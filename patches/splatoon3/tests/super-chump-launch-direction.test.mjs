@@ -20,15 +20,18 @@ const kitCache=new Map();
 async function kitFor(emitted){
  if(kitCache.has(emitted))return kitCache.get(emitted);
  const code=emitted?compactModuleStrings(esbuild.transformSync(kitRaw,{format:'esm',minify:true,charset:'utf8',legalComments:'inline'}).code).code:kitRaw;
- // Use the real dirty-range helper in source and minified realms, not an
- // empty export: the GPU upload mutation must remain observable in tests.
- const helperRaw=fs.readFileSync(path.join(root,'patches/splatoon3/runtime/instance-color-upload.mjs'),'utf8');
- const helper=emitted?compactModuleStrings(esbuild.transformSync(helperRaw,{format:'esm',minify:true,charset:'utf8',legalComments:'inline'}).code).code:helperRaw;
+ // Use the real pool helpers in both source and minified realms so their
+ // GPU upload and bounds mutations remain observable in tests.
+ const helpers=new Map();
+ for(const file of ['instance-color-upload.mjs','shape-pool-bounds.mjs']){
+  const raw=fs.readFileSync(path.join(root,'patches/splatoon3/runtime',file),'utf8');
+  helpers.set('./'+file,emitted?compactModuleStrings(esbuild.transformSync(raw,{format:'esm',minify:true,charset:'utf8',legalComments:'inline'}).code).code:raw);
+ }
  const context=vm.createContext({console});
  const module=new vm.SourceTextModule(code,{context});
  await module.link(spec=>{
-  if(spec!=='./instance-color-upload.mjs')throw Error('unexpected kit import: '+spec);
-  return new vm.SourceTextModule(helper,{context});
+  assert.ok(helpers.has(spec),'explicit real kit dependency: '+spec);
+  return new vm.SourceTextModule(helpers.get(spec),{context});
  });
  await module.evaluate();kitCache.set(emitted,module.namespace);return module.namespace;
 }

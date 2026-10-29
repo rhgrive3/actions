@@ -88,20 +88,21 @@ export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
   const {win,counts,bandByBin}=guidedTables(sampleRate);
   let measured=source.env.findIndex(v=>!Number.isFinite(v));
   if(measured<0)measured=source.env.length;
-  const bandPower=new Float64Array(BANDS.length-1);
+  const bandAmplitude=new Float64Array(BANDS.length-1);
   const ampScale=0.25;
   // Every transform starts with silent DC/Nyquist and unmapped bins.
   const real=new Float64Array(N),imag=new Float64Array(N),ampScratch=new Float64Array(BANDS.length-1);
   for(let start=-N+H;start<length;start+=H){
     const t=Math.max(0,(start+N/2)/sampleRate);
     const amps=bandsAt(source,t,ampScratch);
-    for(let b=0;b<bandPower.length;b++)bandPower[b]=Math.pow(10,amps[b]/10)/counts[b];
+    // The same band amplitude feeds every mapped FFT bin. Keep the original
+    // division then sqrt arithmetic, retaining double precision in this table.
+    for(let b=0;b<bandAmplitude.length;b++)bandAmplitude[b]=Math.sqrt(Math.pow(10,amps[b]/10)/counts[b]);
     real.fill(0);imag.fill(0);
     for(let k=1;k<N/2;k++){
       const which=bandByBin[k];
       if(which<0)continue;
-      const power=bandPower[which];
-      const a=Math.sqrt(power)*ampScale;
+      const a=bandAmplitude[which]*ampScale;
       const theta=r()*TAU;real[k]=a*Math.cos(theta);imag[k]=a*Math.sin(theta);
       real[N-k]=real[k];imag[N-k]=-imag[k];
     }
@@ -123,6 +124,7 @@ export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
   const desiredPeak=0.68,scale=peak>0?desiredPeak/peak:1;
   for(let i=0;i<length;i++)out[i]=(out[i]-dc)*scale;
   // Smooth loop boundary after FFT generation, no sudden clicks when the source wraps.
+  // blend <= length/8 keeps the two edge ranges disjoint for in-place reads.
   if(looping){const blend=Math.min(Math.floor(.03*sampleRate),length>>3);
     for(let i=0;i<blend;i++){const q=taper(i/(blend-1));const v=out[length-blend+i]*(1-q)+out[i]*q;out[i]=v;out[length-blend+i]=v;}
     out[length-1]=out[0];

@@ -81,7 +81,8 @@ export function createSpeakerRunner(body, { mutate = null, instrument = true } =
   const ch = { actor, kid: new THREE.Group(), weapon: { pivot: { visible: true } } };
   for (let i = 0; i < 6; i++) {
     const model = { id: 'spKillerSpeaker', materials: new Map([['ink', { emissiveIntensity: .08 }]]) };
-    state.devices.push({ model, holder: new THREE.Group(), base: [i % 2 ? -.5 : .5, 1.7 + Math.floor(i / 2) * .3, -.2],
+    // Match installSpecialPresentation.start: ordinal belongs to the device record.
+    state.devices.push({ model, speakerIndex: state.devices.length, holder: new THREE.Group(), base: [i % 2 ? -.5 : .5, 1.7 + Math.floor(i / 2) * .3, -.2],
       spec: { speakers: true, scale: 1, hideWeapon: true } });
   }
   return { actor, state, ch, speakerMarks, step(t, dt, yaw = .3, captureValues = true) {

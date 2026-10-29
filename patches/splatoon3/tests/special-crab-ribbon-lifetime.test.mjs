@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { pathToFileURL } from 'node:url';
 import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
+import { installShapePoolBounds, updateShapePoolBounds } from '../runtime/shape-pool-bounds.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const runtime = new URL('../runtime/', import.meta.url);
@@ -31,9 +32,14 @@ async function load(mode, negative = false) {
   const context = vm.createContext({ console });
   const k = new vm.SourceTextModule(kit, { context });
   await k.link(spec => {
-    assert.equal(spec, './instance-color-upload.mjs', 'only the audited color-range helper is allowed');
-    return new vm.SyntheticModule(['markAttributeRange'], function () {
-      this.setExport('markAttributeRange', markAttributeRange);
+    const helpers = {
+      './instance-color-upload.mjs': { markAttributeRange },
+      './shape-pool-bounds.mjs': { installShapePoolBounds, updateShapePoolBounds },
+    };
+    assert.ok(Object.hasOwn(helpers, spec), `explicit real pool dependency ${spec}`);
+    const exports = helpers[spec];
+    return new vm.SyntheticModule(Object.keys(exports), function () {
+      for (const [name, value] of Object.entries(exports)) this.setExport(name, value);
     }, { context });
   }); await k.evaluate();
   const m = new vm.SourceTextModule(source, { context });

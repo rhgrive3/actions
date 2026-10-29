@@ -724,12 +724,35 @@ function addWorld(rt, data) {
   (system._s3AllSpecialObjects ||= []).push(data);
   return data;
 }
+// One immutable wave ring per runtime epoch; materials remain per object.
+const waveFrontGeometryOwners = new WeakMap();
+function retireWaveFrontGeometry(rt) {
+  const entry = rt._waveFrontGeometry;
+  if (!entry) return;
+  rt._waveFrontGeometry = null; entry.retiring = true;
+  if (!entry.users) entry.geometry.dispose();
+}
+function borrowWaveFrontGeometry(rt) {
+  let entry = rt._waveFrontGeometry;
+  if (!entry) {
+    const geometry = new rt.api.THREE.RingGeometry(.96,1,48);
+    entry = rt._waveFrontGeometry = {geometry, users:0, retiring:false};
+    waveFrontGeometryOwners.set(geometry, entry);
+  }
+  entry.users++;
+  return entry.geometry;
+}
 function disposeMesh(rt, object) {
   const mesh = object?.mesh;
   if (!mesh) return;
   rt.api.G.scene?.remove?.(mesh);
   mesh.traverse?.(node => {
-    node.geometry?.dispose?.();
+    const borrowed = node.userData?.s3BorrowedWaveFront === node.geometry && waveFrontGeometryOwners.get(node.geometry);
+    if (borrowed) {
+      delete node.userData.s3BorrowedWaveFront;
+      borrowed.users--;
+      if (borrowed.retiring && !borrowed.users) borrowed.geometry.dispose();
+    } else node.geometry?.dispose?.();
     const mats = Array.isArray(node.material) ? node.material : [node.material];
     mats.forEach(mat => mat?.dispose?.());
   });
@@ -737,7 +760,7 @@ function disposeMesh(rt, object) {
 }
 // Geometry + material of one deployable's world mesh. Shared with the program
 // keepers in special-motion.mjs, so their warmed programs match exactly.
-export function worldMeshParts(THREE, kind, color) {
+export function worldMeshParts(THREE, kind, color, waveGeometry = null) {
   let geometry, material;
   if (kind === 'screen') {
     geometry = new THREE.PlaneGeometry(8, 4.5);
@@ -746,7 +769,7 @@ export function worldMeshParts(THREE, kind, color) {
     geometry = new THREE.CylinderGeometry(.38,.38,1.15,10);
     material = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.22, roughness:.42 });
   } else if (kind === 'waveFront') {
-    geometry = new THREE.RingGeometry(.96,1,48);
+    geometry = waveGeometry || new THREE.RingGeometry(.96,1,48);
     material = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, side:THREE.DoubleSide, depthWrite:false });
   } else {
     geometry = new THREE.SphereGeometry(kind === 'decoy' ? .42 : .7, 10, 8);
@@ -761,7 +784,12 @@ function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   const { THREE, G } = rt.api;
   if (!G.scene?.add || !THREE?.Mesh) return null;
   let mesh=rt.api.specialWorldProxy?.(kind)||null;
-  if(!mesh){const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner));mesh=new THREE.Mesh(geometry,material);}
+  if(!mesh){
+    const shared = kind === 'waveFront' ? borrowWaveFrontGeometry(rt) : null;
+    const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner),shared);
+    mesh=new THREE.Mesh(geometry,material);
+    if(shared)mesh.userData.s3BorrowedWaveFront=shared;
+  }
   if (kind === 'waveFront') mesh.rotation.x = -Math.PI / 2;
   mesh.position.copy(center); mesh.scale.set(...scale);
   if (kind === 'screen') mesh.position.y += 2.2;
@@ -814,15 +842,22 @@ function projectileObjectCause(p, mode=p?.s3AllSpecialMode) {
 function objectHitProposal(rt, p, object, cause=projectileObjectCause(p)) {
   const shooter = p?.owner;
   if (!shooter || shooter.remote || p.ghost) return null;
+  // Sample once at the original property-read position. Invalid claims still
+  // consume their original proposal ordinal, preserving the event sequence of
+  // later legal hits across mixed-version clients.
+  let rawDamage;
   const event = {
     actor: shooter, id: object.id, activation: object.activation, action:'objectHit',
     pos: vecArray(object.pos), target: vecArray(p.pos), seed: normalizedSeed(object.seed),
     object: object.serial || 0, index: object.index || 0,
     ownerNid: Number.isInteger(object.owner?.nid) ? object.owner.nid : -1,
     ownerLife: actorLife(object.owner), attackerLife: actorLife(shooter), objectShredder: objectShredderEquipped(shooter),
-    damage: Math.max(0, Math.min(10000, Number(p.damage) || 0)),cause,
+    damage: Math.max(0, Math.min(10000, (rawDamage = Number(p.damage)) || 0)),cause,
     tick: (object.proposalSerial=((object.proposalSerial||0)+1)),
   };
+  // A zero-damage visual was previously sent and became 1 HP at the owner.
+  // Do not serialize it; keep legitimate subunit damage and the ordinal order.
+  if (!Number.isFinite(rawDamage) || event.damage <= 0) return null;
   if (event.pos && event.target) rt.api.emit?.('all:special', event);
   return event;
 }
@@ -2363,6 +2398,7 @@ function installRuntime(api) {
   };
   api.on?.('actor:removed',event=>retireActorPresentation(event?.actor));
   api.on?.('match:dispose',event=>{
+    retireWaveFrontGeometry(rt);
     for(const actor of event?.match?.actors||[])retireActorPresentation(actor);
   });
   // Only native completed attacks/jumps retire wall protection. Input held
@@ -2529,10 +2565,15 @@ function installRuntime(api) {
   };
   if(typeof projectileStep==='function')P._step=function(p,...args){
     const cause=p?.s3AllSpecial?projectileObjectCause(p):null;
-    const advance=()=>p?.s3AllSpecialFlight
+    if(cause&&!p?.ghost&&!p?.owner?.remote){
+      const advance=()=>p?.s3AllSpecialFlight
+        ?stepSourceFlight(this,p,args[0],projectileStep,api.G)
+        :projectileStep.call(this,p,...args);
+      return withObjectDamageCause(p,advance,cause);
+    }
+    return p?.s3AllSpecialFlight
       ?stepSourceFlight(this,p,args[0],projectileStep,api.G)
       :projectileStep.call(this,p,...args);
-    return cause&&!p?.ghost&&!p?.owner?.remote?withObjectDamageCause(p,advance,cause):advance();
   };
   if(typeof impact==='function')P._impact=function(p,hit,...args){
     if(p?.s3AllSpecial==='crabTank'&&startCrabWallDrop(this,p,hit)){
@@ -2650,6 +2691,7 @@ function installRuntime(api) {
     rt.system=this;
     clearCrabSplashVisuals(this,api.G);
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
+    retireWaveFrontGeometry(rt);
     this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
   };
   for(const [id,definition]of Object.entries(SPECIALS)){
@@ -2699,15 +2741,32 @@ function replayFx(rt,actor,event) {
   }
   return true;
 }
-function replayObjectEvent(rt,actor,event) {
+// Find an actual owner-side device before consuming the sender's replay key.
+// An early or invalid claim must never reserve the one-time admission slot for
+// a later, well-formed event. The caller inserts the replay key immediately
+// after this preflight and before any HP/mutation callbacks (reentrancy safe).
+function findObjectHitTarget(rt,actor,event) {
+  // Replay can precede the first object update; keep the original lazy system
+  // binding before looking up a receiver-owned device.
+  rt.system ||= rt.api.G.projectiles || null;
+  if (!rt.system || !Number.isFinite(event.damage) || event.damage <= 0 || event.damage > 10000) return null;
+  const owner=rt.api.G.netm?.byNid?.get(event.ownerNid)||(rt.api.G.actors||[]).find(a=>a.nid===event.ownerNid);
+  if(!owner||owner.remote||owner.nid!==event.ownerNid||actorLife(owner)!==event.ownerLife||!actor.remote||actor.team===owner.team)return null;
+  const object=(rt.system._s3AllSpecialObjects||[]).find(o=>o.owner===owner&&o.activation===event.activation&&o.serial===event.object&&o.id===event.id);
+  // The local device has authoritative immutable birth identity. A sender
+  // cannot attach a hit to an unrelated seed/index or omit its own source
+  // lifetime. This is packet-identity checking, not an attack contact proof.
+  if(!object||object.dead||object.kind==='screen'||!(object.hp>0)||
+     event.seed!==normalizedSeed(object.seed)||event.index!==(object.index||0)||
+     actorLife(actor)!==event.attackerLife)return null;
+  return object;
+}
+function replayObjectEvent(rt,actor,event,approvedObject=null) {
   rt.system ||= rt.api.G.projectiles || null;
   if(!rt.system)return false;
   if(event.action==='objectHit'){
-    const owner=rt.api.G.netm?.byNid?.get(event.ownerNid)||(rt.api.G.actors||[]).find(a=>a.nid===event.ownerNid);
-    if(!owner||owner.remote||owner.nid!==event.ownerNid||actorLife(owner)!==event.ownerLife||!actor.remote||actor.team===owner.team)return false;
-    const object=(rt.system._s3AllSpecialObjects||[]).find(o=>o.owner===owner&&o.activation===event.activation&&o.serial===event.object&&o.id===event.id);
-    if(!object||object.kind==='screen'||object.hp<=0)return false;
-    if(event.attackerLife!==undefined&&actorLife(actor)!==event.attackerLife)return false;
+    const object=approvedObject||findObjectHitTarget(rt,actor,event);
+    if(!object)return false;
     const rate=withObjectHitGear(actor,event.objectShredder,()=>objectDamageScale(actor,object.id,event.cause||'Default'));
     object.hp=Math.max(0,object.hp-Math.max(1,Math.min(10000,Number(event.damage)||0))*rate);
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');
@@ -2796,6 +2855,15 @@ export function replaySpecial(api,event) {
     ||!Array.isArray(event.pos)||event.pos.length!==3||!event.pos.every(finite))return false;
   if(event.target!==undefined&&(!Array.isArray(event.target)||event.target.length!==3||!event.target.every(finite)))return false;
   if(event.tick!==undefined&&(!Number.isSafeInteger(event.tick)||event.tick<0||event.tick>1e9))return false;
+  // Reject malformed objectHit before the replay ledger: a bad duplicate must
+  // not consume the key for a later, valid claim. Historic peers may omit gear.
+  if(event.action==='objectHit'&&(!Number.isFinite(event.damage)||event.damage<=0||event.damage>10000
+    ||event.objectShredder!==undefined&&typeof event.objectShredder!=='boolean'
+    ||!Number.isSafeInteger(event.tick)||event.tick<1
+    ||!Number.isSafeInteger(event.object)||event.object<=0
+    ||!Number.isSafeInteger(event.index)||event.index<0
+    ||!Number.isSafeInteger(event.attackerLife)||event.attackerLife<0
+    ||!Array.isArray(event.target)||event.target.length!==3||!event.target.every(finite)))return false;
   // Validate before the replay ledger and before any mesh/device allocation.
   if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;
   let cheerOwner=null,cheerState=null;
@@ -2806,6 +2874,12 @@ export function replaySpecial(api,event) {
     cheerState=actorStates.get(cheerOwner);
     if(!cheerState||cheerState.id!=='booyahBomb'||cheerState.serial!==event.activation)return false;
   }
+  // `objectHit` targets may arrive after an owner-side device birth. Check that
+  // target now exists before recording the attacker-controlled proposal tick.
+  // The preflight does not mutate HP; the ledger is still set before callbacks.
+  const approvedObject=event.action==='objectHit'
+    ?findObjectHitTarget(rt,actor,event):null;
+  if(event.action==='objectHit'&&!approvedObject)return false;
   const devicePacket=(event.id==='waveBreaker'&&(event.kind==='wave'||(event.kind===undefined&&event.action==='device')))
     ||(event.id==='splattercolorScreen'&&(event.kind==='screen'||(event.kind===undefined&&event.action==='screen')));
   const life=devicePacket?actorLife(actor):0;
@@ -2831,7 +2905,7 @@ export function replaySpecial(api,event) {
       else if(event.action==='swingEnd'){state.stampHolding=false;state.stampCount=0;}
     }
   }
-  const objectAccepted=replayObjectEvent(rt,actor,event);
+  const objectAccepted=replayObjectEvent(rt,actor,event,approvedObject);
   if(deviceKey&&(objectAccepted||event.action==='destroy'||event.action==='expire')){
     ledger.add(deviceKey);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   }

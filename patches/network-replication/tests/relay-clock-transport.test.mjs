@@ -50,3 +50,27 @@ test('legacy relays and retired connections cannot inject stamped receipts', asy
   assert.deepEqual(got, [['A', 3, null]]);
   tr.close();
 });
+
+test('nested close and reconnect never restore a retired dispatch receipt', async () => {
+  const {tr,connect}=await fixture(),old=await connect(true);
+  let reconnect;
+  tr.onMessage=(from)=>{
+    if(from==='outer'){
+      assert.equal(tr.relayReceipt('outer'),100);
+      old.receive('m|inner|@101|{}');
+      assert.equal(tr.relayReceipt('outer'),null,'closing nested dispatch retires outer context');
+    }else if(from==='inner'){
+      tr.close();
+      assert.equal(tr.relayReceipt('inner'),null);
+      reconnect=connect(true);
+    }
+  };
+  old.receive('m|outer|@100|{}');
+  const current=await reconnect;
+  assert.equal(tr.relayReceipt('outer'),null);
+  assert.equal(tr.relayReceipt('inner'),null);
+  tr.onMessage=from=>assert.equal(tr.relayReceipt(from),200);
+  current.receive('m|new|@200|{}');
+  assert.equal(tr.relayReceipt('new'),null);
+  tr.close();
+});

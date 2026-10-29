@@ -10,28 +10,43 @@ const SOURCE_NEUTRAL_COLOR = Object.freeze(new THREE.Color('#bfc3c6'));
 /** Compatibility with the original Level's face/grid and dynamic box contracts.
  * Static collision remains exact triangles; chart rectangles are NEVER colliders. */
 export class NativeLevel extends Level {
- constructor(data) {
+ constructor(data,{deferBuild=false}={}) {
   const m=data.manifest;
   assertSourceTerrainObjects(m);
   super({id:m.id,bounds:m.bounds,spawnPads:m.spawnPads,spawnBarrier:m.spawnBarrier,single:[],half:[],skipInitialSpatialHash:true});
+  if(!deferBuild)for(const _ of this._initialize(data)){}
+ }
+ static async create(data,{signal,current=()=>true,budgetMilliseconds=4,yieldTask=()=>new Promise(resolve=>setTimeout(resolve,0))}={}) {
+  const check=()=>{if(signal?.aborted||!current())throw Object.assign(new Error('Aborted'),{name:'AbortError'});};
+  check();const level=new this(data,{deferBuild:true}),steps=level._initialize(data);
+  let deadline=performance.now()+budgetMilliseconds;
+  try{for(let step=steps.next();!step.done;step=steps.next()){
+   check();if(performance.now()>=deadline){await yieldTask();check();deadline=performance.now()+budgetMilliseconds;}
+  }check();return level;}finally{steps.return();}
+ }
+ *_initialize(data) {
+  const m=data.manifest;
   this.native=true;this.manifest=m;this.data=data;this.layout.nativeSource=true;
   this.homeSuperJumpPoints=this.spawnPads.map(p=>p.clone());
   this.triangleWorld=new TriangleWorld(data);this.hasRails=false;
   this.mask=data.mask;
-  this.faces=m.faces.map((s,id)=>({...s,id,block:id,
+  this.faces=[];
+  for(let id=0;id<m.faces.length;id++){const s=m.faces[id];this.faces.push({...s,id,block:id,
    n:new THREE.Vector3(...s.n),u:new THREE.Vector3(...s.u),v:new THREE.Vector3(...s.v),origin:new THREE.Vector3(...s.origin),
    wall:Math.abs(s.n[1])<.3,turf:s.n[1]>.7,ceiling:s.n[1]<-.5,paintable:true,
    color:SOURCE_NEUTRAL_COLOR,pattern:0,groundedBottom:false,mural:-1,atlas:null,
-  }));
-  this.blocks=this.faces.map(f=>({
+  });if((id&127)===127)yield; }
+  this.blocks=[];
+  for(const f of this.faces){this.blocks.push({
    id:f.id,nativeFace:f.id,center:f.origin.clone().addScaledVector(f.u,f.su*.5).addScaledVector(f.v,f.sv*.5),
    half:new THREE.Vector3(f.su*.5,0,f.sv*.5),axes:[f.u,f.n,f.v],
    aabbMin:new THREE.Vector3(...f.bounds[0]),aabbMax:new THREE.Vector3(...f.bounds[1]),
    solid:true,paint:true,grate:false,roof:false,rail:false,perch:false,noNav:false,hidden:false,aligned:false,
    color:f.color,faces:[f.id,-1,-1,-1,-1,-1],
-  }));
+  });if((f.id&127)===127)yield; }
   this.objectBlock=new Int32Array(m.objects.length).fill(-1);
   for(let i=0;i<m.objects.length;i++){
+   if((i&127)===127)yield;
    const o=m.objects[i];if(!o.collidable)continue;
    const id=this.blocks.length;this.objectBlock[i]=id;
    const lo=o.bounds[0],hi=o.bounds[1];
@@ -44,7 +59,9 @@ export class NativeLevel extends Level {
    });
   }
   this.staticBlockCount=this.blocks.length;
+  yield;
   this._buildHash();
+  yield;
   this._probe=new THREE.Vector3();
   this._groundHit={point:new THREE.Vector3(),normal:new THREE.Vector3()};
   this._groundOptions={minNormalY:.68};this._supportOptions={minNormalY:.68,anyHit:true,minHitY:-Infinity};
@@ -163,12 +180,16 @@ const NATIVE_GROUND_HEIGHT=NativeLevel.prototype.groundHeight;
 
 export function initNativeGrid(paint){
  const lvl=paint.level;paint.grid=new Uint8Array(lvl.mask.length);
- paint.dead=Uint8Array.from(lvl.mask,v=>v?0:1);
- for(const f of paint.paintFaces){f.nativeEmpty=true;for(let k=f.grid;k<f.grid+f.nu*f.nv;k++)if(!paint.dead[k]){f.nativeEmpty=false;break;}}
+ paint.dead=new Uint8Array(lvl.mask.length);
+ for(let k=0;k<lvl.mask.length;k++)paint.dead[k]=lvl.mask[k]?0:1;
  paint.counts=[0,0];paint.turfTotal=0;paint.turfArea=0;
- for(const f of paint.paintFaces)if(f.turf){
-  const end=f.grid+f.nu*f.nv;
-  for(let k=f.grid;k<end;k++)if(!paint.dead[k]){paint.turfTotal++;paint.turfArea+=f.cu*f.cv;}
+ for(const f of paint.paintFaces){
+  f.nativeEmpty=true;const end=f.grid+f.nu*f.nv;
+  for(let k=f.grid;k<end;k++)if(!paint.dead[k]){
+   f.nativeEmpty=false;
+   if(f.turf){paint.turfTotal++;paint.turfArea+=f.cu*f.cv;}
+   else break;
+  }
  }
 }
 

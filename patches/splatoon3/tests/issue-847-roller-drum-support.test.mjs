@@ -25,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a",
+  "patches/splatoon3/runtime/roller.mjs": "da13f7a173b2c62986a4b278bca94e6133163ffe4d7ff172973eea6031e2ff82",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -78,19 +78,38 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
     if(rel==='patches/splatoon3/runtime/roller.mjs'){
-      // Reverse the exact later performance owner edits, then prove the entire
-      // former input remains byte-identical. All admission fault anchors below
-      // continue to apply to the unmodified current source.
-      let reviewed=raw;
-      for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
+      // The queue only replaces the ephemeral [-1,1] loop with the same two
+      // scalar signs. Prove exact recovery of the complete prior input before
+      // applying the older, separately sealed downhill support reversals.
+      const beforeScalarSign=exactFault(raw,
+        'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(let sign=-1;sign<=1;sign+=2)',
+        'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1])',
+        'queue-scalar-sign-loop');
+      assert.equal(createHash('sha256').update(beforeScalarSign).digest('hex'),
+        '27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a',
+        'Drive-verified 031426fc queue input');
+      // The incoming baseline itself also contained six reviewed optimization
+      // hunks absent from this test's older pin. Retain both Drive digests and
+      // reverse only those exact hunks before the earlier history checks.
+      const deltaBytes=fs.readFileSync(new URL('./fixtures/queue-roller-031426fc-reviewed-delta.json',import.meta.url));
+      assert.equal(createHash('sha256').update(deltaBytes).digest('hex'),
+        'ca0d84694c66b330cf208530b2c7bc10362108259ba666982349b0d5b8735461');
+      const delta=JSON.parse(deltaBytes);let beforeBaselineOptimizations=beforeScalarSign;
+      for(const [index,change]of delta.changes.entries())
+        beforeBaselineOptimizations=exactFault(beforeBaselineOptimizations,change.after,change.before,'baseline-optimization-'+index);
+      assert.equal(createHash('sha256').update(beforeBaselineOptimizations).digest('hex'),
+        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39',
+        'previous reviewed #847 input before incoming baseline optimizations');
+      // Independently replay the current owner's seven exact reverse edits
+      // from the preserved pre-scalar-sign epoch. Both reviewed history paths
+      // must converge, and the owner epoch without downhill support stays pinned.
+      let reviewed=beforeScalarSign;
+      for(const [before,after,name] of ROLLER_PERFORMANCE_REVERSE_EDITS)reviewed=exactFault(reviewed,before,after,name);
       assert.equal(createHash('sha256').update(reviewed).digest('hex'),
-        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39', 'previous #847 performance-owner input');
-      // The owner reviewed the current performance epoch without the downhill
-      // import/fallback. Preserve that independent source identity as well.
-      assert.equal(createHash('sha256').update(withoutReviewedDownhillSupport(raw)).digest('hex'),
-        'dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96', 'reviewed #847 performance epoch without downhill support');
-      // The older epoch first reverses all seven exact performance edits.
-      // Removing the same downhill edits must reproduce its original pin.
+        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39','previous #847 performance-owner input');
+      assert.equal(reviewed,beforeBaselineOptimizations,'independent reviewed baseline and performance owner inversions agree');
+      assert.equal(createHash('sha256').update(withoutReviewedDownhillSupport(beforeScalarSign)).digest('hex'),
+        'dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96','reviewed #847 performance epoch without downhill support');
       const previous=withoutReviewedDownhillSupport(reviewed);
       assert.equal(createHash('sha256').update(previous).digest('hex'),
         '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');

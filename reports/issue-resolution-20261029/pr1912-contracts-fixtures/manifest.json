@@ -1,0 +1,62 @@
+{
+  "source": "11ea9f273bc315257699e4436d08c273145bee05",
+  "repairCommit": "60304c186753da6b6a185e7a15b01fd8b96da685",
+  "node": "v22.23.4",
+  "files": [
+    {
+      "file": "patches/native-stages/tests/native-texture-index.test.mjs",
+      "before": "7422c08da62b47927e03c94da27f4cb7c659eb7f",
+      "after": "86778d32b8fe92f1ff9f030a6aecdcb76cde496c"
+    },
+    {
+      "file": "patches/native-stages/tests/lemuria-unavailable.test.mjs",
+      "before": "735d3fbcfbba085df843cd47789a537c6db64439",
+      "after": "d58f7a7bc3d8fd49748526e4c01b9111291e71dd"
+    },
+    {
+      "file": "patches/native-stages/tests/source-rule-start.test.mjs",
+      "before": "7f3550b40d44a9182ced71026232b592c3d49804",
+      "after": "a744a20e1d371f3d50e2fcdc3fb9b24902155a49"
+    }
+  ],
+  "receipts": [
+    {
+      "file": "agent2-current-failure-job-123403940091.log.gz",
+      "sha256": "06f875a7075b1c49744b85e4332b436d3e14d5a4787e955d7da8298c5d2dd5f7",
+      "uncompressedBytes": 410122,
+      "uncompressedSha256": "32a47e74275fe17944c5f8972df4b9d12e41142182ed16c3694d5dcbc0c649a9"
+    },
+    {
+      "file": "contracts-fixtures-before-node22.tap.gz",
+      "sha256": "93503d0910e968d6e7054b194f659d7b1bd996d90003055a1fa59392b6d6aee9",
+      "uncompressedBytes": 23003,
+      "uncompressedSha256": "32df3d9535e82cf7722e6b698ac9e70193e8f526bf9e90676f6a8ff1c183670d"
+    },
+    {
+      "file": "contracts-fixtures-after-node22.tap.gz",
+      "sha256": "2776061c7c5e43a67497e2194b629f0e3dd176d09eb6f04dfe057bc3bc00fa51",
+      "uncompressedBytes": 15734,
+      "uncompressedSha256": "ff385d1dfa4cfab11edabb6e604c1a2eedfb1fef7e7d73891e6fc2e1858f198c"
+    },
+    {
+      "file": "contracts-fixtures-related-node22.tap.gz",
+      "sha256": "7c2d54ea799cf5a61a6403f194b817b2eda546fa9588693806a474c03c56bb1a",
+      "uncompressedBytes": 19683,
+      "uncompressedSha256": "b2419231e8e7c316199a9cef4ff8555083105c55adfc3ab7dfb26a6dec1ad64b"
+    },
+    {
+      "file": "contracts-timer-noop-counterfactual-node22.tap.gz",
+      "sha256": "8ae118cdca210e44ca279a077c23a2605da5f4e8f44532a823cce25f69d8742b",
+      "uncompressedBytes": 9328,
+      "uncompressedSha256": "947dbfa7ba3a366a409cab71ba2b0928ec6c473ca854680554908f57f88e54b6"
+    }
+  ],
+  "timerCounterfactual": {
+    "scope": "two temporary VM test fixture copies only; production unchanged",
+    "before": "clearTimeout(id){timers.cancelled.push(id);timers.pending.delete(id);}",
+    "after": "clearTimeout(id){timers.cancelled.push(id);}",
+    "expectedFailures": 8,
+    "actualFailures": 8,
+    "failure": "retired callback is removed from the queue; true !== false"
+  }
+}

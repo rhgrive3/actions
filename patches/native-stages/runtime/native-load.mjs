@@ -181,11 +181,10 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  // A source export can contain hundreds of textures for inactive/unrendered objects.
  // nativeDisplay skips those objects; decoding their maps on a touch GPU cannot improve the image.
  // Keep old callers without an object registry compatible.
- const active=Array.isArray(data.manifest.objects)
-  ?new Set(data.manifest.objects.filter(o=>o?.active).map(o=>o.material)):null;
- const materials=active
-  ?Object.entries(data.manifest.materials).filter(([name])=>active.has(name)).map(([,value])=>value)
-  :Object.values(data.manifest.materials);
+ const active=Array.isArray(data.manifest.objects)?new Set():null;
+ if(active)for(const object of data.manifest.objects)if(object?.active)active.add(object.material);
+ const materials=[];
+ for(const name of Object.keys(data.manifest.materials))if(!active||active.has(name))materials.push(data.manifest.materials[name]);
  for(const src of materials){
   const roles={albedo:src.albedo,opacity:src.maps?.opacity};
   if(quality==='high')Object.assign(roles,{normal:src.maps?.normal,roughness:src.maps?.roughness,emissive:src.maps?.emissive});
@@ -199,15 +198,19 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  }
  // Index each material once, including unrequested roles that share a selected
  // file. Keep the job's original last-role precedence and material order.
- if(data.manifest.sourceMode==='browser-direct')for(const m of materials){
-  for(const file of new Set([m.albedo,...Object.values(m.maps||{})])){
-   const job=jobs.get(file);if(job)(job.materials||(job.materials=[])).push(m);
+ if(data.manifest.sourceMode==='browser-direct')for(let ordinal=0;ordinal<materials.length;ordinal++){
+  const m=materials[ordinal],albedo=jobs.get(m.albedo);
+  if(albedo){(albedo.materials||(albedo.materials=[])).push(m);albedo._materialOrdinal=ordinal;}
+  for(const key of Object.keys(m.maps||{})){
+   const job=jobs.get(m.maps[key]);if(!job)continue;
+   if(job._materialOrdinal!==ordinal){(job.materials||(job.materials=[])).push(m);job._materialOrdinal=ordinal;}
   }
  }
  // Only the authenticated browser source inventory can identify byte aliases.
  // Role, cap and declared normal encoding retain independent decode semantics.
  const rows=[],identical=new Map();
  for(const [file,job] of jobs){
+  delete job._materialOrdinal;
   job.aliases=[file];
   const pin=data.integrity?.[file];
   const key=data.manifest.sourceMode==='browser-direct'&&!pin?.sha256&&/^[a-f0-9]{40}$/.test(pin?.gitSha1)&&Number.isSafeInteger(pin.bytes)&&pin.bytes>=0

@@ -8,7 +8,7 @@ const seal=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SH
 const envelope=async(files,pending=false)=>new Response(JSON.stringify({schema:1,pending,files,seal:await seal(files)}));
 async function readRow(name){
  const cache=await caches.open(name),stamp=await cache.match(STAMP),time=stamp?Number(await stamp.text()):0;
- let files=null;try{const meta=await (await cache.match(META)).json(),keys=(await cache.keys()).map(r=>r.url).filter(url=>url!==META&&url!==STAMP).sort();
+ let files=null;try{const meta=await (await cache.match(META)).json(),keys=(await cache.keys()).map(r=>r.url).filter(url=>url!==META&&url!==STAMP);
   if(meta.schema!==1||meta.pending!==false||!meta.files||typeof meta.files!=='object'||Array.isArray(meta.files)||keys.length!==Object.keys(meta.files).length)throw Error('unknown');
   for(const url of keys)if(!Object.hasOwn(meta.files,url)||!Number.isSafeInteger(meta.files[url])||meta.files[url]<0)throw Error('unknown');
   const bytes=sizeOf(meta.files);if(!Number.isSafeInteger(bytes)||meta.seal!==await seal(meta.files))throw Error('unknown');files=meta.files;

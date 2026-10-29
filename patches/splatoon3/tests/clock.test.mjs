@@ -68,3 +68,17 @@ test('#707 unpaused, online-pause (never sets paused) and attract matches keep a
   for (let i = 0; i < 60; i++) runSimulation(game, 1 / 60);
   assert.ok(Math.abs(G.time - 1) < 1e-9, 'menu/boot without a match still advances');
 });
+
+import { coherentMotionStart, actorMotionTick } from '../runtime/actor-motion.mjs';
+for(const hz of [30,60,120])test(`offline results invalidate motion without actor writes, online and rematch retain capture at ${hz} Hz`,()=>{
+ let writes=0,remoteSamples=0;
+ const actors=Array.from({length:8},(_,nid)=>({nid,owner:'p',alive:true,form:'kid',pos:{x:nid,y:0,z:0},s3Motion:new Proxy({}, {set(o,k,v){writes++;o[k]=v;return true;}})}));
+ const G={time:0,actors,projectiles:{update(){}}}, {game,match}=pausedGame(G);match.actors=actors;
+ runSimulation(game,1/60);assert.ok(actors.every(a=>coherentMotionStart(a)));writes=0;
+ match.state='results';const startTick=actorMotionTick();
+ for(let i=0;i<hz*12;i++)runSimulation(game,1/hz);
+ assert.equal(actorMotionTick()-startTick,720);assert.equal(writes,0);assert.ok(actors.every(a=>coherentMotionStart(a)===null));
+ G.netm={applyRemote(){remoteSamples++;}};actors[0].remote=true;runSimulation(game,1/60);
+ assert.equal(remoteSamples,1);assert.ok(writes>0);assert.ok(actors.every(a=>coherentMotionStart(a)));
+ G.netm=null;match.state='playing';actors[0].pos.x=27;runSimulation(game,1/60);assert.equal(coherentMotionStart(actors[0]).x0,27);
+});

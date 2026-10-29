@@ -1,0 +1,159 @@
+{
+  "refs": {
+    "base": "e67c636b81762df56b346a09ef570964d43084df",
+    "existing": "22f1962e95411100d1d34dd127405d110df3e7a8",
+    "pr1912": "11ea9f273bc315257699e4436d08c273145bee05"
+  },
+  "files": [
+    {
+      "path": "inkwave-public/src/game/character-lod.js",
+      "base": "1ecceff38aa579aa2b25f00416a9cacd4f3ff4a8",
+      "existing": "1ecceff38aa579aa2b25f00416a9cacd4f3ff4a8",
+      "pr1912": "7fcf28f91da1d9813b12cf33908ce62fc4856c8a"
+    },
+    {
+      "path": "inkwave-public/src/game/character-outfit.js",
+      "base": "3fe5176fee720950a66b931cf53fe55a776ce5dd",
+      "existing": "3fe5176fee720950a66b931cf53fe55a776ce5dd",
+      "pr1912": "daded923fd9f43af4eb34a880564525d307ab804"
+    },
+    {
+      "path": "inkwave-public/src/world/props-marina-vessels.js",
+      "base": "7028aa2f2f897e77bea0f93b4ee6253bf7deb8fc",
+      "existing": "7028aa2f2f897e77bea0f93b4ee6253bf7deb8fc",
+      "pr1912": "37c9551fd1c00225a8a2f9c8eb69c7f291090e4f"
+    },
+    {
+      "path": "patches/local-quality/adapter.mjs",
+      "base": "827cf777c13040cde5d1cfcd42cddd3b17abf39c",
+      "existing": "230f4321f4080f427ba9d472ea5bec6d187e46e8",
+      "pr1912": "1997d3b3ba82aea83c41b7083422ae46dd5f3193"
+    },
+    {
+      "path": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+      "base": "377a919376ca20344f53e1f0d38b6020d1dc2267",
+      "existing": "a8fd764f13a0acde670fc726e7b7e95498f9547a",
+      "pr1912": "3586a022fa69b691e71fe26ba4b22f59135cfac6"
+    },
+    {
+      "path": "patches/local-quality/intermediate-tick-budget.mjs",
+      "base": "24da55a24fa6b083d4c3a248d3bf9f9732b883cc",
+      "existing": "24da55a24fa6b083d4c3a248d3bf9f9732b883cc",
+      "pr1912": "17753369b52713e3070ef6c5ddd61327ea65382c"
+    },
+    {
+      "path": "patches/local-quality/offscreen-visual-budget.mjs",
+      "base": "c2be82d2641fc82b86e328c16c2f4cbd50b99d4c",
+      "existing": "c2be82d2641fc82b86e328c16c2f4cbd50b99d4c",
+      "pr1912": "66c9f641c3345d3f0055bc3a101b88ea03e8ceaf"
+    },
+    {
+      "path": "patches/local-quality/offscreen-hair-target-adapter.mjs",
+      "base": null,
+      "existing": "44f581c02df533f1024c87fdf1d0db246804b662",
+      "pr1912": null
+    },
+    {
+      "path": "patches/local-quality/render-transfer-optimization-adapter.mjs",
+      "base": null,
+      "existing": "f55f409f984ab8dee52ab2e1fe7107917b6b8b48",
+      "pr1912": null
+    },
+    {
+      "path": "patches/local-quality/paint-profile-batch.mjs",
+      "base": "f4af3e251d99d1f7a41798e22896821ae688b770",
+      "existing": "f4af3e251d99d1f7a41798e22896821ae688b770",
+      "pr1912": "00525b5337beb595567f8a0471fee7bc1cb7f319"
+    },
+    {
+      "path": "patches/local-quality/platform-game.mjs",
+      "base": "089ed74715191a0d7794aaa5d5b41e12341827f0",
+      "existing": "089ed74715191a0d7794aaa5d5b41e12341827f0",
+      "pr1912": "308bfd2734f28cc07edd4bca46850f5b9c2176d9"
+    },
+    {
+      "path": "patches/local-quality/platform-lifecycle.mjs",
+      "base": "a8cc7246272d9c15357289b8c37c78181004f488",
+      "existing": "a8cc7246272d9c15357289b8c37c78181004f488",
+      "pr1912": "303679e82067940a6230c00e0590666e4199fe35"
+    },
+    {
+      "path": "patches/local-quality/presentation-clock.mjs",
+      "base": null,
+      "existing": null,
+      "pr1912": "1e11734a483bc253b295b1acd012526ae6d13ed0"
+    },
+    {
+      "path": "patches/local-quality/queue-late-root-20261029-adapter.mjs",
+      "base": null,
+      "existing": null,
+      "pr1912": "d3fdf3e4f9c5c8c309beca6d63a13cccecd7effc"
+    },
+    {
+      "path": "patches/local-quality/queue-visual-continuation-20261029-adapter.mjs",
+      "base": null,
+      "existing": null,
+      "pr1912": "3ab4ffabd8bb2c5d00e57aca0906f6a23f4409b4"
+    },
+    {
+      "path": "patches/local-quality/queue-world-native-20261029-adapter.mjs",
+      "base": null,
+      "existing": null,
+      "pr1912": "c6d8890e3805d778aff981ffd57eb48d0f417b47"
+    },
+    {
+      "path": "patches/local-quality/range-frame-profiler.mjs",
+      "base": "031d6f51d2b0f0a9b7d2db4c855d3a451f0a4a93",
+      "existing": "031d6f51d2b0f0a9b7d2db4c855d3a451f0a4a93",
+      "pr1912": "12221cabe399ef014d0d461d02de39c3a350ef47"
+    },
+    {
+      "path": "patches/local-quality/refresh-aware-dynres-adapter.mjs",
+      "base": null,
+      "existing": null,
+      "pr1912": "4fe78c9271bc8e953c4a863f39e27bdcb593da84"
+    },
+    {
+      "path": "patches/local-quality/swim-surface.mjs",
+      "base": "3addfc23b264ef525b174c46796e0d5ff5f777e9",
+      "existing": "3addfc23b264ef525b174c46796e0d5ff5f777e9",
+      "pr1912": "d601bd7980a954a9df9fefc3ad83fd2a0cf3193e"
+    },
+    {
+      "path": "patches/native-stages/runtime/native-level.mjs",
+      "base": "21cc21fa78646ed72b48aa1c6c436ec5b03dfae9",
+      "existing": "d7fb77a3fd39948af4cdc3f8cb005e30ce6a2b07",
+      "pr1912": "0d5580d6ac337286e3660f5fc9e88a7e4790961b"
+    },
+    {
+      "path": "patches/native-stages/runtime/native-load.mjs",
+      "base": "7293f7af7ed0e7f2c840ff92b3c1c29ee7bfbf79",
+      "existing": "7293f7af7ed0e7f2c840ff92b3c1c29ee7bfbf79",
+      "pr1912": "df640bb1dd59ea23f08ab385fed0cc68441c2580"
+    },
+    {
+      "path": "patches/native-stages/runtime/native-render.mjs",
+      "base": "fb8ea8a99ea3b2d572e904b3f3d943569f1ed415",
+      "existing": "c19e35409874ab4313c789cab48e640cd55c6fda",
+      "pr1912": "c700857e2b0f5c3f9a95f9a6e8a1adc21a6dc87a"
+    },
+    {
+      "path": "patches/native-stages/runtime/native-texture-budget.mjs",
+      "base": "2c5b442eb997bb57fde694c32be48fb992769346",
+      "existing": "2c5b442eb997bb57fde694c32be48fb992769346",
+      "pr1912": "4d964e8949b45c933e90ccd5004a2e2f538548c9"
+    },
+    {
+      "path": "patches/native-stages/runtime/native-world.mjs",
+      "base": "176740292f9aa249ac44d599b5d79483b3d91526",
+      "existing": "176740292f9aa249ac44d599b5d79483b3d91526",
+      "pr1912": "d03aeb36ad309ee9de1c38619d701e353e669c53"
+    },
+    {
+      "path": "patches/native-stages/runtime/source-retention.mjs",
+      "base": "bdb988482765a43255a3f8b61594c5a1ed4b9bf4",
+      "existing": "bdb988482765a43255a3f8b61594c5a1ed4b9bf4",
+      "pr1912": "c58614242ad3448731c80407faef97bb9353b860"
+    }
+  ]
+}

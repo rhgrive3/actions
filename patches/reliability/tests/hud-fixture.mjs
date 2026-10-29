@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { adaptResults } from '../results-adapter.mjs';
 import { adaptIntro } from '../intro-adapter.mjs';
 import { adaptStart } from '../start-adapter.mjs';
+import { createPresentationClock } from '../../local-quality/presentation-clock.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -62,6 +63,11 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
     saveJSON: () => calls.push(['save']),
     tr: (value, vars = {}) => value.replace('{team}',vars.team || ''),
   });
+  // Composed HUDs use the real lifecycle clock with this fixture's time source.
+  // Keep a caller-provided clock factory when an individual test owns it.
+  if (typeof context.createPresentationClock !== 'function') {
+    context.createPresentationClock = () => createPresentationClock(context);
+  }
   const util = new vm.SourceTextModule(readSource('src/ui/ui-util.js'),{context});
   const tx = new vm.SourceTextModule('export const tx=value=>value;',{context});
   await util.link(() => tx); await util.evaluate();

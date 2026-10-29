@@ -1,0 +1,40 @@
+{
+  "source": "11ea9f273bc315257699e4436d08c273145bee05",
+  "node": "v22.23.4",
+  "runtimeUnchanged": {
+    "patches/native-stages/runtime/native-world.mjs": "d03aeb36ad309ee9de1c38619d701e353e669c53",
+    "patches/native-stages/runtime/native-render.mjs": "c700857e2b0f5c3f9a95f9a6e8a1adc21a6dc87a"
+  },
+  "receipts": [
+    {
+      "file": "agent2-pr1912-failure-job-123403938501.log.gz",
+      "sha256": "fa1ac379938d8ebfbb417385765ffb994508d0b00963f486ce536127b515db05",
+      "uncompressedBytes": 145316,
+      "uncompressedSha256": "5a12ad310eaf390f303d19270fb0a9a4ad5d768bfb473c8710d418fd78ae66f8"
+    },
+    {
+      "file": "native-world-texture-fixed-node22.tap.gz",
+      "sha256": "e12f4cf963cc6955ee0ce129edc1550b6381ec6fac6248fce0ff8c6bba31617e",
+      "uncompressedBytes": 880,
+      "uncompressedSha256": "6f28fa0ccb0fc4054db55a7a75b6837d98c6a2a12927ce3ec30d88743211b413"
+    },
+    {
+      "file": "native-world-related-node22.tap.gz",
+      "sha256": "3678b59270fdb9f6f3d970e519aac1361716a3bf8bf5eeebdcd35330d7ae7506",
+      "uncompressedBytes": 26177,
+      "uncompressedSha256": "487b281a84e7195eff2456e298a003833e26e8105ba5e7d586768fb5c74df9b5"
+    },
+    {
+      "file": "native-world-texture-exact-node22.tap.gz",
+      "sha256": "4831308db4eee75ea5aeb7f25eab6a46890e08ae2064aba09b35dec44d5d68ae",
+      "uncompressedBytes": 1310,
+      "uncompressedSha256": "0293cc6003172c60597ba9ffe616d1e140b7a0a87997937ee835fc7d0b97efbc"
+    },
+    {
+      "file": "agent2-peer-1912-texture-ownership.tap.gz",
+      "sha256": "a63dd221de5bb7ca773c9c6eda193664cdc50db4bcc0fa70e4627a07c05e199c",
+      "uncompressedBytes": 880,
+      "uncompressedSha256": "5199f5a701b957935390e844c3cb39932c15bba5590afa6ac80a7954a47b236e"
+    }
+  ]
+}

@@ -221,11 +221,8 @@ export class RainmakerRule {
     this.checkpointCountFloors = this.goals.map((goal, team) => goal && this.countBaselines[team] > 0 && this.checkpoints[team].length
       ? Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / this.countBaselines[team]), 1, 100))) : 1);
     // Derived solely from the immutable stage geometry, not the carrier position.
-    this.checkpointMinimumCount = [0, 1].map(team => {
-      const goal = this.goals[team], baseline = goal && distance(this.center, goal);
-      if (!(baseline > 0) || !this.checkpoints[team].length) return null;
-      return Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / baseline), 1, 100)));
-    });
+    this.checkpointMinimumCount = this.checkpointCountFloors.map((floor, team) =>
+      this.goals[team] && this.countBaselines[team] > 0 && this.checkpoints[team].length ? floor : null);
     this.state = initialState(this.stage);
   }
 

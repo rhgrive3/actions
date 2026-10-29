@@ -6,6 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {preflightComposition} from '../ci/check-composition-preflight.mjs';
+import {assertValidateWorkflowContract, VALIDATE_REQUIRED_JOBS} from '../ci/inkwave-validate-contract.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const checker = path.join(ROOT, 'scripts/ci/check-workflow-yaml.rb');
@@ -181,4 +182,23 @@ test('external Charger waveform research cannot auto-trigger from pull requests 
   assert.match(triggers, /^on:\n  workflow_dispatch:\n/m);
   assert.doesNotMatch(triggers, /^\s{2}(?:pull_request|push|schedule):/m);
   assert.match(yaml, /cancel-in-progress: true/);
+});
+
+test('semantic YAML contract accepts reordered dependencies and rejects bypasses',()=>{
+ const yaml=fs.readFileSync(path.join(ROOT,'.github/workflows/validate-inkwave-update.yml'),'utf8');
+  assertValidateWorkflowContract(yaml);
+  const final = 'needs: [' + VALIDATE_REQUIRED_JOBS.join(', ') + ']';
+  const reordered = yaml.replace(final, 'needs:\n' + [...VALIDATE_REQUIRED_JOBS].reverse().map(name => '      - ' + name).join('\n'));
+  assert.notEqual(reordered, yaml);
+  assertValidateWorkflowContract(reordered);
+  for (const changed of [
+    yaml.replace('needs: admission_preflight', 'needs: missing_preflight'),
+    yaml.replace('needs: admission_preflight', 'needs: patch_tests'),
+    yaml.replace('needs: build_site', 'needs: admission_preflight'),
+    yaml.replace(final, 'needs: [' + VALIDATE_REQUIRED_JOBS.filter(name => name !== 'browser').join(', ') + ']'),
+    yaml.replace('needs: admission_preflight', 'needs: admission_preflight\n    continue-on-error: true'),
+    yaml.replace('if: inputs.diagnostic_only != true &&', 'if: always() && inputs.diagnostic_only != true &&'),
+    yaml.replace('test "$PREFLIGHT_RESULT" = success', 'true # missing preflight check'),
+    yaml.replace('name: Require every source and patch regression to pass', 'name: Require every source and patch regression to pass\n        if: success()'),
+  ]) { assert.notEqual(changed, yaml); assert.throws(() => assertValidateWorkflowContract(changed)); }
 });

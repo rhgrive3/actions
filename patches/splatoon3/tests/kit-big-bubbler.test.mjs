@@ -1441,3 +1441,30 @@ test('Bubbler thrown OFF a Tower keeps the normal 921 damage and stays in world 
  close(fullHp-dome.hp,bigBubblerTimeDamage(false),1e-8);
  clearBigBubblers('test-complete');
 });
+
+test('stale expire is inert before tombstone, cursor and duplicate bookkeeping', async () => {
+  for (const hz of [30,60,120]) {
+    const {f} = await composed({timeDamageIntervalSeconds:1e9});
+    level(f);
+    const owner=f.make('shooter');owner.remote=true;owner.nid=9;
+    const payload={...VALID_DEPLOY(),domeId:`expire-rejection-${hz}`,serial:17};
+    assert.equal(replayBigBubbler('deploy',owner,payload).reason,'deployed');
+    tickRemoteBigBubblers(1/hz);
+    const dome=bigBubblerRemoteDomes().find(d=>d.id===payload.domeId);
+    const hit={domeId:dome.id,serial:17,eventId:7,target:'canopy',amount:10};
+    assert.equal(replayBigBubbler('hit',owner,hit).reason,'displayed');
+    const hp=dome.hp;
+    const stale={domeId:dome.id,serial:16,eventId:8};
+    assert.equal(replayBigBubbler('expire',owner,stale).reason,'stale-activation');
+    assert.equal(replayBigBubbler('expire',owner,stale).reason,'stale-activation');
+    assert.equal(replayBigBubbler('hit',owner,hit).reason,'duplicate','hit cursor survives refusal');
+    assert.equal(dome.hp,hp);
+    assert.equal(replayBigBubbler('hit',owner,{...hit,eventId:8}).reason,'displayed','no poisoned tombstone');
+    assert.equal(dome.hp,hp-10);
+    assert.equal(replayBigBubbler('expire',owner,{...stale,serial:17}).reason,'expired','rejected identity was not consumed');
+    assert.equal(replayBigBubbler('deploy',owner,payload).reason,'expired-before-deploy');
+    const before={...payload,domeId:`expire-before-deploy-${hz}`};
+    assert.equal(replayBigBubbler('expire',owner,{domeId:before.domeId,serial:17}).reason,'already-absent');
+    assert.equal(replayBigBubbler('deploy',owner,before).reason,'expired-before-deploy');
+  }
+});

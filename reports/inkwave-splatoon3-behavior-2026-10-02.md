@@ -6642,6 +6642,201 @@ Revalidated focused evidence includes source wet lifecycle 8/8, emitted Charger/
 
 Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots, full mobile three-lane acceptance, original-game comparison and hardware performance. The native Explosher absolute geometry increase 281→295 remains a failed gate, not waived or offset. Native prebuilt stage payloads are not hydrated; runtime fallback may fetch external stage data, and offline stage availability is not guaranteed. No character or hair model was edited. Character provenance acceptance is source-text-only, not character visual verification.
 
+## 2026-10-29: reconciliation provenance and evidence boundaries
+
+The following sections preserve two independently authored histories: the local queue branch based on `e67c636b81762df56b346a09ef570964d43084df`, and the separate integration history ending at `22f1962e95411100d1d34dd127405d110df3e7a8`. Their reported counts, builds, source heads, outcomes and limitations describe the original runs, not fresh verification of the merged head. The local 506-record queue is not claimed to be 506 independently fixed issues: records include existing behavior, rejected or superseded proposals, and unresolved source-dependent items. Full integration, current-head CI and any stated held acceptance remain separate.
+
+## 2026-10-29 JST: local Library combat/network queue reconciliation
+
+Baseline source: `031426fcb9373d91e74e933e1507e9af395aa1c9`, reconciled against the selected Drive latest manifest. This pass changes no extracted Splatoon 3 Ver. 11.3.0 numeric parameter, host authority, paint ownership or packet schema. GitHub and original Library queues were not written.
+
+Corrected live boundaries: stale Big Bubbler expire cannot erase a newer dome hit ledger; host heartbeat time advances with elapsed update time while retaining the existing one-send-per-frame 20 Hz gate; nested relay receipt storage is reused without crossing close/reconnect generations; Rainmaker presentation rotation advances only on positive finite delta; offline results invalidate motion records without recapturing frozen actors. Trizooka standalone replay helpers reject malformed action indices and isolate explicit activation generations, but a production online consumer for those helper exports was not established, so their tests are not claimed as an online integration fix.
+
+Exact-behavior local optimizations: catalogue nearest-splash null sentinel, cached weapon-kind scalar comparisons, private Saber device membership constant, eager Crab finite-vector scalar checks, shared Rainmaker constructor checkpoint minimum, Charger contact comparator reuse, Roller IK scalar sign enumeration, eagerly captured Ribbon upload attributes, scalar native Trizooka orbit bases and scalar ranked zone area accumulation. Native orbit uses the same arithmetic order and old-axis resampling; zone coverage keeps ordered sums, returned arrays, private area caches and version invalidation.
+
+Validation: focused replay, production-composed host/relay/tower-paint/result admission, actual server failure/hibernation, complete ranked rule differential, real fixed-clock 30/60/120 Hz, real native Trizooka projectile and actual-method scalar differential suites pass. The orbit differential covers 9,000 cases including changing accessors and exceptional numeric axes; zone coverage compares 1,000 mutable/exceptional-area scenarios; constructor checks include 503 degenerate/extreme geometry and restore cases. Detailed queue-level outcomes and original/source hashes are in the separately delivered local combat ledger.
+
+Remaining limitations are explicit: no iPad mini 6 Safari CPU/GC/FPS measurement or retail side-by-side video was made. Booyah ledger bounding still lacks a safe activation epoch contract across remote adoption, reset and wrap. Fizzy flight-splash helper remains disconnected because the helper is not a sourced flight model and has no admitted replay phase; enabling it alone would invent turf semantics. These are unresolved, not completed by closing a queue.
+
+
+## Local UI/input queue closure — 2026-10-29
+
+The 20261029 UI/input adapter changes the fully composed public source and retains the upstream snapshots. News wipe and lobby countdown now conserve foreground elapsed time while platform suspend/resume rebases clocks; minimap transient effects age on update time instead of capped composite credit. These are INKWAVE presentation corrections, not recovered retail constants. Gameplay damage, paint, range, movement, input sensitivity and network formats are unchanged by these UI fixes.
+
+Stationary minimap colors and superjump icons invalidate on palette/team/weapon payload changes. Pin progress updates independently from opacity. Mobile map/pause taps emit one existing haptic pulse. Composer preservation is limited to density-only quality changes with unchanged shadow and pipeline settings; all other cases retain rebuild behavior. UI DOM, animation, filter and input identity caches retain current outputs and owner lifetimes. Hidden-host records are retired by the matching disposed Match only. WebHID decoder scalarization preserves calibration operations and the built-in reader alone opts into immutable decode options. Raw-gyro trust/fallback and the production 60 Hz mobile scheduling contract remain intact.
+
+Validation: 19 actual composed-method comparisons, 12 additional clock/lifecycle/decoder/render tests, one desktop Chromium DOM/CSS-animation comparison, and targeted existing suites. Chromium measured slider animation creations 30→1, boss combo synchronous offsetWidth reads 15→0, and initial travel-tab weapon cards 160→0; first weapon tab still builds all 160 and retains identical HTML/selection. The minimap native mixed-terrain raster comparison preserves every RGBA byte. These are local operation-count and deterministic comparisons, not whole-game FPS, GPU-time, memory or physical-controller measurements. iPad/Safari, real WebHID mounting/sign conventions, retail visual parity and performance gains remain unmeasured.
+
+Queue dispositions and source hashes: the local delivery ledger `ui-input.json` covers all 86 assigned items, including evidence-based non-adoption of geometry/gyro/shadow changes that could alter current output. Workflow-only browser optimization: six of seven assigned headless jobs were already shell-only; Ink Micro now also uses `--only-shell` with its unchanged Playwright 1.51.1 pin. An isolated shell-only 1.51.1 default launch and SwiftShader RGBA smoke passed, and hiding the required shell failed closed. Full Chromium remains required for Ranked channel=chromium. Remote CI wall-clock and all remote full QA runs are unmeasured.
+
+### 2026-10-29 local combat/network queue follow-up
+
+- Stringer arrow angle interpolation replaces a three-property temporary with eager scalar arguments; exact getter/interpolation differential covers 10,000 cases. Auto Shooter/Dualies firing calls a shared helper directly; delayed Blaster fire retains its captured actor and source parameters. Actual helper/auto and catalogue charge/timing/Dualies suites passed.
+- Dualies slide position validation eagerly captures all three coordinate reads before finite predicates. Special projectile step allocates its callback only for a local causal scope; ordinary/ghost/remote paths preserve their original ordered metadata reads and direct native/source-flight forwarding. Actual callback/accessor/throw differential, installed slide paint and special paint-credit regressions passed.
+- Result continuation keeps immediate selection/change and host-change sends, then retries using the monotonic clock at one second after local transport acceptance or 250ms after rejection. Match object/id separates state, synchronous callbacks cannot duplicate the current choice, and the existing receive authority/sequence/END logic remains. Actual production NetMatch tests and 30/60/120Hz sixty-second cadence plus failure/reentry/replacement tests passed. This changes redundant result control-message cadence, not the wire schema or acceptance rules.
+- Support update uses one private frozen empty fallback roster while preserving each live property read and the actor drink-expiry sweep. Existing Point Sensor/Cooler and two-peer regressions passed.
+- Current bounded codec online admission already rejects >256 compressed rows before expansion while the public generic codec still supports512. Added an oversized row getter regression proving rejection before nested traversal; generation, custom serialization and UTF-8 profitability tests passed.
+- The all-specials regression exceeds the default ~2GiB V8 heap when all retained fixture contexts run in one process. Unchanged tests were partitioned by disjoint name prefixes:53 local cases plus31 imported Kraken occlusion/authority cases,84 unique passes. Exact commands/cases/logs/source hashes are in the local all-specials-split manifest. This is test-resource isolation, not a runtime memory claim.
+- Live main-cause compatibility cannot be cached across combat proof candidates: an actual synchronous LOS callback changes the weapon and the proposed cache changes a rejected hit to an accepted one. The current early cause-before-geometry ordering stays; per-proof compatibility reads stay live.
+
+No physical iPad mini6 Safari timing, retail side-by-side parity, or live WAN multiplayer measurement is claimed by these local source and regression results.
+
+
+## Local presentation and QA queue closure — 2026-10-29
+
+The local continuation reviewed 42 presentation queues, four QA queues and nine additional special/support presentation queues. Per-item source anchors, source/fulltext hashes, reasons and regression files are in the local `agent_results/presentation.json` receipt. Three additional Ranked HUD queues are owned by the root integration audit. No remote repository, Drive or Library write, deployment or schedule was performed.
+
+The changes keep original damage, ink, source ranges, movement, network formats and visual density. Projectile body generation skips only unused endcap/elliptical normal work; empty fallback draws and empty muzzle pools retain first transition and wake behavior. Ribbon zero-segment scans still age and retire samples while avoiding repeated empty uploads. Grip snapshots remain independently owned arrays. Wail speakers retain construction ordinals. Torpedo burst lookup is reused only while scene, map identity and live pool state agree, with fallback after scene changes or last-user retirement. Paint ellipse arithmetic is inlined without reassociation, and depth-isolated landing sort wrappers preserve stable paint order and release references in `finally`.
+
+Special spark HDR scratch is used only by immediate scalar-copy spawners; other color handles retain fresh ownership. Storm rain/drip options are frozen shared constants. Ink Storm ground is sampled under the current cloud position instead of unconditionally trusting its old spawn height; the native field is left untouched and remains the missing-query fallback. Point Sensor pose writes compare actual current values and still advance every model tick. Tacticooler can visibility is checked directly, so externally changed visibility and replaced nodes are repaired immediately.
+
+Tenta fallback target Sets use the existing depth-isolated row scratch and are cleared even on errors; HUD recovery already retires world reticles. Hidden SVG brackets avoid equal-value setters, and Ink Vac ring normals are synchronously copied without an unnecessary vector clone. Special model disposal reuses depth-isolated deduplication sets and clears them on exceptions, retaining borrowed/shared resources and unique disposal order. Crab claw stripe perimeter arithmetic is computed once per owned plan: the complete generated Crab model remains byte-identical. Shell style0 discard now follows the original `fwidth`/alpha calculation and precedes two unused FBM/lighting evaluations for rejected pixels.
+
+Ranked online QA now triggers for the production relay source and local relay fixture in both push/PR filters. Ranked's full-Chromium `--no-shell`, relay sparse checkout and bounded native-clock real remote-audio proof were already implemented and retained. Local path-contract tests do not prove a new GitHub event was scheduled.
+
+Validation: the combined presentation/support/ownership run passed 114 tests; separate new boundary/ownership controls passed13/13 and additional presentation controls passed6/6. Late UI fixture regressions passed22/22 after supplying the real current helper dependencies and preserving independent frozen pre-change oracles. Chromium151/SwiftShader rendered50 shader conditions across styles, ages and camera positions with identical RGBA bytes and zero GL errors. This is desktop software-GPU evidence, not physical Safari/iPad/Android or production-GPU timing. No device FPS, full online8-player loss test or retail visual match is asserted.
+
+Not adopted: naive SpritePool Three.js bounds conflict with the world-coordinate shader under transformed parents; cached renderer ownership can miss a same-pass takeover; identity-cached Saber calibration would hide mutable input changes and share per-call range scratch; escaped ShapePool records/raw buffers cannot be recycled into later leases. The actual negative controls exercise these contracts. Roller adjacency indexing and WeakMap actor-retirement marking remain unadopted tradeoffs because their added maintenance/reentry complexity has no demonstrated benefit over the current bounded fallback and small native actor roster. These are explicit disposition decisions, not claims that the proposed algorithms were implemented.
+
+## 2026-10-29 Library queue / Drive baseline integration — root
+
+基準はDriveのAUTO_LATESTが示す`031426fcb9373d91e74e933e1507e9af395aa1c9`。155本の連続manifest、最終5,739ファイルのGit mode/type/blobとSHA-256、29削除を照合した。公開版の合成後ソースを対象とし、`game/`試作版の値を流用しない。65メインブキ・11family、原作参照バージョンと未確認の数値区分を保持する。
+
+- **retarget:** 後段visual adapterの古いアンカーを先行FKの`matrixWorld.decompose`へ修正。kidのforward quaternionはinverse前に保持し両足で共有。実Actor・非一様親transform・30/60/120Hzの独立比較でpose/足位置が一致。単純な二乗距離化はThree Vector3の実際のULP境界でlock解除の結果が変わるため採用しない。
+- **音声の所有権:** offline reload-only fatalだけRAFを停止し、online transportのtimeout/updateを維持。results BGM timerのepoch/IDをmatch・room・transportの所有権に結び付け、退場/新試合/disposeで回収。Bossのfrozen NOOP loopはsocket metadata書込み前に除外する。
+- **音声worker:** authoredとCharger WSOLAの未応答を可視時20秒で回収、idleはpendingなしの可視時10秒でretire。hidden中は時計を進めず復帰時に期限を再設定。stale worker callbackは新ownerを破棄できず、完成PCMのidentityは維持。WSOLA4job上限とbackoffを実Workerで確認した。物理Safari/iPadの初音遅延を測定したという主張はしない。
+- **音声bytes/数値:** encoded MP3は固定64KiB blockで既存上限を超える前に中断し、Content-Length/abort/reader cleanupを確認。実Chromeで正常Charger MP3の48000Hz stereo 87,771frameが旧decodeと完全一致。STFT帯域sqrt、飽和attack除算、共有既定tap、compiled guitar周波数、MRU処理は独立旧版比較でPCM/イベント/eviction順を維持。44.1/48/96kHzの実ブラウザ出力全sampleが一致。5MiB cache capは導入していない。
+- **Ranked judge/HUD:** judgeを既存HUD `_judgeOwner`へ接続し、match/engine/net/netm/transport/isCurrent/disposeが変わればDOM・RAF・2timerを回収する。mainの遷移開始時にもawait前に取消。旧callbackが新judgeや別FXを消さないこと、3.25秒+550msの表示時刻を30/60/120Hzで確認。Tower objectiveはengine別cacheにし、60,000変化とcustom coercion/accessor localeは独立旧版と一致。静的labelは既存実装を確認し、外部DOM変更の修復を保持する。
+- **採用しなかったmotion/frame案:** SourceBank span候補は77,440kernel case、548clip・2,740raw/local/FK/world poseで一致したが、実39,835curveは全kind0。6交互比較では再現性ある実益を確認できずproductionを元へ戻し、candidateをsealed test fixtureだけに保存した。Ranked followerのrow省略は、BOT所有取得後の最初の更新が`advanceRanked`より前に旧frameを読む負対照でaimが変わる。handoff契約を作らずに省略しない。
+- **CI:** 実YAMLのstaged needs DAG・required8jobs・失敗/skip伝播・最終result env・無条件gateを検証。Pages Node concurrency位置、対象workflow trigger、mobile3receiptのidentity/coverage検証を修正した。Headgearは1shared build + 同一SOURCE_SHA/SHA256検証付き6renderへ集約し、既存582capture acceptanceを保持。Validate build_siteだけreportsをsparse除外し必要9fileを保持、260,278,467bytes省略を実worktreeで確認。GitHub Actionsへの書込み・実行・deployは行っていない。
+
+原作Splatoon 3のframe値・速度・damage/paint定数を新たな推測値へ変更していない。上記はINKWAVEの合成ソース・CPU fixture・desktop Chromium/SwiftShaderの検証であり、原作本体、iPad mini 6/Safari、物理120Hz表示や実WAN8人通信の同等性証明ではない。過去の公開module503は現在再現せず、旧URL404/現行manifestとmodule200・digest一致のread-only観測まで。過去障害の原因解消や今回差分の公開成功とは数えない。
+
+具体的な再現と負対照は`queue-retarget-composition-20261029.test.mjs`、`queue-motion-kernels-20261029.test.mjs`、`queue-results-audio-20261029.test.mjs`、`queue-ranked-hud-20261029.test.mjs`、`queue-root-decisions-20261029.test.mjs`、`queue-audio-recovery-20261029.test.mjs`、`encoded-audio-response.test.mjs`、`inkwave-queue-ci-20261029.test.mjs`、`inkwave-headgear-shared-build.test.mjs`に保持する。
+
+
+## Three additional local combat queue decisions — 2026-10-29
+
+Reference target remains Splatoon 3 Ver.11.3.0; these changes preserve current INKWAVE behavior and do not establish new retail-game frame or shape fidelity. Source scope is the runtime installed into `inkwave-public/`, not the separate `game/` prototype.
+
+- **Pre-hit anchor array elision:** `weapon-hit-reaction.mjs::applyPresentation` now selects the original ordered anchor bases by index. Both pole-channel getters are captured before the first pose write; overlap behavior and all arithmetic remain unchanged. A frozen full-function baseline matches 4,032 Float32/Float64 pose cases (seven families, dual/normal, grip combinations, overlapping anchors and 30/60/120 Hz ages), plus four observable getter/write-order cases. Existing #1097 source ownership, grip and hit reaction regressions pass.
+- **Brella centroid scratch:** `added-family-paint.mjs::collectBrellaSplashes` accepts an explicit synchronous-copy opt-in. The installed `main-weapon-catalog.mjs` only opts in callback identities created by its native drop-copy path, held weakly. Default or replacement callbacks continue receiving independent vectors. Per-volley, per-reentry-depth leases restore depth in `finally`; failed release leaves the original slot/sample boundary intact. Frozen before/current release values and actual copied drop state match. The six-slot fixture reduces centroid clone evaluations from six to one, while sample clones remain unchanged. Actual composed Shelter firing verifies native reuse and replacement-callback retained ownership. Existing all-four-Shelter, blocked-pellet, death/clear, ghost and 30/60/120 Hz floor-paint regressions pass.
+- **Roller normal-length sharing not adopted:** a real `withRollerImpactPaint` negative control uses the supported explicit height getter to change the contact normal between height and angle calculations. Reusing the earlier norm changes paint stretch. Current native admission does not certify all intermediate values/getters immutable; additional proof guards have no demonstrated net benefit for saving one `Math.hypot`. `roller-impact-paint.mjs` remains unchanged, including zero/nonfinite guards and the explicitly provisional height/angle interpolation law. No retail fidelity claim is upgraded.
+
+Validation: `patches/local-quality/tests/queue-combat-three-20261029.test.mjs` and existing #1097/#411/#674/#713/catalog suites: **62/62 pass**. The fixed baseline is `patches/local-quality/tests/fixtures/queue-combat-three-20261029-before.json`. This is local logic and production-composition validation; physical Switch/iPad Safari, real online-session and GPU/FPS effects remain unmeasured. Full queue evidence and source hashes are in the local `agent_results/root-extra-combat-three.json` receipt.
+
+## Combat/network final local review — 2026-10-29
+
+Tower `_syncTower` now caches the three bearing trigonometric results by exact segment components, including signed zero. It still refreshes every mesh/collider/rider boundary; overriding any captured Math function retains the old evaluation path. A frozen prior-method differential covers 2,000 updates including live bearing edits, nonfinite values and overridden Math.cos, with the full RankedWorld suite passing. Big Bubbler candidate traversal captures the two roster bindings eagerly and scans them in the original order without allocating an outer pair array; native candidate and contact-settlement regressions pass.
+
+The final NetSession composition already contains ping-only deduplication. New production-method tests verify failed-send retry, rounded values, host/transport/lobby changes, malformed sender data and mixed name updates. Boss path helper/key hoists and low-ink arc colour reuse are also present in final composition even though raw `inkwave-public` text can appear unchanged.
+
+The remaining allocation proposals were reviewed individually against current source. Concrete negative controls preserve public callback ownership: retained shot-bias records remain independent across later shots and nested exceptions; Brella release reads source changes between callbacks and keeps independent random-velocity snapshots; replacing the added-family source spread with sparse reads changes an accessor-backed splash count; Shooter nearest-paint validation handles sparse arrays and publishes the counter before membership lookup. These four actual-API tests pass. Native Sprinkler contact, maximum-width Roller, Roller support and nearest-paint regressions also pass. Non-adopted proposals are not claimed as implemented optimizations or measured speed improvements.
+
+All-specials verification used four disjoint test-name partitions after the default single-process run exceeded its 2 GiB V8 heap during concurrent work. The partition receipt enumerates 84 distinct executed cases, all passed (53 own cases and31 imported Kraken cases). This is not a claim that the original monolithic invocation completed.
+
+Fizzy flight paint remains a source/replication gap: pinned11.3.0 arrays establish interval/radius/width/depth values, but the unused helper paints immediate circular downward probes and does not consume the full footprint tuple. Existing remote authorization grants bounded burst cores, not periodic flight-drop ordinals. Nintendo's public guide/update notes confirm dropped-ink trails, without publishing their launch/integration/collision algorithm. The helper was not connected with invented physics or an unauthenticated remote action. Standalone Trizooka replay API tests pass, but no installed production caller was found for those replay helpers; this does not claim an online Trizooka correction.
+
+
+## Final local Tower projection and CI review — 2026-10-29
+
+- **Tower checkpoint markers:** the old minimap selected `round(progress * (path.length - 1))` for both teams. This did not follow the existing TowerRule when segment lengths were unequal or the center index was off-center. The new exported `towerCheckpointPosition` shares the rule's path metrics, team direction and interpolation; the UI changes only the checkpoint position lookup. Counts, penalties, capture timing, winner and network state are unchanged. Three independent projection cases cover unequal 3D segments, both directions, off-center start, zero-length segments, endpoints and actual Minimap viewers. Existing HUD/localization 46/46 and projection/cache fixtures 15/15 pass. The sealed old fixture remains unchanged; only the known wrong checkpoint expression is normalized to an independent distance interpolation for unrelated cache/cadence comparisons, with an explicit old-formula negative control.
+- **Adapter composition:** the GPU sail/buoy/gull range adapter recognizes the complete capacity-guarded form produced by the later world adapter on a second pass. Three altered-capacity negative controls still reject malformed forms; 9/9 composition tests pass. This changes second-pass admission, not the first generated gameplay method.
+- **Touch CI dependency:** independent review corrected the earlier claim that the four touch/cargo tests need esbuild. All four entrypoints pass 33/33 when outside-package/node_modules resolution is rejected; a real esbuild import fails under that guard. The unused two-line install step is removed, all test entrypoints and checkout identity guards remain, and restoring those two lines reproduces the exact historical workflow hash. Related CI contracts pass 116/116. No GitHub Actions execution or published performance measurement is claimed.
+- **Historical test identity:** the Roller source fixture now distinguishes the incoming baseline's six previously reviewed changes from this task's scalar loop change. Both layers are reversed with exact unique anchors and independently pinned hashes before the older source seal is checked. The terminal-RAF and empty-scene fixtures now exercise their intended current contracts. No old fixture was relabelled as an unchanged current file.
+
+These are INKWAVE local corrections against the established Splatoon 3 reference scope. No new retail frame constant, projectile physical model or device-performance assertion is introduced. Queue outcomes retain the original body identity and distinguish unavailable bodies, unadopted proposals and partially verified helpers from runtime fixes.
+
+### Final build identity registration
+
+The four new queue adapters were installed into the source composition and marked build-only, but were missing from the separate `IDENTITY_FILES` registry. They are now included in `qualityIdentity`, and the terminal composition test exercises missing-registration and stale-content rejection for each new adapter. This was a build-input identity omission, not a Git tracking omission. The terminal/composition/CI verification passed 24/24. The adapter-registration-only rebuild changed its input hash to `8ec93c1c975bee413d490e271b6aec360292cf62a7fdcc80434bf421c41ed897`; all 2,233 artifact hashes and the native-prebuilt declaration remained identical at that comparison point. The subsequent Wiper correction below changes runtime bytes and is checked in a fresh build, separately from that identity-only comparison.
+
+### Final Wiper clear and gate regression
+
+The full empty-roster branch of `drawS3Shapes` reset the ordinary body/slash/shell/core meshes but omitted the lazily created `wetSlashV`. After a wet Wiper slash, `clear()` could leave its two instances visible. The branch now resets count and visibility only when that existing mesh is present; an empty renderer still does not create it. The original physical, RNG, shape and geometry comparisons are unchanged. Additional checks cover clear, repeated empty frames, wet-slash reuse, Heavy transition and preserved lazy construction. Both the Wiper and S3 projectile-shape test files pass. The original empty-roster queue is therefore reclassified from already implemented to implemented locally, without adding a new queue or double-counting a fix.
+
+The idle-resource gate test still expected the historical seven-job `needs` string. It now uses the strict current eight-job YAML contract. Four altered-workflow negative controls reject missing admission/resource prerequisites, wrong resource-result wiring and removal of the required success check. All 175 tests pass; the workflow and runtime were not changed for this test correction.
+
+
+## 2026-10-29 continuation: current queue and Drive refresh
+
+The current scope is 488 visible files (471 active and 17 Archive), all read in full. The 446 retained files have identical returned-body SHA-256 values to the previous inventory; 42 are new. The 219 previous entries absent from the current returned scope are historical references, not confirmed deletions. Previously inaccessible 63 entries are among that absent scope. No queue original was changed or deleted by this work.
+
+Drive AUTO_LATEST now identifies `e67c636b81762df56b346a09ef570964d43084df`. Its two delta manifests after `031426fcb9373d91e74e933e1507e9af395aa1c9` were checked against immutable Git blobs and integrated locally (six records, five unique files, no deletion). The local Git HEAD remains 031426fc; no commit, push, PR, workflow dispatch or deployment was performed.
+
+### Presentation, audio and input
+
+HUD, InkWipe and Showcase presentation deadlines consume full visible elapsed time. Physical integration remains bounded, and hidden/freeze transitions rebase without catch-up. HUD keeps its existing one-argument callback contract and bounded callback delta; ranked judge consumes the HUD presentation clock when available and retains the custom-HUD delta fallback. Both native and ranked cleanup release the clock subscriber. InkWipe retains its separate pre-existing `dur + 2600ms` safety timer. Showcase's online hold and 0.1-second particle/lob integration cap remain.
+
+The global FX update consumes up to 250ms through at most five bounded 50ms physics steps and stages GPU data only on the last step. Special VFX Director and swim surface geometry still run once per outer frame. Immediate marks/pillars remain visible for one outer render; swim film touched in this frame is retained until that render, and untouched film expires. External emission helpers continue to see the existing 50ms maximum cadence rather than the final remainder. Actual full-runtime comparisons cover normal 30/60/120Hz output, 5/8/10/15/19Hz lifetime and scheduled effects, RNG/order, low-Hz subdivision, buffer contents and exceptional cleanup.
+
+Recorded kit prefetch now owns queued work per active kit and loader/context, releases superseded queued ownership, preserves joined and in-flight decodes, and re-arms evicted one-shot PCM after checking all variants. It does not overtake required main-weapon cues. Actual loader/pack and installed Actor/WeaponRunner tests cover LRU eviction, cancellation, retry/backoff, lifecycle and shared owners.
+
+Gyro attitude delta uses scalar intermediate quaternion and down components with the previous arithmetic and normalization order. Nested callbacks and exceptions restore saved scalar state. Persistent boundary snapshots remain copied. Independent before/current comparisons and prior gyro tests pass.
+
+Settings preview retirement uses one timer per screen while keeping each outgoing node until its original 260ms deadline. Actual composed preview/DOM trace results retain the same peak 12 nodes and all visible states while peak pending retirement timers drop from 11 to 1; destroy drains the owner. The original proposal to hard-cap old nodes at two is not adopted: an actual browser comparison showed nonzero outgoing opacity and visible pixel changes. This is an alternative timer fix, not implementation of the DOM hard cap.
+
+Four new queue reports already match the final composed runtime: beacon relaxation stops after convergence, ink-tank CSS size is cached through ResizeObserver, minimap fit is scalar, and diorama transform writes compare both authored and CSSOM values. These are not counted as newly implemented changes.
+
+The physical 30Hz-vsync report remains unresolved. Executing final `Game._dynRes` reproduces 30Hz input reducing touch scale to 0.6 and desktop to 0.75, while 60/120Hz stay at 1. The current signals cannot distinguish an independently verified physical 30Hz cap from a loaded 60Hz display producing the same callback cadence; forcing a 30Hz budget breaks the overload negative control. No physical display acceptance is claimed. The duplicate-CI-build proposal also remains conditional: its required paired hosted-runner measurements have not been performed, so existing builds and verification are retained.
+
+### 2026-10-29 継続・描画キュー
+
+比較対象は公開 INKWAVE の合成本番ソース。スプラトゥーン3のゲームロジック数値・操作入力・当たり判定・塗り・ネット権限は今回の描画変更では変更していない。Fizzy飛行塗りは添付資料と固定11.3.0一次データを再確認したが、発生位相・移動軸・落下運動・衝突・塗り形状の不足を解消できず、2キューは source_contract_blocked を維持。
+
+描画候補12件は9件をローカル実装、3件を不採用。puffゴースト/羽根と海面mask前倒しはRGBA一致でもSwiftShader計測で利得なし/遅化のため本番に入れない。gooBand画面内部省略は隣接fragment微分のAA同値を証明できないため導入しない。
+
+実Threeメッシュ比較、角線Float32境界、ShapePool35,760頂点包含、Far属性全32通り、投影5,880判定は一致。5shader165条件のWebGL2 RGBA全10,813,440成分差0。ShapePool実描画は画面内/端8→8、完全画面外8→0で画素差0、follow/寿命更新保持。これらはChromium/SwiftShaderと単独ロジックの証拠であり、本家実機・iPad Safari・実ゲーム全体のFPS比較の代用ではない。
+
+
+### 2026-10-29 継続・combat/runtime キュー
+
+対象はローカルの合成本番ソース。追加10件のうち5件を実装し、4件は現行契約または合成後の物理処理に反例があるため不採用とした。objectHitの権限検証1件は未解消であり、全件解消とは扱わない。
+
+Sub replay は owner/life/ghost/subId を一致させ、終端 burst を FX callback より先に一度だけ消費する。物理 ghostWait に入った後の最初の正当な burst と、Fizzy の既存複数 pop/hop は維持する。SP の表示 replay は accepted native special:use と対応装備から一つの activation に結び付け、未開始・未装備の単独 ac を表示根拠にしない。source use/kit の遅延は有界待機とし、装備変更後も既存攻撃の表示を維持する。これは表示の入場条件であり、remote gauge や damage の独立検証ではない。
+
+描画側では Explosher の pooled projectile に付く28係数行を再利用し、seed変更時の位相状態を初期化する。InkSheets は内部呼出しだけ count 出力を再利用し、public record の独立性は維持する。Roller link は描画 record が2未満の pair scan を省略するが、公開 occupancy scratch の clear は残す。30/60/120 Hz の対象出力比較、Float32座標・サイズ・count・instance matrix、public identity の一致を確認した。実機FPSの改善は未測定。
+
+不採用4件には実コードの反例を残した。Shooter guide の profile getter 読取り除去は dirty 判定を変える。Slosher の spread/scalar 化は custom Array iterator の例外契約を変える。Drop deadline cache は rosterを変えない公開 birth 編集を見落とす。Capsule bounds の全候補共通化は、現行 #1040 の候補 actor ごとに異なる相対移動端点と両立せず、通常移動 actor に対する正当な命中を失う。
+
+#### 未解消の権限境界
+
+objectHit は installed NetMatch._play で、未発射の遠方攻撃者の damage:10000 申告により Wave Breaker が480 HPから0になることを実証した。診断の security_pass は false。現行wireには全ての body/continuous 攻撃について source fixed tick の pose/action lineage が揃っていない。owner-authored eventだけの新receiptや、非対応familyへのlegacy fallbackでは独立した接触検証を成立させられない。
+
+合法な対照として、native Inkjet exhaust は30/60/120 Hzすべてで毎秒60 claim、raw damage30、Wave Breaker damage84を生成した。Projectile receipt だけの全拒否gateではこの攻撃を消してしまう。全familyに対する攻撃identity・mode/phase/charge・source tick・receiver接触のprotocol整備が必要なため、親architectureレビューで authority_protocol_blocked とし、中途半端なproduction gateや未使用APIを追加しなかった。family別の最小変更表は objecthit-receiver-closure.md にある。
+
+Fizzy飛行塗りの既存2件は本担当のburst再送修正とは別件。固定11.3.0資料から飛行中の発生位相・移動軸・落下運動・衝突・塗り形状の契約を確定できず、別担当の source_contract_blocked を維持する。既存最大3burstのsource根拠を飛行dropへ転用していない。
+
+#### 検証範囲
+
+新規continuation5、契約反例4、SP admission4、catalogue integration15はPASS。Object Shredderは25 PASS＋既存conditional skip1。all-specialsは既存4regex groupで84 unique PASS（53 local＋31 imported）、重複・未実行・想定外0、実行前後source hash一致。正例fixtureは元を保存した上でnative use/装備/envelopeを補い、2拳・damage・gear・duplicate・lifeの期待値を緩めていない。
+
+### 2026-10-29 continuation: Ranked / Pages queue review
+
+- 比較対象は公開版の最終合成コード。S3全4ガチルールの規定時間→延長/勝敗の権威は既存RankedEngineを維持。raw Matchのtimeup疑義はranked-adapterの2guardで既に解消済みであり、変更しない。全4mode×延長有無×残り1/60秒/1/120秒/1msの24ケースを実Match/固定interval/独立RankedEngine oracleで比較。2guard除去時だけキューの未決定winnerを再現。本家の新しいフレーム値・例外ルールを確定したものではなく、実機比較は未実施。
+- 単独special-gainはイベントオブジェクトを先に切り離して配列コピー無しで消費。ゲージ倍率・eligibility・gains/wire・mixed events・follower・custom consumer callbackを維持、再入は次tickに残る。既存SCU consumerの30/60/120Hz・全4mode・host/follower同値試験も通過。
+- エリアHUDは本番生成の凍結数値ペアのみdescriptor/丸めを再利用。占拠表示、locale/palette、ペア交換、custom/accessor/Proxy入力の意味論を維持。判定・カウント・延長には介入しない。3600更新で同じpairのdescriptor2回、実機CPU/FPS未測定。
+- エリア確保の既知face fastpathは既にnative-stages adapterに存在。3mapの実Paint/Level/RankedWorld差分試験でCPU grid・ordered network・GPU属性同値、hash read 0を再確認。新規重複実装無し。
+- Pagesはupload前とdeploy直前にread-only APIで同じmain SHA・Validate最新run/attempt・全21必須jobs成功を確認。待機上限150分。未完了・失敗・stale・欠落は公開しない。CI-only skipped full matricesも拒否。最終checkとdeploy呼出をGitHub上で原子的にはできず、短い隙間は既存main concurrency cancellationで緩和。
+- Rankedブラウザ証跡は通常continuous screenshotsをoff、DOM snapshots/network/timeline、failure PNG/resultを保持。RANKED_TRACE_FULL_SCREENSHOTS=1でフル画像、通常はdom-ready/ready静止画とstateを保存。Chromium151/Playwright実出力の3対比較（1200ms未ready fixture）で通常JPEG0枚/ZIP2640–2699bytes、full38–39枚/ZIP140715–145064bytes。過去180秒incidentのA/Bやrunner CPU/RSS改善率は未測定。
+
+### 2026-10-29 最終再照合の追加18件：動作比較と残る境界
+
+対象は公開版 `inkwave-public/` と現在のproduction composition。現行キューの再取得で追加18件を確認し、一覧は506件（Active489、Archive17）になった。以下は追加分の局所変更と検証範囲であり、本家Splatoon 3の新しい物理値・射撃速度・塗り面積・原典フレーム値を確定したものではない。元の1607選択のphase1検証と、この追加変更後の直接consumer検証・再buildを分けて記録する。
+
+- **メインの音声loop回復**：実音声APIの凍結NOOPや生成例外を有効handleとして保存せず、失敗時は0.5秒単位の再試行へ抑える。初回のミュート/deferred requestと既存容量gateは維持し、Audio/AudioContextの所有identity変更・closed時だけ旧handleを退役させる。通常swim/climb/enemy/ambienceの音量・pitch・停止時刻は、元の合成methodとの30/60/120Hz trace比較で一致。context無し、凍結NOOP、容量満杯、deferred、context交換と閉鎖も検証した。SE/BGM仕様変更や実機の音声unlock確認とは扱わない。実装は `queue-late-root-20261029-adapter.mjs` の `src/main.js` 変換、根拠は `late-root-20261029.test.mjs`。
+- **環境の経過時計**：Environment.updateの独自100ms capをGameの既存250ms上限に揃える。実際の `_animate` は独立dt積分を行わず `this.time` から船・浮標・鳥等の姿勢を求める。30/60/120Hzの既存行列/uniformは同値、4/5/8Hzの前景elapsedは旧capで失われた時間を保持し、同じ時刻の解析的姿勢と一致。ゲームの物理stepやキャラクターの移動速度を変更していない。実GPU負荷、物理30Hz端末、Safariの受入は別途必要。
+- **Splash seed baseの共通化**：`blaster-flight-paint.mjs` のrandomVelocity有りの実drop出生でuint32 seed baseを4回から1回へまとめ、公開seededSplashUnit、salt/index式、X/Y/Z/drop.seed、pool寿命を維持。特殊seed/非有限値/符号付き0/大きいsaltを含むsourceとminifiedの値比較、および実drop積分・着弾paint順・pool再利用の30/60/120Hz比較で不一致なし。実機CPU/GC/FPSの改善率は未計測。
+- **Stringer照準HUDの結果record**：`catalog-charge-stages.mjs` は第3引数outを明示した場合だけ書き戻し、従来2引数は独立した新規結果を返す。`stringer-charge-hud.mjs` はHUDごとのWeakMapに有効Stringerのrecordを保持し、DOM callback前にstage/progressを取り出して再入の上書きを防ぐ。stage境界、無効値null、出力recordの独立性、武器切替、再入と30/60/120HzのHUD状態を比較。発射時刻・飛距離・塗り・チャージ速度は変更しない。画像の実機比較・allocation bytesの測定は未実施。
+- **サブdeployの再適用**：`all-subs.mjs` で同じghost出生への最初のaccepted deployのみを保持し、新しい外側連番でも時計・yaw・取付け・mesh・使用回数を重複更新しない。最初の正当なowner補正は、受信側で既にdeployed状態になった物体にも適用する。先にbeakonUsesで減った回数を後着初回deployが増やすことも防ぐ。実NetMatchでToxic Mist/Splash Wall/Beakonの30回重複、期限/active時計、mesh identity、残使用数、別出生と復元後初回補正を確認。最初のowner申告自体の位置・期限を独立認証するprotocol追加ではない。
+- **サブmarkは部分解消**：同じ出生とtarget object/target lifeに対する一度受理したmarkを重複受理せず、fresh-envelope反復でrevealedUntilを延長しない。別target、新しいtarget life、出生拒否条件、clearでの証拠退役は維持。しかし出生記録は衝突証明ではなく、射程外の敵への最初の虚偽markは実receiverで依然受理される。**security_pass=false**。正規衝突tick・標的位置履歴・遅延を含む権威契約が不足しているため、現在距離だけの拒否や新しい未証明protocolを導入せず、このキュー全体を修正済みとはしない。実装/診断は `late-sub-replay-20261029.test.mjs` に旧sourceの負の対照とともに残す。
+- **長いRanked延長snapshot**：`ranked/engine.mjs` は規定時間+延長の有限時計、固定step revision予算、該当rule時計との整合、非zones/無得点条件、単調restoreを満たす長いsnapshotを受理する。host/match epoch検証は維持。15/30/60Hzで299.9秒から601秒、実contested Towerとhandoff/retake、実networkでwrong host/epoch/stale拒否を確認。延長の勝敗条件や本家の新しい例外ruleを追加しない。
+- **Ranked overtime通知**：ruleが生成した実event identityとrule identityを用いてgeneric通知の二重生成だけを抑える。256件event cap、standalone開始、rule payload/team/timeを保持。4rule×通常/256capとstandalone、host/guestの重複packetでも音声callbackが各1回であることを検証。実WANや実端末の音声出力確認ではない。
+
+不採用案も残す。0滴時のBlaster descriptor省略は、owned stateでもgame Proxyの観測可能なdescriptor trapを消す反例がある。catalog Blaster gravity spec共有は、実dropに公開された独立/可変specのidentityと書込み隔離を変える。両方とも現行動作を維持した。UTF8短文fastpathは値同一性だけでは本文の実機/8人計測条件を満たさないため未採用。衣装2案は実builderの交互ABBAで安定した利益を確認できず、spawn-pad Decor案はSwiftShader画素一致だけでは物理GPU/Safari gateを満たさないため未採用。
+
+追加runtimeの新規検証は `late-combat-parity-20261029.test.mjs`（8ケース）と `late-sub-replay-20261029.test.mjs`（6ケース）、Rankedは `ranked-late-overtime-20261029.test.mjs` / `ranked-late-overtime-network-20261029.test.mjs`。当該テスト、既存direct consumer、source/buildのhash・実exit・TAPは `continuation/late_queue/` のreceiptへ分離保存する。実装済みという判定は記録された局所範囲に限定し、実機比較・全攻撃系統の権威契約や未解消のObjectHit/Fizzy等を解消済みへ読み替えない。
+
 
 ## 2026-10-28 Issue・CI統合修正と確認範囲
 

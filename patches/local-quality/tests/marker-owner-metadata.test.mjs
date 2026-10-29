@@ -14,7 +14,7 @@ assert.ok(start >= 0 && end > start);
 
 function element() {
   const children = new Map(), names = new Set();
-  return {style:{setProperty(k,v){this[k]=v;}},lastChild:{style:{}},names,
+  return {style:{setProperty(k,v){this[k]=v;},getPropertyValue(k){return this[k]||'';}},lastChild:{style:{}},names,
     classList:{toggle(k,on){if(on)names.add(k);else names.delete(k);}},
     querySelector(key){if(!children.has(key))children.set(key,{});return children.get(key);}};
 }

@@ -31,8 +31,8 @@ function remove(projectiles,drop,hint=-1){
 }
 // Opaque droplets share one draw per spawn scene. Simulation records and
 // receiver contact identities remain fresh and are never pooled.
-function visualPool(api,projectiles){
-  const scene=api.G.scene;if(!scene?.add)return null;
+function visualPool(api,projectiles,scene=api.G.scene){
+  if(!scene?.add)return null;
   const pools=projectiles._s3TorpedoVisuals ||= new Map();
   for(const existing of pools.values())if(existing.scene!==scene&&existing.users===0)disposePool(projectiles,existing);
   let pool=pools.get(scene);
@@ -89,7 +89,7 @@ export function spawnFizzySplashes(api,projectiles,source,position,stage){
 }
 function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
   const drops=projectiles._s3TorpedoSplashes ||= [],rng=random(source.seed^(kind==='find'?0xf1ad6571:kind==='fizzy'?0x3f125167^Math.imul(stage+1,0x85ebca6b):0x82a2b175)),offset=rng()*Math.PI*2;
-  let burstColor=null,burstTint,burstPool;
+  let burstColor=null,burstTint,burstPool,cachedPool=null;
   for(let i=0;i<spec.count;i++){
     while(drops.length>=MAX_DROPS)remove(projectiles,drops[0]);
     const angle=offset+i*Math.PI*2/spec.count;
@@ -101,7 +101,10 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
     const drop={owner:source.owner,team:source.team,sourceLife:source.sourceLife,source,ghost:source.ghost,
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
-    const pool=visualPool(api,projectiles);
+    const scene=api.G.scene;
+    const pool=cachedPool&&cachedPool.scene===scene&&cachedPool.users>0&&cachedPool.idleTimer==null&&projectiles._s3TorpedoVisuals?.get(scene)===cachedPool
+      ?cachedPool:visualPool(api,projectiles,scene);
+    cachedPool=pool;
     if(pool){
       const tint=source.owner.color||api.G.teamColors?.[source.team]||0xffffff;
       const share=typeof tint==='number'||typeof tint==='string';

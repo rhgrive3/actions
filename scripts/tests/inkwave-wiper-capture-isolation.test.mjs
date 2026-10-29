@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {parseBrowserLane, SUITES} from '../ci/run-circleci-browser-lane.mjs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 
 const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
 const suiteRegistry=JSON.parse(fs.readFileSync(new URL('../ci/inkwave-test-suites.json',import.meta.url),'utf8'));
@@ -41,6 +42,8 @@ test('unrelated capture and required receipts keep their normal failure semantic
  const evidence=step('Package bounded browser failure evidence');
  assert.equal(ifLine(evidence),'always() && (failure() || cancelled())');
  const gate=workflow.slice(workflow.indexOf('  validate:\n'),workflow.indexOf('  browser:\n'));
+ const contract=assertValidateWorkflowContract(workflow);
+ assert.equal(contract.gate.if,"${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}");
  assert.ok(gate.includes("if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}"));
  assert.match(gate,/needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
@@ -78,6 +81,8 @@ function assertVerifierWiring(source, registry) {
  assert.match(core,/      - name: Verify motion verifier regressions\n        run: node scripts\/ci\/run-inkwave-test-suite\.mjs verifier\n/);
  const verifierStep=core.split('      - name: Verify motion verifier regressions\n')[1].split('\n      - ')[0];
  assert.doesNotMatch(verifierStep,/continue-on-error:|if:/);
+ const {jobs}=assertValidateWorkflowContract(source);
+ assert.equal(jobs.validate_core.if,"inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)");
  assert.match(core,/^    needs: build_site$/m);
  assert.ok(core.includes("    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)\n"));
  const build=source.slice(source.indexOf('  build_site:\n'),source.indexOf('  validate_core:\n'));

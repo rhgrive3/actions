@@ -121,12 +121,12 @@ export function runSimulation(game, dt) {
         // #1040: capture every actor's start-of-tick pose BEFORE any of them
         // moves this tick. The projectile sweep below runs after m.update, so
         // round segment and actor interval then cover the SAME fixed step.
-        if (offlinePaused) advanceActorMotionTick();
+        const results = m.state === 'results';
+        if (offlinePaused || (results && !G.netm)) advanceActorMotionTick();
         else beginActorMotionTick(G.actors);
         // Results keep input/presentation/network cadence without advancing local
         // authoritative actor/projectile simulation. Menu attract budgeting remains
         // independent and applies only when that attract match owns the menu backdrop.
-        const results = m.state === 'results';
         if (results && G.netm) {
           if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
         } else if (!results) {

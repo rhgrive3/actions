@@ -7,6 +7,8 @@ import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
+import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
+import {adaptQueueVisualContinuation20261029} from '../queue-visual-continuation-20261029-adapter.mjs';
 import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
@@ -122,7 +124,7 @@ test('historical character source retains independently pinned input and both la
     assert.throws(()=>replaceOnce(expected.replace(before,''),before,after,'missing visual owner'),/expected exactly one/);
     assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate visual owner'),/expected exactly one/);
     expected=replaceOnce(expected,before,after,'visual winding owner');
-    assert.equal(replaceOnce(next,after,before,'reverse visual winding owner'),adaptCombatGpuCpuPerfect(rel,historical,replaceOnce),'later owner reverses to full prior composition');
+    assert.equal(replaceOnce(incoming,after,before,'reverse visual winding owner'),adaptCombatGpuCpuPerfect(rel,historical,replaceOnce),'later owner reverses to full prior composition');
    }
    if(rel==='src/game/character-face.js') {
     // The later visual owner computes the carrier/quad census once.
@@ -137,7 +139,7 @@ test('historical character source retains independently pinned input and both la
      assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate visual face owner'),/expected exactly one/);
      expected=replaceOnce(expected,before,after,'visual face owner');
     }
-    let reversed=next;
+    let reversed=incoming;
     for(const [before,after] of [...edits].reverse())reversed=replaceOnce(reversed,after,before,'reverse visual face owner');
     assert.equal(reversed,prior,'later visual face owner reverses to full prior composition');
    }
@@ -155,31 +157,37 @@ test('historical character source retains independently pinned input and both la
      assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate later character owner'),/expected exactly one/);
      expected=replaceOnce(expected,before,after,'later character owner');
     }
-    let reversed=next;
+    let reversed=incoming;
     for(const [before,after] of [...edits].reverse())reversed=replaceOnce(reversed,after,before,'reverse later character owner');
     assert.equal(reversed,prior,'later character owner reverses to full prior composition');
    }
    assert.equal(expected,incoming,rel+' independent owner reconstructions agree');
-   if(next===expected) {
-     assert.equal(next,expected,rel+' exact owner composition');
-   } else {
-     // The frozen 2026-10-26 baseline is still reconstructed above by two
-     // independent owner orders. Later main changes to these three modules
-     // are separately pinned, so a new, unreviewed drift cannot pass.
-     const currentRawSha={
-       'src/game/character-hair.js':'5bcd66cb5c1ba3385e608f173185f89c8c20dc08',
-       'src/game/character-face.js':'202d0b52b33d7df8b8df425e17e752416890f729',
-       'src/game/character.js':'d9979a6c4b98614a91ad79fc9f55096812c5ae70',
-     };
-     const source=raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
-     assert.equal(blob,currentRawSha[rel],rel+' reviewed current Git blob');
-     const reviewedOwners={
-       'src/game/character-hair.js':['getUtoTmapping(i / N)','getPoint(t)'],
-       'src/game/character-face.js':['sectionRows[j]','ringKernel'],
-       'src/game/character.js':['stanceAlpha','_weaponPresentationNear'],
-     };
-     for(const anchor of reviewedOwners[rel]||[])assert.ok(next.includes(anchor),rel+' missing current owner '+anchor);
+   // The independent older owner chains above end before the 2026-10-29
+   // terminal refinements. Compare the complete current source only after both
+   // exact new owners; no pinned current-raw fallback bypasses this equality.
+   const worldNative=adaptWorldNative20261029(rel,expected);
+   const terminal=adaptQueueVisualContinuation20261029(rel,worldNative);
+   if(rel==='src/game/character-face.js'){
+    assert.notEqual(terminal,worldNative,'teeth/tongue continuation owner is exercised');
+    assert.throws(()=>adaptQueueVisualContinuation20261029(rel,terminal),/Visual continuation anchor/);
    }
+   assert.equal(next,terminal,rel+' exact owner composition including visual continuation');
+   // Retain the separately reviewed raw source identities from the current
+   // owner epoch as additional guards, rather than substituting them for the
+   // complete historical + current owner composition equality.
+   const currentRawSha={
+    'src/game/character-hair.js':'5bcd66cb5c1ba3385e608f173185f89c8c20dc08',
+    'src/game/character-face.js':'202d0b52b33d7df8b8df425e17e752416890f729',
+    'src/game/character.js':'d9979a6c4b98614a91ad79fc9f55096812c5ae70',
+   };
+   const source=raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
+   assert.equal(blob,currentRawSha[rel],rel+' reviewed current Git blob');
+   const reviewedOwners={
+    'src/game/character-hair.js':['getUtoTmapping(i / N)','getPoint(t)'],
+    'src/game/character-face.js':['sectionRows[j]','ringKernel'],
+    'src/game/character.js':['stanceAlpha','_weaponPresentationNear'],
+   };
+   for(const anchor of reviewedOwners[rel]||[])assert.ok(next.includes(anchor),rel+' missing current owner '+anchor);
    assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);
   }
  }

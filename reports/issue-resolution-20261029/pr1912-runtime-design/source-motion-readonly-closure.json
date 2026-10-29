@@ -1,0 +1,128 @@
+{
+  "sourceRoot": "/workspace/wt-agent6",
+  "expectedSource": "11ea9f273bc315257699e4436d08c273145bee05",
+  "files": [
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part00",
+      "blob": "cc2fe59ac543c52b7a22b698c459e00378954dd6",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part01",
+      "blob": "cb1611c9666cf311e21f613e631d9b2b3069cdb2",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part02",
+      "blob": "8a1dc0228a60591d65e95e1a59b5f482bbbcb36b",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part03",
+      "blob": "475fbd22fe003df4e93dd29b451904685328b1ae",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part04",
+      "blob": "1dca3a65e5b84682e85cb6f6d394f118fec641b6",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part05",
+      "blob": "0b13e978eee82e3b85f0895a53f89431d11f5cf6",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part06",
+      "blob": "ff66c2a0816be6747e976ea9a7b920f4e4b438c4",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part07",
+      "blob": "ff240264dd89deb6b800a8189b18d1cf80894b5a",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part08",
+      "blob": "35f24d28a9fca12d7719ef4420065288c2f6db15",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part09",
+      "blob": "8139d011e3177998c6ca4c7ee8f575a8ffa20215",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player00.f32.gz.part10",
+      "blob": "36c8f9695d7c9a13246fd42ce73afe2a76f9b615",
+      "bytes": 209798
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part00",
+      "blob": "35ecbc4731a70d716cb3b56fb1990e399785200f",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part01",
+      "blob": "51b70ed4c650295cdf282e2c022d612a791c6e82",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part02",
+      "blob": "c7ecbaffb727e30575259c33b5955f4096c35471",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part03",
+      "blob": "95303515f6ca5fa5278a610e7eae23aa15e75a49",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part04",
+      "blob": "d73a2438ce6e5b41cd44975aca16d60658fe8f38",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part05",
+      "blob": "8d9e4a6c664e4a53c7fc4bd6bc1d6a0d7660919b",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part06",
+      "blob": "6363db3f7e0503e493f51c68e9ee9ce08e1a6e44",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part07",
+      "blob": "688e96ded8a26d4440519265f15288d84de71a0e",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part08",
+      "blob": "3a1b6964ced83f1daf1225af00b562a21c3e9bd0",
+      "bytes": 524288
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player01.f32.gz.part09",
+      "blob": "c87e5fa1b6552993c13a48685f6fb0f66a8a7cd4",
+      "bytes": 281539
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/Player_Squid.f32.gz",
+      "blob": "8dfd340078fdf064eec67a58eda7daf8b600c5f5",
+      "bytes": 44510
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/catalog.json.gz",
+      "blob": "acb09f8c4f7c7f401ae9083f1f256cf44927dfe3",
+      "bytes": 503389
+    },
+    {
+      "path": "inkwave-public/assets/source-motion/manifest.json",
+      "blob": "02b167639ab6a30d1726c01f6cd87e9ef2e59b18",
+      "bytes": 1117
+    }
+  ],
+  "afterVerified": true,
+  "temporaryLinkRemoved": true
+}

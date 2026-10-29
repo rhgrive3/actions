@@ -1,3 +1,4 @@
+import {observeNativeSpecialUse,admitCatalogueSpecial,flushCatalogueSpecials,captureLegacySpecialFrames,withNativeSpecialPlayback,noteNativeSpecialPlayback} from './special-replay-admission.mjs';
 import { hasPendingSubBirthCommit, replayWithSubBirthCommit } from '../../network-replication/sub-birth-commit.mjs';
 import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
@@ -121,9 +122,28 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     const row=nm._rec(['ac',category,actor.nid,packetLife(actor),payload]);
     if(category==='sub'&&payload.phase==='spawn')recordCatalogueSubBirth(nm,event.paintSource,row);
   });
+  const replaySpecialPayload=payload=>{
+    if(payload.id==='booyahBomb'&&payload.action==='activate')payload.actor.s3CatalogueBooyah={activation:payload.activation};
+    if(payload.id==='booyahBomb'&&payload.action==='end')payload.actor.s3CatalogueBooyah=null;
+    return payload.id==='tripleSplashdown'?replaySplashdown(api,payload):replaySpecial(api,payload);
+  };
   const play=NetMatch.prototype._play;
+  const playEvent=NetMatch.prototype._playEvent;
+  NetMatch.prototype._playEvent=function(name,payload,from){
+    const result=playEvent.apply(this,arguments);
+    noteNativeSpecialPlayback(this,name,payload,from);
+    return result;
+  };
   NetMatch.prototype._play=function(from,event){
-    if(event?.[1]!=='ac')return play.call(this,from,event);
+    if(event?.[1]!=='ac'){
+      if(event?.[1]!=='ev'||event[2]!=='special:use')return play.call(this,from,event);
+      const previous=this.peers?.get(from)?._lastEventSeq||0;
+      return withNativeSpecialPlayback(this,from,event,()=>{
+        const result=play.call(this,from,event);
+        if(observeNativeSpecialUse(this,from,event,previous))flushCatalogueSpecials(this,api);
+        return result;
+      });
+    }
     if(![6,8].includes(event.length)||!Number.isFinite(event[0])||!categories.includes(event[2])||!packetSafe(event[3])||!packetSafe(event[4]))return;
     const actor=this.byNid?.get(event[3]),payload=cataloguePayload(event[5]);
     if(!actor?.remote||actor.owner!==from||packetLife(actor)!==event[4]||!payload)return;
@@ -140,13 +160,11 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     const objectHit=payload.phase==='objectHit'||payload.action==='objectHit';
     if(event[2]==='sub'&&['spawn','deploy'].includes(payload.phase)&&(!Object.hasOwn(api.SUB,id)||actor.weapon?.sub!==id))return;
     if(!objectHit&&event[2]==='special'&&!Object.hasOwn(api.SPECIALS,id))return;
-    if(id==='booyahBomb'&&payload.action==='activate')actor.s3CatalogueBooyah={activation:payload.activation};
-    if(id==='booyahBomb'&&payload.action==='end')actor.s3CatalogueBooyah=null;
+    if(event[2]==='special'&&!admitCatalogueSpecial(this,from,actor,event,payload,api,replaySpecialPayload))return;
     if(event[2]==='sub')return hasPendingSubBirthCommit(this,event)
       ? replayWithSubBirthCommit(this,from,event,report=>replaySub(api,payload,report))
       : replaySub(api,payload);
-    if(id==='tripleSplashdown')return replaySplashdown(api,payload);
-    return replaySpecial(api,payload);
+    return replaySpecialPayload(payload);
   };
   // Tick sidecars give a newly joined peer the selected pair before its queued
   // events play, without inventing alternate main IDs or changing packActor.
@@ -167,6 +185,7 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
   NetMatch.prototype._tick=function(from,message){
     const last=this.peers?.get(from)?.lastTs??-Infinity;
     const result=tick.call(this,from,message);
+    captureLegacySpecialFrames(this,from,message,last);
     // Sidecars follow the native accepted watermark, including clock rejection.
     if(!Number.isFinite(message?.ts)||message.ts<=last||this.peers?.get(from)?.lastTs!==message.ts||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;
     for(const [nid,pair]of Object.entries(message.ck)){
@@ -175,6 +194,7 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
       const choice={sub:pair[1],special:pair[2]};
       if(validateCatalogueChoice(choice,api.SUB,api.SPECIALS))applyCatalogueChoice(actor,choice,api);
     }
+    flushCatalogueSpecials(this,api);
     return result;
   };
 }

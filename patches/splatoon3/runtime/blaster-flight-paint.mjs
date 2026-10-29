@@ -167,12 +167,14 @@ export function configureBlasterFlightPaint(projectile, source, scale) {
   projectile.trailEvery = 0; // the scheduler owns Blaster flight paint; never the legacy random trail
   return projectile.s3BlasterFlightPaint;
 }
-export function seededSplashUnit(seed, index) {
-  let value = Number.isFinite(seed) ? Math.floor(Math.abs(seed) * 4294967296) >>> 0 : 0;
+const splashSeedBase = seed => Number.isFinite(seed) ? Math.floor(Math.abs(seed) * 4294967296) >>> 0 : 0;
+function splashUnitFromBase(base, index) {
+  let value = base;
   value = Math.imul(value ^ (index + 1), 2654435761);
   value ^= value >>> 16;
   return (value >>> 0) / 4294967296;
 }
+export function seededSplashUnit(seed, index) { return splashUnitFromBase(splashSeedBase(seed), index); }
 export function paintBlasterFlight(game, projectile, end = projectile?.pos) {
   if (projectile?.type !== 'blast') return 0;
   return paintDistanceFlight(game, projectile, projectile.s3BlasterFlightPaint, end);
@@ -194,17 +196,18 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const dirX = direction ? direction.x : 0, dirZ = direction ? direction.z : 0, len = Math.hypot(dirX, dirZ);
   const fx = len > EPS ? dirX / len : 0, fz = len > EPS ? dirZ / len : 0;
   const random = spec.randomVelocity;
+  const seedBase = random ? splashSeedBase(seed) : 0;
   // Sourced per-axis random spawn velocity (zero for every 11.3.0 Blaster but
   // Precision): X/Y symmetric, Z in [ZMin, ZMax] along the shot direction.
-  const vx = random ? (seededSplashUnit(seed, (salt * 8 + 1) >>> 0) * 2 - 1) * random.x : 0, vy = random ? (seededSplashUnit(seed, (salt * 8 + 2) >>> 0) * 2 - 1) * random.y : 0;
-  const vz = random ? random.zMin + seededSplashUnit(seed, (salt * 8 + 3) >>> 0) * (random.zMax - random.zMin) : 0;
+  const vx = random ? (splashUnitFromBase(seedBase, (salt * 8 + 1) >>> 0) * 2 - 1) * random.x : 0, vy = random ? (splashUnitFromBase(seedBase, (salt * 8 + 2) >>> 0) * 2 - 1) * random.y : 0;
+  const vz = random ? random.zMin + splashUnitFromBase(seedBase, (salt * 8 + 3) >>> 0) * (random.zMax - random.zMin) : 0;
   const pool=game.projectiles._s3SplashDropPool||=([]);
   let drop=pool.pop();
   if(!drop||drop.pos.constructor!==V)drop={pos:new V(),vel:new V(),next:new V(),hit:hitRecord(from)};
   const collision=drop.hit;
   collision.hit=false;collision.dist=0;collision.block=collision.face=-1;collision.u=collision.v=0;
   collision.point.set(0,0,0);collision.normal.set(0,0,0);
-  drop.owner=owner;drop.team=team;drop.seed=seededSplashUnit(seed,(salt*8)>>>0);drop.radius=radius;
+  drop.owner=owner;drop.team=team;drop.seed=random?splashUnitFromBase(seedBase,(salt*8)>>>0):seededSplashUnit(seed,(salt*8)>>>0);drop.radius=radius;
   drop.spec=spec;drop.depth=depth;drop.kind=kind;drop.footprint=footprint;
   drop.dirX=fx;drop.dirZ=fz;drop.spawnY=from.y;drop.releaseX=from.x;drop.releaseZ=from.z;drop.frames=0;
   drop.carry=Number.isFinite(catchUpSeconds)&&catchUpSeconds>0?catchUpSeconds*STEP_FRAMES_PER_SECOND:0;
@@ -241,7 +244,8 @@ function landSplashDrop(game, drop, hit) {
   }
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {
     const depth = splashDepthScale(drop.spec, drop.spawnY - hit.point.y);
-    const { amount, centreBack } = splashStretch(depth, drop.radius);
+    const amount = Number.isFinite(depth) && depth > 1 ? 1.6 * (depth - 1) : 0;
+    const centreBack = 0.375 * drop.radius * amount;
     drop.landingDepth = depth;
     if (amount > 0) {
       drop.next.set(drop.dirX, 0, drop.dirZ);
@@ -286,7 +290,24 @@ export function clearSplashDrops(system) {
 
 // Fixed-step integrator shared by every queued splash. Rendering cadence only
 // changes how many whole reference frames are consumed per call.
+// Invocation-owned sort records cannot escape into another recursive landing.
+const landingWorkspaces = new WeakMap();
 export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIndex = 0) {
+  if (!system?._s3SplashDrops?.length || !Number.isFinite(dt) || dt < 0) return 0;
+  let state=landingWorkspaces.get(system);
+  if(!state){state={depth:0,slots:[]};landingWorkspaces.set(system,state);}
+  const slot=state.depth++,work=state.slots[slot] ||= slot === 0
+    ? {landings:system._s3SplashLandingsScratch ||= [],free:system._s3SplashLandingPool ||= [],retired:system._s3SplashRetiredScratch ||= []}
+    : {landings:[],free:[],retired:[]};
+  system._s3SplashAdvanceDepth=slot+1;
+  work.landings.length=0;work.retired.length=0;
+  try{return advanceSplashDropsInner(system,dt,game,waterY,startIndex,work);}
+  finally{
+    for(const record of work.landings){record.drop=null;record.hit=null;record.time=0;if(work.free.length<1024)work.free.push(record);}
+    work.landings.length=0;work.retired.length=0;state.depth--;system._s3SplashAdvanceDepth=slot;
+  }
+}
+function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
   const queue = system?._s3SplashDrops;
   // A zero-time flush consumes only explicitly accrued birth-step debt. The
   // catalogue uses it after its fixed steps; existing drops accrue no time.
@@ -294,13 +315,8 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
   const physics = game?.physics;
   const start = Math.max(0, Math.min(queue.length, Number.isFinite(startIndex) ? Math.trunc(startIndex) : 0));
   let landed = 0, write = start;
-  const depth = system._s3SplashAdvanceDepth || 0;
-  system._s3SplashAdvanceDepth = depth + 1;
-  const landings = depth === 0 ? (system._s3SplashLandingsScratch || (system._s3SplashLandingsScratch = [])) : [];
-  const landingPool = depth === 0 ? (system._s3SplashLandingPool || (system._s3SplashLandingPool = [])) : null;
-  const retired = depth === 0 ? (system._s3SplashRetiredScratch || (system._s3SplashRetiredScratch = [])) : [];
-  landings.length = 0; retired.length = 0;
-  const epoch = system._s3SplashDropEpoch || 0;
+  const landings=work.landings,retired=work.retired;
+  const epoch=system._s3SplashDropEpoch||0;
   for (let i = start; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -317,16 +333,8 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
         ?sweptWorldHit(physics,d.pos,d.next,radius,radius,record,true)
         :physics.segment(d.pos, d.next, record, true);
       d.frames++;
-      if (hit?.hit) {
-        let entry = landingPool ? landingPool[landings.length] : null;
-        if (!entry) {
-          entry = { drop: d, hit, time: stepTime };
-          if (landingPool) landingPool[landings.length] = entry;
-        } else {
-          entry.drop = d; entry.hit = hit; entry.time = stepTime;
-        }
-        landings.push(entry); landed++; done = true; break;
-      }
+      if (hit?.hit) { const landing=work.free.pop()||{drop:null,hit:null,time:0};landing.drop=d;landing.hit=hit;landing.time=stepTime;landings.push(landing);landed++;done=true;break; }
+
       d.pos.copy(d.next);
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
@@ -344,12 +352,9 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
     for (let i = 0; i < landings.length; i++) {
       const landing = landings[i];
       landSplashDrop(game, landing.drop, landing.hit);
-      landing.drop = null; landing.hit = null;
     }
   } finally {
     for (let i = 0; i < retired.length; i++) recycleSplashDrop(system, retired[i], epoch);
-    landings.length = 0; retired.length = 0;
-    system._s3SplashAdvanceDepth = depth;
   }
   return landed;
 }

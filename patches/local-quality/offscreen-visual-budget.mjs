@@ -59,6 +59,7 @@ const DEG = Math.PI / 180;
 
 /** Sphere margin projected onto a plane with gradient magnitude `g`. */
 const R_MARGIN = (r, g) => r * Math.sqrt(1 + g * g);
+const CAMERA_PROJECTION = new WeakMap();
 
 /**
  * Conservative frustum membership for a Character under `cam`.
@@ -109,9 +110,14 @@ export function inViewVolume(ch, cam) {
   const vz = dx * e[8] + dy * e[9] + dz * e[10];
   const d = -vz;                              // view depth, positive in front
 
-  const t = Math.tan(fov * 0.5 * DEG);        // vertical half-tangent
-  const k = t * aspect;                       // horizontal half-tangent
-  const side = R_MARGIN(REACH, k), vert = R_MARGIN(REACH, t);
+  let projection = CAMERA_PROJECTION.get(cam);
+  if (!projection || !Object.is(projection.fov, fov) || !Object.is(projection.aspect, aspect)
+      || projection.tan !== Math.tan || projection.sqrt !== Math.sqrt) {
+    const t = Math.tan(fov * 0.5 * DEG), k = t * aspect;
+    projection = { fov, aspect, t, k, side: R_MARGIN(REACH, k), vert: R_MARGIN(REACH, t), tan: Math.tan, sqrt: Math.sqrt };
+    CAMERA_PROJECTION.set(cam, projection);
+  }
+  const { t, k, side, vert } = projection;
   // Side planes pass through the eye: f = vx - d*k, |grad| = sqrt(1 + k^2).
   // The sphere is entirely outside only when the centre distance exceeds REACH.
   if (vx - d * k > side) return false;

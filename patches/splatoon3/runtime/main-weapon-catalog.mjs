@@ -62,8 +62,12 @@ const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
 const UNMODIFIED_MOVE_FAMILIES=Object.freeze(['roller','brush','splatana']);
 const SWING_MODES=Object.freeze(['horizontal','vertical','brush']);
 const NEAREST_SPLASH_FAMILIES=Object.freeze(['shooter','splatling','dualies']);
+const SABER_DEVICE_RADIUS_IDS=Object.freeze(['sprinkler','beakon']);
 const EMPTY_LOBE_OFFSETS=Object.freeze([]),EMPTY_LOBE_OFFSET=Object.freeze({});
 const SOURCE_FOOTPRINT_RECORDS=new WeakSet(MAIN_WEAPON_CATALOG.records);
+// Only callbacks created here synchronously copy the borrowed centroid into a drop.
+// Replaced diagnostic callbacks retain the collector's fresh-vector contract.
+const BRELLA_SYNC_RELEASES=new WeakSet();
 function canShareSourceFootprint(record) {
   // Unknown descriptors, getters and proxies keep their per-release reads.
   if(!SOURCE_FOOTPRINT_RECORDS.has(record)||Object.hasOwn(record,'catalogRecord'))return false;
@@ -169,6 +173,13 @@ function stageValue(r, object, stem, frames, fallback = 0) {
   const midF = finite(p.ChargeFrameMidCharge, fullF);
   if (object[stem+'Mid'] == null) return lerp(a,c,clamp((frames-minF)/(fullF-minF)));
   return frames <= midF ? lerp(a,b,clamp((frames-minF)/(midF-minF))) : lerp(b,c,clamp((frames-midF)/(fullF-midF)));
+}
+// Stringer passes three already-normalized numeric values in this exact order.
+function stringerArrowDegrees(r, low, middle, high, frames) {
+  const p=chargeParam(r),minF=finite(p.ChargeFrameMinCharge,8),fullF=chargeFrames(r);
+  const a=finite(low,8),b=finite(middle,a),c=finite(high,b);
+  const midF=finite(p.ChargeFrameMidCharge,fullF);
+  return frames<=midF?lerp(a,b,clamp((frames-minF)/(midF-minF))):lerp(b,c,clamp((frames-midF)/(fullF-midF)));
 }
 function shootingFrames(r, frames) {
   const t=chargeParam(r),full=chargeFrames(r),first=finite(t.ChargeFrame_First,48);
@@ -573,10 +584,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           if(centre===at)centre=_paintCentre.copy(at);
           owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
         }
-        const shape=catalogPaintEllipse(radius,depth);
-        if(shape.rotate)tangent.crossVectors(normal,_paintCross.copy(tangent)).normalize();
-        paintRadius=shape.radius;centre=_paintCentre.copy(at).addScaledVector(tangent,-shape.centreBack);
-        options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
+        const ratio=Number.isFinite(depth)&&depth>0?depth:1,rotate=ratio<1;
+        paintRadius=rotate?radius*ratio:radius;
+        const elongation=rotate?1/ratio:ratio,stretchAmt=1.6*(elongation-1),centreBack=.375*paintRadius*stretchAmt;
+        if(rotate)tangent.crossVectors(normal,_paintCross.copy(tangent)).normalize();
+        centre=_paintCentre.copy(at).addScaledVector(tangent,-centreBack);
+        options.stretch=tangent;options.stretchAmt=stretchAmt;
       }
     }
     // Non-ellipse callers can pass the shared floor-hit point. The native
@@ -998,8 +1011,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const a=runner.a,p=r.parameters.spl__WeaponStringerParam,t=p.ShotParam||{}, frames=charge*chargeFrames(r), count=finite(t.ArrowNum,3);
     // Unlike damage/speed, ArrowAngleMax is the uncharged angle; Min is
     // the fully charged angle. The sparse Tri-Stringer zero is a local default.
-    const degrees=stageValue(r,{ArrowAngleMin:finite(t.ArrowAngleMax,8),
-      ArrowAngleMid:finite(t.ArrowAngleMid,8),ArrowAngleMax:finite(t.ArrowAngleMin,0)},'ArrowAngle',frames,8);
+    const degrees=stringerArrowDegrees(r,finite(t.ArrowAngleMax,8),
+      finite(t.ArrowAngleMid,8),finite(t.ArrowAngleMin,0),frames);
     const desc=mode(r,'arrow',0,charge),s=state(runner),flight=addedFamilySplash(desc.b,r.family,s.arrowShotOrdinal||0);
     if(flight)Object.assign(desc,{splashDropSpec:flight.spec,splashFirst:flight.first,
       splashSpacing:flight.spacing,splashCount:flight.count,
@@ -1516,11 +1529,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
         const end=(s.brellaFlight.clipEnd||=p.prev.clone()).copy(p.prev).lerp(p.pos,fraction);
-        const release=s.brellaSplashRelease||=(from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{
-          owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
-          direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
-          catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)});
-        collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,release);
+        let release=s.brellaSplashRelease;
+        if(!release){
+          release=s.brellaSplashRelease=(from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{
+            owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
+            direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
+            catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)});
+          BRELLA_SYNC_RELEASES.add(release);
+        }
+        collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,release,BRELLA_SYNC_RELEASES.has(release));
       }
       // Apply one distance/obstruction/lifetime admission law to detached
       // source splashes and the unsupported-physics projected fallback.
@@ -1744,6 +1761,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
   }
   function beginPending(s,frames,fire){s.pending={remaining:frames/HZ,fire};}
+  function fireAutoShot(runner,r,s,a,param,variable,burst) {
+      if(!pay(runner,finite(param.InkConsume,.0092)*100*inkMod(a))){s.burst=0;runner.cooldown=finite(param.RepeatFrame,6)/HZ;return;}
+      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':r.family==='dualies'&&catalogDualiesTurret(s)?'turret':variable?'variable':'normal';
+      emitSingle(runner,r,key);runner.firingT=.35;
+      if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
+        if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
+      else if(r.family!=='blaster') runner.cooldown=finite(param.RepeatFrame,6)/HZ;
+  }
   function auto(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,t=weaponParam(r);
     if(!input.fire&&!s.burst)return;
@@ -1752,18 +1777,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const variable=r.sourceActor==='WeaponShooterFlash'&&!input.firePressed&&s.pressed&&s.frame>=finite(t.VariableShotRepeatStartFrame,10);
     const param=variable?p.VariableWeaponParam||t:t;
     const burst=param.TripleShotSpanFrame!=null;
-    const fire=()=> {
-      if(!pay(runner,finite(param.InkConsume,.0092)*100*inkMod(a))){s.burst=0;runner.cooldown=finite(param.RepeatFrame,6)/HZ;return;}
-      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':r.family==='dualies'&&catalogDualiesTurret(s)?'turret':variable?'variable':'normal';
-      emitSingle(runner,r,key);runner.firingT=.35;
-      if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
-        if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
-      else if(r.family!=='blaster') runner.cooldown=finite(param.RepeatFrame,6)/HZ;
-    };
     if(r.family==='blaster'){
       runner.cooldown=finite(param.RepeatFrame,50)/HZ;
-      beginPending(s,finite(param.PreDelayFrame_HumanShot,10),fire);
-    }else fire();
+      beginPending(s,finite(param.PreDelayFrame_HumanShot,10),()=>fireAutoShot(runner,r,s,a,param,variable,burst));
+    }else fireAutoShot(runner,r,s,a,param,variable,burst);
   }
   function charge(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,t=chargeParam(r),full=chargeFrames(r);
@@ -1905,7 +1922,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(object.subId==='splashWall')return saberSlashWallContactBasis(shape,melee.origin,melee.cy,melee.sy,object.pos,
         object.yaw||0,object.spec.wallWidth,object.spec.wallHeight,point);
       const radius=object.kind==='wave'?.72:object.kind==='decoy'?.48:object.subId==='torpedo'?.3:
-        ['sprinkler','beakon'].includes(object.subId)?.42:finite(object.collisionRadius,finite(object.spec?.collisionRadius,0));
+        SABER_DEVICE_RADIUS_IDS.includes(object.subId)?.42:finite(object.collisionRadius,finite(object.spec?.collisionRadius,0));
       melee.objectFeet.copy(object.pos);melee.objectFeet.y-=radius;
       const hit=saberMeleeContact(melee,object,melee.objectFeet,radius,2*radius,false);
       if(hit)point.copy(melee.contact);return hit;

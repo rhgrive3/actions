@@ -70,6 +70,12 @@ function routeCoordinate(team, progress, metrics) {
   return team === 0 ? metrics.center + p * span : metrics.center - p * span;
 }
 
+// Presentation uses the same arc-length coordinate and direction as the rule.
+export function towerCheckpointPosition(stage, team, progress, metrics = pathMetrics(stage)) {
+  if (!teamId(team) || !Number.isFinite(progress)) return null;
+  return writePathPosition([0, 0, 0], metrics, routeCoordinate(team, progress, metrics));
+}
+
 function checkpoints(stage, team) {
   const list = stage?.tower?.checkpoints?.[team];
   if (!Array.isArray(list)) return [];

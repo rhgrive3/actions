@@ -11,6 +11,7 @@ import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
 // 1/6 early-boost boundary would create a second plateau after frame 8.
 // SplashPaintParam and PaintParam use the same source distance convention as
 // flight/range/depth. Applying 0.2 only to width shrank the stripe fivefold.
+const compareChargerContacts = (a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name));
 export const CHARGER_PAINT_WORLD_WIDTH_SCALE = WORLD_UNITS_PER_SOURCE_UNIT;
 export function chargerPaintWorldRadius(sourceWidth) {
   return Math.max(0, Number.isFinite(sourceWidth) ? sourceWidth * CHARGER_PAINT_WORLD_WIDTH_SCALE : 0);
@@ -279,7 +280,7 @@ export function installChargerFlight(api,completion) {
         const row=lease.rows[actors.length]||=( {actor:null,d:0} );row.actor=actor;row.d=t*length;actors.push(row);
       }
     }
-    if(actors.length>1)actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
+    if(actors.length>1)actors.sort(compareChargerContacts);
     amount=job.damage;
     for(const a of actors){
       job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team){

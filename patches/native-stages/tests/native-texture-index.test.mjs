@@ -26,21 +26,23 @@ async function run(source,quality,sourceMode,count=96,{width=8,height=8,limit=4,
  if(pattern){if(n.startsWith('n'))rgba=pattern%3===0?[127,127,1,255]:pattern%3===1?[128,128,0,255]:[(k*13)%256,(k*57)%256,0,255];else if(n.startsWith('r')||n.startsWith('o'))rgba=[pattern%2?2+(k%5):5,pattern%4===0?1:0,0,255];else rgba=[(k*17)%256,(k*61)%256,k%256,k===c.width*64?249:250];}
  bytes.set(rgba,(row*w+col)*4);}return {data:bytes};}};}}
  const counts={materialsValues:0,mapsValues:0},maps=new Set(Object.values(materials).map(m=>m.maps));
+ const materialNames=Object.keys(materials),materialVisits=[];
+ const registry=new Proxy(materials,{get(target,key,receiver){if(Object.hasOwn(target,key))materialVisits.push(key);return Reflect.get(target,key,receiver);}});
  const context=vm.createContext({AbortController,console,Blob,Uint8Array,Float32Array,Uint32Array,Int32Array,TextDecoder,TextEncoder,DOMException,crypto:{subtle:{digest:async(algorithm,bytes)=>{const b=crypto.createHash(algorithm.toLowerCase().replace('-','')).update(new Uint8Array(bytes)).digest();return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);}}},OffscreenCanvas:Canvas,
   async fetch(url){const name=String(url).split('/').pop();return {ok:true,arrayBuffer:async()=>files.get(name).buffer};},
   async createImageBitmap(input,options){const name=input instanceof Blob?names[new Uint8Array(await input.arrayBuffer())[8]]:input.name;const b={name,width:options.resizeWidth||width,height:options.resizeHeight||height,closed:0,close(){this.closed++;}};bitmaps.push(b);return b;}});
  const values=vm.runInContext('Object.values',context);
- context.countValues=o=>{if(o===materials)counts.materialsValues++;if(maps.has(o))counts.mapsValues++;return values(o);};
+ context.countValues=o=>{if(o===registry)counts.materialsValues++;if(maps.has(o))counts.mapsValues++;return values(o);};
  vm.runInContext('Object.values=globalThis.countValues',context);
  const make=exports=>new vm.SyntheticModule(Object.keys(exports),function(){for(const[k,v]of Object.entries(exports))this.setExport(k,v);},{context});
  const modules={'three':make({Texture,DataTexture,SRGBColorSpace:'srgb',NoColorSpace:'none',RepeatWrapping:'repeat',LinearMipmapLinearFilter:'mipmap'}),'./registry.mjs':make({nativeStageURL:(id,file)=>'https://example.invalid/'+file}),'./build-config.mjs':make({nativeStageBuild:{mode:'verified-assets'}}),'./source-data.mjs':make({loadBrowserSource(){throw Error('unused');}}),'./source-cache.mjs':make({sourceBytes(){throw Error('unused');}})};
  const m=new vm.SourceTextModule(source,{context});await m.link(s=>modules[s]);await m.evaluate();
- const loaded=await m.namespace.loadNativeTextures('fixture',{manifest:{sourceMode,materials},integrity},{capabilities:{getMaxAnisotropy:()=>8}},quality,undefined,limit);
+ const loaded=await m.namespace.loadNativeTextures('fixture',{manifest:{sourceMode,materials:registry},integrity},{capabilities:{getMaxAnisotropy:()=>8}},quality,undefined,limit);
  const snapshot={materials,rows:[...loaded].sort(([a],[b])=>a.localeCompare(b)).map(([file,t])=>[file,{name:t.image.name,width:t.image.width,height:t.image.height,data:t.image.data?Array.from(t.image.data):null,colorSpace:t.colorSpace,wrapS:t.wrapS,wrapT:t.wrapT,anisotropy:t.anisotropy,minFilter:t.minFilter,generateMipmaps:t.generateMipmaps,needsUpdate:t.needsUpdate}])};
  for(const b of bitmaps)assert.equal(b.closed,[...loaded.values()].some(t=>t.image===b)?0:1,'bitmap ownership');
  for(const t of loaded.values()){t.image.close?.();t.dispose();}
  assert.ok(bitmaps.every(b=>b.closed===1));assert.ok(textures.every(t=>t.disposed===1));
- return {snapshot,counts,readbacks,reads,decoded:bitmaps.length,textures:textures.length};
+ return {snapshot,counts,materialNames,materialVisits,decodeOrder:bitmaps.map(b=>b.name),readbacks,reads,decoded:bitmaps.length,textures:textures.length};
 }
 test('native texture index baseline is pinned to the previously published loader',()=>{
  assert.equal(crypto.createHash('sha256').update(old).digest('hex'),'93139d9328596b3ef59821a420759180ae9c9bdd644794aee582b8bb12296b98');
@@ -48,7 +50,16 @@ test('native texture index baseline is pinned to the previously published loader
 for(const sourceMode of [undefined,'browser-direct'])for(const quality of ['low','balanced','high'])test(`all material metadata, role precedence, pixels and ownership: ${sourceMode||'staged'}/${quality}`,async()=>{
  const before=await run(old,quality,sourceMode),after=await run(current,quality,sourceMode);
  assert.deepEqual(after.snapshot,before.snapshot);assert.equal(after.decoded,before.decoded);assert.equal(after.textures,before.textures);
- if(sourceMode){assert.ok(after.counts.mapsValues<before.counts.mapsValues/4);assert.equal(after.counts.materialsValues,1);}
+ // The frozen loader is the counterfactual: Object.values material scans visit
+ // all records in repeated native enumeration order. The new loader visits each
+ // registry record once, without that temporary values-array allocation.
+ assert.ok(before.counts.materialsValues>=1,'frozen source exercises the removed allocation');
+ assert.equal(before.materialVisits.length,before.materialNames.length*before.counts.materialsValues);
+ assert.deepEqual(before.materialVisits,before.materialVisits.map((_,i)=>before.materialNames[i%before.materialNames.length]));
+ assert.deepEqual(after.materialVisits,after.materialNames,'every material visited once in source order');
+ assert.equal(after.counts.materialsValues,0);
+ assert.deepEqual(after.decodeOrder,before.decodeOrder,'decode order and bitmap identities retain source precedence');
+ if(sourceMode)assert.ok(after.counts.mapsValues<before.counts.mapsValues/4);
  console.log(JSON.stringify({sourceMode:sourceMode||'staged',quality,materials:96,textures:after.textures,before:before.counts,after:after.counts}));
 });
 

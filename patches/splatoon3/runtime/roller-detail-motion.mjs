@@ -77,8 +77,8 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
     const detail = m ?? { attack: a, blocked: false, startAnchor: null, startRotation: null };
     if (!m) states.set(this, detail);
     if (!detail.startAnchor) {
-      detail.startAnchor = Array.from(pose.slice(C.ANC, C.ANC + 3));
-      detail.startRotation = Array.from(pose.slice(C.ANCR, C.ANCR + 3));
+      detail.startAnchor = [pose[C.ANC], pose[C.ANC + 1], pose[C.ANC + 2]];
+      detail.startRotation = [pose[C.ANCR], pose[C.ANCR + 1], pose[C.ANCR + 2]];
     }
     // The shared roller spline already reaches the measured grip-space coil
     // key at exactly this boundary. Record the initial grip for diagnostics,

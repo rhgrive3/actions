@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
+import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
 import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptOffscreenHairTargets} from '../offscreen-hair-target-adapter.mjs';
@@ -86,6 +87,18 @@ function reverseHairOwner(source,pairs,mutate=(s)=>s){
   value=replaceOnce(value,later,original,label);
  }return value;
 }
+// The 2026-10-29 world owner runs after the pinned hair/clip/visual chain.
+// Reverse only its two exact source-controller changes before older inversions.
+const worldNativeMotionPairs=[
+ ["!['move','idle'].includes(this.state)||!['move','idle'].includes(state)","(this.state!=='move'&&this.state!=='idle')||(state!=='move'&&state!=='idle')"],
+ ["const balanceActive=['move','idle'].includes(this.state)&&!this.manual;","const balanceActive=(this.state==='move'||this.state==='idle')&&!this.manual;"],
+];
+function reverseWorldNativeMotionOwner(source,mutate=(s)=>s){
+ let value=source;for(let i=worldNativeMotionPairs.length-1;i>=0;i--){
+  const [original,later]=worldNativeMotionPairs[i];value=mutate(value,later,i);
+  value=replaceOnce(value,later,original,'pinned world/native motion owner '+i);
+ }return value;
+}
 const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
 // The immutable historical fixture predates the separately reviewed clip pool.
 // Reconstruct its six precise ownership changes without changing fixture bytes.
@@ -113,7 +126,11 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const current=adaptBuildSource(REL,rawCurrent);
  const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,current);
  assert.equal(sha(JSON.stringify(laterOwnerPairs)),'26654dc4115ea24a28d7fad6c73eacafcd41298c7c4a34f183fbe790de638976','pinned later owner anchor pairs');
- const currentBeforeLaterOwner=reverseLaterOwner(afterHistoricalRestore);
+ const beforeWorldNative=reverseWorldNativeMotionOwner(afterHistoricalRestore);
+ assert.equal(adaptWorldNative20261029(REL,beforeWorldNative),afterHistoricalRestore,'world/native owner reverses and recomposes the complete current historical inversion');
+ for(let target=0;target<worldNativeMotionPairs.length;target++)for(const mode of ['missing','duplicate'])
+  assert.throws(()=>reverseWorldNativeMotionOwner(afterHistoricalRestore,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
+ const currentBeforeLaterOwner=reverseLaterOwner(beforeWorldNative);
  for(let target=0;target<laterOwnerPairs.length;target++){
   for(const mode of ['missing','duplicate'])assert.throws(()=>reverseLaterOwner(afterHistoricalRestore,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
  }
@@ -138,7 +155,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  for(let target=0;target<hairPairs.length;target++)for(const mode of ['missing','duplicate'])
   assert.throws(()=>reverseHairOwner(currentBeforeLaterOwner,hairPairs,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
  const restoredCurrent=reverseHairOwner(currentBeforeLaterOwner,hairPairs);
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair)),'pinned walk, clip pool, hair owner, historical owner and subsequent visual queue compose exactly');
+ assert.equal(current,adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair))),'pinned walk, clip pool, hair owner, historical owner and subsequent visual queue compose exactly');
  assert.equal(restoredCurrent,pooled,'pinned historical source plus exact walk and clip-pool anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
@@ -146,7 +163,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
  assert.ok(restored.includes('const rawTravelSpeed=dt>0?dist/dt:0;'),'current composition retains the independently reviewed walk calculation');
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected)))),'walk adapter, clip pool and later hair/visual owners retain the pinned source composition');
+ assert.equal(current,adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected))))),'walk adapter, clip pool and later hair/visual owners retain the pinned source composition');
  assert.equal(restoredCurrent,adoptCurrentClipPool(expected),'prior composition plus reviewed walking and clip-pool ownership is retained');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');

@@ -462,7 +462,21 @@ function participants(nm) {
   return [...new Set(nm.match.actors.filter(a => !a.isBot && !a.s3?.disconnected &&
     (a.owner === nm.myId || nm.s._members?.has(a.owner))).map(a => a.owner))];
 }
-function choiceState(nm) { return nm._resultChoices ||= { rows:new Map(), sequence:0, ended:false }; }
+function choiceState(nm) {
+  const s=nm._resultChoices;
+  if(s?.match===nm.match && s.matchId===nm.cfg.id)return s;
+  return nm._resultChoices={ rows:new Map(), sequence:0, ended:false, match:nm.match, matchId:nm.cfg.id };
+}
+function sendContinuationChoice(nm,s,force=false) {
+  const d=s.local;
+  if(!d||s.ended)return;
+  const now=performance.now(),host=nm.s?.hostId;
+  if(!force && host===s.sendHost && now>=s.lastSendAt && now<s.nextSendAt)return;
+  // Claim the interval before calling transport: synchronous callbacks may reenter.
+  s.sendHost=host;s.lastSendAt=now;s.nextSendAt=now+250;
+  const sent=nm._sendNow(d);
+  if(sent!==false && nm._resultChoices===s && s.local===d)s.nextSendAt=now+1000;
+}
 export function chooseOnlineContinuation(nm, choice) {
   if (!current(nm) || !choices.has(choice) || !participants(nm).includes(nm.myId)) return false;
   const s = choiceState(nm);
@@ -470,7 +484,7 @@ export function chooseOnlineContinuation(nm, choice) {
   const d = {k:'rc', m:nm.cfg.id, q:++s.sequence, choice};
   // Broadcast before the host can emit end; reliable sender order preserves the
   // intent on a successor host, including a peer still changing its equipment.
-  s.local = d; nm._sendNow(d); acceptOnlineContinuation(nm,nm.myId,d);
+  s.local = d; sendContinuationChoice(nm,s,true); acceptOnlineContinuation(nm,nm.myId,d);
   return true;
 }
 export function acceptOnlineContinuation(nm, from, d) {
@@ -494,7 +508,7 @@ function finishIfReady(nm) {
 export function tickOnlineContinuation(nm) {
   if (!current(nm)) return;
   const s = choiceState(nm);
-  if (s.local && !s.ended) nm._sendNow(s.local);
+  sendContinuationChoice(nm,s);
   finishIfReady(nm);
 }
 export function continuationReadyPlayers(session) {

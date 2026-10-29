@@ -50,7 +50,8 @@ export class RangeHud {
         this.cSplat),
       h('div', { class: 'iwr-card__hp' }, this.cHp));
     this.nums = h('div', { class: 'iwr-nums' });
-    this.prompt = h('div', { class: 'iwr-prompt' }, h('b'), h('span', { class: 'iwr-prompt__bar' }, h('i')));
+    this.promptFill = h('i');
+    this.prompt = h('div', { class: 'iwr-prompt' }, h('b'), h('span', { class: 'iwr-prompt__bar' }, this.promptFill));
     this.toastEl = h('div', { class: 'iwr-toast' });
     this.keys = h('div', { class: 'iwr-keys' },
       ...[['R', 'Reset paint'], ['T', 'Reset targets'], ['G', 'Back to start']].map(([k, t]) => h('span', null, h('kbd', null, k), L(t))));
@@ -77,7 +78,7 @@ export class RangeHud {
       if (pad) this.prompt.firstChild.textContent = pad.kind === 'weapon'
         ? `${L('SWITCHING WEAPON')} · ${WEAPONS[pad.weapon].name}` : L(PAD_TEXT[pad.kind] || pad.kind);
     }
-    if (pad) this.prompt.querySelector('i').style.transform = `scaleX(${Math.max(0, Math.min(1, k)).toFixed(3)})`;
+    if (pad) this.promptFill.style.transform = `scaleX(${Math.max(0, Math.min(1, k)).toFixed(3)})`;
   }
   damageNumber(target, amount, splat) {
     const el = h('span', { class: 'iwr-dmg' + (splat ? ' is-splat' : '') + (target.rangeTarget.kind === 'endurance' ? ' is-endure' : '') }, splat ? 'SPLAT!' : fmt(amount, 1));

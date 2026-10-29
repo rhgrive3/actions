@@ -159,9 +159,28 @@ test('legacy actor row without adoption overwrites receipt, keeps historical bit
   });
 });
 
-test('hit-scoped explicit os override and finally restoration are unchanged',async()=>{
+test('accepted owner/life gear outranks untrusted nested hit hints without changing scoped state',async()=>{
+  for(const equipped of [false,true])await pair('dualies',async({f,proxy,gear,turret,send,accept})=>{
+    gear(equipped);turret(!equipped);accept(send());
+    const proof=proxy.s3.objectGearSnapshot;
+    assert.equal(proof.source,'accepted-gear');
+    for(const hint of [false,true])assert.throws(()=>f.withObjectHitGear(proxy,hint,()=>{
+      assert.equal(f.objectShredderEquipped(proxy),equipped);assert.equal(f.objectGearRate(proxy,'sprinkler'),equipped?10:1);
+      f.withObjectHitGear(proxy,!hint,()=>assert.equal(f.objectShredderEquipped(proxy),equipped));
+      assert.equal(f.objectShredderEquipped(proxy),equipped);throw Error('sentinel');
+    }),/sentinel/);
+    assert.equal(proxy.s3.objectGearSnapshot,proof);assert.equal(proxy.s3.objectHitGear,undefined);
+    proxy.s3.objectHitGear=!equipped;
+    f.withObjectHitGear(proxy,!equipped,()=>assert.equal(f.objectShredderEquipped(proxy),equipped));
+    assert.equal(proxy.s3.objectHitGear,!equipped,'accepted gear neither uses nor overwrites an existing scoped hint');
+    delete proxy.s3.objectHitGear;
+  });
+});
+
+test('legacy hit-scoped explicit os fallback retains nested override and finally restoration',async()=>{
   await pair('dualies',async({f,proxy,gear,turret,send,accept})=>{
-    gear(false);turret(true);accept(send());assert.equal(f.objectShredderEquipped(proxy),false);
+    gear(false);turret(false);const legacy=send();legacy.a[0]=legacy.a[0].slice(0,23);delete legacy.gg;accept(legacy);
+    assert.equal(proxy.s3.objectGearSnapshot.source,'legacy-flag');assert.equal(f.objectShredderEquipped(proxy),false);
     assert.throws(()=>f.withObjectHitGear(proxy,true,()=>{
       assert.equal(f.objectShredderEquipped(proxy),true);assert.equal(f.objectGearRate(proxy,'sprinkler'),10);
       f.withObjectHitGear(proxy,false,()=>assert.equal(f.objectShredderEquipped(proxy),false));

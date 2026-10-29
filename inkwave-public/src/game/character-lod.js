@@ -67,6 +67,11 @@ function getVertexSigs(src) {
   if (sigs) return sigs;
   const A = src.attributes, P = A.position, n = P.count;
   const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;
+  if (!SI && !SW && !EX && !CL && !TI) {
+    sigs = new Int32Array(n);
+    _vtxSigCache.set(src, sigs);
+    return sigs;
+  }
   const siArr = SI && !SI.normalized && !SI.isInterleavedBufferAttribute && SI.itemSize === 4 ? SI.array : null;
   const swArr = SW && !SW.normalized && !SW.isInterleavedBufferAttribute && SW.itemSize === 4 ? SW.array : null;
   const exArr = EX && !EX.normalized && !EX.isInterleavedBufferAttribute ? EX.array : null, exS = EX ? EX.itemSize : 0;
@@ -269,12 +274,20 @@ export function clusterDecimate(src, cell, precomputed = null) {
     const sc=!sourceColor.normalized&&!sourceColor.isInterleavedBufferAttribute?sourceColor.array:null;
     const cm=!clusterMat.normalized&&!clusterMat.isInterleavedBufferAttribute?clusterMat.array:null;
     const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;
+    // Repeated indexed corners have the same immutable source attributes and
+    // cluster. Keep first-visit ordering, and retain accessor/custom fallbacks.
+    const cornerMemo = src.index && tris.length > 2*n && n < 0xffffffff &&
+      sm && sc && cm && cc && [sourceMat,sourceColor,clusterMat,clusterColor].every(a =>
+        a.getComponent === THREE.BufferAttribute.prototype.getComponent && ArrayBuffer.isView(a.array))
+      ? new Uint32Array(n) : null;
     for (let i = 0; i < tris.length; i++) {
       const cluster = tris[i], original = sourceCorners[i];
+      const remembered = cornerMemo ? cornerMemo[original] : 0;
+      if (remembered) { remapped.push(remembered - 1); continue; }
       let same = true;
       for (let k = 0; k < sourceMat.itemSize; k++) if ((sm?sm[original*sourceMat.itemSize+k]:sourceMat.getComponent(original,k)) !== (cm?cm[cluster*clusterMat.itemSize+k]:clusterMat.getComponent(cluster,k))) { same = false; break; }
       if (same) for (let k = 0; k < sourceColor.itemSize; k++) if ((sc?sc[original*sourceColor.itemSize+k]:sourceColor.getComponent(original,k)) !== (cc?cc[cluster*clusterColor.itemSize+k]:clusterColor.getComponent(cluster,k))) { same = false; break; }
-      if (same) { remapped.push(cluster); continue; }
+      if (same) { remapped.push(cluster); if (cornerMemo) cornerMemo[original] = cluster + 1; continue; }
       const values = [cluster];
       for (let k = 0; k < sourceMat.itemSize; k++) values.push(sourceMat.getComponent(original, k));
       for (let k = 0; k < sourceColor.itemSize; k++) values.push(sourceColor.getComponent(original, k));
@@ -282,6 +295,7 @@ export function clusterDecimate(src, cell, precomputed = null) {
       let index = splits.get(key);
       if (index === undefined) { index = nc + extras.length; splits.set(key, index); extras.push({ cluster, original }); }
       remapped.push(index);
+      if (cornerMemo) cornerMemo[original] = index + 1;
     }
     if (extras.length) {
       for (const name in attributes) {

@@ -1110,7 +1110,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     if (neededGround && bestGroundError > .003) {
       let bestCost = bestGroundError*30 + switchCost(-1, 0, 0);
       baseQ.copy(orientation);
-      for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1]) {
+      for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(let sign=-1;sign<=1;sign+=2) {
         const [x,y,z] = SEARCH_AXES[axisIndex];
         searchAxis.set(x,y,z);
         for(let step=1;step<=30;step++){

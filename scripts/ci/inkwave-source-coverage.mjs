@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {discoverSourceTestFiles, BROWSER_SOURCE_TESTS} from '../lib/inkwave-test-shards.mjs';
 import {planTestSuite, expandTestSuiteSteps} from './run-inkwave-test-suite.mjs';
+import {assertValidateWorkflowContract} from './inkwave-validate-contract.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const SOURCE_SUITES = {
@@ -29,6 +30,7 @@ export function planSourceTests(suite, root = ROOT) {
 export function assertSourceSuiteCoverage(workflow, suite, root = ROOT) {
   const config = SOURCE_SUITES[suite];
   if (!config) throw Error('Unknown source suite: ' + suite);
+  assertValidateWorkflowContract(workflow);
   const core = workflow.match(/^  validate_core:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
   if (!core) throw Error('Missing validate_core job');
   const patch = workflow.match(/^  patch_tests:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
