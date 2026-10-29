@@ -37,6 +37,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   compare-swim-entry:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
@@ -53,7 +54,7 @@ jobs:
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Install existing native QA tools
         run: |
-          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps --only-shell chromium
       - name: Verify existing native swim contracts
         run: node --experimental-vm-modules --test patches/splatoon3/tests/swim-motion.test.mjs

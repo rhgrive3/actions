@@ -61,13 +61,23 @@ jobs:
           patches/splatoon3/tests/wiper-wet-wave.test.mjs
           patches/splatoon3/tests/added-audio-sharing.test.mjs
           patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
+      - name: Verify exact lockfile installs and fail-closed native recovery guards
+        if: always()
+        id: repair
+        run: >-
+          node --test
+          scripts/tests/inkwave-workflow-inputs.test.mjs
+          tools/swim-entry-qa/workflow.test.mjs
+          scripts/tests/inkwave-context-recovery-browser.test.mjs
       - name: Require every focused group
         if: always()
         env:
           CONTRACTS: ${{ steps.contracts.outcome }}
           HISTORICAL: ${{ steps.historical.outcome }}
           GAMEPLAY: ${{ steps.gameplay.outcome }}
+          REPAIR: ${{ steps.repair.outcome }}
         run: |
           test "$CONTRACTS" = success
           test "$HISTORICAL" = success
           test "$GAMEPLAY" = success
+          test "$REPAIR" = success

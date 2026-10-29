@@ -86,6 +86,11 @@ export async function nativeContextRecoveryProof() {
   g.pause(); g.resume(); check(!match.paused, 'Ordinary direct resume did not work');
   receipt.ordinary = { before: ordinaryPause, paused: ordinaryPaused, resumed: ordinaryResumed }; mark('ordinary-pause-resume');
 
+  // Observe all native startup audio network activity before deliberately
+  // destroying the WebGL context. Keep normal failure reporting fail-closed.
+  const audioIdle = globalThis.__awaitContextRecoveryAudioIdle;
+  check(typeof audioIdle === 'function', 'Missing audio network settlement guard');
+  await audioIdle();
   // Reproduce the confirmed open-pause-menu edge. Context loss is caused by
   // the real extension, not by synthesizing DOM lost/restored events.
   g.pause(); check(match.paused && g.menus.current === 'pause', 'Loss must begin with the pause menu open');
@@ -258,9 +263,29 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     context = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
     await context.tracing.start({ screenshots: false, snapshots: true, sources: false });
     page = await context.newPage();
+    const pendingAudio = new Set();
+    const audioRequest = r => /\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
+    page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); });
+    page.on('requestfinished', r => pendingAudio.delete(r));
+    await page.exposeFunction('__awaitContextRecoveryAudioIdle', async () => {
+      // Wait only for a stable quiet period, never suppress a failed request.
+      const deadline = Date.now() + 30000;
+      let quietSince = null;
+      for (;;) {
+        const now = Date.now();
+        if (pendingAudio.size === 0) {
+          quietSince ??= now;
+          if (now - quietSince >= 750) break;
+        } else quietSince = null;
+        assert(now < deadline, 'Native startup audio fetch did not settle');
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      assert.deepEqual(requests, [], 'Audio startup produced failed network requests');
+      assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
+    });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
-    page.on('requestfailed', r => { if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
+    page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';

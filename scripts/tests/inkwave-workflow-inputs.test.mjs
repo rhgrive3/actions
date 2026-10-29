@@ -59,7 +59,10 @@ function composedCpuBrowserContract(source){
  assert(source.includes(composedCpuRecorder),'retain the source-bound actual browser CPU recorder command');
  assert(source.indexOf(composedCpuBrowserInstall)<source.indexOf(composedCpuRecorder),'browser installation precedes the CPU trace');
  const required=source.slice(source.indexOf('  source-and-emitted:'),source.indexOf('      - uses: actions/upload-artifact@v4'));
- assert.doesNotMatch(required,/^\s+(?:if|continue-on-error):/m,'required source, emitted and browser checks remain unconditional');
+ assert.match(required,/^    if: github\.event\.pull_request\.draft == false$/m,'Draft must not launch full browser and CPU regression');
+ const steps=required.slice(required.indexOf('    steps:\n'));
+ assert.doesNotMatch(steps,/^\s+(?:if|continue-on-error):/m,'required source, emitted and browser steps remain unconditional');
+ assert(required.includes('run: npm ci --no-audit --no-fund'),'install exactly the pinned dependency tree, not the floating registry resolver');
  for(const command of [
   'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
   'node scripts/check-inkwave-patches.mjs --quick',
@@ -82,6 +85,8 @@ test('composed CPU browser contract rejects lost setup, reordered commands and w
   ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n',''],
   ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps --only-shell chromium','          npx playwright install --with-deps --only-shell chromium\n          sudo python3 scripts/prepare-inkwave-ci-apt.py'],
   ['timeout-minutes: 20','timeout-minutes: 30'],
+  ['if: github.event.pull_request.draft == false','if: true'],
+  ['run: npm ci --no-audit --no-fund','run: npm install --no-save esbuild@0.28.2'],
   ['--with-deps --only-shell chromium','chromium'],
   ['--only-shell chromium','chromium'],
   [composedCpuBrowserInstall+composedCpuRecorder,composedCpuRecorder+composedCpuBrowserInstall],

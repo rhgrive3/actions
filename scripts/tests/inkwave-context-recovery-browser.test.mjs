@@ -80,3 +80,24 @@ test('shared menu phases retain strict context-recovery control admission and re
   assert.match(script,/const control = contextMenuControlForPhase\(label\)/);
   assert.match(script,/page\.waitForFunction\(rangeMenuControlReady, control, \{ timeout: remainingMs\(\) \}\)/);
 });
+
+test('actual context loss waits for bounded audio-network quiet without suppressing failures', () => {
+  const script=fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url),'utf8');
+  const proof=nativeContextRecoveryProof.toString();
+  assert.match(proof,/const audioIdle = globalThis\.__awaitContextRecoveryAudioIdle;/);
+  assert.match(proof,/check\(typeof audioIdle === 'function'/);
+  assert.match(proof,/await audioIdle\(\);/);
+  assert(proof.indexOf('await audioIdle();') < proof.indexOf("extension.loseContext()"), 'audio must settle before intentional GL loss');
+  for(const contract of [
+    "page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); })",
+    "page.on('requestfinished', r => pendingAudio.delete(r))",
+    "page.on('requestfailed', r => { pendingAudio.delete(r);",
+    "await page.exposeFunction('__awaitContextRecoveryAudioIdle'",
+    'const deadline = Date.now() + 30000',
+    'if (now - quietSince >= 750) break',
+    "assert.deepEqual(requests, [], 'Audio startup produced failed network requests')",
+    "assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors')",
+    "assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, [])"
+  ]) assert(script.includes(contract),'missing network/lifecycle guard: '+contract);
+  assert.doesNotMatch(script,/ignore(?:RequestFailure|NetworkError)|(?:net::)?ERR_ABORTED\s*\)?\s*continue/);
+});
