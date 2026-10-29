@@ -6,6 +6,7 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
 import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
+import {adaptOffscreenHairTargets} from '../offscreen-hair-target-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const REL='src/game/motion/source-controller.js';
@@ -29,6 +30,26 @@ function reverseLaterOwner(source, mutate=(s)=>s){
   value=replaceOnce(value,later,original,'pinned later owner '+i);
  }return value;
 }
+// The hair adapter runs before the motion FK owner. The pinned historical
+// fixture already contains that owner's idle-balance rewrite, so translate
+// exactly that one reviewed anchor into the fixture's composition boundary.
+function composeHairOwner(source,pairs=[]){
+ return adaptOffscreenHairTargets(REL,source,(text,original,later,label)=>{
+  if(label==='#845 suppress hidden idle hair inputs'){
+   assert.equal(original,'this.bodyBalance.add(idleProfile,1);this.hairTargets.add(this.pose,idleProfile,1);');
+   assert.equal(later,'this.bodyBalance.add(idleProfile,1);if(!c._oobBudget)this.hairTargets.add(this.pose,idleProfile,1);');
+   const from='this.bodyBalance.add(idleProfile,1);',to='this.bodyBalance.add(idleProfile,1,this.bodyBalance._centerFk);';
+   original=original.replace(from,to);later=later.replace(from,to);
+  }
+  pairs.push([original,later,label]);return replaceOnce(text,original,later,label);
+ });
+}
+function reverseHairOwner(source,pairs,mutate=(s)=>s){
+ let value=source;for(let i=pairs.length-1;i>=0;i--){
+  const [original,later,label]=pairs[i];value=mutate(value,later,i);
+  value=replaceOnce(value,later,original,label);
+ }return value;
+}
 const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
 
 test('pinned source-controller reconstructs the walk owner and historical queue (text only)',()=>{
@@ -41,7 +62,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const current=adaptBuildSource(REL,fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8'));
  const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,current);
  assert.equal(sha(JSON.stringify(laterOwnerPairs)),'26654dc4115ea24a28d7fad6c73eacafcd41298c7c4a34f183fbe790de638976','pinned later owner anchor pairs');
- const restoredCurrent=reverseLaterOwner(afterHistoricalRestore);
+ const currentBeforeLaterOwner=reverseLaterOwner(afterHistoricalRestore);
  for(let target=0;target<laterOwnerPairs.length;target++){
   for(const mode of ['missing','duplicate'])assert.throws(()=>reverseLaterOwner(afterHistoricalRestore,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
  }
@@ -53,14 +74,21 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composed)),'pinned walk, historical owner and subsequent visual queue compose exactly');
+ const hairPairs=[],withHair=composeHairOwner(composed,hairPairs);
+ assert.equal(hairPairs.length,9,'all reviewed hair owner anchors are represented');
+ assert.equal(sha(JSON.stringify(hairPairs)),'9b6dc62be57eb1240fff1a4816ac2f15775348089c4ed32a2b92df77a6aa5aad','pinned hair owner anchor pairs');
+ assert.equal(reverseHairOwner(withHair,hairPairs),composed,'hair owner reverses on independently pinned walk composition');
+ for(let target=0;target<hairPairs.length;target++)for(const mode of ['missing','duplicate'])
+  assert.throws(()=>reverseHairOwner(currentBeforeLaterOwner,hairPairs,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
+ const restoredCurrent=reverseHairOwner(currentBeforeLaterOwner,hairPairs);
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair)),'pinned walk, reviewed hair owner, historical owner and subsequent visual queue compose exactly');
  assert.equal(restoredCurrent,composed,'pinned historical source plus exact walk owner anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,expected)),'walk adapter and later visual owner retain the pinned source composition');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(expected))),'walk adapter and later owners retain the pinned source composition');
  assert.equal(restoredCurrent,expected,'prior composition plus the reviewed walking presentation is retained');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
