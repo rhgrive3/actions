@@ -3,7 +3,7 @@
 // The source does not publish a matching shooter pixel/mesh radius. The bounded
 // shooter cross-section multiplier below is an INKWAVE visual calibration,
 // never used for player or field collision, damage, trajectory or turf paint.
-import { sharedBucketDraw, sharedBucketDrawIndex, VISUAL_WIDTH_CALIBRATION } from './projectile-visuals.mjs';
+import { sharedBucketDraw, sharedBucketDrawIndex, VISUAL_WIDTH_CALIBRATION, HISSEN_PRESENTATION_SCALE } from './projectile-visuals.mjs';
 import { INK_LOOK } from './weapons-fidelity.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -180,7 +180,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Match the shared Bucket sheet's existing *visual* width calibration.
     // This is not a new retail draw-radius or world-unit conversion claim.
     const bucket=tri||d.sourceActor==='WeaponSlosherDouble';
-    scale.setScalar(strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius);
+    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1));
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

@@ -26,6 +26,7 @@ import { ShadowCache } from '../../../src/core/shadowcache.js';
 import { installMovement } from './movement.mjs';
 import { installNormalJumpHold } from './normal-jump-hold.mjs';
 import { installMovementMotion } from './movement-motion.mjs';
+import { installSquidrollEffects } from './squidroll-effects.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
@@ -144,6 +145,7 @@ export function install(profile) {
   installMovement(api, profile);
   installNormalJumpHold(api, profile);
   installMovementMotion(api, profile);
+  installSquidrollEffects(api, profile);
   // Keep respawn-owned gameplay wrappers outside Squid Spawn: its Turf branch
   // starts a new life without invoking the legacy native respawn method.
   installRespawnLifecycle(api, profile);

@@ -6942,3 +6942,8 @@ CMB04 exact native capsule scan, CMB06 distance semantics, MOV08b exclusion and 
 ### Minimap Canvas reference clock — current QA correction
 
 The active-browser gate compared current emitted transient FX against the historical composite-credit clock. The documented update-clock correction already prevented pre-birth/stale capped credit in production; changing production back would restore that defect. The QA probe now retains exact historical baseline/candidate parity and separately binds a sealed, invertible two-hunk current clock reference to the producer/build hash. Its current source owners and actual emitted Minimap match exactly for seven cases/710 frames, with blank/corruption/no-op-clock and three stale-credit negative controls retained. The old reference reproduces the hosted overlay-FX frame 1 failure with 223 differing channels; the repaired reference passes without a pixel tolerance. Twenty Node 22 contracts and independent peer review pass. No app/runtime input changed, no hardware or whole-game acceptance claim is made, and the full active-browser CI remains the integration owner's check. The separate follow-up evidence report records the exact source and browser receipts. This QA change introduces no new Splatoon 3 Ver.11.3.0 parameters.
+
+
+### 2026-10-29: イカロールの発光・光跡とヒッセンの空中表示1.5倍
+
+ユーザー指定でイカ本体のアニメーションを維持し、公式映像で見える離水の飛沫・白金色の発光・回転光跡を既存ロール状態へ接続する。通常離水だけだったFXへ、非塗りの開始飛沫と、防御状態に従って失効する光を追加する。Character・移動・防御判定・ゲーム乱数は変更しない。ヒッセン全キットの主飛沫と空中の床塗り用子滴は、通常volume・contour・history代替描画を含め表示寸法だけ1.5倍。弾道・当たり・威力・塗り・元の抽出値・wireを保持する。倍率はユーザー調整であり、本家サイズの一致認定ではない。公式素材の版・ギア・数値曲線とSwitch実機比較は未確認のまま。[比較条件・実装・ローカル回帰とブラウザ比較](roll-hissen-effects-20261029/README.md)。CIはユーザー指定でスキップする。
