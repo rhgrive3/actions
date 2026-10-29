@@ -1,0 +1,21 @@
+{"dynamoCentralSector":{"alignedDamage":180,"turnedFixedDamage":180,"turnedOldDamage":102.58956702780895,"acceptedYaw":1.5707963267948966,"bodyYawAtCapture":0.10555555555555556,"fixedSector":1.5707963267948966,"oldSector":0,"wireUnchanged":true}}
+(node:516764) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1810 all four horizontal sectors follow the central admitted camera through real facing lag at 30/60/120 Hz (1459.421301ms)
+✔ #1810 old body-sector negative control reproduces a real Dynamo central hit losing its pinned max damage (1874.694923ms)
+✔ #1810 edge fan pellets keep the shared camera sector and real outside damage selection (973.001409ms)
+✔ #1810 near-vertical direction, wall-constrained birth and miss controls retain native geometry and packets (2117.728138ms)
+✔ #1810 low-ink wire and Dynamo secondary zero policy remain identical while sector yaw is corrected (2121.625937ms)
+(node:516765) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ horizontal sector production positives: four owners keep camera-relative central damage at 30/60/120 Hz (1496.434397ms)
+✔ horizontal sector production positives: edge fans retain the actual outside curve (932.40412ms)
+✔ horizontal sector production positives: near-vertical births and actual walls/misses remain finite and non-damaging (943.344903ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9047.52038

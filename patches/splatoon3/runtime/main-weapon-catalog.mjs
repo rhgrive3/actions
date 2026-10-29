@@ -698,7 +698,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
-        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
+        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?options.sectorYaw:null}});
     if(descriptor.key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')){
       // Combination.OrderNum selects the emitting glob, not every member of
       // the unit. Reuse the native source resolver and the already drawn seed.
@@ -846,6 +846,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if((key==='slosh'||key==='horizontal'||key==='vertical'||key==='brush')&&
        a.aimDir?.lengthSq()>EPS)
       direction.copy(a.aimDir).normalize();
+    // Damage sectors share the admitted central launch heading. Body facing
+    // follows aim through a spring and can still lag at release; individual
+    // fan pellets must not each redefine the center of the damage sector.
+    const sectorYaw=key==='horizontal'?Math.atan2(direction.x,direction.z):null;
     // Mirrors the mature S3 Slosher cumulative firing-interval sweep:
     // the later Bloblobber bubbles are born 5F apart, but their four yaw
     // headings are resolved at admission from the last windup sample.
@@ -913,7 +917,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           constrainMuzzle(G.physics,base,birth);
         }
         const p=spawn(a,r,d,aim,birth,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
-          index:i,volley,lift:speed*liftRate,depleted});
+          index:i,volley,lift:speed*liftRate,depleted,sectorYaw});
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index
         // offset and speed draw; landing/falling does not reroll the volley.

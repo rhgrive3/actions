@@ -6693,6 +6693,10 @@ Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の
 
 The composed runtime previously performed a cloud-center-to-device visibility test before the vertical rain test. A side barrier blocking only the diagonal could incorrectly shield a Splash Wall or Wave Breaker even with unobstructed rain above it. Storm object damage now uses its existing vertical contact ray; the shared radial damage path retains its normal visibility check by default. A production-composed source fixture reproduces the diagonal-only obstruction, verifies both device classes take damage, verifies a blocked vertical ray stops damage, and preserves the default radial LOS. The negative control without the change fails on the exposed wall. Existing 30/60/120 Hz damage and finite-reach controls pass. This establishes internal consistency, not the 11.3.0 vertical cutoff or cover formula; #735 remains open.
 
+### 2026-10-29: horizontal Roller camera/body damage sectors (#1810 / #1814)
+
+Added horizontal Rollers launched along admitted camera aim but retained body yaw for Inside/Outside damage. A release-tick camera turn can precede the native facing spring: the actual Dynamo central contact received 102.589567 instead of the existing 180 source maximum. The sector now retains the shared central launch heading before pellet fan offsets. Native Actor/Runner/projectile controls cover all four owners at 0/±90 degrees and 30/60/120 Hz, outside fans, near-vertical directions, walls, misses and unchanged full/low-ink packets. Source parameters and Dynamo's existing zero-rate policy are untouched. The original #1812 diagnostic acceptance is reused; #1813's multiplier/sentinel interpretation and overall #1814 remain open. These are composed-source CPU checks, not new retail geometry, device or FPS evidence. [Ownership, original rows and receipts](issue-resolution-20261029/1814-current-owner-audit/README.md).
+
 
 ### 2026-10-29: guest deadline input neutralization
 
