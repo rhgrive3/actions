@@ -42,15 +42,15 @@ test('every Stringer kit fills the existing native circle once per actual charge
 test('compact Charger/Stringer and two-stage Spinner rings keep their HUD geometry and charge paths',()=>{
   const raw=fs.readFileSync(new URL('../../../inkwave-public/src/ui/hud.js',import.meta.url),'utf8');
   const styles=fs.readFileSync(new URL('../../../inkwave-public/styles/hud.css',import.meta.url),'utf8');
-  const tracks=[...raw.matchAll(/<circle r="(\\d+)" class="iw-ret__track"/g)].map(m=>Number(m[1]));
+  const tracks=[...raw.matchAll(/<circle r="([0-9]+)" class="iw-ret__track"/g)].map(m=>Number(m[1]));
   assert.deepEqual(tracks,[15,12],'Charger/Stringer radius 15px, Spinner first radius 12px');
   assert.ok(raw.includes('const C = 2 * Math.PI * 15;'),'Charger/Stringer arc circumference uses the new radius');
   assert.ok(raw.includes('pathLength="100"'),'Spinner arc length remains normalized');
   const composed=adaptBuildSource('src/ui/hud.js',raw);
   assert.ok(composed.includes('<circle r="16" class="iw-ret__track"'),'Spinner second circle is 16px in production');
   assert.ok(composed.includes('<circle r="16" class="iw-ret__charge iw-ret__charge-second"'),'Spinner second charge path stays attached');
-  assert.match(styles,/\\.iw-ret--charger \\.iw-ret__charge \\{[^}]*stroke-width: 2\\.9;/);
-  assert.match(styles,/\\.iw-ret--splatling \\.iw-ret__charge \\{[^}]*stroke-width: 2\\.9;/);
+  assert.ok(styles.includes('.iw-ret--charger .iw-ret__charge { stroke: var(--self-light); stroke-width: 2.9;'),'Charger stroke width is compact');
+  assert.ok(styles.includes('.iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 2.9;'),'Spinner stroke width is compact');
 });
 
 test('HUD wrapper preserves native projection, calls and return values, and clears Stringer styling on switch',()=>{
