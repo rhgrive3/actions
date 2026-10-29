@@ -72,10 +72,10 @@ test('#1100 Splatling outer brackets are axis-aligned corners, not spread-rotate
   assert.doesNotMatch(rules.join('}'), /rotate\(var\(--a\)\)/, 'corner brackets are not rotated by the spread angle');
   // each corner keeps an L of two sides that faces outward along its own diagonal
   const corners = {
-    '315deg': 'border-top-width: 2px; border-left-width: 2px',
-    '45deg': 'border-top-width: 2px; border-right-width: 2px',
-    '135deg': 'border-bottom-width: 2px; border-right-width: 2px',
-    '225deg': 'border-bottom-width: 2px; border-left-width: 2px',
+    '315deg': 'border-top-width: 1.5px; border-left-width: 1.5px',
+    '45deg': 'border-top-width: 1.5px; border-right-width: 1.5px',
+    '135deg': 'border-bottom-width: 1.5px; border-right-width: 1.5px',
+    '225deg': 'border-bottom-width: 1.5px; border-left-width: 1.5px',
   };
   for (const [a, sides] of Object.entries(corners)) {
     assert.ok(css.includes(`.iw-ret--splatling .iw-ret__tick[style*="--a:${a}"]`), `corner rule for ${a}`);
@@ -86,7 +86,7 @@ test('#1100 Splatling outer brackets are axis-aligned corners, not spread-rotate
 test('#1100 Splatling outer corners clear the charge ring at rest and under spread', () => {
   const { base } = bracketCss();
   const [X0, kx, Y0, ky] = base.slice(1).map(Number);
-  const arm = 20, ringReach = 25 + 1; // charge track r=21 plus spin-up segments to r=25
+  const arm = 12, ringReach = 16 + 1.45; // full two-stage outer charge ring r=16 plus stroke half-width
   const nearest = sp => {
     const X = X0 + kx * sp, Y = Y0 + ky * sp;
     // inside arms run from the outer corner inward by `arm`; nearest points are the inner ends
@@ -102,8 +102,13 @@ test('#1100 Splatling corner geometry is derived from the recorded S3 capture', 
   const s = ref.derivation.scaleInkwavePerReferencePx;
   const outerX = Math.round(s * (-ref.frameOuterExtentPx.left + ref.frameOuterExtentPx.right) / 2);
   const outerY = Math.round(s * (-ref.frameOuterExtentPx.top + ref.frameOuterExtentPx.bottom) / 2);
-  assert.equal(Number(base[1]), outerX, 'outer x matches reference extent');
-  assert.equal(Number(base[3]), outerY, 'outer y matches reference extent');
+  const compact = ref.compactDisplayCalibration20261030;
+  const ratio = compact.chargeCircleRadiusPx.spinnerFirst / ref.derivation.ringTrackRadiusInkwavePx;
+  assert.equal(Number(base[1]), compact.outerCornerInkwavePx.x, 'compact outer x is pinned');
+  assert.equal(Number(base[3]), compact.outerCornerInkwavePx.y, 'compact outer y is pinned');
+  assert.equal(Number(base[1]), Math.round(outerX * ratio), 'outer x scales with compact first ring');
+  assert.equal(Number(base[3]), Math.round(outerY * ratio), 'outer y scales with compact first ring');
+  assert.ok(Math.abs(compact.cornerArmLengthPx - ref.derivation.armLengthInkwavePx * ratio) < 1, 'corner arms shrink proportionally');
   assert.equal(s * ref.ringComponent.outerRadiusPx, ref.derivation.ringTrackRadiusInkwavePx, 'ring scale matches track radius');
   assert.ok(ref.unverified.length >= 3, 'unverified items remain recorded');
 });

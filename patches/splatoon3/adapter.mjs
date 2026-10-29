@@ -543,17 +543,18 @@ export function adaptSource(rel, code) {
     // #1100: Heavy Splatling outer brackets are axis-aligned corners of a frame outside the charge ring.
     // Geometry: patches/splatoon3/reference/splatling-reticle-reference.json (one third-party S3 capture, measured 2026-10-10).
     // The spread rate keeps the existing 1px-per-spread radial scale; the sp=0 envelope and absolute size remain 未確認.
+    // 2026-10-30: compress legacy frame geometry by 12/21 alongside the charge circles; preserve the four axis-aligned corners.
     code = replaceOnce(code,
-      '.iw-ret--splatling .iw-ret__tick { left: -4px; top: -4px; width: 8px; height: 8px; background: none; border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 0; }',
+      '.iw-ret--splatling .iw-ret__tick { left: -3px; top: -3px; width: 6px; height: 6px; background: none; border-top: 1.6px solid currentColor; border-left: 1.6px solid currentColor; border-radius: 0; transform: rotate(var(--a)) translateY(calc(-16.5px - var(--sp, 0) * 1px)); }',
       `.iw-ret--splatling .iw-ret__tick {
-  --iw-x: calc(58px + var(--sp, 0) * 0.7071px); --iw-y: calc(40px + var(--sp, 0) * 0.7071px);
-  left: -10px; top: -10px; width: 20px; height: 20px; box-sizing: border-box; background: none; border: 0 solid currentColor; border-radius: 0;
+  --iw-x: calc(33px + var(--sp, 0) * 0.7071px); --iw-y: calc(23px + var(--sp, 0) * 0.7071px);
+  left: -6px; top: -6px; width: 12px; height: 12px; box-sizing: border-box; background: none; border: 0 solid currentColor; border-radius: 0;
   transform: translate(var(--iw-cx), var(--iw-cy));
 }
-.iw-ret--splatling .iw-ret__tick[style*="--a:315deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 3px; }
-.iw-ret--splatling .iw-ret__tick[style*="--a:45deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(10px - var(--iw-y)); border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 3px; }
-.iw-ret--splatling .iw-ret__tick[style*="--a:135deg"] { --iw-cx: calc(var(--iw-x) - 10px); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 3px; }
-.iw-ret--splatling .iw-ret__tick[style*="--a:225deg"] { --iw-cx: calc(10px - var(--iw-x)); --iw-cy: calc(var(--iw-y) - 10px); border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 3px; }`,
+.iw-ret--splatling .iw-ret__tick[style*="--a:315deg"] { --iw-cx: calc(6px - var(--iw-x)); --iw-cy: calc(6px - var(--iw-y)); border-top-width: 1.5px; border-left-width: 1.5px; border-top-left-radius: 2px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:45deg"] { --iw-cx: calc(var(--iw-x) - 6px); --iw-cy: calc(6px - var(--iw-y)); border-top-width: 1.5px; border-right-width: 1.5px; border-top-right-radius: 2px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:135deg"] { --iw-cx: calc(var(--iw-x) - 6px); --iw-cy: calc(var(--iw-y) - 6px); border-bottom-width: 1.5px; border-right-width: 1.5px; border-bottom-right-radius: 2px; }
+.iw-ret--splatling .iw-ret__tick[style*="--a:225deg"] { --iw-cx: calc(6px - var(--iw-x)); --iw-cy: calc(var(--iw-y) - 6px); border-bottom-width: 1.5px; border-left-width: 1.5px; border-bottom-left-radius: 2px; }`,
       'Heavy Splatling axis-aligned outer corner brackets (#1100)');
   }
   if (rel === 'src/ui/hud.js') {
