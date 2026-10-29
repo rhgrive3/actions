@@ -2,7 +2,11 @@
 // Character/socket, Level, Physics, WeaponRunner, Projectiles and NetMatch.
 // A THREE.Scene is retained without a renderer; paint raster/audio are stubs.
 import { fixture } from './source-fixture.mjs';
-import {createCanonicalWeaponActions} from '../../network-replication/canonical-weapon-actions.mjs';
+import {pathToFileURL} from 'node:url';
+// An explicit built module selects the sealed emitted canonical owner; with
+// no override the new leaf is exercised from the source checkout.
+const canonicalModule=process.env.INKWAVE_CANONICAL_TRACE_MODULE?await import(pathToFileURL(process.env.INKWAVE_CANONICAL_TRACE_MODULE)):await import('../../network-replication/canonical-weapon-actions.mjs');
+const {createCanonicalWeaponActions}=canonicalModule;
 const DT=1/60, vec=v=>v?.toArray?.()??null;
 const numeric=v=>typeof v==='number'&&Number.isFinite(v)?v:null;
 const clone=v=>v==null?null:JSON.parse(JSON.stringify(v));
