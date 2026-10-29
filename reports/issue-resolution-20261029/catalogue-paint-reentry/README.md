@@ -62,3 +62,30 @@ repaired `queue-presentation` fixture. The separately retained scalar 32 did
 run the correct local-quality file. The current emitted-site run was pending
 at this ledger snapshot; no emitted, whole-match, hardware or retail-equivalence
 claim is made here.
+
+## Subsequent integrated verification
+
+At clean source `0d46bb41bf9f734cd40bdac7bb5dcdab99c87380`, the actual
+`patches/local-quality/tests/queue-presentation-20261029.test.mjs` source
+fixture passed **15/15** with Node 22, no failures or skips. This correct-path
+run replaces no earlier receipt and confirms the previously omitted fixture.
+
+A separately rebuilt scalar-body site at that same source passed the full
+mandatory emitted selector: **29 files, 318/318 tests, zero failures or skips**.
+The total includes nested tests and overlapping suites; it is not an added set
+of 318 production claims. The emitted positive includes the real two-impact
+paint reentry at both callback boundaries. The build used 1,546 inputs and
+2,259 artifacts, content hash
+`1dd26bc5d74a893c91ef3af433de9b04c53e2731ad74557281682d2b6efaafc1` and
+input hash `5317e79c0b8bd736f0fb6192afc3a36ee27608562a6dfea10507482eb0ecbac9`.
+The recorded source/test and build identities before and after were unchanged.
+This is evidence for the integrated scalar build at `0d46`, not a locally
+built emitted run of the earlier PR1907 vector-body branch or a claim about
+subsequent commits. The gzip summary retains the exact selection and identity
+receipts.
+
+| Receipt | Raw SHA-256 | Gzip SHA-256 |
+| --- | --- | --- |
+| [presentation-15.tap.gz](presentation-15.tap.gz) | `3f6ba15fe5dba9c74db72c0eaf22e68854989205a5f5ec1ff8f2c3f3362c6252` | `7a6f1a6ed2ce1b949c7113e288d58163605e7dca060d653ad5144effeb1f2fea` |
+| [emitted-29.tap.gz](emitted-29.tap.gz) | `ed0b1178d6ba9b4056ec5cd2edba4c00f48d6e538699e1698e0d6a38efa7cda5` | `0e75b87af5e93051501076eb1b96c751b08da5093f25cbef29bed8d9ef335dc9` |
+| [emitted-summary.json.gz](emitted-summary.json.gz) | `e97f3ccde72ab9b23e9428631a46f981cef198627b1a8878d7c239984b4cc0b6` | `3dc558a0d73913cb835c42e9e2cb053878e355224986a300aaaea0b1d14b34fa` |
