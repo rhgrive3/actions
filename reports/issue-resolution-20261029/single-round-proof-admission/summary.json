@@ -64,11 +64,26 @@
       "sha256": "4f51ace87d4d69cb3f3c6c246ce8033b90eee1bf26037f38e5e42d6fbdb1fe70",
       "uncompressedSha256": "a06d1c1fdc78c8e2581e46d90d289e60aee0ecf0bd764520dbd53700587f188c",
       "bytes": 498
+    },
+    {
+      "path": "guard-source-final.tap.gz",
+      "sha256": "5a3be709e40e59c0eda107a9dce4b374d0558bd2af13d36547174faa18e89885",
+      "uncompressedSha256": "5e31a09a36865a26d1d21c941327baa5e4b912df8972d332551b71a95ecac223",
+      "bytes": 5604
     }
   ],
   "limits": [
     "Source CPU component evidence; Character/muzzle, dry paint, flat terrain and stationary Boss state are explicit inputs.",
     "No deployed relay or mandatory native production authority was installed; #1665 and #1666 remain open.",
     "Root owns sealed emitted integration, hosted CI and public behavior-report append."
-  ]
+  ],
+  "guardFollowup": {
+    "codeCommit": "73999f30",
+    "tests": 154,
+    "pass": 154,
+    "fail": 0,
+    "skipped": 0,
+    "runtimeSha256": "64da9a703cff5e03f48605c8e2f394dc5937e223160557caf0c749e5084ab72a",
+    "testSha256": "07c72a94e2fcea63f186e302220549f55e7d598e6da81a94cc0a1be0b420d955"
+  }
 }

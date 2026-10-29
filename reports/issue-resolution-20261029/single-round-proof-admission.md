@@ -93,3 +93,7 @@ row, and verifies no exception, no usable proof and unchanged victim HP. That
 focused source regression passed1/1 with no skips. The153/153 and54-case hashes
 above deliberately retain the exact original code-commit receipt rather than
 claiming that they cover this later guard.
+
+The complete final six-file source rerun after the missing-definition guard
+passes **154/154**, with no failures or skips. Its separately hashed raw log and
+final code/test hashes are retained as guardFollowup in the same summary.

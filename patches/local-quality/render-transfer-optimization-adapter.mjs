@@ -4,6 +4,7 @@
 function clearFxUploadRanges() { this.clearUpdateRanges(); }
 
 function markFxStaticRange(attribute, first, last, liveEnd) {
+  const changed = first < last;
   if (first >= last && attribute.updateRanges.length === 0) return;
   if (liveEnd <= 0) return; // an empty mesh cannot consume an upload
   if (first >= last) { first = liveEnd; last = 0; }
@@ -21,7 +22,9 @@ function markFxStaticRange(attribute, first, last, liveEnd) {
   range.start = first; range.count = last - first;
   attribute.updateRanges.length = 0;
   attribute.updateRanges.push(range);
-  attribute.needsUpdate = true;
+  // Existing ranges already own an unconsumed dirty version. Coalescing them
+  // after a skipped draw does not change source bytes or require a new signal.
+  if (changed) attribute.needsUpdate = true;
 }
 
 export function adaptRenderTransfers(rel, code, once) {
