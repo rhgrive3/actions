@@ -14,6 +14,8 @@ const json=value=>JSON.stringify(value);
 
 test('unobserved diagnostics retain scalar records only; observed exports remain detached and writable',()=>{
  const c={status:'ready',variant:'Player00',currentClips:[],contact:[1,0]};c.fallbacks=initMotionDiagnostics(c);c.fallbacks.add('a');let previous=null;
+ assert.equal(typeof c._iwMotionClipFrame,'function','private clip inputs remain available without observing public descriptors');
+ assert.equal(Object.getOwnPropertyDescriptor(c,'_iwMotionClipFrame').enumerable,false,'private input bridge does not join public diagnostics');
  for(let tick=0;tick<1000;tick++){
   c.currentClips=[{name:'Wait',frame:tick,weight:1}];motionDebug(c,'idle','Nrml',1,2,3,4,.5);motionDebugScalar(c,'groundMode','plant');motionDebugBody(c,true,tick);motionDebugSquid(c,'Sqd_Wait',tick);
   assert.equal(c._iwDiagnostics.materialized,false);if(previous)assert.equal(c._iwDiagnostics.fallbackValues,previous,'unchanged fallback list has no per-frame copy');previous=c._iwDiagnostics.fallbackValues;

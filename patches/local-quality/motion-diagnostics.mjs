@@ -40,6 +40,9 @@ export function initMotionDiagnostics(controller) {
     clipSlot:0,clipFrames:[{rows:[],count:0,cached:null,ready:false},{rows:[],count:0,cached:null,ready:false}],clips:{ready:true,cached:controller.currentClips}};
   Object.defineProperty(controller,'currentClips',{enumerable:true,configurable:true,
     get(){return materializeClips(d.clips);},set(value){d.clips={ready:true,cached:value};}});
+  // Runtime consumers may copy semantic inputs without observing the public
+  // diagnostic snapshot. The returned frame is transient and stays private.
+  Object.defineProperty(controller,'_iwMotionClipFrame',{value(){return d.clips;}});
   Object.defineProperty(controller,'debug',{enumerable:true,configurable:true,
     get(){
       if(d.materialized)return d.cached;
