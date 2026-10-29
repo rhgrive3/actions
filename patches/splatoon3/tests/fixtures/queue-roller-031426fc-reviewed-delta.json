@@ -1,0 +1,34 @@
+{
+  "from": "fad7f42ef7d9d648ed5636172aebd410824e4cf3",
+  "to": "031426fcb9373d91e74e933e1507e9af395aa1c9",
+  "path": "patches/splatoon3/runtime/roller.mjs",
+  "beforeSha256": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "afterSha256": "27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a",
+  "provenance": "Drive manifests 152/154 pin both byte digests. The read-only raw GitHub historical file matches the Drive digest. These pre-existing baseline optimizations are reversed only for the historical test seal, never in production.",
+  "changes": [
+    {
+      "before": "  };\n  const armAheadOf = (runner, now, fire) => {\n    const live = rollStopBlocks(now, runner.s3RollStop);\n    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;\n    runner.s3RollStop = rollStopLocks(now);\n    return true;\n",
+      "after": "  };\n  const armAheadOf = (runner, now, fire) => {\n    if (runner.s3RollStop) {\n      const live = rollStopBlocks(now, runner.s3RollStop);\n      if (live.main || live.sub || live.squid) return false;\n    }\n    if (!rollWillStop(runner, fire)) return false;\n    runner.s3RollStop = rollStopLocks(now);\n    return true;\n"
+    },
+    {
+      "before": "    runner.s3RollerJumpPressed = this.weapon?.kind === 'roller' && !!this.intent?.jump && !this._prevIntent?.jump;\n    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));\n    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;\n    if (blockSquid && this.intent?.squid) {\n      const held = this.intent.squid;\n",
+      "after": "    runner.s3RollerJumpPressed = this.weapon?.kind === 'roller' && !!this.intent?.jump && !this._prevIntent?.jump;\n    const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));\n    const blockSquid = !!runner.s3RollStop && rollStopBlocks(now, runner.s3RollStop).squid;\n    if (blockSquid && this.intent?.squid) {\n      const held = this.intent.squid;\n"
+    },
+    {
+      "before": "    const winding = this.flick >= 0;\n    const onFlickPath = starting || winding;\n    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);\n    // The lower-and-hold action survives a jump or a brief loss of drum\n    // support on a descending slope. Contact below still owns all paint,\n",
+      "after": "    const winding = this.flick >= 0;\n    const onFlickPath = starting || winding;\n    const coldIdle = !inp.fire && !wasHeld && !this.rolling && !this.s3RollerSuspendedHold;\n    const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);\n    // The lower-and-hold action survives a jump or a brief loss of drum\n    // support on a descending slope. Contact below still owns all paint,\n"
+    },
+    {
+      "before": "    const minR = Math.abs(arms.armR.a - arms.armR.b) + .001, minL = Math.abs(arms.armL.a - arms.armL.b) + .001;\n    const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;\n    const alignLeft = q => {\n      if (contacting) {\n",
+      "after": "    const minR = Math.abs(arms.armR.a - arms.armR.b) + .001, minL = Math.abs(arms.armL.a - arms.armL.b) + .001;\n    const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;\n    // Actor yaw and the fixed shaft angle are constant during this IK search.\n    const contactYaw = this.actor?.yaw || 0, contactCy = Math.cos(contactYaw), contactSy = Math.sin(contactYaw);\n    const shaftCy = Math.cos(ROLL_ROTATION[1]), shaftSy = Math.sin(ROLL_ROTATION[1]);\n    const alignLeft = q => {\n      if (contacting) {\n"
+    },
+    {
+      "before": "        weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());\n        axis.set(1,0,0).applyQuaternion(weaponQ).normalize();\n        const n=this.actor?.groundN,yaw=this.actor?.yaw||0,cy=Math.cos(yaw),sy=Math.sin(yaw);\n        toLeft.set(n?n.x*cy-n.z*sy:0,n?n.y:1,n?n.x*sy+n.z*cy:0).normalize();\n        delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));\n        delta.addScaledVector(toLeft,-delta.dot(toLeft)).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());\n        const scale=this.kid.scale;\n",
+      "after": "        weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());\n        axis.set(1,0,0).applyQuaternion(weaponQ).normalize();\n        const n=this.actor?.groundN,cy=contactCy,sy=contactSy;\n        toLeft.set(n?n.x*cy-n.z*sy:0,n?n.y:1,n?n.x*sy+n.z*cy:0).normalize();\n        delta.set(shaftCy,0,-shaftSy);\n        delta.addScaledVector(toLeft,-delta.dot(toLeft)).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());\n        const scale=this.kid.scale;\n"
+    },
+    {
+      "before": "      // During a form transition the source skeleton can scale kid to zero.\n      // A visible roller grip never divides by a collapsed or invalid axis.\n      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {\n        delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());\n        target.x += penetration * delta.x / scale.x;\n",
+      "after": "      // During a form transition the source skeleton can scale kid to zero.\n      // A visible roller grip never divides by a collapsed or invalid axis.\n      if (penetration > .00001 && Number.isFinite(scale.x) && Math.abs(scale.x) > 1e-4 && Number.isFinite(scale.y) && Math.abs(scale.y) > 1e-4 && Number.isFinite(scale.z) && Math.abs(scale.z) > 1e-4) {\n        delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());\n        target.x += penetration * delta.x / scale.x;\n"
+    }
+  ]
+}

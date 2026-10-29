@@ -25,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "patches/splatoon3/runtime/roller.mjs": "da13f7a173b2c62986a4b278bca94e6133163ffe4d7ff172973eea6031e2ff82",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -64,10 +64,32 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
     if(rel==='patches/splatoon3/runtime/roller.mjs'){
+      // The queue only replaces the ephemeral [-1,1] loop with the same two
+      // scalar signs. Prove exact recovery of the complete prior input before
+      // applying the older, separately sealed downhill support reversals.
+      const beforeScalarSign=exactFault(raw,
+        'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(let sign=-1;sign<=1;sign+=2)',
+        'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1])',
+        'queue-scalar-sign-loop');
+      assert.equal(createHash('sha256').update(beforeScalarSign).digest('hex'),
+        '27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a',
+        'Drive-verified 031426fc queue input');
+      // The incoming baseline itself also contained six reviewed optimization
+      // hunks absent from this test's older pin. Retain both Drive digests and
+      // reverse only those exact hunks before the earlier history checks.
+      const deltaBytes=fs.readFileSync(new URL('./fixtures/queue-roller-031426fc-reviewed-delta.json',import.meta.url));
+      assert.equal(createHash('sha256').update(deltaBytes).digest('hex'),
+        'ca0d84694c66b330cf208530b2c7bc10362108259ba666982349b0d5b8735461');
+      const delta=JSON.parse(deltaBytes);let beforeBaselineOptimizations=beforeScalarSign;
+      for(const [index,change]of delta.changes.entries())
+        beforeBaselineOptimizations=exactFault(beforeBaselineOptimizations,change.after,change.before,'baseline-optimization-'+index);
+      assert.equal(createHash('sha256').update(beforeBaselineOptimizations).digest('hex'),
+        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39',
+        'previous reviewed #847 input before incoming baseline optimizations');
       // The downhill fix adds only a shared collision-floor import and this
       // admission fallback. Undo those exact reviewed edits and prove the
       // entire previous pinned source is byte-identical; no pin is relaxed.
-      const previous=exactFault(exactFault(raw,
+      const previous=exactFault(exactFault(beforeBaselineOptimizations,
         "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
         "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
       assert.equal(createHash('sha256').update(previous).digest('hex'),
@@ -87,7 +109,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+      source=exactFault(source,'const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath || coldIdle ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
     } else {
       source=exactFault(source,'    negligiblePlanarMotion(a.intent?.move?.x || 0, a.intent?.move?.z || 0) ||\n','','physical-paint-stick');
     }

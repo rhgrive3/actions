@@ -11,6 +11,7 @@ import { nonWailVfxTicks, consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.
 import { areaSpecialVfxTicks } from '../runtime/area-special-vfx-clock.mjs';
 import { inkjetVfxTicks } from '../runtime/inkjet-vfx-clock.mjs';
 import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
+import { installShapePoolBounds, updateShapePoolBounds } from '../runtime/shape-pool-bounds.mjs';
 
 const sourceURL = new URL('../runtime/special-vfx.mjs', import.meta.url);
 const rel = 'patches/splatoon3/runtime/special-vfx.mjs';
@@ -78,12 +79,15 @@ const emitted = (() => {
   assert.equal(hash(JSON.stringify(manifest.files)), manifest.inputHash, 'emitted input manifest seal');
   assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash, 'emitted artifact manifest seal');
   const modules = {}, hashes = {};
-  for (const file of ['special-vfx.mjs', 'special-vfx-kit.mjs', 'instance-color-upload.mjs', 'nonwail-vfx-clock.mjs', 'area-special-vfx-clock.mjs', 'inkjet-vfx-clock.mjs']) {
-    const rel = 'patches/splatoon3/runtime/' + file, filename = fs.realpathSync(path.join(root, rel));
+  for (const file of ['special-vfx.mjs', 'special-vfx-kit.mjs', 'instance-color-upload.mjs', 'shape-pool-bounds.mjs', 'nonwail-vfx-clock.mjs', 'area-special-vfx-clock.mjs', 'inkjet-vfx-clock.mjs']) {
+    const rel = 'patches/splatoon3/runtime/' + file;
+    const immutablePath = path.join(root, '_versions', manifest.build.revision, rel);
+    const filename = fs.realpathSync(fs.existsSync(path.join(root, rel)) ? path.join(root, rel) : immutablePath);
     assert.ok(filename.startsWith(root + path.sep), 'artifact within selected site');
     const bytes = fs.readFileSync(filename);
     assert.equal(hash(bytes), manifest.artifacts[rel], 'emitted artifact identity ' + file);
-    assert.deepEqual(bytes, fs.readFileSync(path.join(root, '_versions', manifest.build.revision, rel)), 'immutable revision copy ' + file);
+    assert.equal(hash(fs.readFileSync(immutablePath)), manifest.artifacts['_versions/' + manifest.build.revision + '/' + rel], 'versioned artifact identity ' + file);
+    assert.deepEqual(bytes, fs.readFileSync(immutablePath), 'immutable revision copy ' + file);
     assert.equal(hash(fs.readFileSync(new URL('../runtime/' + file, import.meta.url))), manifest.files['patch/runtime/' + file], 'build matches current tested source ' + file);
     modules[file] = { code: bytes.toString(), tree: ast(bytes.toString()) }; hashes[file] = hash(bytes);
   }
@@ -109,7 +113,9 @@ function emittedRecipes(context, sinks, old, instrument) {
   const m = emitted.modules;
   const upload = m['instance-color-upload.mjs'];
   const uploadApi = evaluateEmitted(upload, context, {}, `markAttributeRange:${exported(upload.tree, 'markAttributeRange')}`);
-  const kit = evaluateEmitted(m['special-vfx-kit.mjs'], context, {'./instance-color-upload.mjs': uploadApi}, kitNames.map(name => `${name}:${exported(m['special-vfx-kit.mjs'].tree, name)}`).join(','), instrument);
+  const bounds = m['shape-pool-bounds.mjs'];
+  const boundsApi = evaluateEmitted(bounds, context, {}, ['installShapePoolBounds', 'updateShapePoolBounds'].map(name => `${name}:${exported(bounds.tree, name)}`).join(','));
+  const kit = evaluateEmitted(m['special-vfx-kit.mjs'], context, {'./instance-color-upload.mjs': uploadApi, './shape-pool-bounds.mjs': boundsApi}, kitNames.map(name => `${name}:${exported(m['special-vfx-kit.mjs'].tree, name)}`).join(','), instrument);
   const dependencies = { './special-vfx-kit.mjs': kit };
   for (const [file, names] of Object.entries({
     'nonwail-vfx-clock.mjs': ['nonWailVfxTicks', 'consumeVfxPeriod'],
@@ -162,7 +168,7 @@ export function directorFixture({ old = false, minified = false, instrument = tr
     tentaMissilesLockPreview: () => null, remoteKrakenPhase: () => null,
     WAIL_SPEAKER_POSITIONS: [],
   };
-  const context = vm.createContext({ console, Math: math, __work: work, Float32Array, markAttributeRange, ...sinks });
+  const context = vm.createContext({ console, Math: math, __work: work, Float32Array, markAttributeRange, installShapePoolBounds, updateShapePoolBounds, ...sinks });
   let recipes;
   if (emitted) {
     assert.equal(minified, false, 'emitted mode never substitutes a local minification');
