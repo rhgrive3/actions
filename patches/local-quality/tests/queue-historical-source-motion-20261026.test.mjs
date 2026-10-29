@@ -44,6 +44,42 @@ function composeHairOwner(source,pairs=[]){
   pairs.push([original,later,label]);return replaceOnce(text,original,later,label);
  });
 }
+// The separately reviewed be1c4b71 hair-input pool changed exactly four
+// replacement outputs. Retain the original7d2f7f0e receipt and the new receipt;
+// every source anchor and complete current composition still fails closed.
+const hairInputRowChanges=[
+ [
+  "#845 retain only clips that contribute hair, before action overlays",
+  "  this._iwHairClipCount=this.currentClips.length;this._iwHairLoop=!special;\n  // Pivoting changes the feet, not the gaze/weapon pose into a full lateral",
+  "  if(this._iwHairDeferred){\n   // Optimized diagnostics own pooled inputs. Read them without materializing\n   // public clip descriptors, then retain our own scalar rows across updates.\n   const frame=this._iwMotionClipFrame?.();\n   const clips=frame?(frame.ready?frame.cached:frame.rows):this.currentClips;\n   const count=frame&&!frame.ready?frame.count:clips.length;\n   const rows=this._iwHairClips||(this._iwHairClips=[]);\n   for(let i=0;i<count;i++){\n    const item=clips[i],row=rows[i]||(rows[i]={name:null,frame:0,weight:0});\n    row.name=item.name;row.frame=item.frame;row.weight=item.weight;\n   }\n   this._iwHairClipCount=count;this._iwHairLoop=!special;\n  }\n  // Pivoting changes the feet, not the gaze/weapon pose into a full lateral"
+ ],
+ [
+  "#845 rebuild deferred hair before the first visible accessory solve",
+  " _ensureHairTargets(){\n  if(!this._iwHairDeferred)return;\n  this.hairTargets.clear();\n  for(let i=0;i<this._iwHairClipCount;i++){\n   const item=this.currentClips[i];\n   this.bank.sample(item.name,item.frame,this.tmp,this._iwHairLoop);\n   this.hairTargets.add(this.tmp,locomotionProfile(this.bank,item.name),item.weight);\n  }\n  if(this._iwHairTransition<1)this.hairTargets.mix(this.previousHairTargets,1-this._iwHairTransition);\n  this._iwHairDeferred=false;\n }\n applyAccessories(dt){if(this.active&&this.pose){if(!this.manual)this._ensureHairTargets();",
+  " _ensureHairTargets(){\n  if(!this._iwHairDeferred)return;\n  this.hairTargets.clear();\n  for(let i=0;i<this._iwHairClipCount;i++){\n   const item=this._iwHairClips[i];\n   this.bank.sample(item.name,item.frame,this.tmp,this._iwHairLoop);\n   this.hairTargets.add(this.tmp,locomotionProfile(this.bank,item.name),item.weight);\n   item.name=null;\n  }\n  if(this._iwHairTransition<1)this.hairTargets.mix(this.previousHairTargets,1-this._iwHairTransition);\n  this._iwHairDeferred=false;\n }\n applyAccessories(dt){if(this.active&&this.pose){if(!this.manual)this._ensureHairTargets();"
+ ],
+ [
+  "#845 manual poses discard automatic pending hair inputs",
+  " sampleManual(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;",
+  " sampleManual(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;if(this._iwHairClips)this._iwHairClips.length=0;"
+ ],
+ [
+  "#845 drop deferred bank inputs on bank changes and disposal",
+  " clearBankCaches(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;",
+  " clearBankCaches(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;if(this._iwHairClips)this._iwHairClips.length=0;"
+ ]
+];
+function legacyHairOwnerPairs(pairs){
+ let changed=0;
+ const prior=pairs.map(([original,later,label])=>{
+  const update=hairInputRowChanges.find(row=>row[0]===label);
+  if(!update)return [original,later,label];
+  assert.equal(later,update[2],'exact reviewed hair-input row replacement');changed++;
+  return [original,update[1],label];
+ });
+ assert.equal(changed,4,'all four reviewed hair-input row changes are present');
+ return prior;
+}
 function reverseHairOwner(source,pairs,mutate=(s)=>s){
  let value=source;for(let i=pairs.length-1;i>=0;i--){
   const [original,later,label]=pairs[i];value=mutate(value,later,i);
@@ -76,7 +112,8 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
  const hairPairs=[],withHair=composeHairOwner(composed,hairPairs);
  assert.equal(hairPairs.length,9,'all reviewed hair owner anchors are represented');
- assert.equal(sha(JSON.stringify(hairPairs)),'9b6dc62be57eb1240fff1a4816ac2f15775348089c4ed32a2b92df77a6aa5aad','pinned hair owner anchor pairs');
+ assert.equal(sha(JSON.stringify(legacyHairOwnerPairs(hairPairs))),'9b6dc62be57eb1240fff1a4816ac2f15775348089c4ed32a2b92df77a6aa5aad','original frozen hair owner anchor pairs');
+ assert.equal(sha(JSON.stringify(hairPairs)),'8e79598ba85b25232222c948cb254eededae9958c9d6f922f7b70a3b3e43bf75','reviewed pooled hair owner anchor pairs');
  assert.equal(reverseHairOwner(withHair,hairPairs),composed,'hair owner reverses on independently pinned walk composition');
  for(let target=0;target<hairPairs.length;target++)for(const mode of ['missing','duplicate'])
   assert.throws(()=>reverseHairOwner(currentBeforeLaterOwner,hairPairs,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
