@@ -14,6 +14,7 @@ const frozenMainCapacity = [
   "const family=source.weapon?.kind;\n      maxUses=['blaster','slosher','stringer','roller','brush'].includes(family)?6:2;",
   "maxUses=['blaster','slosher','stringer','roller','brush'].includes(source.weapon?.kind)?6:2;",
 ];
+const frozenPresentationAnchor='    const actor=ownerActor(nm,from,candidate.actor);\n    const interval=actor?.weapon?.fireInterval;';
 function reviewedSingleRoundPolicy(source) {
   // Keep the frozen scan independent, but compare both scans under the later
   // reviewed single-round admission policy. Do not alter the historical file.
@@ -22,6 +23,10 @@ function reviewedSingleRoundPolicy(source) {
     assert.equal(source.split(anchor).length,2,'one frozen main-capacity anchor');
     source=source.replace(anchor,capacity);
   }
+  assert.equal(source.split(frozenPresentationAnchor).length,2,'one frozen projectile-presentation anchor');
+  source=source.replace(frozenPresentationAnchor,`    const actor=ownerActor(nm,from,candidate.actor);
+    if(candidate.src==='ev'&&candidate.kind==='main'&&['shooter','dualies','splatling'].includes(actor?.weapon?.catalogRecord?.family||actor?.weapon?.behaviorKind||actor?.weapon?.kind))continue;
+    const interval=actor?.weapon?.fireInterval;`);
   return source;
 }
 const oldRecord=_source=>reviewedSingleRoundPolicy(frozenCombat).replace(fused,'    if(!candidate || store.some(p=>p.key===candidate.key))continue;')
@@ -60,7 +65,9 @@ test('reference policy retains single-round, penetrating and area capacities on 
   if(route==='birth')event[4]=id;else event[3].weapon=id;
   before.api.record(a,'peer',packet([event]),100);after.api.record(b,'peer',packet([event]),100);
   assert.deepEqual(json(snapshot(b)),json(snapshot(a)),JSON.stringify([definition,route]));
-  assert.equal(b._combatProvenance.proofs.get('peer')[0].maxUses,capacity);
+  const requiresBirth=route==='fire'&&['shooter','dualies','splatling'].includes(definition.catalogRecord?.family||definition.behaviorKind||definition.kind);
+  if(requiresBirth)assert.equal(b._combatProvenance.proofs.size,0,'projectile presentation cannot replace a birth');
+  else assert.equal(b._combatProvenance.proofs.get('peer')[0].maxUses,capacity);
  }
  // Sub explosions and special births keep their separate multi-contact budget.
  for(const cause of ['bomb','storm']){
@@ -90,6 +97,8 @@ test('frozen pre-security capacity is a negative control, and its policy bridge 
   assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat.replace(anchor,'')),/one frozen main-capacity anchor/);
   assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat+anchor),/one frozen main-capacity anchor/);
  }
+ assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat.replace(frozenPresentationAnchor,'')),/one frozen projectile-presentation anchor/);
+ assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat+frozenPresentationAnchor),/one frozen projectile-presentation anchor/);
 });
 
 test('the aligned reference and actual admission reject a second body claim from one Shooter proof',async()=>{

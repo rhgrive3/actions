@@ -624,7 +624,8 @@ test('shot pairing uses the muzzle, not a load-dependent millisecond gap',()=>{
   assert.equal(burst._combatProvenance.proofs.get('peerA').length,2,'two rounds in one frame stay two proofs');
   const other=new Stub();
   ownerTick(other,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
-  assert.equal(other._combatProvenance.proofs.get('peerA').length,2,'a fire event at another muzzle is not that birth');
+  assert.equal(other._combatProvenance.proofs.get('peerA').length,1,'another presentation muzzle cannot replace its absent projectile birth');
+  assert.equal(other._combatProvenance.proofs.get('peerA')[0].pairedFire,undefined,'a fire event at another muzzle is not paired to that birth');
 });
 
 test('roller contact cannot be minted from pose flags without a fresh matching accepted snapshot',()=>{

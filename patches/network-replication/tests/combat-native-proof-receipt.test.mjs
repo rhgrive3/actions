@@ -54,7 +54,11 @@ for(const [name,change] of [
   ['rejected actor life',()=>({l:{17:-1}})],
   ['malformed present actor roster',()=>({a:{}})],
 ])test(`${name} cannot authorize a hit after the enclosing owner timestamp advances`,async t=>{
-  const x=await setup(t,{roller:false});tick(x,change(x));
+  const x=await setup(t,{roller:false});
+  // Charge/beam fields belong to the still-supported no-projectile Charger
+  // path, so these negatives continue to exercise native payload rejection.
+  if(name.startsWith('invalid forwarded'))x.remote.weapon=x.f.WEAPONS.charger;
+  tick(x,change(x));
   assert.equal(x.nm.peers.get('peer').lastTs,1000);
   rejected(x);
 });
@@ -68,7 +72,7 @@ test('trailing native-rejected duplicate row cannot replace the admitted muzzle 
 });
 test('valid admitted pose is retained when a rejected duplicate differs from both it and rendered pose',async t=>{
   const x=await setup(t,{roller:false});x.local.pos.set(50,2,7);
-  tick(x,{a:[row(x,{x:50}),[17,0,2,0]],e:[fire(x,1000,{muzzle:[50,2,0]})]});
+  tick(x,{a:[row(x,{x:50}),[17,0,2,0]],e:[x.birth(1000,{muzzle:[50,2,0]})]});
   assert.equal(x.remote.net.buf.at(-1).x,50);assert.equal(x.remote.pos.x,0);
   assert.equal(proofs(x).length,1);hit(x);assert.equal(x.calls.length,1);
 });
@@ -105,7 +109,8 @@ test('full native nonpaint FIFO cannot mint proof for an omitted shot',async t=>
 test('accepted R2 shot retains admission timing and flushes a valid first pending hit',async t=>{
   const x=await setup(t,{roller:false});x.f.clock.set(100);hit(x);
   assert.equal(x.calls.length,0);
-  tick(x,{r:2,u:100,e:[[...fire(x),100,1]]});
+  const birth=x.birth();birth.splice(-2,2,100,1);birth._netTick=100;birth._netSeq=1;
+  tick(x,{r:2,u:100,e:[birth]});
   assert.equal(x.nm.peers.get('peer').events.length,1,'proof admission does not force playback');
   assert.equal(x.calls.length,1);assert.equal(proofs(x).length,1);
 });
@@ -135,7 +140,7 @@ test('nested newer native snapshot cannot erase the already admitted outer shot 
     x.nm._proofSnapshotHook=null;
     x.tick(1000.1,100.1,{u:106,a:[row(x,{x:0})],e:[]});
   };
-  tick(x,{a:[row(x,{x:50})],e:[fire(x,1000,{muzzle:[50,2,0]})]});
+  tick(x,{a:[row(x,{x:50})],e:[x.birth(1000,{muzzle:[50,2,0]})]});
   assert.equal(x.remote.net.buf.at(-1).x,0);
   assert.equal(x.nm.peers.get('peer').lastTs,1000.1);
   assert.equal(proofs(x).length,1);assert.equal(proofs(x)[0].origin[0],50);
