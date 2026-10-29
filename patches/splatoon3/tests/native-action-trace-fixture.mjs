@@ -47,10 +47,10 @@ export async function nativeTraceFixture(){
  const offHit=f.on('hit',e=>{if(current&&e.attacker===current.actor)current.hits.push({weaponId:e.weaponId,damage:e.damage,victim:e.victim?.nid??null,killed:!!e.killed});});
  const unsubscribe=f.on('weapon:fire',e=>{if(current&&e.actor===current.actor)current.fires.push({weapon:e.weapon,muzzle:vec(e.muzzle),dir:vec(e.dir),charge:numeric(e.charge),hand:numeric(e.hand)});});
  function seed(seed){let x=seed>>>0;f.setRandom(()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/2**32;});}
- function run(id,{seedValue=0x66f1035,hold=120,tail=45,inputAt=null,commandAt=null,startingInk=100}={}){
+ function run(id,{seedValue=0x66f1035,hold=120,tail=45,inputAt=null,commandAt=null,cancelAt=null,startingInk=100}={}){
   tick=0;G.time=0;G.actors=[];ps.clear();seed(seedValue);
   const a=new f.Actor({team:0,name:'trace-owner',weapon:id,isLocal:true,CharacterClass:f.Character});
-  a.spawnAt(new THREE.Vector3(0,0,0),0);a.character.actor=a;scene.add(a.character.root);a.grounded=true;a.ground.hit=true;a.kidT=10;a.ink=startingInk;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,15);a.nid=1;a.owner='A';G.actors=[a];
+  a.spawnAt(new THREE.Vector3(0,0,0),0);a.character.actor=a;scene.add(a.character.root);a.grounded=true;a.ground.hit=true;a.kidT=10;a.ink=startingInk;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,15);a.nid=1;a.owner='A';a.netLife=1;G.actors=[a];
   let packets=[];const senderControl=[];const session={myId:'A',isHost:false,ownerClockVersion:1,_members:new Map([['A',{}],['B',{}]]),tr:{broadcast:m=>{packets.push(clone(m));return true;},sendTo(to,m){senderControl.push({to,msg:clone(m)});return true;}}};
   const net=new f.NetMatch(session,{id:'native-action-trace'}),match={actors:[a],playing:()=>true,state:'playing',canRespawn:()=>false};net.bind(match);G.match=match;G.netm=net;
   const target=f.make('shooter');Object.assign(target,{nid:2,owner:'A',team:1,remote:false,invuln:0});target.pos.set(0,0,3);target.grounded=true;G.actors=[a,target];
@@ -72,6 +72,7 @@ export async function nativeTraceFixture(){
     const fire=inputAt?!!inputAt(tick):tick<=hold,override=commandAt?.(tick)||{};
     const input={fire,sub:false,jump:false,squid:false,special:false,move:[0,0],...override},aim=[0,0],aimPoint=[0,1.05,15];
     const command={nid:1,owner:'A',life:1,input,aim,aimPoint};
+    const cancel=cancelAt?.(tick);if(cancel)command.cancel=cancel;
     const before=actorState(a),targetBefore={hp:target.hp,alive:target.alive},capture=current={actor:a,births:[],wireBirths:[],fires:[],hits:[]};
     const prepared=authority.prepare(command,{tick,from:'A'});if(!prepared.ok)throw Error(id+' prepare '+tick+': '+prepared.reason);
     const applied=authority.apply(prepared.token);if(!applied.ok)throw Error(id+' apply '+tick+': '+applied.reason);
