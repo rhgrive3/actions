@@ -5,15 +5,23 @@ import http from 'node:http';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 const site=path.resolve(process.argv[2] || '_site');
 const evidence=path.resolve(process.argv[3] || '.browser-evidence/issue-batch.json');
-const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+const root=fileURLToPath(new URL('../',import.meta.url)),argIndex=process.argv.indexOf('--source-sha');
+const sourceSha=argIndex>=0?process.argv[argIndex+1]:(process.env.SOURCE_SHA||execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
+const manifest=verifyRuntimeBuild(site,root,sourceSha);
+const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const helperBytes=fs.readFileSync(new URL('./lib/inkwave-input-listener-audit.mjs',import.meta.url));
+const harnessSha=hash(fs.readFileSync(fileURLToPath(import.meta.url))),helperSha=hash(helperBytes),manifestSha=hash(fs.readFileSync(path.join(site,'inkwave-build.json')));
 for(const [file,expected] of Object.entries(manifest.artifacts)){
  const actual=createHash('sha256').update(fs.readFileSync(path.join(site,file))).digest('hex');
  if(actual!==expected)throw Error('Artifact mismatch: '+file);
 }
 const server=http.createServer((req,res)=>{
- if(req.url==='/__input-listener-audit.mjs'){res.setHeader('content-type','text/javascript');fs.createReadStream(new URL('./lib/inkwave-input-listener-audit.mjs',import.meta.url)).pipe(res);return;}
+ if(req.url==='/__input-listener-audit.mjs'){res.setHeader('content-type','text/javascript');res.end(helperBytes);return;}
  if(req.url==='/favicon.ico'){res.writeHead(204);res.end();return;}
  if(new URL(req.url,'http://localhost').pathname==='/probe'){res.setHeader('content-type','text/html');res.end('<!doctype html><script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>');return;}
  const file=path.resolve(site,'.'+new URL(req.url,'http://localhost').pathname);
@@ -68,7 +76,7 @@ try{
   h.setQuality('low');
   const {Input}=await import('/src/core/input.js');
   const {auditInputListeners}=await import('/__input-listener-audit.mjs');
-  const listenerAudit=auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas:r.domElement,
+  const listenerAudit=auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas:r.domElement,orientationTarget:screen.orientation,viewportTarget:window.visualViewport,fontsTarget:document.fonts,eventTargetPrototype:EventTarget.prototype,
    event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
   owner._disposeComposer();r.dispose();
   return {shadowToggles:20,reflectionCycles:20,baseTextures,maxTextures,inputReplacements:listenerAudit.cycles,
@@ -84,12 +92,12 @@ try{
    const {Input}=await import('/src/core/input.js');
    const {auditInputListeners}=await import('/__input-listener-audit.mjs');
    const canvas=document.createElement('canvas');document.body.append(canvas);
-   return auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas,requireCanvas:true,
+   return auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas,orientationTarget:screen.orientation,viewportTarget:window.visualViewport,fontsTarget:document.fonts,eventTargetPrototype:EventTarget.prototype,requireCanvas:true,
     event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
   });
  }finally{await touchPage.close();}
  if(errors.length)throw Error(errors.join('\n'));
  fs.mkdirSync(path.dirname(evidence),{recursive:true});
- fs.writeFileSync(evidence,JSON.stringify({browser:browser.version(),contentHash:manifest.contentHash,result,errors},null,2)+'\n');
+ fs.writeFileSync(evidence,JSON.stringify({browser:browser.version(),sourceSha,contentHash:manifest.contentHash,manifestSha,harnessSha,helperSha,result,errors},null,2)+'\n');
  console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

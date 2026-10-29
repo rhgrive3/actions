@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {auditInputListeners} from '../lib/inkwave-input-listener-audit.mjs';
 
 function setup(fault='') {
- const windowTarget=new EventTarget(),documentTarget=new EventTarget(),canvas=new EventTarget();
+ const windowTarget=new EventTarget(),documentTarget=new EventTarget(),canvas=new EventTarget(),orientationTarget=new EventTarget(),root=new EventTarget(),child=new EventTarget();root.contains=t=>t===child;
  let sentinels,canvasCalls=0;
  class Input {
   constructor() {
@@ -18,8 +18,10 @@ function setup(fault='') {
    listen(windowTarget,'custom',shared,false);listen(windowTarget,'custom',shared,true);
    listen(documentTarget,'custom',shared,false);listen(canvas,'custom',shared,false);
    canvas.addEventListener('pointerdown',()=>canvasCalls++,{signal:this.abort.signal});
-   const resize=()=>{};windowTarget.addEventListener('resize',resize,true);
-   this.mobile={_queueSafeLayout:{unsubs:[()=>windowTarget.removeEventListener('resize',resize,{capture:true})]}};
+   const unsubs=[];for(const type of ['resize','scroll','orientationchange','fullscreenchange','animationstart','animationend','animationcancel','transitionrun','transitionend','transitioncancel']){const cb=()=>{};windowTarget.addEventListener(type,cb,{capture:true});unsubs.push(()=>windowTarget.removeEventListener(type,cb,{capture:true}));}
+   root.addEventListener('pointerdown',()=>{}, {signal:this.abort.signal});child.addEventListener('click',()=>{}, fault==='leak-descendant'?undefined:{signal:this.abort.signal});orientationTarget.addEventListener('change',()=>{}, fault==='leak-orientation'?undefined:{signal:this.abort.signal});
+   if(fault==='unowned-resize')windowTarget.addEventListener('resize',()=>{});
+   this.mobile={root,_abort:this.abort,_queueSafeLayout:{unsubs}};
   }
   down(key){return this.keys.has(key);}
   disposePlatform(){
@@ -36,7 +38,7 @@ function setup(fault='') {
    if(fault==='remove-sentinel')sentinels[0].target.removeEventListener('iw-audit-sentinel',sentinels[0].callback,{capture:true});
   }
  }
- const args={Input,windowTarget,documentTarget,canvas,requireCanvas:true,cycles:3,
+ const args={Input,windowTarget,documentTarget,canvas,orientationTarget,eventTargetPrototype:EventTarget.prototype,requireCanvas:true,cycles:3,
   event:type=>new Event(type),keyEvent:(type,code)=>{const e=new Event(type);Object.defineProperty(e,'code',{value:code});return e;},
   onSentinels:s=>{sentinels=s;}};
  return {args,canvas,getCanvasCalls:()=>canvasCalls};
@@ -53,6 +55,7 @@ test('capture propagation from canvas does not count as a window or document sen
 });
 for(const [fault,pattern] of [
  ['leak-target',/instance listener remains active/],['wrong-capture',/instance listener remains active/],
+ ['leak-descendant',/listener lacks an identified instance owner/],['leak-orientation',/listener lacks an identified instance owner/],['unowned-resize',/listener lacks an identified instance owner/],
  ['forget-abort',/instance listener remains active/],['leak-sampler',/mobile layout sampler retained its unsubs/],['leak-key',/instance listener remains active/],
  ['second-dispose',/second dispose is not idempotent/],['remove-sentinel',/unrelated preexisting sentinel/],
 ]) test(`observer rejects ${fault}`,()=>{const f=setup(fault);assert.throws(()=>auditInputListeners(f.args),pattern);});
