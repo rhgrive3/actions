@@ -13,16 +13,23 @@ import { readExplosherSceneClocks, requireExplosherStyle, installExplosherEarlyF
 const wrapper=fs.readFileSync(new URL('../../../scripts/check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
 const nativeResetSource=fs.readFileSync(new URL('../../../scripts/check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const driver=fs.readFileSync(new URL('../../../scripts/render-inkwave-projectile-shapes.mjs',import.meta.url),'utf8');
-function diagnostic(mode,geometryInstrument=instrumentExplosherGeometryDriver){const controlledMode=true,shapeMode=true,mutate=null;let spawnEnv;
+function diagnostic(mode,geometryInstrument=instrumentExplosherGeometryDriver,mutateControlled=null){const controlledMode=true,shapeMode=true,mutate=null;let spawnEnv;
  const saved={},sha='364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c';
- const control={controlledInitialCondition:true,naturalBootAccepted:false,site:'site',sourceRoot:'root',file:'controlled.js',transformedEmittedSha256:'hash',originalEmittedSha256:'hash',buildContentHash:'hash',paths:['src/main.js','_versions/test/src/main.js']};if(mutate&&!shapeMode)mutate(control);
+ const control={controlledInitialCondition:true,naturalBootAccepted:false,initialAttractWarmup:{alreadyStartedOnly:true,ownerCount:8,helperSha256:'0'.repeat(64),productionBootChanged:false},site:'site',sourceRoot:'root',file:'controlled.js',transformedEmittedSha256:'hash',originalEmittedSha256:'hash',buildContentHash:'hash',paths:['src/main.js','_versions/test/src/main.js']};if(mutate&&!shapeMode)mutate(control);if(mutateControlled)mutateControlled(control);
  const shape={schema:2,lane:'after',sameBuildComparison:true,fullGameTwoBuildAcceptance:false,expectedCommonSourceHead:sha,site:'site',sourceRoot:'root',file:'halo.js',baselineSourceBlob:'7afb76e80960dde61d51effb89057dd1f183d16f',candidateSourceBlob:'ff05f46db9eb5179440cd2c375663148ca05f48a',originalEmittedSha256:'hash',baselineEmittedSha256:'hash',nativeEmittedSha256:'hash',candidateEmittedSha256:'hash',transformedEmittedSha256:'hash',buildContentHash:'hash',paths:['patches/splatoon3/runtime/s3-projectile-shapes.mjs','_versions/test/patches/splatoon3/runtime/s3-projectile-shapes.mjs']};if(shapeMode&&mutate)mutate(shape);
  const fakeFs={mkdirSync(){},readFileSync(p){if(p==='pref.json')return JSON.stringify([{tick:0,view:'behind'}]);if(p==='shape.json')return JSON.stringify(shape);if(p==='control.json')return JSON.stringify(control);if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'src/main.js':'hash','_versions/test/src/main.js':'hash','patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
  const process={argv:['node','wrapper','site','out',sha,'root'],execPath:'node',env:{...(controlledMode?{EXPLOSHER_CONTROLLED_MAIN:'control.json'}:{}),...(shapeMode?{EXPLOSHER_SHAPE_OVERLAY:'shape.json',EXPLOSHER_PREFLIGHT:mode==='preflight'?'1':'0',EXPLOSHER_VIDEO:mode==='video'?'1':'0',EXPLOSHER_EXPECT_PREFLIGHT:'pref.json',EXPLOSHER_ADMIT_BEFORE:'prior-before',EXPLOSHER_ADMIT_AFTER:'prior-after'}:{})},exit(){}};
  const spawn=(bin,args,opts)=>(bin!=='git'&&(spawnEnv=opts.env),bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0});
  const code=wrapper.replace(/^#!.*\n/,'').replace(/^import .*;\n/gm,'').replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','installProjectileCaptureUiGate','readExplosherStagePair','requireExplosherVideoTools','requireControlledStartupPair','explosherCaptureIdentity','requireApprovedCommonBuild','requireInverseShapePair','instrumentExplosherGeometryDriver',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,installProjectileCaptureUiGate,()=>({laneProvenance:{before:{},after:{}},commonHead:sha,buildContentHash:'hash',before:{manifestSha256:'hash'},after:{manifestSha256:'hash'},preflightManifestSha256:{before:'hash',after:'hash'}}),()=>({available:true}),requireControlledStartupPair,()=>({}),()=>({head:sha,tree:'c52b1342cd2d8262bde72bbbfe38f04b1219caa4'}),()=>{},geometryInstrument),mutate? /controlled|Controlled|overlay/: /Wrong native capture count/);
+ const invoke=()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','installProjectileCaptureUiGate','readExplosherStagePair','requireExplosherVideoTools','requireControlledStartupPair','explosherCaptureIdentity','requireApprovedCommonBuild','requireInverseShapePair','instrumentExplosherGeometryDriver',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,installProjectileCaptureUiGate,()=>({laneProvenance:{before:{},after:{}},commonHead:sha,buildContentHash:'hash',before:{manifestSha256:'hash'},after:{manifestSha256:'hash'},preflightManifestSha256:{before:'hash',after:'hash'}}),()=>({available:true}),requireControlledStartupPair,()=>({}),()=>({head:sha,tree:'c52b1342cd2d8262bde72bbbfe38f04b1219caa4'}),()=>{},geometryInstrument);
+ if(mutateControlled){
+  assert.throws(invoke,/Controlled main lacks initial attract readiness/);
+  assert.equal(spawnEnv,undefined,'invalid initial readiness must fail before native capture');
+  assert.deepEqual(Object.keys(saved),[],'invalid initial readiness must fail before generating evidence');
+  return;
+ }
+ assert.throws(invoke,mutate? /controlled|Controlled|overlay/: /Wrong native capture count/);
  const generated=saved['out/native-capture-driver.mjs'];
  assert.equal((generated.match(/window\.__inkwaveExplosherGeometryLifetime =/g)||[]).length,1,'real geometry observer installation must occur exactly once');
  assert.match(generated,/geometry-lifetime\.json/,'real geometry observer cleanup artifact must remain');
@@ -37,4 +44,16 @@ test('composition fixture rejects missing or no-op geometry collaborator',()=>{
  assert.throws(()=>diagnostic('preflight',null),/instrumentExplosherGeometryDriver is not a function/);
  assert.throws(()=>diagnostic('preflight',s=>s),/real geometry observer installation/);
  assert.throws(()=>diagnostic('preflight',s=>instrumentExplosherGeometryDriver(s).replace('observer.restore()','observer.report()')),/real geometry observer restoration/);
+});
+
+// The synthetic receipt must satisfy the real compiler's readiness contract
+// before later wrapper/geometry faults can be exercised. These are not native captures.
+for(const [label,change]of [
+ ['missing readiness',c=>delete c.initialAttractWarmup],
+ ['newly started warmup',c=>c.initialAttractWarmup.alreadyStartedOnly=false],
+ ['missing owner',c=>c.initialAttractWarmup.ownerCount=7],
+ ['duplicate owner',c=>c.initialAttractWarmup.ownerCount=9],
+ ['forged owner count type',c=>c.initialAttractWarmup.ownerCount='8'],
+])test('actual wrapper rejects controlled '+label+' before driver generation',()=>{
+ for(const mode of ['preflight','stills','video'])diagnostic(mode,instrumentExplosherGeometryDriver,change);
 });
