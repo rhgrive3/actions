@@ -25,7 +25,8 @@ function runner(a){const w=a.weaponRunner,s=w.catalogState||{};return {
  charging:!!w.charging,streaming:!!w.streaming,rolling:!!w.rolling,roll:clone(s.roll),pending:!!s.pending,
  catalog:{...finiteState(s,['frame','chargeF','paid','reserved','stream','streamF','streamCharge','streamTime','streamElapsed','stop','burst','burstWait','rounds','turret','rolls','rollingFrames']),stored:s.stored?clone(s.stored):null,pending:s.pending?{remaining:numeric(s.pending.remaining)}:null}};}
 function actorState(a){return {form:a.form,alive:a.alive,grounded:a.grounded,ink:a.ink,hp:a.hp,lastFire:a.lastFire,inkIdle:a.inkIdle,
- pos:vec(a.pos),vel:vec(a.vel),prevIntent:{...a._prevIntent},runner:runner(a)};}
+ pos:vec(a.pos),vel:vec(a.vel),prevIntent:{...a._prevIntent},
+ resources:{...finiteState(a.s3,['recoverStopRemaining','chargerInterruptRecover','chargerKeepRecover']),dodgeInkRemaining:numeric(a.weaponRunner?.s3DodgeInkRemaining)},runner:runner(a)};}
 function birth(p){const c=p.catalog,d=c?.descriptor;return {wid:p.wid??null,owner:p.owner?.nid??null,type:p.type,ghost:!!p.ghost,delay:p.delay,life:p.life,
  age:p.age,pos:vec(p.pos),velocity:vec(p.vel),damage:p.damage,radius:p.radius,size:p.size,
  inkMeta:clone(p.inkMeta),unit:d?.unit??null,index:c?.index??null,key:d?.key??null,seed:numeric(p.seed),

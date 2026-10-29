@@ -7,6 +7,7 @@ test('all 65 production main actors emit native action traces with full tick inp
  const missed=[],trace=[],hitFamilies=new Set();
  for(const r of f.records){const t=f.run(r.id);const births=t.frames.flatMap(frame=>frame.births),fires=t.frames.flatMap(frame=>frame.fires),hits=t.frames.flatMap(frame=>frame.hits);
   if(!births.length&&r.id!=='charger')missed.push(r.id);if(hits.length)hitFamilies.add(r.family);
+  if(r.id==='shooter')assert.ok(t.frames.some(x=>x.after.resources.recoverStopRemaining>0),'actual resource stop is recorded');
   if(r.id==='charger'){const flightBirths=t.frames.flatMap(x=>x.flightBirths);assert.equal(births.length,0,'legacy charger uses the separate flight queue');assert.ok(flightBirths.length&&fires.length&&hits.length,'native finite flight, fire and contact');assert.ok(flightBirths.every(j=>j.owner===1&&j.weapon==='charger'&&!j.ghost&&j.speed>0&&j.range>0));}
   assert.ok(t.initial.alive&&t.initial.grounded&&t.initial.ink===100,r.id+' initial');
   assert.equal(t.frames.length,165);assert.equal(t.packets.length,55);assert.equal(t.accepted.length,55);
