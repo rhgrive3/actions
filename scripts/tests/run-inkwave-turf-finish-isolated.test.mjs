@@ -140,9 +140,8 @@ test('reopened-six rejects monolithic Turf execution, missing bounded cases and 
  ]) {assert.notEqual(changed,workflow);assert.throws(()=>assertReopenedTurfWorkflow(changed));}
 });
 
-test('default patch shard retains Turf ownership but runs bounded cases instead of the monolithic file',()=>{
- const source=fs.readFileSync(new URL('../check-inkwave-patches.mjs',import.meta.url),'utf8');
- assert(source.includes('const shardFiles = selectTestShard(files, shardIndex, shardCount);'));
+function assertTurfPatchShardRoute(source){
+ assert(source.includes("  const shardFiles = isolateRainmaker\n    ? selectIsolatedTestShard(files, shardIndex, shardCount, [path.join(PATCH_ROOT, 'tests/rainmaker-model-actor.test.mjs')])\n    : selectTestShard(files, shardIndex, shardCount);"),'default and isolated selectors retain the full discovered inventory');
  assert(source.includes("const turfFile = path.join(PATCH_ROOT, 'tests/turf-finish.test.mjs');"));
  assert(source.includes('const ordinaryFiles = shardFiles.filter(file => file !== turfFile);'));
  assert(source.includes('if (shardFiles.includes(turfFile)) {'));
@@ -151,6 +150,22 @@ test('default patch shard retains Turf ownership but runs bounded cases instead 
  assert(source.includes('...ordinaryFiles]'));
  assert(!source.includes('...shardFiles]'));
  assert(source.includes("files: shardFiles.map(file => path.relative(ROOT, file).split(path.sep).join('/'))"));
+}
+test('default patch shard retains Turf ownership but runs bounded cases instead of the monolithic file',()=>{
+ assertTurfPatchShardRoute(fs.readFileSync(new URL('../check-inkwave-patches.mjs',import.meta.url),'utf8'));
+});
+test('Turf shard guard rejects changed selectors, lost ownership and unbounded execution',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-patches.mjs',import.meta.url),'utf8');
+ for(const [before,after] of [
+  ['? selectIsolatedTestShard(files, shardIndex, shardCount,','? selectIsolatedTestShard([], shardIndex, shardCount,'],
+  [': selectTestShard(files, shardIndex, shardCount);',': selectTestShard([], shardIndex, shardCount);'],
+  ['const ordinaryFiles = shardFiles.filter(file => file !== turfFile);','const ordinaryFiles = shardFiles;'],
+  ['if (shardFiles.includes(turfFile)) {','if (false) {'],
+  ["['scripts/run-inkwave-turf-finish-isolated.mjs', ROOT, 'source', path.join(logDir, 'turf-finish')]","['scripts/run-inkwave-turf-finish-isolated.mjs', ROOT, 'source', path.join(logDir, 'turf-finish'), '--list']"],
+  ['if (turf.status !== 0) throw Error(','if (false) throw Error('],
+  ['...ordinaryFiles]','...shardFiles]'],
+  ["files: shardFiles.map(file => path.relative(ROOT, file).split(path.sep).join('/'))","files: ordinaryFiles.map(file => path.relative(ROOT, file).split(path.sep).join('/'))"],
+ ]){assert(source.includes(before),before);const changed=source.replace(before,after);assert.notEqual(changed,source);assert.throws(()=>assertTurfPatchShardRoute(changed));}
 });
 test('actual shard dispatch preserves ordinary files, isolated-only shards and fail-closed Turf outcomes',async()=>{
  const code=fs.readFileSync(new URL('../check-inkwave-patches.mjs',import.meta.url),'utf8');
