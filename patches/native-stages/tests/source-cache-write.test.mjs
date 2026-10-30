@@ -13,7 +13,7 @@ function database(){
   names=Array.isArray(names)?names:[names];const work=new Map(names.map(n=>[n,new Map(db.stores.get(n))]));let pending=0,ended=false;
   const t={error:null,abort(){if(ended)return;ended=true;db.aborts++;queueMicrotask(()=>t.onabort?.());},objectStore(name){assert.ok(names.includes(name));const rows=work.get(name);
    const req=fn=>{const r={};pending++;queueMicrotask(()=>{if(ended)return;try{r.result=fn();r.onsuccess?.();}catch(e){t.error=e;t.abort();}finally{pending--;finish();}});return r;};
-   return {getAll(){return req(()=>{const out=[...rows.values()].sort((a,b)=>cmp(a.key,b.key));db.reads.push({store:name,op:'getAll',rows:out.length,payloadBytes:out.reduce((n,r)=>n+bytes(r.data),0)});return structuredClone(out);});},getAllKeys(){return req(()=>{db.reads.push({store:name,op:'getAllKeys',payloadBytes:0});return structuredClone([...rows.keys()].sort(cmp));});},get(key){return req(()=>structuredClone(rows.get(key)));},put(row){return req(()=>{if(db.failPut?.(name,row))throw Error('injected put failure');rows.set(row.key,structuredClone(row));return row.key;});},delete(key){return req(()=>rows.delete(key));}};
+   return {getAll(){return req(()=>{const out=[...rows.values()].sort((a,b)=>cmp(a.key,b.key));db.reads.push({store:name,op:'getAll',rows:out.length,payloadBytes:out.reduce((n,r)=>n+bytes(r.data),0)});return structuredClone(out);});},getAllKeys(){return req(()=>{db.reads.push({store:name,op:'getAllKeys',payloadBytes:0});return structuredClone([...rows.keys()].sort(cmp));});},get(key){return req(()=>structuredClone(rows.get(key)));},put(row){const snapshot=structuredClone(row);return req(()=>{if(db.failPut?.(name,snapshot))throw Error('injected put failure');rows.set(snapshot.key,snapshot);return snapshot.key;});},delete(key){return req(()=>rows.delete(key));}};
   }};
   function finish(){setImmediate(()=>{if(ended||pending)return;ended=true;if(mode==='readwrite')for(const [n,rows] of work)db.stores.set(n,rows);t.oncomplete?.();});}
   finish();return t;
@@ -37,7 +37,7 @@ async function use(kind,db,fn){const oldDB=globalThis.__cacheTestDB,oldIDB=globa
 async function write(kind,db,key,value,time){const old=Date.now;Date.now=()=>time;try{await use(kind,db,m=>m.writeDerived(key,value));}finally{Date.now=old;}}
 const stages=db=>[...db.stores.get('stages').values()].sort((a,b)=>cmp(a.key,b.key));
 async function pair(ops){const a=database(),b=database();for(const op of ops){await write('baseline',a,...op);await write('candidate',b,...op);}assert.deepEqual(stages(b),stages(a));return {a,b};}
-function consistent(db){const rows=stages(db);assert.deepEqual([...db.stores.get('stage-times').values()].sort((a,b)=>cmp(a.key,b.key)),rows.map(({key,time})=>({key,time})));}
+function consistent(db){const rows=stages(db);assert.deepEqual([...db.stores.get('stage-times').values()].sort((a,b)=>cmp(a.key,b.key)).map(({key,time})=>({key,time})),rows.map(({key,time})=>({key,time})));}
 test('fresh, third-key and same-key updates preserve exact rows and seals',async()=>{const {b}=await pair([['a',data(1),10],['b',data(2),20],['c',data(3),30],['b',data(4),40]]);assert.deepEqual(stages(b).map(r=>r.key),['b','c']);consistent(b);});
 test('equal timestamps retain ascending primary-key tie order',async()=>{const {b}=await pair([['z',data(1),100],['a',data(2),100],['m',data(3),200]]);assert.deepEqual(stages(b).map(r=>r.key),['a','m']);consistent(b);});
 test('missing and nonfinite legacy time values keep the original stable-sort behavior',async()=>{
@@ -67,4 +67,36 @@ test('steady write requests return zero stage payload bytes without changing cac
  const a=database(),b=database(),value=data(1,1048576/10|0);for(const kind of ['baseline','candidate']){const db=kind==='baseline'?a:b;await write(kind,db,'a',value,10);await write(kind,db,'b',value,20);db.reads=[];await write(kind,db,'c',value,30);}
  assert.deepEqual(stages(b),stages(a));const sum=db=>db.reads.reduce((n,r)=>n+r.payloadBytes,0);assert.equal(sum(a),bytes(value)*2);assert.equal(sum(b),0);assert.ok(!b.reads.some(r=>r.store==='stages'&&r.op==='getAll'));consistent(b);
  const report={scope:'Node structured-clone mock at DB-open boundary; not native IDB or RSS',perStagePayloadBytes:bytes(value),baselineReturnedPayloadBytes:sum(a),candidateReturnedPayloadBytes:sum(b),baselineRequests:a.reads,candidateRequests:b.reads};console.log('SOURCE_CACHE_WRITE_MOCK_RECEIPT',JSON.stringify(report));
+});
+
+test('verified derived hits refresh eviction metadata without rewriting or cloning a payload',async()=>{
+ const db=database();await write('candidate',db,'a',data(1),10);await write('candidate',db,'b',data(2),20);
+ const payload=db.stores.get('stages').get('a'),original=Date.now;
+ Date.now=()=>100;try{assert.deepEqual(await use('candidate',db,m=>m.readDerived('a')),data(1));}finally{Date.now=original;}
+ assert.strictEqual(db.stores.get('stages').get('a'),payload,'no payload write in the recency transaction');
+ assert.equal(db.stores.get('stage-times').get('a').time,100);
+ await write('candidate',db,'c',data(3),110);assert.deepEqual(stages(db).map(r=>r.key),['a','c']);
+ const before=structuredClone(db.stores.get('stage-times'));
+ db.stores.get('stages').get('a').data.mask[0]^=1;
+ assert.equal(await use('candidate',db,m=>m.readDerived('a')),null);
+ assert.deepEqual(db.stores.get('stage-times'),before,'a corrupt hit cannot refresh its recency');
+});
+
+// IndexedDB serializes put() synchronously; its durability event is later.
+test('staged derived data can transfer before commit and the stored seal remains valid',async()=>{
+ const db=database(),value=data(7,128),expected=structuredClone(value);
+ await use('candidate',db,async m=>{
+  const staged=await m.beginDerivedWrite('early',value);assert(staged);let committed=false;
+  staged.completion.then(()=>{committed=true;});assert.equal(committed,false);
+  const moved=structuredClone(value,{transfer:arrays.map(k=>value[k].buffer)});
+  assert.equal(value.vertices.byteLength,0);assert.deepEqual(moved,expected);
+  assert.equal(await staged.completion,true);assert.equal(committed,true);
+  assert.deepEqual(await m.readDerived('early'),expected);
+ });
+});
+test('failure after staged publication settles completion without losing previous rows',async()=>{
+ const db=database();await write('candidate',db,'a',data(1),10);const before=structuredClone(db.stores);
+ db.failPut=(store,row)=>store==='stage-times'&&row.key==='early';
+ await use('candidate',db,async m=>{const staged=await m.beginDerivedWrite('early',data(2));assert(staged);assert.equal(await staged.completion,false);});
+ assert.deepEqual(db.stores,before);assert.equal(db.aborts,1);
 });
