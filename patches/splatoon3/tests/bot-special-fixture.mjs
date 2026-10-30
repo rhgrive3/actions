@@ -97,4 +97,3 @@ export async function makeBotSpecialFixture() {
   }
   return { ...f, make, brain, aim, tick, scenario, events, rounds };
 }
-
