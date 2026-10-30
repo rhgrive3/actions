@@ -7,22 +7,33 @@ const INSTALLED = Symbol.for('inkwave.paint-dry-regions.v1');
 const KEY = '_iwPaintDryRegions';
 const MAX_RECTS = 128;
 
+function supportedDryTarget(paint) {
+  const m=paint.dryMesh?.material,tex=paint.rt?.texture;
+  return !!paint.rt&&paint.rt.width===paint.size&&paint.rt.height===paint.size&&
+    tex?.type===THREE.UnsignedByteType&&tex.format===THREE.RGBAFormat&&tex.colorSpace===THREE.NoColorSpace&&paint.rt.samples===0&&
+    !paint.rt.scissorTest&&paint.rt.viewport.x===0&&paint.rt.viewport.y===0&&
+    paint.rt.viewport.z===paint.size&&paint.rt.viewport.w===paint.size&&
+    m?.fragmentShader==='precision highp float; uniform float uDry; void main() { gl_FragColor = vec4(0.0, uDry, 0.0, 0.0); }'&&
+    m.vertexShader==='void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }'&&
+    m.onBeforeCompile===THREE.Material.prototype.onBeforeCompile&&m.onBeforeRender===THREE.Material.prototype.onBeforeRender&&
+    m.blending===THREE.CustomBlending&&m.transparent&&!m.depthTest&&!m.depthWrite&&m.colorWrite&&
+    !m.premultipliedAlpha&&!m.alphaTest&&!m.alphaToCoverage&&!m.wireframe&&
+    m.blendEquation===THREE.ReverseSubtractEquation&&m.blendSrc===THREE.OneFactor&&
+    m.blendDst===THREE.OneFactor&&m.blendEquationAlpha===THREE.AddEquation&&
+    m.blendSrcAlpha===THREE.ZeroFactor&&m.blendDstAlpha===THREE.OneFactor;
+}
 
 function allocate(paint) {
-  if(paint.level?.native)return null; // Native-stage texture ownership is a separate, unmodified path.
   const original=paint.dryMesh?.geometry;
   const p=original?.attributes?.position;
-  const m=paint.dryMesh?.material,tex=paint.rt?.texture;
+  const m=paint.dryMesh?.material;
   // This zero-wetness optimization is valid only for the canonical UNORM8
   // subtractive dry pass, never an unknown shader or floating-point atlas.
-  if(!p || !paint.rt || paint.rt.width!==paint.size || paint.rt.height!==paint.size ||
-     tex?.type!==THREE.UnsignedByteType || tex.format!==THREE.RGBAFormat || paint.rt.samples!==0 ||
-     !m?.fragmentShader?.includes('vec4(0.0, uDry, 0.0, 0.0)') ||
-     m.blendEquation!==THREE.ReverseSubtractEquation || m.blendSrc!==THREE.OneFactor ||
-     m.blendDst!==THREE.OneFactor || m.blendEquationAlpha!==THREE.AddEquation ||
-     m.blendSrcAlpha!==THREE.ZeroFactor || m.blendDstAlpha!==THREE.OneFactor)return null;
-  let top=-Infinity;
-  for(let i=0;i<p.count;i++)top=Math.max(top,p.getY(i));
+  if(!p||!supportedDryTarget(paint))return null;
+  const originalIndices=original.index?.array,order=[0,1,2,0,2,3],top=p.getY(2);
+  if(p.count!==4||p.itemSize!==3||originalIndices?.length!==6||!Number.isFinite(top)||top< -1||top>1||
+     order.some((value,i)=>originalIndices[i]!==value))return null;
+  for(let i=0;i<4;i++)if(p.getX(i)!==(i===1||i===2?1:-1)||p.getY(i)!==(i<2?-1:top)||p.getZ(i)!==0)return null;
   const tracker=new PaintDryRegions(paint.size,top);
   const positions=new Float32Array(MAX_RECTS*12);
   const indices=new Uint16Array(MAX_RECTS*6);
@@ -58,9 +69,10 @@ function selectDryGeometry(paint,state){
   }
   paint.dryMesh.geometry=state.geometry;
 }
-function release(paint){
+function release(paint,retireOriginal=false){
   const s=paint[KEY];if(!s)return;
   if(paint.dryMesh?.geometry===s.geometry)paint.dryMesh.geometry=s.original;
+  else if(retireOriginal&&paint.dryMesh?.geometry!==s.original)s.original.dispose();
   s.geometry.dispose();delete paint[KEY];
 }
 export function installPaintDryRegions(PaintSystem) {
@@ -75,13 +87,24 @@ export function installPaintDryRegions(PaintSystem) {
     const result=clear.apply(this,args);this[KEY]?.tracker.reset();return result;
   };
   P._drawQuads=function(...args){
-    const s=this[KEY];
+    let s=this[KEY];
     if(!s || globalThis.document?.hidden || (!this.quads&&!this.dryMesh.visible))return draw.apply(this,args);
     // Unexpected target replacement is not a license to discard unknown ink.
-    if(s.target!==this.rt || this.rt.width!==s.tracker.size || this.rt.height!==s.tracker.size ||
+    if(!supportedDryTarget(this)||s.target!==this.rt || this.rt.width!==s.tracker.size || this.rt.height!==s.tracker.size ||
        (this.dryMesh.material!==s.material)||this.dryMesh.material.vertexShader!==s.vertexShader||this.dryMesh.material.fragmentShader!==s.fragmentShader||
        (this.dryMesh.geometry!==s.original&&this.dryMesh.geometry!==s.geometry)){
-      release(this);return draw.apply(this,args);
+      // Native quality changes resample the old atlas into a new target and
+      // replace the drying quad without running _initGPU. Its wet pixels are
+      // unknown here: dry the complete canonical region for a full wetness
+      // lifetime, then resume sparse tracking. Never treat a transferred
+      // atlas as newly empty or retain a retired target's geometry.
+      const transferred=!!this.level?.native&&(s.target!==this.rt||
+        this.rt.width!==s.tracker.size||this.rt.height!==s.tracker.size);
+      release(this,transferred);
+      if(!transferred||!(s=allocate(this)))return draw.apply(this,args);
+      this[KEY]=s;
+      const t=s.tracker;
+      t.markPositions(new Float32Array([-1,-1,1,-1,1,1,-1,1]),1,0);
     }
     const t=s.tracker, drying=this.dryMesh.visible;
     if(drying&&(!Number.isFinite(this._dryU?.uDry?.value)||this._dryU.uDry.value<0)){release(this);return draw.apply(this,args);}

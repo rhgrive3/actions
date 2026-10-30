@@ -1,0 +1,166 @@
+{
+ "diagnostic": {
+  "queryBlocksBand": {
+   "calls": 1137,
+   "rawCellEntries": 1511487,
+   "maxRawCellEntries": 9050,
+   "returned": 584268,
+   "maxReturned": 4812
+  },
+  "paintDraws": 600,
+  "paintQuads": 553031,
+  "dryDraws": 200,
+  "footprintCalls": 8709,
+  "canonicalRayPreserved": true,
+  "canonicalRaycastPreserved": true
+ },
+ "stage": "robo",
+ "hz": 60,
+ "frames": 600,
+ "ticks": 600,
+ "msPerTick": 19.212833333333254,
+ "frameMs": {
+  "mean": 19.212833333333254,
+  "p50": 16.5,
+  "p95": 40.5,
+  "p99": 51.199999999953434,
+  "max": 78.19999999995343
+ },
+ "bvh": {
+  "queriesPerTick": 300.83,
+  "triangleTestsPerTick": 5809.341666666666,
+  "triangles": 107020
+ },
+ "roster": "shooter s3-saber-lite-02 s3-charger-keeper s3-shooter-blaze-01 blaster s3-shooter-triplemiddle-02 s3-blaster-lightlong s3-stringer-normal-02",
+ "digest": 3691437686,
+ "paint": {
+  "atlas": 2048,
+  "ppm": 4,
+  "faces": 23685
+ },
+ "mobile": false,
+ "quality": "low",
+ "categories": {
+  "match.update": {
+   "msPerTick": 9.535,
+   "callsPerTick": 1
+  },
+  "actor.update": {
+   "msPerTick": 8.576,
+   "callsPerTick": 8
+  },
+  "character.update": {
+   "msPerTick": 6.248,
+   "callsPerTick": 8
+  },
+  "paint.advanceSimulation": {
+   "msPerTick": 5.215,
+   "callsPerTick": 1
+  },
+  "paint._advanceSplatOwnership": {
+   "msPerTick": 3.326,
+   "callsPerTick": 32.6
+  },
+  "paint._emitGrowth": {
+   "msPerTick": 1.417,
+   "callsPerTick": 35.2
+  },
+  "projectiles.update": {
+   "msPerTick": 1.2,
+   "callsPerTick": 1
+  },
+  "bot.update": {
+   "msPerTick": 0.796,
+   "callsPerTick": 7
+  },
+  "paint.splat": {
+   "msPerTick": 0.672,
+   "callsPerTick": 1.3
+  },
+  "fx.update": {
+   "msPerTick": 0.564,
+   "callsPerTick": 1
+  },
+  "paint.coverage": {
+   "msPerTick": 0.511,
+   "callsPerTick": 1
+  },
+  "actor._resolve": {
+   "msPerTick": 0.426,
+   "callsPerTick": 8
+  },
+  "paint._drawQuads": {
+   "msPerTick": 0.416,
+   "callsPerTick": 2
+  },
+  "physics.groundProbe": {
+   "msPerTick": 0.349,
+   "callsPerTick": 14.5
+  },
+  "physics.segment": {
+   "msPerTick": 0.336,
+   "callsPerTick": 57.7
+  },
+  "bvh.rayDownBatch": {
+   "msPerTick": 0.301,
+   "callsPerTick": 14.5
+  },
+  "bvh.queryBox": {
+   "msPerTick": 0.292,
+   "callsPerTick": 21.5
+  },
+  "bvh.sweepSphere": {
+   "msPerTick": 0.225,
+   "callsPerTick": 6.3
+  },
+  "paint.regionStats": {
+   "msPerTick": 0.207,
+   "callsPerTick": 1.2
+  },
+  "bot._pickPaintGoal": {
+   "msPerTick": 0.139,
+   "callsPerTick": 0
+  },
+  "physics.collideBody": {
+   "msPerTick": 0.135,
+   "callsPerTick": 8
+  },
+  "physics.cameraProbe": {
+   "msPerTick": 0.1,
+   "callsPerTick": 1
+  },
+  "paint.sample": {
+   "msPerTick": 0.053,
+   "callsPerTick": 14.5
+  },
+  "bot._edgeGuard": {
+   "msPerTick": 0.034,
+   "callsPerTick": 6.2
+  },
+  "level.containsFaceUV": {
+   "msPerTick": 0.034,
+   "callsPerTick": 14.5
+  },
+  "level.containsOnFace": {
+   "msPerTick": 0.022,
+   "callsPerTick": 14.5
+  },
+  "nav.path": {
+   "msPerTick": 0.017,
+   "callsPerTick": 0
+  },
+  "physics.bodyFits": {
+   "msPerTick": 0.003,
+   "callsPerTick": 0.1
+  },
+  "nav.nearest": {
+   "msPerTick": 0.001,
+   "callsPerTick": 0.1
+  }
+ },
+ "spikes": [],
+ "spikeCount": 0,
+ "browser": "chromium",
+ "site": "site-after",
+ "observerScope": "Caller timers and existing BVH counters; canonical raycast/ray identities retained"
+}

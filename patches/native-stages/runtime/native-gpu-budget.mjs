@@ -31,11 +31,18 @@ export function recordNativeContextLoss(store = storage(), now = Date.now()) {
   return tier;
 }
 
-/** Upper bounds applied on top of the user's effective quality preset. */
+/** Native-stage bounds applied on top of the user's effective preset. */
 export function nativeRenderCaps({ mobile = false, tier = 0 } = {}) {
   const caps = { ao: false, msaa: 2 };
-  if (!mobile) caps.pixelRatio = 1.25;
-  if (tier >= 1) Object.assign(caps, { msaa: 0, bloom: false, pixelRatio: 1, shadowSize: 2048, paintAtlas: 2048 });
+  if (mobile) {
+    // Source meshes remain much denser than the authored lightweight arenas.
+    // One physical render pixel per CSS pixel avoids 1.2^2 (iOS) / 1.35^2
+    // (other touch) full-scene shading. Shadow size and water-reflection work
+    // are also bounded from the first match, before a context loss is needed.
+    Object.assign(caps, { pixelRatio: 1, msaa: 0, bloom: false, shadowSize: 1024,
+      paintAtlas: 2048, reflectionScale: 0.1, reflectionInterval: 4, reflectionActors: false });
+  } else caps.pixelRatio = 1.25;
+  if (tier >= 1) Object.assign(caps, { msaa: 0, bloom: false, pixelRatio: 1, shadowSize: mobile ? 1024 : 2048, paintAtlas: 2048 });
   if (tier >= 2) Object.assign(caps, { pixelRatio: 0.75, shadowSize: 1024 });
   return Object.freeze(caps);
 }
@@ -69,15 +76,17 @@ export function nativeCompressedTextureSupport(renderer) {
 }
 
 /**
- * Texture quality and caps for one native load. Touch devices start one step
- * lower unless the stage ships KTX2 and this GPU receives it compressed; the
- * uncompressed touch budget then stays attached as `caps.fallback` for any
- * image that has to be decoded from its source PNG instead.
+ * Texture quality and caps for one native load. GPU compression reduces
+ * storage, not the per-fragment cost of normal/roughness/emissive maps. Keep
+ * ordinary touch High on the albedo/opacity profile; explicit Ultra can opt
+ * back into compressed detail maps. A compressed touch load always retains
+ * the PNG fallback budget and its idle-decoder retirement lifecycle.
  */
 export function nativeTextureProfile({ settingsQuality, tier = 0, touch = false, compressed = false, stageCaps }) {
   const relief = touch && compressed;
-  const quality = nativeTextureQuality(settingsQuality, tier, touch && !relief);
-  const caps = nativeTierTextureCaps(stageCaps(quality), tier, touch && !relief);
+  const textureTouch = touch && !(relief && settingsQuality === 'ultra');
+  const quality = nativeTextureQuality(settingsQuality, tier, textureTouch);
+  const caps = nativeTierTextureCaps(stageCaps(quality), tier, textureTouch);
   if (!relief) return { quality, caps, textureTouch: touch };
   const fallbackQuality = nativeTextureQuality(settingsQuality, tier, true);
   const fallback = { quality: fallbackQuality, ...nativeTierTextureCaps(stageCaps(fallbackQuality), tier, true) };
@@ -108,7 +117,9 @@ export function capQuality(q, caps) {
     out = { ...q };
     for (const [name, limit] of Object.entries(caps)) {
       if (!(name in out)) continue;
-      out[name] = typeof limit === 'boolean' ? out[name] && limit : Math.min(out[name], limit);
+      // A reflection interval is a minimum frame gap; sizes/density are maxima.
+      out[name] = typeof limit === 'boolean' ? out[name] && limit :
+        name === 'reflectionInterval' ? Math.max(out[name], limit) : Math.min(out[name], limit);
     }
     byCaps.set(key, out = Object.freeze(out));
   }

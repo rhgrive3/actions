@@ -33,7 +33,7 @@ test('default native caps remove the second full-scene GTAO pass and bound the H
   assert.equal(capQuality(LOW, nativeRenderCaps({ tier: 0 })).pixelRatio, 0.75, 'caps never raise a value');
   assert.equal(capQuality(LOW, nativeRenderCaps({ tier: 0 })).ao, false);
   const mobile = { ...HIGH, pixelRatio: 1.2, msaa: 0, ao: false, bloom: false };
-  assert.equal(capQuality(mobile, nativeRenderCaps({ mobile: true, tier: 0 })).pixelRatio, 1.2, 'touch keeps its existing cap at tier 0');
+  assert.equal(capQuality(mobile, nativeRenderCaps({ mobile: true, tier: 0 })).pixelRatio, 1, 'native touch renders at no more than one pixel per CSS pixel');
   const t1 = capQuality(HIGH, nativeRenderCaps({ tier: 1 })), t2 = capQuality(HIGH, nativeRenderCaps({ tier: 2 }));
   assert.deepEqual([t1.msaa, t1.bloom, t1.pixelRatio, t1.shadowSize, t1.paintAtlas], [0, false, 1, 2048, 2048]);
   assert.deepEqual([t2.pixelRatio, t2.shadowSize], [0.75, 1024]);

@@ -1,0 +1,5344 @@
+{
+  "schema": 1,
+  "baselineCommit": "23cb6847ab38466adf735ee5dd6da789701490dd",
+  "baselineBudgetSha256": "c8639385b286647d959f5505560b603cb5f68e8660a96d5d56c38b4453d3ad34",
+  "candidateBudgetSha256": "90e7d1f3ccc5707fc7127377e43d4b8d90b4aba364fb17b6b0c193d20b482961",
+  "triangleWorldSha256": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+  "base": "23cb6847ab38466adf735ee5dd6da789701490dd",
+  "stageCount": 23,
+  "unavailable": [
+    {
+      "id": "lemuria",
+      "reason": "公開モデルが見つからないため、現在プレイできません。"
+    },
+    {
+      "id": "mahi",
+      "reason": "固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+    }
+  ],
+  "limits": [
+    "All converted geometry arrays verified against manifest SHA256; no original OBJ/MTL/PNG fetched.",
+    "Serialized/derived-array sizes are not total process RAM or GPU VRAM; JS objects, driver copies, decoded upload peaks and shared backing stores differ.",
+    "4x4 GPU-block estimate assumes16bytes/block across mip chain (BC7/ASTC4x4/etc); actual device target not measured.",
+    "Texture jobs emulate active-material last-role loading semantics; source/runtime pixel equality not assessed here."
+  ],
+  "rows": [
+    {
+      "id": "scorch",
+      "name": "ユノハナ大渓谷",
+      "stageRecordSha256": "d14cd264528bf241704934bcf1d974f847badd3cbcffc5529af2c95ccba1a575",
+      "geometry": {
+        "vertices": 319113,
+        "triangles": 279299,
+        "collisionTriangles": 133737,
+        "bvhNodes": 32767,
+        "paintFaces": 45171
+      },
+      "allMaterials": 97,
+      "activeObjects": 100,
+      "faces": 45171,
+      "emptyFaces": 0,
+      "maskCells": 1469898,
+      "liveCells": 609529,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 9,
+        "max": 48
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 176,
+        "max": 1116
+      },
+      "serializedArraysMiB": 32.555,
+      "retainedCollisionAndMaskMiB": 10.832,
+      "nativeInkAttributeMiB": 12.248,
+      "nativeInkIndexMiB": 0.803,
+      "arrayBytes": {
+        "triangles": 4814532,
+        "normals": 1604844,
+        "flags": 534948,
+        "objectIds": 534948,
+        "nodes": 1048544,
+        "order": 534948,
+        "vertices": 10211616,
+        "indices": 3351588,
+        "mask": 1469898,
+        "triangleFace": 534948,
+        "faceTriangles": 280716,
+        "faceF64": 8311464,
+        "faceI32": 722736,
+        "faceTriangleOffsets": 180688
+      },
+      "arrayHashes": {
+        "triangles": "a88b07b136a415da2a686098b6094b8ca79168ce2bd1b38fa47fc4f6a587e45f",
+        "normals": "24c6df661c38edabbcfc4d4b9da1186c55c4bd4d0301767fcd944272c141e605",
+        "flags": "829dda3305699baeb1302a6ebba7b7173e9d5cc645c8ffb4a697e8256b9ba1e3",
+        "objectIds": "f5aa6694e6441d5d6114fedb5bff111c10f5b42c374cffb7e005f418b6de7865",
+        "nodes": "c256de7775b922f418b476f971e25e95642845dc4539924e9bb50390f0553b71",
+        "order": "36a53cc0faf62fa462828b51301c789b6add259d3d613bf505dac3bc5eb518ec",
+        "vertices": "6b3a5553bca96325739458bda929d98162ffec171ca9027f628fc42a05c020f1",
+        "indices": "5b1b09b385449222d67469610144f7bd43e021282a8e7cee86753c385398b7e6",
+        "mask": "aaef5f98e15bdfa2290be3f4fe86e2c08676c78142a324135fc7ea3e42e3d390",
+        "triangleFace": "6493204be44947184cdf7ad21373d45d9a6939550f7d6fb490e56662a289628c",
+        "faceTriangles": "d6ac47ff4a70548c57c18a4ceff942ed5cdb22f035a7d53fbc1e96a039a49647",
+        "faceF64": "c9573c7e616f4fc1c1a2ac33ad81e6bc8801c33277efec7e57055bf2a91c3da1",
+        "faceI32": "61f064e223636390fe72be33d2ce806519acc3fd0b21f1667c4f0def94de56cb",
+        "faceTriangleOffsets": "19bafe17f7d062bf3d8855150976f32feee0b7d19cc4a370cd0d1b8c061fc716"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 402,
+        "triangleTests": 18897,
+        "inputSha256": "443e2a53f5eff24db58892bf4d51137627d6af3cb32a10363286a9722fe57264"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 97,
+        "jobs": 235,
+        "details": 154,
+        "roles": {
+          "albedo": 75,
+          "normal": 77,
+          "roughness": 75,
+          "opacity": 6,
+          "emissive": 2
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 146.971,
+        "block4x4MipEstimateMiB": 36.751
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 97,
+          "jobs": 81,
+          "details": 0,
+          "roles": {
+            "albedo": 75,
+            "opacity": 6
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 102.077,
+          "block4x4MipEstimateMiB": 25.523
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 97,
+          "jobs": 81,
+          "details": 0,
+          "roles": {
+            "albedo": 75,
+            "opacity": 6
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 102.077,
+          "block4x4MipEstimateMiB": 25.523
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 97,
+          "jobs": 81,
+          "details": 0,
+          "roles": {
+            "albedo": 75,
+            "opacity": 6
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 102.077,
+          "block4x4MipEstimateMiB": 25.523
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 97,
+          "jobs": 81,
+          "details": 0,
+          "roles": {
+            "albedo": 75,
+            "opacity": 6
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 77.394,
+          "block4x4MipEstimateMiB": 19.352
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 97,
+          "jobs": 81,
+          "details": 0,
+          "roles": {
+            "albedo": 75,
+            "opacity": 6
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 102.077,
+          "block4x4MipEstimateMiB": 25.523
+        }
+      ]
+    },
+    {
+      "id": "hagglefish",
+      "name": "ヤガラ市場",
+      "stageRecordSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+      "geometry": {
+        "vertices": 356466,
+        "triangles": 246063,
+        "collisionTriangles": 163625,
+        "bvhNodes": 32767,
+        "paintFaces": 65827
+      },
+      "allMaterials": 135,
+      "activeObjects": 135,
+      "faces": 65827,
+      "emptyFaces": 0,
+      "maskCells": 1401174,
+      "liveCells": 861089,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 6,
+        "max": 66
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 189,
+        "max": 2650
+      },
+      "serializedArraysMiB": 39.172,
+      "retainedCollisionAndMaskMiB": 12.671,
+      "nativeInkAttributeMiB": 15.908,
+      "nativeInkIndexMiB": 1.043,
+      "arrayBytes": {
+        "triangles": 5890500,
+        "normals": 1963500,
+        "flags": 654500,
+        "objectIds": 654500,
+        "nodes": 1048544,
+        "order": 654500,
+        "vertices": 11406912,
+        "indices": 2952756,
+        "mask": 1401174,
+        "triangleFace": 654500,
+        "faceTriangles": 364604,
+        "faceF64": 12112168,
+        "faceI32": 1053232,
+        "faceTriangleOffsets": 263312
+      },
+      "arrayHashes": {
+        "triangles": "7d546a835feeed1e14be93d1cba589fafafd516058374adfe2c6fa3d0048bb58",
+        "normals": "18c3b70045f86e87e1e9453773d0742fc884ae3bc226dbaea1e06ba3728d3cc1",
+        "flags": "45c538feb023d9ccbe892898c0316581fb43a89648d46f1db6290d3087262377",
+        "objectIds": "2d9b424f314322670d5aa538383c2f0eb689e7076d2f2f55b0e4746ca23cd892",
+        "nodes": "a35012b414de9e1cd52812b18c70bddf84feaa14334ef854f1d4cbac14c904c7",
+        "order": "e5e6bc668f17815fedf3224006456021a530683274cf108e19ef7711f662aaad",
+        "vertices": "407d902f37c8cc3aae7f2646a17cc6ccc14812fd1487ad74dabdc2131a986c7a",
+        "indices": "cb48b929d893d37021ca8a4e3f1646e48be69d123420bc73a99ff99df876d718",
+        "mask": "a67ffad743393644ef8f8e9df25c4e533620d17bc107bdd84a3ac8f2d2209e75",
+        "triangleFace": "77fa5f23810cb2f9044956c3f706e2e09fe633a8407e7e2882008f6da3f360ba",
+        "faceTriangles": "8fd15b5e9f574981e3bdbc10d788a2aa076e2d946c6ec2f05d7102c5070073fc",
+        "faceF64": "6567552673362f0e7b973b75047a8d4a2ce56b88d3bd179679ed96d655897bcf",
+        "faceI32": "7e28f873d6190d14ebbdf2e212fb53a7c546350346bdc26f794b45cc4f725dad",
+        "faceTriangleOffsets": "28cd04b7806e2f00b461f4bf60705105cf678262de2946409409883cbb49ae37"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 453,
+        "triangleTests": 20921,
+        "inputSha256": "9963fe1baa8fc906ab2061214e84f381598719c7a9ab9ee6ec7003ba4f029c56"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 135,
+        "jobs": 298,
+        "details": 190,
+        "roles": {
+          "albedo": 95,
+          "opacity": 13,
+          "emissive": 21,
+          "normal": 86,
+          "roughness": 83
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 156.687,
+        "block4x4MipEstimateMiB": 39.188
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 135,
+          "jobs": 108,
+          "details": 0,
+          "roles": {
+            "albedo": 95,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 106.496,
+          "block4x4MipEstimateMiB": 26.632
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 135,
+          "jobs": 108,
+          "details": 0,
+          "roles": {
+            "albedo": 95,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 106.496,
+          "block4x4MipEstimateMiB": 26.632
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 135,
+          "jobs": 108,
+          "details": 0,
+          "roles": {
+            "albedo": 95,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 106.496,
+          "block4x4MipEstimateMiB": 26.632
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 135,
+          "jobs": 108,
+          "details": 0,
+          "roles": {
+            "albedo": 95,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 104.339,
+          "block4x4MipEstimateMiB": 26.091
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 135,
+          "jobs": 108,
+          "details": 0,
+          "roles": {
+            "albedo": 95,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 106.496,
+          "block4x4MipEstimateMiB": 26.632
+        }
+      ]
+    },
+    {
+      "id": "inkblot",
+      "name": "海女美術大学",
+      "stageRecordSha256": "f53cb373d8cb80edee31c532f2df8f528321cc4549a38274a7c85672c9f398c0",
+      "geometry": {
+        "vertices": 299938,
+        "triangles": 205075,
+        "collisionTriangles": 132645,
+        "bvhNodes": 32767,
+        "paintFaces": 22429
+      },
+      "allMaterials": 103,
+      "activeObjects": 123,
+      "faces": 22429,
+      "emptyFaces": 0,
+      "maskCells": 2058406,
+      "liveCells": 1094865,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 6,
+        "max": 40
+      },
+      "liveChartCells": {
+        "median": 3,
+        "p99": 921,
+        "max": 13574
+      },
+      "serializedArraysMiB": 27.042,
+      "retainedCollisionAndMaskMiB": 11.178,
+      "nativeInkAttributeMiB": 5.456,
+      "nativeInkIndexMiB": 0.358,
+      "arrayBytes": {
+        "triangles": 4775220,
+        "normals": 1591740,
+        "flags": 530580,
+        "objectIds": 530580,
+        "nodes": 1048544,
+        "order": 530580,
+        "vertices": 9598016,
+        "indices": 2460900,
+        "mask": 2058406,
+        "triangleFace": 530580,
+        "faceTriangles": 125052,
+        "faceF64": 4126936,
+        "faceI32": 358864,
+        "faceTriangleOffsets": 89720
+      },
+      "arrayHashes": {
+        "triangles": "2fc806b3b7f8c2a284ff004a310a4cbcd3802e101ce5474ff1997037f598bb80",
+        "normals": "dc7fd3439136a3881bf7e05c9df8dc2ed70a048497b331878b804c921bfaa801",
+        "flags": "a427cf2b9f090b419af0f42a1f977ddde02365ccf335b3c5534216ab2ca777fc",
+        "objectIds": "6a5d3ce233900191bc0b75e9844d2ff1309bd70e1466c7c57e8f026c89990b6d",
+        "nodes": "8afc7edea50078a712b12a8bb5b124ae85ba1f4500fc6c074afa8dcfd7d5f663",
+        "order": "38a2a95b4de1db6f2aa3d4d497e2e70b5f9cc158cd4a47e995e21e47d04fbec8",
+        "vertices": "3d8c8097f2cadb7fb2ecbd83b695feda0cee74273a936760e1a1a023117f72ec",
+        "indices": "9e276391c7256c3ad116a1cecf1ba5a45caad26457f7ab429a67245a4e997aec",
+        "mask": "109af27dff00b9a9838a6069e147560d1b5bdfd9c0017435abfbd77ca71fc78e",
+        "triangleFace": "d4e315bb05c9b01c81d19ab9e15cbba81cf99af0d1d6f887209a693ff1581db9",
+        "faceTriangles": "4bee99df3db595f64fe842a648617b4ffbd29031523377c9df76a37a106f9939",
+        "faceF64": "a231a64a1c08ba64d2e76ecfd23054c5397a5391ee761d63fa884dd44fbe9498",
+        "faceI32": "8a669c69802e4e88278dfc491de6bc0913e2f14d7d225a5db54dc24c5cb902cb",
+        "faceTriangleOffsets": "a485842c80b12f7b59887e5db708ab298078b8a4c63e05e991b2ae68b8b378c3"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 484,
+        "triangleTests": 18609,
+        "inputSha256": "35ea674e9903bdfd2c99046010383726d5f8896555f2dc47bbbc9fffa3f7b837"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 103,
+        "jobs": 223,
+        "details": 129,
+        "roles": {
+          "albedo": 67,
+          "opacity": 27,
+          "normal": 65,
+          "roughness": 54,
+          "emissive": 10
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 201.099,
+        "block4x4MipEstimateMiB": 50.285
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 103,
+          "jobs": 94,
+          "details": 0,
+          "roles": {
+            "albedo": 67,
+            "opacity": 27
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 166.16,
+          "block4x4MipEstimateMiB": 41.544
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 103,
+          "jobs": 94,
+          "details": 0,
+          "roles": {
+            "albedo": 67,
+            "opacity": 27
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 166.16,
+          "block4x4MipEstimateMiB": 41.544
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 103,
+          "jobs": 94,
+          "details": 0,
+          "roles": {
+            "albedo": 67,
+            "opacity": 27
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 166.16,
+          "block4x4MipEstimateMiB": 41.544
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 103,
+          "jobs": 94,
+          "details": 0,
+          "roles": {
+            "albedo": 67,
+            "opacity": 27
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 92.352,
+          "block4x4MipEstimateMiB": 23.092
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 103,
+          "jobs": 94,
+          "details": 0,
+          "roles": {
+            "albedo": 67,
+            "opacity": 27
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 166.16,
+          "block4x4MipEstimateMiB": 41.544
+        }
+      ]
+    },
+    {
+      "id": "mako",
+      "name": "ザトウマーケット",
+      "stageRecordSha256": "78f4ab9f662308e2ead49e5ba31ecf72c0eb9abf40adcbe71f20c79356606990",
+      "geometry": {
+        "vertices": 501429,
+        "triangles": 310038,
+        "collisionTriangles": 151620,
+        "bvhNodes": 32767,
+        "paintFaces": 51216
+      },
+      "sourceGeometry": {
+        "vertices": 602231,
+        "triangles": 343399,
+        "collisionTriangles": 151620,
+        "bvhNodes": 32767,
+        "paintFaces": 51216
+      },
+      "allMaterials": 132,
+      "activeObjects": 146,
+      "faces": 51216,
+      "emptyFaces": 0,
+      "maskCells": 3190694,
+      "liveCells": 1374245,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 10,
+        "max": 96
+      },
+      "liveChartCells": {
+        "median": 1,
+        "p99": 503,
+        "max": 4528
+      },
+      "serializedArraysMiB": 42.445,
+      "retainedCollisionAndMaskMiB": 13.63,
+      "nativeInkAttributeMiB": 15.252,
+      "nativeInkIndexMiB": 1,
+      "arrayBytes": {
+        "triangles": 5458320,
+        "normals": 1819440,
+        "flags": 606480,
+        "objectIds": 606480,
+        "nodes": 1048544,
+        "order": 606480,
+        "vertices": 16045728,
+        "indices": 3720456,
+        "mask": 3190694,
+        "triangleFace": 606480,
+        "faceTriangles": 349572,
+        "faceF64": 9423744,
+        "faceI32": 819456,
+        "faceTriangleOffsets": 204868
+      },
+      "arrayHashes": {
+        "triangles": "f37d423fc7d61a5a6c382974c2d42db8806b6cae6e1e56e1ea308b21b906bb32",
+        "normals": "457913a4a0cb56b827e4f3df304c05662304ddd6395e1458d00752975de595aa",
+        "flags": "7ef8761f0868b267c604571a232ac30d219165d4ec4404a3c307e8e541da4473",
+        "objectIds": "400f43c5c30c1540d6c343282ad68d6dd344a44293c3911aa9440e1fed7985c1",
+        "nodes": "96c63f62a511033b74e13730e2a0506bb2853fce6b90e6428c641b0124a5d251",
+        "order": "f9d4e810015ec1effd456e39796815221cb4ff6b92ed4b4fe17aa3c7fc8ceacd",
+        "vertices": "2298c606bb51a513ed16720be524713ae7833b18c0729dbb856be06a877a1455",
+        "indices": "6a5ffe92ce6b5fc879fe7ea9a27fa0fae542b660a6dcf1da8f4efabc6bf628a9",
+        "mask": "f225f48bcdf3a751a527aa6a2b224fa5750e62248f15cd389d0b36f9500c9640",
+        "triangleFace": "9757df8b03ba665cc4913d631c89f686f517f8b91051bef316932c8e53f87e60",
+        "faceTriangles": "a481fe65932bdf246e42d37438d1c0f70d8e7dcb6490ded0d3550b30128e5ff3",
+        "faceF64": "e6525fbd53cd54b3ba3e2ccdbf5c760a6f10136e3d2b56aa3d34dbe5d3630227",
+        "faceI32": "565388ba57bb9d49d3e6e201d37cb3599af67bd83da0d9f1484f16ab79535ef6",
+        "faceTriangleOffsets": "fc4a999b99fc8fbc1f1755879feef52c6a69b96426b3c48a9825698391e0ee83"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 508,
+        "triangleTests": 23314,
+        "inputSha256": "5b89cfa86587b8d770f5bcb4a9f1020d8dbf404db3302a3871fdba6d6baf79d4"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 132,
+        "jobs": 195,
+        "details": 122,
+        "roles": {
+          "albedo": 58,
+          "normal": 54,
+          "roughness": 55,
+          "emissive": 13,
+          "opacity": 15
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 170.957,
+        "block4x4MipEstimateMiB": 42.748
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 132,
+          "jobs": 73,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 137.494,
+          "block4x4MipEstimateMiB": 34.377
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 132,
+          "jobs": 73,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 137.494,
+          "block4x4MipEstimateMiB": 34.377
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 132,
+          "jobs": 73,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 137.494,
+          "block4x4MipEstimateMiB": 34.377
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 132,
+          "jobs": 73,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 69.311,
+          "block4x4MipEstimateMiB": 17.331
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 132,
+          "jobs": 73,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 137.494,
+          "block4x4MipEstimateMiB": 34.377
+        }
+      ]
+    },
+    {
+      "id": "brinewater",
+      "name": "クサヤ温泉",
+      "stageRecordSha256": "a3dce203f289f532fd71f0422015f6e6ff30484adda50aa0e40f9d407a8af4c9",
+      "geometry": {
+        "vertices": 433565,
+        "triangles": 354463,
+        "collisionTriangles": 157826,
+        "bvhNodes": 32767,
+        "paintFaces": 62213
+      },
+      "sourceGeometry": {
+        "vertices": 510342,
+        "triangles": 405943,
+        "collisionTriangles": 157826,
+        "bvhNodes": 32767,
+        "paintFaces": 62213
+      },
+      "allMaterials": 221,
+      "activeObjects": 228,
+      "faces": 62213,
+      "emptyFaces": 0,
+      "maskCells": 4927794,
+      "liveCells": 2001104,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 12,
+        "max": 157
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 703,
+        "max": 3528
+      },
+      "serializedArraysMiB": 45.16,
+      "retainedCollisionAndMaskMiB": 15.769,
+      "nativeInkAttributeMiB": 19.969,
+      "nativeInkIndexMiB": 1.309,
+      "arrayBytes": {
+        "triangles": 5681736,
+        "normals": 1893912,
+        "flags": 631304,
+        "objectIds": 631304,
+        "nodes": 1048544,
+        "order": 631304,
+        "vertices": 13874080,
+        "indices": 4253556,
+        "mask": 4927794,
+        "triangleFace": 631304,
+        "faceTriangles": 457688,
+        "faceF64": 11447192,
+        "faceI32": 995408,
+        "faceTriangleOffsets": 248856
+      },
+      "arrayHashes": {
+        "triangles": "34b6bbe6f9ff9d24c6c60285166c56329b6bef23994cf4b799370f7f2c8c4640",
+        "normals": "d7833af49ab6cdb97b875187b52129b44225e1289fc46ec664d6ee15d9358614",
+        "flags": "bd8631e8a3bada542de49b328123c4c8cef66d27ef27de7ee4faa61f7dca44a8",
+        "objectIds": "4de78245b46ed251d6f8b4338bb3ab615f714675d8cc701b0a4fca8ffed279d1",
+        "nodes": "076ecefd4134d6718887750266116ecef3d82637d5bd48e1fed5fecdbcbb02dd",
+        "order": "79b877c1b3485f919f0c0e4f4d53b7c5555f5a0695086347b0cacf24307eadb4",
+        "vertices": "e0da9d90dc79cf060371ad4292d09516880221d6fec7554e00b05af9ac4f5078",
+        "indices": "ec7d0d5a4293d5b052ba4f6e8c8a27cb88deca65dce63733c54841c55e7192db",
+        "mask": "3813784e1a4311658e20cb05192be54fc716082c5d188c97c4c3ac24b2a17d37",
+        "triangleFace": "3c2dc9c44deb85820bb736696e76a31ea12c196db0c07d3a079118add4c5896a",
+        "faceTriangles": "6933dbf57cdd0d484bc8b261c5aa1db636d0a3e9b117b71e5b785284ae421f6c",
+        "faceF64": "692a5b55e5929d4fdd49a4476044a2d045a4e87a3762966356c030ecf0681076",
+        "faceI32": "28d8818d04824b73c65d85854d4ee5c97ab6f6227a0aae6501ed284f2d5bc879",
+        "faceTriangleOffsets": "6bc51f1951972243784693f5e4570ae22bea40909598610a8299a20a8040b00f"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 470,
+        "triangleTests": 21189,
+        "inputSha256": "06b32c43eb349a756bb3e2b00537ecc1845518839b3774a2f6d472e2ca2d21f5"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 221,
+        "jobs": 520,
+        "details": 350,
+        "roles": {
+          "albedo": 160,
+          "normal": 157,
+          "roughness": 155,
+          "emissive": 38,
+          "opacity": 10
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 379.309,
+        "block4x4MipEstimateMiB": 94.842
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 221,
+          "jobs": 170,
+          "details": 0,
+          "roles": {
+            "albedo": 160,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 186.626,
+          "block4x4MipEstimateMiB": 46.662
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 221,
+          "jobs": 170,
+          "details": 0,
+          "roles": {
+            "albedo": 160,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 186.626,
+          "block4x4MipEstimateMiB": 46.662
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 221,
+          "jobs": 170,
+          "details": 0,
+          "roles": {
+            "albedo": 160,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 186.626,
+          "block4x4MipEstimateMiB": 46.662
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 221,
+          "jobs": 170,
+          "details": 0,
+          "roles": {
+            "albedo": 160,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 182.443,
+          "block4x4MipEstimateMiB": 45.616
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 221,
+          "jobs": 170,
+          "details": 0,
+          "roles": {
+            "albedo": 160,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 186.626,
+          "block4x4MipEstimateMiB": 46.662
+        }
+      ]
+    },
+    {
+      "id": "airport",
+      "name": "カジキ空港",
+      "stageRecordSha256": "cb815317dadcc97f748c5d77fc6d587f34b7ded7794d70ff6860b9ec5dc992e8",
+      "geometry": {
+        "vertices": 196553,
+        "triangles": 159625,
+        "collisionTriangles": 157842,
+        "bvhNodes": 32767,
+        "paintFaces": 54747
+      },
+      "sourceGeometry": {
+        "vertices": 256788,
+        "triangles": 201941,
+        "collisionTriangles": 157842,
+        "bvhNodes": 32767,
+        "paintFaces": 54747
+      },
+      "allMaterials": 117,
+      "activeObjects": 123,
+      "faces": 54747,
+      "emptyFaces": 0,
+      "maskCells": 2444614,
+      "liveCells": 1363220,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 483
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 359,
+        "max": 2736
+      },
+      "serializedArraysMiB": 31.774,
+      "retainedCollisionAndMaskMiB": 13.298,
+      "nativeInkAttributeMiB": 15.241,
+      "nativeInkIndexMiB": 0.999,
+      "arrayBytes": {
+        "triangles": 5682312,
+        "normals": 1894104,
+        "flags": 631368,
+        "objectIds": 631368,
+        "nodes": 1048544,
+        "order": 631368,
+        "vertices": 6289696,
+        "indices": 1915500,
+        "mask": 2444614,
+        "triangleFace": 631368,
+        "faceTriangles": 349320,
+        "faceF64": 10073448,
+        "faceI32": 875952,
+        "faceTriangleOffsets": 218992
+      },
+      "arrayHashes": {
+        "triangles": "915fa66f60b1037b2e9b1b566cb5b3c60316b65aea5e5ce94f2118905c3c2327",
+        "normals": "db12c16d8cb23ae80f01be34499dd09af84f75718046452612906c4342e74ac2",
+        "flags": "6ad293fc114b62811d66880e46fa674b8b8fa80d95e0a4859f450ad28900e9d4",
+        "objectIds": "29b43131e17d8e78d28a442d68373403d1042cef08abd6a716dedfac86aa3a10",
+        "nodes": "3d313e859c72db9f84bdf736ae9e0609280aa60a71b9cf7e75522c749a57454b",
+        "order": "e1aa6167c2b14a0b3cc863b694a177ddbc6023e7225372e19d92f52c991ab580",
+        "vertices": "057465ab37787fcdb061cce1bf821a74ddd82606a01aa72d9fe0ecba72f7232c",
+        "indices": "666a5af48b93d0c5fb836d03a8c933a69d516b972d8abe9593a01bb76b2a79be",
+        "mask": "1a624dffb085eb87579f056b9018358c90bdc04cbccc70256d0b55ae57ed3d90",
+        "triangleFace": "07daa938e45fecdee957a06cbdefb7d292ae3408d27a73c328daeca020c02e48",
+        "faceTriangles": "70a6a336a78c58a5c02fe3cd77252d85789c32aa4e7137fcfc3c960e7b7a1e4b",
+        "faceF64": "aa0f935deb1027f3d801120c316426c664318b0dd04d332255407ceed9dcea54",
+        "faceI32": "e820c1dd76a0e7598ce9558c63be832efec11387c1470cc72e3fb096d7c2d0ba",
+        "faceTriangleOffsets": "b88815c543fc26dff34ec631e9c9b494c4ce40fdb8a2fc678017a73202185b84"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 460,
+        "triangleTests": 20732,
+        "inputSha256": "bb679c8f014c7f2bcf79798bda54b298fb8ae617aea174a4ace242463af5e87e"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 117,
+        "jobs": 247,
+        "details": 158,
+        "roles": {
+          "albedo": 77,
+          "normal": 76,
+          "roughness": 72,
+          "emissive": 10,
+          "opacity": 12
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 233.868,
+        "block4x4MipEstimateMiB": 58.475
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 117,
+          "jobs": 89,
+          "details": 0,
+          "roles": {
+            "albedo": 77,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 146.619,
+          "block4x4MipEstimateMiB": 36.658
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 117,
+          "jobs": 89,
+          "details": 0,
+          "roles": {
+            "albedo": 77,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 146.619,
+          "block4x4MipEstimateMiB": 36.658
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 117,
+          "jobs": 89,
+          "details": 0,
+          "roles": {
+            "albedo": 77,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 146.619,
+          "block4x4MipEstimateMiB": 36.658
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 117,
+          "jobs": 89,
+          "details": 0,
+          "roles": {
+            "albedo": 77,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 82.186,
+          "block4x4MipEstimateMiB": 20.55
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 117,
+          "jobs": 89,
+          "details": 0,
+          "roles": {
+            "albedo": 77,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 146.619,
+          "block4x4MipEstimateMiB": 36.658
+        }
+      ]
+    },
+    {
+      "id": "barnacle",
+      "name": "タラポートショッピングパーク",
+      "stageRecordSha256": "35b4cefe7895edaca9c2b99e720949fb9ce7abba7cbc2c9559ba3744a15b0a6b",
+      "geometry": {
+        "vertices": 224192,
+        "triangles": 183750,
+        "collisionTriangles": 177607,
+        "bvhNodes": 32767,
+        "paintFaces": 75857
+      },
+      "sourceGeometry": {
+        "vertices": 322386,
+        "triangles": 251011,
+        "collisionTriangles": 177607,
+        "bvhNodes": 32767,
+        "paintFaces": 75857
+      },
+      "allMaterials": 142,
+      "activeObjects": 146,
+      "faces": 75857,
+      "emptyFaces": 0,
+      "maskCells": 1461683,
+      "liveCells": 844829,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 12,
+        "max": 295
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 159,
+        "max": 3228
+      },
+      "serializedArraysMiB": 37.392,
+      "retainedCollisionAndMaskMiB": 13.689,
+      "nativeInkAttributeMiB": 20.804,
+      "nativeInkIndexMiB": 1.364,
+      "arrayBytes": {
+        "triangles": 6393852,
+        "normals": 2131284,
+        "flags": 710428,
+        "objectIds": 710428,
+        "nodes": 1048544,
+        "order": 710428,
+        "vertices": 7174144,
+        "indices": 2205000,
+        "mask": 1461683,
+        "triangleFace": 710428,
+        "faceTriangles": 476820,
+        "faceF64": 13957688,
+        "faceI32": 1213712,
+        "faceTriangleOffsets": 303432
+      },
+      "arrayHashes": {
+        "triangles": "53137d0cc4b37a3e531c2fd0a37420f049d2aff8c579e8e325dd19ae4db3d769",
+        "normals": "dc9b2f2de30c355866e016e9550dd967feee09b134f57ae967bc3319c1fa3901",
+        "flags": "e9c42e098ec09098c4784dd1d29b903e331ec430202b3b9914c32a911616b9ba",
+        "objectIds": "51e4e719496dcb8ccbaecb98e7c5f2802e145a2b567c50f0d0ee70f2c4de596a",
+        "nodes": "328f69d7aeca497c7c84cdc3a2576d0731cd7940138494ad574bf901d3880476",
+        "order": "9398856b8fdd54bc6a8189f6eaa6dd2bf8e137f9d9293bdd08b8e5eff1fad012",
+        "vertices": "0317fbc77a0c6e4e988a5818a6f6ea52614623156e39c6b132dbce847fa5d225",
+        "indices": "add3442ec6eef90cb24951c3f83c6fed1e4ed3086ed749fe3c649070e592ff4d",
+        "mask": "563e8832244def30486904ae7502de52ba6b2f5e63e6dd6eb59141850487abad",
+        "triangleFace": "fd713e8c816fbcfa0b48ea12dbc3d2dbea097052734e14d0f9239da76c184796",
+        "faceTriangles": "93777b0f8c22e24a9f752ed5c36f8b7cfd45b8911db1598761de58c0a1715019",
+        "faceF64": "b6670f7fca4d3a0883f969acc75494ed29b5d2cdaa71cce871b4d88f77ec5cee",
+        "faceI32": "acc73c5d5608ed4532edaea15d9eda60e976083347bacd70033ce576fa5f49ed",
+        "faceTriangleOffsets": "68be4b3699eff4702c21ff42a9a115d1a3a01da1ef8ad8ddeda0d6e401c7394f"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 522,
+        "triangleTests": 23417,
+        "inputSha256": "15793644c1ef5f8e9f2ea78e669255e035d55297ddf27e0979af39a87902167e"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 142,
+        "jobs": 256,
+        "details": 165,
+        "roles": {
+          "albedo": 80,
+          "normal": 82,
+          "roughness": 76,
+          "opacity": 11,
+          "emissive": 7
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 106.017,
+        "block4x4MipEstimateMiB": 26.515
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 142,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 80,
+            "opacity": 11
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 57.188,
+          "block4x4MipEstimateMiB": 14.303
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 142,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 80,
+            "opacity": 11
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 57.188,
+          "block4x4MipEstimateMiB": 14.303
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 142,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 80,
+            "opacity": 11
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 57.188,
+          "block4x4MipEstimateMiB": 14.303
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 142,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 80,
+            "opacity": 11
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 50.984,
+          "block4x4MipEstimateMiB": 12.751
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 142,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 80,
+            "opacity": 11
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 57.188,
+          "block4x4MipEstimateMiB": 14.303
+        }
+      ]
+    },
+    {
+      "id": "bluefin",
+      "name": "ネギトロ炭鉱",
+      "stageRecordSha256": "5cf66996e49b19418343b4d981d73edd51a9d7e02d98fff0c851d80a5a32159f",
+      "geometry": {
+        "vertices": 241756,
+        "triangles": 177135,
+        "collisionTriangles": 176771,
+        "bvhNodes": 32767,
+        "paintFaces": 54497
+      },
+      "sourceGeometry": {
+        "vertices": 1024229,
+        "triangles": 774445,
+        "collisionTriangles": 176771,
+        "bvhNodes": 32767,
+        "paintFaces": 54497
+      },
+      "allMaterials": 156,
+      "activeObjects": 178,
+      "faces": 54497,
+      "emptyFaces": 0,
+      "maskCells": 2414277,
+      "liveCells": 1048263,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 4,
+        "p99": 14,
+        "max": 72
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 312,
+        "max": 9724
+      },
+      "serializedArraysMiB": 34.524,
+      "retainedCollisionAndMaskMiB": 14.517,
+      "nativeInkAttributeMiB": 19.445,
+      "nativeInkIndexMiB": 1.275,
+      "arrayBytes": {
+        "triangles": 6363756,
+        "normals": 2121252,
+        "flags": 707084,
+        "objectIds": 707084,
+        "nodes": 1048544,
+        "order": 707084,
+        "vertices": 7736192,
+        "indices": 2125620,
+        "mask": 2414277,
+        "triangleFace": 707084,
+        "faceTriangles": 445664,
+        "faceF64": 10027448,
+        "faceI32": 871952,
+        "faceTriangleOffsets": 217992
+      },
+      "arrayHashes": {
+        "triangles": "04b26916c0968cb6c4c9bf9e8ed605c7a4eedd58285f372c7bd6f2e2afdb9cee",
+        "normals": "a5fd43f7bb8653ef50cdbcc9250056aa9f25f521a105437726dd970544973f82",
+        "flags": "cfc4cef7e891a56ea676404a9271601d747f3715523964867810c763a41d27c6",
+        "objectIds": "942e8c4b567af1f7ffba3c496f090196e6830f889a85e80e3d9d5cfa9577de2f",
+        "nodes": "dbdc687ca05ebaa838d0d662e228eaa2b93bba86a553134a683d354f2f7cbd0b",
+        "order": "e3377ad49cf3b73925fbf11012e93eb528ddc6cab7994cbb87ba0bd77910f911",
+        "vertices": "c067f347e08728b58f07893654231e542f0b4b72d277de4a14ac3d7518662f83",
+        "indices": "4962b70771c1559e43332d93041444d779157db8b6d7185a891d74cad7a9cb9a",
+        "mask": "32a2b16a616a9a6364dc2dfeb9248d398fa05c7bffede2e6e29b52a065e07e7d",
+        "triangleFace": "9a52e7f6df6f95fb1df22c04e67a38dc3da36331bd03795df8096def3c59f67f",
+        "faceTriangles": "fb5241ff4fb42c0f20bde5fa9f14fab4b5ff58e9f85144795237ec905bfad007",
+        "faceF64": "aca02be017a9994b62fbadbbee98d467b59e0af9c5fa57e6024ec79a40e5e152",
+        "faceI32": "a6775c1fc9eba7c64d492a3256f6baa8b8a0261921a981cee720e0eb135b5435",
+        "faceTriangleOffsets": "a072a27a89ac4e13d08c62cdbda092caad5e4cd7cc911d2465e00ce764cd1f62"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 438,
+        "triangleTests": 22679,
+        "inputSha256": "93cb2d5ad76385017ddb8b65ed6d40e8690d74a073790704539d563c75b8561a"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 156,
+        "jobs": 216,
+        "details": 131,
+        "roles": {
+          "albedo": 72,
+          "normal": 73,
+          "roughness": 55,
+          "emissive": 3,
+          "opacity": 13
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 60.216,
+        "block4x4MipEstimateMiB": 15.063
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 156,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 72,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 42.338,
+          "block4x4MipEstimateMiB": 10.589
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 156,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 72,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 42.338,
+          "block4x4MipEstimateMiB": 10.589
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 156,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 72,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 42.338,
+          "block4x4MipEstimateMiB": 10.589
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 156,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 72,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 31.878,
+          "block4x4MipEstimateMiB": 7.974
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 156,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 72,
+            "opacity": 13
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 42.338,
+          "block4x4MipEstimateMiB": 10.589
+        }
+      ]
+    },
+    {
+      "id": "crableg",
+      "name": "タカアシ経済特区",
+      "stageRecordSha256": "a2d1f59be3358607bfd882b25f6d80b33a81a64732eb15fad38a86ef3d3473ed",
+      "geometry": {
+        "vertices": 469616,
+        "triangles": 323014,
+        "collisionTriangles": 187949,
+        "bvhNodes": 32767,
+        "paintFaces": 48934
+      },
+      "sourceGeometry": {
+        "vertices": 845431,
+        "triangles": 611658,
+        "collisionTriangles": 187949,
+        "bvhNodes": 32767,
+        "paintFaces": 48934
+      },
+      "allMaterials": 195,
+      "activeObjects": 208,
+      "faces": 48934,
+      "emptyFaces": 0,
+      "maskCells": 3206773,
+      "liveCells": 1362021,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 4,
+        "p99": 12,
+        "max": 51
+      },
+      "liveChartCells": {
+        "median": 3,
+        "p99": 469,
+        "max": 2411
+      },
+      "serializedArraysMiB": 43.46,
+      "retainedCollisionAndMaskMiB": 15.911,
+      "nativeInkAttributeMiB": 17.467,
+      "nativeInkIndexMiB": 1.145,
+      "arrayBytes": {
+        "triangles": 6766164,
+        "normals": 2255388,
+        "flags": 751796,
+        "objectIds": 751796,
+        "nodes": 1048544,
+        "order": 751796,
+        "vertices": 15027712,
+        "indices": 3876168,
+        "mask": 3206773,
+        "triangleFace": 751796,
+        "faceTriangles": 400332,
+        "faceF64": 9003856,
+        "faceI32": 782944,
+        "faceTriangleOffsets": 195740
+      },
+      "arrayHashes": {
+        "triangles": "d0765cf14391da525aa255503054832aa93bbd547fe2395849346064c268d7b5",
+        "normals": "71b1f4fe123b5cbfd1da26ee937969566099e3c37e5ecc498c695a562cb0925e",
+        "flags": "ac8f52be4f17f2adaca9ee26e32938d27cb70c395495ba9545546a8fa045fe48",
+        "objectIds": "dd0832512c3cfb7afb8974fb44d1d5227388395f42e27299d492d3ee1e95fb97",
+        "nodes": "4a0f7fa80b5cae5a5d27e2f8a8ec27cdf9b362c04038e7cad386a8f071f0561d",
+        "order": "210b808e1f6fc4812813d4d1370e50daded6aa4ab3a67f11455085ad7ab4f33c",
+        "vertices": "2448ee5271c812f2f513cb896dc0be221ddc9f8a0e8860d2884a8fd11ca0bedd",
+        "indices": "12e28b5784920356976bc558cd5297541fb4ab9afea95dfc24944b52be306f45",
+        "mask": "96e817fafc61513a5861a451defebf11536f306810764e51056c63a1641584cc",
+        "triangleFace": "4a0977321024ea82827f434b294096f76cb0297fe08b88487ff5a3bc15f450ef",
+        "faceTriangles": "3510441e3297b748701298d8af66e0963fae6dd266cb2947c3c402d74f6f7807",
+        "faceF64": "d4795ad64ae5d7aefe839dca8b72923201d260b66e8a077f717ac980b281d139",
+        "faceI32": "ade2d6784b266e472bd6d6e4743b8a4a8244b94fbfddb26aed37fa99204284f5",
+        "faceTriangleOffsets": "50cde0e0fa9fe69697f3f14c6d65d57501e34d6c3d55d3d65eb0da2b8ecc9008"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 386,
+        "triangleTests": 22281,
+        "inputSha256": "1316b1f31e15ceb62dfdb8e95bb2a5a5f8248dd45c336a9a32a4f0e3e80e22b1"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 195,
+        "jobs": 317,
+        "details": 189,
+        "roles": {
+          "albedo": 108,
+          "normal": 98,
+          "roughness": 72,
+          "emissive": 19,
+          "opacity": 20
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 234.068,
+        "block4x4MipEstimateMiB": 58.528
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 195,
+          "jobs": 128,
+          "details": 0,
+          "roles": {
+            "albedo": 108,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 162.154,
+          "block4x4MipEstimateMiB": 40.544
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 195,
+          "jobs": 128,
+          "details": 0,
+          "roles": {
+            "albedo": 108,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 162.154,
+          "block4x4MipEstimateMiB": 40.544
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 195,
+          "jobs": 128,
+          "details": 0,
+          "roles": {
+            "albedo": 108,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 162.154,
+          "block4x4MipEstimateMiB": 40.544
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 195,
+          "jobs": 128,
+          "details": 0,
+          "roles": {
+            "albedo": 108,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 95.673,
+          "block4x4MipEstimateMiB": 23.924
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 195,
+          "jobs": 128,
+          "details": 0,
+          "roles": {
+            "albedo": 108,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 162.154,
+          "block4x4MipEstimateMiB": 40.544
+        }
+      ]
+    },
+    {
+      "id": "eeltail",
+      "name": "ゴンズイ地区",
+      "stageRecordSha256": "7a0cebabc9442e56b2f75104376cbf55c30c4690fd62d94f300bdf1662327a36",
+      "geometry": {
+        "vertices": 641666,
+        "triangles": 436528,
+        "collisionTriangles": 212015,
+        "bvhNodes": 63581,
+        "paintFaces": 67583
+      },
+      "sourceGeometry": {
+        "vertices": 1056904,
+        "triangles": 763146,
+        "collisionTriangles": 212015,
+        "bvhNodes": 63581,
+        "paintFaces": 67583
+      },
+      "allMaterials": 166,
+      "activeObjects": 188,
+      "faces": 67583,
+      "emptyFaces": 0,
+      "maskCells": 2460682,
+      "liveCells": 1517519,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 3,
+        "p99": 14,
+        "max": 128
+      },
+      "liveChartCells": {
+        "median": 1,
+        "p99": 532,
+        "max": 6156
+      },
+      "serializedArraysMiB": 55.47,
+      "retainedCollisionAndMaskMiB": 17.744,
+      "nativeInkAttributeMiB": 23.612,
+      "nativeInkIndexMiB": 1.548,
+      "arrayBytes": {
+        "triangles": 7632540,
+        "normals": 2544180,
+        "flags": 848060,
+        "objectIds": 848060,
+        "nodes": 2034592,
+        "order": 848060,
+        "vertices": 20533312,
+        "indices": 5238336,
+        "mask": 2460682,
+        "triangleFace": 848060,
+        "faceTriangles": 541184,
+        "faceF64": 12435272,
+        "faceI32": 1081328,
+        "faceTriangleOffsets": 270336
+      },
+      "arrayHashes": {
+        "triangles": "a28d15c9908405c306e794b6728c91eebdaf6d85ac5bb58ca27834a42217eac2",
+        "normals": "3e6c72fe0bfe3bb306074b8a4c607f9d963c4c4a4cce0d25d23036560a9217ff",
+        "flags": "3b4d6bb6d9ceefa6708a26f7f7295ab4c276ed447806e3a44c2132026a56b170",
+        "objectIds": "7165fc4e637d3b38b707bce9cbaa332e5c8ade3e52020049b50c0b43efae53b3",
+        "nodes": "08cdee3f987cec4d23e12714ef9f8b0a338fa55b8646eb626de86c15cb5d2881",
+        "order": "ffd098ca1adb9cdd984dc8a7d65cbfd4d31fea995e1e06693d09ce5fb5a90930",
+        "vertices": "79b4eb1db9e320e4f40a90f3956d9e56a8c9513c626cda8440f2e0eb2de297fe",
+        "indices": "e9f9b4d1a619a701273e22f19968a3429c8690874ac264eca788663829475eef",
+        "mask": "6abdbebb93d6a1e19c4e89e6eb03b7d08db74eaf335c222fae72e19be402b3db",
+        "triangleFace": "12042b1f637ff769b1af21d2fdbba265ee2a5f735cdcd88e2e320c14ba1ebfb2",
+        "faceTriangles": "2964dbad40baf6647ea34ca292bf097868d9d8a0934e1828a79e60b0f92ec379",
+        "faceF64": "715ed30bd2ecfa80e492b6af558362b91e891772ea3207055aa3632ee605b68b",
+        "faceI32": "09e3d62ebec41864126aa2a7072268447e493f83572cf7ec37a91cebe3c4b5ba",
+        "faceTriangleOffsets": "b6c9f8ba8c411de40b2a0660b2e84b0ab0a9fdf75e92a671c0a5f174b90f2f5b"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 433,
+        "triangleTests": 16113,
+        "inputSha256": "bb7e46873c21a9a6546b9c30f1a4e13037a95551a23ff5a993051f6c96c941b8"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 166,
+        "jobs": 280,
+        "details": 177,
+        "roles": {
+          "albedo": 89,
+          "normal": 85,
+          "roughness": 80,
+          "emissive": 12,
+          "opacity": 14
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 136.741,
+        "block4x4MipEstimateMiB": 34.194
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 166,
+          "jobs": 103,
+          "details": 0,
+          "roles": {
+            "albedo": 89,
+            "opacity": 14
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.457,
+          "block4x4MipEstimateMiB": 20.118
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 166,
+          "jobs": 103,
+          "details": 0,
+          "roles": {
+            "albedo": 89,
+            "opacity": 14
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.457,
+          "block4x4MipEstimateMiB": 20.118
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 166,
+          "jobs": 103,
+          "details": 0,
+          "roles": {
+            "albedo": 89,
+            "opacity": 14
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.457,
+          "block4x4MipEstimateMiB": 20.118
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 166,
+          "jobs": 103,
+          "details": 0,
+          "roles": {
+            "albedo": 89,
+            "opacity": 14
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 55.274,
+          "block4x4MipEstimateMiB": 13.823
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 166,
+          "jobs": 103,
+          "details": 0,
+          "roles": {
+            "albedo": 89,
+            "opacity": 14
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.457,
+          "block4x4MipEstimateMiB": 20.118
+        }
+      ]
+    },
+    {
+      "id": "flounder",
+      "name": "ヒラメが丘団地",
+      "stageRecordSha256": "143040d713e95f17154c3d775bf3d8ed3dcb5471df51a3fea1042c99533825bc",
+      "geometry": {
+        "vertices": 363534,
+        "triangles": 260950,
+        "collisionTriangles": 154160,
+        "bvhNodes": 32767,
+        "paintFaces": 42139
+      },
+      "sourceGeometry": {
+        "vertices": 855868,
+        "triangles": 633427,
+        "collisionTriangles": 154160,
+        "bvhNodes": 32767,
+        "paintFaces": 42139
+      },
+      "allMaterials": 209,
+      "activeObjects": 314,
+      "faces": 42139,
+      "emptyFaces": 0,
+      "maskCells": 1205511,
+      "liveCells": 607749,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 10,
+        "max": 116
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 217,
+        "max": 2288
+      },
+      "serializedArraysMiB": 34.114,
+      "retainedCollisionAndMaskMiB": 11.836,
+      "nativeInkAttributeMiB": 12.666,
+      "nativeInkIndexMiB": 0.831,
+      "arrayBytes": {
+        "triangles": 5549760,
+        "normals": 1849920,
+        "flags": 616640,
+        "objectIds": 616640,
+        "nodes": 1048544,
+        "order": 616640,
+        "vertices": 11633088,
+        "indices": 3131400,
+        "mask": 1205511,
+        "triangleFace": 616640,
+        "faceTriangles": 290300,
+        "faceF64": 7753576,
+        "faceI32": 674224,
+        "faceTriangleOffsets": 168560
+      },
+      "arrayHashes": {
+        "triangles": "5d9d3c0d626428f865bb79e565b654a507d23c404230c897725c6f57a7d7096d",
+        "normals": "2999dc9f897eb80384636d798619e195c4f69e3886a1fcb1d71feb1bc6b6c75c",
+        "flags": "fe6c03f3d3dbe6db71843d1c931feda63641a2bd51426b095c9130915a107e5b",
+        "objectIds": "2f662f44a70cfe9e2604603256bb3339d1917a80b0bb6324a57170f1e647259a",
+        "nodes": "45e55f23947d16fe13903e8d95ed14248f194d316e2e33dd7c265c69a36d46c4",
+        "order": "bd889bf99d600a17d3dbd6465bc7d6f6f8ca16445dfd24faa69c5dac205d74cc",
+        "vertices": "24735b08d39ef0c7ea1a197919758dc0d5061ad6132c9d7747f9478458d3e78f",
+        "indices": "726a16bd64ae2d87d4167e93ec5c1582eca6b9a97ef85518c4360642ac13a9c9",
+        "mask": "e9ba281e75acaf8fd3867e8e2462690a5df5d7edd79fd741dda05e89cea51449",
+        "triangleFace": "7cab1a16620b70037e18a96b1caf3ffaef7a1cc566245cbb8794883f818dea88",
+        "faceTriangles": "97fe17298bce9a593a53b1983a2a065aa98a1c2e8c216da81e05af3fe6a9ea0a",
+        "faceF64": "99fa77a0d007be180f4c038d2166bda1f6f1bd2ea2bb12ebeed28677cf454488",
+        "faceI32": "3921ffb8dbb88d7af1ca97f55b228adf88f2e2efe939b0f282583c73e0f65204",
+        "faceTriangleOffsets": "27e70a9c2456b34e23a367e29b7a0734cee7d92fe56cfa9e2f6189b75ed5ddb3"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 408,
+        "triangleTests": 16491,
+        "inputSha256": "df5fbd774b89d1c8636f6cede774ecad776b79d83b68196c44c90e3d1a4a86ed"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 209,
+        "jobs": 312,
+        "details": 196,
+        "roles": {
+          "albedo": 96,
+          "normal": 97,
+          "roughness": 86,
+          "opacity": 20,
+          "emissive": 13
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 147.509,
+        "block4x4MipEstimateMiB": 36.887
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 209,
+          "jobs": 116,
+          "details": 0,
+          "roles": {
+            "albedo": 96,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 96.973,
+          "block4x4MipEstimateMiB": 24.248
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 209,
+          "jobs": 116,
+          "details": 0,
+          "roles": {
+            "albedo": 96,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 96.973,
+          "block4x4MipEstimateMiB": 24.248
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 209,
+          "jobs": 116,
+          "details": 0,
+          "roles": {
+            "albedo": 96,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 96.973,
+          "block4x4MipEstimateMiB": 24.248
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 209,
+          "jobs": 116,
+          "details": 0,
+          "roles": {
+            "albedo": 96,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 77.727,
+          "block4x4MipEstimateMiB": 19.436
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 209,
+          "jobs": 116,
+          "details": 0,
+          "roles": {
+            "albedo": 96,
+            "opacity": 20
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 96.973,
+          "block4x4MipEstimateMiB": 24.248
+        }
+      ]
+    },
+    {
+      "id": "hammerhead",
+      "name": "マサバ海峡大橋",
+      "stageRecordSha256": "13c2531bf67c7e2487cf1f4cda2ff380a043219f9839c594013c357776d4233d",
+      "geometry": {
+        "vertices": 266447,
+        "triangles": 172334,
+        "collisionTriangles": 73272,
+        "bvhNodes": 16383,
+        "paintFaces": 25870
+      },
+      "allMaterials": 94,
+      "activeObjects": 109,
+      "faces": 25870,
+      "emptyFaces": 0,
+      "maskCells": 4582553,
+      "liveCells": 1229039,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 4,
+        "p99": 12,
+        "max": 72
+      },
+      "liveChartCells": {
+        "median": 4,
+        "p99": 756,
+        "max": 4502
+      },
+      "serializedArraysMiB": 24.685,
+      "retainedCollisionAndMaskMiB": 9.548,
+      "nativeInkAttributeMiB": 9.425,
+      "nativeInkIndexMiB": 0.618,
+      "arrayBytes": {
+        "triangles": 2637792,
+        "normals": 879264,
+        "flags": 293088,
+        "objectIds": 293088,
+        "nodes": 524256,
+        "order": 293088,
+        "vertices": 8526304,
+        "indices": 2068008,
+        "mask": 4582553,
+        "triangleFace": 293088,
+        "faceTriangles": 216016,
+        "faceF64": 4760080,
+        "faceI32": 413920,
+        "faceTriangleOffsets": 103484
+      },
+      "arrayHashes": {
+        "triangles": "93f0a09eefb9b63b393c5cde42848ee6c77ccdc2bd056ae5c2b87cab7a4dc60c",
+        "normals": "96a7d85357012b4d14fd76905ee15bd3aacdf41d88031ac654501843978ca010",
+        "flags": "2cd323212006b871c5fe47988ef457d9b5ec14f93cdb11f15453256539b0c1d7",
+        "objectIds": "ac84649ec509a6d4bde8e0e04b61fe3a85bc4fbc627f192ba9b6742bc1e8d6f3",
+        "nodes": "c79793c4fc0edf0857bd8e7e2f01f841e00b8f8270804943d95ee68978c95c15",
+        "order": "a789317d02682baaa6adb14d05f671a5c1235bb46bb999152d9a3bbd28d20446",
+        "vertices": "34f67fe1f7e6cc5b0df0107ca6b8ef363c3eb1050da119fe51f6280ecf3ba1af",
+        "indices": "db5fc2e362dbe1ff67e9c32fb6fb87122c25d94d0167d07f2cfb8a38059d769a",
+        "mask": "2ff96438416d1f883d37601d3b9435c9c123ac13097e508c4cc5677d12f0525e",
+        "triangleFace": "73be54485dce98b31ceddef084056337c5178196acef24e6a778516b6f09eb88",
+        "faceTriangles": "550c525d4d0fd4c274715c43ae1acd474ad4b8538ca63482edcd10d3c9db5d98",
+        "faceF64": "356ca5a82ab861a5417daa3d595eeeae0464aadc01fa56f69d6d4ce1adfc56d7",
+        "faceI32": "47774f39c033d68cee2aa98aed0cf4e500ddbc31452ed3f1377350559403f622",
+        "faceTriangleOffsets": "9aff332cea715abbd36b77c6f9d6fed17139ce75acacac0b4b6b25d312cba3e9"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 396,
+        "triangleTests": 20778,
+        "inputSha256": "602e7a42ed3e25edb832fb4ad3534b577df498ce74cd30c6303617846deda237"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 94,
+        "jobs": 206,
+        "details": 128,
+        "roles": {
+          "albedo": 70,
+          "normal": 65,
+          "roughness": 53,
+          "emissive": 10,
+          "opacity": 8
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 277.901,
+        "block4x4MipEstimateMiB": 69.487
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 94,
+          "jobs": 78,
+          "details": 0,
+          "roles": {
+            "albedo": 70,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 184.814,
+          "block4x4MipEstimateMiB": 46.211
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 94,
+          "jobs": 78,
+          "details": 0,
+          "roles": {
+            "albedo": 70,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 184.814,
+          "block4x4MipEstimateMiB": 46.211
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 94,
+          "jobs": 78,
+          "details": 0,
+          "roles": {
+            "albedo": 70,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 184.814,
+          "block4x4MipEstimateMiB": 46.211
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 94,
+          "jobs": 78,
+          "details": 0,
+          "roles": {
+            "albedo": 70,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 75.631,
+          "block4x4MipEstimateMiB": 18.915
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 94,
+          "jobs": 78,
+          "details": 0,
+          "roles": {
+            "albedo": 70,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 184.814,
+          "block4x4MipEstimateMiB": 46.211
+        }
+      ]
+    },
+    {
+      "id": "humpback",
+      "name": "コンブトラック",
+      "stageRecordSha256": "62330c4e7d1baaa27ba41f85fceb3ac048ae8e3e3ec8f6ea9346bf9c1852cfe3",
+      "geometry": {
+        "vertices": 254995,
+        "triangles": 174089,
+        "collisionTriangles": 149539,
+        "bvhNodes": 32767,
+        "paintFaces": 38087
+      },
+      "allMaterials": 77,
+      "activeObjects": 79,
+      "faces": 38087,
+      "emptyFaces": 0,
+      "maskCells": 8934342,
+      "liveCells": 2741540,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 76
+      },
+      "liveChartCells": {
+        "median": 6,
+        "p99": 759,
+        "max": 55977
+      },
+      "serializedArraysMiB": 36.067,
+      "retainedCollisionAndMaskMiB": 18.883,
+      "nativeInkAttributeMiB": 10.788,
+      "nativeInkIndexMiB": 0.707,
+      "arrayBytes": {
+        "triangles": 5383404,
+        "normals": 1794468,
+        "flags": 598156,
+        "objectIds": 598156,
+        "nodes": 1048544,
+        "order": 598156,
+        "vertices": 8159840,
+        "indices": 2089068,
+        "mask": 8934342,
+        "triangleFace": 598156,
+        "faceTriangles": 247248,
+        "faceF64": 7008008,
+        "faceI32": 609392,
+        "faceTriangleOffsets": 152352
+      },
+      "arrayHashes": {
+        "triangles": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "normals": "2ce62120827f24bab6f368834f1c89227c51934a6f6751385ab1f6bd218c8ad5",
+        "flags": "b478d95f7827baff48738896cd6124862790781197700d7ea53983ba5510ef4c",
+        "objectIds": "c1e11255639d3f83865b81f5e4eebc99c733113d9c0c079db9ea5335dfe3cd85",
+        "nodes": "a7e20af329f208928ae3f82f3b74d94a912b0cc6bf65212ab8a25e7b55d4a040",
+        "order": "a8f8d3c35b9b8983428a19f2dba836d58e98cd7246de735d466e69b683057c22",
+        "vertices": "74c4bee43ee8a30c9b9ac3d28766adb58d67ef9c53afc3f228e80eda394f3321",
+        "indices": "048bc3fe44f98026149fe156e6ad56778db119f4d51ac49a9212d1aa6a24d6df",
+        "mask": "56c1d061e2ca97786cf612c578d5fa30ebd3d039c80715e778c4f96c8ab875ee",
+        "triangleFace": "2f95aa844904eccb20c4f3ac0a884e723b410244134e8c1dff26e1e19f4f40c6",
+        "faceTriangles": "2598acb420b400c8d8cf22dbc82eafa89cddf25ca55a9ad05e6a067d2f1c3206",
+        "faceF64": "204131e8c5d1494b9728a5ed2ef6bd100b427aa41c59dbe97540ae562c386b7f",
+        "faceI32": "d5df045ec4ada999ec2e135561d8fc67634f9a3556c208778e57e94b68d0a341",
+        "faceTriangleOffsets": "75f5bd13d6c21a89f1a80fa59bbe169f27f12acb0444bdcd88b43c0910ca10e3"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 431,
+        "triangleTests": 19131,
+        "inputSha256": "56a2801c35e896eb9c4fb3079bdaaafb7c3bfa03e2331c8669d11c22ef0d1ae0"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 77,
+        "jobs": 153,
+        "details": 90,
+        "roles": {
+          "albedo": 51,
+          "normal": 43,
+          "roughness": 41,
+          "emissive": 6,
+          "opacity": 12
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 118,
+        "block4x4MipEstimateMiB": 29.52
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 77,
+          "jobs": 63,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 68.836,
+          "block4x4MipEstimateMiB": 17.219
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 77,
+          "jobs": 63,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 68.836,
+          "block4x4MipEstimateMiB": 17.219
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 77,
+          "jobs": 63,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 68.836,
+          "block4x4MipEstimateMiB": 17.219
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 77,
+          "jobs": 63,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 49.988,
+          "block4x4MipEstimateMiB": 12.503
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 77,
+          "jobs": 63,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 68.836,
+          "block4x4MipEstimateMiB": 17.219
+        }
+      ]
+    },
+    {
+      "id": "manta",
+      "name": "マンタマリア号",
+      "stageRecordSha256": "06aeae7e54ff3d3517709b60755ddaf8256de702f7860142666ca69d01da41b0",
+      "geometry": {
+        "vertices": 345479,
+        "triangles": 224043,
+        "collisionTriangles": 130605,
+        "bvhNodes": 32767,
+        "paintFaces": 71877
+      },
+      "sourceGeometry": {
+        "vertices": 595742,
+        "triangles": 317651,
+        "collisionTriangles": 130605,
+        "bvhNodes": 32767,
+        "paintFaces": 71877
+      },
+      "allMaterials": 96,
+      "activeObjects": 113,
+      "faces": 71877,
+      "emptyFaces": 0,
+      "maskCells": 8675817,
+      "liveCells": 1433953,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 5,
+        "max": 117
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 447,
+        "max": 2755
+      },
+      "serializedArraysMiB": 44.69,
+      "retainedCollisionAndMaskMiB": 17.6,
+      "nativeInkAttributeMiB": 16.211,
+      "nativeInkIndexMiB": 1.063,
+      "arrayBytes": {
+        "triangles": 4701780,
+        "normals": 1567260,
+        "flags": 522420,
+        "objectIds": 522420,
+        "nodes": 1048544,
+        "order": 522420,
+        "vertices": 11055328,
+        "indices": 2688516,
+        "mask": 8675817,
+        "triangleFace": 522420,
+        "faceTriangles": 371540,
+        "faceF64": 13225368,
+        "faceI32": 1150032,
+        "faceTriangleOffsets": 287512
+      },
+      "arrayHashes": {
+        "triangles": "c24640f5a0e6b6dfe2acca13b679b45800118c11620e7c535a6aafce90a0f0bd",
+        "normals": "390ef0c2d771383ad53955b5ff60a63a82882f2a57f44b2c60efc1c4e287bea6",
+        "flags": "0fb8e0c06f1f8bcf52c46a7b43c6ada0857c15a50b4fc7ad6a5e7ec7a5fbee0c",
+        "objectIds": "fd651314a12142e3944d889c72194b7b6b83f805719e00a80baf9ccff3a9acbf",
+        "nodes": "4c4db643aa284d35a621033058feaecd86824d5aa43f60c0c74e4111dbc35f4d",
+        "order": "fa78452a408ea055fb4ae9374174ecd098345cf8eddffd69cb3a6c6c2bef6cf8",
+        "vertices": "42beab5499b4e8e6bd01698ca7cf37116606f136ec0f83aa47283e2805e53c6a",
+        "indices": "8b892a849fff7547e9d64148261b03b4ee9c327657a7ff97fd44044ea018afdf",
+        "mask": "e75b26753842b24d84ad3664c0375148c59e52e05219434a25e9210d58f1c653",
+        "triangleFace": "3f582a12707741b22ee4c8a5170693e0c44fcfb6387604f23719018b6ffc3572",
+        "faceTriangles": "57bea680e7ea28796a055c9d1a62b6152937818da07c366ac7c12e86f63c67d6",
+        "faceF64": "88b62a847e68642f20260511bf057e8443b18de871e21ddca55dd8ba01b40e76",
+        "faceI32": "ad2c7259b752b7cd65cfd85f434a73495f12a88b5030bd8bd0da9eb67c77718c",
+        "faceTriangleOffsets": "14bd0b807591ebccad25b45366dd701cb642e5380a9c5098467b8b5e6fa2d24f"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 386,
+        "triangleTests": 15614,
+        "inputSha256": "d168251c9dc3ace174945105c2d866b119f7c2572a503081685b836fd785372e"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 96,
+        "jobs": 245,
+        "details": 152,
+        "roles": {
+          "albedo": 76,
+          "normal": 75,
+          "roughness": 66,
+          "emissive": 11,
+          "opacity": 17
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 119.656,
+        "block4x4MipEstimateMiB": 29.928
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 96,
+          "jobs": 93,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 17
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 91.212,
+          "block4x4MipEstimateMiB": 22.81
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 96,
+          "jobs": 93,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 17
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 91.212,
+          "block4x4MipEstimateMiB": 22.81
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 96,
+          "jobs": 93,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 17
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 91.212,
+          "block4x4MipEstimateMiB": 22.81
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 96,
+          "jobs": 93,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 17
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 74.208,
+          "block4x4MipEstimateMiB": 18.559
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 96,
+          "jobs": 93,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 17
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 91.212,
+          "block4x4MipEstimateMiB": 22.81
+        }
+      ]
+    },
+    {
+      "id": "mincemeat",
+      "name": "ナメロウ金属",
+      "stageRecordSha256": "bba7eb36121b44a7476852888112ba1c383309d9a48a55f8efa2b44e5f5a07d7",
+      "geometry": {
+        "vertices": 313521,
+        "triangles": 210305,
+        "collisionTriangles": 146903,
+        "bvhNodes": 32767,
+        "paintFaces": 80578
+      },
+      "sourceGeometry": {
+        "vertices": 398287,
+        "triangles": 252705,
+        "collisionTriangles": 146903,
+        "bvhNodes": 32767,
+        "paintFaces": 80578
+      },
+      "allMaterials": 176,
+      "activeObjects": 205,
+      "faces": 80578,
+      "emptyFaces": 0,
+      "maskCells": 4844952,
+      "liveCells": 2473351,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 6,
+        "max": 80
+      },
+      "liveChartCells": {
+        "median": 3,
+        "p99": 390,
+        "max": 30293
+      },
+      "serializedArraysMiB": 42.66,
+      "retainedCollisionAndMaskMiB": 15.009,
+      "nativeInkAttributeMiB": 19.32,
+      "nativeInkIndexMiB": 1.267,
+      "arrayBytes": {
+        "triangles": 5288508,
+        "normals": 1762836,
+        "flags": 587612,
+        "objectIds": 587612,
+        "nodes": 1048544,
+        "order": 587612,
+        "vertices": 10032672,
+        "indices": 2523660,
+        "mask": 4844952,
+        "triangleFace": 587612,
+        "faceTriangles": 442808,
+        "faceF64": 14826352,
+        "faceI32": 1289248,
+        "faceTriangleOffsets": 322316
+      },
+      "arrayHashes": {
+        "triangles": "348d7542c7fda8d7a660f5af5e334822df3a4f5050b8ccc0007704f70cb97b19",
+        "normals": "5c71991970dba96d14d8f27f562db75e9635f8f3f7bb1effb4ffd857b9cd448b",
+        "flags": "2e833ebb357819db7d42ce6b22c68725fa4922f5bb9401bceffc46c04f7c331a",
+        "objectIds": "5dd4f6bb99657f1557061b65f20dc56dc2e330cbfeec4ba3214bb48e278f3b64",
+        "nodes": "d5b678ef4557324839996c733c43abaab60fcd23bf63607697a1c4dfebdbcc6d",
+        "order": "c7a5c9e77b30a60f6a38529841a36607df205465ce5bddff8046c777f6248f09",
+        "vertices": "87b0235e913778a02b32749e237d9a18acff8d1d45b90de576ae7155055256df",
+        "indices": "0df711d04a405c55253854d12be9996612c20c8502cb8c4a4b196cbf4b98e2fe",
+        "mask": "089d00894ce0d54a33d40f612ceed250d4ab974be604e963fca3a106446d358f",
+        "triangleFace": "d458421c57a166af59e7842f360ce82d8625c04e019c5595a9ec1ab5bd7f7766",
+        "faceTriangles": "2f4768bfb5e080e2a0937167a0cdb8b3181b61415003d7e0d95232d413370a90",
+        "faceF64": "dbe8e654995183258e1f933307ff0dab32dd8f5b9be67d5689bd1e3f12b1b289",
+        "faceI32": "bfbbea7ed88c2c7812c9166f0f6121836be263dd3e5946fb93e8e1c3721ad50b",
+        "faceTriangleOffsets": "e578ef8247f92fce945932d90064a40e2a1f4fa13d0c3a0b70fd6293442c776f"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 502,
+        "triangleTests": 22613,
+        "inputSha256": "70e17b54403524210ae42aa7e9f072a86592000e8561343d41047bafc88116bb"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 176,
+        "jobs": 285,
+        "details": 190,
+        "roles": {
+          "albedo": 90,
+          "normal": 95,
+          "roughness": 83,
+          "emissive": 12,
+          "opacity": 5
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 227.524,
+        "block4x4MipEstimateMiB": 56.895
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 176,
+          "jobs": 95,
+          "details": 0,
+          "roles": {
+            "albedo": 90,
+            "opacity": 5
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 156.934,
+          "block4x4MipEstimateMiB": 39.239
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 176,
+          "jobs": 95,
+          "details": 0,
+          "roles": {
+            "albedo": 90,
+            "opacity": 5
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 156.934,
+          "block4x4MipEstimateMiB": 39.239
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 176,
+          "jobs": 95,
+          "details": 0,
+          "roles": {
+            "albedo": 90,
+            "opacity": 5
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 156.934,
+          "block4x4MipEstimateMiB": 39.239
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 176,
+          "jobs": 95,
+          "details": 0,
+          "roles": {
+            "albedo": 90,
+            "opacity": 5
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 77.123,
+          "block4x4MipEstimateMiB": 19.285
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 176,
+          "jobs": 95,
+          "details": 0,
+          "roles": {
+            "albedo": 90,
+            "opacity": 5
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 156.934,
+          "block4x4MipEstimateMiB": 39.239
+        }
+      ]
+    },
+    {
+      "id": "museum",
+      "name": "キンメダイ美術館",
+      "stageRecordSha256": "474387d9f3e6f7f4fe29ade1cd5f3579c969dead1c0a97f55677e76273b47155",
+      "geometry": {
+        "vertices": 254237,
+        "triangles": 178371,
+        "collisionTriangles": 127075,
+        "bvhNodes": 32767,
+        "paintFaces": 47927
+      },
+      "sourceGeometry": {
+        "vertices": 361197,
+        "triangles": 241259,
+        "collisionTriangles": 127075,
+        "bvhNodes": 32767,
+        "paintFaces": 47927
+      },
+      "allMaterials": 115,
+      "activeObjects": 117,
+      "faces": 47927,
+      "emptyFaces": 0,
+      "maskCells": 3174471,
+      "liveCells": 1558431,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 94
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 683,
+        "max": 10893
+      },
+      "serializedArraysMiB": 31.205,
+      "retainedCollisionAndMaskMiB": 12.081,
+      "nativeInkAttributeMiB": 13.619,
+      "nativeInkIndexMiB": 0.893,
+      "arrayBytes": {
+        "triangles": 4574700,
+        "normals": 1524900,
+        "flags": 508300,
+        "objectIds": 508300,
+        "nodes": 1048544,
+        "order": 508300,
+        "vertices": 8135584,
+        "indices": 2140452,
+        "mask": 3174471,
+        "triangleFace": 508300,
+        "faceTriangles": 312132,
+        "faceF64": 8818568,
+        "faceI32": 766832,
+        "faceTriangleOffsets": 191712
+      },
+      "arrayHashes": {
+        "triangles": "64743f3147cc2209d64964b0caad4db4abfdffae33f1d439831d11d7a1d09023",
+        "normals": "8991726f24e1b8b4cb4c0ec46d31e68262ab400827467bacc2e7ba5818bc8a08",
+        "flags": "fe590148b2fd0f87d9336bbfa00af5b5c177ec5addb4caf999ef31b24d58aafe",
+        "objectIds": "563df01034a9a68a9cd9c77098210588d1874bcd76eb9a9f5da4e70853779dba",
+        "nodes": "65649feb4df7b325ccec4db2f5aaa20e08e51a86a4bb753f98e0fbdd2f8d364c",
+        "order": "03a08a5ea29a541101bf5adcb68c2148c5bdefcb47162c15adf74189e7278ce4",
+        "vertices": "03b8ee5973552ef06963938ea9843f3b0d32d0343d34513d2b68030c956d5843",
+        "indices": "6558268c347efca74586b69d346ca187afb6effd7d2179872c7f35c70d2c1a43",
+        "mask": "14504a8e461ae047790a68ba6d4349411d44b89334fa01c6851b2667fe326e9f",
+        "triangleFace": "c6ea6757fc9b7c6ca78bdf9f0e3af18ab47e14dbcfac49c67c3e35b7ff97233d",
+        "faceTriangles": "7b38fe185a1772c95f7e2255567390797abaa8472dcbee9f68a8656e8d69cd98",
+        "faceF64": "c4eccc7296488663efb407b7a46dd3f20a7267a19b73f5ba3c0ec6118c9a4aee",
+        "faceI32": "0b68c9ce63366cc7ea2def3993c54911ceee7d8dd0d4eb8404a751b013365f2f",
+        "faceTriangleOffsets": "9ce39234b89b880dc391f8e9e6dfc452ee908384b531b80a09c86546a4e50501"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 436,
+        "triangleTests": 15339,
+        "inputSha256": "d52feaea523ceb039a1d3d2758dc1965d4e048bfd1e47e371ed2314efbab3d77"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 115,
+        "jobs": 212,
+        "details": 136,
+        "roles": {
+          "albedo": 68,
+          "opacity": 8,
+          "normal": 67,
+          "roughness": 60,
+          "emissive": 9
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 148.245,
+        "block4x4MipEstimateMiB": 37.071
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 76,
+          "details": 0,
+          "roles": {
+            "albedo": 68,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 103.28,
+          "block4x4MipEstimateMiB": 25.823
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 115,
+          "jobs": 76,
+          "details": 0,
+          "roles": {
+            "albedo": 68,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 103.28,
+          "block4x4MipEstimateMiB": 25.823
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 76,
+          "details": 0,
+          "roles": {
+            "albedo": 68,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 103.28,
+          "block4x4MipEstimateMiB": 25.823
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 76,
+          "details": 0,
+          "roles": {
+            "albedo": 68,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 65.28,
+          "block4x4MipEstimateMiB": 16.323
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 76,
+          "details": 0,
+          "roles": {
+            "albedo": 68,
+            "opacity": 8
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 103.28,
+          "block4x4MipEstimateMiB": 25.823
+        }
+      ]
+    },
+    {
+      "id": "robo",
+      "name": "バイガイ亭",
+      "stageRecordSha256": "6a24493108f89a8f78942c6ccefda71d255b89953d8cb21130a5ad86ccfa933d",
+      "geometry": {
+        "vertices": 254039,
+        "triangles": 169233,
+        "collisionTriangles": 107020,
+        "bvhNodes": 32767,
+        "paintFaces": 23685
+      },
+      "sourceGeometry": {
+        "vertices": 867672,
+        "triangles": 586371,
+        "collisionTriangles": 107020,
+        "bvhNodes": 32767,
+        "paintFaces": 23685
+      },
+      "allMaterials": 184,
+      "activeObjects": 243,
+      "faces": 23685,
+      "emptyFaces": 0,
+      "maskCells": 1181405,
+      "liveCells": 584771,
+      "chartTriangles": {
+        "median": 2,
+        "p90": 4,
+        "p99": 16,
+        "max": 118
+      },
+      "liveChartCells": {
+        "median": 4,
+        "p99": 340,
+        "max": 2756
+      },
+      "serializedArraysMiB": 23.17,
+      "retainedCollisionAndMaskMiB": 8.873,
+      "nativeInkAttributeMiB": 9.787,
+      "nativeInkIndexMiB": 0.642,
+      "arrayBytes": {
+        "triangles": 3852720,
+        "normals": 1284240,
+        "flags": 428080,
+        "objectIds": 428080,
+        "nodes": 1048544,
+        "order": 428080,
+        "vertices": 8129248,
+        "indices": 2030796,
+        "mask": 1181405,
+        "triangleFace": 428080,
+        "faceTriangles": 224312,
+        "faceF64": 4358040,
+        "faceI32": 378960,
+        "faceTriangleOffsets": 94744
+      },
+      "arrayHashes": {
+        "triangles": "4d61e64d5e79666838a11c153afc34546e33dc03f0f4f8fa95a8e1ee4c85139c",
+        "normals": "0bdb422bb975e25ce46bb2b22b708e236242d96cdccb6a4e56329904bd5ef34d",
+        "flags": "b6d65004d981c3737d9c9d2e5cc8083621abefae7ce8506c45a0324d4143cf2c",
+        "objectIds": "4c1f6f648fb090b308fc2c1f898a8718cfcad994b4503229eb07aae3b9db620b",
+        "nodes": "774faf6e18e8534207db2448a550d2d8f0819a3279e40abc30aed24a0b292e82",
+        "order": "9ae000cca94c67c9eb859e6f3fa2e9a05c4471bdbbdeb567d2861551b2b5c871",
+        "vertices": "f97d16f2124e81fb0422d4e94dac43f5530fee96453ed23d4df7cd569f92973e",
+        "indices": "3ddb8673e5b67b15b5cbe7072255ead1601d05ceab4efdb1fc8edf99be31b899",
+        "mask": "daac3e5b7d82d97778560804fc5c2032482e8574adf9b98973ed10be88205934",
+        "triangleFace": "abdf5f496d648366dc384953aa54a215a68d3ef919f9af64afb2e3ac349686b8",
+        "faceTriangles": "5fdda946fcb175dc5dbfd5db37f7c1d032660c98e7052b595327bca4b980597b",
+        "faceF64": "3b945a453a87b9726e7c0dec46eeafaab76b41fad784231eb93f937250d85fb8",
+        "faceI32": "5d7c3f9f5f0f3ab95a5bcf43913f74a57fca588b03d1a15165ec70a79415031a",
+        "faceTriangleOffsets": "6dc4819fdb314bf9544117464f6be4c65a5220a69ffca1606807131a7e866d2d"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 472,
+        "triangleTests": 16554,
+        "inputSha256": "2b3cf80207453768ce019ae209eb91ae519521e8d077d2b58ac9faa2c9294617"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 184,
+        "jobs": 151,
+        "details": 96,
+        "roles": {
+          "albedo": 51,
+          "normal": 47,
+          "roughness": 39,
+          "emissive": 10,
+          "opacity": 4
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 140.026,
+        "block4x4MipEstimateMiB": 35.013
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 184,
+          "jobs": 55,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 4
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 93.651,
+          "block4x4MipEstimateMiB": 23.417
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 184,
+          "jobs": 55,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 4
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 93.651,
+          "block4x4MipEstimateMiB": 23.417
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 184,
+          "jobs": 55,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 4
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 93.651,
+          "block4x4MipEstimateMiB": 23.417
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 184,
+          "jobs": 55,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 4
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 60.492,
+          "block4x4MipEstimateMiB": 15.127
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 184,
+          "jobs": 55,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 4
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 93.651,
+          "block4x4MipEstimateMiB": 23.417
+        }
+      ]
+    },
+    {
+      "id": "shipshape",
+      "name": "オヒョウ海運",
+      "stageRecordSha256": "3f389738ea7bdbd75319d7e81092341c7dd81c3b069932b0ecb50a1b9e30e8bf",
+      "geometry": {
+        "vertices": 384488,
+        "triangles": 335944,
+        "collisionTriangles": 310976,
+        "bvhNodes": 65535,
+        "paintFaces": 140825
+      },
+      "sourceGeometry": {
+        "vertices": 388864,
+        "triangles": 339404,
+        "collisionTriangles": 310976,
+        "bvhNodes": 65535,
+        "paintFaces": 140825
+      },
+      "allMaterials": 113,
+      "activeObjects": 134,
+      "faces": 140825,
+      "emptyFaces": 0,
+      "maskCells": 14114614,
+      "liveCells": 6403071,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 68
+      },
+      "liveChartCells": {
+        "median": 4,
+        "p99": 579,
+        "max": 49792
+      },
+      "serializedArraysMiB": 78.319,
+      "retainedCollisionAndMaskMiB": 35.343,
+      "nativeInkAttributeMiB": 41.271,
+      "nativeInkIndexMiB": 2.706,
+      "arrayBytes": {
+        "triangles": 11195136,
+        "normals": 3731712,
+        "flags": 1243904,
+        "objectIds": 1243904,
+        "nodes": 2097120,
+        "order": 1243904,
+        "vertices": 12303616,
+        "indices": 4031328,
+        "mask": 14114614,
+        "triangleFace": 1243904,
+        "faceTriangles": 945916,
+        "faceF64": 25911800,
+        "faceI32": 2253200,
+        "faceTriangleOffsets": 563304
+      },
+      "arrayHashes": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+        "nodes": "11b03f717b9f07db509fd273c75fd832c345cd4b98216513a29e6bf00c55ebfa",
+        "order": "f77805d46a1114f87e0117a1fa34b75802961a002469f5fe0e281fc5b10d5da2",
+        "vertices": "db9273215782a6574497b01b6c2572350a9f37e4e713e88ee20401656700513a",
+        "indices": "e23d9145dd99c01ed3ca214129e11e59413ec16b7a0d0daf46627e3fcaef0f1c",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "faceTriangles": "6d682c98a1258a2ece4dc78800e3425a817466750876ece2f37c60683cf6302f",
+        "faceF64": "46ea58212148ec509f9c3272ca7c6c85d87fba1a06d898ee5321ebd0f16f1610",
+        "faceI32": "67add3b4f615a07c0e34a8b53956099a33da7508f2573ab96119aae1efb8d5ac",
+        "faceTriangleOffsets": "ba773cb723fd83323c8f1a2d555fb237f6d5cf4fc8706ff52de998fe980882c6"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 368,
+        "triangleTests": 18646,
+        "inputSha256": "3de1e8683b64c43e16f7cf2e4cdd1c474d17fdeb70ac198494da7c9b485ed739"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 113,
+        "jobs": 237,
+        "details": 146,
+        "roles": {
+          "albedo": 76,
+          "normal": 67,
+          "roughness": 69,
+          "opacity": 15,
+          "emissive": 10
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 318.851,
+        "block4x4MipEstimateMiB": 79.721
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 113,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 227.059,
+          "block4x4MipEstimateMiB": 56.769
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 113,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 227.059,
+          "block4x4MipEstimateMiB": 56.769
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 113,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 227.059,
+          "block4x4MipEstimateMiB": 56.769
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 113,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 111.059,
+          "block4x4MipEstimateMiB": 27.769
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 113,
+          "jobs": 91,
+          "details": 0,
+          "roles": {
+            "albedo": 76,
+            "opacity": 15
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 227.059,
+          "block4x4MipEstimateMiB": 56.769
+        }
+      ]
+    },
+    {
+      "id": "sturgeon",
+      "name": "チョウザメ造船",
+      "stageRecordSha256": "1e1b551ed1ce09c0a4c9648d1d90306e79f7312ad656c144addd0cc2ddd6c434",
+      "geometry": {
+        "vertices": 269203,
+        "triangles": 188196,
+        "collisionTriangles": 127210,
+        "bvhNodes": 32767,
+        "paintFaces": 29598
+      },
+      "allMaterials": 84,
+      "activeObjects": 86,
+      "faces": 29598,
+      "emptyFaces": 0,
+      "maskCells": 2259705,
+      "liveCells": 1154414,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 4,
+        "p99": 13,
+        "max": 72
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 731,
+        "max": 6874
+      },
+      "serializedArraysMiB": 27.265,
+      "retainedCollisionAndMaskMiB": 11.138,
+      "nativeInkAttributeMiB": 10.001,
+      "nativeInkIndexMiB": 0.656,
+      "arrayBytes": {
+        "triangles": 4579560,
+        "normals": 1526520,
+        "flags": 508840,
+        "objectIds": 508840,
+        "nodes": 1048544,
+        "order": 508840,
+        "vertices": 8614496,
+        "indices": 2258352,
+        "mask": 2259705,
+        "triangleFace": 508840,
+        "faceTriangles": 229224,
+        "faceF64": 5446032,
+        "faceI32": 473568,
+        "faceTriangleOffsets": 118396
+      },
+      "arrayHashes": {
+        "triangles": "b34070b8c2a39e45985da98beea2811959d54b2a31401b87d6bc4945d58504cf",
+        "normals": "82b08286cf0dde4c00dc8ed353613d30967241700155f3bf6501c30b3c03b06e",
+        "flags": "62bdb16cee835e4e58d7367026e2c3ee757b152e57c7b2c2dbedc193ad9e1fc4",
+        "objectIds": "677edf7d89188828b77ada311fd3b2b8e92ba4c6fdfcc5b400a6c0ba9860acc5",
+        "nodes": "5c8779b17afa412b379128cca71ab54fff9c614b2c39abb533fd8e4741498477",
+        "order": "17a4a3b3bbf885bc96803760a48a7e1e3819e136977b366fe5ac2d84fc328d6f",
+        "vertices": "09ee842c7a903e3c7c3d66633811b82954f5a2943cdef5541b8d6886d53806b4",
+        "indices": "ec5ba6a2b305320dd236522a50ae458daafa45ef2801d4bc1f1acc05ff138b5d",
+        "mask": "786cdecfe50111e1ec9cd18d86e555f5aa8a7e9a1ddd03dff7af0c225e97522e",
+        "triangleFace": "11b1b41549678ab540aea765e3d806f0f830cb6e03dc34e476f014c978a66a08",
+        "faceTriangles": "e7825627610ed4b5f5043ccf4a07d0b95805734b53d0d46e815fa6a667bda29f",
+        "faceF64": "87fb2284c909a64a60c5028141bb7f1c5a659fa2f64196d63121982bde932c87",
+        "faceI32": "64626a989e691a637d4adeb317dda2aa33ae8468a40cfdeaccfa8223dad22f6c",
+        "faceTriangleOffsets": "2c0da722e92d7805489c6517aa1bf1ac1e7065faf5707811bc577f8033f03e8c"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 395,
+        "triangleTests": 16478,
+        "inputSha256": "741e5ad019baf6ea590a82b8b8f896563f2878aba982bed83f9257f03469ab49"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 84,
+        "jobs": 149,
+        "details": 91,
+        "roles": {
+          "albedo": 51,
+          "normal": 42,
+          "roughness": 42,
+          "emissive": 7,
+          "opacity": 7
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 113.973,
+        "block4x4MipEstimateMiB": 28.498
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 84,
+          "jobs": 58,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 7
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.244,
+          "block4x4MipEstimateMiB": 20.063
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 84,
+          "jobs": 58,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 7
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.244,
+          "block4x4MipEstimateMiB": 20.063
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 84,
+          "jobs": 58,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 7
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.244,
+          "block4x4MipEstimateMiB": 20.063
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 84,
+          "jobs": 58,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 7
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 46.119,
+          "block4x4MipEstimateMiB": 11.532
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 84,
+          "jobs": 58,
+          "details": 0,
+          "roles": {
+            "albedo": 51,
+            "opacity": 7
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 80.244,
+          "block4x4MipEstimateMiB": 20.063
+        }
+      ]
+    },
+    {
+      "id": "umami",
+      "name": "ナンプラー遺跡",
+      "stageRecordSha256": "f0da9fe440107d3d3cb876a96ffd27100ed4f9b6b7efd6c9baf45a8028e9dd83",
+      "geometry": {
+        "vertices": 378944,
+        "triangles": 300986,
+        "collisionTriangles": 228919,
+        "bvhNodes": 65535,
+        "paintFaces": 114928
+      },
+      "sourceGeometry": {
+        "vertices": 486036,
+        "triangles": 390222,
+        "collisionTriangles": 228919,
+        "bvhNodes": 65535,
+        "paintFaces": 114928
+      },
+      "allMaterials": 146,
+      "activeObjects": 149,
+      "faces": 114928,
+      "emptyFaces": 0,
+      "maskCells": 3682116,
+      "liveCells": 1588615,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 50
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 202,
+        "max": 2604
+      },
+      "serializedArraysMiB": 57.524,
+      "retainedCollisionAndMaskMiB": 20.155,
+      "nativeInkAttributeMiB": 30.738,
+      "nativeInkIndexMiB": 2.016,
+      "arrayBytes": {
+        "triangles": 8241084,
+        "normals": 2747028,
+        "flags": 915676,
+        "objectIds": 915676,
+        "nodes": 2097120,
+        "order": 915676,
+        "vertices": 12126208,
+        "indices": 3611832,
+        "mask": 3682116,
+        "triangleFace": 915676,
+        "faceTriangles": 704508,
+        "faceF64": 21146752,
+        "faceI32": 1838848,
+        "faceTriangleOffsets": 459716
+      },
+      "arrayHashes": {
+        "triangles": "d6febfb77d32ce12be8961645be1f61d7d40f0b6c84c9e2e5b3151560848cda5",
+        "normals": "bd4bd1355b6e4829121e21ae2e64495fa2ef554c61bea51523338eacb2443969",
+        "flags": "267c7e174c48b3ea7e8fc1b75df8eb2c37977eaeabeb682a06f1c872ef5811d7",
+        "objectIds": "10c7e81f42ba068b89681ea7d5afc779aee8a38723870525c8902775e641abfa",
+        "nodes": "8c44d2495c285d81a9e91ac24279c2501771ab73d25816fd95757b8113b4a970",
+        "order": "24661598f4a184106b238b8e77fc05a94730f2063dfcefbdc5b226e390185bf1",
+        "vertices": "4184a77ac7c7442cb164500373182eb13a52f643be7c4da9e26969df9d5e1d3f",
+        "indices": "fc9ac79db1e797274dd70e85bd48b85dad77e8d443ecb0ed074d98409b991efb",
+        "mask": "e15ef5db575c9467dd952f0aa3be02c16e98ff4245faf6082ca5f237b9f7dce6",
+        "triangleFace": "ad1a6a61b617ab178c5f5ec18ab6205181228417a89af1d28692082bd208665b",
+        "faceTriangles": "da7371c2fbf55c949af3ed8a8d0c2733675a37959412660124383582aa3c36e8",
+        "faceF64": "579a2b126337a25e0da2f644f232427879ca8c32464c5cbf112bba10ca2b70c6",
+        "faceI32": "64acc0d9aa5e4994652ef4f82c98d6a186f58fdc19bba2077cdcacd322eaf66f",
+        "faceTriangleOffsets": "5990878641830e3e17dc7038cf036b323833bc234607b079e5b81370d05c631b"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 464,
+        "triangleTests": 16878,
+        "inputSha256": "7b2f0b8b6f1190b0d2a0ee20e41b6bbe7d9896dce0fed876cae8d6405be806dc"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 146,
+        "jobs": 284,
+        "details": 185,
+        "roles": {
+          "albedo": 87,
+          "normal": 91,
+          "roughness": 84,
+          "opacity": 12,
+          "emissive": 10
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 259.521,
+        "block4x4MipEstimateMiB": 64.896
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 146,
+          "jobs": 99,
+          "details": 0,
+          "roles": {
+            "albedo": 87,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 174.624,
+          "block4x4MipEstimateMiB": 43.662
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 146,
+          "jobs": 99,
+          "details": 0,
+          "roles": {
+            "albedo": 87,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 174.624,
+          "block4x4MipEstimateMiB": 43.662
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 146,
+          "jobs": 99,
+          "details": 0,
+          "roles": {
+            "albedo": 87,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 174.624,
+          "block4x4MipEstimateMiB": 43.662
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 146,
+          "jobs": 99,
+          "details": 0,
+          "roles": {
+            "albedo": 87,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 96.124,
+          "block4x4MipEstimateMiB": 24.036
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 146,
+          "jobs": 99,
+          "details": 0,
+          "roles": {
+            "albedo": 87,
+            "opacity": 12
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 174.624,
+          "block4x4MipEstimateMiB": 43.662
+        }
+      ]
+    },
+    {
+      "id": "undertow",
+      "name": "マテガイ放水路",
+      "stageRecordSha256": "9ca9b05f9db357fefe3c0a803c6c69a9052b2da90687f5e5c420204be43a92f4",
+      "geometry": {
+        "vertices": 202530,
+        "triangles": 139248,
+        "collisionTriangles": 70322,
+        "bvhNodes": 16383,
+        "paintFaces": 20135
+      },
+      "sourceGeometry": {
+        "vertices": 375948,
+        "triangles": 259698,
+        "collisionTriangles": 70322,
+        "bvhNodes": 16383,
+        "paintFaces": 20135
+      },
+      "allMaterials": 115,
+      "activeObjects": 115,
+      "faces": 20135,
+      "emptyFaces": 0,
+      "maskCells": 2601065,
+      "liveCells": 1192714,
+      "chartTriangles": {
+        "median": 2,
+        "p90": 5,
+        "p99": 16,
+        "max": 80
+      },
+      "liveChartCells": {
+        "median": 6,
+        "p99": 912,
+        "max": 7829
+      },
+      "serializedArraysMiB": 19.168,
+      "retainedCollisionAndMaskMiB": 7.477,
+      "nativeInkAttributeMiB": 9.346,
+      "nativeInkIndexMiB": 0.613,
+      "arrayBytes": {
+        "triangles": 2531592,
+        "normals": 843864,
+        "flags": 281288,
+        "objectIds": 281288,
+        "nodes": 524256,
+        "order": 281288,
+        "vertices": 6480960,
+        "indices": 1670976,
+        "mask": 2601065,
+        "triangleFace": 281288,
+        "faceTriangles": 214200,
+        "faceF64": 3704840,
+        "faceI32": 322160,
+        "faceTriangleOffsets": 80544
+      },
+      "arrayHashes": {
+        "triangles": "cf66d080d2db90fda19e5098daddd3a7bb5165ada55c8bfcc33b50fc4488d4d0",
+        "normals": "5447e1b187d314a02c0e37d45827dd2f17e86e2cfee7829a176aba10d71ed0b5",
+        "flags": "811ba162ff4aef7c22b96cc0f4c80afc95b89c11b28a86782bfbe485bd5dc5b5",
+        "objectIds": "0c8c35ae7adb04b79d2eb20447982dfd742670ba49f172168b34bfb3899762c7",
+        "nodes": "cb7406211069443a19b6348bd23523cb7c0fd113c8603f07d10f54cfd4db8b66",
+        "order": "bc5b6438c9db2f6af1539923dabab04af20ba6c208800c81a41414b2d36ba827",
+        "vertices": "b4136b77b66b60f12073c3f42edca850150d48b4e9dd81116786eaa367a2af0b",
+        "indices": "73be6fe925e75e8bf91b878894681e1faf03ca8dc8cede967355ccd393e77438",
+        "mask": "24fc61fbe3b8fe5781d8ef1bb10a571879e8c231ff2caab8e310165dc2773216",
+        "triangleFace": "a283d222fa71407c5cfd04b280eeef0b902c7b27870c06590bd165e51c10948d",
+        "faceTriangles": "38ec9c0f830f596e34528d16f66e539aed4aa1ffd21565256bd924e58692cf37",
+        "faceF64": "037ca773875444ed7e6d9fd475b33c05982db2bdb7c6eec3b942dfe2a1c8a260",
+        "faceI32": "b73dedd0ba9ee3bc9947d96b0249b1848a1f2069aa87db6d042de4f04b5f8277",
+        "faceTriangleOffsets": "0eb25445d687766009ef52f71f386113439dab33e2e69b633e7cf73bba2f5ca2"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 388,
+        "triangleTests": 14419,
+        "inputSha256": "bf32199d9e57649f8615e201cf90a39f60743e905d5f614fe71063092d6cd542"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 115,
+        "jobs": 184,
+        "details": 117,
+        "roles": {
+          "albedo": 58,
+          "normal": 60,
+          "roughness": 54,
+          "emissive": 3,
+          "opacity": 9
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 294.964,
+        "block4x4MipEstimateMiB": 73.75
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 67,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 9
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 197.452,
+          "block4x4MipEstimateMiB": 49.366
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 115,
+          "jobs": 67,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 9
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 197.452,
+          "block4x4MipEstimateMiB": 49.366
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 67,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 9
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 197.452,
+          "block4x4MipEstimateMiB": 49.366
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 67,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 9
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 66.269,
+          "block4x4MipEstimateMiB": 16.57
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 115,
+          "jobs": 67,
+          "details": 0,
+          "roles": {
+            "albedo": 58,
+            "opacity": 9
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 197.452,
+          "block4x4MipEstimateMiB": 49.366
+        }
+      ]
+    },
+    {
+      "id": "urchin",
+      "name": "デカライン高架下",
+      "stageRecordSha256": "26fb019e00c50b9406deb8162937fde3d42f6bf128f757466a9e652012dcd54f",
+      "geometry": {
+        "vertices": 260172,
+        "triangles": 202908,
+        "collisionTriangles": 196759,
+        "bvhNodes": 33069,
+        "paintFaces": 56161
+      },
+      "sourceGeometry": {
+        "vertices": 534545,
+        "triangles": 407073,
+        "collisionTriangles": 196759,
+        "bvhNodes": 33069,
+        "paintFaces": 56161
+      },
+      "allMaterials": 150,
+      "activeObjects": 156,
+      "faces": 56161,
+      "emptyFaces": 0,
+      "maskCells": 2573178,
+      "liveCells": 1140823,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 10,
+        "max": 72
+      },
+      "liveChartCells": {
+        "median": 2,
+        "p99": 332,
+        "max": 2569
+      },
+      "serializedArraysMiB": 37.028,
+      "retainedCollisionAndMaskMiB": 15.84,
+      "nativeInkAttributeMiB": 16.826,
+      "nativeInkIndexMiB": 1.103,
+      "arrayBytes": {
+        "triangles": 7083324,
+        "normals": 2361108,
+        "flags": 787036,
+        "objectIds": 787036,
+        "nodes": 1058208,
+        "order": 787036,
+        "vertices": 8325504,
+        "indices": 2434896,
+        "mask": 2573178,
+        "triangleFace": 787036,
+        "faceTriangles": 385648,
+        "faceF64": 10333624,
+        "faceI32": 898576,
+        "faceTriangleOffsets": 224648
+      },
+      "arrayHashes": {
+        "triangles": "f03ef98d58b5b07de58cfefcdd602df69478f6de4b34253789ef7bafd2727a2c",
+        "normals": "19eadd578ac76a370f521f75ef6152362dda40c329fb41de64b57a56992672bc",
+        "flags": "441f63fdcd48f9c73ab07a8cf616ea7f217301f73969459573a2b3b0a937dc76",
+        "objectIds": "e99454a936b6f88db8b3d1352bb3552e8a684734b20449d2855c841fecad50c7",
+        "nodes": "9f170c3b4573a936febf28dd464fd29e8c9051d031d7846f19d89c593a29738e",
+        "order": "459d3ec8b74000a8091fd9e0fc1e509b73d8b70e9bbcb1024a9e732b5dd002ec",
+        "vertices": "745da96f3b081ce6664a68faead9a7e90aa2bd68f7ddce10ee46e3459460ef05",
+        "indices": "37f672655402a197681b573a349ad9a6bd6391be579462fd79f50ecd461d4707",
+        "mask": "7f64c14599a45e99a817a2a5a5e57a2ebc44a9a38ef39ef22534ed81cbe5d54b",
+        "triangleFace": "b370b60a83701abfec852a9a9dd8a1b71047327af7ad1d2d17fee7a11fba977b",
+        "faceTriangles": "4c1077e3dde827ccd730dab8c12b7660b8f0e9229d2e6f39265b32dd0b1b6393",
+        "faceF64": "79123ff1067b9eabd5bad35310042d3899b8fd170ccf32441b22fd42b52917bd",
+        "faceI32": "856504a5d4ef90d9507547edeee8ab6aee86749b20ec9cb80ea55e63b3d28d6e",
+        "faceTriangleOffsets": "f93e88d6a8cc456e0527d00ce4af9246fb4210773884966a0ea9d1d0e035fdb1"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 464,
+        "triangleTests": 23544,
+        "inputSha256": "3a649848f8114d64c43017da7c885a7d1551c2bada313009ee7a13e2660a294a"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 150,
+        "jobs": 195,
+        "details": 125,
+        "roles": {
+          "albedo": 60,
+          "normal": 61,
+          "roughness": 56,
+          "emissive": 8,
+          "opacity": 10
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 150.426,
+        "block4x4MipEstimateMiB": 37.613
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 150,
+          "jobs": 70,
+          "details": 0,
+          "roles": {
+            "albedo": 60,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 99.371,
+          "block4x4MipEstimateMiB": 24.846
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 150,
+          "jobs": 70,
+          "details": 0,
+          "roles": {
+            "albedo": 60,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 99.371,
+          "block4x4MipEstimateMiB": 24.846
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 150,
+          "jobs": 70,
+          "details": 0,
+          "roles": {
+            "albedo": 60,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 99.371,
+          "block4x4MipEstimateMiB": 24.846
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 150,
+          "jobs": 70,
+          "details": 0,
+          "roles": {
+            "albedo": 60,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 71.188,
+          "block4x4MipEstimateMiB": 17.8
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 150,
+          "jobs": 70,
+          "details": 0,
+          "roles": {
+            "albedo": 60,
+            "opacity": 10
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 99.371,
+          "block4x4MipEstimateMiB": 24.846
+        }
+      ]
+    },
+    {
+      "id": "wahoo",
+      "name": "スメーシーワールド",
+      "stageRecordSha256": "1b5d40eea17abc0370925eb47cf4ca3b1990d24cb234334a9624d20d6363bbf4",
+      "geometry": {
+        "vertices": 211621,
+        "triangles": 157845,
+        "collisionTriangles": 102194,
+        "bvhNodes": 24163,
+        "paintFaces": 44152
+      },
+      "sourceGeometry": {
+        "vertices": 221348,
+        "triangles": 162088,
+        "collisionTriangles": 102194,
+        "bvhNodes": 24163,
+        "paintFaces": 44152
+      },
+      "allMaterials": 79,
+      "activeObjects": 79,
+      "faces": 44152,
+      "emptyFaces": 0,
+      "maskCells": 1962869,
+      "liveCells": 1014113,
+      "chartTriangles": {
+        "median": 1,
+        "p90": 2,
+        "p99": 8,
+        "max": 75
+      },
+      "liveChartCells": {
+        "median": 3,
+        "p99": 314,
+        "max": 3920
+      },
+      "serializedArraysMiB": 25.959,
+      "retainedCollisionAndMaskMiB": 9.104,
+      "nativeInkAttributeMiB": 11.789,
+      "nativeInkIndexMiB": 0.773,
+      "arrayBytes": {
+        "triangles": 3678984,
+        "normals": 1226328,
+        "flags": 408776,
+        "objectIds": 408776,
+        "nodes": 773216,
+        "order": 408776,
+        "vertices": 6771872,
+        "indices": 1894140,
+        "mask": 1962869,
+        "triangleFace": 408776,
+        "faceTriangles": 270208,
+        "faceF64": 8123968,
+        "faceI32": 706432,
+        "faceTriangleOffsets": 176612
+      },
+      "arrayHashes": {
+        "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+        "normals": "5f5e66c4a3ed28f8bc76ec7d1d196e7e521143d2e1f2936767859f51fdb7914a",
+        "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+        "objectIds": "f8f121219d0ea8744ba50fc09c98430dbe7bc77dfe513d86f239fef0f3145618",
+        "nodes": "56b99a89f369d3d3509dfbf2f686845c252a8c75a55c272ee52cbf7c41340239",
+        "order": "a0d6123b33b1f2f1819ddd77112875f329b92bec83494603f39501d3f46b874e",
+        "vertices": "c4b75e721958006678015745f7ae640d63c685829817bf9e8072f2a9c6f92bd5",
+        "indices": "240e6c6d7b28f5aaea1081f2f67458e44a18d9a38b91298d190b13e6dfa63a38",
+        "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082",
+        "triangleFace": "8efa39fd0d8dbcdd56a2301101bc013745a842f9dd596a0c954bb8128061ee87",
+        "faceTriangles": "b6c93a5fcede55fe5d418de216807f8d8664bafba224887e344d484d3366bd43",
+        "faceF64": "f1d2b6309cb86748bb75bc80b5fe71ccae77b596ae1fd906bea27dedfdc70c16",
+        "faceI32": "278e5235c1868a68cbb0bb8f33de315044b271c57b768c0b58c15eb8e05b333b",
+        "faceTriangleOffsets": "a096c30bc814df0b6c700f2416120e427f565adadfc66d357d96a9da77f51bf9"
+      },
+      "groundMatrix": {
+        "status": "passed",
+        "poses": 64,
+        "rays": 576,
+        "hits": 441,
+        "triangleTests": 23170,
+        "inputSha256": "d5d6a3faae3c3ccffcae76ab0997ad3dfdb3f0345e7a08eab9f344e4a23a5643"
+      },
+      "baselineHighCompressed": {
+        "settingsQuality": "high",
+        "compressed": true,
+        "memory": null,
+        "quality": "high",
+        "caps": {
+          "maxDimension": 1024,
+          "perRole": {
+            "normal": 512,
+            "roughness": 512
+          },
+          "fallback": {
+            "quality": "balanced",
+            "maxDimension": 1024,
+            "perRole": {}
+          }
+        },
+        "activeMaterials": 79,
+        "jobs": 187,
+        "details": 102,
+        "roles": {
+          "albedo": 66,
+          "normal": 55,
+          "roughness": 37,
+          "emissive": 10,
+          "opacity": 19
+        },
+        "unknown": 0,
+        "rgbaMipMiB": 164.072,
+        "block4x4MipEstimateMiB": 41.024
+      },
+      "mobileProfiles": [
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 79,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 66,
+            "opacity": 19
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 142.056,
+          "block4x4MipEstimateMiB": 35.517
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": false,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {}
+          },
+          "activeMaterials": 79,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 66,
+            "opacity": 19
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 142.056,
+          "block4x4MipEstimateMiB": 35.517
+        },
+        {
+          "settingsQuality": "medium",
+          "compressed": true,
+          "memory": null,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 79,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 66,
+            "opacity": 19
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 142.056,
+          "block4x4MipEstimateMiB": 35.517
+        },
+        {
+          "settingsQuality": "low",
+          "compressed": true,
+          "memory": null,
+          "quality": "low",
+          "caps": {
+            "maxDimension": 512,
+            "perRole": {},
+            "fallback": {
+              "quality": "low",
+              "maxDimension": 512,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 79,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 66,
+            "opacity": 19
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 78.806,
+          "block4x4MipEstimateMiB": 19.705
+        },
+        {
+          "settingsQuality": "high",
+          "compressed": true,
+          "memory": 2,
+          "quality": "balanced",
+          "caps": {
+            "maxDimension": 1024,
+            "perRole": {},
+            "fallback": {
+              "quality": "balanced",
+              "maxDimension": 1024,
+              "perRole": {}
+            }
+          },
+          "activeMaterials": 79,
+          "jobs": 85,
+          "details": 0,
+          "roles": {
+            "albedo": 66,
+            "opacity": 19
+          },
+          "unknown": 0,
+          "rgbaMipMiB": 142.056,
+          "block4x4MipEstimateMiB": 35.517
+        }
+      ]
+    }
+  ]
+}

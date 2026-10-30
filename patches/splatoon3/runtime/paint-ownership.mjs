@@ -516,6 +516,28 @@ function visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,index,x,y,
  return 3;
 }
 
+// Native charts are often only a few live cells. Once the body or a later
+// stamp owns that whole rectangle, none of its ancillary pieces can write it:
+// claimPaintCell rejects the same order and any older order. Inspect the live
+// owner/dead arrays for every face, before preparing masks and piece boxes.
+// Large charts keep the existing sparse piece walk instead of a full scan.
+function nativeAncillaryRectBlocked(paint,face,order,i0,i1,j0,j1){
+  const count=(i1-i0+1)*(j1-j0+1);
+  if(!paint.level?.native||!order||!Number.isSafeInteger(count)||count<1||count>64)return false;
+  const owners=paint._paintOwnershipOrder,dead=paint.dead;
+  if(!owners||!dead)return false;
+  for(let j=j0;j<=j1;j++){
+    const row=face.grid+j*face.nu;
+    for(let i=i0;i<=i1;i++){
+      const index=row+i;
+      if(dead[index])continue;
+      const previous=owners[index]||0;
+      if(!previous||previous!==order&&paintOrderComesAfter(paint,order,previous))return false;
+    }
+  }
+  return true;
+}
+
 function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
@@ -539,6 +561,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const i0 = Math.max(0, Math.floor((lu - ext) / face.cu)), i1 = Math.min(face.nu - 1, Math.floor((lu + ext) / face.cu));
     const j0 = Math.max(0, Math.floor((lv - (ext > down ? ext : down)) / face.cv)), j1 = Math.min(face.nv - 1, Math.floor((lv + ext) / face.cv));
     if (i1 < i0 || j1 < j0) continue;
+    if (paint.level?.native && order && nativeAncillaryRectBlocked(paint,face,order,i0,i1,j0,j1)) continue;
     const cellArea = face.cu * face.cv;
     const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
     if (!mask) continue;

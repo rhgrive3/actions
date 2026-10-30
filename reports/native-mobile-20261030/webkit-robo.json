@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "site": "/workspace/site-mobile-after-all",
+  "pathBoundBuildSha256": "7a99daf376d5e82f3319b99f3c99045c814db1fc980ab5ba570b39f63d4cd23b",
+  "contentHash": "b0235ae6aec58fb76ed2d2ab41d238c343c3f1a767fd8a739fc95d4a325ce608",
+  "revision": "e4cb6a64c792d1802888b686e5388c19833a0fd44e1ebb491f8ecf086f72c53e",
+  "browser": "webkit",
+  "renderFrames": 1,
+  "requestedStages": [
+    "robo"
+  ],
+  "profiles": [
+    {
+      "device": "ipad",
+      "status": "passed",
+      "stages": [
+        {
+          "id": "robo",
+          "name": "バイガイ亭",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 55,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "paintDryRegions": {
+            "present": true,
+            "targetMatches": true,
+            "counters": {
+              "dryPasses": 0,
+              "sparsePasses": 0,
+              "fullPasses": 0,
+              "coveredPixels": 0,
+              "baselinePixels": 0
+            }
+          },
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "geometry": {
+            "vertices": 254039,
+            "triangles": 169233,
+            "collisionTriangles": 107020,
+            "bvhNodes": 32767,
+            "paintFaces": 23685
+          },
+          "frameRows": [
+            {
+              "calls": 129,
+              "triangles": 408897,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 374,
+            "textures": 66
+          },
+          "elapsedMs": 14314
+        }
+      ],
+      "errors": [],
+      "blockedExternal": [],
+      "release": {
+        "nativeReleased": true,
+        "previousDisposed": true,
+        "rawPresetRestored": true
+      }
+    }
+  ],
+  "scope": "webkit mobile emulation: normal stage load, intro render and disposal smoke; not physical iPad/phone FPS or full-match acceptance.",
+  "browserVersion": "26.5"
+}

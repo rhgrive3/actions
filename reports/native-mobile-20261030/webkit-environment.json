@@ -1,0 +1,46 @@
+{
+  "engine": "Playwright 1.62.1 WebKit revision2336 / WebKit26.5 WPE headless",
+  "host": "Debian13 x86_64 cloud container; not physical iPad",
+  "install": "npx playwright install webkit",
+  "dependencies": "System apt index was unavailable. Official Debian trixie package index and packages were downloaded, SHA256 checked, and extracted under ignored .ci-scratch/webkit-deps/root without system changes.",
+  "packages": [
+    {
+      "file": "gstreamer1.0-libav_1.26.2-1+deb13u1_amd64.deb",
+      "sha256": "d3b21d5eadf3195f0de518ec4d0f54046737527be60324922361f25e0ae533df"
+    },
+    {
+      "file": "libgles2_1.7.0-1+b2_amd64.deb",
+      "sha256": "e12c18aa77939d122ee1dea520ba0440b97dc19200b7396e03dff03a3ece74c1"
+    },
+    {
+      "file": "libgraphene-1.0-0_1.10.8-5_amd64.deb",
+      "sha256": "ddcf98f17f6c0a7c76974d7238be1468e59c186034c1b806638d32d9f446ea6e"
+    },
+    {
+      "file": "libgtk-4-1_4.18.6+ds-2_amd64.deb",
+      "sha256": "51ab1114a57702e703cce745c24caf5bd31ec1d2a900c72fd15fe47c6c030e68"
+    },
+    {
+      "file": "libharfbuzz-icu0_10.2.0-1+deb13u1_amd64.deb",
+      "sha256": "0b45d951629e98673c0da73b2bcd0886a467d833bb3b7499892a168f247165d2"
+    },
+    {
+      "file": "libhyphen0_2.8.8-7+b2_amd64.deb",
+      "sha256": "fa9dca7b8cf1381fd52800c44a385c5725a78a88bd705f7c39b1046a5293435e"
+    },
+    {
+      "file": "libmanette-0.2-0_0.2.12-1_amd64.deb",
+      "sha256": "98841a467692c46fd1870275113235691ebbfe71a3524f6b2a0fa7e9c33c6e56"
+    },
+    {
+      "file": "libwoff1_1.0.2-2+b2_amd64.deb",
+      "sha256": "628a2a993556027adaa4e93a675fee341e3d47d306db7f3811ff56ea84a42022"
+    }
+  ],
+  "wrapperSha256": "49370c68eaead4db54177e2fa0a5c3b7eac76ac2e446f6bf9234e24eae6ac8d1",
+  "runner": "scripts/check-native-mobile-browser.mjs",
+  "command": "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 WEBKIT_PATH=/workspace/actions/.ci-scratch/webkit-deps/run-webkit.sh node scripts/check-native-mobile-browser.mjs --site /workspace/site-mobile-after-all --out .ci-scratch/native-webkit-smoke-attempt3 --device ipad --stages robo --browser webkit --render-frames 1",
+  "validation": "WPE MiniBrowser and WPEWebProcess dependencies passed ldd; GLESv2, harfbuzz-icu and hyphen passed real dynamic loading. Stock wrapper replaces LD_LIBRARY_PATH, so the local wrapper runs the same bundled MiniBrowser with its normal WebKit paths plus extracted libraries.",
+  "hostPreflight": "Skipped only Playwright host dependency preflight: it consults system ldconfig, which cannot see unprivileged extracted GLESv2, and also scans unused GTK binaries. No WebGL/GPU capability overrides were applied.",
+  "scope": "Native load, real intro frame, shader/runtime error checks, ownership and native\u2192legacy release; not sustained gameplay or physical-device FPS. Dry-region tracker installed but intro had no drying passes."
+}
