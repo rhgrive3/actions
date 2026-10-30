@@ -61,6 +61,29 @@ try{
   assert(await loc.evaluate((e,isLoadout)=>isLoadout?e.matches('.iw-wgrid'):!!(e.matches('.iw-ss__list')||e.querySelector('.iw-ss__list')),batch==='loadout'),'unexpected scroll pane identity');
   // Position ancestors before stabilization too: scroll-dependent layout may change.
   await loc.evaluate(e=>e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+  // Production uses content-visibility:auto with estimated card heights. Native
+  // pre-scroll materializes every row without changing CSS or recording duplicate images.
+  if(batch==='loadout'){
+   const warmup=[];let settled=false;
+   for(let pass=0;pass<3&&!settled;pass++){
+    await loc.evaluate(e=>e.scrollTop=0);await page.waitForTimeout(200);
+    const initial=await loc.evaluate(e=>({height:e.clientHeight,total:e.scrollHeight,width:e.clientWidth}));
+    let unchanged=true,reachedBottom=false;
+    for(let step=0;step<100;step++){
+     await page.waitForTimeout(120);
+     const state=await loc.evaluate(e=>({top:e.scrollTop,height:e.clientHeight,total:e.scrollHeight,width:e.clientWidth}));
+     unchanged=unchanged&&state.total===initial.total&&state.height===initial.height&&state.width===initial.width;
+     if(state.top+state.height>=state.total-1){reachedBottom=true;break;}
+     const moved=await loc.evaluate(e=>{const before=e.scrollTop;e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,before+e.clientHeight*.5);return e.scrollTop>before+1;});assert(moved,'warm-up scroll stalled');
+    }
+    assert(reachedBottom,'warm-up step budget exhausted');
+    await loc.evaluate(e=>e.scrollTop=0);await page.waitForTimeout(200);
+    const final=await loc.evaluate(e=>({height:e.clientHeight,total:e.scrollHeight,width:e.clientWidth}));
+    settled=unchanged&&JSON.stringify(initial)===JSON.stringify(final);
+    warmup.push({pass,initial,final,settled});
+   }
+   assert(settled,'content-visibility geometry never stabilized across full pane');receipt.catalogueWarmup=warmup;
+  }
   // Fonts must settle BEFORE using geometry as evidence, not only inside capture().
   let stable=0,lastGeometry='',geometry;
   for(let sample=0;sample<30&&stable<4;sample++){
