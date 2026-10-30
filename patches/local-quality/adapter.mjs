@@ -112,6 +112,7 @@ const IDENTITY_FILES = [
   'lobby-slot-transform-adapter.mjs',
   'visual-audio-queue-adapter.mjs',
   'combat-gpu-cpu-perfect-adapter.mjs',
+  'reviewed-wave67-gpu-adapter.mjs',
   'render-transfer-optimization-adapter.mjs',
   'input-lens-queue-adapter.mjs',
   'camera-fov-cache-adapter.mjs',
