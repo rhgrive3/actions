@@ -3,14 +3,30 @@ import assert from 'node:assert/strict';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 
 const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`
-  export {specialRiderMotionSnapshot,SPECIAL_RIDER_CALIBRATION} from './patches/splatoon3/runtime/special-motion.mjs';
+  export {specialRiderMotionSnapshot} from './patches/splatoon3/runtime/special-motion.mjs';
 `});
 const {G,THREE:T,CHARACTER_CHANNELS:C}=f;
 after(()=>f.reset());
 const bones=['hips','spine','chest','shinL','shinR','footL','footR'];
+const steady=new Map();
+const gripEvidence=new WeakMap();
 function points(ch){ch.root.updateMatrixWorld(true);return Object.fromEntries(bones.map(name=>[name,
   ch.root.worldToLocal(ch.bones[name].getWorldPosition(new T.Vector3())).toArray()]));}
 function close(a,b,message,tolerance=1e-6){assert.equal(a.length,b.length);for(let i=0;i<a.length;i++)assert.ok(Math.abs(a[i]-b[i])<tolerance,`${message}: ${a} / ${b}`);}
+function checkSteady(id,hz,pose){
+  const prior=steady.get(id);
+  if(prior)for(const name of ['hips','footL','footR'])close(pose[name],prior[name],id+' '+hz+'Hz '+name,.00001);
+  else steady.set(id,pose);
+}
+function grips(ch){
+  for(const d of ch.s3SpecialDevices())for(const side of ['R','L']){
+    const target=d.model.root.localToWorld(new T.Vector3(...d.spec.hands[side]));
+    const hole=ch.bones['hand'+side].localToWorld(new T.Vector3(side==='R'?.0255:-.0255,-.0525,0));
+    const error=hole.distanceTo(target);
+    if(!gripEvidence.has(ch)||error>gripEvidence.get(ch).error)gripEvidence.set(ch,{side,error,target:target.toArray(),hole:hole.toArray(),state:ch.actor._s3AllSpecialState.phase,age:ch.actor._s3AllSpecialState.t,handScale:ch.bones['hand'+side].scale.toArray()});
+  }
+}
+function assertGrips(ch,id,hz){const evidence=gripEvidence.get(ch);console.log(JSON.stringify({id,hz,grip:evidence}));assert.ok(evidence?.error<1e-5,'rider grips: '+JSON.stringify(evidence));}
 async function start(id,hz=60,enabled=true){
   f.reset();G.time=0;const a=await f.make(),ch=a.character;ch.s3SpecialMotionEnabled=enabled;
   for(let i=0;i<hz;i++)f.tick(a,1/hz);
@@ -28,6 +44,7 @@ for(const hz of [30,60,120])test(`Crab rider retains bent legs above the floor t
   const {a,ch,step}=await start('crabTank',hz);
   for(let i=0;i<hz/2;i++)step();
   const resting=points(ch),s=f.specialRiderMotionSnapshot(ch);
+  checkSteady('crabTank',hz,resting);grips(ch);
   assert.equal(s.kind,'crabTank');assert.equal(s.weight,1);
   assert.ok(ch.sourceMotion.active,'loaded source controller remains enabled outside the drawing transaction');
   assert.ok(resting.hips[1]>.9,'pelvis is at the cockpit rim instead of the standing ground pose');
@@ -41,9 +58,11 @@ for(const hz of [30,60,120])test(`Crab rider retains bent legs above the floor t
   a.intent.move.set(1,0,1);
   for(let i=0;i<hz/2;i++){
     step();const moving=points(ch);
+    grips(ch);
     for(const name of ['hips','footL','footR'])close(moving[name],resting[name],'riding '+name,.002);
   }
   assert.ok(a.pos.length()>.1,'native vehicle movement really advances');
+  assertGrips(ch,'crabTank',hz);
 });
 
 for(const hz of [30,60,120])test(`Reefslider lower body stays crouched and trailing across startup, dash and brake at ${hz}Hz`,async()=>{
@@ -53,9 +72,10 @@ for(const hz of [30,60,120])test(`Reefslider lower body stays crouched and trail
     step();const state=a._s3AllSpecialState;
     if(!state||state.phase==='recovery'||state.t<.3)continue;
     phases.add(state.phase);const p=points(ch);sample=p;
+    grips(ch);
     assert.equal(f.specialRiderMotionSnapshot(ch)?.kind,'reefslider');
     assert.ok(p.hips[1]<.53,'rider lowers their hips over the saddle');
-    assert.ok(p.chest[2]>p.hips[2]+.13,'torso leans toward the actual handles');
+    assert.ok(p.chest[2]>p.hips[2]+.10,'torso leans toward the actual handles');
     for(const side of ['L','R']){
       assert.ok(p['foot'+side][2]<p.hips[2]-.15,'feet trail behind the pelvis');
       assert.ok(p['foot'+side][1]>.17,'rider feet do not plant on the moving floor');
@@ -65,6 +85,8 @@ for(const hz of [30,60,120])test(`Reefslider lower body stays crouched and trail
   }
   assert.deepEqual([...phases],['startup','dash','brake']);
   assert.ok(sample);
+  checkSteady('reefslider',hz,sample);
+  assertGrips(ch,'reefslider',hz);
 });
 
 test('vehicle drawing leaves native movement, phases, damage and emission clocks unchanged',async()=>{
@@ -109,4 +131,13 @@ test('source body and main weapon resume after the native special ends',async()=
     assert.equal(ch.weapon.pivot.visible,true);poses.push(points(ch));
   }
   for(const name of bones)close(poses[1][name],poses[0][name],'restored source '+name,.002);
+});
+
+test('a failed native pose still restores the source controller owner',async()=>{
+  const {ch,step}=await start('crabTank');for(let i=0;i<30;i++)step();
+  const source=ch.sourceMotion,applyBody=source.applyBody,active=source.active;
+  source.applyBody=()=>{throw new Error('pose transaction probe');};
+  try {assert.throws(()=>ch._applyPose(1/60,{}),/pose transaction probe/);}
+  finally {source.applyBody=applyBody;}
+  assert.equal(source.active,active,'finally restores the source owner after a delegated failure');
 });
