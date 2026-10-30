@@ -62,7 +62,10 @@ export function installWeaponAudioRuntime(api){
   function stop(r){if(r?.spinLoop){r.spinLoop.stop?.(.04);r.spinLoop=null;r._spinnerAudioPhase=null;r._spinnerAudioRetryAt=0;}const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const key in s.loops){s.loops[key]?.stop(.04);delete s.loops[key];}s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
-      if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch,progress:event==='charge'?r.charge:undefined});
+      if(!s.loops[event]?.playing&&!s.loops[event]?._sfxDeferred){
+        s.loops[event]?.stop?.(.04);
+        s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch,progress:event==='charge'?r.charge:undefined});
+      }
       if(s.loops[event]){
         const update=s.loopUpdates[event] ||= {pos:undefined,pitch:1,volume:.68};
         update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;update.progress=event==='charge'?r.charge:undefined;
@@ -147,7 +150,7 @@ export function installWeaponAudioRuntime(api){
     // starts AudioContext. Preload the actual selected sub/special *events*
     // rather than decoding all 381 samples or warming every remote actor.
     const loader=G.audio?._realS3Loader,sub=a?.weapon?.sub,special=a?.weapon?.special;
-    if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'){
+    if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'&&!G.audio?._sfxSilent?.()){
       refreshRecordedKitPrefetch(s,loader,G.audio?.ctx,sub,special);kitOwners.add(this);
     }else stopKit(this);
     s.firedThisUpdate=false;
