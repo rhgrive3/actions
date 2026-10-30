@@ -40,7 +40,7 @@ test('one charge starts one premix and cancels its native fallback',async()=>{
   await spinnerPreload(engine,'s3-spinner-hypershort');
   const actor={isLocal:true,weapon:{chargeTime:2,catalogRecord:{parameters:{WeaponParam:{ChargeFrame_First:60,ChargeFrame_Second:120}}}}};
   const h=spinnerChargeAudioLoop(engine,'s3-spinner-hypershort',{actor},()=>base);
-  assert.equal(base.stops,1);assert.equal(sounds.length,1);
+  assert.equal(base.stops,0,'cached premix should not create a needless motor voice');assert.equal(sounds.length,1);
   h.set({progress:1});h.stop();h.stop();
   assert.equal(sounds[0].h.stops,1);
  }finally{globalThis.fetch=old;}
