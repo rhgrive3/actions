@@ -314,7 +314,9 @@ test('source ToHuman bow is corrected after kid silhouette returns, without chan
     drive(api, ch, st, { frames: 45 });
     assert.equal(ch.sourceMotion.formKid, false);
     st.form = 'kid';
-    drive(api, ch, st, { frames: 36, onFrame: () => {
+    // Sample the 50ms presentation at 120Hz so the late visible phase has
+    // multiple observations; gameplay/action clocks are compared below.
+    drive(api, ch, st, { frames: 72, hz: 120, onFrame: () => {
       const c = ch.sourceMotion, m = measure(api, ch);
       samples.push({ state: c.state, formWeight: c.formWeight,
         weight: api.posture.sourcePostureWeight(c.retarget),
@@ -327,6 +329,10 @@ test('source ToHuman bow is corrected after kid silhouette returns, without chan
 
   const [oldTrace, newTrace] = traces;
   assert.equal(oldTrace.length, newTrace.length);
+  for (let i=0;i<newTrace.length;i++) {
+    for (const key of ['state','formWeight','formTime'])
+      assert.equal(newTrace[i][key],oldTrace[i][key],`posture correction preserves ${key} at sample ${i}`);
+  }
   const visible = newTrace.map((p, i) => ({ ...p, i })).filter(p =>
     p.state === 'ToHuman' && p.formWeight >= 0.65);
   assert.ok(visible.length >= 2, 'the actual source ToHuman clip must overlap visible kid frames');
@@ -399,7 +405,8 @@ test('sourced ToHuman cannot generate a phantom carry while airborne or landing'
   assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0);
 
   st.form = 'kid';
-  drive(api, ch, st, { frames: 10 });
+  // Interrupt inside the current 3-frame exchange, before its idle handoff.
+  drive(api, ch, st, { frames: 1 });
   assert.equal(ch.sourceMotion.state, 'ToHuman');
   assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0);
 
