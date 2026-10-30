@@ -10,7 +10,7 @@ const probes = Array.from({ length: 7 }, () => ({ x: 0, y: 0, z: 0,
 // deliberately different from the old single centre ray: a thin ledge or wall
 // edge may hide the torso sample without fully occluding the blast volume.
 // Full cover still blocks every probe.
-export function blasterBlastExposed(physics, center, actor, player) {
+export function blasterBlastExposed(physics, center, actor, player, collision = null) {
   if (!physics?.los || !center || !actor?.pos || !player) return true;
   const baseY = actor.pos.y + (actor.smoothY || 0);
   const height = actor.form === 'squid' ? player.squidHeight : player.height;
@@ -31,6 +31,13 @@ export function blasterBlastExposed(physics, center, actor, player) {
   probes[5].set(actor.pos.x - fx * radius, mid, actor.pos.z - fz * radius);
   probes[6].set(actor.pos.x - fx * radius, high, actor.pos.z - fz * radius);
 
-  for (const point of probes) if (physics.los(center, point)) return true;
+  // The terrain impact can be exactly on (or microscopically inside) a wall.
+  // Start visibility rays on the incident side so slab tests cannot overlook
+  // the struck surface. Keep the explosion center and damage distance unchanged.
+  const normal = collision?.normal;
+  const origin = normal && Number.isFinite(normal.x) && Number.isFinite(normal.y) && Number.isFinite(normal.z)
+    ? { x: center.x + normal.x * 1e-5, y: center.y + normal.y * 1e-5, z: center.z + normal.z * 1e-5 }
+    : center;
+  for (const point of probes) if (physics.los(origin, point)) return true;
   return false;
 }

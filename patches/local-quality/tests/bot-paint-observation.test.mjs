@@ -9,7 +9,7 @@ async function setup({old=false,boss=false}={}) {
   const f=await fixture({extraExports:"export * from './inkwave-public/src/game/bots.js';",adaptNative:(rel,s)=>old?adaptSource(rel,s):adaptBotPaintObservation(rel,adaptSource(rel,s))});
   f.setRandom(()=>.5);
   function newBrain() {
-    const a=f.make('shooter'); a.specialReady=()=>false;
+    const a=f.make('shooter'); a.isBot=true; a.specialReady=()=>false;
     const brain=new f.BotBrain(a); brain.think=0;
     brain._perceive=()=>{}; brain._bossPerceive=()=>{};
     brain._pickPaintGoal=brain._pickRefill=brain._bossGoal=()=>{brain.path=[0];brain.pi=0;brain.goalTimer=100;brain.repath=100;};
