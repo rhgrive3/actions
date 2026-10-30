@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recordedAt": "2026-10-30T04:54:29Z",
+  "recordedAt": "2026-10-30T05:21:59Z",
   "purpose": "QA-only coordination snapshot; no product runtime imports",
   "sourceBase": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
   "parallelLimit": {
@@ -95,7 +95,7 @@
       "task": "actual authority proof fixture independent peer",
       "target": "4 blaster candidate files and QA scripts",
       "head": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
-      "lastResult": "Prior FX/env fixedclock/comparator peer completed; actual new rendering remains untested",
+      "lastResult": "Read-only exporter/workflow peer and pureJS decoder29negative+4knownSHA vectors passed; formalNode/log-size retrieval unverified",
       "state": "peer requested by hud; completion not yet confirmed",
       "next": "Review native proof delivery and retained assertions",
       "dependencies": [
@@ -109,9 +109,9 @@
       "task": "blaster A/B",
       "target": "4product candidate files; QA scripts/workflow",
       "head": "e582ce1e6aadde06f7c72bc3076806c5f1362852",
-      "lastResult": "Run41003942828 logic PASS. Both baseline/candidate built and reached emitted regressions, same authority three failures before browser. Source regression/routing and QA contracts preceded emitted execution successfully. No new PNG.",
+      "lastResult": "a8c919 baseline job123900033577 passed source/emitted+authority/routing and16PNG verifier; candidate running. Read-only same-run8shard original-byte export and decoder prepared; no visual acceptance yet.",
       "state": "QA driver integration",
-      "next": "Peer actual proof fixture repair; both clean immutable lanes rerun without weakened assertions; then real capture/comparison",
+      "next": "Preserve current run; publish reviewed aggregate job; validate all8logs44files before images; cross-lane result may fail and stays failure",
       "dependencies": [
         "peer; GitHubActions"
       ],

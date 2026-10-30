@@ -124,3 +124,40 @@ jobs:
           path: ${{ runner.temp }}/blast-artifacts
           if-no-files-found: error
           retention-days: 7
+
+  blast_ab_evidence:
+    needs: main91_blast_reference
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    if: ${{ needs.main91_blast_reference.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact QA comparison code only
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa
+          persist-credentials: false
+          sparse-checkout: tools/blast-main91-qa
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require transport decoder integrity tests
+        run: node --test qa/tools/blast-main91-qa/decode-blast-ab-evidence.test.mjs
+      - name: Read baseline artifact from this run only
+        uses: actions/download-artifact@v4
+        with:
+          name: blast-shell-alpha-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/baseline
+      - name: Read candidate artifact from this run only
+        uses: actions/download-artifact@v4
+        with:
+          name: blast-shell-alpha-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/candidate
+      - name: Verify and stream original PNG bytes; require strict cross-lane conditions
+        env:
+          EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node qa/tools/blast-main91-qa/stream-blast-ab-evidence.mjs evidence "$EXPECTED_QA_SHA" "${{ matrix.shard }}"
