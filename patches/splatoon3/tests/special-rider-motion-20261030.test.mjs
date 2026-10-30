@@ -7,7 +7,7 @@ const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`
 `});
 const {G,THREE:T,CHARACTER_CHANNELS:C}=f;
 after(()=>f.reset());
-const bones=['hips','spine','chest','shinL','shinR','footL','footR'];
+const bones=['hips','spine','chest','thighL','thighR','shinL','shinR','footL','footR'];
 const steady=new Map();
 const gripEvidence=new WeakMap();
 function points(ch){ch.root.updateMatrixWorld(true);return Object.fromEntries(bones.map(name=>[name,
@@ -49,8 +49,9 @@ for(const hz of [30,60,120])test(`Crab rider retains bent legs above the floor t
   assert.ok(ch.sourceMotion.active,'loaded source controller remains enabled outside the drawing transaction');
   assert.ok(resting.hips[1]>.9,'pelvis is at the cockpit rim instead of the standing ground pose');
   for(const side of ['L','R']){
-    assert.ok(resting['foot'+side][1]>.85,'ankles stay at the rear step height');
-    assert.ok(resting['shin'+side][2]>resting['foot'+side][2]+.1,'knee bends ahead of the trailing foot');
+    assert.ok(resting['thigh'+side][1]-resting['foot'+side][1]>.2,'ankles descend below the anatomical hips');
+    assert.ok(resting['shin'+side][2]>resting['thigh'+side][2]+.08,'knees bend toward the controls from the hips');
+    assert.ok(resting['shin'+side][1]-resting['foot'+side][1]>.07,'calves descend from knees to ankles');
   }
   assert.equal(ch.P[C.WPL],0);assert.equal(ch.P[C.WPR],0);
   const before=gameplay(a);step(0);assert.equal(gameplay(a),before,'paused presentation does not advance the actual special');

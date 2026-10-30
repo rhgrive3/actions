@@ -1,5 +1,9 @@
 # Rider motion comparison — 2026-10-30
 
+The initial Crab pose acceptance below is superseded by
+[the seated-direction correction](crab-rider-correction.md). The original
+knee-versus-foot check missed knees behind the hips and ankles above them.
+
 Scope: `runtime/special-motion.mjs`, based on `fd6435a` in the isolated
 `improve/special-motion-20261030` worktree. The paired device geometry and
 hand fitting change belongs to the holds lane. No `inkwave-public` source or
