@@ -1,0 +1,13 @@
+(node:35963) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ fixed ray axes retain getter/coercion reads, early rejects and exceptions (35.128504ms)
+✔ fixed ray axes preserve reentrant getter queries and mutable node observations (1.363385ms)
+✔ fixed ray axes retain non-number operand coercions for every axis (5.98717ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2356.064264
