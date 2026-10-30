@@ -18,7 +18,7 @@ try{
   await page.waitForFunction(()=>NG?.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
   const bootError=await page.locator('#boot-error').textContent();assert.equal(bootError,'',bootError);assert.equal(errors.length,0,JSON.stringify(errors));
   await page.evaluate(async(id)=>{NG.game.debug.freeze();NG.game.menus.wipe.cancel();await NG.game.startMatch({mapId:id,mode:'turf',duration:180,difficulty:'normal'});},id);
-  await page.evaluate(()=>{const g=NG.game;g._skipRender=true;for(let i=0;i<300;i++)g._frame(1/60);g._skipRender=false;});
+  await page.evaluate(()=>{const g=NG.game;g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+47;i<n;i++)g._frame(1/60);g._skipRender=false;});
   await page.waitForFunction(()=>NG.game.match?.state==='playing',null,{timeout:60000});
   console.log('match '+id);
   console.log('spawn-before '+JSON.stringify(await page.evaluate(()=>({spawn:NG.local.s3?.squidSpawn,paused:NG.match.paused,controller:NG.match.controller.enabled,blocked:NG.match.controller.menuBlocked,menu:NG.game.menus.current,input:NG.input.mouse}))));
@@ -88,7 +88,7 @@ try{
     for(const mode of ['turf','zones','rainmaker','clams']){await page.locator('.iw-screen:not(.is-leaving) .iw-backbtn').click();await screen('mode');await click('mode-'+mode);await screen('setup');await click('map-'+id);assert.equal(await page.evaluate(()=>NG.game.menus._scr.el.querySelector('[data-native-rule-supported="true"]')?.disabled),false);assert.equal(await page.evaluate(()=>NG.game.menus._scr.el.querySelector('[data-native-rule-reason]')?.textContent),'');}
     rejected.setupRefreshVerified=true;rejected.genuineMenuFlow={baseline,physicalStageClicks:true,physicalRuleClicks:true};report.rules.push(rejected);await page.evaluate(()=>{NG.game.debug.freeze();NG.game.menus.wipe.cancel();NG.game.menus.show(null);});continue;
    }
-   await page.evaluate(async({id,mode})=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'easy'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();}, {id,mode});
+   await page.evaluate(async({id,mode})=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'easy'});g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();}, {id,mode});
    let keyboardBoarding=null;
    if(mode==='tower'){
     await page.evaluate(()=>{const G=NG,g=G.game;g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);if(G.local.s3?.squidSpawn||!G.local.grounded)throw Error('Human initial spawn did not land');for(const b of G.actors)if(b!==G.local){b.pos.copy(G.level.spawnPads[b.team]);b.vel.set(0,0,0);b._rankedOnTower=false;}g.menus.show(null);});

@@ -92,7 +92,7 @@ try{
  await context.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));
  await observeRankedBoot(page,url,boot,async()=>{await page.goto(url,{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});},{artifacts:build.artifacts});
  console.log('Boot ready');
- await page.evaluate(async()=>{RG.game.debug.freeze();RG.game._skipRender=true;RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode:'rainmaker'});for(let i=0;i<450;i++)RG.game._frame(1/60);RG.game.debug.freezeBots();await RG.audio.requireRecordedMainShot(RG.game.profile.weapon||'shooter');});
+ await page.evaluate(async()=>{RG.game.debug.freeze();RG.game._skipRender=true;RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode:'rainmaker'});for(let i=0,n=(RG.match.turfIntroFrames??253)+197;i<n;i++)RG.game._frame(1/60);RG.game.debug.freezeBots();await RG.audio.requireRecordedMainShot(RG.game.profile.weapon||'shooter');});
  await page.waitForFunction(()=>RG.match?.state==='playing'&&RG.match.ranked&&RG.game.hud?._visible&&!document.querySelector('.iw-lineup')&&!document.querySelector('.iw-bn--go'),null,{polling:250,timeout:30000});
  await page.evaluate(()=>{
   const G=RG,m=G.match,a=m.local,w=m.rankedWorld;

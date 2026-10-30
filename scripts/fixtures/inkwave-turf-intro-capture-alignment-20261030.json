@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "purpose": "Align only the independently tested Turf intro clock change before checking the unchanged historical HTTP-header epoch",
+  "path": "scripts/check-inkwave-browser.mjs",
+  "priorSha256": "e2fe28de1a82bf4f1242d41a8275b38ee98fa78d78c4bdb8cf906ff7573803f5",
+  "currentSha256": "ac71ef2da67d160ea6560474d23f5e474eb3f0b6af49088ee6fa9c05c2a28baa",
+  "prior": "async function advanceFrozenNativeIntro(page) {\n  return page.evaluate(() => {\n    const g=globalThis.s3ProbeG.game, m=g.match;\n    if (!g.frozen || m?.state !== 'intro' || m.paused) throw Error('Native intro clock admission');\n    const before=m.stateT, skip=g._skipRender;\n    g._skipRender=true;\n    try { for(let i=0;i<186;i++) g._frame(1/60); } finally { g._skipRender=skip; }\n    if(g.match!==m || m.state!=='intro' || !(m.stateT-before>=3.09)) throw Error('Native intro did not advance unchanged component clock');\n    return {before,after:m.stateT,steps:186,hz:60,state:m.state};\n  });\n}",
+  "current": "async function advanceFrozenNativeIntro(page) {\n  return page.evaluate(async () => {\n    const {TURF_INTRO_FRAMES}=await import(new URL('patches/splatoon3/runtime/turf-intro-camera.mjs',document.baseURI));\n    const g=globalThis.s3ProbeG.game, m=g.match;\n    if (!g.frozen || m?.state !== 'intro' || m.paused) throw Error('Native intro clock admission');\n    const before=m.stateT, skip=g._skipRender, steps=TURF_INTRO_FRAMES.ready+1;\n    g._skipRender=true;\n    try { for(let i=0;i<steps;i++) g._frame(1/60); } finally { g._skipRender=skip; }\n    if(g.match!==m || m.state!=='intro' || !(m.stateT-before+1e-9>=steps/60)) throw Error('Native intro did not advance unchanged component clock');\n    return {before,after:m.stateT,steps,hz:60,state:m.state};\n  });\n}"
+}

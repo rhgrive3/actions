@@ -42,9 +42,13 @@ export function nativeTurfIntroWithUiFunction(completeIntro, deadline) {
       if(presentation){
         if(presentation.match!==m || presentation.flow!==g._matchFlow)
           throw new Error('Native cinematic presentation ownership changed');
+        const last=presentation.steps?.at(-1)?.[0];
+        const presentationLimit=Number.isFinite(last)&&Number.isFinite(presentation.origin)
+          ? Math.ceil(Math.max(0,last+presentation.origin-stateT)*60)+1 : 360;
+        if(presentationLimit>600)throw new Error('Invalid native cinematic presentation frame budget');
         while(g._introPresentation===presentation){
           budget();intact();
-          if(presentationFrames>=360)throw new Error('Native cinematic presentation did not finish');
+          if(presentationFrames>=presentationLimit)throw new Error('Native cinematic presentation did not finish');
           g._frame(1/60);presentationFrames++;stateT=m.stateT;
           intact();
         }

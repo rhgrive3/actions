@@ -99,7 +99,7 @@ try{
    for(const a of G.actors){if(!a.bot)continue;const b=a.bot;
     b.sweep=random()*10;b.strafe=random()<.5?1:-1;b.bombCd=3+random()*4;b.think=random()*.2;b.chargeRelease=.95+random()*.05;b.ph1=random()*20;b.ph2=random()*20;b.t=random()*10;b.dodgeCd=1+random()*2;
    }
-   for(let i=0;i<300;i++)g._frame(1/60);
+   for(let i=0,n=(g.match.turfIntroFrames??253)+47;i<n;i++)g._frame(1/60);
    g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;
    for(let i=0;i<120;i++)g._frame(1/60);
    g._skipRender=!render;

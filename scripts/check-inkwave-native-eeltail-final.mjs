@@ -12,7 +12,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=eeltail',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
- await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);g.debug.freezeBots();});
+ await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode:'turf',difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);g.debug.freezeBots();});
  result.minimap=await page.evaluate(()=>{
   const G=NG,map=G.game.minimap;map.ensure();if(G.level.nativeNav!==G.nav)throw Error('Minimap navigation is not owned by current level');
   const pixel=(x,z)=>{const c=map.toCanvas(x,z),ix=Math.max(0,Math.min(map.w-1,Math.floor(c.x))),iz=Math.max(0,Math.min(map.h-1,Math.floor(c.y))),index=iz*map.w+ix;return{index,x:map._worldX(ix+.5),z:map._worldZ(iz+.5),height:map.hgt[index],cell:map.pixCell[index]};};
@@ -45,7 +45,7 @@ try{
   }
   return proof;
  });
- await page.evaluate(async()=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode:'tower',difficulty:'easy'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();});
+ await page.evaluate(async()=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode:'tower',difficulty:'easy'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();});
  result.tower=await page.evaluate(()=>{
   const G=NG,m=G.match,e=m.ranked,w=m.rankedWorld,a=m.local,path=e.stage.tower.path;let probes=0;const failures=[];
   for(let i=0;i<path.length;i++)for(const side of [-.7,.7]){
@@ -59,7 +59,7 @@ try{
  });assert.deepEqual(result.tower.failures,[]);assert(result.tower.pathNodes>2);assert(result.tower.sourceClearance?.queries>0);assert.equal(result.tower.version1130Verified,false);
  result.otherRanked=[];
  for(const mode of ['zones','rainmaker','clams']){
-  await page.evaluate(async mode=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode,difficulty:'easy'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();},mode);
+  await page.evaluate(async mode=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:'eeltail',mode,difficulty:'easy'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();},mode);
   result.otherRanked.push(await page.evaluate(mode=>{
    const m=NG.match,e=m.ranked,w=m.rankedWorld,a=m.local;
    if(mode==='zones'){w.captureZone(0,0);m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Final source zone did not score');}

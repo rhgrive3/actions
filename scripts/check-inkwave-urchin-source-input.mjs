@@ -36,7 +36,7 @@ try{
    const G=NG,g=G.game;g.menus.wipe.cancel();
    await g.startMatch({mapId:'urchin',mode:'tower',difficulty:'easy'});
    g._skipRender=true;g.debug.freezeBots();
-   for(let i=0;i<Math.ceil(hz*5.5);i++)g._frame(1/hz);
+   for(let i=0;i<Math.ceil(hz*((g.match.turfIntroFrames??253)+77)/60);i++)g._frame(1/hz);
    g.input.mouse.left=true;for(let i=0;i<Math.ceil(hz*.15);i++)g._frame(1/hz);
    g.input.mouse.left=false;for(let i=0;i<Math.ceil(hz*1.5);i++)g._frame(1/hz);
    const a=G.local,e=G.match.ranked,w=G.match.rankedWorld;

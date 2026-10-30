@@ -19,7 +19,7 @@ try{
  for(const hz of [30,60,120]){
   await page.keyboard.up('KeyW');await page.mouse.up();await page.evaluate(()=>NG.input.exitLock());await page.waitForFunction(()=>!document.pointerLockElement);await page.mouse.move(0,0);mouseX=mouseY=0;
   const before=await page.evaluate(async hz=>{
-   const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal',weapon:'shooter'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();
+   const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal',weapon:'shooter'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();
    const a=G.local,V=a.pos.constructor,start=new V(13.5,7.5,-15.5),h=G.physics.raycast(start.clone().add(new V(0,.1,0)),new V(0,-1,0),.5);
    if(!h.hit||h.triangle<0||h.normal.y<=.68||Math.abs(h.point.y-start.y)>.01||!G.physics.bodyFits(start,.35,.35,1.45,false,.01))throw Error('Initial original human route support/clearance is absent');
    a.setWeapon('shooter');a.spawnAt(start,Math.PI/2);a.invuln=0;a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;G.projectiles.clear();G.paint.clear();g.rig.follow(a,true);

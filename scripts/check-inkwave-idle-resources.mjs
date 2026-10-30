@@ -514,7 +514,7 @@ async function main(){
     rows.push({size:rt.width,disposes,deleted:deleted.has(handle),cleared:env._farRT===null&&env._farCam===null&&env.U.uFarCube.value===null&&env.U.uFarOn.value===0,sameEnvironment:G.env===env});
    }}finally{gl.deleteTexture=del;}return rows;
   });
-  phase='pause';await page.evaluate(async()=>{await __inkwave.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});__inkwave.debug.freeze();__inkwave.debug.freezeBots();__inkwave._skipRender=true;for(let i=0;i<270;i++)__inkwave._frame(1/60);__inkwave._skipRender=false;__inkwave.menus.wipe.cancel();__inkwave.pause();});
+  phase='pause';await page.evaluate(async()=>{await __inkwave.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});__inkwave.debug.freeze();__inkwave.debug.freezeBots();__inkwave._skipRender=true;for(let i=0;i<900&&__inkwave.match.state==='intro';i++)__inkwave._frame(1/60);if(__inkwave.match.state!=='playing')throw Error('Native intro failed to reach play');__inkwave._skipRender=false;__inkwave.menus.wipe.cancel();__inkwave.pause();});
   result.pause=await page.evaluate(()=>{
    const G=__G,g=G.game,c={renders:0,environment:0,paint:0,shadowMarks:0,menuTicks:0};const restore=[];
    for(const [obj,key,label] of [[g.R,'render','renders'],[G.env,'update','environment'],[G.paint,'flush','paint'],[g.menus,'update','menuTicks']]){const old=obj[key];obj[key]=function(...a){c[label]++;return old.apply(this,a);};restore.push(()=>obj[key]=old);}

@@ -35,7 +35,7 @@ try{
   if(setup)MatchProto.setup=function(...args){s=11223;return setup.apply(this,args);};
   g.debug.freeze();G.time=0;g.s3Clock?.reset();g.menus.wipe.cancel();await g.startMatch({mapId:stage,mode:'turf',duration:180,difficulty:'normal'});g._skipRender=true;
   s=24680;for(const a of G.actors){const b=a.bot;if(!b)continue;b.sweep=Math.random()*10;b.strafe=Math.random()<.5?1:-1;b.bombCd=3+Math.random()*4;b.think=Math.random()*.2;b.chargeRelease=.95+Math.random()*.05;b.ph1=Math.random()*20;b.ph2=Math.random()*20;b.t=Math.random()*10;b.dodgeCd=1+Math.random()*2;}
-  for(let i=0;i<300;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<300;i++)g._frame(1/60);
+  for(let i=0,n=(g.match.turfIntroFrames??253)+47;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<300;i++)g._frame(1/60);
   const acc={},w=G.level.triangleWorld;
   const wrap=(obj,name,label)=>{const fn=obj?.[name];if(typeof fn!=='function')return;let depth=0;obj[name]=function(...a){if(depth++){try{return fn.apply(this,a);}finally{depth--;}}const t=performance.now();try{return fn.apply(this,a);}finally{depth--;const m=acc[label]||(acc[label]={ms:0,calls:0});m.ms+=performance.now()-t;m.calls++;}};};
   if(wrappers){

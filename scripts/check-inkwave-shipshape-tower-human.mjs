@@ -35,7 +35,7 @@ try{
   const setup=await page.evaluate(async()=>{
    const G=NG,g=G.game;
    g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'shipshape',mode:'tower',difficulty:'normal'});
-   g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);
+   g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);
    g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;
    for(let i=0;i<100;i++)g._frame(1/60);
    g.debug.freezeBots();g.menus.show(null);

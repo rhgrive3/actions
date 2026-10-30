@@ -30,6 +30,7 @@ await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded', ti
 await page.evaluate(async () => { globalThis.P = (await import(new URL('src/core/ctx.js', document.baseURI).href)).G; });
 await page.waitForFunction(() => !!globalThis.P?.game?.menus && globalThis.P.mode !== 'boot', null, { timeout: 300000 });
 await page.evaluate(async () => { const g = P.game; g.debug.freeze(); g.menus.wipe.cancel(); g.api.setSettings?.({ quality: 'high' }); await g.startMatch({ mapId: 'tidewater', difficulty: 'easy', duration: 180, mode: 'turf' }); });
+await page.evaluate(() => { const g=P.game,skip=g._skipRender;g._skipRender=true;try{for(let i=0;i<900&&g.match.state==='intro';i++)g._frame(1/60);if(g.match.state!=='playing')throw Error('Native intro did not reach play');}finally{g._skipRender=skip;} });
 await page.waitForFunction(() => P.game.hud?._visible && !document.querySelector('.iw-lineup'), null, { timeout: 60000 });
 await page.addStyleTag({ content: 'body > *:not(canvas):not(#app):not(#game){visibility:hidden !important} .iw-hud,.hud,[class*="hud"]{visibility:hidden !important}' });
 const info = await page.evaluate(() => {

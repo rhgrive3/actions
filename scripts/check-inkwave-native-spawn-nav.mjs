@@ -18,7 +18,7 @@ try{
  await p.evaluate(()=>NG.game.debug.freeze());
  const legacy=await p.evaluate(async()=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id==='tidewater'));const bytes=new TextEncoder().encode(JSON.stringify([NG.nav.nodes,Array.from(NG.nav.valid)])),digest=await crypto.subtle.digest('SHA-256',bytes);return{nodes:NG.nav.nodes.length,valid:NG.nav.validIds.length,digest:Array.from(new Uint8Array(digest))};});
  for(const id of (process.env.NATIVE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(',')){
-  await p.evaluate(async id=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g._skipRender=false;},id);
+  await p.evaluate(async id=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g._skipRender=false;},id);
   const numeric=await p.evaluate(()=>{
    const G=NG,L=G.level,N=G.nav,down=G.local.pos.clone().set(0,-1,0),seeds=L.spawnPads.map((pad,team)=>{
     const h=G.physics.raycast(pad.clone().setY(pad.y+.3),down,.6),node=N.nodes[N.nearest(pad,1.2)];

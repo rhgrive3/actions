@@ -13,6 +13,19 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const descriptorBytes=fs.readFileSync(new URL('../fixtures/inkwave-public-capture-cache-revalidation-1915.json',import.meta.url));
 assert.equal(hash(descriptorBytes),'b775bd5c45fff5211cabd366d649f1522f6e79ad63b8f58181fe64fd2d91b9a7','independently sealed public-capture header epoch');
 const epoch=JSON.parse(descriptorBytes);
+// Preserve the independent #1915 header seal. The new cinematic changes only
+// advanceFrozenNativeIntro; invert that separately sealed, reviewed method
+// before the historical whole-file/header checks below. No producer is edited.
+const introBytes=fs.readFileSync(new URL('../fixtures/inkwave-turf-intro-capture-alignment-20261030.json',import.meta.url));
+assert.equal(hash(introBytes),'359a8d943eec93b2d522c2d7964a561efde3899f34cead4dab025ffec0ebbf40');
+const intro=JSON.parse(introBytes);
+function alignIntro(source) {
+  assert.equal(hash(source),intro.currentSha256,'complete new intro producer');
+  assert.equal(source.split(intro.current).length,2,'one reviewed intro method');
+  const prior=source.replace(intro.current,intro.prior);
+  assert.equal(hash(prior),intro.priorSha256,'all non-intro bytes retain the independent header epoch');
+  return prior;
+}
 assert.equal(epoch.schema,1);
 assert.equal(epoch.priorCommit,'515f9ebe5a34e5e74a6bfcd0b0beded60ead591b');
 assert.deepEqual(epoch.files.map(row=>row.path),['scripts/check-inkwave-browser.mjs','scripts/lib/inkwave-projectile-http-file.mjs']);
@@ -24,8 +37,16 @@ function restore(source,row) {
   return prior;
 }
 const sources=epoch.files.map(row=>{
-  const current=fs.readFileSync(new URL(row.path,root),'utf8');
+  const raw=fs.readFileSync(new URL(row.path,root),'utf8');
+  const current=row.path===intro.path?alignIntro(raw):raw;
   return {row,current,prior:restore(current,row)};
+});
+
+test('intro alignment rejects unrelated, incomplete, duplicate and no-op source changes',()=>{
+  const raw=fs.readFileSync(new URL(intro.path,root),'utf8');
+  assert.equal(hash(alignIntro(raw)),epoch.files[0].currentSha256);
+  for(const source of ['',raw+'\n',raw.replace(intro.current,intro.prior),raw.replace(intro.current,intro.current+intro.current),raw.replace('no-cache, max-age=0, must-revalidate','no-store')])
+    assert.throws(()=>alignIntro(source));
 });
 
 test('only the two exact reviewed header hunks invert to complete historical sources',()=>{
