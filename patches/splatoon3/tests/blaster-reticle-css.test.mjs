@@ -88,8 +88,10 @@ test('#709 inner thin ring has no spread transform in any state', () => {
 });
 
 test('#709 other reticles are untouched by the override', () => {
+  const withoutBlasterSpread = PATCH.replace(/\.iw-ret--blaster \.iw-ret__svg\s*\{[^}]*\}/, '')
+    .replace(/\.iw-ret--blaster \.iw-ret__svg circle\.iw-ret__ring:not\(\.thin\)\s*\{[^}]*\}/, '');
   for (const kind of ['shooter', 'dualies', 'splatling', 'charger', 'roller']) {
-    const current = cascade([HUD, PATCH], svg(kind)), baseline = cascade([HUD], svg(kind));
+    const current = cascade([HUD, PATCH], svg(kind)), baseline = cascade([HUD, withoutBlasterSpread], svg(kind));
     // The independent Dualies reticle may intentionally expose overflowing
     // artwork; #709 must not mutate any other property or spread transform.
     const { overflow: currentOverflow, ...currentCore } = current;
@@ -97,7 +99,7 @@ test('#709 other reticles are untouched by the override', () => {
     assert.deepEqual(currentCore, baselineCore, kind);
     if (currentOverflow !== baselineOverflow) assert.equal(currentOverflow, 'visible', kind);
     for (const classes of [['iw-ret__ring'], ['iw-ret__ring', 'thin']])
-      assert.deepEqual(cascade([HUD, PATCH], circle(classes, kind)), cascade([HUD], circle(classes, kind)), kind);
+      assert.deepEqual(cascade([HUD, PATCH], circle(classes, kind)), cascade([HUD, withoutBlasterSpread], circle(classes, kind)), kind);
   }
 });
 

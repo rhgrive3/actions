@@ -188,6 +188,19 @@ test('#425: touch SP replacement uses the measured tooth steps while preserving 
   new vm.SourceTextModule(code);
 });
 
+test('touch sub button follows the equipped sub and updates on a kit change',()=>{
+  const code=compose('src/core/mobile.js');
+  const start=code.indexOf('  setHud('),end=code.indexOf('\n  endFrame()',start);
+  const icons={bomb:'bomb artwork',torpedo:'torpedo artwork',beakon:'beakon artwork'};
+  const Mobile=vm.runInNewContext(`class Mobile {${code.slice(start,end)}};Mobile`,{
+    clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),SUB_ICONS:icons
+  });
+  const r=specialRig(),m=new Mobile(),icon={innerHTML:''};
+  m.els={special:r.h.sp,fire:r.h.sp,sub:r.h.sp};m.els.special.querySelectorAll=()=>r.h.spSegments;
+  m.els.fire.style={setProperty(){}};m.els.sub.querySelector=()=>icon;m._buzz=()=>{};
+  for(const id of ['bomb','torpedo','beakon','bomb']){m.setHud({subId:id});assert.equal(icon.innerHTML,icons[id]);}
+});
+
 
 test('#381: standalone browser reliability fixture supplies winner without weakening expected outcome',()=>{
   const code=fs.readFileSync(new URL('scripts/check-inkwave-reliability.mjs',root),'utf8');
