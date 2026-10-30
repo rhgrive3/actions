@@ -73,6 +73,7 @@ jobs:
             patches/local-quality/tests/landscape-settings.test.mjs \
             patches/local-quality/tests/landscape-weapons.test.mjs \
             patches/local-quality/tests/landscape-weapon-header.test.mjs \
+            patches/local-quality/tests/landscape-weapon-drawer.test.mjs \
             scripts/tests/landscape-home-adapter.test.mjs \
             tests/landscape-online.test.mjs \
             scripts/tests/landscape-composition.test.mjs \

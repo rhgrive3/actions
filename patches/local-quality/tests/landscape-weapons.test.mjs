@@ -133,7 +133,9 @@ test('production composition emits the fix once and preserves catalogue art, fil
   const css = adaptBuildSource('styles/ui.css', source('styles/ui.css'));
   const menus = adaptBuildSource('src/ui/menus.js', source('src/ui/menus.js'));
   assert.equal(css.split(marker).length - 1, 1, 'wire the adapter into production composition');
-  assert.equal(menus.split("'aria-label': w.name").length - 1, 1);
+  const primaryOwners = menus.match(/const c = h\('button', \{ class: 'iw-wcard iw-in iw-in--pop'[^\n]+/g) || [];
+  assert.equal(primaryOwners.length, 1, 'exactly one primary catalogue card owner');
+  assert.equal(primaryOwners[0].split("'aria-label': w.name").length - 1, 1, 'complete accessible name on the primary owner');
   assert.match(menus, /weaponIcon\(w\.id \|\| id\)/, 'keep ID-to-family SVG binding');
   assert.match(menus, /const materializeArt = \(card\)/, 'preserve lazy art hydration');
   assert.match(menus, /class: 'iw-wd__name iw-display'/, 'detail panel is retained');

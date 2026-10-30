@@ -99,6 +99,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'landscape-weapon-drawer-adapter.mjs',
   'landscape-home-adapter.mjs',
   'landscape-weapons-adapter.mjs',
   'landscape-online-adapter.mjs',

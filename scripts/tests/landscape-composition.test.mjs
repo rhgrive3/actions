@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
+import { adaptLandscapeWeaponDrawer } from '../../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../../patches/local-quality/landscape-weapons-adapter.mjs';
 import { adaptLandscapeOnline } from '../../patches/local-quality/landscape-online-adapter.mjs';
@@ -23,9 +24,9 @@ test('short-landscape fixes preserve the reviewed immutable upstream input bytes
   for (const [file, expected] of Object.entries(pinned)) assert.equal(hash(read(file)), expected, file);
 });
 
-test('all four fixes are build-only and participate in exact-source quality identity', () => {
+test('all five fixes are build-only and participate in exact-source quality identity', () => {
   const identity = qualityIdentity();
-  for (const name of ['home', 'weapons', 'online', 'settings']) {
+  for (const name of ['home', 'weapons', 'online', 'settings', 'weapon-drawer']) {
     const file = `landscape-${name}-adapter.mjs`;
     assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + file), file);
     assert.equal(identity[file], hash(read('patches/local-quality/' + file)), file);
@@ -39,14 +40,15 @@ test('the production composition emits each scoped style fix once without runtim
   for (const marker of [
     'Short landscape weapon catalogue: readable names, not clipped rows.',
     'Short-landscape settings: controls before decorative preview.',
+    'Landscape lobby weapon drawer: preserve complete readable names.',
   ]) assert.equal((ui + mobile).split(marker).length - 1, 1, marker);
-  assert.equal(menus.split("'aria-label': w.name").length - 1, 1);
+  assert.equal(menus.split("'aria-label': w.name").length - 1, 2);
   assert.equal(menus.split('const syncTabSelection =').length - 1, 1);
-  assert(!/from\s*['"][^'"]*landscape-(?:home|weapons|online|settings)-adapter/.test(menus));
+  assert(!/from\s*['"][^'"]*landscape-(?:home|weapons|online|settings|weapon-drawer)-adapter/.test(menus));
 });
 
 test('every new adapter leaves non-menu and gameplay owners unchanged', () => {
-  for (const adapt of [adaptLandscapeHome, adaptLandscapeWeapons, adaptLandscapeOnline, adaptLandscapeSettings]) {
+  for (const adapt of [adaptLandscapeHome, adaptLandscapeWeapons, adaptLandscapeOnline, adaptLandscapeSettings, adaptLandscapeWeaponDrawer]) {
     for (const rel of ['src/main.js', 'src/game/weapons.js', 'src/net/session.js', 'styles/hud.css']) {
       assert.equal(adapt(rel, 'unrelated source sentinel'), 'unrelated source sentinel', rel);
     }

@@ -2,6 +2,7 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/local-quality/landscape-weapon-drawer-adapter.mjs',
   'patches/local-quality/landscape-home-adapter.mjs',
   'patches/local-quality/landscape-weapons-adapter.mjs',
   'patches/local-quality/landscape-online-adapter.mjs',

@@ -1,3 +1,4 @@
+import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
 import { adaptLandscapeOnline } from '../patches/local-quality/landscape-online-adapter.mjs';
@@ -153,6 +154,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptLandscapeWeapons(rel, code);
   code = adaptLandscapeOnline(rel, code);
   code = adaptLandscapeSettings(rel, code);
+  code = adaptLandscapeWeaponDrawer(rel, code);
   return code;
 }
 
