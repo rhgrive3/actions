@@ -3,6 +3,8 @@ import { ZonesRule } from './zones.mjs';
 import { TowerRule } from './tower.mjs';
 import { RainmakerRule } from './rainmaker.mjs';
 import { ClamsRule } from './clams.mjs';
+import { OWNED_RANKED_FRAME } from './frame-ownership.mjs';
+export { OWNED_RANKED_FRAME, OWNED_RANKED_ACTOR, OWNED_RANKED_BLOCKED } from './frame-ownership.mjs';
 
 export const RANKED_MODES = Object.freeze(['zones', 'tower', 'rainmaker', 'clams']);
 export const isRankedMode = mode => RANKED_MODES.includes(mode);
@@ -10,11 +12,12 @@ export const RULE_NAMES = Object.freeze({ zones: 'ガチエリア', tower: 'ガ�
 const RULES = { zones: ZonesRule, tower: TowerRule, rainmaker: RainmakerRule, clams: ClamsRule };
 // Only buildFrame brands its owned boolean-input rows. A wire packet cannot
 // create this symbol; external frame callers retain the cloning contract.
-export const OWNED_RANKED_FRAME = Symbol('owned ranked frame');
 function disarmCatchUp(frame) {
   const inputs = frame.inputs || {};
   let noThrow = frame[OWNED_RANKED_FRAME] === inputs;
   if (noThrow) for (const id in inputs) if (Object.hasOwn(inputs, id) && inputs[id]?.throw !== false) { noThrow = false; break; }
+  if (noThrow && Array.isArray(frame.barrierHits) && frame.barrierHits.length === 0
+      && Object.isFrozen(frame.barrierHits)) return frame;
   return { ...frame, barrierHits: [], inputs: noThrow ? inputs
     : Object.fromEntries(Object.entries(inputs).map(([id, input]) => [id, { ...input, throw: false }])) };
 }
