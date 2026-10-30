@@ -12,9 +12,9 @@ const composed=adaptBuildSource('src/ui/menus.js',fs.readFileSync(root+'/inkwave
 const a=composed.indexOf('  _scr_online() {'),b=composed.indexOf('  // ================================================================ SCREEN: lobby',a);
 assert(a>=0&&b>a);
 const candidate=fs.readFileSync(process.env.INKWAVE_OWNER_CHECKER || path.join(root,'scripts/check-inkwave-menu-focus.mjs'),'utf8');
-const start=candidate.indexOf('  const actionState = '),end=candidate.indexOf('\n  const clickReady = ',start);
+const start=candidate.indexOf('function ownerActionState('),end=candidate.indexOf('async function waitForOwnerAction(',start);
 assert(start>=0&&end>start);
-const readinessSource=candidate.slice(start,end)+'\nactionState;';
+const readinessSource=candidate.slice(start,end)+'\nownerActionState;';
 function setup(){
   let reads=0;
   const f=fixture(composed.slice(a,b),{readClipboard:()=>{reads++;return new Promise(()=>{});}}),m=f.api;
@@ -75,6 +75,32 @@ test('candidate waits before every online native button click and retains exact 
   assert.equal((block.match(/await clickReady\(joinButton\)/g)||[]).length,2);
   assert.equal((block.match(/await clickReady\(pasteButton\)/g)||[]).length,2);
   assert(block.includes('after.reads === before.reads + 1'));
+  assert(candidate.includes("await waitForOwnerAction(page, '.iwr-tab[data-tab=\"weapon\"]', 'pause')"));
+  assert(candidate.includes('await page.waitForFunction(ownerActionState, {selector, screen, readyOnly:true}, {timeout:10000})'));
   assert(!/force: ?true\s*\}\)/.test(block.match(/const clickReady[\s\S]*?const paste =/)[0]));
   for(const text of ["s.disabled && s.mode === 'connecting' && s.calls === 1","s.reads === busyReads && s.code === 'NETXX' && s.calls === 1","p.calls.length === 2 && call.kind === 'join'","row.checks.online.length, 4","{width:844,height:390},{width:1133,height:744}","document.removeEventListener(type, p.traceInput, true)"])assert(candidate.includes(text),text);
+});
+test('shared readiness covers actual animated range panel: native binding/capture reject early tap then select weapon normally',async()=>{
+ const {practiceFixture}=await import(pathToFileURL(path.join(root,'patches/local-quality/tests/helpers/practice-gear-dom-fixture.mjs')));
+ const f=await practiceFixture(root),m=f.menus;
+ Object.defineProperty(f.Element.prototype,'parentNode',{get(){return this.parentElement;},configurable:true});
+ const doc=new f.Element('document'),ui=new f.Element('div');doc.append(ui);
+ const env={document:doc,performance:{now:()=>1000},getComputedStyle:el=>({opacity:String(el.opacity??1)}),setTimeout:()=>1,clearTimeout(){},requestAnimationFrame:()=>0,cancelAnimationFrame(){},addEventListener(){},removeEventListener(){}};
+ const start=composed.indexOf('  _bind(el, opts = {}) {'),end=composed.indexOf('\n  /** Pointer',start);assert(start>=0&&end>start);
+ const Native=vm.runInNewContext('class Native{'+composed.slice(start,end)+'\n_swap(){} };Native',env);
+ installMenuQuality(Native,env);m._bind=Native.prototype._bind;m._binds=new WeakMap();
+ const scr=f.open();scr.name='pause';ui.append(scr.el);Object.assign(m,{el:ui,_scr:scr});Native.prototype._swap.call(m);
+ const panel=scr.el.querySelector('.iwr-pause'),tab=scr.el.querySelectorAll('.iwr-tab').find(t=>t.dataset.tab==='weapon');
+ doc.querySelector=()=>tab;
+ const state=vm.runInNewContext(readinessSource,{window:{menus:m},document:doc,getComputedStyle:env.getComputedStyle});
+ const click=()=>{let stopped=false;const e={target:tab,pointerType:'touch',stopImmediatePropagation(){stopped=true;},preventDefault(){}};
+   ui.events.pointerdown(e);ui.events.click(e);if(!stopped)tab.events.click(e);return !stopped;
+ };
+ assert(panel.classList.contains('iw-in'),'real range panel retains its native entrance animation');
+ const initial=panel.dataset.tab;assert.notEqual(initial,'weapon');
+ panel.opacity=.1;assert.equal(state({selector:'tab',screen:'pause',readyOnly:true}),false);
+ assert.equal(click(),false);assert.equal(panel.dataset.tab,initial);
+ panel.opacity=1;assert.equal(state({selector:'tab',screen:'pause',readyOnly:true}),true);
+ assert.equal(click(),true);assert.equal(panel.dataset.tab,'weapon');
+ assert.equal(state({selector:'tab',screen:'online',readyOnly:true}),false,'another screen never grants readiness');
 });

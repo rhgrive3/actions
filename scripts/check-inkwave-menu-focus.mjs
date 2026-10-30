@@ -263,6 +263,29 @@ async function assertBrowserModalLifetime(page) {
   });
 }
 
+// Real capture ownership, shared by online actions and the native range tab.
+function ownerActionState({selector, screen = 'online', readyOnly = false}) {
+    const m = window.menus, scr = m?._scr, target = document.querySelector(selector);
+    let opacity = 1;
+    for (let el = target?.closest('[data-nav]') || target; el && el !== scr?.el?.parentNode; el = el.parentElement) {
+      const value = +getComputedStyle(el).opacity;
+      if (Number.isFinite(value)) opacity *= value;
+      if (el === scr.el) break;
+    }
+    const mounted = !!target?.isConnected && !!scr?.el.isConnected && !!scr?.el.contains(target);
+    const state = { current:m?.current, owner:scr?.name, mounted, inert:!!scr?.el?.inert, opacity,
+      disabled:!!target?.disabled, codeDisabled:!!scr?.el.querySelector('.iw-code-input')?.disabled,
+      mode:scr?.el.querySelector('.iw-hubcard--join')?.dataset.mode,
+      reads:window.__onlineLifetimeProbe?.clips.length, events:window.__onlineLifetimeProbe?.events.slice(-8),
+      ready:mounted && m.current === screen && scr.name === screen && !scr.el.inert && !target.disabled && opacity > .6 };
+    return readyOnly ? state.ready : state;
+}
+async function waitForOwnerAction(page, selector, screen = 'online') {
+  try { await page.waitForFunction(ownerActionState, {selector, screen, readyOnly:true}, {timeout:10000}); }
+  catch (error) { throw Error('menu lifetime: native action not ready ' + JSON.stringify(await page.evaluate(ownerActionState, {selector, screen})), {cause:error}); }
+  return page.evaluate(ownerActionState, {selector, screen});
+}
+
 // Candidate for the existing screenshot-free menu-focus checker, not a new runner.
 // Caller supplies one fresh, loaded production Menus fixture page per touch size.
 // Real callbacks/native input events; all clipboard reads and connecting promises
@@ -330,31 +353,11 @@ async function assertBrowserOnlineLifetime(page) {
     menus.show('online', { force: true, wipe: false, light: false, instantLeave: true });
     menus.setInputMode('touch');
   });
-  // Playwright actionability deliberately ignores opacity. The real production
-  // capture guard does not: a fresh screen's entrance must own visible input.
-  const actionState = ({selector, readyOnly = false}) => {
-    const m = window.menus, scr = m?._scr, target = document.querySelector(selector);
-    let opacity = 1;
-    for (let el = target?.closest('[data-nav]') || target; el && el !== scr?.el?.parentNode; el = el.parentElement) {
-      const value = +getComputedStyle(el).opacity;
-      if (Number.isFinite(value)) opacity *= value;
-      if (el === scr.el) break;
-    }
-    const mounted = !!target?.isConnected && !!scr?.el.isConnected && !!scr?.el.contains(target);
-    const state = { current:m?.current, owner:scr?.name, mounted, inert:!!scr?.el?.inert, opacity,
-      disabled:!!target?.disabled, codeDisabled:!!scr?.el.querySelector('.iw-code-input')?.disabled,
-      mode:scr?.el.querySelector('.iw-hubcard--join')?.dataset.mode,
-      reads:window.__onlineLifetimeProbe?.clips.length, events:window.__onlineLifetimeProbe?.events.slice(-8),
-      ready:mounted && m.current === 'online' && scr.name === 'online' && !scr.el.inert && !target.disabled && opacity > .6 };
-    return readyOnly ? state.ready : state;
-  };
   const clickReady = async locator => {
     const selector = `${root} .iw-join__btns button:${locator === pasteButton ? 'first' : 'last'}-child`;
-    try { await page.waitForFunction(actionState, {selector, readyOnly:true}, {timeout:10000}); }
-    catch (error) { throw Error('online lifetime: native button not ready ' + JSON.stringify(await page.evaluate(actionState, {selector})), {cause:error}); }
-    const before = await page.evaluate(actionState, {selector});
+    const before = await waitForOwnerAction(page, selector);
     await locator.click();
-    return {before, after:await page.evaluate(actionState, {selector})};
+    return {before, after:await page.evaluate(ownerActionState, {selector})};
   };
   const paste = async () => {
     const {before, after} = await clickReady(pasteButton);
@@ -575,6 +578,7 @@ async function assertBrowserGearPractice(page) {
       G.match = { attract: false, range: a.session };
       m.wipe.cancel(); m.setInputMode('touch'); m.show('pause', { wipe: false, light: false, force: true });
     });
+    await waitForOwnerAction(page, '.iwr-tab[data-tab="weapon"]', 'pause');
     await page.locator('.iwr-tab[data-tab="weapon"]').tap(); await settle();
     const inventory = await page.evaluate(async () => {
       await Promise.race([document.fonts.load('900 12px Rubik', 'Heavy Edit Splatling Nouveau'), new Promise((_, reject) => setTimeout(() => reject(Error('shipped Rubik load timeout')), 10000))]);
