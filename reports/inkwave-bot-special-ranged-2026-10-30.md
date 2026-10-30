@@ -28,3 +28,9 @@
 追加の限定修正: `all-specials.mjs` のmissile selectionはhuman cameraをbotへ適用していたため、human視点が後ろを向くだけでbotの正面lockが消えていた。botのみ既存の自身aim coneへ分岐し、human cameraの選択処理は維持した。
 
 未確認: Switch実機比較、操作モデルの厳密一致、実ステージ全形状のhook安全性、対人の勝率。基礎special runtimeの既存calibration/未確認値はそのまま残る。
+
+## 追加: フルBotBrainでショクワンダーを使用 (2026-10-30)
+
+基準 `origin/main` の `3715e29` 系列で `bot-special-fixture.mjs` の実BotBrain→Actor→Projectileを使用。20 WU先の静止対象にショクワンダーを使わせると、予定した手前の床を越えて28.6499 WUの奥壁まで飛び、到着後はワイパーで445フレームfireを保持しても実メイン弾が0個、対象の減少はhook接触60のみだった。
+
+原因は、床へ浅い角度を作る途中でも0.1radの照準許可でRを押してしまうことと、ready中のメインを常時holdにして通常のタメ解除を無効にしていたこと。現在の実射出rayが計画した安全な床から0.8 WU以内へ当たることを確認し、到着後は通常メインAIのfire levelを引き継いだ。実Brain・実移動で床着地が対象手前となり、ワイパーの実射出とhook接触以外の追加ダメージが出る回帰テストがpass。`node --check` と `git diff --check` もpass。

@@ -87,6 +87,19 @@ function hookPoint(c) {
   return point.copy(contact.point);
 }
 
+
+function hookAimedAtSurface(c,point) {
+  const m=c.memory,origin=(m.rangedHookOrigin ||= c.actor.pos.clone()).copy(c.actor.pos);
+  origin.y+=1.05;
+  const direction=(m.rangedHookDirection ||= c.actor.pos.clone()).copy(c.actor.aimPoint).sub(c.actor.pos);
+  if(direction.lengthSq()<4)return false;direction.normalize();
+  const hit=(m.rangedHookEmissionHit ||= {hit:false,point:c.actor.pos.clone(),normal:c.actor.pos.clone()});
+  hit.hit=false;
+  const contact=c.world.physics.raycast(origin,direction,35,hit,true);
+  return contact?.hit&&finitePoint(contact.point)&&contact.normal?.y>=.5
+    &&contact.point.distanceTo(point)<=.8&&safeFloor(c,contact.point);
+}
+
 export function driveRangedSpecial(c) {
   if(!RANGED.has(c.special))return false;
   const {actor,intent:it}=c;
@@ -184,14 +197,18 @@ export function driveRangedSpecial(c) {
     stop(c);if(s.phase!=='ready')return true;
     if(c.distance<=mainRange(c)*1.05&&Math.abs(c.height)<=10){
       aim(c,enemy.pos,.65,Math.min(.25,c.distance/(actor.weapon?.projSpeed||30)));
-      it.fire=aimed(c,.14);return true;
+      // The native main policy owns charge/release cycles (Stringer/Splatana,
+      // Charger and Splatling); a permanent hold never fires release weapons.
+      it.fire=!!c.normalIntent?.fire&&aimed(c,.14);return true;
     }
     if((s.inkFuel??150)<15||(s.t||0)<(s.nextHookAt||0))return true;
     const point=hookPoint(c);if(!point)return true;
     // Hook uses aimPoint-minus-feet from a chest-height origin. Offset the
     // reticle so the actual emitted ray reaches the sampled floor surface.
     aim(c,point,-1.05);
-    it.sub=aimed(c,.1)&&!s.held?.sub;
+    // A loose angular gate can overshoot a shallow floor ray by many metres.
+    // Confirm the current emitted ray, not just its requested eye-angle.
+    it.sub=aimed(c,.1)&&hookAimedAtSurface(c,point)&&!s.held?.sub;
     return true;
   }
   return true;

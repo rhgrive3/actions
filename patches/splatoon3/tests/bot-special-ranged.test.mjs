@@ -144,3 +144,19 @@ test('Booyah eye-based aiming reaches the intended ground target with the real p
  for(let i=0;i<150;i++)if(x.f.G.projectiles._step(p,1/60))break;
  assert.ok(p.pos.distanceTo(x.enemy.pos)<3,`landing ${p.pos.toArray()} should be near target ${x.enemy.pos.toArray()}`);
 });
+
+
+test('full BotBrain Zipcaster lands at its planned surface and releases its native Splatana main',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture(),{a,b,enemy}=f.scenario('zipcaster');
+ a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));
+ const before=enemy.hp;let landing=null;
+ for(let frame=0;frame<420;frame++){
+  const phase=a._s3AllSpecialState?.phase;f.tick(a,b);
+  if(!landing&&phase==='zip'&&a._s3AllSpecialState?.phase==='hookWait')landing=a.pos.clone();
+ }
+ assert.ok(landing,'native hook travel reaches a surface');
+ assert.ok(landing.z<enemy.pos.z,'hook must not overshoot its target to the wall behind it');
+ assert.ok(f.rounds.some(p=>p.owner===a),'native main receives a real release edge after arrival');
+ assert.ok(enemy.hp<before-60,'main attacks add damage beyond a hook body contact');
+});
