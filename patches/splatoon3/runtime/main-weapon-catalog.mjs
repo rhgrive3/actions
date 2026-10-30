@@ -432,7 +432,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return result;
   };
-  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null;this.chargeStage=0;this.chargeStageProgress=0; return legacyReset.apply(this,args); };
+  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null;this.chargeStage=0;this.chargeStageProgress=0;this._spinnerAudioPhase=null;this._spinnerAudioRetryAt=0; return legacyReset.apply(this,args); };
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
