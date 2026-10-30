@@ -1,0 +1,59 @@
+name: INKWAVE targeted missing phone UI screenshots
+on:
+  pull_request:
+    paths:
+      - 'tools/frontend-targeted/**'
+      - '.github/workflows/inkwave-frontend-targeted.yml'
+permissions:
+  contents: read
+concurrency:
+  group: frontend-targeted-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  capture:
+    if: ${{ github.repository == 'rhgrive3/actions' && github.head_ref == 'qa/frontend-targeted-phone-20261030' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [phone-landscape]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: qa
+          persist-credentials: false
+          sparse-checkout: tools/frontend-targeted
+      - uses: actions/checkout@v4
+        with:
+          ref: 379533f541d86346a068e397f879cb6c13590ffd
+          path: product
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact inputs and build original production
+        working-directory: product
+        env:
+          QA_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = 379533f541d86346a068e397f879cb6c13590ffd
+          test "$(git -C ../qa rev-parse HEAD)" = "$QA_SHA"
+          npm ci --no-audit --no-fund
+          node scripts/build-inkwave.mjs inkwave-public _site
+          npx --no-install playwright install --with-deps chromium
+      - name: Capture only missing targeted UI states with bounded original JPEG logs
+        env:
+          QA_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/evidence"
+          node qa/tools/frontend-targeted/run.mjs "$GITHUB_WORKSPACE/product" "$GITHUB_WORKSPACE/product/_site" "$GITHUB_WORKSPACE/evidence/${{ matrix.device }}" '${{ matrix.device }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-targeted-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/${{ matrix.device }}/
+          if-no-files-found: error
+          retention-days: 14
