@@ -78,6 +78,36 @@ function kraken(ctx) {
   }
   memory.meleeMode = near ? 'jump' : intent.fire ? 'charge' : 'approach';
 }
+// Match the existing UltraStamp source flight (51WU/s, +10.2Y, gravity
+// 46.8WU/s², .97 horizontal retention per source frame). The low arc aims
+// at the body after the native throw windup; it grants no projectile effects.
+function aimStampThrow(ctx, state) {
+  const { actor, enemy, memory } = ctx;
+  const delay = state.throwAt === undefined ? .7 : Math.max(0, state.throwAt - state.t);
+  let lead = delay + ctx.distance / 40, pitch = 0, valid = false;
+  const point = memory.stampThrowPoint ||= actor.pos.clone();
+  for (let pass = 0; pass < 2; pass++) {
+    point.copy(enemy.pos);
+    point.x += (enemy.vel?.x || 0) * lead; point.z += (enemy.vel?.z || 0) * lead;
+    const distance = Math.hypot(point.x - actor.pos.x, point.z - actor.pos.z);
+    let best = Infinity, flight = 0;
+    for (let angle = -.8; angle <= .80001; angle += .015) {
+      const factor = 1 - distance * .03 / (.85 * Math.cos(angle) * .97);
+      if (!(factor > 0 && factor < 1)) continue;
+      const frames = Math.log(factor) / Math.log(.97);
+      if (frames > 108) continue;
+      const y = actor.pos.y + 1.1 + (51 * Math.sin(angle) + 10.2) * frames / 60 - .013 * frames * (frames + 1) / 2;
+      const error = Math.abs(y - (enemy.pos.y + .7));
+      if (error < best) { best = error; pitch = angle; flight = frames / 60; }
+    }
+    valid = best < .7; lead = delay + flight;
+    point.y = actor.pos.y + Math.tan(pitch) * distance;
+  }
+  // Native aimDirection subtracts the feet, while BotBrain constructs its
+  // aimPoint from the eye. Request the actual emitter-basis point unchanged.
+  ctx.aimAt(point);
+  return valid && ctx.isAimed(.065);
+}
 function stamp(ctx) {
   const { actor, intent, memory } = ctx;
   const st = actor._s3AllSpecialState;
@@ -87,7 +117,8 @@ function stamp(ctx) {
     return;
   }
   stop(ctx);
-  if (!st || st.t + EPS < 17 / 60 || st.throwAt !== undefined) return;
+  if (!st || st.t + EPS < 17 / 60) return;
+  if (st.throwAt !== undefined) { if (target) aimStampThrow(ctx, st); return; }
   // Once the sub release has queued a throw the action owner keeps its 42F
   // startup. A second timer-driven pulse would only corrupt its held input.
   if (st.phase === 'throw') return;
@@ -97,9 +128,9 @@ function stamp(ctx) {
     if (memory.stampAimThrow) intent.sub = true;
     return;
   }
-  const aimed = aimEnemy(ctx, .2);
   const throwRange = ctx.distance >= 6 && ctx.distance <= 24 && Math.abs(ctx.height) <= 3;
   const shouldThrow = throwRange && (ctx.distance > 8 || remaining(ctx, st) < 1.35);
+  const aimed = shouldThrow || memory.stampAimThrow || memory.stampReleased ? aimStampThrow(ctx, st) : aimEnemy(ctx, .2);
   if (memory.stampAimThrow) {
     if (aimed && throwRange) {
       // This off edge is the normal sub-release path, not a projectile call.
@@ -112,7 +143,9 @@ function stamp(ctx) {
     intent.sub = true; memory.stampAimThrow = true; return;
   }
   if (!aimed) return;
-  if (ctx.distance <= 4 && Math.abs(ctx.height) <= 2.5) {
+  // The native jump swing's direct contact is only about 2.5WU ahead.
+  // Close the remaining gap instead of hopping in place for 40-damage spray.
+  if (ctx.distance <= 2.4 && Math.abs(ctx.height) <= 2.5) {
     intent.fire = true; hop(ctx, .6);
   } else if (ctx.distance <= 8 && Math.abs(ctx.height) <= 1 && safeRush(ctx, facing(ctx), 2.2)) {
     intent.fire = true;
