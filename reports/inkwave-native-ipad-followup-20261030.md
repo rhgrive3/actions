@@ -18,3 +18,9 @@ LinuxのPlaywright WebKit 26.5でも、基準版のiPad相当プロフィール�
 画像事前確認の直後に実行環境が利用不能となった。追加候補の完了時間・p95、MakoとWebKitでの比較、最終公開treeの再ビルドが残っている。元の30%以上改善の記録を、未計測の追加候補へ流用しない。実機iPad Safariでの60fpsも未確認。
 
 [数値・確認範囲](inkwave-native-ipad-followup-20261030/results.json)。画像・原典モデル・プロファイルはGitへ保存しない。[スプラトゥーン3との既存差分](inkwave-splatoon3-behavior-2026-10-02.md) を今回の描画・寿命管理の検証で解消済みとは扱わない。
+
+## 2026-10-30 統合時のテスト修正
+
+`native-compressed-mip-legality` の既存fixtureが、touch用のfallback予算を渡しているにもかかわらず、完了後もprimary KTX2 workerが破棄されない旧動作を期待していた。CIとローカルで同じ1件の失敗を再現。製品のidle retirementは維持し、期待値を完了後1回の解放へ修正した。同一rendererで次の実loadを行い、新しいprimary/temporary decoderが作られ、全mipの寸法・全画素・破棄回数が一致することを追加確認した。進行中parseを保持する既存の負例、abort後の遅延callback、Borrowed textureの所有権は保持する。
+
+最新mainの既存修正もmergeで取り込み、強制更新や検査の削除は行わない。source関連48件がskipなしで成功。正式CIは更新後headで改めて確認する。WebKitのweaponボタンtapの30秒失敗は別のブラウザ問題として扱い、成功に読み替えない。

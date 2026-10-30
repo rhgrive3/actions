@@ -36,7 +36,8 @@ async function fixture({limit=512,format=THREE.RGBA_BPTC_Format,delayedRgba=fals
  const module=new vm.SourceTextModule(source,{context,importModuleDynamically:spec=>ready(spec.includes('KTX2Loader')?{KTX2Loader}:{fetchVerified:async()=>bytes.slice(0)})});
  await module.link(spec=>synthetic(modules[spec]));await module.evaluate();
  const data={manifest:{materials:{m:{maps:{normal:'normal.png'}}},prebuiltTextures:{'normal.png':{normal:{width,height,offset:0,bytes:80,pack:'p.bin'}}},prebuiltTexturePacks:[{file:'p.bin'}]}};
- const run=signal=>module.namespace.loadNativeTextures('stage',data,{capabilities:{getMaxAnisotropy:()=>4}},'high',signal,{maxDimension:1024,perRole:{normal:limit},fallback:{quality:'balanced',maxDimension:128,perRole:{}}});
+ const renderer={capabilities:{getMaxAnisotropy:()=>4}};
+ const run=signal=>module.namespace.loadNativeTextures('stage',data,renderer,'high',signal,{maxDimension:1024,perRole:{normal:limit},fallback:{quality:'balanced',maxDimension:128,perRole:{}}});
  return{calls,run,get pending(){return pending;},needs:module.namespace.needsExactMipRgba,makeTexture};
 }
 
@@ -48,8 +49,16 @@ test('illegal capped BC7 base retranscodes the identical source and keeps select
  assert.equal(f.calls.parsed.length,2);assert.deepEqual(f.calls.parsed.map(r=>r.rgba),[false,true]);
  assert.deepEqual(f.calls.parsed[0].bytes,f.calls.parsed[1].bytes,'retry source survives primary transferable-buffer detachment');
  assert.equal(f.calls.png,0);assert.equal(f.calls.compressedDisposed,1);
- assert.equal(f.calls.loaders[0].disposals,0,'normal compressed loader remains usable');
+ assert.equal(f.calls.loaders[0].disposals,1,'the completed touch load retires its idle primary worker');
  assert.equal(f.calls.loaders[1].workerLimit,1);assert.equal(f.calls.loaders[1].disposals,1,'temporary RGBA worker retires after actual completion');
+ const again=(await f.run()).get('normal.png');
+ assert.notEqual(again,texture);
+ assert.deepEqual([again.image.width,again.image.height],[400,30]);
+ assert.deepEqual(again.mipmaps.map(m=>Array.from(m.data)),texture.mipmaps.map(m=>Array.from(m.data)),
+   'a subsequent load on the same renderer recreates the decoder without changing any mip pixels');
+ assert.deepEqual(f.calls.parsed.map(r=>r.rgba),[false,true,false,true]);
+ assert.equal(f.calls.loaders.length,4);
+ assert.deepEqual(f.calls.loaders.map(l=>l.disposals),[1,1,1,1]);
 });
 
 test('legal selected compressed mip retains the existing format, exact bytes and single loader',async()=>{
