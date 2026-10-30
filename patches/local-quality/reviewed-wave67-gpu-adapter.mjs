@@ -2,8 +2,12 @@
 // Keep source files locked, preserve current main ownership, and reject missing anchors.
 // Candidate exclusions: incorrect ScreenFX light vectors, broad texlib regex,
 // divergent ink clearcoat gating, unsafe pending-range clipping, redundant InkVolume work.
-function applyIdempotent(code, before, after, replaceOnce, label) {
+function applyIdempotent(code, before, after, replaceOnce, label, acceptSupportGate = false) {
   if (code.includes(after)) return code;
+  // The subsequent reviewed Wave 9 gloss/city support gates indent these two
+  // audited blocks. Recognize only their exact algebra, keeping unknown or
+  // corrupted expressions fail-closed on a second full composition pass.
+  if (acceptSupportGate && code.includes(after.split('\n').map(line => '  ' + line).join('\n').replace('vec3 col = mix(base, env, fres * 0.42);', 'col = mix(base, env, fres * 0.42);'))) return code;
   if (!code.includes(before)) throw new Error(`Reviewed Wave 6/7 optimization anchor missing (${label})`);
   return replaceOnce(code, before, after, label);
 }
@@ -93,7 +97,7 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
   float rl2 = rl * rl, rl4 = rl2 * rl2, rl8 = rl4 * rl4, rl16 = rl8 * rl8;
   col += uSunCol * (pow(rl, 150.0) * 7.0 + rl16 * 0.28) * g;`,
       replaceOnce,
-      'GPU-FX1 DROP_FRAG transcendental pow elimination and specular gate'
+      'GPU-FX1 DROP_FRAG transcendental pow elimination and specular gate', true
     );
     code = applyIdempotent(
       code,
@@ -327,7 +331,7 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
       `  float fnv = 1.0 - clamp(dot(-V, wn2), 0.0, 1.0), fnv2 = fnv * fnv;
   float fres = 0.05 + 0.95 * (fnv2 * fnv2 * fnv);`,
       replaceOnce,
-      'GPU-ENV2c HZ_FRAG_HAZE Fresnel pow(5.0) elimination'
+      'GPU-ENV2c HZ_FRAG_HAZE Fresnel pow(5.0) elimination', true
     );
   }
 

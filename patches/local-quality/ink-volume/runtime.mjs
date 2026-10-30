@@ -25,8 +25,10 @@ void main(){
   vec3 n=normalize(vNormal), eye=normalize(vView), h=normalize(uSunDirV+eye);
   vec3 ambient=mix(uGround,uSky,dot(n,uUpV)*.5+.5);
   vec3 base=tex.rgb*vColor*(.3+ambient*.5+uSunCol*max(dot(n,uSunDirV),0.0)*.45);
-  float fres=.025+.07*pow(1.0-max(dot(n,eye),0.0),4.0);
-  vec3 col=base+uSunCol*pow(max(dot(n,h),0.0),32.0)*.07+ambient*fres;
+  float fe=1.0-max(dot(n,eye),0.0), fe2=fe*fe;
+  float fres=.025+.07*(fe2*fe2);
+  float nh=max(dot(n,h),0.0), nh2=nh*nh, nh4=nh2*nh2, nh8=nh4*nh4, nh16=nh8*nh8;
+  vec3 col=base+uSunCol*(nh16*nh16)*.07+ambient*fres;
   gl_FragColor=vec4(col,tex.a);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
