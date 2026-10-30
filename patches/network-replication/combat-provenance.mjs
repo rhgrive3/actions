@@ -1,3 +1,10 @@
+import {captureCatalogueActionReceipts,catalogueActionReceipt} from './catalogue-action-receipt.mjs';
+import {flushNativeDeviceHits,clearNativeDeviceHits,bindNativeDeviceHitTarget} from './device-hit-pending.mjs';
+import { recordDeviceBirth, nativeDeviceContact } from './device-contact-proof.mjs';
+import {recordSpecialDeviceBirth,nativeSpecialDeviceContact,nativeSpecialDeviceSource,retainedSpecialDeviceProof,retainedSpecialDeviceProofKey} from './special-device-contact-proof.mjs';
+import {nativeStormDeviceContactForActor} from './storm-device-contact-proof.mjs';
+import { recordSubDeviceBirth, retainedSubDeviceProof, retainedSubDeviceProofKey, nativeSubDeviceContact, nativeSubDeviceSource } from './sub-device-contact-proof.mjs';
+import { objectDamageRow, validDeviceDamageCause } from '../splatoon3/runtime/sub-resistance.mjs';
 import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';
 import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';
 import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';
@@ -11,8 +18,13 @@ import { damageLeafMax } from './damage-leaves.mjs';
 import { observeOwnerTick } from './owner-tick-receipt.mjs';
 import { crabletProofKey, recordCrabletBirth, sampleCrabletHistory, crabletTrajectoryVisible, forgetCrabletTraces } from './crablet-trajectory.mjs';
 const MAX_PROOFS = 160, MAX_PENDING = 48;
+// Existing native capacities: 96 catalogue sub objects, 96 ghost bombs and
+// eight roster actors with at most eight private paid-use receipts each.
+// Reserve at most one slot per private identity in addition to the ordinary
+// 160-entry tail. Raw wire IDs never allocate a persistent slot.
+const MAX_RETAINED_DEVICE_PROOFS = 96 + 96 + 8 * 8;
 const EXPLOSIVE_SUBS = new Set(['bomb','suction','burst','curling','autobomb','fizzy','torpedo','inkMine']);
-const PROOF_AGE = 3.5, SPECIAL_PROOF_AGE = 10, PENDING_AGE = 0.95;
+const PROOF_AGE = 3.5, SPECIAL_PROOF_AGE = 10, SPECIAL_DEVICE_PROOF_AGE = 40, PENDING_AGE = 0.95;
 const finite = Number.isFinite;
 const safe = Number.isSafeInteger;
 const actorKey = a => a?.nid;
@@ -27,10 +39,10 @@ const matchIdOk = (nm,d) => typeof nm.cfg?.id === 'string' && d?.m === nm.cfg.id
 function state(nm) {
   return nm._combatProvenance ||= { proofs:new Map(), pending:new Map(), contacts:new Map(), contactSnapshots:new Map(), specialSnapshots:new Map() };
 }
-function prune(s,t) {
+function prune(s,t,nm) {
   for(const [peer,arr] of s.proofs) {
     let end=0;
-    for(let i=0;i<arr.length;i++)if(t-arr[i].at>=0 && t-arr[i].at<=(arr[i].kind==='special'?SPECIAL_PROOF_AGE:PROOF_AGE))arr[end++]=arr[i];
+    for(let i=0;i<arr.length;i++)if(t-arr[i].at>=0 && (t-arr[i].at<=(arr[i].kind==='special'?SPECIAL_PROOF_AGE:PROOF_AGE)||retainedSubDeviceProof(arr[i])||t-arr[i].at<=SPECIAL_DEVICE_PROOF_AGE&&retainedSpecialDeviceProof(nm,arr[i])))arr[end++]=arr[i];
     arr.length=end;
     if(!end)s.proofs.delete(peer);
   }
@@ -41,6 +53,17 @@ function prune(s,t) {
     if(!end)s.pending.delete(peer);
   }
   for(const [k,entry] of s.contacts) if(t-entry.at>1.2)s.contacts.delete(k);
+}
+function boundedProofs(nm,store,t){
+  if(store.length<=MAX_PROOFS)return store;
+  const kept=[],keys=new Set();let ordinary=0;
+  for(let i=store.length-1;i>=0;i--){
+    const proof=store[i],key=proof.kind==='sub'?retainedSubDeviceProofKey(proof):
+      proof.kind==='special'&&t-proof.at>=0&&t-proof.at<=SPECIAL_DEVICE_PROOF_AGE?retainedSpecialDeviceProofKey(nm,proof):null;
+    if(key){if(keys.has(key)||keys.size>=MAX_RETAINED_DEVICE_PROOFS)continue;keys.add(key);kept.push(proof);}
+    else if(ordinary<MAX_PROOFS){ordinary++;kept.push(proof);}
+  }
+  return kept.reverse();
 }
 function weaponId(actor) {
   return actor?.weapon?.catalogRecord?.id || actor?.weapon?.id;
@@ -110,6 +133,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
     const sub=source.weapon?.sub;
     const committedSprinkler=acceptedSub?.sourceKind==='native-sprinkler' && acceptedSub.from===from &&
       acceptedSub.nid===id && acceptedSub.subId==='sprinkler' && sub==='sprinkler' && e[3]==='bomb' && e[11]==='sprinkler';
+    if(['bomb','suction','curling','autobomb'].includes(sub)&&!(acceptedSub?.sourceKind==='native-bomb'&&acceptedSub.from===from&&acceptedSub.nid===id&&acceptedSub.subId===sub))return null;
     if(sub==='sprinkler' && !committedSprinkler)return null;
     if(!committedSprinkler && e[3]!==sub && !(e[3]==='bomb' && EXPLOSIVE_SUBS.has(sub)))return null;
     origin=e.slice(4,7);direction=e.slice(7,10);
@@ -128,8 +152,11 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
   if(length<.0001 || length>700)return null;
   const unit=direction.map(n=>n/length);
   const reach=Math.max(10,Math.min(100,Number(source.weapon?.range||30)+12));
-  const key=acceptedSub && ((e[1]==='ac' && e[2]==='sub') || acceptedSub.sourceKind==='native-sprinkler')
+  const specialProjectileId=kind==='special'&&e[1]==='p'?nm._combatCrabletSystem?.crabletCombatBirthId?.(e):undefined;
+  const key=acceptedSub && ((e[1]==='ac' && e[2]==='sub') || acceptedSub.sourceKind==='native-sprinkler'||acceptedSub.sourceKind==='native-bomb')
     ? ['accepted-sub-birth',id,acceptedSub.life,acceptedSub.serial,cause].join(':')
+    : safe(specialProjectileId)&&specialProjectileId>0
+    ? ['native-special-projectile',id,Math.max(source.netLife??0,source.net?.lastLife??0),cause,specialProjectileId].join(':')
     : [id,e[0],e[1],kind,cause,...origin.map(n=>Math.round(n*10))].join(':');
   return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,
     key:kind==='main'?crabletProofKey(id,e[0],e[1],cause,origin,
@@ -139,14 +166,14 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
 }
 function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
-  const s=state(nm);prune(s,t);
+  const s=state(nm);prune(s,t,nm);
   const poses=nm._combatPoseScratch||(nm._combatPoseScratch=new Map());poses.clear();
   // Paint cannot produce combat proof. Keep expiry and the bounded owned tail,
   // but do not copy actor poses for this common paint-only envelope.
   const eventLimit=Math.min(packet.e.length,256);
   let paintOnly=eventLimit>0;
   for(let i=0;paintOnly&&i<eventLimit;i++)if(!Array.isArray(packet.e[i])||packet.e[i][1]!=='s')paintOnly=false;
-  if(paintOnly){const store=s.proofs.get(from);if(store?.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return null;}
+  if(paintOnly){const store=s.proofs.get(from);if(store?.length)s.proofs.set(from,boundedProofs(nm,store,t));return null;}
   if(acceptedPoses){
     for(const [id,pose] of acceptedPoses)if(v3(pose)&&ownerActor(nm,from,id))poses.set(id,pose);
   }else if(Array.isArray(packet.a))for(const r of packet.a) {
@@ -195,10 +222,11 @@ function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
     if(recent>=rate)continue;
     store.push(candidate);if(acceptedSub)acceptedProof=candidate;
-    if(candidate.kind==='main'&&candidate.src==='p')recordCrabletBirth(nm,from,packet.e[i],t);
+    if(candidate.kind==='main'){if(candidate.src==='p')recordCrabletBirth(nm,from,packet.e[i],t);recordDeviceBirth(nm,candidate,packet.e[i]);}
+    if(candidate.kind==='special')recordSpecialDeviceBirth(nm,candidate,packet.e[i]);
     if(proofKeys){proofKeys.add(candidate.key);if(t-candidate.at<1)recentByActor.set(candidate.actor,recent+1);}
   }
-  if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
+  if(store.length)s.proofs.set(from,boundedProofs(nm,store,t));return acceptedProof;
 }
 // Pair a fire event with the birth it presents: same actor, same packet, the
 // same muzzle point (both rows are r2 of one Vector3) and the same frame. The
@@ -518,6 +546,9 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   const shots=s.proofs.get(from)||[];
   for(const p of shots) {
     if(p.actor!==d.a || p.uses>=p.maxUses)continue;
+    // A live device may outlast the short attack window. Its private contact
+    // history must not extend the old general PvP/Boss plausibility grant.
+    if(p.kind==='sub'&&t-p.at>PROOF_AGE||p.kind==='special'&&t-p.at>SPECIAL_PROOF_AGE)continue;
     // An enrolled native birth authorizes terrain damage only via its contact receipts.
     // Keep unsupported legacy births separate, including after all native contacts retire.
     if(type==='pvp'&&d.w==='torpedo-splash'&&p.nativeTorpedoContact)continue;
@@ -594,7 +625,7 @@ function enqueue(nm,from,d,type,t) {
 export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allowPoseFallback=true) {
   if(!nm || nm._disposed || !d || (type!=='boss'&&type!=='pvp'))return false;
   if(type==='boss'&&(!finite(d.d)||d.d<=0))return false;
-  const s=state(nm);prune(s,t);
+  const s=state(nm);prune(s,t,nm);
   if(type==='boss')sampleCrabletHistory(nm,t);
   const a=ownerActor(nm,from,d.a);
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
@@ -607,7 +638,7 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
   // Reentrant flush of this sender waits for the active batch to settle.
   const flushing=s.flushing || (s.flushing=new Map());
   if(flushing.has(from))return;
-  prune(s,t);
+  prune(s,t,nm);
   const items=s.pending.get(from);
   if(!items?.length)return;
   s.pending.delete(from);
@@ -640,9 +671,72 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
       const added=s.pending.get(from)||[];
       const combined=still.concat(items.slice(cursor),added);
       if(combined.length)s.pending.set(from,combined);else s.pending.delete(from);
-      prune(s,t);
+      prune(s,t,nm);
     }
   }
+}
+// Shared boundary for sub devices, special devices and Splashdown fists.
+// Direct native rounds use receiver-owned flight/contact and damage. Other
+// native attack families retain their existing proof geometry, now with a
+// source-specific damage ceiling, cause enum and a one-use target budget.
+export function admitDeviceHit(nm,actor,target,damage,cause=null,payload=null) {
+  if(!nm||nm._disposed||!actor?.remote||nm.byNid?.get(actor.nid)!==actor||!nm.s?._members?.has(actor.owner)||
+    !target||target.dead||target.owner?.remote||target.owner?.team===actor.team||!finite(damage)||damage<=0)return null;
+  const at=point(target);if(!v3(at))return null;
+  const receipt=payload?catalogueActionReceipt(nm,payload,actor):null;if(payload&&!receipt)return null;
+  if(payload&&!bindNativeDeviceHitTarget(nm,actor,target,payload))return null;
+  // A paid Storm can remain held longer than generic combat proof retention.
+  // Only its private completed birth and actual native cloud frame can grant
+  // device damage here; the PvP/Boss proof path and its expiry stay separate.
+  const storm=receipt&&nativeStormDeviceContactForActor(nm,actor,target,{damage,cause,receipt});
+  if(storm&&storm.commit?.()===true)return {damage:storm.damage,cause:'InkStorm'};
+  const s=nm._combatProvenance;if(!s)return null;const t=now();prune(s,t,nm);
+  const proofs=s.proofs.get(actor.owner)||[],claimTime=receipt?.time??nm.peers?.get(actor.owner)?.lastTs;
+  if(!finite(claimTime))return null;
+  const melee=receipt&&nm._combatCrabletSystem?.nativeMainMeleeDeviceHit?.(nm,actor,target,damage,cause,receipt);
+  if(melee)return melee;
+  for(let i=proofs.length-1;i>=0;i--){
+    const p=proofs[i];
+    if(p.actor!==actor.nid||p.ts>claimTime+.002||p.kind==='main'&&p.fireLife!==Math.max(actor.netLife||0,actor.net?.lastLife||0)||p.deviceTargets?.has(target))continue;
+    const sourceActor=p.kind==='sub'?nativeSubDeviceSource(nm,p):p.kind==='special'?nativeSpecialDeviceSource(nm,p):actor;if(!sourceActor)continue;
+    const ceiling=claimCeiling(sourceActor,{w:p.cause,c:-1},'pvp',nm._combatHitCeilings);
+    if(!(ceiling>0)||damage>ceiling+.011||!validDeviceDamageCause(sourceActor,p.cause,cause,p.kind))continue;
+    let acceptedDamage=damage,acceptedCause=cause||objectDamageRow(actor,p.kind==='main'?null:p.cause);
+    let contactKey=null,commitContact=null;const consumedKeys=p.deviceContactKeys?.get(target);
+    if(p.kind==='main'){
+      const contact=nativeDeviceContact(nm,p,target,claimTime);if(!contact||Math.abs(damage-contact.damage)>.011)continue;
+      acceptedDamage=contact.damage;acceptedCause=objectDamageRow(contact.projectile);
+      if(cause&&cause!==acceptedCause)continue;
+      contactKey=contact.contactKey??null;commitContact=contact.commit;
+    }else if(p.kind==='special'){
+      const contact=nativeSpecialDeviceContact(nm,p,target,claimTime,{consumedKeys,damage,cause,receipt,payload});
+      if(!contact||Math.abs(damage-contact.damage)>.011)continue;
+      acceptedDamage=contact.damage;acceptedCause=contact.cause||objectDamageRow(contact.projectile);
+      if(cause&&cause!==objectDamageRow(contact.projectile,acceptedCause))continue;
+      contactKey=contact.contactKey??null;commitContact=contact.commit;
+    }else if(p.kind==='sub'){
+      const contact=nativeSubDeviceContact(nm,p,target,claimTime,{consumedKeys,damage,cause});
+      if(!contact||Math.abs(damage-contact.damage)>.011)continue;
+      acceptedDamage=contact.damage;acceptedCause=contact.cause||objectDamageRow(contact.projectile);
+      if(cause&&cause!==acceptedCause)continue;
+      contactKey=contact.contactKey;commitContact=contact.commit;
+    }else{
+      // This uses the target's local geometry; neither event.pos nor its
+      // sender-controlled contact coordinates can move the target into range.
+      const radius=target.subId==='splashWall'?(target.spec?.wallWidth||2)/2+1:1.5;
+      if(!rayNear(p,at,radius+5.5)||dist(p.origin,at)>p.reach+8)continue;
+      const tools=losTools(nm);if(tools&&p.kind==='main'&&!clear(tools,p.origin,...at))continue;
+    }
+    if(commitContact&&!commitContact())continue;
+    if(contactKey!==null){
+      if(consumedKeys?.has(contactKey))continue;
+      const targets=p.deviceContactKeys||(p.deviceContactKeys=new WeakMap());
+      let keys=targets.get(target);if(!keys){keys=new Set();targets.set(target,keys);}keys.add(contactKey);
+    }else (p.deviceTargets||=new Set()).add(target);
+    p.uses++;
+    return {damage:acceptedDamage,cause:acceptedCause};
+  }
+  return null;
 }
 export function installCombatProvenance(NetMatch,context={}) {
   const marker=Symbol.for('inkwave.combat-provenance.v1'),P=NetMatch.prototype;
@@ -655,10 +749,13 @@ export function installCombatProvenance(NetMatch,context={}) {
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
+    if(accepted)recordSubDeviceBirth(this,accepted,event,bomb,receipt);
+    if(accepted)this._combatCrabletSystem?.commitReceiverMarkBirth?.(this,bomb,receipt,event);
     if(accepted&&receipt.subId==='torpedo'&&registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler))accepted.nativeTorpedoContact=true;
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
     flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
+    flushNativeDeviceHits(this,receipt.from);
   };
   P._tick=function(from,d) {
     bindSubBirthCommit(this,commitSubBirth);
@@ -666,11 +763,13 @@ export function installCombatProvenance(NetMatch,context={}) {
     const receipt=observed.receipt;
     if(receipt && receipt.ownerSession===this.s && receipt.ownerMatch===this.match &&
       receipt.ownerMatchId===this.cfg?.id && !this._disposed) {
+      captureCatalogueActionReceipts(this,receipt);
       const t=now();
       sampleLocalHistory(this,t);
       recordContactSnapshots(this,from,receipt,t);
       record(this,from,{...receipt,e:receipt.nativeEvents},t,null,receipt.poses);
       flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
+      flushNativeDeviceHits(this,from);
     }
     return observed.result;
   };
@@ -703,6 +802,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldMessage.call(this,from,d);
   };
   P.onLeave=function(id,changed) {
+    clearNativeDeviceHits(this,changed?undefined:id);
     forgetCrabletTraces(this,id,changed);
     if(changed)closeSubBirthCommit(this);
     const s=this._combatProvenance;
@@ -713,6 +813,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldLeave.call(this,id,changed);
   };
   P.dispose=function(...args) {
+    clearNativeDeviceHits(this);
     forgetCrabletTraces(this,null,true);
     closeSubBirthCommit(this);
     const s=this._combatProvenance;
