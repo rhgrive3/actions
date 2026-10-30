@@ -2622,7 +2622,9 @@ uniform int uRipCount;`,
   vec3 m = texture2D(tMask, clamp(muv, 0.0, 1.0)).rgb * inside;`,
       `  vec2 muv = vec2((p.x - uMaskR.x) / (uMaskR.z - uMaskR.x), 1.0 - (p.y - uMaskR.y) / (uMaskR.w - uMaskR.y));
   float inside = step(0.0, muv.x) * step(muv.x, 1.0) * step(0.0, muv.y) * step(muv.y, 1.0);
-  vec3 m = inside > 0.0 ? texture2D(tMask, clamp(muv, 0.0, 1.0)).rgb : vec3(0.0);`,
+  vec2 iwMaskCenterUv = clamp(muv, 0.0, 1.0);
+  vec2 iwMaskCenterDx = dFdx(iwMaskCenterUv), iwMaskCenterDy = dFdy(iwMaskCenterUv);
+  vec3 m = inside > 0.0 ? textureGrad(tMask, iwMaskCenterUv, iwMaskCenterDx, iwMaskCenterDy).rgb : vec3(0.0);`,
       replaceOnce,
       'GPU-LOB-01a gate lobby ground center tMask texture fetch on inside > 0.0'
     );
@@ -2649,10 +2651,13 @@ uniform int uRipCount;`,
   }
   gRipN *= water;`,
       `  // ink is a liquid film with a rounded rim: slope from the mask gradient (world metres) tilts the normal at its edges
+  // Neighbor offsets are uniform; hoist their shared UV gradients before
+  // the spatial gate so implicit LOD never depends on divergent execution.
+  vec2 iwMaskNeighborDx = dFdx(muv), iwMaskNeighborDy = dFdy(muv);
   if (inside > 0.0) {
     vec2 du = vec2(0.025 / (uMaskR.z - uMaskR.x), 0.0), dv = vec2(0.0, 0.025 / (uMaskR.w - uMaskR.y));
-    float hx = dot(texture2D(tMask, muv + du).rg - texture2D(tMask, muv - du).rg, vec2(1.0));
-    float hz = -dot(texture2D(tMask, muv + dv).rg - texture2D(tMask, muv - dv).rg, vec2(1.0));
+    float hx = dot(textureGrad(tMask, muv + du, iwMaskNeighborDx, iwMaskNeighborDy).rg - textureGrad(tMask, muv - du, iwMaskNeighborDx, iwMaskNeighborDy).rg, vec2(1.0));
+    float hz = -dot(textureGrad(tMask, muv + dv, iwMaskNeighborDx, iwMaskNeighborDy).rg - textureGrad(tMask, muv - dv, iwMaskNeighborDx, iwMaskNeighborDy).rg, vec2(1.0));
     gTilt = vec2(hx, hz) * 0.35;
   }
   gRough = mix(gRough, gRough * 0.42, gDamp);

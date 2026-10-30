@@ -120,7 +120,7 @@ const WAVE9_10_11_GPU_TARGETS = [
     'if (inner < 0.5) {',
   ]],
   ['src/game/lobbySet-mats.js', 7, [
-    'vec3 m = inside > 0.0 ? texture2D(tMask, clamp(muv, 0.0, 1.0)).rgb : vec3(0.0);',
+    'vec3 m = inside > 0.0 ? textureGrad(tMask, iwMaskCenterUv, iwMaskCenterDx, iwMaskCenterDy).rgb : vec3(0.0);',
     'if (water > 0.0) {',
     'if (e > 0.02 && e < 0.9) {',
     'if (d.a > 0.001) {',
@@ -266,6 +266,20 @@ test('composed support gates retain strict checks on the reviewed Wave 6/7 algeb
     assert.equal(adaptReviewedWave67Gpu(rel, production, replaceOnce), production);
     assert.ok(production.includes(expression));
     assert.throws(() => adaptReviewedWave67Gpu(rel, production.replace(expression, 'corruptedMath'), replaceOnce), /anchor missing/);
+  }
+});
+
+test('lobby mask sampling has explicit gradients before spatial gates in raw and composed epochs', () => {
+  const rel = 'src/game/lobbySet-mats.js', raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+  for (const source of [adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+    assert.ok(source.indexOf('dFdx(iwMaskCenterUv)') < source.indexOf('vec3 m = inside > 0.0 ? textureGrad'));
+    const start = source.indexOf('vec2 iwMaskNeighborDx = dFdx(muv)');
+    const gate = source.indexOf('if (inside > 0.0) {', start);
+    assert.ok(start >= 0 && gate > start);
+    const body = source.slice(gate, source.indexOf('gTilt =', gate));
+    assert.equal((body.match(/textureGrad\(tMask,/g) || []).length, 4);
+    assert.ok(!body.includes('texture2D('));
+    assert.ok(!body.includes('dFdx(') && !body.includes('dFdy('));
   }
 });
 

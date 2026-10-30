@@ -84,12 +84,50 @@ jobs:
             /native-prebuilt/robo/
             /native-prebuilt/mako/
       - name: Load only the two authenticated stage payloads
+        timeout-minutes: 8
         shell: bash
         run: |
           set -euo pipefail
           test "$(git -C work/reference rev-parse HEAD)" = "$BASELINE_SHA"
-          git lfs fetch --include='native-prebuilt/robo/**,native-prebuilt/mako/**,native-prebuilt/packs/0ea1220dded1953ebc6bf130e3870e91.bin,native-prebuilt/packs/a539e5f0d9b2d65a34d002f0aa41f537.bin,native-prebuilt/packs/a520c306eaec5401e18c871c145ba5b9.bin,native-prebuilt/packs/e2244a93fc62bdc58749eae6a34f54dc.bin' --exclude='' origin "$SOURCE_SHA"
-          git lfs checkout native-prebuilt/robo native-prebuilt/mako native-prebuilt/packs
+          # Explicit pointer inputs avoid a full-tree LFS scan in this partial clone.
+          python3 - <<'PY'
+          import hashlib, os, subprocess
+          from pathlib import Path
+          files=[]
+          for stage in ['robo','mako']:
+              files.extend(sorted(p for p in Path('native-prebuilt',stage).rglob('*') if p.is_file()))
+          for name in ['0ea1220dded1953ebc6bf130e3870e91.bin','a539e5f0d9b2d65a34d002f0aa41f537.bin','a520c306eaec5401e18c871c145ba5b9.bin','e2244a93fc62bdc58749eae6a34f54dc.bin']:
+              files.append(Path('native-prebuilt/packs',name))
+          child_env=os.environ.copy()
+          child_env.pop('GIT_LFS_SKIP_SMUDGE',None)
+          child_env['GIT_LFS_SKIP_DOWNLOAD_ERRORS']='0'
+          loaded=0
+          for p in files:
+              with p.open('rb') as f:
+                  header=f.read(128)
+              if not header.startswith(b'version https://git-lfs.github.com/spec/v1\n'):
+                  continue
+              pointer=p.read_bytes()
+              lines=pointer.decode('ascii').splitlines()
+              expected=next(line[len('oid sha256:'):] for line in lines if line.startswith('oid sha256:'))
+              size=int(next(line[len('size '):] for line in lines if line.startswith('size ')))
+              target=p.with_name(p.name+'.verified-download')
+              print('Loading authenticated LFS payload '+str(p),flush=True)
+              try:
+                  with target.open('wb') as f:
+                      subprocess.run(['git','lfs','smudge',str(p)],input=pointer,stdout=f,env=child_env,check=True)
+                  digest=hashlib.sha256()
+                  with target.open('rb') as f:
+                      for chunk in iter(lambda:f.read(1024*1024),b''):
+                          digest.update(chunk)
+                  if target.stat().st_size!=size or digest.hexdigest()!=expected:
+                      raise RuntimeError('LFS pointer verification failed: '+str(p))
+                  target.replace(p)
+                  loaded+=1
+              finally:
+                  target.unlink(missing_ok=True)
+          print('Verified LFS payloads: '+str(loaded))
+          PY
           cp -a native-prebuilt/robo native-prebuilt/mako work/reference/native-prebuilt/
           mkdir -p work/reference/native-prebuilt/packs
           for pack in 0ea1220dded1953ebc6bf130e3870e91.bin a539e5f0d9b2d65a34d002f0aa41f537.bin a520c306eaec5401e18c871c145ba5b9.bin e2244a93fc62bdc58749eae6a34f54dc.bin; do

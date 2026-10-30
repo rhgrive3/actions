@@ -55,7 +55,7 @@ export function nativeNormalCones(vertices,indices){
  const count=vertices.length/8;if(!Number.isSafeInteger(count)||indices.length%3)return null;
  const bounds=new Float32Array(count),seen=new Uint8Array(count);
  for(let t=0;t<indices.length;t+=3){
-  const a=indices[t],b=indices[t+1],c=indices[t+2];if(![a,b,c].every(i=>Number.isSafeInteger(i)&&i>=0&&i<count))return null;
+  const a=indices[t],b=indices[t+1],c=indices[t+2];if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||!Number.isSafeInteger(c)||a<0||b<0||c<0||a>=count||b>=count||c>=count)return null;
   const ai=a*8,bi=b*8,ci=c*8,ux=vertices[bi]-vertices[ai],uy=vertices[bi+1]-vertices[ai+1],uz=vertices[bi+2]-vertices[ai+2],
    vx=vertices[ci]-vertices[ai],vy=vertices[ci+1]-vertices[ai+1],vz=vertices[ci+2]-vertices[ai+2],x=uy*vz-uz*vy,y=uz*vx-ux*vz,z=ux*vy-uy*vx,cross=x*x+y*y+z*z;
   if(cross===0)continue;
