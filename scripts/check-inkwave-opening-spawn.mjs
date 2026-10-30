@@ -5,6 +5,7 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { assertOpeningSpawnAtRate } from './lib/inkwave-opening-spawn-contract.mjs';
 const site = path.resolve(process.argv[2] || '_site');
 const out = path.resolve(process.argv[3] || '.browser-evidence/opening-spawn');
 fs.mkdirSync(out, { recursive: true });
@@ -31,46 +32,11 @@ try {
   page.on('pageerror', error => result.errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true, musicVolume: 0, audioVolume: 0 })));
   await page.goto('http://127.0.0.1:' + server.address().port, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(async () => { globalThis.openingG = (await import(new URL('src/core/ctx.js', document.baseURI))).G; });
+  await page.evaluate(async () => { globalThis.openingContext = await import(new URL('src/core/ctx.js', document.baseURI)); globalThis.openingG = openingContext.G; globalThis.openingIntroFrames = (await import(new URL('patches/splatoon3/runtime/turf-intro-camera.mjs', document.baseURI))).TURF_INTRO_FRAMES.go; });
   await page.waitForFunction(() => openingG.game?.menus && openingG.mode !== 'boot' || document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
   assert.equal(await page.locator('#boot-error').textContent(), '');
   for (const hz of [30, 60, 120]) {
-    const proof = await page.evaluate(async hz => {
-      const G = openingG, g = G.game;
-      g.debug.freeze(); g.menus.wipe.cancel(); g._skipRender = true;
-      await g.startMatch({ mapId: 'tidewater', mode: 'turf', duration: 180, difficulty: 'normal' });
-      g.debug.freezeBots();
-      const snapshot = () => G.actors.map(a => ({ team: a.team, slot: a.slot, bot: a.isBot,
-        phase: a.s3?.squidSpawn?.phase || null, position: a.pos.toArray(), grounded: a.grounded,
-        supported: !!a.ground.hit, target: a.s3?.squidSpawn?.target || null }));
-      const initial = snapshot(), step = () => g._frame(1 / hz);
-      const waiting = rows => {
-        for (let i = 0; i < rows.length; i++) {
-          if (rows[i].phase !== 'aim' || rows[i].position.some((v, k) => Math.abs(v - initial[i].position[k]) > 1e-8))
-            throw Error('Opening actor left spawner before match start: ' + JSON.stringify(rows[i]));
-        }
-      };
-      waiting(initial);
-      for (let i = 0; i < hz * 4; i++) step();
-      const intro = snapshot(); waiting(intro);
-      if (G.match.state !== 'intro') throw Error('Missing ordinary introduction');
-      // The sourced Turf introduction now ends at frame 578, not 4.2s.
-      // Bound the wait to the emitted intro contract at each simulated rate.
-      const { TURF_INTRO_FRAMES } = await import(new URL('patches/splatoon3/runtime/turf-intro-camera.mjs', document.baseURI));
-      const remaining = Math.ceil(Math.max(0, TURF_INTRO_FRAMES.go / 60 - G.match.stateT) * hz) + 2;
-      for (let i = 0; i < remaining && G.match.state === 'intro'; i++) step();
-      if (G.match.state !== 'playing') throw Error('Ordinary intro did not finish: ' + JSON.stringify({ hz, state: G.match.state, elapsed: G.match.stateT, go: TURF_INTRO_FRAMES.go / 60 }));
-      const playing = snapshot(); waiting(playing);
-      // No FIRE: the existing one-second automatic opening launch applies to all.
-      let frames = 0;
-      while (frames < hz * 1.2 && G.actors.some(a => a.s3?.squidSpawn?.phase === 'aim')) { step(); frames++; }
-      const flight = snapshot();
-      if (flight.some(a => a.phase !== 'flight')) throw Error('All actors must share the automatic opening flight');
-      for (let i = 0; i < hz * 1.5; i++) step();
-      const landed = snapshot();
-      if (landed.some(a => a.phase || !a.grounded || !a.supported)) throw Error('Opening actor failed real supported touchdown: ' + JSON.stringify(landed));
-      return { hz, initial, intro, playing, flight, launchWaitFrames: frames, landed };
-    }, hz);
+    const proof = await page.evaluate(assertOpeningSpawnAtRate, hz);
     assert.equal(proof.initial.length, 8);
     assert.equal(proof.initial.filter(a => a.bot).length, 7);
     result.rates.push(proof);
