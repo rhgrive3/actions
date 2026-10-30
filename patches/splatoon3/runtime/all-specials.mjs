@@ -1,3 +1,10 @@
+import {nativeSpecialActionDeviceContact as readSpecialActionContact,nativeSpecialPassiveDeviceContact as readSpecialPassiveContact} from './special-action-device-contact.mjs';
+import {sealNativeSpecialWorldDeviceBirth,nativeSpecialWorldDeviceContact as readSpecialWorldContact} from './special-world-device-contact.mjs';
+import {catalogueActionReceipt} from '../../network-replication/catalogue-action-receipt.mjs';
+import {nativeCatalogueSpecialActivation} from './special-replay-admission.mjs';
+import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
+import { isNativeDeviceProbe } from '../../network-replication/native-device-probe.mjs';
+import {deferNativeDeviceHit} from '../../network-replication/device-hit-pending.mjs';
 import {validSpecialWorldPayload,admitsRemoteWorldBirth} from './special-world-payload.mjs';
 // Additional Splatoon 3 special actions for the public INKWAVE runtime.
 //
@@ -20,8 +27,8 @@ import {validSpecialWorldPayload,admitsRemoteWorldBirth} from './special-world-p
 import { gearCurve } from './gear.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { validDamageGroup } from './final-damage.mjs';
-import { disposeInkVac, inkVacAbsorbCandidate } from './kit-ink-vac.mjs';
-import { endTrizooka } from './kit-trizooka.mjs';
+import { disposeInkVac, inkVacAbsorbCandidate, restoreNativeInkVacProbe } from './kit-ink-vac.mjs';
+import { endTrizooka, TRIZOOKA } from './kit-trizooka.mjs';
 import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZipcasterArmor } from './zipcaster-armor.mjs';
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
@@ -29,7 +36,7 @@ import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, startHeldSpecia
 import { specialDeviceFlight, stepSpecialDeviceFlight, deviceBelowWorld } from './special-device-flight.mjs';
 import { wailSpeakerOrigin } from './wail-speakers.mjs';
 import { activeSpecialGaugeState, syncActiveSpecialGauge, startActiveSpecialGauge, endActiveSpecialGauge, clearActiveSpecialGauges } from './active-special-gauge.mjs';
-import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
+import { kitTrizookaSteppedBands, kitTrizookaGhost } from './trizooka-collision.mjs';
 import { configureCrabProjectile, paintCrabFlight, crabShooterDamage, withCrabImpactPaint, startCrabWallDrop } from './crab-tank-projectile.mjs';
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 import { SPECIAL_DEVICES } from './special-presentation.mjs';
@@ -104,9 +111,10 @@ function deleteActorState(actor){if(actorStates.get(actor)?.id==='ultraStamp')ac
 const booyahAfterArmor = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
+const nativeScreens=new WeakMap();
 const SEEN_LIMIT = 384;
 const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce',
-  's3TentaTarget','s3TentaTargetActor','s3TentaTargetLife','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
+  's3TentaWire','s3TentaTarget','s3TentaTargetActor','s3TentaTargetLife','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
   's3SpecialPowerAP','s3AllSpecialCrossPaintRadius','s3AllSpecialCrossPaintLength','s3AllSpecialSplashAroundRadius','s3AllSpecialSplashAroundCount',
   's3AllSpecialSplashAroundOffsetY','s3AllSpecialSplashAroundVelocityMin','s3AllSpecialSplashAroundVelocityMax','s3AllSpecialSplashAroundPitchMin',
   's3AllSpecialSplashAroundPitchMax','s3AllSpecialTrailPaintWidth','s3AllSpecialTrailPaintDepthScale','s3AllSpecialTrailPaintSpanFrames',
@@ -386,6 +394,11 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   p.s3AllSpecialSeed = normalizedSeed(opts.seed || 0);
   if (opts.damageReduce) p.s3DamageReduce = { ...opts.damageReduce };
   if(id==='crabTank')configureCrabProjectile(p,opts.sequence||0);
+  if(opts.tenta){
+    const row=opts.tenta;p.s3TentaTarget=row.dest.clone();p.s3TentaTargetActor=row.target;p.s3TentaTargetLife=actorLife(row.target);
+    p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=direction.clone();p.s3TentaLaunchedAt=row.launchedAt;
+    p.s3TentaWire=[p.s3AllSpecialActivation,row.index,row.target.nid,p.s3TentaTargetLife,...vecArray(row.dest)];
+  }
   system._push(p);
   return p;
 }
@@ -517,7 +530,7 @@ function paintSpecialChannels(rt,actor,point,params,seed) {
   return paintCross(rt,actor,point,params.crossRadius,params.crossLength,seed)+
     paintSplashAround(rt,actor,point,params,seed);
 }
-function specialObjectDamage(rt,attack,object,amount,cause=null,at=object.pos) {
+function specialObjectDamage(rt,attack,object,amount,cause=null,at=object.pos,attackSource=null) {
   if(!object||object.dead||!(object.hp>0)||object.owner?.team===attack?.team||!(amount>0)||attack?.remote)return false;
   const damage=amount*objectDamageScale(attack,object.id,cause);
   if(!(damage>0))return false;
@@ -526,6 +539,7 @@ function specialObjectDamage(rt,attack,object,amount,cause=null,at=object.pos) {
     if(!shooter||shooter.remote)return false;
     const event={actor:shooter,id:object.id,activation:object.activation,action:'objectHit',pos:vecArray(object.pos),target:vecArray(at),seed:normalizedSeed(object.seed),object:object.serial||0,index:object.index||0,
       ownerNid:Number.isInteger(object.owner?.nid)?object.owner.nid:-1,ownerLife:actorLife(object.owner),attackerLife:actorLife(shooter),objectShredder:objectShredderEquipped(shooter),cause:objectDamageRow(attack,cause),damage:Math.max(0,Math.min(10000,amount)),tick:(object.proposalSerial=((object.proposalSerial||0)+1))};
+    if(attackSource?.id==='superChump')Object.assign(event,{sourceSpecial:attackSource.id,sourceActivation:attackSource.activation,sourceObject:attackSource.serial,sourceIndex:attackSource.index,sourceSeed:attackSource.seed});
     if(event.pos&&event.target)rt.api.emit?.('all:special',event);
     return !!event.pos&&!!event.target;
   }
@@ -546,9 +560,9 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
     if(!options.pierceLOS&&rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
     const same=reusable&&point.distanceTo===distanceMethod&&Object.is(px,point.x)&&Object.is(py,point.y)&&Object.is(pz,point.z)&&
       Object.is(cx,center.x)&&Object.is(cy,center.y)&&Object.is(cz,center.z);
-    const amount=damageAt(same?distance:point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center);
+    const amount=damageAt(same?distance:point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center,options.attackSource);
   }
-  if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
+  if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause,options.attackSource?{attackSource:options.attackSource}:undefined);
 }
 function damageRadius(rt, actor, id, center, near, far, radius, source = id, once = null, objectCause = source) {
   const G = rt.api.G;
@@ -569,7 +583,7 @@ function damageRadius(rt, actor, id, center, near, far, radius, source = id, onc
   specialObjectRadius(rt,actor,center,radius,d=>d<=radius*.45?near:near+(far-near)*clamp(d/Math.max(radius,1e-6),0,1),objectCause);
 }
 const STAMP_SWING_BANDS=Object.freeze([Object.freeze([4,40])]),CRAB_BODY_BANDS=Object.freeze([Object.freeze([1.45,40])]),KRAKEN_JUMP_BANDS=Object.freeze([Object.freeze([2.65,60])]);
-function damageBandRadius(rt, actor, center, bands, radius, source, once = null, height = 2.8, objectCause = source) {
+function damageBandRadius(rt, actor, center, bands, radius, source, once = null, height = 2.8, objectCause = source, attackSource = null) {
   const G = rt.api.G;let hitCount=0;
   if (actor.remote || !G.projectiles?.applyHit) return hitCount;
   for (const victim of G.actors || []) {
@@ -583,7 +597,7 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
   }
   specialObjectRadius(rt,actor,center,radius,d=>{
     return d > radius ? 0 : bands.find(([r]) => d <= r)?.[1] ?? 0;
-  },objectCause);
+  },objectCause,true,attackSource?{attackSource}:{});
   return hitCount;
 }
 // 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
@@ -726,6 +740,16 @@ function addWorld(rt, data) {
 }
 // One immutable wave ring per runtime epoch; materials remain per object.
 const waveFrontGeometryOwners = new WeakMap();
+const decoyGeometryOwners=new WeakMap();
+function retireDecoyGeometry(rt){
+  const entry=rt._decoyGeometry;if(!entry)return;rt._decoyGeometry=null;entry.retiring=true;
+  if(!entry.users)entry.geometry.dispose();
+}
+function borrowDecoyGeometry(rt){
+  let entry=rt._decoyGeometry;
+  if(!entry){const geometry=new rt.api.THREE.SphereGeometry(.42,10,8);entry=rt._decoyGeometry={geometry,users:0,retiring:false};decoyGeometryOwners.set(geometry,entry);}
+  entry.users++;return entry.geometry;
+}
 function retireWaveFrontGeometry(rt) {
   const entry = rt._waveFrontGeometry;
   if (!entry) return;
@@ -747,9 +771,10 @@ function disposeMesh(rt, object) {
   if (!mesh) return;
   rt.api.G.scene?.remove?.(mesh);
   mesh.traverse?.(node => {
-    const borrowed = node.userData?.s3BorrowedWaveFront === node.geometry && waveFrontGeometryOwners.get(node.geometry);
+    const borrowed = node.userData?.s3BorrowedWaveFront === node.geometry && waveFrontGeometryOwners.get(node.geometry)
+      ||node.userData?.s3BorrowedDecoy===node.geometry&&decoyGeometryOwners.get(node.geometry);
     if (borrowed) {
-      delete node.userData.s3BorrowedWaveFront;
+      delete node.userData.s3BorrowedWaveFront;delete node.userData.s3BorrowedDecoy;
       borrowed.users--;
       if (borrowed.retiring && !borrowed.users) borrowed.geometry.dispose();
     } else node.geometry?.dispose?.();
@@ -760,7 +785,7 @@ function disposeMesh(rt, object) {
 }
 // Geometry + material of one deployable's world mesh. Shared with the program
 // keepers in special-motion.mjs, so their warmed programs match exactly.
-export function worldMeshParts(THREE, kind, color, waveGeometry = null) {
+export function worldMeshParts(THREE, kind, color, waveGeometry = null,decoyGeometry=null) {
   let geometry, material;
   if (kind === 'screen') {
     geometry = new THREE.PlaneGeometry(8, 4.5);
@@ -772,7 +797,7 @@ export function worldMeshParts(THREE, kind, color, waveGeometry = null) {
     geometry = waveGeometry || new THREE.RingGeometry(.96,1,48);
     material = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, side:THREE.DoubleSide, depthWrite:false });
   } else {
-    geometry = new THREE.SphereGeometry(kind === 'decoy' ? .42 : .7, 10, 8);
+    geometry = kind==='decoy'&&decoyGeometry?decoyGeometry:new THREE.SphereGeometry(kind === 'decoy' ? .42 : .7, 10, 8);
     material = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.22, roughness:.55,
       transparent:kind === 'strike'||kind === 'crabBall', opacity:kind === 'strike'?.42:kind === 'crabBall'?.72:1 });
   }
@@ -786,9 +811,11 @@ function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   let mesh=rt.api.specialWorldProxy?.(kind)||null;
   if(!mesh){
     const shared = kind === 'waveFront' ? borrowWaveFrontGeometry(rt) : null;
-    const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner),shared);
+    const decoy=kind==='decoy'?borrowDecoyGeometry(rt):null;
+    const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner),shared,decoy);
     mesh=new THREE.Mesh(geometry,material);
     if(shared)mesh.userData.s3BorrowedWaveFront=shared;
+    if(decoy)mesh.userData.s3BorrowedDecoy=decoy;
   }
   if (kind === 'waveFront') mesh.rotation.x = -Math.PI / 2;
   mesh.position.copy(center); mesh.scale.set(...scale);
@@ -874,7 +901,7 @@ function breakerCandidate(rt, p, start, end, object) {
   if(object.dead||object.kind!=='wave'||object.owner?.team===p?.team)return null;
   const hit=sphereEntry(rt,start,end,object.pos,.72);if(!hit)return null;
   const length=start.distanceTo(end), point=hit.point;let settled=false;
-  return {distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'wave-breaker',onHit:()=>{
+  return {object,distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'wave-breaker',onHit:()=>{
     if(p?.ghost||settled||object.dead)return false;settled=true;
     return specialObjectDamage(rt,p,object,Number(p?.damage)||0,projectileObjectCause(p),hit.point);
   }};
@@ -883,7 +910,7 @@ function chumpCandidate(rt, p, start, end, object) {
   if(object.dead||object.kind!=='decoy'||object.owner?.team===p?.team)return null;
   const hit=sphereEntry(rt,start,end,object.pos,.48);if(!hit)return null;
   const length=start.distanceTo(end),point=hit.point;let settled=false;
-  return {distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'super-chump',onHit:()=>{
+  return {object,distance:length*hit.t,point,normal:rt.v11.subVectors(point,object.pos).normalize().clone(),kind:'super-chump',onHit:()=>{
     if(p?.ghost||settled||object.dead)return false;settled=true;
     return specialObjectDamage(rt,p,object,Number(p?.damage)||0,projectileObjectCause(p),hit.point);
   }};
@@ -899,14 +926,14 @@ function candidate(rt, p, start, end) {
   if(activeStampCount>0)for(const owner of rt.api.G.actors||[]) {
     const state=actorStates.get(owner);
     if(!state||state.id!=='ultraStamp'||state.phase==='throw'||!owner?.alive||owner.team===p?.team)continue;
-    if(state.expiresAt&&rt.api.G.time>state.expiresAt){deleteActorState(owner);continue;}
+    if(state.expiresAt&&rt.api.G.time>state.expiresAt){if(!isNativeDeviceProbe(p))deleteActorState(owner);continue;}
     const d=stampGuardCandidate(rt,p,start,end,owner,state);
     if(d&&(!best||d.distance<best.distance))best=d;
   }
   return best;
 }
 function stampGuardCandidate(rt,p,start,end,owner,state) {
-  if(!start||!end||p?.ghost)return null;
+  if(!start||!end||p?.ghost&&!isNativeDeviceProbe(p))return null;
   // The hammer guards while attacking; simply holding the special, aiming
   // a throw or waiting for the first swing must not create a permanent wall.
   // Exact intracycle raising/lowering remains a hitbox calibration.
@@ -981,7 +1008,11 @@ function beamTouchesObject(rt,from,to,object) {
     if(width>0&&height>0&&Number.isFinite(distance)&&Number.isFinite(radius)&&distance>radius+margin)return false;
     const yaw=object.yaw||0,tx=Math.cos(yaw),tz=-Math.sin(yaw),nx=Math.sin(yaw),nz=Math.cos(yaw);
     const span=from.distanceTo(to),steps=Math.max(1,Math.ceil(span/.35));
-    for(let i=0;i<=steps;i++){
+    let first=0,last=steps;
+    if(width>0&&height>0&&span>0&&Number.isFinite(span)&&Number.isFinite(radius)&&Number.isFinite(margin)&&Number.isFinite(t)){
+      const half=(radius+margin)/span;first=Math.max(0,Math.floor((t-half)*steps)-2);last=Math.min(steps,Math.ceil((t+half)*steps)+2);
+    }
+    for(let i=first;i<=last;i++){
       const p=rt.v14.copy(from).lerp(to,i/steps),dx=p.x-pos.x,dz=p.z-pos.z;
       if(Math.abs(dx*tx+dz*tz)<=((object.spec?.wallWidth||2)/2+.2)&&p.y>=pos.y-.25&&p.y<=pos.y+(object.spec?.wallHeight||3)+.25&&Math.abs(dx*nx+dz*nz)<=.45)return true;
     }
@@ -1005,8 +1036,8 @@ function screenDamageObjects(rt,screen,from,to) {
   if(screen.owner.remote)return;
   const now=screen.age,last=screen.lastObjectCross||=new WeakMap();
   const canHit=object=>{
-    const point=screenObjectContact(rt,screen,from,to,object);if(!point)return null;
     if(now-(last.get(object)??-Infinity)+1e-8<SCREEN_CONTACT_INTERVAL)return null;
+    const point=screenObjectContact(rt,screen,from,to,object);if(!point)return null;
     last.set(object,now);return point;
   };
   for(const object of rt.system?._s3AllSpecialObjects||[]){
@@ -1036,11 +1067,13 @@ function lockWailPair(rt,actor,state,index) {
   const target=selectTargets(rt,actor,1,Infinity)[0]||null,direction=aimDirection(rt,actor,rt.v0).clone();
   const origins=[index*2,index*2+1].map(i=>wailSpeakerOrigin(rt.api.THREE,actor,i));
   state.beamPairs.push({index,target,targetLife:actorLife(target),direction,origins,start:state.nextLock,until:state.nextLock+gearCurve(state.specialPowerAP,180,220,240)/FPS,nextTick:state.nextLock,tick:0,trace:[]});
-  emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
+  emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index,targetNid:target?.nid??-1,targetLife:target?actorLife(target):0});
 }
 function fireWailTick(rt, actor, state, pair) {
   const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
-  const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
+  let lo=0,hi=trace.length;
+  while(lo<hi){const mid=(lo+hi)>>>1;if(trace[mid].t<=at)lo=mid+1;else hi=mid;}
+  const before=trace[lo-1]||trace[0],after=trace[lo];
   const sample=before?rt.v3.copy(before.pos):null;
   if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
   // hitBeam uses the runtime vectors; scalar coordinates keep the paired
@@ -1187,7 +1220,7 @@ function prepareMissiles(rt, actor, state) {
   for(let group=0;group<targets.length;group++){
     const target=targets[group],dest=target?groundAt(rt,target.pos,rt.v2).clone():groundAt(rt,aimPoint(rt,actor,28,rt.v3),rt.v4).clone();
     const count=counts[group];
-    emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:group,count});
+    emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:group,count,targetNid:target.nid,targetLife:actorLife(target)});
     for(let i=0;i<count;i++)missiles.push({target,dest:dest.clone(),index:i,count});  }
   state.pendingMissiles=missiles;state.missileIndex=0;state.missileOrigin=origin;state.nextMissileAt=state.t;state.phase='launching';return true;
 }
@@ -1197,9 +1230,8 @@ function launchMissileStep(rt, actor, state) {
   if(row.target?.alive)row.dest.copy(groundAt(rt,row.target.pos,rt.v2));
   const origin=state.missileOrigin,spread=(row.index-(row.count-1)/2)*.055;
   const dir=rt.v4.copy(row.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
-  const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24});
-  if(p){p.s3TentaTarget=row.dest.clone();p.s3TentaTargetActor=row.target;p.s3TentaTargetLife=actorLife(row.target);
-    p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();p.s3TentaLaunchedAt=state.t;}
+  launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24,
+    tenta:{dest:row.dest,target:row.target,index:state.missileIndex,launchedAt:state.t}});
   state.missileIndex++;
   if(state.missileIndex>=state.pendingMissiles.length){
     emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:state.missileIndex});
@@ -1357,6 +1389,7 @@ function throwChumps(rt,actor,state) {
   if(!actor.grounded)return;
   const {target,positions}=chumpLandingPlan(rt,actor,state),origin=rt.v2.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone();
   const count=12,desc=specialDescription('superChump',state.specialPowerAP||0);
+  emitAction(rt,actor,'superChump',state.serial,'target',actor.pos,target,state.seed,{count});
   for(let i=0;i<count;i++) {
     const pos=positions[i];
     const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{dur:(108+210)/FPS,maxRadius:desc.radius,damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
@@ -1370,6 +1403,11 @@ function throwChumps(rt,actor,state) {
 // as the throw does (nextSeed in each deploy). Read-only: works on a copy of the seed and returns new vectors.
 // Presentation read-out of the Tenta Missiles lock: the circle limit (fraction of the half screen height) and the
 // opponents prepareMissiles would lock right now, so the HUD draws exactly what launches.
+export function tentaMissilesLockRowsForVfx(api,actor) {
+  const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
+  if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
+  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,rows:selectTargets(rt,actor,5,Infinity,true)};
+}
 export function tentaMissilesLockPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
@@ -1396,6 +1434,9 @@ function chumpLandingPlan(rt,actor,state,out=null){
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
+  return chumpPositionsFromTarget(rt,actor,state,target,out);
+}
+function chumpPositionsFromTarget(rt,actor,state,target,out=null){
   const count=12,positions=out?out.positions:[],rotation=seedUnit(state.seed,17)*Math.PI*2;
   const direction=(out?out.direction.copy(target):target.clone()).sub(actor.pos).setY(0).normalize(),side=out?out.side.set(direction.z,0,-direction.x):new rt.api.THREE.Vector3(direction.z,0,-direction.x);
   let ellipse=state.chumpEllipse;
@@ -1560,6 +1601,7 @@ function returnToOrigin(rt,actor,state,reason='duration') {
 }
 function crabBall(rt,actor,state,active) {
   const G=rt.api.G;
+  if(state.ballMode!==!!active)emitAction(rt,actor,'crabTank',state.serial,'roll',actor.pos,null,state.seed,{rolling:!!active});
   state.ballMode=!!active;
   if(actor.specialActive){actor.specialActive.pose=active?'ball':state.cannonT>state.t?'cannon':'shooter';actor.specialActive.cannon=state.cannonT>state.t;}
   if(!active){if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}return;}
@@ -1801,12 +1843,13 @@ function updateWorld(rt,dt) {
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
       const frame=deviceAge*FPS+1e-8,markRatio=frame<4?0:frame<10?.19+.21*(frame-4)/6:frame<18?.4+.215*(frame-10)/8:.615;
-      const markRadius=o.maxRadius*markRatio,probeBound=Math.max(markRadius,1.2)+1e-9;
+      const markRadius=o.maxRadius*markRatio,canMark=frame<=57+1e-8,
+        probeBound=(canMark?Math.max(markRadius,1.2):1.2)+1e-9;
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
         const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>probeBound||Math.abs(dz)>probeBound?Infinity:Math.hypot(dx,dz);
-        if(frame<=57+1e-8&&d<=markRadius&&dy>=-5.2&&dy<=2.8){
+        if(canMark&&d<=markRadius&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
           // Detection has source radius records through57F; MarkingFrame45
           // is the applied status duration, not an early detector cutoff.
@@ -1839,7 +1882,7 @@ function updateWorld(rt,dt) {
       if(o.age>=o.dur){
         const ap=o.specialPowerAP||0,radius=o.maxRadius||descriptions.superChump.radius;
         if(!o.owner.remote){paintDisk(rt,o.owner,o.pos,o.paintRadius,o.seed);paintSpecialChannels(rt,o.owner,o.pos,specialPaintParams('superChump',ap),o.seed);
-          damageBandRadius(rt,o.owner,o.pos,o.damageBands||specialDescription('superChump',ap).splashBands,radius,'superChump');}
+          damageBandRadius(rt,o.owner,o.pos,o.damageBands||specialDescription('superChump',ap).splashBands,radius,'superChump',null,2.8,'superChump',o);}
         fxBurst(rt,o.owner,o.pos,radius,'explode');
         removeWorld(rt,o,'expire');
       }
@@ -1859,7 +1902,7 @@ function updateWorld(rt,dt) {
           if(contact){
             // Contact debuffs refresh continuously, independently of the 60F
             // damage cooldown. The sheet already has a hitbox during startup.
-            if(victim.isLocal){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
+            if(victim.isLocal&&(!o.owner.remote||nativeScreenLive(rt,o))){victim.s3 ||= {};victim.s3.splattercolorUntil=Math.max(victim.s3.splattercolorUntil||0,rt.api.G.time+360/FPS);
               victim.s3.splattercolorMarkUntil=Math.max(victim.s3.splattercolorMarkUntil||0,rt.api.G.time+120/FPS);}
             const last=o.lastCross.get(victim)??-Infinity;
             // Use the source-frame object clock; G.time is shared by all
@@ -2295,20 +2338,23 @@ function activeStep(rt,actor,dt) {
       paintKrakenMove(rt,actor,state,dt,state.direction,true);
       // Public gameplay reference: an airborne/grate dash becomes the
       // 60-damage spinning attack, rather than retaining its grounded 120.
-      if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();}
+      if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();state.jumpIndex=state.strikes++;
+        // Publish the existing air-dash-to-spin transition without advancing RNG.
+        emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,state.seed,{damage:60,index:state.jumpIndex,fromDash:true});}
       else if(state.dashT+1e-8>=KRAKEN_MOVEMENT.dashTime){state.phase='active';state.dashT=0;}
     }else {
       const jumped=moveCombatSquid(rt,actor,dt,state,{speed:krakenMoveSpeed(state.phase,state.chargeT),ignoreEnemy:true});
       paintKrakenMove(rt,actor,state,dt,dir);
-      if(jumped){state.jumpAttack=true;state.jumpHits=new Set();
-        emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,nextSeed(state),{damage:60,index:state.strikes++});}
+      if(jumped){state.jumpAttack=true;state.jumpHits=new Set();state.jumpIndex=state.strikes++;
+        emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,nextSeed(state),{damage:60,index:state.jumpIndex});}
     }
     if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
       damageBandRadius(rt,actor,center,KRAKEN_JUMP_BANDS,2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
       // The movement branch above owns contact-gated paint for jumps too.
       // Do not project an airborne spinning attack onto a distant lower floor.
-      if(actor.grounded||actor.climbing)state.jumpAttack=false;
+      if(actor.grounded||actor.climbing){state.jumpAttack=false;
+        emitAction(rt,actor,state.id,state.serial,'jumpEnd',actor.pos,null,state.seed,{index:state.jumpIndex});}
     }
     // ZR held during transformation or the previous dash starts charging as
     // soon as control returns. Startup samples input too, so an edge-only
@@ -2377,6 +2423,29 @@ function makeState(rt,actor,id) {
   return state;
 }
 
+
+function advanceTentaMissile(rt,p,dt,targetGround,groundEpoch){
+ const THREE=rt.api.THREE;
+        // The S3 mechanics reference describes tracking before the overhead
+        // descent/landing marker. A launch-time coordinate alone makes every
+        // missile miss a moving target even during that tracking phase.
+        // Keep the existing calibrated .7s transition; its retail timing and
+        // the missing long-range horizontal phase remain unverified.
+        const target=p.s3TentaTargetActor;
+        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife){
+          const pos=target.pos,life=p.s3TentaTargetLife;let cached=targetGround.get(target);
+          if(!cached){cached={pos:new THREE.Vector3()};targetGround.set(target,cached);}
+          if(cached.epoch!==groundEpoch||cached.life!==life||cached.x!==pos.x||cached.y!==pos.y||cached.z!==pos.z){
+            cached.x=pos.x;cached.y=pos.y;cached.z=pos.z;cached.life=life;
+            groundAt(rt,pos,cached.pos);cached.epoch=groundEpoch;
+          }
+          p.s3TentaTarget.copy(cached.pos);
+        }
+        p.s3TentaAge=(p.s3TentaAge||0)+dt;
+        if(p.s3TentaAge<.7){const d=p.s3TentaDirection||rt.up;p.vel.x=d.x*4;p.vel.z=d.z*4;p.vel.y=14;p.grav=12;p.drag=.03;}
+        else {p.s3TentaDescending=true;p.grav=0;p.drag=0;const diff=rt.v11.subVectors(p.s3TentaTarget,p.pos),distance=diff.length(),flight=clamp(distance/25,.12,.55);p.vel.copy(diff).multiplyScalar(1/flight);}
+}
+
 function installRuntime(api) {
   const {Actor,Projectiles,THREE}=api||{};
   if(!Actor?.prototype||!Projectiles?.prototype||!THREE?.Vector3)throw new Error('all-specials requires actual Actor, Projectiles and THREE.Vector3');
@@ -2399,7 +2468,7 @@ function installRuntime(api) {
   };
   api.on?.('actor:removed',event=>retireActorPresentation(event?.actor));
   api.on?.('match:dispose',event=>{
-    retireWaveFrontGeometry(rt);
+    retireWaveFrontGeometry(rt);retireDecoyGeometry(rt);
     for(const actor of event?.match?.actors||[])retireActorPresentation(actor);
   });
   // Only native completed attacks/jumps retire wall protection. Input held
@@ -2555,6 +2624,9 @@ function installRuntime(api) {
   P.ghostProjectile=function(...args){
     const before=this.list.length,result=ghostProjectile.apply(this,args);
     if(this.list.length>before){const p=this.list.at(-1);
+      if(p.ghost&&p.wid==='tentaMissiles'){
+        const damage=p.damage;this.restoreNativeSpecialDeviceProbe?.(p,args[0],args[1]);p.damage=damage;
+      }
       if(p.ghost&&p.wid==='crabTank'){
         const mode=p.type==='shot'?'shooter':'cannon';
         p.s3AllSpecial='crabTank';p.s3AllSpecialMode=mode;p.s3PaintNoSpecial=true;
@@ -2604,26 +2676,7 @@ function installRuntime(api) {
       }
     }else if(!(this._s3AllSpecialObjects?.length||0))this._s3AllSpecialWorldClock=0;
     for(const p of this.list||[]){
-      if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles'){
-        // The S3 mechanics reference describes tracking before the overhead
-        // descent/landing marker. A launch-time coordinate alone makes every
-        // missile miss a moving target even during that tracking phase.
-        // Keep the existing calibrated .7s transition; its retail timing and
-        // the missing long-range horizontal phase remain unverified.
-        const target=p.s3TentaTargetActor;
-        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife){
-          const pos=target.pos,life=p.s3TentaTargetLife;let cached=targetGround.get(target);
-          if(!cached){cached={pos:new THREE.Vector3()};targetGround.set(target,cached);}
-          if(cached.epoch!==groundEpoch||cached.life!==life||cached.x!==pos.x||cached.y!==pos.y||cached.z!==pos.z){
-            cached.x=pos.x;cached.y=pos.y;cached.z=pos.z;cached.life=life;
-            groundAt(rt,pos,cached.pos);cached.epoch=groundEpoch;
-          }
-          p.s3TentaTarget.copy(cached.pos);
-        }
-        p.s3TentaAge=(p.s3TentaAge||0)+dt;
-        if(p.s3TentaAge<.7){const d=p.s3TentaDirection||rt.up;p.vel.x=d.x*4;p.vel.z=d.z*4;p.vel.y=14;p.grav=12;p.drag=.03;}
-        else {p.s3TentaDescending=true;p.grav=0;p.drag=0;const diff=rt.v11.subVectors(p.s3TentaTarget,p.pos),distance=diff.length(),flight=clamp(distance/25,.12,.55);p.vel.copy(diff).multiplyScalar(1/flight);}
-      }
+      if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles')advanceTentaMissile(rt,p,dt,targetGround,groundEpoch);
       const profile=p?.s3DamageReduce;if(!profile)continue;
       const t=Number(p.age)||0,k=clamp((t-profile.start)/Math.max(1e-6,profile.end-profile.start),0,1);
       p.damage=profile.max+(profile.min-profile.max)*k;
@@ -2696,7 +2749,7 @@ function installRuntime(api) {
     rt.system=this;
     clearCrabSplashVisuals(this,api.G);
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
-    retireWaveFrontGeometry(rt);
+    retireWaveFrontGeometry(rt);retireDecoyGeometry(rt);
     this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
   };
   for(const [id,definition]of Object.entries(SPECIALS)){
@@ -2714,6 +2767,124 @@ function installRuntime(api) {
   P.s3DamageSpecialObjects=function(attack,center,radius,damageAtDistance,cause=null,options={}){
     if(!attack||!center||!(radius>=0)||typeof damageAtDistance!=='function')return false;
     rt.system=this;specialObjectRadius(rt,attack,center,radius,damageAtDistance,cause,false,options);return true;
+  };
+  function privateProbeRuntime(system){
+    const q={api,system,up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),zero:new THREE.Vector3(),
+      hit:api.Hit?new api.Hit():{hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0}};
+    for(let i=0;i<16;i++)q['v'+i]=new THREE.Vector3();return q;
+  }
+  function contactSource(q){return {
+    description:specialDescription,
+    ground:p=>groundAt(q,p,new THREE.Vector3()),
+    chumpPositions:(a,state,target)=>chumpPositionsFromTarget(q,a,state,target).positions,
+    beamContact:(a,b,target)=>beamTouchesObject(q,a,b,target),
+    inkjetExhaust:inkjetExhaustDamage,
+  };}
+  P.nativeSpecialActionDeviceContact=function(actor,payload,target,receipt,use,claimTime,options){
+    const q=privateProbeRuntime(this);
+    return readSpecialActionContact({api,system:this,actor,payload,target,receipt,use,claimTime,options,source:contactSource(q)})
+      ||this.nativeSpecialWorldDeviceContact?.(actor,payload,target,receipt,use,claimTime,options,q)||null;
+  };
+  P.captureNativeSpecialWorldDeviceBirth=function(actor,payload,receipt,use){
+    return sealNativeSpecialWorldDeviceBirth({api,system:this,actor,payload,receipt,use});
+  };
+  P.nativeSpecialWorldDeviceContact=function(actor,payload,target,receipt,use,claimTime,options,q){
+    q=q||privateProbeRuntime(this);
+    return readSpecialWorldContact({api,system:this,actor,payload,target,receipt,use,claimTime,options,
+      screenContact:(object,start,end,device)=>screenObjectContact(q,object,start,end,device)});
+  };
+  P.nativeSpecialPassiveDeviceContact=function(actor,target,use,claimTime,options){
+    const q=privateProbeRuntime(this);
+    return readSpecialPassiveContact({api,system:this,actor,target,use,claimTime,options,source:contactSource(q)});
+  };
+  // Source restoration for a detached, permanently ghost contact probe. No
+  // factory, pool, mesh, presentation callback or paint owner is invoked.
+  P.restoreNativeSpecialDeviceProbe=function(p,actor,event){
+    const id=p.wid,ap=actor.s3?.abilityPoints?.specialPower||0;
+    if(id!==actor.weapon?.special)return null;
+    p.s3SpecialPowerAP=ap;
+    if(id==='inkVac')return restoreNativeInkVacProbe(p)?p:null;
+    if(id==='trizooka'){
+      if(p.type!=='blast'||Math.abs(p.vel.length()-TRIZOOKA.spawnSpeed)>.025)return null;
+      kitTrizookaGhost(p,actor,api.SPECIALS,{volleyIndex:event[28],actionIndex:event[29],specialPowerAP:ap});
+      if(!Number.isInteger(p.s3VolleyIndex)||p.s3VolleyIndex<0||p.s3VolleyIndex>2||!Number.isInteger(p.s3ActionIndex)||p.s3ActionIndex<0||p.s3ActionIndex>=TRIZOOKA.maxFireActions)return null;
+      p.s3Weapon=p.s3SpecialWeapon;p.damage=TRIZOOKA.directHitDamage;p.size=.22;p.life=TRIZOOKA.duration;
+      p.straight=TRIZOOKA.goStraightFrames;p.grav=p.s3SpecialWeapon.grav||0;p.drag=p.s3SpecialWeapon.drag||0;p.delay=0;
+      return p;
+    }
+    if(!['inkjet','tentaMissiles','booyahBomb','ultraStamp','crabTank'].includes(id)||!['shot','blast'].includes(p.type)||id!=='crabTank'&&p.type!=='blast')return null;
+    const shot=id==='crabTank'&&p.type==='shot',mode=id==='crabTank'?(shot?'shooter':'cannon'):id==='ultraStamp'?'throw':null;
+    const launch=sourceFlight(id,mode,p.type,ap),speed=launch?.spawnSpeed||(id==='inkjet'?INKJET_SPEED:id==='tentaMissiles'?6:18),kick=launch?.spawnY||(id==='tentaMissiles'?3.5:0);
+    const nativeSpeed=Math.hypot(p.vel.x,p.vel.y-kick,p.vel.z);
+    // The source's downward clamp is the only way a legal birth differs
+    // from its sphere of launch velocities. Quantized packets get .025 WU/s.
+    const clamped=launch?.spawnYMin!==undefined&&Math.abs(p.vel.y-launch.spawnYMin)<=.011&&
+      Math.hypot(p.vel.x,p.vel.z)<=Math.sqrt(Math.max(0,speed*speed-(launch.spawnYMin-kick)**2))+.025;
+    if(Math.abs(nativeSpeed-speed)>.025&&!clamped)return null;
+    p.s3AllSpecial=id;p.s3AllSpecialMode=mode;p.s3PaintNoSpecial=true;
+    p.s3SpecialWeapon=shot?directProjectileDescriptor(id,1.6):projectileDescriptor(id,ap);p.s3Weapon=p.s3SpecialWeapon;
+    p.damage=shot?32:p.s3SpecialWeapon.directDamage;p.delay=0;
+    if(id==='inkjet')Object.assign(p,{life:INKJET_RANGE/INKJET_SPEED,straight:INKJET_RANGE/INKJET_SPEED+1,grav:0,drag:0,size:.24});
+    if(id==='tentaMissiles'){
+      Object.assign(p,{life:2.8,straight:.16,grav:11,drag:.08,size:.24});
+      const meta=event.find(x=>x&&typeof x==='object'&&!Array.isArray(x)&&Array.isArray(x.s3Tenta))?.s3Tenta;
+      if(!Array.isArray(meta)||meta.length!==7||!meta.every(finite)||!meta.slice(0,4).every(Number.isSafeInteger)||meta[0]<1||meta[1]<0||meta[1]>=20||meta[2]<0||meta[3]<0)return null;
+      p.s3TentaWire=meta.slice();p.s3AllSpecialActivation=meta[0];p.s3TentaTarget=new THREE.Vector3(...meta.slice(4));
+      p.s3TentaTargetActor=api.G.netm?.byNid?.get(meta[2]);p.s3TentaTargetLife=meta[3];
+      p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=p.vel.clone();p.s3TentaDirection.y-=3.5;p.s3TentaDirection.normalize();
+    }
+    if(id==='booyahBomb')Object.assign(p,{life:2.1,straight:0,grav:19,drag:.16,size:.48});
+    if(id==='ultraStamp')Object.assign(p,{life:1.8,straight:0,grav:17,drag:.13,size:.4});
+    if(id==='crabTank')Object.assign(p,{life:shot?1.25:1.7,straight:(shot?7:8)/FPS,grav:shot?4:18,drag:shot?.04:.12,size:shot?.2:.28});
+    p.s3AllSpecialFlight=launch;p.s3AllSpecialFlightCarry=0;
+    return p;
+  };
+  P.stepNativeSpecialDeviceProbe=function(p,advance){
+    if(p.s3AllSpecial==='tentaMissiles'&&p.s3TentaTarget)advanceTentaMissile(privateProbeRuntime(this),p,1/FPS,new WeakMap(),1);
+    if(p.s3AllSpecial==='crabTank'&&p.type==='shot')p.damage=crabShooterDamage(p.age+1/FPS);
+    if(p.s3AllSpecialFlight)return stepSourceFlight(this,p,1/FPS,advance,api.G);
+    return advance.call(this,p,1/FPS);
+  };
+  P.validateNativeSpecialProjectileContext=function(p,use,actions){
+    if(p.wid!=='tentaMissiles')return true;
+    const meta=p.s3TentaWire,locks=actions.filter(r=>r.payload.id==='tentaMissiles'&&r.payload.action==='target'&&r.payload.activation===meta?.[0]).sort((a,b)=>a.payload.index-b.payload.index);
+    if(!meta||!locks.length||locks.length>5)return false;
+    const count=locks.length===1?10:locks.length===2?5:4;let group=null;
+    for(let i=0;i<locks.length;i++){const row=locks[i];if(row.payload.index!==i||row.payload.count!==count)return false;if(meta[1]>=i*count&&meta[1]<(i+1)*count)group=row;}
+    if(!group||group.payload.targetNid!==meta[2]||group.payload.targetLife!==meta[3]||!p.s3TentaTargetActor||p.s3TentaTargetActor.team===p.team)return false;
+    const target=p.s3TentaTargetActor,initial=new THREE.Vector3(...group.payload.target);
+    // A later missile may use the target's newer accepted position. It cannot
+    // name a free ground coordinate unrelated to that actual target life.
+    if(p.s3TentaTarget.distanceTo(initial)<=.04)return true;
+    const q=privateProbeRuntime(this),samples=[target.pos,...target.net?.buf||[]];
+    return samples.some(sample=>finite3(sample)&&groundAt(q,sample,new THREE.Vector3()).distanceTo(p.s3TentaTarget)<=.75);
+  };
+  P.nativeSpecialProjectileCause=p=>objectDamageRow(p,projectileObjectCause(p));
+  P.nativeSpecialProjectileBurstContact=function(p,target,at,options={}){
+    if(p.s3AllSpecial==='booyahBomb'){
+      const q=privateProbeRuntime(this),center=groundAt(q,at,new THREE.Vector3());center.y+=.2;
+      const limit=Math.round((options.elapsed||0)*FPS);
+      for(let frame=limit;frame===limit&&frame>=41&&frame<=80;frame++){
+        const contactKey=options.contactKey+':booyah:'+frame;if(options.consumedKeys?.has(contactKey))continue;
+        const radius=12.6*(frame-40)/40,damage=this.nativeSubDeviceAreaContact?.(p,target,center,Math.max(.1,radius),()=>3.3)??this.nativeSpecialDeviceAreaContact?.(p,target,center,Math.max(.1,radius),()=>3.3);
+        if(damage>0)return {damage,projectile:p,cause:'NiceBall',contactKey};
+      }
+      return null;
+    }
+    const w=p.s3SpecialWeapon,bands=w?.splashBands||w?.damageBands,radius=w?.splashRadius||w?.burstRadius||0;
+    if(!bands?.length||!(radius>0))return null;
+    const damageAt=d=>bands.find(([r])=>d<=r)?.[1]??0;
+    const damage=this.nativeSubDeviceAreaContact?.(p,target,at,radius,damageAt)??this.nativeSpecialDeviceAreaContact?.(p,target,at,radius,damageAt);
+    return damage>0?{damage,projectile:p,cause:objectDamageRow(p,projectileObjectCause(p,'blast'))}:null;
+  };
+  P.nativeSpecialDeviceAreaContact=function(attack,target,center,radius,damageAtDistance,options={}){
+    if(!this._s3AllSpecialObjects?.includes(target)||target.dead||!(target.hp>0)||target.owner?.remote||
+      target.owner?.team===attack.team)return undefined;
+    const point=options.shapeContact?target.pos.clone():target.pos;
+    if(options.shapeContact&&!options.shapeContact(target,point))return 0;
+    const distance=point.distanceTo(center);
+    if(!options.shapeContact&&distance>radius||!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))return 0;
+    return damageAtDistance(distance,target,point);
   };
   return rt;
 }
@@ -2736,7 +2907,9 @@ function replayLedger(actor) {
 }
 function replayFx(rt,actor,event) {
   const pos=event.pos;if(!Array.isArray(pos)||pos.length!==3||!pos.every(finite))return false;
-  const point=new rt.api.THREE.Vector3(...pos),id=event.id,action=event.action,radius=finite(event.radius)?clamp(event.radius,.1,30):SPECIALS[id]?.radius||1.6;
+  const id=event.id,action=event.action;
+  if(action!=='impact'&&action!=='explode'&&action!=='destroy'&&action!=='pulse'&&action!=='laser'&&action!=='swing'&&action!=='strike'&&action!=='activate'&&action!=='deploy'&&action!=='device'&&action!=='screen'&&action!=='balloon'&&action!=='marker'&&action!=='zip'&&action!=='throw')return true;
+  const point=new rt.api.THREE.Vector3(...pos),radius=finite(event.radius)?clamp(event.radius,.1,30):SPECIALS[id]?.radius||1.6;
   if(action==='impact'||action==='explode'||action==='destroy')fxBurst(rt,actor,point,radius,action==='destroy'?'impact':'explode');
   else if(action==='pulse'||action==='laser'||action==='swing'||action==='strike')rt.api.G.fx?.ring?.(point,rt.up,colorOf(rt,actor),{radius,life:.5});
   else if(action==='activate'||action==='deploy'||action==='device'||action==='screen'||action==='balloon'||action==='marker'||action==='zip'||action==='throw'){
@@ -2766,14 +2939,29 @@ function findObjectHitTarget(rt,actor,event) {
      actorLife(actor)!==event.attackerLife)return null;
   return object;
 }
-function replayObjectEvent(rt,actor,event,approvedObject=null) {
+function screenBirthReceipt(rt,actor,event){
+  const nm=rt.api.G.netm,receipt=catalogueActionReceipt(nm,event,actor),use=nativeCatalogueSpecialActivation(nm,actor,event);
+  if(!receipt||!use)return null;
+  return sealNativeSpecialWorldDeviceBirth({api:rt.api,system:rt.system,actor,payload:event,receipt,use})===true?receipt:null;
+}
+
+function nativeScreenLive(rt,object){
+  const r=nativeScreens.get(object),nm=rt.api.G.netm;
+  if(!r)return false;
+  if(nm!==r.nm||nm._disposed||nm.s!==r.session||nm.match!==r.match||rt.system!==r.system||
+    object.owner!==r.actor||object.owner.net!==r.net||object.owner.owner!==r.from||nm.byNid?.get(r.actor.nid)!==r.actor||
+    nm.peers?.get(r.from)!==r.peer||!nm.s?._members?.has(r.from)){nativeScreens.delete(object);return false;}
+  return true;
+}
+function replayObjectEvent(rt,actor,event,approvedObject=null,approvedHit=null) {
   rt.system ||= rt.api.G.projectiles || null;
   if(!rt.system)return false;
   if(event.action==='objectHit'){
     const object=approvedObject||findObjectHitTarget(rt,actor,event);
     if(!object)return false;
-    const rate=withObjectHitGear(actor,event.objectShredder,()=>objectDamageScale(actor,object.id,event.cause||'Default'));
-    object.hp=Math.max(0,object.hp-Math.max(1,Math.min(10000,Number(event.damage)||0))*rate);
+    const admitted=approvedHit||admitDeviceHit(rt.api.G.netm,actor,object,event.damage,event.cause,event);if(!admitted)return false;
+    const rate=objectDamageScale(actor,object.id,admitted.cause);
+    object.hp=Math.max(0,object.hp-admitted.damage*rate);
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');
     return true;
   }
@@ -2796,16 +2984,19 @@ function replayObjectEvent(rt,actor,event,approvedObject=null) {
     // deploy rather than constructing an invalid one-second device.
     if((kind==='wave'||kind==='screen')&&event.action!=='deploy'
       &&(!finite(event.duration)||!finite(event.radius)||!finite(event.specialPowerAP)))return false;
+    const receipt=kind==='screen'?screenBirthReceipt(rt,actor,event):null;
+    if(kind==='screen'&&catalogueActionReceipt(rt.api.G.netm,event,actor)&&!receipt)return false;
     const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
-    const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
+    const extra={phase:['flight','warning','active'].includes(event.phase)?event.phase:undefined,dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
     if(kind==='screen'){
       const direction=target?target.clone().sub(point).setY(0).normalize():new rt.api.THREE.Vector3(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
       extra.direction=direction;extra.moveSpeed=gearCurve(state.specialPowerAP,.04,.053,.06)*FPS;extra.yaw=Math.atan2(direction.x,direction.z);
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
+    if(receipt)nativeScreens.set(object,{...receipt,system:rt.system});
     if(kind==='wave'||kind==='screen')object.replayLife=replayLife;
-    if(kind==='marker'){object.phase='warning';object.origin=point.clone();if(target)object.pos.copy(target);}
+    if(kind==='marker'){object.phase=extra.phase||'warning';object.origin=point.clone();if(target&&object.phase!=='flight')object.pos.copy(target);}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
@@ -2817,10 +3008,18 @@ function replayObjectEvent(rt,actor,event,approvedObject=null) {
     if(kind==='screen')object.target=target;
   }
   if(!object)return false;
+  if(object.kind==='screen'&&nativeScreenLive(rt,object)&&object._nativeScreenInitialized&&['deploy','screen','land','move','active'].includes(event.action))return true;
+  if(event.action==='land'&&object.replayLandAccepted||event.action==='active'&&object.replayActiveAccepted)return false;
+  const previousAge=object.age,previousLandedAt=object.landedAt;
   if(!existingDeviceBirth&&['deploy','device','screen','land','active'].includes(event.action)){
-    if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=event.age;
-    if(finite(event.landedAt)&&event.landedAt>=0&&event.landedAt<=object.age)object.landedAt=event.landedAt;
-    if(['flight','warning','active'].includes(event.phase))object.phase=event.phase;
+    if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=Math.max(object.age,event.age);
+    if(finite(event.landedAt)&&event.landedAt>=0&&event.landedAt<=object.age){
+      // Once predicted land has started a device clock, even the first owner
+      // correction cannot make that clock younger and repeat a wave/mark.
+      object.landedAt=finite(previousLandedAt)&&previousLandedAt>=0
+        ?Math.min(event.landedAt,object.age-Math.max(0,previousAge-previousLandedAt)):event.landedAt;
+    }
+    if(['flight','warning','active'].includes(event.phase)&&!(object.phase!=='flight'&&event.phase==='flight'))object.phase=event.phase;
     if(event.phase==='flight'&&['marker','wave','screen'].includes(object.kind)
       &&[event.vx,event.vy,event.vz].every(v=>finite(v)&&Math.abs(v)<=500)
       &&finite(event.gravity)&&event.gravity>=0&&event.gravity<=1000
@@ -2828,7 +3027,9 @@ function replayObjectEvent(rt,actor,event,approvedObject=null) {
       object.vel=new rt.api.THREE.Vector3(event.vx,event.vy,event.vz);object.gravity=event.gravity;object.airResist=event.airResist;
     }
   }
+  if(object.kind==='screen'&&nativeScreenLive(rt,object))object._nativeScreenInitialized=true;
   if(event.action==='land'){
+    object.replayLandAccepted=true;
     object.pos.copy(point);object.vel=null;
     if(object.id==='tripleInkstrike'){
       // Local terrain prediction may have begun a ghost strike before its
@@ -2841,6 +3042,7 @@ function replayObjectEvent(rt,actor,event,approvedObject=null) {
     object.pos.copy(point);if(object.mesh){object.mesh.position.copy(point);if(object.kind==='screen')object.mesh.position.y+=object.height/2;}
     if(object.kind==='screen'&&target){const normal=target.clone().sub(point).setY(0).normalize();object.normal.copy(normal);object.direction.copy(normal);object.tangent.set(normal.z,0,-normal.x);object.target=target;}
   }else if(event.action==='active'){
+    object.replayActiveAccepted=true;
     if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=51/FPS;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age+5/FPS;object.once=new Set();}
     if(object.kind==='decoy')object.phase='active';
   }else if(event.action==='hit')object.hp=finite(event.hp)?event.hp:object.hp;
@@ -2871,6 +3073,8 @@ export function replaySpecial(api,event) {
     ||!Array.isArray(event.target)||event.target.length!==3||!event.target.every(finite)))return false;
   // Validate before the replay ledger and before any mesh/device allocation.
   if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;
+  if(event.id==='splattercolorScreen'&&['deploy','screen'].includes(event.action)&&catalogueActionReceipt(api.G.netm,event,actor)&&
+    !(rt.system||api.G.projectiles)?._s3AllSpecialObjects?.some(o=>o.owner===actor&&o.id===event.id&&o.activation===event.activation&&o.serial===event.object)&&!screenBirthReceipt(rt,actor,event))return false;
   let cheerOwner=null,cheerState=null;
   if(event.action==='cheer'){
     if(event.id!=='booyahBomb'||!Number.isSafeInteger(event.ownerNid)||!Number.isSafeInteger(event.ownerLife)||event.ownerLife<0)return false;
@@ -2897,6 +3101,8 @@ export function replaySpecial(api,event) {
   if(deviceKey&&ledger.has(deviceKey)&&['deploy','device','screen'].includes(event.action)
     &&!(rt.system||api.G.projectiles)?._s3AllSpecialObjects?.some(o=>o.owner===actor&&o.id===event.id
       &&o.activation===event.activation&&o.serial===event.object&&o.replayLife===life))return false;
+  const approvedHit=approvedObject?admitDeviceHit(rt.api.G.netm,actor,approvedObject,event.damage,event.cause,event):null;
+  if(approvedObject&&!approvedHit){deferNativeDeviceHit(api.G.netm,actor,event,()=>replaySpecial(api,event));return false;}
   ledger.add(key);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   if(event.action==='cheer'){
     return addBooyahCall(rt,cheerOwner,cheerState,actor,{callId:event.seed});
@@ -2910,7 +3116,7 @@ export function replaySpecial(api,event) {
       else if(event.action==='swingEnd'){state.stampHolding=false;state.stampCount=0;}
     }
   }
-  const objectAccepted=replayObjectEvent(rt,actor,event,approvedObject);
+  const objectAccepted=replayObjectEvent(rt,actor,event,approvedObject,approvedHit);
   if(deviceKey&&(objectAccepted||event.action==='destroy'||event.action==='expire')){
     ledger.add(deviceKey);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   }
