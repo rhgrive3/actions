@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "build": {
+    "command": "INKWAVE_NATIVE_PREBUILT=1 npm run build",
+    "site": "/workspace/actions-ray-opt/_site",
+    "sourceSha": "317da44132e90a2f51bb0af80966d13dc8e5b4fe",
+    "contentHash": "5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765",
+    "revision": "2057fe10082cbab666c98d2f8734d78fc4b6a913d413077990cc96c561664ec3",
+    "nativeStages": {
+      "hagglefish": {
+        "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+        "bytes": 237478
+      }
+    },
+    "sourceAndArtifactBinding": "verifyRuntimeBuild passed"
+  },
+  "emittedTests": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "site": "/workspace/actions-ray-opt/_site",
+    "files": [
+      "ray-fixed-axes.test.mjs",
+      "ray-down-parity.test.mjs",
+      "vertical-slab-parity.test.mjs",
+      "bvh-query-lifetime.test.mjs",
+      "native-ground-batch.test.mjs",
+      "native-ground-mask.test.mjs",
+      "native-los-anyhit.test.mjs"
+    ]
+  },
+  "startupBudget": "passed",
+  "sourceMigrationAudit": "passed",
+  "limits": [
+    "No candidate whole-battle runtime or image comparison was performed in this branch. Parent task will assess this independently.",
+    "Hydrated native assets are local and deliberately absent from the commit."
+  ]
+}

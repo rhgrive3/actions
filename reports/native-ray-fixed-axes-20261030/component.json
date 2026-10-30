@@ -992,5 +992,8 @@
       }
     }
   ],
-  "median": "Average of the two central observations for an even sample count; all original measurements retained."
+  "median": "Average of the two central observations for an even sample count; all original measurements retained.",
+  "measurementHarnessSha256": "b8b560bb1674d1a346a51c041563f96f5c5d9d56b6fe22c5e76fd05fa3256391",
+  "summaryHarnessSha256": "48ccec40b6cb7485aef75cd926e23399763f15d23dd483c20581a3cdb632a78d",
+  "harnessNote": "Post-measurement changes add gzip input reading and conventional even-count median calculation only. The measured invocation loop and every raw sample are unchanged; measurement-harness.mjs.txt preserves the exact capture implementation."
 }
