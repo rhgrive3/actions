@@ -52,7 +52,7 @@ export function installWeaponAudioEngine(Engine){
     this._warmWeapons||=new Set();this._warmWeapons.clear();this._warmWeapons.add(id);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
-    if(spinnerAudioIds.has(requested))void spinnerPreload(this,requested).catch(()=>{});
+    if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')void spinnerPreload(this,requested).catch(()=>{});
     const ownerKey=id;
     if(this._prewarmId!==ownerKey||this._prewarmLoader!==this._realS3Loader){
       this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
@@ -177,7 +177,7 @@ export function installWeaponAudioEngine(Engine){
     }
     // The selected Spinner's complete two-stage phrase / rising layer must
     // decode before the first playable trigger; missing sample is an error.
-    if(spinnerAudioIds.has(requested))
+    if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')
       await audioLoadDeadline(spinnerPreload(this,requested),12000,
         'Spinner charging MP3 preparation timed out');
     return {ready:true,id,recording:'fire'};
