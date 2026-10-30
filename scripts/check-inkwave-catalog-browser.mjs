@@ -680,7 +680,7 @@ try {
           const w={owner,victim,nm,packets,context:{time:G.time,scene:G.scene,actors:G.actors,netm:nm,match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles}};worlds.push(w);return w;
         };
         const step=w=>{activate(w);G.time+=DT;w.context.time=G.time;G.projectiles.update(DT);};
-        const land=drop=>{const g=drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);};
+        const land=drop=>{const g=drop.source.spec.splashGravity??drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);};
         try{
           const tx=world('torpedo-owner');if(attackerAP===57)for(const piece of tx.owner.s3.loadout){piece.main='subPower';piece.subs.fill('subPower');}tx.owner.s3RefreshGear();
           check((tx.owner.s3.abilityPoints.subPower||0)===attackerAP,'Torpedo sender subPower matches fixture');

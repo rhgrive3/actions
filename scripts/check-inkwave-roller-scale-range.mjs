@@ -390,6 +390,18 @@ try{
     if(!response.ok)throw Error('Native service-worker source response failed');
     await response.arrayBuffer();
   });
+  // Menu and battle recordings do not use the procedural music scheduler.
+  // After freezing every visual receipt, exercise an actual procedural track
+  // so its observed Worker remains bound to the emitted creator and bytes.
+  await page.evaluate(async owner=>{
+    const {MusicEngine}=await import(owner);
+    const context=new AudioContext(), engine=new MusicEngine();
+    engine._init(context,context.destination,{level:0});
+    engine.play('boss',{fade:0});
+    if(!engine.ctx||engine.offline||!engine.players.length||!engine.worker||engine.timer!=null)
+      throw Error('Native procedural music Worker did not start');
+    globalThis.__rollerWorkerProbe={context,engine};
+  },'/_versions/'+buildManifest.build.revision+'/src/audio/music.js');
   await page.evaluate(()=>{
     if(!globalThis.__inkwaveBlobWorkerAudit)throw Error('Missing Blob worker observer');
     return globalThis.__inkwaveBlobWorkerAudit.flush();

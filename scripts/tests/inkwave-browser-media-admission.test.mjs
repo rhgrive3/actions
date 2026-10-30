@@ -7,7 +7,7 @@ const battle=new URL('_versions/'+rev+'/assets/audio/Jet_Arrow.mp3',siteURL).hre
 const aborted={url:menu,error:'net::ERR_ABORTED'};
 function receipt(){
  return {assetURL:battle,
-   network:[{event:'response',requestId:'42',url:battle,status:200},{event:'finished',requestId:'42',url:battle}],
+   network:[{event:'response',requestId:'42',url:battle,status:200},{event:'finished',requestId:'42'}],
    snapshots:[{reason:'native-playing-capture-ready',state:{matchState:'playing',track:'battle',desiredTrack:'battle',
       current:{id:'battle',disposed:false,failed:false,element:{readyState:4,paused:false,error:null,currentSrc:battle}}}}]};
 }
@@ -29,6 +29,9 @@ test('missing playback/network or non-playing match never permits menu cancellat
  for(const changes of [{gameplayState:'intro'},{receipt:{...receipt(),network:[]}},
    {receipt:{...receipt(),snapshots:[]}},
    {receipt:{...receipt(),network:[{event:'response',url:battle,requestId:'42',status:404},{event:'finished',url:battle,requestId:'42'}]}},
+   {receipt:{...receipt(),network:[{event:'response',url:battle,requestId:'42',status:200},{event:'finished',requestId:'other'}]}},
+   {receipt:{...receipt(),network:[{event:'response',url:battle,status:200},{event:'finished'}]}},
+   {receipt:{...receipt(),network:[{event:'response',url:battle,requestId:'42',status:200},{event:'finished',url:menu,requestId:'42'}]}},
    {receipt:{...receipt(),snapshots:[{reason:'native-playing-capture-ready',state:{track:'battle',matchState:'playing',current:{id:'battle',element:{readyState:0}}}}]}},
    {revision:'untrusted'}]){
   const r=run([aborted],changes);assert.equal(r.verified.length,0);assert.deepEqual(r.unverified,[aborted]);
