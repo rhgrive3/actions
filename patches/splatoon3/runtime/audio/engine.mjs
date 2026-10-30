@@ -177,9 +177,9 @@ export function installWeaponAudioEngine(Engine){
     }
     // The selected Spinner's complete two-stage phrase / rising layer must
     // decode before the first playable trigger; missing sample is an error.
-    if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')
-      await audioLoadDeadline(spinnerPreload(this,requested),12000,
-        'Spinner charging MP3 preparation timed out');
+    // Optional charge textures must never block START on slow/failed decode.
+    // prepareWeapon already opportunistically warms the selected clip; its
+    // native Motor fallback owns the sound until the texture is resident.
     return {ready:true,id,recording:'fire'};
   };
   const requireMain=p.requireRecordedMainShot;
