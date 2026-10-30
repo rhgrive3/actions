@@ -1,0 +1,1157 @@
+{
+ "diagnostic": {
+  "queryBlocksBand": {
+   "calls": 1157,
+   "rawCellEntries": 1509810,
+   "maxRawCellEntries": 9050,
+   "returned": 587969,
+   "maxReturned": 4812
+  },
+  "paintDraws": 600,
+  "paintQuads": 539536,
+  "dryDraws": 200,
+  "footprintCalls": 9324,
+  "canonicalRayPreserved": true,
+  "canonicalRaycastPreserved": true
+ },
+ "stage": "robo",
+ "hz": 3.3333333333333335,
+ "frames": 34,
+ "ticks": 600,
+ "msPerTick": 13.115,
+ "frameMs": {
+  "mean": 231.44117647058823,
+  "p50": 205.80000000004657,
+  "p95": 399.5999999998603,
+  "p99": 433.69999999995343,
+  "max": 433.69999999995343
+ },
+ "bvh": {
+  "queriesPerTick": 217.65166666666667,
+  "triangleTestsPerTick": 4693.39,
+  "triangles": 107020
+ },
+ "roster": "shooter s3-saber-lite-02 s3-charger-keeper s3-shooter-blaze-01 blaster s3-shooter-triplemiddle-02 s3-blaster-lightlong s3-stringer-normal-02",
+ "digest": 1332234098,
+ "paint": {
+  "atlas": 2048,
+  "ppm": 4,
+  "faces": 23685
+ },
+ "mobile": false,
+ "quality": "low",
+ "categories": {
+  "match.update": {
+   "msPerTick": 5.601,
+   "callsPerTick": 1
+  },
+  "paint.advanceSimulation": {
+   "msPerTick": 5.485,
+   "callsPerTick": 1
+  },
+  "actor.update": {
+   "msPerTick": 4.585,
+   "callsPerTick": 8
+  },
+  "paint._advanceSplatOwnership": {
+   "msPerTick": 3.425,
+   "callsPerTick": 33.2
+  },
+  "character.update": {
+   "msPerTick": 2.229,
+   "callsPerTick": 8
+  },
+  "paint._emitGrowth": {
+   "msPerTick": 1.604,
+   "callsPerTick": 35.9
+  },
+  "projectiles.update": {
+   "msPerTick": 1.149,
+   "callsPerTick": 1
+  },
+  "bot.update": {
+   "msPerTick": 0.968,
+   "callsPerTick": 7
+  },
+  "paint.splat": {
+   "msPerTick": 0.627,
+   "callsPerTick": 1.3
+  },
+  "actor._resolve": {
+   "msPerTick": 0.497,
+   "callsPerTick": 8
+  },
+  "paint._drawQuads": {
+   "msPerTick": 0.414,
+   "callsPerTick": 1.1
+  },
+  "physics.groundProbe": {
+   "msPerTick": 0.388,
+   "callsPerTick": 15.5
+  },
+  "bvh.rayDownBatch": {
+   "msPerTick": 0.335,
+   "callsPerTick": 15.5
+  },
+  "paint.regionStats": {
+   "msPerTick": 0.262,
+   "callsPerTick": 1.2
+  },
+  "bot._pickPaintGoal": {
+   "msPerTick": 0.232,
+   "callsPerTick": 0
+  },
+  "bvh.queryBox": {
+   "msPerTick": 0.207,
+   "callsPerTick": 19.1
+  },
+  "fx.update": {
+   "msPerTick": 0.188,
+   "callsPerTick": 0.1
+  },
+  "physics.segment": {
+   "msPerTick": 0.152,
+   "callsPerTick": 34.3
+  },
+  "bvh.sweepSphere": {
+   "msPerTick": 0.149,
+   "callsPerTick": 2.9
+  },
+  "physics.collideBody": {
+   "msPerTick": 0.126,
+   "callsPerTick": 8
+  },
+  "nav.path": {
+   "msPerTick": 0.082,
+   "callsPerTick": 0
+  },
+  "paint.sample": {
+   "msPerTick": 0.062,
+   "callsPerTick": 15.3
+  },
+  "paint.coverage": {
+   "msPerTick": 0.052,
+   "callsPerTick": 0.1
+  },
+  "level.containsFaceUV": {
+   "msPerTick": 0.041,
+   "callsPerTick": 15.3
+  },
+  "bot._edgeGuard": {
+   "msPerTick": 0.032,
+   "callsPerTick": 6.6
+  },
+  "level.containsOnFace": {
+   "msPerTick": 0.028,
+   "callsPerTick": 15.3
+  },
+  "physics.cameraProbe": {
+   "msPerTick": 0.005,
+   "callsPerTick": 0.1
+  },
+  "physics.bodyFits": {
+   "msPerTick": 0.002,
+   "callsPerTick": 0.2
+  },
+  "nav.nearest": {
+   "msPerTick": 0.001,
+   "callsPerTick": 0.1
+  }
+ },
+ "spikes": [
+  {
+   "frame": 0,
+   "ms": 149,
+   "top": [
+    [
+     "match.update",
+     91
+    ],
+    [
+     "actor.update",
+     77
+    ],
+    [
+     "character.update",
+     42
+    ],
+    [
+     "projectiles.update",
+     25
+    ],
+    [
+     "paint.advanceSimulation",
+     14
+    ],
+    [
+     "bot.update",
+     13
+    ]
+   ]
+  },
+  {
+   "frame": 1,
+   "ms": 434,
+   "top": [
+    [
+     "match.update",
+     218
+    ],
+    [
+     "paint.advanceSimulation",
+     174
+    ],
+    [
+     "actor.update",
+     155
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     114
+    ],
+    [
+     "bot.update",
+     63
+    ],
+    [
+     "character.update",
+     62
+    ]
+   ]
+  },
+  {
+   "frame": 2,
+   "ms": 400,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     202
+    ],
+    [
+     "match.update",
+     155
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     143
+    ],
+    [
+     "actor.update",
+     136
+    ],
+    [
+     "character.update",
+     83
+    ],
+    [
+     "paint._emitGrowth",
+     51
+    ]
+   ]
+  },
+  {
+   "frame": 3,
+   "ms": 375,
+   "top": [
+    [
+     "match.update",
+     191
+    ],
+    [
+     "actor.update",
+     164
+    ],
+    [
+     "paint.advanceSimulation",
+     125
+    ],
+    [
+     "paint._emitGrowth",
+     66
+    ],
+    [
+     "actor._resolve",
+     57
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     50
+    ]
+   ]
+  },
+  {
+   "frame": 4,
+   "ms": 275,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     150
+    ],
+    [
+     "match.update",
+     96
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     95
+    ],
+    [
+     "actor.update",
+     77
+    ],
+    [
+     "character.update",
+     43
+    ],
+    [
+     "paint._emitGrowth",
+     29
+    ]
+   ]
+  },
+  {
+   "frame": 5,
+   "ms": 306,
+   "top": [
+    [
+     "match.update",
+     133
+    ],
+    [
+     "actor.update",
+     117
+    ],
+    [
+     "paint.advanceSimulation",
+     106
+    ],
+    [
+     "character.update",
+     77
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     71
+    ],
+    [
+     "projectiles.update",
+     32
+    ]
+   ]
+  },
+  {
+   "frame": 6,
+   "ms": 254,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     116
+    ],
+    [
+     "match.update",
+     92
+    ],
+    [
+     "actor.update",
+     79
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     72
+    ],
+    [
+     "paint._emitGrowth",
+     36
+    ],
+    [
+     "character.update",
+     35
+    ]
+   ]
+  },
+  {
+   "frame": 7,
+   "ms": 206,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     100
+    ],
+    [
+     "match.update",
+     74
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     69
+    ],
+    [
+     "actor.update",
+     62
+    ],
+    [
+     "character.update",
+     33
+    ],
+    [
+     "paint._emitGrowth",
+     27
+    ]
+   ]
+  },
+  {
+   "frame": 8,
+   "ms": 341,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     171
+    ],
+    [
+     "match.update",
+     126
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     123
+    ],
+    [
+     "actor.update",
+     86
+    ],
+    [
+     "character.update",
+     52
+    ],
+    [
+     "paint._emitGrowth",
+     42
+    ]
+   ]
+  },
+  {
+   "frame": 9,
+   "ms": 355,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     176
+    ],
+    [
+     "match.update",
+     136
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     124
+    ],
+    [
+     "actor.update",
+     90
+    ],
+    [
+     "bot.update",
+     46
+    ],
+    [
+     "paint._emitGrowth",
+     46
+    ]
+   ]
+  },
+  {
+   "frame": 10,
+   "ms": 344,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     182
+    ],
+    [
+     "match.update",
+     125
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     113
+    ],
+    [
+     "actor.update",
+     109
+    ],
+    [
+     "character.update",
+     60
+    ],
+    [
+     "paint._emitGrowth",
+     43
+    ]
+   ]
+  },
+  {
+   "frame": 11,
+   "ms": 335,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     186
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     119
+    ],
+    [
+     "match.update",
+     83
+    ],
+    [
+     "actor.update",
+     70
+    ],
+    [
+     "projectiles.update",
+     47
+    ],
+    [
+     "paint._emitGrowth",
+     43
+    ]
+   ]
+  },
+  {
+   "frame": 12,
+   "ms": 279,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     156
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     118
+    ],
+    [
+     "match.update",
+     94
+    ],
+    [
+     "actor.update",
+     76
+    ],
+    [
+     "character.update",
+     46
+    ],
+    [
+     "paint._emitGrowth",
+     32
+    ]
+   ]
+  },
+  {
+   "frame": 13,
+   "ms": 278,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     152
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     88
+    ],
+    [
+     "match.update",
+     87
+    ],
+    [
+     "actor.update",
+     75
+    ],
+    [
+     "paint._emitGrowth",
+     59
+    ],
+    [
+     "character.update",
+     37
+    ]
+   ]
+  },
+  {
+   "frame": 14,
+   "ms": 256,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     142
+    ],
+    [
+     "match.update",
+     75
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     68
+    ],
+    [
+     "actor.update",
+     66
+    ],
+    [
+     "paint._emitGrowth",
+     48
+    ],
+    [
+     "character.update",
+     33
+    ]
+   ]
+  },
+  {
+   "frame": 15,
+   "ms": 251,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     119
+    ],
+    [
+     "match.update",
+     102
+    ],
+    [
+     "actor.update",
+     90
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     76
+    ],
+    [
+     "character.update",
+     58
+    ],
+    [
+     "paint._emitGrowth",
+     38
+    ]
+   ]
+  },
+  {
+   "frame": 16,
+   "ms": 234,
+   "top": [
+    [
+     "match.update",
+     104
+    ],
+    [
+     "actor.update",
+     87
+    ],
+    [
+     "paint.advanceSimulation",
+     84
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     59
+    ],
+    [
+     "character.update",
+     37
+    ],
+    [
+     "projectiles.update",
+     30
+    ]
+   ]
+  },
+  {
+   "frame": 17,
+   "ms": 186,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     82
+    ],
+    [
+     "match.update",
+     79
+    ],
+    [
+     "actor.update",
+     63
+    ],
+    [
+     "paint._emitGrowth",
+     42
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     36
+    ],
+    [
+     "character.update",
+     35
+    ]
+   ]
+  },
+  {
+   "frame": 18,
+   "ms": 201,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     99
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     78
+    ],
+    [
+     "match.update",
+     69
+    ],
+    [
+     "actor.update",
+     63
+    ],
+    [
+     "character.update",
+     32
+    ],
+    [
+     "projectiles.update",
+     19
+    ]
+   ]
+  },
+  {
+   "frame": 19,
+   "ms": 191,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     85
+    ],
+    [
+     "match.update",
+     77
+    ],
+    [
+     "actor.update",
+     56
+    ],
+    [
+     "paint._emitGrowth",
+     33
+    ],
+    [
+     "character.update",
+     27
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     26
+    ]
+   ]
+  },
+  {
+   "frame": 20,
+   "ms": 200,
+   "top": [
+    [
+     "match.update",
+     103
+    ],
+    [
+     "actor.update",
+     85
+    ],
+    [
+     "character.update",
+     55
+    ],
+    [
+     "paint.advanceSimulation",
+     45
+    ],
+    [
+     "projectiles.update",
+     40
+    ],
+    [
+     "paint.splat",
+     33
+    ]
+   ]
+  },
+  {
+   "frame": 21,
+   "ms": 124,
+   "top": [
+    [
+     "paint.advanceSimulation",
+     54
+    ],
+    [
+     "match.update",
+     51
+    ],
+    [
+     "actor.update",
+     43
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     40
+    ],
+    [
+     "character.update",
+     20
+    ],
+    [
+     "projectiles.update",
+     12
+    ]
+   ]
+  },
+  {
+   "frame": 22,
+   "ms": 104,
+   "top": [
+    [
+     "match.update",
+     44
+    ],
+    [
+     "actor.update",
+     39
+    ],
+    [
+     "projectiles.update",
+     28
+    ],
+    [
+     "paint.splat",
+     24
+    ],
+    [
+     "paint.advanceSimulation",
+     23
+    ],
+    [
+     "character.update",
+     20
+    ]
+   ]
+  },
+  {
+   "frame": 23,
+   "ms": 103,
+   "top": [
+    [
+     "match.update",
+     47
+    ],
+    [
+     "actor.update",
+     41
+    ],
+    [
+     "paint.advanceSimulation",
+     41
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     30
+    ],
+    [
+     "character.update",
+     22
+    ],
+    [
+     "projectiles.update",
+     9
+    ]
+   ]
+  },
+  {
+   "frame": 24,
+   "ms": 148,
+   "top": [
+    [
+     "match.update",
+     99
+    ],
+    [
+     "actor.update",
+     84
+    ],
+    [
+     "character.update",
+     40
+    ],
+    [
+     "paint.advanceSimulation",
+     30
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     19
+    ],
+    [
+     "bot.update",
+     14
+    ]
+   ]
+  },
+  {
+   "frame": 25,
+   "ms": 156,
+   "top": [
+    [
+     "match.update",
+     95
+    ],
+    [
+     "actor.update",
+     81
+    ],
+    [
+     "paint.advanceSimulation",
+     38
+    ],
+    [
+     "character.update",
+     32
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     22
+    ],
+    [
+     "bot.update",
+     14
+    ]
+   ]
+  },
+  {
+   "frame": 26,
+   "ms": 212,
+   "top": [
+    [
+     "match.update",
+     105
+    ],
+    [
+     "actor.update",
+     93
+    ],
+    [
+     "paint.advanceSimulation",
+     73
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     49
+    ],
+    [
+     "character.update",
+     40
+    ],
+    [
+     "projectiles.update",
+     21
+    ]
+   ]
+  },
+  {
+   "frame": 27,
+   "ms": 183,
+   "top": [
+    [
+     "match.update",
+     95
+    ],
+    [
+     "actor.update",
+     65
+    ],
+    [
+     "paint.advanceSimulation",
+     63
+    ],
+    [
+     "character.update",
+     35
+    ],
+    [
+     "paint._emitGrowth",
+     34
+    ],
+    [
+     "bot.update",
+     30
+    ]
+   ]
+  },
+  {
+   "frame": 28,
+   "ms": 188,
+   "top": [
+    [
+     "match.update",
+     95
+    ],
+    [
+     "actor.update",
+     80
+    ],
+    [
+     "paint.advanceSimulation",
+     62
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     40
+    ],
+    [
+     "character.update",
+     27
+    ],
+    [
+     "paint._emitGrowth",
+     17
+    ]
+   ]
+  },
+  {
+   "frame": 29,
+   "ms": 190,
+   "top": [
+    [
+     "match.update",
+     104
+    ],
+    [
+     "actor.update",
+     66
+    ],
+    [
+     "paint.advanceSimulation",
+     63
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     40
+    ],
+    [
+     "bot.update",
+     38
+    ],
+    [
+     "character.update",
+     32
+    ]
+   ]
+  },
+  {
+   "frame": 30,
+   "ms": 197,
+   "top": [
+    [
+     "match.update",
+     92
+    ],
+    [
+     "actor.update",
+     80
+    ],
+    [
+     "paint.advanceSimulation",
+     52
+    ],
+    [
+     "character.update",
+     27
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     27
+    ],
+    [
+     "paint._emitGrowth",
+     22
+    ]
+   ]
+  },
+  {
+   "frame": 31,
+   "ms": 180,
+   "top": [
+    [
+     "match.update",
+     90
+    ],
+    [
+     "actor.update",
+     80
+    ],
+    [
+     "paint.advanceSimulation",
+     67
+    ],
+    [
+     "character.update",
+     50
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     45
+    ],
+    [
+     "paint._emitGrowth",
+     18
+    ]
+   ]
+  },
+  {
+   "frame": 32,
+   "ms": 152,
+   "top": [
+    [
+     "match.update",
+     83
+    ],
+    [
+     "actor.update",
+     70
+    ],
+    [
+     "paint.advanceSimulation",
+     40
+    ],
+    [
+     "character.update",
+     26
+    ],
+    [
+     "paint._advanceSplatOwnership",
+     21
+    ],
+    [
+     "projectiles.update",
+     18
+    ]
+   ]
+  }
+ ],
+ "spikeCount": 33,
+ "browser": "chromium",
+ "site": "site-after",
+ "observerScope": "Caller timers and existing BVH counters; canonical raycast/ray identities retained"
+}

@@ -1,0 +1,3193 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "site": "/workspace/site-mobile-after-all",
+  "pathBoundBuildSha256": "7a99daf376d5e82f3319b99f3c99045c814db1fc980ab5ba570b39f63d4cd23b",
+  "contentHash": "b0235ae6aec58fb76ed2d2ab41d238c343c3f1a767fd8a739fc95d4a325ce608",
+  "revision": "e4cb6a64c792d1802888b686e5388c19833a0fd44e1ebb491f8ecf086f72c53e",
+  "browser": "chromium",
+  "renderFrames": 2,
+  "requestedStages": [
+    "scorch",
+    "hagglefish",
+    "inkblot",
+    "mako",
+    "brinewater",
+    "airport",
+    "barnacle",
+    "bluefin",
+    "crableg",
+    "eeltail",
+    "flounder",
+    "hammerhead",
+    "humpback",
+    "manta",
+    "mincemeat",
+    "museum",
+    "robo",
+    "shipshape",
+    "sturgeon",
+    "umami",
+    "undertow",
+    "urchin",
+    "wahoo"
+  ],
+  "profiles": [
+    {
+      "device": "ipad",
+      "status": "passed",
+      "stages": [
+        {
+          "id": "scorch",
+          "name": "ユノハナ大渓谷",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 81,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "geometry": {
+            "vertices": 319113,
+            "triangles": 279299,
+            "collisionTriangles": 133737,
+            "bvhNodes": 32767,
+            "paintFaces": 45171
+          },
+          "frameRows": [
+            {
+              "calls": 146,
+              "triangles": 368277,
+              "glError": 0
+            },
+            {
+              "calls": 266,
+              "triangles": 583535,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 413,
+            "textures": 98
+          },
+          "elapsedMs": 16385
+        },
+        {
+          "id": "hagglefish",
+          "name": "ヤガラ市場",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 108,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+          "geometry": {
+            "vertices": 356466,
+            "triangles": 246063,
+            "collisionTriangles": 163625,
+            "bvhNodes": 32767,
+            "paintFaces": 65827
+          },
+          "frameRows": [
+            {
+              "calls": 184,
+              "triangles": 405587,
+              "glError": 0
+            },
+            {
+              "calls": 331,
+              "triangles": 674133,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 479,
+            "textures": 135
+          },
+          "elapsedMs": 10815
+        },
+        {
+          "id": "inkblot",
+          "name": "海女美術大学",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 94,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+          "geometry": {
+            "vertices": 299938,
+            "triangles": 205075,
+            "collisionTriangles": 132645,
+            "bvhNodes": 32767,
+            "paintFaces": 22429
+          },
+          "frameRows": [
+            {
+              "calls": 188,
+              "triangles": 452696,
+              "glError": 0
+            },
+            {
+              "calls": 299,
+              "triangles": 670834,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 473,
+            "textures": 118
+          },
+          "elapsedMs": 12333
+        },
+        {
+          "id": "mako",
+          "name": "ザトウマーケット",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 73,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+          "geometry": {
+            "vertices": 501429,
+            "triangles": 310038,
+            "collisionTriangles": 151620,
+            "bvhNodes": 32767,
+            "paintFaces": 51216
+          },
+          "frameRows": [
+            {
+              "calls": 196,
+              "triangles": 455163,
+              "glError": 0
+            },
+            {
+              "calls": 325,
+              "triangles": 619305,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 536,
+            "textures": 101
+          },
+          "elapsedMs": 10905
+        },
+        {
+          "id": "brinewater",
+          "name": "クサヤ温泉",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 170,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+          "geometry": {
+            "vertices": 433565,
+            "triangles": 354463,
+            "collisionTriangles": 157826,
+            "bvhNodes": 32767,
+            "paintFaces": 62213
+          },
+          "frameRows": [
+            {
+              "calls": 184,
+              "triangles": 377190,
+              "glError": 0
+            },
+            {
+              "calls": 361,
+              "triangles": 629906,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 604,
+            "textures": 122
+          },
+          "elapsedMs": 11312
+        },
+        {
+          "id": "airport",
+          "name": "カジキ空港",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 89,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+          "geometry": {
+            "vertices": 196553,
+            "triangles": 159625,
+            "collisionTriangles": 157842,
+            "bvhNodes": 32767,
+            "paintFaces": 54747
+          },
+          "frameRows": [
+            {
+              "calls": 104,
+              "triangles": 419018,
+              "glError": 0
+            },
+            {
+              "calls": 270,
+              "triangles": 641855,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 570,
+            "textures": 62
+          },
+          "elapsedMs": 10516
+        },
+        {
+          "id": "barnacle",
+          "name": "タラポートショッピングパーク",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+          "geometry": {
+            "vertices": 224192,
+            "triangles": 183750,
+            "collisionTriangles": 177607,
+            "bvhNodes": 32767,
+            "paintFaces": 75857
+          },
+          "frameRows": [
+            {
+              "calls": 142,
+              "triangles": 408601,
+              "glError": 0
+            },
+            {
+              "calls": 326,
+              "triangles": 677873,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 629,
+            "textures": 71
+          },
+          "elapsedMs": 12370
+        },
+        {
+          "id": "bluefin",
+          "name": "ネギトロ炭鉱",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 85,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "geometry": {
+            "vertices": 241756,
+            "triangles": 177135,
+            "collisionTriangles": 176771,
+            "bvhNodes": 32767,
+            "paintFaces": 54497
+          },
+          "frameRows": [
+            {
+              "calls": 136,
+              "triangles": 349003,
+              "glError": 0
+            },
+            {
+              "calls": 348,
+              "triangles": 619158,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 684,
+            "textures": 77
+          },
+          "elapsedMs": 23489
+        },
+        {
+          "id": "crableg",
+          "name": "タカアシ経済特区",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 128,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "6f0c27703e7fbe5a02e442431ee88d811ac794849966a82a27b1f96b2c4578c7",
+          "geometry": {
+            "vertices": 469616,
+            "triangles": 323014,
+            "collisionTriangles": 187949,
+            "bvhNodes": 32767,
+            "paintFaces": 48934
+          },
+          "frameRows": [
+            {
+              "calls": 181,
+              "triangles": 360338,
+              "glError": 0
+            },
+            {
+              "calls": 350,
+              "triangles": 627272,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 728,
+            "textures": 128
+          },
+          "elapsedMs": 15301
+        },
+        {
+          "id": "eeltail",
+          "name": "ゴンズイ地区",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 103,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+          "geometry": {
+            "vertices": 641666,
+            "triangles": 436528,
+            "collisionTriangles": 212015,
+            "bvhNodes": 63581,
+            "paintFaces": 67583
+          },
+          "frameRows": [
+            {
+              "calls": 174,
+              "triangles": 364023,
+              "glError": 0
+            },
+            {
+              "calls": 338,
+              "triangles": 634947,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 739,
+            "textures": 96
+          },
+          "elapsedMs": 14332
+        },
+        {
+          "id": "flounder",
+          "name": "ヒラメが丘団地",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 116,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+          "geometry": {
+            "vertices": 363534,
+            "triangles": 260950,
+            "collisionTriangles": 154160,
+            "bvhNodes": 32767,
+            "paintFaces": 42139
+          },
+          "frameRows": [
+            {
+              "calls": 236,
+              "triangles": 445461,
+              "glError": 0
+            },
+            {
+              "calls": 460,
+              "triangles": 676793,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 837,
+            "textures": 116
+          },
+          "elapsedMs": 20426
+        },
+        {
+          "id": "hammerhead",
+          "name": "マサバ海峡大橋",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 78,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+          "geometry": {
+            "vertices": 266447,
+            "triangles": 172334,
+            "collisionTriangles": 73272,
+            "bvhNodes": 16383,
+            "paintFaces": 25870
+          },
+          "frameRows": [
+            {
+              "calls": 155,
+              "triangles": 388760,
+              "glError": 0
+            },
+            {
+              "calls": 256,
+              "triangles": 565290,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 716,
+            "textures": 98
+          },
+          "elapsedMs": 22663
+        },
+        {
+          "id": "humpback",
+          "name": "コンブトラック",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 63,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "geometry": {
+            "vertices": 254995,
+            "triangles": 174089,
+            "collisionTriangles": 149539,
+            "bvhNodes": 32767,
+            "paintFaces": 38087
+          },
+          "frameRows": [
+            {
+              "calls": 142,
+              "triangles": 399334,
+              "glError": 0
+            },
+            {
+              "calls": 251,
+              "triangles": 600249,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 735,
+            "textures": 85
+          },
+          "elapsedMs": 25865
+        },
+        {
+          "id": "manta",
+          "name": "マンタマリア号",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 93,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+          "geometry": {
+            "vertices": 345479,
+            "triangles": 224043,
+            "collisionTriangles": 130605,
+            "bvhNodes": 32767,
+            "paintFaces": 71877
+          },
+          "frameRows": [
+            {
+              "calls": 165,
+              "triangles": 404511,
+              "glError": 0
+            },
+            {
+              "calls": 279,
+              "triangles": 580443,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 767,
+            "textures": 110
+          },
+          "elapsedMs": 10720
+        },
+        {
+          "id": "mincemeat",
+          "name": "ナメロウ金属",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 95,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+          "geometry": {
+            "vertices": 313521,
+            "triangles": 210305,
+            "collisionTriangles": 146903,
+            "bvhNodes": 32767,
+            "paintFaces": 80578
+          },
+          "frameRows": [
+            {
+              "calls": 177,
+              "triangles": 361721,
+              "glError": 0
+            },
+            {
+              "calls": 351,
+              "triangles": 610565,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 858,
+            "textures": 105
+          },
+          "elapsedMs": 15005
+        },
+        {
+          "id": "museum",
+          "name": "キンメダイ美術館",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 76,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+          "geometry": {
+            "vertices": 254237,
+            "triangles": 178371,
+            "collisionTriangles": 127075,
+            "bvhNodes": 32767,
+            "paintFaces": 47927
+          },
+          "frameRows": [
+            {
+              "calls": 152,
+              "triangles": 458490,
+              "glError": 0
+            },
+            {
+              "calls": 293,
+              "triangles": 692735,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 825,
+            "textures": 84
+          },
+          "elapsedMs": 14030
+        },
+        {
+          "id": "robo",
+          "name": "バイガイ亭",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 55,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "geometry": {
+            "vertices": 254039,
+            "triangles": 169233,
+            "collisionTriangles": 107020,
+            "bvhNodes": 32767,
+            "paintFaces": 23685
+          },
+          "frameRows": [
+            {
+              "calls": 131,
+              "triangles": 411704,
+              "glError": 0
+            },
+            {
+              "calls": 341,
+              "triangles": 606062,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 893,
+            "textures": 66
+          },
+          "elapsedMs": 8899
+        },
+        {
+          "id": "shipshape",
+          "name": "オヒョウ海運",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "geometry": {
+            "vertices": 384488,
+            "triangles": 335944,
+            "collisionTriangles": 310976,
+            "bvhNodes": 65535,
+            "paintFaces": 140825
+          },
+          "frameRows": [
+            {
+              "calls": 187,
+              "triangles": 460452,
+              "glError": 0
+            },
+            {
+              "calls": 323,
+              "triangles": 774240,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 865,
+            "textures": 113
+          },
+          "elapsedMs": 38061
+        },
+        {
+          "id": "sturgeon",
+          "name": "チョウザメ造船",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 58,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+          "geometry": {
+            "vertices": 269203,
+            "triangles": 188196,
+            "collisionTriangles": 127210,
+            "bvhNodes": 32767,
+            "paintFaces": 29598
+          },
+          "frameRows": [
+            {
+              "calls": 132,
+              "triangles": 345489,
+              "glError": 0
+            },
+            {
+              "calls": 241,
+              "triangles": 567624,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 838,
+            "textures": 76
+          },
+          "elapsedMs": 15273
+        },
+        {
+          "id": "umami",
+          "name": "ナンプラー遺跡",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 99,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+          "geometry": {
+            "vertices": 378944,
+            "triangles": 300986,
+            "collisionTriangles": 228919,
+            "bvhNodes": 65535,
+            "paintFaces": 114928
+          },
+          "frameRows": [
+            {
+              "calls": 163,
+              "triangles": 392221,
+              "glError": 0
+            },
+            {
+              "calls": 321,
+              "triangles": 670687,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 921,
+            "textures": 111
+          },
+          "elapsedMs": 18152
+        },
+        {
+          "id": "undertow",
+          "name": "マテガイ放水路",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 67,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046",
+          "geometry": {
+            "vertices": 202530,
+            "triangles": 139248,
+            "collisionTriangles": 70322,
+            "bvhNodes": 16383,
+            "paintFaces": 20135
+          },
+          "frameRows": [
+            {
+              "calls": 162,
+              "triangles": 353720,
+              "glError": 0
+            },
+            {
+              "calls": 290,
+              "triangles": 505052,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 910,
+            "textures": 83
+          },
+          "elapsedMs": 15232
+        },
+        {
+          "id": "urchin",
+          "name": "デカライン高架下",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 70,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+          "geometry": {
+            "vertices": 260172,
+            "triangles": 202908,
+            "collisionTriangles": 196759,
+            "bvhNodes": 33069,
+            "paintFaces": 56161
+          },
+          "frameRows": [
+            {
+              "calls": 129,
+              "triangles": 351490,
+              "glError": 0
+            },
+            {
+              "calls": 309,
+              "triangles": 582679,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 951,
+            "textures": 82
+          },
+          "elapsedMs": 14159
+        },
+        {
+          "id": "wahoo",
+          "name": "スメーシーワールド",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 85,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+          "geometry": {
+            "vertices": 211621,
+            "triangles": 157845,
+            "collisionTriangles": 102194,
+            "bvhNodes": 24163,
+            "paintFaces": 44152
+          },
+          "frameRows": [
+            {
+              "calls": 131,
+              "triangles": 485355,
+              "glError": 0
+            },
+            {
+              "calls": 234,
+              "triangles": 697455,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 897,
+            "textures": 90
+          },
+          "elapsedMs": 16348
+        }
+      ],
+      "errors": [],
+      "blockedExternal": [],
+      "release": {
+        "nativeReleased": true,
+        "previousDisposed": true,
+        "rawPresetRestored": true
+      }
+    },
+    {
+      "device": "phone",
+      "status": "passed",
+      "stages": [
+        {
+          "id": "scorch",
+          "name": "ユノハナ大渓谷",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 81,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "geometry": {
+            "vertices": 319113,
+            "triangles": 279299,
+            "collisionTriangles": 133737,
+            "bvhNodes": 32767,
+            "paintFaces": 45171
+          },
+          "frameRows": [
+            {
+              "calls": 146,
+              "triangles": 370186,
+              "glError": 0
+            },
+            {
+              "calls": 266,
+              "triangles": 585444,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 413,
+            "textures": 98
+          },
+          "elapsedMs": 14116
+        },
+        {
+          "id": "hagglefish",
+          "name": "ヤガラ市場",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 108,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+          "geometry": {
+            "vertices": 356466,
+            "triangles": 246063,
+            "collisionTriangles": 163625,
+            "bvhNodes": 32767,
+            "paintFaces": 65827
+          },
+          "frameRows": [
+            {
+              "calls": 184,
+              "triangles": 408706,
+              "glError": 0
+            },
+            {
+              "calls": 331,
+              "triangles": 677252,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 479,
+            "textures": 135
+          },
+          "elapsedMs": 10347
+        },
+        {
+          "id": "inkblot",
+          "name": "海女美術大学",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 94,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+          "geometry": {
+            "vertices": 299938,
+            "triangles": 205075,
+            "collisionTriangles": 132645,
+            "bvhNodes": 32767,
+            "paintFaces": 22429
+          },
+          "frameRows": [
+            {
+              "calls": 188,
+              "triangles": 452662,
+              "glError": 0
+            },
+            {
+              "calls": 299,
+              "triangles": 670800,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 473,
+            "textures": 118
+          },
+          "elapsedMs": 13988
+        },
+        {
+          "id": "mako",
+          "name": "ザトウマーケット",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 73,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+          "geometry": {
+            "vertices": 501429,
+            "triangles": 310038,
+            "collisionTriangles": 151620,
+            "bvhNodes": 32767,
+            "paintFaces": 51216
+          },
+          "frameRows": [
+            {
+              "calls": 196,
+              "triangles": 456304,
+              "glError": 0
+            },
+            {
+              "calls": 325,
+              "triangles": 620446,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 536,
+            "textures": 101
+          },
+          "elapsedMs": 10548
+        },
+        {
+          "id": "brinewater",
+          "name": "クサヤ温泉",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 170,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+          "geometry": {
+            "vertices": 433565,
+            "triangles": 354463,
+            "collisionTriangles": 157826,
+            "bvhNodes": 32767,
+            "paintFaces": 62213
+          },
+          "frameRows": [
+            {
+              "calls": 184,
+              "triangles": 376222,
+              "glError": 0
+            },
+            {
+              "calls": 361,
+              "triangles": 628938,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 604,
+            "textures": 122
+          },
+          "elapsedMs": 10151
+        },
+        {
+          "id": "airport",
+          "name": "カジキ空港",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 89,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+          "geometry": {
+            "vertices": 196553,
+            "triangles": 159625,
+            "collisionTriangles": 157842,
+            "bvhNodes": 32767,
+            "paintFaces": 54747
+          },
+          "frameRows": [
+            {
+              "calls": 104,
+              "triangles": 342345,
+              "glError": 0
+            },
+            {
+              "calls": 270,
+              "triangles": 565182,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 565,
+            "textures": 62
+          },
+          "elapsedMs": 9653
+        },
+        {
+          "id": "barnacle",
+          "name": "タラポートショッピングパーク",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+          "geometry": {
+            "vertices": 224192,
+            "triangles": 183750,
+            "collisionTriangles": 177607,
+            "bvhNodes": 32767,
+            "paintFaces": 75857
+          },
+          "frameRows": [
+            {
+              "calls": 142,
+              "triangles": 337289,
+              "glError": 0
+            },
+            {
+              "calls": 326,
+              "triangles": 606561,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 624,
+            "textures": 71
+          },
+          "elapsedMs": 10889
+        },
+        {
+          "id": "bluefin",
+          "name": "ネギトロ炭鉱",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 85,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "geometry": {
+            "vertices": 241756,
+            "triangles": 177135,
+            "collisionTriangles": 176771,
+            "bvhNodes": 32767,
+            "paintFaces": 54497
+          },
+          "frameRows": [
+            {
+              "calls": 136,
+              "triangles": 349867,
+              "glError": 0
+            },
+            {
+              "calls": 348,
+              "triangles": 620022,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 679,
+            "textures": 77
+          },
+          "elapsedMs": 19395
+        },
+        {
+          "id": "crableg",
+          "name": "タカアシ経済特区",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 128,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "6f0c27703e7fbe5a02e442431ee88d811ac794849966a82a27b1f96b2c4578c7",
+          "geometry": {
+            "vertices": 469616,
+            "triangles": 323014,
+            "collisionTriangles": 187949,
+            "bvhNodes": 32767,
+            "paintFaces": 48934
+          },
+          "frameRows": [
+            {
+              "calls": 181,
+              "triangles": 356961,
+              "glError": 0
+            },
+            {
+              "calls": 350,
+              "triangles": 623895,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 723,
+            "textures": 128
+          },
+          "elapsedMs": 12123
+        },
+        {
+          "id": "eeltail",
+          "name": "ゴンズイ地区",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 103,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+          "geometry": {
+            "vertices": 641666,
+            "triangles": 436528,
+            "collisionTriangles": 212015,
+            "bvhNodes": 63581,
+            "paintFaces": 67583
+          },
+          "frameRows": [
+            {
+              "calls": 172,
+              "triangles": 363767,
+              "glError": 0
+            },
+            {
+              "calls": 336,
+              "triangles": 634691,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 732,
+            "textures": 96
+          },
+          "elapsedMs": 10142
+        },
+        {
+          "id": "flounder",
+          "name": "ヒラメが丘団地",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 116,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+          "geometry": {
+            "vertices": 363534,
+            "triangles": 260950,
+            "collisionTriangles": 154160,
+            "bvhNodes": 32767,
+            "paintFaces": 42139
+          },
+          "frameRows": [
+            {
+              "calls": 238,
+              "triangles": 445855,
+              "glError": 0
+            },
+            {
+              "calls": 462,
+              "triangles": 677187,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 834,
+            "textures": 116
+          },
+          "elapsedMs": 11529
+        },
+        {
+          "id": "hammerhead",
+          "name": "マサバ海峡大橋",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 78,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+          "geometry": {
+            "vertices": 266447,
+            "triangles": 172334,
+            "collisionTriangles": 73272,
+            "bvhNodes": 16383,
+            "paintFaces": 25870
+          },
+          "frameRows": [
+            {
+              "calls": 156,
+              "triangles": 388855,
+              "glError": 0
+            },
+            {
+              "calls": 257,
+              "triangles": 565385,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 712,
+            "textures": 98
+          },
+          "elapsedMs": 11201
+        },
+        {
+          "id": "humpback",
+          "name": "コンブトラック",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 63,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "geometry": {
+            "vertices": 254995,
+            "triangles": 174089,
+            "collisionTriangles": 149539,
+            "bvhNodes": 32767,
+            "paintFaces": 38087
+          },
+          "frameRows": [
+            {
+              "calls": 142,
+              "triangles": 401271,
+              "glError": 0
+            },
+            {
+              "calls": 251,
+              "triangles": 602186,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 730,
+            "textures": 85
+          },
+          "elapsedMs": 18551
+        },
+        {
+          "id": "manta",
+          "name": "マンタマリア号",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 93,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+          "geometry": {
+            "vertices": 345479,
+            "triangles": 224043,
+            "collisionTriangles": 130605,
+            "bvhNodes": 32767,
+            "paintFaces": 71877
+          },
+          "frameRows": [
+            {
+              "calls": 165,
+              "triangles": 406038,
+              "glError": 0
+            },
+            {
+              "calls": 279,
+              "triangles": 581970,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 762,
+            "textures": 110
+          },
+          "elapsedMs": 10741
+        },
+        {
+          "id": "mincemeat",
+          "name": "ナメロウ金属",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 95,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+          "geometry": {
+            "vertices": 313521,
+            "triangles": 210305,
+            "collisionTriangles": 146903,
+            "bvhNodes": 32767,
+            "paintFaces": 80578
+          },
+          "frameRows": [
+            {
+              "calls": 188,
+              "triangles": 364525,
+              "glError": 0
+            },
+            {
+              "calls": 362,
+              "triangles": 613369,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 864,
+            "textures": 106
+          },
+          "elapsedMs": 14887
+        },
+        {
+          "id": "museum",
+          "name": "キンメダイ美術館",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 76,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+          "geometry": {
+            "vertices": 254237,
+            "triangles": 178371,
+            "collisionTriangles": 127075,
+            "bvhNodes": 32767,
+            "paintFaces": 47927
+          },
+          "frameRows": [
+            {
+              "calls": 152,
+              "triangles": 383531,
+              "glError": 0
+            },
+            {
+              "calls": 293,
+              "triangles": 617776,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 820,
+            "textures": 84
+          },
+          "elapsedMs": 12516
+        },
+        {
+          "id": "robo",
+          "name": "バイガイ亭",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 55,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "geometry": {
+            "vertices": 254039,
+            "triangles": 169233,
+            "collisionTriangles": 107020,
+            "bvhNodes": 32767,
+            "paintFaces": 23685
+          },
+          "frameRows": [
+            {
+              "calls": 131,
+              "triangles": 329153,
+              "glError": 0
+            },
+            {
+              "calls": 341,
+              "triangles": 523511,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 888,
+            "textures": 66
+          },
+          "elapsedMs": 8473
+        },
+        {
+          "id": "shipshape",
+          "name": "オヒョウ海運",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "geometry": {
+            "vertices": 384488,
+            "triangles": 335944,
+            "collisionTriangles": 310976,
+            "bvhNodes": 65535,
+            "paintFaces": 140825
+          },
+          "frameRows": [
+            {
+              "calls": 192,
+              "triangles": 464198,
+              "glError": 0
+            },
+            {
+              "calls": 328,
+              "triangles": 777987,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 863,
+            "textures": 114
+          },
+          "elapsedMs": 30038
+        },
+        {
+          "id": "sturgeon",
+          "name": "チョウザメ造船",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 58,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+          "geometry": {
+            "vertices": 269203,
+            "triangles": 188196,
+            "collisionTriangles": 127210,
+            "bvhNodes": 32767,
+            "paintFaces": 29598
+          },
+          "frameRows": [
+            {
+              "calls": 132,
+              "triangles": 345892,
+              "glError": 0
+            },
+            {
+              "calls": 241,
+              "triangles": 568027,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 833,
+            "textures": 76
+          },
+          "elapsedMs": 9048
+        },
+        {
+          "id": "umami",
+          "name": "ナンプラー遺跡",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 99,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+          "geometry": {
+            "vertices": 378944,
+            "triangles": 300986,
+            "collisionTriangles": 228919,
+            "bvhNodes": 65535,
+            "paintFaces": 114928
+          },
+          "frameRows": [
+            {
+              "calls": 163,
+              "triangles": 392486,
+              "glError": 0
+            },
+            {
+              "calls": 321,
+              "triangles": 670952,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 916,
+            "textures": 111
+          },
+          "elapsedMs": 12517
+        },
+        {
+          "id": "undertow",
+          "name": "マテガイ放水路",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 67,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046",
+          "geometry": {
+            "vertices": 202530,
+            "triangles": 139248,
+            "collisionTriangles": 70322,
+            "bvhNodes": 16383,
+            "paintFaces": 20135
+          },
+          "frameRows": [
+            {
+              "calls": 162,
+              "triangles": 354910,
+              "glError": 0
+            },
+            {
+              "calls": 290,
+              "triangles": 506242,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 905,
+            "textures": 83
+          },
+          "elapsedMs": 10851
+        },
+        {
+          "id": "urchin",
+          "name": "デカライン高架下",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 70,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+          "geometry": {
+            "vertices": 260172,
+            "triangles": 202908,
+            "collisionTriangles": 196759,
+            "bvhNodes": 33069,
+            "paintFaces": 56161
+          },
+          "frameRows": [
+            {
+              "calls": 129,
+              "triangles": 351338,
+              "glError": 0
+            },
+            {
+              "calls": 309,
+              "triangles": 582527,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 946,
+            "textures": 82
+          },
+          "elapsedMs": 14124
+        },
+        {
+          "id": "wahoo",
+          "name": "スメーシーワールド",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 85,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+          "geometry": {
+            "vertices": 211621,
+            "triangles": 157845,
+            "collisionTriangles": 102194,
+            "bvhNodes": 24163,
+            "paintFaces": 44152
+          },
+          "frameRows": [
+            {
+              "calls": 131,
+              "triangles": 408199,
+              "glError": 0
+            },
+            {
+              "calls": 234,
+              "triangles": 620299,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 892,
+            "textures": 90
+          },
+          "elapsedMs": 11870
+        }
+      ],
+      "errors": [],
+      "blockedExternal": [],
+      "release": {
+        "nativeReleased": true,
+        "previousDisposed": true,
+        "rawPresetRestored": true
+      }
+    }
+  ],
+  "scope": "chromium mobile emulation: normal stage load, intro render and disposal smoke; not physical iPad/phone FPS or full-match acceptance.",
+  "browserVersion": "151.0.7922.34"
+}

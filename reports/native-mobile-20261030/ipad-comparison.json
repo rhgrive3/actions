@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "scope": "Chromium iPad emulation with SwiftShader, not physical device FPS",
+  "beforeFps": 0.25690980324990903,
+  "afterFps": 0.5180020086966726,
+  "speedup": 2.0162796520177397,
+  "frameTimeReductionPercent": 50.403705210272996,
+  "allThreeActorPaintTracesMatch": true,
+  "pairs": [
+    {
+      "before": 0.2922723198628262,
+      "after": 0.5862982108132827,
+      "speedup": 2.0059997850239575
+    },
+    {
+      "before": 0.2436558118002519,
+      "after": 0.44562617905259255,
+      "speedup": 1.8289166827586907
+    },
+    {
+      "before": 0.24086905555243274,
+      "after": 0.5429372907429192,
+      "speedup": 2.254076554157999
+    }
+  ],
+  "beforeQuality": {
+    "reflectionScale": 0.2,
+    "reflectionInterval": 2,
+    "reflectionActors": false,
+    "pixelRatio": 1.2,
+    "shadowSize": 2048,
+    "msaa": 0,
+    "bloom": false,
+    "ao": false,
+    "paintAtlas": 2048,
+    "particles": 0.7
+  },
+  "afterQuality": {
+    "reflectionScale": 0.1,
+    "reflectionInterval": 4,
+    "reflectionActors": false,
+    "pixelRatio": 1,
+    "shadowSize": 1024,
+    "msaa": 0,
+    "bloom": false,
+    "ao": false,
+    "paintAtlas": 2048,
+    "particles": 0.7
+  },
+  "beforeFramebuffer": [
+    1228,
+    921
+  ],
+  "afterFramebuffer": [
+    1024,
+    768
+  ],
+  "beforeTextures": 151,
+  "afterTextures": 55,
+  "beforeContentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+  "afterContentHash": "b0235ae6aec58fb76ed2d2ab41d238c343c3f1a767fd8a739fc95d4a325ce608"
+}

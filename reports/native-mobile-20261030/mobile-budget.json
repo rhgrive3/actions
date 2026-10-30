@@ -1,0 +1,434 @@
+{
+  "schema": 1,
+  "scope": "All 23 pinned stage metadata records; policy and requested texture job analysis, not physical iPad/phone FPS",
+  "mobileCaps": {
+    "ao": false,
+    "msaa": 0,
+    "pixelRatio": 1,
+    "bloom": false,
+    "shadowSize": 1024,
+    "paintAtlas": 2048,
+    "reflectionScale": 0.1,
+    "reflectionInterval": 4,
+    "reflectionActors": false
+  },
+  "settingsPolicy": {
+    "high": "balanced textures even when KTX2 compressed",
+    "ultra": "explicit compressed high-detail opt-in; safe PNG fallback remains"
+  },
+  "scenarios": [
+    {
+      "cssViewport": [
+        1024,
+        768
+      ],
+      "priorPixelRatio": 1.2,
+      "newPixelRatio": 1,
+      "scenePixelReduction": 0.3055555555555556,
+      "shadowTexelReduction": 0.75,
+      "amortizedReflectionTexelReduction": 0.9132423117709438
+    },
+    {
+      "cssViewport": [
+        844,
+        390
+      ],
+      "priorPixelRatio": 1.35,
+      "newPixelRatio": 1,
+      "scenePixelReduction": 0.4513031550068588,
+      "shadowTexelReduction": 0.75,
+      "amortizedReflectionTexelReduction": 0.887719298245614
+    },
+    {
+      "cssViewport": [
+        568,
+        320
+      ],
+      "priorPixelRatio": 1.35,
+      "newPixelRatio": 1,
+      "scenePixelReduction": 0.4513031550068588,
+      "shadowTexelReduction": 0.75,
+      "amortizedReflectionTexelReduction": 0.8443532451740386
+    }
+  ],
+  "stages": [
+    {
+      "stage": "scorch",
+      "metadataSha256": "d14cd264528bf241704934bcf1d974f847badd3cbcffc5529af2c95ccba1a575",
+      "activeMaterials": 97,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 235,
+        "requestedPackBytes": 26643459
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 81,
+        "requestedPackBytes": 16321608
+      },
+      "detailFilesRemoved": 154
+    },
+    {
+      "stage": "hagglefish",
+      "metadataSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+      "activeMaterials": 135,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 298,
+        "requestedPackBytes": 26733076
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 108,
+        "requestedPackBytes": 15373516
+      },
+      "detailFilesRemoved": 190
+    },
+    {
+      "stage": "inkblot",
+      "metadataSha256": "f53cb373d8cb80edee31c532f2df8f528321cc4549a38274a7c85672c9f398c0",
+      "activeMaterials": 103,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 223,
+        "requestedPackBytes": 19697433
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 94,
+        "requestedPackBytes": 16541123
+      },
+      "detailFilesRemoved": 129
+    },
+    {
+      "stage": "mako",
+      "metadataSha256": "78f4ab9f662308e2ead49e5ba31ecf72c0eb9abf40adcbe71f20c79356606990",
+      "activeMaterials": 132,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 195,
+        "requestedPackBytes": 12584658
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 73,
+        "requestedPackBytes": 8973399
+      },
+      "detailFilesRemoved": 122
+    },
+    {
+      "stage": "brinewater",
+      "metadataSha256": "a3dce203f289f532fd71f0422015f6e6ff30484adda50aa0e40f9d407a8af4c9",
+      "activeMaterials": 221,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 520,
+        "requestedPackBytes": 44629095
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 170,
+        "requestedPackBytes": 20137944
+      },
+      "detailFilesRemoved": 350
+    },
+    {
+      "stage": "airport",
+      "metadataSha256": "cb815317dadcc97f748c5d77fc6d587f34b7ded7794d70ff6860b9ec5dc992e8",
+      "activeMaterials": 117,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 247,
+        "requestedPackBytes": 26083554
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 89,
+        "requestedPackBytes": 15041106
+      },
+      "detailFilesRemoved": 158
+    },
+    {
+      "stage": "barnacle",
+      "metadataSha256": "35b4cefe7895edaca9c2b99e720949fb9ce7abba7cbc2c9559ba3744a15b0a6b",
+      "activeMaterials": 142,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 256,
+        "requestedPackBytes": 16031219
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 91,
+        "requestedPackBytes": 7749809
+      },
+      "detailFilesRemoved": 165
+    },
+    {
+      "stage": "bluefin",
+      "metadataSha256": "5cf66996e49b19418343b4d981d73edd51a9d7e02d98fff0c851d80a5a32159f",
+      "activeMaterials": 156,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 216,
+        "requestedPackBytes": 9195951
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 85,
+        "requestedPackBytes": 5119929
+      },
+      "detailFilesRemoved": 131
+    },
+    {
+      "stage": "crableg",
+      "metadataSha256": "a2d1f59be3358607bfd882b25f6d80b33a81a64732eb15fad38a86ef3d3473ed",
+      "activeMaterials": 195,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 317,
+        "requestedPackBytes": 27385353
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 128,
+        "requestedPackBytes": 17757193
+      },
+      "detailFilesRemoved": 189
+    },
+    {
+      "stage": "eeltail",
+      "metadataSha256": "7a0cebabc9442e56b2f75104376cbf55c30c4690fd62d94f300bdf1662327a36",
+      "activeMaterials": 166,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 280,
+        "requestedPackBytes": 18322637
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 103,
+        "requestedPackBytes": 7605077
+      },
+      "detailFilesRemoved": 177
+    },
+    {
+      "stage": "flounder",
+      "metadataSha256": "143040d713e95f17154c3d775bf3d8ed3dcb5471df51a3fea1042c99533825bc",
+      "activeMaterials": 209,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 312,
+        "requestedPackBytes": 16940526
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 116,
+        "requestedPackBytes": 8964387
+      },
+      "detailFilesRemoved": 196
+    },
+    {
+      "stage": "hammerhead",
+      "metadataSha256": "13c2531bf67c7e2487cf1f4cda2ff380a043219f9839c594013c357776d4233d",
+      "activeMaterials": 94,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 206,
+        "requestedPackBytes": 60921821
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 78,
+        "requestedPackBytes": 32269863
+      },
+      "detailFilesRemoved": 128
+    },
+    {
+      "stage": "humpback",
+      "metadataSha256": "62330c4e7d1baaa27ba41f85fceb3ac048ae8e3e3ec8f6ea9346bf9c1852cfe3",
+      "activeMaterials": 77,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 153,
+        "requestedPackBytes": 20053236
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 63,
+        "requestedPackBytes": 6961488
+      },
+      "detailFilesRemoved": 90
+    },
+    {
+      "stage": "manta",
+      "metadataSha256": "06aeae7e54ff3d3517709b60755ddaf8256de702f7860142666ca69d01da41b0",
+      "activeMaterials": 96,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 245,
+        "requestedPackBytes": 12805422
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 93,
+        "requestedPackBytes": 7951265
+      },
+      "detailFilesRemoved": 152
+    },
+    {
+      "stage": "mincemeat",
+      "metadataSha256": "bba7eb36121b44a7476852888112ba1c383309d9a48a55f8efa2b44e5f5a07d7",
+      "activeMaterials": 176,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 285,
+        "requestedPackBytes": 40025434
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 95,
+        "requestedPackBytes": 23420465
+      },
+      "detailFilesRemoved": 190
+    },
+    {
+      "stage": "museum",
+      "metadataSha256": "474387d9f3e6f7f4fe29ade1cd5f3579c969dead1c0a97f55677e76273b47155",
+      "activeMaterials": 115,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 212,
+        "requestedPackBytes": 18823553
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 76,
+        "requestedPackBytes": 11162613
+      },
+      "detailFilesRemoved": 136
+    },
+    {
+      "stage": "robo",
+      "metadataSha256": "6a24493108f89a8f78942c6ccefda71d255b89953d8cb21130a5ad86ccfa933d",
+      "activeMaterials": 184,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 151,
+        "requestedPackBytes": 11571975
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 55,
+        "requestedPackBytes": 6905190
+      },
+      "detailFilesRemoved": 96
+    },
+    {
+      "stage": "shipshape",
+      "metadataSha256": "3f389738ea7bdbd75319d7e81092341c7dd81c3b069932b0ecb50a1b9e30e8bf",
+      "activeMaterials": 113,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 237,
+        "requestedPackBytes": 39045229
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 91,
+        "requestedPackBytes": 21313401
+      },
+      "detailFilesRemoved": 146
+    },
+    {
+      "stage": "sturgeon",
+      "metadataSha256": "1e1b551ed1ce09c0a4c9648d1d90306e79f7312ad656c144addd0cc2ddd6c434",
+      "activeMaterials": 84,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 149,
+        "requestedPackBytes": 12361840
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 58,
+        "requestedPackBytes": 7551708
+      },
+      "detailFilesRemoved": 91
+    },
+    {
+      "stage": "umami",
+      "metadataSha256": "f0da9fe440107d3d3cb876a96ffd27100ed4f9b6b7efd6c9baf45a8028e9dd83",
+      "activeMaterials": 146,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 284,
+        "requestedPackBytes": 45696525
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 99,
+        "requestedPackBytes": 24456783
+      },
+      "detailFilesRemoved": 185
+    },
+    {
+      "stage": "undertow",
+      "metadataSha256": "9ca9b05f9db357fefe3c0a803c6c69a9052b2da90687f5e5c420204be43a92f4",
+      "activeMaterials": 115,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 184,
+        "requestedPackBytes": 35056014
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 67,
+        "requestedPackBytes": 20698519
+      },
+      "detailFilesRemoved": 117
+    },
+    {
+      "stage": "urchin",
+      "metadataSha256": "26fb019e00c50b9406deb8162937fde3d42f6bf128f757466a9e652012dcd54f",
+      "activeMaterials": 150,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 195,
+        "requestedPackBytes": 20107595
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 70,
+        "requestedPackBytes": 11289713
+      },
+      "detailFilesRemoved": 125
+    },
+    {
+      "stage": "wahoo",
+      "metadataSha256": "1b5d40eea17abc0370925eb47cf4ca3b1990d24cb234334a9624d20d6363bbf4",
+      "activeMaterials": 79,
+      "compressedTouchHighBefore": {
+        "textureQuality": "high",
+        "uniqueTextureFiles": 187,
+        "requestedPackBytes": 12133424
+      },
+      "compressedTouchHighAfter": {
+        "textureQuality": "balanced",
+        "uniqueTextureFiles": 85,
+        "requestedPackBytes": 9153832
+      },
+      "detailFilesRemoved": 102
+    }
+  ],
+  "totals": {
+    "beforeTextureJobs": 5587,
+    "afterTextureJobs": 2068
+  },
+  "limits": [
+    "Rendered scene topology, collision, paint ownership and bot simulation are untouched.",
+    "Reflection estimates include the existing minimum64x64 render target and assume reflection enabled.",
+    "Texture job counts preserve all albedo/opacity files; GPU compressed bytes and hardware throughput depend on device.",
+    "Desktop and nonnative stage policy is unchanged."
+  ]
+}

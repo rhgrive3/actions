@@ -601,7 +601,7 @@ const blockedMap=ch=>ch?.[PRESENTATION_INSTALL]?.blocked||presentationBlocked;
 // devices, not Nintendo's unpublished skeleton or transition durations.
 export const SPECIAL_RIDER_CALIBRATION = Object.freeze({
   settle: .18,
-  crabTank: Object.freeze({ hips: [0, .96, -.10], foot: [.297, 1.02, -.356], torso: [.08, .24, .08] }),
+  crabTank: Object.freeze({ hips: [0, .96, -.10], foot: [.22, .65, -.20], torso: [.30, .25, .10] }),
   reefslider: Object.freeze({ hips: [0, .46, -.08], foot: [.33, .25, -.38], torso: [.35, .50, .35] }),
 });
 const riderBlend=(P,slot,value,w)=>{P[slot]+=(value-P[slot])*w;};

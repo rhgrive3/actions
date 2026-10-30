@@ -1,0 +1,324 @@
+{
+  "status": "passed",
+  "browser": "chromium",
+  "contentHash": "0e21f23f1ff7bd2bd63d5f0428ff7d4af739b52ee1d8c9b892253270dacdc2ff",
+  "revision": "4a009e8f91cfb58aee58496f607bfdfddb9f55355b2e03988f6ecbeda12311f7",
+  "hashes": {
+    "src/world/paint.js": "5c8e8c97bd2794c9a42b447267070648374dba1aeba7bfc895ca2da8fc5b3e81",
+    "patches/local-quality/paint-dry-regions.mjs": "863c27d76a72d9fdb109584dcd992b27e25a21ce8bfbed0f36306b7f25b7109b",
+    "patches/local-quality/paint-dry-region-grid.mjs": "567b3641615a2d21270cb369967bb377bcad7a258f4ba1741d9515a5f662f963"
+  },
+  "sizes": [
+    256,
+    2048
+  ],
+  "cases": [
+    {
+      "size": 256,
+      "sparse": {
+        "dryPasses": 30,
+        "sparsePasses": 30,
+        "fullPasses": 0,
+        "coveredPixels": 51456,
+        "baselinePixels": 1966080
+      },
+      "coverageReductionPercent": 97.3828125,
+      "checks": [
+        {
+          "label": "empty",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "sparse-stamped",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 988
+        },
+        {
+          "label": "sparse-dry-1",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 944
+        },
+        {
+          "label": "sparse-dry-3",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 898
+        },
+        {
+          "label": "sparse-dry-12",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 750
+        },
+        {
+          "label": "sparse-dry-24",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 0
+        },
+        {
+          "label": "sparse-dry-30",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 988,
+          "wet": 0
+        },
+        {
+          "label": "cleared",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "dense-dry-1",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 40520,
+          "wet": 40423
+        },
+        {
+          "label": "dense-dry-2",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 40520,
+          "wet": 40362
+        },
+        {
+          "label": "dense-cleared",
+          "size": 256,
+          "bytes": 262144,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "quality-transfer",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 4250
+        },
+        {
+          "label": "quality-dry-1",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 3928
+        },
+        {
+          "label": "quality-dry-3",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 3650
+        },
+        {
+          "label": "quality-dry-12",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 2977
+        },
+        {
+          "label": "quality-dry-24",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 0
+        },
+        {
+          "label": "quality-dry-25",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 4250,
+          "wet": 0
+        },
+        {
+          "label": "gpu-reinitialized",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "reinitialized-dry-1",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 3563,
+          "wet": 3537
+        },
+        {
+          "label": "reinitialized-dry-3",
+          "size": 512,
+          "bytes": 1048576,
+          "differing": 0,
+          "painted": 3563,
+          "wet": 3495
+        }
+      ],
+      "glVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "glRenderer": "WebKit WebGL",
+      "glError": 0
+    },
+    {
+      "size": 2048,
+      "sparse": {
+        "dryPasses": 30,
+        "sparsePasses": 30,
+        "fullPasses": 0,
+        "coveredPixels": 2433024,
+        "baselinePixels": 125829120
+      },
+      "coverageReductionPercent": 98.06640625,
+      "checks": [
+        {
+          "label": "empty",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "sparse-stamped",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 51043
+        },
+        {
+          "label": "sparse-dry-1",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 50598
+        },
+        {
+          "label": "sparse-dry-3",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 50145
+        },
+        {
+          "label": "sparse-dry-12",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 48812
+        },
+        {
+          "label": "sparse-dry-24",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 0
+        },
+        {
+          "label": "sparse-dry-30",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 0
+        },
+        {
+          "label": "cleared",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "dense-dry-1",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 2519271,
+          "wet": 2518532
+        },
+        {
+          "label": "dense-dry-2",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 2519271,
+          "wet": 2518111
+        },
+        {
+          "label": "dense-cleared",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "gpu-reinitialized",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 0,
+          "wet": 0
+        },
+        {
+          "label": "reinitialized-dry-1",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 50913
+        },
+        {
+          "label": "reinitialized-dry-3",
+          "size": 2048,
+          "bytes": 16777216,
+          "differing": 0,
+          "painted": 51043,
+          "wet": 50761
+        }
+      ],
+      "glVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "glRenderer": "WebKit WebGL",
+      "glError": 0
+    }
+  ],
+  "errors": [],
+  "scope": "Actual emitted native PaintSystem shaders and RGBA8 atlas pixels; isolated atlas workload, not real-stage or physical-device FPS.",
+  "browserVersion": "151.0.7922.34"
+}

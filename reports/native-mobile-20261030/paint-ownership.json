@@ -1,0 +1,162 @@
+{
+  "scope": "Exact 597 captured Robo bomb ownership calls in Node v24.19.0; not GPU, whole-frame FPS, or physical-device evidence",
+  "inputSha256": "6380c190fc0bbbf4c9c7823202a80fffa1dd9a59a9e6d3dab13dc49f943461f0",
+  "stage": "robo",
+  "capturedBuild": {
+    "contentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+    "revision": "0492e91ffdc80d83415c9f193d0206dcb7e4f8b94e69991e43e6eb01142b28aa"
+  },
+  "ownershipSourceSha256": "3dc6d11bb3d6d11769cbe81780634e05e4c35747a2a56d58f8b2c33f34fb8164",
+  "counterfactual": "same ownership source with only the protected-rectangle call disabled",
+  "targets": [
+    {
+      "id": 258,
+      "faces": 558,
+      "cells": 10624,
+      "calls": 199,
+      "closed": true
+    },
+    {
+      "id": 261,
+      "faces": 350,
+      "cells": 35237,
+      "calls": 199,
+      "closed": true
+    },
+    {
+      "id": 280,
+      "faces": 464,
+      "cells": 13489,
+      "calls": 199,
+      "closed": true
+    }
+  ],
+  "checks": {
+    "before": {
+      "milliseconds": 325.16336600000284,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    "after": {
+      "milliseconds": 331.89936400000124,
+      "calls": 597,
+      "digest": 1639329940
+    }
+  },
+  "samples": [
+    {
+      "round": 0,
+      "variant": "before",
+      "milliseconds": 199.35468000000083,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 0,
+      "variant": "after",
+      "milliseconds": 185.32752500000288,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 1,
+      "variant": "after",
+      "milliseconds": 169.95567600000004,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 1,
+      "variant": "before",
+      "milliseconds": 184.15796499999578,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 2,
+      "variant": "before",
+      "milliseconds": 195.28263299999708,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 2,
+      "variant": "after",
+      "milliseconds": 211.14765200000147,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 3,
+      "variant": "after",
+      "milliseconds": 193.75576899998578,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 3,
+      "variant": "before",
+      "milliseconds": 214.63992800000415,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 4,
+      "variant": "before",
+      "milliseconds": 221.5198339999879,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 4,
+      "variant": "after",
+      "milliseconds": 185.5414369999944,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 5,
+      "variant": "after",
+      "milliseconds": 167.88616000001184,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 5,
+      "variant": "before",
+      "milliseconds": 200.5595609999882,
+      "calls": 597,
+      "digest": 1639329940
+    }
+  ],
+  "beforeMedianMs": 199.95712049999452,
+  "afterMedianMs": 185.43448099999864,
+  "reductionPercent": 7.26287689264673,
+  "status": "retained",
+  "cellLimit": 64,
+  "productionSource": "patches/splatoon3/runtime/paint-ownership.mjs",
+  "sourceSha256": "3dc6d11bb3d6d11769cbe81780634e05e4c35747a2a56d58f8b2c33f34fb8164",
+  "captureStorage": "Raw capture contains native face data and remains local; reproduce with scripts/capture-native-paint-ownership.mjs",
+  "controls": [
+    "600-tick native growth replay across reset, newer paint, callback mutation, atlas change and pooled reuse",
+    "Live local/network/legacy/large-clock order precedence",
+    "Unowned rectangles stop at first writable cell; rectangles larger than 64 do not scan",
+    "Existing 800-tick native and legacy ancillary-cell replay passed",
+    "No changes to paint geometry, cell ownership, tick cadence, or rendering"
+  ],
+  "alternativeCaps": [
+    {
+      "cells": 128,
+      "reductionPercent": 2.48202039377885
+    },
+    {
+      "cells": 256,
+      "reductionPercent": 8.370352742285913
+    }
+  ],
+  "capChoice": "Keep the smaller 64-cell bound; larger caps did not establish a reliable improvement over it",
+  "reproduce": [
+    "node scripts/capture-native-paint-ownership.mjs --site _site --stage robo --frames 900 --out .ci-scratch/native-paint/capture.json.gz",
+    "node scripts/benchmark-native-paint-ownership.mjs .ci-scratch/native-paint/capture.json.gz .ci-scratch/native-paint/replay.json"
+  ]
+}

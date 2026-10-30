@@ -39,7 +39,7 @@ export function adaptResourceSource(rel, code, replace) {
   if (rel === 'src/world/environment.js') {
     patch("import { PLAYER } from '../config.js';", "import { PLAYER, effectiveQuality } from '../config.js';\nimport { reflectionDue } from '../../patches/local-quality/resource-budget.mjs';", 'effective reflection import');
     patch("    const q = G.settings?.quality || 'high';\n    const scale = !this.reflections || q === 'low' ? 0 : (q === 'medium' ? 0.28 : q === 'ultra' ? 0.5 : 0.4) * (this.reflScale ?? 1);",
-      '    const q = effectiveQuality(G.settings, G.game?.mobile);\n    const scale = this.reflections ? q.reflectionScale * (this.reflScale ?? 1) : 0;', 'authoritative reflection quality');
+      '    const q = G.level?.native && G.game?.R?.q || effectiveQuality(G.settings, G.game?.mobile);\n    const scale = this.reflections ? q.reflectionScale * (this.reflScale ?? 1) : 0;', 'authoritative reflection quality including native render limits');
     patch('    if (!this._marina || this._reflBusy || scene.overrideMaterial || this._reflFrame === this._frameId) return;',
       '    if (!this._marina) { U.uReflOn.value = 0; return; }\n    if (this._reflBusy || scene.overrideMaterial || this._reflFrame === this._frameId) return;', 'non-marina stop');
     const size = '    renderer.getDrawingBufferSize(_rv2);\n    const w = Math.max(64, Math.round(_rv2.x * scale)), h = Math.max(64, Math.round(_rv2.y * scale));';
