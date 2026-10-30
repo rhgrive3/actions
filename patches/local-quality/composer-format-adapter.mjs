@@ -154,12 +154,7 @@ export function selectComposerTargetFormat(THREE, renderer, {
 }
 
 export function configureComposerColorTargets(THREE, composer, selection) {
-  // The first target receives fullscreen colour passes only. Multisampling
-  // that target adds storage and resolves without antialiasing any geometry;
-  // retain MSAA on the scene target, where silhouettes actually need it.
-  const sceneSamples = composer?.renderTarget2?.samples || 0;
-  const nativeInkStencil=!!selection?.nativeInkStencil;
-  if (!selection?.packed && !selection?.canPack && !sceneSamples && !nativeInkStencil) return composer;
+  if (!selection?.packed && !selection?.canPack) return composer;
 
   // RenderPass must write the scene to target2; Grade writes to target1.
   // ScreenFX, when enabled, writes back to target2. Output can also write to
@@ -173,9 +168,6 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   // This target receives fullscreen color passes only; the forced scene role
   // below keeps all geometry/depth writes on target2, including after swaps.
   composer.renderTarget1.depthBuffer = false;
-  composer.renderTarget1.samples = 0;
-  composer.renderTarget1.stencilBuffer = false;
-  sceneTarget.stencilBuffer = nativeInkStencil;
   sceneTarget.texture.format = THREE.RGBAFormat;
   sceneTarget.texture.type = THREE.HalfFloatType;
   // Native reset() clones target1 for both replacements. Reapply the semantic
@@ -184,11 +176,7 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   composer.reset = function (...args) {
     const value = reset.apply(this, args);
     this.renderTarget1.depthBuffer = false;
-    this.renderTarget1.samples = 0;
-    this.renderTarget1.stencilBuffer = false;
     this.renderTarget2.depthBuffer = true;
-    this.renderTarget2.samples = sceneSamples;
-    this.renderTarget2.stencilBuffer = nativeInkStencil;
     this.renderTarget2.texture.format = THREE.RGBAFormat;
     this.renderTarget2.texture.type = THREE.HalfFloatType;
     return value;
@@ -223,11 +211,6 @@ const LAZY_TARGET_OPTIONS = '        { type: THREE.HalfFloatType, samples });';
 const RENDER_GRADE_ANCHOR =
   '    const gr = G.env && G.env.grade;\n    if (gr && gr !== this._gradeSrc && this.grade) {';
 const RENDER_GRADE_GUARD =
-  '    const nativeInkStencil = !!G.level?.native;\n' +
-  '    if (!!this._nativeInkStencil !== nativeInkStencil) {\n' +
-  '      this._nativeInkStencil = nativeInkStencil;\n' +
-  '      this._buildComposer();\n' +
-  '    }\n' +
   '    const gr = G.env && G.env.grade;\n' +
   '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled;\n' +
   '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) {\n' +
@@ -249,7 +232,7 @@ const DIRECT_TARGET =
 
 const BASELINE_COMPOSER = '    const comp = (this.composer = new EffectComposer(r, rt));';
 const CONFIGURED_COMPOSER =
-  `${BASELINE_COMPOSER}\n    composerColorTarget.nativeInkStencil = !!this._nativeInkStencil;\n    configureComposerColorTargets(THREE, comp, composerColorTarget);`;
+  `${BASELINE_COMPOSER}\n    configureComposerColorTargets(THREE, comp, composerColorTarget);`;
 
 const LAZY_TARGET =
   '        const composerColorTarget = selectComposerTargetFormat(THREE, r, {\n' +
@@ -262,7 +245,7 @@ const LAZY_TARGET =
   '          composerColorTarget.options);';
 const LAZY_COMPOSER_ANCHOR = '      const composer = new EffectComposer(r, rt);';
 const CONFIGURED_LAZY_COMPOSER =
-  `${LAZY_COMPOSER_ANCHOR}\n      composerColorTarget.nativeInkStencil = !!this._nativeInkStencil;\n      configureComposerColorTargets(THREE, composer, composerColorTarget);`;
+  `${LAZY_COMPOSER_ANCHOR}\n      configureComposerColorTargets(THREE, composer, composerColorTarget);`;
 
 export function adaptComposerFormat(rel, code, once) {
   if (rel !== 'src/core/renderer.js') return code;
