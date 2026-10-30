@@ -6962,6 +6962,12 @@ A synchronous private replay world hook could return an unresolved Promise while
 
 The main91c compact reticle owner changes and original capture-derived calibration are preserved. A separate current QA fix initializes a detached special icon before its first HUD call and leaves every original screenshot, request and failure gate active. The historical full probe body is retained by a sealed one-field inverse. Additional Dynamo evidence and independent crossfire controls are recorded separately; no original retail behavior measurement is invented.
 
+## 2026-10-30 泳ぎ飛沫の多方向比較
+
+通常泳ぎの滑らかな左右レールを、低い前端・穴が流れる巻いた膜・後方へ伸びて戻る接続へ調整した。全頂点の部位IDが6で膜の開口処理に入らない不具合と、穴の位相が重なって大きな板状の面が残る問題も修正。公式映像の元fpsデコード、1F刻みの観察、7方向のブラウザ画像、床／坂／壁・4色・30/60/120Hzの確認を [比較記録](swim-splash-multiview-20261030/README.md) に保存した。
+
+移動・塗り・ダメージ・通信・本体アニメーションは維持する。曲線はINKWAVEの表示調整値で、原作からの抽出ではない。公式映像の入力条件と実行版、原作VFXの完全一致、Switch/iPad実機の確認は未確認のまま。
+
 ## 2026-10-30 ナワバリ開始カメラ
 
 公式60fpsのナワバリ紹介映像をフレームごとに解析。従来の上空から背後への一続きの移動を、味方→相手→自陣の3カットに置き換え、209F／399Fの切替、436FのREADY、578Fの開始エフェクト観測に合わせた。Match時計を共有し、ポーズ・試合差し替えと両チーム／回転したパッド配置に対応する。名札・番号・バッジは保持し、撮影中のチームを一列に表示する。画角・3D位置・寄りの曲線はINKWAVEの表示調整値で、本家の内部パラメータではない。初期入場モーション・現行実機・全ステージの完全一致は未確認。[比較と検証記録](turf-intro-camera-20261030.md)。

@@ -67,7 +67,7 @@ test('ordinary swim uses bounded curls and ballistic drops, and respects lifecyc
     for(let n=0;n<20;n++){a._finishFrame(1/60);fx.update(1/60,cam);}
     assert.equal(fx.dN,0,'no continuous swimming droplet pool');assert.equal(fx.glows.n,0,'no swimming bubble glows');
     const slot=fx.swimSurface.slots.find(s=>s.actor===a),mesh=slot.mesh;
-    assert(mesh.visible);assert.equal(mesh.geometry.userData.patches.length,11,'three surface curls and eight fixed drops');assert(mesh.geometry.attributes.position.count<=700,'bounded geometry budget');
+    assert(mesh.visible);assert.equal(mesh.geometry.userData.patches.length,11,'bow, two shoulders, four returning ligaments and four drops');assert(mesh.geometry.attributes.position.count<=700,'bounded geometry budget');
     const coords=mesh.geometry.attributes.position.array,before=coords.slice();
     assert(Math.max(...coords.filter((_v,i)=>i%3===1))>.1,'actual lifted liquid crests');
     assert(Math.min(...coords.filter((_v,i)=>i%3===1))<.01,'film roots stay in the ink');

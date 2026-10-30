@@ -1,4 +1,4 @@
-// Bounded surface curls and ballistic droplets. These are INKWAVE visual
+// A low bow, torn shoulder sheets and returning ligaments. These are INKWAVE visual
 // settings; their curves are not claimed as extracted retail VFX parameters.
 import * as THREE from 'three';
 import { G } from '../../src/core/ctx.js';
@@ -14,53 +14,83 @@ export function createSwimFilmGeometry() {
   const positions=[],data=[],indices=[],patches=[];
   const grid=(kind,nu,nv)=>{
     const start=positions.length/3;
-    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){positions.push(0,0,0);data.push(i/nu,j/nv,6);}
+    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){positions.push(0,0,0);data.push(i/nu,j/nv,kind);}
     for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
       const a=start+j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;
       indices.push(a,c,b,b,c,d);
     }
     patches.push({kind,start,nu,nv});
   };
-  // Three small, rooted curls. Eight tiny drops share this one indexed mesh;
-  // there are no separate particle objects or broad suspended membranes.
-  grid(0,24,4);grid(1,24,4);grid(2,20,4);
-  for(let i=0;i<8;i++)grid(3+i,6,4);
+  // The filled bow joins the two rooted shoulders. Four strips stretch out of
+  // the rear breakup; only four small drops are detached. One draw, 687 vertices.
+  grid(0,20,6);grid(1,20,6);grid(2,16,4);
+  for(let i=0;i<8;i++)grid(3+i,6,i<4?6:3);
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('filmData',new THREE.Float32BufferAttribute(data,3));g.setIndex(indices);
   g.userData.patches=patches;g.userData.filmHoles=Array.from({length:6},()=>new THREE.Vector4());
-  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.15,-.15),1.2);
+  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.18,-.28),1.5);
   updateSwimFilmGeometry(g,0,1);return g;
 }
 
 const hash=n=>fract(Math.sin(n*127.1+311.7)*43758.5453);
 export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
   const p=g.attributes.position.array,k=clamp(speedK),spread=Math.sqrt(k);
+  // Openings travel from the bow towards the returning rear edge. They are
+  // shared by both shoulders, with a phase offset in the shader, never the bow.
+  for(let i=0;i<6;i++)g.userData.filmHoles[i].set(
+    fract(time*1.25+i/6+.025*Math.sin(time*2.1+i*3.7)),.84+.17*Math.sin(time*2.7+i*2.4),
+    .077+.018*(1+Math.sin(i*4.1)),.21+.045*(1+Math.cos(i*2.7)));
   for(const patch of g.userData.patches){
     const {kind,start,nu,nv}=patch;
     // Birth-to-return ballistic arcs vary per birth and actor phase. The drop
     // collapses at BOTH surface crossings, so reseeding cannot pop in midair.
-    const id=kind-3,clock=time*(2.3+Math.max(0,id)*.173)+Math.max(0,id)*.618034;
+    const id=kind-3,clock=time*(1.9+Math.max(0,id)*.137)+Math.max(0,id)*.618034;
     const cycle=Math.floor(clock),age=fract(clock),seed=hash(cycle*19+id*73);
     const pulse=Math.sin(Math.PI*age),side=id%2?-1:1;
     for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
       const u=i/nu,v=j/nv;let x,y,z;
       if(kind<3){
         const shoulder=kind<2,sign=kind===0?1:-1;
-        const irregular=.72+.17*Math.sin(u*17-time*12+kind*2.7)+.11*Math.sin(u*29-time*8.13);
-        const curl=v*Math.PI*.84,edge=Math.sin(Math.PI*u),height=k*(shoulder?.075:.055)*irregular;
-        if(shoulder){x=sign*(.20-.07*Math.sin(curl));z=.18-u*.68;}
-        else{const a=(u-.5)*2.5;x=Math.sin(a)*(.18-.05*Math.sin(curl));z=.10+Math.cos(a)*.16;}
-        y=.002+height*edge*(1-Math.cos(curl));
-        x*=spread;z*=spread;x+=turn*.025*u*u;
+        const wave=u*15-time*14+kind*2.3;
+        const irregular=.78+.15*Math.sin(wave)+.07*Math.sin(u*25-time*9.3+kind);
+        if(shoulder){
+          const edge=Math.sin(Math.PI*u),belly=Math.sin(Math.PI*Math.min(1,u*1.4));
+          const curl=v*Math.PI*(.78+.09*Math.sin(wave*.61));
+          const height=k*(.18+.09*belly)*edge*irregular;
+          // A curved cross-section has volume from low cameras too. The rim
+          // rolls inward; its root stays on the supporting ink plane.
+          x=sign*(.19*(1-.4*u)+.10*belly-.20*Math.sin(curl)*edge+.02*v*v*Math.sin(wave));
+          z=.19-u*.78-v*.07*edge;
+          y=.003+height*Math.sin(curl);
+        }else{
+          const a=(u-.5)*Math.PI;
+          // A filled pressure mound, not a horseshoe with an empty centre.
+          x=Math.sin(a)*.19;
+          z=.19+Math.cos(a)*(.20-v*.44);
+          y=.003+k*.17*Math.cos(a)*Math.sin(Math.PI*v)
+            *(.80+.12*Math.sin(u*13-time*11)+.08*Math.sin(v*11+u*7-time*8));
+        }
+        x*=spread;z*=spread;x+=turn*.10*u*u;
+      }else if(kind<7){
+        // A finite sheet stretches and falls back before the next birth. Width
+        // goes to zero at both crossings, preventing a midair reset/pop.
+        const envelope=pulse*pulse,along=v,theta=TAU*u;
+        const width=(.018+.014*seed)*envelope*Math.sin(Math.PI*along);
+        const travel=age*.30+along*(.18+.11*seed)*envelope;
+        const across=id<2?.11-.18*Math.sin(Math.PI*along):.11+.07*seed+age*(.05+.07*seed)+along*.04;
+        x=(side*across+Math.sin(theta)*width)*spread;
+        z=(-.20-id*.07-travel)*spread+turn*.12*along*envelope;
+        y=.003+k*envelope*(.13+.11*seed)*Math.sin(Math.PI*along)
+          +(1+Math.cos(theta))*width*.23*spread;
       }else{
-        const radius=(.010+.009*seed)*Math.sqrt(k)*Math.sqrt(Math.max(0,pulse));
+        const radius=(.008+.009*seed)*spread*pulse*pulse;
         const theta=TAU*u,phi=Math.PI*v;
         // y = 4 h age(1-age) is the bounded ballistic rise and fall. A drop
         // travels away from its surface birth instead of levitating in place.
         x=side*(.13+age*(.16+.10*seed))*spread+Math.cos(theta)*Math.sin(phi)*radius;
-        z=(.17-id*.065-age*(.20+.15*seed))*spread+Math.sin(theta)*Math.sin(phi)*radius;
-        y=.002+4*k*(.09+.075*seed)*age*(1-age)+(1+Math.cos(phi))*radius*.8;
+        z=(-.05-(id-4)*.14-age*(.32+.18*seed))*spread+Math.sin(theta)*Math.sin(phi)*radius;
+        y=.003+4*k*(.12+.09*seed)*age*(1-age)+(1+Math.cos(phi))*radius*.8;
       }
       const n=(start+j*(nu+1)+i)*3;p[n]=x;p[n+1]=y;p[n+2]=z;
     }
@@ -93,26 +123,31 @@ function material(light,filmHoles) {
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvFilmData=filmData;');
     shader.fragmentShader='uniform float uFilmTime; uniform vec4 uFilmHoles[6]; uniform vec3 uFilmSun; varying vec3 vFilmData;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <alphatest_fragment>',`#include <alphatest_fragment>
-      if(vFilmData.z<1.5 || (vFilmData.z>2.5 && vFilmData.z<3.5)){
+      if(vFilmData.z<1.5){
         float u=vFilmData.x,v=vFilmData.y;
-        // Uneven openings in one continuous skin, staggered rather than rows
-        // of identical scallops. The leading bow remains a filled liquid fold.
+        float curl=3.14159265*(.78+.09*sin((u*15.0-uFilmTime*14.0+vFilmData.z*2.3)*.61));
+        // Only the shoulders tear. Keep the roots and the rounded leading bow
+        // filled; the opposite shoulder breaks at a different phase.
         for(int i=0;i<6;i++){
           float f=float(i);
           vec4 hole=uFilmHoles[i];
-          if(vFilmData.z>2.5){
-            hole=vec4(.5+.23*sin(f*2.4+uFilmTime*2.0),-.3+1.6*fract(uFilmTime*(.51+f*.037)+f*.618034),.13,.17);
-          }
-          if(vFilmData.z>2.5 && abs(u-.5-.06*sin(v*13.0+uFilmTime*9.0))>.28+.14*sin(v*19.0-uFilmTime*12.0))discard;
-          float scale=vFilmData.z>2.5?1.75:1.3;
-          vec2 q=(vec2(u,v)-hole.xy)/(hole.zw*scale);
+          hole.x=fract(hole.x+vFilmData.z*.31);
+          hole.y+=.06*sin(f*3.7+vFilmData.z*2.1);
+          // Both sides of a curled sheet use the same normalized height. A
+          // UV-space cut on just one side is backed by solid liquid on the
+          // other, so the tear disappears when the camera moves around it.
+          vec2 q=(vec2(u,sin(v*curl))-hole.xy)/hole.zw;
           float torn=1.0+.16*sin(q.x*3.0+q.y*5.0+uFilmTime*4.0+f);
-          if(dot(q,q)<torn)discard;
+          if(v>.18 && dot(q,q)<torn)discard;
         }
+        float rim=.90+.10*sin(u*39.0-uFilmTime*15.0+vFilmData.z*2.3);
+        if(v>rim)discard;
       }
-      if(vFilmData.z>3.5 && abs(vFilmData.z-6.0)>.25){
-        float split=smoothstep(.38,.95,vFilmData.x)*.23;
-        if(abs(vFilmData.y-.5)<split)discard;
+      if(vFilmData.z>1.5 && vFilmData.z<2.5){
+        // The leading pressure mound stays filled. Its rear edge stretches
+        // into the shoulder breakup instead of ending in a separate oval cap.
+        float edge=.80+.15*sin(vFilmData.x*23.0-uFilmTime*12.0);
+        if(vFilmData.y>edge)discard;
       }
 
     `);
@@ -146,7 +181,7 @@ function material(light,filmHoles) {
   return m;
 }
 
-// The conservative local sphere contains the bounded curls and eight drops.
+// The conservative local sphere contains the sheets, ligaments and four drops.
 // The vertex shader does not move them; an unseen sphere cannot draw a splash.
 function seenBy(camera,mesh){
   if(!camera?.projectionMatrix||!camera.matrixWorldInverse||camera.isArrayCamera)return true;
