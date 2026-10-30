@@ -20,7 +20,7 @@ test at patches/native-stages/tests/ray-fixed-axes.test.mjs:82:1
   AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
   + actual - expected
   ... Skipped lines
-  
+
     {
       depth: 0,
       error: [
@@ -34,7 +34,7 @@ test at patches/native-stages/tests/ray-fixed-axes.test.mjs:82:1
       ],
       triangles: 0
     }
-  
+
       at TestContext.<anonymous> (file:///workspace/actions-ray-opt/patches/native-stages/tests/ray-fixed-axes.test.mjs:100:63)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1382:25)
