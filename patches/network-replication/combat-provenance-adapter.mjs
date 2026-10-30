@@ -3,6 +3,49 @@
 // Blaster's bounded knockback refinement. Never copy an intermediate policy or
 // replace native guard anchors consumed by preceding composition adapters.
 export function adaptCombatProvenance(rel,code){
+  if(rel==='src/game/weapons.js'){
+    // Pure native birth decoding and motion for the receiver's crablet gate.
+    // The live ghost list, Actor state, RNG, FX, paint and damage stay untouched.
+    return "import { advanceInkFrame as iwCrabletInkStep, INK_LENGTH_SCALE as iwCrabletInkScale } from './inkFlight.js';\n"
+      +"import { fidelityWorldCollisionRadius as iwCrabletFieldRadius } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"
+      +"import { sweptWorldHit as iwCrabletWorldSweep } from '../../patches/splatoon3/runtime/weapons-collision.mjs';\n"
+      +code+`
+Projectiles.prototype.crabletCombatBirthId=function(event){
+  const e=this.prepareFidelityProjectilePacket?.(event);if(!e)return undefined;
+  const offset=(e[27]===null||typeof e[27]==='object'?1:0)+([35,36,37].includes(e.length)?2:0);
+  const id=e[29+offset];return Number.isSafeInteger(id)&&id>0?id:undefined;
+};
+Projectiles.prototype.makeCrabletCombatProbe=function(actor,event){
+  const e=this.prepareFidelityProjectilePacket?.(event);
+  if(!e||typeof this.restoreCrabletFidelityProbe!=='function'||
+    typeof this.restoreCrabletCatalogProbe!=='function')return null;
+  const p={type:e[3],wid:e[4],owner:actor,team:actor.team,age:0,delay:e[11],life:e[12],
+    straight:e[13],radius:e[14],size:e[15],grav:e[16],drag:e[17],ghost:true,seed:0,
+    combatProjectileId:this.crabletCombatBirthId(e),fieldRadius:0,fidelityMode:null,fidelityPhase:0,fidelityPlayerCollision:null,
+    fidelityFieldCollision:null,catalog:null,inkProfile:null,
+    pos:new THREE.Vector3(e[5],e[6],e[7]),prev:new THREE.Vector3(e[5],e[6],e[7]),
+    start:new THREE.Vector3(e[5],e[6],e[7]),vel:new THREE.Vector3(e[8],e[9],e[10])};
+  this.inkFlight.restore(p,e[27]);
+  this.restoreCrabletFidelityProbe(p,actor);
+  return this.restoreCrabletCatalogProbe(p,actor,event);
+};
+Projectiles.prototype.stepCrabletCombatProbe=function(p){
+  if(p.catalog)return this.stepCrabletCatalogProbe(p);
+  if(p.inkProfile){
+    p.prev.copy(p.pos);iwCrabletInkStep(p,p.inkProfile);
+    const field=p.inkProfile.collision.field*iwCrabletInkScale;
+    return {field0:field,field1:field,pad:p.inkPlayerRadius*.6,done:p.pos.y<PLAYER.waterY-1.8};
+  }
+  const field0=iwCrabletFieldRadius(p);
+  advanceFidelityProjectile(p,1/60);
+  return {field0,field1:iwCrabletFieldRadius(p),pad:p.size*.6,done:p.pos.y<PLAYER.waterY-1.8};
+};
+Projectiles.prototype.worldCrabletCombatProbe=function(from,to,r0,r1){
+  const hit=this._crabletWorldProbe||(this._crabletWorldProbe=new Hit());
+  return iwCrabletWorldSweep(G.physics,from,to,r0,r1,hit,true);
+};
+`;
+  }
   if(rel!=='src/net/netmatch.js')return code;
   if(code.includes('installCombatProvenance(NetMatch'))throw Error('combat provenance installed twice');
   const start="    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);";

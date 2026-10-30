@@ -15,7 +15,8 @@ const runtimeRoot=built?pathToFileURL(path.resolve(built)+path.sep):sourceRoot;
 const runtimePaths=['patches/network-replication/combat-provenance.mjs',
   'patches/network-replication/owner-tick-receipt.mjs',
   'patches/network-replication/snapshot-guard.mjs',
-  'patches/network-replication/sub-birth-commit.mjs'];
+  'patches/network-replication/sub-birth-commit.mjs',
+  'patches/network-replication/crablet-trajectory.mjs'];
 if(built){
   const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
   const manifest=JSON.parse(fs.readFileSync(new URL('inkwave-build.json',runtimeRoot),'utf8'));
@@ -580,7 +581,7 @@ test('one shot no longer mints both a projectile and a fire-event proof',()=>{
   charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
   assert.equal(charger.hitCalls.length,1,'hitscan fire events still prove Charger shots');
 });
-test('Boss body behind cover rejects straight fire; crablets keep the ray gate',()=>{
+test('Boss body and direct-fire crablets behind cover reject without spending proof',()=>{
   const nm=new Stub();walled(nm);
   nm.onMessage('peerA',boss(1,-1,0,'shooter',36));
   fire(nm);
@@ -590,9 +591,24 @@ test('Boss body behind cover rejects straight fire; crablets keep the ray gate',
   fire(seen);
   assert.equal(seen.bossCalls.length,1);
   const crab=new Stub();walled(crab);
+  // fire() travels at y=1; native crab sphere centre is y+.35. Put the
+  // target on that ray rather than relying on a bent centre-directed LOS.
+  crab.match.boss.crabs.get(7).y=.65;
   crab.onMessage('peerA',boss(1,7,0,'crab',36));
   fire(crab);
-  assert.equal(crab.bossCalls.length,1);
+  assert.equal(crab.bossCalls.length,0);
+  assert.equal(crab._bossSeq,0,'occluded claim does not spend native sequence');
+  const proof=crab._combatProvenance.proofs.get('peerA')[0];
+  assert.equal(proof.uses,0);
+  assert.equal(proof.bossTargets?.size??0,0);
+  walled(crab,{wallZ:20});
+  crab.onMessage('peerA',boss(1,7,0,'crab',36));
+  assert.equal(crab.bossCalls.length,1,'clear retry uses the original unspent proof');
+  assert.equal(crab._bossSeq,1);
+  assert.equal(proof.uses,1);
+  crab.onMessage('peerA',boss(2,7,0,'crab',36));
+  assert.equal(crab.bossCalls.length,1,'a new nonce cannot duplicate the crablet hit');
+  assert.equal(proof.uses,1);
 });
 test('nonpenetrating proof lands once; Charger and area retain their separate target capacity',()=>{
   const nm=new Stub();fire(nm);

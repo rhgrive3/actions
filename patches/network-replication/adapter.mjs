@@ -30,7 +30,7 @@ export function networkIdentity() {
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'roller-contact-adapter.mjs', 'roller-contact.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
     'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'utf8-length.mjs', 'rolling-quantile.mjs', 'ghost-live-index.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
-    .concat(['owner-tick-receipt.mjs', 'queue-network-20261027-adapter.mjs', 'canonical-weapon-actions.mjs', 'trusted-native-replay.mjs', 'trusted-native-replay-worker.mjs', 'native-command-wire.mjs'])
+    .concat(['crablet-trajectory.mjs', 'owner-tick-receipt.mjs', 'queue-network-20261027-adapter.mjs', 'canonical-weapon-actions.mjs', 'trusted-native-replay.mjs', 'trusted-native-replay-worker.mjs', 'native-command-wire.mjs'])
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {

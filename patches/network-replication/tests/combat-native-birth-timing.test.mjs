@@ -23,7 +23,7 @@ async function setup(t) {
   const boss=Object.assign(Object.create(f.Boss.prototype),{
     sim:true,dead:false,visible:true,invuln:false,pos:new f.THREE.Vector3(0,0,7),hp:1000,maxHp:1000,
     match:nm.match,flashN:0,weakN:0,log:{recv:0,recvDmg:0},
-    crabs:new Map([[3,{id:3,x:0,y:0,z:7,hp:100,dead:false}]]),
+    crabs:new Map([[3,{id:3,x:0,y:.7,z:7,hp:100,dead:false}]]),
     model:{flash(){},hitShapes:[{active:true,weak:false,pos:new f.THREE.Vector3(0,1,7),r:1}]},
   });nm.match.boss=boss;t.after(()=>nm.dispose());
   const birth=(ts=1000)=>nativeMainBirth(f,nm,attacker,attacker.weapon,ts);

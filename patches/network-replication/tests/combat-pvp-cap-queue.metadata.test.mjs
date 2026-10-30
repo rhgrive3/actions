@@ -14,6 +14,7 @@ const auditedImports = [tokenImport,
   "import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';",
   "import { damageLeafMax } from './damage-leaves.mjs';",
   "import { observeOwnerTick } from './owner-tick-receipt.mjs';",
+  "import { crabletProofKey, recordCrabletBirth, sampleCrabletHistory, crabletTrajectoryVisible, forgetCrabletTraces } from './crablet-trajectory.mjs';",
 ];
 let executable = source;
 for (const dependency of auditedImports) {
@@ -51,11 +52,23 @@ const ceilingSources = ['../combat-hit-ceilings-data.mjs', '../damage-leaves.mjs
   assert.doesNotMatch(text, /^import /m, 'ceiling dependency is a leaf module: ' + file);
   return text.replaceAll('export const ', 'const ').replaceAll('export function ', 'function ');
 }).join('\n');
+// Audit the new receiver-only helper in its own lexical scope. Keep its real
+// implementations (including fail-closed native queries), never permissive stubs.
+const crabNames='crabletProofKey,recordCrabletBirth,sampleCrabletHistory,crabletTrajectoryVisible,forgetCrabletTraces';
+let crabSource=fs.readFileSync(new URL('../crablet-trajectory.mjs',import.meta.url),'utf8');
+const crabImport="import { NETWORK_BOSS_CRABLET_SCENE_LIMIT } from './snapshot-guard.mjs';";
+assert.equal(crabSource.split(crabImport).length,2);
+crabSource=crabSource.replace(crabImport,'').replaceAll('export const ','const ').replaceAll('export function ','function ');
+assert.doesNotMatch(crabSource,/\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
+  'crablet helper has no external capabilities');
+const sceneLimit=fs.readFileSync(new URL('../snapshot-guard.mjs',import.meta.url),'utf8').match(/export const NETWORK_BOSS_CRABLET_SCENE_LIMIT\s*=\s*(\d+)\s*;/);
+assert.ok(sceneLimit,'one canonical literal scene limit');
+const crabBoundary=`const {${crabNames}}=(()=>{const NETWORK_BOSS_CRABLET_SCENE_LIMIT=${Number(sceneLimit[1])};${crabSource}\nreturn {${crabNames}};})();\n`;
 function run(body, direct = false) {
   assert.equal(executable.split('function flush(').length, 2, 'unique audited direct boundary');
   const prefix = direct ? executable.slice(0, executable.indexOf('function flush(')) : executable;
   assert.ok(prefix.length > 0);
-  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + prefix +
+  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + crabBoundary + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
   // Token binding is a metadata stub; every new Sprinkler/Torpedo capability throws if touched.

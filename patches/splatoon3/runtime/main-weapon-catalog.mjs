@@ -1221,7 +1221,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     c.to.lerp(c.from,radius/distance);
     return !G.physics.segment(c.from,c.to,c.hit,true).hit;
   }
-  function advance(p) {
+  function advance(p,presentation=true) {
     const s=p.catalog,d=s.descriptor,m=d.m;
     p.prev.copy(p.pos);p.age+=DT;
     if (s.stuck) return;
@@ -1241,12 +1241,36 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     const before=s.travel;
     p.pos.addScaledVector(p.vel,DT);
-    updateCatalogVisual(p);
+    if(presentation)updateCatalogVisual(p);
     let distance=p.prev.distanceTo(p.pos);
     s.travel+=distance;
     if(s.travel>s.range) { const f=clamp((s.range-before)/(s.travel-before));p.pos.lerpVectors(p.prev,p.pos,f);s.travel=s.range;distance=p.prev.distanceTo(p.pos); }
     return distance;
   }
+  // The damage gate decodes only direct-main births. Reuse the installed
+  // source descriptor and integrator; no visual or Actor state is advanced.
+  P.restoreCrabletCatalogProbe=function(p,a,e){
+    const r=RECORDS.get(e[4]);
+    if(!r||r.legacy)return p;
+    if(!['shooter','dualies','splatling','charger'].includes(r.family))return null;
+    const meta=e[27]?.s3Catalog;
+    if(!Array.isArray(meta)||meta.length!==5||meta[0]!==1||
+      !GHOST_CATALOG_SHOT_MODES.includes(meta[1])||!Number.isSafeInteger(meta[2])||
+      meta[2]<0||meta[2]>=30||!Number.isFinite(meta[3])||meta[3]<0||meta[3]>1)return null;
+    try{
+      const d=mode(r,meta[1],meta[2],meta[3]);
+      p.catalog={r,descriptor:d,travel:0,index:Math.max(0,finite(meta[4],0)),phase:0,
+        stuck:false,carry:0,range:d.range};
+      return p;
+    }catch{return null;}
+  };
+  P.stepCrabletCatalogProbe=function(p){
+    const s=p.catalog,d=s.descriptor;
+    const field0=collisionRadius(d.c,'Field',p.age*HZ,s.index,0);
+    advance(p,false);
+    return {field0,field1:collisionRadius(d.c,'Field',p.age*HZ,s.index,0),
+      pad:collisionRadius(d.c,'Player',p.age*HZ,s.index,0),done:p.pos.y<PLAYER.waterY-1.8};
+  };
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
     if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub'&&d.key!=='arrow')return true;

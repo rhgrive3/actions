@@ -1944,6 +1944,12 @@ export function installWeaponsFidelity(context,profile) {
       initializeSplatlingFlight(p,w);
     }else if(p.fidelityMove){p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=p.fidelityMove.freeDrag*60;}
   }
+  // Read-only receiver probes use the same native main-flight initialization
+  // as ghostProjectile, without allocating a cosmetic ghost or drawing RNG.
+  Projectiles.prototype.restoreCrabletFidelityProbe=function(p,actor){
+    initialize(p,WEAPONS[p.wid]||actor.weapon);
+    return p;
+  };
   Projectiles.prototype._push=function(p){
     const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
     if(active&&p.type==='slosh'){
