@@ -1,0 +1,2414 @@
+{
+  "trajectory": {
+    "births": [
+      [
+        6.099854175815902,
+        1.0332556871428833,
+        0.9484798783319183
+      ]
+    ],
+    "frames": [
+      {
+        "time": 14.783333333333648,
+        "pos": [
+          6.099854175815902,
+          1.1108723788035983,
+          1.246981127915326
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.800000000000315,
+        "pos": [
+          6.099854175815902,
+          1.1718224037976468,
+          1.5454823774987339
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.816666666666983,
+        "pos": [
+          6.099854175815902,
+          1.2161057621250286,
+          1.8439836270821417
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.83333333333365,
+        "pos": [
+          6.099854175815902,
+          1.2437224537857439,
+          2.1424848766655495
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.850000000000318,
+        "pos": [
+          6.099854175815902,
+          1.2546724787797923,
+          2.440986126248957
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.866666666666985,
+        "pos": [
+          6.099854175815902,
+          1.248955837107174,
+          2.739487375832365
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.883333333333653,
+        "pos": [
+          6.099854175815902,
+          1.2265725287678892,
+          3.0379886254157724
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.90000000000032,
+        "pos": [
+          6.099854175815902,
+          1.1875225537619378,
+          3.33648987499918
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.916666666666988,
+        "pos": [
+          6.099854175815902,
+          1.1318059120893196,
+          3.6349911245825877
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.933333333333655,
+        "pos": [
+          6.099854175815902,
+          1.0594226037500347,
+          3.9334923741659953
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.950000000000323,
+        "pos": [
+          6.099854175815902,
+          0.9703726287440833,
+          4.231993623749403
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.96666666666699,
+        "pos": [
+          6.099854175815902,
+          0.8646559870714651,
+          4.530494873332811
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 14.983333333333658,
+        "pos": [
+          6.099854175815902,
+          0.7422726787321803,
+          4.8289961229162195
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 15.000000000000325,
+        "pos": [
+          6.099854175815902,
+          0.6032227037262288,
+          5.127497372499628
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 15.016666666666993,
+        "pos": [
+          6.099854175815902,
+          0.44750606205361054,
+          5.3484798783319185
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 15.03333333333366,
+        "pos": [
+          6.099854175815902,
+          0.27512275371432565,
+          5.3484798783319185
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 15.050000000000328,
+        "pos": [
+          6.099854175815902,
+          0.08607277870837413,
+          5.3484798783319185
+        ],
+        "phase": "flight"
+      },
+      {
+        "time": 15.066666666666995,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.083333333333663,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.10000000000033,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.116666666666998,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.133333333333665,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.150000000000333,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.166666666667,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.183333333333668,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.200000000000335,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.216666666667003,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.23333333333367,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      },
+      {
+        "time": 15.250000000000338,
+        "pos": [
+          6.099854175815902,
+          -2.7755575615628914e-17,
+          5.3484798783319185
+        ],
+        "phase": "armed"
+      }
+    ]
+  },
+  "maxTravel": 4.4,
+  "status": "passed",
+  "phase": "baseline",
+  "scope": "Chromium SwiftShader; real offline tidewater native game, production Renderer post stack, seeded global setup RNG 0x12345678. Debug freeze and fixed 60 Hz Actor/Match/FX ticks; seeded shield-hit input and initial carrier position. Effect framebuffer hidden/visible comparison and GPU program link checks. No Switch real-device equivalence claim.",
+  "build": {
+    "revision": "077ed966587df7ffa5988f9eedce775835df063a797a91f932018f65521fc28f",
+    "inputHash": "ba3874294084030df1b641e968a2737c1ca780d04a94c542fbb869b93313d448",
+    "contentHash": "35ff67f65c2387ab9035e88edd4bdf6ea0bf48492c94202d3377c01a85c6ba67"
+  },
+  "browser": "154.0.8037.57",
+  "renderSettings": {
+    "quality": "low",
+    "bloom": false,
+    "shadows": false,
+    "teamInk": [
+      "f2e312",
+      "8a3cff"
+    ]
+  },
+  "boot": {
+    "url": "http://127.0.0.1:40841/?shadercheck=1",
+    "startedAt": "2026-10-30T12:54:58.511Z",
+    "status": "ready",
+    "failures": [],
+    "finishedAt": "2026-10-30T12:56:23.703Z"
+  },
+  "events": [
+    {
+      "kind": "rainmaker-pop",
+      "pos": [
+        6.5,
+        0,
+        0
+      ],
+      "team": 0,
+      "radius": 7,
+      "damage": 900,
+      "id": "0:0",
+      "at": 3.3333333333333264
+    },
+    {
+      "kind": "rainmaker-pickup",
+      "id": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        0,
+        0
+      ],
+      "at": 3.3333333333333264
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.3333333333333264
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.349999999999993
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.3666666666666596
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.383333333333326
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.399999999999993
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.4166666666666594
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.433333333333326
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.4499999999999926
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.4666666666666592
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.483333333333326
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.4999999999999925
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.516666666666659
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.5333333333333257
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.5499999999999923
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.566666666666659
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.5833333333333255
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.599999999999992
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.6166666666666587
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.6333333333333253
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.649999999999992
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.6666666666666585
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.683333333333325
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.6999999999999917
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.7166666666666583
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.733333333333325
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.7499999999999916
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.766666666666658
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.7833333333333248
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.7999999999999914
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.816666666666658
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.8333333333333246
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.849999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.866666666666658
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.8833333333333244
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.899999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.9166666666666576
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.9333333333333242
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.949999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.9666666666666575
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.983333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 3.9999999999999907
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.016666666666658
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.033333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.049999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.0666666666666575
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.083333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.099999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.116666666666657
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.133333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.149999999999991
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.166666666666657
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.183333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.19999999999999
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.216666666666657
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.233333333333324
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.24999999999999
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.266666666666657
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.2833333333333234
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.29999999999999
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.316666666666657
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.333333333333323
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.34999999999999
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.3666666666666565
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.383333333333323
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.39999999999999
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.416666666666656
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.433333333333323
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.4499999999999895
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.466666666666656
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.483333333333323
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.499999999999989
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.516666666666656
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.533333333333323
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.549999999999989
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.566666666666656
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.583333333333322
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.599999999999989
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.616666666666656
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.633333333333322
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.649999999999989
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.666666666666655
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.683333333333322
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.699999999999989
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.716666666666655
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.733333333333322
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.7499999999999885
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.766666666666655
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.783333333333322
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.799999999999988
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.816666666666655
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.8333333333333215
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.849999999999988
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.866666666666655
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.883333333333321
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.899999999999988
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.9166666666666545
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.933333333333321
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.949999999999988
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.966666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.983333333333321
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 4.999999999999988
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.016666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.033333333333321
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.049999999999987
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.066666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.083333333333321
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.099999999999987
+    },
+    {
+      "kind": "rainmaker-charged",
+      "id": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "at": 5.116666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.116666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.13333333333332
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.149999999999987
+    },
+    {
+      "kind": "rainmaker-shot",
+      "id": 0,
+      "actorId": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "aim": [
+        0,
+        0.09983341664682813,
+        0.9950041652780256
+      ],
+      "charge": 1,
+      "shotOrigin": {
+        "actorId": "0:0",
+        "owner": null,
+        "life": 1,
+        "team": 0,
+        "body": [
+          6.5,
+          0.7,
+          0
+        ],
+        "muzzle": [
+          6.099854175815902,
+          1.0332556871428833,
+          0.9484798783319183
+        ]
+      },
+      "damage": 60,
+      "blastDamage": 180,
+      "outerDamage": 40,
+      "radius": 1.4,
+      "nearRadius": 0.92,
+      "directRange": 4.4,
+      "nearRange": 5.3,
+      "effectiveRange": 5.8,
+      "paintRadius": 1,
+      "speed": 18,
+      "launchY": 3.3600000000000008,
+      "recoil": 1.44,
+      "trailRadius": 0.48,
+      "at": 5.166666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.166666666666654
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.18333333333332
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.199999999999987
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.2166666666666535
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.23333333333332
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.249999999999987
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.266666666666653
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.28333333333332
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.2999999999999865
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.316666666666653
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.33333333333332
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.349999999999986
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.366666666666653
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.3833333333333195
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.399999999999986
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.416666666666653
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.433333333333319
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.449999999999986
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.466666666666653
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.483333333333319
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.499999999999986
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.516666666666652
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.533333333333319
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.549999999999986
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.566666666666652
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.583333333333319
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.599999999999985
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.616666666666652
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.633333333333319
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.649999999999985
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.666666666666652
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.6833333333333185
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.699999999999985
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.716666666666652
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.733333333333318
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.749999999999985
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.7666666666666515
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.783333333333318
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.799999999999985
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.816666666666651
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.833333333333318
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.8499999999999845
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.866666666666651
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.883333333333318
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.899999999999984
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.916666666666651
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.933333333333318
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.949999999999984
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.966666666666651
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.983333333333317
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 5.999999999999984
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.016666666666651
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.033333333333317
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.049999999999984
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.06666666666665
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.083333333333317
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.099999999999984
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.11666666666665
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.133333333333317
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.1499999999999835
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.16666666666665
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.183333333333317
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.199999999999983
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.21666666666665
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.2333333333333165
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.249999999999983
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.26666666666665
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.283333333333316
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.299999999999983
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.3166666666666496
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.333333333333316
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.349999999999983
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.366666666666649
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.383333333333316
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.399999999999983
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.416666666666649
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.433333333333316
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.449999999999982
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.466666666666649
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.483333333333316
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.499999999999982
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.516666666666649
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.5333333333333155
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.549999999999982
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.566666666666649
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.583333333333315
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.599999999999982
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.6166666666666485
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.633333333333315
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.649999999999982
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.666666666666648
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.683333333333315
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.6999999999999815
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.716666666666648
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.733333333333315
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.749999999999981
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.766666666666648
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.783333333333315
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.799999999999981
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.816666666666648
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.833333333333314
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.849999999999981
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.866666666666648
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.883333333333314
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.899999999999981
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.916666666666647
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.933333333333314
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.949999999999981
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.966666666666647
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.983333333333314
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 6.9999999999999805
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.016666666666647
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.033333333333314
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.04999999999998
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.066666666666647
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.0833333333333135
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.09999999999998
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.116666666666647
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.133333333333313
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.14999999999998
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.1666666666666465
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.183333333333313
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.19999999999998
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.216666666666646
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.233333333333313
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.24999999999998
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.266666666666646
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.283333333333313
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.299999999999979
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.316666666666646
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.333333333333313
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.349999999999979
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.366666666666646
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.383333333333312
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.399999999999979
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.416666666666646
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.433333333333312
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.449999999999979
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.4666666666666455
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.483333333333312
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.499999999999979
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.516666666666645
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.533333333333312
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.5499999999999785
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.566666666666645
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.583333333333312
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.599999999999978
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.616666666666645
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.6333333333333115
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.649999999999978
+    },
+    {
+      "kind": "special-gain",
+      "team": 1,
+      "points": 0.05,
+      "at": 7.666666666666645
+    }
+  ],
+  "captures": [
+    {
+      "name": "01-barrier-neutral",
+      "nativeTime": 12.96666666666689,
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 1000,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": null,
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-barrier",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1"
+      ],
+      "effectPixels": {
+        "changedPixels": 22261,
+        "maxDelta": 502,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 282,
+        "calls": 285,
+        "triangles": 1290916,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "02-barrier-pressured",
+      "nativeTime": 12.96666666666689,
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 350,
+        "balance": 650,
+        "team": 0
+      },
+      "carrier": null,
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-barrier",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1"
+      ],
+      "effectPixels": {
+        "changedPixels": 50242,
+        "maxDelta": 510,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 294,
+        "calls": 569,
+        "triangles": 2581728,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "03-carrier-idle",
+      "nativeTime": 13.716666666666928,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 19087,
+        "maxDelta": 466,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 307,
+        "calls": 843,
+        "triangles": 3806395,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "03-idle-play-camera",
+      "nativeTime": 13.716666666666928,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 12534,
+        "maxDelta": 463,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 319,
+        "calls": 1152,
+        "triangles": 5073951,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "04-carrier-half-charge",
+      "nativeTime": 14.216666666666953,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0.4833333333333333,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 28033,
+        "maxDelta": 539,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 331,
+        "calls": 1425,
+        "triangles": 6344576,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "05-carrier-full-charge",
+      "nativeTime": 14.76666666666698,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 1,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 32748,
+        "maxDelta": 561,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 343,
+        "calls": 1695,
+        "triangles": 7615171,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "05-full-play-camera",
+      "nativeTime": 14.76666666666698,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 1,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 21247,
+        "maxDelta": 422,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 355,
+        "calls": 2001,
+        "triangles": 8928687,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "06-shot-flight",
+      "nativeTime": 14.850000000000318,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-shot",
+        "rainmaker-shot-head",
+        "rainmaker-shot-ink-sheet",
+        "rainmaker-shot-droplets"
+      ],
+      "effectPixels": {
+        "changedPixels": 1596,
+        "maxDelta": 403,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 372,
+        "calls": 2267,
+        "triangles": 10192451,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "07-shot-impact",
+      "nativeTime": 15.066666666666995,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-impact-splash",
+        "rainmaker-shot",
+        "rainmaker-shot-head"
+      ],
+      "effectPixels": {
+        "changedPixels": 694,
+        "maxDelta": 203,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 397,
+        "calls": 2509,
+        "triangles": 11417991,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "08-shot-detonation",
+      "nativeTime": 15.283333333333672,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-impact-splash",
+        "rainmaker-impact-splash"
+      ],
+      "effectPixels": {
+        "changedPixels": 2410,
+        "maxDelta": 420,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 410,
+        "calls": 2730,
+        "triangles": 12572975,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "name": "09-effects-cleaned",
+      "nativeTime": 17.283333333333633,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 5,
+        "maxDelta": 89,
+        "shellPixels": null
+      },
+      "draw": {
+        "frame": 422,
+        "calls": 2943,
+        "triangles": 13720781,
+        "points": 0,
+        "lines": 0
+      }
+    }
+  ],
+  "errors": []
+}

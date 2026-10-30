@@ -256,6 +256,14 @@ function tailLimits(p) {
  * the bounded history renderer remains the visual fallback. This is a
  * presentation decision only: projectile simulation/paint are untouched. */
 export function hissenVolumeFallback(p) { return actorOf(p)==='WeaponSlosherDiffusion'; }
+// WallDrop retains the projectile solely to paint the descending wall ink.
+// Its airborne Roller sheet/rod must end on the contact tick, on local and
+// ghost playback alike. Do not kill the paint simulation or mark it recycled.
+export function rollerFlightEnded(p) {
+  if (!p?.fidelityWallDrop) return false;
+  const kind = p._iwVisualKind || projectileVisualKind(p);
+  return kind === 'roller-horizontal' || kind === 'roller-vertical';
+}
 export function nativeVolumeOwns(p, engine) {
   if (!p?._inkVolumeRecipe || p._qualityDead || p.delay > 0 ||
       engine?.isInkVolumes !== true || !engine.assets) return false;
@@ -349,9 +357,10 @@ export class ProjectileVisualRuntime {
   // If the pack is unavailable, the new bounded geometry remains the fallback.
   nativeVolumeOwns(p) { return this.helpers.nativeVolumeOwns?.(p) === true; }
   nativeShapeOwns(p) { return this.helpers.nativeShapeOwns?.(p) === true; }
-  handles(p) { return !this.nativeShapeOwns(p) && !this.nativeVolumeOwns(p) &&
+  handles(p) { return rollerFlightEnded(p) || !this.nativeShapeOwns(p) && !this.nativeVolumeOwns(p) &&
     !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }
   ensureBirth(p) {
+    if(rollerFlightEnded(p))return false;
     if(this.nativeShapeOwns(p)||this.nativeVolumeOwns(p))return false;
     if(p._iwVisualHistory)return true;
     // Deferred Bucket rounds have no authoritative muzzle until their actual
@@ -564,6 +573,7 @@ export class ProjectileVisualRuntime {
     }
   }
   _drawRound(p,alpha) {
+    if(rollerFlightEnded(p))return;
     const h=p._iwVisualHistory;if(!h||!h.count||p.delay>0)return;
     const kind=p._iwVisualKind;
     const age=renderAge(p,alpha);
