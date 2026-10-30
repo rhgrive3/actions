@@ -81,8 +81,10 @@ try{
     await g.startMatch({mapId:stage,mode:'turf',difficulty:'normal',duration:180});
     G.time=0;g.rig.time=0;g.rig.shakeSeed=37.5;G.paint.clock=0;g.s3Clock?.reset();
     const [p0,p1]=G.level.spawnPads;g.rig.yaw=Math.atan2(p1.x-p0.x,p1.z-p0.z);g.rig.pitch=.2;
+    // Match the same 77-frame post-intro probe after the current cinematic.
+    const probeFire=(G.match.turfIntroFrames??253)+77;
     for(let i=0;i<setupFrames;i++){
-      if(i===330)g.debug.fire(true);if(i===333)g.debug.fire(false);
+      if(i===probeFire)g.debug.fire(true);if(i===probeFire+3)g.debug.fire(false);
       nativeRenderSeed(i);g._frame(1/60);
     }
     g._skipRender=false;g.R.setDynamicScale(1);window.nativeRenderFrame=setupFrames;

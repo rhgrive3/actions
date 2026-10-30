@@ -2,6 +2,12 @@ name: INKWAVE Wave 9-11 native GPU validation
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths:
+      - 'inkwave-public/**'
+      - 'patches/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/inkwave-wave-native-gpu-validation.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -92,6 +98,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24.19.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install pinned build and browser tools
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1 ws@8.22.0
@@ -134,7 +143,7 @@ jobs:
           sync_args=()
           if [[ "$BENCH_BROWSER" == webkit ]]; then sync_args+=(--sync-frames); fi
           for variant in reference candidate; do
-            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/robo-$variant" --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 600 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --occlusion-checks
+            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/robo-$variant" --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 925 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --occlusion-checks
           done
       - name: Check Mako images and emitted material links after timing
         env:
@@ -150,7 +159,7 @@ jobs:
           sync_args=()
           if [[ "$BENCH_BROWSER" == webkit ]]; then sync_args+=(--sync-frames); fi
           for variant in reference candidate; do
-            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/mako-$variant" --stage mako --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 600 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --images-only --occlusion-checks
+            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/mako-$variant" --stage mako --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 925 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --images-only --occlusion-checks
           done
           node scripts/check-inkwave-wave-gpu-materials.mjs --site work/site-candidate --out work/evidence/materials --browser "$BENCH_BROWSER"
           INKWAVE_BUILT_SITE="$GITHUB_WORKSPACE/work/site-candidate" node --experimental-vm-modules --test patches/native-stages/tests/ink-chunks.test.mjs patches/native-stages/tests/ink-empty-lifecycle.test.mjs patches/native-stages/tests/ink-offscreen-chart.test.mjs
