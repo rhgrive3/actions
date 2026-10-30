@@ -5,6 +5,20 @@ import {pathToFileURL} from 'node:url';
 
 export const EVIDENCE_ARTIFACT_LIMIT=128*1024*1024;
 const order=(a,b)=>a<b?-1:a>b?1:0;
+const encodeManifest=manifest=>Buffer.from(JSON.stringify(manifest,null,2)+'\n');
+export function trimEvidenceInventory(manifest,maximumBytes){
+ if(!manifest.files.length||encodeManifest(manifest).length<=maximumBytes)return;
+ const files=manifest.files,omitted=manifest.omittedInventoryEntries;let low=0,high=files.length;
+ // Removing a complete row reduces the encoded size even when the omitted
+ // count gains a digit. Find the same longest prefix as repeated tail removal,
+ // counting actual UTF-8 bytes and the omitted count at every candidate.
+ while(low<high){
+  const kept=Math.ceil((low+high)/2);
+  manifest.files=files.slice(0,kept);manifest.omittedInventoryEntries=omitted+files.length-kept;
+  if(encodeManifest(manifest).length<=maximumBytes)low=kept;else high=kept-1;
+ }
+ manifest.files=files.slice(0,low);manifest.omittedInventoryEntries=omitted+files.length-low;
+}
 function assertNoSymlinkComponents(file){
  const absolute=path.resolve(file);let current=path.parse(absolute).root;
  for(const part of absolute.slice(current.length).split(path.sep).filter(Boolean)){
@@ -48,15 +62,15 @@ export async function packageEvidence(input,{output=path.resolve(input+'-bounded
   priority(row)===3&&preferredPaths.some(prefix=>row.path.startsWith(prefix+'/'))?2.5:priority(row);
  const selected=rows.slice().sort((a,b)=>rank(a)-rank(b)||(rank(a)>=2.5?b.mtime-a.mtime:0)||order(a.path,b.path));
  const manifest={schema:1,status:overBudget?'over-budget':unsupported?'non-regular-evidence':'no-evidence',sourceSha,limitBytes:limit,originalBytes,inventorySha256:fullInventoryHash.digest('hex'),inventoryEntries:rows.length,omittedInventoryEntries:0,files:selected.map(({file,mtime,regular,...row})=>row)};
- const encode=()=>Buffer.from(JSON.stringify(manifest,null,2)+'\n');
+ const encode=()=>encodeManifest(manifest);
  // Even unusually large inventories must leave a submitted diagnostic. The
  // complete inventory is bound by its digest; retained rows identify omissions.
- while(encode().length>limit/2&&manifest.files.length){manifest.files.pop();manifest.omittedInventoryEntries++;}
+ trimEvidenceInventory(manifest,limit/2);
  const reserve=Math.min(limit,Math.max(1024,Math.ceil(encode().length*1.5)));let remaining=limit-reserve;
  fs.rmSync(output,{recursive:true,force:true});fs.mkdirSync(output,{recursive:true});
  selected.length=manifest.files.length;
- for(const row of selected){
-  if(!row.regular)continue;const info=manifest.files.find(item=>item.path===row.path),target=path.join(output,'files',row.path);
+ for(let index=0;index<selected.length;index++){
+  const row=selected[index];if(!row.regular)continue;const info=manifest.files[index],target=path.join(output,'files',row.path);
   const tail=row.bytes>remaining&&/\.log$/.test(row.path),length=tail?Math.min(remaining,1024*1024):row.bytes;
   if(length>remaining||tail&&length<256)continue;
   fs.mkdirSync(path.dirname(target),{recursive:true});
@@ -68,8 +82,8 @@ export async function packageEvidence(input,{output=path.resolve(input+'-bounded
  let body=encode();
  // The reserve includes copy metadata. Retain the manifest even if a future
  // metadata field grows, by dropping the lowest-priority submitted copies.
- for(const row of selected.slice().reverse()){
-  if(body.length+limit-reserve-remaining<=limit)break;const info=manifest.files.find(item=>item.path===row.path);if(!info.submittedPath)continue;
+ for(let index=selected.length-1;index>=0;index--){
+  if(body.length+limit-reserve-remaining<=limit)break;const info=manifest.files[index];if(!info.submittedPath)continue;
   fs.unlinkSync(path.join(output,info.submittedPath));remaining+=info.submittedBytes;for(const key of ['submittedPath','submittedBytes','submittedSha256','originalByteOffset'])delete info[key];info.disposition='omitted';info.reason='manifest-budget';body=encode();
  }
  fs.writeFileSync(path.join(output,'EVIDENCE_MANIFEST.json'),body);

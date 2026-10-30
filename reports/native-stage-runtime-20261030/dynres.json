@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "baseline": "fd6435a4dd2781928d211537c485c87bc50b3784",
+  "scope": "Node API and fully composed Game._dynRes control replay; not physical-device or whole-game FPS",
+  "cause": "The previous dt > 0.25 guard rejected every sample during persistent sub-4fps native play, so the existing adaptive-resolution controller could never run.",
+  "change": {
+    "thresholdSeconds": 0.25,
+    "consecutiveSamples": 4,
+    "maxDiagnosticSampleSeconds": 1,
+    "eligibility": "native, visible, active unpaused playing match, non-ultra",
+    "normalFramePolicy": "unchanged",
+    "simulationDelta": "unchanged",
+    "resetBoundaries": [
+      "normal/invalid sample",
+      "match",
+      "quality",
+      "level",
+      "pause",
+      "visibility event",
+      "hidden/recovery loop",
+      "manual diagnostic lock"
+    ],
+    "causalTrial": "existing measured-gain requirement and restoration/backoff retained"
+  },
+  "files": {
+    "patches/local-quality/refresh-aware-dynres-adapter.mjs": "8d8b09d12e38b715acb0ea6bfddced980b417e052cf5a7fc0fe03f64e02913ca",
+    "patches/local-quality/idle-adapter.mjs": "efac07c073c38feaa7e4cf5f29505b49281401b6cd0aae0f228e8c2b3427fe18",
+    "patches/local-quality/debug-ab-runtime.mjs": "d4970d56a1398206f588a54b515e7dfab0567485ab492d9020e413604fdbb0bf",
+    "patches/splatoon3/runtime/clock.mjs": "bf9deb8b91aadca68a229ede3cfc791b96481ddde440a061ab43b6d03e157f7b",
+    "patches/local-quality/tests/native-sustained-dynres.test.mjs": "063760753956b71693df182823d69ae85fcc0bd2f80a4ff9dd9522986b530034"
+  },
+  "checks": [
+    {
+      "command": "node --test patches/local-quality/tests/refresh-aware-dynres.test.mjs patches/local-quality/tests/native-sustained-dynres.test.mjs patches/splatoon3/tests/clock.test.mjs",
+      "pass": 38,
+      "fail": 0,
+      "skip": 0,
+      "logSha256": "929bbf757142efb3c924089cf196d5bdafd19fda332b87c30636a4f8caebf38c"
+    },
+    {
+      "command": "node --experimental-vm-modules --test patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/debug-profiler-settings.test.mjs patches/splatoon3/tests/context-recovery-clock.test.mjs",
+      "pass": 62,
+      "fail": 0,
+      "skip": 0,
+      "logSha256": "220f2ba174d7d2cc4cb19047c38362a6acb29dfbbfce211193a43f3c114f2800"
+    }
+  ],
+  "results": [
+    "Before control rejects forty consecutive 300ms samples without any scale trial; candidate reaches a 0.875 trial and restores 1.0 when unchanged CPU-bound cadence shows no gain.",
+    "Isolated hitches, up to three consecutive slow frames, and invalid intervals do not trigger reductions.",
+    "Ordinary intervals produce exactly the same scale transitions and controller state as the control.",
+    "Active diagnostic locking, mobile/desktop floors, visibility, pause and recovery protections pass."
+  ]
+}

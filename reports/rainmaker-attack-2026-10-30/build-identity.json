@@ -1,0 +1,29 @@
+[
+  {
+    "site": "_site-before",
+    "revision": "5d6480b2e2c1a8afa789bcc1415bae586e3156cb",
+    "inputHash": "ba3874294084030df1b641e968a2737c1ca780d04a94c542fbb869b93313d448",
+    "contentHash": "35ff67f65c2387ab9035e88edd4bdf6ea0bf48492c94202d3377c01a85c6ba67",
+    "inputFiles": 1556,
+    "artifacts": 2275,
+    "status": "all exact Git input bytes and emitted artifact hashes matched"
+  },
+  {
+    "site": "_site",
+    "revision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3",
+    "inputHash": "36d5629ecb6545c856b0586ffa1b3a102a5da6d0ffcc6162739a176a24a6222c",
+    "contentHash": "acd69f528eebef6354102a7edfc683be0003dde45cfd7ed860928c47679b9af7",
+    "inputFiles": 1557,
+    "artifacts": 2275,
+    "status": "all exact Git input bytes and emitted artifact hashes matched"
+  },
+  {
+    "site": "_site",
+    "revision": "feab97625845680cf62f2dbc20fddf565e757dda",
+    "inputHash": "c0567cccf73a2292f63c9153186be7f23fa6d66258bb68e612d9735045fab556",
+    "contentHash": "2d5b7177752ae15cf6d890824f549fe20258852e158e18c9dcef86f42456e67b",
+    "inputFiles": 1557,
+    "artifacts": 2275,
+    "status": "all exact Git input bytes and emitted artifact hashes matched"
+  }
+]

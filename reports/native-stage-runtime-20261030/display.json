@@ -1,0 +1,184 @@
+{
+  "scope": "Node CPU component using actual source geometry; not browser, GPU or device FPS",
+  "node": "v24.19.0",
+  "stage": "robo",
+  "stageRecordSha256": "6a24493108f89a8f78942c6ccefda71d255b89953d8cb21130a5ad86ccfa933d",
+  "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+  "fixtureSha256": "7cd31ce7b3fe26ed9facdeda1718d8fece10d380b1562d67051826ecb24b92d8",
+  "candidateSourceSha256": "79c8b415fc3f40f2f1aea37315778838f09283aeef2ae8ab53f2d08e7bbdc118",
+  "objects": 63,
+  "cameras": 240,
+  "loops": 4,
+  "parity": {
+    "exactIndexArrays": true,
+    "exactDrawCounts": true,
+    "exactUploadRanges": true,
+    "exactVersions": true,
+    "selectedTriangles": 22011896
+  },
+  "beforeMedianMs": 5917.994970999996,
+  "afterMedianMs": 371.1324620000014,
+  "reductionPercent": 93.72874658024102,
+  "beforeMedianCpuMs": 5917.535,
+  "afterMedianCpuMs": 371.359,
+  "cpuReductionPercent": 93.72443086521668,
+  "samples": [
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 5816.090214,
+        "cpu": {
+          "user": 5814410,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 371.1324620000014,
+        "cpu": {
+          "user": 371359,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 6037.861239000002,
+        "cpu": {
+          "user": 6037328,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 372.0895780000028,
+        "cpu": {
+          "user": 372158,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 5917.994970999996,
+        "cpu": {
+          "user": 5917535,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 410.63203500000236,
+        "cpu": {
+          "user": 410735,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 5918.7594619999945,
+        "cpu": {
+          "user": 5918192,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 438.93803599999956,
+        "cpu": {
+          "user": 437361,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 5774.817425000001,
+        "cpu": {
+          "user": 5774452,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 366.8053729999956,
+        "cpu": {
+          "user": 366889,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 5518.183593000002,
+        "cpu": {
+          "user": 5517823,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 366.6112009999997,
+        "cpu": {
+          "user": 367895,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 6294.888169999998,
+        "cpu": {
+          "user": 6301775,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 363.72689099999843,
+        "cpu": {
+          "user": 363850,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 5596.633429000001,
+        "cpu": {
+          "user": 5595701,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 360.703843999996,
+        "cpu": {
+          "user": 360839,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    }
+  ],
+  "baselineCommit": "fd6435a4dd2781928d211537c485c87bc50b3784",
+  "candidateCommit": "d3313ffdf4f553dde06549ff27a7de5d32dfe6b0",
+  "scriptSha256": "bfa2e5416a6897f60fd91ce2ceec8b1f56f1856239b2047d939a3e2e76b8c32c",
+  "command": "node --experimental-vm-modules scripts/benchmark-native-display-runs.mjs --out .ci-scratch/native-render/robo-runs.json",
+  "metadataCorrection": "Original timing JSON added Three.js Infinity drawRange sentinels to the triangle sum, which serialized as null. Timings and exact-array/range/version parity are unchanged. Corrected triangle totals were reconstructed from the same 63 source objects, 240 cameras, tile bounding spheres and per-tile triangle counts; complete draws are bounded by index.count. The benchmark script now applies that bound. No second timing run was made."
+}

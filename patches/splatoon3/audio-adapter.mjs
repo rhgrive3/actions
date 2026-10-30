@@ -71,6 +71,17 @@ export function adaptWeaponAudio(rel,code){
     for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
+    // The recorded motor's rate now follows the actual admitted charge, not a
+    // fixed 2022 loop speed. The two Ready cues are owned by the loop wrapper:
+    // suppress only the old local one-shot; leave its visual/rumble edge intact.
+    code=once(code,
+      "this.spinLoop?.set({ pitch: 0.6 + 0.85 * this.charge, pos });",
+      "this.spinLoop?.set({ progress:this.charge, pos });",
+      'local Splatling charge progress into shared audio');
+    code=once(code,
+      "if (a.isLocal) G.audio?.playWeapon?.(a.weapon.id, 'ready', { actor:a,  volume: 0.7 });",
+      "/* Full-charge Ready is fired once by the recorded charge-loop stage owner. */",
+      'local Splatling does not duplicate full-charge Ready');
     // Native Splatling keeps one loop handle through charging and streaming.
     // Its existing 'splatling_spin' starts during CHARGE, so play the sourced
     // motor-charge MP3 there. At the admitted release, change ownership to
@@ -112,7 +123,7 @@ export function adaptWeaponAudio(rel,code){
     // MotorFire alive during charging, and do not invoke old splatling_spin.
     code=once(code,
       "h = this._voiceLoop(a, near, 'spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge });",
-      "const isSpinner = k === 'splatling' || (k === 'catalog' && (a.weapon.behaviorKind === 'splatling' || a.weapon.catalogRecord?.family === 'splatling')) || a.weapon.id?.startsWith('s3-spinner-');\n      h = this._voiceLoop(a, near, 'spinnerCharge', isSpinner && wr.charging && !wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });\n      h = this._voiceLoop(a, near, 'spin', isSpinner && wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });",
+      "const isSpinner = k === 'splatling' || (k === 'catalog' && (a.weapon.behaviorKind === 'splatling' || a.weapon.catalogRecord?.family === 'splatling')) || a.weapon.id?.startsWith('s3-spinner-');\n      h = this._voiceLoop(a, near, 'spinnerCharge', isSpinner && wr.charging && !wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4, progress: wr.charge });\n      h = this._voiceLoop(a, near, 'spin', isSpinner && wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });",
       'remote Spinner charges with Motor and streams with MotorFire, never one sustained old motor');
     code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='spinnerCharge'?'charge':key==='spin'?'spin':'roll', {actor:a,pos:a.pos,volume:0})");
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");

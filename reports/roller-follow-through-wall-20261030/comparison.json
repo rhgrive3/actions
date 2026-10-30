@@ -1,0 +1,203 @@
+{
+  "baselineCommit": "5d6480b2e2c1a8afa789bcc1415bae586e3156cb",
+  "reference": {
+    "url": "https://media-assets.apps-jp.nintendo.com/contents/embed/NablZy7jqxO",
+    "sha256": "4bb9e8f212b83f45d80696b6ddd87217403c570fd60d62a85c32f16a3576cc60",
+    "fps": 60,
+    "firstVisibleInkFrames": [
+      425,
+      426
+    ],
+    "forwardFollowThroughFrames": [
+      430,
+      440
+    ],
+    "version": "footage version/gear/input/FOV undisclosed; repository parameter reference is S3 11.3.0",
+    "otherObservedVerticalSequences": [
+      [
+        480,
+        528
+      ],
+      [
+        544,
+        592
+      ]
+    ]
+  },
+  "browser": "154.0.8037.57",
+  "beforeContentHash": "35ff67f65c2387ab9035e88edd4bdf6ea0bf48492c94202d3377c01a85c6ba67",
+  "afterContentHash": "234c3d23b31eab74bc158b57ea6977e61edfefcfb4a6ca784e2bb696aecfa8ec",
+  "sameStyle": {
+    "hair": 0,
+    "skin": 2,
+    "outfit": 0,
+    "eyes": 0,
+    "hat": 0,
+    "brows": 0
+  },
+  "scenario": "Actual emitted production practice range, Actor/Runner/Character/IK/projectiles and WebGL. FixedClock at selected display Hz; controlled landing and ZR edges, horizontal aim, fixed camera relative to root. Not retail jump/input timing, matched Nintendo footage, hardware GPU performance or pixel parity.",
+  "rows": [
+    {
+      "tick": 31,
+      "sinceReleaseFrames": 0,
+      "beforeAxis": [
+        0.0052764909328889215,
+        0.99821699599625,
+        0.05945576126548031
+      ],
+      "afterAxis": [
+        0.0052764909328889215,
+        0.99821699599625,
+        0.05945576126548031
+      ],
+      "beforeTiltDegrees": 86.57801312397437,
+      "afterTiltDegrees": 86.57801312397437,
+      "afterGripGap": [
+        0,
+        1.4337172069988198e-15
+      ]
+    },
+    {
+      "tick": 33,
+      "sinceReleaseFrames": 2,
+      "beforeAxis": [
+        -0.0249433685199015,
+        0.8957913409062419,
+        0.4437743817800637
+      ],
+      "afterAxis": [
+        -0.05187701435642939,
+        0.6193398242466365,
+        0.7834072743366687
+      ],
+      "beforeTiltDegrees": 63.61025663030744,
+      "afterTiltDegrees": 38.2679409545685,
+      "afterGripGap": [
+        2.7755575615628914e-17,
+        3.379462171739212e-16
+      ]
+    },
+    {
+      "tick": 36,
+      "sinceReleaseFrames": 5,
+      "beforeAxis": [
+        -0.03392248412200608,
+        0.7545013011130894,
+        0.6554212780263143
+      ],
+      "afterAxis": [
+        -0.07168278489421152,
+        0.0817582928353017,
+        0.9940710034511957
+      ],
+      "beforeTiltDegrees": 48.98181362452248,
+      "afterTiltDegrees": 4.689639634352757,
+      "afterGripGap": [
+        0,
+        1.1926018882803991e-15
+      ]
+    },
+    {
+      "tick": 40,
+      "sinceReleaseFrames": 9,
+      "beforeAxis": [
+        -0.7027294218080403,
+        0.3486869092312295,
+        0.6201522386125118
+      ],
+      "afterAxis": [
+        -0.12719507437713015,
+        -0.0003572247160871233,
+        0.9918776564903047
+      ],
+      "beforeTiltDegrees": 20.407021635645084,
+      "afterTiltDegrees": -0.020467469004858505,
+      "afterGripGap": [
+        5.551115123125783e-17,
+        2.237726045655905e-16
+      ]
+    },
+    {
+      "tick": 46,
+      "sinceReleaseFrames": 15,
+      "beforeAxis": [
+        -0.7073610963603806,
+        0.30582113125804977,
+        0.6372705195063452
+      ],
+      "afterAxis": [
+        -0.11622510087451321,
+        -0.013160781067999783,
+        0.9931357005809376
+      ],
+      "beforeTiltDegrees": 17.807571942089425,
+      "afterTiltDegrees": -0.7540789798809798,
+      "afterGripGap": [
+        0,
+        2.618455766672135e-16
+      ]
+    },
+    {
+      "tick": 49,
+      "sinceReleaseFrames": 18,
+      "beforeAxis": [
+        -0.47562471821071417,
+        0.7604380931562608,
+        0.44217081982402323
+      ],
+      "afterAxis": [
+        -0.10595117917898952,
+        -0.11288563792205311,
+        0.9879429034015645
+      ],
+      "beforeTiltDegrees": 49.50283444795334,
+      "afterTiltDegrees": -6.481686855821715,
+      "afterGripGap": [
+        1.1188630228279524e-16,
+        3.188872858294072e-16
+      ]
+    },
+    {
+      "tick": 53,
+      "sinceReleaseFrames": 22,
+      "beforeAxis": [
+        -0.17535809127867716,
+        -0.2786542187885997,
+        -0.9442464541497704
+      ],
+      "afterAxis": [
+        0.7026975636891151,
+        -0.6966234131980565,
+        0.1446787965448705
+      ],
+      "beforeTiltDegrees": -16.179900696256684,
+      "afterTiltDegrees": -44.15672383748986,
+      "afterGripGap": [
+        1.1102230246251565e-16,
+        3.608224830031759e-16
+      ]
+    },
+    {
+      "tick": 56,
+      "sinceReleaseFrames": 25,
+      "beforeAxis": [
+        0.5733194958168598,
+        -0.7563179086963345,
+        -0.3150999471620152
+      ],
+      "afterAxis": [
+        0.5733194958168598,
+        -0.7563179086963345,
+        -0.3150999471620152
+      ],
+      "beforeTiltDegrees": -49.14065934337392,
+      "afterTiltDegrees": -49.14065934337392,
+      "afterGripGap": [
+        5.551115123125783e-17,
+        8.300030970468208e-16
+      ]
+    }
+  ],
+  "errors": [],
+  "limitations": "Rig and camera calibration, not recovered Nintendo bone angles or identical console input."
+}

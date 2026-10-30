@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import {fixtureHTML,createFixtureServer,assertBaselineReproduction,VIEWPORTS,clippingVisibility,stickyRevealDelta,groupGlyphLines} from '../check-inkwave-landscape-fixes.mjs';
+import {fixtureHTML,createFixtureServer,assertBaselineReproduction,VIEWPORTS,clippingVisibility,stickyRevealDelta,groupGlyphLines,parkDrawerPointer} from '../check-inkwave-landscape-fixes.mjs';
 const script=fs.readFileSync(new URL('../check-inkwave-landscape-fixes.mjs',import.meta.url),'utf8');
 test('exact bounded landscape matrix has no portrait or battle case',()=>{assert.deepEqual(VIEWPORTS, [{width:844,height:390},{width:1133,height:744},{width:740,height:360},{width:915,height:412}]);assert(VIEWPORTS.every(v=>v.width>v.height));assert(!script.includes('screenshot('));assert(!script.includes('recordVideo'));assert(!script.includes('--no-sandbox'));});
 test('fixture uses actual packaged stylesheet order and offline runtime, not reconstructed CSS',()=>{const s=fixtureHTML({variant:'candidate',screen:'loadout',lang:'ja'});const order=['/candidate/styles/ui.css','/candidate/styles/mobile.css','/candidate/patches/splatoon3/ui.css'];assert(order.every((v,i)=>s.indexOf(v)>=0&&(i===0||s.indexOf(order[i-1])<s.indexOf(v))));assert(s.includes('G.net=new MockNet()'));assert(s.includes('localizeGameContent({...config,LANG})'));assert(s.includes('data:,'));assert(!s.includes('classList.add(\'iw-touch\')'));assert(!s.includes('new WebSocket'));});
@@ -77,3 +77,16 @@ test('inverse native card rotation preserves one line and a genuine next-line or
 });
 
 test('line grouping fails closed on an invalid physical transform',()=>{assert.throws(()=>groupGlyphLines([],16.9,{a:0,b:0,c:0,d:0}),/invertible/);});
+
+
+test('drawer geometry observes real pointerleave neutrality without changing other screens or gates',async()=>{
+ const state={hover:true,rx:'3.15deg',ry:'-2deg'},card={classList:{contains:()=>state.hover},style:{getPropertyValue:k=>k==='--rx'?state.rx:state.ry}},calls=[];
+ const locator={evaluate:async()=>true};const page={mouse:{move:async(x,y)=>{calls.push([x,y]);state.hover=false;state.rx=state.ry='0deg';}},waitForFunction:async fn=>{assert(vm.runInNewContext('('+fn.toString()+')()',{document:{querySelectorAll:()=>[card]}}),'real hover owner did not clear');}};
+ assert.deepEqual(await parkDrawerPointer(locator,page),{parked:true,hoverCleared:true});assert.deepEqual(calls,[[0,0]]);
+ state.hover=true;const blocked={...page,mouse:{move:async()=>{}}};await assert.rejects(parkDrawerPointer(locator,blocked),/real hover owner/);
+ state.hover=false;state.rx='3deg';await assert.rejects(parkDrawerPointer(locator,blocked),/real hover owner/);
+ await assert.rejects(parkDrawerPointer(locator,{...blocked,waitForFunction:async fn=>{assert(vm.runInNewContext('('+fn.toString()+')()',{document:{querySelectorAll:()=>[]}}),'empty drawer must not count as neutral');}}),/empty drawer/);
+ let touched=false;assert.equal(await parkDrawerPointer({evaluate:async()=>false},{mouse:{move:async()=>{touched=true;}}}),null);assert.equal(touched,false);
+ assert.equal(script.split('await parkDrawerPointer(locator,page)').length-1,2,'both reachable/readable must neutralize after scrolling');
+ assert.match(script,/unsupported perspective clipping transform/);assert(!script.includes("setProperty('--rx'"));assert(!script.includes("setProperty('--ry'"));assert(!script.includes("remove('is-hover')"));
+});

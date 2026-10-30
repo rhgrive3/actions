@@ -16,7 +16,8 @@ import { validRainmakerShotOrigin, rainmakerShotOwnerMatches } from './rainmaker
 // The 11.3.0 Gachihoko table exposes native projectile parameters but not the
 // firing charge thresholds. The Splatoon3mix shot table gives 60F full charge,
 // a 20F minimum partial charge, and the damage/range values used below. The
-// host must convert native DU/F projectile speeds into its world units/second.
+// host converts native engine-unit/frame speeds to world units/second and
+// wiki test-room-line ranges separately (5 world units per test-room line).
 // Stage-provided retreatZ boundaries remain stage data, not game-wide values.
 
 import { canCollectRainmaker } from './clams.mjs';
@@ -101,20 +102,23 @@ const FALL_BELOW_FLOOR = 2;
 const FULL_SHOT_DAMAGE = 60;
 const PARTIAL_SHOT_MIN_DAMAGE = 30;
 const PARTIAL_SHOT_MAX_DAMAGE = 45;
-const FULL_SHOT_DIRECT_RANGE = 4.4;
-const FULL_SHOT_NEAR_RANGE = 5.3;
-const FULL_SHOT_EFFECTIVE_RANGE = 5.8;
-const FULL_SHOT_NEAR_RADIUS = 0.92;
-const FULL_SHOT_FAR_RADIUS = 1.4;
-const PARTIAL_SHOT_MIN_RANGE = 2;
-const PARTIAL_SHOT_MAX_RANGE = 3.4;
+// Wiki ranges are test-room lines (50 DU), not engine world coordinates.
+// The existing weapon bridge uses 10 DU/world unit; native parameter lengths
+// (e.g. BlastParam's 4.6/7.0) are already in those engine world units.
+const WORLD_UNITS_PER_TEST_LINE = 5;
+const FULL_SHOT_DIRECT_RANGE = 4.4 * WORLD_UNITS_PER_TEST_LINE;
+const FULL_SHOT_NEAR_RANGE = 5.3 * WORLD_UNITS_PER_TEST_LINE;
+const FULL_SHOT_EFFECTIVE_RANGE = 5.8 * WORLD_UNITS_PER_TEST_LINE;
+const FULL_SHOT_NEAR_RADIUS = 4.6;
+const FULL_SHOT_FAR_RADIUS = 7;
+const PARTIAL_SHOT_MIN_RANGE = 2 * WORLD_UNITS_PER_TEST_LINE;
+const PARTIAL_SHOT_MAX_RANGE = 3.4 * WORLD_UNITS_PER_TEST_LINE;
 const PARTIAL_SHOT_MIN_PAINT_RADIUS = 1.8;
 const PARTIAL_SHOT_MAX_PAINT_RADIUS = 2.4;
-// WeaponSpGachihoko stores SpawnSpeed in native DU/F. Match the host's
-// established 0.02 world-unit/DU scale and its 60Hz seconds-based physics.
+// Match main-weapon-catalog's native engine-unit/frame -> world-unit/second
+// bridge. The former extra *10*.02 shrank speed, blast and paint fivefold.
 const GAME_FRAMES_PER_SECOND = 60;
-const WORLD_UNITS_PER_DU = 0.02;
-const nativeSpeedToWorldPerSecond = speed => speed * 10 * GAME_FRAMES_PER_SECOND * WORLD_UNITS_PER_DU;
+const nativeSpeedToWorldPerSecond = speed => speed * GAME_FRAMES_PER_SECOND;
 const FULL_SHOT_SPEED = nativeSpeedToWorldPerSecond(1.5);
 const PARTIAL_SHOT_SPEED = nativeSpeedToWorldPerSecond(1.2);
 
@@ -577,7 +581,7 @@ export class RainmakerRule {
       const nearRange = fullCharge ? FULL_SHOT_NEAR_RANGE : null;
       const effectiveRange = fullCharge ? FULL_SHOT_EFFECTIVE_RANGE : directRange;
       const paintRadius = (fullCharge ? 5
-        : PARTIAL_SHOT_MIN_PAINT_RADIUS + (PARTIAL_SHOT_MAX_PAINT_RADIUS - PARTIAL_SHOT_MIN_PAINT_RADIUS) * partialCharge) * 10 * WORLD_UNITS_PER_DU;
+        : PARTIAL_SHOT_MIN_PAINT_RADIUS + (PARTIAL_SHOT_MAX_PAINT_RADIUS - PARTIAL_SHOT_MIN_PAINT_RADIUS) * partialCharge);
       const speed = fullCharge ? FULL_SHOT_SPEED : PARTIAL_SHOT_SPEED;
       const inputAim = input?.aim;
       let aim = Array.isArray(inputAim) && inputAim.length >= 3 && inputAim.slice(0, 3).every(finite)
@@ -600,7 +604,7 @@ export class RainmakerRule {
         directRange, nearRange, effectiveRange, paintRadius, speed,
         launchY: nativeSpeedToWorldPerSecond(fullCharge ? .28 : .14 + .07 * partialCharge),
         recoil: nativeSpeedToWorldPerSecond(fullCharge ? .12 : .06 + .03 * partialCharge),
-        trailRadius: fullCharge ? .48 : paintRadius,
+        trailRadius: fullCharge ? 2.4 : paintRadius,
       };
       c.seconds = c.value = 0; c.firing = c.released = false; c.delay = 1 / 60;
       this._updateShot(remaining, actor, input);

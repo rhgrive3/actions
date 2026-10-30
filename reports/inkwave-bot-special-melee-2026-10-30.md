@@ -1,0 +1,52 @@
+# Bot melee-special policy — 2026-10-30
+
+Baseline: `5d6480b2e2c1a8afa789bcc1415bae586e3156cb`. Scope is bot input policy only; weapon damage, movement physics and action timings remain owned by the existing Actor runtimes.
+
+## References read
+
+S3mix individual pages were opened through the browser on 2026-10-30, including their controls, usage and terrain sections. Page versions differ from the pinned INKWAVE 11.3.0 source tables; prose is tactical guidance, not a replacement for the runtime values.
+
+- [テイオウイカ](https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/テイオウイカ): close jump attack, ZR charge then release, locked dash heading, vulnerable transformation/recovery, water and grate hazards. Page performance table identifies 8.1.0.
+- [ウルトラハンコ](https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ウルトラハンコ): held stamping, short-startup jump swing, sub hold/release throw, exposed startup, obstacles and ledges. Table identifies 11.1.0.
+- [サメライド](https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/サメライド): locked rail, mandatory initial travel, manual braking, travel while braking, water death, explosion occlusion. Table identifies 11.0.0; older timing prose is marked historical and is not copied into physics.
+- [ウルトラチャクチ](https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/ウルトラチャクチ): directional forward fists, local blast, vulnerable rise, independently destructible fists, super-jump variant. Table identifies 11.3.0.
+
+## Implementation and reproduction
+
+`runtime/bot-special-melee.mjs` owns only admitted intent values via the common bot context. All decision distances and reaction choices are INKWAVE AI heuristics, not retail statistics.
+
+| Reproduction | Policy | Expected consequence |
+| --- | --- | --- |
+| Active Kraken, no visible living enemy | Clear jump/attack and stop pursuing; a fully charged hold remains held because releasing it would launch blindly | No repeated empty jumps or uncontrolled charge-release |
+| Close visible Kraken enemy | Grounded, edge-safe jump request | Native jump attack, with physical landing before another jump |
+| Distant visible Kraken enemy | Check full route, charge to runtime threshold, release only while aimed and safe | Actual native charge-release dash rather than a permanent ZR hold |
+| Target disappears, dies or crosses a wall | Suppress attack; cancel incomplete charge or retain completed hold without releasing | No stale-position attack |
+| Stamp near / distant target | Jump swing or stamping / sub hold then release | Native swing and 42F queued throw remain authoritative |
+| Reefslider target in safe lane | Grounded activation; fixed startup rail; predict braking travel after native minimum movement | Stop near enemy or brake on target loss and hazards |
+| Splashdown or legacy Slam | Require visible local target and face it before activation; leave subsequent attack to Actor | No distant timer-driven activation or idle input spam |
+
+Kraken and Reefslider reserve the full planned travel corridor, including shoulder probes. Recovery/startup do not inherit main-weapon attack or jump commands. Legacy `slam` remains a distinct runtime special with its own closer activation heuristic.
+
+## Verification status
+
+Checks:
+
+- `node --check patches/splatoon3/runtime/bot-special-melee.mjs` and `git diff --check` passed.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/bot-special-melee.test.mjs`: 21/21 passed. The fixture uses production composition, real Actor.update input admission, restored native Actor integration, actual Level/Physics and native projectiles. It tests Kraken charge-release/contact and idle behavior at 30/60/120Hz, close jump/contact, target loss at full charge, dead/friendly/occluded/high/cliff targets, Stamp sub-release/42F queued startup and target-loss hold, Reefslider manual braking/impact at three rates, unsafe rails, Triple Splashdown and legacy Slam impacts.
+- The test fixture supplies stable aim through the normal public aim fields; it does not claim to test the BotBrain aim spring. Full BotBrain/build verification belongs to the integration report.
+
+Tests use shared context commit `9cf8b3f38c0b73da7b9c08bbf4edbb223d1c479d` plus actual sibling category sources. Corridor width is delegated to the shared `safePath` helper, with 0.65-unit half-width. During Kraken charging the local path is checked; the full route is checked again immediately before release, avoiding repeated distant probes.
+
+No Switch measurement or retail parity claim is made.
+
+## Follow-through: other melee specials, 2026-10-30
+
+Baseline `3715e29d1656a00b853f73e12a89624b17985b7c`. Kraken policy is unchanged in this follow-up. The previously read individual Wiki controls/usage sections remain the tactical reference; the numerical trajectory comes from the shipped `all-specials.mjs` source flight owner.
+
+A complete BotBrain → Actor → native movement → projectile collision reproduction found that Stamp's throw event existed while the special missed stationary enemies at both 10 and 14 world units. Only the resumed main weapon caused damage. The eye-based aim spring placed the aim point above the feet-based special emitter's intended ray; the throw also adds vertical velocity and loses horizontal speed per source frame. A low-flight-arc solver now targets the body with the existing source trajectory and leads known target velocity through the remaining 42-frame throw startup. The queued startup continues to receive the correct aim, instead of reverting to the main weapon's target. In the same reproduction, stationary 10/14-unit targets and a 14-unit target moving sideways at 2 units/s now each receive 220 damage attributed specifically to `ultraStamp`.
+
+A second reproduction found that a target four units away made the bot jump in place repeatedly, delivering only 40-damage spray. The jump decision now waits until 2.4 units; native walking/stamping closes the gap first, allowing the existing 100-damage direct swing to connect. This threshold is an INKWAVE AI heuristic derived from its current collision geometry, not a retail range claim.
+
+Reefslider and Triple Splashdown keep their existing policies: with real movement and a target moving sideways at 2 units/s, Reefslider's predicted stop produces a 220-damage special explosion, and Splashdown's directional fists produce actual source-tagged explosion hits. Their existing wall/height/unsafe-route admission checks remain in force. No extra movement tactic or physics change was necessary.
+
+Verification: the owned test file now includes full BotBrain/native Actor movement tests that assert damage with the special's own source tag, avoiding false positives from ordinary shots after the special ends. Source syntax and diff checks passed. `node --experimental-vm-modules --test patches/splatoon3/tests/bot-special-melee.test.mjs` passed 24/24 tests (45.5s); no retail hardware comparison is claimed.

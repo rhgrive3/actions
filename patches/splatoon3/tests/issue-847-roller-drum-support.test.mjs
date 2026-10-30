@@ -25,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "da13f7a173b2c62986a4b278bca94e6133163ffe4d7ff172973eea6031e2ff82",
+  "patches/splatoon3/runtime/roller.mjs": "577593bdc59ebb155e022b9ce4f57328ad82c05130ee67105d86aa635cf7d4fe",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -78,10 +78,22 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
     if(rel==='patches/splatoon3/runtime/roller.mjs'){
+      // The reviewed follow-through and floor-search changes leave contact
+      // admission intact. Recover the exact prior input before checking its
+      // sealed history; fault controls below still execute the current source.
+      const followThroughBytes=fs.readFileSync(new URL('./fixtures/roller-follow-through-20261030-reviewed-delta.json',import.meta.url));
+      assert.equal(createHash('sha256').update(followThroughBytes).digest('hex'),
+        '359dc78dfdf663069f20e6a2ea5d35a1d7e68661e78763737c94a82a77d2ab25');
+      const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=raw;
+      for(const [index,change]of followThrough.changes.entries())
+        beforeFollowThrough=exactFault(beforeFollowThrough,change.after,change.before,'follow-through-'+index);
+      assert.equal(createHash('sha256').update(beforeFollowThrough).digest('hex'),
+        'da13f7a173b2c62986a4b278bca94e6133163ffe4d7ff172973eea6031e2ff82',
+        'reviewed roller input before #1943 follow-through changes');
       // The queue only replaces the ephemeral [-1,1] loop with the same two
       // scalar signs. Prove exact recovery of the complete prior input before
       // applying the older, separately sealed downhill support reversals.
-      const beforeScalarSign=exactFault(raw,
+      const beforeScalarSign=exactFault(beforeFollowThrough,
         'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(let sign=-1;sign<=1;sign+=2)',
         'for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1])',
         'queue-scalar-sign-loop');

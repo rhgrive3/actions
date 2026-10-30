@@ -5,6 +5,9 @@ import { chargerRiseBuffer, playChargerRise, prewarmChargerRise, disposeChargerR
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
+import { syncCatalogSpinnerCharge } from './spinner-charge-layer.mjs';
+import { spinnerAudioIds, spinnerClipDefinition, spinnerPreload, spinnerReleaseCache } from './spinner-charge-clips.mjs';
+import { spinnerChargeAudioLoop } from './spinner-charge-control.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
@@ -49,6 +52,7 @@ export function installWeaponAudioEngine(Engine){
     this._warmWeapons||=new Set();this._warmWeapons.clear();this._warmWeapons.add(id);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
+    if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')void spinnerPreload(this,requested).catch(()=>{});
     const ownerKey=id;
     if(this._prewarmId!==ownerKey||this._prewarmLoader!==this._realS3Loader){
       this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
@@ -171,6 +175,11 @@ export function installWeaponAudioEngine(Engine){
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
       }
     }
+    // The selected Spinner's complete two-stage phrase / rising layer must
+    // decode before the first playable trigger; missing sample is an error.
+    // Optional charge textures must never block START on slow/failed decode.
+    // prepareWeapon already opportunistically warms the selected clip; its
+    // native Motor fallback owns the sound until the texture is resident.
     return {ready:true,id,recording:'fire'};
   };
   const requireMain=p.requireRecordedMainShot;
@@ -233,8 +242,9 @@ export function installWeaponAudioEngine(Engine){
     id=borrowedRecordedMainId(mainAudioSourceId(id));
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
+    const decorate = h => h; // spinner charge is now handled by the source phrase router below
     if(id.startsWith('special:')&&this._realS3Loader?.declares(id,event)===false)return null;
-    if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);
+    if(bank.authorized.byEvent.has(`${id}:${event}`))return decorate(this.loop(name,options));
     // A loop can begin after its source is decoded, provided the effect still
     // exists. Returning a permanent silent handle here leaves special effects
     // muted for their entire lifetime in kit-runtime's active map.
@@ -259,8 +269,9 @@ export function installWeaponAudioEngine(Engine){
         if(!actual||actual.playing===false){actual=null;failed=true;}
       }catch{failed=true;actual=null;}
     }).catch(()=>{failed=true;/* Missing/unavailable remains silent. */});
-    return handle;
+    return decorate(handle);
   };
+  p.syncSpinnerCharge=function(runner){ return syncCatalogSpinnerCharge(this,runner); };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
     // Only selected Splat Charger loadouts request their separate rise clip.
     if(this.ctx&&this._warmWeapons?.size){
@@ -277,7 +288,7 @@ export function installWeaponAudioEngine(Engine){
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmCombatCueBank=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){spinnerReleaseCache(this);disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmCombatCueBank=null;this._warmWeapons?.clear();};
   p.prewarmChargerChargeRise=function(weaponId='charger',chargeTime=1){
     if(!this.ctx||!usesChargerRise(weaponId))return false;
     // Pre-stretch the Splat Charger recorded rise in an offline Worker,
@@ -288,5 +299,19 @@ export function installWeaponAudioEngine(Engine){
   p.playChargerChargeRise=function(options){
     try{return playChargerRise(this,options);}
     catch{return null;} // Silence the optional modeled rise if buffer creation fails.
+  };
+  const priorDef=p._def;
+  p._def=function(name){
+    if(typeof name==='string'&&name.startsWith('spinnerClip:'))
+      return spinnerClipDefinition(this,name.slice('spinnerClip:'.length));
+    return priorDef.call(this,name);
+  };
+  const previousLoop=p.loopWeapon;
+  p.loopWeapon=function(id,event,options={}){
+    const source=mainAudioSourceId(id);
+    if(event==='charge'&&spinnerAudioIds.has(source))
+      return spinnerChargeAudioLoop(this,source,options,()=>previousLoop.call(
+        this,id,source==='s3-spinner-downpour'?'spin':'charge',options));
+    return previousLoop.call(this,id,event,options);
   };
 }

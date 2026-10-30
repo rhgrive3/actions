@@ -21,8 +21,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
   } else if(rel==='src/game/bots.js'){
     patch('a.ink > SUB.bomb.inkCost + 8','a.ink > selectedSubCost(a, SUB) + 8','bot sub turf');
     patch('a.ink > SUB.bomb.inkCost + 10','a.ink > selectedSubCost(a, SUB) + 10','bot sub boss');
-    for(const [anchor,label] of [["          if (w.special === 'storm' && dist < 16) it.special = true;",'turf'],["        if (w.special === 'storm' && dist < 13 && T.los) it.special = true;",'boss']])
-      patch(anchor,anchor+"\n        if ((w.special === 'trizooka' && dist < 24) || (w.special === 'inkVac' && dist < 15) || (w.special === 'bubbler' && dist < 12)) it.special = true;",'bot special '+label);
+    // All competitive special admission now belongs to the canonical tail.
     code="import { selectedSubCost } from '../../patches/splatoon3/runtime/kit-composition.mjs';\n"+code;
   } else if(rel==='src/game/actor.js'){
     patch('    this.respawnTimer = PLAYER.respawnTime;','    setRespawnTimer(this, cause);','death-cause respawn');

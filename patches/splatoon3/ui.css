@@ -312,6 +312,31 @@
   visibility: hidden;
   opacity: 0;
 }
+/* S3 capture geometry at 1280x720: two dotted 25.6px sights and four
+   diagonal corners. See reports/dualies-form-tap-20261030.md for sources
+   and the limits of the image calibration. Projection owns their position. */
+.iw-ret--dualies { scale: 1; color: #fff; }
+.iw-xh.is-target .iw-ret--dualies, .iw-ret--dualies.is-lock { scale: 1; color: #fff; }
+.iw-ret--dualies > .iw-ret__dot { display: none; }
+.iw-ret--dualies .iw-ret__svg { overflow: visible; }
+.iw-ret--dualies .iw-ret__ring { stroke-width: 1.4; opacity: .65; }
+.iw-ret--dualies .iw-ret__dual-dot { fill: #fff; stroke: none; }
+.iw-ret--dualies .iw-ret__twin { translate: none; transition: none; }
+.iw-ret--dualies.is-lock .iw-ret__twin { translate: none; }
+.iw-ret--dualies.is-lock .iw-ret__hand { visibility: hidden; }
+.iw-ret--dualies.is-dual-firing .iw-ret__ring { stroke: var(--self, #fff); opacity: 1; }
+.iw-ret--dualies .iw-ret__dual-camera { visibility: hidden; }
+.iw-ret--dualies.has-dual-guide .iw-ret__dual-camera { visibility: visible; }
+.iw-ret--dualies .iw-ret__dual-camera circle { stroke: #fff; stroke-width: 1; opacity: .22; }
+.iw-ret--dualies .iw-ret__tick {
+  --iw-dual-x: calc(24px + var(--sp, 0) * 1px);
+  left: -1.5px; top: -6px; width: 3px; height: 12px;
+  transform: translate(var(--iw-cx), var(--iw-cy)) rotate(var(--iw-angle));
+}
+.iw-ret--dualies .iw-ret__tick:nth-child(3) { --iw-cx: calc(0px - var(--iw-dual-x)); --iw-cy: -30px; --iw-angle: 45deg; }
+.iw-ret--dualies .iw-ret__tick:nth-child(4) { --iw-cx: var(--iw-dual-x); --iw-cy: -30px; --iw-angle: -45deg; }
+.iw-ret--dualies .iw-ret__tick:nth-child(5) { --iw-cx: calc(0px - var(--iw-dual-x)); --iw-cy: 30px; --iw-angle: -45deg; }
+.iw-ret--dualies .iw-ret__tick:nth-child(6) { --iw-cx: var(--iw-dual-x); --iw-cy: 30px; --iw-angle: 45deg; }
 
 /* Alternate-kit loadout: 160 weapon cards must not push the action panel
    several screens below the clipped menu. Scroll cards inside their own

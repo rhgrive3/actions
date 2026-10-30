@@ -164,14 +164,23 @@ function horizontal(r,w,label){assert(r.left>=-1&&r.right<=w+1,`${label}: horizo
 function usable(t,viewport,label,initial=false){assert(t&&t.rect.width>=43&&t.rect.height>=43,`${label}: missing/small touch target`);horizontal(t.rect,viewport.width,label);if(initial)assert(t.inView&&t.hit&&t.unclipped,`${label}: initially obscured/offscreen`);}
 async function tap(page,selector){const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.tap();await settle(page);}
 async function targetNow(locator){return locator.evaluate(e=>{const r=e.getBoundingClientRect(),h=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2),scrollOwners=[];for(let p=e.parentElement;p;p=p.parentElement){const s=getComputedStyle(p);if(/auto|scroll/.test(s.overflowY)&&p.scrollHeight>p.clientHeight+1)scrollOwners.push({tag:p.tagName,class:String(p.className||''),top:p.scrollTop,clientHeight:p.clientHeight,scrollHeight:p.scrollHeight});}return {scrollOwners,...window.fixtureClip(e),hitOwner:h&&{tag:h.tagName,class:String(h.className?.baseVal||h.className||'')},rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},inView:r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1,hit:!!h&&(e===h||e.contains(h))};});}
+// Native wheel scrolling leaves a synthetic mouse cursor in the touch fixture.
+// Move that pointer normally, then observe the real _fx pointerleave owner; do
+// not rewrite hover classes, CSS variables, decorative tilt or 3D acceptance.
+export async function parkDrawerPointer(locator,page){
+ if(!await locator.evaluate(e=>!!e.closest('.iw-ldr')))return null;
+ await page.mouse.move(0,0);
+ await page.waitForFunction(()=>{const cards=[...document.querySelectorAll('.iw-ldr:not(.is-leaving) .iw-wcard')];return cards.length>0&&cards.every(e=>!e.classList.contains('is-hover')&&['--rx','--ry'].every(k=>{const v=e.style.getPropertyValue(k);return !v||parseFloat(v)===0;}));},null,{timeout:3000});
+ return {parked:true,hoverCleared:true};
+}
 export function stickyRevealDelta(target,header){return Math.min(0,target.top-header.bottom-8);}
-async function reachable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();await settle(page);const t=await targetNow(locator);attempts.push({attempt,...t});if(t.inView&&t.hit&&t.unclipped){usable(t,viewport,label,true);return t;}
+async function reachable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();const drawerPointer=await parkDrawerPointer(locator,page);await settle(page);const t={...await targetNow(locator),drawerPointer};attempts.push({attempt,...t});if(t.inView&&t.hit&&t.unclipped){usable(t,viewport,label,true);return t;}
  // The drawer's real sticky header is not a viewport clip. Nearest scrolling
  // may place an otherwise visible card underneath it; exercise a normal wheel
  // correction, then keep exactly the same full-box/paint-hit requirements.
  if(t.unclipped&&!t.hit&&/\biw-ldr__head\b/.test(t.hitOwner?.class||'')){const head=page.locator('.iw-ldr:not(.is-leaving) .iw-ldr__head');const b=await head.boundingBox();if(b){const delta=stickyRevealDelta(t.rect,{bottom:b.y+b.height});if(delta<0){await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.wheel(0,delta);attempts.push({kind:'native-wheel-clear-sticky-header',delta,offsetsBefore:t.scrollOwners});await settle(page);}}}
  }throw Error(label+': not reachable after four settled content-visibility corrections: '+JSON.stringify(attempts));}
-async function readable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();await settle(page);const t=await targetNow(locator);attempts.push(t);if(t.rect.width>0&&t.rect.height>0&&t.inView&&t.hit&&t.unclipped){horizontal(t.rect,viewport.width,label);return t;}}throw Error(label+': complete notice not readable/paint-reachable: '+JSON.stringify(attempts));}
+async function readable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();const drawerPointer=await parkDrawerPointer(locator,page);await settle(page);const t={...await targetNow(locator),drawerPointer};attempts.push(t);if(t.rect.width>0&&t.rect.height>0&&t.inView&&t.hit&&t.unclipped){horizontal(t.rect,viewport.width,label);return t;}}throw Error(label+': complete notice not readable/paint-reachable: '+JSON.stringify(attempts));}
 async function cardDetails(locator){return locator.evaluate(card=>{
  const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
  const name=card.querySelector('.iw-wcard__name'),kit=card.querySelector('.s3-wkit'),style=getComputedStyle(name),glyphs=[],walker=document.createTreeWalker(name,NodeFilter.SHOW_TEXT);let node;
@@ -199,7 +208,7 @@ async function drawerAcceptance(page,v,candidate){
  await tap(page,ACTIVE+' .iw-backbtn');assert.equal(await page.evaluate(()=>menus.current),'main');await tap(page,ACTIVE+' [data-id="online"]');
  const input=page.locator(ACTIVE+' .iw-code-input'),go=page.locator(ACTIVE+' .iw-join__btns .is-go');await reachable(input,page,v,'drawer fixture code');await input.fill('BCEFG');await reachable(go,page,v,'drawer fixture join');await go.tap();
  await page.waitForFunction(()=>menus.current==='lobby'&&G.net.isMock===true&&G.net.state==='lobby',null,{timeout:10000});await settle(page);
- const scope='.iw-ldr:not(.is-leaving)',chip=ACTIVE+' .iw-lob__wchip',open=async()=>{await reachable(page.locator(chip),page,v,'lobby weapon chip');await tap(page,chip);await page.waitForFunction(()=>menus._modal?.classList.contains('iw-ldr'));await settle(page);assert.equal(await page.locator('.iw-ldr').count(),1,'duplicate/stale drawers');};
+ const scope='.iw-ldr:not(.is-leaving)',chip=ACTIVE+' .iw-lob__wchip',open=async()=>{await page.mouse.move(0,0);await reachable(page.locator(chip),page,v,'lobby weapon chip');await tap(page,chip);await page.waitForFunction(()=>menus._modal?.classList.contains('iw-ldr'));await settle(page);assert.equal(await page.locator('.iw-ldr').count(),1,'duplicate/stale drawers');};
  const closed=async()=>{await page.waitForFunction(()=>!menus._modal&&!document.querySelector('.iw-ldr'),null,{timeout:5000});await settle(page);assert.equal(await page.evaluate(()=>G.net.state),'lobby','drawer dismissal left room');};
  await open();const columns=await page.locator(scope+' .iw-ldr__grid').evaluate(e=>getComputedStyle(e).gridTemplateColumns);const names=await observeLongNames(page,v,candidate,scope);
  if(candidate)assert(columns.split(/\s+/).map(parseFloat).every(n=>n>=135),'drawer136px grid lost to later CSS');

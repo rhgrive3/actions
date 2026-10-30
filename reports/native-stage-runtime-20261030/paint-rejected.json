@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "status": "rejected",
+  "candidate": "Early acceptance of the existing sub-cell dot center witness before five SDF samples",
+  "baseline": "fd6435a4dd2781928d211537c485c87bc50b3784",
+  "productionChangesRetained": false,
+  "reason": "No useful speedup in the full ancillary-ownership replay; all four candidate code/test changes were reverted.",
+  "scope": "Node.js v24.19.0 CPU, synthetic 24 native-style charts, existing production shape counts, four seeded growth records and 100 ticks per record; not browser/device/FPS evidence",
+  "validation": {
+    "cellPredicates": "30000 seeded random cases plus half-open boundaries and nonfinite/degenerate inputs matched the unchanged full witness implementation",
+    "ownershipReplay": "Grid/order/count/version and claimed area matched in every timing sample",
+    "digest": {"amount": 222.25, "counts": [3556, 0], "version": 146, "hash": 496057201}
+  },
+  "timing": {
+    "order": "One untimed baseline and candidate warmup, then six alternating before/after pairs in a coordinated quiet window",
+    "beforeMilliseconds": [436.139334, 394.446815, 388.068830, 391.607022, 423.445072, 417.132480],
+    "afterMilliseconds": [442.882892, 393.697531, 386.740177, 397.866319, 437.524842, 422.985487],
+    "beforeMedianMilliseconds": 405.789648,
+    "afterMedianMilliseconds": 410.425903,
+    "interpretation": "Approximately 1.1% slower median, with variation too large to establish a small difference; rejected rather than claiming a gain"
+  }
+}

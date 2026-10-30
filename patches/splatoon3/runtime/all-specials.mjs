@@ -1165,7 +1165,8 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
     let x=null,y=null;
     if(missiles){
       const camera=rt.api.G.camera;
-      if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
+      // G.camera belongs to the human viewer; bots lock through their own aim cone.
+      if(camera?.isPerspectiveCamera&&!actor.isBot){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1;limit??=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
         if(preview){x=projected.x;y=projected.y;}
@@ -2640,6 +2641,7 @@ function installRuntime(api) {
   };
   if(typeof blast==='function')P._blastBurst=function(p,at,...args){
     rt.system=this;
+    const deferred=p.s3TerrainBurstDeferrals||0;
     const owner=p?.owner,previousCause=owner?._s3AllSpecialDamageCause;
     const cause=projectileObjectCause(p,'blast');
     if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=cause;
@@ -2647,6 +2649,9 @@ function installRuntime(api) {
     try{result=blast.call(this,p,at,...args);}finally{
       if(owner){if(previousCause===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previousCause;}
     }
+    // Terrain impact queues its complete special snapshot for the next tick.
+    // Object hits and special paint belong to that flush, once, with HP damage.
+    if((p.s3TerrainBurstDeferrals||0)!==deferred)return result;
     const weapon=p?.s3SpecialWeapon||p?.s3Weapon||api.WEAPONS?.[p?.wid]||api.WEAPONS?.blaster;
     const bands=weapon?.splashBands||weapon?.damageBands;
     if(!p?.ghost&&!p?.owner?.remote&&bands?.length&&p.s3AllSpecial!=='booyahBomb'){

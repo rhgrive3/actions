@@ -1,0 +1,238 @@
+{
+  "baselineCommit": "5d6480b2e2c1a8afa789bcc1415bae586e3156cb",
+  "testedLocalCodeCommit": "02365596579ec798a1e3a37719dbcfd84283205a",
+  "publishedEquivalentCodeCommit": "a69603e685bc204fd211ba3e605cb682b3e52c23",
+  "codeTree": "0a9158e2b1073dbcf6bfad1e634ccc0c6b667e79",
+  "treeEquivalenceVerifiedWithGit": true,
+  "buildContentHash": "c8bf462ff264c44a89b63902f8a54a6277a05aacc1ae1c1576e9ec64d16f2fa3",
+  "tests": [
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/charger-*.test.mjs",
+      "tests": 204,
+      "pass": 204,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "960f549d64fa7b9b371786096dafee9ee74391039ac38ffa2553d4ef224e0eeb"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/form-rapid-toggle.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs",
+      "tests": 7,
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "225d51a6efef69faa003463eab6a306f6f1b3f52d826832efe959bb5a12d0d32"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/form-motion.test.mjs patches/splatoon3/tests/form-motion-allocation-composition.test.mjs",
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "3d0d57fad59f4bd4f86beb02c01f950b34c944cc39313e092b8fcf360cd76c0f"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/weapon-variant-b-charger-followups.test.mjs patches/splatoon3/tests/source-motion-assets.test.mjs patches/splatoon3/tests/weapon-hold-motion.test.mjs patches/splatoon3/tests/squid-roller-slosher-feedback.test.mjs",
+      "tests": 40,
+      "pass": 40,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "c24fdc4929d8cb035b0eb8b643e37580759501d5b7aa306560389484dc98bfbc"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/charger-release-gap.test.mjs patches/splatoon3/tests/issue-batch-1171.test.mjs patches/local-quality/tests/reticle-feedback.test.mjs",
+      "tests": 28,
+      "pass": 28,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "c98252c343eb8e81596f15cbc2e983bc548c2963718443cee7f367f19150a100"
+    },
+    {
+      "command": "INKWAVE_EDGECASE_SITE=/workspace/scratch/inkwave-after INKWAVE_RETICLE_BUILT_SITE=/workspace/scratch/inkwave-after INKWAVE_BUILT_SITE=/workspace/scratch/inkwave-after node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/charger-tap-release.test.mjs patches/splatoon3/tests/dualies-reticle-state.test.mjs patches/splatoon3/tests/form-rapid-toggle.test.mjs",
+      "tests": 15,
+      "pass": 15,
+      "fail": 0,
+      "skipped": 0,
+      "rawLogSha256": "5ba10eef095c2c90069e0e942b4bca3225bb38a4fbedbaf56be3834f91378f11"
+    }
+  ],
+  "componentBrowser": {
+    "command": "CHROMIUM_PATH=/usr/bin/chromium node scripts/check-inkwave-reticle-viewport.mjs /workspace/scratch/reticle-viewport",
+    "viewports": 4,
+    "weaponViews": 28,
+    "heightOnlyResize": {
+      "anchor": {
+        "x": 213.328125,
+        "y": 55
+      },
+      "twins": [
+        {
+          "x": 277.33021545410156,
+          "y": 35.50166702270508
+        },
+        {
+          "x": 130.12687301635742,
+          "y": 35.50166702270508
+        }
+      ],
+      "scale": 0.5416666666666666
+    },
+    "status": "passed"
+  },
+  "fullGameBrowser": {
+    "command": "CHROMIUM_PATH=/usr/bin/chromium node scripts/check-inkwave-browser.mjs --site /workspace/scratch/inkwave-after --evidence-dir /workspace/scratch/game-browser --profile-dir /workspace/scratch/game-browser-profile --exact-source",
+    "status": "passed",
+    "sourceSha": "02365596579ec798a1e3a37719dbcfd84283205a",
+    "contentHash": "c8bf462ff264c44a89b63902f8a54a6277a05aacc1ae1c1576e9ec64d16f2fa3",
+    "verifiedResponses": 794,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "gameplay": {
+      "state": "playing",
+      "elapsedAt20Hz": 3.0000000000023874,
+      "movement": 2.7603360000000166,
+      "movementProbe": {
+        "state": "playing",
+        "paused": false,
+        "alive": true,
+        "form": "kid",
+        "grounded": true,
+        "controller": true,
+        "enabled": true,
+        "menuBlocked": false,
+        "samples": [
+          {
+            "key": "KeyW",
+            "keyPresent": true,
+            "enabled": true,
+            "menuBlocked": false,
+            "intent": [
+              0,
+              0,
+              1
+            ],
+            "vel": [
+              0,
+              0,
+              0.6
+            ],
+            "deltaAfterFirstTick": 0.010000000000001563
+          }
+        ]
+      },
+      "hp": 100,
+      "gear": [
+        {
+          "main": "runSpeed",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "velocityFinite": true,
+      "clockTicks": 935,
+      "paintedFloorArea": 0.625,
+      "coverage": [
+        0.00014398802830541628,
+        0
+      ]
+    },
+    "actionReliability": {
+      "before": 1,
+      "renderOnly": 1,
+      "after": 2,
+      "held": 2,
+      "jumps": 0,
+      "physicalKeyboardEvents": true,
+      "groundCollisionPinned": true
+    },
+    "rawReceiptSha256": "8eccb44fc1361c74a89e96925c8e924c922215268fa46e8dd62806850c4e7da4"
+  },
+  "rapidToggleBrowser": {
+    "before": {
+      "fixedHz": 60,
+      "pressesPerSecond": 8,
+      "durationSeconds": 2,
+      "squidEndpointFrames": 0,
+      "last": {
+        "tick": 179,
+        "form": "kid",
+        "k": 1,
+        "s": 0,
+        "state": "idle",
+        "formT": 1.0333333333333345,
+        "ground": "plant",
+        "soles": [
+          0.027297238939138282,
+          0.11838736896730992
+        ]
+      },
+      "rawRowsSha256": "7cddc0ce48135907f6c24a080488764b88e28aca8d6b3fe50c869a31af3bade3"
+    },
+    "after-final": {
+      "fixedHz": 60,
+      "pressesPerSecond": 8,
+      "durationSeconds": 2,
+      "squidEndpointFrames": 32,
+      "last": {
+        "tick": 179,
+        "form": "kid",
+        "k": 1,
+        "s": 0,
+        "state": "idle",
+        "formT": 1.0500000000000012,
+        "ground": "plant",
+        "soles": [
+          0.020492401696426493,
+          0.026555608992936075
+        ]
+      },
+      "rawRowsSha256": "a74b3bfb39a7fe5b18a4a60cbb5c0767a4f9139f3de81470b5aefa7f30c41de6"
+    },
+    "after-player01": {
+      "fixedHz": 60,
+      "pressesPerSecond": 8,
+      "durationSeconds": 2,
+      "squidEndpointFrames": 32,
+      "last": {
+        "tick": 179,
+        "form": "kid",
+        "k": 1,
+        "s": 0,
+        "state": "idle",
+        "formT": 1.0500000000000012,
+        "ground": "plant",
+        "soles": [
+          0.020492401696426563,
+          0.023067109159954108
+        ]
+      },
+      "rawRowsSha256": "cea27fb02e2304559349fbde23b86021fe2936da11d780224bdb5042f32be431"
+    }
+  },
+  "probeSha256": "c59a41aa4613cf2c49720bf3df4774754f7a80e91402996594042c6a7586d285",
+  "limits": [
+    "Software Chromium component/full-app checks; no Switch or iPad hardware comparison.",
+    "The 0.05s presentation time is an INKWAVE calibration for requested rapid input, not an extracted retail frame count.",
+    "Foot metrics are heel/ball support proxies on the native skeleton; screenshots were inspected separately.",
+    "Test groups overlap; do not sum them as distinct cases."
+  ]
+}
