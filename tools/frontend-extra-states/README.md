@@ -40,3 +40,5 @@ a result. This explicit QA API input differs from the UI's normal 180-second
 default and is recorded in the receipt.
 
 Native screenshots use CDP Page.captureScreenshot (JPEG quality 80, viewport surface, no postprocessing). This reads the already rendered frame without Playwright adding two animation frames to a frozen software-GPU match. Viewport dimensions and original JPEG bytes are still checked.
+
+The native pause menu is captured with the debug render clock unfrozen while the actual game remains paused, so its focus indicator can settle. The audit clock is frozen again before resuming the match simulation.
