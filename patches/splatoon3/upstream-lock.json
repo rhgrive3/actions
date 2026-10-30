@@ -14,7 +14,7 @@
     "src/ui/menus.js": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
     "src/core/shadowcache.js": "0b06a8e8525cb3a0a8736884d622abd92f449e3d2f03a2214f9f163d2e49a53f",
     "src/core/input.js": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
-    "src/ui/hud.js": "34e81090a1d97b4a419aaf205baef2b1ed29b8d61ac0fbc1d258b040112b4448",
+    "src/ui/hud.js": "09ca679484002b90c1158759bcc57903c16b871f293343d8fd5a27aae6c005cf",
     "src/i18n.js": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
     "src/game/physics.js": "c6e1a181a8e93e860dbde97956711733fa41789800951780dfef7dee9b39aa12",
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",

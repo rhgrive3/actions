@@ -1,0 +1,14 @@
+{
+  "frames": 1593,
+  "skinFrames": 75,
+  "coverage": [
+    "active",
+    "inactive",
+    "manual",
+    "air",
+    "shots-active",
+    "shots-inactive",
+    "dead"
+  ],
+  "differenceCount": 0
+}

@@ -1,0 +1,24 @@
+(node:14488) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ public constructor and default driver retain complete context across lifecycle and perception changes (8.606733ms)
+✔ only the opted-in inactive tail omits context, normalIntent, LOS and four closures (4.761014ms)
+✔ fast and full calls preserve invalid-input returns, reset semantics and carrier ordinary inputs (0.719202ms)
+✔ inactive fast calls keep memory identity and reset on equipment, life, death and explicit reset (0.942754ms)
+✔ actual 19-special policies and the composed ordinary BotBrain tail match the frozen pre-change runtime (2204.474219ms)
+✔ special context uses current recognized enemy and fails closed on lost perception or LOS (2.18935ms)
+✔ context never controls local or remote players, invalid ticks or dead actors (0.362332ms)
+✔ AI memory resets on active token, equipment, death, life and explicit brain reset (0.787838ms)
+✔ aim requests alter the spring target, preserve actual aim and retain ordinary inputs (0.171952ms)
+✔ active specials hold actual aim after recognition loss rather than tracking a hidden live target (0.393373ms)
+✔ safe movement rejects wall, drop, water and unsupported Kraken grates (0.680546ms)
+✔ boss targets must remain in the living boss current hit-shape collection (0.221185ms)
+✔ production composition has one final tail policy and no random or competing special owner (25.468744ms)
+✔ uncharged bots preserve ordinary combat without invoking category planning (1.382721ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2548.380064
