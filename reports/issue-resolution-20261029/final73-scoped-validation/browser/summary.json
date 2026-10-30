@@ -1,0 +1,139 @@
+{
+  "focused": {
+    "head": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+    "contentHash": "5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a",
+    "inputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+    "passed": true,
+    "scope": "focused UI plus unchanged Minimap probe",
+    "fullAcceptance": false,
+    "ui": {
+      "splatlingStages": [
+        "first",
+        "second",
+        "full",
+        "partial-stream"
+      ],
+      "splatlingNegativeControls": [
+        "hidden",
+        "opacity",
+        "offscreen",
+        "stroke",
+        "zero-size",
+        "progress"
+      ],
+      "authoritativeSpread": [
+        {
+          "weapon": "shooter",
+          "negativeControls": 3
+        },
+        {
+          "weapon": "dualies",
+          "negativeControls": 3
+        },
+        {
+          "weapon": "splatling",
+          "negativeControls": 3
+        },
+        {
+          "weapon": "blaster",
+          "negativeControls": 3
+        }
+      ],
+      "winnerPodiumStates": [
+        {
+          "winner": 0,
+          "localWin": false
+        },
+        {
+          "winner": 1,
+          "localWin": false
+        }
+      ]
+    },
+    "minimap": {
+      "cases": [
+        {
+          "name": "wall-only",
+          "frames": 120
+        },
+        {
+          "name": "overlay-bomb",
+          "frames": 103
+        },
+        {
+          "name": "overlay-FX",
+          "frames": 102
+        },
+        {
+          "name": "turf-flash",
+          "frames": 102
+        },
+        {
+          "name": "hidden-reopen",
+          "frames": 81
+        },
+        {
+          "name": "FX-force-zero-credit",
+          "frames": 101
+        },
+        {
+          "name": "FX-slow-tick",
+          "frames": 101
+        }
+      ],
+      "totalComparedFrames": 710,
+      "negativeControls": {
+        "blankRejected": true,
+        "corruptionRejected": true,
+        "clockRejected": true,
+        "stalePrebirthRejected": true,
+        "forceCreditRejected": true,
+        "slowTickCreditRejected": true
+      },
+      "scope": "Synthetic real Canvas2D fixture retains exact legacy baseline/candidate parity, separately applies the sealed two-hunk current update-clock reference, and compares its baseline/candidate with actual versioned Minimap imports in an isolated iframe. Exact per-tick RGBA/state comparison; no whole-Game or device performance claim."
+    },
+    "strict": {
+      "pageErrors": [],
+      "consoleErrors": [],
+      "requestFailures": [],
+      "verifiedAudioCancellations": [],
+      "verifiedResponses": 683
+    },
+    "identity": {
+      "artifactsBefore": 2267,
+      "artifactsAfter": 2267,
+      "inputs": 1550,
+      "allInputsAfter": true,
+      "sourceQaAfter": true,
+      "toolsWrapperContractExecutableAfter": true,
+      "actualExecutable": [
+        {
+          "pid": 900549,
+          "parentPid": 900534,
+          "executable": "/home/agent/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+          "sha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+        }
+      ],
+      "processesClosed": true,
+      "remainingOwnedProcesses": []
+    }
+  },
+  "failedFullActive": {
+    "head": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+    "contentHash": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+    "inputHash": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+    "passed": false,
+    "fullAcceptanceWasAttempted": true,
+    "canonicalKitsCompleted": 65,
+    "gearSelectsCompleted": 12,
+    "minimapReached": false,
+    "failure": "First native HUD._updCrosshair update in inspectSplatlingStages: synthetic fixture omitted constructor-owned spIcon; TypeError setting innerHTML. Raw failure is retained without relabeling.",
+    "processesClosed": true
+  },
+  "limits": [
+    "The focused pass does not accept the old full-active failure or constitute full-active acceptance.",
+    "The existing UI-only mode omits the 65-kit/12-gear prefix; it retains all checkUiVisualProbes assertions. The sealed loader changes exactly the existing Minimap skip gate into the same call.",
+    "Minimap scope is the existing synthetic real Canvas2D fixture plus actual versioned Minimap imports, exact per-tick RGBA/state comparison; it is not a whole-game performance measurement.",
+    "No FPS, hardware or comparative performance claim; no new product code or browser rerun is included in this packet."
+  ]
+}

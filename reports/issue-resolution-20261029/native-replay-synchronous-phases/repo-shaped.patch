@@ -1,0 +1,157 @@
+--- a/patches/network-replication/trusted-native-replay.mjs
++++ b/patches/network-replication/trusted-native-replay.mjs
+@@ -31,6 +31,14 @@
+     s.executing=false;
+   }
+ }
++// Native frame/lifecycle hooks must finish inside this realm scope. A pending
++// phase is not a completed authority frame and cannot expose contact receipts.
++function runWorldPhase(s,name,...args) {
++  const result=s.world[name]?.(...args);
++  if(result && (typeof result==='object'||typeof result==='function') && typeof result.then==='function')
++    throw Error('Asynchronous native authority phase: '+name);
++  return result;
++}
+ function live(s) { return !!s && !s.closed && s.error===null && realms.get(s.api.G)===s; }
+ function liveContact(s,r) {
+   return s.actors.get(r.attacker)?.netLife===r.attackerLife &&
+@@ -137,12 +145,12 @@
+         bindDamage(s,a);
+         // This trusted callback runs native lifecycle setup, e.g. initial Turf
+         // Squid Spawn. It is not supplied by a wire event or owner snapshot.
+-        if(world.initializeActor)world.initializeActor(a,r,api);
++        if(world.initializeActor)runWorldPhase(s,'initializeActor',a,r,api);
+         else a.spawnAt(new api.THREE.Vector3(...r.position),r.yaw);
+         if(a.netLife!==r.life)throw Error('Trusted life requires its actual native spawn history');
+         commands?.register(a,{owner:r.owner,life:r.life,epoch,firstTick:1});
+       }
+-      s.context.boss=api.G.boss=world.createBoss?.(api.G,api)||null;
++      s.context.boss=api.G.boss=runWorldPhase(s,'createBoss',api.G,api)||null;
+       bindBoss(s,s.context.boss);
+       if(typeof api.on==='function')s.offs.push(api.on('weapon:fire',e=>{
+         if(s.executing&&s.actorSet.has(e.actor)){
+@@ -179,11 +187,11 @@
+     scope(s,()=>{
+       if(s.commands){for(const t of prepared)if(!s.commands.apply(t)?.ok)throw Error('Canonical command commit rejected');}
+       else for(const c of frame.commands)applyCommand(c,s.actors.get(c.nid));
+-      s.world.beforeActors?.(s.context.actors,frame.dt,s.api);
++      runWorldPhase(s,'beforeActors',s.context.actors,frame.dt,s.api);
+       for(const a of s.context.actors)a.update(frame.dt);
+-      s.world.afterActors?.(s.context.actors,frame.dt,s.api);
++      runWorldPhase(s,'afterActors',s.context.actors,frame.dt,s.api);
+       s.context.projectiles.update(frame.dt);
+-      s.world.afterProjectiles?.(s.context.actors,frame.dt,s.api);
++      runWorldPhase(s,'afterProjectiles',s.context.actors,frame.dt,s.api);
+       // Reenrollment follows actual native respawn, never an owner row. The
+       // current input was applied to the old life before native spawn reset it.
+       for(const a of s.context.actors){const c=frame.commands.find(c=>c.nid===a.nid);if(c.life!==a.netLife){
+--- a/patches/network-replication/tests/trusted-native-replay.test.mjs
++++ b/patches/network-replication/tests/trusted-native-replay.test.mjs
+@@ -23,11 +23,11 @@
+   getMuzzle(out){return out.copy(this.root.position).add(V(0,1.05,.3));}
+ }
+ const spawn=(nid,team,z,weapon='shooter',x=0)=>({nid,owner:team?'B':'A',life:1,team,slot:0,weapon,position:[x,0,z],yaw:team?Math.PI:0});
+-function setup({wall=false,roster=[spawn(1,0,0),spawn(2,1,7)],boss=null,afterActors=null,initializeActor=null,warmup=180,dispose=null,worldCamera='default'}={}){
++function setup({wall=false,roster=[spawn(1,0,0),spawn(2,1,7)],boss=null,beforeActors=null,afterActors=null,afterProjectiles=null,initializeActor=null,warmup=180,dispose=null,worldCamera='default'}={}){
+   const raw={bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]};
+   if(wall)raw.single.push({kind:'box',min:[-4,0,3],max:[4,6,4]});
+   const level=new f.Level(raw),physics=new f.Physics(level),paint={sample:()=>0,splat:()=>0};
+-  const world={level,physics,paint,match:{playing:()=>true,canRespawn:()=>false},afterActors,createBoss:boss,initializeActor,dispose};
++  const world={level,physics,paint,match:{playing:()=>true,canRespawn:()=>false},beforeActors,afterActors,afterProjectiles,createBoss:boss,initializeActor,dispose};
+   if(worldCamera!=='default')world.camera=worldCamera;
+   const token=f.createTrustedNativeReplay(f,{isolatedRealm:true,epoch:'match',seed:83921,time:0,world,roster,CharacterClass:Display});
+   const authorization={epoch:'match',owners:new Map(roster.map(r=>[r.nid,r.owner]))};
+@@ -35,7 +35,7 @@
+   const step=(inputs={},dt=1/60)=>host(f.advanceTrustedNativeReplay(token,{tick:state().tick+1,dt,commands:roster.map(r=>({nid:r.nid,owner:r.owner,life:r.life,input:{fire:false,squid:false,sub:false,jump:false,special:false,move:[0,0],...inputs[r.nid]},aim:[r.yaw,0],aimPoint:[r.position[0],1,40]}))},authorization));
+   // Expire native spawn invulnerability through real updates, not assignments.
+   try { for(let i=0;i<warmup;i++)assert.deepEqual(step(),{ok:true,tick:i+1,contacts:0}); } catch(e) { f.disposeTrustedNativeReplay(token); throw e; }
+-  return {token,state,step,authorization,close:()=>f.disposeTrustedNativeReplay(token)};
++  return {token,state,step,authorization,world,close:()=>f.disposeTrustedNativeReplay(token)};
+ }
+ function claim(e){return Object.fromEntries(['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].map(k=>[k,e[k]]));}
+ function shoot(w,frames=40){for(let i=0;i<frames;i++)assert.equal(w.step({1:{fire:i===0}}).ok,true,w.state().error);}
+@@ -268,3 +268,84 @@
+   assert.equal(w.step().ok,true);assert.equal(w.state().tick,tick+1);assert.equal(w.state().error,null);assert.ok(f.commitTrustedNativeContact(w.token,receipt));
+  }finally{w.close();}
+ });
++
++// These hooks are trusted native phases, not asynchronous work queues. Never
++// publish completion or private damage receipts while any phase is pending.
++for(const phase of ['beforeActors','afterActors','afterProjectiles'])test(`pending ${phase} faults the session before native contacts can commit`,()=>{
++  let pending=false,resolve;
++  const wait=new Promise(r=>{resolve=r;});
++  const w=setup({[phase]:function(){assert.equal(this,w.world);return pending?wait:undefined;},warmup:0});
++  try{
++    for(let i=0;i<180;i++)assert.equal(w.step().ok,true);
++    shoot(w);const state=w.state(),effect=state.effects[0];
++    assert.ok(state.launches.length>0,'actual native paid fire occurred');
++    assert.ok(effect&&state.actors[1].hp<100,'native projectile flight/contact changed HP before the phase fault');
++    const selected=claim(effect),receipt=f.peekTrustedNativeContact(w.token,selected);
++    assert.ok(receipt,'the pre-fault contact was genuinely available');
++    const saved={...f.G},random=f.VM_MATH.random;
++    pending=true;
++    assert.deepEqual(w.step(),{ok:false,reason:'Asynchronous native authority phase: '+phase});
++    assert.equal(w.state().contacts,0,'fault retires every outstanding private contact');
++    assert.equal(f.peekTrustedNativeContact(w.token,selected),null);
++    assert.equal(f.commitTrustedNativeContact(w.token,receipt),null);
++    assert.equal(w.step().ok,false,'a pending hook cannot continue funding native simulation');
++    for(const [key,value]of Object.entries(saved))assert.equal(f.G[key],value,key);
++    assert.equal(f.VM_MATH.random,random,'realm RNG owner restored');
++  }finally{resolve();w.close();}
++});
++
++test('pending native initialization rejects enrollment, releases the realm and disposes the partially constructed actor',()=>{
++  let resolve,initialized;const wait=new Promise(r=>{resolve=r;}),before=Display.disposals||0;
++  try{
++    assert.throws(()=>{initialized=setup({warmup:0,initializeActor(a,r){
++      a.spawnAt(V(...r.position),r.yaw);return wait;
++    }});},/Asynchronous native authority phase: initializeActor/);
++    assert.equal(Display.disposals,before+1,'the failed first initializer releases its one constructed Character');
++    const replacement=setup({warmup:0});
++    try{assert.equal(replacement.step().ok,true,'failed enrollment cannot retain the native realm lease');}
++    finally{replacement.close();}
++  }finally{initialized?.close();resolve();}
++});
++
++test('synchronous hooks retain this, native arguments and ordinary non-thenable return compatibility',()=>{
++  const calls=[],receivers=[];
++  const w=setup({warmup:0,initializeActor(a,r,api){
++    receivers.push(this);assert.equal(api,f);a.spawnAt(V(...r.position),r.yaw);return {then:'ordinary metadata'};
++  },beforeActors(actors,dt,api){receivers.push(this);calls.push('before');assert.equal(actors.length,2);assert.equal(dt,1/60);assert.equal(api,f);return 0;},
++  afterActors(){receivers.push(this);calls.push('actors');return function ordinaryResult(){};},
++  afterProjectiles(){receivers.push(this);calls.push('projectiles');return {then:false};}});
++  try{
++    assert.equal(w.step().ok,true);assert.deepEqual(calls,['before','actors','projectiles']);
++    assert.ok(receivers.every(receiver=>receiver===w.world));
++    assert.equal(w.state().error,null);
++  }finally{w.close();}
++});
++
++test('callable thenables reject without Promise assimilation or calling their then method',()=>{
++  let thenCalls=0;const result=function pendingPhaseResult(){};
++  result.then=()=>{thenCalls++;};
++  const w=setup({warmup:0,afterActors(){return result;}});
++  try{
++    assert.deepEqual(w.step(),{ok:false,reason:'Asynchronous native authority phase: afterActors'});
++    assert.equal(thenCalls,0,'the guard neither executes nor swallows asynchronous work');
++    assert.equal(w.state().contacts,0);assert.equal(w.step().ok,false);
++  }finally{w.close();}
++});
++
++test('pending native-shaped Boss promise rejects construction and releases every actor and realm lease',()=>{
++  let resolve,initialized;const wait=new Promise(r=>{resolve=r;}),before=Display.disposals||0;
++  // A plain Promise already fails the old Boss-method predicate. This real
++  // pending Promise carries the native method surface and therefore exposes
++  // the missing synchronous-construction admission rather than that old check.
++  Object.assign(wait,{hit:f.Boss.prototype.hit,applyDamage:f.Boss.prototype.applyDamage,
++    _hitCrab:f.Boss.prototype._hitCrab,crabs:new Map(),dispose(){}});
++  try{
++    assert.throws(()=>{initialized=setup({warmup:0,boss(G,api){
++      assert.equal(api,f);assert.equal(G,f.G);assert.equal(this.match.playing(),true);return wait;
++    }});},/Asynchronous native authority phase: createBoss/);
++    assert.equal(Display.disposals,before+2,'both actors created before the failed Boss factory are disposed');
++    const replacement=setup({warmup:0});
++    try{assert.equal(replacement.step().ok,true,'pending Boss construction does not retain the native realm lease');}
++    finally{replacement.close();}
++  }finally{initialized?.close();resolve();}
++});

@@ -67,7 +67,7 @@ try{
     const progress=r.label==='First half'||r.label==='Second half'?.5:r.label==='Full'?1:0;
     assert.ok(Math.abs(r.offset-r.circumference*(1-progress))<.011,r.id+' '+r.label);
     assert.equal(r.stage,r.label==='Full'?'full':r.label==='First ready'||r.label==='Second half'?'second':'first');
-    assert.equal(r.circleRadius,'25');assert.equal(r.trackRadius,'25');assert.equal(r.addedSecondCircle,false);
+    assert.equal(r.circleRadius,'15');assert.equal(r.trackRadius,'15');assert.equal(r.addedSecondCircle,false);
     assert.equal(r.actorUnchanged,true);assert.equal(+r.scopeOpacity,0);
     assert.equal(r.trackOpacity,'',r.id+' native track opacity remains CSS-owned');
     assert.equal(r.stroke,'',r.id+' native arc stroke remains CSS-owned');

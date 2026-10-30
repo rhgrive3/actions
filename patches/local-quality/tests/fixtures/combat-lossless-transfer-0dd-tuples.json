@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "0ddfda32230f54e69a5d791e4d0d6178b1c2074d",
+  "adapterSha256": "f23481ad297ad0ebcaec6e7e3901401506fe3ebf77ced503a75815bed013be3e",
+  "tuples": {
+    "GPU-07c cache aspect only while drawing-buffer size is stable": {
+      "before": "    if (W !== this._w || H !== this._h) { this._w = W; this._h = H; U.uRes.value.set(W, H); }\n    this._aspect = W / Math.max(1, H);\n    U.uAspect.value = this._aspect;",
+      "after": "    if (W !== this._w || H !== this._h) {\n      this._w = W; this._h = H; U.uRes.value.set(W, H);\n      this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;\n    }"
+    },
+    "GPU-07d skip unchanged team RGB while retaining live alpha": {
+      "before": "    if (local) {\n      const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);\n      U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);\n      U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);\n      _c.copy(enemy).lerp(_cc.setRGB(0.55, 0.0, 0.04), 0.55);\n      U.uHeart.value.set(_c.r, _c.g, _c.b, s.heart);\n      U.uAura.value.set(own.r * 1.6, own.g * 1.6, own.b * 1.6, U.uAura.value.w);\n      U.uSwim.value.set(own.r, own.g, own.b, s.swim);\n      U.uSpeedTint.value.copy(own).lerp(WHITE, 0.6);\n      U.uKill.value.set(own.r * 1.3, own.g * 1.3, own.b * 1.3, U.uKill.value.w);\n      U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);\n      U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);\n    }\n    void alive;",
+      "after": "    if (local) {\n      const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);\n      const rgb = this._iwTeamRgb;\n      if (!this._iwTeamRgbValid ||\n          !Object.is(rgb[0], own.r) || !Object.is(rgb[1], own.g) || !Object.is(rgb[2], own.b) ||\n          !Object.is(rgb[3], enemy.r) || !Object.is(rgb[4], enemy.g) || !Object.is(rgb[5], enemy.b)) {\n        U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);\n        U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);\n        _c.copy(enemy).lerp(_cc.setRGB(0.55, 0.0, 0.04), 0.55);\n        U.uHeart.value.set(_c.r, _c.g, _c.b, s.heart);\n        U.uAura.value.set(own.r * 1.6, own.g * 1.6, own.b * 1.6, U.uAura.value.w);\n        U.uSwim.value.set(own.r, own.g, own.b, s.swim);\n        U.uSpeedTint.value.copy(own).lerp(WHITE, 0.6);\n        U.uKill.value.set(own.r * 1.3, own.g * 1.3, own.b * 1.3, U.uKill.value.w);\n        U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);\n        U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);\n        rgb[0] = own.r; rgb[1] = own.g; rgb[2] = own.b;\n        rgb[3] = enemy.r; rgb[4] = enemy.g; rgb[5] = enemy.b;\n        this._iwTeamRgbValid = true;\n      }\n    } else this._iwTeamRgbValid = false;\n    void alive;"
+    }
+  }
+}

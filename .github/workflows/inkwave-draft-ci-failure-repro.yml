@@ -1,0 +1,84 @@
+name: INKWAVE draft CI failure reproduction
+on:
+  push:
+    branches: [fix/inkwave-ci-failures-20261029-draft]
+    paths: ['.github/workflows/inkwave-draft-ci-failure-repro.yml']
+permissions:
+  contents: read
+concurrency:
+  group: draft-failure-repro-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned test dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Reproduce core/A+ and workflow contracts
+        id: contracts
+        run: >-
+          node --test
+          scripts/tests/inkwave-owner-clock-diagnostic.test.mjs
+          scripts/tests/inkwave-sandbox-runner-route.test.mjs
+          scripts/tests/inkwave-ci-recurrence-guards.test.mjs
+          scripts/tests/inkwave-idle-resources-gates.test.mjs
+          scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+      - name: Reproduce historical source and native stage fixtures
+        if: success() || steps.contracts.outcome == 'failure'
+        id: historical
+        run: >-
+          node --experimental-vm-modules --test --test-concurrency=2
+          patches/local-quality/tests/queue-historical-character-20261026.test.mjs
+          patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs
+          patches/splatoon3/tests/explosher-stage-admission.test.mjs
+      - name: Reproduce Wiper/audio/roller source regressions
+        if: success() || steps.contracts.outcome == 'failure' || steps.historical.outcome == 'failure'
+        id: gameplay
+        run: >-
+          node --experimental-vm-modules --test --test-concurrency=2
+          patches/splatoon3/tests/wiper-wet-wave.test.mjs
+          patches/splatoon3/tests/added-audio-sharing.test.mjs
+          patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
+      - name: Verify exact lockfile installs and fail-closed native recovery guards
+        if: always()
+        id: repair
+        run: >-
+          node --experimental-vm-modules --test
+          scripts/tests/inkwave-workflow-inputs.test.mjs
+          tools/swim-entry-qa/workflow.test.mjs
+          scripts/tests/inkwave-context-recovery-browser.test.mjs
+      - name: Require every focused group
+        if: always()
+        env:
+          CONTRACTS: ${{ steps.contracts.outcome }}
+          HISTORICAL: ${{ steps.historical.outcome }}
+          GAMEPLAY: ${{ steps.gameplay.outcome }}
+          REPAIR: ${{ steps.repair.outcome }}
+        run: |
+          test "$CONTRACTS" = success
+          test "$HISTORICAL" = success
+          test "$GAMEPLAY" = success
+          test "$REPAIR" = success

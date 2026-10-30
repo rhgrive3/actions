@@ -1,0 +1,12 @@
+{
+  "status": "verified-immutable-current-source-and-full-build",
+  "sourceSha": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+  "site": "/workspace/scratch/main-wave345-repaired-site",
+  "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+  "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+  "declaredInputs": 1546,
+  "artifacts": 2259,
+  "builderSha256": "4ec7a154eeaa1b7f65beb7fd26ccb33f231596eeb0b56579e10733868639e2f9",
+  "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+  "scope": "Read-only prerequisite for a separately sealed same-build current/current native self-control; no browser or calibration executed"
+}

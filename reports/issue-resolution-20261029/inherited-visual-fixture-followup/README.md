@@ -1,0 +1,13 @@
+# Inherited cache and visual-fixture follow-up
+
+Main91c shard6 logs exposed three failures still reproducible in public98: the extracted ScreenFX update receiver omitted its constructor-owned RGB cache, and two Hissen assertions retained pre-0904 display dimensions. The controlled source selection initially passed 14/17 and failed 3; the two narrowly reviewed fixture corrections pass 17/17. The cache test now models the actual constructor's Float64Array(6) and invalid cache state and asserts that native constructor allocation remains present. All original dormant/first-visible uniform, alpha and RNG assertions stay intact.
+
+The Hissen expectations independently use the owner's explicit 1.5 display multiplier; native radius, physical state, paint, heading, RNG, other weapons, shader fields and capacity controls are unchanged. Independent in-memory counterfactuals reject both a 1.0 Hissen scale and applying 1.5 to other weapons. The broader related source group passes 37/37 and the emitted-runtime Hissen group passes 8/8 with zero failures/skips. Test helpers remain source-side; these are CPU/component results, not GPU screenshots.
+
+The separate controlled emitted Stringer HUD checker also retained 25px instead of the owner-requested 15px. Original98 collects all 15 rows with actual radius 15 and then fails 15≠25. Changing only its two radius expectations passes all 15 charge-stage, single-circle, circumference, immutability and CSS-ownership checks in Chromium 154.0.8037.57. Both browser/server pairs close. This is a controlled DOM component check, not ordinary gameplay, hardware or retail parity.
+
+The exact98 contact-FK suite independently passes 2/2 with 108 actual loaded-bank pose comparisons at 30/60/120. All 1,550 application inputs and 13 motion-bank files remain unchanged before/after; the run's unrelated test-only WIP is disclosed. This does not claim hosted bank availability.
+
+Main91 active/UI/core failures map to the already published private-icon/menu-epoch/#1723-guard fixes. Its two contact-FK failures map to the owner-seam fixture repair, with the local loaded-bank proof above. Actual hosted results on the next head remain a separate requirement. Source failure logs are available in main jobs 123650956885,123650957109,123650956955 and123650956663; the new source fixture repair is not a relabeling of those failures.
+
+Application inputs and emitted artifacts remain exactly 5d8b/6c81 (1,550/2,267). Only three test/harness files change. The fixture patches and original failures, positives and counterfactuals retain exact hashes in manifest.json. No assertion is removed, CI is not weakened, and no app, physics or protocol behavior changes.

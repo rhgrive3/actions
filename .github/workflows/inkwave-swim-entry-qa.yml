@@ -1,6 +1,7 @@
 name: INKWAVE swim owner entry native QA
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - 'inkwave-public/src/game/actor.js'
       - 'inkwave-public/src/game/character-geo.js'
@@ -37,6 +38,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   compare-swim-entry:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
@@ -46,6 +48,7 @@ jobs:
         with:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -53,7 +56,7 @@ jobs:
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Install existing native QA tools
         run: |
-          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps --only-shell chromium
       - name: Verify existing native swim contracts
         run: node --experimental-vm-modules --test patches/splatoon3/tests/swim-motion.test.mjs
@@ -65,6 +68,7 @@ jobs:
           ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 1
           path: _swim_entry_reference
+          persist-credentials: false
       - name: Prepare, build and capture the named counterfactual
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"

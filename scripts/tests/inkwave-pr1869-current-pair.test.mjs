@@ -165,7 +165,25 @@ test('Range actual checker preserves all 24 manifest/index and stage cases',asyn
  const profilerImport="import { runProfilerLifecycleBrowserChecks } from './lib/inkwave-profiler-lifecycle-browser.mjs';\n";
  const profilerCall="      out.checks.profilerLifecycle = await runProfilerLifecycleBrowserChecks(page, manifest.artifacts);\n";
  const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
+ // The reviewed lazy-tab interaction is outside the immutable preflight and
+ // stage predicates below. Prove its complete exact inverse before applying
+ // the older profiler-owner bridge; neither historical digest is rebound.
+ const reviewedLazyActivation="    // The native WEAPON tab creates its catalogue on first activation. Share\n    // the existing 30-second UI budget between the click and lazy construction.\n    const pickerDeadline = Date.now() + 30000;\n    const pickerRemainingMs = () => Math.max(1, pickerDeadline - Date.now());\n    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id=\"r-tab-weapon\"]').click({ timeout: pickerRemainingMs() });\n    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').first().waitFor({ state: 'attached', timeout: pickerRemainingMs() });\n";
+ const historicalActivation="    // The picker is the pause panel's WEAPON tab (TOOLS / TRAVEL / WEAPON).\n    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id=\"r-tab-weapon\"]').click();\n";
+ const lastChipSelection="    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();";
+ const catalogueStart='    // The hub ring remains readable. The scrollable picker must expose\n';
+ function restorePriorRange(source){
+  assert.equal(source.split(reviewedLazyActivation).length,2,'exactly one reviewed lazy-tab block');
+  assert.equal(source.split(reviewedLazyActivation+catalogueStart).length,2,'reviewed activation directly precedes original catalogue enumeration');
+  assert.equal(source.split(historicalActivation).length,1,'no duplicate historical activation');
+  assert.equal(source.split(lastChipSelection).length,2,'exactly one original last-chip selection');
+  const restored=source.replace(reviewedLazyActivation,'').replace(lastChipSelection,historicalActivation+lastChipSelection);
+  assert.equal(digest(restored),'7528713841a736a3a7d92fc7f85933411e2d1f515def151989f1791e21b71772','exact complete Range source before lazy-tab activation');
+  return restored;
+ }
  function reviewedRangeBody(source){
+  assert.equal(digest(source),'3db366bed964222fe61c6b6031cd78aca0749d23a9eed22ddfd032dfc487400a','exact current reviewed lazy Range bytes');
+  source=restorePriorRange(source);
   assert.equal(digest(source),'7528713841a736a3a7d92fc7f85933411e2d1f515def151989f1791e21b71772','exact integrated Range bytes');
   for(const line of [profilerImport,profilerCall])assert.equal(source.split(line).length,2,'exactly one reviewed hook line');
   assert(source.includes("import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';\n"+profilerImport+"import { pathToFileURL } from 'node:url';\n"),'exact import position');
@@ -178,12 +196,24 @@ test('Range actual checker preserves all 24 manifest/index and stage cases',asyn
  assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+helper.length+'\0'),helper])).digest('hex'),'42b36a251f7350fc553b19b28c10a1cfd28b853e');
  const candidate=reviewedRangeBody(integrated);
  for(const mutation of [integrated.replace(profilerImport,''),integrated.replace(profilerCall,''),integrated.replace(profilerCall,profilerCall+profilerCall),integrated.replace('manifest.artifacts);','{});'),integrated+'\n// unreviewed change\n'])assert.throws(()=>reviewedRangeBody(mutation));
+ assert.throws(()=>reviewedRangeBody(restorePriorRange(integrated)),/exact current reviewed lazy Range bytes/,'historical identity alone cannot admit the current checker');
+ for(const anchor of [reviewedLazyActivation,lastChipSelection])for(const replacement of ['',anchor+anchor]){
+  const mutation=integrated.replace(anchor,replacement);assert.notEqual(mutation,integrated);
+  assert.throws(()=>restorePriorRange(mutation));
+  assert.throws(()=>reviewedRangeBody(mutation));
+ }
+ const missingReadiness=integrated.replace("    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').first().waitFor({ state: 'attached', timeout: pickerRemainingMs() });\n",'');
+ assert.notEqual(missingReadiness,integrated);assert.throws(()=>restorePriorRange(missingReadiness));assert.throws(()=>reviewedRangeBody(missingReadiness));
+ const movedActivation=integrated.replace(reviewedLazyActivation,'').replace(lastChipSelection,lastChipSelection+'\n'+reviewedLazyActivation);
+ assert.notEqual(movedActivation,integrated);assert.throws(()=>restorePriorRange(movedActivation));assert.throws(()=>reviewedRangeBody(movedActivation));
  const baselinePreflight="const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');\nconst manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));\nif (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');\nif (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');\n// No baked AO pair exists for the range in this source tree. Verify the actual\n// artifact contract rather than requiring an asset that was never shipped.\nconst rangeLightmapFiles=['assets/lightmaps/range.json','assets/lightmaps/range.png'];\nconst rangeLightmapCount=rangeLightmapFiles.filter(f=>Object.hasOwn(manifest.artifacts,f)).length;\nif (rangeLightmapCount===1) throw new Error('Incomplete baked range AO pair');\n// The emitted runtime index is authoritative: packaged but unregistered\n// lightmap assets are not loaded by Game._loadLightmap, including Range.\nconst emittedLightmaps=(await import(pathToFileURL(path.join(site,'src/world/lightmap-assets.js')).href)).LIGHTMAP_LAYOUTS;\nif (!Array.isArray(emittedLightmaps) || emittedLightmaps.some(id=>typeof id!=='string')) throw new Error('Invalid emitted lightmap index');\nconst rangeLightmapAvailable=emittedLightmaps.includes('range');\nif (rangeLightmapAvailable && rangeLightmapCount!==2) throw new Error('Emitted Range lightmap index is missing its complete asset pair');\n\n";
  const sha256=value=>crypto.createHash('sha256').update(value).digest('hex');
  function uniqueOffset(source,anchor){const n=source.indexOf(anchor);assert(n>=0,anchor);assert.equal(source.indexOf(anchor,n+anchor.length),-1,anchor);return n;}
  function exactSlice(source,start,end){const a=uniqueOffset(source,start),b=uniqueOffset(source,end);assert(b>a);return source.slice(a,b);}
  const candidatePreflight=exactSlice(candidate,'const hash = (b) =>','const pw = await import(');
  const stageSource=exactSlice(candidate,'    const st = out.checks.stage;','    // #589: inspect the real constrained atlas');
+ assert.equal(exactSlice(integrated,'const hash = (b) =>','const pw = await import('),candidatePreflight,'all 24 cases execute the unchanged actual current preflight bytes');
+ assert.equal(exactSlice(integrated,'    const st = out.checks.stage;','    // #589: inspect the real constrained atlas'),stageSource,'all 24 cases execute the unchanged actual current stage bytes');
  assert.equal(sha256(candidate),'ff79498bc6a7fb53626a035712ee34550254b49b7f1fbfc003e6f10915c68fb2');
  assert.equal(sha256(baselinePreflight),'e7c66d23f44eb2309034b5420b64a07524d9be601e068a463c99b43d2109559b');
  assert.equal(sha256(candidatePreflight),'b4689b6c386064b0e096e95bcd1923cc35ecc1392777252c987c219b64ab38df');
