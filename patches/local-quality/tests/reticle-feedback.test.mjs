@@ -19,6 +19,7 @@ class El {
  set className(v){this.names=new Set(v.split(' '));} get className(){return [...this.names].join(' ');}
  set innerHTML(v){this.html=v;} get innerHTML(){return this.html;}
  querySelector(){return new El();} remove(){} insertAdjacentHTML(){} contains(){return true;} setAttribute(k,v){this[k]=v;}
+ removeAttribute(k){delete this[k];}
  animate(frames,options){const a={frames,options,currentTime:0,playState:'running',plays:1,cancel(){this.playState='idle';this.currentTime=null;},play(){this.playState='running';this.plays++;}};this.animations.push(a);return a;}
 }
 function fixture(){
