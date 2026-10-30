@@ -21,6 +21,9 @@ export function driveCanonicalBotSpecial(actor,intent,dt,target,options={}){
  // Activation has one owner in every mode. A native painting/duel decision
  // must not bypass the category's range, terrain, recognition or team checks.
  intent.special=false;
+ // An uncharged bot still uses its ordinary main weapon. Avoid both the
+ // category's preparation aim and its more expensive trajectory probes.
+ if(!ctx.state&&!actor.specialReady?.())return ctx;
  if(ctx.state){
   intent.fire=intent.sub=intent.jump=intent.squid=intent.booyah=false;
   if(ctx.brain)ctx.brain._bombAim=ctx.brain._releaseBomb=false;

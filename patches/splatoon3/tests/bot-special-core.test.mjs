@@ -93,3 +93,22 @@ test('production composition has one final tail policy and no random or competin
   assert.ok(!code.includes("w.special === 'trizooka' && dist < 24"));
   assert.ok(!code.includes("w.special === 'storm' && dist < 16"));
 });
+
+test('uncharged bots preserve ordinary combat without invoking category planning',()=>{
+  // Exercise the real dispatcher with an observable category boundary. Its
+  // production dependencies need the game module loader; this narrow test
+  // keeps only the category planners behind a spy, not the readiness policy.
+  const source=fs.readFileSync(new URL('../runtime/canonical-kits.mjs',import.meta.url),'utf8')
+    .replace(/^import .*;\n/gm,'').replace(/^export \{[^\n]*\n/gm,'').replaceAll('export function ','function ');
+  let planned=0;
+  const planner=ctx=>{planned++;ctx.wantYaw=2;ctx.move.set(1,0,0);ctx.intent.fire=false;return true;};
+  const dispatch=Function('createBotSpecialContext','driveMeleeSpecial','driveRangedSpecial','driveSupportSpecial',
+    source+'\nreturn driveCanonicalBotSpecial;')(createBotSpecialContext,planner,planner,planner);
+  const f=setup();f.actor.specialReady=()=>false;f.intent.move.set(.2,0,.7);
+  const ctx=dispatch(f.actor,f.intent,.1,f.enemy,f.options);
+  assert.equal(planned,0);assert.equal(ctx.handled,false);assert.equal(ctx.wantYaw,0);
+  assert.deepEqual([f.intent.move.x,f.intent.move.z],[.2,.7]);assert.equal(f.intent.fire,true);
+  f.actor.specialReady=()=>true;dispatch(f.actor,f.intent,.1,f.enemy,f.options);assert.equal(planned,1);
+  f.actor.specialReady=()=>false;f.actor.specialActive={id:'trizooka'};
+  dispatch(f.actor,f.intent,.1,f.enemy,f.options);assert.equal(planned,2,'active specials continue after spending their meter');
+});
