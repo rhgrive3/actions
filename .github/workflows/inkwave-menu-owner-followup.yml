@@ -19,6 +19,7 @@ on:
       - 'scripts/lib/inkwave-build-only-modules.mjs'
       - 'scripts/lib/inkwave-online-controlled-fixture.mjs'
       - 'scripts/tests/inkwave-online-async-entry.test.mjs'
+      - 'scripts/tests/inkwave-online-name-input.test.mjs'
       - 'scripts/tests/landscape-composition.test.mjs'
       - 'scripts/tests/settings-reset-lifetime.test.mjs'
       - 'scripts/tests/touch-layout-editor-lifetime.test.mjs'
@@ -30,7 +31,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   focused-menu-owner:
-    if: github.head_ref == 'fix/menu-owner-lifetime-followup-20261030'
+    if: github.head_ref == 'fix/menu-owner-input-acceptance-20261030'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     env:
@@ -78,7 +79,7 @@ jobs:
             assert(match, 'missing complete test summary: ' + key);
             counts[key] = Number(match[1]);
           }
-          assert(counts.tests >= 56, 'focused regression inventory is incomplete');
+          assert(counts.tests >= 60, 'focused regression inventory is incomplete');
           assert.equal(counts.pass, counts.tests);
           for (const key of ['fail', 'cancelled', 'skipped', 'todo']) assert.equal(counts[key], 0, key);
           fs.writeFileSync('.ci-scratch/menu-owner-followup/regression-summary.json', JSON.stringify({sourceSha:process.env.SOURCE_SHA, ...counts}, null, 2) + '\n');

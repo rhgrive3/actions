@@ -89,7 +89,13 @@ test('#709 inner thin ring has no spread transform in any state', () => {
 
 test('#709 other reticles are untouched by the override', () => {
   for (const kind of ['shooter', 'dualies', 'splatling', 'charger', 'roller']) {
-    assert.deepEqual(cascade([HUD, PATCH], svg(kind)), cascade([HUD], svg(kind)), kind);
+    const current = cascade([HUD, PATCH], svg(kind)), baseline = cascade([HUD], svg(kind));
+    // The independent Dualies reticle may intentionally expose overflowing
+    // artwork; #709 must not mutate any other property or spread transform.
+    const { overflow: currentOverflow, ...currentCore } = current;
+    const { overflow: baselineOverflow, ...baselineCore } = baseline;
+    assert.deepEqual(currentCore, baselineCore, kind);
+    if (currentOverflow !== baselineOverflow) assert.equal(currentOverflow, 'visible', kind);
     for (const classes of [['iw-ret__ring'], ['iw-ret__ring', 'thin']])
       assert.deepEqual(cascade([HUD, PATCH], circle(classes, kind)), cascade([HUD], circle(classes, kind)), kind);
   }
