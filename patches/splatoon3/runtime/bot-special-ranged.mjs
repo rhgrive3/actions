@@ -54,7 +54,7 @@ function aimBooyah(c) {
   const h=c.actor.pos.y+1.2-c.enemy.pos.y;
   let bestError=Infinity,bestPitch=0;
   for(let pitch=-.6;pitch<=1.00001;pitch+=.04){
-    const vy=60*Math.sin(pitch),a=75.6/7200,b=a-vy/60;
+    const vy=Math.max(-24,60*Math.sin(pitch)),a=75.6/7200,b=a-vy/60;
     const disc=b*b+4*a*h;if(disc<0)continue;
     const frames=(-b+Math.sqrt(disc))/(2*a);if(!(frames>0&&frames<=126))continue;
     const travel=Math.cos(pitch)*.955*(1-Math.pow(.955,frames))/.045;
@@ -62,6 +62,8 @@ function aimBooyah(c) {
     if(error<bestError){bestError=error;bestPitch=pitch;}
   }
   const p=(c.memory.rangedAimPoint ||= c.actor.pos.clone());
+  // all-specials emits along aimPoint minus feet, while the shared spring
+  // constructs that point from the eye. Keep this target in the emitter basis.
   p.set(c.enemy.pos.x,c.actor.pos.y+Math.tan(bestPitch)*d,c.enemy.pos.z);
   aim(c,p,0);return bestError<=10;
 }
@@ -186,7 +188,9 @@ export function driveRangedSpecial(c) {
     }
     if((s.inkFuel??150)<15||(s.t||0)<(s.nextHookAt||0))return true;
     const point=hookPoint(c);if(!point)return true;
-    aim(c,point,0);
+    // Hook uses aimPoint-minus-feet from a chest-height origin. Offset the
+    // reticle so the actual emitted ray reaches the sampled floor surface.
+    aim(c,point,-1.05);
     it.sub=aimed(c,.1)&&!s.held?.sub;
     return true;
   }
