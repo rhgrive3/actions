@@ -1,0 +1,139 @@
+{
+  "schema": 2,
+  "status": "final-throughput-validation-pending",
+  "sourceCommit": "4e4a16c0b8997ce9c14b93a40e9655cb0e784c84",
+  "sourceTree": "ce9626fa9023a215946e8483f9b8935952429874",
+  "localTestedSource": "f0951e3ed5e77d15549ed4798bcbdde1eb7f17e3",
+  "input": {
+    "patchDocument": "https://docs.google.com/document/d/1g8RWUlg7bj_MxSz-RZ7H-IkcSvovzdCm13MPgFLF16A/edit",
+    "reportDocument": "https://docs.google.com/document/d/1eYNauevgpBlj62XZjjmhKb3RofKISzSMQw7sEFmKjCU/edit",
+    "normalizedPatchSha256": "bcd3679e7d7dd1cab901947aa980f6384bf20bf35a936bfc0af406141a3dba0d"
+  },
+  "sourceRegressions": {
+    "total": 129,
+    "passed": 119,
+    "failed": 0,
+    "skipped": 10,
+    "skipReason": "Existing private-asset and emitted-site dependent checks; final emitted checks are scheduled separately.",
+    "scope": "Tested prior-base f0951e3e code; fresh combined-current-main checks pending."
+  },
+  "historicalWaveCandidate": {
+    "sourceCommit": "c0ca4b9879d0e4453ebdd0ebc8fd50a84f5d3763",
+    "contentHash": "2d9eeaa9c3cb86c98226427931883d77651651e5d9fa0cb98e3146f93e8c9961",
+    "performance": {
+      "chromiumIpadHigh": {
+        "reference": [
+          0.1520931053153602,
+          0.1590510378875515,
+          0.14669876435631105
+        ],
+        "candidate": [
+          0.16439175871234016,
+          0.17558645877229948,
+          0.17433508598207345
+        ],
+        "referenceFps": 0.15244754534044658,
+        "candidateFps": 0.1712885063699326,
+        "improvementPercent": 12.358979600104615
+      },
+      "webkitIpadHigh": {
+        "reference": [
+          0.34704147145583897,
+          0.34214938242036474,
+          0.33158697526361164
+        ],
+        "candidate": [
+          0.3152684510860998,
+          0.33099430689792136,
+          0.32530904359141183
+        ],
+        "referenceFps": 0.3401360544217687,
+        "candidateFps": 0.32372586893418653,
+        "improvementPercent": -4.824594533349158
+      }
+    },
+    "images": [
+      {
+        "stage": "robo",
+        "browser": "webkit",
+        "maxMeanRgb": 0.09338973239916486,
+        "maxP99Rgb": 1,
+        "alphaExact": true
+      },
+      {
+        "stage": "mako",
+        "browser": "chromium",
+        "maxMeanRgb": 0.09169328056531104,
+        "maxP99Rgb": 1,
+        "alphaExact": true
+      }
+    ],
+    "materialLinks": {
+      "browsers": [
+        "chromium",
+        "webkit"
+      ],
+      "factories": 20,
+      "programs": 32,
+      "glError": 0
+    },
+    "acceptedAsFinal": false
+  },
+  "finalCandidate": {
+    "webkitBaseline": {
+      "sourceCommit": "cf4c30e9698f3a71f383dce92cef27f910c6ac6b",
+      "fps": [
+        0.35414527038991395,
+        0.35773055734420833,
+        0.312930279133809
+      ]
+    },
+    "webkitProvisionalFirstWindow": {
+      "fps": 0.3533818644427168,
+      "traceSha256": "1c77fb8ddae41f2c953cd0f6b058515b720a2b5f71773e857e7fdd3eff4e0723",
+      "coldPrograms": 0,
+      "acceptedAsCompleteMeasurement": false
+    },
+    "completionBlocker": "Managed execution environment disconnected before final result recovery. Reproducible exact-source validation is moved to GitHub Actions."
+  },
+  "limits": [
+    "No physical GPU: Chromium SwiftShader and Linux software WebKit only.",
+    "WebKit's Apple GPU string is not physical iPad evidence.",
+    "Historical +45.409% desktop result belongs to the earlier implementation; final Wave candidate must pass a fresh comparison.",
+    "Final 30% improvement, final cone images and real iPad Safari/Metal 60fps are not yet verified."
+  ],
+  "parentMain": "45f5d98ba7944ae280f27f15d827b2132586ea14",
+  "comparisonBaselines": {
+    "desktop": {
+      "sha": "6ae5b34493e0744a7334025ba09b810f034194e8",
+      "parentMain": "45f5d98ba7944ae280f27f15d827b2132586ea14",
+      "minimumSpeedup": 1.3,
+      "description": "Comparison-only rollback of exactly three render files to their original 0cc5ce37 blobs. All current-main camera/gameplay stays identical.",
+      "rollbacks": [
+        {
+          "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "387d1ad9f1e070c3b49d651349771e01223dafc8"
+        },
+        {
+          "path": "patches/native-stages/runtime/native-render.mjs",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "3b368948be962d1fad15cc04a6605bbfa9c397ea"
+        },
+        {
+          "path": "patches/local-quality/composer-format-adapter.mjs",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "5834e14371307d58952ce1823bd737b56c8837cc"
+        }
+      ]
+    },
+    "webkit": {
+      "sha": "45f5d98ba7944ae280f27f15d827b2132586ea14",
+      "minimumSpeedup": 1,
+      "description": "Current main including merged P1 native rendering and new intro camera; measures only this follow-up."
+    }
+  }
+}
