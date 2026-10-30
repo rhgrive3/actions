@@ -15,7 +15,8 @@ const runtimeRoot=built?pathToFileURL(path.resolve(built)+path.sep):sourceRoot;
 const runtimePaths=['patches/network-replication/combat-provenance.mjs',
   'patches/network-replication/owner-tick-receipt.mjs',
   'patches/network-replication/snapshot-guard.mjs',
-  'patches/network-replication/sub-birth-commit.mjs'];
+  'patches/network-replication/sub-birth-commit.mjs',
+  'patches/network-replication/crablet-trajectory.mjs'];
 if(built){
   const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
   const manifest=JSON.parse(fs.readFileSync(new URL('inkwave-build.json',runtimeRoot),'utf8'));
@@ -590,6 +591,9 @@ test('Boss body and direct-fire crablets behind cover reject without spending pr
   fire(seen);
   assert.equal(seen.bossCalls.length,1);
   const crab=new Stub();walled(crab);
+  // fire() travels at y=1; native crab sphere centre is y+.35. Put the
+  // target on that ray rather than relying on a bent centre-directed LOS.
+  crab.match.boss.crabs.get(7).y=.65;
   crab.onMessage('peerA',boss(1,7,0,'crab',36));
   fire(crab);
   assert.equal(crab.bossCalls.length,0);

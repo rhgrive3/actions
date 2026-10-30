@@ -45,7 +45,11 @@ function net(){
 const packet=(events,ts=100)=>({ts,a:[[1,0,0,0]],e:events});
 const shot=(n,at=100)=>[at,'p',1,'shot','shooter',0,1,n*.01,0,0,45];
 const fire=(n,at=100)=>[at,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:[0,1,n*.01],dir:[0,0,45]}];
-function snapshot(m){const s=m._combatProvenance;return s?{proofs:[...s.proofs],pending:[...s.pending],contacts:[...s.contacts]}:null;}
+function snapshot(m){const s=m._combatProvenance;return s?{proofs:[...s.proofs].map(([peer,rows])=>[peer,rows.map(p=>{
+ // Compare the frozen scan policy; receiver-only native crab trace metadata
+ // added later is verified against actual flight in crablet-native-trajectory.
+ const {firePose,beamLength,beamCharge,...policy}=p;return policy;
+})]),pending:[...s.pending],contacts:[...s.contacts]}:null;}
 
 test('reference policy retains single-round, penetrating and area capacities on both main event routes',async()=>{
  const before=await load(oldRecord),after=await load();

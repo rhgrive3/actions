@@ -9,6 +9,7 @@ import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs'
 import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';
 import { damageLeafMax } from './damage-leaves.mjs';
 import { observeOwnerTick } from './owner-tick-receipt.mjs';
+import { crabletProofKey, recordCrabletBirth, sampleCrabletHistory, crabletTrajectoryVisible, forgetCrabletTraces } from './crablet-trajectory.mjs';
 const MAX_PROOFS = 160, MAX_PENDING = 48;
 const EXPLOSIVE_SUBS = new Set(['bomb','suction','burst','curling','autobomb','fizzy','torpedo','inkMine']);
 const PROOF_AGE = 3.5, SPECIAL_PROOF_AGE = 10, PENDING_AGE = 0.95;
@@ -130,7 +131,11 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
   const key=acceptedSub && ((e[1]==='ac' && e[2]==='sub') || acceptedSub.sourceKind==='native-sprinkler')
     ? ['accepted-sub-birth',id,acceptedSub.life,acceptedSub.serial,cause].join(':')
     : [id,e[0],e[1],kind,cause,...origin.map(n=>Math.round(n*10))].join(':');
-  return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,key,src:e[1],los:null};
+  return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,
+    key:kind==='main'?crabletProofKey(id,e[0],e[1],cause,origin,
+      nm.isHost&&nm.match?.boss?.sim&&e[1]==='p'?nm._combatCrabletSystem?.crabletCombatBirthId?.(e):undefined):key,
+    src:e[1],los:null,firePose:pose.slice(),beamLength:e[1]==='ev'?e[3]?.len:undefined,
+    beamCharge:e[1]==='ev'?e[3]?.charge:undefined};
 }
 function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
@@ -190,6 +195,7 @@ function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
     if(recent>=rate)continue;
     store.push(candidate);if(acceptedSub)acceptedProof=candidate;
+    if(candidate.kind==='main'&&candidate.src==='p')recordCrabletBirth(nm,from,packet.e[i],t);
     if(proofKeys){proofKeys.add(candidate.key);if(t-candidate.at<1)recentByActor.set(candidate.actor,recent+1);}
   }
   if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
@@ -234,6 +240,7 @@ function clear(tools,from,x,y,z) {
 }
 // Local actors only: one bounded ring per actor, sampled on owner packets.
 export function sampleLocalHistory(nm,t=now()) {
+  sampleCrabletHistory(nm,t);
   const s=state(nm),rings=s.history||(s.history=new Map());
   for(const a of nm.byNid?.values?.()||[]) {
     if(a?.remote||!a?.alive||!a.pos||!finite(a.pos.x)||!finite(a.pos.y)||!finite(a.pos.z))continue;
@@ -255,8 +262,8 @@ function poseVisible(tools,origin,x,y,z) {
   }
   return false;
 }
-function attackerSeesMuzzle(tools,nm,p) {
-  const a=nm.byNid?.get(p.actor),pose=point(a);
+function attackerSeesMuzzle(tools,nm,p,firePose=null) {
+  const a=nm.byNid?.get(p.actor),pose=firePose||point(a);
   if(!v3(pose))return false;
   for(const height of ATTACKER_HEIGHTS)if(clear(tools,p.origin,pose[0],pose[1]+height,pose[2]))return true;
   return false;
@@ -294,16 +301,12 @@ function bossVisible(nm,p) {
   }
   return false;
 }
-function crabletVisible(nm,p,crab) {
+function crabletVisible(nm,p,crab,t) {
   const tools=losTools(nm);
   if(!tools)return true; // preserve offline/unit contexts without a collision world
   if(!crab || crab.dead || ![crab.x,crab.y,crab.z].every(finite) ||
-    !attackerSeesMuzzle(tools,nm,p))return false;
-  // Match the native _segCrabs hit sphere (center y + .35, radius .55).
-  // Check the near surface rather than the center, which may be behind cover.
-  const c=[crab.x,crab.y+.35,crab.z],d=difference(p.origin,c),len=magnitude(d);
-  const k=len>1e-6?Math.min(len,.55*.8)/len:0;
-  return clear(tools,p.origin,c[0]+d[0]*k,c[1]+d[1]*k,c[2]+d[2]*k);
+    !attackerSeesMuzzle(tools,nm,p,p.firePose))return false;
+  return crabletTrajectoryVisible(nm,p,crab,t);
 }
 function rayNear(p,target,margin=5) {
   const dx=target[0]-p.origin[0],dy=target[1]-p.origin[1],dz=target[2]-p.origin[2];
@@ -524,7 +527,8 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
       !(d.w==='torpedo-splash'&&p.cause==='torpedo'))continue;
     if(p.kind==='special' && d.w!==p.cause)continue;
     if(!withinProofCeiling(nm,actor,d,type,p))continue;
-    if(!rayNear(p,target,type==='boss'?6:5.5))continue;
+    const directCrab=type==='boss'&&d.c>=0&&p.kind==='main'&&directFire(actor);
+    if(!directCrab&&!rayNear(p,target,type==='boss'?6:5.5))continue;
     if(type==='pvp') {
       if(!hitSegmentOk(p,d.bg,target))continue;
       if(p.kind==='main' && d.bg && nm._combatProvenancePhysics?.los && nm._combatProvenanceTHREE?.Vector3) {
@@ -545,7 +549,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
     } else {
       if(d.weak===1 && !weakPointOk(nm,p))continue;
       if(d.c<0&&p.kind==='main'&&directFire(actor)&&!bossVisible(nm,p))continue;
-      if(d.c>=0&&p.kind==='main'&&directFire(actor)&&!crabletVisible(nm,p,nm.match.boss.crabs.get(d.c)))continue;
+      if(directCrab&&!crabletVisible(nm,p,nm.match.boss.crabs.get(d.c),t))continue;
       if(p.kind==='main'&&directFire(actor)) {
         // A native straight round/beam connects with each Boss body or
         // crablet once. A fresh transport nonce is not another collision.
@@ -591,6 +595,7 @@ export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allow
   if(!nm || nm._disposed || !d || (type!=='boss'&&type!=='pvp'))return false;
   if(type==='boss'&&(!finite(d.d)||d.d<=0))return false;
   const s=state(nm);prune(s,t);
+  if(type==='boss')sampleCrabletHistory(nm,t);
   const a=ownerActor(nm,from,d.a);
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
   return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
@@ -698,6 +703,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldMessage.call(this,from,d);
   };
   P.onLeave=function(id,changed) {
+    forgetCrabletTraces(this,id,changed);
     if(changed)closeSubBirthCommit(this);
     const s=this._combatProvenance;
     s?.proofs.delete(id);s?.pending.delete(id);
@@ -707,6 +713,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldLeave.call(this,id,changed);
   };
   P.dispose=function(...args) {
+    forgetCrabletTraces(this,null,true);
     closeSubBirthCommit(this);
     const s=this._combatProvenance;
     s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.contactSnapshots.clear();s?.specialSnapshots.clear();s?.history?.clear();
@@ -717,9 +724,14 @@ export function installCombatProvenance(NetMatch,context={}) {
   // touch this gate; physics is optional for offline/unit-test contexts.
   P._combatProvenancePhysics=null;
   P._combatProvenanceTHREE=context.THREE||null;
+  P._combatCrabletSystem=null;
   P._combatHitCeilings=context.hitCeilings||COMBAT_HIT_CEILINGS;
   if(context.G) {
     const oldBind=P.bind;
-    P.bind=function(...args){this._combatProvenancePhysics=context.G.physics;return oldBind.apply(this,args);};
+    P.bind=function(...args){
+      this._combatProvenancePhysics=context.G.physics;
+      this._combatCrabletSystem=typeof context.G.projectiles?.makeCrabletCombatProbe==='function'?context.G.projectiles:null;
+      return oldBind.apply(this,args);
+    };
   }
 }

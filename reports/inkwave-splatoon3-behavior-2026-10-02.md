@@ -6970,3 +6970,7 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: 開始カメラと既存PRの統合検証
 
 [統合記録](inkwave-pr-integration-20261030.md)。開始カメラ・native描画・ホコ／ヤグラモデルを含む最終mainのtreeを、検証済みの合成treeと照合した。ソース、最適化済み配信、実ブラウザー、実WebSocketの結果を分けて記録し、WahooオンラインQAの旧版でも起きる失敗、GO後の既存1秒猶予、全ステージ・現行Switch実機との完全一致の未確認を維持する。ソフトウェア描画やDOM検証を本家実機／iPad実機の測定に読み替えない。
+
+### 2026-10-30: #1925 crablet受信検査の部分遮蔽修正
+
+中心へのLOSによる2つの実Physics反例を、受信済みnative birthの実integrator/field sweepとnative Boss sphere contactで修正する。受信側の位置履歴、native ID/lifeと同時刻の別弾、proofの原子的な消費も検査する。通常飛行とSplatoon 3 Ver.11.3.0のsource parameterは変更しない。INKWAVE独自Bossのclaim検査であり、任天堂のnetwork authorityやBoss挙動の一致を示さない。検証範囲と残る#1665/#1666の制限は[弾道検査レポート](crablet-native-trajectory-20261030.md)。

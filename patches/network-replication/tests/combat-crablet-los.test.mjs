@@ -54,13 +54,14 @@ test('blocked or throwing muzzle/terrain checks fail closed without consuming pr
     assert.equal(x.proof.bossTargets?.size??0,0);
   }
 });
-test('crablet LOS uses native sphere near surface, not the covered center',()=>{
+test('crablet LOS ends at the native closest contact on the actual shot ray',()=>{
   const x=fixture();
-  x.setVisibility((_a,b)=>b.z<9.8);
+  x.setVisibility((_a,b)=>b.z<=10);
   assert.equal(x.claim(),true);
   const end=x.calls.at(-1)[1];
-  assert.ok(end[2]>9.5&&end[2]<9.8);
-  assert.ok(end[1]>0&&end[1]<.35);
+  assert.equal(end[2],10);
+  assert.equal(end[1],0,'visibility cannot bend the shot toward the sphere centre');
+  assert.ok(Math.hypot(end[0],end[1]-.35,end[2]-10)<=.55);
 });
 test('dead or invalid crablets never consume a main proof',()=>{
   for(const change of [{dead:true},{x:NaN},{y:Infinity},{z:undefined}]) {
