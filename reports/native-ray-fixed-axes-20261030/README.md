@@ -10,7 +10,7 @@
 
 また、初期finite検証でthrowしていた従来coercion試験を補い、nth valueOfでslab中のthrowを確認した。far.valueOf中のthrow、nested ray、反復する値変更、origin/direction/node途中変更も比較した。[追加6試験](coercion-tests.log)、[関連28試験](left-associated-tests.log)、[修正後の実形状16,000 ray](native-parity-left-associated.json)は成功した。集約は[left-associated validation](left-associated-validation.json)を参照。
 
-現時点の部品計測表と通常配信build receiptは加算順修正前の候補に対応する。修正後の再ビルド・部品再測定は共有枠の解放後に実施する。
+加算順修正版 `88349c4c` で同じ実入力の部品計測を再実施した。下表と `component-left-associated.json` はこの修正版に対応する。通常配信build receiptは修正前の候補に対応し、再ビルドは共有枠の解放を待っている。
 
 ## 実入力の記録と部品計測
 
@@ -20,20 +20,20 @@
 
 | 種別 | 実呼出数 | 基準CPU ms | 候補CPU ms | 短縮率 |
 | --- | ---: | ---: | ---: | ---: |
-| 全scalar ray、元の混在順 | 138,886 | 302.617 | 274.094 | 9.43% |
-| 垂直down、変更しない対照 | 50,426 | 91.739 | 90.908 | 0.91% |
-| 斜めanyHit | 6,193 | 10.616 | 9.374 | 11.70% |
-| 斜めnearest、far ≤ 1 | 62,552 | 128.958 | 120.136 | 6.84% |
-| 斜めnearest、far > 1 | 19,715 | 49.094 | 43.253 | 11.90% |
+| 全scalar ray、元の混在順 | 138,886 | 314.489 | 290.251 | 7.71% |
+| 垂直down、変更しない対照 | 50,426 | 95.314 | 96.215 | -0.95% |
+| 斜めanyHit | 6,193 | 10.663 | 9.933 | 6.84% |
+| 斜めnearest、far ≤ 1 | 62,552 | 135.802 | 120.839 | 11.02% |
+| 斜めnearest、far > 1 | 19,715 | 49.669 | 46.306 | 6.77% |
 
-[全試行・環境・実装ハッシュ](component.json)は不利な値も保持している。例えば垂直downの候補最大値は110.871msで、基準最大96.074msより遅い。カテゴリを分けるとJITやキャッシュ状態が変わるため、カテゴリ中央値の合計を全体中央値として扱わない。実対戦フレーム時間、GPU、端末FPS、画像同一性の測定ではない。batch、capsule、sphere sweepの速度効果は測っていない。
+[修正版の全試行・環境・実装ハッシュ](component-left-associated.json)は不利な値も保持している。例えば垂直downの候補中央値は0.95%増加し、候補最大値102.713msは基準最大97.505msより遅い。[修正前の計測履歴](component.json)と[測定harness](measurement-harness-left-associated.mjs.txt)も保存した。カテゴリを分けるとJITやキャッシュ状態が変わるため、カテゴリ中央値の合計を全体中央値として扱わない。実対戦フレーム時間、GPU、端末FPS、画像同一性の測定ではない。batch、capsule、sphere sweepの速度効果は測っていない。
 
 [入力全件](ray-inputs.json.gz)は再生可能なgzip JSONである。JSONは符号付きゼロを正のゼロへ正規化するため、符号付きゼロの同等性は別の境界試験で確認した。記録した範囲は1ステージ・1ブキ・1入力系列に限られ、全ステージやブキの頻度分布を代表するとはしない。
 
 ## 機能検証と残る確認
 
 - 既存ray/downward slab/BVH lifetime/ground batch/mask/LOSの24 tests成功。ランダム12,000 ray、異常slab 18,144回、極値predicate 1,005,400回、30/60/120Hzのnative移動と実weapon admission/damage/paintを含む。
-- [追加3 tests](fixed-axes-tests.log)成功。getter/proxyの全読取順、各軸early reject、読取例外、非number coercion、node getter中のnested rayとnode途中書換を、変更前の厳密なループと比較した。
+- [初回追加3 tests](fixed-axes-tests.log)成功。getter/proxyの全読取順、各軸early reject、読取例外、非number coercion、node getter中のnested rayとnode途中書換を、変更前の厳密なループと比較した。
 - [Hagglefish実形状の独立16,000 ray](native-parity.json)は全hit情報、query16,000、triangleTests4,157,951が一致した。
 - 通常配信ビルドとemitted testsの結果は `build-validation.json` を参照。候補ビルドの実battle全体・画像比較は親作業で確認する範囲として残す。
 

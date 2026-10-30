@@ -23,5 +23,6 @@
     ]
   },
   "nativeGeometryParity": "native-parity-left-associated.json",
-  "status": "Source functional checks passed. Rebuild and component remeasurement are waiting for the shared measurement/build slot; the prior component/build receipts refer to the earlier candidate."
+  "status": "Source functional checks and corrected-source ABBA/BAAB component remeasurement passed. Rebuild is waiting for the shared build/measurement slot; build-validation.json still refers to the earlier candidate.",
+  "componentReplay": "component-left-associated.json"
 }
