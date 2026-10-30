@@ -57,12 +57,20 @@ export function createBotSpecialContext(actor, intent, dt, target, options = {})
   if (!visible) enemy = null;
   const distance = enemy ? Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) : Infinity;
   const height = enemy ? enemy.pos.y - actor.pos.y : Infinity;
+  // Native combat computes its desired look from the remembered Actor even
+  // after LOS is lost. An active special must not inherit that live position;
+  // hold the actual look unless its policy chooses a last-seen or world point.
+  const holdLook = !!state && !visible;
+  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));
+  const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
+  const previousDistance = finitePoint(actor.aimPoint) ? Math.hypot(actor.aimPoint.x - eye.x,
+    actor.aimPoint.y - eye.y, actor.aimPoint.z - eye.z) : 6;
   const ctx = { actor, intent, dt, special, state, memory, enemy, distance, height, visible,
     world, brain, move, handled: false, aimChanged: false,
     normalIntent: { fire: !!intent.fire, sub: !!intent.sub, jump: !!intent.jump, squid: !!intent.squid, booyah: !!intent.booyah },
-    wantYaw: finite(options.wantYaw, finite(actor.aimYaw, actor.yaw)),
-    wantPitch: finite(options.wantPitch, finite(actor.aimPitch)),
-    aimDistance: Math.max(0.1, finite(options.aimDistance, 6)) };
+    wantYaw: holdLook ? actualYaw : finite(options.wantYaw, actualYaw),
+    wantPitch: holdLook ? actualPitch : finite(options.wantPitch, actualPitch),
+    aimDistance: Math.max(0.1, holdLook ? previousDistance : finite(options.aimDistance, 6)) };
 
   ctx.aimAt = (point, { height: lift = 0, lead = 0 } = {}) => {
     if (!finitePoint(point)) return false;

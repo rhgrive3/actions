@@ -1,0 +1,18 @@
+[
+  {
+    "label": "before",
+    "commit": "fd6435a4dd2781928d211537c485c87bc50b3784",
+    "verifiedInputs": 1561,
+    "contentHash": "e0c4225187a81a6a1b8162454f7545191b178f9b0979155031b40c300464ae27",
+    "artifactCount": 2283,
+    "mismatches": []
+  },
+  {
+    "label": "after",
+    "commit": "d3313ffdf4f553dde06549ff27a7de5d32dfe6b0",
+    "verifiedInputs": 1561,
+    "contentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+    "artifactCount": 2283,
+    "mismatches": []
+  }
+]

@@ -188,6 +188,19 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  if(tiles.length<2)return null;
  for(const tile of tiles){tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;}
  const tileOf=tiles.length<=65536?new Uint16Array(ids):ids;
+ // Source exporters usually keep neighbouring triangles together. Store
+ // their tile runs once so a camera switch can copy contiguous source spans
+ // instead of comparing and assigning every index individually. Highly
+ // interleaved objects retain the scalar path to avoid many tiny copies.
+ const runTiles=[],runStarts=[],runEnds=[];
+ for(let start=0;start<tileOf.length;){
+  const tile=tileOf[start];let end=start+1;
+  while(end<tileOf.length&&tileOf[end]===tile)end++;
+  runTiles.push(tile);runStarts.push(start*3);runEnds.push(end*3);start=end;
+ }
+ const runs=runTiles.length<=tileOf.length/4?{
+  tiles:tileOf.constructor.from(runTiles),starts:Uint32Array.from(runStarts),ends:Uint32Array.from(runEnds)
+ }:null;
  const index=new THREE.BufferAttribute(source.slice(),1).setUsage(THREE.DynamicDrawUsage);
  g.setIndex(index);
  const view=new THREE.Matrix4(),frustum=new THREE.Frustum(),last=new Float64Array(16),visible=new Uint8Array(tiles.length).fill(1);
@@ -211,13 +224,27 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
   if(!changed)return;
   const target=index.array;
   let count=0,dirtyStart=Infinity;
-  for(let t=0;t<tileOf.length;t++){
-   if(!visible[tileOf[t]])continue;
-   const at=t*3;
-   for(let k=0;k<3;k++){
-    const value=source[at+k];
-    if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);target[count]=value;}
-    count++;
+  if(runs){
+   for(let r=0;r<runs.tiles.length;r++){
+    if(!visible[runs.tiles[r]])continue;
+    let start=runs.starts[r],end=runs.ends[r];
+    // Only the unchanged prefix can narrow the pending upload. Once a value
+    // differs the full remaining selected tail is uploaded either way.
+    if(dirtyStart===Infinity){
+     while(start<end&&target[count]===source[start]){start++;count++;}
+     if(start<end)dirtyStart=count;
+    }
+    if(start<end){target.set(source.subarray(start,end),count);count+=end-start;}
+   }
+  }else{
+   for(let t=0;t<tileOf.length;t++){
+    if(!visible[tileOf[t]])continue;
+    const at=t*3;
+    for(let k=0;k<3;k++){
+     const value=source[at+k];
+     if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);target[count]=value;}
+     count++;
+    }
    }
   }
   g.setDrawRange(0,count);

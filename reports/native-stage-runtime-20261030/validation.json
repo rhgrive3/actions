@@ -1,0 +1,46 @@
+{
+  "implementationCommit": "d3313ffdf4f553dde06549ff27a7de5d32dfe6b0",
+  "source": {
+    "pass": 148,
+    "fail": 0,
+    "skip": 5,
+    "note": "48 native and 100 lifecycle/controller checks; native skips require unavailable assets"
+  },
+  "emitted": {
+    "pass": 19,
+    "fail": 0,
+    "skip": 5
+  },
+  "gates": [
+    "upstream quick checks",
+    "optimized production build",
+    "startup budget",
+    "source migration audit",
+    "git diff --check"
+  ],
+  "browser": {
+    "engine": "Chromium 151 / SwiftShader",
+    "stage": "robo",
+    "actorCount": 8,
+    "setupFrames": 600,
+    "warmup": 15,
+    "framesPerWindow": 5,
+    "windows": 3,
+    "imageDirections": 4,
+    "imageChangedPixels": 0,
+    "actorAndPaintState": "identical all three windows",
+    "coldPrograms": 0,
+    "errors": 0,
+    "timingCriterion": "No required software-GPU speedup; --min-speedup 0 validates replay/image equivalence"
+  },
+  "emittedOverload": {
+    "native": true,
+    "transitions": [
+      0.875,
+      1
+    ],
+    "ticksBefore": 633,
+    "ticksAfter": 633
+  },
+  "probeHarnessSha256": "887bde681d93979e978965f2e2fdc92f4e5422d4f9a6ab7d0906f0c5b7d2ae9e"
+}

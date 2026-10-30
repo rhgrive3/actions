@@ -67,6 +67,7 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
       return false;
     if (lockedMode===null) {
       priorScale=game.R.dynScale;
+      game._nativeSlowFrames=null;
       const original=game._dynRes;
       if (typeof original==='function') {
         const owned=Object.prototype.hasOwnProperty.call(game,'_dynRes');

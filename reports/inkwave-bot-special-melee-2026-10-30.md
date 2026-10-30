@@ -38,3 +38,15 @@ Checks:
 Tests use shared context commit `9cf8b3f38c0b73da7b9c08bbf4edbb223d1c479d` plus actual sibling category sources. Corridor width is delegated to the shared `safePath` helper, with 0.65-unit half-width. During Kraken charging the local path is checked; the full route is checked again immediately before release, avoiding repeated distant probes.
 
 No Switch measurement or retail parity claim is made.
+
+## Follow-through: other melee specials, 2026-10-30
+
+Baseline `3715e29d1656a00b853f73e12a89624b17985b7c`. Kraken policy is unchanged in this follow-up. The previously read individual Wiki controls/usage sections remain the tactical reference; the numerical trajectory comes from the shipped `all-specials.mjs` source flight owner.
+
+A complete BotBrain → Actor → native movement → projectile collision reproduction found that Stamp's throw event existed while the special missed stationary enemies at both 10 and 14 world units. Only the resumed main weapon caused damage. The eye-based aim spring placed the aim point above the feet-based special emitter's intended ray; the throw also adds vertical velocity and loses horizontal speed per source frame. A low-flight-arc solver now targets the body with the existing source trajectory and leads known target velocity through the remaining 42-frame throw startup. The queued startup continues to receive the correct aim, instead of reverting to the main weapon's target. In the same reproduction, stationary 10/14-unit targets and a 14-unit target moving sideways at 2 units/s now each receive 220 damage attributed specifically to `ultraStamp`.
+
+A second reproduction found that a target four units away made the bot jump in place repeatedly, delivering only 40-damage spray. The jump decision now waits until 2.4 units; native walking/stamping closes the gap first, allowing the existing 100-damage direct swing to connect. This threshold is an INKWAVE AI heuristic derived from its current collision geometry, not a retail range claim.
+
+Reefslider and Triple Splashdown keep their existing policies: with real movement and a target moving sideways at 2 units/s, Reefslider's predicted stop produces a 220-damage special explosion, and Splashdown's directional fists produce actual source-tagged explosion hits. Their existing wall/height/unsafe-route admission checks remain in force. No extra movement tactic or physics change was necessary.
+
+Verification: the owned test file now includes full BotBrain/native Actor movement tests that assert damage with the special's own source tag, avoiding false positives from ordinary shots after the special ends. Source syntax and diff checks passed. `node --experimental-vm-modules --test patches/splatoon3/tests/bot-special-melee.test.mjs` passed 24/24 tests (45.5s); no retail hardware comparison is claimed.

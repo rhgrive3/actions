@@ -100,8 +100,11 @@ export class TriangleWorld {
   try {
    while(top){
     const pending=stack[--top],ni=stack[--top]*8;let active=0;
-    for(let i=0;i<count;i++){
-     if(!(pending&(1<<i)))continue;const o=origins[i];
+    // A small child node usually intersects only one or two footprint rays.
+    // Visit its set bits in the same ascending sample order instead of
+    // scanning every sample at every node (and again at every triangle).
+    for(let remaining=pending;remaining;remaining&=remaining-1){
+     const i=31-Math.clz32(remaining&-remaining),o=origins[i];
      if(o.x<nodes[ni]||o.x>nodes[ni+3]||o.z<nodes[ni+2]||o.z>nodes[ni+5])continue;
      const a=(nodes[ni+1]-o.y)/dir.y,b=(nodes[ni+4]-o.y)/dir.y;
      if(a>=b){if(a<0||b>dist[i])continue;}
@@ -115,10 +118,10 @@ export class TriangleWorld {
     for(let q=start;q<start+right;q++){
      const t=this.order[q];if((ignoreGrates&&(this.flags[t]&4))||norm[t*3+1]<minNormalY)continue;
      const n=t*9,ax=verts[n],ay=verts[n+1],az=verts[n+2],ex=verts[n+3]-ax,ey=verts[n+4]-ay,ez=verts[n+5]-az,fx=verts[n+6]-ax,fy=verts[n+7]-ay,fz=verts[n+8]-az;
-     const hx=dir.y*fz-dir.z*fy,hy=dir.z*fx-dir.x*fz,hz=dir.x*fy-dir.y*fx,det=ex*hx+ey*hy+ez*hz;
-     for(let i=0;i<count;i++){
-      if(!(active&(1<<i)))continue;this.triangleTests++;if(Math.abs(det)<1e-10)continue;
-      const o=origins[i],inv=1/det,sx=o.x-ax,sy=o.y-ay,sz=o.z-az,tu=(sx*hx+sy*hy+sz*hz)*inv;
+     const hx=dir.y*fz-dir.z*fy,hy=dir.z*fx-dir.x*fz,hz=dir.x*fy-dir.y*fx,det=ex*hx+ey*hy+ez*hz,parallel=Math.abs(det)<1e-10,inv=1/det;
+     for(let remaining=active;remaining;remaining&=remaining-1){
+      const i=31-Math.clz32(remaining&-remaining);this.triangleTests++;if(parallel)continue;
+      const o=origins[i],sx=o.x-ax,sy=o.y-ay,sz=o.z-az,tu=(sx*hx+sy*hy+sz*hz)*inv;
       if(tu<-.000001||tu>1.000001)continue;
       const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,tv=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
       if(tv<-.000001||tu+tv>1.000001)continue;

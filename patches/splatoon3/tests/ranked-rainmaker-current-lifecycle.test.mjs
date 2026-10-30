@@ -21,7 +21,8 @@ for(const weapon of['shooter','dualies'])test('current shoulder pose: '+weapon+'
    try{
     await runFormScenario({api:f,weapon,pitch:-1.05,onSetup:corrected?null:control,onFrame:({row,a,ch,mesh})=>{
      assert.equal(row.source.status,'ready');assert.equal(row.source.active,true);assert.equal(row.poses,1);
-     out.entry.push(Object.fromEntries(equalKeys.map(key=>[key,row[key]])));if(row.returnFrame!==3)return;
+     out.entry.push(Object.fromEntries(equalKeys.map(key=>[key,row[key]])));if(row.returnFrame!==1)return;
+     assert.equal(row.pending,corrected,'lifecycle interruption happens inside the live form transaction');
      if(corrected)assert.ok(row.grip<.001,'current pose reaches the support socket');
      out.before={grip:row.grip,pending:row.pending};
      if(corrected){const rendered=hash(ch.boneList.map(trs));for(const hand of[0,1]){const muzzle=hand&&ch.weapon.left?ch.weapon.left.muzzle:ch.weapon.muzzle,canonical=ch.getMuzzleHand(new f.THREE.Vector3(),hand).toArray();for(const method of ['getWorldPosition','updateWorldMatrix']){const raw=muzzle[method],error=Error('intentional canonical getter '+method+' fault');muzzle[method]=()=>{throw error;};try{assert.throws(()=>ch.getMuzzleHand(new f.THREE.Vector3(),hand),e=>e===error);}finally{muzzle[method]=raw;}assert.equal(hash(ch.boneList.map(trs)),rendered);assert.equal(ch.constructor.prototype[Symbol.for('inkwave.s3.weapon-handoff-motion.v1')].formStates.get(ch).busy,false);assert.deepEqual(ch.getMuzzleHand(new f.THREE.Vector3(),hand).toArray(),canonical,'next getter remains canonical after '+method+' fault');}}}

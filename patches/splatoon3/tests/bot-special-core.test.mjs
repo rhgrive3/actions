@@ -55,6 +55,17 @@ test('aim requests alter the spring target, preserve actual aim and retain ordin
   f.brain.aimYaw=ctx.wantYaw;f.brain.aimPitch=ctx.wantPitch;assert.equal(ctx.isAimed(),true);
 });
 
+test('active specials hold actual aim after recognition loss rather than tracking a hidden live target',()=>{
+  const f=setup();f.actor.specialActive={id:'killerWail'};
+  f.brain.aimYaw=.2;f.brain.aimPitch=-.1;f.actor.aimPoint=vector(0,1.1,17);
+  f.options.wantYaw=2;f.options.wantPitch=.8;f.options.aimDistance=51;
+  f.world.physics.los=()=>false;let ctx=f.ctx();
+  assert.equal(ctx.enemy,null);assert.equal(ctx.wantYaw,.2);assert.equal(ctx.wantPitch,-.1);assert.equal(ctx.aimDistance,17);
+  f.enemy.pos.set(100,50,-100);ctx=f.ctx();
+  assert.equal(ctx.wantYaw,.2);assert.equal(ctx.wantPitch,-.1);assert.equal(ctx.aimDistance,17);
+  ctx.aimAt(vector(3,0,8));assert.notEqual(ctx.wantYaw,.2,'an explicit last-seen/world point can still guide the policy');
+});
+
 test('safe movement rejects wall, drop, water and unsupported Kraken grates',()=>{
   const f=setup();assert.equal(f.ctx().moveToward(f.enemy.pos),true);assert.equal(f.intent.move.z,1);
   f.world.physics.segment=()=>({hit:true});assert.equal(f.ctx().moveToward(f.enemy.pos),false);assert.equal(f.intent.move.z,0);
@@ -111,4 +122,10 @@ test('uncharged bots preserve ordinary combat without invoking category planning
   f.actor.specialReady=()=>true;dispatch(f.actor,f.intent,.1,f.enemy,f.options);assert.equal(planned,1);
   f.actor.specialReady=()=>false;f.actor.specialActive={id:'trizooka'};
   dispatch(f.actor,f.intent,.1,f.enemy,f.options);assert.equal(planned,2,'active specials continue after spending their meter');
+  f.actor.specialActive=null;f.actor.specialReady=()=>true;f.actor.nid=9;
+  f.world.match={mode:'rainmaker',ranked:{rule:{state:{carrier:'9'}}}};
+  f.intent.fire=true;f.intent.move.set(.1,0,.8);
+  const carrier=dispatch(f.actor,f.intent,.1,f.enemy,f.options);
+  assert.equal(planned,2);assert.equal(carrier.handled,false);assert.equal(f.intent.fire,true);
+  assert.deepEqual([f.intent.move.x,f.intent.move.z],[.1,.8]);assert.equal(f.intent.special,false);
 });

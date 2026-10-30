@@ -21,6 +21,11 @@ export function driveCanonicalBotSpecial(actor,intent,dt,target,options={}){
  // Activation has one owner in every mode. A native painting/duel decision
  // must not bypass the category's range, terrain, recognition or team checks.
  intent.special=false;
+ // Rainmaker owns its carrier's weapon and Actor suppresses specials there.
+ // Skip preparation too, so a full meter cannot redirect the carrier's shot.
+ const match=ctx.world?.match;
+ const actorId=String(actor.nid??`${actor.team}:${actor.slot}`);
+ if(match?.mode==='rainmaker'&&match.ranked?.rule?.state?.carrier===actorId)return ctx;
  // An uncharged bot still uses its ordinary main weapon. Avoid both the
  // category's preparation aim and its more expensive trajectory probes.
  if(!ctx.state&&!actor.specialReady?.())return ctx;
