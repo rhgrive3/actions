@@ -1,8 +1,10 @@
 import { readEncodedAudioResponse } from './encoded-response.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
+import { pcmResidency, pcmEventWindows } from './pcm-residency.mjs';
 /**
  * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
- * Replacement is transactional: an in-progress download NEVER changes the live bank.
+ * Replacement is transactional: an in-progress replace:true import NEVER changes the live bank.
+ * Demand callers may opt into complete-event publication windows within one generation.
  * Usage-rights statements are operator attestations, NOT license verification.
  */
 import { WEAPON_AUDIO, LOOP_EVENTS } from './weapon-recipes.mjs';
@@ -141,11 +143,14 @@ export class AuthorizedSamplePack {
     }
     for(const arr of this.byEvent.values())arr.sort((a,b)=>a.variant-b.variant);
   }
-  async load(manifest,{baseURL='./',concurrency=3,replace=true}={}){
+  async load(manifest,{baseURL='./',concurrency=3,replace=true,publishEvents=0,observeResidency}={}){
     const valid=validateAuthorizedManifest(manifest);
     if(!safeBaseURL(baseURL))throw new TypeError('baseURL must be a safe relative local path');
     if(typeof this.fetcher!=='function')throw new Error('fetch API unavailable');
     if(!Number.isInteger(concurrency)||concurrency<1||concurrency>4)throw new RangeError('concurrency must be 1..4');
+    if(!Number.isInteger(publishEvents)||publishEvents<0||publishEvents>2)throw new RangeError('publishEvents must be 0, 1 or 2');
+    if(replace&&publishEvents)throw new TypeError('Replacement imports must remain atomic');
+    if(observeResidency!=null&&typeof observeResidency!=='function')throw new TypeError('observeResidency must be a function');
     const generation=++this.generation;
     this._cancelLoads();
     const current=()=>this.generation===generation && this.ctx.state!=='closed';
@@ -153,9 +158,22 @@ export class AuthorizedSamplePack {
     // must not overwrite that owner's staging LRU or create further load work.
     if(!current())return {loaded:0,rejected:0,errors:[],cancelled:true,bytes:this.bytes};
     const cancelled=Symbol('cancelled audio sample load');
-    const next=replace?new Map():new Map(this.loaded);
-    let total=0,done=0,repairs=0,cursor=0;
+    let next=replace?new Map():new Map(this.loaded);
+    let total=0,done=0,repairs=0;
+    const windows=pcmEventWindows(valid,publishEvents);
     const errors=[],decoded=new Map(),scopes=new Map();
+    const decodedPCM=observeResidency?new Map():null;
+    let pendingNativeDecodes=0,publications=0;
+    const peaks=observeResidency?{publishedBytes:0,stagedBytes:0,unionBytes:0,decodedBytes:0,retainedBytes:0,pendingNativeDecodes:0}:null;
+    const observe=phase=>{
+      if(!observeResidency)return;
+      const sample=pcmResidency(this.loaded,next,decodedPCM,pendingNativeDecodes);
+      for(const key of Object.keys(peaks))peaks[key]=Math.max(peaks[key],sample[key]);
+      // Diagnostics cannot break playback or grant a stale generation ownership.
+      try{observeResidency({...sample,phase,generation,publications,current:current()});}catch{}
+    };
+    observe('begin');
+    if(!current())return {loaded:0,rejected:0,errors:[],cancelled:true,bytes:this.bytes};
     // Existing and staged rows reference PCM by identity. Account bytes once
     // per AudioBuffer while staging, without rebuilding a candidate Map per clip.
     const refs=new Map();
@@ -236,105 +254,123 @@ export class AuthorizedSamplePack {
           if(directHash){
             if(file.verifiedDigest!==directHash)throw new Error('Checksum must precede direct decode');
           }
-          const pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)&&!directHash?bytes.slice(0):bytes);
+          let pcm;
+          pendingNativeDecodes++;observe('decode-start');
+          try{if(!current())throw cancelled;scope.check();pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)&&!directHash?bytes.slice(0):bytes);}
+          finally{pendingNativeDecodes--;}
           scope.check();
           if(!current())throw cancelled;
           if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
              !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
             throw new Error('Invalid decoded sample');
+          decodedPCM?.set(clip.file,pcm);observe('decoded');
           return pcm;
         }));
         return file;
       });
       decoded.set(clip.file,promise);return promise;
     };
-    const jobs=Array.from({length:Math.min(concurrency,Math.max(1,valid.length))},async()=>{
-      while(cursor<valid.length && current()){
-        const clip=valid[cursor++];this.pending++;
-        try{
-          // Reuse an already verified, byte-identical source buffer across IDs.
-          // The same source is intentionally referenced by e.g. several chargers.
-          // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
-          let existing=null,rawWindup=null;
-          if(usePCMIndex){
-            const candidate=pcmRows.get(pcmKey(clip))?.values().next().value;
-            if(candidate&&canReusePCM(candidate,clip))existing=candidate;
-            if(!existing&&clip.id==='s3-brush-normal'&&clip.event==='roll'){
-              const windup=windupRows.get(windupKey(clip))?.values().next().value;
-              if(windup&&canReuseBrushWindup(windup,clip))rawWindup=windup;
-            }
-          }else for(const row of next.values()){
-            if(canReusePCM(row,clip)){existing=row;break;}
-            if(!rawWindup&&canReuseBrushWindup(row,clip))rawWindup=row;
-          }
-          let buffer;
-          if(existing){buffer=existing.buffer;}
-          else {
-            const decodedFile=rawWindup?null:await getDecoded(clip);
-            if(!current())return;
-            if(clip.sha256&&!rawWindup){
-              if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
-              // Memoize only this transaction's actual fetched bytes; every
-              // manifest row still compares its own declared checksum.
-              if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
-                .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
-              const sha=await decodedFile.digest;
-              if(!current())return;
-              if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
-            }
-            const pcm=rawWindup?rawWindup.buffer:await decodedFile.decode();
-            if(!current())return;
-            if(clip.loopEnd!=null&&clip.loopEnd>pcm.duration)throw new Error('Loop end exceeds decoded duration');
-            const shouldLoop=LOOP_EVENTS.has(clip.event),shouldRepair=shouldLoop&&clip.seamlessLoop!==false;
-            buffer=shouldRepair?repairLoopSeam(this.ctx,pcm,clip.loopStart??0,clip.loopEnd??pcm.duration):pcm;
-            if(buffer!==pcm)repairs++;
-          }
-          const cost=buffer.length*buffer.numberOfChannels*4;
-          if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
-          if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
-          const key=this.key(clip.id,clip.event,clip.variant);
-          lastStagedTouchKey=null;
-          const prior=next.get(key);
-          if(prior){next.delete(key);release(prior);indexRow(prior,false);changedEvents.add(`${prior.id}:${prior.event}`);}
-          const row=Object.freeze({...clip,buffer,bytes:cost});
-          next.set(key,row);acquire(row);indexRow(row,true);changedEvents.add(`${row.id}:${row.event}`);
-          // New row fits the budget alone; evict from the original LRU head
-          // until the staged bank fits, accounting for shared PCM identities.
-          trim(key);
-          done++;
-        }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
-        finally{
-          this.pending--;
-          // A shared decoded file remains live until its last manifest borrower
-          // finishes, even if jobs run concurrently or one clip fails checksum.
-          const left=remainingByFile.get(clip.file)-1;
-          if(left===0){remainingByFile.delete(clip.file);decoded.delete(clip.file);const scope=scopes.get(clip.file);scope?.finish();this._loadScopes.delete(scope);scopes.delete(clip.file);}
-          else remainingByFile.set(clip.file,left);
+    const publish=()=>{
+      let byEvent;
+      if(!replace){
+        byEvent=new Map();
+        // Keep the final Map's original event order, while retaining untouched
+        // arrays and sorting only the events with actual row changes.
+        for(const row of next.values()){
+          const event=`${row.id}:${row.event}`;
+          if(!byEvent.has(event))byEvent.set(event,changedEvents.has(event)?[]:this.byEvent.get(event)||[]);
+          if(changedEvents.has(event))byEvent.get(event).push(row);
         }
+        for(const event of changedEvents)byEvent.get(event)?.sort((a,b)=>a.variant-b.variant);
       }
-    });
-    await Promise.all(jobs);
-    if(this._lruStage===stage)this._lruStage=null;
-    // Last-request-wins. The old playback bank remains valid throughout network/decode.
-    if(!current())return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes};
-    let byEvent;
-    if(!replace){
-      byEvent=new Map();
-      // Keep the final Map's original event order, while retaining untouched
-      // arrays and sorting only the events with actual row changes.
-      for(const row of next.values()){
-        const event=`${row.id}:${row.event}`;
-        if(!byEvent.has(event))byEvent.set(event,changedEvents.has(event)?[]:this.byEvent.get(event)||[]);
-        if(changedEvents.has(event))byEvent.get(event).push(row);
-      }
-      for(const event of changedEvents)byEvent.get(event)?.sort((a,b)=>a.variant-b.variant);
+      this.loaded=next;this._mruKey=null;this.bytes=total;
+      if(byEvent)this.byEvent=byEvent;else this._reindex();
+      this.errors=errors;this.repaired=repairs;
+      this.manifest={targetVersion:manifest.targetVersion||null,usageRights:manifest.usageRights,source:manifest.source||null};
+      this.source='user-supplied';publications++;observe('published');
+    };
+    // Real demand paging publishes at most two complete events at a time. The
+    // published Map never aliases the next mutable stage: an incomplete variant
+    // cannot leak into playback, including through pick()'s mirrored LRU touch.
+    for(let windowIndex=0;windowIndex<windows.length&&current();windowIndex++){
+      const window=windows[windowIndex];let cursor=0;
+      const jobs=Array.from({length:Math.min(concurrency,Math.max(1,window.length))},async()=>{
+        while(cursor<window.length && current()){
+          const clip=window[cursor++];this.pending++;
+          try{
+            // Reuse an already verified, byte-identical source buffer across IDs.
+            // The same source is intentionally referenced by e.g. several chargers.
+            // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
+            let existing=null,rawWindup=null;
+            if(usePCMIndex){
+              const candidate=pcmRows.get(pcmKey(clip))?.values().next().value;
+              if(candidate&&canReusePCM(candidate,clip))existing=candidate;
+              if(!existing&&clip.id==='s3-brush-normal'&&clip.event==='roll'){
+                const windup=windupRows.get(windupKey(clip))?.values().next().value;
+                if(windup&&canReuseBrushWindup(windup,clip))rawWindup=windup;
+              }
+            }else for(const row of next.values()){
+              if(canReusePCM(row,clip)){existing=row;break;}
+              if(!rawWindup&&canReuseBrushWindup(row,clip))rawWindup=row;
+            }
+            let buffer;
+            if(existing){buffer=existing.buffer;}
+            else {
+              const decodedFile=rawWindup?null:await getDecoded(clip);
+              if(!current())return;
+              if(clip.sha256&&!rawWindup){
+                if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
+                // Memoize only this transaction's actual fetched bytes; every
+                // manifest row still compares its own declared checksum.
+                if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
+                  .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
+                const sha=await decodedFile.digest;
+                if(!current())return;
+                if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
+              }
+              const pcm=rawWindup?rawWindup.buffer:await decodedFile.decode();
+              if(!current())return;
+              if(clip.loopEnd!=null&&clip.loopEnd>pcm.duration)throw new Error('Loop end exceeds decoded duration');
+              const shouldLoop=LOOP_EVENTS.has(clip.event),shouldRepair=shouldLoop&&clip.seamlessLoop!==false;
+              buffer=shouldRepair?repairLoopSeam(this.ctx,pcm,clip.loopStart??0,clip.loopEnd??pcm.duration):pcm;
+              if(buffer!==pcm)repairs++;
+            }
+            const cost=buffer.length*buffer.numberOfChannels*4;
+            if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
+            if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
+            const key=this.key(clip.id,clip.event,clip.variant);
+            lastStagedTouchKey=null;
+            const prior=next.get(key);
+            if(prior){next.delete(key);release(prior);indexRow(prior,false);changedEvents.add(`${prior.id}:${prior.event}`);}
+            const row=Object.freeze({...clip,buffer,bytes:cost});
+            next.set(key,row);acquire(row);indexRow(row,true);changedEvents.add(`${row.id}:${row.event}`);
+            // New row fits the budget alone; evict from the original LRU head
+            // until the staged bank fits, accounting for shared PCM identities.
+            trim(key);
+            done++;observe('staged');
+          }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
+          finally{
+            this.pending--;
+            // A shared decoded file remains live until its last manifest borrower
+            // finishes, even if jobs run concurrently or one clip fails checksum.
+            const left=remainingByFile.get(clip.file)-1;
+            if(left===0){remainingByFile.delete(clip.file);decoded.delete(clip.file);decodedPCM?.delete(clip.file);const scope=scopes.get(clip.file);scope?.finish();this._loadScopes.delete(scope);scopes.delete(clip.file);}
+            else remainingByFile.set(clip.file,left);
+            observe('released');
+          }
+        }
+      });
+      await Promise.all(jobs);
+      if(!current())break;
+      if(windowIndex+1<windows.length){publish();next=new Map(next);changedEvents.clear();observe('window');}
     }
-    this.loaded=next;this._mruKey=null;this.bytes=total;
-    if(byEvent)this.byEvent=byEvent;else this._reindex();
-    this.errors=errors;this.repaired=repairs;
-    this.manifest={targetVersion:manifest.targetVersion||null,usageRights:manifest.usageRights,source:manifest.source||null};
-    this.source='user-supplied';
-    return {loaded:done,rejected:errors.length,errors,cancelled:false,bytes:this.bytes,repairedLoops:repairs};
+    if(this._lruStage===stage)this._lruStage=null;
+    // A superseded demand import retains only already completed windows. Atomic
+    // replacement still publishes once, only after its entire import finishes.
+    if(!current()){observe('cancelled');return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes,...(peaks?{residency:{...peaks,publications}}:{})};}
+    publish();
+    if(!current())return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes,...(peaks?{residency:{...peaks,publications}}:{})};
+    return {loaded:done,rejected:errors.length,errors,cancelled:false,bytes:this.bytes,repairedLoops:repairs,...(peaks?{residency:{...peaks,publications}}:{})};
   }
   clear(){this.generation++;this._lruStage=null;this.loaded.clear();this._mruKey=null;this.byEvent.clear();this.bytes=0;this.manifest=null;this.source='none';this.errors=[];this.repaired=0;this._cancelLoads();}
   stats(){return{source:this.source,clips:this.loaded.size,bytes:this.bytes,limitBytes:this.maxBytes,errors:this.errors.length,

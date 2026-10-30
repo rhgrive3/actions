@@ -143,7 +143,7 @@ export async function prewarmChargerRise(audio,{weaponId='charger',chargeTime=1,
   return state.stretchCache.prepare('splat-charger-phrase',excerpt,chargeTime);
 }
 export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',chargeTime=1}={}){
-  if(!usesChargerRise(weaponId))return null;
+  if(!usesChargerRise(weaponId)||audio?._sfxSilent?.())return null;
   const ctx=audio?.ctx,target=audio?.sfxIn;
   const state=ctx?slots.get(ctx):null;
   const original=state?.buffer;
