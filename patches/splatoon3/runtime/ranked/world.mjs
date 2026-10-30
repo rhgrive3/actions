@@ -41,6 +41,49 @@ class RankedZoneCell {
   constructor(face, cell, area, i, j) { this.face = face; this.cell = cell; this.area = area; this.i = i; this.j = j; }
   get center() { return floorCellCenter(this.face, this.i, this.j, this.face.origin.clone()); }
 }
+const packedZoneCells = new WeakMap();
+function ownedZoneCells(lists,index){
+  const record=packedZoneCells.get(lists)?.[index];
+  if(!record)return null;
+  // `defineProperty`/delete bypass the normal setter, so validate the exact
+  // accessor before using the private representation as authoritative input.
+  return Object.getOwnPropertyDescriptor(lists,index)?.get===record.getView?record:null;
+}
+class ZoneCellBuilder {
+  constructor(){this.cells=[];this.areas=[];this.ii=[];this.jj=[];this.faceIds=[];this.faces=[];this.faceMap=new Map();this.total=0;this.compatible=true;}
+  push(face,cell,area,i,j){
+    let id=this.faceMap.get(face);
+    if(id===undefined){id=this.faces.length;this.faces.push(face);this.faceMap.set(face,id);}
+    this.compatible &&= Number.isSafeInteger(cell)&&cell>=0&&cell<=0x7fffffff&&Number.isSafeInteger(i)&&i>=0&&i<=0x7fffffff&&Number.isSafeInteger(j)&&j>=0&&j<=0x7fffffff&&id<=0xffffffff;
+    this.cells.push(cell);this.areas.push(area);this.ii.push(i);this.jj.push(j);this.faceIds.push(id);this.total+=area;
+  }
+  finish(){
+    this.faceMap=null;
+    if(!this.compatible)return this;
+    this.cells=Int32Array.from(this.cells);this.ii=Int32Array.from(this.ii);this.jj=Int32Array.from(this.jj);
+    this.faceIds=Uint32Array.from(this.faceIds);this.areas=Float64Array.from(this.areas);
+    return this;
+  }
+  view(){
+    const rows=Array.from(this.cells,(cell,i)=>Object.freeze(new RankedZoneCell(this.faces[this.faceIds[i]],cell,this.areas[i],this.ii[i],this.jj[i])));
+    Object.freeze(rows);zoneAreaTotals.set(rows,this.total);return rows;
+  }
+}
+function publishZoneCells(builders){
+  const lists=new Array(builders.length),records=builders.map(b=>b.finish());
+  packedZoneCells.set(lists,records);
+  for(let index=0;index<records.length;index++){
+    const record=records[index];let view;
+    if(!record.compatible){lists[index]=record.view();records[index]=null;continue;}
+    // Diagnostic callers receive the original immutable Array/Object shape
+    // only on demand. Replacing a list always restores the generic path.
+    record.getView=()=>view||(view=record.view());
+    Object.defineProperty(lists,index,{enumerable:true,configurable:true,
+      get:record.getView,
+      set(value){view=value;records[index]=null;Object.defineProperty(lists,index,{value,writable:true,enumerable:true,configurable:true});}});
+  }
+  return lists;
+}
 
 function updateBlockBounds(block) {
   block.aabbMin.set(Infinity, Infinity, Infinity);
@@ -880,6 +923,7 @@ export class RankedWorld {
     const zones = this.stage?.zones || [];
     this._zoneCells = zones.map(() => []);
     if (!Array.isArray(faces) || !this.paint?.grid) return;
+    const builders=zones.map(()=>new ZoneCellBuilder());
     const p = new this.THREE.Vector3();
     let zoneBounds;
     for (const face of faces) {
@@ -902,16 +946,13 @@ export class RankedWorld {
           // or another storey merely because it overlaps that floor in X/Z.
           if (Math.abs(p.y - bounds.cy) > bounds.height) continue;
           if (p.x < bounds.minX || p.x > bounds.maxX || p.z < bounds.minZ || p.z > bounds.maxZ) continue;
-          this._zoneCells[index].push(Object.freeze(new RankedZoneCell(face, cell, face.cu * face.cv, i, j)));
+          builders[index].push(face, cell, face.cu * face.cv, i, j);
         }
       }
     }
     // These published lists/areas cannot change in place. A custom or replaced
     // index has no private total and takes the original ordered sum below.
-    for (const cells of this._zoneCells) {
-      let total = 0; for (const entry of cells) total += entry.area;
-      Object.freeze(cells); zoneAreaTotals.set(cells, total);
-    }
+    this._zoneCells=publishZoneCells(builders);
   }
 
   zoneCoverage() {
@@ -922,6 +963,16 @@ export class RankedWorld {
     if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
+      const packed=ownedZoneCells(this._zoneCells,index);
+      if(packed){
+        let teamOneArea=0,teamTwoArea=0;
+        for(let i=0;i<packed.cells.length;i++){
+          const team=this.paint.grid[packed.cells[i]],area=packed.areas[i];
+          if(team===1)teamOneArea+=area;else if(team===2)teamTwoArea+=area;
+        }
+        const a=packed.total<=0?0:teamOneArea/packed.total,b=packed.total<=0?0:teamTwoArea/packed.total;
+        return grid&&finite(version)?createZoneCoveragePair(a,b):[a,b];
+      }
       const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
       let totalArea=total === undefined ? 0 : total, teamOneArea=0, teamTwoArea=0;
       for (const entry of cells || []) {
@@ -946,8 +997,7 @@ export class RankedWorld {
   captureZone(index, team) {
     if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
     let claimed = 0, lastFace = null, radius = 0;
-    for (const entry of this._zoneCells[index] || []) {
-      const { face, cell, i, j } = entry;
+    const stamp=(face,cell,i,j)=>{
       const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
       // Use the native splat path (CPU grid, ink atlas, and online splat
       // recording) restricted to each live turf face. Each exposed cell gets a
@@ -960,7 +1010,10 @@ export class RankedWorld {
         seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
         kind: 'blast', instant: true, face: face.id,
       }) || 0;
-    }
+    };
+    const packed=ownedZoneCells(this._zoneCells,index);
+    if(packed)for(let n=0;n<packed.cells.length;n++)stamp(packed.faces[packed.faceIds[n]],packed.cells[n],packed.ii[n],packed.jj[n]);
+    else for(const {face,cell,i,j} of this._zoneCells[index]||[])stamp(face,cell,i,j);
     return claimed;
   }
 
