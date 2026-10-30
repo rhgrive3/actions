@@ -1,8 +1,8 @@
 {
   "schema": 2,
-  "status": "final-throughput-validation-pending",
-  "sourceCommit": "4e4a16c0b8997ce9c14b93a40e9655cb0e784c84",
-  "sourceTree": "ce9626fa9023a215946e8483f9b8935952429874",
+  "status": "conservative-normal-map-candidate-awaiting-ci",
+  "sourceCommit": "67eabfc333c8fda78a79dd168eadaf53c132073d",
+  "sourceTree": "4201ce62f988254826a86d70f72265cc775b4cea",
   "localTestedSource": "f0951e3ed5e77d15549ed4798bcbdde1eb7f17e3",
   "input": {
     "patchDocument": "https://docs.google.com/document/d/1g8RWUlg7bj_MxSz-RZ7H-IkcSvovzdCm13MPgFLF16A/edit",
@@ -135,5 +135,35 @@
       "minimumSpeedup": 1,
       "description": "Current main including merged P1 native rendering and new intro camera; measures only this follow-up."
     }
+  },
+  "qaCommit": "62430ad05285f22a4146e4e299521f297229aec8",
+  "normalMaps": "All normal-mapped native materials retain pixel-frequency IBL; weak-normal interpolation is removed after prior WebKit regression and unbounded normal Z review.",
+  "geometryPropertyCheck": {
+    "status": "passed",
+    "implementationGitBlob": "3c49e9e2768c31d4b10c06753de1256bb9654ca5",
+    "randomMeshes": 1500,
+    "triangleCorners": 46272,
+    "certificates": 8059,
+    "fallbacks": 1102469,
+    "positive": 4062,
+    "negative": 3997,
+    "scope": "Executes the exact extracted JS normal-cone implementation with a BufferAttribute storage stub; geometric-facing property only, not GPU raster/performance evidence.",
+    "geometryFunctionUnchanged": true
+  },
+  "replay": {
+    "setupFrames": 925,
+    "declaredIntroFrames": 578,
+    "activeSetupFrames": 347,
+    "probePostIntroFrames": 77,
+    "warmup": {
+      "chromium": 30,
+      "webkit": 10
+    },
+    "activePreroll": {
+      "chromium": 0,
+      "webkit": 60
+    },
+    "framesPerWindow": 10,
+    "windows": 3
   }
 }
