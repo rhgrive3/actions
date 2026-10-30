@@ -6974,3 +6974,7 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: #1925 crablet受信検査の部分遮蔽修正
 
 中心へのLOSによる2つの実Physics反例を、受信済みnative birthの実integrator/field sweepとnative Boss sphere contactで修正する。受信側の位置履歴、native ID/lifeと同時刻の別弾、proofの原子的な消費も検査する。通常飛行とSplatoon 3 Ver.11.3.0のsource parameterは変更しない。INKWAVE独自Bossのclaim検査であり、任天堂のnetwork authorityやBoss挙動の一致を示さない。検証範囲と残る#1665/#1666の制限は[弾道検査レポート](crablet-native-trajectory-20261030.md)。
+
+### 2026-10-30: 開始カメラのGOから初期発射への同期
+
+任天堂公式60fps映像nawabari_pc.mp4の578Fに見える開始エフェクトに合わせ、今回のTurfカメラを使うMatchはGOと同じtickで自動発射する。以前のINKWAVE独自の1秒待機を解消。456Fから開始前の照準を許可し、最後の1Fの旋回もnative computeAimの前に光学視点へ反映する。30/60/120Hzの全8人、通常復活、pointer-lock guard、native入力replayを検証した。456Fの入力許可・flight形状・3Dカメラ数値はINKWAVEの調整で、Nintendo内部の受付tickや現行Switchでの完全一致は未確認。[参照条件・再現・結果](turf-intro-camera-20261030.md)。
