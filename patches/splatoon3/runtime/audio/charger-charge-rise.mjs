@@ -1,3 +1,4 @@
+import {playProgressCharge} from './progress-charge-playback.mjs';
 import { readEncodedAudioResponse, EncodedAudioResponseError } from './encoded-response.mjs';
 import { mainAudioSourceId, WEAPON_AUDIO } from './weapon-recipes.mjs';
 import { PitchPreservingChargeCache, chargerOnsetRatio } from './pitch-preserving-charge.mjs';
@@ -142,7 +143,7 @@ export async function prewarmChargerRise(audio,{weaponId='charger',chargeTime=1,
   state.stretchCache||=new PitchPreservingChargeCache(ctx,{workerFactory,maxBytes:3*1024*1024});
   return state.stretchCache.prepare('splat-charger-phrase',excerpt,chargeTime);
 }
-export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',chargeTime=1}={}){
+export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',chargeTime=1,progress}={}){
   if(!usesChargerRise(weaponId))return null;
   const ctx=audio?.ctx,target=audio?.sfxIn;
   const state=ctx?slots.get(ctx):null;
@@ -150,9 +151,7 @@ export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',ch
   if(!original||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
   const level=clamp(Number(volume)||0,0,1);
   if(level<=0)return null;
-  const now=ctx.currentTime,source=ctx.createBufferSource(),gain=ctx.createGain();
-  const validPos=pos&&[pos.x,pos.y,pos.z].every(Number.isFinite);
-  const panner=validPos&&typeof audio._panner==='function'?audio._panner(pos,3):null;
+
   let buffer=original,offset=RECORDED_CHARGER_FIRST.startSeconds;
   let length=Math.min(RECORDED_CHARGER_FIRST.playSeconds,original.duration-offset);
   // All chargers derive from the SAME selected Splat Charger rise. A ready
@@ -166,6 +165,10 @@ export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',ch
     else void prewarmChargerRise(audio,{weaponId,chargeTime}).catch(()=>{});
   }
   if(!(length>.2))return null;
+  if(Number.isFinite(progress))return playProgressCharge(audio,buffer,{offset,length,chargeTime,progress,volume:level,pos});
+  const now=ctx.currentTime,source=ctx.createBufferSource(),gain=ctx.createGain();
+  const validPos=pos&&[pos.x,pos.y,pos.z].every(Number.isFinite);
+  const panner=validPos&&typeof audio._panner==='function'?audio._panner(pos,3):null;
   source.buffer=buffer;source.loop=false;source.playbackRate.value=1;
   source.connect(gain);gain.connect(panner||target);if(panner)panner.connect(target);
   gain.gain.setValueAtTime(0,now);

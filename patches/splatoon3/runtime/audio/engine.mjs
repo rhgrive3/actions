@@ -1,3 +1,4 @@
+import {CHARGE_CONFIRMATION,prepareChargeConfirmation,chargeConfirmationDefinition,disposeChargeConfirmation} from './charge-confirmation.mjs';
 import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
@@ -182,8 +183,10 @@ export function installWeaponAudioEngine(Engine){
     }
     // One small shared recorded cue must be resident before a very short
     // LACT first stage. Unknown/test manifests do not invent this source.
-    if((spinnerAudioIds.has(requested)||usesStringerCharge(requested))&&loader.declares('charger','ready')===true)
-      await audioLoadDeadline(loader.ensure('charger','ready',{priority:true}),12000);
+    if(spinnerAudioIds.has(requested)||usesStringerCharge(requested)){
+      if(!await audioLoadDeadline(prepareChargeConfirmation(this),10000))
+        throw new Error('チャージ完了音のMP3を読み込めません。通信を確認してSTARTを押してください');
+    }
     // Optional charge textures must never block START on slow/failed decode.
     // prepareWeapon already opportunistically warms the selected clip; its
     // native Motor fallback owns the sound until the texture is resident.
@@ -294,7 +297,7 @@ export function installWeaponAudioEngine(Engine){
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){spinnerReleaseCache(this);disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmCombatCueBank=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){disposeChargeConfirmation(this);spinnerReleaseCache(this);disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmCombatCueBank=null;this._warmWeapons?.clear();};
   p.prewarmChargerChargeRise=function(weaponId='charger',chargeTime=1){
     if(!this.ctx||!usesChargerRise(weaponId))return false;
     // Pre-stretch the Splat Charger recorded rise in an offline Worker,
@@ -308,6 +311,7 @@ export function installWeaponAudioEngine(Engine){
   };
   const priorDef=p._def;
   p._def=function(name){
+    if(name===CHARGE_CONFIRMATION.name)return chargeConfirmationDefinition(this);
     if(typeof name==='string'&&name.startsWith('spinnerClip:'))
       return spinnerClipDefinition(this,name.slice('spinnerClip:'.length));
     return priorDef.call(this,name);
@@ -322,5 +326,6 @@ export function installWeaponAudioEngine(Engine){
       return stringerChargeAudioLoop(this,source,options,()=>previousLoop.call(this,id,event,options));
     return previousLoop.call(this,id,event,options);
   };
+  p.prepareChargeConfirmation=function(){return prepareChargeConfirmation(this);};
   installChargeAudioLifecycle(Engine);
 }

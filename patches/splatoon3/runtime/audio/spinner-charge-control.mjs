@@ -1,15 +1,16 @@
+import {chargeAudioProgress} from './charge-audio-state.mjs';
 import {spinnerAudioIds,spinnerUsesPremix,spinnerClipMarkers,spinnerCached,spinnerPreload} from './spinner-charge-clips.mjs';
-import {QUIET_CHARGE,trackChargeHandle,prewarmChargeCue,playChargeCue,chargeFraction,boundedCharge,chargeStage} from './charge-audio-lifecycle.mjs';
+import {QUIET_CHARGE,trackChargeHandle,prewarmChargeCue,playChargeCue,chargeFraction,chargeStage} from './charge-audio-lifecycle.mjs';
 // Reuse one decoded buffer; start a source only at an actual stage boundary.
 // The first/second cue is never reached by a free-running wall-clock recording.
 export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   const ctx=engine?.ctx;if(!spinnerAudioIds.has(id)||!ctx||ctx.state==='closed')return QUIET_CHARGE;
   const phrase=spinnerUsesPremix(id),meta=spinnerClipMarkers(id),firstAt=chargeFraction(opts.actor?.weapon);
-  let progress=boundedCharge(Number.isFinite(opts.progress)?opts.progress:opts.actor?.weaponRunner?.charge);
+  let progress=chargeAudioProgress(opts.actor,Number.isFinite(opts.progress)?opts.progress:opts.actor?.weaponRunner?.charge);
   let phase=chargeStage(progress,firstAt),previous=progress,last=ctx.currentTime;
   let stopped=false,pending=false,clip=null,clipPhase=-1,native=null,retire=()=>{},position=opts.pos;
   let volume=Number.isFinite(opts.volume)?Math.max(0,opts.volume):.5;
-  let first=progress+1e-6>=firstAt,full=progress+1e-6>=1;
+  let first=progress+1e-6>=firstAt,full=progress>=1;
   const seconds=Math.max(.05,opts.actor?.weapon?.chargeTime||1);
   const phaseStart=s=>s===0?0:s===1?meta.first:meta.full;
   const sourceSpan=s=>s===0?meta.first:meta.full-meta.first;
@@ -25,7 +26,8 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
     let offset=0;
     if(phrase){
       const lo=phase===1?firstAt:0;
-      offset=phaseStart(phase);
+      // The full-charge transient is now a separate unwarped reference cue.
+      offset=phase===2?meta.full+.30:phaseStart(phase);
       if(resume)offset=phase===2?meta.full+.30:Math.max(offset+(phase===1?.035:0),offset+(progress-lo)/gameSpan(phase)*sourceSpan(phase));
     }
     const candidate=engine.loop('spinnerClip:'+id,{...opts,phase,offset,pitch,fadeIn:.006,volume:phrase?volume:volume*.52,pos:position});
@@ -45,7 +47,7 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
       if(Object.hasOwn(next,'pos'))position=next.pos;
       if(Number.isFinite(next.volume))volume=Math.max(0,next.volume);
       if(Number.isFinite(next.progress)){
-        const q=boundedCharge(next.progress),now=ctx.currentTime,dt=now-last,dp=q-previous;
+        const q=chargeAudioProgress(opts.actor,next.progress),now=ctx.currentTime,dt=now-last,dp=q-previous;
         const stage=chargeStage(q,firstAt),changed=stage!==phase;
         progress=q;
         if(changed){
@@ -60,8 +62,8 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
         // Aggregate zero-time simulation ticks rather than divide by zero.
         if(dt>=1/240||changed){last=now;previous=q;}
         const needsCue=!phrase||!clip?.playing||clipPhase!==phase;
-        if(!first&&q+1e-6>=firstAt){first=true;if(needsCue)playChargeCue(engine,opts.actor,position,volume,1);}
-        if(!full&&q+1e-6>=1){full=true;if(needsCue)playChargeCue(engine,opts.actor,position,volume,2);}
+        if(!first&&q+1e-6>=firstAt){first=true;if(needsCue&&q<1)playChargeCue(engine,opts.actor,position,volume,1);}
+        if(!full&&q>=1){full=true;playChargeCue(engine,opts.actor,position,volume,2);}
       }
       const scaled=phrase?volume:volume*.52;
       // Stable full holds do not enqueue redundant AudioParam automation.
