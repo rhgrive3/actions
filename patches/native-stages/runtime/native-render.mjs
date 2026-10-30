@@ -225,9 +225,17 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
   const target=index.array;
   let count=0,dirtyStart=Infinity;
   if(runs){
-   for(let r=0;r<runs.tiles.length;r++){
-    if(!visible[runs.tiles[r]])continue;
-    let start=runs.starts[r],end=runs.ends[r];
+   // Different tiles can still occupy one contiguous visible source span.
+   // Merge those neighbouring runs before copying: the index order and
+   // unchanged-prefix comparison stay identical, without a subarray per tile.
+   let spanStart=-1,spanEnd=0;
+   for(let r=0;r<=runs.tiles.length;r++){
+    if(r<runs.tiles.length&&visible[runs.tiles[r]]){
+     if(spanStart<0)spanStart=runs.starts[r];
+     spanEnd=runs.ends[r];continue;
+    }
+    if(spanStart<0)continue;
+    let start=spanStart,end=spanEnd;spanStart=-1;
     // Only the unchanged prefix can narrow the pending upload. Once a value
     // differs the full remaining selected tail is uploaded either way.
     if(dirtyStart===Infinity){

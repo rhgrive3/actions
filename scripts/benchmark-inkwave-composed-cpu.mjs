@@ -25,6 +25,16 @@ const render=process.argv.includes('--render'),wrappers=!process.argv.includes('
 const allocations=process.argv.includes('--allocations');
 const quality=get('--quality','high');
 const weapon=get('--weapon',null);
+const device=get('--device','desktop');
+const deviceProfiles={
+ desktop:{viewport:{width:960,height:640}},
+ ipad:{viewport:{width:1024,height:768},deviceScaleFactor:2,hasTouch:true,isMobile:true,
+  userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'},
+ phone:{viewport:{width:844,height:390},deviceScaleFactor:3,hasTouch:true,isMobile:true,
+  userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36'}
+};
+if(!Object.hasOwn(deviceProfiles,device))throw Error('Invalid device; expected desktop, ipad or phone');
+const contextOptions=deviceProfiles[device];
 const temp=persistentBrowserTemp(path.join(evidence,'tmp'));
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=temp;
 const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
@@ -54,7 +64,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:2,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
  harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-sandbox-browser.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
- environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,weapon,viewport:[960,640],render,wrappers,allocations},
+ environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,weapon,device,viewport:[contextOptions.viewport.width,contextOptions.viewport.height],render,wrappers,allocations},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
  'Inclusive scopes overlap. Wrappers and GC tracing perturb timings; use --no-wrappers as a control.',
@@ -65,7 +75,7 @@ try{
  browser=await launchSandboxBrowser(chromium,{CHROMIUM_EXECUTABLE_PATH:process.env.CHROMIUM_PATH});
  report.environment.browser=browser.version();
  for(const stage of stages){
-  const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage(),errors=[];
+  const context=await browser.newContext(contextOptions),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(installCpuGameplayDigest);
   await page.addInitScript(installCpuCounters);
@@ -113,9 +123,10 @@ try{
    }
    G.renderer.getContext().finish();
    window.cpuBenchResetStep=i=>{seed=(24680+Math.imul(i,2654435761))>>>0;};
-   return {actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,roster:G.actors.map(a=>a.weapon.id),native:!!G.level.native,
-    sourceCharacters:characters.length,triangles:G.level.triangleWorld?.triangleCount??0,paintFaces:G.paint.paintFaces?.length,atlas:G.paint.size,ppm:G.paint.ppm,settings:g.settings,scene:globalThis.__iwReadCpuCounters(G.renderer,G.scene).scene};
+   return {actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,roster:G.actors.map(a=>a.weapon.id),native:!!G.level.native,mobile:!!g.mobile?.touch,
+    sourceCharacters:characters.length,triangles:G.level.triangleWorld?.triangleCount??0,paintFaces:G.paint.paintFaces?.length,atlas:G.paint.size,ppm:G.paint.ppm,settings:g.settings,rendererQuality:{...g.R.q},scene:globalThis.__iwReadCpuCounters(G.renderer,G.scene).scene};
   },{stage,render,weapon});
+  if(device!=='desktop'&&!initial.mobile)throw Error('Requested touch device did not activate mobile runtime');
   const cdp=await context.newCDPSession(page);
   await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
   const before=await cdp.send('Performance.getMetrics');
