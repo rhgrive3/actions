@@ -99,7 +99,8 @@ export function splatlingBurst(w, charge) {
 // 160F round (41 total), consistent with the added Spinners and Wiki table.
 // A stream ends one reference frame after its final emitted round.
 export function splatlingReservation(w, charge, availableInk) {
-  if (![w.fireInterval, w.inkPerShot, charge, availableInk].every(Number.isFinite) || !(w.fireInterval > 0) || !(w.inkPerShot > 0)) throw new Error('Invalid Splatling reservation');
+  const initialFireInterval=w.fireInterval, initialInkPerShot=w.inkPerShot;
+  if (!Number.isFinite(initialFireInterval)||!Number.isFinite(initialInkPerShot)||!Number.isFinite(charge)||!Number.isFinite(availableInk) || !(w.fireInterval > 0) || !(w.inkPerShot > 0)) throw new Error('Invalid Splatling reservation');
   const requested = charge <= 0 ? 0 : Math.floor(splatlingBurst(w, charge) / w.fireInterval + 1e-10) + 1;
   const affordable = Math.max(0, Math.floor(Math.max(0, availableInk) / w.inkPerShot + 1e-10));
   const shots = Math.min(requested, affordable);
@@ -177,6 +178,7 @@ const INTERRUPT_SLOTS = {
   charge: { time: 's3ChargeInterruptT', press: 's3ChargeInterruptPressT', live: r => r.charging },
   stream: { time: 's3StreamInterrupt', press: 's3StreamInterruptPressT', live: r => r.streaming },
 };
+const INTERRUPT_SLOT_VALUES = Object.freeze(Object.values(INTERRUPT_SLOTS));
 export function clearSplatlingSubInterrupt(runner) {
   runner.s3SplatlingSubInterruptPending = false;
   runner.s3SplatlingSubInterruptRemaining = 0;
@@ -250,7 +252,7 @@ export function tickSplatlingInterrupt(runner, dt) {
   return null;
 }
 export function releaseSplatlingInterrupt(runner, press) {
-  for (const x of Object.values(INTERRUPT_SLOTS)) { runner[x.time] = 0; runner[x.press] = press; }
+  for (const x of INTERRUPT_SLOT_VALUES) { runner[x.time] = 0; runner[x.press] = press; }
 }
 export function ageDamage(weapon, age, baseDamage) {
   if (!(weapon.damageReduceEnd > weapon.damageReduceStart) || weapon.damageReduceStart < 0) return baseDamage;
@@ -419,7 +421,8 @@ export function installWeapons(context, profile) {
   };
   Projectiles.prototype._push = function (p) {
     p.s3Weapon = p.s3SpecialWeapon || (p.owner ? p.owner.weapon : null);
-    if (AGE_GRAVITY_FAMILIES.includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
+    const gravityFamily=p.s3Weapon?.kind;
+    if ((gravityFamily==='shooter'||gravityFamily==='dualies'||gravityFamily==='splatling') && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
   // The public shooter raises the launch ray to compensate for drop at the
@@ -537,11 +540,11 @@ export function installWeapons(context, profile) {
   const BLASTER_START = Number.isFinite(blasterParam?.Jump_DegBiasDecreaseStartFrame) ? blasterParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
   const BLASTER_END = Number.isFinite(blasterParam?.Jump_DegBiasEndFrame) ? blasterParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
   const BLASTER_BIAS_MAX = Number.isFinite(blasterParam?.Jump_DegBiasMax) ? blasterParam.Jump_DegBiasMax : null;
-  const blasterJumpSupported = () => Number.isFinite(BLASTER_START) && Number.isFinite(BLASTER_END) && BLASTER_END > BLASTER_START && BLASTER_BIAS_MAX > 0;
+  const BLASTER_JUMP_SUPPORTED = Number.isFinite(BLASTER_START) && Number.isFinite(BLASTER_END) && BLASTER_END > BLASTER_START && BLASTER_BIAS_MAX > 0;
   const blasterJumpBias = age => recoveringJumpBias(blasterParam.Stand_DegBiasMax,
     BLASTER_BIAS_MAX, age * BLASTER_REF_HZ, blasterParam);
   WeaponRunner.prototype.s3BlasterJumpState = function (w) {
-    if (!w || w.kind !== 'blaster' || !blasterJumpSupported())
+    if (!w || w.kind !== 'blaster' || !BLASTER_JUMP_SUPPORTED)
       return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
     const active = this.s3BlasterJumpT != null, bias = active ? blasterJumpBias(this.s3BlasterJumpT) : 0;
     const envelope = accuracyEnvelope(w, this.a.grounded, this.s3BlasterJumpT, blasterParam, BLASTER_REF_HZ), ground = w.spreadGround;
@@ -560,9 +563,9 @@ export function installWeapons(context, profile) {
   const DUALIES_START = Number.isFinite(dualiesParam?.Jump_DegBiasDecreaseStartFrame) ? dualiesParam.Jump_DegBiasDecreaseStartFrame / BLASTER_REF_HZ : null;
   const DUALIES_END = Number.isFinite(dualiesParam?.Jump_DegBiasEndFrame) ? dualiesParam.Jump_DegBiasEndFrame / BLASTER_REF_HZ : null;
   const DUALIES_BIAS_MAX = Number.isFinite(dualiesParam?.Jump_DegBiasMax) ? dualiesParam.Jump_DegBiasMax : null;
-  const dualiesJumpSupported = () => Number.isFinite(DUALIES_START) && Number.isFinite(DUALIES_END) && DUALIES_END > DUALIES_START && DUALIES_BIAS_MAX > 0;
+  const DUALIES_JUMP_SUPPORTED = Number.isFinite(DUALIES_START) && Number.isFinite(DUALIES_END) && DUALIES_END > DUALIES_START && DUALIES_BIAS_MAX > 0;
   WeaponRunner.prototype.s3DualiesJumpState = function (w) {
-    if (!w || w.kind !== 'dualies' || !dualiesJumpSupported())
+    if (!w || w.kind !== 'dualies' || !DUALIES_JUMP_SUPPORTED)
       return { supported: false, active: false, age: null, frames: null, bias: 0, envelope: 0, ground: 0, phase: 'idle', recovering: false };
     const active = this.s3DualiesJumpT != null;
     const bias = active ? this.s3DualiesAccuracy.chance(this.a.grounded, this.s3DualiesJumpT) : 0;
@@ -579,7 +582,7 @@ export function installWeapons(context, profile) {
     if (weapon.kind === 'shooter') this.s3ShooterMoveRemaining = shooterMovementRemaining(this.s3ShooterMoveRemaining, dt);
     if (weapon?.kind === 'blaster') this.s3BlasterMoveRemaining = Math.max(0, (this.s3BlasterMoveRemaining || 0) - dt);
     else this.s3BlasterMoveRemaining = 0;
-    if (blasterJumpSupported() && weapon?.kind === 'blaster') {
+    if (BLASTER_JUMP_SUPPORTED && weapon?.kind === 'blaster') {
       const grounded = !!this.a.grounded;
       const jumpSerial = this.a.s3JumpSerial || 0;
       if (jumpSerial !== this.s3BlasterJumpSeen) this.s3BlasterJumpT = 0;
@@ -592,7 +595,7 @@ export function installWeapons(context, profile) {
       this.s3BlasterWasGrounded = false;
       this.s3BlasterJumpSeen = this.a?.s3JumpSerial || 0;
     }
-    if (dualiesJumpSupported() && weapon?.kind === 'dualies') {
+    if (DUALIES_JUMP_SUPPORTED && weapon?.kind === 'dualies') {
       const jumpSerial = this.a.s3JumpSerial || 0;
       if (jumpSerial !== this.s3DualiesJumpSeen) this.s3DualiesJumpT = 0;
       else if (this.s3DualiesJumpT != null) this.s3DualiesJumpT += dt;

@@ -26,6 +26,28 @@ const NAVIGATION_TIMEOUT_MS = 4000;
 const MAX_HTML_BYTES = 1024 * 1024;
 const MAX_REVISION_BYTES = 48 * 1024 * 1024;
 const flights = new Map();
+let currentCachePending = null;
+const retainedCachePending = new Map();
+function openCurrentCache() {
+  if (currentCachePending) return currentCachePending;
+  const pending = Promise.resolve().then(() => caches.open(CURRENT));
+  currentCachePending = pending;
+  const clear = () => { if (currentCachePending === pending) currentCachePending = null; };
+  pending.then(clear, clear);
+  return pending;
+}
+function openRetainedCache(revision) {
+  let pending = retainedCachePending.get(revision);
+  if (pending) return pending;
+  pending = (async () => {
+    const names = await caches.keys();
+    return names.includes(SNAPSHOT(revision)) ? caches.open(SNAPSHOT(revision)) : null;
+  })();
+  retainedCachePending.set(revision, pending);
+  const clear = () => { if (retainedCachePending.get(revision) === pending) retainedCachePending.delete(revision); };
+  pending.then(clear, clear);
+  return pending;
+}
 const jsonResponse = value => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
 const safeRevision = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
@@ -289,32 +311,37 @@ async function navigation(request) {
   } catch { return await offlineIndex() || recoveryDocument(); }
 }
 async function currentAsset(request, rel) {
-  let cache;
-  try {
-    cache = await caches.open(CURRENT);
-    const hit = await cache.match(request);
-    if (hit) return hit; // The common warm path: no fetch, clone-to-storage, digest, or revalidation.
-  } catch { return fetch(request); }
-  let task = flights.get(request.url);
-  if (!task) {
-    task = (async () => {
+  let flight = flights.get(request.url);
+  if (!flight) {
+    flight = { users: 0, task: null };
+    flight.task = (async () => {
+      let cache;
+      try {
+        cache = await openCurrentCache();
+        const hit = await cache.match(request);
+        if (hit) return hit;
+      } catch {
+        // A single cancelled caller cannot abort another subscriber's fetch.
+        return fetch(new Request(request, { signal: new AbortController().signal }));
+      }
       const { response, verified } = await verifiedAsset(request, BUILD.assets[rel]);
       if (!response.ok) return response;
       if (!verified) throw new Error('Uncacheable');
       try { await cache.put(request, response.clone()); } catch { /* quota: online play must still work */ }
       return response;
     })();
-    flights.set(request.url, task);
-    task.then(() => flights.delete(request.url), () => flights.delete(request.url));
+    flights.set(request.url, flight);
+    const clear = () => { if (flights.get(request.url) === flight) flights.delete(request.url); };
+    flight.task.then(clear, clear);
   }
-  return (await task).clone();
+  flight.users++;
+  const response = await flight.task;
+  // The overwhelmingly common single warm request still needs no clone.
+  return flight.users === 1 ? response : response.clone();
 }
 async function retainedAsset(request, revision) {
   // Existing old documents may need their predecessor's tree. Never substitute the current revision.
-  const names = await caches.keys().catch(() => []);
-  if (names.includes(SNAPSHOT(revision))) {
-    try { const hit = await (await caches.open(SNAPSHOT(revision))).match(request); if (hit) return hit; } catch { /* eviction */ }
-  }
+  try { const cache = await openRetainedCache(revision); const hit = cache && await cache.match(request); if (hit) return hit; } catch { /* eviction */ }
   // A waiting update's modules pass through the old active worker. A negative
   // HTTP-cache entry from deployment must not strand that new document either.
   const response = await timedFetch(request, 30000);
