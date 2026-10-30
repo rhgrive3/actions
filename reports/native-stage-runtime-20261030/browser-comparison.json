@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "errors": [],
+  "referenceContentHash": "e0c4225187a81a6a1b8162454f7545191b178f9b0979155031b40c300464ae27",
+  "candidateContentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "node": "v24.19.0",
+    "viewport": [
+      960,
+      540
+    ],
+    "browser": "chromium",
+    "device": "desktop",
+    "renderer": "SwiftShader",
+    "browserVersion": "151.0.7922.34"
+  },
+  "stage": "robo",
+  "quality": "medium",
+  "referenceFps": 0.42587382210398617,
+  "candidateFps": 0.446475079249325,
+  "speedup": 1.0483740865863989,
+  "fpsImprovementPercent": 4.837408658639886,
+  "pairs": [
+    {
+      "run": 0,
+      "firstStep": 615,
+      "frames": 5,
+      "referenceFps": 0.5326799126404943,
+      "candidateFps": 0.5131678880062389,
+      "speedup": 0.9633700761541124,
+      "traceSha256": "0a01af4a84f9a5beff1126223758ec50b2fbdc0414220da68e24b98df83b0ac6",
+      "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+    },
+    {
+      "run": 1,
+      "firstStep": 620,
+      "frames": 5,
+      "referenceFps": 0.45165486341956834,
+      "candidateFps": 0.5242518925493308,
+      "speedup": 1.1607356302556249,
+      "traceSha256": "4586d5560fa1408874efc4bba856cbccdb63e9c8e236f47c70cf91a6d13cece2",
+      "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+    },
+    {
+      "run": 2,
+      "firstStep": 625,
+      "frames": 5,
+      "referenceFps": 0.338643259644559,
+      "candidateFps": 0.34926688880040624,
+      "speedup": 1.0313711519520508,
+      "traceSha256": "490d02ea24d132207f53fa28ff7ca696696ba75a350d9eac937ab7be6ec01cfc",
+      "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+    }
+  ],
+  "images": [
+    {
+      "view": "forward",
+      "width": 960,
+      "height": 540,
+      "meanRgbDelta": 0.0,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 0,
+      "changedPixels": 0,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "bff58533cc8feed5b3879efd78b8bb8bb6bdd0c11bed1f0ff0190509c9a455df",
+        "bff58533cc8feed5b3879efd78b8bb8bb6bdd0c11bed1f0ff0190509c9a455df"
+      ]
+    },
+    {
+      "view": "left",
+      "width": 960,
+      "height": 540,
+      "meanRgbDelta": 0.0,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 0,
+      "changedPixels": 0,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "c5da7655c2f788d8e834003e4a2ca3fa969c21201d5f554c77798feac69a1c7a",
+        "c5da7655c2f788d8e834003e4a2ca3fa969c21201d5f554c77798feac69a1c7a"
+      ]
+    },
+    {
+      "view": "back",
+      "width": 960,
+      "height": 540,
+      "meanRgbDelta": 0.0,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 0,
+      "changedPixels": 0,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "639903a1bd6998c55c016ea1e0b8ef980b66f92dea3d3756074040cb211434b4",
+        "639903a1bd6998c55c016ea1e0b8ef980b66f92dea3d3756074040cb211434b4"
+      ]
+    },
+    {
+      "view": "right",
+      "width": 960,
+      "height": 540,
+      "meanRgbDelta": 0.0,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 0,
+      "changedPixels": 0,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "f780d88ae048aa54172ceef6c7c42102a030c8412a3e47b9ed1997bf7357540d",
+        "f780d88ae048aa54172ceef6c7c42102a030c8412a3e47b9ed1997bf7357540d"
+      ]
+    }
+  ],
+  "referenceCompletedFrameMs": null,
+  "candidateCompletedFrameMs": null,
+  "limits": [
+    "Fixed 60 Hz production simulation plus all ordinary render passes; wall time includes GPU completion. Not a physical-device or presentation-latency measurement.",
+    "This is one matched replay with three timed windows, not a physical GPU or whole-device benchmark."
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "schema": 1,
+  "node": "v24.19.0",
+  "scope": "Node CPU footprint component, not browser/device/GPU FPS",
+  "stage": "robo",
+  "stageRecordSha256": "6a24493108f89a8f78942c6ccefda71d255b89953d8cb21130a5ad86ccfa933d",
+  "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+  "implementationSha256": {
+    "before": "03f7de4043c4f08d54eb573da590d10506e987a085030de2f71d6f6e6bf84804",
+    "after": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd"
+  },
+  "count": 5000,
+  "trials": 7,
+  "cases": [
+    {
+      "name": "robo",
+      "triangles": 107020,
+      "poses": 1024,
+      "inputSha256": "c75624fe9edced63e31c9c57248ff44e10680fa6f400645348d98929e583ce3f",
+      "parity": true,
+      "samples": {
+        "before": [
+          {
+            "wallMs": 126.01821100000006,
+            "cpuMs": 127.127,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 139.872386,
+            "cpuMs": 139.887,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 138.45723299999986,
+            "cpuMs": 138.341,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 138.6968320000001,
+            "cpuMs": 138.626,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 146.95827299999974,
+            "cpuMs": 146.972,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 137.09661000000006,
+            "cpuMs": 137.108,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 138.0024800000001,
+            "cpuMs": 137.916,
+            "queries": 45000,
+            "triangleTests": 1594973
+          }
+        ],
+        "after": [
+          {
+            "wallMs": 117.06303900000012,
+            "cpuMs": 117.079,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 122.83562400000005,
+            "cpuMs": 122.316,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 119.22828800000002,
+            "cpuMs": 119.181,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 117.16462100000035,
+            "cpuMs": 117.167,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 129.64675799999986,
+            "cpuMs": 129.685,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 122.32295400000021,
+            "cpuMs": 122.325,
+            "queries": 45000,
+            "triangleTests": 1594973
+          },
+          {
+            "wallMs": 113.68863400000009,
+            "cpuMs": 113.701,
+            "queries": 45000,
+            "triangleTests": 1594973
+          }
+        ]
+      },
+      "summary": {
+        "wallMs": {
+          "before": 138.45723299999986,
+          "after": 119.22828800000002,
+          "reductionPercent": 13.888003236349423
+        },
+        "cpuMs": {
+          "before": 138.341,
+          "after": 119.181,
+          "reductionPercent": 13.849834828431206
+        }
+      }
+    },
+    {
+      "name": "dense-overlapping-sheets",
+      "triangles": 196,
+      "poses": 256,
+      "inputSha256": "3351eab496b22d507ae867b8f137236636a7af596ab6eb240c1e18b1eba8b462",
+      "parity": true,
+      "samples": {
+        "before": [
+          {
+            "wallMs": 28.116263000000345,
+            "cpuMs": 28.071,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 29.40711199999987,
+            "cpuMs": 29.42,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 29.144628999999895,
+            "cpuMs": 29.149,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 30.22118300000011,
+            "cpuMs": 35.251,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 32.01546699999972,
+            "cpuMs": 32.031,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 32.1556370000003,
+            "cpuMs": 32.632,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 31.430237999999918,
+            "cpuMs": 31.443,
+            "queries": 45000,
+            "triangleTests": 1097856
+          }
+        ],
+        "after": [
+          {
+            "wallMs": 32.44063600000027,
+            "cpuMs": 32.459,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 30.99462500000027,
+            "cpuMs": 31,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 31.928555999999844,
+            "cpuMs": 31.943,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 30.832500999999866,
+            "cpuMs": 30.848,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 31.665260999999646,
+            "cpuMs": 31.68,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 29.199641000000156,
+            "cpuMs": 29.213,
+            "queries": 45000,
+            "triangleTests": 1097856
+          },
+          {
+            "wallMs": 34.88117800000009,
+            "cpuMs": 34.897,
+            "queries": 45000,
+            "triangleTests": 1097856
+          }
+        ]
+      },
+      "summary": {
+        "wallMs": {
+          "before": 30.22118300000011,
+          "after": 31.665260999999646,
+          "reductionPercent": -4.778363573654709
+        },
+        "cpuMs": {
+          "before": 31.443,
+          "after": 31.68,
+          "reductionPercent": -0.7537448716725459
+        }
+      }
+    }
+  ]
+}
