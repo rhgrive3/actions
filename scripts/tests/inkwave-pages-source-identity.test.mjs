@@ -41,7 +41,7 @@ test('Pages stays deployable while mandatory Validate still owns the full regres
   const full = gate.slice(gate.indexOf('  patch_tests:'),gate.indexOf('  circleci_offload_gate:'));
   // The dedicated Rainmaker actor lane increases the matrix to nine shards.
   // Keep the full source/regression gate, not merely a matching shard count.
-  assert.match(full, /shard: \\[0, 1, 2, 3, 4, 5, 6, 7, 8\\]/);
+  assert.match(full, /shard: \[0, 1, 2, 3, 4, 5, 6, 7, 8\]/);
   assert.match(full, /INKWAVE_TEST_SHARD_COUNT: '9'/);
   assert.match(full, /INKWAVE_TEST_ISOLATE_RAINMAKER: '1'/);
   assert.match(full, /run: node --experimental-vm-modules scripts\/check-inkwave-patches\.mjs/);
