@@ -6,7 +6,9 @@ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   if(!spinnerAudioIds.has(id))return null;
   const phrase=spinnerUsesPremix(id),ctx=engine.ctx;
-  let stopped=false,clip=null,native=phrase?null:nativeLoop();
+  // Keep the installed source Motor audible until the optional premix has
+  // decoded. A cold cache must not produce a silent first charge.
+  let stopped=false,clip=null,native=nativeLoop();
   let progress=0,previous=0,last=ctx?.currentTime??0;
   let pitch=phrase?clamp(spinnerClipFull(id)/(opts.actor?.weapon?.chargeTime||1),.25,3):.88;
   let first=false,full=false,failed=false,position=opts.pos;
@@ -21,12 +23,15 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
       ...opts,offset:phrase?progress*spinnerClipFull(id):0,pitch,
       volume:phrase?volume:volume*.52,
     });
+    // Once the weapon's premix is audible, retire the temporary motor
+    // instead of mixing a second unrelated mechanical layer.
+    if(phrase&&clip?.playing!==false&&native){native.stop?.(.035);native=null;}
   };
   if(spinnerCached(engine,id))start();
   else spinnerPreload(engine,id).then(()=>start(),e=>{
     failed=true;
     // An unusable premix falls back to the existing recorded motor.
-    if(phrase&&!stopped)native=nativeLoop();
+    if(phrase&&!stopped&&!native?.playing)native=nativeLoop();
     console.warn('[spinner audio] optional charge phrase',id,e);
   });
   const cue=stage=>{
@@ -38,7 +43,12 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
     });
   };
   return {
-    get playing(){return !stopped&&(clip?.playing!==false||!clip||native?.playing!==false);},
+    get playing(){
+      if(stopped)return false;
+      if(clip?.playing)return true;
+      if(native?.playing)return true;
+      return !failed;
+    },
     set(update={}){
       if(stopped)return;
       if(update.pos!==undefined)position=update.pos;
