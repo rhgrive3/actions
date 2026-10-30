@@ -83,6 +83,8 @@ export function adaptStart(rel, code) {
     'startup accepts its UI-owned operation without bypassing build instrumentation');
   code = replaceOnce(code, '      startMatch: (o) => self.startMatch(o),',
     '      startMatch: (o) => self._startMenuMatch(o),', 'menu consumes active startup rejection');
+  code = replaceOnce(code, '      rematch: () => self.startMatch(self.lastMatchOpts || {}),',
+    '      rematch: () => self._startMenuMatch(self.lastMatchOpts || {}),', 'rematch consumes active startup rejection');
   code = replaceOnce(code, "    if (!this._bossMod) this._bossMod = loadLazyModule('./boss/bossMode.js');",
     "    if (!this._bossMod) {\n      const pending = this._bossMod = loadLazyModule('./boss/bossMode.js');\n      pending.catch(() => { if (this._bossMod === pending) this._bossMod = null; });\n    }",
     'failed Boss module can be retried');
