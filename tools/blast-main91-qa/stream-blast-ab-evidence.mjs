@@ -48,15 +48,15 @@ const selectedPng=files.filter(f=>f.name.endsWith('.png')).slice(shard*4,shard*4
 const selected=[...(shard===0?files.filter(f=>f.name.endsWith('.json')):[]),...selectedPng];
 const exportedBytes=selected.reduce((sum,f)=>sum+f.bytes.length,0);
 assert.ok(exportedBytes<=12*1024*1024,'bounded per-job log: split required, no truncation');
-const emit=o=>console.log('BLAST_AB_V1 '+JSON.stringify(o));
-emit({kind:'begin',exporterSHA256:hash(fs.readFileSync(new URL(import.meta.url))),comparatorSHA256:hash(fs.readFileSync(new URL('./compare-blast-ab.mjs',import.meta.url))),qaHead:expectedQA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,shard,shards:8,fileCount:selected.length,pngCount:4,totalBytes:exportedBytes,allEvidenceBytes:totalBytes,encoding:'base64',chunkChars:16384,scope:'original artifact bytes; no image transformation; visual review not performed'});
+const emit=o=>new Promise((resolve,reject)=>process.stdout.write('BLAST_AB_V1 '+JSON.stringify(o)+'\n',error=>error?reject(error):resolve()));
+await emit({kind:'begin',exporterSHA256:hash(fs.readFileSync(new URL(import.meta.url))),comparatorSHA256:hash(fs.readFileSync(new URL('./compare-blast-ab.mjs',import.meta.url))),qaHead:expectedQA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,shard,shards:8,fileCount:selected.length,pngCount:4,totalBytes:exportedBytes,allEvidenceBytes:totalBytes,encoding:'base64',chunkChars:16384,scope:'original artifact bytes; no image transformation; visual review not performed'});
 for(const f of selected){
  const encoded=f.bytes.toString('base64'),chunks=Math.ceil(encoded.length/16384),sha256=hash(f.bytes);
- emit({kind:'file',variant:f.variant,name:f.name,length:f.bytes.length,sha256,chunks});
- for(let index=0;index<chunks;index++)emit({kind:'chunk',variant:f.variant,name:f.name,index,data:encoded.slice(index*16384,(index+1)*16384)});
- emit({kind:'file-end',variant:f.variant,name:f.name,sha256,chunks});
+ await emit({kind:'file',variant:f.variant,name:f.name,length:f.bytes.length,sha256,chunks});
+ for(let index=0;index<chunks;index++)await emit({kind:'chunk',variant:f.variant,name:f.name,index,data:encoded.slice(index*16384,(index+1)*16384)});
+ await emit({kind:'file-end',variant:f.variant,name:f.name,sha256,chunks});
 }
-emit({kind:'complete',shard,shards:8,fileCount:selected.length,pngCount:4,totalBytes:exportedBytes});
+await emit({kind:'complete',shard,shards:8,fileCount:selected.length,pngCount:4,totalBytes:exportedBytes});
 let result;
-try{result=compareBlastAB(lanes.baseline,lanes.candidate,expectedQA);emit({kind:'comparison',...result});}
-catch(error){emit({kind:'comparison',conditionsMatch:false,error:String(error.message),visualReview:'pending',performance:'not evaluated'});throw error;}
+try{result=compareBlastAB(lanes.baseline,lanes.candidate,expectedQA);await emit({kind:'comparison',...result});}
+catch(error){await emit({kind:'comparison',conditionsMatch:false,error:String(error.message),visualReview:'pending',performance:'not evaluated'});process.exitCode=1;}

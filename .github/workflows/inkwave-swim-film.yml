@@ -146,7 +146,18 @@ jobs:
         with:
           node-version: 22
       - name: Require transport decoder integrity tests
-        run: node --test qa/tools/blast-main91-qa/decode-blast-ab-evidence.test.mjs
+        run: node --test qa/tools/blast-main91-qa/decode-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/stream-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/compare-blast-ab.test.mjs
+      - name: Recover optional public reference separately from A/B evidence
+        if: ${{ matrix.shard == 0 }}
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          if node --test qa/tools/blast-main91-qa/recover-public-blast-reference.test.mjs; then
+            node qa/tools/blast-main91-qa/recover-public-blast-reference.mjs
+          else
+            echo 'BLAST_REFERENCE_V1 {"type":"error","recordId":"reference-helper","status":"not-recovered","error":"Reference helper negative tests failed; network retrieval not attempted"}'
+            exit 1
+          fi
       - name: Read baseline artifact from this run only
         uses: actions/download-artifact@v4
         with:

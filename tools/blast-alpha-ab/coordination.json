@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recordedAt": "2026-10-30T05:21:59Z",
+  "recordedAt": "2026-10-30T05:57:21Z",
   "purpose": "QA-only coordination snapshot; no product runtime imports",
   "sourceBase": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
   "parallelLimit": {
@@ -67,7 +67,7 @@
       "task": "actual authority proof fixture repair",
       "target": "tools/blast-main91-qa/test-blaster-knockback-authority.mjs",
       "head": null,
-      "lastResult": "QA blob7f34416ad5eb7bd67ee461315c0b299c7f007ab8: full composed fixture, actual fire/tick proof, original four cases plus missing-proof negative; Node pending",
+      "lastResult": "Fixed public reference helper with HTTPS host allowlist and mov-only/no-external-reference ffmpeg decode peer reviewed; real acquisition not yet run",
       "state": "connector test authoring",
       "next": "Independent peer and formal source/emitted CI",
       "dependencies": [
@@ -95,7 +95,7 @@
       "task": "actual authority proof fixture independent peer",
       "target": "4 blaster candidate files and QA scripts",
       "head": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
-      "lastResult": "Read-only exporter/workflow peer and pureJS decoder29negative+4knownSHA vectors passed; formalNode/log-size retrieval unverified",
+      "lastResult": "Transport flush and content-addressed revision correction peer passed; permanent decoder29/compare9 negative tests prepared; actual Node pipe test awaits CI",
       "state": "peer requested by hud; completion not yet confirmed",
       "next": "Review native proof delivery and retained assertions",
       "dependencies": [
@@ -108,10 +108,10 @@
       "owner": "/root/recover_blast_capture",
       "task": "blaster A/B",
       "target": "4product candidate files; QA scripts/workflow",
-      "head": "e582ce1e6aadde06f7c72bc3076806c5f1362852",
-      "lastResult": "a8c919 baseline job123900033577 passed source/emitted+authority/routing and16PNG verifier; candidate running. Read-only same-run8shard original-byte export and decoder prepared; no visual acceptance yet.",
-      "state": "QA driver integration",
-      "next": "Preserve current run; publish reviewed aggregate job; validate all8logs44files before images; cross-lane result may fail and stays failure",
+      "head": "7c00d10b10b867464e2b8106d4837f247a16a245",
+      "lastResult": "Both capture lanes+logic succeeded run41008380628. Original32PNG artifacts preserved. Shards6/7 comparison failed and stdout was incomplete; no new image displayed. Fixed content-revision-vs-Githead comparison and awaited stdout with natural failure exit are peer reviewed.",
+      "state": "connector QA recovery implementation",
+      "next": "Publish one combined QA successor with reference helper and permanent negatives; re-capture and verify all44files/8shards before visual assessment",
       "dependencies": [
         "peer; GitHubActions"
       ],

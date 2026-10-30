@@ -82,7 +82,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),f=path.resolve(site,'.'+decodeURIComponent(u.pathname==='/'?'/index.html':u.pathname));assert.ok(f.startsWith(site+path.sep));serveProjectileCaptureFile(req,res,f,mime);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page;
-const driver={head:HEAD,variant:VARIANT,shellAlpha:SHELL_ALPHA,manifestHash:manifest.contentHash,launch:'existing launchSandboxBrowser; chromiumSandbox:true; no local --no-sandbox fallback',cases:[],status:'incomplete'};
+const driver={head:HEAD,variant:VARIANT,shellAlpha:SHELL_ALPHA,manifestHash:manifest.contentHash,buildRevision:manifest.build.revision,launch:'existing launchSandboxBrowser; chromiumSandbox:true; no local --no-sandbox fallback',cases:[],status:'incomplete'};
 fs.mkdirSync(out,{recursive:true});const save=()=>fs.writeFileSync(path.join(out,'driver-receipt.json'),JSON.stringify(driver,null,2));save();
 const audioTrace=createAudioRequestTrace();driver.audioRequestTrace=audioTrace.data;
  async function audioSnapshot(label){

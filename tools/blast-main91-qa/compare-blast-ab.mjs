@@ -27,7 +27,7 @@ export function compareBlastAB(A,B,expectedQA){
    const z=c.cases?.[i];if(!z){bad.push('missing case');continue;}
    eq(z.withRoll,!!i,variant+'.case order');eq(z.preparation.nativeMatch,true,'nativeMatch');
    eq(z.preparation.verifiedHead,head,'prepared head');eq(z.preparation.contentHash,c.expectedContentHash,'prepared content');eq(z.preparation.allArtifactHashesVerified,true,'prepared hashes');
-   eq(z.setup.contentHash,c.expectedContentHash,'setup content');eq(z.setup.manifestRevision,head,'setup revision');
+   eq(z.setup.contentHash,c.expectedContentHash,'setup content');if(!/^[a-f0-9]{64}$/.test(d.buildRevision||''))bad.push(variant+'.buildRevision');eq(z.setup.manifestRevision,d.buildRevision,'setup content-addressed revision');
    eq(z.setup.weaponId,'blaster','weapon');eq(z.setup.radius,z.setup.nativeBurstRadius,'radius');
    for(const k of ['camera','position','radius','ink','quality','firstTick'])exists(z.setup[k],'setup.'+k);
    eq(z.setup.firstTick.burstAgeAtF0,1/60,'F0 age');eq(z.setup.firstTick.fxTicksBeforeAdmission,0,'prior FX tick');
