@@ -47,3 +47,30 @@ Results: source 9/9; composed/minified cadence tests 2/2. The same measured valu
 Related regressions: `special-vfx.test.mjs`, `special-vfx-pool-capacity.test.mjs`, `inkjet-vfx-pool-budget.test.mjs`, `special-vfx-recipes-parity.test.mjs` and `trizooka-lobe-vfx.test.mjs` pass 61/61. This includes VFX-on/off gameplay parity, pooled geometry/material reuse and disposal, unchanged recipe state/RNG order, Inkjet fair capacity at 30/60/120 Hz, and native Trizooka birth/terminal timing. The fixture reports its existing optional source-motion dynamic-import warning; the tests exit successfully. `check-inkwave-patches.mjs --quick` and `git diff --check` pass.
 
 These are production CPU pool and recipe checks. Browser/GPU and combined-branch verification are recorded separately by the integration owner; Switch hardware, retail side-by-side frames and iPad performance were not measured here.
+
+## Follow-up: bounded CPU cost and extreme inputs
+
+The [one-off probe](splash-cost-probe.mjs) executes the real `SpritePool.update` from `8d84fd3` and the exact cached-drag baseline from `fd6435a4`, including Float32 writes and dirty attribute range bookkeeping. The seed is the same real 73-sprite `inkBlast` (72 puffs and one spark). Half/full loads repeat its admitted records; the final two cases deliberately alternate `.8/1.12/1.6/2.2` drag each particle to defeat the adjacent-rate cache. Each sample resets outside the wall-time window and runs three updates, keeping every particle inside its authored lifetime. Seven paired samples alternate old/new order. Process CPU timing includes the same reset overhead on both sides.
+
+Recorded machine: Node 24.19.0, Intel Xeon Platinum 8573C, five logical CPUs. Several other source tests ran on this shared host. Wall-time medians were noisy, so the table uses **process CPU milliseconds per update**. The [raw results](splash-cost-results.json) include both clocks, every sample and 60 Hz results; negative differences are noise, not a speedup claim.
+
+| Load | 30 Hz old → new (ms) | 120 Hz old → new (ms) |
+| --- | ---: | ---: |
+| Actual 73-sprite burst | 0.015638 → 0.015567 | 0.014676 → 0.014886 |
+| 260 puffs | 0.038087 → 0.041055 | 0.038668 → 0.042242 |
+| 520 puffs | 0.071653 → 0.077777 | 0.077585 → 0.081207 |
+| 450 sparks | 0.036416 → 0.039550 | 0.037719 → 0.038004 |
+| 900 sparks | 0.068884 → 0.073613 | 0.071405 → 0.073024 |
+| 520 puffs, alternating drag | 0.075188 → 0.095905 | 0.075078 → 0.092069 |
+| 900 sparks, alternating drag | 0.082384 → 0.113524 | 0.080190 → 0.117268 |
+
+The largest observed added CPU cost is 0.037078 ms/update in the deliberately alternating 900-particle load (46.2% of that small isolated component). The real burst and normal full-pool cases add at most 0.006125 ms in these 30/120 Hz medians. This is not a mobile-frame-time or GPU measurement, and no further optimization is justified by this component result alone. All old/new pool tests retained the same counts and bounded upload ranges: 520 puffs plus one warm slot, 900 sparks plus one warm slot, and 12 kit draw pools. No capacity, geometry, shader or material was added.
+
+Extreme stored positive Float32 drag from `2^-149` through `3.4028234663852886e38` stayed finite at 30/60/120 Hz. Inputs above Float32's maximum become infinity in the existing state array and retain the legacy nonfinite-rate path. A separate pathological probe found that positive time as small as `Number.MIN_VALUE` or `1e-300`, combined with tiny positive drag, can underflow `drag*dt` to zero. The exponential ratio then evaluated `0/0`. The follow-up uses its mathematical limit, `1`, when that product is zero. It changes neither ordinary-frame coefficients nor the preserved 60 Hz path.
+
+The added regression exercises the actual pool with nine tiny-positive-time/rate combinations, checks unchanged sub-Float32 motion and finite uploaded attributes. Follow-up source suite: 10/10; composed/minified suite: 3/3. Follow-up runtime SHA-256: `326f5ec529bb53edc70606758bfbb92ef467a081d19c3ac5b5ea1689e97a7d79`. The CPU samples predate this single limit guard and identify their original source hash in the attached results.
+
+```sh
+INKWAVE_UPSTREAM_SOURCE=/workspace/actions/inkwave-public \
+node --experimental-vm-modules reports/special-presentation-20261030/splash-cost-probe.mjs
+```

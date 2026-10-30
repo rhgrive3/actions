@@ -114,3 +114,18 @@ test('gravity, buoyancy, zero and near-zero drag retain their curve under regula
     } finally { seed.dispose(); }
   }
 });
+
+test('positive elapsed time below the drag-product range uses its finite zero limit', async () => {
+  const f = await fixture(), { THREE } = f;
+  for (const rate of [2 ** -149, 1e-20, 1]) for (const dt of [Number.MIN_VALUE, 1e-300, 1e-30]) {
+    const kit = new Kit(THREE, new THREE.Scene());
+    try {
+      kit.puffs.spawn(1, 2, 3, 8, 6, -4, 2, .2, .1, 1, .4, .2, 1, 2,
+        { drag: rate, grav: 14, buoy: .6, seed: .2, rot: 0, stretch: .05 });
+      const before = state(kit.puffs);
+      kit.update(dt);
+      assert.deepEqual(state(kit.puffs), before, `sub-Float32 motion remains unchanged for drag=${rate} dt=${dt}`);
+      for (const attribute of kit.puffs.updateAttributes) assert.ok(attribute.array.every(Number.isFinite), 'no nonfinite vertex attribute');
+    } finally { kit.dispose(); }
+  }
+});

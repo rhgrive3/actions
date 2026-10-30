@@ -317,7 +317,8 @@ class SpritePool {
           // at 30/120 Hz without retuning the authored 60 Hz effect.
           if (rate === 0) { travel = kick = dt; fall = dt * (dt + frame) * 0.5; }
           else {
-            const a = rate * frame, b = rate * dt, s = a / Math.expm1(a), q = -Math.expm1(-b) / b;
+            // Positive rate*dt can underflow; the exponential ratio tends to 1.
+            const a = rate * frame, b = rate * dt, s = a / Math.expm1(a), q = b === 0 ? 1 : -Math.expm1(-b) / b;
             // Stable 1-s and 1-q near zero; direct subtraction loses the
             // acceleration term for very small positive drag.
             const ds = a < 1e-3 ? a * (0.5 - a / 12 + a * a * a / 720) : 1 - s;
