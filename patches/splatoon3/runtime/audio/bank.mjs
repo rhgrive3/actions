@@ -126,19 +126,16 @@ export class WeaponSoundBank {
       const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();
       const recordedChargerOnset=!!authorized&&chargerOnset;
       const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
-      const recordedSpinnerCharge=recordedSpinnerMotor&&event==='charge';
       s.buffer=buffer;s.loop=loop;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
       // A recorded click stays at the recorded speed and retains its full
       // attack/decay. Do not pitch-sweep, stretch, stitch or endlessly loop it.
-      s.playbackRate.value=(recordedChargerOnset||recordedSpinnerMotor&&!recordedSpinnerCharge)?1:
-        recordedSpinnerCharge?Math.max(.82,Math.min(1.22,p)):Math.max(.3,Math.min(3,p));s.start(v.t,0);
+      s.playbackRate.value=(recordedChargerOnset||recordedSpinnerMotor)?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
       return {pitch(q,t){
-        if(recordedSpinnerCharge)s.playbackRate.setTargetAtTime(Math.max(.82,Math.min(1.22,q)),t,.035);
-        else if(!recordedChargerOnset&&!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
+        if(!recordedChargerOnset&&!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
       }};
     };
     const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
