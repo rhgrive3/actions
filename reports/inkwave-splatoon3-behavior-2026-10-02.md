@@ -6961,3 +6961,9 @@ The main changes through 0904 (icons, transfer caches, Squid Roll effects and Hi
 A synchronous private replay world hook could return an unresolved Promise while advance still published a completed contact. An actual paid native Shooter contact reduced private target HP 100→64 before that pending phase completed. The five initialization/frame hooks now reject thenables; frame errors retire pending receipts and initialization failure disposes created actors and releases the realm. Normal sync results and method receivers remain intact. Seven added controls and existing native controls pass 131/131; the unchanged leaf passes only the normal synchronous case and fails six negative cases. This is a synchronous API correction, not cancellation, arbitrary callback rollback or a completed mandatory network authority. The fresh f277 emitted owner-claim diagnostic still deducts 36 HP from forged valid births in PvP/Boss/crablet without actual sender launch/contact; #1665/#1666 remain open. Protocol, native physics and Splatoon 3 Ver.11.3.0 parameters are unchanged; physical-device testing is waived.
 
 The main91c compact reticle owner changes and original capture-derived calibration are preserved. A separate current QA fix initializes a detached special icon before its first HUD call and leaves every original screenshot, request and failure gate active. The historical full probe body is retained by a sealed one-field inverse. Additional Dynamo evidence and independent crossfire controls are recorded separately; no original retail behavior measurement is invented.
+
+## 2026-10-30 泳ぎ飛沫の多方向比較
+
+通常泳ぎの滑らかな左右レールを、低い前端・穴が流れる巻いた膜・後方へ伸びて戻る接続へ調整した。全頂点の部位IDが6で膜の開口処理に入らない不具合と、穴の位相が重なって大きな板状の面が残る問題も修正。公式映像の元fpsデコード、1F刻みの観察、7方向のブラウザ画像、床／坂／壁・4色・30/60/120Hzの確認を [比較記録](swim-splash-multiview-20261030/README.md) に保存した。
+
+移動・塗り・ダメージ・通信・本体アニメーションは維持する。曲線はINKWAVEの表示調整値で、原作からの抽出ではない。公式映像の入力条件と実行版、原作VFXの完全一致、Switch/iPad実機の確認は未確認のまま。
