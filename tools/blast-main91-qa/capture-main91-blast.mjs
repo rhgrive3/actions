@@ -48,6 +48,11 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
         G.settings.cameraShake=0;g.rig.setMap(false);
         G.camera.position.fromArray(camera.position);G.camera.lookAt(...camera.target);G.camera.updateMatrixWorld(true);
         G.projectiles.clear();G.fx.clear();
+        // QA-only isolated FX comparison epoch; native game/actor clocks are not reset.
+        const originalFxClock={time:G.fx._time,dt:G.fx._dt};
+        if(!Number.isFinite(originalFxClock.time)||!Number.isFinite(originalFxClock.dt))throw Error('finite original FX clock required');
+        window.__iwSurfaceClock=()=>Object.fromEntries(['levelMat','grateMat'].map(name=>{const u=g[name]?.userData?.uniforms;return[name,u?Object.fromEntries(['uTime','uWake','uWakeB','uSwimH','uSwimF'].map(k=>{const x=u[k]?.value;return[k,x?.toArray?x.toArray():x??null];})):null];}));
+        window.__iwFxClock=()=>({time:G.fx._time,shell:G.fx._shellUniforms.uTime.value,ring:G.fx._ringU.uTime.value,beam:G.fx._beamU.uTime.value,mote:G.fx._moteU.uTime.value,dt:G.fx._dt});
         window.__iwBlastRng=window.__iwResetScenarioRandom(0x42535431);
         const V=G.camera.position.constructor;
         // Public production FX API. Radius is recorded, not tuned to fake a match.
@@ -55,7 +60,7 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
         window.__iwBlastBeforeAdmissionFxTicks=0;window.__iwBlastOriginalFxUpdate=G.fx.update;
         G.fx.update=function(dt,...args){if(dt>0)window.__iwBlastBeforeAdmissionFxTicks++;return window.__iwBlastOriginalFxUpdate.call(this,dt,...args);};
         window.__iwBlastFrame=0;
-        return {manifestRevision:manifest.build?.revision,contentHash:manifest.contentHash,position:blastPosition,radius,ink:a.color.getHexString(),camera:G.camera.matrixWorld.toArray(),roll:roll?{time:roll.time,armorHP:roll.armorHP}:null,quality:G.fx.q,weaponId:a.weapon.id,nativeBurstRadius:radius};
+        return {originalFxClock,initialFxTime:0,clockScope:'QA-only isolated FX epoch; native G.time/game/roll clocks untouched',manifestRevision:manifest.build?.revision,contentHash:manifest.contentHash,position:blastPosition,radius,ink:a.color.getHexString(),camera:G.camera.matrixWorld.toArray(),roll:roll?{time:roll.time,armorHP:roll.armorHP}:null,quality:G.fx.q,weaponId:a.weapon.id,nativeBurstRadius:radius};
       },{withRoll,hash:expectedContentHash,camera,blastPosition});
       if(withRoll){const admission=await admitRoll(page);assert.equal(admission?.realInputRollAdmission,true);setup.admission=admission;}
       setup.firstTick=await page.evaluate(({withRoll,shellAlpha})=>{
@@ -65,11 +70,16 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
         if(withRoll&&(!(roll?.time>0)||a.form!=='squid'||a.grounded||!a.alive||a.climbing||a.specialActive||a.superJumpState||a.character?.root?.visible===false))throw Error('real eligible airborne roll required');
         if(a.weapon.id!=='blaster'||a.weapon.burstRadius!==window.__iwBlastRadius)throw Error('weapon changed during admission');
         const V=G.camera.position.constructor;
+        // Native match/roll admission above is proven before isolated rendering clocks are fixed.
+        const originalEnvironmentClock={time:G.env?.time,shader:G.env?.U?.uTime?.value};
+        if(!Number.isFinite(originalEnvironmentClock.time)||!Number.isFinite(originalEnvironmentClock.shader)||typeof G.env?.update!=='function')throw Error('finite native environment clock required');
+        G.fx._time=0; // QA-only; no extra FX update and no game/actor clock write.
+        G.env.time=0;G.env.update(0,G.camera); // Normal environment synchronization recomputes animated poses.
         G.fx.explosion(new V(...window.__iwBlastPosition),a.color,a.weapon.burstRadius,shellAlpha);
         const born=G.time;G.time+=1/60;g.time+=1/60;G.fx.update(1/60,G.camera);
         window.__iwBlastLighting=()=>({fov:G.camera.fov,aspect:G.camera.aspect,toneMapping:G.renderer.toneMapping,exposure:G.renderer.toneMappingExposure,outputColorSpace:G.renderer.outputColorSpace,quality:G.fx.q,projectionMatrix:G.camera.projectionMatrix.toArray(),matrixWorld:G.camera.matrixWorld.toArray(),fxLight:Object.fromEntries(Object.entries(G.fx._light||{}).map(([k,v])=>[k,v?.toArray?v.toArray():v])),environmentGrade:G.env?.grade??null,bloom:g.R.bloom?{strength:g.R.bloom.strength,radius:g.R.bloom.radius,threshold:g.R.bloom.threshold}:null,lights:(()=>{const x=[];G.scene.traverse(o=>{if(o.isLight)x.push({type:o.type,color:o.color.getHexString(),intensity:o.intensity,position:o.position.toArray()});});return x;})()});
         window.__iwBlastLightingBaseline=JSON.stringify(window.__iwBlastLighting());
-        return {burstBorn:born,firstFrameTime:G.time,burstAgeAtF0:1/60,actorPosition:a.pos.toArray(),actorProjection:a.pos.clone().add(new V(0,.35,0)).project(G.camera).toArray(),fxTicksBeforeAdmission:0,lighting:window.__iwBlastLighting(),roll:roll?{remaining:roll.time,armorTime:roll.armorTime,armorHP:roll.armorHP,grounded:a.grounded,visible:a.character?.root?.visible,climbing:a.climbing,special:!!a.specialActive,superJump:!!a.superJumpState}:null};
+        return {burstBorn:born,originalEnvironmentClock,renderClockFixture:'isolated FX and environment epochs fixed after native admission; not full native-frame equivalence',fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),firstFrameTime:G.time,burstAgeAtF0:1/60,actorPosition:a.pos.toArray(),actorProjection:a.pos.clone().add(new V(0,.35,0)).project(G.camera).toArray(),fxTicksBeforeAdmission:0,lighting:window.__iwBlastLighting(),roll:roll?{remaining:roll.time,armorTime:roll.armorTime,armorHP:roll.armorHP,grounded:a.grounded,visible:a.character?.root?.visible,climbing:a.climbing,special:!!a.specialActive,superJump:!!a.superJumpState}:null};
       },{withRoll,shellAlpha:SHELL_ALPHA});
       if(report.cases.length)assert.deepEqual(setup.firstTick.lighting,report.cases[0].setup.firstTick.lighting,'both case camera/light/exposure must match');
       const record={withRoll,preparation,setup,captures:[]};report.cases.push(record);write();
@@ -89,7 +99,7 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
           const gl=G.renderer.getContext(),error=gl.getError();if(error)throw Error('WebGL error '+error);
           // Same synchronous task as actual render: no composited placeholder PNG.
           const png=G.renderer.domElement.toDataURL('image/png');
-          return {png,frame,seconds:(frame+1)/60,burstAgeSeconds:(frame+1)/60,roll: g.match.local.s3?.actions?.roll?{remaining:g.match.local.s3.actions.roll.time,armorTime:g.match.local.s3.actions.roll.armorTime,grounded:g.match.local.grounded}:null,actorPosition:g.match.local.pos.toArray(),actorProjection:g.match.local.pos.clone().project(G.camera).toArray(),pools:{glows:G.fx.glows.n,drops:G.fx.dN,shells:G.fx.shells.n},gameTime:G.time,fx:G.fx.stats?.()??null,drawCalls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,camera:before,rng:window.__iwBlastRng.snapshot(),glError:error};
+          return {png,frame,fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),seconds:(frame+1)/60,burstAgeSeconds:(frame+1)/60,roll: g.match.local.s3?.actions?.roll?{remaining:g.match.local.s3.actions.roll.time,armorTime:g.match.local.s3.actions.roll.armorTime,grounded:g.match.local.grounded}:null,actorPosition:g.match.local.pos.toArray(),actorProjection:g.match.local.pos.clone().project(G.camera).toArray(),pools:{glows:G.fx.glows.n,drops:G.fx.dN,shells:G.fx.shells.n},gameTime:G.time,fx:G.fx.stats?.()??null,drawCalls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,camera:before,rng:window.__iwBlastRng.snapshot(),glError:error};
         },{frame,withRoll});
         const file=`${withRoll?'blast-roll':'blast-only'}-F${String(frame).padStart(2,'0')}.png`;
         const bytes=Buffer.from(data.png.split(',')[1],'base64');fs.writeFileSync(path.join(out,file),bytes);
