@@ -74,7 +74,7 @@ export function spinnerClipDefinition(engine,id){
   const key=spinnerClipKey(id),buffer=spinnerCached(engine,id),meta=CLIPS[key];
   if(!buffer||!meta)return null;
   const rise=key==='rise';
-  return {gain:rise?.13:.31,jitter:0,reverb:.025,priority:82,
+  return {progressControlled:true,gain:rise?.13:.31,jitter:0,reverb:.025,priority:82,
     loop(v,p,opts={}){
       const phase=Number.isInteger(opts.phase)?Math.max(0,Math.min(2,opts.phase)):2;
       const w=windowFor(buffer,meta,phase,rise),src=v.ctx.createBufferSource();
