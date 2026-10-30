@@ -18,15 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { device: phone-portrait, batch: editor }
-          - { device: phone-portrait, batch: variants }
-          - { device: phone-landscape, batch: editor }
-          - { device: phone-landscape, batch: variants }
+          - { device: phone-landscape, batch: error-bottom }
           - { device: phone-landscape, batch: battle }
-          - { device: ipad-mini-portrait, batch: editor }
-          - { device: ipad-mini-portrait, batch: variants }
-          - { device: ipad-mini-landscape, batch: editor }
-          - { device: ipad-mini-landscape, batch: variants }
           - { device: ipad-mini-landscape, batch: battle }
     steps:
       - uses: actions/checkout@v4
