@@ -15,10 +15,7 @@ export function adaptStormEffects(rel, code) {
     code = once(code, 'a.subAim = !!this.weaponRunner.aimingSub;', 'a.subAim = !!this.weaponRunner.aimingSub || isStormHolding(this);', 'held-device pose');
     return "import { isStormHolding, startStormHold, updateStormHold, advanceStormLock } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
   }
-  if (rel === 'src/game/bots.js') {
-    code = once(code, '    // ---------------- aim: critically-damped spring', "    if (a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold') {\n      it.sub = !a.specialActive.botSubPressed; a.specialActive.botSubPressed = true;\n      it.fire = it.special = false;\n    }\n\n    // ---------------- aim: critically-damped spring", 'bot explicit throw input');
-    return code;
-  }
+  // Bot Storm hold/release is owned by the shared canonical special policy.
   if (rel === 'src/net/netmatch.js') {
     code = once(code, '  if (wr.aimingSub) f |= F.subAim;', "  if (wr.aimingSub || a.specialActive?.id === 'storm' && a.specialActive.phase === 'hold') f |= F.subAim;", 'remote held-device pose');
     return once(code, "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;", "    a.specialActive = f & F.special ? (a.specialActive || { id: a.weapon.special, net: true }) : null;\n    if (a.specialActive?.id === 'storm') a.specialActive.phase = f & F.subAim ? 'hold' : 'throw';", 'remote held-device phase');

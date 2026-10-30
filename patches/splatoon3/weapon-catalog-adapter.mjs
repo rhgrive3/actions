@@ -100,10 +100,56 @@ export function adaptWeaponCatalog(rel, code) {
     // BotBrain now owns its precise behavior-family selection in the source.
     // Do not rewrite 45 `w.kind` occurrences or fold Stringer/Splatana into
     // Charger here. Preserve the independent canonical special adapter only.
-    code = "import { driveCanonicalBotSpecial } from '../../patches/splatoon3/runtime/canonical-kits.mjs';\\n".replace('\\n','\n') + code;
-    return replaceOnce(code, '    // ---------------- aim: critically-damped spring',
-      '    driveCanonicalBotSpecial(a, it, dt, this.target);\\n    // ---------------- aim: critically-damped spring'.replace('\\n','\n'),
-      'canonical bot special inputs');
+    code = "import { driveCanonicalBotSpecial, resetBotSpecialMemory } from '../../patches/splatoon3/runtime/canonical-kits.mjs';\n" + code;
+    code = replaceOnce(code, '  reset() {\n', '  reset() {\n    resetBotSpecialMemory(this.a);\n', 'bot special reset');
+    code = replaceOnce(code, '    const it = a.intent;\n',
+      `    const it = a.intent;
+    if (a.remote || a.isLocal || a.isBot === false) return;
+    if (!a.alive || a.superJumpState || !G.match?.playing()) resetBotSpecialMemory(a);
+`, 'local bot special lifecycle');
+    code = replaceOnce(code, `        // special
+        if (a.specialReady()) {
+          if (w.special === 'slam' && dist < 4.5) it.special = true;
+          if (w.special === 'storm' && dist < 16) it.special = true;
+        }`, '        // Special admission is owned by the final shared tail.', 'single duel special owner');
+    code = replaceOnce(code, `      if (a.specialReady() && Math.random() < 0.01) {
+        const r = G.paint.regionStats(a.pos.x, a.pos.y, a.pos.z, 5, a.team, _stats);
+        if (r.own < 0.5) it.special = true;
+      }`, '', 'remove indiscriminate paint special');
+    code = replaceOnce(code, `      // specials: slam from under its claws, the storm cloud onto it
+      if (a.specialReady() && !th.level && !T.crab) {
+        if (w.special === 'slam' && dist < 5.5) it.special = true;
+        if (w.special === 'storm' && dist < 13 && T.los) it.special = true;
+      }`, '      // The shared tail also owns special inputs in boss play.', 'single boss special owner');
+    code = replaceOnce(code, '    // ---------------- aim: critically-damped spring',
+      `    const specialControl = driveCanonicalBotSpecial(a, it, dt, this.target, {
+      world: G, brain: this, move, wantYaw, wantPitch, aimDistance: aimDist,
+    });
+    if (specialControl?.handled) {
+      wantYaw = specialControl.wantYaw; wantPitch = specialControl.wantPitch;
+      aimDist = specialControl.aimDistance;
+      wantMove = move.lengthSq() > 0.01;
+    }
+    const specialJump = it.jump;
+    // ---------------- aim: critically-damped spring`, 'canonical bot special inputs');
+    code = replaceOnce(code,
+      "    const fighting = this.mode === 'fight';",
+      "    const fighting = this.mode === 'fight' || !!(specialControl?.handled && (specialControl.state || specialControl.aimChanged));",
+      'special aim spring combat response');
+    code = replaceOnce(code,
+      "      const d = fighting && this.target ? aimDist : this.mode === 'refill' ? 1.6 : 6;",
+      "      const d = specialControl?.handled && (specialControl.state || specialControl.aimChanged) ? aimDist : fighting && this.target ? aimDist : this.mode === 'refill' ? 1.6 : 6;",
+      'special actual aim ray distance');
+    return replaceOnce(code,
+      '    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }',
+      `    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }
+    if (specialControl?.handled && specialControl.state) {
+      // A navigation hop must not become an unrequested special attack.
+      it.jump = specialJump;
+      this._needJump = false;
+      this.noProg = 0;
+      if (move.lengthSq() < 1e-8) { it.move.set(0, 0, 0); this.mvMag = 0; }
+    }`, 'preserve special jump and stop input after navigation');
   }
 
   if (rel === 'src/game/player.js') {

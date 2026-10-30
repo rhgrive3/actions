@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
 import {fixture} from './source-fixture.mjs';
+import {makeBotSpecialFixture} from './bot-special-fixture.mjs';
 import {CANONICAL_KITS} from '../runtime/canonical-kits-data.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 const reference=JSON.parse(fs.readFileSync(new URL('../reference/canonical-kits-1130.json',import.meta.url)));
@@ -47,14 +48,15 @@ test('custom pairs are bound to their main and do not leak across bot/remote wea
  applyCatalogueChoice(a,{sub:'bomb',special:'bubbler'},f);assert.equal(a.weapon.kitStatus,'verified-base-kit');assert.equal(a.s3CatalogueChoice,null);
 });
 
-test('canonical bot policy admits all newly equipped special families without free gauge or effects',async()=>{
- const {driveCanonicalBotSpecial}=await import('../runtime/canonical-kits.mjs');const f=await setup();makePaintWorld(f);
+test('all 65 canonical bot kits admit their special in an explicit useful scenario',async()=>{
+ const f=await makeBotSpecialFixture();
  for(const [id,k]of Object.entries(CANONICAL_KITS)){
-  if(['trizooka','bubbler','inkVac','storm'].includes(k.special))continue;
-  f.G.projectiles.clear();f.G.actors.length=0;const a=f.make(id),enemy=f.make('shooter');enemy.team=1;enemy.pos.set(0,0,5);a.special=a.specialCost();a.invuln=0;
-  driveCanonicalBotSpecial(a,a.intent,1/60,enemy);assert.equal(a.intent.special,true,id);f.tick(a);assert.equal(a.stats.specials,1,id);
-  for(let frame=0;frame<180;frame++){driveCanonicalBotSpecial(a,a.intent,1/60,enemy);f.tick(a);}
-  assert.ok(Number.isFinite(a.special),id);
+  const {a,b}=f.scenario(k.special,{weaponId:id});
+  for(let frame=0;frame<90&&a.stats.specials===0;frame++)f.tick(a,b);
+  assert.equal(a.weapon.special,k.special,id+' canonical identity');
+  assert.equal(a.stats.specials,1,id+' useful target/team scenario admitted through BotBrain and Actor');
+  assert.equal(a.specialReady(),false,id+' no free second activation');
+  assert.ok(Number.isFinite(a.special),id+' finite paid gauge');
  }
 });
 
