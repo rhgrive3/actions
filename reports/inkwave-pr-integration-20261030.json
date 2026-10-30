@@ -1,0 +1,415 @@
+{
+  "date": "2026-10-30",
+  "repository": "rhgrive3/actions",
+  "testedProductTree": "2139af94dbea4983f8eac9abd77bf6123c6c800c",
+  "composition": {
+    "baseMain": "379533f541d86346a068e397f879cb6c13590ffd",
+    "camera": "98349562564cfbbf58efab74a20d21b624c489f1",
+    "nativeRendering": "cf4c30e9698f3a71f383dce92cef27f910c6ac6b",
+    "rankedModels": "29b6287fa56b844ecbb8a75fedc388bda1d14af8"
+  },
+  "build": {
+    "contentHash": "38a8b21f6b68b3a1a768b64582f5c340e2ea0cb77bdcae02feb4770c7b4db75b",
+    "inputHash": "28f2e98e16bd9573ae2d175d0d4d726ecf3d47c7679cb2d4cd16e1c230651418",
+    "revision": "2879d69447906de0daee627e8e98cd4a5ce667f05682ef76cf171e8689c00cf1",
+    "quickChecks": "passed",
+    "optimizedBuild": "passed",
+    "startupBudget": "passed"
+  },
+  "tests": {
+    "nativeSource": {
+      "pass": 645,
+      "skip": 128,
+      "fail": 0
+    },
+    "cameraAndModelSource": {
+      "pass": 24,
+      "skip": 0,
+      "fail": 0
+    },
+    "cameraAndModelEmitted": {
+      "pass": 21,
+      "skip": 0,
+      "fail": 0
+    },
+    "inkRenderingEmitted": {
+      "pass": 19,
+      "skip": 5,
+      "fail": 0
+    }
+  },
+  "webkitMobile": [
+    {
+      "sourceSha": "cf4c30e9698f3a71f383dce92cef27f910c6ac6b",
+      "status": "passed",
+      "engine": "webkit",
+      "viewportModel": "mobile-emulation",
+      "contentHash": "eddaa9b307dc8674bb47201c755ed6abc0b17b0ea326bc24890cff588ca45a0d",
+      "inputHash": "da91d50e1d9a6058f002312a9e4c73a588690f8af8ffdb62f5b8b08cc099b8fa",
+      "revision": "99eaa4158adb513812c251cad7394b3d1fea90d810d09fc2baed6ac6a486d1ae",
+      "fullReceiptSha256": "007abdc5e0123b8fe6bd74b91ccadc3606e20146a116722ade74e4936482100a",
+      "cases": [
+        {
+          "name": "small-phone",
+          "width": 568,
+          "height": 320,
+          "checks": 49,
+          "allPassed": true
+        },
+        {
+          "name": "phone",
+          "width": 844,
+          "height": 390,
+          "checks": 111,
+          "allPassed": true
+        },
+        {
+          "name": "android",
+          "width": 740,
+          "height": 360,
+          "checks": 49,
+          "allPassed": true
+        },
+        {
+          "name": "standard",
+          "width": 667,
+          "height": 375,
+          "checks": 49,
+          "allPassed": true
+        },
+        {
+          "name": "landscape",
+          "width": 932,
+          "height": 430,
+          "checks": 49,
+          "allPassed": true
+        },
+        {
+          "name": "browser-bars",
+          "width": 740,
+          "height": 280,
+          "checks": 46,
+          "allPassed": true
+        },
+        {
+          "name": "notched",
+          "width": 844,
+          "height": 390,
+          "checks": 49,
+          "allPassed": true
+        },
+        {
+          "name": "tablet",
+          "width": 1024,
+          "height": 768,
+          "checks": 41,
+          "allPassed": true
+        },
+        {
+          "name": "desktop",
+          "width": 1440,
+          "height": 900,
+          "checks": 20,
+          "allPassed": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "sourceSha": "cf4c30e9698f3a71f383dce92cef27f910c6ac6b",
+      "status": "passed",
+      "engine": "webkit",
+      "viewportModel": "resizable-touch",
+      "contentHash": "eddaa9b307dc8674bb47201c755ed6abc0b17b0ea326bc24890cff588ca45a0d",
+      "inputHash": "da91d50e1d9a6058f002312a9e4c73a588690f8af8ffdb62f5b8b08cc099b8fa",
+      "revision": "99eaa4158adb513812c251cad7394b3d1fea90d810d09fc2baed6ac6a486d1ae",
+      "fullReceiptSha256": "7fecbf1f82982d22d22c9c28420181b7fb2653e661fdd67fea1d264d60e4ae3b",
+      "cases": [
+        {
+          "name": "phone",
+          "width": 844,
+          "height": 390,
+          "checks": 114,
+          "allPassed": true
+        },
+        {
+          "name": "landscape",
+          "width": 932,
+          "height": 430,
+          "checks": 52,
+          "allPassed": true
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "limits": [
+    "Not a physical iPad/Switch measurement",
+    "Broad GitHub CI was still pending at the initial production merges",
+    "Source face intersection and browser DOM checks are different evidence",
+    "Complete Splatoon 3 intro parity is not certified"
+  ],
+  "webkitEnvironment": {
+    "playwright": "1.62.1",
+    "webkitBuild": 2336,
+    "libraries": {
+      "loaded": [
+        "libgtk-4.so.1",
+        "libgraphene-1.0.so.0",
+        "libharfbuzz-icu.so.0",
+        "libmanette-0.2.so.0",
+        "libhyphen.so.0",
+        "libGLESv2.so.2"
+      ],
+      "directory": "/workspace/webkit-runtime/root/usr/lib/x86_64-linux-gnu",
+      "reason": "User-space packages do not appear in the system ldconfig cache; each required library was successfully dlopen-tested"
+    },
+    "note": "Workspace dependencies were linked into the user-owned WebKit bundle. Manual dlopen validation replaced only the ldconfig-based host preflight; production UI checks were unmodified."
+  },
+  "cameraBasisComparison": {
+    "stage": "wahoo",
+    "offlineRatesPassed": [
+      30,
+      60,
+      120
+    ],
+    "onlineStatus": "failed in both baseline and candidate",
+    "baseline": "5b722cba888cb86a7a21f29596bd54eaf16b01fd",
+    "candidate": "98349562564cfbbf58efab74a20d21b624c489f1",
+    "failure": "Second peer initial target absent after first peer land advances both peers",
+    "playingTimeAtFailure": 3.2833333333333266,
+    "pageErrors": []
+  },
+  "activeBrowser": {
+    "status": "passed",
+    "sourceSha": "09f96c87ab6d2b31a7b1141334304ac9cfdb8e8d",
+    "contentHash": "38a8b21f6b68b3a1a768b64582f5c340e2ea0cb77bdcae02feb4770c7b4db75b",
+    "gameplay": {
+      "state": "playing",
+      "elapsedAt20Hz": 3.0000000000023874,
+      "movement": 2.7603360000000166,
+      "movementProbe": {
+        "state": "playing",
+        "paused": false,
+        "alive": true,
+        "form": "kid",
+        "grounded": true,
+        "controller": true,
+        "enabled": true,
+        "menuBlocked": false,
+        "samples": [
+          {
+            "key": "KeyW",
+            "keyPresent": true,
+            "enabled": true,
+            "menuBlocked": false,
+            "intent": [
+              0,
+              0,
+              1
+            ],
+            "vel": [
+              0,
+              0,
+              0.6
+            ],
+            "deltaAfterFirstTick": 0.010000000000001563
+          }
+        ]
+      },
+      "hp": 100,
+      "gear": [
+        {
+          "main": "runSpeed",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "velocityFinite": true,
+      "clockTicks": 923,
+      "paintedFloorArea": 0.625,
+      "coverage": [
+        0.00014398802830541628,
+        0
+      ]
+    },
+    "actionReliability": {
+      "before": 1,
+      "renderOnly": 1,
+      "after": 2,
+      "held": 2,
+      "jumps": 0,
+      "physicalKeyboardEvents": true,
+      "groundCollisionPinned": true
+    },
+    "verifiedResponses": 793,
+    "errors": [],
+    "fullReceiptSha256": "947de5341ce3923b21fb3dbbac0a79aa181fa9f5c1d946dcedf5d45b251ad59f",
+    "canonicalKits": 65
+  },
+  "rankedModelObjectCI": {
+    "run": 41027285562,
+    "job": 123968295763,
+    "headSha": "29b6287fa56b844ecbb8a75fedc388bda1d14af8",
+    "status": "passed",
+    "artifactID": 12967144083,
+    "artifactSha256": "d976a7ccd7e2c8cfa5206943e8bcdfc74b094829ed8ca84c08809f23f168073a",
+    "artifactVerifiedVia": "GitHub connector download and SHA-256 readback",
+    "groups": [
+      {
+        "receipt": "air/result.json",
+        "sha256": "e887bc8276072a3f5f219ec2c9f8843d650c097e4e39a8350ec1a004a35e89bc",
+        "suite": "rainmaker-air",
+        "scope": "Actual Actor.update -> advanceRanked with flat real Physics and normal pickup/jump inputs. Source Dualies/team0; carry and charge each3 jumps x28 air frames =84,168 total; each3 jumps x16 landing frames =48,96 total per revision. Before overlays the receipt-declared pre-landing-fix handoff, not a full baseline build. Carry must reproduce the historical landing failure; the current shoulder position can make charge reachable even with the historical handoff. After must pass every grip check. The separate injected hand offset is a verifier negative, not a historical pose. Shoulder/landing visual acceptance remains a separate human review.",
+        "status": "passed",
+        "sourceSha": "29b6287fa56b844ecbb8a75fedc388bda1d14af8",
+        "contentHash": "9cf195d67f81bb19d12af43a2250517c6ea84835882eb1dd0003b3c3300a5167",
+        "expectedFrames": 20,
+        "frames": 20,
+        "errors": [],
+        "sourceAndEmittedVerified": true
+      },
+      {
+        "receipt": "form/result.json",
+        "sha256": "c32eebb623059a92fca1c1360ff2f7cd91f76e313dbe6d13d55d32c46e2ac3be",
+        "suite": "rainmaker-form",
+        "scope": "Separate interrupted-ToHuman12q comparison;20PNG/ten exact camera-light pairs. Existing Rainmaker actor-origin vs displayed-muzzle mismatch remains explicitly unresolved; numeric passes do not establish visual acceptance.",
+        "status": "passed",
+        "sourceSha": "29b6287fa56b844ecbb8a75fedc388bda1d14af8",
+        "contentHash": "9cf195d67f81bb19d12af43a2250517c6ea84835882eb1dd0003b3c3300a5167",
+        "expectedFrames": 20,
+        "frames": 20,
+        "errors": [],
+        "sourceAndEmittedVerified": true
+      },
+      {
+        "receipt": "origin/result.json",
+        "sha256": "1369677c244c05d102269bae5d82fd3f4111314be073a32a9f5810de8dca59d6",
+        "suite": "rainmaker-origin",
+        "scope": "Exact 8bc ranked before overlay versus candidate emitted origin; actual source Actor/rule/effect/native render, isolated world sinks, no network or native-stage acceptance.",
+        "status": "passed",
+        "sourceSha": "29b6287fa56b844ecbb8a75fedc388bda1d14af8",
+        "contentHash": "9cf195d67f81bb19d12af43a2250517c6ea84835882eb1dd0003b3c3300a5167",
+        "expectedFrames": 18,
+        "frames": 18,
+        "errors": [],
+        "sourceAndEmittedVerified": true
+      },
+      {
+        "receipt": "result.json",
+        "sha256": "e83e19c06f266e3c178e0fad6af7363d36752f8f3dc9d536d555aed75fbd5cd6",
+        "suite": "rainmaker",
+        "scope": "Production composed Actor/source/native driven sequence and real render pipeline; before is main3839 motion modules only; not full match/network. Nintendo angles are calibration, not extracted joints.",
+        "status": "passed",
+        "sourceSha": "29b6287fa56b844ecbb8a75fedc388bda1d14af8",
+        "contentHash": "9cf195d67f81bb19d12af43a2250517c6ea84835882eb1dd0003b3c3300a5167",
+        "expectedFrames": 128,
+        "frames": 128,
+        "errors": [],
+        "sourceAndEmittedVerified": true
+      }
+    ],
+    "representativeFramesInspected": [
+      "before-native-carry-side.png",
+      "after-native-carry-side.png",
+      "after-source-charged-isolated-aim-up-side.png",
+      "after-native-recoil-isolated-aim-down-rear.png",
+      "air/after-charge-jump-frame-305-rear.png"
+    ]
+  },
+  "finalProductMain": "3913b46cbc8aedb28061340a34ea0923fa781beb",
+  "finalMainTreeMatchesTestedTree": true,
+  "mergedPullRequests": {
+    "1922": "12fd89023090b32465df9ef2724385f1d4c724bf",
+    "1926": "379533f541d86346a068e397f879cb6c13590ffd",
+    "1929": "0068338861c8846832e127d1efe9ed9624bb9f5b",
+    "1923": "0985ce2a45174e86ae731ef2e76ba19da08957a6",
+    "1919": "3913b46cbc8aedb28061340a34ea0923fa781beb"
+  },
+  "rankedBrowser": {
+    "status": "passed",
+    "scope": "offline-and-online",
+    "contentHash": "38a8b21f6b68b3a1a768b64582f5c340e2ea0cb77bdcae02feb4770c7b4db75b",
+    "inputHash": "28f2e98e16bd9573ae2d175d0d4d726ecf3d47c7679cb2d4cd16e1c230651418",
+    "revision": "2879d69447906de0daee627e8e98cd4a5ce667f05682ef76cf171e8689c00cf1",
+    "browser": {
+      "version": "151.0.7922.34",
+      "channel": "custom-executable"
+    },
+    "errors": [],
+    "fullReceiptSha256": "3f5698034d3c769670d6aa5bad8f569b1bafc01267bfc6d01775a1fa8547c847",
+    "modes": [
+      {
+        "mode": "zones",
+        "offline": {
+          "mode": "zones",
+          "state": "playing",
+          "time": 296.700000000003,
+          "actors": 8,
+          "ranked": true,
+          "hud": "ガチエリアアルファ100·ブラボー1004:57エリア1 0/0   エリア2 0/0"
+        },
+        "onlinePeers": 2,
+        "terminalPeers": 2
+      },
+      {
+        "mode": "tower",
+        "offline": {
+          "mode": "tower",
+          "state": "playing",
+          "time": 296.700000000003,
+          "actors": 8,
+          "ranked": true,
+          "hud": "ガチヤグラアルファ100·ブラボー1004:57中立のヤグラ · 47%"
+        },
+        "onlinePeers": 2,
+        "terminalPeers": 2
+      },
+      {
+        "mode": "rainmaker",
+        "offline": {
+          "mode": "rainmaker",
+          "state": "playing",
+          "time": 296.700000000003,
+          "actors": 8,
+          "ranked": true,
+          "hud": "ガチホコバトルアルファ100·ブラボー1004:57バリア 0 / 1000"
+        },
+        "onlinePeers": 2,
+        "terminalPeers": 2
+      },
+      {
+        "mode": "clams",
+        "offline": {
+          "mode": "clams",
+          "state": "playing",
+          "time": 296.700000000003,
+          "actors": 8,
+          "ranked": true,
+          "hud": "ガチアサリアルファ100·ブラボー1004:57アサリ 0/8個 · 0点獲得 · バリアありアサリを投げる [C]"
+        },
+        "onlinePeers": 2,
+        "terminalPeers": 2
+      }
+    ]
+  }
+}
