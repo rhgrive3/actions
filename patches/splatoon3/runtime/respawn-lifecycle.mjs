@@ -290,14 +290,16 @@ export function installRespawnLifecycle(api, profile) {
         }
         if (!this.intent.fire) spawn.fireArmed = true;
         const pressed = spawn.fireArmed && this.intent.fire && !this._prevIntent.fire;
-        // S3: at the match start the spawners fire on their own (a ZR press
-        // only locks the spot earlier). INKWAVE's opening fly-by camera leaves
-        // no aiming time, so the player gets initialAutoLaunch seconds of play
-        // first (INKWAVE calibration). Respawns wait for ZR as in S3.
+        // The filmed Turf intro now provides aim time before GO. Its initial
+        // spawners launch on the first playing tick (observed reference 578F),
+        // without the old extra second. Older/Boss intros retain their delay;
+        // ordinary respawns keep their existing ZR-owned launch.
         if (spawn.initial && !spawn.ownerReplicated && G.match?.state === 'playing') spawn.playWait = (spawn.playWait || 0) + (dt > 0 ? dt : 0);
         const initialReady = !spawn.ownerReplicated && G.match?.state === 'playing';
+        const initialDelay = G.match?.turfIntroFrames > 0 && !G.match.bossMode && !G.match.boss
+          ? 0 : SQUID_SPAWN_PRESENTATION.initialAutoLaunch;
         const auto = spawn.initial
-          ? initialReady && (spawn.playWait || 0) + EPS >= SQUID_SPAWN_PRESENTATION.initialAutoLaunch
+          ? initialReady && (spawn.playWait || 0) + EPS >= initialDelay
           : this.isBot || this.remote;
         this._prevIntent.fire = this.intent.fire;
         const fireLaunch = pressed && (!spawn.initial || initialReady && !this.isBot);

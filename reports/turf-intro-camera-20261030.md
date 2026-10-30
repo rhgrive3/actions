@@ -66,3 +66,23 @@
 ## main統合後の追跡
 
 [PR統合の検証記録](inkwave-pr-integration-20261030.md)に、描画・モデル変更を含む同一treeでの実ブラウザー受入と4種の実オンライン、WebKitの追加結果、既存WahooオンラインQAの旧版でも再現する失敗を記録した。main反映と広いCI全体の完了は区別する。GO後の既存1秒の自動発射猶予は維持しており、本家578Fの発射を含むイントロ全体の完全一致は認定しない。
+
+## GOと初期発射の後続修正
+
+当初残したGO後1秒の待機を、今回のTurfカメラを使うMatchでは撤去する。公式映像の578Fの開始エフェクトへ合わせ、最初のplaying tickで8人が初期発射する。Bossの既存イントロと通常復活のZR待ちは維持する。新カメラが落ち着く456Fから照準入力を許可し、開始前に着地点を選べるようにした。この456FはINKWAVE側の入力許可設計であり、Nintendo内部の操作受付tickを測定した値ではない。
+
+マウスのpointer-lockのfallback／再取得にも同じ開始前の照準状態を接続する。activation・pause・menu・match/flow・document・generationの各既存guardは保つ。最後の1Fで旋回した場合も、native controllerのcomputeAimに入る前に時刻からカメラを再サンプルし、発射先が前のrenderのrayへ遅れないようにする。通常follow cameraのspringは再度進めない。
+
+初期発射・通常復活・カメラの35件、pointer-lockを含む49件、最後の1Fの照準と通常カメラを含む33件が成功（重複あり）。30/60/120Hzの8人全員で、577Fまで待機、578Fで同じtickに発射する。独立したnative Match/Actor/Character/NetMatchの2 realmで、実STARTから初期発射・着地・最初のCharger発射までの入力replayも成功した。古い260F固定待ちは新イントロの途中だったため、Matchの実frame budgetへ接続した。
+
+初回の実Chromium確認はWahooの18時点、物理マウスでの開始前照準、578Fの8人発射・followへの復帰を通過し、page errorは0。最終の統合buildの結果と画像は後続receiptへ追加する。映像のGO字形・白flashの全画素、各stage固有のカメラ、キャラクターの全入場motionまで完全一致を示すものではない。
+
+既存native camera-basis QAはGO後77/97Fまで待つと初期targetが既に失われるため、GOの13F前で照準を確認する。オンラインでは、片方の着地中に両者を進める前に両方の照準を記録する。8人・原典stage・物理マウス・実relay・着地の検査は保持する。
+
+### 最終カメラ受入
+
+head `df0bd756d621773354ecc208e33754104f8dc429` の通常buildを全入力／生成物へ照合した。contentHashは `542385b0b323125fa7286341323ac320a7601f50682a8f309a9031c1519c948a`。同じ配信で、Wahooの実Chromium18時点・物理マウスの開始前旋回・578Fで全8人発射・通常follow復帰が成功、errorsは0。
+
+既存のnative camera-basis QAも、原典Wahooでオフライン30/60/120Hzと実WebSocket＋本番RoomDurableObjectの2人オンライン30/60/120Hzがすべて成功した。両teamのnative camera/aimと着地点の前方整合、物理マウス、全員の初期発射、着地、従来Tidewaterの軸を確認した。relay packetは1,472件、errorsは0。両peerを進める前に両方のaimを検査する修正によって、以前の2人目のtarget消失のQA手順も解消した。任天堂実機や全stageの一致の主張ではない。
+
+[18時点の数値](turf-intro-camera-20261030/launch-browser.json) / [オフライン・実relayのreceipt](turf-intro-camera-20261030/launch-camera-basis.json) / [発射前後の6画像](turf-intro-camera-20261030/launch-frames.jpg)。

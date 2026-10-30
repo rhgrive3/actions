@@ -1,0 +1,233 @@
+{
+  "status": "passed",
+  "id": "wahoo",
+  "offline": [
+    {
+      "hz": 30,
+      "team": 0,
+      "rigYaw": 1.5707963267948966,
+      "aimYaw": 1.5707963267948966,
+      "expectedYaw": 1.5707963267948966,
+      "alignment": 0.9997909317313151,
+      "actors": 8,
+      "mode": "turf",
+      "native": true,
+      "landing": {
+        "alive": true,
+        "grounded": true,
+        "spawnActive": false,
+        "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+        "inputAlignment": 0.9997909317313151
+      }
+    },
+    {
+      "hz": 60,
+      "team": 0,
+      "rigYaw": 1.5707963267948966,
+      "aimYaw": 1.5707963267948966,
+      "expectedYaw": 1.5707963267948966,
+      "alignment": 0.9997909317313151,
+      "actors": 8,
+      "mode": "turf",
+      "native": true,
+      "landing": {
+        "alive": true,
+        "grounded": true,
+        "spawnActive": false,
+        "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+        "inputAlignment": 0.9997909317313151
+      }
+    },
+    {
+      "hz": 120,
+      "team": 0,
+      "rigYaw": 1.5707963267948966,
+      "aimYaw": 1.5707963267948966,
+      "expectedYaw": 1.5707963267948966,
+      "alignment": 0.9997909317313151,
+      "actors": 8,
+      "mode": "turf",
+      "native": true,
+      "landing": {
+        "alive": true,
+        "grounded": true,
+        "spawnActive": false,
+        "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+        "inputAlignment": 0.9997909317313151
+      }
+    }
+  ],
+  "online": [
+    {
+      "hz": 30,
+      "peers": [
+        {
+          "hz": 30,
+          "team": 0,
+          "rigYaw": 1.5707963267948966,
+          "aimYaw": 1.5707963267948966,
+          "expectedYaw": 1.5707963267948966,
+          "alignment": 0.9997909317313151,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+            "inputAlignment": 0.9997909317313151
+          }
+        },
+        {
+          "hz": 30,
+          "team": 1,
+          "rigYaw": -1.5707963267948966,
+          "aimYaw": -1.5707963267948966,
+          "expectedYaw": -1.5707963267948966,
+          "alignment": 0.9997635067795065,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "automatic GO; native aim recorded before shared stepping"
+          }
+        }
+      ],
+      "transport": "real WebSocket + production RoomDurableObject"
+    },
+    {
+      "hz": 60,
+      "peers": [
+        {
+          "hz": 60,
+          "team": 0,
+          "rigYaw": 1.5707963267948966,
+          "aimYaw": 1.5707963267948966,
+          "expectedYaw": 1.5707963267948966,
+          "alignment": 0.9997909317313151,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+            "inputAlignment": 0.9997909317313151
+          }
+        },
+        {
+          "hz": 60,
+          "team": 1,
+          "rigYaw": -1.5707963267948966,
+          "aimYaw": -1.5707963267948966,
+          "expectedYaw": -1.5707963267948966,
+          "alignment": 0.9997635067795065,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "automatic GO; native aim recorded before shared stepping"
+          }
+        }
+      ],
+      "transport": "real WebSocket + production RoomDurableObject"
+    },
+    {
+      "hz": 120,
+      "peers": [
+        {
+          "hz": 120,
+          "team": 0,
+          "rigYaw": 1.5707963267948966,
+          "aimYaw": 1.5707963267948966,
+          "expectedYaw": 1.5707963267948966,
+          "alignment": 0.9997909317313151,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "pre-GO browser canvas pointer lock + physical mouse; automatic GO launch",
+            "inputAlignment": 0.9997909317313151
+          }
+        },
+        {
+          "hz": 120,
+          "team": 1,
+          "rigYaw": -1.5707963267948966,
+          "aimYaw": -1.5707963267948966,
+          "expectedYaw": -1.5707963267948966,
+          "alignment": 0.9997635067795065,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "automatic GO; native aim recorded before shared stepping"
+          }
+        }
+      ],
+      "transport": "real WebSocket + production RoomDurableObject"
+    }
+  ],
+  "errors": [],
+  "resources": [
+    {
+      "phase": "menu",
+      "gridBytes": 1962869,
+      "paintGrowing": 0,
+      "paintOrderRecords": 1,
+      "renderer": {
+        "geometries": 234,
+        "textures": 19
+      },
+      "jsHeapBytes": 403316404
+    },
+    {
+      "phase": "menu",
+      "gridBytes": 1962869,
+      "paintGrowing": 0,
+      "paintOrderRecords": 1,
+      "renderer": {
+        "geometries": 234,
+        "textures": 19
+      },
+      "jsHeapBytes": 364896970
+    },
+    {
+      "phase": "menu",
+      "gridBytes": 1962869,
+      "paintGrowing": 0,
+      "paintOrderRecords": 1,
+      "renderer": {
+        "geometries": 234,
+        "textures": 19
+      },
+      "jsHeapBytes": 404960070
+    }
+  ],
+  "pointerLockEnvironment": {
+    "locked": true,
+    "error": null,
+    "focused": true
+  },
+  "legacy": {
+    "id": "tidewater",
+    "native": false,
+    "rigYaw": 0,
+    "aimYaw": 0
+  },
+  "packets": 1472
+}

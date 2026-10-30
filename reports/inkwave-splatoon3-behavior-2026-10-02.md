@@ -6970,3 +6970,7 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: 開始カメラと既存PRの統合検証
 
 [統合記録](inkwave-pr-integration-20261030.md)。開始カメラ・native描画・ホコ／ヤグラモデルを含む最終mainのtreeを、検証済みの合成treeと照合した。ソース、最適化済み配信、実ブラウザー、実WebSocketの結果を分けて記録し、WahooオンラインQAの旧版でも起きる失敗、GO後の既存1秒猶予、全ステージ・現行Switch実機との完全一致の未確認を維持する。ソフトウェア描画やDOM検証を本家実機／iPad実機の測定に読み替えない。
+
+### 2026-10-30: 開始カメラのGOから初期発射への同期
+
+任天堂公式60fps映像nawabari_pc.mp4の578Fに見える開始エフェクトに合わせ、今回のTurfカメラを使うMatchはGOと同じtickで自動発射する。以前のINKWAVE独自の1秒待機を解消。456Fから開始前の照準を許可し、最後の1Fの旋回もnative computeAimの前に光学視点へ反映する。30/60/120Hzの全8人、通常復活、pointer-lock guard、native入力replayを検証した。456Fの入力許可・flight形状・3Dカメラ数値はINKWAVEの調整で、Nintendo内部の受付tickや現行Switchでの完全一致は未確認。[参照条件・再現・結果](turf-intro-camera-20261030.md)。
