@@ -11,7 +11,7 @@ export function adaptOnlineAsyncEntry(rel, code) {
     if (online.split(before).length !== 2) throw new Error('online async entry: expected one ' + label);
     online = online.replace(before, after);
   };
-  once('    const nameRow = this._nameRow();', '    const nameRow = this._nameRow();\n    nameRow._input.addEventListener(\'focus\', () => { st.clipboardRevision++; clearTimeout(st.autoT); });', 'name edit ownership');
+  once('    const nameRow = this._nameRow();', '    const nameRow = this._nameRow();\n    const retireNameEntry = () => { st.clipboardRevision++; clearTimeout(st.autoT); };\n    nameRow._input.addEventListener(\'focus\', retireNameEntry);\n    nameRow._input.addEventListener(\'input\', retireNameEntry);', 'name edit ownership');
   once("input: 'kbm', alive: true, errT: 0", "input: 'kbm', alive: true, errT: 0, clipboardRevision: 0", 'state');
   once("    const exitEntry = () => { clearError();", "    const exitEntry = () => { st.clipboardRevision++; clearTimeout(st.autoT); clearError();", 'entry cancellation');
   for (const name of ['type = (c)', 'backspace = ()']) {

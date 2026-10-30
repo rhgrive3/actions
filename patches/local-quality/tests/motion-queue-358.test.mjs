@@ -47,7 +47,11 @@ test('tube bases and suction angle tables preserve callbacks, custom methods and
  console.log(JSON.stringify({scope:'actual composed geometry and callback order',tubes,cups,trig}));
 });
 
-function fitSource(code){const i=code.indexOf('  function fit(');return code.slice(i,code.indexOf('\n  cp._buildPose=',i));}
+function fitSource(code){
+ const i=code.indexOf('  function fit('),end=code.indexOf('\n  function riderPose(',i);
+ assert.ok(i>=0&&end>i,'isolate the held-item fit without removing the independent rider pose owner');
+ return code.slice(i,end);
+}
 test('special held fit exits only after both constraints perform no projection',()=>{
  const code=fs.readFileSync(new URL('../../splatoon3/runtime/special-motion.mjs',import.meta.url),'utf8'),fits=[old('special-fit'),fitSource(code)].map(s=>new Function(s+'\nreturn fit;')()),random=rng();let before=0,after=0,nonconverged=0;
  // Mirror the real held-prop hierarchy before fit measures refreshed world matrices.

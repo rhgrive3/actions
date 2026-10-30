@@ -146,7 +146,7 @@ test('Crab socket beyond a thin wall cannot launch damage or flight paint throug
     const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecialMode,mode);assert.ok(p.start.z<.42,'accepted origin remains on the near side');
     const hits=[];f.G.projectiles.applyHit=(_owner,target,damage)=>hits.push({target,damage});
     for(let i=0;i<120;i++)f.G.projectiles.update(1/60);
-    assert.equal(hits.some(h=>h.target===victim),false);
+    assert.equal(hits.some(h=>h.target===victim),false, `${mode}: ${JSON.stringify(hits.map(h=>h.damage))}`);
     assert.equal(p.s3CrabFlightPaint.index,0,'no detached flight ink is released beyond the wall');
   }
 });

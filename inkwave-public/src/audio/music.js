@@ -1,8 +1,8 @@
 import { StreamedTrack } from './streamedTrack.js';
 
-// INKWAVE — procedural music engine + shared Web Audio DSP core (with optional streamed battle BGM).
+// INKWAVE — shared Web Audio DSP core, procedural scores, and streamed menu/battle BGM.
 //
-// Everything here is synthesized: no audio files. The DSP helpers (Voice builder `V`, envelopes, noise buffers,
+// The procedural DSP helpers (Voice builder `V`, envelopes, noise buffers,
 // impulse responses, instrument voices) are exported so src/audio/audio.js can build its SFX with the same parts.
 // All builders take any BaseAudioContext + destination node so they can be rendered through an OfflineAudioContext
 // (see tools/audio-test.mjs).
@@ -1255,8 +1255,14 @@ class Player {
   }
 }
 
-// Same-origin, on-demand MP3; no full-track decodeAudioData allocation on memory-limited devices.
-const FILE_TRACK_URLS = Object.freeze({ battle: new URL('../../assets/audio/Jet_Arrow.mp3', import.meta.url).href });
+// Same-origin, on-demand MP3; avoid a whole-track decodeAudioData allocation on mobile devices.
+// Menu BGM: 『ザ・イカスィング』 / 作曲・著作権者: 蒼い鍵盤 (Aoi Kenban).
+// Free-use audio supplied by the project owner. Retain this creator credit with the asset.
+const FILE_TRACK_URLS = Object.freeze({
+  menu: new URL('../../assets/audio/menu_the_ika_swing_aoi_kenban.mp3', import.meta.url).href,
+  battle: new URL('../../assets/audio/Jet_Arrow.mp3', import.meta.url).href,
+});
+const REQUIRED_FILE_TRACKS = new Set(['menu', 'battle']);
 const LOOKAHEAD = 0.16, TICK_MS = 25;
 
 export class MusicEngine {
@@ -1326,8 +1332,8 @@ export class MusicEngine {
     }
   }
 
-  // Recorded music is the ONLY soundtrack for live turf battles. Retry transient
-  // loading/decoding failures twice, then leave music silent; never synthesize Turf Riot.
+  // The licensed menu and battle recordings are mandatory in a live browser.
+  // Retry transient media errors twice; do not fall back to the former synth BGM.
   _retryFile(track, reason) {
     if (this.offline || typeof window === 'undefined' || this._desiredTrack !== track || !FILE_TRACK_URLS[track]) return;
     this._fileFailures.add(track);
@@ -1335,7 +1341,7 @@ export class MusicEngine {
     if (this._fileRetryCount >= 2) {
       if (!this._fileErrorReported) {
         this._fileErrorReported = true;
-        console.warn('[music] Jet Arrow unavailable after retries; turf music muted (no legacy fallback)', reason);
+        console.warn(`[music] ${track} recording unavailable after retries; music muted (no legacy fallback)`, reason);
         try { this.onFileError?.(track, reason); } catch (_) { /* reporting must not interrupt gameplay */ }
       }
       return;
@@ -1450,7 +1456,7 @@ export class MusicEngine {
       if (this._desiredTrack === 'battle') return;
       track = 'battle';
     }
-    if (track !== 'battle') {
+    if (!FILE_TRACK_URLS[track]) {
       this._cancelFileRetry();
       this._fileRetryCount = 0;
       this._fileErrorReported = false;
@@ -1507,15 +1513,15 @@ export class MusicEngine {
         this._fileFailures.add(track);
         element.removeAttribute('src');
         element.load();
-        console.warn('[music] Jet Arrow media setup failed; retrying the recording only', e);
+        console.warn(`[music] ${track} media setup failed; retrying the recording only`, e);
       }
     }
-    // Keep offline render tests procedural, but never select procedural battle
-    // music in an actual browser when a recorded MP3 cannot be opened.
-    if (!p && track === 'battle' && !this.offline && typeof window !== 'undefined') {
+    // Offline render tests may still synthesize, but live menu/battle playback
+    // must never resurrect a replaced procedural soundtrack.
+    if (!p && REQUIRED_FILE_TRACKS.has(track) && !this.offline && typeof window !== 'undefined') {
       if (cur) cur.fadeOut(now, Math.max(0.03, fade));
       this.current = null;
-      this._retryFile(track, new Error('Jet Arrow stream could not be opened'));
+      this._retryFile(track, new Error(`${track} recording could not be opened`));
       this._tick();
       return;
     }

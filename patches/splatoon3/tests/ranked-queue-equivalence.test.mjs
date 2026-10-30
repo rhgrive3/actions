@@ -52,9 +52,26 @@ for (const name of ['clams', 'tower', 'zones', 'rainmaker', 'engine']) {
  if (name === 'clams') source = supportCorrectedReference(source);
  // The short-tap fix adds an idle release latch. This queue trace exercises
  // held/full-charge releases; give the frozen state the same additive default.
- if (name === 'rainmaker') source = replaceReference(source,
-  'firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false',
-  'firing: false, released: false, delay: 0, recovery: 0, pending: null, wasSwimming: false');
+ if (name === 'rainmaker') {
+  source = replaceReference(source,
+   'firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false',
+   'firing: false, released: false, delay: 0, recovery: 0, pending: null, wasSwimming: false');
+  // The merged Rainmaker unit correction deliberately changed the fivefold Rainmaker unit conversion.
+  // Apply only those constants to the frozen queue reference, retaining its
+  // original scheduling and snapshot code for this equivalence comparison.
+  for (const [before, after] of [
+   ['const FULL_SHOT_DIRECT_RANGE = 4.4;', 'const FULL_SHOT_DIRECT_RANGE = 4.4 * 5;'],
+   ['const FULL_SHOT_NEAR_RANGE = 5.3;', 'const FULL_SHOT_NEAR_RANGE = 5.3 * 5;'],
+   ['const FULL_SHOT_EFFECTIVE_RANGE = 5.8;', 'const FULL_SHOT_EFFECTIVE_RANGE = 5.8 * 5;'],
+   ['const FULL_SHOT_NEAR_RADIUS = 0.92;', 'const FULL_SHOT_NEAR_RADIUS = 4.6;'],
+   ['const FULL_SHOT_FAR_RADIUS = 1.4;', 'const FULL_SHOT_FAR_RADIUS = 7;'],
+   ['const PARTIAL_SHOT_MIN_RANGE = 2;', 'const PARTIAL_SHOT_MIN_RANGE = 2 * 5;'],
+   ['const PARTIAL_SHOT_MAX_RANGE = 3.4;', 'const PARTIAL_SHOT_MAX_RANGE = 3.4 * 5;'],
+   ['speed => speed * 10 * GAME_FRAMES_PER_SECOND * WORLD_UNITS_PER_DU;', 'speed => speed * GAME_FRAMES_PER_SECOND;'],
+   [') * 10 * WORLD_UNITS_PER_DU;', ');'],
+   ['trailRadius: fullCharge ? .48 : paintRadius,', 'trailRadius: fullCharge ? 2.4 : paintRadius,'],
+  ]) source = replaceReference(source, before, after);
+ }
  source = source.replace(/from '\.\/(\w+)\.mjs'/g, (_all, dependency) => `from '${urls[dependency]}'`);
  urls[name] = dataUrl(source);
 }
@@ -127,7 +144,7 @@ test('baseline Rainmaker full-charge releases preserve catch-up snapshots and or
   for(const dt of [1/120,1/60,1/30,.08,.25,.4,.5])step(dt,true);
   for(const dt of [1/120,1/60,1/30,.08,.25,.4])step(dt,false);
  }
- assert.equal(shots.length,2);assert.ok(shots.every(e=>e.charge===1&&e.damage===60&&e.blastDamage===180));
+ assert.equal(shots.length,2);assert.ok(shots.every(e=>e.charge===1&&e.damage===60&&e.blastDamage===180 && e.directRange===22 && e.effectiveRange===29 && e.radius===7 && e.speed===90));
 });
 test('Rainmaker swept-sphere arithmetic preserves exact baseline numbers without per-target arrays', () => {
  const r=random(417);

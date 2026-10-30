@@ -140,15 +140,22 @@ test('#675 source-backed Gear/AP: 8F and 60F actual Charger ink debits at 0/10/5
   }
 });
 
-test('#675 pre-minimum releases remain rejected instead of creating an unauthorized shot', async () => {
+test('#675 pre-minimum physical taps emit one authorized, paid minimum shot after the release gap', async () => {
   for (const heldFrames of [0, 1, 4, 7]) {
     const f = await fixture(), actor = f.make('charger');
+    actor.ink = 100;
     actor.intent.fire = true;
     f.tick(actor);
     for (let i = 0; i < heldFrames; i++) f.tick(actor);
+    assert.equal(f.shots.length, 0, 'held startup / charging never fires');
     actor.intent.fire = false;
-    for (let i = 0; i < 5; i++) f.tick(actor);
-    assert.equal(f.shots.length, 0, 'no unauthorized ' + heldFrames + 'F shot');
+    f.tick(actor);
+    assert.equal(f.shots.length, 0, 'one release-gap frame for ' + heldFrames + 'F tap');
+    f.tick(actor, 4);
+    assert.equal(f.shots.length, 1, 'exactly one authorized ' + heldFrames + 'F minimum shot');
+    const minimum = (actor.weapon.minimumChargeTime ?? 8 / 60) / actor.weapon.chargeTime;
+    close(f.shots[0].charge, Math.min(1, minimum), 'minimum release charge floor');
+    close(100 - actor.ink, actor.weapon.inkMin, 'minimum release ink payment');
     assert.ok(actor.ink >= 0 && actor.ink <= 100);
   }
 });

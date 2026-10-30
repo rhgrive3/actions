@@ -1,4 +1,4 @@
-// Stream pre-encoded battle music instead of decoding the entire MP3 into an AudioBuffer.
+// Stream pre-encoded menu and battle music without decoding the entire MP3 into an AudioBuffer.
 // Connected to MusicEngine.mix, so user volume, SFX ducking and master limiting still apply.
 export class StreamedTrack {
   constructor(engine, id, song, element, onFailure) {

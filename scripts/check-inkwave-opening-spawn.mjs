@@ -54,8 +54,12 @@ try {
       for (let i = 0; i < hz * 4; i++) step();
       const intro = snapshot(); waiting(intro);
       if (G.match.state !== 'intro') throw Error('Missing ordinary introduction');
-      for (let i = 0; i < hz && G.match.state === 'intro'; i++) step();
-      if (G.match.state !== 'playing') throw Error('Ordinary intro did not finish');
+      // The sourced Turf introduction now ends at frame 578, not 4.2s.
+      // Bound the wait to the emitted intro contract at each simulated rate.
+      const { TURF_INTRO_FRAMES } = await import(new URL('patches/splatoon3/runtime/turf-intro-camera.mjs', document.baseURI));
+      const remaining = Math.ceil(Math.max(0, TURF_INTRO_FRAMES.go / 60 - G.match.stateT) * hz) + 2;
+      for (let i = 0; i < remaining && G.match.state === 'intro'; i++) step();
+      if (G.match.state !== 'playing') throw Error('Ordinary intro did not finish: ' + JSON.stringify({ hz, state: G.match.state, elapsed: G.match.stateT, go: TURF_INTRO_FRAMES.go / 60 }));
       const playing = snapshot(); waiting(playing);
       // No FIRE: the existing one-second automatic opening launch applies to all.
       let frames = 0;

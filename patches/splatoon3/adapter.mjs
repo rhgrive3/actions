@@ -1159,7 +1159,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "      this.applyHit(p.owner, e, lerp(w.splashDamageMax, w.splashDamageMin, d / w.splashRadius), 'blaster');",
       "      this.applyHit(p.owner, e, distanceDamage(w.damageBands, d), 'blaster');", 'blaster damage bands');
     code = replaceOnce(code, '      if (!G.physics.los(c, _v)) continue;',
-      '      if (!blasterBlastExposed(G.physics, c, e, PLAYER)) continue;', 'Blaster volume-aware burst cover');
+      '      if (!blasterBlastExposed(G.physics, c, e, PLAYER, p.s3BurstCollisionHit)) continue;', 'Blaster volume-aware burst cover');
     code = replaceOnce(code, '      b.vel.y -= 24 * dt;', '      b.vel.y -= (b.kind === \'bomb\' ? SUB.bomb.gravity : 24) * dt;', 'bomb gravity');
     code = replaceOnce(code, 'const pos = _v.copy(a.pos); pos.y += 1.35;', 'const pos = _v.copy(a.pos); pos.y += 1.35; bombReleasePosition(a, pos);', 'bomb release origin');
     code = replaceOnce(code, 'const p = _v.copy(a.pos); p.y += 1.35;', 'const p = _v.copy(a.pos); p.y += 1.35; bombPreviewPosition(a, p);', 'bomb preview origin');

@@ -144,9 +144,10 @@ test('production Actor final release pose agrees with the adopted displayed muzz
     let interruptedSamples=0;
     a.aimPitch=-1.05;
     for(let i=0;i<14;i++){
-      a.intent.squid=i<4;a.intent.fire=false;
-      rule.state.charge={seconds:i<4?0:1,value:i<4?0:1,firing:i>=4,delay:0,recovery:0,pending:null,wasSwimming:false};
+      a.intent.squid=i<2;a.intent.fire=false;
+      rule.state.charge={seconds:i<2?0:1,value:i<2?0:1,firing:i>=2,delay:0,recovery:0,pending:null,wasSwimming:false};
       f.tick(a);const ch=a.character;
+      if(i===1)assert.equal(ch.sourceMotion.state,'ToSquid','return interrupts an in-progress dive');
       if(!ch.s3RainmakerFormPending)continue;
       assert.equal(ch.sourceMotion.returnInterrupted,true);
       group.position.copy(a.pos);presentation.update(a,1);group.updateMatrixWorld(true);
@@ -155,9 +156,9 @@ test('production Actor final release pose agrees with the adopted displayed muzz
       assert.ok(p);near(p.muzzle,core.localToWorld(new THREE.Vector3(...core.userData.rainmakerModel.muzzle)).toArray());
       assert.deepEqual(ch.boneList.map(b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray()]),before);
       assert.equal(ch.s3RainmakerFormPending,true,'snapshot does not consume or replace the existing transient owner');
-      trace.push({interruptedFrame:i-4,scale:ch.kidScale,origin:plain(p)});interruptedSamples++;
+      trace.push({interruptedFrame:i-2,scale:ch.kidScale,origin:plain(p)});interruptedSamples++;
     }
-    assert.equal(interruptedSamples,9,'all existing interrupted-return display-owner frames are sampled');
+    assert.equal(interruptedSamples,2,'both interrupted-return display-owner frames are sampled');
     const live=f.captureRainmakerShotOrigin(THREE,a,String(a.nid),a.pos.toArray(),a.aimDir.toArray());
     const translated=f.captureRainmakerShotOrigin(THREE,a,String(a.nid),[a.pos.x+5,a.pos.y+2,a.pos.z-3],a.aimDir.toArray());
     near(translated.muzzle,live.muzzle.map((n,i)=>n+[5,2,-3][i]),'remote admitted position translates the same bounded socket');
