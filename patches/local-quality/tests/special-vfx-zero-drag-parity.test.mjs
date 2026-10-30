@@ -57,10 +57,13 @@ function oldUpdate(state, dt) {
   return { p, n: 1 };
 }
 
-test('production SpritePool preserves the old Float32 state for zero/nonzero drag and finite/nonfinite dt', () => {
-  const dragCases = [0, -0, 0.25, 1.5, Number.NaN, Number.POSITIVE_INFINITY];
+test('production SpritePool preserves the 60 Hz Float32 state and legacy nonforward/nonfinite inputs', () => {
+  const dragCases = [0, -0, 0.25, 1.5, -0.25, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
   const dtCases = [0, -0, 1/30, 1/60, 1/120, -0.01, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
   for (const drag of dragCases) for (const dt of dtCases) {
+    // Positive alternate cadences intentionally follow the 60 Hz trajectory;
+    // their positions are covered by special-splash-cadence.test.mjs.
+    if (Number.isFinite(drag) && drag >= 0 && dt > 0 && Number.isFinite(dt) && dt !== 1/60) continue;
     const calls = [];
     const pool = makePool(calls);
     pool.spawn(1, 2, 3, 4, 5, 6, 3, 0.1, 0.2, 1, 0.5, 0.2, 0.8, 0,
