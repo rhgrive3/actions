@@ -83,8 +83,8 @@ export function adaptWeaponAudio(rel,code){
       "this.spinLoop?.set({ progress:this.charge, pos });",
       'local Splatling charge progress into shared audio');
     code=once(code,
-      "if (a.isLocal) G.audio?.playWeapon?.(a.weapon.id, 'ready', { actor:a,  volume: 0.7 });",
-      "/* Full-charge Ready is fired once by the recorded charge-loop stage owner. */",
+      "if (a.isLocal) G.audio?.playWeapon?.(a.weapon.id, 'ready', { actor:a,  volume: 0.7 });\n        rumble(a, 0.05, 0.28, 60);",
+      "/* Full-charge Ready is fired once by the recorded charge-loop stage owner. */\n        rumble(a, 0.05, 0.28, 60);",
       'local Splatling does not duplicate full-charge Ready');
     // Native Splatling keeps one loop handle through charging and streaming.
     // Its existing 'splatling_spin' starts during CHARGE, so play the sourced
