@@ -1,0 +1,56 @@
+name: INKWAVE public reference decode (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inkwave-public-reference.yml'
+      - 'tools/blast-main91-qa/recover-public-blast-reference.mjs'
+      - 'tools/blast-main91-qa/recover-public-blast-reference.test.mjs'
+      - 'tools/blast-main91-qa/recover-public-blast-browser-reference.mjs'
+      - 'tools/blast-main91-qa/recover-public-blast-browser-reference.test.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-public-reference-${{ github.run_id }}
+  cancel-in-progress: false
+jobs:
+  reference:
+    if: github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/blast-public-reference-20261030' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout exact reviewed reference helpers
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_QA_SHA }}
+          path: qa
+          persist-credentials: false
+          sparse-checkout: tools/blast-main91-qa
+      - name: Checkout fixed approved dependency and sandbox launcher source
+        uses: actions/checkout@v4
+        with:
+          ref: 5b722cba888cb86a7a21f29596bd54eaf16b01fd
+          path: source
+          persist-credentials: false
+          sparse-checkout: scripts/lib
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore existing locked QA dependencies only
+        working-directory: source
+        run: npm ci --no-audit --no-fund
+      - name: Provision the already-approved pinned Playwright Chromium
+        working-directory: source
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Require fixed-host transport and native-frame metadata negative tests
+        run: node --test qa/tools/blast-main91-qa/recover-public-blast-reference.test.mjs qa/tools/blast-main91-qa/recover-public-blast-browser-reference.test.mjs
+      - name: Record immutable source and QA revisions
+        run: |
+          test "$(git -C qa rev-parse HEAD)" = "$EXPECTED_QA_SHA"
+          test "$(git -C source rev-parse HEAD)" = "5b722cba888cb86a7a21f29596bd54eaf16b01fd"
+          printf 'REFERENCE_QA_HEAD=%s\n' "$EXPECTED_QA_SHA"
+          printf 'REFERENCE_SOURCE_HEAD=%s\n' "$(git -C source rev-parse HEAD)"
+      - name: Decode one original-size public video frame with sandbox enabled
+        timeout-minutes: 5
+        run: node qa/tools/blast-main91-qa/recover-public-blast-browser-reference.mjs "$GITHUB_WORKSPACE/source"
