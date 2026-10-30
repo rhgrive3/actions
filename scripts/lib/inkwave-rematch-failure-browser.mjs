@@ -19,7 +19,7 @@ export async function verifyRematchFailureRecovery(page, { evidenceDir, contentH
         const warm = g._warmCharacters, descriptor = Object.getOwnPropertyDescriptor(g, '_warmCharacters');
         if (typeof g.menus.toast !== 'function') throw Error('Real menu toast function is required');
         const toast = g.menus.toast, toastDescriptor = Object.getOwnPropertyDescriptor(g.menus, 'toast');
-        const qa = window[key] = { scenario, calls: 0, reached: false, oldSettled: false, oldRejected: null, toastCount: 0, beforeOptions: JSON.stringify(g.lastMatchOpts) };
+        const qa = window[key] = { scenario, calls: 0, rematchCalls: 0, attractCalls: 0, warmOwners: [], reached: false, oldSettled: false, oldRejected: null, toastCount: 0, beforeOptions: JSON.stringify(g.lastMatchOpts) };
         let rejectGate, gateSettled = false;
         const gate = new Promise((resolve, reject) => { rejectGate = reject; });
         // Cleanup may reject before the app reaches warm. Handle that path,
@@ -27,8 +27,20 @@ export async function verifyRematchFailureRecovery(page, { evidenceDir, contentH
         gate.catch(() => {});
         // No artificial rejection is created until the public operation owns it.
         g._warmCharacters = function (...args) {
+          const [match, flow] = args;
+          const attract = match?.attract === true;
+          const owned = !!match && this.match === match && G.match === match;
+          const flowCurrent = !!flow?.current?.();
           qa.calls++;
-          if (qa.calls === 1) { qa.reached = true; return gate; }
+          qa.warmOwners.push({ attract, owned, flowCurrent });
+          if (!owned || (!attract && (!flow || flow !== this._matchFlow || !flowCurrent)))
+            throw Error('Rematch warm boundary has no current match owner');
+          if (attract) {
+            qa.attractCalls++;
+            return warm.apply(this, args);
+          }
+          qa.rematchCalls++;
+          if (qa.rematchCalls === 1) { qa.reached = true; return gate; }
           return warm.apply(this, args);
         };
         g.menus.toast = function (...args) { qa.toastCount++; return toast.apply(this, args); };
@@ -65,13 +77,13 @@ export async function verifyRematchFailureRecovery(page, { evidenceDir, contentH
       }
       const receipt = await page.evaluate(key => {
         const q=window[key],g=window.__inkwave,G=window.__G;
-        return { scenario:q.scenario,calls:q.calls,oldSettled:q.oldSettled,oldRejected:q.oldRejected,retrySettled:q.retrySettled,retryRejected:q.retryRejected,toastCount:q.toastCount,
+        return { scenario:q.scenario,calls:q.calls,rematchCalls:q.rematchCalls,attractCalls:q.attractCalls,warmOwners:q.warmOwners,oldSettled:q.oldSettled,oldRejected:q.oldRejected,retrySettled:q.retrySettled,retryRejected:q.retryRejected,toastCount:q.toastCount,
           mode:G.mode,menu:g.menus.current,attract:!!g.match?.attract,playing:g.match?.state==='playing',liveMatch:g.match===G.match,
           optionsPreserved:JSON.stringify(g.lastMatchOpts)===q.beforeOptions,
           winnerPreserved:q.scenario!=='stale-warm-rejection'||(g.match===q.winner&&g._matchFlow===q.winnerFlow&&JSON.stringify(g.lastMatchOpts)===q.winnerOptions) };
       }, key);
       const expectedToasts=scenario==='warm-rejection-retry'?1:0;
-      if (receipt.calls!==2 || !receipt.oldSettled || receipt.oldRejected || receipt.toastCount!==expectedToasts || receipt.mode!=='match' || receipt.menu!==null || receipt.attract || !receipt.playing || !receipt.liveMatch || !receipt.optionsPreserved || !receipt.winnerPreserved)
+      if (receipt.rematchCalls!==2 || receipt.calls!==receipt.rematchCalls+receipt.attractCalls || !receipt.oldSettled || receipt.oldRejected || receipt.toastCount!==expectedToasts || receipt.mode!=='match' || receipt.menu!==null || receipt.attract || !receipt.playing || !receipt.liveMatch || !receipt.optionsPreserved || !receipt.winnerPreserved)
         throw Error('Rematch retry/late rejection violated live ownership: '+JSON.stringify(receipt));
       await page.screenshot({ path:evidenceDir+'/'+scenario+'-playing.png',timeout:60000 });
       receipts.push({...receipt,contentHash});
