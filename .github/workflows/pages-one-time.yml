@@ -1,0 +1,42 @@
+name: One-time INKWAVE Pages deployment
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages-inkwave-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build production site
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Check current main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh api repos/$GITHUB_REPOSITORY/git/ref/heads/main --jq .object.sha)" = "$GITHUB_SHA"
+      - uses: actions/deploy-pages@v4
+        id: deployment
