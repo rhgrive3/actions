@@ -1,0 +1,9 @@
+{
+  "sourceSite": "/workspace/actions-score-main/_site",
+  "sourceSha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+  "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8",
+  "manifestSha256": "a1741a0096ebe73692b41f0f9059db7c015bf70eff509b31b7bee5284ef66a7c",
+  "manifestBytes": 640915,
+  "servedFileSizes": 691,
+  "scope": "Manifest and file-size snapshot only; original run verified actual source/LFS/served bytes. Publication does not include private payloads."
+}
