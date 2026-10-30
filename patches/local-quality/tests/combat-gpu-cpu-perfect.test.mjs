@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptQualitySource, qualityIdentity, replaceOnce } from '../adapter.mjs';
-import { adaptCombatGpuCpuPerfect, adaptCombatGpuCpuPerfectTargets } from '../combat-gpu-cpu-perfect-adapter.mjs';
+import { adaptCombatGpuCpuPerfect, adaptCombatGpuCpuPerfectTargets, adaptCombatWave345 } from '../combat-gpu-cpu-perfect-adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 import { auditDirectSource } from '../../../scripts/inkwave-source-migration-audit.mjs';
 
@@ -221,7 +221,7 @@ test('Wave 3-5 composed source compatibility and second-pass idempotence', () =>
   ]) {
     const raw = read(rel);
     const composed = adaptBuildSource(rel, raw);
-    const again = adaptCombatGpuCpuPerfect(rel, composed, replaceOnce);
+    const again = adaptCombatWave345(rel, adaptCombatGpuCpuPerfect(rel, composed, replaceOnce), replaceOnce);
     assert.equal(again, composed, rel + ': wave 3-5 transformer must be idempotent');
     assert.ok(composed.length > 100, rel + ': expected real source, not an empty adapter result');
   }

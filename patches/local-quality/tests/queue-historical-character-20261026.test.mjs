@@ -9,7 +9,8 @@ import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
 import {adaptQueueVisualContinuation20261029} from '../queue-visual-continuation-20261029-adapter.mjs';
-import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {adaptCombatGpuCpuPerfect,adaptCombatWave345} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {adaptLateRoot20261029} from '../queue-late-root-20261029-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const oracleBytes=fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url));
@@ -23,6 +24,15 @@ const geometry=g=>Object.fromEntries([...Object.entries(g.attributes).map(([k,a]
 function body(code){const edits=parse(code,{ecmaVersion:'latest',sourceType:'module'}).body.flatMap(n=>n.type==='ImportDeclaration'||n.type==='ExportAllDeclaration'?[[n.start,n.end]]:n.type==='ExportNamedDeclaration'?[[n.start,n.declaration?.start??n.end]]:[]);for(const[a,b]of edits.reverse())code=code.slice(0,a)+code.slice(b);return code;}
 function leaf(code,names,G={},K={},math=Math){return new Function('THREE','G','K','CS','MC','PART','Math',body(code)+'\nreturn {'+names+'};')(THREE,G,K,{}, {}, {},math);}
 const sha=s=>createHash('sha256').update(s).digest('hex');
+const finalCharacterOwnerBytes=fs.readFileSync(new URL('./fixtures/queue-historical-character-wave345-1915.json',import.meta.url));
+function finalCharacterOwner(bytes=finalCharacterOwnerBytes){
+ assert.equal(sha(bytes),'6499e7ee29fcbd3f7cf8ea91f1d573d295a8187aadb1f1212f1e2dfb3b22a3ba','sealed final Character owner tuple');
+ return JSON.parse(bytes);
+}
+function replayFinalCharacterOwner(source,bytes=finalCharacterOwnerBytes){
+ const {before,after,label}=finalCharacterOwner(bytes);
+ return replaceOnce(source,before,after,label);
+}
 
 test('shared limb tables preserve independent live hints, caller outputs and bounded coordinate invalidation',()=>{
  const kernels=pair('src/game/character-outfit.js').map((s,i)=>leaf(s,'limbPath'+(i?',historicalLimbTables':'')));
@@ -171,7 +181,30 @@ test('historical character source retains independently pinned input and both la
     assert.notEqual(terminal,worldNative,'teeth/tongue continuation owner is exercised');
     assert.throws(()=>adaptQueueVisualContinuation20261029(rel,terminal),/Visual continuation anchor/);
    }
-   assert.equal(next,terminal,rel+' exact owner composition including visual continuation');
+   let currentTerminal=terminal;
+   if(rel==='src/game/character.js'){
+    const {before,after,label}=finalCharacterOwner();
+    currentTerminal=replayFinalCharacterOwner(terminal);
+    assert.notEqual(currentTerminal,terminal,'final scalar transform owner is separate from the unchanged older chain');
+    assert.equal(replaceOnce(next,after,before,'reverse '+label),terminal,'current Character reverses to the complete independently reconstructed older chain');
+    assert.throws(()=>replayFinalCharacterOwner(terminal.replace(before,'')),/expected exactly one/,'missing final owner site is rejected');
+    assert.throws(()=>replayFinalCharacterOwner(terminal+before),/expected exactly one/,'duplicate final owner site is rejected');
+    assert.throws(()=>replaceOnce(next.replace(after,''),after,before,'missing reverse '+label),/expected exactly one/,'missing current final owner site cannot be reversed');
+    assert.throws(()=>replaceOnce(next+after,after,before,'duplicate reverse '+label),/expected exactly one/,'duplicate current final owner site cannot be reversed');
+    assert.throws(()=>replayFinalCharacterOwner(terminal,Buffer.from(finalCharacterOwnerBytes.toString().replace('quat._onChangeCallback();','quat._onChangeCallback?.();'))),/sealed final Character owner tuple/,'changed final owner cannot acquire the frozen tuple identity');
+   }
+   assert.equal(next,currentTerminal,rel+' exact owner composition including visual continuation and reviewed final owner');
+   // Wave 3–5 is a separate final owner, after all frozen historical and
+   // 2026-10-29 continuations. Preserve the earlier byte-for-byte equality.
+   const preWave=adaptLateRoot20261029(rel,terminal);
+   assert.equal(preWave,terminal,rel+' late-root owner leaves character files unchanged');
+   const currentEpoch=adaptCombatWave345(rel,preWave,replaceOnce);
+   if(rel==='src/game/character.js'){
+    assert.notEqual(currentEpoch,preWave,'final Wave 3–5 Character owner is exercised');
+    assert.equal(adaptCombatWave345(rel,currentEpoch,replaceOnce),currentEpoch,'Wave 3–5 Character owner remains idempotent');
+   }
+   assert.equal(next,currentEpoch,rel+' exact owner composition including visual continuation and terminal Wave 3–5');
+   assert.equal(currentTerminal,currentEpoch,rel+' independently sealed final tuple matches the actual final owner');
    // Retain the separately reviewed raw source identities from the current
    // owner epoch as additional guards, rather than substituting them for the
    // complete historical + current owner composition equality.

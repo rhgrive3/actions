@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "status": "accepted-four-trial-self-control",
+  "accepted": true,
+  "contractSha256": "5de124dad30e75f6db4a75085aabf782f939526395cd20fb2bb30f18f9e60b5d",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/measure-mesa-native-control.mjs",
+    "--out",
+    "/workspace/scratch/agent3-native-self-control-550-four/driver",
+    "--mode",
+    "calibrate",
+    "--stage",
+    "tidewater",
+    "--scenario",
+    "normal",
+    "--samples",
+    "60",
+    "--warmup",
+    "30",
+    "--native-trials",
+    "4",
+    "--width",
+    "480",
+    "--height",
+    "300",
+    "--camera-offset-x",
+    "0",
+    "--playwright",
+    "/workspace/wt-optimized/node_modules/playwright/index.mjs",
+    "--chromium",
+    "/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+    "--sha-C",
+    "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+    "--root-C",
+    "/workspace/wt-agent6",
+    "--site-C",
+    "/workspace/scratch/main-wave345-repaired-site",
+    "--sha-B",
+    "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+    "--root-B",
+    "/workspace/wt-agent6",
+    "--site-B",
+    "/workspace/scratch/main-wave345-repaired-site"
+  ],
+  "performanceClaimAllowed": false,
+  "oldPairAccepted": false,
+  "driverPid": 850366,
+  "exitCode": 0,
+  "driverRawSha256": "ec40850ee3ca47f5219312572f605288dd9de8efb4fa164149a3bb509b6f619a",
+  "driverStatus": "passed-mesa-native-calibration",
+  "driverError": null,
+  "images": [
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    }
+  ],
+  "validation": {
+    "accepted": true,
+    "comparison": "same immutable current build only",
+    "performanceClaimAllowed": false,
+    "oldPairAccepted": false,
+    "originalInputCardinalities": {
+      "buffers": 3022,
+      "textures": 48,
+      "meshStates": 488,
+      "lightStates": 2,
+      "materialStates": 174,
+      "shaderSources": 179,
+      "gpuColorTargets": 15
+    }
+  },
+  "sourceBuildHelpersExecutableAndFrozenUnchanged": true,
+  "remainingOwnedProcesses": []
+}

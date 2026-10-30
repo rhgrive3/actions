@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
+import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 const main=adaptBuildSource('src/main.js',
   fs.readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8'));
 test('#1723 recovery UI ships through the native bundle, never an omitted source-menu sidefile', () => {
@@ -78,13 +79,17 @@ test('#1723 failed legacy publication fails closed, native rollback is not false
 });
 
 function guardedFrame(G,runSimulation=()=>{throw Error('disposed world advanced');}) {
- const marker='  _frame(dt) {',at=main.indexOf(marker);
- assert.ok(at>=0,'production Game._frame');
- const guard=main.indexOf('    if (this._nativeStageSwitchPending) {',at);
- const normal=main.indexOf('    const tA = performance.now();',guard);
- assert.ok(guard>at && normal>guard,'guard runs before any world frame work');
- // Compile the emitted method prefix, with its terminating return.
- const source=main.slice(at,normal)+'\n  }';
+ const ast=parse(main,{sourceType:'module',ecmaVersion:'latest'});
+ const game=ast.body.find(n=>n.type==='ClassDeclaration'&&n.id?.name==='Game');
+ const method=game?.body.body.find(n=>n.type==='MethodDefinition'&&n.key?.name==='_frame');
+ assert.ok(method,'production Game._frame');
+ const [guard]=method.value.body.body;
+ assert.equal(guard?.type,'IfStatement','the stage fence is the first frame statement');
+ assert.equal(main.slice(guard.test.start,guard.test.end),'this._nativeStageSwitchPending','the leading guard checks the actual pending stage');
+ assert.equal(guard.consequent.type,'BlockStatement');
+ assert.equal(guard.consequent.body.at(-1)?.type,'ReturnStatement','the fence exits before world work');
+ // Compile the exact leading method prefix through the guarded return.
+ const source=main.slice(method.start,guard.end)+'\n  }';
  return new Function('G','performance','runSimulation',
    'return ({'+source+'})._frame;')(G,{now:()=>123},runSimulation);
 }

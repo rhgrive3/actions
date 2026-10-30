@@ -1157,8 +1157,15 @@ export class SwimWake {`,
         'CMB-06 preserve native perception distance semantics');
     }
 
+    return code;
+}
+}
+
+// Final Wave 3–5 pass runs after strict world/audio/UI queue adapters.
+// Conditional misses retain those owners; they are not counted as applied.
+export function adaptCombatWave345(rel, code, replaceOnce) {
     if (rel === 'src/world/level.js') {
-      // LVL-01: Ternary clamping in _hxi/_hzi, scalar OBB test in pointInBlock, and AABB/scalar plane in groundHeight.
+      // LVL-01: Ternary hash clamping, scalar OBB test and scalar ground plane.
       code = applyWave345Compatible(
         code,
         `  _hxi(x) { return Math.max(0, Math.min(this.hw - 1, Math.floor((x - this.hx0) / this.hashCell))); }
@@ -1203,7 +1210,7 @@ export class SwimWake {`,
     }`,
         `    for (let i = 0; i < ids.length; i++) {
       const b = this.blocks[ids[i]];
-      if (!b.solid || b.aabbMax?.y <= best) continue;
+      if (!b.solid) continue;
       // intersect vertical line with the block's top face plane
       const n = b.axes[1];
       if (n.y < 0.5) continue;
@@ -1217,7 +1224,7 @@ export class SwimWake {`,
       }
     }`,
         replaceOnce,
-        'LVL-01c AABB height guard and scalar plane intersection in Level.groundHeight'
+        'LVL-01c scalar plane intersection preserving native support skin in Level.groundHeight'
       );
     }
 
@@ -1315,36 +1322,18 @@ export class SwimWake {`,
     }
 
     if (rel === 'src/game/motion/source-controller.js') {
-      // MOT-01: Cache clip & locomotionProfile on directionClips entries and famTables to eliminate per-frame Map lookups.
+      // The profile owner already keys its result by bank/name. Match those
+      // keys before reusing it on a direction record, which is public/mutable.
+      // Keep cadence/sample Map reads native: SourceBank exposes no clip-map
+      // mutation epoch, and caching a clip can retain replaced/deleted entries.
       code = applyWave345Compatible(
         code,
         `   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);`,
-        `   const item=(j?runClips:walkClips)[mode][i],p=item._prof||(item._prof=locomotionProfile(this.bank,item.name));`,
+        `   const item=(j?runClips:walkClips)[mode][i],bank=this.bank,name=item.name;
+   const p=item._profBank===bank&&item._profName===name?item._prof:
+    (item._prof=locomotionProfile(bank,name),item._profName=name,item._profBank=bank,item._prof);`,
         replaceOnce,
-        'MOT-01a cache locomotionProfile on directionClips item'
-      );
-      code = applyWave345Compatible(
-        code,
-        `   let entry=locoPool[locoIdx];if(!entry)entry=locoPool[locoIdx]={name:'',weight:0,profile:null};locoIdx++;
-   entry.name=item.name;entry.weight=weight;entry.profile=p;list.push(entry);`,
-        `   let entry=locoPool[locoIdx];if(!entry)entry=locoPool[locoIdx]={name:'',clip:null,weight:0,profile:null};locoIdx++;
-   entry.name=item.name;entry.clip=item._clip||(item._clip=this.bank.clips.get(item.name));entry.weight=weight;entry.profile=p;list.push(entry);`,
-        replaceOnce,
-        'MOT-01b cache clip reference on pooled locomotion list entry'
-      );
-      code = applyWave345Compatible(
-        code,
-        `  let nominalCadence=0;for(let i=0;i<list.length;i++){const item=list[i];nominalCadence+=item.weight*HOST_MOTION.fps/this.bank.clips.get(item.name).frames;}`,
-        `  let nominalCadence=0;for(let i=0;i<list.length;i++){const item=list[i];nominalCadence+=item.weight*HOST_MOTION.fps/item.clip.frames;}`,
-        replaceOnce,
-        'MOT-01c use cached clip.frames in nominalCadence loop'
-      );
-      code = applyWave345Compatible(
-        code,
-        `    const clip=this.bank.clips.get(item.name),p=item.profile;`,
-        `    const clip=item.clip,p=item.profile;`,
-        replaceOnce,
-        'MOT-01d use cached clip reference in locomotion sample loop'
+        'MOT-01a cache locomotionProfile by direction item, bank and name'
       );
     }
 
@@ -1385,6 +1374,7 @@ export class SwimWake {`,
   const p=this.eyeGeometry.attributes.position,n=this.eyeGeometry.attributes.normal;
   const pa=p.array,na=n.array,base=this.eyeBase,norm=this.eyeNormals,count=p.count;
   let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
+  let invalidVertex=false;
   if(data.headIds){
    const hIds=data.headIds,mats=this.matrices,hNorms=this.eyeHeadNormals;
    for(let k=0;k<3;k++)hNorms[k].getNormalMatrix(mats[hIds[k]]);
@@ -1406,6 +1396,7 @@ export class SwimWake {`,
     const vx=ax+b2x*t,vy=ay+b2y*t,vz=az+b2z*t;
     pa[j]=vx;pa[j+1]=vy;pa[j+2]=vz;
     const px=pa[j],py=pa[j+1],pz=pa[j+2];
+    if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(pz))invalidVertex=true;
     if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;if(pz<minZ)minZ=pz;if(pz>maxZ)maxZ=pz;
     const nA=k===0?ne0:ne1,nB=k===0?ne1:ne2;
     const ox=norm[j],oy=norm[j+1],oz=norm[j+2];
@@ -1429,6 +1420,7 @@ export class SwimWake {`,
     pa[j+1]=(mA[1]*bx+mA[5]*by+mA[9]*bz+mA[13])*wA;
     pa[j+2]=(mA[2]*bx+mA[6]*by+mA[10]*bz+mA[14])*wA;
     const px=pa[j],py=pa[j+1],pz=pa[j+2];
+    if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(pz))invalidVertex=true;
     if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;if(pz<minZ)minZ=pz;if(pz>maxZ)maxZ=pz;
     const ox=norm[j],oy=norm[j+1],oz=norm[j+2];
     let nx=nA[0]*ox+nA[3]*oy+nA[6]*oz,ny=nA[1]*ox+nA[4]*oy+nA[7]*oz,nz=nA[2]*ox+nA[5]*oy+nA[8]*oz;
@@ -1437,7 +1429,10 @@ export class SwimWake {`,
    }
   }
   p.needsUpdate=true;n.needsUpdate=true;
-  if(count>0&&Number.isFinite(minX)&&Number.isFinite(maxX)&&Number.isFinite(minY)&&Number.isFinite(maxY)&&Number.isFinite(minZ)&&Number.isFinite(maxZ)){
+  // Preserve native empty/invalid, morph-target and custom bounds owners.
+  if(count>0&&!invalidVertex&&!this.eyeGeometry.morphAttributes.position?.length&&
+     this.eyeGeometry.computeBoundingSphere===THREE.BufferGeometry.prototype.computeBoundingSphere&&
+     Number.isFinite(minX)&&Number.isFinite(maxX)&&Number.isFinite(minY)&&Number.isFinite(maxY)&&Number.isFinite(minZ)&&Number.isFinite(maxZ)){
    let sphere=this.eyeGeometry.boundingSphere;
    if(!sphere)sphere=this.eyeGeometry.boundingSphere=new THREE.Sphere();
    const cx=(minX+maxX)*0.5,cy=(minY+maxY)*0.5,cz=(minZ+maxZ)*0.5;
@@ -1623,7 +1618,7 @@ export class SwimWake {`,
     }
   }`,
         `  _emitGrowth(g, tn, dT, dripOnly) {
-    const E = g.entries, R = g.R, kind = g.kind, team = g.team, seed = g.seed, netOrderId = g.netOrderId;
+    const E = g.entries, R = g.R, kind = g.kind;
     const entryStride = g.entryStride === 8 ? 8 : 7;
     const cachedProjection = entryStride === 8 && Object.is(g.entryRadius, R);
     const reachK = REACH[kind];
@@ -1640,10 +1635,12 @@ export class SwimWake {`,
         const down = f.wall && g.dripDur ? rr * DRIP_REACH : 0;
         u0 = lu - ext; u1 = lu + ext; v0 = lv - Math.max(ext, down); v1 = lv + ext; mode = 0;
       }
-      if (!netOrderId) {
+      // Match the original draw argument/property order after each entry.
+      const team = g.team, seed = g.seed;
+      if (!g.netOrderId) {
         this._pushQuad(f, u0, u1, v0, v1, lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode);
       } else {
-        const count = this._paintOrderRuns(f, netOrderId, u0, u1, v0, v1), runs = this._paintOrderRunScratch;
+        const count = this._paintOrderRuns(f, g.netOrderId, u0, u1, v0, v1), runs = this._paintOrderRunScratch;
         for (let r = 0; r < count; r++) {
           const at = r * 4;
           this._pushQuad(f, runs[at], runs[at + 1], runs[at + 2], runs[at + 3], lu, lv, dn, R, team, seed, kind, sdu, sdv, sa, tn, dT, mode);
@@ -1795,12 +1792,23 @@ export class SwimWake {`,
     // skip repeated work while the drawing-buffer dimensions are unchanged.
     code = applyIdempotent(
       code,
+      `    this._aspect = 16 / 9;`,
+      `    this._aspect = 16 / 9;
+    this._iwAspectValid = false;`,
+      replaceOnce, 'GPU-07c initialize aspect independently of the size cache'
+    );
+    code = applyIdempotent(
+      code,
       `    if (W !== this._w || H !== this._h) { this._w = W; this._h = H; U.uRes.value.set(W, H); }
     this._aspect = W / Math.max(1, H);
     U.uAspect.value = this._aspect;`,
       `    if (W !== this._w || H !== this._h) {
       this._w = W; this._h = H; U.uRes.value.set(W, H);
       this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;
+      this._iwAspectValid = true;
+    } else if (!this._iwAspectValid) {
+      this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;
+      this._iwAspectValid = true;
     }`,
       replaceOnce, 'GPU-07c cache aspect only while drawing-buffer size is stable'
     );
@@ -1824,9 +1832,7 @@ export class SwimWake {`,
     const s = this.s;`,
       replaceOnce, 'GPU-07d invalidate cache on reset'
     );
-    code = applyIdempotent(
-      code,
-      `    if (local) {
+    const teamRgbBefore = `    if (local) {
       const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
       U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);
       U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);
@@ -1839,8 +1845,8 @@ export class SwimWake {`,
       U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);
       U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);
     }
-    void alive;`,
-      `    if (local) {
+    void alive;`;
+    const teamRgbAfter = `    if (local) {
       const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
       const rgb = this._iwTeamRgb;
       if (!this._iwTeamRgbValid ||
@@ -1861,9 +1867,24 @@ export class SwimWake {`,
         this._iwTeamRgbValid = true;
       }
     } else this._iwTeamRgbValid = false;
-    void alive;`,
-      replaceOnce, 'GPU-07d skip unchanged team RGB while retaining live alpha'
-    );
+    void alive;`;
+    // The final pass follows the submitted-pass owner in current builds.
+    // Keep both exact source epochs, and reject mixed/duplicate sites rather
+    // than accidentally restoring color work for a dormant pass.
+    const teamRgbEpochs = [
+      { before: teamRgbBefore, after: teamRgbAfter },
+      { before: teamRgbBefore.replace('if (local)', 'if (local && any)'),
+        after: teamRgbAfter.replace('if (local)', 'if (local && any)') },
+    ];
+    let teamRgbEpoch = null, teamRgbSites = 0;
+    for (const epoch of teamRgbEpochs) {
+      const sites = code.split(epoch.before).length - 1 + code.split(epoch.after).length - 1;
+      if (sites) teamRgbEpoch = epoch;
+      teamRgbSites += sites;
+    }
+    if (teamRgbSites !== 1) throw new Error('INKWAVE GPU-07d team RGB source epoch: expected exactly one complete site');
+    code = applyIdempotent(code, teamRgbEpoch.before, teamRgbEpoch.after,
+      replaceOnce, 'GPU-07d skip unchanged team RGB while retaining live alpha');
     code = applyIdempotent(
       code,
       `    if (!a) { this.U.uLensColA.value.copy(enemy); this.U.uLensColB.value.copy(own); this.U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, 0); }`,
@@ -1937,5 +1958,4 @@ export class FX {`,
   }
 
     return code;
-}
 }

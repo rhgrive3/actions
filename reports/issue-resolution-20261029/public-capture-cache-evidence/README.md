@@ -1,0 +1,9 @@
+# Public capture cache revalidation, 2026-10-29
+
+The single full active run passed at committed source `8cb5dec72c3d8cf9fde8eb703873aacf16c428ee`, using the unchanged strict active checker and immutable 6013/4a3 build. It completed 65 kits, 12 gear selections, native gameplay, all seven Minimap cases/710 frames and six negative controls. All errors, console errors, request failures and accepted audio cancellation lists were empty. The formerly failed Spinner motor asset appears in hash-verified runtime responses.
+
+The prior 515 full run failed only for that motor asset's `net::ERR_ABORTED`; its raw failed result is retained separately here. The source delta changes only successful public non-HTML GET200 Cache-Control from no-store to `no-cache, max-age=0, must-revalidate` in the active loopback server and projectile HTTP helper. HTML, HEAD, partial media206,416,404, MIME, lengths and exact body behavior remain unchanged. The historical sources invert byte-exactly from the independent sealed two-hunk descriptor. No application/audio runtime code, error gate, thresholds, delays or browser flags changed.
+
+The actual launched executable was read from /proc: Chromium headless-shell1234, SHA256 e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f. All 1,546 build inputs and 2,259 artifacts verified before and after. Source/QA identity stayed clean at 8cb. Browser/server teardown completed; no owned process remained.
+
+80 focused Node22 tests passed; independent peer verified both complete inverses against Git515 and passed24 focused HTTP tests. Preserve the distinction that the active checker is wholly strict while the projectile runner has a pre-existing verified-audio cancellation exception; this candidate adds none. No candidate projectile browser run or later external-main icon build is claimed here. The paired cache-policy diagnostic and upstream Playwright issue42742 are separate root-owned causal evidence.

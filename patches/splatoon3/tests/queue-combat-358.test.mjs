@@ -82,6 +82,12 @@ function chargerStepSource(){
  // Keep the real lease try/finally intact; an interior statement is not a function boundary.
  return source.slice(steps[0].start,steps[0].end);
 }
+// Use the production module's comparator, including its actual tie-breaking.
+const chargerSource=read('weapons-charger-flight.mjs');
+const comparatorDeclarations=parse(chargerSource,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='VariableDeclaration'&&n.declarations.some(d=>d.id.name==='compareChargerContacts'));
+assert.equal(comparatorDeclarations.length,1,'one native Charger contact comparator');
+const comparatorDeclaration=comparatorDeclarations[0];
+const compareChargerContacts=pure(chargerSource.slice(comparatorDeclaration.start,comparatorDeclaration.end),'compareChargerContacts');
 function runChargerStep(code,{actors,ghost=false,speed=60,range=.5,dt=1/60,from=[0,.8,0],dir=[0,0,1],full=false,radii=[.1,.1],motion='coherent',stop=null,nativeHits=false,player=chargerPlayer}){
  const rows=actors.map((a,i)=>({...a,nid:a.nid??i,alive:a.alive??true,team:a.team??1,form:a.form??'kid',pos:new THREE.Vector3(...(a.start||a.end))}));
  if(motion!=='missing')beginActorMotionTick(rows);
@@ -90,7 +96,7 @@ function runChargerStep(code,{actors,ghost=false,speed=60,range=.5,dt=1/60,from=
  if(motion==='discontinuous')rows.forEach(markActorMotionDiscontinuity);
  const trace=[],hits=[],events=[],defenses=[],G={actors:rows,physics:{}},owner={team:0,addTurf(){}},job={speed,range,travel:0,pos:new THREE.Vector3(...from),prev:new THREE.Vector3(),dir:new THREE.Vector3(...dir),owner,team:0,seen:new Set(),base:new THREE.Vector3(),moved:new THREE.Vector3(),ghost,full,damage:40,charge:1,weapon:{id:'charger'},paint:{width:1,terminalRate:1}};
  let mins=0,current;const math=Object.create(Math);math.min=(...a)=>{mins++;return Math.min(...a);};
- const fn=pure(code,'step',{Math:math,G,EPS:1e-10,SIM_DT:1/60,PLAYER:player,completion:{weapons:{charger:{}}},api:{},
+ const fn=pure(code,'step',{Math:math,G,compareChargerContacts,EPS:1e-10,SIM_DT:1/60,PLAYER:player,completion:{weapons:{charger:{}}},api:{},
   collision:{InitRadiusForField:radii[0],EndRadiusForField:radii[1],InitRadiusForPlayer:radii[0],EndRadiusForPlayer:radii[1]},
   sweptWorldHit:()=>stop?.kind==='world'?{hit:true,dist:stop.distance,normal:new THREE.Vector3(0,0,-1),point:new THREE.Vector3(0,.8,stop.distance)}:{hit:false},
   coherentMotionStart,hurtboxRadius(actor){current=actor;return nativeHurtboxRadius(actor,player);},hurtboxHeight:actor=>nativeHurtboxHeight(actor,player),

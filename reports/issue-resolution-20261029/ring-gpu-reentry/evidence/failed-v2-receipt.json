@@ -1,0 +1,15 @@
+{
+  "status": "failed-targeted-diagnostic",
+  "rawBytes": 621051,
+  "rawSha256": "e7ac0a51cb1d3bc5f0fa0770added1676f032b8a6067be85064e2160432e13e9",
+  "gzipBytes": 17373,
+  "gzipSha256": "b611573cb28b91e31734e92496324cb8543834bc1e727116e1d58e4509b95ebf",
+  "contractSha256": "8af645d13ed453f270d49aa84b3c4b51a9d7badeb6786daa8df82ce37007ed04",
+  "processesClosed": true,
+  "manifestUnchanged": true,
+  "helperBytesUnchanged": true,
+  "servedArtifactsUnchanged": true,
+  "preservedEvidenceUnchanged": true,
+  "browserExecutableUnchanged": true,
+  "error": "page.evaluate: ReferenceError: clearSwimSurface is not defined\n    at RingProducer.clear (eval at ringGpuReentryBrowser (eval at evaluate (:311:30)), <anonymous>:251:5)\n    at eval (eval at evaluate (:311:30), <anonymous>:85:24)\n    at each (eval at evaluate (:311:30), <anonymous>:42:73)\n    at ringGpuReentryBrowser (eval at evaluate (:311:30), <anonymous>:85:4)\n    at async <anonymous>:337:30\n    at /workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/check-ring-gpu-reentry.mjs:64:33"
+}

@@ -72,7 +72,10 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'t
 const server=http.createServer((request,response)=>{
   try { const pathname=decodeURIComponent(new URL(request.url,'http://localhost').pathname); const file=path.resolve(site,'.'+(pathname==='/'?'/index.html':pathname));
     if(!file.startsWith(site+path.sep)||!fs.statSync(file).isFile()) throw new Error('Missing');
-    response.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(file).pipe(response);
+    // Streamed no-store responses can report ERR_ABORTED after EOF in Chromium:
+    // https://github.com/microsoft/playwright/issues/42742
+    const cacheControl=request.method==='GET'&&path.extname(file)!=='.html'?'no-cache, max-age=0, must-revalidate':'no-store';
+    response.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':cacheControl});fs.createReadStream(file).pipe(response);
   }catch{response.writeHead(404);response.end('Not found');}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));

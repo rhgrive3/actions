@@ -1,0 +1,8 @@
+{
+  "scope": "After the 49-test and two runtime-negative runs, only one comment replaced authoritative radius with raw draw radius. All executable test bytes are unchanged. Original run and generated negative text retain their original test hash.",
+  "testedTestSha256": "f23d978b5145dc61b15758ecceb4de35843c711da3cd7a5462472156d484d776",
+  "publishedTestSha256": "2484006e7c86237efb42d69bf37221ffe2f0cae09fa02cf49333c896901a091b",
+  "oldComment": "pinned source envelope and authoritative radius above stay unscaled.",
+  "newComment": "pinned source envelope and raw draw radius above stay unscaled.",
+  "exactReverseIdentity": true
+}

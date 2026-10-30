@@ -1,0 +1,1067 @@
+{
+  "schema": 1,
+  "snapshotUtc": "2026-10-29T13:58:02Z",
+  "scope": "All 26 open issues excluding #401; original human issue criteria govern. Physical-device testing waived. Read-only historical snapshot; no action is implied.",
+  "publishedHeads": {
+    "1908": "88f8d25d13a309ee47c59831116b1742740df517",
+    "1910": "f9a0ed1986320dd4b95c6e422fab9ebc92b91eb5",
+    "1909": "1035835081fdaba1a957f27aec7fe93b1abdde8d",
+    "1907": "76c11325bd482c47e0c4dc12830422eafdc3452d",
+    "1911": "7efdabe38f13bc11a64008777a925ad01e8af816",
+    "1912": "7e8601d233e2a56ee175f0c459ed304621e870b5"
+  },
+  "pr1913": {
+    "head": "972e26cdc117f7fec6a3636d2fd1545481a5eaba",
+    "status": "GitHub reports closed and merged 2026-10-29T13:40:26Z"
+  },
+  "issueCounts": {
+    "openExcluding401": 26,
+    "softwareCandidatesPendingRequiredCI": 2,
+    "otherOpenSpecificCriteria": 24
+  },
+  "closuresConfirmed": [
+    {
+      "number": 79,
+      "closedAt": "2026-10-29T10:42:34Z",
+      "stateReason": "completed"
+    },
+    {
+      "number": 725,
+      "closedAt": "2026-10-29T10:42:37Z",
+      "stateReason": "completed"
+    },
+    {
+      "number": 1767,
+      "closedAt": "2026-10-28T22:05:22Z",
+      "stateReason": "completed",
+      "note": "Already closed before the earlier 28-issue audit"
+    }
+  ],
+  "pullRequestScope": {
+    "open": [],
+    "rolling48hCutoff": "2026-10-27T13:58:00Z",
+    "rolling48hUnionCount": 18,
+    "originalScopeUnionCount": 23,
+    "note": "All seven previously open PRs are now reported closed/merged by GitHub. Preserve the original 21-PR snapshot plus #1912/#1913 for a stable union of 23.",
+    "closedRecently": [
+      1907,
+      1908,
+      1909,
+      1910,
+      1911,
+      1912,
+      1913,
+      1882,
+      1895,
+      1897,
+      1898,
+      1900,
+      1901,
+      1902,
+      1903,
+      1904,
+      1905,
+      1906
+    ],
+    "observedFinalStates": [
+      {
+        "number": 1907,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:41:12Z",
+        "finalHead": "d0b09b23ec299a958b63ec961b6eab98285b14a2",
+        "mergeCommitSha": "e9dcd6f5584d3e7c5f2a346d9fa8b2cda2390d95"
+      },
+      {
+        "number": 1908,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:38:35Z",
+        "finalHead": "88f8d25d13a309ee47c59831116b1742740df517",
+        "mergeCommitSha": "f9a0ed1986320dd4b95c6e422fab9ebc92b91eb5"
+      },
+      {
+        "number": 1909,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:41:32Z",
+        "finalHead": "e9dcd6f5584d3e7c5f2a346d9fa8b2cda2390d95",
+        "mergeCommitSha": "a22700d04744d7540d6069b9e09b3109c4fb1906"
+      },
+      {
+        "number": 1910,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:41:42Z",
+        "finalHead": "a22700d04744d7540d6069b9e09b3109c4fb1906",
+        "mergeCommitSha": "550cd1728d0e93fd9ba8301eafd5ab9a52fb2b0b"
+      },
+      {
+        "number": 1911,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:40:57Z",
+        "finalHead": "1826844805af5a458be9d2fd5636c505b4a73afb",
+        "mergeCommitSha": "d0b09b23ec299a958b63ec961b6eab98285b14a2"
+      },
+      {
+        "number": 1912,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:40:42Z",
+        "finalHead": "7e8601d233e2a56ee175f0c459ed304621e870b5",
+        "mergeCommitSha": "1826844805af5a458be9d2fd5636c505b4a73afb"
+      },
+      {
+        "number": 1913,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-10-29T13:40:26Z",
+        "finalHead": "972e26cdc117f7fec6a3636d2fd1545481a5eaba",
+        "mergeCommitSha": "e7c89eb58e19098015f8269d4fd6b5acb95a55db"
+      }
+    ]
+  },
+  "ciSnapshot": {
+    "main": "No successful final main gate is asserted; merge message contains [skip ci].",
+    "previous1908Validate": "failure, run 40880681868 job 123475446233",
+    "note": "A prior recovery attempt and any cancelled annotation are historical; neither proves current main. No earlier source or emitted receipt proves final hosted CI."
+  },
+  "limits": [
+    "Unsuccessful bounded source searches do not prove a source cannot exist.",
+    "No physical-device validation is required; the waiver does not establish unknown source semantics.",
+    "MOV-08b and isolated Character QA scope holds remain.",
+    "Do not sum overlapping source, emitted and browser test counts."
+  ],
+  "issues": [
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/226",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Identify the sourced meaning of RainNum and compare generation, reuse, ground contact, paint writes, area, distribution and timing.",
+      "testedOrObserved": "Existing deterministic public-source and composed accounting separates 172/172/171 calls from 178 candidate rays; it does not map either count to Nintendo particles.",
+      "remaining": "Find an applicable lifecycle source and compare like quantities; make a gameplay change only if an actual discrepancy is established.",
+      "evidence": [
+        {
+          "path": "reports/inkwave-storm-rain-calibration-2026-10-09.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/inkwave-storm-rain-calibration-2026-10-09.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/287",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Calibrate independent right-stick 0/end anchors and intermediate mapping while preserving profiles, gyro and dead zones.",
+      "testedOrObserved": "Legacy-gain migration and overlapping upper-yaw settings were repaired; the current curve is provisional.",
+      "remaining": "Establish the requested reference anchors and intermediate mapping; do not present provisional tuning as source-confirmed.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/input-followup.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/input-followup.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        }
+      ]
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/532",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify the Dualies roll 4+1 distance, timing, glide/easing, dive/default rules and independent coordinate mapping.",
+      "testedOrObserved": "Existing 4+1 movement/timing controls cover the implemented model.",
+      "remaining": "Obtain or verify the independent anchors and semantics needed to compare the model; no arbitrary replacement.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/642",
+      "status": "software_candidate_pending_required_ci",
+      "originalRequirement": "Reduce mobile persistent color allocation in idle and normal battle; preserve output, resize cleanup, desktop HDR and context stability.",
+      "testedOrObserved": "Guarded packed/HDR resources and cleanup have source, emitted and browser fixture evidence with explicit pixel tolerances.",
+      "remaining": "Software completion candidate: final required exact-head CI and the documented acceptance scope remain outstanding; do not infer hardware memory or FPS.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        }
+      ]
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/735",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Bound vertical storm damage using a validated rain volume and cutoff, preserving DPS, cover and ownership at 30/60/120 Hz.",
+      "testedOrObserved": "An internal finite lower boundary and cover/owner tests address the unbounded-damage defect; its cutoff is not a verified S3 measurement.",
+      "remaining": "Establish the reference volume, lower cutoff and coordinate convention, then validate boundary, cover and owner behavior.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/final-batch/public-source-inventory.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/final-batch/public-source-inventory.md"
+        }
+      ]
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/845",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Remove simulation-cadence offscreen ground work, materially reduce Character visual CPU, preserve authoritative state and correct first-visible reentry at 30/60/120 Hz.",
+      "testedOrObserved": "Ground rectangle inference and synchronous Actor-bus memo invalidation were corrected; an earlier native-source fixture still sampled ground on 600/600 budgeted ticks.",
+      "remaining": "Demonstrate safe reduced ground-query cadence and comparable visual CPU in a camera-away scene, preserving support, muzzle, history and first draw; these correctness fixes increase work and do not complete the performance goal.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261029/845-ground-certificate/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/845-ground-certificate/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/845-actor-event-ground-memo/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/845-actor-event-ground-memo/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        }
+      ]
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/890",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify a sourced current-S3 hold cutoff and progression while preserving input buffering, coyote and distinct jump paths.",
+      "testedOrObserved": "Tap and hold produce distinct trajectories; existing 5F/0.7 tuning is explicitly provisional.",
+      "remaining": "Validate the original cutoff/curve against relevant source semantics rather than inventing coefficients.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/952",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Implement or validate Splatling charge-entry ground deceleration with source parameters and frame trace, preserving steering and cancellation.",
+      "testedOrObserved": "The current solver no longer incorrectly cancels existing reversal/orthogonal deceleration.",
+      "remaining": "Establish the relevant current-S3 delay/curve semantics and validate the requested frame trace.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        }
+      ]
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/956",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify footwear-dependent authoritative Charger muzzle height with two sourced distinct soles and cover/guide/shot parity.",
+      "testedOrObserved": "Available catalog metadata describes abilities/materials but did not establish sole transforms in the bounded audit.",
+      "remaining": "Find suitable source-model or other independent sole/transform evidence and test two distinct shoes before tuning.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/992",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify native Dualies phase/feet selection, droplets, height composition and sparse default/world mapping.",
+      "testedOrObserved": "Existing native paint and turf controls cover current behavior.",
+      "remaining": "Resolve the specific phase permutation, nearest-foot, droplet and height/default semantics against suitable source evidence.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/997",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Match weak diagonal walk cadence, stride, foot contact and direction/velocity continuity to the current-S3 reference.",
+      "testedOrObserved": "Current source-bank cadence and existing motion controls are implemented.",
+      "remaining": "Establish and compare the S3 weak-input selector and progression; preserve the Character QA scope hold.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/character-local.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/character-local.md"
+        }
+      ]
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1097",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify class-appropriate damage/idle/moving selection, directional timing, attachment and remote/gameplay behavior.",
+      "testedOrObserved": "The current source-bank generic Damage and native upper-body class layer are distinct; provisional visual behavior has tests.",
+      "remaining": "Find the relevant S3 class selector/joint timing evidence and validate it without turning provisional curves into source claims.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        }
+      ]
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1116",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify S3 class-specific jump choice when distinct and preserve start/air/land/fire priority and attachments across rates.",
+      "testedOrObserved": "Existing jump/source-bank and attachment behavior has software tests.",
+      "remaining": "Establish which S3 clips and selector are actually applicable, then compare timing and ownership.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        }
+      ]
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1431",
+      "status": "software_candidate_pending_required_ci",
+      "originalRequirement": "Resolve Quad and Explosher first/steady birth-to-visible-muzzle alignment across aim, cadence, OBB, LOS and authority.",
+      "testedOrObserved": "Source and emitted tests plus retained actual draw evidence cover both owners, including intentional blocked/predicted fallback.",
+      "remaining": "Software completion candidate: required exact-head CI and recorded fixture/visual limits remain; do not invent a retail aperture condition.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261029/issue1431-current2b/README.md",
+          "presentAtPRs": [
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/issue1431-current2b/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons-1431.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons-1431.md"
+        }
+      ]
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1434",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Calibrate a repeatable equivalent whole-game software A/B with matched workload/readback, ABBA/BAAB and frame statistics.",
+      "testedOrObserved": "A native/native software comparison has failed its strict identity gate; isolated operation-level savings are recorded separately.",
+      "remaining": "Produce a calibrated matching baseline and complete the requested paired measurements before claiming a speedup.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261029/current-pair-methodology/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/current-pair-methodology/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1565",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Complete the plan’s G0/G2 quality and non-regression measurements; use later pose/distance techniques only if their stated conditions are met.",
+      "testedOrObserved": "Existing source and controlled visual CPU work has partial evidence.",
+      "remaining": "Establish comparable workload and quality/non-regression results; G3/G4 are conditional, not mandatory speculative features.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/continuation-20261029.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/continuation-20261029.md"
+        }
+      ]
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1607",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Separate failed-hook 20F source field from observed 45F retry phases and verify miss, near-floor, near-wall, input and cost behavior.",
+      "testedOrObserved": "A separately supported successful-hook 20F minimum was fixed; the current 44/45/46F miss controls retain the 45F behavior.",
+      "remaining": "Resolve the source meaning of the failed-hook timing phases or document a supported no-change outcome; do not simply replace 45F with 20F.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons-1607.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons-1607.md"
+        }
+      ]
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1665",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Require trusted weapon action, resource, timeline and geometry evidence before accepting PvP hit damage, including legitimate lag/migration behavior.",
+      "testedOrObserved": "Malformed births no longer mint executable projectile proof. In the 3054 emitted diagnostic presentation-only attacks cause zero damage, but valid-shaped forged projectile events still cause 36 HP without sender launch or receiver contact.",
+      "remaining": "Connect production-required trusted action/contact authority with genuine positive, no-fire/forgery, lag and migration controls; component replay alone is not that authority.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/authority-remaining.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/authority-remaining.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/native-birth-admission/README.md",
+          "presentAtPRs": [
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/native-birth-admission/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/pr1912-reconciled-runtime/README.md",
+          "presentAtPRs": [
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/pr1912-reconciled-runtime/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1666",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Require trusted action/contact and weak-state evidence for Boss/crablet hits, with correct proof consumption, migration and legitimate attack controls.",
+      "testedOrObserved": "Existing proof ordering and malformed-birth fixes reject several false claims. The 3054 emitted valid-shaped forged projectile diagnostic still inflicts 36 HP on Boss and crablet without actual launch/contact.",
+      "remaining": "Connect trusted Boss/crablet action and contact authority in the mandatory production path; retain valid weak-state and replay/migration behavior.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/authority-remaining.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/authority-remaining.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/pr1912-reconciled-runtime/README.md",
+          "presentAtPRs": [
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/pr1912-reconciled-runtime/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1671",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Identify the dominant native gameplay CPU path and demonstrate material improvement in a comparable full workload without changing simulation, paint, collision or AI.",
+      "testedOrObserved": "Controlled 8-actor/7-bot/300-tick traces and selected query reductions retain state; whole-workload timings varied and did not establish material recovery.",
+      "remaining": "Profile and fix the demonstrated dominant path, then compare equivalent workloads and output; device FPS is waived.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261029/native-cpu-rejected/README.md",
+          "presentAtPRs": [
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/native-cpu-rejected/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1708",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Source and verify the eleven named weapons’ own S3 11.3 audio cues, event mappings, hashes and permitted usage.",
+      "testedOrObserved": "Existing audio controls and candidate-source reviews do not establish version, provenance or rights for all named cues.",
+      "remaining": "Identify and verify the required cue/event sources and usage rights before adopting or publishing assets.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/audio-followup.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/audio-followup.md"
+        }
+      ]
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1757",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Profile multiple stage and practice conditions, reduce the demonstrated resource/CPU bottleneck and compare p50/p95 with gameplay and resource parity.",
+      "testedOrObserved": "Focused native and rendering optimizations retain selected state; comparable whole-scene recovery is not yet established.",
+      "remaining": "Complete equivalent multistage/practice profiling and parity-backed repair; device tracing is waived.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-performance/README.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-performance/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1789",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Verify Bloblobber floor/slope dispatch and restitution sequence, speed-limit interpretation and sparse large-bubble defaults.",
+      "testedOrObserved": "Existing bounce and source-row diagnostics identify plausible semantics but not the exact rules.",
+      "remaining": "Resolve the slope, speed-limit and default semantics with reliable relevant evidence before changing behavior.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1813",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Isolate Dynamo secondary-unit damage, collision, object hit and paint, and determine whether UnitDamageRate=0 is a multiplier or sentinel.",
+      "testedOrObserved": "The source field omission is known and actual unit/authority controls exist; zero’s native meaning is not established by the value alone.",
+      "remaining": "Compare an isolated unit-1 path against a reliable current-S3 semantic source; preserve paint and crossfire.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261029/1814-current-owner-audit/README.md",
+          "presentAtPRs": [
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/1814-current-owner-audit/README.md"
+        },
+        {
+          "path": "reports/issue-resolution-20261028/remaining-weapons.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/remaining-weapons.md"
+        }
+      ]
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1814",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Reconcile the ten named #1804–#1813 tracker items and requested real-path matrix for eleven affected weapons.",
+      "testedOrObserved": "The owner audit identifies completed rows and retained #1813 semantic uncertainty; related #1789/#1431 are not additional tracker prerequisites.",
+      "remaining": "Close the actual tracker rows and requested weapon matrix with their evidence; do not impose a new 65-weapon retail-proof condition.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261029/1814-current-owner-audit/README.md",
+          "presentAtPRs": [
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261029/1814-current-owner-audit/README.md"
+        }
+      ]
+    },
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "issueUrl": "https://github.com/rhgrive3/actions/issues/1823",
+      "status": "open_specific_criterion",
+      "originalRequirement": "Obtain the actual S3 Charger rise cue and trigger/curve provenance and validate click/rise/ready/keep lifecycle.",
+      "testedOrObserved": "Existing legacy phrase/lifecycle repairs are tested but are not the sourced S3 cue.",
+      "remaining": "Find and verify the correct cue and event mapping, then perform the specified software lifecycle and audio checks.",
+      "evidence": [
+        {
+          "path": "reports/issue-resolution-20261028/audio-followup.md",
+          "presentAtPRs": [
+            1908,
+            1910,
+            1909,
+            1907,
+            1911,
+            1912
+          ],
+          "url": "https://github.com/rhgrive3/actions/blob/7e8601d233e2a56ee175f0c459ed304621e870b5/reports/issue-resolution-20261028/audio-followup.md"
+        }
+      ]
+    }
+  ],
+  "pr1908State": {
+    "state": "closed",
+    "merged": true,
+    "mergedAt": "2026-10-29T13:38:35Z",
+    "mergeCommitSha": "f9a0ed1986320dd4b95c6e422fab9ebc92b91eb5",
+    "base": "main",
+    "reportedMergedBy": "rhgrive3",
+    "mainHeadAtCensus": "fecc40a9de1652a1f6e27ae6840439ff989e8fdc",
+    "note": "Read-only GitHub API observation; cause of merge state not adjudicated."
+  },
+  "headSnapshotBasis": "publishedHeads are the earlier reviewed heads; evidence path presence is checked at those identities, not inferred from final PR head.",
+  "mainState": {
+    "head": "fecc40a9de1652a1f6e27ae6840439ff989e8fdc",
+    "parents": [
+      "7e8601d233e2a56ee175f0c459ed304621e870b5",
+      "972e26cdc117f7fec6a3636d2fd1545481a5eaba"
+    ],
+    "tree": "23bdba55e03f611dae84aecc447d810e71767f6f",
+    "treeAlsoMatches": "db7ea1dc63db02e15f2025a4f1c2839ff97ec57a",
+    "mergeActor": "not inferred",
+    "knownFailures": [
+      "FX composition order: 4 failures of 10 selected tests",
+      "Wave semantic incoming controls: 5 failures of 5 against the merged source",
+      "Exported posture API stale-state behavior reproduced"
+    ],
+    "fixes": "Local fixes are under validation and are not yet published at this snapshot",
+    "ciNote": "The merge message contains [skip ci]. A cancelled account annotation is not a successful test. Earlier #1908 recovery attempt remains historical and does not prove current main."
+  },
+  "currentEvidenceAddenda": [
+    {
+      "asOf": "2026-10-29T16:17:34Z",
+      "historicalSnapshotPreserved": true,
+      "openIssueNumbers": [
+        226,
+        287,
+        532,
+        642,
+        735,
+        845,
+        890,
+        952,
+        956,
+        992,
+        997,
+        1097,
+        1116,
+        1431,
+        1434,
+        1565,
+        1607,
+        1665,
+        1666,
+        1671,
+        1708,
+        1757,
+        1789,
+        1813,
+        1814,
+        1823
+      ],
+      "excludedIssue": 401,
+      "physicalDeviceValidation": "waived",
+      "closuresAlreadyVerified": [
+        79,
+        725,
+        1767
+      ],
+      "publicPR": {
+        "number": 1914,
+        "state": "open",
+        "draft": false,
+        "head": "331fdaadb061d192e83e0f82d37fbb5c3291da0a",
+        "base": "085dc852fbed282204b84b63a47ee56a7d95a7f1"
+      },
+      "localUnpublishedCommit": "7290b01f329f7de3b7ccf830b50604c9585061ef",
+      "commonEvidence": {
+        "source": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+        "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+        "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+        "publishedReport": "https://github.com/rhgrive3/actions/blob/331fdaadb061d192e83e0f82d37fbb5c3291da0a/reports/issue-resolution-20261029/pr1914-ci-reconciliation/README.md"
+      },
+      "issues": {
+        "1431": {
+          "browserConditions": 36,
+          "births": 288,
+          "images": 75,
+          "actualDraws": 147,
+          "browserScope": "controlled actual native actors/physics and SwiftShader; not full match or retail",
+          "previous2bEvidenceRemainsSeparate": true,
+          "requiredExactHeadHostedCI": "pending"
+        },
+        "642": {
+          "profiles": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "scope": "actual local Turf touch-emulation snapshots; not time-weighted or physical VRAM",
+          "eligiblePackedColorSavingsPercent": 25,
+          "activeScreenFxColorSavingsPercent": 0,
+          "sampledMenuTargets": "null target accessors only",
+          "highAudioRequestFailures": "two ERR_ABORTED retained",
+          "requiredExactHeadHostedCI": "pending"
+        },
+        "1814": {
+          "sourceTestCommit": "a1805ae79f0d02de387d50ab86adcb142ddd7476",
+          "localSourceTest": "patches/splatoon3/tests/issue-1814-native-weapon-matrix-20261029.test.mjs",
+          "testCount": 8,
+          "passed": 8,
+          "skipped": 0,
+          "scope": "controlled Actor/Runner/projectile and deployed-object fixture; Character pose and movement integration stubbed",
+          "remaining": "#1813 retail zero-rate semantics and tracker completion remain unresolved"
+        },
+        "1434": {
+          "priorPairKind": "distinct common C versus optimized B, not a same-build native/native self-control",
+          "commonSource": "4f5f7acc15e43016985d8b782bf3ba83551a9443",
+          "optimizedSource": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+          "priorVersions": [
+            135,
+            134
+          ],
+          "priorStrictResult": "rejected and retained",
+          "controlAttributionLocalPath": "/workspace/scratch/agent3-ring-gpu-reentry-20261029-v3/whole-game-control-mode-proof.json",
+          "controlAttributionSha256": "99b271d7263eaea0b4f1df32667fd4289a26d9316ef2782034e5e914d2e42168",
+          "isolatedRingDiagnostic": "99 observations / 33 groups; RGBA and live VBO/source exact, strict state remains unequal; no whole-game causality claim",
+          "currentCurrentSelfControl": "source/build preflight only; browser calibration pending"
+        }
+      },
+      "otherStatus": "Native Chromium audio request failures and required current-hosted CI unresolved; minimap clock and sub-mark investigations not adjudicated. MOV-08b and isolated Character QA holds retained."
+    },
+    {
+      "atUtc": "2026-10-29T18:35:17Z",
+      "historicalSnapshotPreserved": true,
+      "publishedPR1914Head": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+      "mainPreservedThrough": "91c1aa89061ddeec0685a7b32899b3b711995c60",
+      "externalPR1916": "Closed/merged by a separate operation after owner dafba0a2; all eight final owner paths retained. The root abandoned its obsolete unpublished integration and did not push the closed PR.",
+      "historical39cBuild": {
+        "contentHash": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+        "inputHash": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+        "inputs": 1550,
+        "artifacts": 2267,
+        "mandatoryEmitted": "369/369 pass; no skips",
+        "context": "Strict real loss/restore,120 RAF and retained state/paint/terminal refusal pass; not automatic gameplay recovery",
+        "menu": "121/121 pass;8 exact responses include4 new modules",
+        "volumeAndEffectsCPU": "13/13 pass; emitted volume uses source Three and simulated GL",
+        "rollHissenBrowser": "Controlled scene passes with no request/page/HTTP/GL errors; not full match",
+        "composer": "48 cases pass",
+        "postDepth": "78 Chromium and78 configured WPE WebKit cases pass",
+        "nativeTouch": "LOW/MED/HIGH bounded samples all pass; eligible estimated color allocation25% lower, no hardware memory/FPS claim",
+        "fullActive": "NONPASS after65 kits/12 gear: synthetic HUD omitted constructor-owned spIcon; Minimap not reached",
+        "packet": "../main39-followup-evidence/README.md"
+      },
+      "followupSourceCorrections": {
+        "hud": "Detached private spIcon clone before first native update; exact old full-body seal preserved by one-field inverse; regression registered in existing VM suite",
+        "menu": "Historical menu behavior regression now registered in the same VM suite",
+        "nativeReplay": "Five synchronous world hooks reject thenables, retire pending contacts or reject initialization. Peer-approved131/131; unchanged implementation fails6 of7 added controls. Does not cancel Promise continuations, roll back arbitrary callbacks or connect production authority."
+      },
+      "issue1813": "Public11.2 analysis identifies two paint-only secondary bullets, immutable11.2/11.3 parameter rows match17556 bytes; existing3 native-source cases and non-vacuous separate-owner crossfire control pass. Conditional software candidate, not per-target retail collision measurement. See1813-source-corroboration.",
+      "securityStillOpen": "Fresh f277 emitted diagnostic still accepts complete forged native projectile rows for36 HP each on PvP/Boss/crablet without sender launch/contact; authenticating an owner row does not derive trusted actions. #1665/#1666 remain open.",
+      "review": "All11 original inline threads resolved after verifying public39c code; no new findings at18:28:32.",
+      "CI": "At18:29:19,39c had36 workflows:27success,5active,3queued,1skip,0fail; this is progress, not final acceptance. Final next head needs its own CI.",
+      "issueClosure": "No additional issue closed by this addendum; original26 excluding401 retained. Device testing waived; main merge not performed by root."
+    },
+    {
+      "sourceEpoch": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+      "buildContentHash": "5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a",
+      "buildInputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+      "sourceInputs": 1550,
+      "artifacts": 2267,
+      "emittedNative": "131/131 pass, no skips",
+      "emittedExactHUD": "2/2 pass, no skips",
+      "focusedBrowser": "PASS all UI and7 Minimap/710 frames, strict errors empty, fullAcceptance false; prior full-active remains NONPASS",
+      "reticleSource": "32/32 pass",
+      "runnerContracts": "118/118 pass",
+      "evidence": "../final73-scoped-validation/README.md",
+      "nextHeadCI": "pending; no successful acceptance inferred",
+      "issueClosures": "none added"
+    },
+    {
+      "baseHead": "98ccd1c6ea143ea402319c6637cd1bca5d075a6e",
+      "runtimeInputsUnchanged": true,
+      "followup": "../inherited-visual-fixture-followup/README.md",
+      "source": "37/37 pass; original focused14/17 with3 real fixture failures",
+      "emittedHissen": "8/8 pass",
+      "controlledStringer": "Original15!=25 failure; exact two expected radii corrected to15;15 cases pass",
+      "contactFK": "2/2 pass actualbank108poses,13 motion files SHA-bound; not hosted acceptance",
+      "resourceCapture": "../642-native-webgl-resource-capture-98/README.md",
+      "nativeGL": "385 calls/192 attachments/64 native textures, original48 andobserved48 identical; allocations anddeletes observed, notphysicalVRAM",
+      "budget": "Existing mean<=1.25,p99<=3 accepted byengineeringreview, no assertednumericaluseragreement",
+      "CI": "NewheadrequiredCI pending; prior98 stillhad3 sourcefixturefailures",
+      "issueClosures": "none added"
+    }
+  ]
+}

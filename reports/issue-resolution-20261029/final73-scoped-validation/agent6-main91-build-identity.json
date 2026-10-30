@@ -1,0 +1,873 @@
+{
+  "scope": "Read-only source and complete build-artifact identity comparison, not current-build browser, hardware, gameplay, performance, or visual equivalence. Versioned URLs normalized solely for content comparison; changed shell, HUD, authority and volume-manifest bytes remain explicit. Issue 1431 36-case prior capture is 6013; issue 642 recent native sample is f277.",
+  "builds": [
+    {
+      "label": "6013",
+      "site": "/workspace/scratch/main-wave345-repaired-site",
+      "source": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+      "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+      "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "inputMapSha256": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+      "revision": "2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd",
+      "inputCount": 1546,
+      "artifactCount": 2259,
+      "verifiedPrebuiltCount": 0
+    },
+    {
+      "label": "f277",
+      "site": "/workspace/scratch/main0904-integrated-site",
+      "source": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+      "contentHash": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+      "inputHash": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+      "inputMapSha256": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+      "manifestSha256": "a7ae27e9911639bc1f8d4df55b4113c95aef7a4cca173136ca46446f9aace2fd",
+      "revision": "7d9d0e1be7cf368b60b05047de7cbaf59ee72bca6d528fc8e4056bd927dc9822",
+      "inputCount": 1550,
+      "artifactCount": 2267,
+      "verifiedPrebuiltCount": 0
+    },
+    {
+      "label": "5d8b",
+      "site": "/workspace/scratch/main91-phase-integrated-site",
+      "source": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+      "contentHash": "5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a",
+      "inputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+      "inputMapSha256": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+      "manifestSha256": "380891fc733b8c69f78d5fe114f9aea3b7882be06e257915cb9a6cdac51b2a9f",
+      "revision": "4dce88d6e1f29922bcef1f70cb9fb4964bc4e3bd790bce2e641fd1b949f49077",
+      "inputCount": 1550,
+      "artifactCount": 2267,
+      "verifiedPrebuiltCount": 0
+    }
+  ],
+  "selectedRuntimeArtifacts": {
+    "patches/local-quality/ink-volume/recipes.mjs": {
+      "6013": "136628ebe56c2d6575711e33681ef757257f8142076b5a2c493846d5d61d4eab",
+      "f277": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d",
+      "5d8b": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d"
+    },
+    "patches/local-quality/ink-volume/runtime.mjs": {
+      "6013": "9fa94ac76b9de498c2fdd92005dbf88f5ab53ebc60cd0a55f28caa74922c44e1",
+      "f277": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91",
+      "5d8b": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91"
+    },
+    "patches/native-stages/runtime/native-projectile-sweep.mjs": {
+      "6013": "0ad1ec94eabac504e13949cfeacc6ece4709afa1343917bc294043db1d9410ec",
+      "f277": "0ad1ec94eabac504e13949cfeacc6ece4709afa1343917bc294043db1d9410ec",
+      "5d8b": "0ad1ec94eabac504e13949cfeacc6ece4709afa1343917bc294043db1d9410ec"
+    },
+    "patches/network-replication/slosher-paint-admission.mjs": {
+      "6013": "dd93729ed7a866be649073a65ba80afce9deae39096d388f8920d86257efe88a",
+      "f277": "dd93729ed7a866be649073a65ba80afce9deae39096d388f8920d86257efe88a",
+      "5d8b": "dd93729ed7a866be649073a65ba80afce9deae39096d388f8920d86257efe88a"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherBathTub_Shot_00.mp3": {
+      "6013": "9c1586fda80cd8e32ce96d261a6d94d546dee04130639ca3518122dd78551bbe",
+      "f277": "9c1586fda80cd8e32ce96d261a6d94d546dee04130639ca3518122dd78551bbe",
+      "5d8b": "9c1586fda80cd8e32ce96d261a6d94d546dee04130639ca3518122dd78551bbe"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherBathTub_Shot_01.mp3": {
+      "6013": "d93193530f57992c3d7d10d62b94f771e1471c099696d6fe743fd1c6a2788782",
+      "f277": "d93193530f57992c3d7d10d62b94f771e1471c099696d6fe743fd1c6a2788782",
+      "5d8b": "d93193530f57992c3d7d10d62b94f771e1471c099696d6fe743fd1c6a2788782"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherDiffusion_Shot_00.mp3": {
+      "6013": "e86df88bef2ec978c615705357bde508f5f04e9f1f5fd2e77aa2f97a06505a8f",
+      "f277": "e86df88bef2ec978c615705357bde508f5f04e9f1f5fd2e77aa2f97a06505a8f",
+      "5d8b": "e86df88bef2ec978c615705357bde508f5f04e9f1f5fd2e77aa2f97a06505a8f"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherDiffusion_Shot_01.mp3": {
+      "6013": "963419850300eef4bb46ffb1d37dd8c52a808be0756cfd8b496c447cbc418e92",
+      "f277": "963419850300eef4bb46ffb1d37dd8c52a808be0756cfd8b496c447cbc418e92",
+      "5d8b": "963419850300eef4bb46ffb1d37dd8c52a808be0756cfd8b496c447cbc418e92"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherLauncher_Shot_00.mp3": {
+      "6013": "0d2af2a7ecf58981ef2ab367fcbee0f7b9010df68b610409f25d6d1ad1a719f4",
+      "f277": "0d2af2a7ecf58981ef2ab367fcbee0f7b9010df68b610409f25d6d1ad1a719f4",
+      "5d8b": "0d2af2a7ecf58981ef2ab367fcbee0f7b9010df68b610409f25d6d1ad1a719f4"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherLauncher_Shot_01.mp3": {
+      "6013": "6048817270dd47bb96a096b05396a452ebf3c8560aa153f83d654f4aedfbe70f",
+      "f277": "6048817270dd47bb96a096b05396a452ebf3c8560aa153f83d654f4aedfbe70f",
+      "5d8b": "6048817270dd47bb96a096b05396a452ebf3c8560aa153f83d654f4aedfbe70f"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherStrong_Shot_00.mp3": {
+      "6013": "5dd8131ec2eef901259b4bc0d7d90da9d464aaa0bf068c5e7f83f6e61f2f5db6",
+      "f277": "5dd8131ec2eef901259b4bc0d7d90da9d464aaa0bf068c5e7f83f6e61f2f5db6",
+      "5d8b": "5dd8131ec2eef901259b4bc0d7d90da9d464aaa0bf068c5e7f83f6e61f2f5db6"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherStrong_Shot_01.mp3": {
+      "6013": "32d109446a9eba142c59a16a543158fc1b8c820627b26d6396af3c2f421071c9",
+      "f277": "32d109446a9eba142c59a16a543158fc1b8c820627b26d6396af3c2f421071c9",
+      "5d8b": "32d109446a9eba142c59a16a543158fc1b8c820627b26d6396af3c2f421071c9"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherWashtub_Explosion_00.mp3": {
+      "6013": "8f8a52e58d4f6295e5ed8a5d1181c42349e7e68e1fb51a8d3712c875c80eebd7",
+      "f277": "8f8a52e58d4f6295e5ed8a5d1181c42349e7e68e1fb51a8d3712c875c80eebd7",
+      "5d8b": "8f8a52e58d4f6295e5ed8a5d1181c42349e7e68e1fb51a8d3712c875c80eebd7"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherWashtub_Shot_00.mp3": {
+      "6013": "a3321428824fd892a4391e0126f73a8a683500d005d3cc9e8aa45fac78afbc21",
+      "f277": "a3321428824fd892a4391e0126f73a8a683500d005d3cc9e8aa45fac78afbc21",
+      "5d8b": "a3321428824fd892a4391e0126f73a8a683500d005d3cc9e8aa45fac78afbc21"
+    },
+    "patches/splatoon3/runtime/audio/s3-real/Wp_SlosherWashtub_Shot_01.mp3": {
+      "6013": "832d624f9a4139969b2f4c51b80a066e06c04b0ab8d940199fa80aad4fb9d406",
+      "f277": "832d624f9a4139969b2f4c51b80a066e06c04b0ab8d940199fa80aad4fb9d406",
+      "5d8b": "832d624f9a4139969b2f4c51b80a066e06c04b0ab8d940199fa80aad4fb9d406"
+    },
+    "patches/splatoon3/runtime/catalog-dualies-motion.mjs": {
+      "6013": "132915a94e7b0d9b2a0709828dc56c2166ab4c85b9b452e97b2d0f3f5b9f9f86",
+      "f277": "132915a94e7b0d9b2a0709828dc56c2166ab4c85b9b452e97b2d0f3f5b9f9f86",
+      "5d8b": "132915a94e7b0d9b2a0709828dc56c2166ab4c85b9b452e97b2d0f3f5b9f9f86"
+    },
+    "patches/splatoon3/runtime/catalogue-payload.mjs": {
+      "6013": "eec988e898d6354815aa9d8814da483c1179ec0e04a19d40a474f373e01e44d1",
+      "f277": "eec988e898d6354815aa9d8814da483c1179ec0e04a19d40a474f373e01e44d1",
+      "5d8b": "eec988e898d6354815aa9d8814da483c1179ec0e04a19d40a474f373e01e44d1"
+    },
+    "patches/splatoon3/runtime/catalogue.mjs": {
+      "6013": "94879b9c00bc73404ba2fa01464f57a71610760495e36894c3cab6a10c7f6703",
+      "f277": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124",
+      "5d8b": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124"
+    },
+    "patches/splatoon3/runtime/crab-tank-projectile.mjs": {
+      "6013": "5863da119d43e32c183f2eb11d2ca386538028a43a7d72153f3a736b8fb8332c",
+      "f277": "5863da119d43e32c183f2eb11d2ca386538028a43a7d72153f3a736b8fb8332c",
+      "5d8b": "5863da119d43e32c183f2eb11d2ca386538028a43a7d72153f3a736b8fb8332c"
+    },
+    "patches/splatoon3/runtime/dualies-accuracy.mjs": {
+      "6013": "1e884cdfe48cbc1fb7b83e6acb36875a318a68c5df56567098d45b6787594dad",
+      "f277": "1e884cdfe48cbc1fb7b83e6acb36875a318a68c5df56567098d45b6787594dad",
+      "5d8b": "1e884cdfe48cbc1fb7b83e6acb36875a318a68c5df56567098d45b6787594dad"
+    },
+    "patches/splatoon3/runtime/dualies-guide-cache.mjs": {
+      "6013": "683279d04c0eecbaae1f88f449c89ae54209a8c9170b868ead8a27edee7a6982",
+      "f277": "683279d04c0eecbaae1f88f449c89ae54209a8c9170b868ead8a27edee7a6982",
+      "5d8b": "683279d04c0eecbaae1f88f449c89ae54209a8c9170b868ead8a27edee7a6982"
+    },
+    "patches/splatoon3/runtime/dualies-motion.mjs": {
+      "6013": "9f0e2f73031ed57f26a656db4e2ce1654e4caeeccc71ca66d873da086d08e5d5",
+      "f277": "9f0e2f73031ed57f26a656db4e2ce1654e4caeeccc71ca66d873da086d08e5d5",
+      "5d8b": "9f0e2f73031ed57f26a656db4e2ce1654e4caeeccc71ca66d873da086d08e5d5"
+    },
+    "patches/splatoon3/runtime/dualies-network.mjs": {
+      "6013": "ad119d6fae5bd267582e35c08dd83b22607062767965bb7052b05215f59a887e",
+      "f277": "ad119d6fae5bd267582e35c08dd83b22607062767965bb7052b05215f59a887e",
+      "5d8b": "ad119d6fae5bd267582e35c08dd83b22607062767965bb7052b05215f59a887e"
+    },
+    "patches/splatoon3/runtime/dualies-slide-paint.mjs": {
+      "6013": "d4adfe8443cb07a566fdfe651829986098e23c7dfab4039fdfb1a6dc16213208",
+      "f277": "d4adfe8443cb07a566fdfe651829986098e23c7dfab4039fdfb1a6dc16213208",
+      "5d8b": "d4adfe8443cb07a566fdfe651829986098e23c7dfab4039fdfb1a6dc16213208"
+    },
+    "patches/splatoon3/runtime/main-weapon-catalog-data.mjs": {
+      "6013": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f",
+      "f277": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f",
+      "5d8b": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f"
+    },
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": {
+      "6013": "abb4bb5d9a3944e586c63a93ae7ce04b1be395e6e9d0b17a42ba3c83ed196cb7",
+      "f277": "abb4bb5d9a3944e586c63a93ae7ce04b1be395e6e9d0b17a42ba3c83ed196cb7",
+      "5d8b": "abb4bb5d9a3944e586c63a93ae7ce04b1be395e6e9d0b17a42ba3c83ed196cb7"
+    },
+    "patches/splatoon3/runtime/projectile-collision.mjs": {
+      "6013": "5cb60082b7ddfe8a20d51a373eba016cb609a75557a4a464d568eb82a7ef9606",
+      "f277": "5cb60082b7ddfe8a20d51a373eba016cb609a75557a4a464d568eb82a7ef9606",
+      "5d8b": "5cb60082b7ddfe8a20d51a373eba016cb609a75557a4a464d568eb82a7ef9606"
+    },
+    "patches/splatoon3/runtime/projectile-presentation.mjs": {
+      "6013": "2e94deb83714521789635228d80f883f2da4343039541e90345d0a6f8a721d4e",
+      "f277": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718",
+      "5d8b": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718"
+    },
+    "patches/splatoon3/runtime/projectile-visual-source-data.mjs": {
+      "6013": "202dc32cd0863961436ffc4ddfa147ed5b733ff483421fe3955827731dcca362",
+      "f277": "202dc32cd0863961436ffc4ddfa147ed5b733ff483421fe3955827731dcca362",
+      "5d8b": "202dc32cd0863961436ffc4ddfa147ed5b733ff483421fe3955827731dcca362"
+    },
+    "patches/splatoon3/runtime/projectile-visuals.mjs": {
+      "6013": "22921a3270e8e62b8b569e69843a6d235f4f521eb48ad9433852b33882931567",
+      "f277": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435",
+      "5d8b": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435"
+    },
+    "patches/splatoon3/runtime/s3-projectile-shapes.mjs": {
+      "6013": "2b6e114ca640e8a261b795e49b2121e98151b433a74db9f39628fc11456f2df4",
+      "f277": "2b6e114ca640e8a261b795e49b2121e98151b433a74db9f39628fc11456f2df4",
+      "5d8b": "2b6e114ca640e8a261b795e49b2121e98151b433a74db9f39628fc11456f2df4"
+    },
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": {
+      "6013": "22047556c8e127b1c83334da57ba2dca5df29107ac9b38a8b1d10c840d9713ff",
+      "f277": "22047556c8e127b1c83334da57ba2dca5df29107ac9b38a8b1d10c840d9713ff",
+      "5d8b": "22047556c8e127b1c83334da57ba2dca5df29107ac9b38a8b1d10c840d9713ff"
+    },
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": {
+      "6013": "876f300d3a8480a4e132c967fd629d5653c30e0cfcf478f7152ab8832911b13f",
+      "f277": "876f300d3a8480a4e132c967fd629d5653c30e0cfcf478f7152ab8832911b13f",
+      "5d8b": "876f300d3a8480a4e132c967fd629d5653c30e0cfcf478f7152ab8832911b13f"
+    },
+    "patches/splatoon3/runtime/squidroll-effects.mjs": {
+      "6013": null,
+      "f277": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16",
+      "5d8b": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16"
+    },
+    "patches/splatoon3/runtime/squidroll-motion.mjs": {
+      "6013": "3c94b1e72e45c9d43e5e202397bf93e9deb7b13ff125e0e521dcc83e36cac686",
+      "f277": "3c94b1e72e45c9d43e5e202397bf93e9deb7b13ff125e0e521dcc83e36cac686",
+      "5d8b": "3c94b1e72e45c9d43e5e202397bf93e9deb7b13ff125e0e521dcc83e36cac686"
+    },
+    "src/core/renderer.js": {
+      "6013": "d680d62d89d756a4531beda58577a4d1598c21b13967128e7764eb5e436da01c",
+      "f277": "d680d62d89d756a4531beda58577a4d1598c21b13967128e7764eb5e436da01c",
+      "5d8b": "d680d62d89d756a4531beda58577a4d1598c21b13967128e7764eb5e436da01c"
+    },
+    "src/fx/fx.js": {
+      "6013": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+      "f277": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be",
+      "5d8b": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be"
+    },
+    "src/fx/screenfx.js": {
+      "6013": "99f6dc737cb9e7ab8c3d430ab93a391e8ffb3f901dfd078b7186b2337826b7d0",
+      "f277": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a",
+      "5d8b": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a"
+    },
+    "src/game/actor.js": {
+      "6013": "4f1f931334079ec2f5094dd4ef4860cc101f186fd2b20907bf3aa091b363e138",
+      "f277": "4f1f931334079ec2f5094dd4ef4860cc101f186fd2b20907bf3aa091b363e138",
+      "5d8b": "4f1f931334079ec2f5094dd4ef4860cc101f186fd2b20907bf3aa091b363e138"
+    },
+    "src/game/character-weapons.js": {
+      "6013": "0c7ef7b8a220ddac6f02bac078f3c18c536a7b20820ca77d68f20af6d1b1a621",
+      "f277": "0c7ef7b8a220ddac6f02bac078f3c18c536a7b20820ca77d68f20af6d1b1a621",
+      "5d8b": "0c7ef7b8a220ddac6f02bac078f3c18c536a7b20820ca77d68f20af6d1b1a621"
+    },
+    "src/game/weapons.js": {
+      "6013": "c34029cc1021acbc0f0645872306866bcd3e5d9872201e369d82e3da17db635d",
+      "f277": "c34029cc1021acbc0f0645872306866bcd3e5d9872201e369d82e3da17db635d",
+      "5d8b": "c34029cc1021acbc0f0645872306866bcd3e5d9872201e369d82e3da17db635d"
+    },
+    "vendor/three/build/three.module.js": {
+      "6013": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3",
+      "f277": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3",
+      "5d8b": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3"
+    },
+    "vendor/three/jsm/postprocessing/EffectComposer.js": {
+      "6013": "7bb2fc707c332db063338abeeeba2b171b886e86fda85314dd31806df020b26f",
+      "f277": "7bb2fc707c332db063338abeeeba2b171b886e86fda85314dd31806df020b26f",
+      "5d8b": "7bb2fc707c332db063338abeeeba2b171b886e86fda85314dd31806df020b26f"
+    },
+    "vendor/three/jsm/postprocessing/GTAOPass.js": {
+      "6013": "1b84a94464efa31f385947c6cbe3df52d8e0a63ab481cef27c164880af4926a3",
+      "f277": "1b84a94464efa31f385947c6cbe3df52d8e0a63ab481cef27c164880af4926a3",
+      "5d8b": "1b84a94464efa31f385947c6cbe3df52d8e0a63ab481cef27c164880af4926a3"
+    },
+    "vendor/three/jsm/postprocessing/MaskPass.js": {
+      "6013": "ea325e70186b5145e4d36e55dd83d085c9cd3f8fd54998ac67c83ad26f4633f7",
+      "f277": "ea325e70186b5145e4d36e55dd83d085c9cd3f8fd54998ac67c83ad26f4633f7",
+      "5d8b": "ea325e70186b5145e4d36e55dd83d085c9cd3f8fd54998ac67c83ad26f4633f7"
+    },
+    "vendor/three/jsm/postprocessing/OutputPass.js": {
+      "6013": "b431f3d70c53d03d6cd4cf9ab031bf4d31aa52e0ebb23469c8b880aedfdc1d39",
+      "f277": "b431f3d70c53d03d6cd4cf9ab031bf4d31aa52e0ebb23469c8b880aedfdc1d39",
+      "5d8b": "b431f3d70c53d03d6cd4cf9ab031bf4d31aa52e0ebb23469c8b880aedfdc1d39"
+    },
+    "vendor/three/jsm/postprocessing/Pass.js": {
+      "6013": "9c1a4327f1675f0e44987adfe7dd1aa78cceccb19e2c985040bc9ec600854391",
+      "f277": "9c1a4327f1675f0e44987adfe7dd1aa78cceccb19e2c985040bc9ec600854391",
+      "5d8b": "9c1a4327f1675f0e44987adfe7dd1aa78cceccb19e2c985040bc9ec600854391"
+    },
+    "vendor/three/jsm/postprocessing/RenderPass.js": {
+      "6013": "02aa08f542746f0f86514d03c20dd5bfba691a68ccdc2c80c9e753a3beb72c63",
+      "f277": "02aa08f542746f0f86514d03c20dd5bfba691a68ccdc2c80c9e753a3beb72c63",
+      "5d8b": "02aa08f542746f0f86514d03c20dd5bfba691a68ccdc2c80c9e753a3beb72c63"
+    },
+    "vendor/three/jsm/postprocessing/ShaderPass.js": {
+      "6013": "6074191d28c419638772306a32c0bbd95b67805552645aa55a959d5d3f03f0f2",
+      "f277": "6074191d28c419638772306a32c0bbd95b67805552645aa55a959d5d3f03f0f2",
+      "5d8b": "6074191d28c419638772306a32c0bbd95b67805552645aa55a959d5d3f03f0f2"
+    },
+    "vendor/three/jsm/postprocessing/UnrealBloomPass.js": {
+      "6013": "ec5b29508cb242968fb623138aec2bfb63d02c97d1436cc1e5f8a2603a3d8e7a",
+      "f277": "ec5b29508cb242968fb623138aec2bfb63d02c97d1436cc1e5f8a2603a3d8e7a",
+      "5d8b": "ec5b29508cb242968fb623138aec2bfb63d02c97d1436cc1e5f8a2603a3d8e7a"
+    }
+  },
+  "volumeManifests": [
+    {
+      "name": "hissen-fallback",
+      "rows": [
+        {
+          "label": "6013",
+          "binary": "../../../../../_versions/2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd/patches/local-quality/ink-volume/assets/hissen-fallback/volumes.bin.gz",
+          "normalizedHash": "277d4fba257626ae2bd1af1ae934e8da1ea12f391733e1a2270b5f375e7e6b0a",
+          "binarySHA256": "976da22e14602d8be29c177aa16d01d62b1ee9cc6b3daad37c2ba24e59d976b2"
+        },
+        {
+          "label": "f277",
+          "binary": "../../../../../_versions/7d9d0e1be7cf368b60b05047de7cbaf59ee72bca6d528fc8e4056bd927dc9822/patches/local-quality/ink-volume/assets/hissen-fallback/volumes.bin.gz",
+          "normalizedHash": "277d4fba257626ae2bd1af1ae934e8da1ea12f391733e1a2270b5f375e7e6b0a",
+          "binarySHA256": "976da22e14602d8be29c177aa16d01d62b1ee9cc6b3daad37c2ba24e59d976b2"
+        },
+        {
+          "label": "5d8b",
+          "binary": "../../../../../_versions/4dce88d6e1f29922bcef1f70cb9fb4964bc4e3bd790bce2e641fd1b949f49077/patches/local-quality/ink-volume/assets/hissen-fallback/volumes.bin.gz",
+          "normalizedHash": "277d4fba257626ae2bd1af1ae934e8da1ea12f391733e1a2270b5f375e7e6b0a",
+          "binarySHA256": "976da22e14602d8be29c177aa16d01d62b1ee9cc6b3daad37c2ba24e59d976b2"
+        }
+      ]
+    },
+    {
+      "name": "roller",
+      "rows": [
+        {
+          "label": "6013",
+          "binary": "../../../../../_versions/2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+          "normalizedHash": "47c0618ddc19ef48278e1c3d50209d75739206b392f71d380904789f980bead3",
+          "binarySHA256": "026af490b7b48cf10ff71f64d1bec579aaa5cafcf6b944ff942c19de468a39cf"
+        },
+        {
+          "label": "f277",
+          "binary": "../../../../../_versions/7d9d0e1be7cf368b60b05047de7cbaf59ee72bca6d528fc8e4056bd927dc9822/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+          "normalizedHash": "47c0618ddc19ef48278e1c3d50209d75739206b392f71d380904789f980bead3",
+          "binarySHA256": "026af490b7b48cf10ff71f64d1bec579aaa5cafcf6b944ff942c19de468a39cf"
+        },
+        {
+          "label": "5d8b",
+          "binary": "../../../../../_versions/4dce88d6e1f29922bcef1f70cb9fb4964bc4e3bd790bce2e641fd1b949f49077/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+          "normalizedHash": "47c0618ddc19ef48278e1c3d50209d75739206b392f71d380904789f980bead3",
+          "binarySHA256": "026af490b7b48cf10ff71f64d1bec579aaa5cafcf6b944ff942c19de468a39cf"
+        }
+      ]
+    },
+    {
+      "name": "shooter",
+      "rows": [
+        {
+          "label": "6013",
+          "binary": "../../../../../_versions/2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd/patches/local-quality/ink-volume/assets/shooter/volumes.bin.gz",
+          "normalizedHash": "14182599c50b050ff49cdcd5be7832b71cb2def8b7d83c4e53031e59a4be7d2b",
+          "binarySHA256": "77be60e10b59b3964e7c3dd64ff36aec9373ecce68eb797ca7bcce97cea878fa"
+        },
+        {
+          "label": "f277",
+          "binary": "../../../../../_versions/7d9d0e1be7cf368b60b05047de7cbaf59ee72bca6d528fc8e4056bd927dc9822/patches/local-quality/ink-volume/assets/shooter/volumes.bin.gz",
+          "normalizedHash": "14182599c50b050ff49cdcd5be7832b71cb2def8b7d83c4e53031e59a4be7d2b",
+          "binarySHA256": "77be60e10b59b3964e7c3dd64ff36aec9373ecce68eb797ca7bcce97cea878fa"
+        },
+        {
+          "label": "5d8b",
+          "binary": "../../../../../_versions/4dce88d6e1f29922bcef1f70cb9fb4964bc4e3bd790bce2e641fd1b949f49077/patches/local-quality/ink-volume/assets/shooter/volumes.bin.gz",
+          "normalizedHash": "14182599c50b050ff49cdcd5be7832b71cb2def8b7d83c4e53031e59a4be7d2b",
+          "binarySHA256": "77be60e10b59b3964e7c3dd64ff36aec9373ecce68eb797ca7bcce97cea878fa"
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "from": "6013",
+      "to": "f277",
+      "inputDelta": {
+        "local-quality/combat-gpu-cpu-perfect-adapter.mjs": {
+          "before": "a4ae781e4ba9021504dcdb6bb623fe7ce73b6e4befc4f6c512b11041eba0f3b8",
+          "after": "a1b5acab6332c415e0effa6a1302fb729270da02a3f42cd551bd38cce9811d5e"
+        },
+        "local-quality/ink-volume/recipes.mjs": {
+          "before": "f981ecb9f69ed1974ef18db6a173159ce78ff519c5b046db1c85dccd81e95de1",
+          "after": "4f432cd9b2e99f38edbcec8ba03b7403121d7909a8c6f77a728a4d4c3e238c8a"
+        },
+        "local-quality/ink-volume/runtime.mjs": {
+          "before": "3165a9fc2007c974981a54963b2f7d942481c454019c52be937320453ad9ff24",
+          "after": "5cd9c97080601068fb53eba32b574b8f6cd21a2df516d609d3e5b5d713d50c78"
+        },
+        "patch/kit-rescue-adapter.mjs": {
+          "before": "a34088b7c91447836bea47f15da9be88c952d7019c6de62c75a54bde057d90f8",
+          "after": "7ae490137599e1f745449c97ab848c375ae99413faf86b03e4c49ee0cf383ca5"
+        },
+        "patch/runtime/catalogue.mjs": {
+          "before": "54c553143a3ae75f88ecb6d73ab6e3e66a33744899143ea429509d2e9a3713fd",
+          "after": "b75d17222168f21723f348b6378e35266cfcd278bc2ae2bf2e43ea728291d4a3"
+        },
+        "patch/runtime/install.mjs": {
+          "before": "c5991f05eaa7b8b81ca43f36d9278237e00dfc44c714b7a60fe635203c98cb0f",
+          "after": "897584395e2e3e070e5d499d1e579c7fd2eb0b5e833e96bff874602a5435aea8"
+        },
+        "patch/runtime/projectile-presentation.mjs": {
+          "before": "a5544306fed67c0a78d9010265796ca0cf7438201d42691fbaaf7f56a6d39ec5",
+          "after": "bf5b8d22f65484ac7331a3ce860d4cdc8d902ac0a696ba9a31af45b7f7700cc3"
+        },
+        "patch/runtime/projectile-visuals.mjs": {
+          "before": "3579308b21491a4dfe745cdcf34df0afe5a8ce0bc761563ddc29bea64ec728ca",
+          "after": "028ab57c1ac5b9e9c6e291d8cfcaeb384854c9986dad296960e3f0cc9e7cc450"
+        },
+        "patch/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453"
+        },
+        "patch/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "d4196644a1867263f6ba22814d7d0174426ec838031c5b3df51e6360d47e2e08"
+        },
+        "patch/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "4b0ea14d27aae5129e2e98568e6cceb30a9bc1dfc688c000d01efba9e29851dc"
+        },
+        "patch/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "0fe024784718d29fcc552a9f981b4eb78e359cfd4eb6a49e273da4a212978e2d"
+        }
+      },
+      "artifactDeltaRevisionNormalized": {
+        "_versions/@revision/patches/local-quality/ink-volume/recipes.mjs": {
+          "before": "136628ebe56c2d6575711e33681ef757257f8142076b5a2c493846d5d61d4eab",
+          "after": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d"
+        },
+        "_versions/@revision/patches/local-quality/ink-volume/runtime.mjs": {
+          "before": "9fa94ac76b9de498c2fdd92005dbf88f5ab53ebc60cd0a55f28caa74922c44e1",
+          "after": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/catalogue.mjs": {
+          "before": "94879b9c00bc73404ba2fa01464f57a71610760495e36894c3cab6a10c7f6703",
+          "after": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/install.mjs": {
+          "before": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+          "after": "6d83e38e482ed55173b67bba8b86105fa9896da59b30c249f178576ed0c5d422"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/projectile-presentation.mjs": {
+          "before": "2e94deb83714521789635228d80f883f2da4343039541e90345d0a6f8a721d4e",
+          "after": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/projectile-visuals.mjs": {
+          "before": "22921a3270e8e62b8b569e69843a6d235f4f521eb48ad9433852b33882931567",
+          "after": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "276c6097706d0dc15eae4d4d79726c2ea7e98c37eed200212b5b53465919ca7d"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "e319e2f91b222178cc5fadbdbd90833fb550e32aa475ae687b8db863a0f79e62"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "bcc7b02fef084244ad27b338fd0f3938b53db3e73dd7b01b760d2cf3acdf1a75"
+        },
+        "_versions/@revision/src/fx/fx.js": {
+          "before": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+          "after": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be"
+        },
+        "_versions/@revision/src/fx/screenfx.js": {
+          "before": "99f6dc737cb9e7ab8c3d430ab93a391e8ffb3f901dfd078b7186b2337826b7d0",
+          "after": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a"
+        },
+        "_versions/@revision/src/ui/hud.js": {
+          "before": "6e1b2d48f80939d37a4354a154f62fd617524ba313dcc55a8f4145b866207a64",
+          "after": "feea4f407060d85ad6c42d3432005e281e0194cb4c1ef905e47c6223bb7f2daf"
+        },
+        "_versions/@revision/src/world/decor.js": {
+          "before": "271ee79cb1d459865d603f0a48c680ae8e9207a4fc29044ab04cd84dda4559f1",
+          "after": "b9b46656e02a436db631379f9835afcefa9ed49beda971f338d40fb922452f56"
+        },
+        "index.html": {
+          "before": "069b79f4ea9777c0342ccf242cd8e37c6a83cc64e09a4cdd53430381bb70bfd2",
+          "after": "2d871f899436cabbbc668d1bbe2990bf200e045284a966c8e531f1b9aea758ad"
+        },
+        "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json": {
+          "before": "ed235d7b550d151d7b24f63b79ab627992aa0d0eba1695b84209fe06b8385e5e",
+          "after": "c6ea627d7561e41b99eb951688ea1877df66a65d5f4c6415762a3e5a0f3c3c46"
+        },
+        "patches/local-quality/ink-volume/assets/roller/manifest.json": {
+          "before": "aba7bc3066dc8114d76c74d68628ef8c394508f374d1d8698a76910df60f0922",
+          "after": "1228a4c74d5f2684afbcf261dd40024f7d0058ccc5e3e5666a1bb1e81758c1bb"
+        },
+        "patches/local-quality/ink-volume/assets/shooter/manifest.json": {
+          "before": "a5207daa836b4fb4bbc74111d12e34c83af6825393ffa9c2216496509b0f6fd3",
+          "after": "bcf276b6e39a5aa05b47d7ee7a4aab750616fbaffdf226d64958120b935779df"
+        },
+        "patches/local-quality/ink-volume/recipes.mjs": {
+          "before": "136628ebe56c2d6575711e33681ef757257f8142076b5a2c493846d5d61d4eab",
+          "after": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d"
+        },
+        "patches/local-quality/ink-volume/runtime.mjs": {
+          "before": "9fa94ac76b9de498c2fdd92005dbf88f5ab53ebc60cd0a55f28caa74922c44e1",
+          "after": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91"
+        },
+        "patches/splatoon3/runtime/catalogue.mjs": {
+          "before": "94879b9c00bc73404ba2fa01464f57a71610760495e36894c3cab6a10c7f6703",
+          "after": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124"
+        },
+        "patches/splatoon3/runtime/install.mjs": {
+          "before": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+          "after": "6d83e38e482ed55173b67bba8b86105fa9896da59b30c249f178576ed0c5d422"
+        },
+        "patches/splatoon3/runtime/projectile-presentation.mjs": {
+          "before": "2e94deb83714521789635228d80f883f2da4343039541e90345d0a6f8a721d4e",
+          "after": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718"
+        },
+        "patches/splatoon3/runtime/projectile-visuals.mjs": {
+          "before": "22921a3270e8e62b8b569e69843a6d235f4f521eb48ad9433852b33882931567",
+          "after": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435"
+        },
+        "patches/splatoon3/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16"
+        },
+        "patches/splatoon3/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "276c6097706d0dc15eae4d4d79726c2ea7e98c37eed200212b5b53465919ca7d"
+        },
+        "patches/splatoon3/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "e319e2f91b222178cc5fadbdbd90833fb550e32aa475ae687b8db863a0f79e62"
+        },
+        "patches/splatoon3/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "bcc7b02fef084244ad27b338fd0f3938b53db3e73dd7b01b760d2cf3acdf1a75"
+        },
+        "src/fx/fx.js": {
+          "before": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+          "after": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be"
+        },
+        "src/fx/screenfx.js": {
+          "before": "99f6dc737cb9e7ab8c3d430ab93a391e8ffb3f901dfd078b7186b2337826b7d0",
+          "after": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a"
+        },
+        "src/ui/hud.js": {
+          "before": "6e1b2d48f80939d37a4354a154f62fd617524ba313dcc55a8f4145b866207a64",
+          "after": "feea4f407060d85ad6c42d3432005e281e0194cb4c1ef905e47c6223bb7f2daf"
+        },
+        "src/world/decor.js": {
+          "before": "271ee79cb1d459865d603f0a48c680ae8e9207a4fc29044ab04cd84dda4559f1",
+          "after": "b9b46656e02a436db631379f9835afcefa9ed49beda971f338d40fb922452f56"
+        },
+        "sw.js": {
+          "before": "95011744cd0994a78edb2ca268b21985406abafb5dcf9631afb3a7206084fd8a",
+          "after": "ddb420806ec734d2b79573b16a7dea3d18174ab64c0bcbc398a0448ce8b77e40"
+        }
+      },
+      "prebuiltDelta": {}
+    },
+    {
+      "from": "f277",
+      "to": "5d8b",
+      "inputDelta": {
+        "local-quality/splatling-reticle-adapter.mjs": {
+          "before": "dc765ad588aad93daa87e4189d4c840b74ded40b51134f71160d91e5b4a1eb8e",
+          "after": "5fe188331c6c03e33d7a756973f1f1fc1a516ae5fe88c8d2250c4b62ab98415e"
+        },
+        "network-replication/trusted-native-replay.mjs": {
+          "before": "95f11ea022a0ee7d2e87361d7a6208a9b77117e3fcf121ce451895e1f192b7cc",
+          "after": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902"
+        },
+        "patch/adapter.mjs": {
+          "before": "26f421ecf1bd0bd5e18d57057d0fa7f9277a980e9ac413d2c3482fe5ac9c3866",
+          "after": "3b9d150218ed64dc98137c47be00b0875519801871e226edcdde2fdab656c640"
+        },
+        "patch/reference/splatling-reticle-reference.json": {
+          "before": "36b2dcb166c524f009853fa0148c3a6ecd7cc25dd33eff9c9db318571ca044c9",
+          "after": "b3b65af4816355126a8750634b3526ab0d428e2564c9876b66a236c4b149e73a"
+        },
+        "patch/upstream-lock.json": {
+          "before": "1d77eb7afd81c6a930ddda3c059950cc2f2fb22917ec90977188f65815cbdf8a",
+          "after": "ba0fc1bf3849c49dc3cb2f391784a2bb284f373cc69b41db8cf8b21cfc82b013"
+        },
+        "upstream/src/ui/hud.js": {
+          "before": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
+          "after": "34e81090a1d97b4a419aaf205baef2b1ed29b8d61ac0fbc1d258b040112b4448"
+        },
+        "upstream/styles/hud.css": {
+          "before": "07315f000eb82793e26edfa9ef81317fb231369e3d6e0d46bdccc98961f58100",
+          "after": "4277b43cdeebdbc788b05a1996320f2639a1e16eb82bee7ae25b94fc28ec3d24"
+        }
+      },
+      "artifactDeltaRevisionNormalized": {
+        "_versions/@revision/patches/network-replication/trusted-native-replay.mjs": {
+          "before": "413bd297405ff9e8d041f71490c304756f48acce4930487bfb26da03e2b297de",
+          "after": "b4a0e2b55c7ff2381849dfb0589d1ed3f0fa07cf9f195a4eba01d8612a9cb483"
+        },
+        "_versions/@revision/src/ui/hud.js": {
+          "before": "feea4f407060d85ad6c42d3432005e281e0194cb4c1ef905e47c6223bb7f2daf",
+          "after": "f9d17de24d7d16683908b5834f4f4c8bd42cfff7a02c642a090c4537643cfa05"
+        },
+        "_versions/@revision/styles/hud.css": {
+          "before": "d464f46ec532097edb9cb9f4800c0236490b2efd337df0bccf10f3402e068696",
+          "after": "27ba2198ed1b7a837e22e504c8929564b65eec7dcfac4eb4d71f84ae909a26e8"
+        },
+        "index.html": {
+          "before": "2d871f899436cabbbc668d1bbe2990bf200e045284a966c8e531f1b9aea758ad",
+          "after": "c542b3ca4795267c51bf15050df75153d810f293e2dbfd52c27111d9aaa2d34c"
+        },
+        "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json": {
+          "before": "c6ea627d7561e41b99eb951688ea1877df66a65d5f4c6415762a3e5a0f3c3c46",
+          "after": "282d777871a36eccc639a7f14030b6d04de10ca4f05f08d08f85c38aa8c110c9"
+        },
+        "patches/local-quality/ink-volume/assets/roller/manifest.json": {
+          "before": "1228a4c74d5f2684afbcf261dd40024f7d0058ccc5e3e5666a1bb1e81758c1bb",
+          "after": "22fa5cb8dd7a8e84efb792eebd149572f21e179585816493097a016d85c35cad"
+        },
+        "patches/local-quality/ink-volume/assets/shooter/manifest.json": {
+          "before": "bcf276b6e39a5aa05b47d7ee7a4aab750616fbaffdf226d64958120b935779df",
+          "after": "d8c3f48a6e2a9fec2df6b3d0d2d1efef19cba5416a77803961a9ec9fb20d16ac"
+        },
+        "patches/network-replication/trusted-native-replay.mjs": {
+          "before": "413bd297405ff9e8d041f71490c304756f48acce4930487bfb26da03e2b297de",
+          "after": "b4a0e2b55c7ff2381849dfb0589d1ed3f0fa07cf9f195a4eba01d8612a9cb483"
+        },
+        "src/ui/hud.js": {
+          "before": "feea4f407060d85ad6c42d3432005e281e0194cb4c1ef905e47c6223bb7f2daf",
+          "after": "f9d17de24d7d16683908b5834f4f4c8bd42cfff7a02c642a090c4537643cfa05"
+        },
+        "styles/hud.css": {
+          "before": "d464f46ec532097edb9cb9f4800c0236490b2efd337df0bccf10f3402e068696",
+          "after": "27ba2198ed1b7a837e22e504c8929564b65eec7dcfac4eb4d71f84ae909a26e8"
+        },
+        "sw.js": {
+          "before": "ddb420806ec734d2b79573b16a7dea3d18174ab64c0bcbc398a0448ce8b77e40",
+          "after": "303a0374a25a7513e9f149ae5a302b534ae604baee94dac7e57e91a227a7c5bf"
+        }
+      },
+      "prebuiltDelta": {}
+    },
+    {
+      "from": "6013",
+      "to": "5d8b",
+      "inputDelta": {
+        "local-quality/combat-gpu-cpu-perfect-adapter.mjs": {
+          "before": "a4ae781e4ba9021504dcdb6bb623fe7ce73b6e4befc4f6c512b11041eba0f3b8",
+          "after": "a1b5acab6332c415e0effa6a1302fb729270da02a3f42cd551bd38cce9811d5e"
+        },
+        "local-quality/ink-volume/recipes.mjs": {
+          "before": "f981ecb9f69ed1974ef18db6a173159ce78ff519c5b046db1c85dccd81e95de1",
+          "after": "4f432cd9b2e99f38edbcec8ba03b7403121d7909a8c6f77a728a4d4c3e238c8a"
+        },
+        "local-quality/ink-volume/runtime.mjs": {
+          "before": "3165a9fc2007c974981a54963b2f7d942481c454019c52be937320453ad9ff24",
+          "after": "5cd9c97080601068fb53eba32b574b8f6cd21a2df516d609d3e5b5d713d50c78"
+        },
+        "local-quality/splatling-reticle-adapter.mjs": {
+          "before": "dc765ad588aad93daa87e4189d4c840b74ded40b51134f71160d91e5b4a1eb8e",
+          "after": "5fe188331c6c03e33d7a756973f1f1fc1a516ae5fe88c8d2250c4b62ab98415e"
+        },
+        "network-replication/trusted-native-replay.mjs": {
+          "before": "95f11ea022a0ee7d2e87361d7a6208a9b77117e3fcf121ce451895e1f192b7cc",
+          "after": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902"
+        },
+        "patch/adapter.mjs": {
+          "before": "26f421ecf1bd0bd5e18d57057d0fa7f9277a980e9ac413d2c3482fe5ac9c3866",
+          "after": "3b9d150218ed64dc98137c47be00b0875519801871e226edcdde2fdab656c640"
+        },
+        "patch/kit-rescue-adapter.mjs": {
+          "before": "a34088b7c91447836bea47f15da9be88c952d7019c6de62c75a54bde057d90f8",
+          "after": "7ae490137599e1f745449c97ab848c375ae99413faf86b03e4c49ee0cf383ca5"
+        },
+        "patch/reference/splatling-reticle-reference.json": {
+          "before": "36b2dcb166c524f009853fa0148c3a6ecd7cc25dd33eff9c9db318571ca044c9",
+          "after": "b3b65af4816355126a8750634b3526ab0d428e2564c9876b66a236c4b149e73a"
+        },
+        "patch/runtime/catalogue.mjs": {
+          "before": "54c553143a3ae75f88ecb6d73ab6e3e66a33744899143ea429509d2e9a3713fd",
+          "after": "b75d17222168f21723f348b6378e35266cfcd278bc2ae2bf2e43ea728291d4a3"
+        },
+        "patch/runtime/install.mjs": {
+          "before": "c5991f05eaa7b8b81ca43f36d9278237e00dfc44c714b7a60fe635203c98cb0f",
+          "after": "897584395e2e3e070e5d499d1e579c7fd2eb0b5e833e96bff874602a5435aea8"
+        },
+        "patch/runtime/projectile-presentation.mjs": {
+          "before": "a5544306fed67c0a78d9010265796ca0cf7438201d42691fbaaf7f56a6d39ec5",
+          "after": "bf5b8d22f65484ac7331a3ce860d4cdc8d902ac0a696ba9a31af45b7f7700cc3"
+        },
+        "patch/runtime/projectile-visuals.mjs": {
+          "before": "3579308b21491a4dfe745cdcf34df0afe5a8ce0bc761563ddc29bea64ec728ca",
+          "after": "028ab57c1ac5b9e9c6e291d8cfcaeb384854c9986dad296960e3f0cc9e7cc450"
+        },
+        "patch/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453"
+        },
+        "patch/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "d4196644a1867263f6ba22814d7d0174426ec838031c5b3df51e6360d47e2e08"
+        },
+        "patch/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "4b0ea14d27aae5129e2e98568e6cceb30a9bc1dfc688c000d01efba9e29851dc"
+        },
+        "patch/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "0fe024784718d29fcc552a9f981b4eb78e359cfd4eb6a49e273da4a212978e2d"
+        },
+        "patch/upstream-lock.json": {
+          "before": "1d77eb7afd81c6a930ddda3c059950cc2f2fb22917ec90977188f65815cbdf8a",
+          "after": "ba0fc1bf3849c49dc3cb2f391784a2bb284f373cc69b41db8cf8b21cfc82b013"
+        },
+        "upstream/src/ui/hud.js": {
+          "before": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
+          "after": "34e81090a1d97b4a419aaf205baef2b1ed29b8d61ac0fbc1d258b040112b4448"
+        },
+        "upstream/styles/hud.css": {
+          "before": "07315f000eb82793e26edfa9ef81317fb231369e3d6e0d46bdccc98961f58100",
+          "after": "4277b43cdeebdbc788b05a1996320f2639a1e16eb82bee7ae25b94fc28ec3d24"
+        }
+      },
+      "artifactDeltaRevisionNormalized": {
+        "_versions/@revision/patches/local-quality/ink-volume/recipes.mjs": {
+          "before": "136628ebe56c2d6575711e33681ef757257f8142076b5a2c493846d5d61d4eab",
+          "after": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d"
+        },
+        "_versions/@revision/patches/local-quality/ink-volume/runtime.mjs": {
+          "before": "9fa94ac76b9de498c2fdd92005dbf88f5ab53ebc60cd0a55f28caa74922c44e1",
+          "after": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91"
+        },
+        "_versions/@revision/patches/network-replication/trusted-native-replay.mjs": {
+          "before": "413bd297405ff9e8d041f71490c304756f48acce4930487bfb26da03e2b297de",
+          "after": "b4a0e2b55c7ff2381849dfb0589d1ed3f0fa07cf9f195a4eba01d8612a9cb483"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/catalogue.mjs": {
+          "before": "94879b9c00bc73404ba2fa01464f57a71610760495e36894c3cab6a10c7f6703",
+          "after": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/install.mjs": {
+          "before": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+          "after": "6d83e38e482ed55173b67bba8b86105fa9896da59b30c249f178576ed0c5d422"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/projectile-presentation.mjs": {
+          "before": "2e94deb83714521789635228d80f883f2da4343039541e90345d0a6f8a721d4e",
+          "after": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/projectile-visuals.mjs": {
+          "before": "22921a3270e8e62b8b569e69843a6d235f4f521eb48ad9433852b33882931567",
+          "after": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "276c6097706d0dc15eae4d4d79726c2ea7e98c37eed200212b5b53465919ca7d"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "e319e2f91b222178cc5fadbdbd90833fb550e32aa475ae687b8db863a0f79e62"
+        },
+        "_versions/@revision/patches/splatoon3/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "bcc7b02fef084244ad27b338fd0f3938b53db3e73dd7b01b760d2cf3acdf1a75"
+        },
+        "_versions/@revision/src/fx/fx.js": {
+          "before": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+          "after": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be"
+        },
+        "_versions/@revision/src/fx/screenfx.js": {
+          "before": "99f6dc737cb9e7ab8c3d430ab93a391e8ffb3f901dfd078b7186b2337826b7d0",
+          "after": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a"
+        },
+        "_versions/@revision/src/ui/hud.js": {
+          "before": "6e1b2d48f80939d37a4354a154f62fd617524ba313dcc55a8f4145b866207a64",
+          "after": "f9d17de24d7d16683908b5834f4f4c8bd42cfff7a02c642a090c4537643cfa05"
+        },
+        "_versions/@revision/src/world/decor.js": {
+          "before": "271ee79cb1d459865d603f0a48c680ae8e9207a4fc29044ab04cd84dda4559f1",
+          "after": "b9b46656e02a436db631379f9835afcefa9ed49beda971f338d40fb922452f56"
+        },
+        "_versions/@revision/styles/hud.css": {
+          "before": "d464f46ec532097edb9cb9f4800c0236490b2efd337df0bccf10f3402e068696",
+          "after": "27ba2198ed1b7a837e22e504c8929564b65eec7dcfac4eb4d71f84ae909a26e8"
+        },
+        "index.html": {
+          "before": "069b79f4ea9777c0342ccf242cd8e37c6a83cc64e09a4cdd53430381bb70bfd2",
+          "after": "c542b3ca4795267c51bf15050df75153d810f293e2dbfd52c27111d9aaa2d34c"
+        },
+        "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json": {
+          "before": "ed235d7b550d151d7b24f63b79ab627992aa0d0eba1695b84209fe06b8385e5e",
+          "after": "282d777871a36eccc639a7f14030b6d04de10ca4f05f08d08f85c38aa8c110c9"
+        },
+        "patches/local-quality/ink-volume/assets/roller/manifest.json": {
+          "before": "aba7bc3066dc8114d76c74d68628ef8c394508f374d1d8698a76910df60f0922",
+          "after": "22fa5cb8dd7a8e84efb792eebd149572f21e179585816493097a016d85c35cad"
+        },
+        "patches/local-quality/ink-volume/assets/shooter/manifest.json": {
+          "before": "a5207daa836b4fb4bbc74111d12e34c83af6825393ffa9c2216496509b0f6fd3",
+          "after": "d8c3f48a6e2a9fec2df6b3d0d2d1efef19cba5416a77803961a9ec9fb20d16ac"
+        },
+        "patches/local-quality/ink-volume/recipes.mjs": {
+          "before": "136628ebe56c2d6575711e33681ef757257f8142076b5a2c493846d5d61d4eab",
+          "after": "fc6d781c65405bbfb4c32692b6d7c6cdf9d426cc859864ae795b7b058474c86d"
+        },
+        "patches/local-quality/ink-volume/runtime.mjs": {
+          "before": "9fa94ac76b9de498c2fdd92005dbf88f5ab53ebc60cd0a55f28caa74922c44e1",
+          "after": "5267121f8551ed7bd0616b0839dcf42a6c3ac397119d2eb46d4e7c17563c3f91"
+        },
+        "patches/network-replication/trusted-native-replay.mjs": {
+          "before": "413bd297405ff9e8d041f71490c304756f48acce4930487bfb26da03e2b297de",
+          "after": "b4a0e2b55c7ff2381849dfb0589d1ed3f0fa07cf9f195a4eba01d8612a9cb483"
+        },
+        "patches/splatoon3/runtime/catalogue.mjs": {
+          "before": "94879b9c00bc73404ba2fa01464f57a71610760495e36894c3cab6a10c7f6703",
+          "after": "7d61375229b63ba21633877efa669be0234e4337ef87d5fc37bade542a13f124"
+        },
+        "patches/splatoon3/runtime/install.mjs": {
+          "before": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+          "after": "6d83e38e482ed55173b67bba8b86105fa9896da59b30c249f178576ed0c5d422"
+        },
+        "patches/splatoon3/runtime/projectile-presentation.mjs": {
+          "before": "2e94deb83714521789635228d80f883f2da4343039541e90345d0a6f8a721d4e",
+          "after": "02ddab81c7d47afaa7c1269e3ac0d02629a1857e1f49507ec67bc40d65d50718"
+        },
+        "patches/splatoon3/runtime/projectile-visuals.mjs": {
+          "before": "22921a3270e8e62b8b569e69843a6d235f4f521eb48ad9433852b33882931567",
+          "after": "a0900a4b4a8d4020f684415ba523cf062d264b7bf0e26ec0b6fe7081e86b7435"
+        },
+        "patches/splatoon3/runtime/squidroll-effects.mjs": {
+          "before": null,
+          "after": "779e8a4aeb5c5ccfcbafdb0b690e79cc150d17eef505f97d90bb412ab621aa16"
+        },
+        "patches/splatoon3/runtime/ui-kit-icons.mjs": {
+          "before": null,
+          "after": "276c6097706d0dc15eae4d4d79726c2ea7e98c37eed200212b5b53465919ca7d"
+        },
+        "patches/splatoon3/runtime/ui-special-icons.mjs": {
+          "before": null,
+          "after": "e319e2f91b222178cc5fadbdbd90833fb550e32aa475ae687b8db863a0f79e62"
+        },
+        "patches/splatoon3/runtime/ui-sub-icons.mjs": {
+          "before": null,
+          "after": "bcc7b02fef084244ad27b338fd0f3938b53db3e73dd7b01b760d2cf3acdf1a75"
+        },
+        "src/fx/fx.js": {
+          "before": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+          "after": "51a3263331ae1aec0a091a584a0ed99cbddbdf27cd73fe6f47de40a15907d0be"
+        },
+        "src/fx/screenfx.js": {
+          "before": "99f6dc737cb9e7ab8c3d430ab93a391e8ffb3f901dfd078b7186b2337826b7d0",
+          "after": "06bea14994748dd2a5e12bafbd5d1f551639c4576073d20abc13a22c15519e0a"
+        },
+        "src/ui/hud.js": {
+          "before": "6e1b2d48f80939d37a4354a154f62fd617524ba313dcc55a8f4145b866207a64",
+          "after": "f9d17de24d7d16683908b5834f4f4c8bd42cfff7a02c642a090c4537643cfa05"
+        },
+        "src/world/decor.js": {
+          "before": "271ee79cb1d459865d603f0a48c680ae8e9207a4fc29044ab04cd84dda4559f1",
+          "after": "b9b46656e02a436db631379f9835afcefa9ed49beda971f338d40fb922452f56"
+        },
+        "styles/hud.css": {
+          "before": "d464f46ec532097edb9cb9f4800c0236490b2efd337df0bccf10f3402e068696",
+          "after": "27ba2198ed1b7a837e22e504c8929564b65eec7dcfac4eb4d71f84ae909a26e8"
+        },
+        "sw.js": {
+          "before": "95011744cd0994a78edb2ca268b21985406abafb5dcf9631afb3a7206084fd8a",
+          "after": "303a0374a25a7513e9f149ae5a302b534ae604baee94dac7e57e91a227a7c5bf"
+        }
+      },
+      "prebuiltDelta": {}
+    }
+  ],
+  "prebuiltScope": "Each manifest exposes zero native prebuilt entries to indexPrebuiltRuntimeAssets; no external native-prebuilt file identity is asserted by this receipt."
+}
