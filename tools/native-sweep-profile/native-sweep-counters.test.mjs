@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import path from 'node:path';
-import {instrumentNativeSweep,createSweepCounters,isolateProfileEnvironment,captureObservedValue,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
+import {instrumentNativeSweep,createSweepCounters,isolateProfileEnvironment,captureObservedValue,capturePaintArguments,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
 class World{
  constructor(){this.nodes=new Float32Array([-1,-1,-1,1,1,1,-1,1]);this.order=[0];this.triangleTests=0;this.queryCount=0;this._queryStacks=[];this._queryDepth=0;this.throwSource=false;}
  _acquireStack(){const d=this._queryDepth++,stack=this._queryStacks[d]||(this._queryStacks[d]=[]);stack[0]=0;return stack;}
@@ -152,4 +152,24 @@ test('fresh VM lanes compare own-data receipts while numeric mutations remain fa
  assert.notDeepEqual(captureObservedValue(before),captureObservedValue(after),'negative zero is still a real observed difference');
  after.samples[0][0].pos[2]=-0;after.samples[0][0].vel[0]+=1;
  assert.notDeepEqual(captureObservedValue(before),captureObservedValue(after),'a changed projectile velocity still fails');
+});
+
+test('paint receipt resolves the exact fixture owner and preserves all other argument guards',()=>{
+ const owner={team:0,hp:100,ink:.7,addTurf(){}};const args=[{x:1,y:2,z:3},2,0,{seed:.5,claimOwner:owner}];
+ const first=capturePaintArguments(args,owner);assert.equal(args[3].claimOwner,owner,'caller options are untouched');
+ owner.ink=.6;assert.notDeepEqual(first,capturePaintArguments(args,owner));
+ assert.throws(()=>capturePaintArguments(args,{...owner}),/Unexpected/);
+ assert.throws(()=>capturePaintArguments([{x:0},1,0,{get claimOwner(){throw Error('must not run');}}],owner),/getters/);
+ assert.throws(()=>capturePaintArguments([{x:0},1,0,{claimOwner:owner,callback(){}}],owner),/Unsupported/);
+});
+
+test('exact full-module merged declarations retain traversal guards',()=>{
+ const esbuild=createRequire(path.join(process.env.PROFILE_ROOT||process.cwd(),'package.json'))('esbuild');
+ const normalize=source=>canonicalQueryBoxBindings(esbuild.transformSync('globalThis.__qa={'+source+'};',{minify:true,target:'es2022'}).code);
+ const body=World.prototype.queryBox.toString().replaceAll('const ','let ').replace('stack=this._acquireStack();let top=1;','stack=this._acquireStack(),top=1;');
+ const f=setup();f.world.queryBox=new Function('return ({'+body+'}).queryBox')();
+ const counters=createSweepCounters({normalizeQueryBox:normalize});counters.invoke('catalogue',f.original,f.args);assert.equal(counters.snapshot().bvhNodeVisits,1);
+ for(const change of [s=>s.replace('let left=','void a[n];let left='),s=>s.replace('top=1','top=2'),s=>s.replace('n+3','n+4')]){
+  f.world.queryBox=new Function('return ({'+change(body)+'}).queryBox')();assert.throws(()=>createSweepCounters({normalizeQueryBox:normalize}).invoke('catalogue',f.original,f.args),/Unreviewed/);
+ }
 });

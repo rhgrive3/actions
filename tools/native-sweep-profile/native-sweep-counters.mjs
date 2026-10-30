@@ -25,7 +25,11 @@ export function instrumentNativeSweep(source) {
 }
 const approvedQueryBox="queryBox(min,max,fn,stopOnFalse=false){\n  const a=this.nodes,stack=this._acquireStack();let top=1;\n  try {\n  while(top){const n=stack[--top]*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;\n   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack[top++]=left;stack[top++]=right;continue;}const start=-left-1;for(let k=start;k<start+right;k++)if(fn(this.order[k])===false&&stopOnFalse)return;\n  }\n  } finally {this._releaseStack(stack);}\n }";
 export function createSweepCounters({enabled=true,normalizeQueryBox=source=>source.replace(/\s+/g,'')}={}) {
- const canonicalQueryBox=normalizeQueryBox(approvedQueryBox),verifiedMethods=new WeakSet();
+ // The full-module build merges the top declarations and emits let for the
+ // remaining read-only bindings. Admit these two exact bodies; traversal,
+ // operators, bounds, node reads and callback order still match in full.
+ const mergedDeclarations=approvedQueryBox.replaceAll('const ','let ').replace('stack=this._acquireStack();let top=1;','stack=this._acquireStack(),top=1;');
+ const canonicalQueryBox=normalizeQueryBox(approvedQueryBox),approvedBodies=new Set([canonicalQueryBox,normalizeQueryBox(mergedDeclarations)]),verifiedMethods=new WeakSet();
  const stats={catalogue:0,level:0,sourceQueries:0,queryCountDelta:0,sourceHits:0,totalHits:0,misses:0,queryBoxCalls:0,bvhNodeVisits:0,candidateTriangles:0,triangleTests:0,dynamicOBBCalls:0,sourceOptionsReused:0,sourceOutputReused:0,bvhStackReused:0,errors:0};
  const optionsSeen=new WeakSet(),outputsSeen=new WeakSet(),active=new WeakSet();
  function invoke(kind,original,input,receiver){
@@ -38,7 +42,7 @@ export function createSweepCounters({enabled=true,normalizeQueryBox=source=>sour
   // This counter relies on the current read-only queryBox visiting a[n] once per popped BVH node.
   if(!verifiedMethods.has(saved.queryBox)){
    const observedQueryBox=normalizeQueryBox(Function.prototype.toString.call(saved.queryBox));
-   if(observedQueryBox!==canonicalQueryBox)throw Error('Unreviewed queryBox traversal; do not infer visits; canonical-diagnostic='+JSON.stringify({expected:canonicalQueryBox.slice(0,8192),observed:observedQueryBox.slice(0,8192),expectedLength:canonicalQueryBox.length,observedLength:observedQueryBox.length}));
+   if(!approvedBodies.has(observedQueryBox))throw Error('Unreviewed queryBox traversal; do not infer visits; canonical-diagnostic='+JSON.stringify({expected:canonicalQueryBox.slice(0,8192),observed:observedQueryBox.slice(0,8192),expectedLength:canonicalQueryBox.length,observedLength:observedQueryBox.length}));
    verifiedMethods.add(saved.queryBox);
   }
   const descriptors=Object.fromEntries(['nodes','queryBox','sweepSphere','_acquireStack'].map(key=>[key,Object.getOwnPropertyDescriptor(world,key)]));
@@ -97,6 +101,28 @@ export function captureObservedValue(value){
   return Array.isArray(v)?{type:'Array',length:v.length,entries}:{type:'Object',entries};
  }
  return copy(value,'$',0);
+}
+
+// Paint passes a live claimOwner Actor with methods and a cyclic game graph.
+// Resolve only that exact fixture owner to a labelled identity and declared
+// scalar state. Other options retain the strict own-data/getter checks above.
+export function capturePaintArguments(args,owner){
+ const projected=Array.from(args),options=args[3];
+ if(options&&typeof options==='object'&&Object.hasOwn(options,'claimOwner')){
+  const descriptors=Object.getOwnPropertyDescriptors(options),copy=Object.create(null);
+  for(const [key,d]of Object.entries(descriptors)){
+   if(!Object.hasOwn(d,'value'))throw Error('QA refuses paint option getters');
+   copy[key]=d.value;
+  }
+  if(!owner||copy.claimOwner!==owner)throw Error('Unexpected paint claim owner');
+  const state=Object.create(null);
+  for(const key of ['nid','team','hp','ink','turf']){
+   const d=Object.getOwnPropertyDescriptor(owner,key);
+   if(d){if(!Object.hasOwn(d,'value'))throw Error('QA refuses owner state getters');state[key]=d.value;}
+  }
+  copy.claimOwner={identity:'admitted-fixture-actor',state};projected[3]=copy;
+ }
+ return captureObservedValue(projected);
 }
 
 

@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
-import {instrumentNativeSweep,createSweepCounters,captureObservedValue,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
+import {instrumentNativeSweep,createSweepCounters,captureObservedValue,capturePaintArguments,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
 const root=path.resolve(process.env.PROFILE_ROOT||process.cwd());
 const expected=process.env.PROFILE_SOURCE_SHA;
 assert.match(expected||'',/^[a-f0-9]{40}$/);
@@ -66,9 +66,10 @@ for(const scenario of ['flat','wall','moving'])for(const weapon of ['shooter','s
    nodes:new Float32Array([...bounds,-1,1]),order:new Uint32Array([0]),triangleFace:new Int32Array([0]),mask:new Uint8Array([1])});
   if(scenario==='moving'){const id=level.blocks.length;level.blocks.push({id,solid:true,grate:false,center:V(-2,1,0),half:V(.5,.5,.5),axes:[V(1,0,0),V(0,1,0),V(0,0,1)],aabbMin:V(-2.5,.5,-.5),aabbMax:V(-1.5,1.5,.5),faces:[-1,-1,-1,-1,-1,-1]});}
   G.actors.length=0;G.projectiles.clear();G.time=0;G.netm=null;G.boss=null;G.local=null;G.level=level;G.physics=new f.NativePhysics(level);
-  const paint=[],splat=G.paint.splat;
-  G.paint.splat=function(...args){paint.push(captureObservedValue(args));return Reflect.apply(splat,this,args);};
+  const paint=[],splat=G.paint.splat;let claimOwner=null;
+  G.paint.splat=function(...args){paint.push(capturePaintArguments(args,claimOwner));return Reflect.apply(splat,this,args);};
   const a=f.make(weapon);a.pos.set(-5,0,0);a.character.root.position.copy(a.pos);a.aimYaw=a.intent.aimYaw=Math.PI/2;a.aimPoint.set(5,1.05,0);
+  claimOwner=a;
   const admittedFrames=emitMainShot(f,a);
   assert.ok(G.projectiles.list.length>0,'real Actor admission required');
   const samples=[];
@@ -90,7 +91,7 @@ for(const scenario of ['flat','wall','moving'])for(const weapon of ['shooter','s
 assert.equal(hookHashes.size,1,'exactly one runtime identity per mode');
 const report={schema:1,sourceHead:expected,mode,manifestContentHash:manifest.contentHash,buildRevision:manifest.build.revision,sourceInputHash:manifest.inputHash,runtimeBoundToSelectedBytes:true,
  runtimeOriginalSHA256:[...hookHashes][0],runtimeExpectedSHA256:[...expectedHookHashes][0],dt,steps,seeds,rows,
- observationScope:'projectile wid/life/position/velocity history; paint argument own-data graph; actorHP; RNG calls/state',
+ observationScope:'projectile wid/life/position/velocity history; paint argument own-data graph with exact fixture claimOwner identity and nid/team/hp/ink/turf scalar state; actorHP; RNG calls/state',
  scope:'Synthetic-stage actual Actor->WeaponRunner->Projectiles fixture, observer count only. Character rendering is stubbed. Not device, FPS or native-map acceptance. The moving scenario uses a stationary OBB in the dynamic-block list; it is not moving-platform acceptance.',
  cacheMeaning:'sourceOptionsReused/sourceOutputReused/bvhStackReused are storage reuse, not collision-result cache hits',
  instrumentation:'QA-only compile wrapper and temporary read-only node observer; original files unchanged; restored on success/error'};
