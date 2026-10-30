@@ -1,10 +1,13 @@
-// A settings screen owns one retirement queue. Nodes retain their full 260 ms
-// crossfade; only the timeout handles are coalesced. Destroy never removes DOM.
+// A settings screen owns one timeout and at most two retiring previews. Normal
+// one/two-step navigation retains the full 260 ms fade. Faster bursts release the
+// oldest outgoing preview; the current preview is never passed here.
 export function createPreviewRetirement({
   now = () => performance.now(),
   schedule = (fn, delay) => setTimeout(fn, delay),
   cancel = (id) => clearTimeout(id),
+  maxRetired = 2,
 } = {}) {
+  if (!(maxRetired === Infinity || Number.isInteger(maxRetired) && maxRetired >= 0)) throw new RangeError("Invalid preview retirement bound");
   const retired = new Map();
   let active = null, draining = false, destroyed = false;
   const arm = () => {
@@ -38,7 +41,12 @@ export function createPreviewRetirement({
     retire(el) {
       if (destroyed || retired.has(el)) return;
       retired.set(el, now() + 260);
-      arm();
+      try {
+        // Delete ownership before DOM removal: hooks may retire/destroy again.
+        while(!destroyed&&retired.size>maxRetired){
+          const oldest=retired.keys().next().value;retired.delete(oldest);oldest.remove();
+        }
+      } finally { arm(); }
     },
     destroy() {
       if (destroyed) return;
