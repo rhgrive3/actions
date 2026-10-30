@@ -9,7 +9,39 @@ import {replaceOnce} from '../adapter.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/added-ui-motion-before.json',import.meta.url)));
 // Compare sparse storage with the same later walking presentation on both
 // sides. The frozen source bytes and every strict pose assertion stay intact.
-const baseline=(rel,raw)=>{if(before.motionSources[rel])return adaptWalkPresentation(rel,before.motionSources[rel],replaceOnce);let code=adaptBuildSource(rel,raw);if(rel==='src/game/cameraRig.js'){const start=code.indexOf('  _follow(dt) {'),end=code.indexOf('\n  _',start+4);assert(start>=0&&end>start);code=code.slice(0,start)+'  '+before.methods._follow+code.slice(end);}return code;};
+// Build the negative control from today's complete composition, not a frozen
+// pre-queue source controller that lacks later movement and hair behavior.
+// Reverse only the sparse-storage/camera-hotpath batch under test. The saved
+// pre-optimization snapshot still anchors the original dense expressions.
+const baseline=(rel,raw)=>{
+ let code=adaptBuildSource(rel,raw);
+ const denseGait='this.wp=bank.bones.map(()=>new THREE.Vector3());this.wq=bank.bones.map(()=>new THREE.Quaternion());';
+ const denseBalance='this.targets={wp:bank.bones.map(()=>new THREE.Vector3())};this.centerTargets={wp:bank.bones.map(()=>new THREE.Vector3())};';
+ const densePrevious='this.previousBalanceTargets={wp:bank.bones.map(()=>new THREE.Vector3())};';
+ if(rel==='src/game/motion/gait-targets.js'){
+   assert.ok(before.motionSources[rel].includes(denseGait),'frozen dense-gait negative control');
+   const sparse='if(this.indices.every(i=>Number.isInteger(i)&&i>=0&&i<bank.bones.length)){this.wp=new Array(bank.bones.length);this.wq=new Array(bank.bones.length);for(const i of this.indices){this.wp[i]=new THREE.Vector3();this.wq[i]=new THREE.Quaternion();}}else{'+denseGait+'}';
+   return replaceOnce(code,sparse,denseGait,'dense gait A/B control');
+ }
+ if(rel==='src/game/motion/body-balance.js'){
+   assert.ok(before.motionSources[rel].includes(denseBalance),'frozen dense-balance negative control');
+   const sparse="const balanceIndices=['leg1_L','leg1_R'].map(name=>bank.index[name]);if(balanceIndices.every(i=>Number.isInteger(i)&&i>=0&&i<bank.bones.length)){this.targets={wp:new Array(bank.bones.length)};this.centerTargets={wp:new Array(bank.bones.length)};for(const i of balanceIndices){this.targets.wp[i]=new THREE.Vector3();this.centerTargets.wp[i]=new THREE.Vector3();}}else{"+denseBalance+"}";
+   return replaceOnce(code,sparse,"const balanceIndices=['leg1_L','leg1_R'].map(name=>bank.index[name]);"+denseBalance,'dense balance A/B control');
+ }
+ if(rel==='src/game/motion/source-controller.js'){
+   assert.ok(before.motionSources[rel].includes(densePrevious),'frozen dense-previous-balance control');
+   const sparse="const balanceIndices=['leg1_L','leg1_R'].map(name=>bank.index[name]);if(balanceIndices.every(i=>Number.isInteger(i)&&i>=0&&i<bank.bones.length)){this.previousBalanceTargets={wp:new Array(bank.bones.length)};for(const i of balanceIndices)this.previousBalanceTargets.wp[i]=new THREE.Vector3();}else{"+densePrevious+"}";
+   return replaceOnce(code,sparse,densePrevious,'dense previous balance A/B control');
+ }
+ if(rel==='src/game/cameraRig.js'){
+   const start=code.indexOf('    let fwd;\n    if (this.forward === CAMERA_FORWARD_IMPL) {');
+   const suffix='   // camera right on the ground plane';
+   const at=code.indexOf(suffix,start);
+   assert.ok(start>=0&&at>start,'current camera fast path belongs to the A/B test');
+   return code.slice(0,start)+'    const fwd = this.forward(_fwd);\n    _right.set(-Math.cos(this.yaw), 0, Math.sin(this.yaw));'+suffix+code.slice(at+suffix.length);
+ }
+ return code;
+};
 const extraExports="export {GaitTargets} from './src/game/motion/gait-targets.js';export {BodyBalance} from './src/game/motion/body-balance.js';export {CameraRig} from './src/game/cameraRig.js';";
 const json=x=>JSON.parse(JSON.stringify(x));
 function cameraSnapshot(r){const out={};for(const k of ['yaw','pitch','pivotY','curDist','fovKick','scopeK','wantDist','shoulder','kick','_lastTY','_vyF','_sjLandT'])out[k]=r[k];for(const k of ['sx','sy','sz','hgt','side','boom','lensLift','kickS','dipS'])out[k]=json(r[k]);return json({...out,pivot:r.pivot.toArray(),p:r.camera.position.toArray(),q:r.camera.quaternion.toArray()});}
