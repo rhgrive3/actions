@@ -8,6 +8,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/landscape-online-adapter.mjs',
   'patches/local-quality/landscape-settings-adapter.mjs',
   'patches/splatoon3/turf-intro-camera-adapter.mjs',
+  'patches/splatoon3/boss-storm-volume-adapter.mjs',
   'patches/splatoon3/stringer-charge-hud-adapter.mjs',
 
   'patches/local-quality/walk-presentation-adapter.mjs',
