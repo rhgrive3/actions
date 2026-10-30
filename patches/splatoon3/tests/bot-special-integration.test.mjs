@@ -8,10 +8,23 @@ test('normal turf BotBrain never spends a full special on an empty battlefield',
     f.G.projectiles.clear(); f.G.actors.length = 0;
     const a = f.make(special), b = f.brain(a);
     f.setRandom(() => 0); // Exercise the old unconditional paint-mode special branch.
-    f.tick(a, b, 90);
+    // Observe the current short, unproductive route before navigation picks a
+    // new distant paint goal that could legitimately justify a support special.
+    f.tick(a, b, 6);
     assert.equal(a.stats.specials, 0, special + ' no enemy/objective/team benefit');
     assert.equal(a.special, a.specialCost(), special + ' gauge remains available');
     assert.equal(!!a.specialActive, false, special + ' no phantom activation');
+  }
+});
+
+test('the four specials outside the base-kit table admit through actual catalogue choices', async () => {
+  const f = await boot();
+  for (const special of ['krakenRoyale', 'superChump', 'splattercolorScreen', 'tripleSplashdown']) {
+    const { a, b } = f.scenario(special);
+    for (let frame = 0; frame < 90 && a.stats.specials === 0; frame++) f.tick(a, b);
+    assert.equal(a.weapon.special, special);
+    assert.equal(a.stats.specials, 1, special + ' actual registered admission');
+    assert.equal(a.specialReady(), false);
   }
 });
 
@@ -56,7 +69,7 @@ test('Kraken holds and releases a real charge, then suppresses empty-field jumps
   let charged = false, released = false, dash = false;
   for (let frame = 0; frame < 180 && !dash; frame++) {
     f.tick(a, b);
-    charged ||= !!a.intent.fire && (a.specialActive?.phase === 'charge' || a._s3AllSpecialState?.charge > 0);
+    charged ||= !!a.intent.fire && a._s3AllSpecialState?.phase === 'charge' && a._s3AllSpecialState.chargeT > 0;
     released ||= charged && !a.intent.fire;
     dash ||= a.specialActive?.phase === 'dash' || a._s3AllSpecialState?.phase === 'dash';
   }

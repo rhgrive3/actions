@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('content-type', /\.m?js$/.test(file) ? 'text/javascript' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream');
   fs.createReadStream(file).pipe(res);
 });
-const result = { status: 'running', sourceSha: build.build.sourceSha, contentHash: build.contentHash, cases: [], errors: [],
+const result = { status: 'running', revision: build.build.revision, contentHash: build.contentHash, cases: [], errors: [],
   scope: 'Emitted native BotBrain/Actor/Physics/NavGraph/Projectiles and CPU paint ownership in Chromium; controlled supported floor, no rendering or retail parity claim.' };
 let browser;
 try {
@@ -49,6 +49,7 @@ try {
     const { BotBrain } = await import(new URL('src/game/bots.js', document.baseURI));
     const { NavGraph } = await import(new URL('src/game/nav.js', document.baseURI));
     const { CANONICAL_KITS } = await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs', document.baseURI));
+    const { applyCatalogueChoice } = await import(new URL('patches/splatoon3/runtime/catalogue.mjs', document.baseURI));
     const profile = await fetch(new URL('patches/splatoon3/profile.json', document.baseURI)).then(r => r.json());
     const api = install(profile), { G } = api;
     const kits = Object.fromEntries(Object.entries(CANONICAL_KITS).map(([id, k]) => [k.special, id]));
@@ -71,8 +72,10 @@ try {
     const throwStorm = G.projectiles.throwStorm;
     G.projectiles.throwStorm = function (...args) { stormThrows++; return throwStorm.apply(this, args); };
     function make(special, team, z) {
-      const a = new api.Actor({ team, name: 'Special verification', weapon: kits[special], isBot: true,
+      const a = new api.Actor({ team, name: 'Special verification', weapon: kits[special] || 'shooter', isBot: true,
         CharacterClass: api.Character, style: { hair: 0, skin: 0 } });
+      if (!kits[special] && !applyCatalogueChoice(a, { sub: 'bomb', special }, api)) throw Error('Cannot equip ' + special);
+      if (a.weapon.special !== special) throw Error('Scenario equipped ' + a.weapon.special + ' instead of ' + special);
       G.actors.push(a); a.spawnAt(new THREE.Vector3(0, 0, z), 0); a.invuln = 0;
       a.special = a.specialCost(); a.hp = 100000;
       return a;

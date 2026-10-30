@@ -3,7 +3,6 @@ import { fixture } from './source-fixture.mjs';
 import { CANONICAL_KITS } from '../runtime/canonical-kits-data.mjs';
 
 export const STEP = 1 / 60;
-export const SPECIALS = [...new Set(Object.values(CANONICAL_KITS).map(k => k.special))];
 const KIT = Object.fromEntries(Object.entries(CANONICAL_KITS).map(([id, k]) => [k.special, id]));
 export const SPECIAL_SCENARIOS = Object.freeze({
   ultraStamp: 12, krakenRoyale: 8, reefslider: 12, tripleSplashdown: 5,
@@ -12,6 +11,7 @@ export const SPECIAL_SCENARIOS = Object.freeze({
   bubbler: 20, storm: 20, tripleInkstrike: 20, tacticooler: 20,
   waveBreaker: 20, superChump: 20, splattercolorScreen: 20,
 });
+export const SPECIALS = Object.keys(SPECIAL_SCENARIOS);
 
 // Real source BotBrain, Actor, Physics, navigation and projectile admission.
 // Only GPU upload and Character presentation are omitted from this CPU fixture.
@@ -52,6 +52,9 @@ export async function makeBotSpecialFixture() {
   };
   function make(special, team = 0, point = [0, 0, 0], weaponId = KIT[special]) {
     const a = f.make(weaponId || 'shooter');
+    delete a._integrate; // Restore native movement/terrain, frozen by the generic fixture.
+    if (!weaponId) assert.equal(f.applyCatalogueChoice(a, { sub: 'bomb', special }, f), true);
+    assert.equal(a.weapon.special, special, 'scenario must equip the requested special');
     a.team = team; a.slot = G.actors.length - 1;
     a.form = 'kid'; a.invuln = 0; a.pos.set(...point); a.character.root.position.copy(a.pos);
     a.special = a.specialCost();
