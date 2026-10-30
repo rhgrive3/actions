@@ -9,11 +9,17 @@ const presentation = fs.readFileSync(new URL('../runtime/special-presentation.mj
 export const currentSHA256 = Object.fromEntries(Object.entries({ motion, presentation }).map(([name, body]) => [name, createHash('sha256').update(body).digest('hex')]));
 const releaseStart = presentation.indexOf('  function releaseWeapon(s) {');
 const releaseWeapon = new Function('return ' + presentation.slice(releaseStart, presentation.indexOf('  function retire(ch)', releaseStart)))();
+const fitStart = motion.indexOf('  function fit(ch,m,g){');
+// Replace only this function in the frozen oracle. New sibling helpers (for
+// example riderPose) must survive; the following _buildPose hook calls them.
+const fitEnd = motion.indexOf('\n  }\n', fitStart);
+assert.ok(fitStart >= 0 && fitEnd > fitStart, 'fit function has its own closing boundary');
 export const current = {
-  fit: motion.slice(motion.indexOf('  function fit(ch,m,g){'), motion.indexOf('  cp._buildPose=function', motion.indexOf('  function fit(ch,m,g){'))),
+  fit: motion.slice(fitStart, fitEnd + 5),
   pose: presentation.slice(presentation.indexOf('  function pose(ch, s, dt) {'), presentation.indexOf('  const cp = Character.prototype, chUpdate = cp.update')),
 };
 for (const [name, body] of Object.entries(current)) assert.ok(body.startsWith('  function ' + name), name + ' production owner');
+assert.equal(current.fit.match(/^  function /gm)?.length, 1, 'fit oracle cannot consume sibling helpers');
 
 // Executes the actual constraint function and real THREE transforms. Native
 // shoulder/arm callbacks are deterministic sinks here; full Character coverage
