@@ -62,7 +62,15 @@ export function wrapSpinnerChargeLoop(engine, weaponId, underlying, options = {}
 // mutate gameplay timing or the charge gauge.
 export function syncCatalogSpinnerCharge(engine, runner) {
   const actor = runner?.a, weapon = actor?.weapon;
-  if (!actor || actor.remote || weapon?.catalogRecord?.family !== 'splatling') return;
+  if (!actor || weapon?.catalogRecord?.family !== 'splatling') return;
+  // Host migration must release the former local voice. The remote netmatch
+  // audio owner uses independent replica handles.
+  if (actor.remote) {
+    runner.spinLoop?.stop?.(0.055);
+    runner.spinLoop = null;
+    runner._spinnerAudioPhase = null;
+    return;
+  }
   const near = actor.isLocal || actor._nearCamera?.();
   const active = near && actor.alive !== false && actor.form === 'kid' &&
     !actor.specialActive && !actor.superJumpState && !runner.aimingSub;
