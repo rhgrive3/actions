@@ -20,6 +20,7 @@ import { pathToFileURL } from 'node:url';
 import { boundedDiagnostic, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
 import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 import { rematchEngine, rematchLaunchOptions } from './lib/inkwave-rematch-engine.mjs';
+import { verifyRematchFailureRecovery } from './lib/inkwave-rematch-failure-browser.mjs';
 
 const engine = rematchEngine(process.argv.slice(2));
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
@@ -392,6 +393,9 @@ try {
   const after = (rangeRound.turfAfter = await snap());
   check('range', 'turf after', after.range === false && after.hudRange === false && (after.timer === '3:00' || after.timer === '2:59') && Number.isFinite(after.time), 'next Turf War keeps its own clock and HUD', after);
   rounds.push(rangeRound);
+  activeRound = { round: 'rematch-failure-recovery' };
+  activeRound.receipts = await operationTrace.run('rematch: reject, retry and stale rejection', () => verifyRematchFailureRecovery(page, { evidenceDir: evidence, contentHash: manifest.contentHash }));
+  rounds.push(activeRound);
   status = failures.length || errors.length ? 'failed' : 'passed';
 } catch (e) {
   failures.push({ round: 'fatal', message: String(e?.stack || e).slice(0, 2000) });
@@ -413,3 +417,4 @@ try {
   console.log(JSON.stringify({ status, failures: failures.slice(0, 20), errors: errors.slice(0, 10) }, null, 1));
   process.exitCode = status === 'passed' ? 0 : 1;
 }
+
