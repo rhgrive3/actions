@@ -2,13 +2,13 @@
   "scope": "Final integration of special holds, rider posture, terminal VFX and splash cadence; no retail parity claim",
   "initialBase": "fd6435a4dd2781928d211537c485c87bc50b3784",
   "integratedMain": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
-  "finalProductCommit": "bc11846475824b2d8fe3350b1f3fe0f17bfd73b6",
+  "finalProductCommit": "ce472cc9c7f3a56aeb39cbc071bdb9c68c43c3e4",
   "build": {
-    "contentHash": "2d63aa0e01a04c07166825cb7859d603f47562dc5a99301fb1fd853a96bd3368",
-    "revision": "ba22067a99ebda2001d9c7f345d9fb9ccfa2438b68968c08d0abb50f4993396f",
+    "contentHash": "53e77646e644773f7ca07a23482f5e9ad869c5129cb3f4f0c62466ca6cccb67c",
+    "revision": "4b6c25d58ef4098a21c3bbc85a8d5da4762145bebce29921ba15ac05c0b39e1b",
     "runtimeInputs": {
       "patch/runtime/special-models.mjs": "0aed9ae331dd1f6f7bd931572afb810caf3df788dfb4781b0b22b514a387d3ff",
-      "patch/runtime/special-motion.mjs": "788e37158c1ea2c657f726c5c48359b681580141b95139cba62dd4d396379de2",
+      "patch/runtime/special-motion.mjs": "5feb6b0bbe883a0aa6d8f6b2de1af69ff0bf9c8a639ae1fdfbcdc51181bacfa6",
       "patch/runtime/special-presentation.mjs": "05972dc376048095cb2fbc9f0c962dbc9e0a1bf48e7ca3766f8c0ede13eea2cb",
       "patch/runtime/special-vfx-kit.mjs": "326f5ec529bb53edc70606758bfbb92ef467a081d19c3ac5b5ea1689e97a7d79",
       "patch/runtime/special-vfx.mjs": "e861b59a6c2960c8cd7184a1b23e5243aff3232971b3251e6c52334600e38cab"
@@ -59,7 +59,7 @@
       "note": "Full standard special-presentation check before final Reef coordinate adjustment; final changed rider verified separately"
     },
     "finalRider": "See verification.md and visual/final-matched-60.json; same-order60Hz480px, additional30/120Hz128px",
-    "finalApplication": {
+    "beforeCrabCorrectionApplication": {
       "status": "passed",
       "sourceSha": "bc11846475824b2d8fe3350b1f3fe0f17bfd73b6",
       "contentHash": "2d63aa0e01a04c07166825cb7859d603f47562dc5a99301fb1fd853a96bd3368",
@@ -72,13 +72,62 @@
       "requestFailures": [],
       "evidence": "validation/final-application-browser.json.gz",
       "evidenceSHA256": "cbbea99363a3e0bf27e03d73a6023ba7fa94b19e1fc274467c14972aa7c106b7"
+    },
+    "finalCrab": {
+      "status": "passed",
+      "contentHash": "53e77646e644773f7ca07a23482f5e9ad869c5129cb3f4f0c62466ca6cccb67c",
+      "driverSHA256": "54ff8d949d387fc9f3e6e8326f3fc5e4408e25056999014218df8d242df6e964",
+      "errors": [],
+      "record": "crab-direction/final-root.json",
+      "images": [
+        {
+          "filename": "crabTank-60-0500-front-chassis-hidden.png",
+          "sha256": "cb2fbd371e97344f5479fd60dad6f2b84ba163cb5720bcf22f53001c8a27480e",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-0500-front.png",
+          "sha256": "ed17a399b3c23e090100cae413b01357b6c6147d19af615d370b20a039b49055",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-0500-side-chassis-hidden.png",
+          "sha256": "6e417b24eafa595071ab98842886436e151083ec1300346ea2d2eb11d120289a",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-0500-side.png",
+          "sha256": "be4218a23ddeb56c49cdcd490a5fe56e0e7aec1c5f9f7e511d6b8db19913f688",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-1000-front-chassis-hidden.png",
+          "sha256": "1ef8a971b6a45b504a629ed74a643b13c24805a9130805aa15d166e73b48e59e",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-1000-front.png",
+          "sha256": "9fe9054ed6f38b0e1c5e609a6a59bc9fe95b6e05375da608157012f612ec9fb4",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-1000-side-chassis-hidden.png",
+          "sha256": "833fd2b7f033db0239b1b5dbc54bcd82e30883e08172586acc717ba8b46b19ce",
+          "identicalToReviewedCandidate": true
+        },
+        {
+          "filename": "crabTank-60-1000-side.png",
+          "sha256": "adcb12852d7a55e4198e7fdbe4f70428af442828525f331ddad065db30ca9427",
+          "identicalToReviewedCandidate": true
+        }
+      ]
     }
   },
   "gates": {
     "quick": "passed",
     "startupBudget": {
       "status": "passed",
-      "revision": "ba22067a99ebda2001d9c7f345d9fb9ccfa2438b68968c08d0abb50f4993396f",
+      "revision": "4b6c25d58ef4098a21c3bbc85a8d5da4762145bebce29921ba15ac05c0b39e1b",
       "initialJSRequests": 146,
       "modulePreloads": 145,
       "coreModulePreloads": 131,
@@ -87,9 +136,9 @@
       "initialJSBytes": 1834056,
       "criticalHTMLBytes": 24043,
       "precacheCount": 594,
-      "precacheBytes": 7989657,
+      "precacheBytes": 7989651,
       "workerBytes": 98004,
-      "declaredBytes": 16749672,
+      "declaredBytes": 16749666,
       "measurementKind": "deterministic file and dependency gates; not native browser timings"
     },
     "migration": "passed; no failures"
@@ -111,6 +160,10 @@
     "repaired-hotpath": {
       "log": "validation/repaired-hotpath.log.gz",
       "sha256": "f6ca9cb69de28d62c9fa88fa5d8191bbcf714b3288ec879a7c7b23e88b5fd0af"
+    },
+    "crab-corrected-emitted": {
+      "log": "validation/crab-corrected-emitted.log.gz",
+      "sha256": "5bffa70be2c018dbd79b66dfa3f5c6dceb9ebc3f5bff9259e5ffd6f695f9b86e"
     }
   },
   "limits": [
@@ -118,5 +171,40 @@
     "No Switch/iPad hardware qualification or full retail curve/shape parity",
     "Whole Booyah overhead pose and impact surface normals remain open",
     "Direct varying-dt browser fixture is not a fixed-clock physics equivalence test"
-  ]
+  ],
+  "beforeCrabCorrectionProductCommit": "bc11846475824b2d8fe3350b1f3fe0f17bfd73b6",
+  "beforeCrabCorrectionBuild": {
+    "contentHash": "2d63aa0e01a04c07166825cb7859d603f47562dc5a99301fb1fd853a96bd3368",
+    "revision": "ba22067a99ebda2001d9c7f345d9fb9ccfa2438b68968c08d0abb50f4993396f",
+    "runtimeInputs": {
+      "patch/runtime/special-models.mjs": "0aed9ae331dd1f6f7bd931572afb810caf3df788dfb4781b0b22b514a387d3ff",
+      "patch/runtime/special-motion.mjs": "788e37158c1ea2c657f726c5c48359b681580141b95139cba62dd4d396379de2",
+      "patch/runtime/special-presentation.mjs": "05972dc376048095cb2fbc9f0c962dbc9e0a1bf48e7ca3766f8c0ede13eea2cb",
+      "patch/runtime/special-vfx-kit.mjs": "326f5ec529bb53edc70606758bfbb92ef467a081d19c3ac5b5ea1689e97a7d79",
+      "patch/runtime/special-vfx.mjs": "e861b59a6c2960c8cd7184a1b23e5243aff3232971b3251e6c52334600e38cab"
+    }
+  },
+  "crabPostureCorrection": {
+    "supersedes": "The earlier Crab silhouette acceptance did not detect backward knees and above-hip ankles.",
+    "sourceTests": {
+      "total": 7,
+      "passed": 7,
+      "includes": "30/60/120Hz, previous-calibration negative control, updated existing Crab cases"
+    },
+    "finalEmittedTests": {
+      "total": 2,
+      "passed": 2,
+      "yawRadians": [
+        0,
+        1.5707963267948966
+      ]
+    },
+    "renderViews": [
+      "front",
+      "side",
+      "front chassis-hidden",
+      "side chassis-hidden"
+    ],
+    "unchanged": "Reefslider and other four special runtime files retain prior hashes."
+  }
 }
