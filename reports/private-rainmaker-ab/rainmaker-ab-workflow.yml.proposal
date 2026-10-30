@@ -1,0 +1,59 @@
+# Review-only proposal. Not installed in .github/workflows and not dispatched.
+name: Private Rainmaker Actor paired acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      qa_sha:
+        description: Immutable reviewed QA bundle commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  paired_actor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [source, emitted]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.qa_sha }}
+          path: qa
+          filter: blob:none
+          sparse-checkout: reports/private-rainmaker-ab
+      - uses: actions/checkout@v4
+        with:
+          ref: af588fb0f3f74eefa681a3a4f776154999085814
+          path: product
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable inputs
+        env:
+          QA_SHA: ${{ inputs.qa_sha }}
+        run: |
+          [[ "$QA_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C qa rev-parse HEAD)" = "$QA_SHA"
+          test "$(git -C product rev-parse HEAD)" = af588fb0f3f74eefa681a3a4f776154999085814
+          test -x /usr/bin/time
+          node --test qa/reports/private-rainmaker-ab/rainmaker-ab-contract.test.mjs
+      - name: Install locked dependencies
+        working-directory: product
+        run: npm ci --no-audit --no-fund
+      - name: Build exact production composition once
+        if: matrix.mode == 'emitted'
+        working-directory: product
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Actual Actor all normal and extreme cases, alternating variants
+        run: node qa/reports/private-rainmaker-ab/run-rainmaker-ab.mjs '${{ matrix.mode }}' product 'evidence/${{ matrix.mode }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rainmaker-actor-ab-${{ matrix.mode }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/${{ matrix.mode }}/
+          if-no-files-found: error
+          retention-days: 14
