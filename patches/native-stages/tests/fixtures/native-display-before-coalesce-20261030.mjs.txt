@@ -92,4 +92,3 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  mesh.onBeforeShadow=function(r,o,c,shadowCamera,geometry,material,group){select(shadowCamera);return beforeShadow.call(this,r,o,c,shadowCamera,geometry,material,group);};
  return {tiles:tiles.length,select,dispose(){disposed=true;mesh.onBeforeRender=beforeRender;mesh.onBeforeShadow=beforeShadow;}};
 }
-

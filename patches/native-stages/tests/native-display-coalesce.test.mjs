@@ -14,7 +14,7 @@ async function load(url){
 }
 const reference=new URL('./fixtures/native-display-before-coalesce-20261030.mjs.txt',import.meta.url);
 assert.equal(createHash('sha256').update(fs.readFileSync(reference)).digest('hex'),
- '8954453c3575aa2328eb745756b88320bba991d7555ae7b632ca58c69179d41c','frozen pre-coalescing reference');
+ '6ff0dac314d236f26d46ccd5e64bc2fa9781c4d5d8472fa55417bb3b8401f298','frozen pre-coalescing reference');
 const before=await load(reference);
 const after=await load(new URL('../runtime/native-render.mjs',import.meta.url));
 

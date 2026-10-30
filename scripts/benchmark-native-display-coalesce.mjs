@@ -27,7 +27,7 @@ for(const name of ['vertices','indices']){
 const source=fs.readFileSync(new URL('patches/native-stages/runtime/native-render.mjs',root),'utf8');
 const fixture=fs.readFileSync(new URL('patches/native-stages/tests/fixtures/native-display-before-coalesce-20261030.mjs.txt',root),'utf8');
 const fixtureHash=hash(fixture);
-assert.equal(fixtureHash,'8954453c3575aa2328eb745756b88320bba991d7555ae7b632ca58c69179d41c');
+assert.equal(fixtureHash,'6ff0dac314d236f26d46ccd5e64bc2fa9781c4d5d8472fa55417bb3b8401f298');
 const begin=source.indexOf('export function installNativeDisplayCulling('),end=source.indexOf('// Display geometry',begin);
 assert.ok(begin>=0&&end>begin);
 const baselineSource=source.slice(0,begin)+fixture.slice(fixture.indexOf('export function'))+source.slice(end);
