@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {spinnerFirstStage,spinnerChargePitch,wrapSpinnerChargeLoop,syncCatalogSpinnerCharge} from '../runtime/audio/spinner-charge-layer.mjs';
+import {spinnerFirstStage,spinnerChargePitch,syncCatalogSpinnerCharge} from '../runtime/audio/spinner-charge-layer.mjs';
 import {adaptWeaponAudio} from '../audio-adapter.mjs';
 
 function motor() {
@@ -23,34 +23,6 @@ test('all six source first stages drive the charge sound rather than a 50% guess
   assert.equal(spinnerChargePitch(-10),.88);
   assert.ok(Math.abs(spinnerChargePitch(1)-1.2)<1e-12);
   assert.equal(spinnerChargePitch(10),spinnerChargePitch(1));
-});
-
-test('two recorded Ready cues fire once per charge with no extra timers or oscillators',()=>{
-  const events=[],h=motor(),actor={isLocal:true,weapon:weapon(48,72)};
-  const engine={playWeapon:(id,event,options)=>events.push({id,event,options})};
-  const voice=wrapSpinnerChargeLoop(engine,actor.weapon.id,h,{actor});
-  for(const p of [0,.3,.65,48/72,.78,.95,1,1,.94,1])voice.set({progress:p,pos:null});
-  assert.deepEqual(events.map(e=>e.event),['ready','ready']);
-  assert.deepEqual(events.map(e=>e.options.pitch),[.92,1.12]);
-  assert.ok(events.every(e=>e.options.pos===undefined),'local cues are non-positional');
-  assert.equal(h.updates.length,10);
-  assert.equal(h.updates[0].pitch,spinnerChargePitch(0));
-  assert.equal(h.updates.at(-1).pitch,spinnerChargePitch(1));
-  voice.stop(.05);voice.stop(.05);voice.set({progress:1});
-  assert.equal(h.stops.length,1);
-  assert.equal(events.length,2,'interrupted loop cannot emit new cues');
-  const second=wrapSpinnerChargeLoop(engine,actor.weapon.id,motor(),{actor});
-  second.set({progress:1});
-  assert.equal(events.length,4,'new charge owns fresh edge flags');
-});
-
-test('silent or rejected motor loops never generate fake recorded charge cues',()=>{
-  const h=motor();h.playing=false;
-  const events=[];
-  const voice=wrapSpinnerChargeLoop({playWeapon(...args){events.push(args);}},'splatling',h,{actor:{weapon:{id:'splatling'},isLocal:false}});
-  voice.set({progress:1});
-  assert.equal(events.length,0);
-  assert.equal(voice.playing,false);
 });
 
 test('S3 local catalog charge and stream own one loop at a time with cleanup',()=>{
@@ -91,6 +63,6 @@ test('production source adapter wires local and remote progress without duplicat
   const remote=adaptWeaponAudio('src/net/netmatch.js',network);
   assert.match(remote,/progress: wr\.charge/);
   const bank=fs.readFileSync(new URL('../runtime/audio/bank.mjs',import.meta.url),'utf8');
-  assert.ok(bank.includes('recordedSpinnerCharge'));
+  assert.ok(bank.includes('recordedSpinnerMotor'),'the original recording remains locked to speed 1');
   assert.ok(!fs.readFileSync(new URL('../runtime/audio/spinner-charge-layer.mjs',import.meta.url),'utf8').includes('createOscillator'));
 });
