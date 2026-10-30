@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 const [rootArg,siteArg,outArg,id,batch]=process.argv.slice(2),root=path.resolve(rootArg),site=path.resolve(siteArg),out=path.resolve(outArg);
 const PRODUCT='379533f541d86346a068e397f879cb6c13590ffd',QA=process.env.QA_SHA;
 assert.match(QA||'',/^[a-f0-9]{40}$/);assert(!fs.existsSync(out));fs.mkdirSync(out,{recursive:true});
-const profiles={'phone-landscape':{width:844,height:390},'phone-portrait':{width:390,height:844},'ipad-mini-portrait':{width:744,height:1133},'ipad-mini-landscape':{width:1133,height:744}};assert(['editor','variants','battle','error-bottom'].includes(batch));assert(profiles[id]);assert(batch!=='battle'||id.endsWith('landscape'));const device={id,viewport:profiles[id],isMobile:true,hasTouch:true,deviceScaleFactor:1};
+const profiles={'phone-landscape':{width:844,height:390},'phone-portrait':{width:390,height:844},'ipad-mini-portrait':{width:744,height:1133},'ipad-mini-landscape':{width:1133,height:744}};assert(['editor','variants','battle','error-bottom','pause-only'].includes(batch));assert(profiles[id]);assert(!['battle','pause-only'].includes(batch)||id.endsWith('landscape'));assert(batch!=='pause-only'||id==='ipad-mini-landscape');const device={id,viewport:profiles[id],isMobile:true,hasTouch:true,deviceScaleFactor:1};
 const {chromium}=createRequire(path.join(root,'package.json'))('playwright');
 const {launchSandboxBrowser}=await import(pathToFileURL(path.join(root,'scripts/lib/inkwave-sandbox-browser.mjs')));
 assert(!process.env.CHROMIUM_EXECUTABLE_PATH);
@@ -111,7 +111,7 @@ try{
   await attempt('online-pause',async()=>{await fixture();await page.evaluate(()=>G.netm={});await show('pause');await snap('preview-online-pause',{scope:'UI-preview'});await tap('[data-id="quit"]');await page.locator('.iw-modal').waitFor({state:'visible'});await snap('preview-online-pause-leave-confirm',{scope:'UI-preview',notes:['Confirmation not accepted']});});
   await attempt('room-disconnect',async()=>{await fixture();await show('lobby');await page.evaluate(()=>menus._roomGone('Lost connection to the room'));await waitScreen('online');await snap('preview-room-disconnect',{scope:'UI-preview',notes:['Existing room-loss handler invoked in offline fixture; no real room']});});
  }
- if(batch==='battle')await attempt('offline-bot-match',async()=>{
+ if(['battle','pause-only'].includes(batch))await attempt('offline-bot-match',async()=>{
   await page.goto(origin+'/?news=0&skipTitle=1&autopilot=1',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__inkwave?.debug&&window.__inkwave?.menus,null,{timeout:180000});await waitScreen('main');
   await tap('.iw-main [data-id="play"]');await waitScreen('mode');await tap('[data-id="mode-turf"]');await waitScreen('setup');
   // Keep the native START event/permission route, but supply the originally
@@ -130,6 +130,7 @@ try{
   const actualDuration=await page.evaluate(()=>{window.__inkwave.debug.freeze();return window.__inkwave.match.duration;});assert.equal(actualDuration,20,'real API must honor the requested 20s Turf input');receipt.matchInput={duration:20,route:'native START with one original startMatch API call'};
   if(id==='ipad-mini-landscape'){await snap('offline-battle-hud',{scope:'actual-game-native-start',notes:['Actual local offline Turf match with bots; native START gesture with valid setup map; Single-use native startMatch API requests 20s; autopilot; actual simulation advanced by supported audit clock after HUD; no result injection']});
   await page.evaluate(()=>{window.__inkwave.pause();window.__inkwave.debug.unfreeze();});await waitScreen('pause');await snap('offline-battle-pause',{scope:'actual-game-api-pause'});await tap('[data-id="quit"]');await page.locator('.iw-modal').waitFor({state:'visible'});await page.waitForTimeout(600);await snap('offline-battle-quit-confirm',{scope:'actual-game-api-pause',notes:['Confirmation not accepted']});await page.keyboard.press('Escape');await page.evaluate(()=>{window.__inkwave.debug.freeze();window.__inkwave.resume();});}
+  if(batch==='pause-only')return;
   let advancedMs=0;for(let n=0;n<Math.ceil((actualDuration+60)/2);n++){const done=await page.evaluate(()=>window.__inkwave.menus?.current==='results'||window.__G?.mode==='results');if(done)break;await page.evaluate(()=>window.__inkwave.debug.step(2000));advancedMs+=2000;await page.waitForTimeout(10);}receipt.auditClock={method:'existing debug.freeze/step',stepMs:2000,advancedMs,configuredDuration:actualDuration};await page.evaluate(()=>window.__inkwave.debug.unfreeze());await page.waitForFunction(()=>window.__inkwave?.menus?.current==='results',null,{timeout:30000});await waitScreen('results');await tap('.iw-res__title');await page.waitForFunction(()=>window.__inkwave.menus._scr.el.classList.contains('is-done'));await snap('offline-battle-results',{scope:'actual-game',notes:['Actual offline bot simulation, audit-clock advanced; no injected winner, match.time or result']});
  });
  if(batch==='error-bottom')await attempt('short-viewport-error-banners',async()=>{
@@ -143,7 +144,7 @@ try{
    await snap('preview-online-error-'+n+'-bottom',{scope:'UI-preview',notes:['Synthetic local rejected API outcome: '+errors[n],'Scroll-only bottom continuation of retained initial capture; banner bounding box verified',box]});
   }
  });
- const planned=batch==='editor'?5:batch==='variants'?20:batch==='error-bottom'?6:id==='phone-landscape'?1:4;
+ const planned=batch==='editor'?5:batch==='variants'?20:batch==='error-bottom'?6:batch==='pause-only'?3:id==='phone-landscape'?1:4;
  assert.equal(receipt.images.length,planned,'required distinct-state count');receipt.required=required;receipt.batch=batch;receipt.transport={maxLogBytes:MAX_LOG_BYTES,rawImageProcessing:'none',artifactRetainsAllOriginals:true};persist();
 
 } catch(e){receipt.failures.push({phase:'fatal',error:String(e.stack||e)});persist();await emit({type:'failure',device:id,error:String(e.stack||e)});}
