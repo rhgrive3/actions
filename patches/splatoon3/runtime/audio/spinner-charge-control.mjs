@@ -8,7 +8,7 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   const phrase=spinnerUsesPremix(id),ctx=engine.ctx;
   // Keep the installed source Motor audible until the optional premix has
   // decoded. A cold cache must not produce a silent first charge.
-  let stopped=false,clip=null,native=nativeLoop();
+  let stopped=false,clip=null,native=phrase&&spinnerCached(engine,id)?null:nativeLoop();
   let progress=0,previous=0,last=ctx?.currentTime??0;
   let pitch=phrase?clamp(spinnerClipFull(id)/(opts.actor?.weapon?.chargeTime||1),.25,3):.88;
   let first=false,full=false,failed=false,position=opts.pos;
@@ -47,7 +47,7 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
       if(stopped)return false;
       if(clip?.playing)return true;
       if(native?.playing)return true;
-      return !failed;
+      return !failed&&!!ctx;
     },
     set(update={}){
       if(stopped)return;
