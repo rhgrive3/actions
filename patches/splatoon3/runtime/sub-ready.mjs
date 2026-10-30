@@ -78,8 +78,8 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
    this.s3SubFromSquid=false;
   }
   // #1000: Curling/Suction readiness uses the equipped sub's resolved cost.
-  const cost=selectedSubReadyCost(a,SUB);
   if(s&&input.subReleased){
+   const cost=selectedSubReadyCost(a,SUB);
    if(a.ink+EPS<cost){this.s3SubReady=null;s=null;}
    else s.pending=true;
   }

@@ -77,6 +77,14 @@ function validWireCause(weapon,cause){
   }
   return mainCauseCache.get(weapon).has(cause);
 }
+export function validDeviceDamageCause(actor,id,cause,kind){
+  if(cause==null)return true;
+  if(kind==='special'&&id==='inkVac'&&cause==='BlowerInhale')return true;
+  if(kind==='main')return cause===objectDamageRow(actor)||validWireCause(id,cause);
+  if(cause===attackRows[id]||validWireCause(id,cause))return true;
+  const subRows={bomb:['Bomb'],suction:['Bomb_Suction'],curling:['Bomb','Bomb_CurlingBullet'],autobomb:['Bomb'],burst:['Bomb_DirectHit'],fizzy:['Bomb_Fizzy'],torpedo:['Bomb_TorpedoBullet','Bomb_TorpedoSplashBurst'],inkMine:['Bomb_Trap']};
+  return subRows[id]?.includes(cause)===true;
+}
 export function withObjectDamageCause(attack,callback,cause=catalogueAttackRow(attack)){
   const owner=attack?.owner&&typeof attack.owner==='object'?attack.owner:attack;
   if(!owner||!cause)return callback();
