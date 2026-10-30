@@ -1,0 +1,47 @@
+name: INKWAVE existing screenshot recovery
+on:
+  pull_request:
+    paths:
+      - 'tools/frontend-recovery/**'
+      - '.github/workflows/inkwave-frontend-recovery.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: frontend-recovery-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  metadata:
+    if: ${{ github.repository == 'rhgrive3/actions' && github.head_ref == 'qa/frontend-existing-artifact-recovery-20261030' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: [12969351732, 12969586617]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          sparse-checkout: tools/frontend-recovery
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: rhgrive3/actions
+          run-id: 41035688850
+          artifact-ids: ${{ matrix.artifact }}
+          merge-multiple: true
+          path: recovered
+      - name: Verify immutable ZIP and print only original metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QA_SHA: ${{ github.event.pull_request.head.sha }}
+          ARTIFACT_ID: ${{ matrix.artifact }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$QA_SHA"
+          gh api "repos/rhgrive3/actions/actions/artifacts/$ARTIFACT_ID/zip" > original.zip
+          node tools/frontend-recovery/metadata.mjs "$ARTIFACT_ID" recovered original.zip

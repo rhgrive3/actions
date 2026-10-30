@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const pins=[{"id":12969586617,"name":"frontend-phone-landscape-41035688850-1","size":8905124,"digest":"sha256:6e3fccfda1c7e5cd18455c391224760d5e8efaa0a48d4c8b9ecbe51c708747dc","device":"phone-landscape"},{"id":12969351732,"name":"frontend-phone-portrait-41035688850-1","size":7659650,"digest":"sha256:147ed2a56bf52fa1700a18b83eb1e786f6ae170a9980c90c9d6df8c9235c3c8d","device":"phone-portrait"}];
+const pin=pins.find(x=>String(x.id)===process.argv[2]);assert.ok(pin,'unknown pinned artifact');
+const root=path.resolve(process.argv[3]),zip=path.resolve(process.argv[4]);
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const meta=JSON.parse(execFileSync('gh',['api','repos/rhgrive3/actions/actions/artifacts/'+pin.id],{maxBuffer:1024*1024}));
+assert.equal(meta.id,pin.id);assert.equal(meta.name,pin.name);assert.equal(meta.size_in_bytes,pin.size);assert.equal(meta.digest,pin.digest);assert.equal(meta.expired,false);
+assert.equal(meta.workflow_run.id,41035688850);assert.equal(meta.workflow_run.head_sha,'25d2111aedefa25a436636b632173e650cc3b71c');assert.equal(meta.workflow_run.repository_id,1371175410);
+assert.ok(fs.statSync(zip).size<=32*1024*1024);assert.equal('sha256:'+hash(fs.readFileSync(zip)),pin.digest);
+const entries=execFileSync('unzip',['-Z1',zip],{maxBuffer:1024*1024}).toString().trim().split('\n');
+assert.equal(entries.filter(x=>x==='manifest.json').length,1,'one root manifest');
+const raw=execFileSync('unzip',['-p',zip,'manifest.json'],{maxBuffer:1024*1024});
+const f=path.join(root,'manifest.json');assert.ok(fs.lstatSync(f).isFile()&&!fs.lstatSync(f).isSymbolicLink());
+assert.deepEqual(fs.readFileSync(f),raw,'download-artifact manifest equals digest-verified ZIP');
+const m=JSON.parse(raw);assert.equal(m.schema,1);assert.equal(m.productHead,'379533f541d86346a068e397f879cb6c13590ffd');assert.equal(m.qaHead,'25d2111aedefa25a436636b632173e650cc3b71c');assert.equal(String(m.run),'41035688850');assert.equal(String(m.attempt),'1');assert.equal(m.device.id,pin.device);
+assert.ok(Array.isArray(m.images)&&m.images.length<=1000);assert.ok(Array.isArray(m.failures));assert.equal(typeof m.complete,'boolean');
+const indices=new Set(),files=new Set();
+for(const im of m.images){assert.ok(Number.isInteger(im.index)&&!indices.has(im.index));indices.add(im.index);assert.ok(/^[A-Za-z0-9._-]+\.jpg$/.test(im.jpeg.file)&&!files.has(im.jpeg.file));files.add(im.jpeg.file);assert.ok(/^[a-f0-9]{64}$/.test(im.jpeg.sha256));assert.ok(Number.isInteger(im.jpeg.bytes)&&im.jpeg.bytes>0);assert.equal(im.jpeg.nativeScreenshot,true);assert.equal(im.jpeg.quality,80);}
+const out={type:'metadata',sourceArtifact:pin,manifestSHA256:hash(raw),transportRun:process.env.GITHUB_RUN_ID,transportQAHead:process.env.QA_SHA,sourceManifest:m,recoveryComplete:true,captureComplete:m.complete};
+const line=JSON.stringify(out);assert.ok(Buffer.byteLength(line)<1024*1024,'bounded metadata');
+console.log('FRONTEND_RECOVERY_V1 '+line);
