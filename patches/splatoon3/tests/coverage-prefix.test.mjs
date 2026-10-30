@@ -67,10 +67,10 @@ test('public direct indexed scans still observe every grid edit without a versio
 
 test('sparse native-style zero ownership keeps cell offsets and ordered weights exact', () => {
   const p=make(16384);p.grid.fill(0);
-  p.paintFaces=[face(0,4096,.17,.13),face(4096,12288,.19,.37)];
+  p.paintFaces=[face(0,4097,.17,.13),face(4097,12287,.19,.37)];
   for(let i=7;i<p.dead.length;i+=17)p.dead[i]=1;
   exact(p);assert.deepEqual(p.coverage(),[0,0]);
-  for(const [cell,team]of [[15003,1],[12011,2],[0,1],[4000,2],[16000,1]]){
+  for(const [cell,team]of [[15003,1],[12011,2],[0,1],[4096,2],[4097,1],[16000,1]]){
     p.grid[cell]=team;notePaintMutation(p,true);exact(p,'sparse write '+cell);
   }
   p.grid.fill(0);notePaintMutation(p,true);exact(p,'all-zero replay');
@@ -89,7 +89,7 @@ test('identity changes rebuild the index and retain full fallback', () => {
   assert.deepEqual(p.coverage(), [0, 0]);
 });
 
-test('sparse unaligned eligible cells retain their original reads and overlapping/reordered faces use full fallback', () => {
+test('sparse unaligned eligible cells retain their weighted order and overlapping/reordered faces use full fallback', () => {
   const p = make();
   for (let i = 1; i < p.dead.length; i += 3) p.dead[i] = 1;
   p.paintFaces = [face(1, 7000), face(7100, 1090, .7, .17, .6)];
@@ -98,6 +98,14 @@ test('sparse unaligned eligible cells retain their original reads and overlappin
     p.paintFaces = faces; exact(p); assert.equal(p._s3CoverageIndex.replay, null);
     p.grid[601] = 1; notePaintMutation(p, true); exact(p);
   }
+});
+
+test('partial words ignore excluded bytes, retain high ownership bytes and fall back at truncated storage', () => {
+  const p=make(32);p.dead[1]=1;p.dead[3]=1;p.grid[2]=255;exact(p);
+  p.grid[1]=255;p.grid[3]=255;notePaintMutation(p,true);exact(p,'excluded high bytes');
+  p.grid[0]=2;p.grid[4]=128;p.grid[31]=255;notePaintMutation(p,true);exact(p,'eligible high bytes');
+  const tail=make(31);exact(tail);assert.equal(tail._s3CoverageIndex.replay,null);
+  tail.grid[30]=2;notePaintMutation(tail,true);exact(tail,'partial final backing word');
 });
 
 test('Proxy, custom arrays, SharedArrayBuffer, resizable, unaligned and detached storage keep the original full path', () => {

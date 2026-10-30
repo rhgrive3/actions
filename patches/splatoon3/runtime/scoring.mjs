@@ -9,6 +9,11 @@
 // with the original per-face weight, so every sum is bit-identical.
 const PREFIX_SHIFT = 8, PREFIX_GROUPS = 1 << PREFIX_SHIFT;
 const LITTLE_ENDIAN = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
+const ELIGIBLE_WORD_MASKS = Uint32Array.from({ length: 16 }, (_, mask) => {
+  let word = 0;
+  for (let byte = 0; byte < 4; byte++) if (mask & 1 << byte) word |= 255 << (LITTLE_ENDIAN ? byte * 8 : (3 - byte) * 8);
+  return word >>> 0;
+});
 const TYPED_ARRAY = Object.getPrototypeOf(Uint8Array.prototype);
 const typedLength = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'length').get;
 const typedBuffer = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'buffer').get;
@@ -71,68 +76,66 @@ function scanFloorCoverage({ cells, weights, area }, grid) {
 // must therefore still observe earlier, unannounced writes when it publishes a
 // later turf change. Verify the entire reused prefix against its last ownership
 // snapshot; a writer's reported bounds alone cannot establish that it is clean.
-// Four consecutive, aligned eligible bytes can be compared in one read. Gaps
-// retain the original single-cell read, and unusual/publicly supplied arrays
-// retain indexedFloorCoverage. No floating-point block sums are combined.
+// Compare each source word with its eligible-byte mask, including partial words
+// around gaps. Unusual/publicly supplied arrays retain indexedFloorCoverage.
+// No floating-point block sums are combined.
 function coverageReplay(index, grid) {
   if (!ArrayBuffer.isView(grid) || Object.getPrototypeOf(grid) !== Uint8Array.prototype ||
       Object.hasOwn(grid, 'buffer') || Object.hasOwn(grid, 'byteOffset') ||
       Object.hasOwn(grid, 'byteLength') || Object.hasOwn(grid, 'length')) return null;
   const length = typedLength.call(grid), buffer = typedBuffer.call(grid), offset = typedOffset.call(grid);
   if (Object.getPrototypeOf(buffer) !== ArrayBuffer.prototype || bufferResizable?.call(buffer) ||
-      !length || offset % 4 || bufferLength.call(buffer) < offset + length) return null;
+      !length || length > 0x40000000 || offset % 4 || bufferLength.call(buffer) < offset + length) return null;
   const cached = index.replay;
   if (cached === null) return null;
   if (cached && cached.length === length) return cached;
-  const { cells } = index, groups = [], checkpoints = [];
+  const { cells } = index, groups = [], starts = [], wholeWords = Math.floor(length / 4);
   for (let i = 0; i < cells.length;) {
     const cell = cells[i];
     // Non-monotonic/overlapping public faces keep the full original scan.
-    if (cell < 0 || cell >= length || i && cell <= cells[i - 1]) return (index.replay = null);
-    if (!(groups.length % PREFIX_GROUPS)) checkpoints.push(i);
-    if (!(cell % 4) && i + 3 < cells.length && cells[i + 1] === cell + 1 &&
-        cells[i + 2] === cell + 2 && cells[i + 3] === cell + 3 && cell + 3 < length) {
-      groups.push(cell / 4); i += 4;
-    } else { groups.push(~cell); i++; }
+    if (cell < 0 || cell >= length || cell >>> 2 >= wholeWords || i && cell <= cells[i - 1]) return (index.replay = null);
+    const word = cell >>> 2, start = i; let mask = 0;
+    do {
+      if (i && cells[i] <= cells[i - 1]) return (index.replay = null);
+      mask |= 1 << (cells[i] & 3); i++;
+    } while (i < cells.length && cells[i] >>> 2 === word);
+    groups.push(word * 16 + mask); starts.push(start);
   }
-  return (index.replay = { length, words: new Uint32Array(buffer, offset, Math.floor(length / 4)),
-    groups: Int32Array.from(groups), ownership: new Uint32Array(groups.length),
-    checkpoints: Int32Array.from(checkpoints), prefix0: new Float64Array(checkpoints.length),
-    prefix1: new Float64Array(checkpoints.length), valid: false, t0: 0, t1: 0 });
+  const checkpoints = Math.ceil(groups.length / PREFIX_GROUPS);
+  return (index.replay = { length, words: new Uint32Array(buffer, offset, wholeWords),
+    groups: Uint32Array.from(groups), starts: Int32Array.from(starts), ownership: new Uint32Array(groups.length),
+    prefix0: new Float64Array(checkpoints), prefix1: new Float64Array(checkpoints), valid: false, t0: 0, t1: 0 });
 }
 
-function replayFloorCoverage(paint, full) {
-  const index = coverageIndex(paint), grid = paint.grid, replay = coverageReplay(index, grid);
+function replayFloorCoverage(index, grid, full) {
+  const replay = grid === index.grid ? coverageReplay(index, grid) : null;
   if (!replay) return scanFloorCoverage(index, grid);
-  const { groups, words, ownership, checkpoints, prefix0, prefix1 } = replay;
+  const { groups, words, ownership, starts, prefix0, prefix1 } = replay;
   const { weights, area } = index;
   let first = 0;
   if (!full && replay.valid) {
     for (; first < groups.length; first++) {
-      const group = groups[first], value = group < 0 ? grid[~group] : words[group];
+      const group = groups[first], value = (words[group >>> 4] & ELIGIBLE_WORD_MASKS[group & 15]) >>> 0;
       if (value !== ownership[first]) break;
     }
     if (first === groups.length) return area > 0 ? [replay.t0 / area, replay.t1 / area] : [0, 0];
   }
   const checkpoint = first >>> PREFIX_SHIFT, start = checkpoint * PREFIX_GROUPS;
-  let i = checkpoints[checkpoint] || 0, t0 = start ? prefix0[checkpoint] : 0, t1 = start ? prefix1[checkpoint] : 0;
+  let t0 = start ? prefix0[checkpoint] : 0, t1 = start ? prefix1[checkpoint] : 0;
   for (let g = start; g < groups.length; g++) {
     if (!(g % PREFIX_GROUPS)) { prefix0[g >>> PREFIX_SHIFT] = t0; prefix1[g >>> PREFIX_SHIFT] = t1; }
-    const group = groups[g], value = group < 0 ? grid[~group] : words[group];
+    const group = groups[g], mask = group & 15, value = (words[group >>> 4] & ELIGIBLE_WORD_MASKS[mask]) >>> 0;
     ownership[g] = value;
     // Most native turf is still unpainted. An all-zero word contributes no
-    // additions, so skip all four original zero-team tests together.
-    if (value === 0) { i += group < 0 ? 1 : 4; continue; }
-    if (group < 0) {
-      if (value === 1) t0 += weights[i];
-      else if (value === 2) t1 += weights[i];
+    // additions, so skip all of its original zero-team tests together.
+    if (value === 0) continue;
+    let i = starts[g];
+    for (let byte = 0; byte < 4; byte++) {
+      if (!(mask & 1 << byte)) continue;
+      const team = value >>> (LITTLE_ENDIAN ? byte * 8 : (3 - byte) * 8) & 255;
+      if (team === 1) t0 += weights[i];
+      else if (team === 2) t1 += weights[i];
       i++;
-    } else {
-      for (let byte = 0; byte < 4; byte++, i++) {
-        const team = value >>> (LITTLE_ENDIAN ? byte * 8 : (3 - byte) * 8) & 255;
-        if (team === 1) t0 += weights[i];
-        else if (team === 2) t1 += weights[i];
-      }
     }
   }
   replay.valid = true; replay.t0 = t0; replay.t1 = t1;
@@ -158,14 +161,12 @@ export function installScoring({ PaintSystem }) {
     observePaintVersion(this);
     if (this._s3CoverageVersion !== this._s3TurfVersion || this._s3CoverageGrid !== this.grid ||
         this._s3CoverageDead !== this.dead || this._s3CoverageFaces !== this.paintFaces) {
-      // Public accessors must keep the original number/order of property reads.
-      const plain = ['grid', 'dead', 'paintFaces'].every(key =>
-        Object.hasOwn(Object.getOwnPropertyDescriptor(this, key) || {}, 'value'));
-      if (plain) {
-        const full = this._s3CoverageFullScan || this._s3CoverageGrid !== this.grid ||
-          this._s3CoverageDead !== this.dead || this._s3CoverageFaces !== this.paintFaces;
-        this._s3Coverage = replayFloorCoverage(this, full);
-      } else this._s3Coverage = indexedFloorCoverage(this);
+      // Capture the same index/grid reads as indexedFloorCoverage. Comparing
+      // identities through the captured index avoids extra public getter reads.
+      const index = coverageIndex(this), grid = this.grid;
+      const full = this._s3CoverageFullScan || this._s3CoverageGrid !== index.grid ||
+        this._s3CoverageDead !== index.dead || this._s3CoverageFaces !== index.faces;
+      this._s3Coverage = replayFloorCoverage(index, grid, full);
       this._s3CoverageFullScan = false;
       this._s3CoverageVersion = this._s3TurfVersion; this._s3CoverageGrid = this.grid;
       this._s3CoverageDead = this.dead; this._s3CoverageFaces = this.paintFaces;
