@@ -6,6 +6,26 @@
 export function adaptRefreshAwareDynRes(rel, code, replaceOnce) {
   if (rel !== 'src/main.js') return code;
   code = replaceOnce(code,
+    '    if (dt <= 0 || dt > 0.25) return;',
+    `    // Native overload admission: isolated stalls remain excluded, but a
+    // continuously overloaded native stage must still reach the controller.
+    // Only this diagnostic sample is bounded; simulation keeps its real dt.
+    if (Number.isFinite(dt) && dt > 0.25 && G.level?.native &&
+        !document.hidden && this.match?.state === 'playing' &&
+        !this.match.attract && !this.match.paused && this.settings.quality !== 'ultra') {
+      let slow = this._nativeSlowFrames;
+      if (!slow || slow.match !== this.match || slow.level !== G.level || slow.quality !== this.settings.quality)
+        slow = this._nativeSlowFrames = { match: this.match, level: G.level, quality: this.settings.quality, count: 0 };
+      slow.count = Math.min(4, slow.count + 1);
+      if (slow.count < 4) return;
+      dt = Math.min(dt, 1);
+    } else {
+      this._nativeSlowFrames = null;
+      if (!Number.isFinite(dt) || dt <= 0 || dt > 0.25) return;
+    }
+    // End native overload admission.`,
+    'admit sustained native overload without counting isolated stalls');
+  code = replaceOnce(code,
     '      d.match = match; d.quality = quality;',
     '      d.match = match; d.quality = quality;\n      d._resolutionTrial = null; d._noGainWindows = 0; d._noGainCount = 0;',
     'reset resolution causal trial on match/quality change');

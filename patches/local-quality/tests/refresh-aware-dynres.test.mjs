@@ -70,7 +70,7 @@ function simulate({modified=false,touch=true,hz=30,total=40,frameDt,frameRate='d
   }
   return {scale:R.dynScale,transitions,game:g};
 }
-test('adapter only transforms main and uses three unique anchors',()=>{
+test('adapter only transforms main and uses unique anchors',()=>{
   assert.equal(adaptRefreshAwareDynRes('src/core/renderer.js',source,replaceOnce),source);
   const b=adaptRefreshAwareDynRes('src/main.js',source,replaceOnce);
   assert.equal((b.match(/_resolutionTrial = \{ avg, scale: s \}/g)||[]).length,1);

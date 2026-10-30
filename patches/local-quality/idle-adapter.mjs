@@ -154,7 +154,7 @@ export function adaptIdleSource(rel, code, replace) {
       '    const cov = inspect && this.attractT <= 110 ? G.paint.coverage() : null;\n' +
       '    if (this.attractT > 110 || (cov && cov[0] + cov[1] > 0.72)) {',
       'throttle menu-only turf reset coverage scan');
-    patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
+    patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) { this._nativeSlowFrames = null; return; }', 'paused frames are not GPU headroom samples');
     patch('      if (!setUp) this.R.render();', `      if (!setUp && (!menuAttractBudget || this._menuAttractFrame)) {
         if (pausedFrame.paused && !pausedFrame.draw) {
           // Preserve the WebGL backdrop through page composition without
