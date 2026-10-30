@@ -7,6 +7,7 @@ import { utf8ByteLength } from './utf8-length.mjs';
 
 export const OWNER_CLOCK_VERSION = 1;
 export const OWNER_CLOCK_CHALLENGE_TTL = 2;
+export const OWNER_CLOCK_REFUSED_RETRY = 0.1;
 export const OWNER_CLOCK_PENDING_PACKETS = 64;
 export const OWNER_CLOCK_PENDING_BYTES = 256 * 1024;
 const states = new WeakMap();
@@ -49,14 +50,19 @@ function send(nm, to, payload) {
 function request(nm, from, p, at, resend = false) {
   if (p.origin || !finite(at) || at < 0) return;
   if (p.pending && at >= p.pending.at && at - p.pending.at <= OWNER_CLOCK_CHALLENGE_TTL) {
-    if (!resend) return;
+    if (!resend && (p.pending.sent || at < p.pending.retryAt)) return;
     // Repeating the SAME nonce does not renew its origin or expiration time.
   } else {
     const words = new Uint32Array(4);
     globalThis.crypto.getRandomValues(words);
-    p.pending = { nonce: Array.from(words, x => x.toString(16).padStart(8, '0')).join(''), at };
+    p.pending = { nonce: Array.from(words, x => x.toString(16).padStart(8, '0')).join(''), at, sent: false, retryAt: at };
   }
-  send(nm, from, { k: 'ocq', v: OWNER_CLOCK_VERSION, m: nm.cfg.id, n: p.pending.nonce });
+  // Only locally refused writes use the short retry. Keep one nonce and its
+  // original freshness deadline; successful sends retain the existing TTL.
+  const pending = p.pending;
+  pending.retryAt = at + OWNER_CLOCK_REFUSED_RETRY;
+  const sent = send(nm, from, { k: 'ocq', v: OWNER_CLOCK_VERSION, m: nm.cfg.id, n: pending.nonce });
+  pending.sent ||= sent;
 }
 export function beginOwnerClock(nm, at) {
   if (!enabled(nm) || !nm.match) return;
