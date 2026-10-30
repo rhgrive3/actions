@@ -2,6 +2,9 @@
 // The native Physics.los() reads x/y/z through Vector3.copy, so probe records
 // can stay realm-independent in Node regression tests and in the browser.
 const EPS = 1e-9;
+// Above TriangleWorld's 1e-5 minimum ray hit, using NativePhysics' existing
+// 1e-4 source-contact tolerance. This is LOS geometry, not a damage radius.
+const CONTACT_SEPARATION = 1e-4;
 const probes = Array.from({ length: 7 }, () => ({ x: 0, y: 0, z: 0,
   set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; } }));
 
@@ -36,7 +39,7 @@ export function blasterBlastExposed(physics, center, actor, player, collision = 
   // the struck surface. Keep the explosion center and damage distance unchanged.
   const normal = collision?.normal;
   const origin = normal && Number.isFinite(normal.x) && Number.isFinite(normal.y) && Number.isFinite(normal.z)
-    ? { x: center.x + normal.x * 1e-5, y: center.y + normal.y * 1e-5, z: center.z + normal.z * 1e-5 }
+    ? { x: center.x + normal.x * CONTACT_SEPARATION, y: center.y + normal.y * CONTACT_SEPARATION, z: center.z + normal.z * CONTACT_SEPARATION }
     : center;
   for (const point of probes) if (physics.los(origin, point)) return true;
   return false;
