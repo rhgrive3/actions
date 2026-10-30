@@ -29,4 +29,12 @@ Kraken and Reefslider reserve the full planned travel corridor, including should
 
 ## Verification status
 
-Initial syntax check: `node --check patches/splatoon3/runtime/bot-special-melee.mjs` passed. Composed Actor input tests are being added with the shared context dependency; full BotBrain/build verification belongs to the integration report. No Switch measurement or retail parity claim is made.
+Checks:
+
+- `node --check patches/splatoon3/runtime/bot-special-melee.mjs` and `git diff --check` passed.
+- `node --experimental-vm-modules --test patches/splatoon3/tests/bot-special-melee.test.mjs`: 21/21 passed. The fixture uses production composition, real Actor.update input admission, restored native Actor integration, actual Level/Physics and native projectiles. It tests Kraken charge-release/contact and idle behavior at 30/60/120Hz, close jump/contact, target loss at full charge, dead/friendly/occluded/high/cliff targets, Stamp sub-release/42F queued startup and target-loss hold, Reefslider manual braking/impact at three rates, unsafe rails, Triple Splashdown and legacy Slam impacts.
+- The test fixture supplies stable aim through the normal public aim fields; it does not claim to test the BotBrain aim spring. Full BotBrain/build verification belongs to the integration report.
+
+Tests use shared context commit `9cf8b3f38c0b73da7b9c08bbf4edbb223d1c479d` plus actual sibling category sources. Corridor width is delegated to the shared `safePath` helper, with 0.65-unit half-width. During Kraken charging the local path is checked; the full route is checked again immediately before release, avoiding repeated distant probes.
+
+No Switch measurement or retail parity claim is made.

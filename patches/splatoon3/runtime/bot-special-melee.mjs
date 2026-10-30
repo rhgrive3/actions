@@ -25,14 +25,7 @@ function safeRush(ctx, direction, length) {
   // A rush cannot brake/steer around a missing deck. Probe the complete body
   // route, including its shoulders, before committing a charge or slide.
   const end = rushPoint(ctx, direction, length / magnitude);
-  if (!ctx.safePath(end)) return false;
-  for (const side of [-.65, .65]) {
-    const shoulder = end.clone();
-    shoulder.x -= direction.z / magnitude * side;
-    shoulder.z += direction.x / magnitude * side;
-    if (!ctx.safePath(shoulder)) return false;
-  }
-  return true;
+  return ctx.safePath(end, Infinity, .65);
 }
 function facing(ctx) {
   return ctx.actor.pos.clone().set(Math.sin(ctx.actor.aimYaw || 0), 0, Math.cos(ctx.actor.aimYaw || 0));
@@ -67,7 +60,9 @@ function kraken(ctx) {
   if (target) aimEnemy(ctx, .12);
   if (st.phase === 'charge') {
     const ready = st.chargeT + EPS >= KRAKEN_MOVEMENT.chargeTime;
-    const clear = chargeTarget && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), 12);
+    // Recheck the complete committed corridor at release, not every charge
+    // frame. During charging the body moves only slowly; probe that local path.
+    const clear = chargeTarget && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), ready ? 12 : 1.5);
     // An early release cancels charging. A FULL charge releases a real dash:
     // hold it if the target died/disappeared or the route became unsafe.
     intent.fire = ready ? !(clear && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) : clear && enoughTime;
