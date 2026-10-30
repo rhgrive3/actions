@@ -7,9 +7,9 @@ const source=readFileSync(new URL('../reviewed-wave67-gpu-adapter.mjs',import.me
 const labels=[...source.matchAll(/'GPU-[A-Za-z0-9]+ [^']*'/g)].map(m=>m[0]);
 
 test('reviewed Wave 6/7 selects exactly the audited operations',()=>{
-  assert.equal(labels.length,21);
+  assert.equal(labels.length,19);
   assert.equal(new Set(labels).size,21);
-  for(const bad of ['GPU-03b','GPU-TEX1','GPU-SFX1a','GPU-22b','GPU-SFX3'])
+  for(const bad of ['GPU-03b','GPU-TEX1','GPU-SFX1a','GPU-22b','GPU-SFX3','GPU-07c','GPU-12c'])
     assert.ok(!labels.some(x=>x.startsWith("'"+bad+' ')),bad);
 });
 
@@ -34,5 +34,4 @@ test('current combat adapter hooks the reviewed changes without rewriting locked
   assert.ok(adapter.includes("import { adaptReviewedWave67Gpu } from './reviewed-wave67-gpu-adapter.mjs';"));
   assert.ok(adapter.includes('code = adaptReviewedWave67Gpu(rel, code, replaceOnce);'));
   assert.ok(source.includes('if (cop != 0.0)'));
-  assert.ok(source.includes('uPulse != 0.0 ?'));
 });

@@ -32,22 +32,6 @@ export function adaptReviewedWave67Gpu(rel, code, replaceOnce) {
   if (rel === 'src/fx/screenfx.js') {
     code = applyIdempotent(
       code,
-      `    if (W !== this._w || H !== this._h) { this._w = W; this._h = H; U.uRes.value.set(W, H); }
-    this._aspect = W / Math.max(1, H);
-    U.uAspect.value = this._aspect;`,
-      `    if (W !== this._w || H !== this._h) {
-      this._w = W; this._h = H; U.uRes.value.set(W, H);
-      this._aspect = W / Math.max(1, H);
-      U.uAspect.value = this._aspect;
-    } else if (this._aspect === undefined) {
-      this._aspect = W / Math.max(1, H);
-      U.uAspect.value = this._aspect;
-    }`,
-      replaceOnce,
-      'GPU-07c update ScreenFX uAspect only on viewport resize'
-    );
-    code = applyIdempotent(
-      code,
       `      float ring = exp(-pow((bl - uBlastRing) * 18.0, 2.0));`,
       `      float brd = (bl - uBlastRing) * 18.0;
       float ring = exp(-(brd * brd));`,
@@ -77,16 +61,6 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
       const beat = Math.exp(-(d1 * d1)) + 0.7 * Math.exp(-(d2 * d2));`,
       replaceOnce,
       'GPU-SFX2b ScreenFX _sim heartbeat Math.pow(x, 2) elimination'
-    );
-  }
-
-  if (rel === 'src/world/decor.js') {
-    code = applyIdempotent(
-      code,
-      `  float wave = uPulse * smoothstep(0.09, 0.0, abs(r - uPulseT * 1.35)) * (1.0 - smoothstep(0.7, 1.35, uPulseT * 1.35));`,
-      `  float wave = uPulse != 0.0 ? uPulse * smoothstep(0.09, 0.0, abs(r - uPulseT * 1.35)) * (1.0 - smoothstep(0.7, 1.35, uPulseT * 1.35)) : 0.0;`,
-      replaceOnce,
-      'GPU-12c gate PAD_FRAG pulse wave smoothsteps on uPulse > 0.0'
     );
   }
 
