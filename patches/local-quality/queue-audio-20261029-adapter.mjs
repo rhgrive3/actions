@@ -4,6 +4,12 @@ function once(code,before,after,label){
   return code.slice(0,at)+after+code.slice(at+before.length);
 }
 export function adaptQueueAudio20261029(rel,code){
+  // This pass follows the network idle prefilter. A charging Stringer (or
+  // its fading loop) must still reach NetMatch's positional audio owner.
+  if(rel==='src/net/netmatch.js')return once(code,
+    ' && !wr.rolling && !loops.charge && !loops.spinnerCharge',
+    " && !(wr.charging && (a.weapon.behaviorKind === 'stringer' || a.weapon.catalogRecord?.family === 'stringer' || a.weapon.id?.startsWith('s3-stringer-'))) && !wr.rolling && !loops.bowCharge && !loops.charge && !loops.spinnerCharge",
+    'Stringer charge and pending sound bypass the idle audio gate');
   if(rel==='src/audio/bossAudio.js')return once(code,'    if (!h) return;\n    h._sock = sock;',
     '    if (!h || h.playing === false) return;\n    h._sock = sock;','inactive Boss loop is never decorated or tracked');
   if(rel==='src/audio/music.js'){
