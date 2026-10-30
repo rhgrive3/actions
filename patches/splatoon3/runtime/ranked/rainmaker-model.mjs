@@ -32,22 +32,41 @@ export function createRainmakerModel(THREE) {
     g.computeVertexNormals(); append(g, gold);
   }
   // +Z is the mouth/aim direction; the origin sits at the existing right grip.
-  oval([0, .25, -.10], [.25, .29, .44]);
+  oval([0, .25, -.10], [.24, .28, .42]);
   // Keep the head behind the open muzzle instead of sealing its dark aperture.
-  oval([0, .28, .25], [.29, .31, .19]);
-  const mouth = new THREE.TorusGeometry(.207, .045, 4, 12);
-  mouth.scale(1, 1.12, 1); mouth.translate(0, .24, .47); append(mouth, rim);
-  const inside = new THREE.CircleGeometry(.205, 12); inside.scale(1, 1.12, 1);
-  inside.translate(0, .24, .455); append(inside, dark);
+  const head = new THREE.SphereGeometry(1, 10, 5, Math.PI, Math.PI);
+  head.scale(.315, .325, .30); head.translate(0, .28, .36); append(head, gold);
+  function jawWall(front, back, inward = false) {
+    const vertices = [];
+    const point = (r, angle) => [Math.sin(angle) * r[0], r[1] + Math.cos(angle) * r[0] * r[3], r[2]];
+    for (let i = 0; i < 12; i++) {
+      const a = i * Math.PI / 6, b = (i + 1) * Math.PI / 6;
+      const f = point(front, a), g = point(front, b), h = point(back, a), j = point(back, b);
+      const faces = inward ? [[f, h, j], [f, j, g]] : [[f, j, h], [f, g, j]];
+      for (const face of faces) vertices.push(...face.flat());
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals(); append(geometry, gold);
+  }
+  jawWall([.252, .24, .47, 1.12], [.315, .28, .36, .325 / .315]);
+  const mouth = new THREE.TorusGeometry(.218, .034, 4, 12);
+  mouth.scale(1, 1.12, .045 / .034); mouth.translate(0, .24, .47); append(mouth, rim);
+  // The inner jaw actually retreats into the head; it is not a flat gold cap.
+  jawWall([.216, .24, .465, 1.12], [.095, .24, .32, 1.12], true);
+  const inside = new THREE.CircleGeometry(.095, 12); inside.scale(1, 1.12, 1);
+  inside.translate(0, .24, .321); append(inside, dark);
   for (const side of [-1, 1]) {
     oval([side * .226, .455, .267], [.069, .080, .066], rim, 6, 4);
     oval([side * .258, .455, .292], [.025, .035, .032], dark, 5, 3);
-    fin([[side * .20, .20, -.20], [side * .47, .15, -.45], [side * .38, .10, -.02]], .035);
+    fin([[side * .20, .23, -.17], [side * .36, .32, -.26], [side * .49, .30, -.38], [side * .48, .19, -.45], [side * .40, .12, -.38], [side * .25, .12, -.06]], .035);
+    const tooth = new THREE.ConeGeometry(.032, .135, 4);
+    tooth.rotateZ(Math.PI); tooth.translate(side * .13, .34, .478); append(tooth, rim);
   }
   // Upturned tail and dorsal fan define the recognisable gold-fish outline.
   oval([0, .39, -.49], [.12, .20, .14], gold, 6, 4);
-  fin([[0, .40, -.46], [0, .82, -.72], [0, 0.87, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
-  fin([[0, .49, -.34], [0, .68, -.28], [0, .62, .05], [0, .50, .16]], .04);
+  fin([[0, .40, -.46], [0, .60, -.56], [0, .77, -.65], [0, .85, -.75], [0, .87, -.85], [0, .84, -.95], [0, .77, -.94], [0, .70, -.86], [0, .65, -.77], [0, .61, -.87], [0, .54, -.98], [0, .47, -1.00], [0, .40, -.95], [0, .38, -.84], [0, .40, -.72], [0, .32, -.62]], .045);
+  fin([[0, .49, -.34], [0, .65, -.28], [0, .71, -.16], [0, .69, -.04], [0, .62, .07], [0, .50, .16]], .04);
   // Carry the fish above and outside the primary hand, beside the shoulder.
   // The original forward/below-grip mount made it hang in front of the waist.
   // Keep the hand socket fixed; the raised tail clears the head on its side.
@@ -82,7 +101,7 @@ export function createRainmakerModel(THREE) {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: .65, roughness: .34 });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'rainmaker-core'; mesh.castShadow = true;
-  mesh.userData.rainmakerModel = { revision: 4, grip: [0, 0, 0], muzzle: [-.30, .124, .749] };
+  mesh.userData.rainmakerModel = { revision: 5, grip: [0, 0, 0], muzzle: [-.30, .124, .749] };
   return mesh;
 }
 

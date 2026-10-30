@@ -35,3 +35,19 @@ export function selectTestShard(files, shardIndex = 0, shardCount = 1) {
     throw new RangeError('shard index must be within the configured shard count');
   return files.filter((_, index) => index % shardCount === shardIndex);
 }
+
+// Reserve the last lane for explicitly selected files without re-numbering the
+// original sorted modulo partition. Default callers keep their old partition.
+export function selectIsolatedTestShard(files, shardIndex, shardCount, isolatedFiles) {
+  selectTestShard(files, shardIndex, shardCount);
+  if (shardCount < 2) throw new RangeError('isolated partition needs at least two shards');
+  if (!Array.isArray(isolatedFiles) || !isolatedFiles.length)
+    throw new TypeError('isolated test files must be a non-empty array');
+  if (new Set(files).size !== files.length || new Set(isolatedFiles).size !== isolatedFiles.length)
+    throw new Error('duplicate test file in isolated partition');
+  const isolated = new Set(isolatedFiles);
+  for (const file of isolated)
+    if (!files.includes(file)) throw new Error('missing isolated test file: ' + file);
+  if (shardIndex === shardCount - 1) return files.filter(file => isolated.has(file));
+  return selectTestShard(files, shardIndex, shardCount - 1).filter(file => !isolated.has(file));
+}
