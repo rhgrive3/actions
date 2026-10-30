@@ -25,6 +25,7 @@ function fixture(old=false){
   const random=()=>{work.rng++;return(word=(Math.imul(word,1664525)+1013904223)>>>0)/4294967296;};
   const bindings={...kit,Math:math,__work:work,vfxRandom:random,WAIL_SPEAKER_POSITIONS,nonWailVfxTicks,consumeVfxPeriod,inkjetVfxTicks,
     inkjetVfxAdmission:()=>({}),inkjetVfxRoom:()=>true,inkVacState:a=>a.vac,tentaMissilesLockPreview:()=>state.preview,
+    tentaMissilesLockRowsForVfx:()=>state.preview&&({limit:state.preview.limit,rows:state.preview.targets.map((actor,i)=>({actor,x:state.preview.screen?.[i]?.[0],y:state.preview.screen?.[i]?.[1]}))}),
     bigBubblerDomes:()=>state.local,bigBubblerRemoteDomes:()=>state.remote};
   const source=(old?baseline:current).replace(/^import .*;\n/gm,'').replace(/^export default .*;\n?/gm,'').replace(/^export /gm,'').replace('inkCol(c) {','inkCol(c) { __work.inkCol++;');
   let program=source+';return {Director,DIRECTORS,OBJECT_FX,stepFilaments,speakerAnchors};';
