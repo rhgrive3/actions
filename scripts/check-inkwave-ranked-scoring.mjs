@@ -62,7 +62,7 @@ async function probeHalyardScoring(){
  g.debug.freeze();g.menus.wipe.cancel();g._skipRender=true;
  const setup=async mode=>{
   g.input.reset?.();await g.startMatch({mapId:'halyard',mode,difficulty:'easy'});g.debug.freezeBots();
-  for(let i=0;i<400;i++)g._frame(1/60);G.projectiles.clear();
+  for(let i=0,n=(g.match.turfIntroFrames??253)+147;i<n;i++)g._frame(1/60);G.projectiles.clear();
   const m=G.match,a=m.local;a.invuln=999;a.s3.spawnArmor=null;
   return {m,a,e:m.ranked,id:String(a.nid??`${a.team}:${a.slot}`),touch:g.input.mobile};
  };

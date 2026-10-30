@@ -55,6 +55,9 @@
 
 `e089721`のRanked CIは、330F固定の開始待ちで新イントロの途中に止まり、HUD表示待ちが失敗した（[run 41029248882](https://github.com/rhgrive3/actions/actions/runs/41029248882)）。旧Matchの開始は253tick、新Matchは578tick。開始待ちを実Matchの `turfIntroFrames` から計算し、従来の開始後77tick（330Fの手順）、47tick（300Fの手順）、17tick（270Fの性能手順）を維持する。旧生成物の比較は253tickへfallbackする。オンラインの350F手順も従来の97tickを維持する。計測窓の長さ・合否条件・壁時計の締切は変えない。性能手順は実際のsetup frame数を記録し、描画warmupと計測のseed番号もその数から続ける。
 
-同種のQA開始処理を74本で修正。Rankedの実際の開始予算式を読み、合成済みMatchとFixedClockを30/60/120Hzで実行する回帰を追加した。全レートでplayingへ入り、開始後のtick数と減った試合時間が一致する。旧330Fを使う負例はintroに残り、CI失敗を再現する。カメラのsource／emittedは各10件、CI runner契約119件が成功。これらはQA手順の変更で、撮影済みカメラの配信内容は `4bab7a49…` と同じ。
+同種のQA開始処理を78本で修正。Rankedの実際の開始予算式を読み、合成済みMatchとFixedClockを30/60/120Hzで実行する回帰を追加した。全レートでplayingへ入り、開始後のtick数と減った試合時間が一致する。旧330Fを使う負例はintroに残り、CI失敗を再現する。カメラのsource／emittedは各10件、CI runner契約119件が成功。これらはQA手順の変更で、撮影済みカメラの配信内容は `4bab7a49…` と同じ。
 
 通常の実ブラウザ受入手順も `e089721`の実配信で完走し、65キット・789レスポンスの同一生成物照合、移動・塗り・回避が成功し、ページエラーは0だった。本家実機の受入試験とは区別する。
+
+
+ローカルChromiumのRanked手順は最適化済み配信を使い、エリア・ヤグラ・ホコ・アサリの全4種について、オフラインの実試合と2人の実WebSocket／本番RoomDurableObject接続を完走した。HUD、目的物、スコア、終了同期、ホコの実ブキ／壁／フルチャージ、接触ギアを含む既存ゲートを通過し、`errors: []`。[実行receipt](turf-intro-camera-20261030/ranked-browser.json)。追加のprojectile比較契約13件も成功。後段の400／420／450F待ちは従来の開始後147／167／197tickへ接続し、240Fのintro内準備はGOの13tick前を維持する。

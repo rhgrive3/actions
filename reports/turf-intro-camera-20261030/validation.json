@@ -69,5 +69,22 @@
     "kits": 65,
     "verifiedResponses": 789,
     "pageErrors": []
+  },
+  "rankedBrowser": {
+    "status": "passed",
+    "scope": "offline-and-online",
+    "modes": [
+      "zones",
+      "tower",
+      "rainmaker",
+      "clams"
+    ],
+    "pageErrors": [],
+    "runtimeContentHash": "4bab7a49a1e2f16a1593154ec64e492210de2713d3d8c1fd37bec8738147eff3",
+    "receipt": "ranked-browser.json"
+  },
+  "projectilePairContracts": {
+    "pass": 13,
+    "fail": 0
   }
 }
