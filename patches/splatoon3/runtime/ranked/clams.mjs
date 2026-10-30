@@ -1,4 +1,6 @@
 import { firstThreeFinite } from './coordinates.mjs';
+import { OWNED_RANKED_FRAME, OWNED_RANKED_ACTOR } from './frame-ownership.mjs';
+const ownedPosition = Symbol('ClamsRule owned position');
 // Splatoon3mix's S3-specific pickup/throw tables; no retail timing claims.
 const NO_CLAM_PICKUP = new Set(['zipcaster', 'crabTank', 'krakenRoyale', 'tripleSplashdown', 'slam']);
 const NO_CLAM_THROW = new Set(['trizooka', 'zipcaster', 'booyahBomb', 'inkVac', 'inkjet', 'ultraStamp', 'crabTank', 'reefslider', 'tripleInkstrike', 'krakenRoyale', 'tripleSplashdown', 'slam']);
@@ -288,7 +290,15 @@ export class ClamsRule {
 
   _registerActors(frame) {
     for (const actor of this._actorList(frame)) {
-      this.state.actorPositions[actor.id] = vec(actor.pos);
+      const pos=actor.pos,previous=this.state.actorPositions[actor.id];
+      const owned=frame?.[OWNED_RANKED_FRAME]===frame?.inputs && actor[OWNED_RANKED_ACTOR]===pos
+        && Array.isArray(pos) && pos.length===3 && Number.isFinite(pos[0]) && Number.isFinite(pos[1]) && Number.isFinite(pos[2]);
+      if(owned && previous?.[ownedPosition]===actor){previous[0]=pos[0];previous[1]=pos[1];previous[2]=pos[2];}
+      else {
+        const next=vec(pos);
+        if(owned)Object.defineProperty(next,ownedPosition,{value:actor});
+        this.state.actorPositions[actor.id]=next;
+      }
       this.state.actorTeams[actor.id] = actor.team;
       const inv = this._inventory(actor.id, actor.team);
       if (actor.alive === false && (inv.small || inv.power)) this._dropInventory(actor.id, actor.pos, actor.team, frame);

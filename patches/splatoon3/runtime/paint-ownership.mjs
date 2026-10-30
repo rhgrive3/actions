@@ -1,4 +1,4 @@
-import { notePaintMutation } from './scoring.mjs';
+import { notePaintMutation, noteCoverageCell } from './scoring.mjs';
 const STEP = 1 / 60;
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.issue264.paint-ownership-installed');
@@ -510,7 +510,7 @@ function visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,index,x,y,
  visit[index]=stamp;
  if(previous===value){claimPaintCell(paint,index,value,order);return 1;}
  if(!claimPaintCell(paint,index,value,order))return 1;
- paint.grid[index]=value;
+ paint.grid[index]=value;noteCoverageCell(paint,index,value);
  if(paint._inkMark){const cell=index-face.grid,j=Math.floor(cell/face.nu);paint._inkMark(face,cell-j*face.nu,j);}
  if(face.turf&&!paint.dead[index]){if(previous)paint.counts[previous-1]--;paint.counts[g.team]++;return 7;}
  return 3;
@@ -621,7 +621,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       g._ancillaryDoneRadius = g.R;
     }
   }
-  if (changed) notePaintMutation(paint, claimed > 0);
+  if (changed) notePaintMutation(paint, claimed > 0, true);
   if (claimed > 0 && g.paintOwner && !g.paintOwner.remote) {
     if (g.paintCreditMode === 1) g.paintOwner.addTurfNoSpecial?.(claimed);
     else g.paintOwner.addTurf?.(claimed);
