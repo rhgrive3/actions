@@ -59,8 +59,11 @@ test('Tri-Slosher and Dread Wringer share Bucket art but retain source envelopes
       assert.equal(engine.submission[0].name, 'projectile:slosher:slosher');
       assert.equal(engine.assets.get(engine.submission[0].name),bucketAsset,'all kits reuse the same registered art');
       const tail = Math.max(draw.TailLengthMin,Math.min(draw.TailLengthMax,speed*Math.min(age,draw.TailSolidFrame/60)));
-      assert.deepEqual(Array.from(engine.submission[0].stretch),[radius,radius+tail,radius*.32]);
-      assert.deepEqual(Array.from(engine.submission[0].position),[0,0,-tail*.5]);
+      // The owner's Hissen enlargement affects the submitted art, while the
+      // pinned source envelope and raw draw radius above stay unscaled.
+      const presentationScale = actor === 'WeaponSlosherDiffusion' ? 1.5 : 1;
+      assert.deepEqual(Array.from(engine.submission[0].stretch),[radius,radius+tail,radius*.32].map(v=>v*presentationScale));
+      assert.deepEqual(Array.from(engine.submission[0].position),[0,0,-tail*.5*presentationScale]);
       assert.equal(JSON.stringify({catalog:p.catalog,pos:p.pos,vel:p.vel,age:p.age}),before,'presentation preserves authoritative projectile state');
 
       // Only the known shared native sheet or Roller sheet fallback is valid;

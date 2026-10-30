@@ -69,7 +69,7 @@ function install(WEAPONS, G, SUB) {
   Object.assign(h, {
     _L: { weapon: 'charger', kind: 'charger' },
     _bloom: 0, _kick: 0,
-    ret: new Node(), scopeMask: new Node(), xh: new Node(), shield: new Node(), subChip: new Node(),
+    ret: new Node(), scopeMask: new Node(), xh: new Node(), shield: new Node(), subChip: new Node(), spIcon: new Node(),
     _chargeEl: new Node(), _chargeC: 100,
     restarts: [],
     _restart(el, cls) { this.restarts.push([el, cls]); },

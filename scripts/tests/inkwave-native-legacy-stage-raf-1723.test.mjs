@@ -108,4 +108,3 @@ test('#1723 actual frame suppresses disposed paint/decor but retains network and
  assert.deepEqual([network,poll,menu,end,clock,reset],[120,120,240,120,120,0]);
  assert.ok(Math.abs(G.time-12)<1e-8,'clock advances while GPU is fenced');
 });
-

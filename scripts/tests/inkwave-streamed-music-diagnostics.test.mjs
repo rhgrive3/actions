@@ -106,6 +106,26 @@ const PHASE_OBSERVER_RUNNER_HUNKS = [
   ]
 ];
 const PRE_PHASE_OBSERVER_RUNNER_SHA256 = "5718370b5a02e38cb591d10e72b70d7f6e2b31832ffc5a631e2c5472830f3377";
+// Preserve the original nine-hunk phase history by reversing only the sealed
+// primitive Character timeline epoch to the complete committed 331 runner.
+const characterTimelineBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-character-timeline-1915.json',import.meta.url));
+assert.equal(crypto.createHash('sha256').update(characterTimelineBytes).digest('hex'),'9186af6ae24966b5d5d25abaf897fbd8c34deea1d0b63e78b517adc47790b462','sealed Character timeline inverse descriptor');
+const characterTimelineEpoch=JSON.parse(characterTimelineBytes);
+const characterTimelineHash=text=>crypto.createHash('sha256').update(text).digest('hex');
+function revertCharacterTimelineHunks(source){
+ assert.equal(characterTimelineEpoch.hunks.length,3,'all reviewed timeline regions');
+ for(const {current,prior,label} of characterTimelineEpoch.hunks){
+  assert.equal(source.split(current).length,2,'exact singular Character timeline region: '+label);
+  source=source.replace(current,prior);
+ }
+ assert.equal(characterTimelineHash(source),'84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4','exact complete 331 projectile runner');
+ return source;
+}
+function restoreCharacterTimelineRunner(source){
+ assert.equal(characterTimelineHash(source),'31fa499c8650b8dbcd2260f088e586f0e7d41312aa3061d40fb755665d97a27f','exact current projectile runner with primitive timeline');
+ return revertCharacterTimelineHunks(source);
+}
+
 function restoreReviewedPhaseObserverRunner(source){
  let restored=source;
  for(const [current,prior]of PHASE_OBSERVER_RUNNER_HUNKS){
@@ -130,7 +150,7 @@ function restoreProtocol2BaseRunner(source){
  return restored;
 }
 test('runner keeps historical workload and failure gates after reviewed capture updates',()=>{
- const runner=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ const runner=restoreCharacterTimelineRunner(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'));
  const gate="page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));";
  assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=restoreProtocol2Runner(runner);
@@ -250,7 +270,7 @@ test('runner keeps historical workload and failure gates after reviewed capture 
 
 
 test('protocol-2 reversal rejects missing, duplicate, unknown and failure-gate runner changes',()=>{
- const runner=restoreReviewedPhaseObserverRunner(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'));
+ const runner=restoreReviewedPhaseObserverRunner(restoreCharacterTimelineRunner(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8')));
  assert.equal(PROTOCOL2_RUNNER_HUNKS.length,14);
  assert.equal(crypto.createHash('sha256').update(restoreProtocol2BaseRunner(runner)).digest('hex'),PRE_PROTOCOL2_RUNNER_SHA256);
  for(const [current,prior]of PROTOCOL2_RUNNER_HUNKS){
@@ -271,7 +291,7 @@ test('protocol-2 reversal rejects missing, duplicate, unknown and failure-gate r
 });
 
 test('phase-observer reversal rejects missing, duplicate, relocated or changed capture-only additions',()=>{
- const runner=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ const runner=restoreCharacterTimelineRunner(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'));
  assert.equal(PHASE_OBSERVER_RUNNER_HUNKS.length, 9);
  assert.equal(crypto.createHash('sha256').update(restoreReviewedPhaseObserverRunner(runner)).digest('hex'),PRE_PHASE_OBSERVER_RUNNER_SHA256);
  for(const [current,prior]of PHASE_OBSERVER_RUNNER_HUNKS){
@@ -290,6 +310,21 @@ test('phase-observer reversal rejects missing, duplicate, relocated or changed c
  }
  assert.throws(()=>restoreReviewedPhaseObserverRunner('// unreviewed addition\n'+runner));
  assert.throws(()=>restoreReviewedPhaseObserverRunner(restoreReviewedPhaseObserverRunner(runner)),'old runner cannot impersonate current observation input');
+});
+
+test('primitive Character timeline inverse preserves the exact prior runner and rejects altered regions',()=>{
+ const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ const prior=restoreCharacterTimelineRunner(current);
+ assert.equal(characterTimelineHash(prior),'84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4');
+ for(const {current:region,prior:before} of characterTimelineEpoch.hunks){
+  assert.throws(()=>revertCharacterTimelineHunks(current.replace(region,before)),'missing reviewed timeline region');
+  assert.throws(()=>revertCharacterTimelineHunks(current+region),'duplicate reviewed timeline region');
+  assert.throws(()=>restoreCharacterTimelineRunner(current.replace(region,before)),'historical region cannot impersonate current');
+ }
+ const changed=current.replace("traceCapturePhase('source-loader', 'await');","traceCapturePhase('source-loader', 'changed');");
+ assert.notEqual(changed,current);assert.throws(()=>restoreCharacterTimelineRunner(changed),'altered phase rejected');
+ assert.throws(()=>restoreCharacterTimelineRunner(current+'\n// unreviewed addition'));
+ assert.throws(()=>restoreCharacterTimelineRunner(prior),'prior epoch cannot impersonate current');
 });
 
 test('snapshot cap is explicit and close failures keep their original rejection',async()=>{
@@ -392,7 +427,7 @@ async function outerFixture({visualFailure=false,contextFailure=false,browserFai
   mimeErrors:requestFailure?['request failed Jet_Arrow.mp3: net::ERR_ABORTED']:[],NATIVE_BOOT_TIMEOUT_MS:180000,evidence:'/evidence',process:{},
   path:{join:(...args)=>args.join('/')},console:{log(){}},fs:{writeFileSync:(p,b)=>writes.push({path:p,body:b})},
   browser:{close:async()=>{calls.push('browser-close');if(browserFailure)throw tertiary;}},server:{close:done=>{calls.push('server-close');if(serverPending)finishServer=done;else done();}},
-  openGameContext:async()=>({page:{},close:async()=>{calls.push('context-close');if(contextFailure)throw secondary;}}),
+  openGameContext:async()=>({page:{},characterTrace:[['source-loader','await',123]],close:async()=>{calls.push('context-close');if(contextFailure)throw secondary;}}),
   runVisuals:async()=>{calls.push('visual');if(visualFailure)throw primary;},
   runFiringPerformance:async()=>{calls.push('performance');if(performanceFailure)throw primary;return {};}};
  vm.createContext(realm);const completing=vm.runInContext('(async()=>{'+outerText+'})()',realm);
@@ -424,6 +459,7 @@ for(const options of [
  if(options.visualFailure||options.performanceFailure)assert.equal(f.report.error,f.primary.stack);
  else if(options.contextFailure)assert.equal(f.report.error,f.secondary.stack);
  else if(options.browserFailure&&!options.requestFailure)assert.equal(f.report.error,f.tertiary.stack);
+ if(options.visualFailure)assert.deepEqual(JSON.parse(JSON.stringify(f.report.browserDiagnostics.find(x=>x.event==='visual-character-lifecycle')?.timeline)),[['source-loader','await',123]]);
  if(options.requestFailure){assert.deepEqual(f.report.errors,['request failed Jet_Arrow.mp3: net::ERR_ABORTED']);assert.equal(f.report.error,undefined);}
  const cleanup=f.report.browserDiagnostics.filter(x=>x.event.endsWith('cleanup-failed'));
  assert.equal(cleanup.length,Number(!!(options.visualFailure&&options.contextFailure))+Number(!!options.browserFailure));
@@ -431,8 +467,11 @@ for(const options of [
 });
 test('cleanup-only diagnostics are bounded and do not truncate an existing primary error',async()=>{
  const f=await outerFixture({visualFailure:true,contextFailure:true,browserFailure:true,longCleanup:true});
- assert.equal(f.report.error,f.primary.stack);assert.equal(f.report.browserDiagnostics.length,2);
- for(const row of f.report.browserDiagnostics)assert.equal(row.error.length,1000);
+ assert.equal(f.report.error,f.primary.stack);
+ const cleanup=f.report.browserDiagnostics.filter(row=>row.event.endsWith('cleanup-failed'));
+ assert.equal(cleanup.length,2);
+ for(const row of cleanup)assert.equal(row.error.length,1000);
+ assert.deepEqual(JSON.parse(JSON.stringify(f.report.browserDiagnostics.find(row=>row.event==='visual-character-lifecycle')?.timeline)),[['source-loader','await',123]]);
  const g=await outerFixture({browserFailure:true,longCleanup:true});assert.equal(g.report.status,'failed');assert.equal(g.report.error.length,4000);
 });
 

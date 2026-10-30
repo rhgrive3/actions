@@ -81,7 +81,7 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
       throw Error('Invalid Wiper capture step');
     if (command === null) continue; // GitHub-only actions: checkout/cache/upload artifacts.
     if (title === 'Package bounded browser failure evidence') {
-      if (command !== 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$CI_STORAGE/failure-evidence" .built-site/_site/inkwave-build.json'
+      if (command !== 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$RUNNER_TEMP/inkwave-browser-failure-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${BROWSER_SUITE}" .built-site/_site/inkwave-build.json'
           || !attrs.includes('        if: always() && (failure() || cancelled())'))
         throw Error('Unreviewed evidence-only step: ' + title);
       continue; // CircleCI packages failures in its always-run artifact step.

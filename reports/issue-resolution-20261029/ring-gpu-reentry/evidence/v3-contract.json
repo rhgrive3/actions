@@ -1,0 +1,141 @@
+{
+  "kind": "DO_NOT_MERGE-targeted-ring-upload-and-GPU-reentry",
+  "schema": 1,
+  "oldWholeGamePairRemainsRejected": true,
+  "wholeGame135134EventTrace": false,
+  "productionChanged": false,
+  "site": {
+    "path": "/workspace/scratch/main-wave345-repaired-site",
+    "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+    "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+    "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+    "buildRevision": "2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd",
+    "fxArtifactSha256": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2"
+  },
+  "currentClearSource": {
+    "moduleSha256": "88fc45b3696683d085b4a1eb08d82e031db35010dd5e1e4ecd56f07faf16d525",
+    "functionSource": "function clearSwimSurface(fx){fx.swimSurface?.clear();}",
+    "functionSha256": "1ef8157bf3fef0745600ad55e0e766d961cb5abf3d11b42ec056c5931d42b118",
+    "closureIdentifiers": [],
+    "closureSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "currentClearOwner": {
+    "moduleSha256": "1882df57f169f183b02435eb0c181b32d94e98ab804aa42861c186c0646a96a2",
+    "functionSource": "function se(i){i.swimSurface?.clear()}",
+    "functionSha256": "3b924dc9082e88d01afa349997767a2682d1aa5d8e7a510be1021d8c1b78ab2c",
+    "closureIdentifiers": [],
+    "closureSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "currentClearMethod": {
+    "methodSource": "clear(){t0(this),this._qualityDropSource?.fill(null),this._qualityCurtainSources&&(this._qualityCurtainSources.length=0),this.inkVolumes?.clear(),this.dN=0,this.dGeo.instanceCount=0,this._dropColorStart=this.dCap,this._dropColorEnd=0,this.shells&&(this.shells.dirtyStart=this.shells.cap,this.shells.dirtyEnd=0);for(const t of[this.puffs,this.glows,this.rings,this.shells,this.beams])t.n=0,t.geo.instanceCount=0;this.rings.dirtyStart=this.rings.cap,this.rings.dirtyEnd=0,this.marks.n=0,this.pillars.n=0,this._sqN=0}",
+    "methodSha256": "30dc6b526e6c1051579f5250e8b2a06a9ad77bdff9c2bfa7b64db36f073734b0",
+    "dependency": "t0"
+  },
+  "historical": {
+    "C": {
+      "sourceSha256": "78aa2dbc53cbafb2f5b52783419942a23e20bd902e4d3e75573487da6bd94802",
+      "fullComposedSha256": "7cafe383caa60b45720686dd9a4670e7dba238392c34075ac1aa624380fe5ee3",
+      "methods": {
+        "_initRings": "048bbdcaedb3ac8ae19dc1a2f6b269eae8ec4af412ecdf21d347dd09a26f3452",
+        "_ringRaw": "22893c6de3c1d25a28de7c0e912f2cfe122534d967ee2a4e12e90068f2538a72",
+        "_color": "89499ffaeaef6107b79587fdc991ec46a867f30b3be9b8ac3d7f5430241ee489",
+        "mark": "9a9c39a8c5c934ccacab59fc642043e399d34e09a715a9da1a9a8129ee3ef3c0",
+        "_updateRings": "d7213754baaec79bb41f38c79a659d0caf5f14db630473dabc331b55c1183c86",
+        "clear": "0d5b80d5089a89d031940340419e3243ec124cded5dd8361ad7cf857ac32094e"
+      },
+      "sourceGitSha": "4f5f7acc15e43016985d8b782bf3ba83551a9443",
+      "originContractSha256": "8a1c754ace6cbf9f72c2f6f28ece87b0c71fbf1c19c30cf084ea2e1697953bed",
+      "clearOwner": {
+        "moduleSha256": "643eb0e5cb3a5e18f2aaa0b03a5b9232d2a2ebcc47036bb47c516af4c736d585",
+        "functionSource": "function clearSwimSurface(fx){fx.swimSurface?.clear();}",
+        "functionSha256": "1ef8157bf3fef0745600ad55e0e766d961cb5abf3d11b42ec056c5931d42b118",
+        "closureIdentifiers": [],
+        "closureSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "sourceGitSha": "4f5f7acc15e43016985d8b782bf3ba83551a9443"
+      },
+      "compressedSha256": "3912e5b2e048aef359fae5af63527c08bf867e65413ef897c4632dd1693a59fe",
+      "manifestCompressedSha256": "a28d1b70c70d3259f9b607ab9c254ce65a4617860d6c1dbb431e3b9539d1e60e",
+      "receiptFileSha256": "bfcc2dbbf859b07019f50cdd01e22ce9ce709422cf84845bfa1e3181b5107104",
+      "threeArtifacts": {
+        "vendor/three/build/three.module.js": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3"
+      },
+      "threeSourceInputs": {
+        "upstream/vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+        "upstream/vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+      }
+    },
+    "B": {
+      "sourceSha256": "2b522d942542d372507c6bbaed0dc6193c948fc55164ea61968a27bc16839dcf",
+      "fullComposedSha256": "9a5f8c19e76ab76597b18b46c13cb9cc270ced4204a82842ddde214c8b93957b",
+      "methods": {
+        "_initRings": "ab4a6881839cffcd255a5dcd7a73d8754dabbd77a2bbc2e6fd8b4e807aaac9e8",
+        "_ringRaw": "56916d30c7af4f065ec0336991e8f3248f7a492aeec7313275081a194e24adcd",
+        "_color": "89499ffaeaef6107b79587fdc991ec46a867f30b3be9b8ac3d7f5430241ee489",
+        "mark": "9a9c39a8c5c934ccacab59fc642043e399d34e09a715a9da1a9a8129ee3ef3c0",
+        "_updateRings": "8f2de75296301fc0b0ed23fc05b480f9d09fa612510643ea2d19c89bda971943",
+        "clear": "e35cceb798806be5bb83a72bc1a4f258498557b8103634c821054c822a6e9bbb"
+      },
+      "sourceGitSha": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+      "originContractSha256": "8a1c754ace6cbf9f72c2f6f28ece87b0c71fbf1c19c30cf084ea2e1697953bed",
+      "clearOwner": {
+        "moduleSha256": "643eb0e5cb3a5e18f2aaa0b03a5b9232d2a2ebcc47036bb47c516af4c736d585",
+        "functionSource": "function clearSwimSurface(fx){fx.swimSurface?.clear();}",
+        "functionSha256": "1ef8157bf3fef0745600ad55e0e766d961cb5abf3d11b42ec056c5931d42b118",
+        "closureIdentifiers": [],
+        "closureSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "sourceGitSha": "7525bd5cc275c46f308fda2ee06912478d48b5d5"
+      },
+      "compressedSha256": "e05d38ac7f7ef4dc3a3ed6d9cadfe032bee9917e7aaa29d8f020fc34046624b5",
+      "manifestCompressedSha256": "606acb4a87e507b4642d2554107994da15ba5a71337fc3a70e93c5662f135069",
+      "receiptFileSha256": "bfcc2dbbf859b07019f50cdd01e22ce9ce709422cf84845bfa1e3181b5107104",
+      "threeArtifacts": {
+        "vendor/three/build/three.module.js": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3"
+      },
+      "threeSourceInputs": {
+        "upstream/vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+        "upstream/vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+      }
+    }
+  },
+  "helpers": {
+    "check-ring-gpu-reentry.mjs": "bacecb40ccb99350d140a01559db5735803dbd7fc84b9d719dc27316b94de7e6",
+    "ring-gpu-reentry-source.mjs": "20ec644b13ce8c635593303aa57acdf205e350f527dc101ff5ae5bb1ff052a95",
+    "ring-gpu-reentry-browser.mjs": "10ae8eedb9f968e2f51f13c07630a041bafcf135b393c0d6d955fb2a9dedf788",
+    "mesa-native-condition.mjs": "5ca1e817cecc3e4ee0a646aa4dbe88cb4c238c29aca2516f1920d27bcc948e8d",
+    "../../../patches/loading-cache/vendor/acorn.mjs": "b4c8c70200e72bae33cf1085e0ecb1e792c1b6924ed50cab817caf14f51bb249"
+  },
+  "condition": {
+    "backend": "Mesa llvmpipe ANGLE gl-egl surfaceless",
+    "browser": "151.0.7922.34",
+    "playwright": "1.62.1",
+    "viewport": [
+      256,
+      256
+    ],
+    "antialias": false,
+    "ringCapacity": 210,
+    "immediateMarkCapacity": 48,
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "staticTailSubUploads": {
+      "C": 2,
+      "B": 0,
+      "current": 0
+    }
+  },
+  "strictComparisonFields": [
+    "instances",
+    "draws",
+    "triangles",
+    "pixelSha256",
+    "shaderSources",
+    "all attribute versions/ranges/full CPU/full GPU/live CPU/live GPU bytes"
+  ],
+  "allowedVersionChanges": 0,
+  "allowedPixelChanges": 0,
+  "allowedBufferChanges": 0,
+  "comparisonAcceptanceChanged": false
+}

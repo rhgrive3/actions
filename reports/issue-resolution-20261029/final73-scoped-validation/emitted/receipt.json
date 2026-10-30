@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "sourceSha": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+  "site": "/workspace/scratch/main91-phase-integrated-site",
+  "revision": "4dce88d6e1f29922bcef1f70cb9fb4964bc4e3bd790bce2e641fd1b949f49077",
+  "contentHash": "5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a",
+  "inputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+  "pass": true,
+  "nodeVersion": "v22.23.4",
+  "canonicalEnvironment": {
+    "SOURCE_SHA": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+    "INKWAVE_BUILT_SITE": "/workspace/scratch/main91-phase-integrated-site",
+    "INKWAVE_CANONICAL_TRACE_MODULE": "/workspace/scratch/main91-phase-integrated-site/patches/network-replication/canonical-weapon-actions.mjs",
+    "INKWAVE_NATIVE_TRACE_COMPARE": "/workspace/wt-agent5/patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz"
+  },
+  "startedAt": "2026-10-29T18:40:14.624Z",
+  "finishedAt": "2026-10-29T18:40:43.103Z",
+  "results": {
+    "native131": {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-concurrency=2",
+        "patches/network-replication/tests/trusted-native-replay.test.mjs",
+        "patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+        "patches/network-replication/tests/native-command-wire.test.mjs",
+        "patches/network-replication/tests/native-turf-start-replay.test.mjs"
+      ],
+      "startedAt": "2026-10-29T18:40:14.795Z",
+      "exit": 0,
+      "signal": null,
+      "finishedAt": "2026-10-29T18:40:40.921Z",
+      "sha256": "f9775970916bfc1478b723eb18cb7b0217b93a247991735c262f52894304fe12",
+      "tests": 131,
+      "pass": 131,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "hud-spicon2": {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-concurrency=2",
+        "scripts/tests/inkwave-hud-spicon-fixture.test.mjs"
+      ],
+      "startedAt": "2026-10-29T18:40:40.923Z",
+      "exit": 0,
+      "signal": null,
+      "finishedAt": "2026-10-29T18:40:42.200Z",
+      "sha256": "2bb0f7fd51d78924d21207b3f6edc52bb86edcb3e8f6240773b94e2cb554f18f",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    }
+  },
+  "buildInputsBeforeAndAfterVerified": 1550,
+  "artifactsBeforeAndAfterVerified": 2267,
+  "headAndQaUnchanged": true,
+  "qaBindings": [
+    {
+      "file": "patches/network-replication/tests/trusted-native-replay.test.mjs",
+      "sha256": "2abc3c63c28fddb7a346326ff20a276734d3b3c3b27d83a416223be8454bf6c2",
+      "gitBlob": "077d03a301f739efe05dc38027525566b4d4b47f"
+    },
+    {
+      "file": "patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+      "sha256": "043efc1a388617f7a0c00a8416b88dccdaec1b190472079ec786391131fb58f0",
+      "gitBlob": "1bcfbd31cc09bd8fa6919a7e5118e667fa2cae93"
+    },
+    {
+      "file": "patches/network-replication/tests/native-command-wire.test.mjs",
+      "sha256": "c3c46a9db56023e44b538a806543306da075eb93b688b5930779a20e3bd40693",
+      "gitBlob": "e263a2e589b374666d4ce2bc75ad174eaf7903c0"
+    },
+    {
+      "file": "patches/network-replication/tests/native-turf-start-replay.test.mjs",
+      "sha256": "1925567276a6bf121c4cd7c616e0ffba43f9490a5f0a53708ef665fba962ca63",
+      "gitBlob": "b243eec23a3a92fadc76fd72e4fdf4466e597f0e"
+    },
+    {
+      "file": "scripts/tests/inkwave-hud-spicon-fixture.test.mjs",
+      "sha256": "330765ae320fe0a58fa4355f236f1b2379f8c7152fa4cfeb79a16929d808c876",
+      "gitBlob": "13c9bddea136fbb18fa66c2587e920253a4fe87b"
+    },
+    {
+      "file": "patches/network-replication/tests/native-turf-replay-fixture.mjs",
+      "sha256": "95a09a93295811a67b60828b2155f1dd22e132dd79f42e5e638a338729e942e8",
+      "gitBlob": "3559656e339fded25c19bf43a25b9ec7d4871642"
+    },
+    {
+      "file": "patches/splatoon3/tests/source-fixture.mjs",
+      "sha256": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e",
+      "gitBlob": "2d5807972e2630a86b60653b723ca3d7319732b7"
+    },
+    {
+      "file": "patches/splatoon3/tests/source-loaded-actor-fixture.mjs",
+      "sha256": "5945014f327b65339388de9835a0796b6b88c314e3cc7a4c3707c67875f8ac4d",
+      "gitBlob": "fb51e09611f735e6b5be30b841a367a5ce321d68"
+    },
+    {
+      "file": "patches/splatoon3/tests/fixture-cache.mjs",
+      "sha256": "ed2c627bbd62162ea27ad1e94fbf90ae5945e09cd20d6108190a70eb3e789131",
+      "gitBlob": "acdb1de72ed626334a5d8fd23e835efe3d347918"
+    },
+    {
+      "file": "scripts/check-inkwave-hud-authority.mjs",
+      "sha256": "1c8801e6a8c12aa1cbea9c547c12e348e7b3393942f53550e33708bb08b0fc35",
+      "gitBlob": "af89c769820a57d01d199a132728e7bed3c62a1c"
+    },
+    {
+      "file": "patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz",
+      "sha256": "941c7c20adc49911e2a50a9bd9ed89734ede67762536174585911f725239b976",
+      "gitBlob": "485cbfde3fffc11f4fe8cb30b558fcd869b93de0"
+    },
+    {
+      "file": "patches/loading-cache/vendor/acorn.mjs",
+      "sha256": "b4c8c70200e72bae33cf1085e0ecb1e792c1b6924ed50cab817caf14f51bb249",
+      "gitBlob": "74d5fc431be2b5062245e72937ef2032164b51cd"
+    },
+    {
+      "file": "scripts/lib/inkwave-runtime-evidence.mjs",
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af",
+      "gitBlob": "b759390daadbfeac48fc6bd1d001f0c859876ea3"
+    },
+    {
+      "file": "scripts/run-inkwave-turf-finish-isolated.mjs",
+      "sha256": "35de37aa2f1e1928d9fc09d6d77eed2ecfaecf20b4e7e80530c92f02fe38ccb0",
+      "gitBlob": "8a549fc3111698d5d361105a774956e4ca613d2b"
+    }
+  ],
+  "runtimeArtifactBindings": [
+    {
+      "artifact": "patches/network-replication/trusted-native-replay.mjs",
+      "sha256": "b4a0e2b55c7ff2381849dfb0589d1ed3f0fa07cf9f195a4eba01d8612a9cb483",
+      "sourceInputKey": "network-replication/trusted-native-replay.mjs",
+      "sourceSha256": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902"
+    },
+    {
+      "artifact": "patches/network-replication/canonical-weapon-actions.mjs",
+      "sha256": "897b424e88685d2b0b073eba23ad4d23ec5491fe7cb478577ab101b6e7b3a0e7",
+      "sourceInputKey": "network-replication/canonical-weapon-actions.mjs",
+      "sourceSha256": "3594c4a8db71bd3e80280dcfb6faf8c416e4dbfcf6ca4dc615cec53a3e040348"
+    },
+    {
+      "artifact": "patches/network-replication/native-command-wire.mjs",
+      "sha256": "b1ac684c195b9a8109b23446cd444ba905862f34dd5e8bbeabd0019ef3683a96",
+      "sourceInputKey": "network-replication/native-command-wire.mjs",
+      "sourceSha256": "536b4ffc46ce2947ad147c532cf734d4a16e3d2e603342517163380857ba6026"
+    },
+    {
+      "artifact": "src/ui/hud.js",
+      "sha256": "f9d17de24d7d16683908b5834f4f4c8bd42cfff7a02c642a090c4537643cfa05",
+      "sourceInputKey": "upstream/src/ui/hud.js",
+      "sourceSha256": "34e81090a1d97b4a419aaf205baef2b1ed29b8d61ac0fbc1d258b040112b4448"
+    }
+  ],
+  "buildManifestSha256": "380891fc733b8c69f78d5fe114f9aea3b7882be06e257915cb9a6cdac51b2a9f",
+  "fullArtifactBinding": {
+    "path": "/workspace/scratch/agent1-emitted-phase73bf/site-binding.json",
+    "sha256": "e93981c5938848fa0783ac9bf735451654fbb60764d66213438a47668935b26c",
+    "duplicated": false
+  },
+  "gpuRuns": 0,
+  "scope": "Fresh emitted native replay/component validation only, not a browser capture or mandatory deployed authority. Native131 exact four-file source closure + exact newHUD spIcon first-call/private-icon file2. No broad34 repetition.",
+  "limitations": [
+    "The native main65 ordinary controls retain documented fixed-Character/dry-paint seams; the firstTurf/Charger replay retains actual banked source Character boundary.",
+    "HUD collector2 is a CPU minimal-DOM/actual emitted-HUD regression, not SVG visibility/browser screenshot proof.",
+    "#1665/#1666 remain open; synchronous-component guard is not production server authority, cancellation/isolation or rollback.",
+    "Old39c/f277 and6013 evidence retains its own historical labels."
+  ],
+  "files": [
+    {
+      "path": "emitted73bf-receipt.json.gz",
+      "originalPath": "/workspace/scratch/agent1-emitted-phase73bf/receipt.json",
+      "bytes": 6505,
+      "sha256": "a9a225fe18ed2ea3ec0a92696bda5dc4548192a0b42c42e925010db614d9b7bf",
+      "gzipBytes": 2343,
+      "gzipSha256": "102bdfbc113cd52b654ff61d1b0e738a77fca6c56476edb0c5019d8e5dac4dea"
+    },
+    {
+      "path": "emitted73bf-native131.tap.gz",
+      "originalPath": "/workspace/scratch/agent1-emitted-phase73bf/native131.tap",
+      "bytes": 31107,
+      "sha256": "f9775970916bfc1478b723eb18cb7b0217b93a247991735c262f52894304fe12",
+      "gzipBytes": 7073,
+      "gzipSha256": "f3118b48a3d978eac6d80cdca00470b69fdd4caff3812094283b8d2ec6b58f5a"
+    },
+    {
+      "path": "emitted73bf-hud-spicon2.tap.gz",
+      "originalPath": "/workspace/scratch/agent1-emitted-phase73bf/hud-spicon2.tap",
+      "bytes": 1096,
+      "sha256": "2bb0f7fd51d78924d21207b3f6edc52bb86edcb3e8f6240773b94e2cb554f18f",
+      "gzipBytes": 504,
+      "gzipSha256": "ddad1d13f8750483e7a17994ee74ba0080026efdad34dda20566636aa8fb7127"
+    },
+    {
+      "path": "emitted73bf-launch.log.gz",
+      "originalPath": "/workspace/scratch/agent1-emitted-phase73bf-launch.log",
+      "bytes": 1338,
+      "sha256": "e0a544f4517a8141ee6eb132f0006b0ab9c8e322a0f7424e6be2d8a3121cb0d8",
+      "gzipBytes": 572,
+      "gzipSha256": "949cbb03e460643319deff65262a8ee123cafd209c48430300f37b0da9b01632"
+    },
+    {
+      "path": "emitted73bf-wrapper.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-run-emitted-phase73bf.mjs",
+      "bytes": 5893,
+      "sha256": "1d298f926b565a35f861f2d318e38dff19bbbfeb752f203bd840e1477c8e258a",
+      "gzipBytes": 2364,
+      "gzipSha256": "9cd676f3acd12d9fe75347e4da8d13f467ccd0f8069de0260a282a003ec8f381"
+    }
+  ]
+}

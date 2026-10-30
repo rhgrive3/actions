@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath, contextMenuControlForPhase } from '../check-inkwave-context-recovery-browser.mjs';
+import { spawnSync } from 'node:child_process';
+import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath, contextMenuControlForPhase, installAudioRequestTrace } from '../check-inkwave-context-recovery-browser.mjs';
+import { audioLoadScope } from '../../patches/splatoon3/runtime/audio/load-deadline.mjs';
+import { readEncodedAudioResponse, EncodedAudioResponseError } from '../../patches/splatoon3/runtime/audio/encoded-response.mjs';
+import { AuthorizedSamplePack } from '../../patches/splatoon3/runtime/audio/authorized-samples.mjs';
+import { RealS3SampleLoader } from '../../patches/splatoon3/runtime/audio/real-s3-loader.mjs';
 const proof = () => {
   const state = { time: 170, gameTime: 10, ticks: 600, frame: 602, paused: true, paintVersion: 7, counts: [20, 30], gridLength: 100, gridHash: 42, actors: [{ nid: 1, pos: [0, 0, 0], hp: 100, alive: true, respawnTimer: 0 }] };
   return { stages: ['paint-seeded', 'ordinary-pause-resume', 'context-lost', 'context-restored', 'terminal-restart-rejected'].map(stage => ({ stage })), realGPUEvents: true,
@@ -79,4 +84,89 @@ test('shared menu phases retain strict context-recovery control admission and re
   const script=fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url),'utf8');
   assert.match(script,/const control = contextMenuControlForPhase\(label\)/);
   assert.match(script,/page\.waitForFunction\(rangeMenuControlReady, control, \{ timeout: remainingMs\(\) \}\)/);
+});
+
+test('actual context loss waits for bounded audio-network quiet without suppressing failures', () => {
+  const script=fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url),'utf8');
+  const proof=nativeContextRecoveryProof.toString();
+  assert.match(proof,/const audioIdle = globalThis\.__awaitContextRecoveryAudioIdle;/);
+  assert.match(proof,/check\(typeof audioIdle === 'function'/);
+  assert.match(proof,/await audioIdle\(\);/);
+  assert(proof.indexOf('await audioIdle();') < proof.indexOf("extension.loseContext()"), 'audio must settle before intentional GL loss');
+  for(const contract of [
+    "page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); })",
+    "page.on('requestfinished', r => pendingAudio.delete(r))",
+    "page.on('requestfailed', r => { pendingAudio.delete(r);",
+    "await page.exposeFunction('__awaitContextRecoveryAudioIdle'",
+    'const deadline = Date.now() + 30000',
+    'if (now - quietSince >= 750) break',
+    "assert.deepEqual(requests, [], 'Audio startup produced failed network requests')",
+    "assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors')",
+    "assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, [])"
+  ]) assert(script.includes(contract),'missing network/lifecycle guard: '+contract);
+  assert.doesNotMatch(script,/ignore(?:RequestFailure|NetworkError)|(?:net::)?ERR_ABORTED\s*\)?\s*continue/);
+});
+
+
+test('audio trace preserves fetch/read results while exposing exact owner cancellation and bounded records', async()=>{
+  const env=globalThis,stream=ReadableStream.prototype,reader=ReadableStreamDefaultReader.prototype,controller=AbortController.prototype;
+  const old={fetch:env.fetch,getReader:stream.getReader,streamCancel:stream.cancel,read:reader.read,readerCancel:reader.cancel,release:reader.releaseLock,body:Object.getOwnPropertyDescriptor(Response.prototype,'body'),abort:controller.abort,RG:env.RG,trace:env.__audioRequestTrace,snapshot:env.__contextAudioOwnerSnapshot};
+  let current,throwFetch=false,lastRead,dispatcher=null;const nativeThrow=new Error('native fetch throw');
+  env.fetch=(...args)=>{if(throwFetch)throw nativeThrow;return dispatcher?dispatcher(...args):current;};
+  // Record the exact native promise before the observer wraps read().
+  reader.read=function(...args){return lastRead=Reflect.apply(old.read,this,args);};
+  const makeResponse=(chunks,never=false,href='https://example.test/runtime/audio/s3-real/test.mp3')=>{let i=0;const response=new Response(new ReadableStream({pull(c){if(i<chunks.length)c.enqueue(chunks[i++]);else if(!never)c.close();}}),{status:200});Object.defineProperty(response,'url',{value:href});return response;};
+  const url=new URL('https://example.test/runtime/audio/s3-real/test.mp3');
+  try{
+    installAudioRequestTrace();const trace=env.__audioRequestTrace,events=()=>trace.map(row=>row.event);
+    let scope=audioLoadScope(1000),response=makeResponse([new Uint8Array([1,2,3])]);current=Promise.resolve(response);
+    assert.equal(env.fetch(url,{signal:scope.signal}),current,'native URL-object fetch promise identity');
+    await current;const body=await readEncodedAudioResponse(response,8,{scope});
+    assert.deepEqual([...new Uint8Array(body)],[1,2,3]);assert(events().includes('body'));assert(events().includes('get-reader'));assert(events().includes('read-call'));assert(trace.some(row=>row.event==='reader-release'&&row.encodedBodyCompleted));assert(!events().some(name=>/abort|cancel/.test(name)));scope.finish();
+    trace.length=0;scope=audioLoadScope(1000);response=makeResponse([new Uint8Array(9)]);current=Promise.resolve(response);await env.fetch(url,{signal:scope.signal});
+    await assert.rejects(readEncodedAudioResponse(response,8,{scope}),EncodedAudioResponseError);
+    assert(events().includes('reader-cancel'));assert(events().includes('controller-abort'));assert(events().includes('signal-abort'));assert(trace.find(x=>x.event==='reader-cancel').stack.includes('encoded-response.mjs'));scope.finish();
+    trace.length=0;scope=audioLoadScope(1000);response=makeResponse([],true);current=Promise.resolve(response);await env.fetch(url,{signal:scope.signal});
+    const r=response.body.getReader(),nativePending=r.read();assert.equal(nativePending,lastRead,'read promise remains exactly native');
+    const reason=new Error('fixture owner retired');scope.cancel(reason);await r.cancel(reason);await nativePending;
+    assert(events().includes('controller-abort'));assert(events().includes('signal-abort'));assert.equal(trace.find(x=>x.event==='reader-cancel').reason.message,'fixture owner retired');scope.finish();
+    trace.length=0;const readFailure=new Error('native stream rejection');response=new Response(new ReadableStream({start(c){c.error(readFailure);}}));Object.defineProperty(response,'url',{value:url.href});current=Promise.resolve(response);await env.fetch(url);
+    const rejectedReader=response.body.getReader(),rejectedRead=rejectedReader.read();assert.equal(rejectedRead,lastRead);await assert.rejects(rejectedRead,error=>error===readFailure);assert(events().includes('read-call'));assert(!events().some(name=>/abort|cancel/.test(name)));rejectedReader.releaseLock();
+    trace.length=0;const rejected=new Error('native fetch rejection');current=Promise.reject(rejected);assert.equal(env.fetch(url),current);await assert.rejects(current,error=>error===rejected);
+    throwFetch=true;assert.throws(()=>env.fetch(url),error=>error===nativeThrow);throwFetch=false;
+    trace.length=0;response=makeResponse([new Uint8Array([5])]);current=Promise.resolve(response);assert.equal(env.fetch('https://example.test/other'),current);assert.deepEqual([...new Uint8Array(await response.arrayBuffer())],[5]);assert.equal(trace.length,0);
+    // Actual loader passes URL objects through sameModuleFetch, not string paths.
+    trace.length=0;const realContext={state:'running',sampleRate:8000,decodeAudioData:async()=>({duration:.01,length:80,numberOfChannels:1,sampleRate:8000})};
+    const pack=new AuthorizedSamplePack(realContext),realBank={ctx:realContext,authorized:pack,disposed:false};
+    const fakeManifest={schema:1,usageRights:'Synthetic fixture only',clips:[{id:'combat:damage',event:'fire',variant:0,file:'s3-real/fixture.mp3'}]};
+    dispatcher=input=>Promise.resolve(String(input).endsWith('real-s3-installed.json')?new Response(JSON.stringify(fakeManifest)):makeResponse([new Uint8Array([1,2,3])],false,String(input)));
+    const realLoader=new RealS3SampleLoader(realBank,{fetcher:env.fetch});const loaded=await realLoader.ensure('combat:damage','fire');
+    assert.equal(loaded.loaded,1);assert.equal(pack.byEvent.has('combat:damage:fire'),true);
+    assert(trace.some(row=>row.event==='fetch-start' && row.url.endsWith('/s3-real/fixture.mp3')),'actual URL-object loader is observed');
+    assert(trace.some(row=>row.event==='reader-release'&&row.encodedBodyCompleted),'actual encoded reader completed');dispatcher=null;pack.clear();
+
+    const context={state:'running'},bank={ctx:context,authorized:{generation:3,pending:0,loaded:new Map([['one',{id:'combat:damage',event:'fire',variant:0,file:'a.mp3',sha256:'abc'}],['two',{id:'combat:damage',event:'fire',variant:1,file:'b.mp3'}]])}},loader={bank,status:'ready',inFlight:new Map(),errors:[],declares:()=>true};
+    env.RG={audio:{ctx:context,_weaponBank:bank,_realS3Loader:loader}};const first=env.__contextAudioOwnerSnapshot(),second=env.__contextAudioOwnerSnapshot();
+    assert.equal(first.context,second.context);assert.equal(first.bank,second.bank);assert.equal(first.loader,second.loader);assert.deepEqual(first.cues.find(c=>c.id==='combat:damage').variants.map(v=>v.variant),[0,1]);env.RG.audio.ctx={state:'running'};assert.notEqual(env.__contextAudioOwnerSnapshot().context,first.context);
+    trace.length=0;for(let i=0;i<700;i++){current=Promise.resolve(new Response(null));await env.fetch(url);}assert.equal(trace.length,512,'diagnostic event array is bounded');
+  }finally{
+    env.fetch=old.fetch;stream.getReader=old.getReader;stream.cancel=old.streamCancel;reader.read=old.read;reader.cancel=old.readerCancel;reader.releaseLock=old.release;Object.defineProperty(Response.prototype,'body',old.body);controller.abort=old.abort;
+    if(old.RG===undefined)delete env.RG;else env.RG=old.RG;
+    if(old.trace===undefined)delete env.__audioRequestTrace;else env.__audioRequestTrace=old.trace;
+    if(old.snapshot===undefined)delete env.__contextAudioOwnerSnapshot;else env.__contextAudioOwnerSnapshot=old.snapshot;
+  }
+});
+
+
+test('audio trace cannot suppress native unhandled fetch or read rejections',()=>{
+  const harness=new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url).href;
+  const program=`import {installAudioRequestTrace} from ${JSON.stringify(harness)};
+    const events=[];process.on('unhandledRejection',e=>events.push(e.message));
+    const url='https://example.test/runtime/audio/s3-real/unhandled.mp3';
+    globalThis.fetch=()=>Promise.reject(new Error('native fetch unhandled'));installAudioRequestTrace();fetch(url);
+    const response=new Response(new ReadableStream({start(c){c.error(new Error('native read unhandled'));}}));
+    Object.defineProperty(response,'url',{value:url});response.body.getReader().read();
+    setTimeout(()=>console.log(JSON.stringify(events)),25);`;
+  const child=spawnSync(process.execPath,['--input-type=module','-e',program],{encoding:'utf8',timeout:5000});
+  assert.equal(child.status,0,child.stderr);assert.deepEqual(JSON.parse(child.stdout.trim()).sort(),['native fetch unhandled','native read unhandled']);
 });

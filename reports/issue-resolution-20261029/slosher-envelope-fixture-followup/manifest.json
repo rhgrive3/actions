@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "baseHead": "72c799fee36173e1255e023bad7c9a19605ad2b1",
+  "ownerCommit": "0904ce33",
+  "scope": "One test fixture and evidence; all runtime source remains unchanged",
+  "files": [
+    {
+      "path": "hosted-cpu2-123709310616.log.gz",
+      "rawBytes": 1110425,
+      "rawSha256": "759945dfa602e1aee17699d8e10860135c06a90cdbd6f87d001332ada2f8a223",
+      "gzipBytes": 186300,
+      "gzipSha256": "b875ab2ebcd00c01f65f6929751be4e8bab28e232341167615ae7dbfd45c5f9d"
+    },
+    {
+      "path": "hosted-final-123736457555.log.gz",
+      "rawBytes": 5675,
+      "rawSha256": "2301d499b624e72c2980df5ee00411279e73c5a1c6294a02cac1c8144018292e",
+      "gzipBytes": 1715,
+      "gzipSha256": "e4b4e7f4abe62f73beb96fdaf9c8ee18365ad0f707609b311481e7894b7cf956"
+    },
+    {
+      "path": "before-72.tap.gz",
+      "rawBytes": 1734,
+      "rawSha256": "0dbfcf3e2140061ddc023242354a99bdb14bbd980bcafc01855a0fcc2a2df8e2",
+      "gzipBytes": 786,
+      "gzipSha256": "a8024df0a0a33f5571696d798597a5eb23caaaafc8c863688b5a3d9c5929404e"
+    },
+    {
+      "path": "related-six-after.tap.gz",
+      "rawBytes": 14438,
+      "rawSha256": "15112e5d4aae7f9d5807a9dc9784e9ca221e6e800f034ffb56893442fe11a89f",
+      "gzipBytes": 3549,
+      "gzipSha256": "af93abacc59c4585abe52b336171618904915b56b775c39620ad9957fbb06ae2"
+    },
+    {
+      "path": "runtime-hissen-1x-negative.tap.gz",
+      "rawBytes": 1763,
+      "rawSha256": "1cd4620f84c1a9ec96a826e9d201d16664c5134962ddd5c911d02934ba97e785",
+      "gzipBytes": 802,
+      "gzipSha256": "24ff42ae1d5785a9cbb33636e11559f6c0e84b2f9b1f792a53a629d50f88c01f"
+    },
+    {
+      "path": "runtime-double-1_5x-negative.tap.gz",
+      "rawBytes": 1767,
+      "rawSha256": "8191c6de9c59e369c6119bc53e796b931bd0c60fd6a1877db4e7cf477a9b7eb8",
+      "gzipBytes": 803,
+      "gzipSha256": "fa277de2de2763193ebad2344256310c0cb9fdea92d6a639047505185d7342d7"
+    },
+    {
+      "path": "runtime-hissen-1x-counterfactual.mjs.txt.gz",
+      "rawBytes": 8622,
+      "rawSha256": "5b5d32432017063e88c820418ccf2fe38bfe863d82eea1cb98d135a74ec18fe6",
+      "gzipBytes": 3062,
+      "gzipSha256": "947391b4146600827a5ddc05114186c2301b9a02910b1a3648343eb756502cce"
+    },
+    {
+      "path": "runtime-double-1_5x-counterfactual.mjs.txt.gz",
+      "rawBytes": 8694,
+      "rawSha256": "2f32877356a1c738522c384d488f33d2802e431c32dae0317972e45b0e2d8bd6",
+      "gzipBytes": 3069,
+      "gzipSha256": "0d18943c405e7a3f5f4002432c82cf887da5e43ea68d551865f17ebf9c2ad74b"
+    },
+    {
+      "path": "local-run-receipt.json.gz",
+      "rawBytes": 2599,
+      "rawSha256": "77bd7a2a8d0125ddf5f828b3cdb96693406e7adbc2528d470525e0dd1973b6d8",
+      "gzipBytes": 762,
+      "gzipSha256": "1ec18832d8dfd4b22b38ada0f507726904467934fbad747eda8461a36dd31a88"
+    },
+    {
+      "path": "local-runner.py.gz",
+      "rawBytes": 3503,
+      "rawSha256": "d1ec4b9929c52066720178d96550b4d16e51b3558c37ff42423740bd1e56d2fc",
+      "gzipBytes": 1469,
+      "gzipSha256": "8c5b96d0d1b500f8a6e0c4febcd95ec2c5c603a617dfd8868a3f5a03fdc7c02f"
+    },
+    {
+      "path": "hosted-diagnosis.json.gz",
+      "rawBytes": 2695,
+      "rawSha256": "1a418a09f406a49a657ce757a7b4223f95eb388e15ab13c3e6a38ff2c9932c44",
+      "gzipBytes": 1352,
+      "gzipSha256": "4d5ff2bac6121f38b5def2dd48f6bdb2f910277b2901a895dd2d70147e332150"
+    },
+    {
+      "path": "hosted-terminal72.json.gz",
+      "rawBytes": 164758,
+      "rawSha256": "01948f1337d70dd79a2f2edd16e0a2c776536e5059fff5b81d60cd50fa5ff821",
+      "gzipBytes": 26135,
+      "gzipSha256": "b788c3bc07c229ab33148fb37b9cbfb008bf49b7aa022bc6bc73528934d0d6f5"
+    }
+  ],
+  "testFiles": {
+    "patches/local-quality/tests/slosher-shared-envelope.test.mjs": {
+      "bytes": 8244,
+      "sha256": "2484006e7c86237efb42d69bf37221ffe2f0cae09fa02cf49333c896901a091b"
+    },
+    "patches/local-quality/ink-volume/recipes.mjs": {
+      "bytes": 10317,
+      "sha256": "4f432cd9b2e99f38edbcec8ba03b7403121d7909a8c6f77a728a4d4c3e238c8a"
+    },
+    "patches/splatoon3/runtime/projectile-visuals.mjs": {
+      "bytes": 47421,
+      "sha256": "028ab57c1ac5b9e9c6e291d8cfcaeb384854c9986dad296960e3f0cc9e7cc450"
+    },
+    "patches/splatoon3/tests/source-fixture.mjs": {
+      "bytes": 11379,
+      "sha256": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e"
+    }
+  },
+  "results": {
+    "before": {
+      "total": 2,
+      "pass": 1,
+      "fail": 1,
+      "skip": 0
+    },
+    "afterRelatedSix": {
+      "total": 49,
+      "pass": 49,
+      "fail": 0,
+      "skip": 0
+    },
+    "runtimeHissen1x": {
+      "total": 2,
+      "pass": 1,
+      "fail": 1,
+      "skip": 0,
+      "expectedRejection": true
+    },
+    "runtimeDouble1_5x": {
+      "total": 2,
+      "pass": 1,
+      "fail": 1,
+      "skip": 0,
+      "expectedRejection": true
+    },
+    "sourceOnly": true,
+    "overlappingSelectionsNotSummed": true
+  },
+  "finalCommentOnlyIdentity": {
+    "scope": "After the 49-test and two runtime-negative runs, only one comment replaced authoritative radius with raw draw radius. All executable test bytes are unchanged. Original run and generated negative text retain their original test hash.",
+    "testedTestSha256": "f23d978b5145dc61b15758ecceb4de35843c711da3cd7a5462472156d484d776",
+    "publishedTestSha256": "2484006e7c86237efb42d69bf37221ffe2f0cae09fa02cf49333c896901a091b",
+    "oldComment": "pinned source envelope and authoritative radius above stay unscaled.",
+    "newComment": "pinned source envelope and raw draw radius above stay unscaled.",
+    "exactReverseIdentity": true
+  }
+}

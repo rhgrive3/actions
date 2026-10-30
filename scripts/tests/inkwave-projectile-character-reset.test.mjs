@@ -8,7 +8,12 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs', import.meta.url), 'utf8');
 const matched = source.match(/async function resetCaptureCharacter\(actor\) \{[\s\S]*?\n\}/g);
 assert.equal(matched?.length, 1);
-const reset = vm.runInNewContext('(' + matched[0] + ')');
+const traceSource = source.match(/function traceCapturePhase\(phase, status\) \{[\s\S]*?\n  \}/g);
+assert.equal(traceSource?.length, 1);
+const messages = [], sandbox = { console: { debug(value) { messages.push(value); } } };
+vm.createContext(sandbox);
+vm.runInContext(traceSource[0], sandbox);
+const reset = vm.runInContext('(' + matched[0] + ')', sandbox);
 function fixture({ status = 'ready', rejection = null, deferred = null, oldDisposeThrows = false, frames = 0 } = {}) {
   const events = [], instances = [];
   class Value { constructor(value) { this.value = value; } copy(other) { this.value = other.value; return this; } }
@@ -86,4 +91,36 @@ test('capture uses frozen async lifecycle and normal native zero-time frame, nev
   assert.match(source, /if \(!g\.frozen\)[\s\S]*await resetCaptureCharacter\(a\);[\s\S]*if \(!g\.frozen\)/);
   assert.match(source, /const resetAtNativeFloor =[\s\S]*a\._finishFrame\(0\);[\s\S]*resetAtNativeFloor\(canonical\.pos/);
   assert.doesNotMatch(source, /source\.playClip\(|WaitShoot_Nrml/);
+});
+
+test('pending and failed native loader expose the last primitive phase without retaining owners', async () => {
+  messages.length = 0;
+  let reject;
+  const deferred = new Promise((_resolve, fail) => { reject = fail; });
+  const f = fixture({ deferred }), pending = reset(f.actor);
+  const read = () => messages.map(value => JSON.parse(value.slice('__IW_CHARACTER_PHASE_V1__'.length)));
+  assert.deepEqual(read().map(row => row.slice(0, 2)), [
+    ['character-reset', 'begin'], ['character-reset', 'constructed'], ['source-loader', 'await'],
+  ]);
+  assert.ok(read().every(row => row.length === 3 && typeof row[0] === 'string' && typeof row[1] === 'string' && Number.isFinite(row[2])));
+  const failure = new Error('actual loader rejection'); reject(failure);
+  await assert.rejects(pending, error => error === failure);
+  assert.deepEqual(read().slice(-2).map(row => row.slice(0, 2)), [['character-reset', 'discard-begin'], ['character-reset', 'discarded']]);
+  assert.equal(f.actor.character, f.old); assert.equal(f.old.disposed, false); assert.equal(f.instances[1].disposed, true);
+});
+
+test('primitive console timeline is capped at 64 and captured before failure cleanup', () => {
+  const begin = source.indexOf('  const characterTrace = [];'), end = source.indexOf('  page.setDefaultTimeout(30000);', begin);
+  assert.ok(begin >= 0 && end > begin);
+  let listener;
+  const trace = new Function('page', source.slice(begin, end) + '\nreturn characterTrace;')({ on(name, cb) { assert.equal(name, 'console'); listener = cb; } });
+  const emit = value => listener({ text() { return value; } });
+  for (let i = 0; i < 70; i++) emit('__IW_CHARACTER_PHASE_V1__' + JSON.stringify(['phase', 'value-' + i, i]));
+  emit('__IW_CHARACTER_PHASE_V1__' + JSON.stringify(['phase', { owner: 'not-primitive' }, 71]));
+  emit('__IW_CHARACTER_PHASE_V1__' + JSON.stringify(['x'.repeat(65), 'value', 72]));
+  emit('__IW_CHARACTER_PHASE_V1__not-json');
+  assert.equal(trace.length, 64); assert.deepEqual(trace[0], ['phase', 'value-6', 6]); assert.deepEqual(trace.at(-1), ['phase', 'value-69', 69]);
+  const catchAt = source.indexOf("report.browserDiagnostics.push({ event: 'visual-character-lifecycle', timeline: visual.characterTrace.slice() });");
+  const closeAt = source.indexOf('await visual.close()', catchAt);
+  assert.ok(catchAt >= 0 && closeAt > catchAt, 'failure receipt is saved before owned context cleanup');
 });

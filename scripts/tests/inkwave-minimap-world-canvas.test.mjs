@@ -8,10 +8,13 @@ test('independent pre-world minimap oracle reconstructs the already-reviewed sou
 test('abortable native minimap source epoch remains exact and rejects mixed or edited source sets',()=>{
  const sourcePaths=['inkwave-public/src/game/minimap.js','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/native-stages/runtime/native-minimap.mjs'];
  const pins=Object.fromEntries(sourcePaths.map(file=>[file,digest(fs.readFileSync(new URL('../../'+file,import.meta.url)))]));
- assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-abortable-axis-prefilter-1870');
+ assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-typed-storage-20261028');
  const old=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-storage-beec332');
  assert.ok(old,'previous reviewed native renderer remains admissible');
  const native='patches/native-stages/runtime/native-minimap.mjs';
+ const axis=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-abortable-axis-prefilter-1870');
+ assert.ok(axis,'historical axis-prefilter source epoch remains admissible');
+ assert.equal(assertReviewedMinimapSources({...pins,[native]:axis.pins[native]}),axis.name);
  assert.equal(assertReviewedMinimapSources({...pins,[native]:old.pins[native]}),old.name);
  assert.throws(()=>assertReviewedMinimapSources({...pins,[native]:'0'.repeat(64)}),/source pin mismatch/);
  assert.throws(()=>assertReviewedMinimapSources({...pins,[native]:'47daa3d3a880e425b4a4580de56d688011d34ab7fc7ae2b7029c1c4581acc08b'}),/source pin mismatch/);
@@ -31,18 +34,73 @@ test('abortable scheduling retains the reviewed native raster and support genera
 });
 
 const nativePath='../../patches/native-stages/runtime/native-minimap.mjs';
+// Frozen from dd90aa241aabd5f0b972cc3471386ba3d4da86dc, before the
+// subsequently reviewed typed-storage changes. Both complete source hashes
+// and the exact three reversible changes are required; the historical pin is
+// not relabelled as the current renderer.
+const historicalNative=fs.readFileSync(new URL('../fixtures/native-minimap-axis-prefilter-1870.mjs.txt',import.meta.url),'utf8');
+const historicalNativeHash='668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb';
+const typedNativeHash='f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5';
+const typedChanges=[
+ [` const reachable=new Uint8Array(nav.nodes.length),queue=[];
+ for(const pad of level.spawnPads){const id=nav.nearest(pad,1.2);if(id>=0&&nav.valid[id]&&!reachable[id]){reachable[id]=1;queue.push(id);}}
+ for(let i=0;i<queue.length;i++)for(const edge of nav.nodes[queue[i]].nb)if(nav.valid[edge.to]&&!reachable[edge.to]){reachable[edge.to]=1;queue.push(edge.to);}`,
+ ` const reachable=new Uint8Array(nav.nodes.length),queue=nav.nodes.length<=65536?new Uint16Array(nav.nodes.length):new Uint32Array(nav.nodes.length);let tail=0;
+ for(const pad of level.spawnPads){const id=nav.nearest(pad,1.2);if(id>=0&&nav.valid[id]&&!reachable[id]){reachable[id]=1;queue[tail++]=id;}}
+ for(let i=0;i<tail;i++)for(const edge of nav.nodes[queue[i]].nb)if(nav.valid[edge.to]&&!reachable[edge.to]){reachable[edge.to]=1;queue[tail++]=edge.to;}`],
+ [` let index=0,same=true;visitSupportValues(map,layers,value=>{if(!Object.is(value,cache.values[index++]))same=false;});return same&&index===cache.values.length;
+}
+function rememberSupport(map,layers,hits){
+ const values=[];visitSupportValues(map,layers,value=>values.push(value));`,
+ ` let index=0,same=true;visitSupportValues(map,layers,value=>{if(!Object.is(value,cache.values.get(index++)))same=false;});return same&&index===cache.values.length;
+}
+function rememberSupport(map,layers,hits){
+ const chunks=[],other=new Map();let length=0;
+ visitSupportValues(map,layers,value=>{const chunk=length>>>13,slot=length&8191;if(!chunks[chunk])chunks[chunk]=new Float64Array(8192);if(typeof value==='number')chunks[chunk][slot]=value;else other.set(length,value);length++;});
+ const values={length,get(i){return other.has(i)?other.get(i):i<length?chunks[i>>>13][i&8191]:undefined;}};`],
+ [` if(map.topBlock?.length!==N)map.topBlock=new Int32Array(N);map.topBlock.fill(-1);`,
+ ` const BlockIndex=L.staticBlockCount<=32768?Int16Array:Int32Array;
+ if(map.topBlock?.length!==N||!(map.topBlock instanceof BlockIndex))map.topBlock=new BlockIndex(N);map.topBlock.fill(-1);`],
+];
+function replaceTypedOnce(source,from,to){
+ assert.equal(source.split(from).length,2,'one exact typed-storage epoch hunk');return source.replace(from,to);
+}
+function restoreAxisEpoch(source){
+ assert.equal(digest(source),typedNativeHash,'complete current typed-storage source');
+ for(const [before,after] of [...typedChanges].reverse())source=replaceTypedOnce(source,after,before);
+ assert.equal(digest(source),historicalNativeHash,'complete restored axis-prefilter source');
+ assert.equal(source,historicalNative,'restoration matches independent frozen historical bytes');return source;
+}
+function projectTypedEpoch(source){
+ assert.equal(digest(source),historicalNativeHash,'complete historical axis-prefilter source');
+ for(const [before,after] of typedChanges)source=replaceTypedOnce(source,before,after);
+ assert.equal(digest(source),typedNativeHash,'complete projected typed-storage source');return source;
+}
 const oldCandidate='   const n=nav.nodes[id];if(Math.hypot(n.x-x,n.z-z)<=nav.step*1.1)candidates.push(n);';
 const filteredCandidate='   const n=nav.nodes[id],dx=n.x-x,dz=n.z-z,reach=nav.step*1.1;\n   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;\n   if(Math.hypot(dx,dz)<=reach)candidates.push(n);';
 function reviewedNativeSource(source){
+ source=restoreAxisEpoch(source);
  assert.equal(source.split(filteredCandidate).length,2,'one exact reviewed axis prefilter');
  const reviewed=source.replace(filteredCandidate,oldCandidate);
  assert.equal(digest(reviewed),'5ba0e08316cc9a5e07b4f0f1e57129b9e4d355bf7684110aa95783f9007ad3ac','all other abortable-native bytes remain exact');
  return reviewed;
 }
+test('typed-storage source reverses exactly to the separately frozen historical owner',()=>{
+ const source=fs.readFileSync(new URL(nativePath,import.meta.url),'utf8');
+ assert.equal(digest(historicalNative),historicalNativeHash);
+ assert.equal(restoreAxisEpoch(source),historicalNative);
+ assert.equal(projectTypedEpoch(historicalNative),source);
+ for(const [before,after] of typedChanges){
+  assert.throws(()=>restoreAxisEpoch(source.replace(after,'')),/complete current typed-storage source/);
+  assert.throws(()=>restoreAxisEpoch(source.replace(after,after+'\n'+after)),/complete current typed-storage source/);
+  assert.throws(()=>projectTypedEpoch(historicalNative.replace(before,'')),/complete historical axis-prefilter source/);
+  assert.throws(()=>projectTypedEpoch(historicalNative.replace(before,before+'\n'+before)),/complete historical axis-prefilter source/);
+ }
+});
 test('merged axis-prefilter epoch rejects edited prefilter and mixed renderer sources',()=>{
  const source=fs.readFileSync(new URL(nativePath,import.meta.url),'utf8');
  reviewedNativeSource(source);
- assert.equal(digest(source),'668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb');
+ assert.equal(digest(restoreAxisEpoch(source)),'668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb');
  const current=REVIEWED_MINIMAP_SOURCE_EPOCHS.at(-1),native='patches/native-stages/runtime/native-minimap.mjs';
  const changed=source.replace('Math.abs(dx)>reach','Math.abs(dx)>=reach');assert.notEqual(changed,source);
  assert.throws(()=>assertReviewedMinimapSources({...current.pins,[native]:digest(changed)}),/source pin mismatch/);

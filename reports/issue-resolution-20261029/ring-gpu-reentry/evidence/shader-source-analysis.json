@@ -1,0 +1,16 @@
+{
+  "vertex": {
+    "C": "081bfca2dfaae00e807270f0c7237b539b7a38c8aa937de9e971ab3409cb168c",
+    "B": "081bfca2dfaae00e807270f0c7237b539b7a38c8aa937de9e971ab3409cb168c",
+    "current": "081bfca2dfaae00e807270f0c7237b539b7a38c8aa937de9e971ab3409cb168c",
+    "sameCB": true,
+    "sameCurrent": true
+  },
+  "fragment": {
+    "C": "4e1d54292fba0ab4f3b69d7f4a8c700966ad6fa8ac067e6f2d40dbd75ba69d72",
+    "B": "4e1d54292fba0ab4f3b69d7f4a8c700966ad6fa8ac067e6f2d40dbd75ba69d72",
+    "current": "b2e69d68c5966ba75e132a3c7794f6ed1217be499781078ce1ac5315785e7847",
+    "sameCB": true,
+    "sameCurrent": false
+  }
+}

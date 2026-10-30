@@ -15,6 +15,14 @@ const fixtureBytes=fs.readFileSync(new URL('./fixtures/queue-historical-source-m
 const fixture=JSON.parse(fixtureBytes);
 const before=fixture.modules[REL].source,after=adaptHistoricalSourceMotion20261026(REL,before);
 const sha=s=>createHash('sha256').update(s).digest('hex');
+// The reviewed current profile owner is a separate epoch, replayed only after
+// independently reconstructing the unchanged historical owner chain.
+const profileOwnerBytes=fs.readFileSync(new URL('./fixtures/historical-motion-mot01-1913-profile.json',import.meta.url));
+function adoptCurrentProfileOwner(source,bytes=profileOwnerBytes){
+ assert.equal(sha(bytes),'43f78f3f0b862a5f1534ee6ca51cc59ea8d5d4a0eb7904ed30fe1c98a91bbea4','pinned current profile owner descriptor bytes');
+ const {before,after,label}=JSON.parse(bytes);
+ return replaceOnce(source,before,after,label);
+}
 const method=s=>{const a=s.indexOf(' actionClip('),b=s.indexOf('\n sampleManual',a);return new Function('return ({'+s.slice(a,b)+'});')().actionClip;};
 const methods=[method(before),method(after)];
 const helper=after.slice(after.indexOf('// Historical queue: one exact dt slot'));
@@ -155,7 +163,10 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  for(let target=0;target<hairPairs.length;target++)for(const mode of ['missing','duplicate'])
   assert.throws(()=>reverseHairOwner(currentBeforeLaterOwner,hairPairs,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
  const restoredCurrent=reverseHairOwner(currentBeforeLaterOwner,hairPairs);
- assert.equal(current,adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair))),'pinned walk, clip pool, hair owner, historical owner and subsequent visual queue compose exactly');
+ const priorOwnerChain=adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair)));
+ assert.notEqual(current,priorOwnerChain,'current profile owner remains distinct from the unchanged prior owner chain');
+ assert.equal(current,adoptCurrentProfileOwner(priorOwnerChain),'pinned walk, clip pool, hair owner, historical owner, subsequent visual queue and current profile owner compose exactly');
+ assert.throws(()=>adoptCurrentProfileOwner(priorOwnerChain,Buffer.from(profileOwnerBytes.toString().replace('item._profName===name','item._profName!==name'))),/pinned current profile owner descriptor bytes/,'changed current owner cannot acquire the pinned descriptor identity');
  assert.equal(restoredCurrent,pooled,'pinned historical source plus exact walk and clip-pool anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
@@ -163,7 +174,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
  assert.ok(restored.includes('const rawTravelSpeed=dt>0?dist/dt:0;'),'current composition retains the independently reviewed walk calculation');
- assert.equal(current,adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected))))),'walk adapter, clip pool and later hair/visual owners retain the pinned source composition');
+ assert.equal(current,adoptCurrentProfileOwner(adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected)))))),'walk adapter, clip pool and later hair/visual/profile owners retain the pinned source composition');
  assert.equal(restoredCurrent,adoptCurrentClipPool(expected),'prior composition plus reviewed walking and clip-pool ownership is retained');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');

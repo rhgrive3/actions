@@ -91,7 +91,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0, carryReentryAge: 0, emerging: 0, lateralK: -1 });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0, carryReentryAge: 0 });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -182,8 +182,6 @@ function advanceWeight(retarget) {
   if (emerging > st.weight) st.weight = emerging;
   st.time = now;
   st.neck = 0;
-  st.emerging = emerging;
-  st.lateralK = !enabled || !c || c.manual ? 0 : st.weight * clamp(c.strafeBalance || 0, 0, 1) * (1 - SOURCE_POSTURE.lateralKeep);
   return st.weight;
 }
 
@@ -196,8 +194,8 @@ export function sourceLateralCorrection(retarget) {
   return postureState(retarget).weight * clamp(c.strafeBalance || 0, 0, 1) * (1 - SOURCE_POSTURE.lateralKeep);
 }
 /** Roll `q` about the kid Z axis so the bone's axis loses that share of its side lean. */
-function correctLateral(retarget, q, axis, precomputedK) {
-  const k = precomputedK >= 0 ? precomputedK : sourceLateralCorrection(retarget);
+function correctLateral(retarget, q, axis) {
+  const k = sourceLateralCorrection(retarget);
   if (k <= 1e-4) return 0;
   _d.copy(axis).applyQuaternion(q);
   const angle = Math.atan2(_d.x, _d.y) * k;
@@ -212,8 +210,7 @@ function correctLateral(retarget, q, axis, precomputedK) {
 export function sourcePostureBone(retarget, target, q, dir, upper = true) {
   if (target === 'hips') {
     advanceWeight(retarget);
-    const st = retarget.s3Posture;
-    correctLateral(retarget, q, YAX, st.lateralK);
+    correctLateral(retarget, q, YAX);
     return;
   }
   if (!upper) return;
@@ -229,7 +226,7 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
     const P = SOURCE_POSTURE;
     // ToHuman's forward tilt comes directly from the sampled source bone q.
     // Cancel that actual lean, not a video-estimated angle or frame fraction.
-    const emergence = st.time !== null ? st.emerging : sourceEmergePostureWeight(controllerOf(retarget));
+    const emergence = sourceEmergePostureWeight(controllerOf(retarget));
     const keep = emergence ? 0 : isTorsoBone(target)
       ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * st.move
       : P.neckKeep;
@@ -238,7 +235,7 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
   }
   if (Math.abs(angle) > 1e-7) q.premultiply(_q.setFromAxisAngle(XAX, angle));
   // Side lean after the sagittal correction, measured on each bone's own up axis (the displayed lean).
-  correctLateral(retarget, q, YAX, st.time !== null ? st.lateralK : -1);
+  correctLateral(retarget, q, YAX);
 }
 
 /** Called by SourceMotionController.alignWeapon with the weapon orientation (kid space, before aim pitch).

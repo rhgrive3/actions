@@ -1,0 +1,89 @@
+{
+  "asOf": "2026-10-29T15:30:30.572178+00:00",
+  "candidate": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+  "published": "36743577ee15efbaa0f84ec552b2490ab688cac3",
+  "mergedExistingDraft": "6690e8017252396b327ae6088d3746765ad5835d",
+  "status": "Local source eight-shard and audio causal fix still pending; not full acceptance",
+  "deviceValidation": "waived by user",
+  "mainMergeByThisTask": false,
+  "evidence": {
+    "character-menu-paint-source": {
+      "source": "/workspace/scratch/agent3-1915-source-final.tap",
+      "file": "character-menu-paint-source.txt.gz",
+      "sha256": "751af3ba5309a81965fd53e9e0e801aa7b5d2d62dc7ef7eaf3c834fb7a616ce9",
+      "bytes": 7532
+    },
+    "current-native-helper-fixtures": {
+      "source": "/workspace/scratch/pr1915-shard3-three-after.tap",
+      "file": "current-native-helper-fixtures.txt.gz",
+      "sha256": "b1295d3a44860c2e6150a5a1dfbcc51bc402cc0cad511cc422b1b2b43abdd10a",
+      "bytes": 6023
+    },
+    "contact-fk": {
+      "source": "/workspace/scratch/pr1915-contact-fk-repair.tap",
+      "file": "contact-fk.txt.gz",
+      "sha256": "8ce89c9b52b3b3de583cdc67e9cff8e430dbaf2c0283c5010dd1e34b490112df",
+      "bytes": 1128
+    },
+    "new-canonical-test-registration": {
+      "source": "/workspace/scratch/pr1915-canonical-new-tests.tap",
+      "file": "new-canonical-test-registration.txt.gz",
+      "sha256": "76b3c778530e1cf9ac3ea336ffdddb4892c770aab3466fa53dc94b9b08441cf6",
+      "bytes": 4090
+    },
+    "audio-observer-adjacent": {
+      "source": "/workspace/scratch/pr1915-audio-observer/final-v2-adjacent-node22.tap",
+      "file": "audio-observer-adjacent.txt.gz",
+      "sha256": "490615ea17c990a1937031650f5a2e35a7ca219aef20a23a450a9c2ea83d7afd",
+      "bytes": 10566
+    },
+    "range-source": {
+      "source": "/workspace/scratch/agent2-pr1915-range-focused.tap",
+      "file": "range-source.txt.gz",
+      "sha256": "850208b15f84c4002f7b690029c032a976aaf78c0ff9ee8010ab420638977699",
+      "bytes": 6482
+    },
+    "menu-browser": {
+      "source": "/workspace/scratch/agent3-1915-menu-focus/menu-focus-result.json",
+      "file": "menu-browser.json.gz",
+      "sha256": "262c6a4204e8c372034b4aecde2ce4b654b9f73c2cc9f5367fff4685c1d378b6",
+      "bytes": 7368
+    },
+    "current-1431-browser-summary": {
+      "source": "/workspace/scratch/issue642-1431-current-adjudication/current6013-summary.json",
+      "file": "current-1431-browser-summary.json.gz",
+      "sha256": "d074218d0072173d6297c88cc2da09b97bdd7c028eb09d87aa831bf5ce1d8f23",
+      "bytes": 38388
+    },
+    "current-642-native-readme": {
+      "source": "/workspace/scratch/issue642-native-sample/README.md",
+      "file": "current-642-native-readme.txt.gz",
+      "sha256": "65cd6f02dc98e3809f193ed3790ec28fc3b71a6e84ae714f5f97885592563046",
+      "bytes": 3953
+    },
+    "current-audio-failure": {
+      "source": "/workspace/scratch/agent1-context-audio-828/result.json",
+      "file": "current-audio-failure.json.gz",
+      "sha256": "298c1bf3dc7af5229bd51196df69c633bbd17fd55aac2c23d2ba94adafba1f20",
+      "bytes": 124197
+    },
+    "audio-native-stream-causal-control": {
+      "source": "/workspace/scratch/agent1-audio-framing-probe/result.json",
+      "file": "audio-native-stream-causal-control.json.gz",
+      "sha256": "8711bd4ce02a8f05a170155318fb12efc18bc3024442f78f019a963b0704aa94",
+      "bytes": 211237
+    },
+    "projectile-lifecycle": {
+      "source": "/workspace/scratch/agent1-projectile-lifecycle-evidence/receipt.json",
+      "file": "projectile-lifecycle.json.gz",
+      "sha256": "b678a025eab8bfb69adeed00aa324580c8488cab7ad58474a0abd3f00bb5e95d",
+      "bytes": 5753
+    },
+    "audio-pipeline-rejected": {
+      "source": "/workspace/scratch/agent1-audio-bounded-probe/result.json",
+      "file": "audio-pipeline-rejected.json.gz",
+      "sha256": "406925748fe9e387996dd9d9e51ccf72b410cf6631f79a0799bb1af3514829bb",
+      "bytes": 186807
+    }
+  }
+}
