@@ -120,6 +120,9 @@ function replayFloorCoverage(paint, full) {
     if (!(g % PREFIX_GROUPS)) { prefix0[g >>> PREFIX_SHIFT] = t0; prefix1[g >>> PREFIX_SHIFT] = t1; }
     const group = groups[g], value = group < 0 ? grid[~group] : words[group];
     ownership[g] = value;
+    // Most native turf is still unpainted. An all-zero word contributes no
+    // additions, so skip all four original zero-team tests together.
+    if (value === 0) { i += group < 0 ? 1 : 4; continue; }
     if (group < 0) {
       if (value === 1) t0 += weights[i];
       else if (value === 2) t1 += weights[i];

@@ -65,6 +65,17 @@ test('public direct indexed scans still observe every grid edit without a versio
   notePaintMutation(p, true); exact(p, 'direct indexed reads do not consume a pending coverage change');
 });
 
+test('sparse native-style zero ownership keeps cell offsets and ordered weights exact', () => {
+  const p=make(16384);p.grid.fill(0);
+  p.paintFaces=[face(0,4096,.17,.13),face(4096,12288,.19,.37)];
+  for(let i=7;i<p.dead.length;i+=17)p.dead[i]=1;
+  exact(p);assert.deepEqual(p.coverage(),[0,0]);
+  for(const [cell,team]of [[15003,1],[12011,2],[0,1],[4000,2],[16000,1]]){
+    p.grid[cell]=team;notePaintMutation(p,true);exact(p,'sparse write '+cell);
+  }
+  p.grid.fill(0);notePaintMutation(p,true);exact(p,'all-zero replay');
+});
+
 test('identity changes rebuild the index and retain full fallback', () => {
   const p = make(); exact(p);
   for (const key of ['grid', 'dead', 'paintFaces']) {
