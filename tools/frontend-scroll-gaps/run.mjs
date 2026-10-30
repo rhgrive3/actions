@@ -55,9 +55,20 @@ try{
 
  const coverage=[];
  const fillGap=async(name,pane,completedSteps,hasBottom,fresh=false)=>{
+  await page.evaluate(()=>document.fonts.ready);
   const panes=await page.evaluate(()=>{const root=window.__inkwave.menus._scr.el;return [root,...root.querySelectorAll('main,section,div')].filter(e=>e.getBoundingClientRect().width>0&&e.getBoundingClientRect().height>0&&e.clientHeight>100&&e.scrollHeight>e.clientHeight+30&&/auto|scroll/.test(getComputedStyle(e).overflowY)).map((e,j)=>{e.dataset.qaGap=String(j);return {j,height:e.clientHeight,total:e.scrollHeight};});});
   assert(panes[pane],name+' missing pane');const loc=page.locator('[data-qa-gap="'+pane+'"]');
   assert(await loc.evaluate((e,isLoadout)=>isLoadout?e.matches('.iw-wgrid'):!!(e.matches('.iw-ss__list')||e.querySelector('.iw-ss__list')),batch==='loadout'),'unexpected scroll pane identity');
+  // Position ancestors before stabilization too: scroll-dependent layout may change.
+  await loc.evaluate(e=>e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+  // Fonts must settle BEFORE using geometry as evidence, not only inside capture().
+  let stable=0,lastGeometry='',geometry;
+  for(let sample=0;sample<30&&stable<4;sample++){
+   await page.waitForTimeout(200);geometry=await loc.evaluate(e=>({height:e.clientHeight,total:e.scrollHeight,width:e.clientWidth}));
+   const key=JSON.stringify(geometry);stable=key===lastGeometry?stable+1:0;lastGeometry=key;
+  }
+  assert(stable>=4,'catalogue geometry did not stabilize');
+  if(id==='phone-portrait'&&batch==='loadout'&&(geometry.total!==7750||geometry.height!==540)){fresh=true;completedSteps=0;hasBottom=false;receipt.geometryFallback={reason:'settled geometry differs from prior capture',prior:{height:540,total:7750},current:geometry};}
   // Match the original sweep's 85% steps without recapturing completed images.
   await loc.evaluate(e=>e.scrollTop=0);
   for(let n=0;n<completedSteps;n++)await loc.evaluate(e=>{e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,e.scrollTop+e.clientHeight*.85);});
@@ -76,6 +87,7 @@ try{
    assert.equal(visible.scrollTop,pos.after,'ancestor positioning changed pane');assert(visible.height>=pos.height-2&&visible.width>=visible.clientWidth-2,'catalogue clipped by viewport');
    assert(pos.after<=coveredEnd+1,'coverage gap between new captures');
    await capture(name+'-gap-pane'+pane+'-step'+(completedSteps+positions.length+1),{scope:'native-scroll-gap',notes:{position:pos,visible,priorCompletedSteps:completedSteps,priorBottom:hasBottom}});
+   const afterCapture=await loc.evaluate(e=>({height:e.clientHeight,total:e.scrollHeight,top:e.scrollTop}));assert.deepEqual(afterCapture,{height:baseline.height,total:baseline.total,top:pos.after},'geometry changed during screenshot');
    coveredEnd=pos.after+pos.height;positions.push(pos);
   }
   assert(coveredEnd>=targetEnd-1,'gap coverage incomplete');coverage.push({name,pane,baseline,targetEnd,coveredEnd,priorBottom:hasBottom,fresh,positions});

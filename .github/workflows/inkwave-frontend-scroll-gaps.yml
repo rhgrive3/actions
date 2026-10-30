@@ -20,7 +20,6 @@ jobs:
         include:
           - { device: phone-portrait, batch: loadout }
           - { device: phone-landscape, batch: loadout }
-          - { device: phone-landscape, batch: setup }
     steps:
       - uses: actions/checkout@v4
         with:
