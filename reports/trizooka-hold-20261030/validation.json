@@ -1,0 +1,94 @@
+{
+  "base": "67f708b650b1af788206a4c0e9e3dd879bfa3e44",
+  "runtimeCommit": "b27043b2ac7ff112a8c544dda39029e39238d650",
+  "runtimeSHA256": "a4336340325fb796b0dfa6f21382915a37ef22531078f2857ebebc5b26b13ff2",
+  "build": {
+    "contentHash": "d76c80e7ba56743fb6ea3e01bac87b95072b7760351cb3fd243f0e66b5779690",
+    "revision": "d34673c42881432f93416f2f30f68c3c7df17e36d5e918f7dba25fedd88f0c0e",
+    "optimization": "esbuild-minify",
+    "esbuild": "0.28.2"
+  },
+  "tests": {
+    "source": {
+      "passed": 8,
+      "failed": 0
+    },
+    "emitted": {
+      "passed": 8,
+      "failed": 0
+    },
+    "dedicatedAndHotpath": {
+      "passed": 12,
+      "failed": 0
+    },
+    "combatBirthSwimVfx": {
+      "passed": 53,
+      "failed": 0
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "beforeContentHash": "cab72739888ee5da1ded95c845b1e0b481d62e0439b7aa4d2a975889b2cbd49c",
+    "finalContentHash": "d76c80e7ba56743fb6ea3e01bac87b95072b7760351cb3fd243f0e66b5779690",
+    "driverSHA256": "6788531d7061839fd85ebbd2c1b3fd5be4273fd86f0f98a83c16fdf486f7de62",
+    "evidence": [
+      "visual/before.json",
+      "visual/final.json"
+    ],
+    "scope": "source-loaded Character + real Actor/Physics/Projectiles/FX, controlled flat floor and isolated real-Physics wall probe; no retail-parity or hardware-performance claim"
+  },
+  "intentionalGameplayChange": {
+    "reason": "actual launch remains coherent with the corrected visible nozzle",
+    "birthShiftInMovingFixture": 0.40813,
+    "velocityVectorDeltaInFixture": 0.69787,
+    "maxPairedPaintStampShiftInFixture": 0.52181,
+    "paintStampsBeforeAndAfter": 50,
+    "units": "INKWAVE world units; velocities per second",
+    "preserved": "combat and resource scalar values, shot count/cadence, flight parameters, native safety/aim rules and network schema/authority"
+  },
+  "gates": {
+    "quick": "passed",
+    "normalBuild": "passed",
+    "startupBudget": {
+      "status": "passed",
+      "revision": "d34673c42881432f93416f2f30f68c3c7df17e36d5e918f7dba25fedd88f0c0e",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 78620,
+      "initialJSBytes": 1848729,
+      "criticalHTMLBytes": 24043,
+      "precacheCount": 594,
+      "precacheBytes": 8017309,
+      "workerBytes": 98005,
+      "declaredBytes": 16779232,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "diffCheck": "passed"
+  },
+  "limits": [
+    "prerelease original stills; exact version/gear/input/mesh/joints unverified",
+    "static capsules do not deplete per volley and prior small ejected shell is retained",
+    "first-shot flash saturates effect close-up; birth alignment established by synchronous coordinates",
+    "no exact gameplay-position parity, complete retail fidelity or all-CI qualification"
+  ],
+  "logs": {
+    "source": {
+      "file": "validation/source.log.gz",
+      "uncompressedSHA256": "1485182ab58df2e43fdf609945451476df0882d5ba1dac7e3fd66bff104e505d"
+    },
+    "emitted": {
+      "file": "validation/emitted.log.gz",
+      "uncompressedSHA256": "287a8314eb36e16302ec7e65a99a8cddd9c5f3c350ab637f14f1536142f73e05"
+    },
+    "combat-regressions": {
+      "file": "validation/combat-regressions.log.gz",
+      "uncompressedSHA256": "c3d12eb9e159de36c791deb718670568ed303e29bfe3cd82b3287bf2d5ced5dc"
+    },
+    "dedicated-hotpath": {
+      "file": "validation/dedicated-hotpath.log.gz",
+      "uncompressedSHA256": "02f6823f8da364d8fb0d66d9ad85c941078dac9f5734e6755e32b2235f0566bb"
+    }
+  }
+}

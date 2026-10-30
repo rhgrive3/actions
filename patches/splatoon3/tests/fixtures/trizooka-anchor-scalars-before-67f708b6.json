@@ -1,0 +1,81 @@
+{
+  "source": "67f708b6",
+  "scope": "native cadence, combat and network scalar fields; origin/direction intentionally excluded",
+  "traces": {
+    "30": {
+      "births": [
+        {"tick":18,"action":1,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":18,"action":1,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":18,"action":1,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":45,"action":2,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":45,"action":2,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":45,"action":2,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":73,"action":3,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":73,"action":3,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":73,"action":3,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false}
+      ],
+      "packets": [
+        {"tick":18,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,1,0,0.11,1,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":19,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,1,0,0.48,2,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":21,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,1,0,0.85,3,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":45,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,2,0,0.11,4,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":46,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,2,0,0.48,5,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":48,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,2,0,0.85,6,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":73,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,3,0,0.11,7,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":74,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,3,0,0.48,8,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":76,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,3,0,0.85,9,-1,{"s3SpecialPowerAP":0}]}
+      ],
+      "actor": {"ink":100,"hp":100,"special":0,"position":[3.7577878019021798,0,4.697234752377721],"velocity":[2.304,0,2.8799999999999994]}
+    },
+    "60": {
+      "births": [
+        {"tick":35,"action":1,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":35,"action":1,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":35,"action":1,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":90,"action":2,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":90,"action":2,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":90,"action":2,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":145,"action":3,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":145,"action":3,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":145,"action":3,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false}
+      ],
+      "packets": [
+        {"tick":35,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,1,0,0.11,1,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":38,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,1,0,0.48,2,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":42,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,1,0,0.85,3,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":90,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,2,0,0.11,4,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":93,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,2,0,0.48,5,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":97,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,2,0,0.85,6,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":145,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,3,0,0.11,7,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":148,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,3,0,0.48,8,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":152,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,3,0,0.85,9,-1,{"s3SpecialPowerAP":0}]}
+      ],
+      "actor": {"ink":99.08,"hp":100,"special":0,"position":[3.7552347523777234,0,4.694043440472155],"velocity":[1.728,0,2.1599999999999997]}
+    },
+    "120": {
+      "births": [
+        {"tick":70,"action":1,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":70,"action":1,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":70,"action":1,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":180,"action":2,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":180,"action":2,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":180,"action":2,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":290,"action":3,"index":0,"delay":0,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.11,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":290,"action":3,"index":1,"delay":0.06666666666666667,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.48,"speed":67.5,"authority":true,"ghost":false},
+        {"tick":290,"action":3,"index":2,"delay":0.13333333333333333,"life":5.5,"straight":0.26666666666666666,"damage":220,"radius":3.2,"size":0.22,"grav":68.60340000000001,"drag":0.01985,"seed":0.85,"speed":67.5,"authority":true,"ghost":false}
+      ],
+      "packets": [
+        {"tick":70,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.106,0.8,1.3,0.035,26,0.3,0,null,0,1,0,0.11,1,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":77,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,1,0,0.48,2,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":85,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,1,0,0.85,3,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":180,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,0,2,0,0.11,4,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":187,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,2,0,0.48,5,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":195,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.106,0.8,1.3,0.035,26,0.3,0,null,2,2,0,0.85,6,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":290,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.106,0.8,1.3,0.035,26,0.3,0,null,0,3,0,0.11,7,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":297,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,1,3,0,0.48,8,-1,{"s3SpecialPowerAP":0}]},
+        {"tick":305,"kind":["blast","trizooka"],"length":34,"fields":[0,5.5,0.26666666666666666,3.2,0.22,68.60340000000001,0.01985,1.1,0,0.1,0.8,1.3,0.035,26,0.3,3,null,2,3,0,0.85,9,-1,{"s3SpecialPowerAP":0}]}
+      ],
+      "actor": {"ink":99.08,"hp":100,"special":0,"position":[3.7559199652343627,0,4.694899956542975],"velocity":[1.728,0,2.1599999999999997]}
+    }
+  }
+}

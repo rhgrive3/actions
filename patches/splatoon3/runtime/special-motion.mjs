@@ -268,6 +268,16 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
 // surfaces and joint coordinates are INKWAVE calibration, not retail assets.
 // Geometry is immutable and shared. Every model owns its materials; disposal
 // never destroys the geometry of a second live activation.
+// Procedural calibration from Nintendo's 2021 Trizooka stills 00–03. The
+// reference establishes the large shoulder-side tube, rear capsule housing,
+// hollow green head and two separate grips; dimensions are INKWAVE choices.
+export const TRIZOOKA_PRESENTATION = Object.freeze({
+  position: Object.freeze([-.40, 1.07, .10]),
+  trigger: Object.freeze([0, -.26, -.18]),
+  support: Object.freeze([.205, -.11, .08]),
+  supportAngle: .85,
+  muzzle: Object.freeze([0, .075, .66]),
+});
 const factories = new WeakMap();
 function factory(THREE) {
 const bank = new Map(), V = (x=0,y=0,z=0) => new THREE.Vector3(x,y,z);
@@ -326,39 +336,78 @@ function mesh(root,geo,material,name){const m=new THREE.Mesh(geo,material);m.nam
 function hardware(root,key,make){return mesh(root,geometry(key,make),surface(0xffffff),key);}
 function ink(root,key,color,make){return mesh(root,geometry(key,make),surface(color,true),key);}
 function root(kind){const g=new THREE.Group();g.name='special:'+kind;g.userData.specialKind=kind;return g;}
-function sockets(g,r,l,muzzle){
+function sockets(g,r,l,muzzle,handQuats=null){
   const d=g.userData,q=new THREE.Quaternion();if(d.specialKind==='trizooka'||d.specialKind==='storm')q.setFromAxisAngle(V(1,0,0),-Math.PI/2);
-  d.handQR=q.clone();d.handQL=q.clone();d.holeR=V(.0255,-.0525,0);d.holeL=V(-.0255,-.0525,0);
+  d.handQR=handQuats?.R?.clone()||q.clone();d.handQL=handQuats?.L?.clone()||q.clone();d.holeR=V(.0255,-.0525,0);d.holeL=V(-.0255,-.0525,0);
   d.gripR=V(...r);d.gripL=V(...l);d.handR=d.gripR.clone().sub(d.holeR.clone().applyQuaternion(d.handQR));
   d.handL=d.gripL.clone().sub(d.holeL.clone().applyQuaternion(d.handQL));d.muzzle=V(...muzzle);return g;
 }
 
 function createTrizooka(color){
-  const g=root('trizooka');
+  const g=root('trizooka'),D=TRIZOOKA_PRESENTATION;
   hardware(g,'zooka-housing',()=>{
-    const p=new Parts();p.add(tube(.105,.42,0,.075,-.03),C.silver);
-    for(let i=0;i<8;i++)p.add(rim(.11,.015,0,.075,-.22+i*.05),C.cream);
-    p.add(pipe(.19,.14,.20,0,.075,.28),'#4cab30').add(rim(.18,.024,0,.075,.392),C.red)
-      .add(rim(.15,.014,0,.075,.07),'#cbdb36').add(tube(.13,.09,0,.075,-.285),C.red);
-    p.add(box(.055,.16,.065,0,-.12,-.12),'#4cab30').add(box(.055,.085,.065,.13,-.025,.12),C.dark);
-    p.add(box(.04,.026,.20,0,.27,.24),C.dark).add(box(.025,.035,.05,0,.29,.31),C.silver);
+    const p=new Parts(),green='#36b62b',yellow='#d8df45';
+    // Long ribbed silver neck, with polygonal collars at the rear and grip.
+    p.add(tube(.108,.57,0,.075,-.005),C.silver);
+    for(let i=0;i<10;i++)p.add(rim(.111,.009,0,.075,-.245+i*.052),C.silver);
+    const collar=(r,inner,length,z)=>lathe([[inner,-length/2],[r,-length/2],[r,length/2],[inner,length/2],[inner,-length/2]],6).rotateX(Math.PI/2).translate(0,.075,z);
+    p.add(collar(.174,.11,.09,.055),yellow).add(collar(.184,.12,.042,-.285),yellow);
+    // Substantial yellow rear drum and longitudinal silver fins behind the
+    // shoulder. The old model had only a short red cap in this region.
+    p.add(tube(.168,.28,0,.075,-.425),C.dark)
+      .add(pipe(.205,.16,.026,0,.075,-.57),yellow).add(pipe(.205,.16,.026,0,.075,-.29),yellow);
+    for(let i=0;i<12;i++){
+      const a=i*Math.PI/6;
+      p.add(new THREE.BoxGeometry(.022,.027,.245).translate(Math.sin(a)*.183,.075+Math.cos(a)*.183,-.43),C.silver);
+    }
+    // Bulging, faceted green nose: a dark recessed bore, with an open red lip.
+    const shell=lathe([[.13,.255],[.175,.285],[.222,.35],[.235,.44],[.223,.54],[.192,.60],[.168,.61]],24).rotateX(Math.PI/2).translate(0,.075,0);
+    p.add(shell,green).add(pipe(.174,.143,.065,0,.075,.625),C.red)
+      .add(pipe(.145,.138,.20,0,.075,.535),C.dark).add(tube(.139,.008,0,.075,.432),C.black)
+      .add(rim(.158,.008,0,.075,.278),C.dark);
+    for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]){
+      p.add(box(.038,.035,.26,Math.sin(a)*.221,.075+Math.cos(a)*.221,.435),green);
+    }
+    // Silver fasteners on the nose rim and a small sight above it.
+    for(const a of [0,Math.PI])p.add(box(.05,.025,.045,0,.075+Math.cos(a)*.239,.435),C.silver);
+    p.add(box(.035,.035,.16,0,.325,.435),green).add(box(.065,.025,.045,0,.355,.45),C.dark);
+    // Distinct green grips: rear trigger vertical, front support oblique.
+    const grip=(below=.105,above=.105)=>lathe([[0,-below],[.035,-below],[.04,-below+.025],[.033,above-.02],[.027,above],[0,above]],8);
+    p.add(grip(.075,.15).translate(...D.trigger),green)
+      .add(box(.055,.105,.075,0,-.06,-.18),green)
+      .add(grip().rotateZ(D.supportAngle).translate(...D.support),green);
+    p.add(hose([[.025,-.15,-.225],[.057,-.18,-.20],[.055,-.31,-.15],[.025,-.32,-.14]],.008),C.dark)
+      .add(box(.012,.055,.014,.015,-.235,-.14),C.red);
+    // Three large rounded capsules, dark bands, ribbed white caps and hoses.
     for(let i=0;i<3;i++){
-      const x=(i-1)*.19;
-      p.add(tube(.079,.31).rotateX(-Math.PI/2).translate(x,.28,-.29),C.yellow)
-        .add(tube(.084,.047).rotateX(-Math.PI/2).translate(x,.26,-.29),C.dark)
-        .add(tube(.066,.045).rotateX(-Math.PI/2).translate(x,.10,-.29),C.cream)
-        .add(hose([[x,.11,-.29],[x,.04,-.32],[x,-.03,-.23],[x*.3,.02,-.18]],.020),C.dark);
+      const x=(i-1)*.19,y=.355+(i===1?.035:0),z=-.43;
+      const at=geo=>geo.rotateX(-.32).translate(x,y,z);
+      p.add(at(lathe([[0,-.19],[.055,-.19],[.078,-.155],[.084,-.10],[.084,.10],[.075,.16],[.04,.19],[0,.195]],14)),C.yellow)
+        .add(at(lathe([[.085,-.055],[.085,-.005],[.085,.018]],14)),C.dark)
+        .add(at(lathe([[0,-.225],[.067,-.225],[.068,-.18],[0,-.18]],12)),C.cream);
+      for(let j=0;j<8;j++){
+        const a=j*Math.PI/4;
+        p.add(at(new THREE.BoxGeometry(.011,.04,.01).translate(Math.sin(a)*.069,-.202,Math.cos(a)*.069)),C.cream);
+      }
+      p.add(hose([[x,y-.18,z+.06],[x,y-.28,z+.065],[x,y-.31,z+.17],[x*.65,.16,-.255]],.023),C.dark);
     }
     return p.end();
   });
-  ink(g,'zooka-bore',color,()=>new Parts().add(tube(.14,.005,0,.075,.365),'#ffffff').end());
+  // The recessed back stays dark in neutral light. Team colour belongs to
+  // the admitted muzzle flash, not an opaque disk across the opening.
+  ink(g,'zooka-bore',C.dark,()=>new Parts().add(tube(.138,.006,0,.075,.431),'#ffffff').end());
   g.userData.breech=hardware(g,'zooka-breech',()=>new Parts().add(tube(.115,.055,0,.075,-.25),C.silver).end());
   g.userData.cartridge=hardware(g,'zooka-cartridge',()=>new Parts().add(tube(.072,.13),C.silver).add(rim(.075,.009,0,0,-.06),C.cream).end());
   g.userData.cartridge.visible=false;
   const flash=mesh(g,geometry('zooka-flash',()=>{const d=new THREE.SphereGeometry(1,16,8);d.userData.specialShared=true;return d;}),
     new THREE.MeshBasicMaterial({color,transparent:true,opacity:0,depthWrite:false}),'zooka-flash');
-  flash.position.set(0,.075,.41);flash.visible=false;flash.castShadow=false;g.userData.flash=flash;
-  return sockets(g,[0,-.12,-.12],[.13,-.025,.12],[0,.075,.402]);
+  flash.position.set(0,.075,.668);flash.visible=false;flash.castShadow=false;g.userData.flash=flash;
+  const R=new THREE.Quaternion().setFromAxisAngle(V(1,0,0),-Math.PI/2);
+  const L=new THREE.Quaternion().setFromAxisAngle(V(0,0,1),D.supportAngle).multiply(R);
+  sockets(g,D.trigger,D.support,D.muzzle,{R,L});
+  g.userData.gripAxes={R:{center:V(...D.trigger),direction:V(0,1,0),halfLength:.075},L:{center:V(...D.support),direction:V(-Math.sin(D.supportAngle),Math.cos(D.supportAngle),0),halfLength:.105}};
+  g.userData.barrelAxis={back:V(0,.075,-.57),front:V(...D.muzzle)};
+  return g;
 }
 function createInkVac(color){
   const g=root('inkVac');
@@ -776,7 +825,11 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       const s=presentationState(this);hold(this,s,id);const g=s.model,a=this.actor;
       this.kid.getWorldQuaternion(s.worldQ);s.dir.copy(a.aimDir).applyQuaternion(s.worldQ.invert()).normalize();
       s.q.setFromUnitVectors(s.a.set(0,0,1),s.dir);g.quaternion.copy(s.q);
-      const kick=Math.exp(-14*Math.max(0,(G.time||0)-s.shotAt));g.position.set(-.11,.96,.25-.055*kick);fit(this,s,g);
+      const kick=Math.exp(-14*Math.max(0,(G.time||0)-s.shotAt));
+      if(id==='trizooka'){
+        g.position.fromArray(TRIZOOKA_PRESENTATION.position);g.position.addScaledVector(s.dir,-.055*kick);
+      }else g.position.set(-.11,.96,.25-.055*kick);
+      fit(this,s,g);
       if(id==='trizooka'){g.userData.breech.position.z=-.018*kick;const flash=g.userData.flash,age=(G.time||0)-s.shotAt;flash.visible=age>=0&&age<.10;flash.material.opacity=.7*(1-clamp(age/.10));flash.scale.set(.11+.18*clamp(age/.10),.11+.18*clamp(age/.10),.15);}
       if(id==='inkVac'&&s.pack){const charge=inkVacState(a)?.charge||0;s.pack.userData.fill.scale.y=.10+.90*charge;}
       this._applyFingers(this.P,0);
