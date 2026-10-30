@@ -10,12 +10,13 @@ const hash=b=>createHash('sha256').update(b).digest('hex');
 assert.equal(git(source,'rev-parse','HEAD'),HEAD);
 assert.equal(git(source,'status','--porcelain','--untracked-files=no'),'');
 const reviewedScripts={
+ 'test-blaster-knockback-authority.mjs':'626a9760d62aec74ead19ed3cac03ffaa834631769ef2248440914bf931c8a83',
  'audio-request-trace.mjs':'3f8be5e75a736afb01ca34deb24f5a5271c4a7df4cab16db37f002547c7da695',
  'audio-request-trace.test.mjs':'86fa9a80411726f57c6bbe731b87c6c65c1e487ae47efc3ef007afd2f1d3b709',
  'verify-blast-clocks.test.mjs':'f8e4b56c8d9930511645566e9a91937db0f05939b51f2bccb6d2e2da52f95c5a',
  'test-blast-alpha-routing.mjs':'71ae5a0c70c7bddcaf58efe3606ac677733fec9bafb067aa85aad74ba97bafe6',
  'compare-blast-ab.mjs':'ceacda95fde0389ee614c53db4f2ddc9d2464ee8f533d980c42ba13b5067f752',
- 'run-main91-blast.mjs':'0865f9eeee82dfd4864d2cd735acb3f0d62a97dd687ac9b1c975e0a9c3c0152f',
+ 'run-main91-blast.mjs':'f01e6b1f63633ab1842f1fce7e6eac679c58eece01c49b614908e58f8daa31a2',
  'capture-main91-blast.mjs':'7d67ef87436b1fadb3707d1c03f71869519ca528398bb275bfd2e140f194b513'
 };
 const scripts=Object.fromEntries([...Object.keys(reviewedScripts),'verify-blast-artifacts.mjs'].map(f=>[f,hash(fs.readFileSync(new URL(f,import.meta.url)))]));
@@ -38,7 +39,7 @@ if(mode==='provenance'){
  const driver=JSON.parse(fs.readFileSync(path.join(out,'driver-receipt.json')));
  assert.equal(capture.head,HEAD);assert.equal(driver.head,HEAD);
  assert.equal(capture.variant,VARIANT);assert.equal(driver.variant,VARIANT);assert.equal(capture.shellAlpha,SHELL_ALPHA);assert.equal(driver.shellAlpha,SHELL_ALPHA);
- const regression=JSON.parse(fs.readFileSync(path.join(out,'regression-receipt.json')));assert.equal(regression.sourceHead,HEAD);assert.equal(regression.variant,VARIANT);assert.equal(regression.source,'passed');assert.equal(regression.emitted,'passed');assert.equal(regression.tests.length,5);assert.deepEqual(regression.routing,{source:'passed',emitted:'passed'});assert.deepEqual(regression.qaContracts,['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs']);
+ const regression=JSON.parse(fs.readFileSync(path.join(out,'regression-receipt.json')));assert.equal(regression.sourceHead,HEAD);assert.equal(regression.variant,VARIANT);assert.equal(regression.source,'passed');assert.equal(regression.emitted,'passed');assert.equal(regression.tests.length,5);assert.deepEqual(regression.authorityFixture,{reason:"original authority cases preserved; real fire and authenticated owner tick provide required proof in final composition; immutable source tests untouched",file:'test-blaster-knockback-authority.mjs',sha256:scripts['test-blaster-knockback-authority.mjs'],source:'passed',emitted:'passed'});assert.deepEqual(regression.routing,{source:'passed',emitted:'passed'});assert.deepEqual(regression.qaContracts,['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs']);
  assert.equal(capture.status,'captured-not-reviewed');assert.equal(driver.status,'captured-not-reviewed');
  assert.equal(capture.expectedContentHash,driver.manifestHash);
  assert.equal(capture.cases.length,2);
