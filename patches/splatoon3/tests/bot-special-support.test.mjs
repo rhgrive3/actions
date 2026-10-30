@@ -89,7 +89,13 @@ test('unknown enemies, unsupported terrain and close invaders do not trigger was
 });
 
 test('throw planning rejects a wall before the target without creating a device',async()=>{
-  const f=await setup('storm');f.G.physics.los=()=>false;
+  const f=await setup('storm');
+  f.G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},
+    spawnPads:[[-70,0,0],[70,0,0]],spawnBarrier:0,half:[],single:[
+      {kind:'box',min:[-100,-1,-100],max:[100,0,100]},
+      {kind:'box',min:[-100,0,5],max:[100,6,6]},
+    ]});
+  f.G.physics=new f.Physics(f.G.level);
   for(let i=0;i<90;i++)f.tick();
   assert.equal(f.a.stats.specials,0);assert.equal(f.G.projectiles.clouds.length,0);
 });
@@ -177,4 +183,46 @@ test('real Bubbler grows at the checked position and intercepts hostile Actor sh
   }
   assert.ok(dome.hp<hp||dome.fieldHp<field,'real enemy projectiles contact the barrier');
   assert.equal(a.hp,100,'the grown barrier shields the bot from outside shots');
+});
+
+test('real BotBrain does not spend Triple Inkstrike on a thin low obstruction before the target',async()=>{
+  const f=await makeFullBotFixture();
+  f.G.level=new f.Level({bounds:{minX:-25,maxX:25,minZ:-15,maxZ:45},
+    spawnPads:[[-20,0,-10],[20,0,40]],spawnBarrier:0,half:[],single:[
+      {kind:'box',min:[-25,-1,-15],max:[25,0,45]},
+      {kind:'box',min:[-25,0,16.66],max:[25,.6,16.67]},
+    ]});
+  f.G.physics=new f.Physics(f.G.level);f.G.nav=new f.NavGraph(f.G.level,f.G.physics);
+  const {a,b,enemy}=f.scenario('tripleInkstrike');
+  assert.equal(f.G.physics.los(a.pos.clone().setY(1.1),enemy.pos.clone().setY(.85)),true,'target body is visible over the low wall');
+  for(let i=0;i<240;i++)f.tick(a,b);
+  assert.equal(a.stats.specials,0,'the guide would hit the low wall, not the intended target floor');
+  assert.equal(f.events.filter(e=>e.actor===a&&e.action==='marker').length,0);
+});
+
+for(const hz of [30,120])test(`moving real BotBrain settles its spring and lands three guides at ${hz} Hz`,async()=>{
+  const f=await makeFullBotFixture(),{a,b}=f.scenario('tripleInkstrike');
+  b.aimYaw=a.aimYaw=Math.PI/2;b.aimPitch=a.aimPitch=.8;
+  b._pathTo(new f.THREE.Vector3(8,0,18),.6);b.repath=100;
+  for(let i=0;i<hz*6;i++){
+    const dt=1/hz;b.update(dt);a.update(dt);f.G.time+=dt;f.G.projectiles.update(dt);f.G.paint.advanceSimulation(dt);
+  }
+  assert.equal(a.stats.specials,1);
+  const landed=f.events.filter(e=>e.actor===a&&e.id==='tripleInkstrike'&&e.action==='land');
+  assert.equal(landed.length,3,'all guide throws finish through the real spring');
+  assert.ok(landed.every(e=>Math.abs(e.pos[2]-20)<3&&Math.abs(e.pos[1])<.2),'moving preparation still reaches the target floor');
+});
+
+test('real Wave Breaker Bot preserves its charge below an out-of-range high platform',async()=>{
+  const f=await makeFullBotFixture();
+  f.G.level=new f.Level({bounds:{minX:-25,maxX:25,minZ:-15,maxZ:45},
+    spawnPads:[[-20,0,-10],[20,0,40]],spawnBarrier:0,half:[],single:[
+      {kind:'box',min:[-25,-1,-15],max:[25,0,45]},
+      {kind:'box',min:[-4,0,17],max:[4,3,24]},
+    ]});
+  f.G.physics=new f.Physics(f.G.level);f.G.nav=new f.NavGraph(f.G.level,f.G.physics);
+  const {a,b,enemy}=f.scenario('waveBreaker');enemy.pos.set(0,3,20);
+  f.aim(a,b,enemy.pos);
+  for(let i=0;i<180;i++)f.tick(a,b);
+  assert.equal(a.stats.specials,0,'low generator cannot reach the upper terrain surface');
 });

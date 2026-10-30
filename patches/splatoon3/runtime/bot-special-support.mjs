@@ -148,9 +148,13 @@ function aimPlan(ctx, point) {
   for (let i = 1; i <= 6; i++) {
     const t = time * i / 6, next = from.clone().addScaledVector(vel, t);
     next.y -= gravity * t * t / 2;
-    // Lift the endpoint above the selected floor; a floor contact is expected.
-    next.y += .18;
-    if (ctx.world?.physics?.los && !ctx.world.physics.los(previous, next)) return false;
+    // LOS intentionally omits its last .05 WU and ignores grates. A thrown
+    // guide has neither exception: trace the full low arc at its real height.
+    if (ctx.world?.physics?.segment) {
+      const hit = ctx.memory.flightHit ||= {point:new THREE.Vector3(),normal:new THREE.Vector3()};
+      const contact = ctx.world.physics.segment(previous, next, hit, false);
+      if (contact?.hit && !(i === 6 && contact.normal?.y > .4 && contact.point.distanceTo(point) < .3)) return false;
+    } else if (ctx.world?.physics?.los && !ctx.world.physics.los(previous, next)) return false;
     previous = next;
   }
   return true;
@@ -171,7 +175,8 @@ export function driveSupportSpecial(ctx) {
   }
   const point = memory.point;
   // Inapplicable or duplicate support must not steal the ordinary gun aim.
-  if (!point || !state && (!actor.specialReady?.() || covered(ctx, point))) return true;
+  if (!point) { if (memory.holding) intent.sub = true; return true; }
+  if (!state && (!actor.specialReady?.() || covered(ctx, point))) return true;
   const normalAim = [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged];
   if (!aimPlan(ctx, point)) {
     [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged] = normalAim;
