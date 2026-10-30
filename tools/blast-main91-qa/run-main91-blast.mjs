@@ -5,6 +5,9 @@ import {pathToFileURL,fileURLToPath} from 'node:url';import {createRequire} from
 import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {createAudioRequestTrace,installAudioAbortTrace} from './audio-request-trace.mjs';
+import {settleRecordedCaptureAudio} from './settle-recorded-capture-audio.mjs';
+import {installStableScenarioRandom} from './stable-scenario-random.mjs';
+import {installPairedBlastDiagnostics} from './paired-blast-diagnostics.mjs';
 import {captureBlastPair,HEAD,VARIANT,SHELL_ALPHA} from './capture-main91-blast.mjs';
 // QA-driver-only predicate; no product state mutation or helper navigation.
 function mainPlayReady(){
@@ -51,7 +54,7 @@ const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')))
 assert.equal(sha(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [f,h] of Object.entries(manifest.artifacts)){const file=path.resolve(site,f);assert.ok(file.startsWith(site+path.sep));assert.equal(sha(fs.readFileSync(file)),h,f);}
 fs.mkdirSync(out,{recursive:true});
-const qaRegressionTests=['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs'];
+const qaRegressionTests=['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs','stable-scenario-random.test.mjs','paired-blast-diagnostics.test.mjs','settle-recorded-capture-audio.test.mjs'];
 for(const name of qaRegressionTests){
  const file=new URL('./'+name,import.meta.url);
  try{const log=execFileSync(process.execPath,['--test',fileURLToPath(file)],{cwd:root,env:buildEnv,encoding:'utf8',maxBuffer:16*1024*1024});fs.writeFileSync(path.join(out,name+'.tap'),log);}
@@ -98,10 +101,10 @@ try{
  page.on('requestfailed',r=>{audioTrace.failed(r);if(driver.requestFailures.length<100)driver.requestFailures.push({url:r.url().slice(0,2000),failure:r.failure()});save();});
  page.on('response',r=>{audioTrace.headers(r);if(r.status()>=400&&driver.httpErrors.length<100){driver.httpErrors.push({url:r.url().slice(0,2000),status:r.status()});save();}});
  await page.addInitScript(installAudioAbortTrace);
+ await page.addInitScript(installStableScenarioRandom);
+ await page.addInitScript(installPairedBlastDiagnostics);
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,minimap:false,cameraShake:0,colorblind:true,difficulty:'normal',matchLength:180,lastStage:'tidewater',lastMode:'turf',stageTimes:{tidewater:'day'}}));
-  let boot=0x49574b33;Math.random=()=>{boot^=boot<<13;boot^=boot>>>17;boot^=boot<<5;return(boot>>>0)/4294967296;};
-  window.__iwResetScenarioRandom=seed=>{let state=seed>>>0,draws=0;const callers=[];Math.random=()=>{state^=state<<13;state^=state>>>17;state^=state<<5;draws++;if(callers.length<12)callers.push({draw:draws,stack:(new Error('scenario Math.random').stack||'').split('\n').slice(2,8).map(s=>s.trim())});return(state>>>0)/4294967296;};return{snapshot:()=>({seed:seed>>>0,draws,state:state>>>0,callers})};};
  });
  async function bootAndWarm(){
   const events=[];const attempt={events,observations:[],startedAt:Date.now()};driver.menuAttempts.push(attempt);events.push=(...items)=>{const n=Array.prototype.push.apply(events,items);save();return n;};save();const navigation=audioTrace.beginNavigation();try{await page.goto(`http://127.0.0.1:${server.address().port}/?map=tidewater&difficulty=normal&skipTitle`,{waitUntil:'domcontentloaded',timeout:60000});audioTrace.endNavigation(navigation);}catch(e){audioTrace.endNavigation(navigation,'failed');throw e;}
@@ -129,7 +132,11 @@ try{
    if(frames>=120)throw Error('native own-ink swim admission failed');
    return {origin,actor:a.pos.toArray(),velocity:a.vel.toArray(),frames,form:a.form,submerged:a.submerged,grounded:a.grounded,weapon:a.weaponId,paintFixture:'native splat radius12 at native settled spawn'};
   });
-  events.push({intro,warm});return {events,warm};
+  audioTrace.setPhase('settle-native-recorded-audio');
+  const audioSettlement=await page.evaluate(settleRecordedCaptureAudio,{timeoutMs:90000});
+  (driver.audioSettlements??=[]).push(audioSettlement);save();
+  assert.equal(audioSettlement.status,'ready','native selected kit audio must settle without errors before capture');
+  events.push({intro,warm,audioSettlement});return {events,warm};
  }
  // First prepare computes native scene coordinates; subsequent cases fresh reload.
  let first=await bootAndWarm();const origin=first.warm.origin;

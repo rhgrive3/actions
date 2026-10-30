@@ -20,6 +20,9 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
   assert.equal(camera.position.length,3);assert.equal(camera.target.length,3);assert.equal(blastPosition.length,3);
   fs.mkdirSync(out,{recursive:true});
   const report={head:HEAD,variant:VARIANT,shellAlpha:SHELL_ALPHA,expectedContentHash,status:'incomplete',sourceReference:'https://x.com/rougsmth/status/1632258225746903041',referenceOnsetFrame:955,referenceDate:'2023-03-05',scope:'isolated actual composed FX API capture in normally booted game; manual local Actor/FX stepping is NOT full native controller/match frame equivalence; not weapon hit/damage or target feedback test',cases:[]};
+  const paired={scope:'candidate-internal same-frame alpha sensitivity only; original separate-boot comparison remains required',head:HEAD,variant:VARIANT,status:'incomplete',pairs:[]};
+  const writePaired=()=>fs.writeFileSync(path.join(out,'paired','paired-receipt.json'),JSON.stringify(paired,null,2));
+  if(VARIANT==='candidate'){fs.mkdirSync(path.join(out,'paired'),{recursive:true});writePaired();}
   const write=()=>fs.writeFileSync(path.join(out,'capture-receipt.json'),JSON.stringify(report,null,2));
   write();
   try {
@@ -76,15 +79,16 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
         G.fx._time=0; // QA-only; no extra FX update and no game/actor clock write.
         G.env.time=0;G.env.update(0,G.camera); // Normal environment synchronization recomputes animated poses.
         G.fx.explosion(new V(...window.__iwBlastPosition),a.color,a.weapon.burstRadius,shellAlpha);
+        window.__iwMarkBlastShell();
         const born=G.time;G.time+=1/60;g.time+=1/60;G.fx.update(1/60,G.camera);
         window.__iwBlastLighting=()=>({fov:G.camera.fov,aspect:G.camera.aspect,toneMapping:G.renderer.toneMapping,exposure:G.renderer.toneMappingExposure,outputColorSpace:G.renderer.outputColorSpace,quality:G.fx.q,projectionMatrix:G.camera.projectionMatrix.toArray(),matrixWorld:G.camera.matrixWorld.toArray(),fxLight:Object.fromEntries(Object.entries(G.fx._light||{}).map(([k,v])=>[k,v?.toArray?v.toArray():v])),environmentGrade:G.env?.grade??null,bloom:g.R.bloom?{strength:g.R.bloom.strength,radius:g.R.bloom.radius,threshold:g.R.bloom.threshold}:null,lights:(()=>{const x=[];G.scene.traverse(o=>{if(o.isLight)x.push({type:o.type,color:o.color.getHexString(),intensity:o.intensity,position:o.position.toArray()});});return x;})()});
         window.__iwBlastLightingBaseline=JSON.stringify(window.__iwBlastLighting());
-        return {burstBorn:born,originalEnvironmentClock,renderClockFixture:'isolated FX and environment epochs fixed after native admission; not full native-frame equivalence',fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),firstFrameTime:G.time,burstAgeAtF0:1/60,actorPosition:a.pos.toArray(),actorProjection:a.pos.clone().add(new V(0,.35,0)).project(G.camera).toArray(),fxTicksBeforeAdmission:0,lighting:window.__iwBlastLighting(),roll:roll?{remaining:roll.time,armorTime:roll.armorTime,armorHP:roll.armorHP,grounded:a.grounded,visible:a.character?.root?.visible,climbing:a.climbing,special:!!a.specialActive,superJump:!!a.superJumpState}:null};
+        return {fxInputs:window.__iwObserveFXInputs(),blastShellToken:window.__iwPairedShellToken,burstBorn:born,originalEnvironmentClock,renderClockFixture:'isolated FX and environment epochs fixed after native admission; not full native-frame equivalence',fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),firstFrameTime:G.time,burstAgeAtF0:1/60,actorPosition:a.pos.toArray(),actorProjection:a.pos.clone().add(new V(0,.35,0)).project(G.camera).toArray(),fxTicksBeforeAdmission:0,lighting:window.__iwBlastLighting(),roll:roll?{remaining:roll.time,armorTime:roll.armorTime,armorHP:roll.armorHP,grounded:a.grounded,visible:a.character?.root?.visible,climbing:a.climbing,special:!!a.specialActive,superJump:!!a.superJumpState}:null};
       },{withRoll,shellAlpha:SHELL_ALPHA});
       if(report.cases.length)assert.deepEqual(setup.firstTick.lighting,report.cases[0].setup.firstTick.lighting,'both case camera/light/exposure must match');
       const record={withRoll,preparation,setup,captures:[]};report.cases.push(record);write();
       for(const frame of FRAMES){
-        const data=await page.evaluate(({frame,withRoll})=>{
+        const data=await page.evaluate(async({frame,withRoll,variant})=>{
           const G=window.__G,g=window.__inkwave,dt=1/60;
           while(window.__iwBlastFrame<frame){
             G.time+=dt;g.time+=dt;
@@ -99,13 +103,20 @@ export async function captureBlastPair({page,out,expectedContentHash,prepareCase
           const gl=G.renderer.getContext(),error=gl.getError();if(error)throw Error('WebGL error '+error);
           // Same synchronous task as actual render: no composited placeholder PNG.
           const png=G.renderer.domElement.toDataURL('image/png');
-          return {png,frame,fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),seconds:(frame+1)/60,burstAgeSeconds:(frame+1)/60,roll: g.match.local.s3?.actions?.roll?{remaining:g.match.local.s3.actions.roll.time,armorTime:g.match.local.s3.actions.roll.armorTime,grounded:g.match.local.grounded}:null,actorPosition:g.match.local.pos.toArray(),actorProjection:g.match.local.pos.clone().project(G.camera).toArray(),pools:{glows:G.fx.glows.n,drops:G.fx.dN,shells:G.fx.shells.n},gameTime:G.time,fx:G.fx.stats?.()??null,drawCalls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,camera:before,rng:window.__iwBlastRng.snapshot(),glError:error};
-        },{frame,withRoll});
+          const snapshot={png,frame,fxInputs:window.__iwObserveFXInputs(),rngDiagnostics:window.__iwBlastRng.diagnostics(),fxClock:window.__iwFxClock(),environmentClock:{time:G.env?.time,shader:G.env?.U?.uTime?.value},surfaceClock:window.__iwSurfaceClock(),seconds:(frame+1)/60,burstAgeSeconds:(frame+1)/60,roll: g.match.local.s3?.actions?.roll?{remaining:g.match.local.s3.actions.roll.time,armorTime:g.match.local.s3.actions.roll.armorTime,grounded:g.match.local.grounded}:null,actorPosition:g.match.local.pos.toArray(),actorProjection:g.match.local.pos.clone().project(G.camera).toArray(),pools:{glows:G.fx.glows.n,drops:G.fx.dN,shells:G.fx.shells.n},gameTime:G.time,fx:G.fx.stats?.()??null,drawCalls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,camera:before,rng:window.__iwBlastRng.snapshot(),glError:error};
+          if(variant==='candidate'&&!withRoll&&[0,3,9].includes(frame))snapshot.paired=await window.__iwCapturePairedBlast(frame);
+          return snapshot;
+        },{frame,withRoll,variant:VARIANT});
         const file=`${withRoll?'blast-roll':'blast-only'}-F${String(frame).padStart(2,'0')}.png`;
         const bytes=Buffer.from(data.png.split(',')[1],'base64');fs.writeFileSync(path.join(out,file),bytes);
+        if(data.paired){
+          const p=data.paired;for(const key of ['alpha1','alpha092']){const bytes=Buffer.from(p[key].split(',')[1],'base64');const file=`blast-only-F${String(frame).padStart(2,'0')}-${key}.png`;fs.writeFileSync(path.join(out,'paired',file),bytes);p[key]={file,sha256:sha(bytes),byteLength:bytes.length};}
+          paired.pairs.push(p);writePaired();delete data.paired;
+        }
         delete data.png;record.captures.push({...data,file,sha256:sha(bytes),sourceReferenceFrame:956+frame});write();
       }
     }
+    if(VARIANT==='candidate'){assert.deepEqual(paired.pairs.map(x=>x.frame),[0,3,9]);paired.status='captured-restoration-verified-not-reviewed';writePaired();}
     report.status='captured-not-reviewed';write();return report;
   }catch(e){report.error=String(e.stack||e);write();throw e;}
 }

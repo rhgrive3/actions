@@ -172,3 +172,35 @@ jobs:
         env:
           EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node qa/tools/blast-main91-qa/stream-blast-ab-evidence.mjs evidence "$EXPECTED_QA_SHA" "${{ matrix.shard }}"
+
+  blast_paired_evidence:
+    needs: main91_blast_reference
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    if: ${{ needs.main91_blast_reference.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact QA paired evidence code only
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa
+          persist-credentials: false
+          sparse-checkout: tools/blast-main91-qa
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require paired evidence decoder negative tests
+        run: node --test qa/tools/blast-main91-qa/decode-blast-paired-evidence.test.mjs
+      - name: Read candidate artifact from this exact run only
+        uses: actions/download-artifact@v4
+        with:
+          name: blast-shell-alpha-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/candidate
+      - name: Verify restored-state receipts and export six auxiliary original PNGs separately
+        env:
+          EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node qa/tools/blast-main91-qa/stream-paired-blast-evidence.mjs evidence/candidate "$EXPECTED_QA_SHA" "${{ matrix.shard }}"

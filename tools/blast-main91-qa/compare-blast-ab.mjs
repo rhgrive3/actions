@@ -5,6 +5,30 @@ export function compareBlastAB(A,B,expectedQA){
  const eq=(a,b,p)=>{if(JSON.stringify(a)!==JSON.stringify(b))bad.push(p);};
  const exists=(v,p)=>{if(v===undefined||v===null)bad.push(p+' missing');};
  if(!/^[a-f0-9]{40}$/.test(QA||''))throw Error('explicit immutable expected QA SHA required');
+function normalizeFXInputs(input,token,variant,age,label){
+ const fail=m=>{throw Error(label+': '+m);};
+ const finite=Number.isFinite;
+ const array=(v,n,k)=>{if(!Array.isArray(v)||(n!==null&&v.length!==n)||!v.every(finite))fail(k+' invalid');};
+ if(!input||!token)fail('fxInputs/token missing');
+ for(const k of ['seed','life','kind','r0','r1'])if(!finite(token[k]))fail('token '+k);
+ if(token.life<=0)fail('token life');array(token.axis,4,'token axis');
+ const s=input.shells;if(!s||!Number.isSafeInteger(s.n)||s.n<0||s.n>65536)fail('shell count');
+ for(const [k,stride]of Object.entries({P:3,V:3,C:3,X:9,A:4}))array(s[k],s.n*stride,k);
+ if(!s.gpu)fail('GPU missing');for(const k of ['aPosR','aColA','aMisc','aAxis'])array(s.gpu[k],s.n*4,k);
+ array(input.constructorMoteSeeds,null,'mote seeds');if(!input.constructorMoteSeeds.length||input.constructorMoteSeeds.length%4)fail('mote seed count');
+ const r=input.rng;if(!r||r.seed!==0x42535431||!Number.isSafeInteger(r.draws)||r.draws<0||!Number.isInteger(r.state)||r.state<0||r.state>0xffffffff)fail('RNG missing/invalid');
+ const out=JSON.parse(JSON.stringify(input)),hits=[];
+ for(let i=0;i<s.n;i++){const x=i*9;
+  if(s.X[x+7]===token.seed&&s.X[x+3]===token.life&&s.X[x+6]===token.kind&&s.X[x]===token.r0&&s.X[x+1]===token.r1&&JSON.stringify(s.A.slice(i*4,i*4+4))===JSON.stringify(token.axis))hits.push(i);
+ }
+ const alive=age<token.life;
+ if(hits.length!==(alive?1:0))fail('target shell missing/ambiguous/expired');
+ for(const i of hits){const want=variant==='baseline'?1:Math.fround(.92);
+  if(s.X[i*9+5]!==want||s.gpu.aColA[i*4+3]!==want)fail('target CPU/GPU alpha');
+  out.shells.X[i*9+5]='target-shell-alpha';out.shells.gpu.aColA[i*4+3]='target-shell-alpha';
+ }
+ return out;
+}
  const results=[];
  for(const [x,variant,head,alpha]of [[A,'baseline',BASE,1],[B,'candidate',QA,.92]]){
   const c=x.capture,d=x.driver,p=x.provenance,v=x.verification,r=x.regression;
@@ -44,10 +68,12 @@ export function compareBlastAB(A,B,expectedQA){
     if(!Number.isFinite(f.surfaceClock?.levelMat?.uTime))bad.push('surfaceClock.levelMat.uTime missing/nonfinite');
     for(const k of ['uWake','uWakeB','uSwimH','uSwimF'])if(!Array.isArray(f.surfaceClock?.levelMat?.[k]))bad.push('surfaceClock.levelMat.'+k+' missing');eq(f.environmentClock?.time,0,'environment time');eq(f.environmentClock?.shader,0,'environment shader');
     for(const k of ['rng','camera','gameTime','actorPosition','actorProjection','pools','drawCalls','triangles'])exists(f[k],'capture.'+k);
-    const {sha256,...conditions}=f;return conditions;
+    const {sha256,rngDiagnostics,...conditions}=f;
+    eq(f.fxInputs?.rng,f.rng,'actual RNG receipt');conditions.fxInputs=normalizeFXInputs(f.fxInputs,z.setup.firstTick.blastShellToken,variant,f.burstAgeSeconds,variant+'.frame'+f.frame);return conditions;
    });
    const {contentHash,manifestRevision,originalFxClock,firstTick,...rest}=z.setup;
-   const {originalEnvironmentClock,...tick}=firstTick;
+   const {originalEnvironmentClock,rngDiagnostics,...tick}=firstTick;
+   tick.fxInputs=normalizeFXInputs(firstTick.fxInputs,firstTick.blastShellToken,variant,firstTick.burstAgeAtF0,variant+'.firstTick');
    const setup={...rest,originalFxDt:originalFxClock?.dt,firstTick:tick};
    cases.push({withRoll:z.withRoll,warm:z.preparation.warm,setup,captures});
   }
