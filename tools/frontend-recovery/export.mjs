@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-const pins=[{"id":12969586617,"name":"frontend-phone-landscape-41035688850-1","size":8905124,"digest":"sha256:6e3fccfda1c7e5cd18455c391224760d5e8efaa0a48d4c8b9ecbe51c708747dc","device":"phone-landscape"},{"id":12969351732,"name":"frontend-phone-portrait-41035688850-1","size":7659650,"digest":"sha256:147ed2a56bf52fa1700a18b83eb1e786f6ae170a9980c90c9d6df8c9235c3c8d","device":"phone-portrait"}];
+const pins=[{"id":12969586617,"name":"frontend-phone-landscape-41035688850-1","size":8905124,"digest":"sha256:6e3fccfda1c7e5cd18455c391224760d5e8efaa0a48d4c8b9ecbe51c708747dc","device":"phone-landscape"},{"id":12969351732,"name":"frontend-phone-portrait-41035688850-1","size":7659650,"digest":"sha256:147ed2a56bf52fa1700a18b83eb1e786f6ae170a9980c90c9d6df8c9235c3c8d","device":"phone-portrait"},{"id":12970247003,"name":"frontend-ipad-mini-landscape-41035688850-1","size":13262407,"digest":"sha256:208bd7ca1bf785245782ead418c070b3eecc54a0d18f75eba9c234e625dc6b31","device":"ipad-mini-landscape"},{"id":12969304583,"name":"frontend-ipad-mini-portrait-41035688850-1","size":10727377,"digest":"sha256:3b2e1783cee7cf0d254ece028bb339cf0e0186ff2b1d9dd8cbb0f4d72ca1dd70","device":"ipad-mini-portrait"}];
 const pin=pins.find(x=>String(x.id)===process.argv[2]);assert.ok(pin,'unknown pinned artifact');
 const root=path.resolve(process.argv[3]),zip=path.resolve(process.argv[4]);
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -22,10 +22,10 @@ const indices=new Set(),files=new Set();
 for(const im of m.images){assert.ok(Number.isInteger(im.index)&&!indices.has(im.index));indices.add(im.index);assert.ok(/^[A-Za-z0-9._-]+\.jpg$/.test(im.jpeg.file)&&!files.has(im.jpeg.file));files.add(im.jpeg.file);assert.ok(/^[a-f0-9]{64}$/.test(im.jpeg.sha256));assert.ok(Number.isInteger(im.jpeg.bytes)&&im.jpeg.bytes>0);assert.equal(im.jpeg.nativeScreenshot,true);assert.equal(im.jpeg.quality,80);}
 
 const manifestSHA256=hash(raw), mode=process.argv[5]||'plan';
-const expected=pin.device==='phone-portrait'?{width:390,height:844}:{width:844,height:390};
+const expected=({'phone-portrait':{width:390,height:844},'phone-landscape':{width:844,height:390},'ipad-mini-portrait':{width:744,height:1133},'ipad-mini-landscape':{width:1133,height:744}})[pin.device];
 assert.deepEqual(m.device.viewport,expected);assert.equal(m.device.deviceScaleFactor,1);
 const LIMIT=2500*1024, RESERVE=16*1024;
-const selections={"phone-portrait":[2,18,28,38,43,46,49,52,55,58,61,63,65,67,69,72,74,76,78,80,82,85,87,89,91,94,96,97,101,102,106,107,111,112,116,117,121,122,126,127,128,129,130,131,132,165,166,167],"phone-landscape":[2,21,33,45,52,57,62,67,72,78,83,87,91,95,99,103,105,107,110,113,116,119,122,125,128,136,138,139,148,149,158,159,168,169,178,179]};
+const selections={"ipad-mini-portrait":[1,2,9,27,30,32,34,36,38,40,42,44,46,48,50,53,54,55,56,57,58,60,61,62,64,65,66,69,70,73,74,77,78,81,82,85,86,89,90,91,92,93,94,95],"ipad-mini-landscape":[2,14,16,21,30,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,56,57,58,59,60,61,62,63,64,65,68,69,70,71,72,75,76,77,78,81,82,83,86,87,88,91,92,93,96,97,98,101,102,103,106,107,108,109,110,111,112,113]};
 const selected=selections[pin.device].map(index=>{const im=m.images.find(x=>x.index===index);assert.ok(im);return im;});
 assert.equal(new Set(selected.map(x=>x.index)).size,selected.length);
 function jpegSize(b){assert.equal(b.readUInt16BE(0),0xffd8);for(let p=2;p+4<b.length;){assert.equal(b[p++],255);let marker=b[p++];while(marker===255)marker=b[p++];if(marker===217||marker===218)break;const length=b.readUInt16BE(p);assert.ok(length>=2&&p+length<=b.length);if([192,193,194].includes(marker))return {height:b.readUInt16BE(p+3),width:b.readUInt16BE(p+5)};p+=length;}throw Error('JPEG SOF absent');}

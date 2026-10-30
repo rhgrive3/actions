@@ -31,17 +31,17 @@ jobs:
           github-token: ${{ github.token }}
           repository: rhgrive3/actions
           run-id: 41035688850
-          artifact-ids: 12969586617
+          artifact-ids: 12970247003
           merge-multiple: true
-          path: recovered-12969586617
+          path: recovered-12970247003
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
           repository: rhgrive3/actions
           run-id: 41035688850
-          artifact-ids: 12969351732
+          artifact-ids: 12969304583
           merge-multiple: true
-          path: recovered-12969351732
+          path: recovered-12969304583
       - name: Verify original bytes and plan bounded non-overlapping transport
         id: plan
         env:
@@ -49,13 +49,13 @@ jobs:
           QA_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$QA_SHA"
-          for id in 12969351732 12969586617; do
+          for id in 12969304583 12970247003; do
             gh api "repos/rhgrive3/actions/actions/artifacts/$id/zip" > "original-$id.zip"
             node tools/frontend-recovery/export.mjs "$id" "recovered-$id" "original-$id.zip" plan
           done
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const include=[12969351732,12969586617].flatMap(id=>JSON.parse(fs.readFileSync('plan-'+id+'.json')).bins.map((_,bin)=>({artifact:String(id),bin:String(bin)})));
+          const include=[12969304583,12970247003].flatMap(id=>JSON.parse(fs.readFileSync('plan-'+id+'.json')).bins.map((_,bin)=>({artifact:String(id),bin:String(bin)})));
           if(!include.length||include.length>40)throw Error('Invalid export matrix');
           fs.appendFileSync(process.env.GITHUB_OUTPUT,'matrix='+JSON.stringify({include})+'\n');
           NODE
@@ -93,38 +93,3 @@ jobs:
           test "$(git rev-parse HEAD)" = "$QA_SHA"
           gh api "repos/rhgrive3/actions/actions/artifacts/$ARTIFACT_ID/zip" > original.zip
           node tools/frontend-recovery/export.mjs "$ARTIFACT_ID" recovered original.zip "$BIN"
-
-  mini_metadata:
-    if: ${{ github.repository == 'rhgrive3/actions' && github.head_ref == 'qa/frontend-existing-artifact-recovery-20261030' && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
-    strategy:
-      fail-fast: false
-      matrix:
-        artifact: [12969304583, 12970247003]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-          sparse-checkout: tools/frontend-recovery
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          repository: rhgrive3/actions
-          run-id: 41035688850
-          artifact-ids: ${{ matrix.artifact }}
-          merge-multiple: true
-          path: recovered
-      - name: Verify immutable ZIP and print only original metadata
-        env:
-          GH_TOKEN: ${{ github.token }}
-          QA_SHA: ${{ github.event.pull_request.head.sha }}
-          ARTIFACT_ID: ${{ matrix.artifact }}
-        run: |
-          test "$(git rev-parse HEAD)" = "$QA_SHA"
-          gh api "repos/rhgrive3/actions/actions/artifacts/$ARTIFACT_ID/zip" > original.zip
-          node tools/frontend-recovery/metadata.mjs "$ARTIFACT_ID" recovered original.zip
