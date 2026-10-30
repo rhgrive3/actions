@@ -47,7 +47,7 @@ function receiver(x){
     _combatProvenance:{proofs:new Map(),pending:new Map(),contacts:new Map()}};
   const direction=event.slice(8,11),length=Math.hypot(...direction),origin=event.slice(5,8),cause=a.weapon.catalogRecord?.id||a.weapon.id;
   const proof={actor:a.nid,at:100,ts:100,origin,unit:direction.map(v=>v/length),reach:50,
-    cause,kind:'main',src:'p',uses:0,maxUses:1,firePose:a.pos.toArray(),
+    cause,kind:'main',src:'p',uses:0,maxUses:1,firePose:a.pos.toArray(),fireLife:0,
     key:crabletProofKey(a.nid,100,'p',cause,origin,system.crabletCombatBirthId(event))};
   nm._combatProvenance.proofs.set('guest',[proof]);
   recordCrabletBirth(nm,'guest',event,100);
@@ -179,6 +179,9 @@ for(const charge of [8/60,.5,1])test(`legacy Charger ${charge} receiver segments
   crab.x=at.x;crab.y=at.y-.35;crab.z=at.z;
   assert.equal(x.claim(),true);assert.equal(proof.uses,1);
   assert.equal(x.claim(),false,'a penetrating beam still cannot hit the same crab twice');
+  proof.uses=0;proof.bossTargets=new Set();a.netLife=1;
+  assert.equal(x.claim(),false,'a legacy fire event cannot cross the owner life boundary');
+  assert.equal(proof.uses,0);
 });
 
 test('an accepted native ID cannot replace its original spread trajectory on replay',()=>{

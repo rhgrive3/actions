@@ -134,7 +134,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
   return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,
     key:kind==='main'?crabletProofKey(id,e[0],e[1],cause,origin,
       nm.isHost&&nm.match?.boss?.sim&&e[1]==='p'?nm._combatCrabletSystem?.crabletCombatBirthId?.(e):undefined):key,
-    src:e[1],los:null,firePose:pose.slice(),beamLength:e[1]==='ev'?e[3]?.len:undefined,
+    src:e[1],los:null,firePose:pose.slice(),fireLife:Math.max(source.netLife??0,source.net?.lastLife??0),beamLength:e[1]==='ev'?e[3]?.len:undefined,
     beamCharge:e[1]==='ev'?e[3]?.charge:undefined};
 }
 function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {

@@ -48,7 +48,7 @@ const fire=(n,at=100)=>[at,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzz
 function snapshot(m){const s=m._combatProvenance;return s?{proofs:[...s.proofs].map(([peer,rows])=>[peer,rows.map(p=>{
  // Compare the frozen scan policy; receiver-only native crab trace metadata
  // added later is verified against actual flight in crablet-native-trajectory.
- const {firePose,beamLength,beamCharge,...policy}=p;return policy;
+ const {firePose,fireLife,beamLength,beamCharge,...policy}=p;return policy;
 })]),pending:[...s.pending],contacts:[...s.contacts]}:null;}
 
 test('reference policy retains single-round, penetrating and area capacities on both main event routes',async()=>{

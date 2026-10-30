@@ -114,6 +114,8 @@ export function crabletTrajectoryVisible(nm,proof,crab,t=now()) {
     if(native&&(proof.src!=='ev'||family(nm.byNid.get(proof.actor))!=='charger'||
       (nm.byNid.get(proof.actor)?.weapon?.catalogRecord&&!nm.byNid.get(proof.actor).weapon.catalogRecord.legacy)))return false;
     if(native){
+      const actor=nm.byNid.get(proof.actor);
+      if(proof.fireLife!==Math.max(actor.netLife??0,actor.net?.lastLife??0))return false;
       path=system.makeCrabletChargerPath?.(proof);
       if(!path?.length)return false;
     }else{
