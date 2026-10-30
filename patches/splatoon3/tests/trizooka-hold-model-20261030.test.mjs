@@ -4,7 +4,8 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 
 // Real loaded source rig and real procedural meshes. Geometry/holding checks
 // are separate from Nintendo proportions and native launch-physics tests.
-const f=await sourceLoadedActorFixture({random:()=>.5,extraExports:`
+let randomReads=0;
+const f=await sourceLoadedActorFixture({random:()=>{randomReads++;return .5;},extraExports:`
  export {createTrizooka,disposeSpecialModel,TRIZOOKA_PRESENTATION,trizookaPresentationMuzzle} from './patches/splatoon3/runtime/special-motion.mjs';
 `});
 const {THREE:T,G}=f;
@@ -12,7 +13,9 @@ const v=(...a)=>new T.Vector3(...a);
 function gripHole(ch,side){return ch.bones['hand'+side].localToWorld(v(side==='R'?.0255:-.0255,-.0525,0));}
 
 test('Trizooka has a recessed hollow bore, a long rear housing and solid distinct grip geometry',()=>{
+ const beforeRandom=randomReads;
  const g=f.createTrizooka('#ff7711',T),h=g.getObjectByName('zooka-housing');g.updateWorldMatrix(true,true);
+ assert.equal(randomReads,beforeRandom,'model construction uses production crypto UUIDs and never advances gameplay Math.random');
  assert.equal(g.children.length,5,'retain the existing five model meshes');
  const bounds=new T.Box3().setFromObject(h),size=bounds.getSize(v());
  assert.ok(size.z>1.15&&bounds.min.z<-.53,'neck and rear drum extend behind the head');
