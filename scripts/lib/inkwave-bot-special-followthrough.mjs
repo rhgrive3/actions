@@ -15,10 +15,11 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
     const { a, b, enemy, ally } = await prepare(special, distance);
     if (a.weapon.special !== special) throw Error('Wrong special fixture: ' + special);
     enemy.hp = 100; enemy.special = 0;
-    const row = { special, main: a.weaponId, admissions: 0, initialDistance: distance, damage: 0, damageCauses: [],
-      actions: {}, emittedRounds: 0, held: false, released: false, landed: false, landedCount: 0,
+    const row = { special, main: a.weaponId, admissions: 0, initialDistance: distance, damage: 0, mainDamage: 0, mainHitCount: 0, damageCauses: [],
+      actions: {}, emittedRounds: 0, mainAttacks: 0, held: false, released: false, landed: false, landedCount: 0,
       waveReached: false, drinkApplied: false, shieldBlocked: false, hookArrived: false,
-      paintArea: 0, targetEnd: null, frames: 0, pass: false };
+      paintArea: 0, specialPaintArea: 0, targetEnd: null, frames: 0, effectFrame: null,
+      ended: false, normalResumed: false, ownerAlive: true, pass: false };
     const stops = [];
     if (special === 'bubbler') enemy.setWeapon('charger');
     stops.push(on('all:special', event => {
@@ -29,7 +30,16 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
     stops.push(on('kit:bubbler:hit', event => {
       if ((event.actor || event.owner) === a && event.amount > 0) row.shieldBlocked = true;
     }));
+    stops.push(on('weapon:fire', event => {
+      if (special === 'zipcaster' && event.actor === a && event.weapon === a.weaponId &&
+        a.specialActive?.id === special && row.hookArrived) row.mainAttacks++;
+    }));
     const damage = enemy.damage;
+    const addSpecialPaint = a.addTurfNoSpecial;
+    a.addTurfNoSpecial = function (area, ...rest) {
+      if (Number.isFinite(area) && area > 0) row.specialPaintArea += area;
+      return addSpecialPaint.call(this, area, ...rest);
+    };
     let applyingProjectile = null;
     const burst = G.projectiles._blastBurst;
     G.projectiles._blastBurst = function (projectile, ...rest) {
@@ -45,10 +55,12 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
       // main fire after a special ends from the claimed effect.
       const projectileOwned = applyingProjectile?.owner === a && (applyingProjectile.wid === special ||
         applyingProjectile.s3AllSpecial === special || applyingProjectile.s3SpecialWeapon?.id === special);
-      const owned = attacker === a && (cause === special || projectileOwned || special === 'zipcaster' &&
-        a.specialActive?.id === special && row.hookArrived);
+      const zipMain = special === 'zipcaster' && cause === a.weaponId &&
+        a.specialActive?.id === special && row.hookArrived;
+      const owned = attacker === a && (cause === special || projectileOwned || zipMain);
       if (owned && this.hp < hp) {
         row.damage += hp - this.hp;
+        if (zipMain) { row.mainDamage += hp - this.hp; row.mainHitCount++; }
         if (!row.damageCauses.includes(cause)) row.damageCauses.push(cause);
       }
       return result;
@@ -63,9 +75,9 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
       if (special === 'bubbler') return row.landed && row.shieldBlocked;
       if (special === 'tacticooler') return row.landed && row.drinkApplied;
       if (special === 'waveBreaker') return row.landed && row.waveReached && row.damage > 0;
-      if (special === 'superChump') return row.landedCount === 12 && row.actions.balloon === 12 && row.paintArea > 0;
+      if (special === 'superChump') return row.landedCount === 12 && row.actions.balloon === 12 && row.specialPaintArea > 0;
       if (special === 'splattercolorScreen') return row.landed && row.actions.cross > 0 && row.damage > 0;
-      if (special === 'zipcaster') return row.actions.zip > 0 && row.hookArrived && row.damage > 0;
+      if (special === 'zipcaster') return row.actions.zip > 0 && row.hookArrived && row.mainHitCount > 0 && row.mainDamage > 0;
       if (special === 'tentaMissiles') return row.actions.target > 0 && row.actions.launch > 0 && row.damage > 0;
       if (special === 'killerWail') return row.actions.target > 0 && row.actions.laser > 0 && row.damage > 0;
       if (special === 'tripleInkstrike') return row.actions.marker === 3 && row.damage > 0;
@@ -73,7 +85,8 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
       return row.damage > 0;
     };
     try {
-      for (let frame = 0; frame < 900 && !succeeded(); frame++) {
+      let endFrame = null;
+      for (let frame = 0; frame < 1200; frame++) {
         const beforeSub = a.intent.sub;
         if (special === 'bubbler') {
           const dome = bigBubblerDomes().find(d => d.owner === a && !d.dead);
@@ -104,13 +117,22 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
           row.drinkApplied ||= !!ally?.s3?.drink && ally.s3.drinkUntil > G.time;
         }
         row.paintArea = a.stats.turf;
+        if (succeeded() && row.effectFrame === null) row.effectFrame = frame + 1;
+        row.ownerAlive = a.alive;
+        if (row.effectFrame !== null && a.stats.specials === 1 && !a.specialActive) {
+          row.ended = true;
+          endFrame ??= frame;
+          if (frame > endFrame && (a.intent.fire || a.intent.squid || a.intent.move.lengthSq() > .001)) row.normalResumed = true;
+          if (frame - endFrame >= 6) break;
+        }
       }
       row.targetEnd = enemy.pos.toArray();
       row.targetHp = enemy.hp; row.targetAlive = enemy.alive;
-      row.pass = row.admissions === 1 && succeeded();
+      row.pass = row.admissions === 1 && row.effectFrame !== null && row.ended && row.ownerAlive;
       rows.push(row);
     } finally {
-      enemy.damage = damage; G.projectiles._push = push; G.projectiles._blastBurst = burst;
+      enemy.damage = damage; a.addTurfNoSpecial = addSpecialPaint;
+      G.projectiles._push = push; G.projectiles._blastBurst = burst;
       for (const stop of stops) stop?.();
     }
   }

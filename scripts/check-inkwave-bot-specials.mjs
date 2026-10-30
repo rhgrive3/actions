@@ -39,6 +39,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 const result = { status: 'running', revision: build.build.revision, contentHash: build.contentHash, cases: [], errors: [],
+  harnessSha256: hash(fs.readFileSync(new URL('./lib/inkwave-bot-special-followthrough.mjs', import.meta.url))),
   scope: 'Emitted native BotBrain/Actor/Physics/NavGraph/Projectiles and CPU paint ownership in Chromium; 18 distinct specials excluding Kraken; controlled supported floor, 100 HP enemies; no rendering, all-stage or retail parity claim.' };
 let browser;
 try {
