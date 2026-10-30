@@ -18,14 +18,14 @@ async function world(f){
   assert.equal(a._s3AllSpecialState.phase,'ready');
   return {f,a,s:a._s3AllSpecialState};
 }
-async function trace({f,hz,initial='miss',retry=45}){
+async function trace({f,hz,initial='miss',retry=45,hold=false}){
   const {a,s}=await world(f),clock=new f.FixedClock(),rows=[];let tick=0;
   for(let frame=0;frame<hz*3;frame++)clock.advance(1/hz,dt=>{
     // Empty sky has no hit; close-floor contact is <3 units. The same real
     // wall is a valid close hook at the later horizontal input.
     a.aimPitch=tick<retry?(initial==='miss'?Math.PI/2:-Math.PI/4):0;
     a.aimPoint.set(a.pos.x,a.pos.y+20*Math.sin(a.aimPitch),a.pos.z+20*Math.cos(a.aimPitch));
-    a.intent.sub=tick===0||tick===retry;
+    a.intent.sub=hold?tick<=retry:tick===0||tick===retry;
     const fuel=s.inkFuel,from=a.pos.clone();f.G.time+=dt;a.update(dt);
     rows.push({tick,phase:s.phase,failed:s.failedHooks||0,gate:s.nextHookAt??null,
       fuel:s.inkFuel,deltaFuel:fuel-s.inkFuel,pos:Array.from(a.pos.toArray()),moved:from.distanceTo(a.pos),
@@ -55,5 +55,17 @@ test('#1607 real sky/floor rejection and valid wall retry have exact fixed-tick 
         assert.ok(rows[last].wait>=12/60-1e-8,'existing 12F wait remains separate from failure retry');
       }
     }
+  }
+});
+
+test('holding through a missed hook retries when the recovery expires at each render cadence',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  let baseline;
+  for(const hz of [30,60,120]){
+    const rows=await trace({f,hz,initial:'miss',retry:45,hold:true});
+    assert.equal(rows[0].failed,1);
+    assert.equal(rows[44].phase,'ready');
+    assert.equal(rows[45].phase,'hookFlight');
+    if(baseline)assert.deepEqual(rows,baseline);else baseline=rows;
   }
 });
