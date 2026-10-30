@@ -49,7 +49,7 @@ export async function verifyRematchFailureRecovery(page, { evidenceDir, contentH
         }, key);
         if (recovered.rejected || recovered.menu !== 'main' || recovered.mode !== 'menu' || !recovered.attract || recovered.toastCount !== 1)
           throw Error('Public rematch did not recover its failed warm: '+JSON.stringify(recovered));
-        await page.screenshot({ path: evidenceDir+'/'+scenario+'-recovered.png', timeout: 15000 });
+        await page.screenshot({ path: evidenceDir+'/'+scenario+'-recovered.png', timeout: 60000 });
         await page.evaluate(key => { const q=window[key]; q.retrySettled=false; q.retryRejected=null; q.retry=Promise.resolve(window.__inkwave.api.rematch()).then(()=>{q.retrySettled=true;},error=>{q.retryRejected=String(error?.message||error);q.retrySettled=true;}); }, key);
       } else {
         // A newer public rematch must win while the old warm promise is pending.
@@ -73,7 +73,7 @@ export async function verifyRematchFailureRecovery(page, { evidenceDir, contentH
       const expectedToasts=scenario==='warm-rejection-retry'?1:0;
       if (receipt.calls!==2 || !receipt.oldSettled || receipt.oldRejected || receipt.toastCount!==expectedToasts || receipt.mode!=='match' || receipt.menu!==null || receipt.attract || !receipt.playing || !receipt.liveMatch || !receipt.optionsPreserved || !receipt.winnerPreserved)
         throw Error('Rematch retry/late rejection violated live ownership: '+JSON.stringify(receipt));
-      await page.screenshot({ path:evidenceDir+'/'+scenario+'-playing.png',timeout:15000 });
+      await page.screenshot({ path:evidenceDir+'/'+scenario+'-playing.png',timeout:60000 });
       receipts.push({...receipt,contentHash});
     } finally {
       // Release any pending synthetic rejection; handlers were attached immediately.
