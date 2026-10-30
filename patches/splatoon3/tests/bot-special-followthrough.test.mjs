@@ -9,6 +9,11 @@ test('all eighteen other specials reach native combat or support effects through
     G: f.G, on: f.on, bigBubblerDomes: f.bigBubblerDomes,
     prepare(special, distance) {
       const scene = f.scenario(special);
+      if (special === 'waveBreaker') {
+        scene.a.setWeapon('s3-shooter-short');
+        assert.ok(f.applyCatalogueChoice(scene.a, { sub: 'bomb', special }, f));
+        scene.a.special = scene.a.specialCost();
+      }
       scene.enemy.pos.z = distance; scene.enemy.hp = 100;
       f.aim(scene.a, scene.b, scene.enemy.pos);
       scene.ally = f.G.actors.find(a => a !== scene.a && a.team === scene.a.team);

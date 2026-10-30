@@ -15,7 +15,7 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
     const { a, b, enemy, ally } = await prepare(special, distance);
     if (a.weapon.special !== special) throw Error('Wrong special fixture: ' + special);
     enemy.hp = 100; enemy.special = 0;
-    const row = { special, admissions: 0, initialDistance: distance, damage: 0, damageCauses: [],
+    const row = { special, main: a.weaponId, admissions: 0, initialDistance: distance, damage: 0, damageCauses: [],
       actions: {}, emittedRounds: 0, held: false, released: false, landed: false, landedCount: 0,
       waveReached: false, drinkApplied: false, shieldBlocked: false, hookArrived: false,
       paintArea: 0, targetEnd: null, frames: 0, pass: false };
@@ -30,13 +30,22 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
       if ((event.actor || event.owner) === a && event.amount > 0) row.shieldBlocked = true;
     }));
     const damage = enemy.damage;
+    let applyingProjectile = null;
+    const burst = G.projectiles._blastBurst;
+    G.projectiles._blastBurst = function (projectile, ...rest) {
+      const previous = applyingProjectile; applyingProjectile = projectile;
+      try { return burst.call(this, projectile, ...rest); }
+      finally { applyingProjectile = previous; }
+    };
     enemy.damage = function (amount, attacker, cause, ...rest) {
       const hp = this.hp;
       const result = damage.call(this, amount, attacker, cause, ...rest);
       // Zipcaster intentionally uses the equipped main between real hooks.
       // Every other case requires its own special cause, excluding ordinary
       // main fire after a special ends from the claimed effect.
-      const owned = attacker === a && (cause === special || special === 'zipcaster' &&
+      const projectileOwned = applyingProjectile?.owner === a && (applyingProjectile.wid === special ||
+        applyingProjectile.s3AllSpecial === special || applyingProjectile.s3SpecialWeapon?.id === special);
+      const owned = attacker === a && (cause === special || projectileOwned || special === 'zipcaster' &&
         a.specialActive?.id === special && row.hookArrived);
       if (owned && this.hp < hp) {
         row.damage += hp - this.hp;
@@ -97,10 +106,11 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
         row.paintArea = a.stats.turf;
       }
       row.targetEnd = enemy.pos.toArray();
+      row.targetHp = enemy.hp; row.targetAlive = enemy.alive;
       row.pass = row.admissions === 1 && succeeded();
       rows.push(row);
     } finally {
-      enemy.damage = damage; G.projectiles._push = push;
+      enemy.damage = damage; G.projectiles._push = push; G.projectiles._blastBurst = burst;
       for (const stop of stops) stop?.();
     }
   }

@@ -84,6 +84,11 @@ try {
     function prepare(special, distance) {
       G.projectiles.clear(); G.paint = new CpuPaint(null, G.level, { atlasSize: 1024, maxDensity: 12, cell: .5 }); G.actors.length = 0;
       const a = make(special, 0, 0), enemy = make('trizooka', 1, distance);
+      if (special === 'waveBreaker') {
+        a.setWeapon('s3-shooter-short');
+        if (!applyCatalogueChoice(a, { sub: 'bomb', special }, api)) throw Error('Wave scenario custom kit rejected');
+        a.special = a.specialCost();
+      }
       const ally = special === 'tacticooler' ? make('trizooka', 0, 0) : null;
       if (ally) { ally.pos.x = 3; ally.special = 0; }
       const b = a.bot = new BotBrain(a);
