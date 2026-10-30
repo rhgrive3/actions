@@ -1,0 +1,92 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createBotSpecialContext, resetBotSpecialMemory} from '../runtime/bot-special-context.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+
+const vector = (x=0,y=0,z=0) => ({ x,y,z,set(x,y,z){Object.assign(this,{x,y,z});return this;} });
+function setup() {
+  const actor={alive:true,isBot:true,team:0,pos:vector(),weapon:{special:'trizooka'},weaponId:'shooter',aimYaw:0,aimPitch:0};
+  const enemy={alive:true,team:1,pos:vector(0,0,12),vel:vector(),form:'kid'};
+  const intent={move:vector(),fire:true,sub:false,jump:false,squid:false};
+  const brain={target:enemy,seeTimer:1,aimYaw:0,aimPitch:0};
+  const world={physics:{los:()=>true,segment:()=>({hit:false})},level:{groundHeight:()=>0}};
+  const options={world,brain,move:intent.move,wantYaw:0,wantPitch:0,aimDistance:6};
+  return {actor,enemy,intent,brain,world,options,ctx:(dt=1/60)=>createBotSpecialContext(actor,intent,dt,enemy,options)};
+}
+
+test('special context uses current recognized enemy and fails closed on lost perception or LOS',()=>{
+  const f=setup();assert.equal(f.ctx().enemy,f.enemy);
+  f.brain.seeTimer=0;assert.equal(f.ctx().enemy,null);
+  f.brain.seeTimer=1;f.world.physics.los=()=>false;assert.equal(f.ctx().enemy,null);
+  f.world.physics.los=()=>true;f.enemy.team=0;assert.equal(f.ctx().enemy,null);
+  f.enemy.team=1;f.enemy.alive=false;assert.equal(f.ctx().enemy,null);
+  f.enemy.alive=true;f.enemy.pos.x=NaN;assert.equal(f.ctx().enemy,null);
+  delete f.options.world;assert.equal(f.ctx().visible,false);
+});
+
+test('context never controls local or remote players, invalid ticks or dead actors',()=>{
+  const f=setup();for(const flag of ['remote','isLocal']){f.actor[flag]=true;assert.equal(f.ctx(),null);delete f.actor[flag];}
+  f.actor.isBot=false;assert.equal(f.ctx(),null);f.actor.isBot=true;
+  for(const dt of [0,-1,NaN,Infinity])assert.equal(f.ctx(dt),null);
+  f.actor.alive=false;assert.equal(f.ctx(),null);
+  assert.equal(f.intent.fire,true);
+});
+
+test('AI memory resets on active token, equipment, death, life and explicit brain reset',()=>{
+  const f=setup();let ctx=f.ctx();ctx.memory.prepared=true;
+  assert.equal(f.ctx().memory.prepared,true);
+  f.actor.specialActive={id:'trizooka'};ctx=f.ctx(.1);
+  assert.equal(ctx.memory.prepared,undefined);assert.equal(ctx.memory.time,.1);
+  assert.equal(f.ctx(.2).memory.time,.3+Number.EPSILON/4);
+  f.actor.specialActive={id:'trizooka'};assert.equal(f.ctx(.1).memory.time,.1);
+  f.actor.weapon={special:'trizooka'};assert.equal(f.ctx(.1).memory.time,.1);
+  f.actor.netLife=2;assert.equal(f.ctx(.1).memory.time,.1);
+  f.actor.alive=false;f.ctx();f.actor.alive=true;assert.equal(f.ctx(.1).memory.time,.1);
+  resetBotSpecialMemory(f.actor);assert.equal(f.ctx(.1).memory.time,.1);
+  f.actor.specialActive=null;assert.equal(f.ctx().memory.time,0);
+});
+
+test('aim requests alter the spring target, preserve actual aim and retain ordinary inputs',()=>{
+  const f=setup(),ctx=f.ctx();ctx.aimAt(vector(12,2,0));
+  assert.equal(ctx.wantYaw,Math.PI/2);assert.ok(ctx.wantPitch>0);assert.equal(ctx.isAimed(),false);
+  assert.equal(f.actor.aimYaw,0);assert.equal(f.actor.aimPoint,undefined);
+  assert.equal(ctx.normalIntent.fire,true);assert.equal(ctx.aimChanged,true);
+  f.brain.aimYaw=ctx.wantYaw;f.brain.aimPitch=ctx.wantPitch;assert.equal(ctx.isAimed(),true);
+});
+
+test('safe movement rejects wall, drop, water and unsupported Kraken grates',()=>{
+  const f=setup();assert.equal(f.ctx().moveToward(f.enemy.pos),true);assert.equal(f.intent.move.z,1);
+  f.world.physics.segment=()=>({hit:true});assert.equal(f.ctx().moveToward(f.enemy.pos),false);assert.equal(f.intent.move.z,0);
+  f.world.physics.segment=()=>({hit:false});f.world.level.groundHeight=()=>-Infinity;assert.equal(f.ctx().safePath(f.enemy.pos),false);
+  f.world.level.groundHeight=(x,z)=>z>5?-2:0;assert.equal(f.ctx().safePath(f.enemy.pos),false);
+  assert.equal(f.ctx().safePath(f.enemy.pos,1.2),true);
+  f.world.level.groundHeight=()=>0;f.actor.weapon.special='krakenRoyale';
+  f.world.physics.groundProbe=(_x,_y,_z,_up,_down,_foot,out,skipGrates)=>{assert.equal(skipGrates,true);out.hit=false;};
+  assert.equal(f.ctx().safePath(f.enemy.pos),false);
+  f.world.physics.groundProbe=(_x,_y,_z,_up,_down,_foot,out)=>{out.hit=true;out.y=0;};assert.equal(f.ctx().safePath(f.enemy.pos),true);
+});
+
+test('boss targets must remain in the living boss current hit-shape collection',()=>{
+  const f=setup(),shape={active:true,pos:vector(0,2,10)};
+  const target={shape,los:true};f.brain.target=f.brain.bTgt=target;
+  f.world.boss={visible:true,dead:false,model:{hitShapes:[shape]}};
+  const ctx=()=>createBotSpecialContext(f.actor,f.intent,.1,target,f.options);
+  assert.equal(ctx().enemy.botBossTarget,target);
+  shape.active=false;assert.equal(ctx().enemy,null);shape.active=true;
+  f.world.boss.model.hitShapes=[];assert.equal(ctx().enemy,null);
+  f.world.boss.model.hitShapes=[shape];f.world.boss.dead=true;assert.equal(ctx().enemy,null);
+});
+
+test('production composition has one final tail policy and no random or competing special owner',()=>{
+  const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/bots.js',import.meta.url),'utf8');
+  const code=adaptBuildSource('src/game/bots.js',source);
+  assert.equal((code.match(/driveCanonicalBotSpecial\(a,/g)||[]).length,1);
+  assert.ok(code.indexOf('driveCanonicalBotSpecial(a,')<code.indexOf('this.aimYawV +='));
+  assert.ok(code.indexOf('it.jump = specialJump;')>code.indexOf('if (this._needJump'));
+  assert.ok(code.includes('resetBotSpecialMemory(this.a);'));
+  assert.ok(!code.includes('if (r.own < 0.5) it.special = true'));
+  assert.ok(!code.includes('botSubPressed'));
+  assert.ok(!code.includes("w.special === 'trizooka' && dist < 24"));
+  assert.ok(!code.includes("w.special === 'storm' && dist < 16"));
+});

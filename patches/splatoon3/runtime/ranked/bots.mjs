@@ -389,7 +389,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   // Preserve the native aim spring: a throw must not leave the hand until its
   // actual smoothed ray is lined up with the rule-owned ballistic target.
   // Otherwise the cooldown starts on a miss even though the bot was turning.
-  if (action === 'throw' && clamThrow?.reachable && brain._rankedThrowCd <= 0) {
+  if (!a.specialActive && !it.special && action === 'throw' && clamThrow?.reachable && brain._rankedThrowCd <= 0) {
     const actualYaw = Number.isFinite(brain.aimYaw) ? brain.aimYaw : wantYaw;
     const actualPitch = Number.isFinite(brain.aimPitch) ? brain.aimPitch : wantPitch;
     const yawError = Math.atan2(Math.sin(wantYaw - actualYaw), Math.cos(wantYaw - actualYaw));
@@ -402,7 +402,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   // which can stop short of a Rainmaker shield that is farther away. Preserve
   // the native aim spring, but extend its smoothed ray to the actual target
   // distance so shooter flight and collision remain authoritative.
-  if (engine.mode === 'rainmaker' && action === 'barrier' && aim) {
+  if (!a.specialActive && !it.special && engine.mode === 'rainmaker' && action === 'barrier' && aim) {
     const cp = Math.cos(a.aimPitch);
     a.aimPoint.set(a.pos.x + Math.sin(a.aimYaw) * cp * aimDist,
       a.pos.y + 1.1 + Math.sin(a.aimPitch) * aimDist,
