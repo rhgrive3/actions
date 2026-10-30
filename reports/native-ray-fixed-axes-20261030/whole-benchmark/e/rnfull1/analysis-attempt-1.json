@@ -1,0 +1,8 @@
+{
+  "recordedAt": "2026-10-30T20:47:05.890085+00:00",
+  "command": "node e/rnfull1/analyze.mjs",
+  "exitCode": 1,
+  "error": "ERR_MODULE_NOT_FOUND: harness/lib/inkwave-network-source-coverage.mjs imported by saved harness/lib/inkwave-runtime-evidence.mjs",
+  "classification": "Post-run analysis import dependency missing from existing eight-file harness snapshot; timed run completed successfully and raw result unaffected.",
+  "resolution": "Readback imports current source harness after checking every recorded harness file against both saved and current bytes."
+}

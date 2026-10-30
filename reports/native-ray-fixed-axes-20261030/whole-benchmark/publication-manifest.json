@@ -1,0 +1,178 @@
+{
+  "createdAt": "2026-10-30T20:50:43.167417+00:00",
+  "archiveBaseSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+  "measurementBaselineSha": "db2134a71ffe3360626fdadba78916d9b702d31b",
+  "measurementCandidateSha": "df2491c6096c173efc14504dc5d00ea5b8458df5",
+  "originalMergedPr": "https://github.com/rhgrive3/actions/pull/1971",
+  "files": {
+    "e/rnfull0/result.json.gz": {
+      "rawBytes": 4927123,
+      "rawSha256": "3e7532f3e4d7f32c4504761bd66a50cc5868ec8e929d4adccf7db2fd657bb39f",
+      "gzipBytes": 578244,
+      "gzipSha256": "81c1a7640b908b6d0a8a11e2e1739354b1bdd8732fc386379429edd2b614fd89"
+    },
+    "e/rnfull1/result.json.gz": {
+      "rawBytes": 7094763,
+      "rawSha256": "19ad7a94bab6edaee500fad2d5c765d03bec22c7ea518e3d324bb1eabd04ea67",
+      "gzipBytes": 865650,
+      "gzipSha256": "78f06b578899c0f6b6b273d031fb1f7be4ed1f9c0120b707d42869e46d74634e"
+    },
+    "e/rnfull0/full-plan.json": {
+      "bytes": 4998,
+      "sha256": "73b6986ae6174c1179e5d86336e225f6c6758df2fe55f186619813dd99201078"
+    },
+    "e/rnfull0/validate-full.mjs": {
+      "bytes": 6858,
+      "sha256": "d367c63d3484f8ce9cc23060279e2f63226695a585d2e275522f169de6b136fb"
+    },
+    "e/rnfull0/pre-run-seal.json": {
+      "bytes": 446,
+      "sha256": "4f29e1b7531327e3d72437fdca64e741049a8fbced17f247a962f933cb8f6e53"
+    },
+    "e/rnfull0/fixed-command.json": {
+      "bytes": 989,
+      "sha256": "7813a625912162084733b5f326ad61e964019ab1886b68214a1f4b11c0ec88e2"
+    },
+    "e/rnfull0/interruption.json": {
+      "bytes": 983,
+      "sha256": "b781d76301a1dd6e6a61173c7aa16b403a4d2189a85f3e00e92012392c570b8f"
+    },
+    "e/rnfull0/run.log": {
+      "bytes": 5732,
+      "sha256": "2425313fb09d89c0d74bc5d19f2e58b3b4aa1163ba4163037f434cfc541815bd"
+    },
+    "e/rnfull1/analysis-attempt-1.json": {
+      "bytes": 568,
+      "sha256": "640581a39a64255e7956e4199eec71269b94853752e9bbc8594b5eff200df8cc"
+    },
+    "e/rnfull1/detached.json": {
+      "bytes": 166,
+      "sha256": "b34a5a1ec92885b7f097af3fa1e6cf41318ee8f8eaf1a6ede94e17be6dbcba76"
+    },
+    "e/rnfull1/setup-events.json": {
+      "bytes": 900,
+      "sha256": "bec10603c2a92b7a079e57e0bdbf84df8b5c3c0041367025c683c39749346fa5"
+    },
+    "e/rnfull1/analysis.json": {
+      "bytes": 83836,
+      "sha256": "637ba9312612db35d0f8650b24974b5dd659e821ba85847eb4fd4a37ace20466"
+    },
+    "e/rnfull1/full-plan.json": {
+      "bytes": 5471,
+      "sha256": "0c53ad53568c535618c8a03b7b5ee521dd5a281a5b364e139e8e351a0319080d"
+    },
+    "e/rnfull1/launcher.py": {
+      "bytes": 1816,
+      "sha256": "db907ad2a5d28f7e5d2a0dc8432294918f0ea8cffa8157817a1add76cc64db94"
+    },
+    "e/rnfull1/exit.json": {
+      "bytes": 1465,
+      "sha256": "fd1c2f50a0e28f1abc1985897fcf72b1ce2dbb528855858dfe8008417a286649"
+    },
+    "e/rnfull1/report.md": {
+      "bytes": 6038,
+      "sha256": "1d3e8d2a6de0f1ca397b51016d1f6fc11800ba51aee1ca794c6e716537386e36"
+    },
+    "e/rnfull1/process.json": {
+      "bytes": 1465,
+      "sha256": "fd1c2f50a0e28f1abc1985897fcf72b1ce2dbb528855858dfe8008417a286649"
+    },
+    "e/rnfull1/completion-verification.json": {
+      "bytes": 26161,
+      "sha256": "f49d72021d1699606d0fa7177593f5cbd87c25166782c7e65bfd152081c9963f"
+    },
+    "e/rnfull1/original-full-plan.json": {
+      "bytes": 4998,
+      "sha256": "73b6986ae6174c1179e5d86336e225f6c6758df2fe55f186619813dd99201078"
+    },
+    "e/rnfull1/analyze.mjs": {
+      "bytes": 6178,
+      "sha256": "b65f21f5b9fd39fc443730d12f2d1b24482defa056599f4a41d6c183dc767252"
+    },
+    "e/rnfull1/run.log": {
+      "bytes": 7321,
+      "sha256": "ee9feeab2b5b9b1b54a9868bfdf95e4c6970ac51e4230fb326f4c7bc7f77b996"
+    },
+    "e/rnfull1/harness/benchmark-inkwave-composed-native-gpu-pool.mjs": {
+      "bytes": 25231,
+      "sha256": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a"
+    },
+    "e/rnfull1/harness/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "e/rnfull1/harness/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "e/rnfull1/harness/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "e/rnfull1/harness/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "e/rnfull1/harness/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "e/rnfull1/harness/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "e/rnfull1/harness/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs": {
+      "bytes": 25231,
+      "sha256": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a"
+    },
+    "scripts/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "scripts/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "scripts/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "scripts/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "scripts/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "scripts/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "scripts/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "scripts/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "README.md": {
+      "bytes": 2323,
+      "sha256": "730e68d6d4f04d341387010426309a50d67d7a8520f6b838883bd034fefd94f8"
+    },
+    "publication-readback.json": {
+      "bytes": 498,
+      "sha256": "05341aa196734c1a90554ce86213a9a7f2e6950309383b82cf8640326760cf25"
+    }
+  },
+  "limits": [
+    "Archive commit adds measurement evidence only; it was not itself rebuilt or timed.",
+    "Scene rendering was disabled. Whole-workload speedup is not established; real device GPU/FPS and pixel equivalence remain unmeasured."
+  ],
+  "adaptedReportSourceSha256": "e663b9fbb6f70d3b9f2f562469ab901a74d9defbc620a603bbd23339b4879901"
+}
