@@ -1,0 +1,133 @@
+{
+  "baseCommit": "231dfdf58730e61b16b3bc76b61704171ca598bc",
+  "baseBlob": "c656d8d0b36fdb1193e402fc11b6aaae2407a4d7",
+  "candidateBlob": "47e67868068d69686e9211eae36db57d217b276f",
+  "modelCurrentMain": "7d5446fafc42cf0a58bbaddc220884c5f3dceff1",
+  "modelIdentical": false,
+  "threeCoreBlob": "0a1d6cb9ef3cabc97a50bd02394c85e8d1c513c2",
+  "parity": {
+    "cases": 201828,
+    "mismatch": 0,
+    "oldPlanes": 54897216,
+    "newPlanes": 34169323,
+    "savedFraction": 0.3775763965881257
+  },
+  "actualPlaneBench": {
+    "mismatch": 0,
+    "cases": 201828,
+    "rows": [
+      {
+        "order": "old-new",
+        "old": 1710,
+        "new": 1122,
+        "same": true
+      },
+      {
+        "order": "new-old",
+        "old": 1829,
+        "new": 1181,
+        "same": true
+      },
+      {
+        "order": "old-new",
+        "old": 1874,
+        "new": 1151,
+        "same": true
+      },
+      {
+        "order": "new-old",
+        "old": 1799,
+        "new": 1185,
+        "same": true
+      },
+      {
+        "order": "old-new",
+        "old": 1844,
+        "new": 1153,
+        "same": true
+      },
+      {
+        "order": "new-old",
+        "old": 1793,
+        "new": 1174,
+        "same": true
+      }
+    ]
+  },
+  "numberDotBench": [
+    {
+      "order": "old-new",
+      "old": 1329,
+      "new": 823,
+      "sumSame": true
+    },
+    {
+      "order": "new-old",
+      "old": 1314,
+      "new": 844,
+      "sumSame": true
+    },
+    {
+      "order": "old-new",
+      "old": 1273,
+      "new": 843,
+      "sumSame": true
+    },
+    {
+      "order": "new-old",
+      "old": 1271,
+      "new": 822,
+      "sumSame": true
+    },
+    {
+      "order": "old-new",
+      "old": 1282,
+      "new": 833,
+      "sumSame": true
+    },
+    {
+      "order": "new-old",
+      "old": 1281,
+      "new": 834,
+      "sumSame": true
+    },
+    {
+      "order": "old-new",
+      "old": 1262,
+      "new": 901,
+      "sumSame": true
+    },
+    {
+      "order": "new-old",
+      "old": 1289,
+      "new": 854,
+      "sumSame": true
+    }
+  ],
+  "change": "Only inner max-plane loop gains if(d>union)break; no >=; outer min retained.",
+  "preservation": "Single replacement reverse reconstructs v3 full file exactly; SAT608, ticks6/90, assertions, finite validation all unchanged.",
+  "scope": "Actual model geometry and official THREE Plane/Vector3 in functions V8. No Node/full Actor/source/emitted/browser run.",
+  "acceptancePlan": [
+    "After execution storage recovers, run base231df and this candidate sequentially on identical exact source composition and hardware, normal and extreme env modes.",
+    "Require exact result receipts including all vertex/face counts, SAT pairs/intersections, min distances/ticks and ownership checks; preserve all tests/no skips.",
+    "Record wall and CPU time with warmup and alternating order; confirm no full-suite regression and finalhead CI before any integration.",
+    "Keep PR1919 unchanged. Saved candidate does not establish fullActor or gameplay FPS gain."
+  ],
+  "modelCurrentMainDifferent": true,
+  "modelExactBaseCommit": "231dfdf58730e61b16b3bc76b61704171ca598bc",
+  "modelIdenticalToSavedBase": true,
+  "extremeFiniteProbe": {
+    "cases": 512,
+    "mismatch": 0
+  },
+  "independentPeer": {
+    "agent": "recover_model_acceptance",
+    "seed": "0xa178fe39",
+    "cases": 201828,
+    "mismatch": 0,
+    "oldPlanes": 54897216,
+    "newPlanes": 34179296,
+    "singleDiffReverse": true,
+    "finiteGuardRequired": true
+  }
+}
