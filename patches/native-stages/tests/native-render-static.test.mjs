@@ -12,6 +12,7 @@ async function fixture(customData=null) {
   const modules = {
     three: make(THREE),
     '../../../src/world/levelMaterial.js': make({ createLevelMaterial() { throw Error('unused'); } }),
+    './native-paint-detail.mjs': make({ enableNativePaintDetail() { throw Error('unused'); } }),
   };
   const module = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-render.mjs', import.meta.url), 'utf8'), { context });
   await module.link(name => modules[name]);

@@ -8,7 +8,8 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 async function load(url){
  const context=vm.createContext({console});
  const make=values=>new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context});
- const external={three:make(THREE),'../../../src/world/levelMaterial.js':make({createLevelMaterial(){throw Error('unused');}})};
+ const external={three:make(THREE),'../../../src/world/levelMaterial.js':make({createLevelMaterial(){throw Error('unused');}}),
+  './native-paint-detail.mjs':make({enableNativePaintDetail(){throw Error('unused');}})};
  const m=new vm.SourceTextModule(fs.readFileSync(url,'utf8'),{context});await m.link(name=>external[name]);await m.evaluate();
  return m.namespace.installNativeDisplayCulling;
 }

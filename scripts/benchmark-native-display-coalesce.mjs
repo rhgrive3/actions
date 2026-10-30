@@ -35,6 +35,7 @@ async function load(code){
  const context=vm.createContext({console}),modules={
   three:new vm.SyntheticModule(Object.keys(THREE),function(){for(const[k,v]of Object.entries(THREE))this.setExport(k,v);},{context}),
   '../../../src/world/levelMaterial.js':new vm.SyntheticModule(['createLevelMaterial'],function(){this.setExport('createLevelMaterial',()=>{throw Error('unused');});},{context}),
+  './native-paint-detail.mjs':new vm.SyntheticModule(['enableNativePaintDetail'],function(){this.setExport('enableNativePaintDetail',()=>{throw Error('unused');});},{context}),
  };
  const m=new vm.SourceTextModule(code,{context});await m.link(n=>modules[n]);await m.evaluate();
  return m.namespace.nativeDisplay(data,new Map(),'balanced');

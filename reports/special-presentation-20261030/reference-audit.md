@@ -1,5 +1,7 @@
 # Special presentation reference audit — 2026-10-30
 
+The initial Crab visual acceptance below was insufficient: it missed knees behind the hips and ankles above them. That acceptance is superseded by the corrected forward-bend checks and front/side/chassis-hidden evidence in [crab-posture-fix.md](crab-posture-fix.md) and [crab-direction-verification.md](crab-direction-verification.md). The earlier images remain historical evidence, not final approval.
+
 Baseline: `fd6435a4dd2781928d211537c485c87bc50b3784`, public `inkwave-public/` with `patches/splatoon3/`. This is a source and existing-evidence audit; it does not claim a new browser run or Switch measurement. Findings describe the baseline and may be superseded by subsequent changes.
 
 ## Reference conditions

@@ -8,13 +8,13 @@ import {fileURLToPath} from 'node:url';
 if(!vm.SourceTextModule){
  test('native quality/world lifecycle subprocess',()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;execFileSync(process.execPath,['--experimental-vm-modules','--test',fileURLToPath(import.meta.url)],{env,stdio:'pipe'});});
 }else{
-async function fixture(){
+async function fixture({touch=true,initialQuality='high',maxTextureSize=4096}={}){
  const metrics={loads:0,displayDisposes:0,inkDisposes:0,materialDisposes:0,oldPaintDisposes:0};
  const data={manifest:{geometry:{vertices:3,triangles:1},materials:{}},id:'test'};
  const caps={maxDimension:1024,perRole:{normal:512}};
- const G={teamColors:[],scene:{add(){},remove(){}},renderer:{capabilities:{maxTextureSize:4096},getRenderTarget(){return null},setRenderTarget(){},compileAsync(){return Promise.resolve()}}};
- const game={settings:{quality:'high'},mobile:{touch:true},_shadowRoots(){},_setPalette(){},_pickPalette(){},_footprint(){return {}},nativeWorld:null};
- class Paint {constructor(){this.texture={};this.dryMesh={visible:false};this.grid=new Uint8Array(4);this.size=2048;this.ppm=4;}dispose(){metrics.oldPaintDisposes++;}}
+ const G={teamColors:[],scene:{add(){},remove(){}},renderer:{capabilities:{maxTextureSize},getRenderTarget(){return null},setRenderTarget(){},compileAsync(){return Promise.resolve()}}};
+ const game={settings:{quality:initialQuality},mobile:{touch},_shadowRoots(){},_setPalette(){},_pickPalette(){},_footprint(){return {}},nativeWorld:null};
+ class Paint {constructor(_renderer,_level,options){metrics.paintOptions=options;this.texture={};this.dryMesh={visible:false};this.grid=new Uint8Array(4);this.size=options.atlasSize;this.ppm=options.maxDensity;}dispose(){metrics.oldPaintDisposes++;}}
  class Level {constructor(d){this.data=d;this.layout={id:'test'};this.bounds={minX:0,maxX:20,minZ:0,maxZ:20};this.faces=[];}}
  class Mesh {bindPaint(){return this}dispose(){metrics.inkDisposes++;}}
  const loader={async loadNativeData(){return data},async loadNativeTextures(){metrics.loads++;return new Map()}};
@@ -44,6 +44,17 @@ async function fixture(){
 test('real world creation seeds the exact initial profile; High/Ultra do not decode again',async()=>{
  const f=await fixture();assert.equal(f.game.nativeWorld.textureProfile.data,f.data);assert.equal(f.game.nativeWorld.textureProfile.caps,f.caps);assert.equal(f.metrics.loads,1);
  await f.quality.applyNativeQuality(f.game,{quality:'ultra'},f.game.mobile,f.deps);assert.equal(f.metrics.loads,1);
+});
+test('native ink requests ordinary-stage contour density without exceeding existing atlas caps',async()=>{
+ for(const [options,size,density] of [
+  [{touch:false},4096,30], [{touch:true},2048,18],
+  [{touch:false,initialQuality:'low'},2048,18], [{touch:false,maxTextureSize:1024},1024,18],
+ ]){
+  const f=await fixture(options);
+  assert.equal(f.metrics.paintOptions.atlasSize,size);
+  assert.equal(f.metrics.paintOptions.maxDensity,density);
+  f.world.releaseNativeWorld(f.game);
+ }
 });
 test('real world release cancels delayed quality loads and releases late images exactly once',async()=>{
  const f=await fixture();let release,signal;const counters={close:0,dispose:0};

@@ -196,7 +196,14 @@ export function initNativeGrid(paint){
 export function layoutNativePaint(paint,maxDensity){
  paint.pad=2;paint.paintFaces=paint.level.faces.filter(f=>f.paintable);
  const rects=paint.paintFaces.map((f,index)=>({f,index,w:0,h:0,x:0,y:0})),S=paint.size,pad=paint.pad;
- for(let ppm=maxDensity;ppm>.05;ppm*=.8){
+ // A higher requested density must not select a worse fallback on crowded
+ // stages merely because its .8-step ladder has a different phase. Retain
+ // every formerly available 8/4 ppm candidate inside the same atlas budget.
+ const densities=[];
+ for(const start of maxDensity>8?[maxDensity,8,4]:[maxDensity])
+  for(let ppm=start;ppm>.05;ppm*=.8)densities.push(ppm);
+ if(maxDensity>8)densities.sort((a,b)=>b-a);
+ for(const ppm of densities){
   let area=0,valid=Number.isSafeInteger(S)&&S>0;
   for(const r of rects){r.w=Math.ceil(r.f.su*ppm)+pad*2;r.h=Math.ceil(r.f.sv*ppm)+pad*2;area+=r.w*r.h;if(!Number.isSafeInteger(r.w)||!Number.isSafeInteger(r.h)||r.w<0||r.h<0||!Number.isSafeInteger(area))valid=false;}
   if(!valid){if(paint._tryPack(paint.paintFaces,ppm,S)){paint.ppm=ppm;return;}continue;}

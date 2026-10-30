@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
+import { enableNativePaintDetail } from './native-paint-detail.mjs';
 
 export function specializeNativeSourceAmbient(shader,roughSpecular=false,facingCones=false){
  const height=shader.envMapCubeUVHeight;
@@ -91,7 +92,9 @@ export function specializeNativeInkSurface(fragment){
 }
 
 export function nativeInkMaterial(paint, murals, texlib){
+ const detail=enableNativePaintDetail(paint);
  const mat=createLevelMaterial(paint.texture,paint.size,murals,{paint,texlib,nativeInkOverlay:true});
+ if(detail)mat.userData.nativePaintDetail=detail;
  mat.transparent=true;mat.depthWrite=false;mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;
  const compile=mat.onBeforeCompile;
  mat.onBeforeCompile=shader=>{
@@ -114,9 +117,10 @@ export function nativeInkMaterial(paint, murals, texlib){
   // Avoid shader kills so early stencil rejection can skip physical shading;
   // reflection targets without stencil keep the same transparent result.
   shader.fragmentShader=shader.fragmentShader.replace(/\bdiscard\s*;/g,'diffuseColor.a = 0.0;');
+  if(detail){Object.assign(shader.uniforms,detail.uniforms);shader.fragmentShader=detail.decorate(shader.fragmentShader);}
  };
  mat.defaultAttributeValues={...mat.defaultAttributeValues,color:[1,1,1],lightUv:[-1,-1]};
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v8';return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v9'+(detail?'-detail':'');return mat;
 }
 
 export function nativeInkGeometry(level,paint){
