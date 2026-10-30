@@ -8,7 +8,7 @@ export function readOnlineScroll({ownerSelector = null, targetSelector = null} =
   const owner = ownerSelector && root.querySelector(ownerSelector);
   const target = targetSelector && root.querySelector(targetSelector);
   const style = el => { const s=getComputedStyle(el); return {overflowY:s.overflowY,touchAction:s.touchAction,display:s.display,visibility:s.visibility,opacity:Number(s.opacity)}; };
-  const state = {root:{...rect(root),...style(root),scrollTop:root.scrollTop},documentScroll:document.scrollingElement.scrollTop,
+  const state = {inputMode:globalThis.menus?._input||null,activeTag:document.activeElement?.tagName||null,activeOwnerIndex:[...root.querySelectorAll('.iw-hub__body,.iw-hub__me')].findIndex(el=>el.contains(document.activeElement)),root:{...rect(root),...style(root),scrollTop:root.scrollTop},documentScroll:document.scrollingElement.scrollTop,
     owners:[...root.querySelectorAll('.iw-hub__body,.iw-hub__me')].map(el=>({className:el.className,...rect(el),...style(el),scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight})),viewport:{width:innerWidth,height:innerHeight}};
   if (ownerSelector && !owner) return {...state,missing:ownerSelector};
   if (targetSelector && !target) return {...state,missing:targetSelector};
@@ -50,7 +50,7 @@ export function assertOnlineScrollLayout(state) {
 
 export function assertOnlineScrollMovement(before,after,index,direction) {
   const delta=after.owners[index].scrollTop-before.owners[index].scrollTop;
-  assert(direction*delta>1,`${before.owners[index].className}: real wheel must move its local scroll owner`);
+  assert(direction*delta>1,`${before.owners[index].className}: native input must move its local scroll owner`);
   assert(Math.abs(after.root.scrollTop-before.root.scrollTop)<=1,'root must not substitute for local scroll owner');
   assert(Math.abs(after.documentScroll-before.documentScroll)<=1,'document must not substitute for local scroll owner');
   assert(Math.abs(after.owners[1-index].scrollTop-before.owners[1-index].scrollTop)<=1,'other panel must scroll independently');
@@ -67,24 +67,36 @@ export function assertOnlineTarget(state,label,{readable=false}={}) {
 
 export async function checkResponsiveOnlineScroll(page,{settle,errorOnly=false}={}) {
   let state=await page.evaluate(readOnlineScroll);assertOnlineScrollLayout(state);
-  const result={owners:state.owners,gestures:[],targets:[]};
+  const engine=page.context().browser().browserType().name();
+  assert(['chromium','webkit'].includes(engine),'supported responsive browser engine');
+  const inputMethod=engine==='webkit'?'native-keyboard-home-end':'native-mouse-wheel';
+  const result={engine,inputMethod,physicalTouchSwipeVerified:false,owners:state.owners,gestures:[],targets:[]};
   if(!errorOnly){
     let moved=0;
     for(let index=0;index<OWNERS.length;index++){
       state=await page.evaluate(readOnlineScroll);const owner=state.owners[index],max=owner.scrollHeight-owner.clientHeight;
       if(max<=1)continue;
-      // Native gestures, never CSS/scrollTop mutation: reset toward the top,
-      // then prove down/up movement in only this owner's real scroll viewport.
-      await page.mouse.move(owner.left+Math.min(12,owner.width/2),(owner.top+owner.bottom)/2);
-      await page.mouse.wheel(0,-owner.scrollHeight);await page.waitForFunction(selector=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop<=1,OWNERS[index],{timeout:5000});
+      // Mobile WebKit rejects wheel input. This case is already explicitly in
+      // attached-keyboard mode: use native Home/End defaults, not a synthetic
+      // touch swipe or a programmatic scroll/style/context-profile mutation.
+      if(engine==='webkit'){
+        assert.equal(state.inputMode,'kbm','native keyboard proof requires the existing attached-keyboard state');
+        await page.locator('.iw-online:not(.is-leaving) '+OWNERS[index]+' button:not(:disabled)').first().focus();
+        const focused=await page.evaluate(readOnlineScroll);assertOnlineScrollLayout(focused);
+        assert.equal(focused.activeTag,'BUTTON','native scroll focus stays on an existing enabled button');
+        assert.equal(focused.activeOwnerIndex,index,'native scroll focus must belong to this panel');
+        assert(Math.abs(focused.owners[1-index].scrollTop-state.owners[1-index].scrollTop)<=1,'focus must not scroll the sibling panel');
+      }else await page.mouse.move(owner.left+Math.min(12,owner.width/2),(owner.top+owner.bottom)/2);
+      const scroll=delta=>engine==='webkit'?page.keyboard.press(delta<0?'Home':'End'):page.mouse.wheel(0,delta);
+      await scroll(-owner.scrollHeight);await page.waitForFunction(selector=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop<=1,OWNERS[index],{timeout:5000});
       const before=await page.evaluate(readOnlineScroll);
-      await page.mouse.wheel(0,Math.max(160,owner.clientHeight));
+      await scroll(Math.max(160,owner.clientHeight));
       await page.waitForFunction(({selector,top})=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop>top+1,{selector:OWNERS[index],top:before.owners[index].scrollTop},{timeout:5000});
       const down=await page.evaluate(readOnlineScroll);assertOnlineScrollMovement(before,down,index,1);
-      await page.mouse.wheel(0,-owner.scrollHeight);
+      await scroll(-owner.scrollHeight);
       await page.waitForFunction(selector=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop<=1,OWNERS[index],{timeout:5000});
       const up=await page.evaluate(readOnlineScroll);assertOnlineScrollMovement(down,up,index,-1);
-      result.gestures.push({owner:OWNERS[index],before:before.owners[index].scrollTop,down:down.owners[index].scrollTop,up:up.owners[index].scrollTop});moved++;
+      result.gestures.push({inputMethod,owner:OWNERS[index],before:before.owners[index].scrollTop,down:down.owners[index].scrollTop,up:up.owners[index].scrollTop});moved++;
     }
     assert(moved>0,'short landscape content must exercise at least one overflowing local owner');
   }

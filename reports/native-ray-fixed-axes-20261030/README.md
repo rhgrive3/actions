@@ -47,3 +47,7 @@ node --experimental-vm-modules scripts/benchmark-native-ray-inputs.mjs --baselin
 ```
 
 HydrateしたHagglefishの17ファイルは[asset binding](native-asset-binding.json)のSHA-256を検証して使用する。元モデル・テクスチャ・変換済み三角形はこの変更へ追加しない。
+
+## 現行mainへの適用確認
+
+[db2134上の通常配信buildと30-frame actual native smoke](latest-main/README.md)を追加した。baseline `db2134a7` とcandidate `df2491c6` のbuild・source/asset照合、emitted 24/30 tests、実16,000 rayの一致、12 windows/6組の記録state parityを確認した。30-frame smokeは性能認定に使わず、A/Aの時間外れ値と後処理の誤assertも保持する。公開準備時のmain `42e6d107` はWebKit scroll QAの2ファイルのみ増えておりray runtimeは同一だが、このmainと公開用merge commitでの再build・対戦計測は未実施。
