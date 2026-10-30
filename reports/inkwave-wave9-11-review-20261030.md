@@ -26,6 +26,16 @@ Driveの[累積パッチ](https://docs.google.com/document/d/1g8RWUlg7bj_MxSz-RZ
 
 最終の速度・画像・配信engine検証は[専用GitHub Actions](../.github/workflows/inkwave-wave-native-gpu-validation.yml)へ移した。候補と比較専用の共通main基準（desktop/medium/Chromium）、最新main 45f5d98b（iPad/high/WebKit）をそれぞれ通常ビルドし、全生成物・ソース入力をSHAへ照合する。新mainの開始カメラは旧版より長いため、旧ゲーム全体との直接比較は行わない。desktopの比較基準 6ae5b34493e0744a7334025ba09b810f034194e8 は45f5d98bを親とし、native-render・native-ink-chunks・composer-format-adapterの3ファイルだけを0cc5ce37の正確なblobへ戻した比較専用branchである。カメラ、対戦、塗り、他のmain更新は候補と共通に保つ。WebKitは既にP1を含む最新mainに対する追加効果を測る。新しい578フレームの導入演出に合わせ、準備を925フレーム（演出後の347フレームは旧条件と同じ）、試射を演出後77フレームへ調整した。同一条件の本番フレームを3区間、GPU完了待ち込みで順に測る。Chromiumは30%以上、WebKitは悪化しないことを要求する。RoboとMakoの7視点、全員の位置・速度・HP・インク・生存状態、塗りgrid/counts/coverage、cold shaderとGLエラーも確認する。画像閾値はRGB平均差1.25・p99差3以下、alpha完全一致。計測中にテスト・ビルド・別ブラウザを並行実行しない。LFSは必要な2 stageと4 packのpointerだけを直接展開し、全payloadのSHA256とsizeを照合する。JSONだけをartifactとして残し、モデル・画像・ブラウザprofileは公開しない。
 
-**最新候補で30%以上の高速化とWebKitの非悪化は、現時点では未確認。** [以前のdesktop +45.409%](inkwave-native-render-performance-20261030.md)を最新Wave版の結果へ読み替えない。今回の環境には実GPUがなく、Linux WebKitの「Apple GPU」という文字列もiPad実機の証拠ではない。実機Safari/Metalでの60fpsは未確認。
+**後続の固定runtime検証は次段の最終結果を参照。** [以前のdesktop +45.409%](inkwave-native-render-performance-20261030.md)を最新Wave版の結果へ読み替えない。今回の環境には実GPUがなく、Linux WebKitの「Apple GPU」という文字列もiPad実機の証拠ではない。実機Safari/Metalでの60fpsは未確認。
 
 [数値・検証状態](inkwave-wave9-11-review-20261030/results.json)。再現用の[全フレーム計測](../scripts/benchmark-inkwave-native-render.mjs)、[画像・状態・速度比較](../scripts/compare-inkwave-native-render.py)、[材質リンク確認](../scripts/check-inkwave-wave-gpu-materials.mjs)を含む。[スプラトゥーン3との既存挙動差分](inkwave-splatoon3-behavior-2026-10-02.md)を今回の描画検証で解消済みとは扱わない。
+
+## 最終結果の確認
+
+専用ActionsのartifactをGitHub連携で回収し、ZIPのSHA256を照合した。候補の全生成物hashは両試行とも `93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f`、入力は1,555件。b149→361の変更はworkflowだけで製品コードを変えない。root側でも最終のnative shader/coneとWaveの関連17件を実行し、失敗0・skip0だった。
+
+[Chromium job 124019291679](https://github.com/rhgrive3/actions/actions/runs/41042746572/job/124019291679)は全3区間で30%以上、全体+52.72299%。同じrunのRobo/Mako各7視点・対戦状態・材質リンクも成功した。既存P1を巻き戻した共通ゲーム基準に対する数値であり、既存main比の追加改善率ではない。
+
+WebKitは初回−0.10402%で閾値未達となった。その結果を残し、事前に記した順序反転の一組だけを同じruntime hashで実行した。[再測定job 124035819175](https://github.com/rhgrive3/actions/actions/runs/41047721610/job/124035819175)では全体+0.19331%でaggregate 1.00のgateを通過した。3区間の一つは−3.30%であり、改善を証明したとは扱わない。両測定からWebKitはほぼ同等という範囲に留める。画像・state・cold shader・GL errorの検証結果と元の失敗も保持する。
+
+[最終receiptと各試行のJSON](inkwave-wave9-11-review-20261030/final-verification.json)。広いCIの全群完了、実機iPad Safari/Metalの60fps、後続の開始発射修正を含む統合版の同率高速化は認定しない。
