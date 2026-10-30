@@ -1,4 +1,5 @@
-import {QUIET_CHARGE,trackChargeHandle,prewarmChargeCue,playChargeCue,chargeFraction,boundedCharge,chargeStage} from './charge-audio-lifecycle.mjs';
+import {chargeAudioProgress} from './charge-audio-state.mjs';
+import {QUIET_CHARGE,trackChargeHandle,prewarmChargeCue,playChargeCue,chargeFraction,chargeStage} from './charge-audio-lifecycle.mjs';
 const IDS=new Set(['s3-stringer-normal','s3-stringer-short','s3-stringer-explosion']);
 export const usesStringerCharge=id=>IDS.has(id);
 // Recorded Stringer/LACT charge loops are retained. The subtle stage-dependent
@@ -7,7 +8,7 @@ export const usesStringerCharge=id=>IDS.has(id);
 export function stringerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   const ctx=engine?.ctx;if(!usesStringerCharge(id)||!ctx||ctx.state==='closed')return QUIET_CHARGE;
   const first=chargeFraction(opts.actor?.weapon,'stringer');
-  let q=boundedCharge(Number.isFinite(opts.progress)?opts.progress:opts.actor?.weaponRunner?.charge);
+  let q=chargeAudioProgress(opts.actor,Number.isFinite(opts.progress)?opts.progress:opts.actor?.weaponRunner?.charge);
   let stage=chargeStage(q,first),stopped=false,retire=()=>{},position=opts.pos;
   let volume=Number.isFinite(opts.volume)?Math.max(0,opts.volume):.6;
   let firstPlayed=stage>=1,fullPlayed=stage===2,lastPitch=NaN,lastVolume=NaN;
@@ -20,7 +21,7 @@ export function stringerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
       if(!valid())return;
       if(Object.hasOwn(next,'pos'))position=next.pos;
       if(Number.isFinite(next.volume))volume=Math.max(0,next.volume);
-      if(Number.isFinite(next.progress))q=boundedCharge(next.progress);
+      if(Number.isFinite(next.progress))q=chargeAudioProgress(opts.actor,next.progress);
       stage=chargeStage(q,first);
       const phase=q<first?.5*q/first:.5+.5*(q-first)/(1-first);
       const pitch=.92+.16*phase,gain=volume*(stage===2?.68:.8+.2*phase);
@@ -28,7 +29,7 @@ export function stringerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
         update.pitch=pitch;update.volume=gain;update.pos=position;native.set?.(update);
         lastPitch=pitch;lastVolume=gain;
       }
-      if(!firstPlayed&&stage>=1){firstPlayed=true;playChargeCue(engine,opts.actor,position,volume,1);}
+      if(!firstPlayed&&stage>=1){firstPlayed=true;if(stage<2)playChargeCue(engine,opts.actor,position,volume,1);}
       if(!fullPlayed&&stage===2){fullPlayed=true;playChargeCue(engine,opts.actor,position,volume,2);}
     },
     stop(fade=.04){if(stopped)return;stopped=true;native.stop?.(fade);retire();},

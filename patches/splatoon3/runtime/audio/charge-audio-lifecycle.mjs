@@ -1,6 +1,7 @@
 // Own compound/pending charge handles as well as their admitted mixer voices.
 // stopAll must invalidate a cold request before its Promise can start a voice.
 const owners = new WeakMap();
+const confirmations = new WeakMap();
 const INSTALLED = Symbol.for('inkwave.charge-audio-lifecycle.v1');
 export const QUIET_CHARGE = Object.freeze({playing:false,set(){},stop(){}});
 export function trackChargeHandle(engine, handle, priority=64) {
@@ -28,18 +29,25 @@ export function installChargeAudioLifecycle(Engine) {
   p.stopAll=function(fade=.1){stopChargeHandles(this,fade);return stop?.call(this,fade);};
 }
 export function prewarmChargeCue(engine) {
-  const bank=engine.weaponBank?.(),loader=engine._realS3Loader;
-  if(!bank||bank.authorized?.byEvent?.has('charger:ready')||loader?.declares?.('charger','ready')===false)return;
-  // Shared 5.8 KB recording. Its use for these families is an explicit proxy,
-  // not a recovered Nintendo Stringer/Splatling sound-event mapping.
-  loader?.ensure?.('charger','ready')?.catch?.(()=>{});
+  engine.prepareChargeConfirmation?.()?.catch?.(()=>{});
 }
 export function playChargeCue(engine, actor, pos, volume, stage, delay=0) {
-  return engine.playWeapon?.('charger','ready',{
+  const ctx=engine.ctx,now=ctx?.currentTime;
+  let voices=ctx&&confirmations.get(ctx);
+  if(ctx&&!voices){voices=new WeakMap();confirmations.set(ctx,voices);}
+  const keyed=actor&&(typeof actor==='object'||typeof actor==='function');
+  const previous=keyed&&voices?.get(actor);
+  // Multiple fixed ticks may share a single audio time after a slow frame.
+  // Do not layer an obsolete first-stage beep over the full confirmation.
+  if(stage===2&&previous?.stage===1&&now>=previous.at&&now-previous.at<1/60)
+    previous.voice?.v?.kill?.(now+.003);
+  const voice=engine.play?.('charge:confirmation',{
     actor,pos:actor?.isLocal?undefined:pos,
     volume:volume*(stage===1?.55:.8),pitch:stage===1?1:1.15,delay,
     priority:actor?.isLocal?93:62,
   });
+  if(keyed&&voices)voices.set(actor,{voice,stage,at:now});
+  return voice;
 }
 export function chargeFraction(weapon, family='splatling') {
   const params=family==='stringer'
@@ -50,4 +58,4 @@ export function chargeFraction(weapon, family='splatling') {
   return Number.isFinite(first)&&Number.isFinite(full)&&first>0&&full>first?first/full:2/3;
 }
 export const boundedCharge = value => Number.isFinite(value)?Math.max(0,Math.min(1,value)):0;
-export const chargeStage = (q,first) => q+1e-6>=1?2:q+1e-6>=first?1:0;
+export const chargeStage = (q,first) => q>=1?2:q+1e-6>=first?1:0;
