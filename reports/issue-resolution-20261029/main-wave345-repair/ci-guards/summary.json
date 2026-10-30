@@ -1,0 +1,65 @@
+{
+  "utc": "2026-10-29T14:13:11.371710+00:00",
+  "head": "a02d717bbf3fc3f32c721336c25138e147290c68",
+  "trackedTreeCleanBefore": true,
+  "trackedTreeCleanAfter": true,
+  "node": "v22.23.4",
+  "canonical": {
+    "files": 41,
+    "total": 687,
+    "pass": 686,
+    "fail": 0,
+    "skip": 1,
+    "existingConditionalOptionalPackSkip": true
+  },
+  "cpuHistory": {
+    "total": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0
+  },
+  "actualFullAplusProgram": {
+    "exitCode": 0,
+    "validJSON": true,
+    "stderrBytes": 0,
+    "historicalMigrationThreePairsByteIdentical": true,
+    "noRuntimeFPSGainClaim": true
+  },
+  "logs": [
+    {
+      "name": "agent2-main-a02d717-canonical-verifier.tap",
+      "bytes": 154022,
+      "sha256": "5e41755387c051feb99696f9f9c613d67525bd796697a38559292a0158f6f223",
+      "gzipSha256": "0c98ac2aaf168fa0ece2891bf34850aac8c1a2f8e8908fb09a140eeefd4c4bd8"
+    },
+    {
+      "name": "agent2-main-a02d717-cpu-history.tap",
+      "bytes": 2340,
+      "sha256": "e2ecc00622352fb5ec97701102e8a98d8bdbd1d86281831f1ed0105cedeccc7f",
+      "gzipSha256": "9559271d2382e646f8ea0c5ea06daedbf05edead9322e8c044325e8fde26687c"
+    },
+    {
+      "name": "agent2-main-a02d717-aplus-benchmark.json",
+      "bytes": 6020,
+      "sha256": "a98cf8842732d63d7ea57aa05f7efc5864878d8edad6a3b6daee54bdbcb0281c",
+      "gzipSha256": "f5de0aa0aa16715c5522c2fecd69d750c09427effdf49024d0186ddbe535b9dd"
+    },
+    {
+      "name": "agent2-main-a02d717-aplus-benchmark.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    }
+  ],
+  "trackedFileSHA256": {
+    "scripts/ci/inkwave-test-suites.json": "c6ff04593b02669fee1f1d24d441319f7bb1c7aa1f7ccad12c8312e2d010e813",
+    "scripts/ci/inkwave-source-coverage.mjs": "22cbd84c1f973b73b1a32a641b1e97309944123ff2b8e3ed5a99cb6e8ce5cede",
+    "scripts/ci/inkwave-validate-contract.mjs": "d39a84bea161028723304c3c6280dffc5021643af90a94e20141b36796d5030a",
+    "scripts/benchmark-aplus-verification.mjs": "3bd7338fa85ea888c510174788276e960be22f357f926e350dd69ba56b8be2e2",
+    "scripts/tests/inkwave-cpu-history.test.mjs": "0f75f693cecc0354912f62b97c916b1a85b3af257246b84a52e86675edc7e020",
+    "scripts/tests/inkwave-source-coverage.test.mjs": "81f0376fcdf8fffe5983eff75344d3ab9361ddac374350400fd54ec88d4a7989",
+    ".github/workflows/validate-inkwave-update.yml": "54cf19bc325dce2a86a7fc7871f9c77ef07030ff65ed5c939545be8ed4859113",
+    ".circleci/config.yml": "e0ef7cf14fc7cba1d95ae15828956706adae468bfe91ce1b50111c8275f47fab"
+  },
+  "limits": "Exact local fix-forward candidate proof. Root independently owns source 14 files, 130/130, and mandatory emitted 34 files, 369/369, with immutable build 6013/artifacts. These source/CI/historical runs overlap earlier proofs and are not added together; they do not establish hosted CI, hardware, current main fecc acceptance, or resolution of the old 45 families. All old 7 PRs were already merged externally; no closed-PR retry, cancellation, or main write was performed in this phase."
+}

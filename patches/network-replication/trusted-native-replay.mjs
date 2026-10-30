@@ -31,6 +31,14 @@ function scope(s, fn) {
     s.executing=false;
   }
 }
+// Native frame/lifecycle hooks must finish inside this realm scope. A pending
+// phase is not a completed authority frame and cannot expose contact receipts.
+function runWorldPhase(s,name,...args) {
+  const result=s.world[name]?.(...args);
+  if(result && (typeof result==='object'||typeof result==='function') && typeof result.then==='function')
+    throw Error('Asynchronous native authority phase: '+name);
+  return result;
+}
 function live(s) { return !!s && !s.closed && s.error===null && realms.get(s.api.G)===s; }
 function liveContact(s,r) {
   return s.actors.get(r.attacker)?.netLife===r.attackerLife &&
@@ -137,12 +145,12 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
         bindDamage(s,a);
         // This trusted callback runs native lifecycle setup, e.g. initial Turf
         // Squid Spawn. It is not supplied by a wire event or owner snapshot.
-        if(world.initializeActor)world.initializeActor(a,r,api);
+        if(world.initializeActor)runWorldPhase(s,'initializeActor',a,r,api);
         else a.spawnAt(new api.THREE.Vector3(...r.position),r.yaw);
         if(a.netLife!==r.life)throw Error('Trusted life requires its actual native spawn history');
         commands?.register(a,{owner:r.owner,life:r.life,epoch,firstTick:1});
       }
-      s.context.boss=api.G.boss=world.createBoss?.(api.G,api)||null;
+      s.context.boss=api.G.boss=runWorldPhase(s,'createBoss',api.G,api)||null;
       bindBoss(s,s.context.boss);
       if(typeof api.on==='function')s.offs.push(api.on('weapon:fire',e=>{
         if(s.executing&&s.actorSet.has(e.actor)){
@@ -179,11 +187,11 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
     scope(s,()=>{
       if(s.commands){for(const t of prepared)if(!s.commands.apply(t)?.ok)throw Error('Canonical command commit rejected');}
       else for(const c of frame.commands)applyCommand(c,s.actors.get(c.nid));
-      s.world.beforeActors?.(s.context.actors,frame.dt,s.api);
+      runWorldPhase(s,'beforeActors',s.context.actors,frame.dt,s.api);
       for(const a of s.context.actors)a.update(frame.dt);
-      s.world.afterActors?.(s.context.actors,frame.dt,s.api);
+      runWorldPhase(s,'afterActors',s.context.actors,frame.dt,s.api);
       s.context.projectiles.update(frame.dt);
-      s.world.afterProjectiles?.(s.context.actors,frame.dt,s.api);
+      runWorldPhase(s,'afterProjectiles',s.context.actors,frame.dt,s.api);
       // Reenrollment follows actual native respawn, never an owner row. The
       // current input was applied to the old life before native spawn reset it.
       for(const a of s.context.actors){const c=frame.commands.find(c=>c.nid===a.nid);if(c.life!==a.netLife){

@@ -13,18 +13,50 @@ for(const sub of ['angleShooter','inkMine'])test(`${sub} receiver binds marking 
 for(const sub of ['angleShooter','inkMine'])test(`${sub} known mark birth outlives visual retirement but not clear or match identity`,async()=>{
  const a=await peer('a',sub,10);const obj=a.f.G.projectiles.throwBomb(a.o);obj.pos.set(0,.7,0);obj.prev.copy(obj.pos);obj.vel.set(0,0,60);if(sub==='inkMine'){obj.phase='deployed';obj.vel.set(0,0,0);obj.activeAt=0;obj.deployedAt=0;obj.expireAt=Infinity;}
  for(let i=0;i<240;i++)a.f.G.projectiles.update(1/60);
- const birth=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='spawn'),mark=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='mark'),expire=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='expire');assert.ok(birth&&mark&&expire);
+ const birth=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='spawn'),mark=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='mark'),expire=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='expire');assert.ok(birth&&mark&&expire);assert.equal(mark[5].frames,300,'existing configured five-second mark duration');
  for(const kind of ['timeout','visual','retired','clear','match']){
-  const b=await peer('b',sub,10);b.nm._play('a',JSON.parse(JSON.stringify(birth)));
+  const b=await peer('b',sub,10),birthReceivedAt=b.f.G.time;
+  assert.equal(birthReceivedAt,0,'accepted native birth starts at the fixture clock origin');
+  b.nm._play('a',JSON.parse(JSON.stringify(birth)));
   if(kind==='timeout'){const ghost=b.f.G.projectiles._s3SubObjects[0];ghost.age=10;for(let i=0;i<6;i++){b.f.G.time+=1/60;b.f.G.projectiles.update(1/60);}}
   else if(kind==='retired'){b.nm._play('a',JSON.parse(JSON.stringify(expire)));assert.equal(b.f.G.projectiles._s3SubObjects.length,0);}
   else{b.f.G.projectiles.kitDefenseCandidate=o=>({distance:0,point:o.prev.clone(),onHit(){}});for(let i=0;i<6;i++){b.f.G.time+=1/60;b.f.G.projectiles.update(1/60);}assert.equal(b.f.G.projectiles._s3SubObjects.length,0,'receiver visual intercept retired the ghost');}
   if(kind==='clear')b.f.G.projectiles.clear();if(kind==='match')b.f.G.match={...b.f.G.match};
   b.nm._play('a',JSON.parse(JSON.stringify(mark)));
   if(kind==='clear'||kind==='match'||kind==='retired')assert.equal(b.v.s3.revealedUntil,undefined,kind);
-  else near(b.v.s3.revealedUntil[0]-b.f.G.time,(5-(mark[5].markAgeFrames||0)/60)*gearCurve(10,1,sub==='inkMine'?.55:.43,.1));
+  else {
+   const senderAge=mark[5].markAgeFrames||0;
+   near(b.f.G.time-birthReceivedAt,6/60);
+   const receiverAge=Math.floor((b.f.G.time-birthReceivedAt)*60+1e-8);
+   assert.equal(receiverAge,6,'visual/timeout advances the accepted receiver birth by six fixed ticks');
+   if(sub==='angleShooter')assert.equal(senderAge,2,'actual source contact precedes receiver elapsed age');
+   else assert.equal(senderAge,0,'mine marking starts at detonation, not its birth');
+   const age=sub==='angleShooter'?Math.max(senderAge,receiverAge):senderAge;
+   const actual=b.v.s3.revealedUntil[0]-b.f.G.time,scale=gearCurve(10,1,sub==='inkMine'?.55:.43,.1);
+   near(actual,(mark[5].frames-age)/60*scale);
+   if(sub==='angleShooter')assert.ok(Math.abs(actual-(mark[5].frames-senderAge)/60*scale)>1e-8,'sender-only clock would incorrectly extend the delayed mark');
+   else assert.ok(Math.abs(actual-(mark[5].frames-receiverAge)/60*scale)>1e-8,'mine lifetime must not subtract pre-detonation birth age');
+  }
  }
 });
+test('Angle Shooter later source line contact keeps its longer sender age and cannot be renewed',async()=>{
+ const a=await peer('a','angleShooter',10),b=await peer('b','angleShooter',10);
+ a.v.pos.x=10;
+ const shot=a.f.G.projectiles.throwBomb(a.o);shot.pos.set(0,.7,0);shot.prev.copy(shot.pos);shot.vel.set(0,0,60);
+ const birth=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='spawn');assert.ok(birth);
+ const receivedAt=b.f.G.time;b.nm._play('a',JSON.parse(JSON.stringify(birth)));
+ for(let i=0;i<10;i++)a.f.G.projectiles.update(1/60);
+ assert.ok(!a.nm.out.some(e=>e[1]==='ac'&&e[5].phase==='mark'),'source target is initially away from the line');
+ a.v.pos.x=0;for(let i=0;i<20&&!a.nm.out.some(e=>e[1]==='ac'&&e[5].phase==='mark');i++)a.f.G.projectiles.update(1/60);
+ const mark=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='mark');assert.ok(mark,'actual late native line contact emits mark');
+ for(let i=0;i<2;i++){b.f.G.time+=1/60;b.f.G.projectiles.update(1/60);}
+ const receiverAge=Math.floor((b.f.G.time-receivedAt)*60+1e-8),senderAge=mark[5].markAgeFrames;
+ assert.equal(receiverAge,2);assert.ok(senderAge>receiverAge,'actual sender contact age is dominant');
+ b.nm._play('a',JSON.parse(JSON.stringify(mark)));
+ const until=b.v.s3.revealedUntil[0];near(until-b.f.G.time,(mark[5].frames-senderAge)/60*gearCurve(10,1,.43,.1));
+ b.f.G.time+=1/60;b.nm._play('a',JSON.parse(JSON.stringify(mark)));assert.equal(b.v.s3.revealedUntil[0],until,'replay cannot renew the admitted target');
+});
+
 test('source-cap eviction cannot resurrect old births and owner identity changes reject receipts',async()=>{
  const a=await peer('a','angleShooter',10),b=await peer('b','angleShooter',10);const first=a.f.G.projectiles.throwBomb(a.o);first.pos.set(0,.7,0);first.prev.copy(first.pos);first.vel.set(0,0,60);for(let i=0;i<3;i++)a.f.G.projectiles.update(1/60);
  const mark=a.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='mark');assert.ok(mark);for(let i=0;i<100;i++)a.f.G.projectiles.throwBomb(a.o);

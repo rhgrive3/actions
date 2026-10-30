@@ -43,6 +43,12 @@ export function serveProjectileCaptureFile(req, res, file, mime) {
     headers['content-range'] = `bytes ${start}-${end}/${size}`;
     headers['content-length'] = end - start + 1;
   }
+  // Keep HTML, HEAD and partial/error media responses unchanged. Successful
+  // public asset GETs must revalidate; no-store can abort streamed Chromium EOF:
+  // https://github.com/microsoft/playwright/issues/42742
+  if (req.method === 'GET' && status === 200 && path.extname(file) !== '.html') {
+    headers['cache-control'] = 'no-cache, max-age=0, must-revalidate';
+  }
   res.writeHead(status, headers);
   if (size === 0) res.end();
   else {

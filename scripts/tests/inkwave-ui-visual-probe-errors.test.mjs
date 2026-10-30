@@ -75,8 +75,14 @@ test('cleanup-only failure still rejects an otherwise passed probe and retains f
   assert.equal(writes[0][1].states.length,4);assert.equal(writes[1][1].stages.length,4);
   assert.equal(writes[1][1].negatives.length,6);
 });
-test('successful render/probe body and screenshot options are byte-identical to the approved candidate',()=>{
+test('successful render/probe body retains the approved epoch through only the private icon initialization',()=>{
   const after=fs.readFileSync(new URL('../check-inkwave-hud-authority.mjs',import.meta.url),'utf8');
   const body=s=>{const start=s.indexOf('export async function checkUiVisualProbes(');return s.slice(s.indexOf('  // #508',start),s.indexOf('  } catch(error) {',start));};
-  assert.equal(crypto.createHash('sha256').update(body(after)).digest('hex'),'a087e4ec49ff0b6974ed36413e69c90902812b13fd3decd76a05662b57bb1b2a');
+  const before="shield:document.createElement('div'),scopeMask:h.scopeMask.cloneNode(false)";
+  const current="shield:document.createElement('div'),spIcon:h.spIcon.cloneNode(false),scopeMask:h.scopeMask.cloneNode(false)";
+  const currentBody=body(after),hash=s=>crypto.createHash('sha256').update(s).digest('hex');
+  assert.equal(hash(currentBody),'668c7066305f675d5bd366c9c06e818812a41c7999f56615ea8d99531af1c21b');
+  assert.equal(currentBody.split(current).length-1,1,'one exact private icon initialization');
+  assert.equal(currentBody.split(before).length-1,0,'the old incomplete initialization is absent');
+  assert.equal(hash(currentBody.replace(current,before)),'a087e4ec49ff0b6974ed36413e69c90902812b13fd3decd76a05662b57bb1b2a','complete prior probe body and all screenshot/assertion policies are retained');
 });

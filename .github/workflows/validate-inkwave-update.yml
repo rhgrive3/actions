@@ -493,7 +493,10 @@ jobs:
             patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs \
             patches/splatoon3/tests/special-legacy-native-receiver.test.mjs \
             patches/splatoon3/tests/catalog-paint-reentry.test.mjs \
-            patches/local-quality/tests/native-ground-event-memo.test.mjs
+            patches/local-quality/tests/native-ground-event-memo.test.mjs \
+            patches/local-quality/tests/wave345-paint-runtime-parity.test.mjs \
+            patches/splatoon3/tests/wave345-projectile-clams-parity.test.mjs \
+            patches/splatoon3/tests/source-posture-cache-1913.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
@@ -674,6 +677,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
@@ -702,7 +706,7 @@ jobs:
           path: ~/.npm/_cacache
           key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Install pinned patch test dependencies
-        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
+        run: npm ci --no-audit --no-fund
       - name: Prepare persistent worker regression fixtures
         run: |
           test "$(realpath -m "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
@@ -842,6 +846,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
@@ -872,8 +877,8 @@ jobs:
       - name: Verify immutable site for this browser shard
         id: verified-site
         run: |
-          mkdir -p .built-site
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          mkdir -p .built-site .ci-scratch
+          npm ci --no-audit --no-fund
           tar -xf .built-site/immutable-site.tar -C .built-site
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
           EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}' node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('.built-site/_site/inkwave-build.json')).contentHash,process.env.EXPECTED_CONTENT_HASH);"
@@ -922,6 +927,9 @@ jobs:
       - name: Verify minimap observation symmetry and strict failure controls
         if: matrix.suite == 'active'
         run: node --test scripts/lib/minimap-canvas-observation.test.mjs scripts/lib/inkwave-canonical-kit-input.test.mjs
+      - name: Verify native minimap storage and Canvas parity
+        if: matrix.suite == 'active'
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-minimap-world-canvas.test.mjs
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
@@ -1185,7 +1193,7 @@ jobs:
       - name: Package bounded browser failure evidence
         if: always() && (failure() || cancelled())
         id: browser_failure_evidence
-        run: node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$CI_STORAGE/failure-evidence" .built-site/_site/inkwave-build.json
+        run: node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$RUNNER_TEMP/inkwave-browser-failure-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${BROWSER_SUITE}" .built-site/_site/inkwave-build.json
       - uses: actions/upload-artifact@v4
         if: always() && steps.browser_failure_evidence.outputs.eligible == 'true'
         with:

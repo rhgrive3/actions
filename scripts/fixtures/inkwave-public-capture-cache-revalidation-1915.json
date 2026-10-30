@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "priorCommit": "515f9ebe5a34e5e74a6bfcd0b0beded60ead591b",
+  "scope": "Public local QA GET 200 non-HTML assets require revalidation; preserve HTML, HEAD, media ranges, errors, body bytes and strict request-failure admission. No application/audio runtime change.",
+  "files": [
+    {
+      "path": "scripts/check-inkwave-browser.mjs",
+      "priorSha256": "98dc6c6561c44a474dcba66217f4301c9043df2f048e88b00801a66bdf739470",
+      "currentSha256": "e2fe28de1a82bf4f1242d41a8275b38ee98fa78d78c4bdb8cf906ff7573803f5",
+      "prior": "    response.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(file).pipe(response);\n",
+      "current": "    // Streamed no-store responses can report ERR_ABORTED after EOF in Chromium:\n    // https://github.com/microsoft/playwright/issues/42742\n    const cacheControl=request.method==='GET'&&path.extname(file)!=='.html'?'no-cache, max-age=0, must-revalidate':'no-store';\n    response.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':cacheControl});fs.createReadStream(file).pipe(response);\n"
+    },
+    {
+      "path": "scripts/lib/inkwave-projectile-http-file.mjs",
+      "priorSha256": "03aedc3492c62296f03dcee662dd93c57183cc86057c2aec2faaed889725b19a",
+      "currentSha256": "92e9d2e9290fa227b9f380c0cbb71a3051471e94d824bac7a40928dbf3646d98",
+      "prior": "  res.writeHead(status, headers);\n",
+      "current": "  // Keep HTML, HEAD and partial/error media responses unchanged. Successful\n  // public asset GETs must revalidate; no-store can abort streamed Chromium EOF:\n  // https://github.com/microsoft/playwright/issues/42742\n  if (req.method === 'GET' && status === 200 && path.extname(file) !== '.html') {\n    headers['cache-control'] = 'no-cache, max-age=0, must-revalidate';\n  }\n  res.writeHead(status, headers);\n"
+    }
+  ]
+}

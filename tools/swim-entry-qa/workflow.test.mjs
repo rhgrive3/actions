@@ -16,11 +16,16 @@ function verify(code){
  assert(code.includes('INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test --test-concurrency=1'));
  assert(code.includes('node tools/swim-entry-qa/compare.mjs .qa-evidence/swim-entry-baseline/result.json .qa-evidence/swim-entry-candidate/result.json "$SOURCE_SHA"'));
  assert(code.includes('timeout-minutes: 40'));
+ assert(code.includes('    if: github.event_name != \'pull_request\' || github.event.pull_request.draft == false'),'Draft must not run native GPU capture');
+ assert(code.includes('npm ci --no-audit --no-fund'),'locked reproducible dependency install is required');
+ assert(!code.includes('npm install --no-save'),'no unpinned npm resolver in QA job');
 }
 test('native heading workflow keeps two shallow exact-head builds and emitted/paired gates',()=>{
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
+  s=>s.replace('npm ci --no-audit --no-fund','npm install --no-save esbuild@0.28.2'),
+  s=>s.replace('github.event.pull_request.draft == false','true'),
   s=>s.replace('ref: ${{ env.SOURCE_SHA }}','ref: main'),
   s=>s.replace('node tools/swim-entry-qa/reference.mjs','echo tools/swim-entry-qa/reference.mjs'),
   s=>s.replace('test "$(git -C _swim_entry_reference rev-parse HEAD)" = "$SOURCE_SHA"','true'),
