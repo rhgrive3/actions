@@ -294,6 +294,17 @@ function bossVisible(nm,p) {
   }
   return false;
 }
+function crabletVisible(nm,p,crab) {
+  const tools=losTools(nm);
+  if(!tools)return true; // preserve offline/unit contexts without a collision world
+  if(!crab || crab.dead || ![crab.x,crab.y,crab.z].every(finite) ||
+    !attackerSeesMuzzle(tools,nm,p))return false;
+  // Match the native _segCrabs hit sphere (center y + .35, radius .55).
+  // Check the near surface rather than the center, which may be behind cover.
+  const c=[crab.x,crab.y+.35,crab.z],d=difference(p.origin,c),len=magnitude(d);
+  const k=len>1e-6?Math.min(len,.55*.8)/len:0;
+  return clear(tools,p.origin,c[0]+d[0]*k,c[1]+d[1]*k,c[2]+d[2]*k);
+}
 function rayNear(p,target,margin=5) {
   const dx=target[0]-p.origin[0],dy=target[1]-p.origin[1],dz=target[2]-p.origin[2];
   const along=dx*p.unit[0]+dy*p.unit[1]+dz*p.unit[2];
@@ -534,6 +545,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
     } else {
       if(d.weak===1 && !weakPointOk(nm,p))continue;
       if(d.c<0&&p.kind==='main'&&directFire(actor)&&!bossVisible(nm,p))continue;
+      if(d.c>=0&&p.kind==='main'&&directFire(actor)&&!crabletVisible(nm,p,nm.match.boss.crabs.get(d.c)))continue;
       if(p.kind==='main'&&directFire(actor)) {
         // A native straight round/beam connects with each Boss body or
         // crablet once. A fresh transport nonce is not another collision.
