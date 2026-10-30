@@ -80,7 +80,7 @@ function sampleCache(ch) {
   if (!cache) {
     cache = { pose: new Float32Array(ch.P.length), receiver: { PX: new Float32Array(ch.P.length), _effort: 0 },
       fields: fieldBank(), feet: ch.feet.map(() => fieldBank()), nodes: [], nodeStates: new WeakMap(),
-      methods: SECONDARY.map(name => ({ name, descriptor: null })), busy: false };
+      methods: SECONDARY.map(name => ({ name, descriptor: null })), socketPath: [], skinLeaves: [], busy: false };
     sampleCaches.set(ch, cache);
   }
   return cache;
@@ -103,8 +103,14 @@ function sampleRelease(a, out) {
   // display points and head bookkeeping, so restore those as well as bones.
   captureFields(ch, cache.fields);
   for (let i = 0; i < ch.feet.length; i++) captureFields(ch.feet[i], cache.feet[i]);
-  let nodeCount = 0;
+  let nodeCount = 0, nativeMatrices=!!installation.nodeMethods;cache.skinLeaves.length=0;
   ch.root.traverse(node => {
+    const methods=installation.nodeMethods;
+    if(methods){
+      const skin=node.updateMatrixWorld===methods.skin&&node.isSkinnedMesh&&node.children.length===0;
+      if(skin)cache.skinLeaves.push(node);
+      if(node.updateMatrix!==methods.local||!skin&&node.updateMatrixWorld!==methods.tree||node.updateWorldMatrix!==methods.path)nativeMatrices=false;
+    }
     let item = cache.nodeStates.get(node);
     if (!item) {
       item = { node, position: node.position.clone(), quaternion: node.quaternion.clone(), rotation: node.rotation.clone(), scale: node.scale.clone(),
@@ -125,7 +131,24 @@ function sampleRelease(a, out) {
     ch.root.position.copy(a.pos); ch.root.position.y += a.smoothY || 0;
     ch.root.rotation.y = a.yaw; ch.yaw = a.yaw;
     curves.apply.call(ch, 0, a.anim || {});
-    ch.root.updateMatrixWorld(true);
+    // Only the bomb socket is read before the transaction restores all nodes.
+    // Refresh its ancestry using the same local/world operations and force
+    // flag, without walking unrelated children or mutating an external scene.
+    // Custom update overrides keep the complete original traversal contract.
+    const path=cache.socketPath;path.length=0;
+    if(nativeMatrices)for(let node=ch.bomb.group;node;node=node.parent){path.push(node);if(node===ch.root)break;}
+    if(path.at(-1)===ch.root){
+      for(let i=path.length-1;i>=0;i--)path[i].updateWorldMatrix(false,false,true);
+      // Native leaf SkinnedMeshes also refresh bindMatrixInverse in a full
+      // traversal. Preserve that observable side effect with their real method.
+      for(const skin of cache.skinLeaves){
+        path.length=0;for(let node=skin.parent;node;node=node.parent){path.push(node);if(node===ch.root)break;}
+        for(let i=path.length-1;i>=0;i--)path[i].updateWorldMatrix(false,false,true);
+        skin.updateMatrixWorld(true);
+      }
+    }
+    else ch.root.updateMatrixWorld(true);
+    path.length=0;
     // The hierarchy has just been evaluated. Avoid getWorldPosition's parent
     // update, which would also mutate an external scene's matrix bookkeeping.
     out.setFromMatrixPosition(ch.bomb.group.matrixWorld);
@@ -148,7 +171,7 @@ function sampleRelease(a, out) {
       item.node.matrix.copy(item.matrix); item.node.matrixWorld.copy(item.world);
       item.node.visible = item.visible; item.node.matrixWorldNeedsUpdate = item.dirty;
     }
-    cache.busy = false;
+    cache.socketPath.length=cache.skinLeaves.length=0;cache.busy = false;
   }
   return out;
 }
@@ -166,7 +189,7 @@ export function bombPreviewPosition(a, out) {
   if (!a?.weaponRunner?.aimingSub) return out;
   return sampleRelease(a, out);
 }
-export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: timers, CHARACTER_BOMB_POSE: curves }) {
+export function installBombMotion({ Character, WeaponRunner, THREE, CHARACTER_TIMERS: timers, CHARACTER_BOMB_POSE: curves }) {
   if (!Character || !Number.isInteger(timers?.T_THROW))
     throw Error('Bomb motion requires the actual Character and exact exported T_THROW');
   if (typeof curves?.throw !== 'function' || typeof curves?.apply !== 'function')
@@ -175,7 +198,9 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
   // A globally registered own prototype stamp survives imports into other VM
   // realms. Keep the original state/curve registry available to their helpers.
   if (Object.hasOwn(C, INSTALL)) return;
-  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed }) });
+  const node=THREE?.Object3D?.prototype;
+  const nodeMethods=node?Object.freeze({local:node.updateMatrix,tree:node.updateMatrixWorld,path:node.updateWorldMatrix,skin:THREE.SkinnedMesh?.prototype.updateMatrixWorld}):null;
+  Object.defineProperty(C, INSTALL, { value: Object.freeze({ states, curves, timers, disposed, nodeMethods }) });
   function clear(ch) {
     if (!ch?.tr) return;
     restoreMainWeapon(ch);
