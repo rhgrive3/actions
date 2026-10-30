@@ -11,6 +11,7 @@
 // hardware, and is no substitute for a physical-device trace.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';
 import { chromium, webkit } from 'playwright';
+import {NATIVE_SIM_PHYSICS_METHODS,NATIVE_SIM_BVH_METHODS} from './lib/native-sim-observers.mjs';
 const args=process.argv.slice(2),get=(n,d)=>{const i=args.indexOf(n);return i<0?d:args[i+1];},has=n=>args.includes(n);
 const site=path.resolve(get('--site','_site-native')),stage=get('--stage','scorch'),frames=Number(get('--frames',3600)),hz=Number(get('--hz',60));
 const engine=get('--browser','chromium'),mobile=has('--mobile'),wrappers=!has('--no-wrappers'),out=get('--out',null);
@@ -25,7 +26,7 @@ try{
   let s=987654321;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};},mobile);
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map='+stage,{waitUntil:'domcontentloaded',timeout:60000});
  await page.waitForFunction(()=>window.__G?.mode==='menu',null,{timeout:300000});
- const report=await page.evaluate(async({stage,frames,hz,wrappers})=>{
+ const report=await page.evaluate(async({stage,frames,hz,wrappers,physicsMethods,bvhMethods})=>{
   const g=window.__inkwave,G=window.__G;let s=13579;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
   // Same deterministic start as check-inkwave-native-sim-digest.mjs, so two
   // builds replay one workload (compare the printed roster and final digest).
@@ -42,8 +43,10 @@ try{
    const P=Object.getPrototypeOf;wrap(P(G.actors[0].character),'update','character.update');wrap(G.match,'update','match.update');
    const bot=G.actors.find(a=>a.bot)?.bot;if(bot)for(const n of ['update','_edgeGuard','_pickPaintGoal'])wrap(P(bot),n,'bot.'+n);
    for(const n of ['update','_resolve'])wrap(P(G.actors[0]),n,'actor.'+n);
-   for(const n of ['raycast','groundProbe','collideBody','bodyFits','cameraProbe','segment'])wrap(G.physics,n,'physics.'+n);
-   if(w)for(const n of ['ray','queryBox','sweepSphere'])wrap(w,n,'bvh.'+n);
+   // Canonical ray identities select batched ground and Boolean LOS paths.
+   // Replacing either method would measure the slower fallback instead.
+   for(const n of physicsMethods)wrap(G.physics,n,'physics.'+n);
+   if(w)for(const n of bvhMethods)wrap(w,n,'bvh.'+n);
    for(const n of ['advanceSimulation','splat','regionStats','_advanceSplatOwnership','_emitGrowth','_drawQuads','coverage'])wrap(G.paint,n,'paint.'+n);
    for(const n of ['path','nearest'])wrap(G.nav,n,'nav.'+n);wrap(G.projectiles,'update','projectiles.update');wrap(G.fx,'update','fx.update');
   }
@@ -59,8 +62,9 @@ try{
    bvh:w?{queriesPerTick:(w.queryCount-q0)/ticks,triangleTestsPerTick:(w.triangleTests-t0)/ticks,triangles:w.triangleCount}:null,
    roster:G.actors.map(a=>a.weapon?.id).join(' '),digest,paint:{atlas:G.paint.size,ppm:G.paint.ppm,faces:G.paint.paintFaces?.length},mobile:!!g.mobile?.touch,quality:g.settings?.quality,
    categories:Object.fromEntries(Object.entries(acc).sort((a,b)=>b[1].ms-a[1].ms).map(([k,v])=>[k,{msPerTick:+(v.ms/ticks).toFixed(3),callsPerTick:+(v.calls/ticks).toFixed(1)}])),spikes:spikes.slice(0,40),spikeCount:spikes.length};
- },{stage,frames,hz,wrappers});
+ },{stage,frames,hz,wrappers,physicsMethods:NATIVE_SIM_PHYSICS_METHODS,bvhMethods:NATIVE_SIM_BVH_METHODS});
  report.browser=engine;report.site=path.basename(site);
+ report.observerScope=wrappers?'Caller timers and existing BVH counters; canonical raycast/ray identities retained':'No wrapper timers; existing BVH counters';
  if(out)fs.writeFileSync(out,JSON.stringify(report,null,1));
  const {categories,spikes,...summary}=report;console.log(JSON.stringify(summary));
  for(const [k,v] of Object.entries(categories))console.log(String(v.msPerTick).padStart(9),String(v.callsPerTick).padStart(8),k);

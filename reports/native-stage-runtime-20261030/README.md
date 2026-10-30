@@ -65,3 +65,22 @@ python3 scripts/compare-inkwave-native-render.py ../native-render-before ../nati
 描画の固定入力比較はシミュレーション、塗り、カメラ、影、解像度を同じ条件にする。この比較の合否は状態・画像の一致を目的とし、ソフトウェアGPUの速度閾値は設けないため`--min-speedup 0`を明示する。CPU削減率は上記の独立した部品計測による。候補の実行では通常のベンチマークの画像取得後に、[追加プローブ](emitted-overload-probe.mjs.txt)を挿入して実配信の`_dynRes`へ300ms間隔を入力した。レンダラーの調整呼び出しだけを記録し、判定後は元の状態へ戻す。時間計測・画像比較の区間は変更していない。
 
 Splatoon 3の比較条件は既存記録のVer.11.3.0を引き継ぐ。今回の最適化で新しい移動・射撃・塗り・当たり判定の数値は導入しない。Nintendoの内部描画・負荷調整方式と同じという主張はせず、既存の本家実機比較の未確認項目は維持する。
+
+## 追調査: 異常な重さの解消は未確認
+
+ユーザーの「異常に重くなる問題」全体を解消したとは判定していない。上記は負荷の一部削減と制御不具合の修正であり、報告端末での再現・原因の特定・改善確認が残る。PR #1946はこの追記時点で未マージ、CIも待ち行列にある。
+
+既存の`measure-inkwave-native-sim.mjs`は計測のために`physics.raycast`と`world.ray`を置き換えていた。そのため正規メソッドとの同一性を検査する接地バッチ・Boolean LOSが無効になり、遅いフォールバックを計測していた。今回、両メソッドを保持して呼び出し元と既存カウンターを観測するよう修正した。回帰2件は正規経路の維持と旧計測の負の対照を確認した。以前のラッパー付き14～17ms/tickを通常プレイの費用として扱わない。
+
+修正後の追加診断は、Roboで同じ600tickを60Hzと300ms間隔（最後だけ100ms）で実行した。接地の正規経路を維持しても、呼び出し元のタイマーと追加カウンターの負荷は残る。平均CPUはそれぞれ19.21ms/tickと13.12ms/tickで、実機性能でも前後の改善率でもない。アクターの表示処理は6.248→2.229ms/tickとなり、既存の途中tickの表示省略が働く。物理クエリーの増殖は確認していない。
+
+一方、塗りatlasは両方600回描画され、低い描画頻度では1表示当たり約18回になる。塗り処理は約5.2～5.5ms/tickを占めるが、これだけで報告端末の原因とは断定できない。状態digestも異なるため、この2本を挙動一致のA/B試験や高速化の証拠としては扱わない。追加のゲーム本体変更は行っていない。[60Hz](followup-60hz.json)、[300ms](followup-300ms.json)。
+
+再現する場合は、記録した診断用スクリプトを元の相対配置へコピーする。
+
+```sh
+cp reports/native-stage-runtime-20261030/catchup-probe.mjs.txt .ci-scratch/measure-native-catchup.mjs
+node .ci-scratch/measure-native-catchup.mjs --site ../site-after --stage robo --hz 60 --ticks 600 --out .ci-scratch/native-query-60hz.json
+node .ci-scratch/measure-native-catchup.mjs --site ../site-after --stage robo --hz 3.3333333333333335 --ticks 600 --out .ci-scratch/native-query-300ms.json
+node --experimental-vm-modules --test scripts/tests/native-sim-observers.test.mjs
+```
