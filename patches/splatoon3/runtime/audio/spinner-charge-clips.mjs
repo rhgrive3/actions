@@ -32,7 +32,7 @@ export async function spinnerPreload(engine,id){
     const data=await res.arrayBuffer();
     if(!data.byteLength||data.byteLength>MAX_MP3_BYTES)throw Error('Spinner charge MP3 invalid: '+key);
     const decoded=await ctx.decodeAudioData(data);
-    if(!Number.isFinite(decoded.duration)||decoded.duration<info.full+.03)
+    if(!Number.isFinite(decoded.duration)||decoded.duration<info.full-.025)
       throw Error('Spinner charge MP3 truncated: '+key);
     if(engine.ctx!==ctx||ctx.state==='closed')return null;
     const bytes=decoded.length*decoded.numberOfChannels*4;
