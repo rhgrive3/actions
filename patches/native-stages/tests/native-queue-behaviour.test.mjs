@@ -14,6 +14,17 @@ test('native atlas record reuse retains every original rect, stable tie and ppm'
   assert.deepEqual(structuredClone(b.level.faces),structuredClone(a.level.faces));assert.equal(b.ppm,a.ppm);assert.equal(b.usedHeight,a.usedHeight);
  }
 });
+test('raising native contour density cannot worsen an existing crowded-atlas fallback',()=>{
+ for(let run=1;run<=40;run++){
+  const faces=Array.from({length:run*6},(_,i)=>({id:i,paintable:true,su:1+rnd()*16,sv:1+rnd()*16}));
+  const make=()=>({level:{faces:structuredClone(faces)},size:128,_tryPack:f.PaintSystem.prototype._tryPack});
+  const oldLow=make(),oldHigh=make(),current=make();
+  layout(oldLow,4);layout(oldHigh,8);layout(current,18);
+  assert.ok(current.ppm>=Math.max(oldLow.ppm,oldHigh.ppm),'higher ceiling lost a formerly fitting density');
+  assert.ok(current.ppm<=18);
+  assert.ok(current.usedHeight<=current.size);
+ }
+});
 const map={id:'query-queue',bounds:{minX:-24,maxX:24,minZ:-24,maxZ:24},spawnPads:[[0,1,-20],[0,1,20]],spawnBarrier:0,half:[],single:Array.from({length:25},(_,i)=>({kind:'box',min:[i%5*7-17,0,Math.floor(i/5)*7-17],max:[i%5*7-13,1,Math.floor(i/5)*7-13],color:'#777'}))};
 test('Uint32 stamp rollover preserves unique canonical block order across repeated queries',()=>{
  const a=new f.Level(map),b=new f.Level(map),out=[];a._stamp=0xfffffffd;

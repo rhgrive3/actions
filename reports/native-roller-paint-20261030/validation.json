@@ -1,0 +1,38 @@
+{
+  "originalBase": "c22d9c332889fed013860c0f935a709923ee231f",
+  "parent": "d0a6c262589e5a81c09a095d730be5b0749ee9b5",
+  "contentHash": "318c6593467d22a49e5ce23a5f74b136854c0c904690110475bbd749a0ee9607",
+  "revision": null,
+  "validation": {
+    "focusedAndRelatedCpuPassed": 57,
+    "assetDependentSkipped": 5,
+    "failed": 0,
+    "productionBuild": "passed",
+    "startupBudget": "passed",
+    "compositionQuick": "passed",
+    "emittedChromium": "passed",
+    "emittedWebKit": "passed",
+    "touchMobileContext": true,
+    "interiorSamplesPerBrowserCase": 391,
+    "browserCasesPerEngine": 4,
+    "cpuGaps": 0,
+    "atlasAlphaGaps": 0,
+    "stencilGaps": 0,
+    "priorPhysicalRollerAndMasks": 7
+  },
+  "codeSha256": {
+    "patches/native-stages/adapter.mjs": "de356604c3de7eb762890418f54487eea2aae2ed5c670872cd9a946b0fbc1ad7",
+    "patches/native-stages/runtime/native-paint.mjs": "25119e25dc02318d1e1e0dbf838cc6a4155fa37481530e661447d7b67c96e3fd",
+    "patches/native-stages/runtime/native-level.mjs": "32e7a76735e1637cc0dc95afbeac467cacc73b9447701081aeeb755a92a3c519",
+    "patches/native-stages/runtime/native-world.mjs": "06a2eb39b732f7b20bf6c36e993a5e6228e3817bfa223ba32241320b45c7c1e5",
+    "patches/native-stages/runtime/native-paint-detail.mjs": "89937bb984c613186454adfc80f6264aea86a2b51ae845c6681f6c56b5a75ad9",
+    "patches/native-stages/runtime/native-render.mjs": "9d472992f130c2fefad912704c32bb80e995e81f5a26fe868da2b4ac4ca04405",
+    "patches/native-stages/runtime/native-ink-chunks.mjs": "f6d470c60f884a5de5fd4fa084d645b26f8da87f0a9d7b0aade1801764c0d5b3",
+    "scripts/check-inkwave-native-roller-paint.mjs": "710c44bb47c17c5fd9e4cf6303ac655e3f4850cd0174aed84029bc8ef49e2696"
+  },
+  "limitations": [
+    "Synthetic source-mesh render, not full-map playthroughs.",
+    "WebKit touch emulation, not physical iPad or Switch verification.",
+    "CPU paint history is match-scoped; resident detail graphics allocation is bounded."
+  ]
+}

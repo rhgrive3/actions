@@ -1,0 +1,20 @@
+{
+  "8": {
+    "edgeRows": 400,
+    "totalVariationPixels": 22,
+    "stepsAtLeastTwoPixels": 0,
+    "rangePixels": 6
+  },
+  "18": {
+    "edgeRows": 400,
+    "totalVariationPixels": 115,
+    "stepsAtLeastTwoPixels": 0,
+    "rangePixels": 6
+  },
+  "30": {
+    "edgeRows": 400,
+    "totalVariationPixels": 216,
+    "stepsAtLeastTwoPixels": 21,
+    "rangePixels": 6
+  }
+}

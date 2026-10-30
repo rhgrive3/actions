@@ -107,7 +107,10 @@ export async function buildNativeWorld(game,map,current){
    pendingNavigation=NavGraph.createNative(level,physics,{signal,current}).then(nav=>({nav}),error=>{const failed=!signal.aborted&&current()&&error.name!=='AbortError';controller.abort(error);return {error,failed};});
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
-  paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
+  const paintAtlasSize=Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096);
+  // Use the same contour sampling budget as ordinary stages. The packer may
+  // reduce density to fit all charts; atlas dimensions/GPU safety caps stay fixed.
+  paint=new PaintSystem(G.renderer,level,{atlasSize:paintAtlasSize,maxDensity:paintAtlasSize>=4096?30:18,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
   // distant mip levels; source material maps retain their normal mip chains.
   paint.texture.generateMipmaps=false;paint.texture.minFilter=THREE.LinearFilter;

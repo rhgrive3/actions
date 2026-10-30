@@ -1,0 +1,94 @@
+(node:7970) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native ink makes unpainted colour transparent after evaluating shading derivatives (3827.306916ms)
+✔ native ink evaluates surface gradients before bypassing fully covered floor textures (4268.854303ms)
+✔ native ink attributes retain source order, UVs and exact typed allocation (4860.919415ms)
+✔ render chunks preserve crossing triangles and bound only their indexed vertices (4231.249644ms)
+﹣ source ink partition preserves every vertex, triangle and paint attribute: scorch (0.503545ms) # SKIP
+﹣ source ink partition preserves every vertex, triangle and paint attribute: hagglefish (0.368857ms) # SKIP
+﹣ source ink partition preserves every vertex, triangle and paint attribute: inkblot (0.134904ms) # SKIP
+﹣ source ink partition preserves every vertex, triangle and paint attribute: mako (0.091245ms) # SKIP
+﹣ source ink partition preserves every vertex, triangle and paint attribute: brinewater (0.2868ms) # SKIP
+✔ native ink bulk runs retain interleaved transparent source triangle order (2490.800931ms)
+✔ native ink culling respects stage world transforms and camera clip changes (2585.788837ms)
+✔ native ink bulk path retains separated source runs without changing blend order (2957.461335ms)
+✔ signed projection zero is recognized by the cached view comparison (2115.25826ms)
+✔ native painted-only culling keeps crossing triangles, clears and restores the colour pass (1934.585225ms)
+✔ painted-chart selection draws only reached charts, in source order, and fails open (1989.584561ms)
+✔ prepainted binding fails open rather than hiding an existing ink atlas (3802.858054ms)
+✔ native display excludes alpha and glass from AO without losing tiny-feature shadows (2765.235814ms)
+✔ #1671 face chunk lists mark exactly the chunks of a full scan, including moved faces (3046.509379ms)
+✔ native runtime runs are exact-sized typed arrays in original triangle order (7344.197374ms)
+✔ known-empty native binding skips only the explicitly fresh grid scan (6909.082042ms)
+(node:7971) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native detail retains immutable coverage after pooled growth records are reused (3531.093907ms)
+✔ native detail has sixteen resident pages and replays an evicted floor on revisit (39.155444ms)
+✔ native detail clearing and disposal release history and restore the paint owner (16.584653ms)
+✔ native detail follows an inclined source floor in its own plane (39.086744ms)
+✔ native detail follows the game camera when PaintSystem.setView is unused (54.353503ms)
+(node:7972) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ High/Ultra preserve initial textures but still apply all other quality settings (12.156831ms)
+✔ rapid quality changes abort and drain old decoding before starting latest request (30.292686ms)
+✔ return to current profile cancels obsolete work without decoding replacement (9.544423ms)
+✔ same pending texture profile coalesces and remains publishable (15.000598ms)
+✔ world cancellation cannot publish and releases completed textures exactly once (10.815423ms)
+✔ failure keeps valid old profile, retries and clears only current error (6.520883ms)
+✔ per-role cap change is not mistaken for the same effective texture profile (2.406343ms)
+✔ stage replacement while loading disposes stale result without rebinding either world (4.94479ms)
+(node:7991) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real world creation seeds the exact initial profile; High/Ultra do not decode again (13.816453ms)
+✔ native ink requests ordinary-stage contour density without exceeding existing atlas caps (37.335348ms)
+[native] cleanup display Error: injected display dispose
+    at w.display.dispose (file:///workspace/actions-fix/patches/native-stages/tests/native-quality-world.test.mjs:71:59)
+    at vm:module(14):164:24
+    at safely (vm:module(14):75:32)
+    at Object.dispose (vm:module(14):164:5)
+    at TestContext.<anonymous> (file:///workspace/actions-fix/patches/native-stages/tests/native-quality-world.test.mjs:72:4)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+✔ real world release cancels delayed quality loads and releases late images exactly once (41.644995ms)
+✔ world disposal attempts every sibling even when display cleanup fails (10.254642ms)
+(node:7998) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native atlas record reuse retains every original rect, stable tie and ppm (1274.739772ms)
+✔ raising native contour density cannot worsen an existing crowded-atlas fallback (181.621789ms)
+✔ Uint32 stamp rollover preserves unique canonical block order across repeated queries (30.425342ms)
+✔ face-restricted splats retain actual CPU claims, growth commands and grid after bypassing broadphase (552.602766ms)
+✔ native object supplied AABB retains exact Three bounding sphere and tiny caster threshold (368.111889ms)
+(node:8029) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ normal cones conservatively certify every incident triangle, including transformed views (82.082666ms)
+✔ normal-cone hemisphere reuse preserves transparent FrontSide and BackSide passes (16.495285ms)
+✔ cone shader falls back at silhouettes, unusual cameras and missing attributes (10.995546ms)
+✔ native diffuse ambient keeps unapproved normal maps, unsupported and unfamiliar shader layouts on their original path (23.681416ms)
+✔ native glass retains pixel-frequency reflections while matte source surfaces interpolate the broad lobe (18.937059ms)
+✔ source materials preserve pixel-frequency IBL for normal maps at every strength and encoding (11.989502ms)
+✔ baked native display preserves vertex positions and follows changing parent transforms without local recomposition (14.872556ms)
+✔ native display selects exact index width with the WebGL2 primitive restart boundary (9.908351ms)
+✔ native display reads actual index slices, preserves source values and releases uploaded narrowed arrays (16.439298ms)
+✔ native display tile selection retains every intersecting triangle, exact index order and baked attributes (42.428998ms)
+✔ native display handles alternating colour/reflection/shadow cameras and preserves pending index uploads (11.992027ms)
+✔ shared native plane masks preserve every live CPU ink claim and causal order (5509.179213ms)
+(node:8043) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native roller contact paints both sides of a coplanar chart seam in CPU and GPU submissions (5726.563636ms)
+✔ native contact cannot paint through a raised floor, lower floor, wall or NoPaint material (11.515311ms)
+✔ ordinary native projectile impacts remain restricted to their struck chart (7.973479ms)
+✔ a native contact crossing charts records one event and replays identical ownership (14.321082ms)
+✔ legacy contact retains its struck-face scope (17.812069ms)
+(node:8050) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source cell coverage preserves thin triangle interiors and rejects empty or edge-only cells (6.150229ms)
+✔ owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives (5618.713195ms)
+✔ Python and worker masks agree for partial polygons and thin strips (7823.054463ms)
+ℹ tests 62
+ℹ suites 0
+ℹ pass 57
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 5
+ℹ todo 0
+ℹ duration_ms 59044.379097
