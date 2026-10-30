@@ -430,9 +430,8 @@ function killerSpeaker(THREE) {
 //  - three crab legs per side: grey hip and knee joints and long curved
 //    yellow blades with white diagonal stripes, tips on the ground;
 //  - crash-test-dummy circles on the dome sides, pods and claw.
-// The kid stands in INKWAVE (no riding pose), so the tank sits on the ground
-// and the cockpit rim is between the kid's waist and chest; the real rider
-// sits on top, higher.
+// The tank stays at the physical feet; the rider pose raises the hips onto
+// the cockpit rather than lifting the chassis and its launch sockets.
 registerFinish('crabTan', 0xc9b08c, { roughness: 0.55, metalness: 0 });
 registerFinish('crabGrey', 0xc3c7c2, { roughness: 0.45, metalness: 0.25 });
 registerFinish('crabMark', 0x3a2c1c, { roughness: 0.6, metalness: 0 });
@@ -770,6 +769,13 @@ registerFinish('cageBlue', 0x5a62d6, { roughness: 0.42, metalness: 0.05 });
 registerFinish('lilac', 0xcac6e8, { roughness: 0.6, metalness: 0 });
 registerFinish('harnessBlue', 0x9fc0f2, { roughness: 0.45, metalness: 0 });
 registerInkFinish('inkPale', { roughness: 0.3, metalness: 0, emissive: 0.32 });
+// Centres of the black grab handles, in model space. Both the geometry and
+// hand constraints use these sockets; the old approximate targets sat above
+// and behind the handles. Derived from the authored shark surface at z=.245.
+export const REEFSLIDER_GRIPS = Object.freeze({
+  R: Object.freeze([-0.26186076168860944, 0.4839723387999223, 0.24490352377608923]),
+  L: Object.freeze([0.26187590799943633, 0.48395680859192003, 0.24490331161252585]),
+});
 function reefShark(THREE) {
   const K = kit();
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1018,7 +1024,7 @@ function reefShark(THREE) {
     for (let i = 0; i <= 10; i++) { const t = i / 10, z = 0.515 - 0.195 * t, y = 0.262 + (0.47 - 0.262) * t, th = s * thAt(z, y); SP.push(on(z, th, 0.018)); SN.push(nrm(z, th)); }
     lilac.push(ribbon(SP, SN, 0.034, 0.008));
     // Black grab handle with a slot, on the upper flank.
-    const hz = 0.245, hth = s * thAt(hz, 0.47), hp = on(hz, hth, 0.02), hn = nrm(hz, hth);
+    const hz = 0.245, hth = s * thAt(hz, 0.47), hp = V(...REEFSLIDER_GRIPS[s < 0 ? 'R' : 'L']), hn = nrm(hz, hth);
     const hb = new THREE.Matrix4().makeBasis(Z.clone().cross(hn).normalize(), hn, Z.clone().sub(hn.clone().multiplyScalar(hn.z)).normalize());
     hb.setPosition(hp);
     K.add('body', 'black', softBox(THREE, 0.075, 0.045, 0.19, 0.4, 4).applyMatrix4(hb));

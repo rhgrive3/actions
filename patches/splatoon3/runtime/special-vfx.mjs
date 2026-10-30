@@ -18,6 +18,7 @@ const TENTA_BRACKET_CORNERS = Object.freeze([[-1, -1], [1, -1], [1, 1], [-1, 1]]
 //   - 'all:special' events (local) and the replayed copies of them (remote);
 //   - the live actor state (`specialActive`, `_s3AllSpecialState`, kit states);
 //   - the live projectile list and the special world objects;
+//   - native projectile terminal burst callbacks;
 // and draws through its own pooled GPU kit (special-vfx-kit.mjs) plus the
 // game's FX pools (G.fx). Effect marks for animation (actor._s3SpecialMarks)
 // are presentation timestamps only.
@@ -73,6 +74,7 @@ class Director {
     this.kit = new SpecialVfxKit(T, fx.root, fx.q ?? 1, inkLightUniforms(T, fx));
     this.tracks = new Map(); this.rounds = new Map(); this.objects = new Map(); this.lasers = new Map();
     this.inkjetImpacts = new WeakSet();
+    this.roundImpacts = new WeakSet();
     this.inkVacShots = new WeakSet();
     this.trizookaShots = new WeakSet();
     this.domes = new Map(); this.coolers = new Map(); this.fists = new Map(); this.storms = new Map();
@@ -320,6 +322,7 @@ class Director {
     for (const [a, t] of this.tracks) this.endTrack(a, t);
     for (const m of [this.tracks, this.rounds, this.objects, this.lasers, this.domes, this.coolers, this.fists, this.storms]) m.clear();
     this.inkjetImpacts = new WeakSet();
+    this.roundImpacts = new WeakSet();
     if(this._frameRounds)this._frameRounds.length=0;
     this._frameRoundsValid=false;this._frameRoundSource=null;
     this.kit.clear();this._speakerCache=new WeakMap();
@@ -359,7 +362,7 @@ class Director {
     seen.clear();
     for (const p of list) {
       const spec = ROUND_FX[p?.wid];
-      if (!spec || !p.pos || p.dead) continue;
+      if (!spec || !p.pos || p.dead || this.inkjetImpacts.has(p) || this.roundImpacts?.has(p)) continue;
       if (spec.when && !spec.when(p)) continue;
       let r = this.rounds.get(p);
       const changed=!r||r.identityWid!==p.wid||r.identitySeed!==p.seed||r.identitySpecialSeed!==p.s3AllSpecialSeed;
@@ -374,7 +377,9 @@ class Director {
       seen.add(p); r.age += dt; r.last.copy(p.pos); if (p.vel) r.vel.copy(p.vel);
       if (this.near(p.pos, 90)) this.call(spec.frame, r, p, dt);
     }
-    for (const [p, r] of this.rounds) if (!seen.has(p)) { this.finishRound(r, r.wid !== 'inkjet'); this.rounds.delete(p); }
+    // Disappearance can mean cancellation, water, cleanup or pooled reuse.
+    // Only the native terminal burst below is evidence of an impact.
+    for (const [p, r] of this.rounds) if (!seen.has(p)) { this.finishRound(r, false); this.rounds.delete(p); }
   }
   frameRoundCandidates() {
     const list=this.G.projectiles?.list;
@@ -404,19 +409,29 @@ class Director {
     if (!enabled) return;
     trizookaMuzzle(this, p.owner, this.rgb(p.owner, p.team), p.start, p.s3VolleyIndex || 0);
   }
-  // Inkjet's native burst owns its terminal point. A missing list entry is
-  // not an impact: it may be cleared, recycled or removed without a burst.
+  // Native bursts own terminal positions, including rounds that collide before
+  // their first rendered frame. Keep Inkjet's existing observer entry while all
+  // recipes share the same terminal-only lifecycle.
   inkjetImpact(p, x, y, z) {
-    if (this.inkjetImpacts.has(p)) return;
-    this.inkjetImpacts.add(p);
+    this.roundImpact(p, x, y, z);
+  }
+  roundImpact(p, x, y, z) {
+    const impacts = p.wid === 'inkjet' ? this.inkjetImpacts : (this.roundImpacts ||= new WeakSet());
+    if (impacts.has(p)) return;
+    impacts.add(p);
+    const tracked = this.rounds.get(p);
+    if (tracked) { this.finishRound(tracked, false); this.rounds.delete(p); }
+    const r = { last: new this.THREE.Vector3(x, y, z), color: this.rgb(p.owner, p.team), d: {} };
+    // A same-frame Ink Vac collision has no start record from which to read
+    // its charge-scaled radius. The native projectile carries that radius.
+    if (p.wid === 'inkVac') r.d.R = Number.isFinite(p.radius) && p.radius > 1 ? p.radius : 6;
+    this.call(ROUND_FX[p.wid]?.impact, r);
+  }
+  resetRound(p) {
+    this.inkjetImpacts.delete(p);
+    this.roundImpacts?.delete(p);
     const r = this.rounds.get(p);
     if (r) { this.finishRound(r, false); this.rounds.delete(p); }
-    this.call(ROUND_FX.inkjet.impact, { last: new this.THREE.Vector3(x, y, z), color: this.rgb(p.owner, p.team) });
-  }
-  resetInkjetRound(p) {
-    this.inkjetImpacts.delete(p);
-    const r = this.rounds.get(p);
-    if (r?.wid === 'inkjet') { this.finishRound(r, false); this.rounds.delete(p); }
   }
   finishRound(r, impact) {
     for (const rib of Object.values(r.d)) {
@@ -1749,18 +1764,20 @@ export function installSpecialVfx(api) {
   // Terrain bursts re-enter through a deferred snapshot with no live position.
   // Observe the actual projectile terminal once, not its later gameplay flush.
   if (typeof blast === 'function') P._blastBurst = function (p, at, ...args) {
-    const inkjet = this === G.projectiles && p?.wid === 'inkjet' && finite(p.pos?.x) && finite(p.pos?.y) && finite(p.pos?.z) && finite(at?.x) && finite(at?.y) && finite(at?.z);
+    const spec = ROUND_FX[p?.wid];
+    const terminal = this === G.projectiles && spec && (p.wid === 'inkjet' || p.type === 'blast') && (!spec.when || spec.when(p)) &&
+      finite(p.pos?.x) && finite(p.pos?.y) && finite(p.pos?.z) && finite(at?.x) && finite(at?.y) && finite(at?.z);
     // Preserve the native terminal coordinates before chained callbacks reuse
     // their scratch vectors. Do not alter the projectile or gameplay result.
-    const x = inkjet ? at.x : 0, y = inkjet ? at.y : 0, z = inkjet ? at.z : 0;
+    const x = terminal ? at.x : 0, y = terminal ? at.y : 0, z = terminal ? at.z : 0;
     const out = blast.call(this, p, at, ...args);
-    const d = inkjet && G.fx?.s3SpecialVfxEnabled !== false && directors.get(G.fx);
-    if (d) d.call(d.inkjetImpact, p, x, y, z);
+    const d = terminal && G.fx?.s3SpecialVfxEnabled !== false && directors.get(G.fx);
+    if (d) d.call(p.wid === 'inkjet' ? d.inkjetImpact : d.roundImpact, p, x, y, z);
     return out;
   };
   if (typeof fresh === 'function') P._new = function (...args) {
     const p = fresh.apply(this, args), d = this === G.projectiles && directors.get(G.fx);
-    if (d) { d._frameRoundsValid=false;d.call(d.resetInkjetRound, p); d.inkVacShots.delete(p); }
+    if (d) { d._frameRoundsValid=false;d.call(d.resetRound, p); d.inkVacShots.delete(p); }
     return p;
   };
   installTrizookaVfxBirths(api);

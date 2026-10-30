@@ -1,0 +1,32 @@
+{
+  "candidateCommit": "967c64f8e92a7285dd259a3c977eb38b734905d5",
+  "browser": "/usr/bin/chromium; headless; ANGLE SwiftShader",
+  "source": "scripts/render-inkwave-special-gallery.mjs with only executablePath and empty favicon added locally",
+  "size": 480,
+  "images": [
+    {
+      "file": "inkjet-before.png",
+      "sha256": "d00050fe03f16b3fe82af9ddd8a3549d8f698fadedddd658b017ef9119ff66d4",
+      "revision": "2e093c576ff891e9e4536cd1bf8d44ec2715b494f79c8e57cb876edaf23945cc",
+      "errors": []
+    },
+    {
+      "file": "stamp-before.png",
+      "sha256": "618b66cfa24125d977b8b89f3b97d0a14966df989abf507848662bc29585c9fd",
+      "revision": "2e093c576ff891e9e4536cd1bf8d44ec2715b494f79c8e57cb876edaf23945cc",
+      "errors": []
+    },
+    {
+      "file": "inkjet-after.png",
+      "sha256": "db2ef85ec318b4ea4da95360100e47b16ddd72f5414c55ae85cde87ced1363ce",
+      "revision": "bad1f1e962cba50bc737a935db39012fef7ce6bc7485195ad44a0f02f9f16528",
+      "errors": []
+    },
+    {
+      "file": "stamp-after.png",
+      "sha256": "ad50db05e8e8fe8e1cb7ef6d5023dac0f6c3d00371adeda6f034586067819933",
+      "revision": "bad1f1e962cba50bc737a935db39012fef7ce6bc7485195ad44a0f02f9f16528",
+      "errors": []
+    }
+  ]
+}

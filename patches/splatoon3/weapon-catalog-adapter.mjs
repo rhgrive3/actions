@@ -124,7 +124,7 @@ export function adaptWeaponCatalog(rel, code) {
     code = replaceOnce(code, '    // ---------------- aim: critically-damped spring',
       `    const specialControl = driveCanonicalBotSpecial(a, it, dt, this.target, {
       world: G, brain: this, move, wantYaw, wantPitch, aimDistance: aimDist,
-    });
+    }, true);
     if (specialControl?.handled) {
       wantYaw = specialControl.wantYaw; wantPitch = specialControl.wantPitch;
       aimDist = specialControl.aimDistance;

@@ -595,6 +595,27 @@ export const SPECIAL_ART_STATUS='procedural S3 reference interpretation; retail 
 function presentationShown(ch){for(let p=ch.root;p;p=p.parent)if(!p.visible)return false;return true;}
 const presentationMap=ch=>ch?.[PRESENTATION_INSTALL]?.states||presentationStates;
 const blockedMap=ch=>ch?.[PRESENTATION_INSTALL]?.blocked||presentationBlocked;
+// The source locomotion bank has no seated vehicle clips. A device's grips
+// cannot correct a walking pelvis/feet: riders need a whole-body pose before
+// the native IK pass. Coordinates below fit this procedural rig and its
+// devices, not Nintendo's unpublished skeleton or transition durations.
+export const SPECIAL_RIDER_CALIBRATION = Object.freeze({
+  settle: .18,
+  crabTank: Object.freeze({ hips: [0, .96, -.10], foot: [.297, 1.02, -.356], torso: [.08, .24, .08] }),
+  reefslider: Object.freeze({ hips: [0, .46, -.08], foot: [.33, .25, -.38], torso: [.35, .50, .35] }),
+});
+const riderBlend=(P,slot,value,w)=>{P[slot]+=(value-P[slot])*w;};
+function riderKind(ch) {
+  const a=ch.actor,token=specialPresentationToken(a),id=token?.id;
+  if(!a||a.character!==ch||!a.alive||a.superJumpState||ch.dance||!ch.kidForm||!presentationShown(ch)
+    ||ch.s3SpecialMotionEnabled===false||ch.s3SpecialPresentationEnabled===false||blockedMap(ch).get(ch)===token)return null;
+  if(id==='crabTank'&&(token.pose==='ball'||a._s3AllSpecialState?.ballMode))return null;
+  return id==='crabTank'||id==='reefslider'?id:null;
+}
+export function specialRiderMotionSnapshot(ch) {
+  const m=presentationMap(ch).get(ch);
+  return m?.riderKind?{kind:m.riderKind,age:m.riderAge,weight:m.riderWeight}:null;
+}
 function mapped(ch){const a=ch.actor,token=specialPresentationToken(a);if(!a||blockedMap(ch).get(ch)===token||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return null;
   const id=token?.id;return id==='trizooka'||id==='inkVac'||isSlam(id)||id==='storm'&&token.phase==='hold'?id:null;}
 export function specialPresentationSnapshot(ch){const m=presentationMap(ch).get(ch);return m?{kind:m.kind,handError:m.error,
@@ -693,7 +714,39 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       m.a.copy(socket).applyMatrix4(g.matrixWorld);m.b.copy(g.userData[side?'holeL':'holeR']).applyMatrix4(bone.matrixWorld);m.error=Math.max(m.error,m.a.distanceTo(m.b));
     }
   }
-  cp._buildPose=function(dt,input){const r=build.call(this,dt,input),id=mapped(this);if(id==='trizooka'||id==='inkVac'){
+  function riderPose(ch,dt,id) {
+    const m=id?presentationState(ch):presentationMap(ch).get(ch);
+    if(!m)return;
+    if(!id){
+      // Source clocks kept advancing while its floor solver yielded. Its old
+      // world-space foot anchors must not drag the first walking frame back
+      // toward the vehicle's launch position.
+      if(m.riderKind)ch.sourceMotion?.retarget?.reset();
+      m.riderKind=null;m.riderToken=null;m.riderAge=0;m.riderWeight=0;return;
+    }
+    const token=specialPresentationToken(ch.actor),state=ch.actor._s3AllSpecialState;
+    if(m.riderToken!==token){m.riderToken=token;m.riderAge=0;}
+    // Read the admitted action's age where available. Remote flag-only rows
+    // get a local presentation age, never an invented gameplay phase.
+    const age=state?.id===id&&Number.isFinite(state.t)?state.t:token.t;
+    m.riderAge=Number.isFinite(age)?Math.max(0,age):m.riderAge+Math.max(0,Math.min(.1,Number.isFinite(dt)?dt:0));
+    const w=m.riderWeight=smooth(m.riderAge/SPECIAL_RIDER_CALIBRATION.settle),P=ch.P,cfg=SPECIAL_RIDER_CALIBRATION[id];
+    m.riderKind=id;
+    for(let j=0;j<3;j++){
+      riderBlend(P,C.HIPS_P+j,cfg.hips[j]-ch.rest.hips.getComponent(j),w);
+      riderBlend(P,C.HIPS+j,j===0?cfg.torso[0]:0,w);riderBlend(P,C.SPINE+j,j===0?cfg.torso[1]:0,w);riderBlend(P,C.CHEST+j,j===0?cfg.torso[2]:0,w);
+      riderBlend(P,C.MODEL+j,0,w);riderBlend(P,C.MODELR+j,0,w);
+      riderBlend(P,C.FOOTL+j,cfg.foot[j],w);riderBlend(P,C.FOOTR+j,j===0?-cfg.foot[j]:cfg.foot[j],w);
+      riderBlend(P,C.FOOTLR+j,j===0&&id==='reefslider'?.65:0,w);riderBlend(P,C.FOOTRR+j,j===0&&id==='reefslider'?.65:0,w);
+      riderBlend(P,C.KNEEL+j,j===0?.25:j===2?1:0,w);riderBlend(P,C.KNEER+j,j===0?-.25:j===2?1:0,w);
+    }
+    // Vehicle contact is not floor contact. Preserve the native contact
+    // bookkeeping, but never blend a shoe back onto the moving ground below.
+    P[C.WPL]=P[C.WPR]=0;P[C.IKR]=P[C.IKL]=P[C.LTW]=0;
+    riderBlend(P,C.SQY,1,w);riderBlend(P,C.SQXZ,1,w);
+    P[C.HANDPL]=P[C.HANDPR]=0;
+  }
+  cp._buildPose=function(dt,input){const r=build.call(this,dt,input),ride=riderKind(this),id=mapped(this);riderPose(this,dt,ride);if(id==='trizooka'||id==='inkVac'){
       const m=presentationState(this);hold(this,m,id);const P=this.P,kick=Math.exp(-14*Math.max(0,(G.time||0)-m.shotAt));
       P[C.IKR]=P[C.IKL]=P[C.LTW]=0;P[C.CHEST]+=.09-.13*kick;P[C.SPINE]+=.025;
       P[C.HANDPL]=P[C.HANDPR]=0;P[C.MODELR]=P[C.MODELR+1]=P[C.MODELR+2]=0;
@@ -707,7 +760,18 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       P[C.HANDPL]=P[C.HANDPR]=0;
       if(this.sourceMotion){this.sourceMotion.sourceUpper=false;this.sourceMotion.keepSourceArms=false;}
     }return r;};
-  cp._applyPose=function(dt,input){const result=apply.call(this,dt,input),id=mapped(this),m=presentationMap(this).get(this);
+  cp._applyPose=function(dt,input){
+    const ride=riderKind(this),source=this.sourceMotion,active=source?.active;
+    let result;
+    try {
+      // Native _applyPose otherwise skips its lower-body IK and then lets the
+      // source bank overwrite the rider with an ordinary walk/jump clip. This
+      // is one drawing transaction; advance(), form and action clocks retain
+      // their source owner and resume normally on the next update.
+      if(ride&&source)source.active=false;
+      result=apply.call(this,dt,input);
+    } finally {if(ride&&source)source.active=active;}
+    const id=mapped(this),m=presentationMap(this).get(this);
     if(id==='trizooka'||id==='inkVac'){
       const s=presentationState(this);hold(this,s,id);const g=s.model,a=this.actor;
       this.kid.getWorldQuaternion(s.worldQ);s.dir.copy(a.aimDir).applyQuaternion(s.worldQ.invert()).normalize();
@@ -766,6 +830,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
     }
   }
   cp.update=function(dt,input){const result=update.call(this,dt,input),m=presentationMap(this).get(this),a=this.actor;
+    if(m?.riderKind&&!riderKind(this))riderPose(this,0,null);
     if(!a)return result;
     if(m){if(!mapped(this)&&m.kind)restore(this,m);cartridge(this,m);fists(this,m);}
     else if(a._s3TripleSlamFists||a.remote&&a.specialActive?.id==='slam')fists(this,presentationState(this));

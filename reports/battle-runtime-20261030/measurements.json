@@ -1,0 +1,749 @@
+{
+  "scope": "Fixed-step emitted game CPU transactions; not displayed FPS. All samples, including adverse results, retained.",
+  "order": [
+    "baseline-a1",
+    "intermediate-b1",
+    "baseline-a2",
+    "intermediate-b2",
+    "final-b3"
+  ],
+  "trials": [
+    {
+      "label": "baseline-a1",
+      "sourceSha": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
+      "contentHash": "276c8c285f5ab7533d242bee140ab4e07f43204d645e19c877c7c1102bfe5b79",
+      "status": "passed",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "low",
+        "weapon": "shooter",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "allocations": false,
+        "browser": "154.0.8037.57"
+      },
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "shooter",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 2048,
+        "ppm": 12.895073280000002,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1474,
+          "meshes": 450,
+          "visibleMeshes": 116,
+          "vertices": 2803489,
+          "visibleVertices": 569685,
+          "indices": 13792632,
+          "bones": 8904,
+          "geometries": 332,
+          "materials": 158,
+          "textures": 12
+        }
+      },
+      "frames": 900,
+      "ticks": 900,
+      "minActors": 8,
+      "minLiving": 8,
+      "cpuFrameMs": {
+        "mean": 8.974555555556694,
+        "p50": 7.2999999998137355,
+        "p95": 19.600000000093132,
+        "p99": 37.09999999962747,
+        "max": 59.40000000037253
+      },
+      "threadCpuMs": {
+        "TaskDuration": 6663.223999999999,
+        "ScriptDuration": 6.532,
+        "ThreadTime": 6675.678
+      },
+      "gc": {
+        "status": "observed",
+        "events": 24,
+        "pauses": 12,
+        "pauseMs": 24.589,
+        "maxPauseMs": 3.392,
+        "windowMs": 8118.044
+      },
+      "digest": 3698021394,
+      "counts": [
+        12871,
+        13384
+      ],
+      "errors": []
+    },
+    {
+      "label": "intermediate-b1",
+      "sourceSha": "c4f6d8f5aa8e4a3a59543e01d9761b087725470d",
+      "contentHash": "0e04c7b05efba0bfac3d2302565513e49fbd9c7898aa85bd4d1234c6964e7f4f",
+      "status": "passed",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "low",
+        "weapon": "shooter",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "allocations": false,
+        "browser": "154.0.8037.57"
+      },
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "shooter",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 2048,
+        "ppm": 12.895073280000002,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1474,
+          "meshes": 450,
+          "visibleMeshes": 116,
+          "vertices": 2803489,
+          "visibleVertices": 569685,
+          "indices": 13792632,
+          "bones": 8904,
+          "geometries": 332,
+          "materials": 158,
+          "textures": 12
+        }
+      },
+      "frames": 900,
+      "ticks": 900,
+      "minActors": 8,
+      "minLiving": 8,
+      "cpuFrameMs": {
+        "mean": 9.205777777776433,
+        "p50": 8,
+        "p95": 17.5,
+        "p99": 26.299999999813735,
+        "max": 54.5
+      },
+      "threadCpuMs": {
+        "TaskDuration": 7388.1050000000005,
+        "ScriptDuration": 4.83,
+        "ThreadTime": 7397.42
+      },
+      "gc": {
+        "status": "observed",
+        "events": 26,
+        "pauses": 13,
+        "pauseMs": 36.217000000000006,
+        "maxPauseMs": 13.098,
+        "windowMs": 8305.606
+      },
+      "digest": 3698021394,
+      "counts": [
+        12871,
+        13384
+      ],
+      "errors": []
+    },
+    {
+      "label": "baseline-a2",
+      "sourceSha": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
+      "contentHash": "276c8c285f5ab7533d242bee140ab4e07f43204d645e19c877c7c1102bfe5b79",
+      "status": "passed",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "low",
+        "weapon": "shooter",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "allocations": false,
+        "browser": "154.0.8037.57"
+      },
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "shooter",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 2048,
+        "ppm": 12.895073280000002,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1474,
+          "meshes": 450,
+          "visibleMeshes": 116,
+          "vertices": 2803489,
+          "visibleVertices": 569685,
+          "indices": 13792632,
+          "bones": 8904,
+          "geometries": 332,
+          "materials": 158,
+          "textures": 12
+        }
+      },
+      "frames": 900,
+      "ticks": 900,
+      "minActors": 8,
+      "minLiving": 8,
+      "cpuFrameMs": {
+        "mean": 8.641777777773225,
+        "p50": 7.2000000001862645,
+        "p95": 18.100000000093132,
+        "p99": 30.200000000186265,
+        "max": 51.299999999813735
+      },
+      "threadCpuMs": {
+        "TaskDuration": 6457.8369999999995,
+        "ScriptDuration": 5.009,
+        "ThreadTime": 6468.3
+      },
+      "gc": {
+        "status": "observed",
+        "events": 26,
+        "pauses": 13,
+        "pauseMs": 38.718999999999994,
+        "maxPauseMs": 7.311,
+        "windowMs": 7794.706
+      },
+      "digest": 3698021394,
+      "counts": [
+        12871,
+        13384
+      ],
+      "errors": []
+    },
+    {
+      "label": "intermediate-b2",
+      "sourceSha": "c4f6d8f5aa8e4a3a59543e01d9761b087725470d",
+      "contentHash": "0e04c7b05efba0bfac3d2302565513e49fbd9c7898aa85bd4d1234c6964e7f4f",
+      "status": "passed",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "low",
+        "weapon": "shooter",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "allocations": false,
+        "browser": "154.0.8037.57"
+      },
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "shooter",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 2048,
+        "ppm": 12.895073280000002,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1474,
+          "meshes": 450,
+          "visibleMeshes": 116,
+          "vertices": 2803489,
+          "visibleVertices": 569685,
+          "indices": 13792632,
+          "bones": 8904,
+          "geometries": 332,
+          "materials": 158,
+          "textures": 12
+        }
+      },
+      "frames": 900,
+      "ticks": 900,
+      "minActors": 8,
+      "minLiving": 8,
+      "cpuFrameMs": {
+        "mean": 8.7391111111108,
+        "p50": 7.2999999998137355,
+        "p95": 17.600000000093132,
+        "p99": 31.5,
+        "max": 46.89999999990687
+      },
+      "threadCpuMs": {
+        "TaskDuration": 6634.4529999999995,
+        "ScriptDuration": 5.934,
+        "ThreadTime": 6642.347
+      },
+      "gc": {
+        "status": "observed",
+        "events": 26,
+        "pauses": 13,
+        "pauseMs": 31.961999999999996,
+        "maxPauseMs": 7.475,
+        "windowMs": 7883.657
+      },
+      "digest": 3698021394,
+      "counts": [
+        12871,
+        13384
+      ],
+      "errors": []
+    },
+    {
+      "label": "final-b3",
+      "sourceSha": "f6ba8324987dfa91cce215c06e762233fc276f20",
+      "contentHash": "c3785dd15be649ce72195cb0bcec2ea274ce37af641d012a049aa254c64f382f",
+      "status": "passed",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "low",
+        "weapon": "shooter",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "allocations": false,
+        "browser": "154.0.8037.57"
+      },
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "shooter",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 2048,
+        "ppm": 12.895073280000002,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1474,
+          "meshes": 450,
+          "visibleMeshes": 116,
+          "vertices": 2803489,
+          "visibleVertices": 569685,
+          "indices": 13792632,
+          "bones": 8904,
+          "geometries": 332,
+          "materials": 158,
+          "textures": 12
+        }
+      },
+      "frames": 900,
+      "ticks": 900,
+      "minActors": 8,
+      "minLiving": 8,
+      "cpuFrameMs": {
+        "mean": 9.008999999994929,
+        "p50": 7.7999999998137355,
+        "p95": 19.299999999813735,
+        "p99": 32.60000000009313,
+        "max": 43.10000000009313
+      },
+      "threadCpuMs": {
+        "TaskDuration": 7143.736,
+        "ScriptDuration": 4.763,
+        "ThreadTime": 7151.666
+      },
+      "gc": {
+        "status": "observed",
+        "events": 26,
+        "pauses": 13,
+        "pauseMs": 61.832,
+        "maxPauseMs": 21.322,
+        "windowMs": 8142.342
+      },
+      "digest": 3698021394,
+      "counts": [
+        12871,
+        13384
+      ],
+      "errors": []
+    }
+  ],
+  "receipts": [
+    {
+      "label": "baseline-a1",
+      "file": "baseline-a1.json.gz",
+      "jsonSha256": "3f9987e483d40479f87ec6b94f4c527582c4002e75458e59b71dfc20c08484e3",
+      "gzipSha256": "ab5e6c36fd7e24cc53815581a3e92af788ff41f220149bbb808d735c571cdf4a",
+      "bytes": 127355
+    },
+    {
+      "label": "intermediate-b1",
+      "file": "intermediate-b1.json.gz",
+      "jsonSha256": "9826d70d795fdaaec971abc17183b645a8ff9b9f12482d6a762726ad10511740",
+      "gzipSha256": "0608e11e844e84ba86f317ffdb46fece52427073a637256bd45b79c800c77079",
+      "bytes": 126764
+    },
+    {
+      "label": "baseline-a2",
+      "file": "baseline-a2.json.gz",
+      "jsonSha256": "76bb3882ce16756dd1723b3bae5f25885f9879c6a0ff9faeb381114609247e14",
+      "gzipSha256": "0b52baa633c5ada1a91b8b1d0d9f337124c8a16554477d17c77fab9c6e0929e9",
+      "bytes": 127465
+    },
+    {
+      "label": "intermediate-b2",
+      "file": "intermediate-b2.json.gz",
+      "jsonSha256": "1ff24095ae0b97e2c692fae18791e7c3a3e579d9f32737a1eab0ec224bc2c43f",
+      "gzipSha256": "051331fae76f6033cbb82834eaf60d7d84aa3b561db1012b2294cd192d22e61c",
+      "bytes": 125931
+    },
+    {
+      "label": "final-b3",
+      "file": "final-b3.json.gz",
+      "jsonSha256": "6f81b00b6e8506dddcef07e7a76f2fc3a3c86664df956b63a813f9a5372c233f",
+      "gzipSha256": "398f7d5c3607e916a792eaa4c771a1037a482f67c91029dcdc056dbf706b7a89",
+      "bytes": 127004
+    }
+  ]
+}

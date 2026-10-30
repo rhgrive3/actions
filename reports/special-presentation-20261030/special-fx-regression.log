@@ -1,0 +1,61 @@
+✔ restored drop normalization and streak petal reuse preserve raw pool writes, seeded order, HDR and custom normalizers (233.064377ms)
+✔ restored Wail render alpha shares one exponential without changing beams or cosmetic RNG (67.806938ms)
+✔ round identity retirement ends retained shape cores and both ribbon pools exactly before impact (2.140363ms)
+✔ restored Bubbler iteration keeps eager local/remote source order, live-array mutations and retirement (6.385286ms)
+✔ Reefslider wakes, Vac suction basis and Inkjet ground guard retain every emitted argument at 30/60/120 Hz (357.467792ms)
+✔ Kraken filament sine reuse preserves every ribbon point and timestamp (324.248616ms)
+✔ speaker anchor reuse preserves filter-before-map reads, real matrices, sparse rows and releases holder references (97.447914ms)
+✔ Tenta rows preserve HUD order/projection and reuse bounded rows without retaining actors, including nested/error paths (72.901272ms)
+✔ Tenta headless reticles keep the same target lifecycle with row reuse (31.903411ms)
+✔ Wave viewer cache remains rejected: a same-array role change inside a synchronous beam callback selects a new viewer (10.55457ms)
+✔ an explicitly selected missing emitted build fails instead of falling back to source (1912.02739ms)
+✔ source 30Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (1834.612079ms)
+✔ source 30Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (686.544555ms)
+✔ source 60Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (2128.924602ms)
+ℹ {"refreshes":636,"clonesBefore":1308,"clonesAfter":36}
+✔ source 60Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (986.441595ms)
+ℹ {"trigBefore":792,"trigAfter":198}
+✔ source 120Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (5505.309271ms)
+✔ source 120Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (1502.211147ms)
+✔ production transform 30Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (1184.359089ms)
+✔ production transform 30Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (1113.988573ms)
+✔ production transform 60Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (3437.955639ms)
+✔ production transform 60Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (961.060593ms)
+✔ production transform 120Hz: six Wail rays preserve endpoints, particles, attributes and RNG through refresh/expiry/restart (5375.866825ms)
+✔ production transform 120Hz: three Inkstrike columns preserve complete particle/shape state and use one sin/cos per spray (2770.961172ms)
+✔ Wail refresh snapshots both aliased endpoints before writing either; old handles stay owned (71.069339ms)
+✔ uninstrumented fixtures preserve state while using native Math/Vector3 and no RNG spy (225.544277ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions-special_fx/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/actions-special_fx/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions-special_fx/patches/splatoon3/tests/special-vfx.test.mjs:192:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:6713) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the effect pools attach to the game FX root once, one draw per pool, with a degenerate warm instance (3688.288172ms)
+✔ presentation never changes gameplay: identical state, paint, events and randomness with effects on or off (13596.060867ms)
+✔ every special drives effects at 30/60/120 Hz and the pools stay bounded (38678.667511ms)
+✔ impact effects reuse the game blast without its droplet paint, and never call Math.random (3597.585186ms)
+✔ remote replay rows reach the effects only when accepted, and only for remote actors (3904.340075ms)
+✔ fired Wail effects keep their accepted world origins after death and expire without an actor track (4187.444457ms)
+✔ the effect kit retires its GPU resources with the FX instance (4103.988786ms)
+✔ Ultra Stamp is raised while held, anticipates the authoritative swing and lands on it (44712.800758ms)
+✔ effect meshes stay out of override passes (GTAO normal/depth) and draw normally otherwise (1524.821277ms)
+✔ Super Chump aim preview shows exactly the twelve landing points the throw uses (1228.273198ms)
+✔ Tenta Missiles lock HUD brackets exactly the opponents the salvo locks (1394.811629ms)
+✔ a remote Kraken is drawn dashing only at dash speed (the network carries no phase) (4.439824ms)
+✔ sprite quads face the camera (a mirrored, back-facing quad is culled and never draws) (1476.601248ms)
+✔ a follow callback drives the shape it owns (the default easing never overwrites it) (2876.460073ms)
+✔ the Ink Vac burst covers the blast radius the shot actually carries (6..11 by charge) (2725.110485ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131082.786762

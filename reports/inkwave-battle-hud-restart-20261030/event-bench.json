@@ -1,0 +1,141 @@
+{
+  "baselineRef": "84453765039f040cb937f6beb7fdb58d54f169dd",
+  "note": "Synthetic real DOM/CSS event burst: 500 turf pop + lowink pairs per sample, 5 alternating samples after 20-pair warmup. Not game frame time or FPS.",
+  "browser": "154.0.8037.57",
+  "summaries": {
+    "baseline": {
+      "elapsedMs": 1041,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "offsetWidthReads": 1000
+    },
+    "candidate": {
+      "elapsedMs": 43.89999999990687,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 501,
+      "offsetWidthReads": 0
+    }
+  },
+  "samples": [
+    {
+      "round": 0,
+      "variant": "baseline",
+      "elapsedMs": 1041,
+      "offsetWidthReads": 1000,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "LayoutDuration": 0.117624,
+      "RecalcStyleDuration": 0.830147
+    },
+    {
+      "round": 0,
+      "variant": "candidate",
+      "elapsedMs": 43.39999999990687,
+      "offsetWidthReads": 0,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 501,
+      "LayoutDuration": 0.00015699999999999048,
+      "RecalcStyleDuration": 0.031695999999999946
+    },
+    {
+      "round": 1,
+      "variant": "candidate",
+      "elapsedMs": 48.89999999990687,
+      "offsetWidthReads": 0,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 501,
+      "LayoutDuration": 0.00013900000000000023,
+      "RecalcStyleDuration": 0.03598699999999999
+    },
+    {
+      "round": 1,
+      "variant": "baseline",
+      "elapsedMs": 1058.6999999997206,
+      "offsetWidthReads": 1000,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "LayoutDuration": 0.11520199999999997,
+      "RecalcStyleDuration": 0.8532360000000001
+    },
+    {
+      "round": 2,
+      "variant": "baseline",
+      "elapsedMs": 1052.8999999999069,
+      "offsetWidthReads": 1000,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "LayoutDuration": 0.11245500000000003,
+      "RecalcStyleDuration": 0.853302
+    },
+    {
+      "round": 2,
+      "variant": "candidate",
+      "elapsedMs": 44.299999999813735,
+      "offsetWidthReads": 0,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 500,
+      "LayoutDuration": 0.00013500000000005175,
+      "RecalcStyleDuration": 0.03201900000000002
+    },
+    {
+      "round": 3,
+      "variant": "candidate",
+      "elapsedMs": 43.89999999990687,
+      "offsetWidthReads": 0,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 500,
+      "LayoutDuration": 0.00025599999999997847,
+      "RecalcStyleDuration": 0.03236300000000014
+    },
+    {
+      "round": 3,
+      "variant": "baseline",
+      "elapsedMs": 1030,
+      "offsetWidthReads": 1000,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "LayoutDuration": 0.10875600000000002,
+      "RecalcStyleDuration": 0.8351599999999997
+    },
+    {
+      "round": 4,
+      "variant": "baseline",
+      "elapsedMs": 1029,
+      "offsetWidthReads": 1000,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1001,
+      "RecalcStyleCount": 1001,
+      "LayoutDuration": 0.109184,
+      "RecalcStyleDuration": 0.8305339999999997
+    },
+    {
+      "round": 4,
+      "variant": "candidate",
+      "elapsedMs": 39.39999999990687,
+      "offsetWidthReads": 0,
+      "tickerNodes": 4,
+      "warning": 0.45,
+      "LayoutCount": 1,
+      "RecalcStyleCount": 501,
+      "LayoutDuration": 0.00014199999999997548,
+      "RecalcStyleDuration": 0.028991999999999685
+    }
+  ]
+}
