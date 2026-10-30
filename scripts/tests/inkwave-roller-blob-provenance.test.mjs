@@ -139,16 +139,17 @@ async function startNativeMusicProbe(owner, loadMusic = value => import(value), 
   const { MusicEngine } = await loadMusic(owner);
   const context = globalThis.__rollerMusicContext = new AudioContextCtor();
   const engine = globalThis.engine = new MusicEngine();
-  // Real production initialization and playback, with a silent output bus.
+  // Menu and battle are streamed recordings and intentionally do not start
+  // the procedural scheduler. Boss remains a real procedural track.
   engine._init(context, context.destination, { level: 0 });
-  engine.play('menu', { fade: 0 });
+  engine.play('boss', { fade: 0 });
   const state = {
     context: !!engine.ctx, contextState: context.state, offline: !!engine.offline,
     players: engine.players.length, worker: !!engine.worker, fallbackTimer: engine.timer != null,
     enabled: engine._musicIdle?.enabled, lifecycleInstalled: !!engine._platformMusic,
   };
   if (!state.context || state.offline || !state.players || !state.worker || state.fallbackTimer) {
-    throw new Error('Native music Worker activation failed after real init/menu playback: ' + JSON.stringify(state));
+    throw new Error('Native music Worker activation failed after real init/boss playback: ' + JSON.stringify(state));
   }
   return state;
 }
@@ -170,7 +171,7 @@ test('native Worker probe requires real initialization and active playback, neve
       this.worker = {};
     }
     play(track, options) {
-      assert.equal(track, 'menu'); assert.deepEqual(options, { fade: 0 });
+      assert.equal(track, 'boss'); assert.deepEqual(options, { fade: 0 });
       calls.push('play'); this.players.push({}); this._startTimer();
     }
   }

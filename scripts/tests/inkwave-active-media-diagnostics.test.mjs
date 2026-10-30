@@ -15,7 +15,7 @@ test('active native owner is observed before navigation, with one playing snapsh
  assert.ok(full<source.indexOf('  result.turfLead ='));
 });
 
-test('original failed-request gate is strict and is evaluated before closure diagnostics',()=>{
+test('raw failed requests are preserved and unverified failures gate before closure diagnostics',()=>{
  const listener=source.match(/page\.on\('requestfailed', request => \{[\s\S]*?\n\}\);/)?.[0];
  assert.ok(listener,'actual active-capture failed-request listener remains present');
  for(const error of ['net::ERR_ABORTED','net::ERR_FAILED',undefined]){
@@ -26,14 +26,17 @@ test('original failed-request gate is strict and is evaluated before closure dia
   assert.equal(failures[0].url,'https://fixture.invalid/audio.mp3');
   assert.equal(failures[0].error,error);
  }
- const gate="if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';";
+ const gate="if(errors.length || consoleErrors.length || audioAdmission.unverified.length) result.status = 'failed';";
  assert.ok(source.includes(gate));
  assert.ok(source.indexOf(gate)<source.indexOf('await closeObservedBrowser();'));
- for(const kind of ['errors','consoleErrors','failures']) {
-  const c={errors:[],consoleErrors:[],failures:[],result:{status:'passed'}};c[kind].push('negative');
+ assert.ok(source.includes('requests:failures,siteURL:address,revision:manifest.build.revision'));
+ assert.ok(source.includes('result.requestFailures = failures;'));
+ for(const kind of ['errors','consoleErrors','unverified']) {
+  const c={errors:[],consoleErrors:[],audioAdmission:{unverified:[]},result:{status:'passed'}};
+  (kind==='unverified'?c.audioAdmission.unverified:c[kind]).push('negative');
   vm.runInNewContext(gate,c);assert.equal(c.result.status,'failed',kind);
  }
- const c={errors:[],consoleErrors:[],failures:[],result:{status:'passed'}};
+ const c={errors:[],consoleErrors:[],audioAdmission:{unverified:[]},result:{status:'passed'}};
  vm.runInNewContext(gate,c);assert.equal(c.result.status,'passed');
  assert.doesNotMatch(source,/failures\.(?:filter|splice)|ERR_ABORTED[^\n]*(?:return|continue)/);
 });

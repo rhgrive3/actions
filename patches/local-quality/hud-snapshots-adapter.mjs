@@ -29,6 +29,11 @@ export function adaptHudSnapshots(rel, code, once) {
   }
   if (rel === 'src/core/mobile.js') {
     code = once(code, '  setHud({ special = 0,', '  setHud({ inkLow = false, special = 0,', 'touch shortage feedback input');
+    code = once(code, 'weapon = null, specialId = null,', "weapon = null, subId = null, specialId = null,", 'touch selected sub input');
+    code = once(code,
+      "    if (specialId && specialId !== L.spId)",
+      "    if (subId && subId !== L.subId) { L.subId = subId; E.sub.querySelector('.iwm-b__ico').innerHTML = SUB_ICONS[subId] || SUB_ICONS.bomb; }\n    if (specialId && specialId !== L.spId)",
+      'touch selected sub icon');
     return once(code,
       "    if (ik !== L.ink) { L.ink = ik; E.fire.style.setProperty('--ink', ik.toFixed(2)); E.fire.classList.toggle('is-low', ik < 0.2); }",
       "    if (ik !== L.ink) { L.ink = ik; E.fire.style.setProperty('--ink', ik.toFixed(2)); }\n    const low = !!inkLow;\n    if (low !== L.low) { L.low = low; E.fire.classList.toggle('is-low', low); }",

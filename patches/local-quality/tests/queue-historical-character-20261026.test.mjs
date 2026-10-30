@@ -12,6 +12,7 @@ import {adaptQueueVisualContinuation20261029} from '../queue-visual-continuation
 import {adaptCombatGpuCpuPerfect,adaptCombatWave345} from '../combat-gpu-cpu-perfect-adapter.mjs';
 import {adaptLateRoot20261029} from '../queue-late-root-20261029-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
+import {reverseReviewedMotionEpoch,reverseReviewedCharacterWave} from './reviewed-motion-epoch.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const oracleBytes=fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url));
 const oracle=JSON.parse(oracleBytes);
@@ -100,7 +101,8 @@ const characterWeaponAfter="  // Weapon contact poses also need this frame's rep
 test('historical character source retains independently pinned input and both later owner anchors (text only)',()=>{
  assert.equal(sha(oracleBytes),'8a9fb6e48fb8078e73e6a8a0a7156ac97792378390409dba063113abaceddf77','frozen fixture bytes');
  for(const[rel,entry]of Object.entries(oracle.modules)){
-  assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});
+  assert.equal(sha(entry.source),entry.sha256,rel);const emitted=candidate(rel,raw(rel));parse(emitted,{ecmaVersion:'latest',sourceType:'module'});
+  const next=rel==='src/game/character.js'?reverseReviewedMotionEpoch(emitted,'character'):emitted;
   if(rel==='src/game/character-outfit.js'){
    assert.equal(next,raw(rel),'current direct outfit source remains authoritative');assert.equal(adaptHistoricalCharacter20261026(rel,next),next);
   }else{
@@ -203,8 +205,9 @@ test('historical character source retains independently pinned input and both la
     assert.notEqual(currentEpoch,preWave,'final Wave 3–5 Character owner is exercised');
     assert.equal(adaptCombatWave345(rel,currentEpoch,replaceOnce),currentEpoch,'Wave 3–5 Character owner remains idempotent');
    }
-   assert.equal(next,currentEpoch,rel+' exact owner composition including visual continuation and terminal Wave 3–5');
-   assert.equal(currentTerminal,currentEpoch,rel+' independently sealed final tuple matches the actual final owner');
+   const priorWave=rel==='src/game/character.js'?reverseReviewedCharacterWave(currentEpoch):currentEpoch;
+   assert.equal(next,priorWave,rel+' exact owner composition including visual continuation and terminal Wave 3–5');
+   assert.equal(currentTerminal,priorWave,rel+' independently sealed final tuple matches the prior final owner');
    // Retain the separately reviewed raw source identities from the current
    // owner epoch as additional guards, rather than substituting them for the
    // complete historical + current owner composition equality.

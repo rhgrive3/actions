@@ -38,12 +38,12 @@ test('all Hissen kits enlarge every native airborne lobe in full and contour ren
 test('Hissen falling child matrices grow 50%; paint footprints, headings and other weapons remain unchanged',async()=>{
   const f=await fixture({productionComposition:true,extraExports}),T=f.THREE;
   const child={owner:{color:new T.Color('red')},pos:new T.Vector3(1,2,3),vel:new T.Vector3(0,-4,0),radius:3,drawRadius:.3,dirX:1,dirZ:0,seed:.2};
-  for(const actor of ['WeaponSlosherDiffusion','WeaponSlosherDouble','WeaponShooterNormal']) {
+  for(const actor of ['WeaponSlosherDiffusion','WeaponSlosherDouble','WeaponSlosherStrong','WeaponShooterNormal']) {
     child.sourceActor=actor;const before=JSON.stringify(child),matrices=[];
     const mesh={setMatrixAt:(_i,m)=>matrices.push(m.clone()),setColorAt:()=>{}};
     const n=f.appendSourcedSplashVisuals({_s3SplashDrops:[child]},mesh,new Float32Array(4),new Float32Array(4),new Float32Array(2),0,48,new T.Matrix4(),new T.Quaternion(),new T.Vector3(),new T.Vector3(),new T.Vector3(0,0,1));
     assert.equal(n,1);const scale=new T.Vector3(),position=new T.Vector3(),rotation=new T.Quaternion();matrices[0].decompose(position,rotation,scale);
-    const expected=actor==='WeaponSlosherDiffusion'?.225:actor==='WeaponSlosherDouble'?.15:.3;
+    const expected=actor==='WeaponSlosherDiffusion'?.225:actor==='WeaponSlosherDouble'||actor==='WeaponSlosherStrong'?.15:.3;
     for(const v of scale.toArray())close(v,expected);
     assert.deepEqual(position.toArray(),child.pos.toArray());assert.equal(JSON.stringify(child),before);
   }

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {reverseReviewedMotionEpoch} from './reviewed-motion-epoch.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -131,7 +132,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const rawCurrent=fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8');
  const currentGitBlob=createHash('sha1').update('blob '+Buffer.byteLength(rawCurrent)+'\0').update(rawCurrent).digest('hex');
  assert.equal(currentGitBlob,'111747a0ab4141af1cb3c58258e6ca24b88716f2','the separately reviewed current raw controller remains exact');
- const current=adaptBuildSource(REL,rawCurrent);
+ const current=reverseReviewedMotionEpoch(adaptBuildSource(REL,rawCurrent),'motion');
  const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,current);
  assert.equal(sha(JSON.stringify(laterOwnerPairs)),'26654dc4115ea24a28d7fad6c73eacafcd41298c7c4a34f183fbe790de638976','pinned later owner anchor pairs');
  const beforeWorldNative=reverseWorldNativeMotionOwner(afterHistoricalRestore);

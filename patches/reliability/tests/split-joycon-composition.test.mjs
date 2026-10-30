@@ -71,7 +71,7 @@ async function boot() {
   playerContext.G = G;
   const playerDepsCache = new Map();
   const playerModule = new vm.SourceTextModule(playerSource, { context: playerContext, identifier: path.join(ROOT, 'inkwave-public', PLAYER_REL) });
-  await playerModule.link(spec => {
+  await playerModule.link((spec, from) => {
     if (['../../patches/splatoon3/runtime/player-hurtbox.mjs', '../../patches/splatoon3/runtime/pad-sensitivity.mjs',
       '../../patches/splatoon3/runtime/superjump-destination.mjs'].includes(spec))
       return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches', spec.slice('../../patches/'.length)));
@@ -80,6 +80,12 @@ async function boot() {
     // any controller behavior; replacing it with dummy exports would hide drift.
     if (spec === '../../patches/splatoon3/runtime/camera-aim-controls.mjs') {
       return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches', spec.slice('../../patches/'.length)));
+    }
+    if (spec === '../../patches/splatoon3/runtime/turf-intro-camera.mjs') {
+      return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches/splatoon3/runtime/turf-intro-camera.mjs'));
+    }
+    if (['./battle-framing.mjs', './intro-presentation.mjs'].includes(spec) && from.identifier === path.join(ROOT, 'patches/splatoon3/runtime/turf-intro-camera.mjs')) {
+      return fileModule(playerContext, playerDepsCache, path.resolve(path.dirname(from.identifier), spec));
     }
     if (spec === '../../patches/splatoon3/runtime/weapons-fidelity.mjs') {
       return stubModule(playerContext, playerDepsCache, spec, 'export function updateShotGuide() {} export function projectShotGuide() {}');

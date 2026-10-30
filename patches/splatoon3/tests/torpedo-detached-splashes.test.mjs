@@ -48,7 +48,7 @@ async function world(client=null,clock=null){
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
 function landing(drop){
-  const g=drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
+  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
   return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}
@@ -72,6 +72,11 @@ test('Torpedo main contact does not apply an immediate extra12 and each detached
   for(let i=0;i<45;i++)w.step();assert.equal(b.phase,'chase');
   w.victim.pos.set(0,0,30);b.pos.set(-1,.7,30);b.prev.copy(b.pos);b.vel.set(120,0,0);w.step();
   const drops=w.f.G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');assert.equal(drops.length,8);
+  for(const d of drops){
+    const destination=landing(d),distance=Math.hypot(destination.x-d.pos.x,destination.z-d.pos.z);
+    assert.ok(distance<12,'detached blasts stay near the parent rather than travelling across the stage');
+    assert.equal(d.gravity,60,'the chase splash does not inherit parent flight gravity');
+  }
   assert.deepEqual(w.hits.map(h=>h.amount),[60]);assert.equal(w.victim.hp,40);
   assert.equal(w.stamps.filter(s=>s.radius===2).length,0,'chase splash paint waits for its own terrain contact');
   for(const d of drops){
@@ -99,6 +104,22 @@ test('Torpedo detached children clear with the world without inventing impact da
   assert.equal(w.f.G.projectiles._s3TorpedoSplashes.length,0);
   assert.ok(meshes.every(m=>m.parent===null));for(let i=0;i<200;i++)w.step();
   assert.deepEqual([w.hits.length,w.stamps.length],before);
+});
+
+test('secondary landing time and footprint remain fixed across render rates',async()=>{
+  let baseline;
+  for(const hz of [30,60,120]){
+    const w=await world(),b=w.fire();w.contact(b);
+    const clock=new w.f.FixedClock(),start=w.f.G.time,landings=[];
+    const original=w.paint.splat.bind(w.paint);
+    w.paint.splat=(pos,r,team,opts)=>{
+      if(r===2)landings.push([+(w.f.G.time-start).toFixed(6),...pos.toArray().map(n=>+n.toFixed(6))]);
+      return original(pos,r,team,opts);
+    };
+    for(let frame=0;frame<hz*3;frame++)clock.advance(1/hz,()=>w.step());
+    assert.equal(landings.length,8);
+    if(baseline)assert.deepEqual(landings,baseline,`${hz} Hz render cadence`);else baseline=landings;
+  }
 });
 
 test('Torpedo JSON replay keeps native hit and paint authority while ghosts carry detached visuals only',async()=>{

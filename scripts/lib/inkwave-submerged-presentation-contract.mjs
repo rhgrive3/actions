@@ -37,7 +37,11 @@ export function classifySubmergedPresentation(r) {
   }
   // A submerged squid does NOT excuse a still-visible transitioning human.
   // Independent glint/Flow draws may remain; they are validated separately.
-  const emptyRigAdmissible=inInk&&r.rootVisible&&r.rootAncestorsVisible&&r.squidRootVisible&&r.squidScale>0.001&&r.kidScale===0&&r.kidVisible===false&&(!r.source.active||r.source.formWeight===0);
+  // The native fallback scale may retain a nonzero transition value after the
+  // active source rig has hidden the kid. Actual visibility and the source
+  // blend, not that stale scalar alone, decide whether a human is drawn.
+  const hiddenKid=r.kidVisible===false&&(r.source.active?r.source.formWeight===0:r.kidScale===0);
+  const emptyRigAdmissible=inInk&&r.rootVisible&&r.rootAncestorsVisible&&r.squidRootVisible&&r.squidScale>0.001&&hiddenKid;
   return {expectedHiddenBody:inInk,emptyRigAdmissible,kind:inInk?'submerged-body':r.form==='kid'?'human':r.grounded?'dry-squid':'airborne-squid'};
 }
 

@@ -6,7 +6,11 @@ const MENU_RECORDING='menu_the_ika_swing_aoi_kenban.mp3';
 function battleReady(receipt) {
   if (!receipt?.assetURL || !Array.isArray(receipt.network) || !Array.isArray(receipt.snapshots)) return false;
   const response=receipt.network.find(row=>row.event==='response'&&row.url===receipt.assetURL&&row.status===200);
-  const completed=receipt.network.some(row=>row.event==='finished'&&row.url===receipt.assetURL&&row.requestId===response?.requestId);
+  // CDP loadingFinished identifies the request by ID; unlike the response,
+  // it does not include a URL. Bind it to the exact successful response.
+  const completed=typeof response?.requestId==='string'&&response.requestId.length>0&&
+    receipt.network.some(row=>row.event==='finished'&&row.requestId===response.requestId&&
+      (row.url===undefined||row.url===receipt.assetURL));
   const playing=receipt.snapshots.some(row=>{
     if(row.reason!=='native-playing-capture-ready')return false;
     const s=row.state,player=s?.current,media=player?.element;

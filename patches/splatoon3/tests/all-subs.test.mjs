@@ -41,6 +41,20 @@ function deployed(f, actor, sub, pos = [0, 1, 0]) {
   return object;
 }
 
+test('enemy fire hits and destroys the visible upper body of a deployed Beakon', async () => {
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const owner=f.make('shooter'),enemy=f.make('shooter');owner.team=0;enemy.team=1;owner.grounded=true;
+  const beacon=deployed(f,owner,'beakon',[0,0,0]);
+  const p={team:1,owner:enemy,damage:60,size:.08};
+  const start=new f.THREE.Vector3(0,.85,-2),end=new f.THREE.Vector3(0,.85,2);
+  for(let i=0;i<2;i++){
+    const hit=f.G.projectiles.kitBarrierCandidate(p,start,end);
+    assert.equal(hit?.object,beacon);hit.onHit();
+  }
+  assert.equal(beacon.dead,true);
+  assert.equal(f.G.projectiles.kitBarrierCandidate(p,start,end),null);
+});
+
 test('catalogue exposes fourteen entries and extracted rows follow the pinned 11.3.0 source', () => {
   assert.equal(SOURCE_RECEIPT.receipt.version, '11.3.0');
   assert.equal(ALL_SUB_IDS.length, 14);

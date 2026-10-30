@@ -1,9 +1,9 @@
 import {registerLimitedDrop,retireLimitedDrop} from '../../network-replication/torpedo-contact-commit.mjs';
 // S3 11.3.0 WeaponBombTorpedo BlastParamChase.SplashAroundParam supplies
 // Num8, Pitch65deg and Velocity0.42..0.48 DU/frame. Each detached drop explodes
-// on terrain, not together with the parent. Gravity is the existing custom
-// projectile calibration (24 world units/s²); its omitted retail default and
-// the exact azimuth distribution remain unverified. Fizzy's explicit per-stage
+// on terrain, not together with the parent. Their separate gravity is a
+// gameplay calibration, not an extracted retail default; exact azimuth and
+// Splatoon 3 flight timing remain unverified. Fizzy's explicit per-stage
 // SplashAroundParam uses the same bounded detached pool (legacy property name)
 // for harmless ordinary owner paint; it never receives a causal core grant.
 import { coolerSegmentContact } from './support-cooler-collision.mjs';
@@ -99,6 +99,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
     const vel=new api.THREE.Vector3(Math.cos(angle)*Math.cos(pitch)*speed,
       Math.sin(pitch)*speed,Math.sin(angle)*Math.cos(pitch)*speed);
     const drop={owner:source.owner,team:source.team,sourceLife:source.sourceLife,source,ghost:source.ghost,
+      gravity:kind==='chase'?(source.spec.splashGravity??source.spec.gravity):source.spec.gravity,
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
     const scene=api.G.scene;
@@ -121,7 +122,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
 export function stepTorpedoSplashes(api,projectiles,dt,burst){
   const list=projectiles._s3TorpedoSplashes||[];
   for(let i=list.length-1;i>=0;i--){
-    const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=d.source.spec.gravity*dt;d.pos.addScaledVector(d.vel,dt);
+    const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=(d.gravity??d.source.spec.gravity)*dt;d.pos.addScaledVector(d.vel,dt);
     const world=api.G.physics?.segment?.(d.prev,d.pos,projectiles._s3TorpedoSplashHit ||= new api.Hit());
     // Physics owns reusable Hit vectors. Capture primitives before later
     // collision/defense callbacks can reenter and overwrite that scratch.

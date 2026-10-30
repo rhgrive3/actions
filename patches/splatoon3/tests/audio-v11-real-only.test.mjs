@@ -265,7 +265,7 @@ test('network Charger voices use the shared Splat rise instead of an indefinite 
  assert.ok(adapted.includes('a.net._chargerOnsetActive = chargerStarting;'));
  assert.ok(adapted.includes('usesChargerRise(wid)?G.audio?.playChargerChargeRise'),'all recorded Charger identities use the Splat phrase');
  assert.ok(adapted.includes('const wid=a.weapon.id,chargeTime=a.weapon.chargeTime'),'remote rise follows weapon identity and clock');
- assert.ok(adapted.includes('G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime}'),'remote rise stays positional');
+ assert.ok(adapted.includes('G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime,progress:wr.charge}'),'remote rise stays positional and follows current charge progress');
  assert.ok(!adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"),'no individual HoldNoise on fresh hold');
  assert.ok(!adapted.includes("this._voiceLoop(a, near, 'charge', wr.charging"),
    'remote Charger hold must never be passed to the looping sound adapter');

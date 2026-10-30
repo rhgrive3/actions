@@ -22,10 +22,13 @@ test('non audio and malformed URLs do not escape recording',()=>{
  for(const url of ['not a URL','http://local/src/main.js','http://local/assets/audio/a.mp3'])assert.equal(capture(url,'net::ERR_ABORTED').length,1);
 });
 test('missing network error detail still fails closed',()=>assert.deepEqual(capture(audio,null),[{url:audio}]));
-test('pre-close failure gate and explicit teardown order remain unchanged',()=>{
- const gate=source.indexOf("if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';");
+test('pre-close gate rejects unverified failures and retains raw evidence before teardown',()=>{
+ const classify=source.indexOf('const audioAdmission = classifyRetiredMenuAudioAbort(');
+ const gate=source.indexOf("if(errors.length || consoleErrors.length || audioAdmission.unverified.length) result.status = 'failed';");
  const write=source.indexOf("fs.renameSync(evidence + '/browser-result.json.writing'");
  const close=source.lastIndexOf('await closeObservedBrowser();');
- assert.ok(gate>0 && gate<write && write<close);
- assert.match(source,/result\.verifiedAudioCancellations = \[\];/);
+ assert.ok(classify>0 && classify<gate && gate<write && write<close);
+ assert.match(source,/result\.requestFailures = failures;/);
+ assert.match(source,/result\.unverifiedRequestFailures = audioAdmission\.unverified;/);
+ assert.match(source,/result\.verifiedAudioCancellations = audioAdmission\.verified;/);
 });

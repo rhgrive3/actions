@@ -92,6 +92,9 @@ export async function checkResponsiveOnlineScroll(page,{settle,errorOnly=false}=
       const before=await page.evaluate(readOnlineScroll);
       await scroll(Math.max(160,owner.clientHeight));
       await page.waitForFunction(({selector,top})=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop>top+1,{selector:OWNERS[index],top:before.owners[index].scrollTop},{timeout:5000});
+      // End can animate asynchronously in WebKit. Wait for its native scroll
+      // to finish before issuing Home; otherwise the two motions can race.
+      if(engine==='webkit')await page.waitForFunction(selector=>{const el=document.querySelector('.iw-online:not(.is-leaving) '+selector);return el.scrollTop>=el.scrollHeight-el.clientHeight-1;},OWNERS[index],{timeout:5000});
       const down=await page.evaluate(readOnlineScroll);assertOnlineScrollMovement(before,down,index,1);
       await scroll(-owner.scrollHeight);
       await page.waitForFunction(selector=>document.querySelector('.iw-online:not(.is-leaving) '+selector).scrollTop<=1,OWNERS[index],{timeout:5000});

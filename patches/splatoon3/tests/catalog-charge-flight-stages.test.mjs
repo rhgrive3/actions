@@ -4,6 +4,7 @@ import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
+import { stringerChargeAudioLoop } from '../runtime/audio/stringer-charge-control.mjs';
 
 const chargers=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='charger'&&!r.legacy);
 const bows=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='stringer');
@@ -67,15 +68,16 @@ test('replicated Charger heads never create a second falling-paint claim and cle
 
 test('every Stringer kit exposes two source-timed charge stages, dings once per boundary and resets on release/cancel',async()=>{
   const f=await world(),cues=[];
-  f.G.audio={ctx:{},prepareWeapon(){},playWeapon(){},duck(){},
-    play(name,o){if(name==='charger_full')cues.push(o);},
-    loopWeapon(){return {playing:true,set(){},stop(){}};}};
+  f.G.audio={ctx:{state:'running',currentTime:0},prepareWeapon(){},playWeapon(){},duck(){},
+    play(name,o){if(name==='charge:confirmation')cues.push(o);},
+    loopWeapon(id,event,opts){return stringerChargeAudioLoop(this,id,opts,()=>({playing:true,set(){},stop(){this.playing=false;}}));}};
   f.installWeaponAudioRuntime(f.installedRuntime);
   for(const row of bows)for(const id of [row.id,...ALTERNATE_WEAPON_KITS.filter(k=>k.baseId===row.id).map(k=>k.id)]){
     const p=row.parameters.spl__WeaponStringerParam.ChargeParam;
     const a=f.make(id);a.form='kid';a.isLocal=true;const r=a.weaponRunner;cues.length=0;
     close(a.weapon.firstChargeTime,p.ChargeFrameMidCharge/60,id+' first clock');
     for(let frame=1;frame<=p.ChargeFrameFullCharge+3;frame++){
+      f.G.audio.ctx.currentTime+=1/60;
       r.update(1/60,{fire:true,firePressed:frame===1});
       const stage=frame<p.ChargeFrameMidCharge?0:frame<p.ChargeFrameFullCharge?1:2;
       assert.equal(r.chargeStage,stage,id+' at frame '+frame);
