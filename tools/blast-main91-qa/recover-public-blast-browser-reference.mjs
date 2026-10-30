@@ -26,6 +26,12 @@ const SYNDICATION=publicReferenceQuery();
 const TARGET=15.95,MAX_VIDEO=128*1024*1024,MAX_PNG=8*1024*1024,PREFIX='BLAST_REFERENCE_BROWSER_V1';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const emit=value=>process.stdout.write(PREFIX+' '+JSON.stringify(value)+'\n');
+export function createReferenceTrace(now=()=>performance.now()){
+ let phase='setup',next=0,overflow=false;const events=[],ids=new WeakMap();
+ return {phase(value){phase=value;},id(request){if(!ids.has(request))ids.set(request,++next);return ids.get(request);},
+  record(type,data={}){if(events.length>=128){overflow=true;return;}events.push({type,nodeTimeMs:now(),phase,...data});},
+  snapshot(){return {clock:'Node performance.now milliseconds; not browser clock or proof of consumed bytes',overflow,events:events.map(e=>({...e}))};}};
+}
 export function validatePresentedFrame(frame,target=TARGET){
  const finite=n=>typeof n==='number'&&Number.isFinite(n);
  if(!finite(target)||target!==TARGET)throw Error('Only the fixed reference time is allowed');
@@ -66,7 +72,7 @@ export async function seekReferenceFrame({url,target=15.95}){
 }
 export async function recoverBrowserReference(sourceRoot){
  let server,browser;
- const networkFailures=[];
+ const networkFailures=[],trace=createReferenceTrace();let mediaProof=null;
  try{
   if(process.env.CHROMIUM_EXECUTABLE_PATH)throw Error('Executable override forbidden');
   const root=path.resolve(sourceRoot),require=createRequire(path.join(root,'package.json'));
@@ -83,39 +89,57 @@ export async function recoverBrowserReference(sourceRoot){
   emit({type:'metadata',url:SYNDICATION,bytes:json.bytes.length,sha256:sha(json.bytes),parse:'json',...metadata});
   if(!metadata.identityMatches)throw Error('Public tweet identity missing or mismatched');
   const video=await limitedFetch(selectVideo(data),'video.twimg.com',MAX_VIDEO,AbortSignal.timeout(90000));
+  mediaProof={videoURL:video.url,videoSHA256:sha(video.bytes),videoBytes:video.bytes.length};
   server=http.createServer((req,res)=>{
+   const requestId=String(req.headers['x-iw-reference-request-id']||'missing').slice(0,20);
+   trace.record('server-request',{requestId,method:req.method,range:String(req.headers.range||'').slice(0,120)});
+   res.on('finish',()=>trace.record('server-finish',{requestId,status:res.statusCode}));
+   res.on('close',()=>trace.record('server-close',{requestId,status:res.statusCode,writableFinished:res.writableFinished}));
+   req.on('aborted',()=>trace.record('server-aborted',{requestId}));
+
    if(req.url!=='/reference.mp4'||!['GET','HEAD'].includes(req.method)){res.writeHead(404);res.end();return;}
    const range=req.headers.range;
    if(range){
     const match=/^bytes=(\d+)-(\d*)$/.exec(range);
     const start=match?Number(match[1]):NaN,end=match&&match[2]?Number(match[2]):video.bytes.length-1;
     if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>=video.bytes.length){res.writeHead(416,{'content-range':'bytes */'+video.bytes.length});res.end();return;}
-    res.writeHead(206,{'content-type':'video/mp4','content-range':'bytes '+start+'-'+end+'/'+video.bytes.length,'content-length':end-start+1,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes.subarray(start,end+1));return;
+    trace.record('server-body-offered',{requestId,status:206,bodyBytesOffered:req.method==='HEAD'?0:end-start+1,start,end});res.writeHead(206,{'content-type':'video/mp4','content-range':'bytes '+start+'-'+end+'/'+video.bytes.length,'content-length':end-start+1,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes.subarray(start,end+1));return;
    }
-   res.writeHead(200,{'content-type':'video/mp4','content-length':video.bytes.length,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes);
+   trace.record('server-body-offered',{requestId,status:200,bodyBytesOffered:req.method==='HEAD'?0:video.bytes.length,start:0,end:video.bytes.length-1});res.writeHead(200,{'content-type':'video/mp4','content-length':video.bytes.length,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const localURL='http://127.0.0.1:'+server.address().port+'/reference.mp4';
   browser=await launchSandboxBrowser(chromium);
   const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,serviceWorkers:'block'});
-  await context.route('**/*',route=>route.request().url()===localURL?route.continue():route.abort('blockedbyclient'));
+  await context.route('**/*',async route=>{
+   const request=route.request();if(request.url()!==localURL)return route.abort('blockedbyclient');
+   return route.continue({headers:{...await request.allHeaders(),'x-iw-reference-request-id':String(trace.id(request))}});
+  });
   const page=await context.newPage();
-  page.on('requestfailed',r=>networkFailures.push({url:r.url(),failure:r.failure()}));
+  page.on('request',r=>trace.record('browser-request',{requestId:String(trace.id(r)),url:r.url(),method:r.method(),range:r.headers().range??null}));
+  page.on('response',r=>trace.record('browser-response',{requestId:String(trace.id(r.request())),status:r.status(),contentRange:r.headers()['content-range']??null,contentLength:r.headers()['content-length']??null}));
+  page.on('requestfinished',r=>trace.record('browser-finished',{requestId:String(trace.id(r))}));
+  page.on('requestfailed',r=>{const failure={url:r.url(),failure:r.failure()};networkFailures.push(failure);trace.record('browser-failed',{requestId:String(trace.id(r)),...failure});});
   await page.setContent(`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; media-src http://127.0.0.1:*; style-src 'unsafe-inline'"><style>html,body{margin:0;padding:0;background:black}video{display:block;max-width:none;max-height:none}</style><video></video>`);
-  const frame=await page.evaluate(seekReferenceFrame,{url:localURL,target:TARGET});validatePresentedFrame(frame);
+  trace.phase('metadata-and-seek');
+  const frame=await page.evaluate(seekReferenceFrame,{url:localURL,target:TARGET});validatePresentedFrame(frame);mediaProof.frame=frame;trace.phase('frame-validated');
   await page.setViewportSize({width:frame.width,height:frame.height});
   const element=page.locator('video'),box=await element.boundingBox();
   if(!box||box.width!==frame.width||box.height!==frame.height)throw Error('Video element is scaled');
-  const png=await element.screenshot({type:'png',timeout:30000});
-  const after=await element.evaluate(v=>({paused:v.paused,seeking:v.seeking,currentTime:v.currentTime,width:v.videoWidth,height:v.videoHeight}));
+  trace.phase('screenshot');const png=await element.screenshot({type:'png',timeout:30000});
+  const after=await element.evaluate(v=>({paused:v.paused,seeking:v.seeking,currentTime:v.currentTime,width:v.videoWidth,height:v.videoHeight,videoError:v.error?{code:v.error.code,message:String(v.error.message).slice(0,160)}:null}));
   if(!after.paused||after.seeking||after.currentTime!==frame.currentTime||after.width!==frame.width||after.height!==frame.height)throw Error('Video changed during screenshot');
   if(png.length>MAX_PNG||png.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||png.readUInt32BE(16)!==frame.width||png.readUInt32BE(20)!==frame.height)throw Error('Reference screenshot size or PNG mismatch');
+  mediaProof.after=after;mediaProof.pngSHA256=sha(png);mediaProof.pngBytes=png.length;mediaProof.pixelReview='pending';trace.phase('post-screenshot');
+  emit({type:'transport-diagnostic',recordId:'public-tweet-browser-frame',mediaProof,trace:trace.snapshot(),networkFailures});
+  if(trace.snapshot().overflow)throw Error('Reference request trace bound exceeded');
+  if(after.videoError)throw Error('Video decoder reported an error');
   if(networkFailures.length)throw Error('Reference browser request failed: '+JSON.stringify(networkFailures));
   const base64=png.toString('base64'),parts=Math.ceil(base64.length/12000),pngSHA256=sha(png);
   emit({type:'meta',recordId:'public-tweet-browser-frame',status:'decoded-not-reviewed',sourceURL:SOURCE,syndicationURL:SYNDICATION,videoURL:video.url,retrievedAt:new Date().toISOString(),requestedTimeSeconds:TARGET,frame,videoSHA256:sha(video.bytes),videoBytes:video.bytes.length,pngSHA256,pngBytes:png.length,parts,encoding:'base64',browser:browser.version(),sandboxOptions:options,scope:'historical public 2023 clip; game build unverified; original-size paused video element; browser decode/compositor color pipeline, no image editing'});
   for(let i=0;i<parts;i++)emit({type:'chunk',recordId:'public-tweet-browser-frame',index:i,base64:base64.slice(i*12000,(i+1)*12000)});
   emit({type:'complete',recordId:'public-tweet-browser-frame',pngSHA256,parts});return true;
- }catch(error){emit({type:'error',recordId:'public-tweet-browser-frame',status:'not-recovered',sourceURL:SOURCE,error:String(error?.stack||error).slice(0,3000),networkFailures});return false;}
+ }catch(error){emit({type:'error',recordId:'public-tweet-browser-frame',status:'not-recovered',sourceURL:SOURCE,error:String(error?.stack||error).slice(0,3000),mediaProof,trace:trace.snapshot(),networkFailures});return false;}
  finally{await browser?.close().catch(error=>emit({type:'cleanup-error',error:String(error)}));if(server)await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){if(!await recoverBrowserReference(process.argv[2]))process.exitCode=1;}

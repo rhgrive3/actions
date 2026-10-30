@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validatePresentedFrame,seekReferenceFrame,publicReferenceQuery,inspectReferenceMetadata} from './recover-public-blast-browser-reference.mjs';
+import {validatePresentedFrame,seekReferenceFrame,publicReferenceQuery,inspectReferenceMetadata,createReferenceTrace} from './recover-public-blast-browser-reference.mjs';
 const frame=()=>({mediaTime:15.95,paused:true,seeking:false,readyState:2,currentTime:15.95,width:1920,height:1080,metadataWidth:1920,metadataHeight:1080,presentedFrames:1});
 test('actual presented frame metadata is required at the fixed time',()=>{assert.equal(validatePresentedFrame(frame()),true);assert.throws(()=>validatePresentedFrame(frame(),16));});
 test('wrong frame, unready, playback, scaled metadata, excessive dimensions rejected',()=>{
@@ -31,4 +31,17 @@ test('metadata output is bounded and omits untrusted text and media values',()=>
  assert.equal(result.keys.length,32);assert(result.keys.every(k=>k.length<=64));
  assert.equal(result.typename.length,80);assert.equal(result.observedId.length,40);
  assert(!JSON.stringify(result).includes('PRIVATE_'));assert(!JSON.stringify(result).includes('UNPRINTED'));
+});
+
+test('local trace request identity stable, distinct, phases and raw failure retained',()=>{
+ let time=0;const trace=createReferenceTrace(()=>++time),a={},b={};
+ assert.equal(trace.id(a),trace.id(a));assert.notEqual(trace.id(a),trace.id(b));
+ trace.phase('metadata-and-seek');trace.record('browser-failed',{requestId:String(trace.id(a)),failure:{errorText:'net::ERR_ABORTED'}});
+ const out=trace.snapshot();assert.equal(out.events[0].phase,'metadata-and-seek');assert.equal(out.events[0].nodeTimeMs,1);
+ assert.equal(out.events[0].failure.errorText,'net::ERR_ABORTED');assert.equal(out.overflow,false);
+});
+test('trace bounds explicitly fail closed without silent loss or old snapshot extension',()=>{
+ const trace=createReferenceTrace(()=>1);trace.record('first');const before=trace.snapshot();
+ for(let i=0;i<200;i++)trace.record('event');
+ assert.equal(before.events.length,1);assert.equal(trace.snapshot().events.length,128);assert.equal(trace.snapshot().overflow,true);
 });
