@@ -241,6 +241,17 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   for (const file of ['inkwave-public/src/main.js', 'inkwave-public/src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs']) assert(sourceInputs.includes(file), 'Required source input omitted from identity: ' + file);
   const moduleHashes = Object.fromEntries(required.map(file => { const digest = build.artifacts[file]; assert(digest, 'Missing required emitted module: ' + file); return [file, digest]; }));
   const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set();
+  // Diagnostics only: retain the strict zero-request-failure acceptance below.
+  const requestDiagnostics = [], failedRequestURLs = new Set();
+  let requestPhase = 'startup';
+  const recordRequestDiagnostic = (event, request) => {
+    if (requestDiagnostics.length >= 64) return;
+    let timing = null, timingError = null;
+    try { timing = request.timing(); } catch (error) { timingError = String(error); }
+    requestDiagnostics.push({ event, phase: requestPhase, at: new Date().toISOString(),
+      url: request.url(), resourceType: request.resourceType(), timing, timingError,
+      failure: request.failure()?.errorText ?? null });
+  };
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -260,7 +271,14 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
-    page.on('requestfailed', r => { if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
+    page.on('requestfailed', r => {
+      if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText });
+      if (failedRequestURLs.size < 32) failedRequestURLs.add(r.url());
+      recordRequestDiagnostic('failed', r);
+    });
+    page.on('requestfinished', r => {
+      if (failedRequestURLs.has(r.url())) recordRequestDiagnostic('same-url-finished-after-failure', r);
+    });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
@@ -300,7 +318,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       local: !!RG.match.local?.isLocal, sameMatch: RG.game.match === RG.match, audioState: RG.audio?.ctx?.state,
       recordedShooterFire: RG.audio?._weaponBank?.authorized?.byEvent?.has('shooter:fire') === true }));
     validateContextStartupReceipt(startup); lastStage = 'playing';
+    requestPhase = 'context-proof';
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
+    requestPhase = 'post-context-proof';
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
     assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
@@ -311,7 +331,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => ({ proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [] })); } catch (e) { diagnosticError = e.message; }
     result = { ok: false, error: error.stack || String(error), partial, diagnosticError };
   } finally {
-    result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }
@@ -323,3 +343,4 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   return result;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main(process.argv[2], process.argv[3]).catch(error => { console.error(error); process.exitCode = 1; });
+
