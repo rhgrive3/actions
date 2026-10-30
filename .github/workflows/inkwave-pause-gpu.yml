@@ -34,6 +34,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Verify exact checkout head
         shell: bash
@@ -64,6 +77,19 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: 00b8994711809ba6d0469723c858ddef6805e2ae
           path: baseline
       - name: Build unchanged baseline

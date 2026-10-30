@@ -57,12 +57,14 @@ jobs:
           npx playwright install --with-deps --only-shell chromium
       - name: Verify normal input and native QA contracts
         run: node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs tools/squid-heading-qa/reference.test.mjs tools/squid-heading-qa/bank-contract.test.mjs
-      - name: Checkout same-source counterfactual without repository history
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.SOURCE_SHA }}
-          fetch-depth: 1
-          path: _squid_heading_reference
+      - name: Create isolated same-source counterfactual from local Git objects
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git worktree add --detach _squid_heading_reference "$SOURCE_SHA"
+          test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"
+          test -z "$(git -C _squid_heading_reference status --porcelain)"
       - name: Build and capture named heading-only counterfactual
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"

@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          filter: blob:none
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           sparse-checkout-cone-mode: false
@@ -27,6 +28,14 @@ jobs:
             /*
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
