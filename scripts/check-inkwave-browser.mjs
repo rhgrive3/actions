@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
+import { classifyRetiredMenuAudioAbort } from './lib/inkwave-browser-media-admission.mjs';
 import { checkAcceptedDefaultConsumption } from './lib/inkwave-accepted-default-probe.mjs';
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { clickNativeKitCard } from './lib/inkwave-canonical-kit-input.mjs';
@@ -105,9 +106,8 @@ await page.addInitScript(() => { localStorage.setItem('inkwave.settings', JSON.s
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => {
   const event={url:request.url(),error:request.failure()?.errorText};
-  // A verified upstream body is not proof of browser delivery, playback, or
-  // intentional cancellation. All active-capture request failures fail closed.
-  // Explicit context teardown remains after the pre-close acceptance gate.
+  // Preserve every raw failure, including the previous track's MediaElement
+  // cancellation. Any lifecycle classification requires independent evidence.
   failures.push(event);
 });
 page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text().slice(0, 1500)); });
@@ -118,8 +118,8 @@ const streamedMusic = await observeStreamedMusic({context:browser,page,
 async function closeObservedBrowser() {
   try { return await streamedMusic.close(); }
   finally {
-    // Preserve the existing pre-close acceptance gate; closure diagnostics are
-    // saved separately and do not classify a canceled request as harmless.
+    // Explicit context teardown remains outside the pre-close acceptance gate.
+    // This post-close snapshot is never used to justify media cancellation.
     fs.writeFileSync(path.join(evidence,'streamed-music-diagnostics.json.writing'),JSON.stringify(streamedMusicReceipt,null,2));
     fs.renameSync(path.join(evidence,'streamed-music-diagnostics.json.writing'),path.join(evidence,'streamed-music-diagnostics.json'));
   }
@@ -512,9 +512,15 @@ try {
   result.sourceSha = sourceSha; result.verifiedResponses = receipts.length;
   result.verifiedRuntimeFiles = [...new Set(receipts)].sort();
   for (const required of ['patches/splatoon3/bootstrap.mjs','patches/splatoon3/profile.json','patches/splatoon3/runtime/install.mjs','patches/splatoon3/runtime/weapons.mjs','patches/splatoon3/runtime/movement.mjs','patches/splatoon3/runtime/walk.mjs','patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/movement-motion.mjs','patches/splatoon3/runtime/weapon-motion.mjs','patches/splatoon3/runtime/bomb-motion.mjs','patches/splatoon3/runtime/flow-motion.mjs','patches/splatoon3/runtime/weapon-detail-motion.mjs','src/main.js','src/game/actor.js','src/game/character.js','src/game/weapons.js']) if(!receipts.includes(required)) errors.push('Required runtime was not verified: '+required);
-  if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';
-  result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;
-  result.verifiedAudioCancellations = []; // No active-capture cancellation is waived.
+  const audioAdmission = classifyRetiredMenuAudioAbort({
+    requests:failures,siteURL:address,revision:manifest.build.revision,
+    receipt:streamedMusicReceipt,gameplayState:result.gameplay?.state,
+  });
+  if(errors.length || consoleErrors.length || audioAdmission.unverified.length) result.status = 'failed';
+  result.errors = errors; result.consoleErrors = consoleErrors;
+  result.requestFailures = failures; // Exact, unmodified browser evidence.
+  result.unverifiedRequestFailures = audioAdmission.unverified;
+  result.verifiedAudioCancellations = audioAdmission.verified;
   fs.writeFileSync(evidence + '/browser-result.json.writing', JSON.stringify(result, null, 2));
   fs.renameSync(evidence + '/browser-result.json.writing', evidence + '/browser-result.json');
   console.log(JSON.stringify({status:result.status,error:result.error,sourceSha,contentHash:result.contentHash,gearSelects:result.gearSelects,gameplay:result.gameplay,actionReliability:result.actionReliability,verifiedResponses:receipts.length,errors})); await closeObservedBrowser();
