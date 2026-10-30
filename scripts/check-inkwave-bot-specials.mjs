@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Short emitted-build check of native BotBrain -> Actor -> special effects.
+// Eighteen-special emitted-build check of native BotBrain -> Actor -> special effects.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +21,11 @@ for (const [file, digest] of Object.entries(build.artifacts))
   assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
 const prefix = `/_versions/${build.build.revision}/`;
 const server = http.createServer((req, res) => {
+  if (req.url === '/__bot-special-proof.mjs') {
+    res.setHeader('content-type', 'text/javascript');
+    res.end(fs.readFileSync(new URL('./lib/inkwave-bot-special-followthrough.mjs', import.meta.url)));
+    return;
+  }
   if (req.url === '/check') {
     res.setHeader('content-type', 'text/html');
     res.end(`<html><head><base href="${prefix}"><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body>Bot special input verification</body></html>`);
@@ -34,7 +39,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 const result = { status: 'running', revision: build.build.revision, contentHash: build.contentHash, cases: [], errors: [],
-  scope: 'Emitted native BotBrain/Actor/Physics/NavGraph/Projectiles and CPU paint ownership in Chromium; controlled supported floor, no rendering or retail parity claim.' };
+  scope: 'Emitted native BotBrain/Actor/Physics/NavGraph/Projectiles and CPU paint ownership in Chromium; 18 distinct specials excluding Kraken; controlled supported floor, 100 HP enemies; no rendering, all-stage or retail parity claim.' };
 let browser;
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -66,60 +71,39 @@ try {
     }
     G.paint = new CpuPaint(null, G.level, { atlasSize: 1024, maxDensity: 12, cell: .5 });
     G.projectiles = new api.Projectiles(G.scene);
-    const events = [], cases = [], failures = [];
-    api.on('all:special', e => events.push(e));
-    let stormThrows = 0;
-    const throwStorm = G.projectiles.throwStorm;
-    G.projectiles.throwStorm = function (...args) { stormThrows++; return throwStorm.apply(this, args); };
+    const { observeBotSpecialFollowthrough, FOLLOWTHROUGH_CASES } = await import(location.origin + '/__bot-special-proof.mjs');
     function make(special, team, z) {
       const a = new api.Actor({ team, name: 'Special verification', weapon: kits[special] || 'shooter', isBot: true,
         CharacterClass: api.Character, style: { hair: 0, skin: 0 } });
       if (!kits[special] && !applyCatalogueChoice(a, { sub: 'bomb', special }, api)) throw Error('Cannot equip ' + special);
-      if (a.weapon.special !== special) throw Error('Scenario equipped ' + a.weapon.special + ' instead of ' + special);
+      if (a.weapon.special !== special) throw Error('Wrong special identity: ' + special);
       G.actors.push(a); a.spawnAt(new THREE.Vector3(0, 0, z), 0); a.invuln = 0;
-      a.special = a.specialCost(); a.hp = 100000;
+      a.special = a.specialCost();
       return a;
     }
-    function prepare(special, distance = 20) {
-      G.projectiles.clear(); G.paint = new CpuPaint(null, G.level, { atlasSize: 1024, maxDensity: 12, cell: .5 }); G.actors.length = 0; events.length = 0; stormThrows = 0;
+    function prepare(special, distance) {
+      G.projectiles.clear(); G.paint = new CpuPaint(null, G.level, { atlasSize: 1024, maxDensity: 12, cell: .5 }); G.actors.length = 0;
       const a = make(special, 0, 0), enemy = make('trizooka', 1, distance);
+      const ally = special === 'tacticooler' ? make('trizooka', 0, 0) : null;
+      if (ally) { ally.pos.x = 3; ally.special = 0; }
       const b = a.bot = new BotBrain(a);
       b.target = enemy; b.seeTimer = 1.2; b.think = b.repath = b.bombCd = b.dodgeCd = 100;
       b.react = 0; b.acqT = 100; b.aimYaw = a.aimYaw = 0;
       b.aimPitch = a.aimPitch = Math.atan2(-.25, distance);
       a.aimPoint.set(0, .85, distance);
       b._pathTo(new THREE.Vector3(0, 0, 4), .6); b.repath = 100;
-      return { a, b, enemy };
+      return { a, b, enemy, ally };
     }
-    function tick(a, b) {
+    function tick(a, b, enemy, ally) {
       G.time += 1 / 60; b.update(1 / 60); a.update(1 / 60);
+      enemy.update(1 / 60); ally?.update(1 / 60);
       G.projectiles.update(1 / 60); G.paint.advanceSimulation(1 / 60);
     }
-    const check = (ok, label, details) => { if (!ok) failures.push({ label, details }); };
     Math.random = () => .5;
-    for (const special of ['storm', 'booyahBomb', 'tripleInkstrike']) {
-      const { a, b } = prepare(special);
-      let held = false, released = false;
-      const done = () => special === 'storm' ? stormThrows === 1 : events.some(e => e.actor === a && e.id === special && e.action === (special === 'tripleInkstrike' ? 'marker' : 'throw'));
-      for (let frame = 0; frame < 600 && !done(); frame++) {
-        const wasHeld = held; tick(a, b); held ||= a.intent.sub; released ||= wasHeld && !a.intent.sub;
-      }
-      const row = { special, admissions: a.stats.specials, held, released, effect: done() };
-      check(a.stats.specials === 1 && held && released && done(), special + ' native hold/release/effect', row); cases.push(row);
-    }
-    const { a, b, enemy } = prepare('krakenRoyale', 8);
-    let charged = false, released = false, dash = false;
-    for (let frame = 0; frame < 180 && !dash; frame++) {
-      tick(a, b); charged ||= a._s3AllSpecialState?.phase === 'charge';
-      released ||= charged && !a.intent.fire; dash ||= a._s3AllSpecialState?.phase === 'dash';
-    }
-    check(a.stats.specials === 1 && charged && released && dash, 'Kraken native charge and release', { admissions: a.stats.specials, charged, released, dash });
-    enemy.alive = false; b.target = null; b.seeTimer = 0; b.noProg = 1; b.jumpCd = -1; b._needJump = true;
-    let emptyJump = false;
-    for (let frame = 0; frame < 20; frame++) { tick(a, b); emptyJump ||= a.intent.jump; }
-    check(!emptyJump, 'Kraken empty-field tail jump suppressed', { emptyJump });
-    cases.push({ special: 'krakenRoyale', admissions: a.stats.specials, charged, released, dash, emptyJump });
-    return { cases, failures };
+    const { bigBubblerDomes } = await import(new URL('patches/splatoon3/runtime/kit-big-bubbler.mjs', document.baseURI));
+    const cases = await observeBotSpecialFollowthrough({ G, on: api.on, prepare, tick, bigBubblerDomes });
+    if (cases.length !== 18 || new Set(cases.map(c => c.special)).size !== 18 || FOLLOWTHROUGH_CASES.some(([id]) => !cases.some(c => c.special === id))) throw Error('Missing special proof');
+    return { cases, failures: cases.filter(c => !c.pass) };
   });
   result.cases = checked.cases; result.failures = checked.failures;
   assert.deepEqual(result.errors, []);

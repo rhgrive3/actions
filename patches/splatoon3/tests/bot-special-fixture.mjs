@@ -57,6 +57,7 @@ export async function makeBotSpecialFixture() {
     assert.equal(a.weapon.special, special, 'scenario must equip the requested special');
     a.team = team; a.slot = G.actors.length - 1;
     a.form = 'kid'; a.invuln = 0; a.pos.set(...point); a.character.root.position.copy(a.pos);
+    a.character.getMuzzle = out => out.copy(a.pos).add(new THREE.Vector3(0, 1.05, 0)).addScaledVector(a.aimDir, .3);
     a.special = a.specialCost();
     a.isBot = true;
     return a;
