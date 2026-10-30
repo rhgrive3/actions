@@ -1,0 +1,52 @@
+{
+  "source": "https://www.nintendo.com/jp/switch/av5ja/assets/images/index/movie/nawabari_pc.mp4",
+  "sha256": "5e933a5ce4b6695ca07b12777298ad5bf5eee82b5ce50ba0f90141382d5e8640",
+  "bytes": 9569787,
+  "width": 996,
+  "height": 560,
+  "fps": "60/1",
+  "decodedFrames": 1526,
+  "inspectedRange": [
+    0,
+    599
+  ],
+  "frameOrigin": "zero-based decoded source-video frame, not an asserted retail animation frame",
+  "maxPtsErrorSeconds": 3.3333333604446125e-07,
+  "events": [
+    {
+      "frame": 209,
+      "time": 3.4833333333333334,
+      "event": "friendly-to-opponent hard cut",
+      "evidence": "ffmpeg scene > .25 and adjacent-frame visual inspection"
+    },
+    {
+      "frame": 399,
+      "time": 6.65,
+      "event": "opponent-to-own-spawn hard cut",
+      "evidence": "ffmpeg scene > .25 and adjacent-frame visual inspection"
+    },
+    {
+      "frame": 436,
+      "time": 7.266666666666667,
+      "event": "first READY glyph",
+      "evidence": "adjacent frames 431..440 visually inspected"
+    },
+    {
+      "frame": 578,
+      "time": 9.633333333333333,
+      "event": "first match-start launch flash/burst",
+      "evidence": "adjacent frames 572..581 visually inspected"
+    },
+    {
+      "frame": 581,
+      "time": 9.683333333333334,
+      "event": "GO letters visible after white flash",
+      "evidence": "adjacent-frame visual inspection"
+    }
+  ],
+  "uncertainties": [
+    "source game version/gear/input timestamps are not supplied",
+    "the clip starts at team entry; a preceding rule/stage card is not evidenced",
+    "3D positions, FOV, optical easing and universal current-version timing cannot be recovered from one edited video"
+  ]
+}

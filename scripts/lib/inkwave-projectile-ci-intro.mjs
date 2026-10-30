@@ -24,11 +24,16 @@ export function completeNativeTurfIntro() {
   const stateTBefore = match.stateT;
   const matchTimeBefore = match.time;
   const skipRenderBefore = game._skipRender;
+  // Current camera sequence has a source-bound 578F intro. Historical builds
+  // retain their original bound. This does not extend the host wall deadline.
+  const frameLimit = match.turfIntroFrames ?? 360;
+  if (!Number.isSafeInteger(frameLimit) || frameLimit < 1 || frameLimit > 600)
+    throw new Error('Invalid native Turf intro frame budget');
   let frames = 0;
   game.debug.freeze();
   try {
     game._skipRender = true;
-    while (match.state === 'intro' && frames < 360) {
+    while (match.state === 'intro' && frames < frameLimit) {
       game._frame(1 / 60);
       frames++;
       if (game.match !== match || G.match !== match) {

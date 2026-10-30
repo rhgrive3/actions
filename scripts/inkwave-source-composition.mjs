@@ -1,3 +1,4 @@
+import { adaptTurfIntroCamera } from '../patches/splatoon3/turf-intro-camera-adapter.mjs';
 import { adaptLockOptionRecovery } from '../patches/reliability/lock-option-recovery-adapter.mjs';
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
 import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
@@ -143,7 +144,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueUiContinuation20261029(rel, code);
   code = adaptQueueVisualContinuation20261029(rel, code);
   code = adaptLateRoot20261029(rel, code);
-  return adaptCombatWave345(rel, code, replaceOnce);
+  return adaptTurfIntroCamera(rel, adaptCombatWave345(rel, code, replaceOnce));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

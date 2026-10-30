@@ -12,6 +12,7 @@ function section(source, start, end) {
   return source.slice(a, b);
 }
 export const nativeIntroMethods = {
+  turfRuntime: fs.readFileSync(new URL('../../../patches/splatoon3/runtime/turf-intro-camera.mjs', import.meta.url),'utf8').replace(/^import .*;$/gm,'').replace(/export /g,''),
   beginIntroPresentation:beginIntroPresentation.toString(),
   advanceIntroPresentation:advanceIntroPresentation.toString(),
   intro: section(main, '  _intro() {', '\n  pause() {'),
@@ -25,9 +26,9 @@ export const nativeIntroMethods = {
 export function installNativeIntroFixture(methods) {
     const beginIntroPresentation=eval('('+methods.beginIntroPresentation+')');
     const advanceIntroPresentation=eval('('+methods.advanceIntroPresentation+')');
-    const G = window.__G = { mode:'match', level:{spawnPads:[{x:0,y:0,z:0}]}, projectiles:{}, teamHex:['#ff8a14','#2f5bff'] };
-    const THREE = { Vector3:class {constructor(x,y,z){Object.assign(this,{x,y,z});} set(x,y,z){Object.assign(this,{x,y,z});}} };
-    const nativeArenaBasis = () => null, nativeSpawnYaw = (_l,_t,yaw) => yaw;
+    const G = window.__G = { mode:'match', level:{spawnPads:[{x:0,y:0,z:0},{x:0,y:0,z:40}]}, projectiles:{}, teamHex:['#ff8a14','#2f5bff'] };
+    const THREE = { Vector3:class {constructor(x=0,y=0,z=0){Object.assign(this,{x,y,z});} set(x,y,z){Object.assign(this,{x,y,z});return this;} copy(v){return this.set(v.x,v.y,v.z);} add(v){return this.set(this.x+v.x,this.y+v.y,this.z+v.z);} multiplyScalar(k){return this.set(this.x*k,this.y*k,this.z*k);} distanceTo(v){return Math.hypot(this.x-v.x,this.y-v.y,this.z-v.z);} lerpVectors(a,b,k){return this.set(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,a.z+(b.z-a.z)*k);}} };
+    const {beginTurfIntro,TURF_INTRO_FRAMES}=new Function('beginIntroPresentation','advanceIntroPresentation','battleVerticalFov','BATTLE_HUMANOID_VERTICAL_FOV',methods.turfRuntime+';return {beginTurfIntro,TURF_INTRO_FRAMES};')(beginIntroPresentation,advanceIntroPresentation,x=>x,55);
     const TEAM_NAMES=['Alpha','Bravo'], WEAPONS={}, GLYPHS={}, tr=x=>x, tu=x=>x;
     const toHex=(x,f)=>x||f, colorVars=()=>{}, tagTitle=()=>'', tagNum=()=>'', tagArt=()=>'', fnv=()=>0, weaponIcon=()=>'', kindOf=x=>x, splatSVG=()=>'';
     const h = (tag, props, ...kids) => {
@@ -40,18 +41,18 @@ export function installNativeIntroFixture(methods) {
     const captureTurfFinish=()=>{},advanceTenacity=()=>{},sampleTeamWipes=()=>{};
     const MATCH={finalCountdown:5};
     const calls = window.calls={frames:0,liveFrames:0,renderedIntroFrames:0,skippedLiveFrames:0,freeze:0,unfreeze:0};
-    const hud={el:document.querySelector('.iw-hud'),overLayer:document.querySelector('.iw-hud-over'),_visible:false,boss:{on:false},setWorldPaused(){},_snd(){}};
+    const hud={el:document.querySelector('.iw-hud'),overLayer:document.querySelector('.iw-hud-over'),_visible:false,boss:{on:false},setWorldPaused(){},_clearReticleFeedback(){},_snd(){}};
     hud.bannerLayer=h('div');hud.overLayer.append(hud.bannerLayer);
     hud.setVisible=eval('({'+methods.visible+'})').setVisible;
     hud._lineup=eval('({'+methods.lineup+'})')._lineup;
     hud.banner=eval('({'+methods.banner+'})').banner;
-    const m={state:'intro',stateT:0,time:180,duration:180,mode:'turf',attract:false,paused:false,actors:[],controller:{},local:{isLocal:true,team:0}};
+    const m={turfIntroFrames:TURF_INTRO_FRAMES.go,state:'intro',stateT:0,time:180,duration:180,mode:'turf',attract:false,paused:false,actors:[],controller:{},local:{isLocal:true,team:0}};
     const emit=(kind,data)=>{if(kind==='match:state'&&data.state==='playing')hud.banner('go');};
     m.update=eval('({'+methods.update+'})').update;m.setState=eval('({'+methods.setState+'})').setState;
     const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl2');
     if(!gl)throw Error('real WebGL2 context unavailable');
     const renderer={domElement:canvas,getContext:()=>gl};
-    const game=window.__inkwave={match:m,frozen:false,_skipRender:false,hud,R:{renderer},rig:{cinematic(){}},_playMusic(){},
+    const game=window.__inkwave={match:m,frozen:false,_skipRender:false,hud,R:{renderer},rig:{pivot:new THREE.Vector3(),camera:{position:new THREE.Vector3(),up:new THREE.Vector3(),userData:{},aspect:16/9,lookAt(){},updateProjectionMatrix(){},updateMatrixWorld(){}}},_playMusic(){},
       settings:{frameRate:'display'},_rangeFrameProbe:null,timer:{update(){},getDelta:()=>1/60},fpsAcc:0,fpsN:0,_dynRes(){},
       menus:{current:null,_scr:null,layer:h('div'),wipeEl:h('div'),wipe:{busy:false,running:false}}};
     game.debug={freeze(){calls.freeze++;game.frozen=true;},unfreeze(){calls.unfreeze++;game.frozen=false;game.timer.update();}};

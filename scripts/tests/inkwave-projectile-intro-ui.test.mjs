@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {TURF_INTRO_FRAMES} from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';
 import {nativeIntroMethods, installNativeIntroFixture} from './fixtures/inkwave-projectile-native-intro.mjs';
 import {installProjectileCaptureUiGate,withProjectileCaptureUi} from '../lib/inkwave-projectile-capture-ui.mjs';
 import {completeNativeTurfIntro} from '../lib/inkwave-projectile-ci-intro.mjs';
@@ -51,12 +52,12 @@ const callback=deadline=>atomicIntroFunction(nativeTurfIntroWithUiFunction(compl
 
 test('actual composed intro, lineup and match methods pass phase-correct helper without rendering early cinematic',async()=>{
   const f=fixture();const early=f.read({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true});
-  assert.equal(early.ready,true);assert.equal(early.captureReady,false);assert(early.captureFailed.includes('hud'));assert(early.captureFailed.includes('lineup'));assert.equal(early.hud.flag,false);assert.equal(early.ui.lineupCount,1);assert.equal(f.read().ready,false);
+  assert.equal(early.ready,true);assert.equal(early.captureReady,false);assert(early.captureFailed.includes('hud'));assert(!early.captureFailed.includes('lineup'));assert.equal(early.hud.flag,false);assert.equal(early.ui.lineupCount,0);assert.equal(f.read().ready,false);
   const pending=f.run(callback(10000));f.window.startNativeLoop();
   const result=await f.drive(pending);
-  assert.equal(result.playingReady,true);assert.equal(result.intro.frames,253);assert.equal(result.intro.matchTimeBefore,180);assert.equal(result.intro.matchTimeAfter,180);
+  assert.equal(result.playingReady,true);assert.equal(result.intro.frames,TURF_INTRO_FRAMES.go);assert.equal(result.intro.matchTimeBefore,180);assert.equal(result.intro.matchTimeAfter,180);
   assert.equal(f.calls.renderedIntroFrames,0);assert.equal(f.calls.skippedLiveFrames,0);assert.equal(f.calls.freeze,2);assert.equal(f.calls.unfreeze,2);
-  assert.equal(f.window.__iwProjectileIntroUiReceipt.initialUi.hud.flag,false);assert(f.window.__iwProjectileIntroUiReceipt.initialUi.captureFailed.includes('hud'));assert.equal(f.window.__iwProjectileIntroUiReceipt.uiReadyAtMs,3500);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
+  assert.equal(f.window.__iwProjectileIntroUiReceipt.initialUi.hud.flag,false);assert(f.window.__iwProjectileIntroUiReceipt.initialUi.captureFailed.includes('hud'));assert.equal(f.window.__iwProjectileIntroUiReceipt.uiReadyAtMs,50);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
   assert.equal(f.read().ready,false,'GO is still mandatory to settle');
   await f.tick(4000);assert.equal(f.read().ready,true);assert.equal(f.calls.skippedLiveFrames,0);
 });
@@ -67,17 +68,17 @@ test('negative control executes actual native HUD timer after immediate completi
 });
 
 test('structural mode cannot authorize capture, playing, duplicate/missing HUD, multiple lineups or wrong renderer',()=>{
-  for(const mutate of [f=>f.hud.remove(),f=>f.ui.append(Object.assign(new f.Node(),{className:'iw-hud'})),f=>f.G.renderer={...f.G.renderer},f=>f.over.append(Object.assign(new f.Node(),{className:'iw-lineup'}))]){
+  for(const mutate of [f=>f.hud.remove(),f=>f.ui.append(Object.assign(new f.Node(),{className:'iw-hud'})),f=>f.G.renderer={...f.G.renderer},f=>{for(let i=0;i<2;i++)f.over.append(Object.assign(new f.Node(),{className:'iw-lineup'}));}]){
     const f=fixture();mutate(f);assert.equal(f.read({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}).ready,false);assert.equal(f.calls.frames,0);
   }
   for(const phase of ['capture','settled','before-screenshot','playing']){const f=fixture();assert.equal(f.read({phase,allowIntro:true,settled:false,cinematicAdmission:true}).ready,false);}
-  const f=fixture();f.run(completeNativeTurfIntro);assert.equal(f.read({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}).ready,false);
+  const f=fixture();f.run(completeNativeTurfIntro);assert.equal(f.read({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}).captureReady,false);
 });
 
 for(const fault of ['HUD hidden','lineup remains','CSS pending','CSS paused','wrong renderer','touch orientation','menu reappears','wipe restarts'])test(fault+' remains fail-closed after structural admission and restores native controls',async()=>{
   const f=fixture(),pending=f.run(callback(3800));
   if(fault==='HUD hidden')f.game.hud=null;
-  if(fault==='lineup remains')f.over.querySelector('.iw-lineup').remove=()=>{};
+  if(fault==='lineup remains')f.over.append(Object.assign(new f.Node(),{className:'iw-lineup'}));
   if(fault==='CSS pending')f.hud.animation=[{pending:true,playState:'running',effect:{target:f.hud}}];
   if(fault==='CSS paused')f.hud.animation=[{pending:false,playState:'paused',effect:{target:f.hud}}];
   if(fault==='wrong renderer')f.G.renderer={...f.G.renderer};
@@ -85,7 +86,7 @@ for(const fault of ['HUD hidden','lineup remains','CSS pending','CSS paused','wr
   if(fault==='menu reappears')f.game.menus.current='pause';
   if(fault==='wipe restarts')f.game.menus.wipe.running=true;
   await assert.rejects(f.drive(pending),/deadline|ownership/);
-  assert.equal(f.calls.frames,180);assert.equal(f.calls.liveFrames,0);assert.equal(f.match.state,'intro');assert.equal(f.match.time,180);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
+  assert.equal(f.calls.frames,TURF_INTRO_FRAMES.ready);assert.equal(f.calls.liveFrames,0);assert.equal(f.match.state,'intro');assert.equal(f.match.time,180);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
   assert.equal(f.window.__iwProjectileIntroUiReceipt.outcome,'failed');
 });
 
@@ -93,7 +94,7 @@ for(const fault of ['identity','paused','state','clock','unfreeze','network','bo
   const f=fixture(),pending=f.run(callback(5000));
   if(fault==='identity')f.G.match={};if(fault==='paused')f.match.paused=true;if(fault==='state')f.match.state='playing';if(fault==='clock')f.match.time=179;if(fault==='unfreeze')f.game.frozen=false;if(fault==='network')f.G.netm={};
   if(fault==='boss')f.match.boss={};if(fault==='range')f.match.opts={range:true};if(fault==='ranked')f.match.mode='zones';
-  await assert.rejects(f.drive(pending),/ownership changed/);assert.equal(f.calls.frames,180);assert.equal(f.calls.liveFrames,0);assert.equal(f.game._skipRender,false);assert.equal(f.game.frozen,false);
+  await assert.rejects(f.drive(pending),/ownership changed/);assert.equal(f.calls.frames,TURF_INTRO_FRAMES.ready);assert.equal(f.calls.liveFrames,0);assert.equal(f.game._skipRender,false);assert.equal(f.game.frozen,false);
 });
 
 test('expired callback does not mutate cinematic and a late UI receipt can never satisfy original host deadline',async()=>{
@@ -101,6 +102,7 @@ test('expired callback does not mutate cinematic and a late UI receipt can never
   assert.equal(f.window.__iwProjectileIntroUiReceipt.outcome,'failed');
   const g=fixture(),receipt={};const evaluation=g.run(callback(10000));
   const result=await g.drive(evaluation);assert.equal(result.playingReady,true);
+  await g.tick(3501);
   await assert.rejects(requireAtomicIntro({evaluate:async()=>result},()=>{},3500,{now:g.now,receipt}),/expired/);assert.equal(receipt.outcome,'expired-before-evaluation');
 });
 
@@ -130,7 +132,7 @@ test('a foreign Match-clock presentation cannot authorize even one intro frame',
 test('a stalled native presentation remains bounded and cannot consume a live frame',async()=>{
  const f=fixture();f.game._frame=()=>{f.calls.frames++;};
  await assert.rejects(f.run(callback(10000)),/presentation did not finish/);
- assert.equal(f.calls.frames,360);assert.equal(f.calls.liveFrames,0);
+ assert.equal(f.calls.frames,TURF_INTRO_FRAMES.ready+1);assert.equal(f.calls.liveFrames,0);
  assert.equal(f.match.time,180);assert.equal(f.match.state,'intro');
  assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
 });

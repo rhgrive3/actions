@@ -1,0 +1,47 @@
+{
+  "candidateContentHash": "c2c07c8b884ea3f7cb698591f9bf511faafe01237ab01e08276dac3bd296bfe5",
+  "nativeCapture": {
+    "outcome": "passed",
+    "frames": 16,
+    "nativeRows": 16,
+    "pageErrors": []
+  },
+  "sourceTests": {
+    "pass": 86,
+    "fail": 0,
+    "skip": 0
+  },
+  "emittedTests": {
+    "pass": 35,
+    "fail": 0,
+    "skip": 0
+  },
+  "introContractTests": {
+    "pass": 58,
+    "fail": 0,
+    "skip": 0
+  },
+  "uiBrowserTests": {
+    "pass": 8,
+    "fail": 0,
+    "skip": 0
+  },
+  "quickChecks": "passed",
+  "build": "esbuild-minify",
+  "startupBudget": {
+    "status": "passed",
+    "revision": "21c6b3c167aa821bce0d4cd8c94b5d4b48e4b8636bf6eb7b4637a29c84d4621e",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78620,
+    "initialJSBytes": 1819684,
+    "criticalHTMLBytes": 24043,
+    "precacheCount": 584,
+    "precacheBytes": 7917848,
+    "workerBytes": 96130,
+    "declaredBytes": 16399345,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  }
+}

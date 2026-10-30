@@ -51,7 +51,7 @@ try{
  result.active=await page.evaluate(()=>{const gl=probeG.renderer?.getContext(),ext=gl?.getExtension('WEBGL_debug_renderer_info');return{baseURI:document.baseURI,mode:probeG.mode,browser:navigator.userAgent,dpr:devicePixelRatio,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,gpuTimerQuery:!!gl?.getExtension('EXT_disjoint_timer_query_webgl2')};});
  result.environment.browser=await context.browser().version();result.environment.seed=20261004;result.environment.seedMode='reset-each-fixed-step';result.environment.fixtureClockMode='canonical-battle-zero-phase';checkpoint();
  if(fixedOnly&&!menuOnly)await page.evaluate(()=>{probeG.game.debug.freeze();probeG.game.R.setDynamicScale(1);});
- if(parityOnly)await page.evaluate(async()=>{const g=probeG.game;await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freeze();g.debug.freezeBots();g._skipRender=true;for(let i=0;i<270;i++)g._frame(1/60);g._skipRender=false;g.R.render();});
+ if(parityOnly)await page.evaluate(async()=>{const g=probeG.game;await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freeze();g.debug.freezeBots();g._skipRender=true;for(let i=0;i<900&&g.match.state==='intro';i++)g._frame(1/60);if(g.match.state!=='playing')throw Error('Native intro failed to reach play');g._skipRender=false;g.R.render();});
  if(!result.active.baseURI.includes(result.revision))throw Error('Active revision mismatch');
  const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
  for(const scenario of (inputOnly||parityOnly?[]:menuOnly?['title','settings']:['title','settings','battle'])){
