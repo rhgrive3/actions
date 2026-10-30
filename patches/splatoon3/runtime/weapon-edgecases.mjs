@@ -411,6 +411,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     // Keep the latest fixed-tick queue owner: mark the queued snapshot, not the live pooled round.
     const reducedDirect = !!victim && victim !== 'boss';
     if (!flushing && p.s3TerrainBurst) {
+      p.s3TerrainBurstDeferrals = (p.s3TerrainBurstDeferrals || 0) + 1;
       (this.s3BlastQueue ??= []).push({
         point: point.clone(), victim,
         p: { owner: p.owner, team: p.team, ghost: !!p.ghost, wid: p.wid, seed: p.seed,
@@ -418,6 +419,26 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
           // just as we keep its source weapon and collision normal.
           vel: p.vel?.clone(),
           s3Weapon: p.s3Weapon ?? null, s3TerrainBurst: true,
+          // Special rounds share this same deferred terrain queue. Keep the
+          // immutable descriptor and firing-action ledger, not the pooled
+          // projectile; otherwise the flush becomes an ordinary Blaster hit.
+          s3SpecialWeapon: p.s3SpecialWeapon ?? null,
+          damageOwner: p.damageOwner, s3TrizookaBirthPending: p.s3TrizookaBirthPending,
+          s3TrizookaVolleyDamage: p.s3TrizookaVolleyDamage,
+          s3TrizookaAP: p.s3TrizookaAP, s3VolleyIndex: p.s3VolleyIndex, s3ActionIndex: p.s3ActionIndex,
+          s3AllSpecial: p.s3AllSpecial, s3AllSpecialMode: p.s3AllSpecialMode,
+          s3AllSpecialActivation: p.s3AllSpecialActivation, s3AllSpecialSeed: p.s3AllSpecialSeed,
+          s3SpecialPowerAP: p.s3SpecialPowerAP, s3PaintNoSpecial: p.s3PaintNoSpecial,
+          s3AllSpecialPaintRadius: p.s3AllSpecialPaintRadius,
+          s3AllSpecialCrossPaintRadius: p.s3AllSpecialCrossPaintRadius,
+          s3AllSpecialCrossPaintLength: p.s3AllSpecialCrossPaintLength,
+          s3AllSpecialSplashAroundRadius: p.s3AllSpecialSplashAroundRadius,
+          s3AllSpecialSplashAroundCount: p.s3AllSpecialSplashAroundCount,
+          s3AllSpecialSplashAroundOffsetY: p.s3AllSpecialSplashAroundOffsetY,
+          s3AllSpecialSplashAroundVelocityMin: p.s3AllSpecialSplashAroundVelocityMin,
+          s3AllSpecialSplashAroundVelocityMax: p.s3AllSpecialSplashAroundVelocityMax,
+          s3AllSpecialSplashAroundPitchMin: p.s3AllSpecialSplashAroundPitchMin,
+          s3AllSpecialSplashAroundPitchMax: p.s3AllSpecialSplashAroundPitchMax,
           // PR1188: keep the struck surface orientation for the falling burst drop.
           s3BurstCollisionHit: p.s3BurstCollisionHit?.normal ? { normal: p.s3BurstCollisionHit.normal.clone() } : null },
       });
