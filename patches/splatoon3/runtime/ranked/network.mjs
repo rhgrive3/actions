@@ -265,7 +265,7 @@ export function acceptState(nm, packet) {
       // Host totals use baseline points, independent of this actor's SCU.
       a.special = Math.min(a.specialCost(), a.special + gain / (a.s3?.modifiers?.specialCharge || 1));
     }
-    m.rankedGains = [...packet.gains];
+    m.rankedGains = packet.gains.map((total, team) => Math.max(previous[team], total));
   }
   m.rankedWorld?.update(engine, 0);
   recordTowerHostSnapshot(nm, packet.state);

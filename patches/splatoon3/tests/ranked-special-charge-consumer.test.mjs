@@ -113,3 +113,21 @@ test('dynamic SCU changes preserve filled fraction and death consumes skipped pa
   equip(a, 0); near(a.specialFrac(), .2); w.award(20); near(a.specialFrac(), .3);
   equip(a, 57); a.special = a.specialCost() - 1; w.award(50); near(a.specialFrac(), 1, 'cap remains actor-local');
 });
+
+
+test('ranked cumulative passive credit cannot rewind within the same match or new host', async () => {
+ const f=await boot();
+ for(const mode of ['zones','tower','rainmaker','clams']) {
+  const w=world(f,mode);w.a.special=0;
+  w.receive(45);near(w.a.special,45);
+  w.receive(0,{revision:w.host.revision});near(w.a.special,45);
+  assert.equal(w.m.rankedGains[0],45,'same revision lower total never erases credited high-water');
+  w.receive(45);near(w.a.special,45,'same total after lower snapshot is not a new award');
+  w.receive(10);w.receive(60);near(w.a.special,60,'only genuinely new cumulative delta awarded');
+  w.nm.s.hostId='new-host';w.nm.s._members.add('new-host');
+  const send=total=>{w.host.revision++;w.nm.onMessage('new-host',{k:'rkstate',rk:{match:'ranked-scu',host:'new-host',state:w.host.snapshot(),gains:[total,0]}});};
+  send(0);send(60);near(w.a.special,60,'host handoff cannot replay old cumulative credit');
+  send(70);near(w.a.special,70);
+  const fresh=world(f,mode);fresh.receive(10);near(fresh.a.special,10,'fresh match owns a fresh zero ledger');
+ }
+});

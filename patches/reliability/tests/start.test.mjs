@@ -749,3 +749,14 @@ test('negative control: old menu entry propagates recorded-audio rejection witho
   assert.equal(h.game.menus.current,null);
 });
 
+
+function rematch(h) {const line=PRODUCTION.match(/^      rematch: \(\) => self\.[^\n]+/m)?.[0];assert.ok(line);return vm.runInNewContext(`({${line}})`,{self:h.game}).rematch();}
+function resultRig(phase){const h=boot(PRODUCTION,phase?[phase]:[]);Object.assign(h.G.net,{state:'offline',tr:null,match:null});h.G.mode='match';h.game.match.attract=false;h.game.match.state='results';h.game.menus.current='loadout';h.game.lastMatchOpts={mapId:'a',mode:'turf'};return h;}
+for (const phaseName of ['world','warm']) test('result rematch recovers '+phaseName+' rejection and permits retry',async()=>{
+ const h=resultRig(phaseName),toasts=[];h.game.menus.toast=x=>toasts.push(x);const pending=rematch(h),caught=pending.catch(e=>e);await h.reached[phaseName].promise;assert.equal(h.game.menus.current,null);h.gates[phaseName].reject(Error('temporary '+phaseName));await caught;
+ assert.equal(h.game.menus.current,'main');assert.equal(h.G.mode,'menu');assert.equal(toasts.length,1);assert.equal(h.game.match.attract,true);assert.equal(h.count('fadeOut'),1);
+ h.gates[phaseName]=deferred();h.gates[phaseName].resolve();await rematch(h);assert.equal(h.G.mode,'match');assert.equal(h.game.match.attract,false);assert.equal(toasts.length,1);
+});
+test('late failed rematch cannot overwrite newer successful retry',async()=>{const h=resultRig('warm'),toasts=[];h.game.menus.toast=x=>toasts.push(x);const pending=rematch(h),caught=pending.catch(e=>e);await h.reached.warm.promise;const old=h.gates.warm;h.gates.warm=deferred();h.gates.warm.resolve();await rematch(h);const before=h.snapshot(),at=h.calls.length;old.reject(Error('old'));await caught;assert.deepEqual(h.snapshot(),before);assert.deepEqual(h.calls.slice(at),[]);assert.equal(toasts.length,0);});
+test('direct core start still rejects instead of consuming caller error',async()=>{const h=resultRig('world');const pending=h.game.startMatch(h.game.lastMatchOpts);const caught=assert.rejects(pending,/core failure/);await h.reached.world.promise;h.gates.world.reject(Error('core failure'));await caught;assert.equal(h.game.menus.current,null);});
+test('real rematch API preserves exact last options and returned promise',()=>{const line=PRODUCTION.match(/^      rematch: \(\) => self\.[^\n]+/m)?.[0];for(const opts of [{mapId:'a',duration:90,mode:'turf'},{mapId:'b',mode:'boss'},undefined]){const marker=Promise.resolve('normal'),calls=[],self={lastMatchOpts:opts,startMatch(o){calls.push(o);return marker;},_startMenuMatch(o){calls.push(o);return marker;}};const api=vm.runInNewContext(`({${line}})`,{self});assert.equal(api.rematch(),marker);assert.equal(calls.length,1);if(opts)assert.equal(calls[0],opts);else assert.equal(Object.keys(calls[0]).length,0);}});
