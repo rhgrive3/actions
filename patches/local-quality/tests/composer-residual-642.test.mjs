@@ -105,6 +105,22 @@ const PROFILES = [
   { name: 'desktop-ULTRA', quality: 'ultra', mobile: { touch: false }, css: [1920, 1080], dpr: 2 },
 ];
 
+test('native stencil and geometry MSAA stay on the scene target through resize and reset',async()=>{
+ const ns=await linkEntry(`export * as THREE from 'three';\nexport {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';`);
+ for(const samples of [0,2,4]){
+  const target=new ns.THREE.WebGLRenderTarget(64,32,{type:ns.THREE.HalfFloatType,samples});
+  const composer=new ns.EffectComposer(nativeComposerRenderer(1),target);
+  configureComposerColorTargets(ns.THREE,composer,{packed:false,canPack:false,nativeInkStencil:true});
+  for(const action of [()=>{},()=>composer.setSize(128,72),()=>composer.reset()]){
+   action();assert.equal(composer.renderTarget1.samples,0);assert.equal(composer.renderTarget1.stencilBuffer,false);
+   assert.equal(composer.renderTarget1.depthBuffer,false);assert.equal(composer.renderTarget2.samples,samples);
+   assert.equal(composer.renderTarget2.stencilBuffer,true);assert.equal(composer.renderTarget2.depthBuffer,true);
+   assert.equal(composer.renderTarget2.texture.type,ns.THREE.HalfFloatType);
+  }
+  composer.dispose();
+ }
+});
+
 test('#642 acceptance: mobile uses a renderable packed HDR pair and frees it on resize/dispose', async () => {
   const ns = await linkEntry(
     `export * as THREE from 'three';\n` +
@@ -240,7 +256,11 @@ test('#642 acceptance: unsupported WebGL, incomplete FBO and unproven ScreenFX f
     configureComposerColorTargets(ns.THREE, composer, decision);
     assert.deepEqual([composer.renderTarget1.texture.type, composer.renderTarget2.texture.type],
       [ns.THREE.HalfFloatType, ns.THREE.HalfFloatType], `${scenario.name} keeps both targets HalfFloat`);
-    assert.deepEqual([composer.renderTarget1.depthBuffer, composer.renderTarget2.depthBuffer], [true, true], `${scenario.name} keeps native depth roles`);
+    const samples=scenario.samples??0;
+    assert.deepEqual([composer.renderTarget1.depthBuffer, composer.renderTarget2.depthBuffer], [samples?false:true, true], `${scenario.name} retains scene depth`);
+    assert.deepEqual([composer.renderTarget1.samples, composer.renderTarget2.samples], [0,samples], `${scenario.name} retains geometry MSAA without multisampling fullscreen colour`);
+    composer.reset();
+    assert.deepEqual([composer.renderTarget1.samples, composer.renderTarget2.samples], [0,samples], `${scenario.name} preserves MSAA roles after reset`);
     composer.dispose();
     if (state.probes.length) assert.equal(state.probeDisposals, 1, `${scenario.name} disposes its attempted probe`);
     assert.equal(state.bound, priorTarget, `${scenario.name} restores the previous target`);

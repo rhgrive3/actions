@@ -25,7 +25,7 @@ function make(f) {
 }
 
 test('empty native ink skips view/frustum work and the first later paint uses the current camera', async () => {
-  const f = await nativeFixture(), { mesh, geometry, other, paint, camera } = make(f);
+  const f = await nativeFixture({renderOnly:true}), { mesh, geometry, other, paint, camera } = make(f);
   let views = 0, frustums = 0;
   const multiply = mesh._view.multiplyMatrices, setFrustum = mesh._frustum.setFromProjectionMatrix;
   mesh._view.multiplyMatrices = function(...args) { views++; return multiply.apply(this, args); };
@@ -61,7 +61,7 @@ test('empty native ink skips view/frustum work and the first later paint uses th
 });
 
 test('native ink releases face/chunk caches on rebind, geometry replacement and disposal', async () => {
-  const f = await nativeFixture(), { mesh, geometry, face, paint } = make(f);
+  const f = await nativeFixture({renderOnly:true}), { mesh, geometry, face, paint } = make(f);
   const list = mesh._faceChunks(face);
   assert.equal(mesh._faceChunkLists.get(face).list, list);
   const wrappedPush = paint._pushQuad;
@@ -84,4 +84,28 @@ test('native ink releases face/chunk caches on rebind, geometry replacement and 
   assert.equal(mesh._painted, null);
   assert.equal(mesh.geometry, null);
   mesh.dispose(); mesh.material.dispose();
+});
+
+test('native ink stencil shares current atlas geometry, falls back on reflections and releases only its material',async()=>{
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,{mesh,paint,geometry,face,camera}=make(f);
+ mesh.material.dispose();mesh.material=f.nativeInkMaterial({texture:new THREE.Texture(),size:256},new THREE.Texture());
+ let target={stencilBuffer:true};const renderer={getRenderTarget:()=>target};paint.renderer=renderer;
+ mesh.bindPaint(paint);const mask=mesh._stencilMask;
+ assert.ok(mask);assert.equal(mask.parent,mesh);assert.equal(mask.geometry,geometry);
+ assert.equal(mask.material.colorWrite,false);assert.equal(mask.material.depthWrite,false);
+ assert.equal(mask.material.stencilFunc,THREE.AlwaysStencilFunc);assert.equal(mask.material.stencilZPass,THREE.ReplaceStencilOp);
+ assert.equal(mesh.material.stencilFunc,THREE.EqualStencilFunc);assert.equal(mesh.material.stencilWriteMask,0);
+ assert.equal(mask.material.stencilRef,mesh.material.stencilRef);assert.ok(mask.renderOrder<mesh.renderOrder);
+ paint._pushQuad(face,0,1,0,1);mask.onBeforeRender(renderer,{},camera);
+ assert.equal(mesh.material.stencilWrite,true);assert.equal(mask.material.visible,true);assert.equal(geometry.drawRange.count,3);
+ const texture=new THREE.Texture();mesh.material.userData.uniforms.uPaint.value=texture;
+ const next=geometry.clone().setIndex(null);mesh.geometry=next;mesh.bindPaint(paint);geometry.dispose();
+ mask.onBeforeRender(renderer,{},camera);
+ assert.equal(mask.geometry,next);assert.equal(mask.material.uniforms.uPaint.value,texture);
+ target={stencilBuffer:false};mesh.onBeforeRender(renderer,{},camera);
+ assert.equal(mask.material.visible,false);assert.equal(mesh.material.stencilWrite,false,'reflection retains the original unmasked ink draw');
+ target=null;mesh.onBeforeRender(renderer,{},camera);assert.equal(mask.material.visible,false);assert.equal(mesh.material.stencilWrite,false);
+ let disposed=0;mask.material.addEventListener('dispose',()=>disposed++);
+ mesh.dispose();mesh.dispose();assert.equal(disposed,1);assert.equal(mask.parent,null);assert.equal(mesh._stencilMask,null);
+ mesh.material.dispose();texture.dispose();
 });
