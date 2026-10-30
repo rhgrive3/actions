@@ -32,8 +32,8 @@
 
 ## 検証
 
-- `node --experimental-vm-modules --test` で開始カメラ・初期スポーン・照準・画角・Splashtag・Opening・intro寿命・Turf leadの関連回帰87件がskipなしで成功。
-- 配信生成物に `INKWAVE_BUILT_SITE` を指定し、CameraRig / Match / 照準 / 画角 / 初期スポーン36件を再実行し、skipなしで成功。
+- `node --experimental-vm-modules --test` で開始カメラ・初期スポーン・照準・画角・Splashtag・Opening・intro寿命・Turf leadの関連回帰88件がskipなしで成功。
+- 配信生成物に `INKWAVE_BUILT_SITE` を指定し、CameraRig / Match / 照準 / 画角 / 初期スポーン37件を再実行し、skipなしで成功。
 - introを実行する撮影用fixtureの契約58件と、実ChromiumのDOM/CSS/所有権・締切の負例8件が成功。
 - quick checks、通常の最適化ビルド、startup budgetが成功。
 - `node scripts/capture-inkwave-turf-intro.mjs --site _site --map wahoo --evidence-dir <永続保存先>` で実配信Game/Match/CameraRigを16時点で撮影。seed112358、1280×720、low、SwiftShader。専用のsandbox有効ブラウザを使い、生成物全ハッシュを開始前に照合する。比較元main 5b722cba8も同一Wahoo・同じseedで16時点を撮影した。キャプチャは試合をfreezeしたうえで実Game._frameを1/60ずつ実行し、撮影時だけdt=0で描画するため、GPU実時間性能の証拠ではない。
@@ -46,6 +46,15 @@
 
 [公式映像の要点](turf-intro-camera-20261030/reference.jpg) / [原典Wahooの16時点](turf-intro-camera-20261030/native-after.jpg) / [実ブラウザ数値](turf-intro-camera-20261030/native-after.json) / [集計](turf-intro-camera-20261030/validation.json)。原典16画像を確認し、ページエラー0、578Fでplaying、初期aimからflight／通常追従へ復帰することを確認した。全画面の画素一致や実機FPSの主張ではない。
 
-追加レビュー: 名札の既存セキュリティ処理・メタデータを保持し、表示チームと寿命だけをカメラへ接続。source87／emitted36、intro契約58、実ブラウザUI8、HTTPヘッダー保持4、CI runner契約119が成功した。#1915のHTTPヘッダー検証は既存sealをそのまま残し、新しいintro待ち関数だけを別sealで正確に逆変換して従来の全ファイル検証へ渡す。不完全・重複・無関係の変更とヘッダー後退の負例は失敗する。main #1922の独立したshader代数最適化もmergeで取り込み済み。
+追加レビュー: 名札の既存セキュリティ処理・メタデータを保持し、表示チームと寿命だけをカメラへ接続。source88／emitted37、intro契約58、実ブラウザUI8、HTTPヘッダー保持4、CI runner契約119が成功した。#1915のHTTPヘッダー検証は既存sealをそのまま残し、新しいintro待ち関数だけを別sealで正確に逆変換して従来の全ファイル検証へ渡す。不完全・重複・無関係の変更とヘッダー後退の負例は失敗する。main #1922の独立したshader代数最適化もmergeで取り込み済み。
 
 [同一Wahooの変更前後](turf-intro-camera-20261030/before-after.jpg) / [基準版の数値](turf-intro-camera-20261030/native-before.json)。これは同一映像時刻のカット構成の比較で、旧版は4.2秒でplayingとなるため後半の試合状態は異なる。画素差や速度を評価する比較ではない。
+
+
+## CIで見つかったQA開始待ちの修正
+
+`e089721`のRanked CIは、330F固定の開始待ちで新イントロの途中に止まり、HUD表示待ちが失敗した（[run 41029248882](https://github.com/rhgrive3/actions/actions/runs/41029248882)）。旧Matchの開始は253tick、新Matchは578tick。開始待ちを実Matchの `turfIntroFrames` から計算し、従来の開始後77tick（330Fの手順）、47tick（300Fの手順）、17tick（270Fの性能手順）を維持する。旧生成物の比較は253tickへfallbackする。オンラインの350F手順も従来の97tickを維持する。計測窓の長さ・合否条件・壁時計の締切は変えない。性能手順は実際のsetup frame数を記録し、描画warmupと計測のseed番号もその数から続ける。
+
+同種のQA開始処理を74本で修正。Rankedの実際の開始予算式を読み、合成済みMatchとFixedClockを30/60/120Hzで実行する回帰を追加した。全レートでplayingへ入り、開始後のtick数と減った試合時間が一致する。旧330Fを使う負例はintroに残り、CI失敗を再現する。カメラのsource／emittedは各10件、CI runner契約119件が成功。これらはQA手順の変更で、撮影済みカメラの配信内容は `4bab7a49…` と同じ。
+
+通常の実ブラウザ受入手順も `e089721`の実配信で完走し、65キット・789レスポンスの同一生成物照合、移動・塗り・回避が成功し、ページエラーは0だった。本家実機の受入試験とは区別する。

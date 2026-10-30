@@ -82,7 +82,7 @@ try {
     const gl = G.renderer.getContext(), done = new Uint8Array(4);
     // Keep the real game path (AI, collision, paint, Character and post rendering).
     // Drain each frame to avoid measuring an arbitrarily growing software GPU queue.
-    for (let frame = 0; frame < 330; frame++) { g._frame(1 / 60); gl.readPixels(320, 240, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, done); }
+    for (let frame = 0, frames = (g.match.turfIntroFrames ?? 253) + 77; frame < frames; frame++) { g._frame(1 / 60); gl.readPixels(320, 240, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, done); }
     if (gl.getError() || gl.isContextLost()) throw Error('Invalid game warm-up');
     if (G.actors.length !== 8 || G.actors.some(a => a.character.sourceMotion.status !== 'ready')) throw Error('Missing native actors/source motion');
     if (G.mode !== 'match' || g.match.state !== 'playing' || G.level.layout?.id !== stage) throw Error('Requested native match is not playing');

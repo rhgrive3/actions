@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 import { beginTurfIntro, turfIntroShot, TURF_INTRO_FRAMES } from '../runtime/turf-intro-camera.mjs';
 
@@ -97,6 +98,28 @@ test('actual composed Match starts GO on frame 578 and freezes its clock through
   m.paused = true; for (let i = 0; i < 300; i++) m.update(1 / 60);
   assert.equal(m.state, 'intro');
   m.paused = false; m.update(1 / 60); assert.equal(m.state, 'playing');
+});
+
+test('Ranked browser startup budget reaches GO and retains 77 gameplay ticks at each render rate', async () => {
+  const source = readFileSync(new URL('../../../scripts/check-inkwave-ranked-browser.mjs', import.meta.url), 'utf8');
+  const expression = source.match(/await advance\(p,await p\.evaluate\(\(\)=>([^\n]+)\)\);/);
+  assert.ok(expression, 'exercise the actual Ranked QA startup expression');
+  const budget = new Function('RG', `return ${expression[1]};`);
+  assert.equal(budget({ match: {} }), 330, 'historical builds retain their previous budget');
+  const f = await fixture({ productionComposition: true,
+    extraExports: "export { Match } from './inkwave-public/src/game/match.js';" });
+  for (const hz of [30, 60, 120]) {
+    const m = new f.Match({}); f.G.match = m; m.start();
+    const clock = new f.FixedClock(), frames = budget({ match: m });
+    for (let i = 0; i < Math.ceil(frames * hz / 60); i++) clock.advance(1 / hz, dt => m.update(dt));
+    assert.equal(m.state, 'playing');
+    const played = clock.ticks - TURF_INTRO_FRAMES.go;
+    assert.ok(played >= 77 && played <= 78, '30 Hz may include one complete extra fixed tick');
+    close(m.duration - m.time, played / 60);
+  }
+  const old = new f.Match({}); f.G.match = old; old.start();
+  for (let i = 0; i < 330; i++) old.update(1 / 60);
+  assert.equal(old.state, 'intro', 'the previous fixed 330-frame startup reproduces the CI failure');
 });
 
 test('opening spawn aim still permits the existing map camera', async () => {

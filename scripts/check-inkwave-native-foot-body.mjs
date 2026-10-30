@@ -32,7 +32,7 @@ try{
   const hash=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',value))).map(n=>n.toString(16).padStart(2,'0')).join('');
   try{for(const hz of rates){
    g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'shipshape',mode:'turf',difficulty:'normal'});g._skipRender=true;
-   for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
+   for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
    const L=G.level,P=G.physics,a=G.actors.find(a=>a.team===0&&a.bot),V=a.pos.constructor,buffers={};
    for(const[k,v]of Object.entries(L.data))if(ArrayBuffer.isView(v))buffers[k]=await hash(v.buffer);
    const beforeTextures=JSON.stringify(L.manifest.textureIntegrity);

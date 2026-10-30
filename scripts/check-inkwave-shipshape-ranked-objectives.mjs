@@ -19,7 +19,7 @@ try{
    const G=NG,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),cases=[],random=Math.random;Math.random=()=>.5;
    try{for(const mode of selectedModes){
     for(const team of teams)for(const hz of rates){
-    const g=G.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
+    const g=G.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'normal'});g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
     if(G.match.mode!==mode||G.match.ranked?.mode!==mode||G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7)throw Error('Actual ranked match/roster was not initialized');const L=G.level,V=G.local.pos.constructor;
 
      const a=G.actors.find(a=>a.team===team&&a.bot);for(const other of G.actors){if(other===a)continue;const p=L.spawnPads[other.team].clone(),angle=other.slot/4*Math.PI*2+.6;p.x+=Math.cos(angle)*.7;p.z+=Math.sin(angle)*.7;const h=G.physics.raycast(p.clone().add(new V(0,.1,0)),new V(0,-1,0),.3);if(!h.hit||h.face<0||Math.abs(h.point.y-p.y)>.15)throw Error('Other real actor setup lacks original source pad support');other.spawnAt(p,other.team?Math.PI:0);other.intent.move.set(0,0,0);other.intent.fire=other.intent.squid=other.intent.jump=other.intent.sub=other.intent.special=false;}

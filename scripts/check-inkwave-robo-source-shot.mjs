@@ -10,7 +10,7 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=robo',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
  for(const hz of [30,60,120]){
   const proof=await page.evaluate(async hz=>{
-   const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.api.setLoadout({weapon:'shooter'});g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();
+   const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.api.setLoadout({weapon:'shooter'});g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();
    const L=G.level,P=G.physics,a=G.local,v=a.pos.clone(),d=v.clone(),down=d.clone().set(0,-1,0);let target=null;
    for(const id of G.nav.validIds){const n=G.nav.nodes[id];if(n.zone>=0||!n.nativePaintable||n.y>9)continue;
     for(let k=0;k<8;k++){const angle=k*Math.PI/4;d.set(Math.sin(angle),0,Math.cos(angle));const h=P.raycast(v.set(n.x,n.y+1.05,n.z),d,7);if(!h.hit||h.dist<3||h.face<0||Math.abs(h.normal.y)>.2)continue;

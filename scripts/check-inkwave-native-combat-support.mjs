@@ -11,7 +11,7 @@ try{
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  for(const policy of ['baseline','candidate'])for(const form of ['kid','squid'])for(const hz of [30,60,120]){
   console.log('combat '+policy+' '+form+' render'+hz);
-  await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'shipshape',mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);});
+  await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'shipshape',mode:'turf',difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);});
   const result=await page.evaluate(async({policy,form,hz})=>{
    const G=NG,g=G.game,V=G.local.pos.constructor,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),{PLAYER}=await import(new URL('src/config.js',document.baseURI));
    const a=G.actors.find(a=>a.bot&&a.team===0),enemy=G.actors.find(a=>a.team===1&&a.slot===3)||G.actors.find(a=>a.team===1);G.paint.clear();G.projectiles.clear();

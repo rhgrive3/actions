@@ -67,7 +67,7 @@ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()
 try{
  await page.addInitScript(()=>{Math.random=()=>.5;localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0}));});
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=robo',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
- await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();});
+ await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'robo',mode:'turf',duration:180,difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();});
  await page.evaluate('globalThis.selectPartialWall='+selectPartialWall.toString());await page.evaluate('globalThis.selectClimbWall='+selectClimbWall.toString());
  result.proof=await page.evaluate(async()=>{
   const G=NG,g=G.game,a=G.local,{PLAYER}=await import(new URL('src/config.js',document.baseURI)),old=new Uint8Array(await(await fetch('/__robo-mask-v3.bin')).arrayBuffer()),probe=selectPartialWall(G,old,PLAYER),cases=[],V=a.pos.constructor;

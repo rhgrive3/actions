@@ -7,12 +7,12 @@
     "pageErrors": []
   },
   "sourceTests": {
-    "pass": 87,
+    "pass": 88,
     "fail": 0,
     "skip": 0
   },
   "emittedTests": {
-    "pass": 36,
+    "pass": 37,
     "fail": 0,
     "skip": 0
   },
@@ -51,5 +51,23 @@
   "ciRunnerContracts": {
     "pass": 119,
     "fail": 0
+  },
+  "qaStartupBudgetRegression": {
+    "sourcePass": 10,
+    "emittedPass": 10,
+    "rates": [
+      30,
+      60,
+      120
+    ],
+    "legacy330FrameCounterexample": "remains intro",
+    "runtimeContentHashUnchanged": true
+  },
+  "activeBrowser": {
+    "sourceSha": "e0897216bfd40c1557f6ff8443004f15226157dc",
+    "status": "passed",
+    "kits": 65,
+    "verifiedResponses": 789,
+    "pageErrors": []
   }
 }
