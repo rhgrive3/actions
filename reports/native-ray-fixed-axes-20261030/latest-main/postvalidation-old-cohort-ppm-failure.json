@@ -1,0 +1,92 @@
+{
+  "benchmarkStatus": "passed",
+  "postValidationStatus": "failed-stale-validator-expectation",
+  "oldCohortPpm": 3.2,
+  "actualPpm": [
+    {
+      "phase": "preflight",
+      "kind": "warmup",
+      "side": "a",
+      "replayOrdinal": 1,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "preflight",
+      "kind": "warmup",
+      "side": "b",
+      "replayOrdinal": 1,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "warmup",
+      "side": "a",
+      "replayOrdinal": 1,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "warmup",
+      "side": "b",
+      "replayOrdinal": 1,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "side": "a",
+      "replayOrdinal": 2,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "side": "b",
+      "replayOrdinal": 2,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "side": "b",
+      "replayOrdinal": 3,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "side": "a",
+      "replayOrdinal": 3,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "side": "a",
+      "replayOrdinal": 2,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "side": "b",
+      "replayOrdinal": 2,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "side": "b",
+      "replayOrdinal": 3,
+      "ppm": 3.774873600000001
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "side": "a",
+      "replayOrdinal": 3,
+      "ppm": 3.774873600000001
+    }
+  ],
+  "correction": "Use positive finite PPM admission and existing full initial-object exact matched-ordinal parity. This changes only the postprocessor, not harness, data or prespecified benchmark."
+}

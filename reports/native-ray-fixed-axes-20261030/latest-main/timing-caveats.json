@@ -1,0 +1,20 @@
+{
+  "purpose": "No speedup inference from this 30frame smoke",
+  "allWindowsRetained": true,
+  "additionalCgroupThrottleWindows": [
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "side": "b",
+      "slot": 1,
+      "replayOrdinal": 2,
+      "frameMeanMs": 76.34333333335817,
+      "rendererThreadMsPerTick": 58.2573,
+      "throttledPeriodsDelta": 8,
+      "throttledUsecDelta": 359013
+    }
+  ],
+  "interpretation": "One A/A timing outlier coincided with additional cgroup throttling; cause not established by this smoke. Recorded-state/affinity admission passed. All windows retained. ThreadTime includes observers; scene rendering excluded but atlas work remains. Fixed CPU pools change this host experiment.",
+  "postprocessorCorrection": "The copied old-cohort PPM=3.2 assertion was invalid for latest main. Corrected only the postprocessor to positive finite PPM while retaining exact full initial-object matched-ordinal parity. All 12 windows use identical PPM=3.774873600000001. Original failure record retained.",
+  "fullMeasurementStarted": false
+}

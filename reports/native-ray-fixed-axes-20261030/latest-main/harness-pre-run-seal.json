@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-10-30T19:36:45.706Z",
+  "files": {
+    "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a",
+    "scripts/lib/inkwave-native-pool-admission.mjs": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+  },
+  "unchangedFromPriorSmoke": true
+}

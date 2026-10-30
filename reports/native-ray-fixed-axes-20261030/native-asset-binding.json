@@ -1,0 +1,90 @@
+{
+  "source": "/workspace/actions-native-base/native-prebuilt",
+  "files": [
+    {
+      "file": "hagglefish/stage.json",
+      "bytes": 237478,
+      "sha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa"
+    },
+    {
+      "file": "hagglefish/triangles.0.bin",
+      "bytes": 5890500,
+      "sha256": "7d546a835feeed1e14be93d1cba589fafafd516058374adfe2c6fa3d0048bb58"
+    },
+    {
+      "file": "hagglefish/normals.0.bin",
+      "bytes": 1963500,
+      "sha256": "18c3b70045f86e87e1e9453773d0742fc884ae3bc226dbaea1e06ba3728d3cc1"
+    },
+    {
+      "file": "hagglefish/flags.0.bin",
+      "bytes": 654500,
+      "sha256": "45c538feb023d9ccbe892898c0316581fb43a89648d46f1db6290d3087262377"
+    },
+    {
+      "file": "hagglefish/objectIds.0.bin",
+      "bytes": 654500,
+      "sha256": "2d9b424f314322670d5aa538383c2f0eb689e7076d2f2f55b0e4746ca23cd892"
+    },
+    {
+      "file": "hagglefish/nodes.0.bin",
+      "bytes": 1048544,
+      "sha256": "a35012b414de9e1cd52812b18c70bddf84feaa14334ef854f1d4cbac14c904c7"
+    },
+    {
+      "file": "hagglefish/order.0.bin",
+      "bytes": 654500,
+      "sha256": "e5e6bc668f17815fedf3224006456021a530683274cf108e19ef7711f662aaad"
+    },
+    {
+      "file": "hagglefish/vertices.0.bin",
+      "bytes": 11406912,
+      "sha256": "407d902f37c8cc3aae7f2646a17cc6ccc14812fd1487ad74dabdc2131a986c7a"
+    },
+    {
+      "file": "hagglefish/indices.0.bin",
+      "bytes": 2952756,
+      "sha256": "cb48b929d893d37021ca8a4e3f1646e48be69d123420bc73a99ff99df876d718"
+    },
+    {
+      "file": "hagglefish/mask.0.bin",
+      "bytes": 1401174,
+      "sha256": "a67ffad743393644ef8f8e9df25c4e533620d17bc107bdd84a3ac8f2d2209e75"
+    },
+    {
+      "file": "hagglefish/triangleFace.0.bin",
+      "bytes": 654500,
+      "sha256": "77fa5f23810cb2f9044956c3f706e2e09fe633a8407e7e2882008f6da3f360ba"
+    },
+    {
+      "file": "hagglefish/faceTriangles.0.bin",
+      "bytes": 364604,
+      "sha256": "8fd15b5e9f574981e3bdbc10d788a2aa076e2d946c6ec2f05d7102c5070073fc"
+    },
+    {
+      "file": "hagglefish/faceF64.0.bin",
+      "bytes": 12112168,
+      "sha256": "6567552673362f0e7b973b75047a8d4a2ce56b88d3bd179679ed96d655897bcf"
+    },
+    {
+      "file": "hagglefish/faceI32.0.bin",
+      "bytes": 1053232,
+      "sha256": "7e28f873d6190d14ebbdf2e212fb53a7c546350346bdc26f794b45cc4f725dad"
+    },
+    {
+      "file": "hagglefish/faceTriangleOffsets.0.bin",
+      "bytes": 263312,
+      "sha256": "28cd04b7806e2f00b461f4bf60705105cf678262de2946409409883cbb49ae37"
+    },
+    {
+      "file": "packs/0bf2832473e3d41ef06934c19a369195.bin",
+      "bytes": 15373516,
+      "sha256": "0bf2832473e3d41ef06934c19a369195b5b2116a5f058a3305297f0cb10397c8"
+    },
+    {
+      "file": "packs/17bb58c376d433629f030474dc50e198.bin",
+      "bytes": 11359560,
+      "sha256": "17bb58c376d433629f030474dc50e198ba25a02f3fb0f2566a1cca50596829e3"
+    }
+  ]
+}
