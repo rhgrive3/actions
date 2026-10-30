@@ -24,13 +24,14 @@ function bossEnemy(actor, target, brain, world) {
   return finitePoint(pos) ? { alive: true, team: 1 - actor.team, pos, vel: { x: 0, y: 0, z: 0 }, botBossTarget: target } : null;
 }
 
-function beginBotSpecialContext(actor, intent, dt, options) {
+// The internal inactive path needs validation and memory lifecycle only. Reuse
+// the existing entry so an uncharged tick does not allocate a context snapshot.
+export function prepareBotSpecialFrame(actor, intent, dt) {
   if (!actor?.alive || actor.remote || actor.isLocal || actor.isBot === false || !finitePoint(actor.pos)
     || !intent || !Number.isFinite(dt) || dt <= 0) {
     if (actor && !actor.alive) resetBotSpecialMemory(actor);
     return null;
   }
-  const { brain, world, move = intent.move } = options;
   const state = actor.specialActive || null;
   const special = actor.weapon?.special;
   let entry = memories.get(actor);
@@ -43,7 +44,14 @@ function beginBotSpecialContext(actor, intent, dt, options) {
   const memory = entry.memory;
   if (state) memory.time += dt;
   else memory.time = 0;
+  return entry;
+}
 
+function beginBotSpecialContext(actor, intent, dt, options, prepared) {
+  const entry = prepared || prepareBotSpecialFrame(actor, intent, dt);
+  if (!entry) return null;
+  const { brain, world, move = intent.move } = options;
+  const { special, state, memory } = entry;
   return { actor, intent, dt, special, state, memory, enemy: null, distance: Infinity, height: Infinity, visible: false,
     world, brain, move, handled: false, aimChanged: false,
     normalIntent: { fire: !!intent.fire, sub: !!intent.sub, jump: !!intent.jump, squid: !!intent.squid, booyah: !!intent.booyah },
@@ -52,8 +60,8 @@ function beginBotSpecialContext(actor, intent, dt, options) {
 
 // Internal dispatcher phase: validate and advance memory every tick, even when
 // no special can be planned. Ordinary combat only consumes the control fields.
-export function createBotSpecialFrame(actor, intent, dt, options = {}) {
-  const ctx = beginBotSpecialContext(actor, intent, dt, options);
+export function createBotSpecialFrame(actor, intent, dt, options = {}, prepared) {
+  const ctx = beginBotSpecialContext(actor, intent, dt, options, prepared);
   if (!ctx) return null;
   const { brain } = ctx;
   const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));

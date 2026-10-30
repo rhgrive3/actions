@@ -16,9 +16,12 @@ const ids = ['ultraStamp', 'krakenRoyale', 'reefslider', 'tripleSplashdown', 'tr
   'tripleInkstrike', 'tacticooler', 'waveBreaker', 'superChump', 'splattercolorScreen'];
 
 function smallRuntime(old = false) {
-  const work = { closures: 0, los: 0, planners: 0 };
+  const work = { contexts: 0, normalIntents: 0, closures: 0, los: 0, planners: 0 };
   const source = old ? frozen.sources[contextPath] : read(contextPath);
-  const context = strip(source).replace(/  ctx\.(aimAt|isAimed|safePath|moveToward) = /g, '  work.closures++; ctx.$1 = ');
+  const context = strip(source)
+    .replace(/  (const ctx =|return) \{ actor, intent, dt,/g, '  work.contexts++; $1 { actor, intent, dt,')
+    .replace(/normalIntent: (\{[^\n]+\}),/, 'normalIntent: (work.normalIntents++, $1),')
+    .replace(/  ctx\.(aimAt|isAimed|safePath|moveToward) = /g, '  work.closures++; ctx.$1 = ');
   const driver = strip(old ? frozen.sources[driverPath] : read(driverPath));
   const planner = ctx => { work.planners++; return false; };
   return { work, ...Function('work', 'driveMeleeSpecial', 'driveRangedSpecial', 'driveSupportSpecial', context + '\n' + driver +
@@ -66,17 +69,17 @@ test('public constructor and default driver retain complete context across lifec
   }
 });
 
-test('only the opted-in inactive tail omits LOS and four context closures, while advancing memory every tick', () => {
+test('only the opted-in inactive tail omits context, normalIntent, LOS and four closures', () => {
   const before = smallRuntime(true), after = smallRuntime(), a = smallWorld(before), b = smallWorld(after);
   for (let i = 0; i < 420; i++) {
     a.intent.special = b.intent.special = true;
     const x = before.driveCanonicalBotSpecial(a.actor, a.intent, 1 / 60, a.enemy, a.options);
     const y = after.driveCanonicalBotSpecial(b.actor, b.intent, 1 / 60, b.enemy, b.options, true);
-    assert.deepEqual(control(y), control(x)); assert.deepEqual(intentState({ intent: b.intent }), intentState({ intent: a.intent }));
-    assert.equal(y.memory.time, 0);
+    assert.equal(y, null); assert.equal(x.handled, false);
+    assert.deepEqual(intentState({ intent: b.intent }), intentState({ intent: a.intent }));
   }
-  assert.deepEqual(before.work, { closures: 1680, los: 420, planners: 0 });
-  assert.deepEqual(after.work, { closures: 0, los: 0, planners: 0 });
+  assert.deepEqual(before.work, { contexts: 420, normalIntents: 420, closures: 1680, los: 420, planners: 0 });
+  assert.deepEqual(after.work, { contexts: 0, normalIntents: 0, closures: 0, los: 0, planners: 0 });
   // A full/default call still returns the old complete observable snapshot.
   assert.deepEqual(full(after.driveCanonicalBotSpecial(b.actor, b.intent, 1 / 60, b.enemy, b.options)),
     full(before.driveCanonicalBotSpecial(a.actor, a.intent, 1 / 60, a.enemy, a.options)));
@@ -110,15 +113,19 @@ test('fast and full calls preserve invalid-input returns, reset semantics and ca
     f.actor.nid = 9; f.actor.specialReady = () => true;
     f.world.match = { mode: 'rainmaker', ranked: { rule: { state: { carrier: '9' } } } };
   }
-  assert.deepEqual(control(after.driveCanonicalBotSpecial(b.actor, b.intent, .1, b.enemy, b.options, true)),
-    control(before.driveCanonicalBotSpecial(a.actor, a.intent, .1, a.enemy, a.options)));
+  assert.equal(after.driveCanonicalBotSpecial(b.actor, b.intent, .1, b.enemy, b.options, true), null);
+  assert.equal(before.driveCanonicalBotSpecial(a.actor, a.intent, .1, a.enemy, a.options).handled, false);
   assert.deepEqual(intentState({ intent: b.intent }), intentState({ intent: a.intent })); assert.equal(b.intent.special, false);
 });
 
 test('inactive fast calls keep memory identity and reset on equipment, life, death and explicit reset', () => {
   const before = smallRuntime(true), after = smallRuntime(), a = smallWorld(before), b = smallWorld(after);
-  const call = () => [before.driveCanonicalBotSpecial(a.actor, a.intent, .1, a.enemy, a.options),
-    after.driveCanonicalBotSpecial(b.actor, b.intent, .1, b.enemy, b.options, true)];
+  const call = () => {
+    const old = before.driveCanonicalBotSpecial(a.actor, a.intent, .1, a.enemy, a.options);
+    assert.equal(after.driveCanonicalBotSpecial(b.actor, b.intent, .1, b.enemy, b.options, true), null);
+    // Public inspection must find the memory left by the no-context fast path.
+    return [old, after.createBotSpecialContext(b.actor, b.intent, .1, b.enemy, b.options)];
+  };
   let [x, y] = call(); x.memory.marker = y.memory.marker = 7;
   [x, y] = call(); assert.equal(x.memory.marker, 7); assert.equal(y.memory.marker, 7);
   for (const change of [f => { f.actor.weapon = { ...f.actor.weapon }; }, f => { f.actor.netLife++; },
@@ -188,9 +195,10 @@ test('actual 19-special policies and the composed ordinary BotBrain tail match t
       const a = before.driveCanonicalBotSpecial(x.a, x.a.intent, 1 / hz, x.enemy, x.options);
       const b = after.driveCanonicalBotSpecial(y.a, y.a.intent, 1 / hz, y.enemy, y.options, true);
       const label = `${special}/${mode}/${hz}/${tick}`;
-      assert.deepEqual(control(b), control(a), label);
+      if (mode === 'uncharged') { assert.equal(b, null, label); assert.equal(a.handled, false, label); }
+      else assert.deepEqual(control(b), control(a), label);
       assert.deepEqual(intentState(y.a), intentState(x.a), label);
-      assert.equal(memoryState(b, after.G.actors), memoryState(a, before.G.actors), label);
+      if (b) assert.equal(memoryState(b, after.G.actors), memoryState(a, before.G.actors), label);
     }
   }
   // Exercise the real composed caller and admitted native shooter, not just a
@@ -210,5 +218,38 @@ test('actual 19-special policies and the composed ordinary BotBrain tail match t
     }
     assert.ok(after.shots.length > 0, 'native shooter actually fired at ' + hz + ' Hz');
     assert.equal(x.work.los - y.work.los, hz, 'the real composed caller saves one inactive LOS per tick');
+  }
+  // Readiness owns expired gauge cleanup. Fast exits must keep its exact
+  // admission point/count, including no cleanup for active/carrier/invalid calls.
+  for (const mode of ['unready', 'active', 'carrier', 'invalid']) {
+    const pairs = [[before, setup(before, 'trizooka', false, mode === 'active')],
+      [after, setup(after, 'trizooka', false, mode === 'active')]];
+    const logs = pairs.map(([f, s]) => {
+      const a = s.a, calls = []; delete a.specialReady;
+      const ready = a.specialReady;
+      a.netLife = 1; a.special = a.specialCost();
+      a.s3PreOperationGauge = { id: 'waveBreaker', game: f.G, match: f.G.match,
+        owner: a.owner, life: 1, token: {}, cost: a.special };
+      a.s3SpecialGaugeLocks = new Map([['waveBreaker', { game: f.G, match: f.G.match, until: -1 }]]);
+      a.intent.special = true;
+      a.specialReady = function (...args) {
+        calls.push(['before', this.intent.special, !!this.s3PreOperationGauge, this.s3SpecialGaugeLocks.size]);
+        const result = ready.apply(this, args);
+        calls.push(['after', result, !!this.s3PreOperationGauge, this.s3SpecialGaugeLocks.size]);
+        return result;
+      };
+      if (mode === 'carrier') Object.assign(f.G.match, { mode: 'rainmaker', ranked: { rule: { state: { carrier: '1' } } } });
+      if (mode === 'invalid') a.alive = false;
+      return calls;
+    });
+    const [[, x], [, y]] = pairs;
+    before.driveCanonicalBotSpecial(x.a, x.a.intent, 1 / 60, x.enemy, x.options);
+    after.driveCanonicalBotSpecial(y.a, y.a.intent, 1 / 60, y.enemy, y.options, true);
+    assert.deepEqual(logs[1], logs[0], mode + ' readiness cleanup ordering');
+    assert.equal(logs[1].length, mode === 'unready' ? 2 : 0, mode + ' readiness call count');
+    assert.equal(y.a.special, x.a.special);
+    assert.equal(!!y.a.s3PreOperationGauge, !!x.a.s3PreOperationGauge);
+    assert.equal(y.a.s3SpecialGaugeLocks.size, x.a.s3SpecialGaugeLocks.size);
+    assert.deepEqual(intentState(y.a), intentState(x.a));
   }
 });
