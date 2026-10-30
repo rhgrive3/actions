@@ -25,6 +25,9 @@ async function settingsRig(saved) {
   const G = { mode:'match' };
   const context = {
     DEFAULT_SETTINGS, G, migrateAimProfiles, applyAimSettingsChange, initialGyroDefaults,
+    // The real Settings view declares its lifetime owner outside the extracted reset span.
+    // Preserve the live guard in the isolated callback rather than erasing it.
+    destroyed: false,
     QUALITY, sanitizeSettings, sanitizeSettingsChange,
     legacyPadToS3, notePausedWorldChange, normalizeViewSettings,
     localStorage: { getItem:k=>storage.get(k) ?? null, setItem:(k,v)=>storage.set(k,v) },

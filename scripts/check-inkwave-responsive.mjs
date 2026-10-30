@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {checkResponsiveOnlineScroll} from './lib/inkwave-responsive-online-scroll.mjs';
 import {responsiveAnimationsSettled} from './lib/inkwave-responsive-animation-settle.mjs';
 // Focused menu regression. Runs the production menu DOM/CSS with the
 // existing offline session fixture; does not claim real-device or gameplay proof.
@@ -82,7 +83,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'lib/inkwave-responsive-animation-diagnostics.mjs', 'lib/inkwave-responsive-animation-settle.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-online-scroll.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'lib/inkwave-responsive-animation-diagnostics.mjs', 'lib/inkwave-responsive-animation-settle.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -262,6 +263,8 @@ try {
         await tap(page, '.iw-join__btns .is-go');
         await page.waitForFunction(() => document.querySelector('.iw-jstat')?.classList.contains('is-on'));
         assert.equal(await codeInput.isDisabled(), false);
+        const localOnlineScroll = config.viewport.width > config.viewport.height && config.viewport.height <= 500;
+        if (localOnlineScroll) entry.onlineErrorReachability = await checkResponsiveOnlineScroll(page, {settle, errorOnly: true});
         await codeInput.evaluate((el) => {
           const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'Join my room: BC234');
           el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
@@ -271,7 +274,8 @@ try {
         assert.equal(await page.evaluate(() => G.net.state), 'error', 'native paste must wait for JOIN');
         await page.evaluate(() => menus.setInputMode('kbm'));
         assert.equal(await codeInput.isVisible(), true, 'touch device layout must survive an attached keyboard or compatibility mouse event');
-        assert.equal(await page.locator('.iw-online').evaluate((el) => getComputedStyle(el).overflowY), 'auto');
+        if (localOnlineScroll) entry.onlineLocalScroll = await checkResponsiveOnlineScroll(page, {settle});
+        else assert.equal(await page.locator('.iw-online').evaluate((el) => getComputedStyle(el).overflowY), 'auto');
         await page.evaluate(() => menus.setInputMode('touch'));
         await page.evaluate(() => G.net.leave());
         await page.evaluate(() => G.net.create('Host Squidkid'));

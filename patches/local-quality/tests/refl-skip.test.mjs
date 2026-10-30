@@ -27,11 +27,12 @@ test('#581 invalidation is wired on the arena rebuild and the marina transition,
   assert.equal(out.includes('stageMarina !== this._marina) { this._marina = stageMarina; this._rebuildDock(); }'), false);
   assert.throws(() => adaptReflSkip(RAW, out, replaceOnce), /refl-skip: arena rebuild/);
 
-  // The lazy cache remains; the composed exclusion uses the existing effective-quality policy.
+  // The lazy cache remains; the current renderer excludes actor/FX/prop
+  // reflection draws below ultra, without resurrecting a disposed stage.
   assert.match(out, /if \(this\._reflSkipKey === key\) return this\._reflSkipList;/);
   assert.match(out, /this\._reflSkipKey = key; this\._reflSkipList = list;/);
-  assert.match(out, /const q = effectiveQuality\(G.settings, G.game\?\.mobile\);/);
-  assert.match(out, /if \(!q.reflectionActors\) \{/);
+  assert.match(out, /if \(q !== 'ultra'\) \{/);
+  assert.match(out, /for \(const a of G\.actors \|\| \[\]\) if \(a\.character && a\.character\.root\) hide\.push\(a\.character\.root\);/);
   assert.match(out, /hide\.push\(\.\.\.this\._reflSkips\(scene\)\);/);
 
   // Raw inkwave-public/ stays byte-identical: the native anchors are still there, unpatched.

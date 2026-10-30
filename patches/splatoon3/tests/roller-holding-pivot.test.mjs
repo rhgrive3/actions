@@ -96,7 +96,7 @@ function catalogGripRecorder(f) {
     f.THREE, f.CHARACTER_CHANNELS, f.FIST_OFFSET, f.GRIP_HOLE_L);
 }
 
-async function trace(mode) {
+async function trace(mode, exerciseRepeatedIK = false) {
   const adaptHoldingRuntime = (rel, source) =>
     rel === 'patches/splatoon3/runtime/roller.mjs' ? holdingRuntimeVariant(mode, source) : source;
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true,
@@ -173,9 +173,9 @@ async function trace(mode) {
       spin: [w.drumA, w.drumW], hand: hand.toArray(), rightMatrix: Array.from(c.bones.handR.matrixWorld.elements),
       weaponMatrix: Array.from(w.off.matrixWorld.elements), palmUp,
       errors, pos: Array.from(a.pos.toArray()), ink: a.ink, rolling: a.weaponRunner.rolling });
-    // The next native frame resets the rig; full trajectory parity below also
-    // checks that this same-clock exercise does not contaminate release.
-    if ((mode === 'current' || mode === 'pivot-current') && tick === 120) {
+    // Repeated solves mutate the live pose. Exercise them on an isolated trace
+    // so the following release comparison starts from untouched native frames.
+    if (exerciseRepeatedIK && tick === 120) {
     const c = a.character, w = c.weapon, phase = w.drumA, speed = w.drumW;
     const repeat = (side, weight) => {
       const [limb, target, pole, orientation, oldWeight, index] = captured[side];
@@ -209,7 +209,7 @@ function sameContact(before, after) {
       { tick: a.tick, pos: a.pos, ink: a.ink, rolling: a.rolling, contact: a.contact, roll: a.roll }, 'native gameplay unchanged');
     // Geometry roundoff only: 1nm is far below the existing 1e-5 paint-contact gate.
     for (let j = 0; j < 3; j++) {
-      assert.ok(Math.abs(b.center[j] - a.center[j]) < 1e-9, 'live drum center must stay pinned');
+      assert.ok(Math.abs(b.center[j] - a.center[j]) < 1e-9, `live drum center must stay pinned: tick ${i + 1} axis ${j} delta ${b.center[j] - a.center[j]}`);
       assert.ok(Math.abs(b.axis[j] - a.axis[j]) < 1e-9, 'live drum axle must stay pinned');
     }
     assert.deepEqual(Array.from(b.spin), Array.from(a.spin), 'native drum clock and speed are unchanged');
@@ -243,6 +243,7 @@ test('held Roller lowers its hands about the same live cylinder; off-center faul
   const lostPhase = await trace('lost-phase');
   assert.throws(() => sameContact(control, lostPhase), /live drum radial frame must stay pinned/,
     'a missing counter-spin must not pass even with an axis-centered cylinder');
+  await trace('pivot-current', true);
   const fault = await trace('off-center');
   assert.throws(() => sameContact(control, fault), /live drum center must stay pinned/,
     'a deliberate 2cm wrist-only offset must not pass the contact-preservation gate');
@@ -304,7 +305,7 @@ test('rolling shaft clears the torso while actual paint follows the shifted drum
         Math.abs(value - a.center[j] + .09 * b.roll * a.axis[j]) < 1e-8),
         'side holding translates the actual drum along its axle without gait-dependent drift');
     } else {
-      assert.deepEqual(b.weaponMatrix, a.weaponMatrix, 'nonrolling weapon returns to the canonical pose');
+      assert.deepEqual(b.weaponMatrix, a.weaponMatrix, `nonrolling weapon returns to the canonical pose: tick ${i + 1}`);
     }
   }
 
