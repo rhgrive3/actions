@@ -1,0 +1,35 @@
+{
+  "frames": 900,
+  "hz": 60,
+  "ticks": 900,
+  "actors": 8,
+  "minLiving": 7,
+  "digest": 1606414722,
+  "bvh": {
+    "queries": 247281,
+    "triangleTests": 5193821
+  },
+  "baselineSourceSha": "5637c8038e00466a8022c4d2b705ec9e5dc1c8d2",
+  "contentHash": "e3c3937b58cf2259cb76d724d83c38cd172704e84f63e1b4bd518f1534e7f7af",
+  "recordingHarnessSha256": "3326880a8e9856a2942cf922f01be905759cd54e3e5a6df78a8c72cc75fbd3a6",
+  "baselineParity": {
+    "initial": true,
+    "frames": true,
+    "hz": true,
+    "ticks": true,
+    "minActors": true,
+    "minLiving": true,
+    "digest": true,
+    "digests": true,
+    "counts": true,
+    "state": true,
+    "draw": true,
+    "resources": true,
+    "scene": true,
+    "bvh": true
+  },
+  "limits": [
+    "Input recorder adds wrappers but preserves canonical batch and anyHit paths; all recorded baseline state/BVH/resource counters match the uninstrumented baseline.",
+    "JSON normalizes signed zeros; source edge tests independently check signed-zero equivalence. No recording timings are used."
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "sourceFilesExamined": 123,
+  "sourceFilesRewritten": 78,
+  "sourceFilesDirect": 45,
+  "totalOriginalBytes": 4658134,
+  "totalComposedBytes": 5369094,
+  "directOwnerPathsVerified": [
+    "patches/splatoon3/runtime/weapons-collision.mjs",
+    "src/game/character-lod.js",
+    "src/game/character-outfit.js",
+    "src/game/inkCollision.js",
+    "src/game/lobbySet-tex.js",
+    "src/game/motion/body-balance.js",
+    "src/game/motion/source-bank.js",
+    "src/game/nav.js",
+    "src/world/murals.js",
+    "src/world/props-core.js",
+    "src/world/props-marina-placements.js",
+    "src/world/props-marina-vessels.js",
+    "src/world/props.js",
+    "src/world/stages/cargo/layout.js",
+    "src/world/stages/cargo/placements.js",
+    "src/world/stages/data.js",
+    "src/world/stages/index.js",
+    "src/world/stages/surfaces.js"
+  ],
+  "changedPaths": [
+    {
+      "path": "src/net/netmatch.js",
+      "sourceBytes": 42534,
+      "composedBytes": 179618,
+      "deltaBytes": 137084
+    },
+    {
+      "path": "src/ui/hud.js",
+      "sourceBytes": 86656,
+      "composedBytes": 135623,
+      "deltaBytes": 48967
+    },
+    {
+      "path": "src/game/weapons.js",
+      "sourceBytes": 87952,
+      "composedBytes": 132358,
+      "deltaBytes": 44406
+    },
+    {
+      "path": "src/main.js",
+      "sourceBytes": 74741,
+      "composedBytes": 115196,
+      "deltaBytes": 40455
+    },
+    {
+      "path": "src/ui/menus.js",
+      "sourceBytes": 252955,
+      "composedBytes": 289980,
+      "deltaBytes": 37025
+    },
+    {
+      "path": "src/core/input.js",
+      "sourceBytes": 7310,
+      "composedBytes": 31086,
+      "deltaBytes": 23776
+    },
+    {
+      "path": "src/core/mobile.js",
+      "sourceBytes": 29906,
+      "composedBytes": 53649,
+      "deltaBytes": 23743
+    },
+    {
+      "path": "src/game/player.js",
+      "sourceBytes": 11945,
+      "composedBytes": 34832,
+      "deltaBytes": 22887
+    },
+    {
+      "path": "src/world/paint.js",
+      "sourceBytes": 36556,
+      "composedBytes": 57399,
+      "deltaBytes": 20843
+    },
+    {
+      "path": "src/game/character.js",
+      "sourceBytes": 231400,
+      "composedBytes": 250236,
+      "deltaBytes": 18836
+    },
+    {
+      "path": "src/game/motion/source-controller.js",
+      "sourceBytes": 36429,
+      "composedBytes": 53513,
+      "deltaBytes": 17084
+    },
+    {
+      "path": "src/core/renderer.js",
+      "sourceBytes": 18620,
+      "composedBytes": 35132,
+      "deltaBytes": 16512
+    },
+    {
+      "path": "src/game/actor.js",
+      "sourceBytes": 50015,
+      "composedBytes": 64515,
+      "deltaBytes": 14500
+    },
+    {
+      "path": "src/fx/fx.js",
+      "sourceBytes": 123528,
+      "composedBytes": 138015,
+      "deltaBytes": 14487
+    },
+    {
+      "path": "styles/hud.css",
+      "sourceBytes": 102280,
+      "composedBytes": 115319,
+      "deltaBytes": 13039
+    },
+    {
+      "path": "styles/ui.css",
+      "sourceBytes": 290094,
+      "composedBytes": 302694,
+      "deltaBytes": 12600
+    },
+    {
+      "path": "src/game/character-face.js",
+      "sourceBytes": 58743,
+      "composedBytes": 71144,
+      "deltaBytes": 12401
+    },
+    {
+      "path": "src/net/session.js",
+      "sourceBytes": 17518,
+      "composedBytes": 29446,
+      "deltaBytes": 11928
+    },
+    {
+      "path": "src/game/showcase.js",
+      "sourceBytes": 158118,
+      "composedBytes": 168155,
+      "deltaBytes": 10037
+    },
+    {
+      "path": "src/ui/diorama.js",
+      "sourceBytes": 11854,
+      "composedBytes": 21826,
+      "deltaBytes": 9972
+    }
+  ],
+  "changedPathsTruncated": true,
+  "failures": []
+}
