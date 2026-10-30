@@ -1,8 +1,8 @@
 {
   "schema": 2,
-  "status": "conservative-normal-map-candidate-awaiting-ci",
-  "sourceCommit": "67eabfc333c8fda78a79dd168eadaf53c132073d",
-  "sourceTree": "4201ce62f988254826a86d70f72265cc775b4cea",
+  "status": "final-source-awaiting-ci",
+  "sourceCommit": "b5b2a782e604614c382e6d93b954dba462a3731d",
+  "sourceTree": "95b1a5e3d4b094c39837399b980422a8a9572acd",
   "localTestedSource": "f0951e3ed5e77d15549ed4798bcbdde1eb7f17e3",
   "input": {
     "patchDocument": "https://docs.google.com/document/d/1g8RWUlg7bj_MxSz-RZ7H-IkcSvovzdCm13MPgFLF16A/edit",
@@ -136,11 +136,11 @@
       "description": "Current main including merged P1 native rendering and new intro camera; measures only this follow-up."
     }
   },
-  "qaCommit": "62430ad05285f22a4146e4e299521f297229aec8",
+  "qaCommit": "b5b2a782e604614c382e6d93b954dba462a3731d",
   "normalMaps": "All normal-mapped native materials retain pixel-frequency IBL; weak-normal interpolation is removed after prior WebKit regression and unbounded normal Z review.",
   "geometryPropertyCheck": {
     "status": "passed",
-    "implementationGitBlob": "72e075643fc8b728987b8a274d1f6ec2bee7a302",
+    "implementationGitBlob": "c89edaeffb2bb27e46ff2a2459fa120bc3ab5aa5",
     "randomMeshes": 1500,
     "triangleCorners": 46272,
     "certificates": 8059,
@@ -148,7 +148,8 @@
     "positive": 4062,
     "negative": 3997,
     "scope": "Executes the exact extracted JS normal-cone implementation with a BufferAttribute storage stub; geometric-facing property only, not GPU raster/performance evidence.",
-    "geometryFunctionUnchanged": true
+    "geometryFunctionUnchanged": true,
+    "allocationRemovalBoundsByteExact": true
   },
   "replay": {
     "setupFrames": 925,
@@ -166,5 +167,33 @@
     "framesPerWindow": 10,
     "windows": 3
   },
-  "transparentPasses": "FLIP_SIDED adjusts the cone-facing sign before selecting a hemisphere. Added independent FrontSide/BackSide property coverage."
+  "transparentPasses": "FLIP_SIDED adjusts the cone-facing sign before selecting a hemisphere. Added independent FrontSide/BackSide property coverage.",
+  "additionalPureJsChecks": {
+    "status": "passed",
+    "rawLobbyCalls": 7,
+    "lobbyRawIdempotence": true,
+    "explicitNeighborTextureGradSamples": 4,
+    "allocationRemovalRandomMeshes": 400,
+    "allocationRemovalBoundsByteExact": true,
+    "scope": "Runs exact extracted pure-JS implementations; compiled production and GPU checks remain CI-owned."
+  },
+  "referenceScopeVerification": {
+    "status": "passed",
+    "parentMain": "45f5d98ba7944ae280f27f15d827b2132586ea14",
+    "sha": "6ae5b34493e0744a7334025ba09b810f034194e8",
+    "files": [
+      {
+        "path": "patches/local-quality/composer-format-adapter.mjs",
+        "sha": "5834e14371307d58952ce1823bd737b56c8837cc"
+      },
+      {
+        "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+        "sha": "387d1ad9f1e070c3b49d651349771e01223dafc8"
+      },
+      {
+        "path": "patches/native-stages/runtime/native-render.mjs",
+        "sha": "3b368948be962d1fad15cc04a6605bbfa9c397ea"
+      }
+    ]
+  }
 }
