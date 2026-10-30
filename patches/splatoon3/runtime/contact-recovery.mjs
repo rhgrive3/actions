@@ -23,7 +23,10 @@ export function rollerContactClear(a, e, w, physics, player) {
   return !physics.segment(drum,target,hit,false).hit;
 }
 export function blasterPlayerRadiusRate(p,w) {
-  return p.s3TerrainBurst ? w.terrainSplashRadiusRate : 1;
+  // Special projectile descriptors have no Blaster-only terrain multiplier.
+  // Undefined here yields NaN and disables the caller's distance comparison,
+  // allowing the last damage band to reach every visible opponent.
+  return p.s3TerrainBurst && Number.isFinite(w.terrainSplashRadiusRate) ? w.terrainSplashRadiusRate : 1;
 }
 export function installContactRecovery({Projectiles}) {
   const tag=Symbol.for('inkwave.s3.contact-recovery.v1'),p=Projectiles.prototype;

@@ -6,13 +6,13 @@ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectil
  export {bigBubblerDomes} from './patches/splatoon3/runtime/kit-big-bubbler.mjs';
 `});
 const near=(got,want,label)=>assert.ok(Math.abs(got-want)<1e-8,`${label}: ${got} != ${want}`);
-function world(id){
+function world(id,ap=0){
  const {G}=f;G.projectiles.clear();G.actors=[];G.time=0;G.net=G.netm=null;G.mode='match';
  G.match={mode:'turf',state:'playing',time:180,playing:()=>true,canRespawn:()=>false};G.scene=new f.THREE.Scene();G.camera=new f.THREE.PerspectiveCamera();
  G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0,
   single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}],half:[]});G.physics=new f.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};
  const a=f.make(),victim=f.make();a.invuln=0;victim.team=1;victim.hp=1000;victim.invuln=0;victim.pos.set(0,0,8);
- a.weapon={...a.weapon,special:id,specialCost:100};a.special=100;a.aimYaw=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,.7,30);a._prevIntent={};
+ a.weapon={...a.weapon,special:id,specialCost:100};a.special=100;a.s3.abilityPoints={...a.s3.abilityPoints,specialPower:ap};a.aimYaw=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,.7,30);a._prevIntent={};
  a._startSpecial();
  if(id==='ultraStamp'){a.intent.sub=true;a._updateSpecial(1/60);a.intent.sub=false;}
  else if(id==='crabTank')a.intent.sub=true;
@@ -39,6 +39,28 @@ for(const [id,cause,probes]of [
   near(1000-victim.hp,expected,`${id} actor at ${distance}`);
   near(10000-object.hp,expected*f.objectDamageScale(p,'waveBreaker',cause),`${id} device at ${distance}`);
  }
+});
+test('Inkjet terrain impact applies only its actual blast radius, including with Special Power Up',()=>{
+ for(const [ap,radius] of [[0,5],[57,6.5]]){
+  const {G,victim,p}=world('inkjet',ap),at=new f.THREE.Vector3(0,.7,0);
+  p.s3TerrainBurst=true;
+  for(const [distance,damage] of [[2,50],[radius-.01,30],[radius+.01,0],[50,0]]){
+   victim.hp=1000;victim.pos.set(distance,0,0);
+   G.projectiles._blastBurst(p,at,null);
+   assert.equal(G.projectiles.flushBlastImpacts(),1,'the real deferred terrain burst resolves once');
+   near(1000-victim.hp,damage,`AP${ap} terrain blast at ${distance}`);
+  }
+ }
+});
+test('real Inkjet terrain contact cannot damage a distant visible opponent',()=>{
+ const {G,victim,p}=world('inkjet'),nearby=f.make();
+ nearby.team=1;nearby.hp=1000;nearby.invuln=0;nearby.pos.set(3,0,0);
+ victim.pos.set(50,0,0);victim.hp=1000;
+ p.vel.set(0,-1,0);
+ G.projectiles._impact(p,{point:new f.THREE.Vector3(0,0,0),normal:new f.THREE.Vector3(0,1,0)});
+ assert.equal(G.projectiles.flushBlastImpacts(),1);
+ near(1000-nearby.hp,30,'nearby opponent receives the outer band');
+ near(victim.hp,1000,'distant opponent remains untouched');
 });
 test('a native Inkjet outer blast spends the fixed 30 band at a real Bubbler interception',()=>{
  const {G,a,victim,p}=world('inkjet'),owner=f.make();owner.team=1;owner.pos.set(6.255,0,-3);
