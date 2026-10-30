@@ -51,6 +51,7 @@ jobs:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.main91_blast_capture == true) || (github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/main91-blast-reference-20261030' && github.event.pull_request.base.ref == 'main') }}
     runs-on: ubuntu-latest
     env:
+      CHROMIUM_EXECUTABLE_PATH: /opt/google/chrome/chrome
       EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 30
     steps:
@@ -76,6 +77,31 @@ jobs:
       - name: Install matching Playwright Chromium and supported system dependencies
         working-directory: source
         run: npx --no-install playwright install --with-deps chromium
+      - name: Verify preinstalled system Chrome and its existing sandbox policy without changing it
+        run: |
+          mkdir -p "$RUNNER_TEMP/blast-artifacts"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          const binary=process.env.CHROMIUM_EXECUTABLE_PATH,profile='/etc/apparmor.d/chrome';
+          const receipt={binary,profile,runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,status:'incomplete',checkedAt:new Date().toISOString()};
+          const save=()=>fs.writeFileSync(process.env.RUNNER_TEMP+'/blast-artifacts/system-browser.json',JSON.stringify(receipt,null,2));
+          try {
+            assert.equal(binary,'/opt/google/chrome/chrome');
+            for(const file of [binary,profile]){const st=fs.statSync(file);assert.equal(st.uid,0,'must be preinstalled root-owned '+file);assert.equal(st.mode&0o022,0,'must not be group/world writable '+file);}
+            fs.accessSync(binary,fs.constants.X_OK);
+            receipt.resolvedExecutable=fs.realpathSync(binary);
+            const policy=fs.readFileSync(profile,'utf8');
+            assert.ok(policy.includes('/opt/google/chrome/chrome'),'existing profile must cover standard binary');
+            assert.match(policy,/\buserns\s*,/,'existing profile must admit browser sandbox namespaces');
+            receipt.profileSHA256=createHash('sha256').update(policy).digest('hex');
+            receipt.version=execFileSync(binary,['--version'],{encoding:'utf8'}).trim();
+            receipt.package=execFileSync('dpkg-query',['-W','-f=${Package} ${Version}\n','google-chrome-stable'],{encoding:'utf8'}).trim();
+            receipt.status='preinstalled-binary-and-policy-verified-not-yet-launched';save();
+          } catch(e){receipt.error=String(e.stack||e);save();throw e;}
+          JS
       - name: Record source and QA provenance
         run: |
           mkdir -p "$RUNNER_TEMP/blast-artifacts"
