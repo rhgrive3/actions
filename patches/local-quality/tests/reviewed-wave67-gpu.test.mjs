@@ -8,7 +8,7 @@ const labels=[...source.matchAll(/'GPU-[A-Za-z0-9]+ [^']*'/g)].map(m=>m[0]);
 
 test('reviewed Wave 6/7 selects exactly the audited operations',()=>{
   assert.equal(labels.length,19);
-  assert.equal(new Set(labels).size,21);
+  assert.equal(new Set(labels).size,19);
   for(const bad of ['GPU-03b','GPU-TEX1','GPU-SFX1a','GPU-22b','GPU-SFX3','GPU-07c','GPU-12c'])
     assert.ok(!labels.some(x=>x.startsWith("'"+bad+' ')),bad);
 });
