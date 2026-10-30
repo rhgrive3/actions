@@ -22,8 +22,8 @@ test('remote idle audio avoids distance probes but always stops a previously pla
   let probes=0,calls=0,stops=0;const actor={remote:true,alive:true,weapon:{kind:'shooter'},weaponRunner:{},net:{loops:{}},_nearCamera(){probes++;return false;}};
   const n={byNid:new Map([[1,actor]]),_voiceLoop(a,near,key,on){calls++;if(a.net.loops[key]&&!on){a.net.loops[key].stop();a.net.loops[key]=null;}return null;}};
   voices.call(n,.016);assert.equal(probes,0);assert.equal(calls,0);
-  actor.net.loops.charge={stop(){stops++;}};voices.call(n,.016);assert.equal(probes,1);assert.equal(calls,3);assert.equal(stops,1);assert.equal(actor.net.loops.charge,null);
-  actor.weapon.kind='charger';actor.weaponRunner.charging=true;voices.call(n,.016);assert.equal(probes,2);assert.equal(calls,6);
+  actor.net.loops.charge={stop(){stops++;}};voices.call(n,.016);assert.equal(probes,1);assert.equal(calls,4);assert.equal(stops,1);assert.equal(actor.net.loops.charge,null);
+  actor.weapon.kind='charger';actor.weaponRunner.charging=true;voices.call(n,.016);assert.equal(probes,2);assert.equal(calls,8);
 });
 test('catalog Spinner source motors enter and retire through the optimized remote voice guard',()=>{
   const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesChargerRise});
@@ -53,7 +53,7 @@ test('remote Charger release retires its recorded phrase and rearms the next ons
   const G={audio:{playChargerChargeRise(){starts++;return {stop(){stops++;}};}}};
   const voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesChargerRise});
   const a={remote:true,alive:true,weapon:{id:'charger',kind:'charger'},weaponRunner:{charging:true},net:{loops:{}},_nearCamera(){probes++;return true;}};
-  const n={byNid:new Map([[1,a]]),_voiceLoop(_a,_near,key){assert.ok(key==='spinnerCharge'||key==='spin'||key==='roll','Charger cannot create a repeating click');calls++;return null;}};
+  const n={byNid:new Map([[1,a]]),_voiceLoop(_a,_near,key,on){assert.ok(key==='spinnerCharge'||key==='spin'||key==='roll'||key==='bowCharge'&&!on,'Charger cannot create a repeating click');calls++;return null;}};
   voices.call(n,.016);assert.equal(starts,1);assert.equal(probes,1);assert.equal(a.net._chargerOnsetActive,true);
   voices.call(n,.016);assert.equal(starts,1,'a held charge has one recorded phrase');
   a.weaponRunner.charging=false;voices.call(n,.016);

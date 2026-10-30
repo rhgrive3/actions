@@ -2,6 +2,13 @@
 // Native snapshots and source locks stay unchanged; fail on a moved or duplicate anchor.
 const CHANGES = [
   [
+    "src/audio/music.js",
+    "    if (!preservePreload && track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();",
+    "    if (!preservePreload && track && track !== 'opening' && this._preloadedFile?.id !== track) this._dropPreload();",
+    "music-retire-unrelated-stream-preload",
+    1
+  ],
+  [
     "src/game/showcase.js",
     "this.splats.count = this._span(this.SA, this.SL, this.SN, sTop);\n    this.rings.count = this._span(this.RA, this.RL, this.RN, rTop);",
     "this.splats.count = sTop + 1;\n    this.rings.count = rTop + 1;",

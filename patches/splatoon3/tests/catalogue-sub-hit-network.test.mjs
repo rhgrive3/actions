@@ -18,7 +18,7 @@ function prepareTorpedoTerrain(w){
  f.G.physics=new f.installedRuntime.Physics(f.G.level);o.pos.set(0,0,26);v.pos.set(0,0,38);
 }
 function stepWorld(w){w.f.G.time+=1/60;w.f.G.projectiles.update(1/60);}
-function landing(drop){const g=drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);}
+function landing(drop){const g=drop.source.spec.splashGravity??drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);}
 function throwBurst(f,o){const p=f.G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);return p;}
 function advance(f,fps=60){for(let i=0;i<10;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}}
 for(const [w,n]of Object.entries(CATALOGUE_SUB_HIT_MAX))for(const ap of [0,57])test(`${w} JSON bounded raw hit reaches victim ${ap}AP once`,async()=>{

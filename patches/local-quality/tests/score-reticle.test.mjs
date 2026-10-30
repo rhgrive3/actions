@@ -30,7 +30,7 @@ class El {
   insertAdjacentHTML(_where,s){this.html=(this.html||'')+s;}
   set className(s){this.names=new Set(s.split(/\s+/).filter(Boolean));} get className(){return [...this.names].join(' ');}
   set innerHTML(s){this.html=s;this.children=[];this.parts.clear();} get innerHTML(){return this.html||'';}
-  appendChild(c){c.parentNode=this;this.children.push(c);return c;} setAttribute(k,v){this[k]=v;} addEventListener(){} remove(){} animate(){return{};}
+  appendChild(c){c.parentNode=this;this.children.push(c);return c;} setAttribute(k,v){this[k]=v;} removeAttribute(k){delete this[k];} addEventListener(){} remove(){} animate(){return{};}
   get offsetWidth(){return 1000;}
   querySelectorAll(selector){const names=selector.split('.').filter(Boolean),out=[];for(const c of this.children){if(names.every(n=>c.names?.has(n)))out.push(c);if(c.querySelectorAll)out.push(...c.querySelectorAll(selector));}return out;}
   querySelector(selector){const found=this.querySelectorAll(selector)[0];if(found)return found;if(!this.parts.has(selector))this.parts.set(selector,this.appendChild(new El()));return this.parts.get(selector);}

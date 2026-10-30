@@ -19,20 +19,27 @@ function random(seed){let n=seed;return()=>((n=Math.imul(n,1664525)+1013904223>>
 
 test('sub defense materializes only the final nearest candidate with identical geometry and one-shot ownership',()=>{
   const rnd=random(81);
+  const oldRadius="radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42";
+  assert.equal(baseline.customObjectCandidate.split(oldRadius).length,2,'one historical radius anchor');
+  const alignedBaseline=baseline.customObjectCandidate.replace(oldRadius,"radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:object.subId==='beakon'?.5:.42");
   for(let trial=0;trial<750;trial++){
     const rows=Array.from({length:trial%13},(_,i)=>({subId:i%3===0?'splashWall':i%3===1?'beakon':'torpedo',phase:i%3===2?'chase':'deployed',team:i%5?1:0,owner:{remote:i%4===0},ghost:i%7===0,hp:35,seq:i,pos:new THREE.Vector3(rnd()*6-3,rnd()*3-1,rnd()*10-3),yaw:rnd()*6}));
     const start=new THREE.Vector3(rnd()-.5,rnd()*2,rnd()-.5),end=new THREE.Vector3(rnd()*2-1,rnd()*2,8),p={team:0,owner:{remote:false},size:.2,damage:40,ghost:trial%11===0};
-    const run=code=>{
+    const run=(code,legacy=false)=>{
       let vectors=0;class Vector3 extends THREE.Vector3{constructor(...a){super(...a);vectors++;}}
       const records=rows.map(o=>({...o,pos:o.pos.clone(),owner:{...o.owner}})),effects=[];
+      // The current Beakon sphere is intentionally centered above its foot;
+      // align the historical sphere to compare all other geometry and effects.
+      if(legacy)for(const object of records)if(object.subId==='beakon')object.pos.y+=.48;
       const env={finite3,clamp,ALL_SUB_SPECS,syncObjectAttachment(){},targetableTorpedo:o=>o.subId==='torpedo'&&o.phase==='chase',objectDamageScale:()=>1,localOwner:o=>!!o&&!o.remote,emitObjectHit:(_api,o,_p,pt)=>effects.push(['proposal',o.seq,...pt.toArray()]),removeObject:(_api,_projectiles,o)=>{o.dead=true;effects.push(['remove',o.seq]);},blast:(_api,_p,pt)=>effects.push(['blast',...pt.toArray()])};
-      const result=evaluate(code,env)({THREE:{Vector3}}, {_s3SubObjects:records},p,start,end);
+      const api={THREE:{Vector3},_allSubBeakonCenter:new THREE.Vector3(),_allSubBeakonOffset:new THREE.Vector3(0,.48,0)};
+      const result=evaluate(code,env)(api, {_s3SubObjects:records},p,start,end);
       if(!result)return{result:null,vectors};
       const value={id:result.object.seq,t:result.t,distance:result.distance,point:result.point.toArray(),normal:result.normal.toArray(),visualOnly:result.visualOnly};
       value.first=result.onHit();value.second=result.onHit();value.hp=result.object.hp;value.settled=result.settled;value.effects=effects;
       return{result:value,vectors};
     };
-    const before=run(baseline.customObjectCandidate),after=run(current('customObjectCandidate'));
+    const before=run(alignedBaseline,true),after=run(current('customObjectCandidate'));
     assert.deepEqual(after.result,before.result);assert.ok(after.vectors<=2);assert.ok(after.vectors<=before.vectors);
   }
 });

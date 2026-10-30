@@ -21,7 +21,7 @@ const server=http.createServer((req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser;
 try {
-  browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:1000,height:700},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browser=await chromium.launchPersistentContext(profile,{headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),viewport:{width:1000,height:700},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const page=await browser.newPage();
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false})));
   await page.goto(`http://127.0.0.1:${server.address().port}/`,{waitUntil:'domcontentloaded'});
@@ -42,9 +42,12 @@ try {
       g.debug.fire(true);g._frame(1/60);
       g.debug.fire(false);
       if(a.s3.squidSpawn?.phase!=='flight')throw Error('Native Squid Spawn did not launch');
-      for(let i=0;i<65;i++)g._frame(1/60);
     }
-    if(a.s3?.squidSpawn||g.match.state!=='playing')throw Error('Movement probe started before native spawn/play admission');
+    // The intro may have already launched the actor, and a missed initial
+    // touchdown can enter the native landing phase. Advance that real state
+    // until it completes, with a finite bound instead of assuming 65 frames.
+    for(let i=0;i<300&&a.s3?.squidSpawn&&g.match.state==='playing';i++)g._frame(1/60);
+    if(a.s3?.squidSpawn||g.match.state!=='playing')throw Error('Movement probe started before native spawn/play admission: '+JSON.stringify({phase:a.s3?.squidSpawn?.phase,match:g.match.state,grounded:a.grounded}));
     const {Level}=await import(new URL('src/world/level.js',document.baseURI));
     const {Physics}=await import(new URL('src/game/physics.js',document.baseURI));
     const profile=await fetch(new URL('patches/splatoon3/profile.json',document.baseURI)).then(r=>r.json());
