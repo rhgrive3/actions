@@ -34,4 +34,7 @@ test('current combat adapter hooks the reviewed changes without rewriting locked
   assert.ok(adapter.includes("import { adaptReviewedWave67Gpu } from './reviewed-wave67-gpu-adapter.mjs';"));
   assert.ok(adapter.includes('code = adaptReviewedWave67Gpu(rel, code, replaceOnce);'));
   assert.ok(source.includes('if (cop != 0.0)'));
+  const qualityIdentity=readFileSync(new URL('../adapter.mjs',import.meta.url),'utf8');
+  assert.ok(qualityIdentity.includes("'reviewed-wave67-gpu-adapter.mjs'"),
+    'reviewed GPU transform changes must invalidate the release quality identity');
 });
