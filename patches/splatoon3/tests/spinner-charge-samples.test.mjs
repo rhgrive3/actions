@@ -65,6 +65,7 @@ test('gapless browser MP3 decode preserves a smoothly looping rise sample',async
    return src;
   }}};
   def.loop(voice,1,{});
+  assert.equal(src._end,Infinity,'V.kill must have a stop deadline for the looping source');
   const from=Math.round(src.loopStart*sampleRate),end=Math.round(src.loopEnd*sampleRate);
   assert.ok(Math.abs(pcm[end-1]-pcm[from])<1e-3,'the loop boundary is nearly continuous');
  }finally{globalThis.fetch=old;}
