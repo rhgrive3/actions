@@ -1,0 +1,295 @@
+{
+  "status": "verified-after-saved-file-readback",
+  "resultSha256": "d1ee8c7ec754ec9edd287182402a7b304d200bb3e99ba64e19e3a9dd924f3662",
+  "counts": {
+    "warmups": 20,
+    "preflight": 8,
+    "measurements": 16,
+    "exactPairs": 22,
+    "rejected": 0
+  },
+  "sourceAndReceipts": {
+    "a": {
+      "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+      "admittedPrivateFiles": 17,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ],
+      "servedUniqueFiles": 687,
+      "totalRequests": 2146
+    },
+    "b": {
+      "sourceSha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+      "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8",
+      "admittedPrivateFiles": 17,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ],
+      "servedUniqueFiles": 687,
+      "totalRequests": 720
+    }
+  },
+  "phases": {
+    "preflight": {
+      "quartetSummary": {
+        "quartets": [
+          {
+            "round": 0,
+            "replayOrdinals": [
+              6,
+              6,
+              7,
+              7
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 27.687444444480867,
+                "b": 23.710444444444857,
+                "ratio": 0.8563608855988595,
+                "changePercent": -14.363911440114052
+              },
+              "rendererThreadMsPerTick": {
+                "a": 11.278884999999999,
+                "b": 9.687018888888897,
+                "ratio": 0.8588631667836757,
+                "changePercent": -14.113683321632431
+              }
+            }
+          },
+          {
+            "round": 1,
+            "replayOrdinals": [
+              8,
+              8,
+              9,
+              9
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 26.912055555555142,
+                "b": 21.68288888887192,
+                "ratio": 0.8056942675416027,
+                "changePercent": -19.43057324583973
+              },
+              "rendererThreadMsPerTick": {
+                "a": 11.443291111111122,
+                "b": 8.97719444444443,
+                "ratio": 0.7844941072702258,
+                "changePercent": -21.550589272977415
+              }
+            }
+          }
+        ],
+        "frameRatio": {
+          "n": 2,
+          "mean": 0.8310275765702311,
+          "median": 0.8310275765702311,
+          "p95": 0.8563608855988595,
+          "max": 0.8563608855988595,
+          "geometricMean": 0.8306413524944753,
+          "logRatioTInterval95": [
+            0.5638217875142849,
+            1.223728972084766
+          ],
+          "inference": "Descriptive Student-t interval over independent ABBA quartets assuming approximately normal log-ratios; not over individual frame samples. Persistent host interference or drift can invalidate this assumption."
+        },
+        "threadRatio": {
+          "n": 2,
+          "mean": 0.8216786370269508,
+          "median": 0.8216786370269508,
+          "p95": 0.8588631667836757,
+          "max": 0.8588631667836757,
+          "geometricMean": 0.8208368250104516,
+          "logRatioTInterval95": [
+            0.46170240815297736,
+            1.4593233247117812
+          ],
+          "inference": "Descriptive Student-t interval over independent ABBA quartets assuming approximately normal log-ratios; not over individual frame samples. Persistent host interference or drift can invalidate this assumption."
+        }
+      },
+      "throttledWindows": 8,
+      "throttledPeriods": 49,
+      "throttledUsec": 1893799,
+      "sideMeans": {
+        "a": {
+          "frameMeanMs": {
+            "min": 21.984999999987583,
+            "max": 31.8391111111227,
+            "mean": 27.299750000018005
+          },
+          "rendererThreadMsPerTick": {
+            "min": 8.789143333333335,
+            "max": 14.097438888888911,
+            "mean": 11.36108805555556
+          }
+        },
+        "b": {
+          "frameMeanMs": {
+            "min": 21.380777777801786,
+            "max": 25.211777777775293,
+            "mean": 22.696666666658388
+          },
+          "rendererThreadMsPerTick": {
+            "min": 8.747518888888902,
+            "max": 10.62651888888889,
+            "mean": 9.332106666666663
+          }
+        }
+      }
+    },
+    "measurements": {
+      "quartetSummary": {
+        "quartets": [
+          {
+            "round": 0,
+            "replayOrdinals": [
+              6,
+              6,
+              7,
+              7
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 22.758666666669562,
+                "b": 21.104500000046357,
+                "ratio": 0.9273170660280482,
+                "changePercent": -7.26829339719518
+              },
+              "rendererThreadMsPerTick": {
+                "a": 9.255880555555546,
+                "b": 8.976498333333325,
+                "ratio": 0.9698157057510286,
+                "changePercent": -3.01842942489714
+              }
+            }
+          },
+          {
+            "round": 1,
+            "replayOrdinals": [
+              8,
+              8,
+              9,
+              9
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 22.827777777730176,
+                "b": 21.83738888891621,
+                "ratio": 0.9566147481170879,
+                "changePercent": -4.338525188291209
+              },
+              "rendererThreadMsPerTick": {
+                "a": 9.371632777777783,
+                "b": 8.871734444444453,
+                "ratio": 0.9466583523717766,
+                "changePercent": -5.334164762822335
+              }
+            }
+          },
+          {
+            "round": 2,
+            "replayOrdinals": [
+              10,
+              10,
+              11,
+              11
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 21.65605555555473,
+                "b": 21.019777777772397,
+                "ratio": 0.9706189441493592,
+                "changePercent": -2.938105585064077
+              },
+              "rendererThreadMsPerTick": {
+                "a": 9.252610555555567,
+                "b": 8.883544999999991,
+                "ratio": 0.9601122782224983,
+                "changePercent": -3.988772177750166
+              }
+            }
+          },
+          {
+            "round": 3,
+            "replayOrdinals": [
+              12,
+              12,
+              13,
+              13
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 21.611611111112353,
+                "b": 21.56933333330891,
+                "ratio": 0.9980437470586493,
+                "changePercent": -0.19562529413507113
+              },
+              "rendererThreadMsPerTick": {
+                "a": 8.76080111111111,
+                "b": 8.79105666666667,
+                "ratio": 1.0034535147153594,
+                "changePercent": 0.34535147153593737
+              }
+            }
+          }
+        ],
+        "frameRatio": {
+          "n": 4,
+          "mean": 0.9631486263382861,
+          "median": 0.9636168461332235,
+          "p95": 0.9980437470586493,
+          "max": 0.9980437470586493,
+          "geometricMean": 0.9628107187169331,
+          "logRatioTInterval95": [
+            0.9170506407062425,
+            1.0108541872478374
+          ],
+          "inference": "Descriptive Student-t interval over independent ABBA quartets assuming approximately normal log-ratios; not over individual frame samples. Persistent host interference or drift can invalidate this assumption."
+        },
+        "threadRatio": {
+          "n": 4,
+          "mean": 0.9700099627651657,
+          "median": 0.9649639919867634,
+          "p95": 1.0034535147153594,
+          "max": 1.0034535147153594,
+          "geometricMean": 0.969784953317563,
+          "logRatioTInterval95": [
+            0.9322341900736901,
+            1.0088482762113729
+          ],
+          "inference": "Descriptive Student-t interval over independent ABBA quartets assuming approximately normal log-ratios; not over individual frame samples. Persistent host interference or drift can invalidate this assumption."
+        }
+      },
+      "throttledWindows": 11,
+      "throttledPeriods": 16,
+      "throttledUsec": 15121,
+      "sideMeans": {
+        "a": {
+          "frameMeanMs": {
+            "min": 21.389777777745493,
+            "max": 23.642222222160132,
+            "mean": 22.2135277777667
+          },
+          "rendererThreadMsPerTick": {
+            "min": 8.738369999999993,
+            "max": 9.671565555555553,
+            "mean": 9.16023125
+          }
+        },
+        "b": {
+          "frameMeanMs": {
+            "min": 20.57866666670475,
+            "max": 22.051000000048013,
+            "mean": 21.38275000001097
+          },
+          "rendererThreadMsPerTick": {
+            "min": 8.694100000000004,
+            "max": 9.142355555555545,
+            "mean": 8.880708611111109
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "fixedAt": "2026-10-30T21:11:59.868096+00:00",
+  "purpose": "Latest-main native coverage optimization full A/A and A/B measurement",
+  "authorizedScope": "Parent explicitly authorized full fixed-condition measurement after csm0 smoke pass and browser shutdown.",
+  "cwd": "/workspace/actions-battle-benchmark",
+  "environment": {
+    "CHROMIUM_PATH": "/usr/bin/chromium"
+  },
+  "runs": [
+    {
+      "name": "coverage-native-full",
+      "evidence": "/workspace/actions-battle-benchmark/e/cf0",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-score-base/_site",
+        "--sha-a",
+        "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "--site-b",
+        "/workspace/actions-score-main/_site",
+        "--sha-b",
+        "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "--frames",
+        "900",
+        "--warmup-runs",
+        "5",
+        "--warmup-frames",
+        "900",
+        "--aa-rounds",
+        "2",
+        "--rounds",
+        "4",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/cf0"
+      ]
+    }
+  ],
+  "conditions": {
+    "stage": "hagglefish",
+    "quality": "low",
+    "viewport": [
+      480,
+      300
+    ],
+    "hz": 60,
+    "weapon": "shooter",
+    "frames": 900,
+    "warmupRunsPerSidePerPhase": 5,
+    "warmupFrames": 900,
+    "warmupSchedulePerPhase": [
+      "a",
+      "b",
+      "a",
+      "b",
+      "b",
+      "a",
+      "a",
+      "b",
+      "b",
+      "a"
+    ],
+    "aaQuartets": 2,
+    "abQuartets": 4,
+    "gpuCpus": "0-1",
+    "workerCpus": "2-3",
+    "sceneRender": false,
+    "allowBvhWorkReduction": false,
+    "profiling": false,
+    "allocations": false,
+    "forcedGc": false
+  },
+  "expected": {
+    "warmupWindows": 20,
+    "preflightMeasuredWindows": 8,
+    "comparisonMeasuredWindows": 16,
+    "totalWindows": 44,
+    "matchedOrdinalPairs": 22
+  },
+  "source": {
+    "a": {
+      "site": "/workspace/actions-score-base/_site",
+      "sha": "17ce3883007b9f402a82dc194285f23deba3afb9"
+    },
+    "b": {
+      "site": "/workspace/actions-score-main/_site",
+      "sha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2"
+    }
+  },
+  "admission": [
+    "Source SHA/build manifest and all private Git LFS oid/size binding before browser launch",
+    "Every served body SHA/size verified",
+    "Native eight actors, seven bots, eight ready source characters",
+    "All numeric results finite; no page errors or context loss",
+    "Exact matched-ordinal state/gameplay/paint/counts/draw/resources/scene/pose/budget/BVH parity",
+    "All observed thread affinity before/after each window; constant GPU PID",
+    "Retain every warmup/window/failure/cgroup snapshot/HTTP receipt"
+  ],
+  "timingPolicy": {
+    "discardOutlierWindows": false,
+    "automaticRetry": false,
+    "replicationUnit": "ABBA quartet; frame samples are not independent replications",
+    "cgroupThrottling": "Retain every cgroup delta and every timing, including unfavorable/throttled windows.",
+    "heapAndGc": "Record existing pre/post JSHeap metric snapshots and frame blocks. Ordinary runtime GC remains active, without forced GC or extra profiling/tracing. Heap changes alone do not identify GC events.",
+    "parentCoordination": "Parent stated benchmark slot available and explicitly authorized continuation."
+  },
+  "priorSmoke": {
+    "evidence": "../csm0",
+    "resultSha256": "4c0e88091f4f3680f0bf9ab67377d48bffc327745205169a8a8fdd42721809c8",
+    "status": "passed",
+    "harness": {
+      "benchmark-inkwave-composed-native-gpu-pool.mjs": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a",
+      "lib/inkwave-native-pool-admission.mjs": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb",
+      "lib/inkwave-cpu-affinity-pool.mjs": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56",
+      "lib/inkwave-composed-cpu-replay.mjs": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11",
+      "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+      "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+      "lib/inkwave-runtime-evidence.mjs": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af",
+      "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "builds": {
+      "a": {
+        "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d"
+      },
+      "b": {
+        "sourceSha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8"
+      }
+    },
+    "interpretation": "Smoke admission passed; 30-frame/one-quartet timing is not full-performance evidence and is not pooled with this run."
+  },
+  "limits": [
+    "Native Hagglefish LOW480x300, scene submissions disabled; paint-atlas draws remain active.",
+    "Fixed disjoint GPU0-1 / worker2-3 affinity under four-core cgroup quota changes host experiment; SwiftShader is software work, not device FPS.",
+    "Renderer ThreadTime includes digest/counter/CDP observer work; per-frame wall excludes subsequent observers.",
+    "Recorded matched-state equality does not prove all pixels, audio, private state, or external-device/Splatoon3 behavior.",
+    "No direct GC event trace; interpret heap deltas without attributing causality."
+  ]
+}

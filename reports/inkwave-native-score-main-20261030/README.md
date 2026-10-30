@@ -8,5 +8,6 @@
 - 同旧sourceの実native browser: 8 actors、30/60/120Hz、537 coverage呼出と10 directケースが比較成功。これは非計時correctness検証で、実機/FPS計測ではない。
 - [現行mainへのbuild統合](summary.json): baseline17ce3883、candidate ffad9e08。470e952aはdocs追加でscoring runtimeは同一。通常build/source/artifact/LFS/startup budget検証済み。最初のbroad emitted testsは両版63/66（共通standalone fixture mismatch2、numba不在1）。その失敗logを保持し、supported subsetは両版62/62、prefix source/emitted各12/12、source-native各3/3。元の失敗を成功には数えない。
 - [最新sourceのactual native smoke](native-smoke/README.md): baseline17ce3883/candidate470e952a、30-frame12窓/6組strict state/paint/BVH parity成功。A/Bのwall不利値も残す。scene submissionなしで画像/表示pose同一性・実機GPU・FPSを実証しない。
+- [最新sourceの900-tick native計測](native-full/README.md): 同じbuildの全44窓/22 matched-ordinal組で記録state/paint/BVH等が一致。A/B wall −3.719%（95% −8.295〜+1.085%）、ThreadTime −3.022%（95% −6.777〜+0.885%）。同一build A/Aの揺れも大きく、全体高速化は未確認。全rawを圧縮保存し、元analyzerによるsaved-file readbackでanalysisとreportの一致を確認した。
 
-900-tick44窓の全体A/B測定は別作業で進行中で、この公開候補に結果を混ぜない。Node固定履歴の短縮を全体性能へ読み替えず、全体高速化・実機FPSは未確認。公開用docs commitは再build/計時していない。Splatoon 3の既存比較条件Ver.11.3.0を引き継ぎ、新しい塗り重み・面積・score数値を導入せず、本家実機の未確認事項を維持する。
+Node固定履歴の46.00%短縮を全体性能へ読み替えず、全体高速化・実機FPSは未確認。900-tick計測もscene submissionなし・SwiftShader・固定CPU pool・固定ABBA/固定page順であり、自然scheduler・全描画への一般化はしていない。公開用docs commitは再build/計時していない。Splatoon 3の既存比較条件Ver.11.3.0を引き継ぎ、新しい塗り重み・面積・score数値を導入せず、本家実機の未確認事項を維持する。
