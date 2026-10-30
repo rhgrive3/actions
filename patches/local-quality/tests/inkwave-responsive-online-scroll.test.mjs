@@ -88,6 +88,12 @@ test('mobile WebKit attached-keyboard path uses native Home/End/Home while keepi
  assert(!f.calls.some(x=>x[0]==='wheel'));assert.equal(f.calls.filter(x=>x[0]==='focus').length,2);
  assert(r.gestures.every(x=>x.inputMethod===r.inputMethod&&x.down>x.before+1&&x.up===0));
 });
+test('WebKit waits for animated End to finish before sending Home',async()=>{
+ const f=pageFixture({engine:'webkit'}),press=f.page.keyboard.press;let pending=false,settled=0;
+ f.page.keyboard.press=async key=>{if(key==='Home')assert.equal(pending,false,'Home must not race an unfinished End');if(key==='End')pending=true;await press(key);};
+ f.page.waitForFunction=async fn=>{if(String(fn).includes('scrollHeight-el.clientHeight-1')){assert(pending);pending=false;settled++;}};
+ await checkResponsiveOnlineScroll(f.page);assert.equal(settled,2,'both native scroll owners settle at the End boundary');
+});
 test('WebKit keyboard path fails closed on swallowed keys, stolen focus, wrong mode, outer/sibling rescue, or clipping',async()=>{
  for(const options of [{keyboardWorks:false},{wrongFocus:true},{inputMode:'touch'},{crossScroll:true},{clipped:true},{rescueRoot:true},{rescueDocument:true}])
   await assert.rejects(checkResponsiveOnlineScroll(pageFixture({engine:'webkit',...options}).page),/native input|focus|keyboard state|root|document|clipped/);
