@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validatePresentedFrame,seekReferenceFrame,publicReferenceQuery,inspectReferenceMetadata,createReferenceTrace} from './recover-public-blast-browser-reference.mjs';
+import {validatePresentedFrame,seekReferenceFrame,publicReferenceQuery,inspectReferenceMetadata,createReferenceTrace,bufferReferenceMedia,isBufferedMediaSeekAbort} from './recover-public-blast-browser-reference.mjs';
 const frame=()=>({mediaTime:15.95,paused:true,seeking:false,readyState:2,currentTime:15.95,width:1920,height:1080,metadataWidth:1920,metadataHeight:1080,presentedFrames:1});
 test('actual presented frame metadata is required at the fixed time',()=>{assert.equal(validatePresentedFrame(frame()),true);assert.throws(()=>validatePresentedFrame(frame(),16));});
 test('wrong frame, unready, playback, scaled metadata, excessive dimensions rejected',()=>{
@@ -44,4 +44,17 @@ test('trace bounds explicitly fail closed without silent loss or old snapshot ex
  const trace=createReferenceTrace(()=>1);trace.record('first');const before=trace.snapshot();
  for(let i=0;i<200;i++)trace.record('event');
  assert.equal(before.events.length,1);assert.equal(trace.snapshot().events.length,128);assert.equal(trace.snapshot().overflow,true);
+});
+
+test('complete buffer requires the declared length and rejects failed or truncated HTTP',async()=>{
+ const run=({ok=true,declared=4,actual=4,expectedBytes=4}={})=>new Function('fetch','Blob','URL','return ('+bufferReferenceMedia.toString()+');')(async()=>({ok,headers:{get:()=>String(declared)},arrayBuffer:async()=>new Uint8Array(actual).buffer}),Blob,{createObjectURL:b=>'blob:fixture/'+b.size})({url:'http://127.0.0.1:1/reference.mp4',expectedBytes});
+ assert.deepEqual(await run(),{url:'blob:fixture/4',bytes:4});
+ for(const input of [{ok:false},{declared:3},{actual:3},{expectedBytes:0},{expectedBytes:128*1024*1024+1}])await assert.rejects(run(input));
+});
+
+test('only the owned complete-buffer Blob seek abort is non-network; HTTP and other failures remain fatal',()=>{
+ const owned='blob:null/owned';
+ assert.equal(isBufferedMediaSeekAbort({url:owned,failure:{errorText:'net::ERR_ABORTED'}},owned),true);
+ for(const value of [{url:'http://127.0.0.1/reference.mp4',failure:{errorText:'net::ERR_ABORTED'}},{url:'blob:null/other',failure:{errorText:'net::ERR_ABORTED'}},{url:owned,failure:{errorText:'net::ERR_FAILED'}},{url:owned}])assert.equal(isBufferedMediaSeekAbort(value,owned),false);
+ assert.equal(isBufferedMediaSeekAbort({url:owned,failure:{errorText:'net::ERR_ABORTED'}},null),false);
 });

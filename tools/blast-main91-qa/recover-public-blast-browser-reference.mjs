@@ -43,6 +43,22 @@ export function validatePresentedFrame(frame,target=TARGET){
  if(!Number.isInteger(frame.presentedFrames)||frame.presentedFrames<1)throw Error('No presented video frame observed');
  return true;
 }
+// Fetch the bounded, already source-verified MP4 once before native seeking.
+// A fully buffered Blob avoids the browser cancelling an HTTP Range request
+// when it seeks; real request failures remain fatal and retained in the trace.
+export async function bufferReferenceMedia({url,expectedBytes}){
+ if(!Number.isSafeInteger(expectedBytes)||expectedBytes<=0||expectedBytes>128*1024*1024)throw Error('Invalid reference byte bound');
+ const response=await fetch(url,{mode:'cors',credentials:'omit'});
+ if(!response.ok||Number(response.headers.get('content-length'))!==expectedBytes)throw Error('Reference buffer response mismatch');
+ const bytes=await response.arrayBuffer();
+ if(bytes.byteLength!==expectedBytes)throw Error('Incomplete reference buffer');
+ const blob=new Blob([bytes],{type:'video/mp4'});
+ return {url:URL.createObjectURL(blob),bytes:blob.size};
+}
+export function isBufferedMediaSeekAbort(failure,ownedBlobURL){
+ return typeof ownedBlobURL==='string'&&ownedBlobURL.startsWith('blob:')&&
+  failure.url===ownedBlobURL&&failure.failure?.errorText==='net::ERR_ABORTED';
+}
 export async function seekReferenceFrame({url,target=15.95}){
  if(target!==15.95)throw Error('Only the fixed reference time is allowed');
  const video=document.querySelector('video');
@@ -72,7 +88,7 @@ export async function seekReferenceFrame({url,target=15.95}){
 }
 export async function recoverBrowserReference(sourceRoot){
  let server,browser;
- const networkFailures=[],trace=createReferenceTrace();let mediaProof=null;
+ const networkFailures=[],bufferedMediaEvents=[],trace=createReferenceTrace();let mediaProof=null,ownedBlobURL=null;
  try{
   if(process.env.CHROMIUM_EXECUTABLE_PATH)throw Error('Executable override forbidden');
   const root=path.resolve(sourceRoot),require=createRequire(path.join(root,'package.json'));
@@ -105,7 +121,7 @@ export async function recoverBrowserReference(sourceRoot){
     if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>=video.bytes.length){res.writeHead(416,{'content-range':'bytes */'+video.bytes.length});res.end();return;}
     trace.record('server-body-offered',{requestId,status:206,bodyBytesOffered:req.method==='HEAD'?0:end-start+1,start,end});res.writeHead(206,{'content-type':'video/mp4','content-range':'bytes '+start+'-'+end+'/'+video.bytes.length,'content-length':end-start+1,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes.subarray(start,end+1));return;
    }
-   trace.record('server-body-offered',{requestId,status:200,bodyBytesOffered:req.method==='HEAD'?0:video.bytes.length,start:0,end:video.bytes.length-1});res.writeHead(200,{'content-type':'video/mp4','content-length':video.bytes.length,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes);
+   trace.record('server-body-offered',{requestId,status:200,bodyBytesOffered:req.method==='HEAD'?0:video.bytes.length,start:0,end:video.bytes.length-1});res.writeHead(200,{'access-control-allow-origin':'null','content-type':'video/mp4','content-length':video.bytes.length,'accept-ranges':'bytes','cache-control':'no-store'});res.end(req.method==='HEAD'?undefined:video.bytes);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const localURL='http://127.0.0.1:'+server.address().port+'/reference.mp4';
@@ -119,10 +135,20 @@ export async function recoverBrowserReference(sourceRoot){
   page.on('request',r=>trace.record('browser-request',{requestId:String(trace.id(r)),url:r.url(),method:r.method(),range:r.headers().range??null}));
   page.on('response',r=>trace.record('browser-response',{requestId:String(trace.id(r.request())),status:r.status(),contentRange:r.headers()['content-range']??null,contentLength:r.headers()['content-length']??null}));
   page.on('requestfinished',r=>trace.record('browser-finished',{requestId:String(trace.id(r))}));
-  page.on('requestfailed',r=>{const failure={url:r.url(),failure:r.failure()};networkFailures.push(failure);trace.record('browser-failed',{requestId:String(trace.id(r)),...failure});});
-  await page.setContent(`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; media-src http://127.0.0.1:*; style-src 'unsafe-inline'"><style>html,body{margin:0;padding:0;background:black}video{display:block;max-width:none;max-height:none}</style><video></video>`);
+  page.on('requestfailed',r=>{const failure={url:r.url(),failure:r.failure()};trace.record('browser-failed',{requestId:String(trace.id(r)),...failure});
+   // This exact owned Blob already contains the complete checked HTTP body.
+   // Its cancelled decoder read has no network transfer to fail. Keep it in
+   // the receipt; all HTTP failures and all other decoder failures stay fatal.
+   if(isBufferedMediaSeekAbort(failure,ownedBlobURL))bufferedMediaEvents.push(failure);else networkFailures.push(failure);
+  });
+  await page.setContent(`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src http://127.0.0.1:*; media-src blob:; style-src 'unsafe-inline'"><style>html,body{margin:0;padding:0;background:black}video{display:block;max-width:none;max-height:none}</style><video></video>`);
+  trace.phase('complete-media-buffer');
+  const buffered=await page.evaluate(bufferReferenceMedia,{url:localURL,expectedBytes:video.bytes.length});
+  if(buffered.bytes!==video.bytes.length||!buffered.url.startsWith('blob:'))throw Error('Browser media buffer mismatch');
+  ownedBlobURL=buffered.url;
+  mediaProof.transport={kind:'complete-buffer-blob',bytes:buffered.bytes};
   trace.phase('metadata-and-seek');
-  const frame=await page.evaluate(seekReferenceFrame,{url:localURL,target:TARGET});validatePresentedFrame(frame);mediaProof.frame=frame;trace.phase('frame-validated');
+  const frame=await page.evaluate(seekReferenceFrame,{url:buffered.url,target:TARGET});validatePresentedFrame(frame);mediaProof.frame=frame;trace.phase('frame-validated');
   await page.setViewportSize({width:frame.width,height:frame.height});
   const element=page.locator('video'),box=await element.boundingBox();
   if(!box||box.width!==frame.width||box.height!==frame.height)throw Error('Video element is scaled');
@@ -131,7 +157,7 @@ export async function recoverBrowserReference(sourceRoot){
   if(!after.paused||after.seeking||after.currentTime!==frame.currentTime||after.width!==frame.width||after.height!==frame.height)throw Error('Video changed during screenshot');
   if(png.length>MAX_PNG||png.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||png.readUInt32BE(16)!==frame.width||png.readUInt32BE(20)!==frame.height)throw Error('Reference screenshot size or PNG mismatch');
   mediaProof.after=after;mediaProof.pngSHA256=sha(png);mediaProof.pngBytes=png.length;mediaProof.pixelReview='pending';trace.phase('post-screenshot');
-  emit({type:'transport-diagnostic',recordId:'public-tweet-browser-frame',mediaProof,trace:trace.snapshot(),networkFailures});
+  emit({type:'transport-diagnostic',recordId:'public-tweet-browser-frame',mediaProof,trace:trace.snapshot(),networkFailures,bufferedMediaEvents});
   if(trace.snapshot().overflow)throw Error('Reference request trace bound exceeded');
   if(after.videoError)throw Error('Video decoder reported an error');
   if(networkFailures.length)throw Error('Reference browser request failed: '+JSON.stringify(networkFailures));
