@@ -1,0 +1,360 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "site": "/workspace/site-mobile-round2-after",
+  "pathBoundBuildSha256": "e2c1ddb7b04c29ebf48de97faf38f61555f5855f864dc38d588b33b8821cc597",
+  "contentHash": "55c6e1fe799e2a40cb429038158a6ed1b0a28c74c705e4a82d0b2bdc057d3f66",
+  "revision": "1ca7e5b98e61d159e6d46a3b31808f10beea93055bef857e020ea633eb5cc8c3",
+  "browser": "chromium",
+  "renderFrames": 2,
+  "requestedStages": [
+    "robo",
+    "shipshape"
+  ],
+  "profiles": [
+    {
+      "device": "ipad",
+      "status": "passed",
+      "stages": [
+        {
+          "id": "robo",
+          "name": "バイガイ亭",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 55,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "paintDryRegions": {
+            "present": true,
+            "targetMatches": true,
+            "counters": {
+              "dryPasses": 0,
+              "sparsePasses": 0,
+              "fullPasses": 0,
+              "coveredPixels": 0,
+              "baselinePixels": 0
+            }
+          },
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "geometry": {
+            "vertices": 254039,
+            "triangles": 169233,
+            "collisionTriangles": 107020,
+            "bvhNodes": 32767,
+            "paintFaces": 23685
+          },
+          "frameRows": [
+            {
+              "calls": 129,
+              "triangles": 408897,
+              "glError": 0
+            },
+            {
+              "calls": 339,
+              "triangles": 603013,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 480,
+            "textures": 66
+          },
+          "elapsedMs": 21790
+        },
+        {
+          "id": "shipshape",
+          "name": "オヒョウ海運",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": true,
+            "ipad": true,
+            "android": false,
+            "touch": true,
+            "touchCapable": true,
+            "phone": false,
+            "tablet": true
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            1024,
+            768
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "paintDryRegions": {
+            "present": true,
+            "targetMatches": true,
+            "counters": {
+              "dryPasses": 0,
+              "sparsePasses": 0,
+              "fullPasses": 0,
+              "coveredPixels": 0,
+              "baselinePixels": 0
+            }
+          },
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "geometry": {
+            "vertices": 384488,
+            "triangles": 335944,
+            "collisionTriangles": 310976,
+            "bvhNodes": 65535,
+            "paintFaces": 140825
+          },
+          "frameRows": [
+            {
+              "calls": 183,
+              "triangles": 464120,
+              "glError": 0
+            },
+            {
+              "calls": 319,
+              "triangles": 779173,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 467,
+            "textures": 113
+          },
+          "elapsedMs": 30359
+        }
+      ],
+      "errors": [],
+      "blockedExternal": [],
+      "release": {
+        "nativeReleased": true,
+        "previousDisposed": true,
+        "rawPresetRestored": true
+      }
+    },
+    {
+      "device": "phone",
+      "status": "passed",
+      "stages": [
+        {
+          "id": "robo",
+          "name": "バイガイ亭",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 55,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "paintDryRegions": {
+            "present": true,
+            "targetMatches": true,
+            "counters": {
+              "dryPasses": 0,
+              "sparsePasses": 0,
+              "fullPasses": 0,
+              "coveredPixels": 0,
+              "baselinePixels": 0
+            }
+          },
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "geometry": {
+            "vertices": 254039,
+            "triangles": 169233,
+            "collisionTriangles": 107020,
+            "bvhNodes": 32767,
+            "paintFaces": 23685
+          },
+          "frameRows": [
+            {
+              "calls": 129,
+              "triangles": 326346,
+              "glError": 0
+            },
+            {
+              "calls": 339,
+              "triangles": 520462,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 475,
+            "textures": 66
+          },
+          "elapsedMs": 12000
+        },
+        {
+          "id": "shipshape",
+          "name": "オヒョウ海運",
+          "status": "passed",
+          "native": true,
+          "actors": 8,
+          "bots": 7,
+          "matchState": "intro",
+          "touch": {
+            "ios": false,
+            "ipad": false,
+            "android": true,
+            "touch": true,
+            "touchCapable": true,
+            "phone": true,
+            "tablet": false
+          },
+          "quality": {
+            "reflectionScale": 0.1,
+            "reflectionInterval": 4,
+            "reflectionActors": false,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "msaa": 0,
+            "bloom": false,
+            "ao": false,
+            "paintAtlas": 2048,
+            "particles": 0.7
+          },
+          "textureQuality": "balanced",
+          "textureCount": 91,
+          "textureLimit": 1024,
+          "atlas": 2048,
+          "framebuffer": [
+            844,
+            390
+          ],
+          "prebuilt": true,
+          "nativeGroups": 1,
+          "nativeInk": 1,
+          "detailMaterials": 0,
+          "previousDisposed": true,
+          "paintDryRegions": {
+            "present": true,
+            "targetMatches": true,
+            "counters": {
+              "dryPasses": 0,
+              "sparsePasses": 0,
+              "fullPasses": 0,
+              "coveredPixels": 0,
+              "baselinePixels": 0
+            }
+          },
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "geometry": {
+            "vertices": 384488,
+            "triangles": 335944,
+            "collisionTriangles": 310976,
+            "bvhNodes": 65535,
+            "paintFaces": 140825
+          },
+          "frameRows": [
+            {
+              "calls": 188,
+              "triangles": 467866,
+              "glError": 0
+            },
+            {
+              "calls": 324,
+              "triangles": 782920,
+              "glError": 0
+            }
+          ],
+          "memory": {
+            "geometries": 465,
+            "textures": 114
+          },
+          "elapsedMs": 27414
+        }
+      ],
+      "errors": [],
+      "blockedExternal": [],
+      "release": {
+        "nativeReleased": true,
+        "previousDisposed": true,
+        "rawPresetRestored": true
+      }
+    }
+  ],
+  "scope": "chromium mobile emulation: normal stage load, intro render and disposal smoke; not physical iPad/phone FPS or full-match acceptance.",
+  "browserVersion": "151.0.7922.34"
+}

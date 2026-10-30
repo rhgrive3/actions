@@ -1,0 +1,32 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {performance} from 'node:perf_hooks';
+import * as THREE from '../../inkwave-public/vendor/three/build/three.module.js';
+import {sphereTriangleEntry} from '../../patches/native-stages/runtime/sphere-triangle-entry.mjs';
+const source=fs.readFileSync('.ci-scratch/native-physics-round2/before.mjs','utf8');
+const slabStart=source.indexOf('   for(let k=0;k<3;k++){'),slabEnd=source.indexOf('\n   }\n   }\n   if(miss)continue;',slabStart)+5;
+assert(slabStart>0&&slabEnd>slabStart);
+const axis=(k,coord)=>`    {const o=origin.${coord},d=dir.${coord};
+     if(d>-1e-12&&d<1e-12){if(o<nodes[ni+${k}]||o>nodes[ni+${k+3}]){miss=true;break slabs;}}
+     else {const a=(nodes[ni+${k}]-o)/d,b=(nodes[ni+${k+3}]-o)/d;
+      if(a<=b&&typeof high==='number'&&high===high){if(a>low)low=a;if(b<high)high=b;if(high<low){miss=true;break slabs;}}
+      else if(b<=a&&typeof high==='number'&&high===high){if(b>low)low=b;if(a<high)high=a;if(high<low){miss=true;break slabs;}}
+      else{low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low){miss=true;break slabs;}}
+     }
+    }`;
+const unrolled=source.slice(0,slabStart)+'   slabs:{\n'+['x','y','z'].map((c,k)=>axis(k,c)).join('\n')+'\n   }'+source.slice(slabEnd);
+const broad=source.replace('  let mask=0;\n','  let mask=0,loX=Infinity,hiX=-Infinity,loZ=Infinity,hiZ=-Infinity;\n').replace('mask|=1<<i;this.queryCount++;','mask|=1<<i;this.queryCount++;if(o.x<loX)loX=o.x;if(o.x>hiX)hiX=o.x;if(o.z<loZ)loZ=o.z;if(o.z>hiZ)hiZ=o.z;').replace('const pending=stack[--top],ni=stack[--top]*8;let active=0;','const pending=stack[--top],ni=stack[--top]*8;let active=0;\n    if(loX>nodes[ni+3]||hiX<nodes[ni]||loZ>nodes[ni+5]||hiZ<nodes[ni+2])continue;');
+fs.writeFileSync('.ci-scratch/native-physics-round2/unrolled.mjs',unrolled);fs.writeFileSync('.ci-scratch/native-physics-round2/broad.mjs',broad);
+const sources={before:source,unrolled,broad},types=Object.fromEntries(Object.entries(sources).map(([key,s])=>[key,new Function('THREE','sphereTriangleEntry',s.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn TriangleWorld;')(THREE,sphereTriangleEntry)]));
+const flat=h=>h&&typeof h==='object'?{...h,point:h.point.toArray(),normal:h.normal.toArray()}:h;
+let seed=1783;const rnd=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296),results=[];
+for(const stage of ['robo','shipshape']){
+ const r=JSON.parse(fs.readFileSync('native-prebuilt/'+stage+'/stage.json')),data={manifest:r.manifest};for(const key of ['triangles','normals','flags','objectIds','nodes','order']){const s=r.arrays[key],b=Buffer.concat(s.chunks.map(c=>fs.readFileSync('native-prebuilt/'+stage+'/'+c.file))),T=globalThis[s.type];data[key]=new T(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));}
+ const poses=[];for(let n=0;n<1024;n++){let id;do{id=Math.floor(rnd()*data.flags.length);}while(data.normals[id*3+1]<.68);const k=id*9,a=data.triangles;poses.push(new THREE.Vector3((a[k]+a[k+3]+a[k+6])/3,(a[k+1]+a[k+4]+a[k+7])/3+.6,(a[k+2]+a[k+5]+a[k+8])/3));}
+ const inputs=poses.map((o,i)=>[o,new THREE.Vector3(rnd()-.5,(rnd()-.5)*.5,rnd()-.5).normalize(),i%2?20:100,{ignoreGrates:i%3===0,anyHit:i%4===0}]);
+ const worlds=Object.fromEntries(Object.entries(types).map(([key,T])=>[key,new T(data)]));
+ for(const p of inputs)assert.deepEqual(flat(worlds.unrolled.ray(...p)),flat(worlds.before.ray(...p)));
+ const run=(key,batch,n)=>{const w=worlds[key],out={point:new THREE.Vector3(),normal:new THREE.Vector3()},origins=Array.from({length:9},()=>new THREE.Vector3()),outputs=origins.map(()=>({point:new THREE.Vector3(),normal:new THREE.Vector3()})),st=performance.now(),cpu=process.cpuUsage();for(let i=0;i<n;i++){if(batch){const p=poses[i%poses.length];origins[0].copy(p);for(let k=1;k<9;k++)origins[k].set(p.x+Math.cos((k-1)*Math.PI/4)*.28,p.y,p.z+Math.sin((k-1)*Math.PI/4)*.28);w.rayDownBatch(origins,1.05,{},outputs);}else w.ray(...inputs[i%inputs.length],out);}const c=process.cpuUsage(cpu);return{wall:performance.now()-st,cpu:(c.user+c.system)/1000};};
+ for(const [name,keys,batch,n]of [['ray',['before','unrolled'],false,10000],['ground',['before','broad'],true,5000]]){
+  for(const key of keys)run(key,batch,3000);const samples={};for(let trial=0;trial<7;trial++)for(const key of trial%2?[...keys].reverse():keys)(samples[key]??=[]).push(run(key,batch,n));results.push({stage,name,samples});
+ }
+}
+console.log(JSON.stringify(results,null,2));

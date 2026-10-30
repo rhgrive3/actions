@@ -1,9 +1,14 @@
+import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
+import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
+import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
+import { adaptLandscapeGearNativeKeys } from '../patches/local-quality/landscape-gear-native-keys-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
 import { adaptLandscapeOnline } from '../patches/local-quality/landscape-online-adapter.mjs';
 import { adaptLandscapeSettings } from '../patches/local-quality/landscape-settings-adapter.mjs';
 import { adaptTurfIntroCamera } from '../patches/splatoon3/turf-intro-camera-adapter.mjs';
+import { adaptBossStormVolume } from '../patches/splatoon3/boss-storm-volume-adapter.mjs';
 import { adaptLockOptionRecovery } from '../patches/reliability/lock-option-recovery-adapter.mjs';
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
 import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
@@ -150,11 +155,16 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueVisualContinuation20261029(rel, code);
   code = adaptLateRoot20261029(rel, code);
   code = adaptTurfIntroCamera(rel, adaptCombatWave345(rel, code, replaceOnce));
+  code = adaptBossStormVolume(rel, code);
   code = adaptLandscapeHome(rel, code);
   code = adaptLandscapeWeapons(rel, code);
   code = adaptLandscapeOnline(rel, code);
   code = adaptLandscapeSettings(rel, code);
   code = adaptLandscapeWeaponDrawer(rel, code);
+  code = adaptPauseModalLifetime(rel, code);
+  code = adaptOnlineAsyncEntry(rel, code);
+  code = adaptLandscapePracticeWeapons(rel, code);
+  code = adaptLandscapeGearNativeKeys(rel, code);
   return code;
 }
 

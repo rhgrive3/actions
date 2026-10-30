@@ -1,4 +1,3 @@
-import { catalogChargeStage } from '../catalog-charge-stages.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
@@ -60,13 +59,13 @@ export function installWeaponAudioRuntime(api){
     return o;
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume,true));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const key in s.loops){s.loops[key]?.stop(.04);delete s.loops[key];}s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){if(r?.spinLoop){r.spinLoop.stop?.(.04);r.spinLoop=null;r._spinnerAudioPhase=null;r._spinnerAudioRetryAt=0;}const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const key in s.loops){s.loops[key]?.stop(.04);delete s.loops[key];}s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
-      if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
+      if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch,progress:event==='charge'?r.charge:undefined});
       if(s.loops[event]){
         const update=s.loopUpdates[event] ||= {pos:undefined,pitch:1,volume:.68};
-        update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;
+        update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;update.progress=event==='charge'?r.charge:undefined;
         s.loops[event].set(update);
       }
       active.add(r);
@@ -127,6 +126,11 @@ export function installWeaponAudioRuntime(api){
   listen('special:use',e=>{
     const a=e?.actor,s=a?.weaponRunner?._mainAudioState,n=a?.net;
     if(s?.chargeRise){s.chargeRise.stop?.(.04);s.chargeRise=null;}
+    const family=WEAPON_AUDIO[mainAudioSourceId(a?.weapon?.id)]?.family;
+    if(family==='splatling'||family==='stringer'){
+      stop(a?.weaponRunner);
+      for(const key of ['spinnerCharge','bowCharge','spin'])if(n?.loops?.[key]){n.loops[key].stop?.(.04);n.loops[key]=null;}
+    }
     // Replicas own their phrase in NetMatch, not WeaponRunner. Keep their
     // edge latch too: an older charging snapshot can outlive this event.
     if(a?.remote&&n?._chargerRise){n._chargerRise.stop?.(.04);n._chargerRise=null;}
@@ -184,6 +188,10 @@ export function installWeaponAudioRuntime(api){
       if(!nowCharging&&!this.s3Stored)s.keepEmergePlayed=false;
       if(!a?.weapon?.catalogRecord)s.wasCharge=nowCharging;
     }
+    // Native and catalogue Spinners already own runner.spinLoop. Register
+    // that owner for death/match/engine cleanup, never create a second motor.
+    if(recipe?.family==='splatling'&&this.spinLoop)active.add(this);
+    if(recipe?.family==='splatling'&&(!a.alive||a.form==='squid'||a.specialActive||a.superJumpState))stop(this);
     // Other weapon families still own their true continuous loop events.
     if(!a?.weapon?.catalogRecord||a.remote)return result;
     if(!a.alive||a.form==='squid'||a.specialActive||a.superJumpState){stop(this);return result;}
@@ -194,19 +202,14 @@ export function installWeaponAudioRuntime(api){
       s.sBlastMode=mode;
     }
     const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
-    if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
-    keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
+    const spinnerOwned=r.family==='splatling'&&typeof G.audio?.syncSpinnerCharge==='function';
+    if(!isCharger&&!spinnerOwned)keepLoop(this,'charge',charging,.66+q*.78);
+    if(!spinnerOwned)keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
     const rollingSE=!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold;
     keepLoop(this,'roll',rollingSE,rollingSE ? .8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25 : .8);
-    const bowPhase=catalogChargeStage(a.weapon,q);
-    if(bowPhase){
-      const previous=s.chargeStage||0;
-      // The retained pack has no Stringer ready recording. Use the existing
-      // INKWAVE stage ding explicitly; this is not a claimed retail cue.
-      for(let stage=previous+1;charging&&stage<=bowPhase.stage;stage++)
-        G.audio?.play('charger_full',{...options(a,a.pos,.45),pitch:stage===1?.8:1});
-      s.chargeStage=charging?bowPhase.stage:0;
-    }else if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
+    // Spinner premixes and the Stringer charge handle own both boundary
+    // cues. No second synthetic charger_full/ready is layered over them.
+    if(r.family!=='stringer'&&r.family!=='splatling'&&charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);
     // Brush_Move is a sustained floor-contact loop, not a swing windup.

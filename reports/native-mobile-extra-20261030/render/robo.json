@@ -1,0 +1,179 @@
+{
+  "scope": "Node CPU component using actual source geometry; not browser, GPU or device FPS",
+  "node": "v24.19.0",
+  "stage": "robo",
+  "stageRecordSha256": "6a24493108f89a8f78942c6ccefda71d255b89953d8cb21130a5ad86ccfa933d",
+  "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+  "fixtureSha256": "8954453c3575aa2328eb745756b88320bba991d7555ae7b632ca58c69179d41c",
+  "candidateSourceSha256": "11cbdbcdf0429757a803db6aa95f89c42c1dda94836ebc6e3bd7a45cd45dfe47",
+  "objects": 63,
+  "cameras": 240,
+  "loops": 4,
+  "parity": {
+    "exactIndexArrays": true,
+    "exactDrawCounts": true,
+    "exactUploadRanges": true,
+    "exactVersions": true,
+    "selectedTriangles": 22011896
+  },
+  "beforeMedianMs": 411.23071900000105,
+  "afterMedianMs": 155.7183180000011,
+  "reductionPercent": 62.1335880795421,
+  "beforeMedianCpuMs": 411.343,
+  "afterMedianCpuMs": 155.819,
+  "cpuReductionPercent": 62.119447760141774,
+  "samples": [
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 418.682549000001,
+        "cpu": {
+          "user": 418770,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 170.77616899999884,
+        "cpu": {
+          "user": 170886,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 446.36287900000025,
+        "cpu": {
+          "user": 446460,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 174.84899899999982,
+        "cpu": {
+          "user": 174648,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 416.64468099999976,
+        "cpu": {
+          "user": 415948,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 147.5700429999997,
+        "cpu": {
+          "user": 147674,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 398.5956420000002,
+        "cpu": {
+          "user": 398768,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 151.13285799999903,
+        "cpu": {
+          "user": 151150,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 411.23071900000105,
+        "cpu": {
+          "user": 411343,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 155.7183180000011,
+        "cpu": {
+          "user": 155819,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 395.74798999999985,
+        "cpu": {
+          "user": 395903,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 156.1031350000012,
+        "cpu": {
+          "user": 157258,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 387.94775200000004,
+        "cpu": {
+          "user": 395906,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 144.1511329999994,
+        "cpu": {
+          "user": 144270,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 411.0709999999999,
+        "cpu": {
+          "user": 411274,
+          "system": 0
+        },
+        "triangles": 88047584
+      },
+      "after": {
+        "ms": 143.20019599999978,
+        "cpu": {
+          "user": 143217,
+          "system": 0
+        },
+        "triangles": 88047584
+      }
+    }
+  ]
+}

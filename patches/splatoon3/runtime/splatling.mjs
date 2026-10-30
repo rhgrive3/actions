@@ -7,10 +7,11 @@ const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
 const sampledSpeedViews = new WeakMap();
 const LOG_HALF=Math.log(.5);
 function updateSpinLoop(runner,pos){
-  // Recorded Motor/MotorFire sounds stay at their original 1x pitch.
-  // Only position follows the actor; old synthesized pitch modulation is gone.
-  const update=runner._s3SpinLoopUpdate ||= {pos:undefined};
-  update.pos=pos;runner.spinLoop?.set?.(update);
+  // Recorded motor pitch remains owned by its source bank. The independent
+  // staged charge phrase must receive the real gameplay fraction too.
+  const update=runner._s3SpinLoopUpdate ||= {pos:undefined,progress:undefined};
+  update.pos=pos;update.progress=runner.charging?runner.charge:undefined;
+  runner.spinLoop?.set?.(update);
 }
 let lastSpeedMedian=NaN,lastSpeedExponent=0;
 
