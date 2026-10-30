@@ -60,8 +60,11 @@ function choosePoint(ctx, active) {
   let point;
   if (special === 'tacticooler') {
     const mate = allies.find(a => !(a.s3?.drink && a.s3.drinkUntil > ctx.world.time + 4));
-    if (!active && (!mate || seen && distance < 6)) return null;
-    point = toward(ctx, mate?.pos || goal || actor.pos, 3);
+    const ownDrink = actor.s3?.drink && actor.s3.drinkUntil > ctx.world.time + 4;
+    const soloPush = !ownDrink && (seen ? distance >= 8 && distance <= 32 :
+      !atSpawn && goalDistance >= 8 && goalDistance <= 32);
+    if (!active && ((!mate && !soloPush) || seen && distance < 6)) return null;
+    point = toward(ctx, mate?.pos || goal || seen || actor.pos, 3);
   } else if (special === 'bubbler') {
     if (!active && (seen ? distance < 5 || distance > 26 :
       atSpawn || !allies.length || goalDistance > 12 || brain?.mode === 'refill')) return null;

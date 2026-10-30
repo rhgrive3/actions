@@ -93,3 +93,19 @@ test('throw planning rejects a wall before the target without creating a device'
   for(let i=0;i<90;i++)f.tick();
   assert.equal(f.a.stats.specials,0);assert.equal(f.G.projectiles.clouds.length,0);
 });
+
+// Followthrough checks retain the real BotBrain spring, steering, Actor
+// integration, terrain collisions, native device landing and support effects.
+import { makeBotSpecialFixture as makeFullBotFixture } from './bot-special-fixture.mjs';
+
+test('real solo BotBrain deploys Tacticooler for its own frontline push and receives a drink', async () => {
+  const f = await makeFullBotFixture(), { a, b, enemy } = f.scenario('tacticooler');
+  f.G.actors = [a, enemy]; // No allied actor: the caster can still use its own drink.
+  for (let i = 0; i < 180 && !a.s3?.drink; i++) f.tick(a, b);
+  assert.equal(a.stats.specials, 1, 'solo frontline user does not wait forever for a teammate');
+  assert.equal(a.specialActive, null);
+  const stand = f.G.projectiles._s3SupportCoolers?.find(o => o.owner === a);
+  assert.ok(stand, 'real cooler throw has landed');
+  assert.ok(Math.hypot(stand.pos.x-a.pos.x, stand.pos.z-a.pos.z) < 7, 'drink is within pickup distance');
+  assert.equal(a.s3.drink, true, 'native stand grants the drink');
+});

@@ -30,3 +30,9 @@
 - テストのdriver contextは照準の結果をActorへ適用する。共通BotBrainのspringとadapterの最終統合はcore/親作業の検証範囲。
 
 実機比較やNintendo Botの再現を確認したものではない。低軌道予測は動く足場・空中慣性・dragを含む完全な命中保証ではなく、現行物理に渡す入力を安全側に選ぶための近似。グローバル比較記録へのリンク追加と統合SHA記録は統合担当が行う。
+
+## 追加改善: 実BotBrainからの支援完了 (2026-10-30)
+
+基準 `3715e29d1656a00b853f73e12a89624b17985b7c`。実BotBrain / aim spring / native移動 / Actor / Projectiles / Level / Physicsを使い、エナジースタンドで味方rosterを除いた前線対面を実行したところ、180F待っても一度も使用しないことを再現した。キャスター自身にもドリンクの価値があるため、現在ドリンクがなく、見えている前線または既存の前進目標がある場合は自己支援の設置も許可する。空の短距離塗りルート・スポーン待機・近距離戦への無条件発動は加えない。
+
+追加テスト `real solo BotBrain deploys Tacticooler for its own frontline push and receives a drink` は変更前失敗、変更後成功。入力の意図だけでなく、現行物理で着地したスタンドからnativeのdrinkが実際に取得できるところまで確認した。
