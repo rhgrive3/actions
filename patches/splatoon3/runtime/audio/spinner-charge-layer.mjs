@@ -1,6 +1,6 @@
-// Presentation-only Splatling charge layers. No additional samples, PCM synthesis,
-// timers, network packets or per-weapon decoded buffers: reuse the loaded Motor
-// recording and its already-authorized Ready cue.
+// Presentation-only Splatling charge state/threshold helpers. Actual authored
+// recordings are owned by spinner-charge-clips.mjs and spinner-charge-control.mjs.
+// This module never changes the gameplay timing, ballistics or network packets.
 const clamp01 = value => Math.max(0, Math.min(1, value));
 
 export function spinnerFirstStage(weapon) {
@@ -15,46 +15,6 @@ export function spinnerChargePitch(progress) {
   // The motor source is one recording. A small smoothed playback-rate sweep
   // follows charge progress instead of allocating another voice every frame.
   return 0.88 + 0.32 * clamp01(progress);
-}
-
-export function wrapSpinnerChargeLoop(engine, weaponId, underlying, options = {}) {
-  if (!underlying) return underlying;
-  const firstAt = spinnerFirstStage(options.actor?.weapon);
-  let stopped = false, firstPlayed = false, fullPlayed = false;
-  let position = options.pos;
-  const cue = (stage) => {
-    // Ready is a source-authenticated MP3 already resident for selected loadouts.
-    // Missing recordings stay silent, per the real-only audio policy.
-    engine.playWeapon?.(weaponId, 'ready', {
-      actor: options.actor, pos: options.actor?.isLocal ? undefined : position,
-      volume: (options.actor?.isLocal ? 1 : 0.65) * (stage === 1 ? 0.37 : 0.56),
-      pitch: stage === 1 ? 0.92 : 1.12, priority: 93,
-    });
-  };
-  return {
-    get playing() { return !stopped && underlying.playing !== false; },
-    set(update = {}) {
-      if (stopped) return;
-      if (update.pos !== undefined) position = update.pos;
-      if (!Number.isFinite(update.progress)) { underlying.set?.(update); return; }
-      const progress = clamp01(update.progress);
-      underlying.set?.({ ...update, pitch: spinnerChargePitch(progress) });
-      if (underlying.playing === false) return;
-      if (!firstPlayed && progress + 1e-6 >= firstAt) {
-        firstPlayed = true;
-        cue(1);
-      }
-      if (!fullPlayed && progress + 1e-6 >= 1) {
-        fullPlayed = true;
-        cue(2);
-      }
-    },
-    stop(fade = 0.06) {
-      if (stopped) return;
-      stopped = true;
-      underlying.stop?.(fade);
-    },
-  };
 }
 
 // The S3 catalogue replaces the legacy WeaponRunner and has no local motor
