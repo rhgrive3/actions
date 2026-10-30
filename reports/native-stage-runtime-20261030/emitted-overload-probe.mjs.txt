@@ -1,0 +1,17 @@
+  result.nativeOverload = await page.evaluate(() => {
+    const G=__G,g=G.game,r=g.R;
+    const saved={dyn:g._dyn,slow:g._nativeSlowFrames,scale:r.dynScale,set:r.setDynamicScale};
+    const transitions=[],ticks=g.s3Clock?.ticks;
+    try {
+      g._dyn=undefined;g._nativeSlowFrames=null;r.dynScale=1;
+      r.setDynamicScale=function(value){transitions.push(value);this.dynScale=value;};
+      for(let i=0;i<40;i++)g._dynRes(.3);
+      return {native:!!G.level.native,transitions,ticksBefore:ticks,ticksAfter:g.s3Clock?.ticks};
+    } finally {
+      g._dyn=saved.dyn;g._nativeSlowFrames=saved.slow;r.dynScale=saved.scale;r.setDynamicScale=saved.set;
+    }
+  });
+  assert.equal(result.nativeOverload.native,true);
+  assert.ok(result.nativeOverload.transitions.includes(.875));
+  assert.ok(result.nativeOverload.transitions.includes(1));
+  assert.equal(result.nativeOverload.ticksBefore,result.nativeOverload.ticksAfter);

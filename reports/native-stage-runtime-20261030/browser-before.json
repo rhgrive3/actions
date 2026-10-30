@@ -1,0 +1,648 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "stage": "robo",
+  "quality": "medium",
+  "setupFrames": 600,
+  "warmup": 15,
+  "frames": 5,
+  "runs": 3,
+  "contentHash": "e0c4225187a81a6a1b8162454f7545191b178f9b0979155031b40c300464ae27",
+  "syncFrames": false,
+  "occlusionChecks": false,
+  "imagesOnly": false,
+  "activePreroll": 0,
+  "sourceInputHash": "0e58882e92f30b9d7e3347a714bb184e245ec956a4e04a5fafde0a583a68dd63",
+  "revision": "f08c4a43c1a3871ea6c2a9bd7dd58bf1e5c4e3a87447e557c9469f0704199b03",
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "node": "v24.19.0",
+    "viewport": [
+      960,
+      540
+    ],
+    "browser": "chromium",
+    "device": "desktop",
+    "renderer": "SwiftShader",
+    "browserVersion": "151.0.7922.34"
+  },
+  "windows": [
+    {
+      "run": 0,
+      "firstStep": 615,
+      "frames": 5,
+      "elapsedMs": 9386.5,
+      "submitMs": 103.10000000003492,
+      "completionMs": 9283.399999999965,
+      "fps": 0.5326799126404943,
+      "newPrograms": 0,
+      "times": [
+        17,
+        22.699999999953434,
+        14.799999999988358,
+        18.70000000001164,
+        29.600000000034925
+      ],
+      "counts": [
+        {
+          "calls": 365,
+          "triangles": 380390
+        },
+        {
+          "calls": 365,
+          "triangles": 381649
+        },
+        {
+          "calls": 365,
+          "triangles": 381673
+        },
+        {
+          "calls": 365,
+          "triangles": 381689
+        },
+        {
+          "calls": 364,
+          "triangles": 381579
+        }
+      ],
+      "actors": [
+        {
+          "weapon": "shooter",
+          "pos": [
+            -51.800117960249715,
+            10.631337421957156,
+            19.408850018644888
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-flash",
+          "pos": [
+            -55.54146892956657,
+            10.631337421957156,
+            21.635514008262668
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-charger-normalscope-02",
+          "pos": [
+            -56.33815024565801,
+            10.631337421957156,
+            19.267293321248005
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-precision-02",
+          "pos": [
+            -56.15277202812048,
+            10.666651908714575,
+            18.20166090490052
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-brush-normal-01",
+          "pos": [
+            55.42723560399493,
+            10.631337421957156,
+            -22.53430444212239
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-saber-normal",
+          "pos": [
+            55.050620036449374,
+            10.631337421957156,
+            -20.991192440657112
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-stringer-normal-01",
+          "pos": [
+            55.67542301976636,
+            10.631337421957156,
+            -19.718096076624946
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-gravity",
+          "pos": [
+            56.38912412761474,
+            10.631337421957156,
+            -18.43258297557926
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        }
+      ],
+      "paint": {
+        "counts": [
+          0,
+          0
+        ],
+        "coverage": [
+          0,
+          0
+        ],
+        "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+      },
+      "quality": {
+        "reflectionScale": 0.28,
+        "reflectionInterval": 1,
+        "reflectionActors": false,
+        "pixelRatio": 1,
+        "shadowSize": 2048,
+        "msaa": 2,
+        "bloom": true,
+        "ao": false,
+        "paintAtlas": 2048,
+        "particles": 0.7
+      },
+      "scale": 1,
+      "glError": 0,
+      "state": "playing",
+      "completionPixel": [
+        163,
+        93,
+        91,
+        255
+      ],
+      "stencilMask": {
+        "present": true,
+        "visible": false
+      },
+      "coreDepth": {
+        "present": false,
+        "seeOn": 0.9992281085809008
+      },
+      "targets": [
+        {
+          "samples": 0,
+          "depth": false,
+          "stencil": false,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        },
+        {
+          "samples": 2,
+          "depth": true,
+          "stencil": true,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        }
+      ],
+      "traceSha256": "0a01af4a84f9a5beff1126223758ec50b2fbdc0414220da68e24b98df83b0ac6"
+    },
+    {
+      "run": 1,
+      "firstStep": 620,
+      "frames": 5,
+      "elapsedMs": 11070.400000000023,
+      "submitMs": 62.59999999997672,
+      "completionMs": 11007.800000000047,
+      "fps": 0.45165486341956834,
+      "newPrograms": 0,
+      "times": [
+        15.700000000011642,
+        13.099999999976717,
+        12.400000000023283,
+        10.399999999965075,
+        10.899999999965075
+      ],
+      "counts": [
+        {
+          "calls": 364,
+          "triangles": 381619
+        },
+        {
+          "calls": 364,
+          "triangles": 381645
+        },
+        {
+          "calls": 364,
+          "triangles": 381677
+        },
+        {
+          "calls": 365,
+          "triangles": 382389
+        },
+        {
+          "calls": 365,
+          "triangles": 381806
+        }
+      ],
+      "actors": [
+        {
+          "weapon": "shooter",
+          "pos": [
+            -50.933399576589984,
+            9.860588218438501,
+            19.022507093835102
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-flash",
+          "pos": [
+            -55.033165239835355,
+            9.860588218438501,
+            21.519742037359862
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-charger-normalscope-02",
+          "pos": [
+            -55.892494195537026,
+            9.860588218438501,
+            19.04584252472918
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-precision-02",
+          "pos": [
+            -55.842354956596466,
+            9.909810933904119,
+            17.92929850025875
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-brush-normal-01",
+          "pos": [
+            54.87756694346769,
+            9.860588218438501,
+            -22.66975999076267
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-saber-normal",
+          "pos": [
+            54.63715914673935,
+            9.860588218438501,
+            -20.993492360527718
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-stringer-normal-01",
+          "pos": [
+            55.35516602522414,
+            9.860588218438501,
+            -19.42807710335396
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-gravity",
+          "pos": [
+            55.95837008682784,
+            9.860588218438501,
+            -17.972154338165115
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        }
+      ],
+      "paint": {
+        "counts": [
+          0,
+          0
+        ],
+        "coverage": [
+          0,
+          0
+        ],
+        "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+      },
+      "quality": {
+        "reflectionScale": 0.28,
+        "reflectionInterval": 1,
+        "reflectionActors": false,
+        "pixelRatio": 1,
+        "shadowSize": 2048,
+        "msaa": 2,
+        "bloom": true,
+        "ao": false,
+        "paintAtlas": 2048,
+        "particles": 0.7
+      },
+      "scale": 1,
+      "glError": 0,
+      "state": "playing",
+      "completionPixel": [
+        163,
+        95,
+        106,
+        255
+      ],
+      "stencilMask": {
+        "present": true,
+        "visible": false
+      },
+      "coreDepth": {
+        "present": false,
+        "seeOn": 0.9996645373720975
+      },
+      "targets": [
+        {
+          "samples": 0,
+          "depth": false,
+          "stencil": false,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        },
+        {
+          "samples": 2,
+          "depth": true,
+          "stencil": true,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        }
+      ],
+      "traceSha256": "4586d5560fa1408874efc4bba856cbccdb63e9c8e236f47c70cf91a6d13cece2"
+    },
+    {
+      "run": 2,
+      "firstStep": 625,
+      "frames": 5,
+      "elapsedMs": 14764.800000000047,
+      "submitMs": 11531.800000000047,
+      "completionMs": 3233,
+      "fps": 0.338643259644559,
+      "newPrograms": 0,
+      "times": [
+        23.900000000023283,
+        14.600000000034925,
+        32.20000000001164,
+        11437.5,
+        23.5
+      ],
+      "counts": [
+        {
+          "calls": 364,
+          "triangles": 378831
+        },
+        {
+          "calls": 364,
+          "triangles": 378885
+        },
+        {
+          "calls": 358,
+          "triangles": 376190
+        },
+        {
+          "calls": 433,
+          "triangles": 598912
+        },
+        {
+          "calls": 434,
+          "triangles": 598855
+        }
+      ],
+      "actors": [
+        {
+          "weapon": "shooter",
+          "pos": [
+            -50.066929534552244,
+            8.995487296692206,
+            18.635461745573508
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-flash",
+          "pos": [
+            -54.54581239204964,
+            8.995487296692206,
+            21.41036534376117
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-charger-normalscope-02",
+          "pos": [
+            -55.46721367719599,
+            8.995487296692206,
+            18.83252326589175
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-precision-02",
+          "pos": [
+            -55.548044678732964,
+            9.064419144578888,
+            17.67174851792933
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-brush-normal-01",
+          "pos": [
+            54.349673547904516,
+            8.995487296692206,
+            -22.801871217692284
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-saber-normal",
+          "pos": [
+            54.24558017065722,
+            8.995487296692206,
+            -20.997187689029857
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-stringer-normal-01",
+          "pos": [
+            55.0521982367803,
+            8.995487296692206,
+            -19.151584209360074
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        },
+        {
+          "weapon": "s3-shooter-gravity",
+          "pos": [
+            55.54279336496714,
+            8.995487296692206,
+            -17.527485884157546
+          ],
+          "hp": 100,
+          "ink": 100,
+          "alive": true
+        }
+      ],
+      "paint": {
+        "counts": [
+          0,
+          0
+        ],
+        "coverage": [
+          0,
+          0
+        ],
+        "gridSha256": "1ca34173e8b0515193546351acf853d936144f4c983cb6a06bb2d6fef63dc58e"
+      },
+      "quality": {
+        "reflectionScale": 0.28,
+        "reflectionInterval": 1,
+        "reflectionActors": false,
+        "pixelRatio": 1,
+        "shadowSize": 2048,
+        "msaa": 2,
+        "bloom": true,
+        "ao": false,
+        "paintAtlas": 2048,
+        "particles": 0.7
+      },
+      "scale": 1,
+      "glError": 0,
+      "state": "playing",
+      "completionPixel": [
+        133,
+        72,
+        121,
+        255
+      ],
+      "stencilMask": {
+        "present": true,
+        "visible": false
+      },
+      "coreDepth": {
+        "present": false,
+        "seeOn": 0.9998542085428924
+      },
+      "targets": [
+        {
+          "samples": 0,
+          "depth": false,
+          "stencil": false,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        },
+        {
+          "samples": 2,
+          "depth": true,
+          "stencil": true,
+          "width": 960,
+          "height": 540,
+          "type": 1016
+        }
+      ],
+      "traceSha256": "490d02ea24d132207f53fa28ff7ca696696ba75a350d9eac937ab7be6ec01cfc"
+    }
+  ],
+  "errors": [],
+  "measurement": "Fixed 60 Hz production simulation plus all ordinary render passes; wall time includes GPU completion. Not a physical-device or presentation-latency measurement.",
+  "setup": {
+    "native": true,
+    "actors": 8,
+    "bots": 7,
+    "state": "playing",
+    "device": {
+      "ios": false,
+      "ipad": false,
+      "android": false,
+      "touch": false,
+      "touchCapable": false,
+      "phone": false,
+      "tablet": false
+    },
+    "paused": false,
+    "menu": null,
+    "framebuffer": [
+      960,
+      540
+    ],
+    "coreDepth": false,
+    "textureQuality": "balanced",
+    "textureLimit": 1024,
+    "textureCount": 55,
+    "idleTextureWorkersReleased": false,
+    "quality": {
+      "reflectionScale": 0.28,
+      "reflectionInterval": 1,
+      "reflectionActors": false,
+      "pixelRatio": 1,
+      "shadowSize": 2048,
+      "msaa": 2,
+      "bloom": true,
+      "ao": false,
+      "paintAtlas": 2048,
+      "particles": 0.7
+    },
+    "atlas": 2048,
+    "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "workersAfterSetup": 2,
+  "completedWarmup": 10,
+  "programEvents": [],
+  "imageViews": [
+    "forward",
+    "left",
+    "back",
+    "right"
+  ],
+  "workersAfterImages": 2
+}

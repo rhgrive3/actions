@@ -159,6 +159,7 @@ export function installGame(Game) {
   if (!hiddenGuestListenerInstalled && globalThis.document?.addEventListener) {
     globalThis.document.addEventListener('visibilitychange', () => {
       const G = context?.G, net = G?.net;
+      if (globalThis.document.hidden && G?.game) G.game._nativeSlowFrames = null;
       if (!globalThis.document.hidden || !G?.netm || !net || net.isHost || net.state !== 'match' || net._s3HiddenGuestLeft) return;
       net._s3HiddenGuestLeft = true;
       net.leave(true);
@@ -180,6 +181,7 @@ export function installGame(Game) {
     // A hidden tab explicitly suspends local play; it cannot accumulate hours
     // of catch-up. Foreground slow frames retain all their elapsed time.
     if (terminalRecoveryRequired(this) || globalThis.document?.hidden) {
+      this._nativeSlowFrames = null;
       this.timer.update(); this.s3Clock?.reset();
       requestAnimationFrame(() => this._loop());
       return;
