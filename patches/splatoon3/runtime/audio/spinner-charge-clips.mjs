@@ -23,13 +23,14 @@ function repairSeam(buffer,meta,rise){
  if(typeof buffer.getChannelData!=='function'||!Number.isFinite(buffer.sampleRate))return;
  const {start,end,fade}=loopWindow(buffer,meta,rise),rate=buffer.sampleRate;
  const from=Math.round(start*rate),to=Math.round(end*rate),count=Math.round(fade*rate);
+ const loopStart=Math.round((start+fade)*rate);
  if(count<2||from+count+1>=to-count||to>=buffer.length)return;
  for(let ch=0;ch<buffer.numberOfChannels;ch++){
   const data=buffer.getChannelData(ch);
   // One-time overlap-add; no new buffer or extra audio playback voice.
   for(let i=0;i<count;i++){
    const alpha=(i+1)/count,at=to-count+i;
-   data[at]=data[at]*(1-alpha)+data[from+i+1]*alpha;
+   data[at]=data[at]*(1-alpha)+data[loopStart-count+i+1]*alpha;
   }
  }
 }

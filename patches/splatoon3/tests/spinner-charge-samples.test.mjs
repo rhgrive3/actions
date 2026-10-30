@@ -46,11 +46,11 @@ test('one charge starts one premix and cancels its native fallback',async()=>{
  }finally{globalThis.fetch=old;}
 });
 
-test('gapless browser MP3 decode preserves a smoothly looping rise sample',async()=>{
+for(const sampleRate of [44100,48000])test(`gapless ${sampleRate}Hz MP3 decode preserves a smoothly looping rise sample`,async()=>{
  const {spinnerPreload,spinnerClipDefinition}=await import('../runtime/audio/spinner-charge-clips.mjs');
  const old=globalThis.fetch;
  globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(64)});
- const sampleRate=48000,pcm=new Float32Array(Math.round(.489*sampleRate));
+ const pcm=new Float32Array(Math.round(.489*sampleRate));
  for(let i=0;i<pcm.length;i++)pcm[i]=Math.sin(i*.13)*.17;
  const buffer={sampleRate,numberOfChannels:1,length:pcm.length,duration:pcm.length/sampleRate,
    getChannelData:()=>pcm};
