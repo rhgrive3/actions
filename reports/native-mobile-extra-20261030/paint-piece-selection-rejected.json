@@ -1,0 +1,158 @@
+{
+  "scope": "Exact captured native bomb ownership calls in Node; not GPU or whole-frame FPS",
+  "cellLimit": 64,
+  "inputSha256": "6380c190fc0bbbf4c9c7823202a80fffa1dd9a59a9e6d3dab13dc49f943461f0",
+  "stage": "robo",
+  "capturedBuild": {
+    "contentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+    "revision": "0492e91ffdc80d83415c9f193d0206dcb7e4f8b94e69991e43e6eb01142b28aa"
+  },
+  "ownershipSourceSha256": "d774bb1e8aee32dc348a1f8e73ed9d44e4ae1de22564b74cd27779597faff9c8",
+  "counterfactual": "Explicit saved baseline paint-ownership source versus the candidate source snapshot; the existing 64-cell protected-rectangle optimization stays ENABLED in both variants",
+  "targets": [
+    {
+      "id": 258,
+      "faces": 558,
+      "cells": 10624,
+      "calls": 199,
+      "closed": true
+    },
+    {
+      "id": 261,
+      "faces": 350,
+      "cells": 35237,
+      "calls": 199,
+      "closed": true
+    },
+    {
+      "id": 280,
+      "faces": 464,
+      "cells": 13489,
+      "calls": 199,
+      "closed": true
+    }
+  ],
+  "checks": {
+    "before": {
+      "milliseconds": 354.81629200000083,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    "after": {
+      "milliseconds": 341.6461600000018,
+      "calls": 597,
+      "digest": 1639329940
+    }
+  },
+  "samples": [
+    {
+      "round": 0,
+      "variant": "before",
+      "milliseconds": 174.9386909999953,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 0,
+      "variant": "after",
+      "milliseconds": 170.1293650000016,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 1,
+      "variant": "after",
+      "milliseconds": 184.20637600000418,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 1,
+      "variant": "before",
+      "milliseconds": 158.26489300000776,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 2,
+      "variant": "before",
+      "milliseconds": 166.83892300001025,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 2,
+      "variant": "after",
+      "milliseconds": 174.99524299999666,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 3,
+      "variant": "after",
+      "milliseconds": 191.78503500000807,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 3,
+      "variant": "before",
+      "milliseconds": 176.28722500001368,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 4,
+      "variant": "before",
+      "milliseconds": 211.03310600000077,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 4,
+      "variant": "after",
+      "milliseconds": 188.20353500000783,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 5,
+      "variant": "after",
+      "milliseconds": 188.80102900000657,
+      "calls": 597,
+      "digest": 1639329940
+    },
+    {
+      "round": 5,
+      "variant": "before",
+      "milliseconds": 173.80578399998194,
+      "calls": 597,
+      "digest": 1639329940
+    }
+  ],
+  "beforeMedianMs": 174.37223749998861,
+  "afterMedianMs": 186.204955500006,
+  "reductionPercent": -6.78589560452143,
+  "status": "rejected",
+  "candidate": "Bounded per-growth cache of source-order static piece indices intersecting each small native chart",
+  "baselineSourceSha256": "3dc6d11bb3d6d11769cbe81780634e05e4c35747a2a56d58f8b2c33f34fb8164",
+  "candidateSourceSha256": "d774bb1e8aee32dc348a1f8e73ed9d44e4ae1de22564b74cd27779597faff9c8",
+  "harnessAnnotation": "The initial scratch harness copied an obsolete counterfactual label from the first-round benchmark. This report corrects that label; its code loaded before.mjs for before and the live candidate source for after. It did not disable the protected-rectangle gate.",
+  "baselineTransform": "No transform: load .ci-scratch/native-paint-next/before.mjs, saved before any second-round candidate changes; production-composition native-stage adaptation applied equally to both variants",
+  "candidateSnapshot": "paint-piece-selection-rejected.mjs.txt",
+  "reason": "Real captured-call parity passed, but the candidate was 6.79% slower at the paired median. Per-piece revalidation cost outweighed saved bounds calculations. All production and new regression-test changes were restored/removed.",
+  "validation": {
+    "capturedCalls": 597,
+    "state": "Every per-call claimed area, grid, ownership order, dead mask, counts and version matched the actual capture for both variants",
+    "tests": {
+      "pass": 6,
+      "fail": 0,
+      "scope": "Existing800tick native/legacy ownership replay, source-index/bounds invalidation, same-call callback introducing a previously excluded piece, new800tick mutation/reuse replay"
+    }
+  },
+  "cacheAccounting": "Prototype admission estimate prefix*42+192 bytes per entry, capped at262144 accounted bytes per growth lease. It was not a measured or guaranteed heap maximum; JS object/array overhead was additional. This cache is not retained in product.",
+  "baselineRevision": "92c987f9a4bd9fb2d12fe9256d8a3449ed84ff6a",
+  "benchmarkSnapshot": "paint-piece-selection-bench.mjs.txt",
+  "benchmarkSnapshotSha256": "b74d6be4c4adb185dbddc836bf9b6de766d462149a3fc627ed9a191460da5bc3",
+  "testLog": "paint-piece-selection-tests.log"
+}

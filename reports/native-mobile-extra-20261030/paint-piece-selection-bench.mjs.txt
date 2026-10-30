@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+// Replay captured native ownership inputs through the current source and the same source with only the protected-rectangle gate disabled.
+// node scripts/benchmark-native-paint-ownership.mjs .ci-scratch/native-paint/capture.json.gz .ci-scratch/native-paint/replay.json
+import fs from 'node:fs';import {gunzipSync} from 'node:zlib';import {performance} from 'node:perf_hooks';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {adaptBuildSource} from '../../scripts/inkwave-source-composition.mjs';import {adaptNativeStages} from '../../patches/native-stages/adapter.mjs';import * as helpers from '../../patches/native-stages/runtime/native-paint.mjs';
+const file=process.argv[2],out=process.argv[3],capture=JSON.parse(gunzipSync(fs.readFileSync(file)));
+const limit=Number(process.argv[4]||64);assert.ok(Number.isSafeInteger(limit)&&limit>=1&&limit<=1024);
+const root=new URL('../../',import.meta.url),path=new URL('patches/splatoon3/runtime/paint-ownership.mjs',root),source=fs.readFileSync(path,'utf8').replace('count>64','count>'+limit);
+const gate='    if (paint.level?.native && order && nativeAncillaryRectBlocked(paint,face,order,i0,i1,j0,j1)) continue;';assert.equal(source.split(gate).length,2);
+const load=code=>import('data:text/javascript;base64,'+Buffer.from(adaptNativeStages('patches/splatoon3/runtime/paint-ownership.mjs',code).replace(/import .*native-paint.*;\n/,Object.values(helpers).filter(f=>typeof f==='function').map(f=>f.toString()).join('\n')+'\n').replace(/from '(\.\/[^']+)'/g,(_,rel)=>'from '+JSON.stringify(new URL(rel,path).href))+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
+const modules={before:await load(fs.readFileSync(new URL('.ci-scratch/native-paint-next/before.mjs',root),'utf8')),after:await load(source)};
+const composed=adaptBuildSource('src/world/paint.js',fs.readFileSync(new URL('inkwave-public/src/world/paint.js',root),'utf8'));
+const contract={kind:{speck:7},shapes:JSON.parse(composed.match(/installIssue264PaintOwnership\(PaintSystem,[^;]*shapes: (\[\[[^;]*?\]\])/)[1]),reach:JSON.parse(composed.match(/const REACH = (\[[^;]+\]);/)[1]),dripReach:Number(composed.match(/const DRIP_REACH = ([^;]+);/)[1])};
+assert.equal(capture.native,true);assert.ok(capture.targets.length>0);assert.ok(capture.targets.every(r=>r.calls.length>1));
+function setup(mod){return capture.targets.map(row=>{const paint={level:{native:true},grid:new Uint8Array(row.length),dead:new Uint8Array(row.length),counts:[0,0],version:0};mod.ensureOwnershipState(paint);const entries=row.entries.slice();for(let at=0;at<entries.length;at+=row.entryStride)entries[at]=row.faces[entries[at]];return{row,paint,g:{entries},eg:new Uint8Array(row.indices.length),eo:new Uint32Array(row.indices.length),ed:new Uint8Array(row.indices.length)};});}
+function replay(mod,verify=false){const worlds=setup(mod);let time=0,digest=2166136261,calls=0;const mix=v=>digest=Math.imul(digest^v,16777619)>>>0;
+ for(const {row,paint,g,eg,eo,ed}of worlds){for(const call of row.calls){
+  for(const [k,gv,ov,dv]of call.before){const i=row.indices[k];paint.grid[i]=gv;paint._paintOwnershipOrder[i]=ov;paint.dead[i]=dv;eg[k]=gv;eo[k]=ov;ed[k]=dv;}
+  paint.counts=call.counts.slice();paint.version=call.version;paint._s3ObservedPaintVersion=call.version;paint._paintOrderRecords=call.orders;Object.assign(g,call.g);
+  const start=performance.now(),value=mod.claimAncillaryCells(paint,g,call.tn,call.dT,contract);time+=performance.now()-start;calls++;
+  for(const[k,gv,ov,dv]of call.after){eg[k]=gv;eo[k]=ov;ed[k]=dv;}
+  if(verify){assert.equal(value,call.value,'claimed '+row.id+' / '+calls);assert.deepEqual(paint.counts,call.afterCounts,'counts '+row.id+' / '+calls);assert.equal(paint.version,call.afterVersion,'version '+row.id+' / '+calls);for(let k=0;k<row.indices.length;k++){const i=row.indices[k];assert.equal(paint.grid[i],eg[k],'grid '+i+' / '+calls);assert.equal(paint._paintOwnershipOrder[i],eo[k],'order '+i+' / '+calls);assert.equal(paint.dead[i],ed[k],'dead '+i+' / '+calls);}}
+  mix(paint.version);mix(Math.round(value*1e6));
+ }
+ for(const i of row.indices){mix(paint.grid[i]);mix(paint._paintOwnershipOrder[i]);}}
+ return{milliseconds:time,calls,digest};}
+const checks={before:replay(modules.before,true),after:replay(modules.after,true)};assert.equal(checks.before.digest,checks.after.digest);console.log('verified '+JSON.stringify(checks));
+replay(modules.before);replay(modules.after);const samples=[];
+for(let round=0;round<6;round++)for(const variant of round%2?['after','before']:['before','after']){const r=replay(modules[variant]);assert.equal(r.digest,checks.before.digest);samples.push({round,variant,...r});console.log(JSON.stringify(samples.at(-1)));}
+const median=a=>{a.sort((a,b)=>a-b);return(a[2]+a[3])/2;},before=median(samples.filter(r=>r.variant==='before').map(r=>r.milliseconds)),after=median(samples.filter(r=>r.variant==='after').map(r=>r.milliseconds));
+const report={scope:'Exact captured native bomb ownership calls in Node; not GPU or whole-frame FPS',cellLimit:limit,inputSha256:createHash('sha256').update(fs.readFileSync(file)).digest('hex'),stage:capture.stage,capturedBuild:capture.build,ownershipSourceSha256:createHash('sha256').update(source).digest('hex'),counterfactual:'same ownership source with only the protected-rectangle call disabled',targets:capture.targets.map(r=>({id:r.id,faces:r.faces.length,cells:r.indices.length,calls:r.calls.length,closed:r.closed})),checks,samples,beforeMedianMs:before,afterMedianMs:after,reductionPercent:(1-after/before)*100};if(out)fs.writeFileSync(out,JSON.stringify(report,null,2));console.log(JSON.stringify(report));

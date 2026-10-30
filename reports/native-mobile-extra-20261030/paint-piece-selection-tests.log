@@ -1,0 +1,14 @@
+✔ native drip ticks replay settled pieces with the original claims, counts and order (4763.155304ms)
+✔ legacy levels keep the full per-cell loop and identical claims (8117.044231ms)
+✔ replay is limited to settled wall pieces of native drip growth (0.308493ms)
+✔ settled source indices retain order, see live bounds, and leave unexpected layouts on the full path (2.609577ms)
+✔ a callback can make an excluded later piece paintable in the same call (4.244782ms)
+✔ 800 native ticks preserve live claims across reset, face, stamp and atlas changes (231.591124ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12973.713099

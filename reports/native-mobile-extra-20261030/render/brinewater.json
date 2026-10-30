@@ -1,0 +1,181 @@
+{
+  "scope": "Node CPU component using actual source geometry; not browser, GPU or device FPS",
+  "node": "v24.19.0",
+  "baselineCommit": "60e29562f8fa44c1bd12d1858cf6a995a84d6cd8",
+  "parityOnly": false,
+  "stage": "brinewater",
+  "stageRecordSha256": "a3dce203f289f532fd71f0422015f6e6ff30484adda50aa0e40f9d407a8af4c9",
+  "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+  "fixtureSha256": "8954453c3575aa2328eb745756b88320bba991d7555ae7b632ca58c69179d41c",
+  "candidateSourceSha256": "11cbdbcdf0429757a803db6aa95f89c42c1dda94836ebc6e3bd7a45cd45dfe47",
+  "objects": 96,
+  "cameras": 240,
+  "loops": 4,
+  "parity": {
+    "exactIndexArrays": true,
+    "exactDrawCounts": true,
+    "exactUploadRanges": true,
+    "exactVersions": true,
+    "selectedTriangles": 24656972
+  },
+  "beforeMedianMs": 6591.101248000006,
+  "afterMedianMs": 5952.050801999998,
+  "reductionPercent": 9.695655125824699,
+  "beforeMedianCpuMs": 6589.405,
+  "afterMedianCpuMs": 5951.943,
+  "cpuReductionPercent": 9.674044925148772,
+  "samples": [
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 6785.669923999998,
+        "cpu": {
+          "user": 6785818,
+          "system": 0
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 5590.932249999998,
+        "cpu": {
+          "user": 5591034,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 6575.085506000003,
+        "cpu": {
+          "user": 6570514,
+          "system": 3894
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 6119.719733999998,
+        "cpu": {
+          "user": 6117423,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 6554.267480000002,
+        "cpu": {
+          "user": 6542080,
+          "system": 12305
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 6304.1652019999965,
+        "cpu": {
+          "user": 6295794,
+          "system": 8380
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 6591.101248000006,
+        "cpu": {
+          "user": 6586201,
+          "system": 3204
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 5488.278317999997,
+        "cpu": {
+          "user": 5489298,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 6106.575030000007,
+        "cpu": {
+          "user": 6116496,
+          "system": 0
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 5532.805588999996,
+        "cpu": {
+          "user": 5532792,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 6797.493059999993,
+        "cpu": {
+          "user": 6797167,
+          "system": 1906
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 6035.796000999995,
+        "cpu": {
+          "user": 6035774,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "baseline-candidate",
+      "before": {
+        "ms": 6741.369445999997,
+        "cpu": {
+          "user": 6735744,
+          "system": 5962
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 5856.996652999995,
+        "cpu": {
+          "user": 5856152,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    },
+    {
+      "order": "candidate-baseline",
+      "before": {
+        "ms": 6588.0776500000065,
+        "cpu": {
+          "user": 6588119,
+          "system": 0
+        },
+        "triangles": 98627888
+      },
+      "after": {
+        "ms": 5952.050801999998,
+        "cpu": {
+          "user": 5951943,
+          "system": 0
+        },
+        "triangles": 98627888
+      }
+    }
+  ]
+}
