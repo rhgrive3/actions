@@ -1,0 +1,28 @@
+{
+  "scope": "Node CPU component using actual source geometry; not browser, GPU or device FPS",
+  "node": "v24.19.0",
+  "baselineCommit": "60e29562f8fa44c1bd12d1858cf6a995a84d6cd8",
+  "parityOnly": true,
+  "stage": "shipshape",
+  "stageRecordSha256": "3f389738ea7bdbd75319d7e81092341c7dd81c3b069932b0ecb50a1b9e30e8bf",
+  "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+  "fixtureSha256": "6ff0dac314d236f26d46ccd5e64bc2fa9781c4d5d8472fa55417bb3b8401f298",
+  "candidateSourceSha256": "668c5b0bf8f8016a99a11da40f21576b62f9c6feb5b73d9b39faf1ce140a0654",
+  "objects": 54,
+  "cameras": 48,
+  "loops": 4,
+  "parity": {
+    "exactIndexArrays": true,
+    "exactDrawCounts": true,
+    "exactUploadRanges": true,
+    "exactVersions": true,
+    "selectedTriangles": 3303508
+  },
+  "beforeMedianMs": null,
+  "afterMedianMs": null,
+  "reductionPercent": null,
+  "beforeMedianCpuMs": null,
+  "afterMedianCpuMs": null,
+  "cpuReductionPercent": null,
+  "samples": []
+}
