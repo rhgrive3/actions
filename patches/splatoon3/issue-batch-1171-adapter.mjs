@@ -9,7 +9,7 @@ export function adaptIssueBatch1171(rel, code, replaceOnce) {
     // Keep both normal-fire sights and their per-hand kick references. Add a
     // separate centered sight for S3's post-roll turret, which CSS alone toggles.
     patch('<path class="iw-ret__lock" d="M0 -19 L19 0 L0 19 L-19 0 Z"/>',
-      '<circle cx="0" cy="0" r="6.2" class="iw-ret__ring thin iw-ret__merged"/>' +
+      '<g class="iw-ret__merged"><circle r="12.8" class="iw-ret__ring thin"/><circle r="1.7" class="iw-ret__dual-dot"/></g>' +
       '<path class="iw-ret__lock" d="M0 -19 L19 0 L0 19 L-19 0 Z"/>',
       '#1158 merged Dualies post-roll sight');
   }

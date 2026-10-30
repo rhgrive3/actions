@@ -2,6 +2,7 @@
 // into the weapon stance. These are INKWAVE visual calibrations, not published
 // Nintendo joint curves, transformation frames, or gameplay timings.
 import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } from './action-admission.mjs';
+import { formExchangeWeight, FORM_EXCHANGE } from './form-timing.mjs';
 export const FORM_MOTION_CALIBRATION = Object.freeze({
   settleStart: .10, settleEnd: .22, reversalBlend: .08, gestureEnd: .16,
   divePitch: .10, emergePitch: -.035, hipDropLegFraction: .025,
@@ -160,6 +161,18 @@ export function installFormMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
         if (weight === 1) m.start = null;
       } else if (!(dt > 0) && previous) put(this, previous);
     } else m.start = null;
+    // Native fallback uses the same short exchange as the sourced rig. Start
+    // reversals at the actually displayed silhouette, including paused input.
+    if (changed || rewound) m.exchangeFrom = previous?.k ?? (toKid ? 0 : 1);
+    if (transition && m.exchangeFrom !== undefined) {
+      const duration = toKid ? FORM_EXCHANGE.emerge : FORM_EXCHANGE.dive;
+      const k = formExchangeWeight(m.exchangeFrom, toKid, m.age);
+      const current = m.currentBuffer || (m.currentBuffer = makeShapeRecord());
+      current.k = current.ky = current.kx = k;
+      current.s = current.sy = current.sx = 1 - k; current.lift = 0;
+      put(this, current);
+      if (m.age >= duration) m.start = null;
+    }
     capturePrevious(m, this);
     return result;
   };

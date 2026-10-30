@@ -1,23 +1,30 @@
-// When the sourced humanoid's ToHuman / ToSquid clip may own the whole body.
-//
-// SourceMotionController plays the Wii U ToHuman clip (31 F, ~0.52 s) for its full length after every
-// squid -> kid change, ahead of the air and locomotion states, and disables foot planting while it runs.
-// Measured in the built game (shooter, 60 Hz): surfacing from a swim with the stick held kept the body in
-// ToHuman for 31 frames while the Actor already moved at 5.76 m/s (~3 m), so both feet slid together;
-// releasing the stick after a full swim slid 1.75 m in the same frozen pose. Changing form in the air
-// played the crouched ground clip mid-jump with no torso correction (source-posture only corrects the
-// grounded ToHuman), which reads as a bow.
-//
-// Playtest comparison against Splatoon 3 reported both as wrong (feet together while sliding; a bow
-// mid-jump); no official frame data exists and no footage frame count was taken for this rule. The clip
-// therefore keeps owning the body only for a grounded, (nearly) stationary change. Once declined for a change, it is not re-entered mid-clip when the speed later drops.
-// The form scale curve (formWeight / formDuration), the squid-side clip and all gameplay are unchanged.
+// Sourced form clips own grounded, stationary transformations. Moving and
+// airborne returns keep locomotion/jump poses. The short presentation exchange
+// is calibrated for the reported rapid input; exact retail timing is unmeasured.
+import { FORM_EXCHANGE } from './form-timing.mjs';
 export const SOURCE_FORM_TRANSITION = Object.freeze({
   // Displacement speed (m/s) above which the returning kid uses locomotion instead of ToHuman.
   // INKWAVE choice: well under the 5.76 m/s run and a 25% stick walk, above standing jitter.
   moveSpeed: 0.6,
   status: 'INKWAVE presentation rule from a playtest comparison; no extracted transition frame data',
 });
+
+export function sourceFormDuration(controller, clipSeconds) {
+  return Math.min(clipSeconds, controller.formKid ? FORM_EXCHANGE.emerge : FORM_EXCHANGE.dive);
+}
+export function sourceFormFrame(controller, frames) {
+  return frames * Math.min(1, controller.formTime / Math.max(1e-6, controller.formDuration));
+}
+// Compressed transformation poses can exceed a short host leg's reach. A
+// contact rejected there must not stay blocked throughout the following idle.
+export function restoreFormSupport(controller, blendSeconds) {
+  if (!controller.formEvent || !controller.formKid || controller.s3FormSupportRestored ||
+      !controller.grounded || controller.state !== 'idle' ||
+      controller.formTime < controller.formDuration + blendSeconds) return;
+  controller.s3FormSupportRestored = true;
+  controller.retarget.reset();
+  if (controller.retarget.s3Posture) controller.retarget.s3Posture.idleFeet = null;
+}
 
 export function sourceFormClipAdmitted(controller) {
   if (controller.s3FormClipDeclined) return false;
