@@ -2345,7 +2345,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const subInp=this._catalogSubInput||(this._catalogSubInput={fire:false,firePressed:false,sub:false,subReleased:false});
     subInp.sub=!throwBlocked&&input?.sub;subInp.subReleased=!throwBlocked&&input?.subReleased;
     legacyUpdate.call(this,dt,subInp);
-    if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
+    if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState){
+      if(r.family==='splatling')G.audio?.syncSpinnerCharge?.(this);
+      return;
+    }
     // Wiki: orientation changes continuously even while swimming/unarmed.
     // Use explicit per-weapon forward/reverse rates; omitted tilt keep/reset
     // semantics remain unverified, rather than inventing a 45F freeze.
@@ -2388,7 +2391,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
       this.rolling=false;this.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
-      s.pressed=!!input.fire;return;
+      s.pressed=!!input.fire;
+      if(r.family==='splatling')G.audio?.syncSpinnerCharge?.(this);
+      return;
     }
     if(r.family==='shooter'||r.family==='blaster')auto(this,r,input,s,dt);
     else if(r.family==='dualies')dualies(this,r,input,s,dt);
@@ -2396,6 +2401,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     else if(r.family==='slosher')slosh(this,r,input,s);
     else if(r.family==='brella')brella(this,r,input,s,dt);
     else charge(this,r,input,s,dt);
+    if(r.family==='splatling')G.audio?.syncSpinnerCharge?.(this);
     s.frame=input.fire?s.frame+dt*HZ:0;s.pressed=!!input.fire;
   };
   return {records:RECORDS.size,limits:CATALOG_MODEL_LIMITS};
