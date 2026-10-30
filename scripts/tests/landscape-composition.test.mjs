@@ -10,6 +10,10 @@ import { adaptLandscapeHome } from '../../patches/local-quality/landscape-home-a
 import { adaptLandscapeWeapons } from '../../patches/local-quality/landscape-weapons-adapter.mjs';
 import { adaptLandscapeOnline } from '../../patches/local-quality/landscape-online-adapter.mjs';
 import { adaptLandscapeSettings } from '../../patches/local-quality/landscape-settings-adapter.mjs';
+import { adaptPauseModalLifetime } from '../../patches/local-quality/pause-modal-lifetime-adapter.mjs';
+import { adaptOnlineAsyncEntry } from '../../patches/local-quality/online-async-entry-adapter.mjs';
+import { adaptLandscapePracticeWeapons } from '../../patches/local-quality/landscape-practice-weapons-adapter.mjs';
+import { adaptLandscapeGearNativeKeys } from '../../patches/local-quality/landscape-gear-native-keys-adapter.mjs';
 
 const root = new URL('../../', import.meta.url);
 const read = rel => fs.readFileSync(new URL(rel, root), 'utf8');
@@ -24,10 +28,9 @@ test('short-landscape fixes preserve the reviewed immutable upstream input bytes
   for (const [file, expected] of Object.entries(pinned)) assert.equal(hash(read(file)), expected, file);
 });
 
-test('all five fixes are build-only and participate in exact-source quality identity', () => {
+test('all nine adapters are build-only and participate in exact-source quality identity', () => {
   const identity = qualityIdentity();
-  for (const name of ['home', 'weapons', 'online', 'settings', 'weapon-drawer']) {
-    const file = `landscape-${name}-adapter.mjs`;
+  for (const file of ['landscape-home-adapter.mjs', 'landscape-weapons-adapter.mjs', 'landscape-online-adapter.mjs', 'landscape-settings-adapter.mjs', 'landscape-weapon-drawer-adapter.mjs', 'pause-modal-lifetime-adapter.mjs', 'online-async-entry-adapter.mjs', 'landscape-practice-weapons-adapter.mjs', 'landscape-gear-native-keys-adapter.mjs']) {
     assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + file), file);
     assert.equal(identity[file], hash(read('patches/local-quality/' + file)), file);
   }
@@ -48,7 +51,7 @@ test('the production composition emits each scoped style fix once without runtim
 });
 
 test('every new adapter leaves non-menu and gameplay owners unchanged', () => {
-  for (const adapt of [adaptLandscapeHome, adaptLandscapeWeapons, adaptLandscapeOnline, adaptLandscapeSettings, adaptLandscapeWeaponDrawer]) {
+  for (const adapt of [adaptLandscapeHome, adaptLandscapeWeapons, adaptLandscapeOnline, adaptLandscapeSettings, adaptLandscapeWeaponDrawer, adaptPauseModalLifetime, adaptOnlineAsyncEntry, adaptLandscapePracticeWeapons, adaptLandscapeGearNativeKeys]) {
     for (const rel of ['src/main.js', 'src/game/weapons.js', 'src/net/session.js', 'styles/hud.css']) {
       assert.equal(adapt(rel, 'unrelated source sentinel'), 'unrelated source sentinel', rel);
     }

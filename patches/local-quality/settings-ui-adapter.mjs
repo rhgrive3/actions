@@ -65,6 +65,8 @@ export function adaptSettingsUi(rel, code, once) {
   if (start < 0 || end < start) throw new Error('settings UI: missing screen boundary');
   let screen = code.slice(start, end);
   const edit = (before, after, label) => { screen = once(screen, before, after, 'settings UI: ' + label); };
+  edit(`      if (!resetArmed) {`, `      if (destroyed) return;
+      if (!resetArmed) {`, 'retired screen cannot confirm or re-arm reset');
   edit('    const controls = new Map();', `    const controls = new Map();
     let destroyed = false, savedTimer = null, layoutDirty = true, layoutObserver = null;
     const invalidateLayout = () => { layoutDirty = true; };
