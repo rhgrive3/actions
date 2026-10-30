@@ -15,6 +15,11 @@ on:
       - 'patches/local-quality/tests/swim-film-offscreen.test.mjs'
       - '.github/workflows/inkwave-swim-film.yml'
   workflow_dispatch:
+    inputs:
+      main91_blast_capture:
+        description: Independent pinned main91 blast and native-roll comparison capture
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -41,3 +46,50 @@ jobs:
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Film presentation, frame-rate parity and off-screen shape parity
         run: node --experimental-vm-modules --test patches/local-quality/tests/swim-presentation.test.mjs patches/local-quality/tests/swim-surface-fps.test.mjs patches/local-quality/tests/swim-film-offscreen.test.mjs
+
+  main91_blast_reference:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.main91_blast_capture == true) || (github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/main91-blast-reference-20261030' && github.event.pull_request.base.ref == 'main') }}
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout only the reviewed QA scripts
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa
+          persist-credentials: false
+          sparse-checkout: tools/blast-main91-qa
+      - name: Checkout immutable production baseline separately
+        uses: actions/checkout@v4
+        with:
+          ref: 91c1aa89061ddeec0685a7b32899b3b711995c60
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked production QA dependencies
+        working-directory: source
+        run: npm ci
+      - name: Install matching Playwright Chromium and supported system dependencies
+        working-directory: source
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Record source and QA provenance
+        run: |
+          mkdir -p "$RUNNER_TEMP/blast-artifacts"
+          node qa/tools/blast-main91-qa/verify-blast-artifacts.mjs provenance source qa "$RUNNER_TEMP/blast-artifacts"
+      - name: Build clean pinned source and capture with existing sandbox-enabled launcher
+        run: |
+          node qa/tools/blast-main91-qa/run-main91-blast.mjs "$GITHUB_WORKSPACE/source" "$RUNNER_TEMP/main91-blast-site" "$RUNNER_TEMP/blast-artifacts"
+      - name: Require both complete eight-frame sequences and receipt hashes
+        run: node qa/tools/blast-main91-qa/verify-blast-artifacts.mjs verify source qa "$RUNNER_TEMP/blast-artifacts"
+      - name: Preserve incomplete receipts on failure; never claim capture success
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main91-blast-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/blast-artifacts
+          if-no-files-found: error
+          retention-days: 7
