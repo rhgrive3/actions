@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { classifyRetiredMenuAudioAbort } from '../lib/inkwave-browser-media-admission.mjs';
-const rev='a'.repeat(40),siteURL='http://127.0.0.1:40000/';
+const rev='a'.repeat(64),siteURL='http://127.0.0.1:40000/';
 const menu=new URL('_versions/'+rev+'/assets/audio/menu_the_ika_swing_aoi_kenban.mp3',siteURL).href;
 const battle=new URL('_versions/'+rev+'/assets/audio/Jet_Arrow.mp3',siteURL).href;
 const aborted={url:menu,error:'net::ERR_ABORTED'};
