@@ -206,5 +206,36 @@
       "side chassis-hidden"
     ],
     "unchanged": "Reefslider and other four special runtime files retain prior hashes."
+  },
+  "latestMainIntegration": {
+    "base": "d0a6c262589e5a81c09a095d730be5b0749ee9b5",
+    "codeCommit": "e23bf8dbff58d0c8fd26d0b0ff7e17269fc441a5",
+    "contentHash": "ff2a4c30c2ee0d471a133b12881eed13791aaececec990fb5fac332b05d32395",
+    "revision": "9b4a936d1be74b45663fccd855e3ad18564880a8fc955ef395b2224540242ac2",
+    "motionInputSHA256": "5feb6b0bbe883a0aa6d8f6b2de1af69ff0bf9c8a639ae1fdfbcdc51181bacfa6",
+    "quick": "passed",
+    "budget": {
+      "status": "passed",
+      "revision": "9b4a936d1be74b45663fccd855e3ad18564880a8fc955ef395b2224540242ac2",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 78620,
+      "initialJSBytes": 1834056,
+      "criticalHTMLBytes": 24043,
+      "precacheCount": 594,
+      "precacheBytes": 8000476,
+      "workerBytes": 98005,
+      "declaredBytes": 16762399,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "emittedSignedJointTests": {
+      "passed": 2,
+      "failed": 0
+    },
+    "note": "The previously merged PR1949 used the uncorrected pose. This correction is a separate follow-up branch.",
+    "emittedEvidence": "validation/crab-followup-emitted.log.gz",
+    "emittedLogSHA256": "61d65e7899c66ade6e5421904844be833eb34abe783c2385578bebb7deefc47a"
   }
 }
