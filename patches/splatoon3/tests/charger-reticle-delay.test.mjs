@@ -99,6 +99,11 @@ test('Blaster reticle scales with the actual viewport and keeps screen-space spr
     assert.equal(Number(h.xh.style['--iw-reticle-scale']),scale);
     assert.equal(Number(h.ret.style['--sp']),20/scale);
   }
+  f.WEAPONS['test-catalog-blaster']={kind:'catalog',behaviorKind:'blaster'};
+  h.weapon='test-catalog-blaster';h._L.weapon=h.weapon;
+  ui.context.innerWidth=2560;ui.context.innerHeight=1440;ui.update();
+  assert.equal(Number(h.xh.style['--iw-reticle-scale']),2,'catalogue Blasters use the same viewport scaling');
+  delete f.WEAPONS['test-catalog-blaster'];
 });
 
 // The shipped stylesheet, read from the patch the build actually links.

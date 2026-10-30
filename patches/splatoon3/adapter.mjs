@@ -591,7 +591,8 @@ export function adaptSource(rel, code) {
       "    const w = f.weapon || 'shooter';",
       `    const w = f.weapon || 'shooter';
     const viewportScale = Math.min(innerHeight / 720, innerWidth / 1280);
-    const reticleScale = WEAPONS[w]?.kind === 'blaster'
+    const reticleFamily = WEAPONS[w]?.behaviorKind || (WEAPONS[w]?.kind === 'catalog' ? WEAPONS[w]?.modelKind : WEAPONS[w]?.kind) || w;
+    const reticleScale = reticleFamily === 'blaster'
       ? Math.min(3, Math.max(.25, viewportScale))
       : Math.min(1, Math.max(.5, viewportScale));
     if (reticleScale !== L.reticleScale) {
