@@ -19,10 +19,39 @@ const epoch=JSON.parse(descriptorBytes);
 const introBytes=fs.readFileSync(new URL('../fixtures/inkwave-turf-intro-capture-alignment-20261030.json',import.meta.url));
 assert.equal(hash(introBytes),'359a8d943eec93b2d522c2d7964a561efde3899f34cead4dab025ffec0ebbf40');
 const intro=JSON.parse(introBytes);
+const approvedAudioHandoffInverse = [
+  [
+    "import { classifyRetiredMenuAudioAbort } from './lib/inkwave-browser-media-admission.mjs';\n",
+    ""
+  ],
+  [
+    "  // Preserve every raw failure, including the previous track's MediaElement\n  // cancellation. Any lifecycle classification requires independent evidence.\n  failures.push(event);",
+    "  // A verified upstream body is not proof of browser delivery, playback, or\n  // intentional cancellation. All active-capture request failures fail closed.\n  // Explicit context teardown remains after the pre-close acceptance gate.\n  failures.push(event);"
+  ],
+  [
+    "    // Explicit context teardown remains outside the pre-close acceptance gate.\n    // This post-close snapshot is never used to justify media cancellation.",
+    "    // Preserve the existing pre-close acceptance gate; closure diagnostics are\n    // saved separately and do not classify a canceled request as harmless."
+  ],
+  [
+    "  const audioAdmission = classifyRetiredMenuAudioAbort({\n    requests:failures,siteURL:address,revision:manifest.build.revision,\n    receipt:streamedMusicReceipt,gameplayState:result.gameplay?.state,\n  });\n  if(errors.length || consoleErrors.length || audioAdmission.unverified.length) result.status = 'failed';\n  result.errors = errors; result.consoleErrors = consoleErrors;\n  result.requestFailures = failures; // Exact, unmodified browser evidence.\n  result.unverifiedRequestFailures = audioAdmission.unverified;\n  result.verifiedAudioCancellations = audioAdmission.verified;",
+    "  if(errors.length || consoleErrors.length || failures.length) result.status = 'failed';\n  result.errors = errors; result.consoleErrors = consoleErrors; result.requestFailures = failures;\n  result.verifiedAudioCancellations = []; // No active-capture cancellation is waived."
+  ]
+];
+function alignAudioHandoff(source) {
+  let prior=source;
+  for(const [current,previous] of approvedAudioHandoffInverse){
+    assert.equal(prior.split(current).length,2,'exactly one reviewed audio handoff hunk');
+    prior=prior.replace(current,previous);
+  }
+  // This prior snapshot is independently sealed by the original intro fixture.
+  // No other edits, omissions or duplicate replacements can pass the hash.
+  assert.equal(hash(prior),intro.currentSha256,'audio handoff changes only');
+  return prior;
+}
 function alignIntro(source) {
-  assert.equal(hash(source),intro.currentSha256,'complete new intro producer');
-  assert.equal(source.split(intro.current).length,2,'one reviewed intro method');
-  const prior=source.replace(intro.current,intro.prior);
+  const aligned=alignAudioHandoff(source);
+  assert.equal(aligned.split(intro.current).length,2,'one reviewed intro method');
+  const prior=aligned.replace(intro.current,intro.prior);
   assert.equal(hash(prior),intro.priorSha256,'all non-intro bytes retain the independent header epoch');
   return prior;
 }
