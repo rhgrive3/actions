@@ -45,4 +45,4 @@ The native pause menu is captured with the debug render clock unfrozen while the
 
 The bounded `pause-only` batch repeats the three native iPad HUD/pause/quit-confirmation states without repeating the already captured full-match result. It is restricted to ipad-mini-landscape and retains separate manifests.
 
-The `result-only` batch captures a new actual offline result without repeating the pause states. The native result title DOM control is activated after visibility verification to finish its reveal; it does not alter the match outcome. Small progress records expose the actual match clock while stepping.
+The `result-only` batch captures a new actual offline result without repeating the pause states. The native Enter key finishes the result count-up through the existing onNav handler after the results screen is visible; it does not alter the match outcome. Stepping stops at the real judge state and normal rendering resumes for the asynchronous result transition (bounded to 180 seconds). Small progress records expose the actual match clock while stepping.
