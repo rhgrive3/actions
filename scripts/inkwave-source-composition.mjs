@@ -8,6 +8,10 @@ import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapon
 import { adaptLandscapeOnline } from '../patches/local-quality/landscape-online-adapter.mjs';
 import { adaptLandscapeSettings } from '../patches/local-quality/landscape-settings-adapter.mjs';
 import { adaptTurfIntroCamera } from '../patches/splatoon3/turf-intro-camera-adapter.mjs';
+import { adaptQueueNetwork20261030 } from '../patches/network-replication/queue-network-20261030-adapter.mjs';
+import { adaptQueueBots20261030 } from '../patches/local-quality/queue-bots-20261030-adapter.mjs';
+import { adaptQueueUiAudio20261030 } from '../patches/local-quality/queue-ui-audio-20261030-adapter.mjs';
+import { adaptQueueRender20261030 } from '../patches/local-quality/queue-render-20261030-adapter.mjs';
 import { adaptBossStormVolume } from '../patches/splatoon3/boss-storm-volume-adapter.mjs';
 import { adaptLockOptionRecovery } from '../patches/reliability/lock-option-recovery-adapter.mjs';
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
@@ -154,7 +158,11 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueUiContinuation20261029(rel, code);
   code = adaptQueueVisualContinuation20261029(rel, code);
   code = adaptLateRoot20261029(rel, code);
+  code = adaptQueueBots20261030(rel, code);
   code = adaptTurfIntroCamera(rel, adaptCombatWave345(rel, code, replaceOnce));
+  code = adaptQueueNetwork20261030(rel, code);
+  code = adaptQueueUiAudio20261030(rel, code);
+  code = adaptQueueRender20261030(rel, code);
   code = adaptBossStormVolume(rel, code);
   code = adaptLandscapeHome(rel, code);
   code = adaptLandscapeWeapons(rel, code);
