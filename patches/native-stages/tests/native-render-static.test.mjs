@@ -23,10 +23,73 @@ async function fixture(customData=null) {
   ]);
   const object = { active: true, material: 'concrete', vo: 0, vc: 3, io: 0, ic: 3, collidable: true };
   const data = { vertices, indices: new Uint32Array([0, 1, 2]), manifest: { materials: {}, objects: [object] } };
-  return { display: module.namespace.nativeDisplay(customData||data, new Map(), 'high'), vertices, compactNativeIndices:module.namespace.compactNativeIndices, installNativeDisplayCulling:module.namespace.installNativeDisplayCulling, specializeNativeSourceAmbient:module.namespace.specializeNativeSourceAmbient };
+  return { display: module.namespace.nativeDisplay(customData||data, new Map(), 'high'), vertices, nativeNormalCones:module.namespace.nativeNormalCones, compactNativeIndices:module.namespace.compactNativeIndices, installNativeDisplayCulling:module.namespace.installNativeDisplayCulling, specializeNativeSourceAmbient:module.namespace.specializeNativeSourceAmbient };
 }
 
-test('native diffuse ambient keeps normal-mapped, unsupported and unfamiliar shader layouts on their original path',async()=>{
+test('normal cones conservatively certify every incident triangle, including transformed views',async()=>{
+ const {display,nativeNormalCones:cones}=await fixture();display.dispose();
+ const positions=[[0,0,0],[1,0,0],[0,1,0],[0,0,1]];
+ const vertices=Float32Array.from(positions.flatMap(p=>[...p,1,1,1,0,0])),indices=new Uint32Array([0,1,2,0,3,1,0,2,3]);
+ const before=vertices.slice(),ib=indices.slice(),bound=cones(vertices,indices);
+ assert.equal(bound.normalized,true);assert.equal(bound.array.BYTES_PER_ELEMENT,1);
+ assert.deepEqual(vertices,before);assert.deepEqual(indices,ib);
+ let certified=0,fallback=0;
+ const n=new THREE.Vector3(1,1,1).normalize();
+ for(const scale of [[1,1,1],[.3,2,1.1],[-.7,1.4,2]])for(let t=0;t<240;t++){
+  const modelView=new THREE.Matrix4().compose(new THREE.Vector3(2,-1,3),new THREE.Quaternion().setFromEuler(new THREE.Euler(.2,.5,-.4)),new THREE.Vector3(...scale));
+  const normalMatrix=new THREE.Matrix3().getNormalMatrix(modelView);
+  const eyeView=new THREE.Vector3(Math.sin(t*1.37),Math.cos(t*.71),Math.sin(t*.91)).normalize();
+  const eye=eyeView.clone().applyMatrix3(normalMatrix.clone().transpose()).normalize(),facing=n.dot(eye);
+  if(Math.abs(facing)>bound.array[0]/255){
+   certified++;
+   for(const face of [[0,0,1],[0,1,0],[1,0,0]])assert.equal(Math.sign(new THREE.Vector3(...face).dot(eye)),Math.sign(facing));
+  }else fallback++;
+ }
+ assert.ok(certified>20&&fallback>20,'exercise both certified hemispheres and silhouette fallback');
+ const invalid=vertices.slice();invalid.set([-1,-1,-1],3);
+ assert.equal(cones(invalid,indices).array[0],255,'inverted normals cannot certify');
+ assert.equal(cones(vertices,new Uint32Array([0,0,0])).array[0],255,'unused/degenerate corners retain both hemispheres');
+ const thin=new Float32Array([0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,1e-7,0,0,0,1,0,0]);
+ assert.deepEqual(Array.from(cones(thin,new Uint32Array([0,1,2])).array),[255,255,255]);
+ assert.equal(cones(vertices,[0,1,-1]),null);assert.equal(cones(vertices,[0,1,99]),null);assert.equal(cones(vertices,[0,1]),null);
+});
+
+test('normal-cone hemisphere reuse preserves transparent FrontSide and BackSide passes',async()=>{
+ const {display,nativeNormalCones:cones}=await fixture();display.dispose();
+ const v=new Float32Array([0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0,1]);
+ const bound=cones(v,new Uint32Array([0,1,2])).array[0]/255;
+ let front=0,back=0;
+ for(const flip of [1,-1])for(let i=0;i<720;i++){
+  const eye=new THREE.Vector3(Math.sin(i*.71),Math.cos(i*.43),Math.sin(i*.37)).normalize();
+  const authored=new THREE.Vector3(0,0,1),facing=authored.dot(eye),passFacing=flip*facing;
+  if(Math.abs(passFacing)<=bound)continue;
+  const transformed=authored.clone().multiplyScalar(flip);
+  const optimized=transformed.clone().multiplyScalar(passFacing<0?-1:1);
+  const glFrontFacing=flip*eye.z>0;
+  const expected=transformed.clone().multiplyScalar(glFrontFacing?1:-1);
+  assert.ok(optimized.distanceTo(expected)<1e-12);
+  if(glFrontFacing)front++;else back++;
+  if(flip<0&&facing<0)assert.ok(optimized.z<0,'BackSide must not flip the already transformed normal twice');
+ }
+ assert.ok(front>100&&back>100);
+});
+
+test('cone shader falls back at silhouettes, unusual cameras and missing attributes',async()=>{
+ const {display,specializeNativeSourceAmbient:specialize}=await fixture(),mesh=display.group.children[0];
+ assert.deepEqual(Array.from(mesh.material.defaultAttributeValues.nativeNormalCone),[1]);
+ const attr=mesh.geometry.getAttribute('nativeNormalCone');assert.ok(attr);attr.onUploadCallback();assert.equal(attr.array,null);
+ const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:false,envMapCubeUVHeight:1024};
+ assert.equal(specialize(shader,true,true),true);
+ assert.match(shader.vertexShader,/abs\(nativeFacing\)>nativeNormalCone/);
+ assert.ok(shader.vertexShader.includes('#ifdef FLIP_SIDED\nnativeFacing=-nativeFacing;\n#endif'));
+ assert.ok(shader.vertexShader.indexOf('nativeFacing=-nativeFacing;')<shader.vertexShader.indexOf('bool nativeSingle='),'apply the BackSide convention before selecting an environment hemisphere');
+ assert.match(shader.vertexShader,/determinant\(mat3\(viewMatrix\)\)>0.0/);
+ assert.match(shader.vertexShader,/if\(!nativeSingle\)\{vNativeIrradianceBack=getIBLIrradiance/);
+ assert.match(shader.fragmentShader,/gl_FrontFacing\?vNativeRadianceFront:vNativeRadianceBack/);
+ display.dispose();
+});
+
+test('native diffuse ambient keeps unapproved normal maps, unsupported and unfamiliar shader layouts on their original path',async()=>{
  const {display,specializeNativeSourceAmbient:specialize}=await fixture();display.dispose();
  const source=()=>({vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:false,envMapCubeUVHeight:1024});
  for(const change of [{normalMap:true},{envMap:false},{envMapCubeUVHeight:null},{envMapCubeUVHeight:768},{vertexShader:'void main(){}'},{fragmentShader:'void main(){}'}]){
@@ -43,6 +106,9 @@ test('native diffuse ambient keeps normal-mapped, unsupported and unfamiliar sha
  assert.match(broad.fragmentShader,/gl_FrontFacing\?vNativeRadianceFront:vNativeRadianceBack/);
  const missing=source();missing.vertexShader=missing.vertexShader.replace('#include <project_vertex>','');const before={...missing};
  assert.equal(specialize(missing,true),false);assert.deepEqual(missing,before,'unsupported source layout fails open before mutating either stage');
+ const mapped=Object.assign(source(),{normalMap:true}),unchanged={...mapped};
+ assert.equal(specialize(mapped,true,true),false);assert.deepEqual(mapped,unchanged,'normal maps retain all pixel-frequency IBL, even with cones enabled');
+
 });
 
 test('native glass retains pixel-frequency reflections while matte source surfaces interpolate the broad lobe',async()=>{
@@ -55,6 +121,20 @@ test('native glass retains pixel-frequency reflections while matte source surfac
  assert.doesNotMatch(shader.vertexShader,/vNativeRadiance/);
  assert.ok(shader.fragmentShader.includes('getIBLRadiance( geometryViewDir, geometryNormal, material.roughness )'));
  glass.display.dispose();display.dispose();
+});
+
+test('source materials preserve pixel-frequency IBL for normal maps at every strength and encoding',async()=>{
+ const {display}=await fixture(),mat=display.group.children[0].material;
+ mat.normalMap=new THREE.Texture();
+ for(const type of [THREE.TangentSpaceNormalMap,THREE.ObjectSpaceNormalMap])for(const scale of [0,.1,.28,-.28,.5,1]){
+  mat.normalMapType=type;mat.normalScale.set(scale,scale);
+  const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:true,envMapCubeUVHeight:1024};
+  mat.onBeforeCompile(shader);
+  assert.doesNotMatch(shader.vertexShader,/vNativeIrradiance|vNativeRadiance/);
+  assert.ok(shader.fragmentShader.includes('#include <normal_fragment_maps>'));
+  assert.ok(shader.fragmentShader.includes('#include <lights_fragment_maps>'));
+ }
+ mat.normalMap.dispose();display.dispose();
 });
 
 test('baked native display preserves vertex positions and follows changing parent transforms without local recomposition', async () => {

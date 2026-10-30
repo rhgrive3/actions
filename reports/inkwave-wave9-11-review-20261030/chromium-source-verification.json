@@ -1,0 +1,14 @@
+[
+  {
+    "sha": "6ae5b34493e0744a7334025ba09b810f034194e8",
+    "contentHash": "2669bdec91f1ca26eb0e6a6bd36b91eb7cb42f919984e8f33f6112ed7c94dada",
+    "inputs": 1555,
+    "artifacts": 2275
+  },
+  {
+    "sha": "b149f617b747bdbaa1cbcafa9d75211652e1990c",
+    "contentHash": "93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f",
+    "inputs": 1555,
+    "artifacts": 2273
+  }
+]

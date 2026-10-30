@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "errors": [],
+  "referenceContentHash": "66539990b663153c11877b8399267d521ea86d55a50f04507e15c1f503e64535",
+  "candidateContentHash": "93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f",
+  "environment": {
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "node": "v24.19.0",
+    "viewport": [
+      1024,
+      768
+    ],
+    "browser": "webkit",
+    "device": "ipad",
+    "renderer": "WebKit GL",
+    "browserVersion": "26.5"
+  },
+  "stage": "robo",
+  "quality": "high",
+  "referenceFps": 0.2278821393575243,
+  "candidateFps": 0.22832266559101322,
+  "speedup": 1.001933131902004,
+  "fpsImprovementPercent": 0.19331319020039484,
+  "pairs": [
+    {
+      "run": 0,
+      "firstStep": 995,
+      "frames": 10,
+      "referenceFps": 0.22624434389140272,
+      "candidateFps": 0.2323744016359158,
+      "speedup": 1.0270948552307477,
+      "traceSha256": "f42f7cf496659708834add03249a32b73ed7ef1719982ffe29ffcb86fee43a2e",
+      "gridSha256": "0d0555a1635a716214ad52672fa06cbb271eb2c92d7e777e2d738355ac8b104b"
+    },
+    {
+      "run": 1,
+      "firstStep": 1005,
+      "frames": 10,
+      "referenceFps": 0.22488081316902042,
+      "candidateFps": 0.2277333697706725,
+      "speedup": 1.0126847486962265,
+      "traceSha256": "1a047950a79352b194a1a39ceb67304ce09a089a61ee4f69867456b1f689ee30",
+      "gridSha256": "60d1f989869dc252b4737dbb34105a531cbbd5a38abdb8b988d7bc64c45bbcdc"
+    },
+    {
+      "run": 2,
+      "firstStep": 1015,
+      "frames": 10,
+      "referenceFps": 0.2326717699341539,
+      "candidateFps": 0.2249820014398848,
+      "speedup": 0.9669501439884809,
+      "traceSha256": "58ce8fe73fab3b72d84a3253bf94740246f6825bf414d0570fd9c334b4141a79",
+      "gridSha256": "48526099b4e5cea72745f465c5bf55a5d20d18158a859ddc3a6a91ccb6fe6220"
+    }
+  ],
+  "images": [
+    {
+      "view": "forward",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 5.894551194766581e-07,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 1,
+      "changedPixels": 2,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "eb5db660ab0d1a1bb7bb998b4e49ad921b72ea53a2a5aae3459cd3e708d58c60",
+        "a6d384b3311ad5b50cdfcb0a8f17e8569665fc3bc6ad2a5a277e10926ed55f43"
+      ]
+    },
+    {
+      "view": "left",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 1.1789102389533162e-06,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 1,
+      "changedPixels": 3,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "a9ee5b493073bb8659b4b688b04faf8df27af56cdc587d5499ee2239cbab2912",
+        "c16335a4de9b7c0052cc66f0c044b81dd9270597d5821a42ab5e41a8406eab11"
+      ]
+    },
+    {
+      "view": "back",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 0.0,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 0,
+      "changedPixels": 0,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "2cb592a81706fe22eddd62d00bf1b8df2f526e0e414360d9f221546c537ac959",
+        "2cb592a81706fe22eddd62d00bf1b8df2f526e0e414360d9f221546c537ac959"
+      ]
+    },
+    {
+      "view": "right",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 5.894551194766581e-07,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 2,
+      "changedPixels": 1,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "9403732b63d1f66b6c62ef7b7e15816f227dcce8b4ca7d9b095161986b3341bb",
+        "235646c54e6798b4ed4bc09450e3becd0459a1887c7bad9342f3296b6d453baa"
+      ]
+    },
+    {
+      "view": "feet-lowered",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 5.894551194766581e-07,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 1,
+      "changedPixels": 2,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "b5f73e83769e26f41d74605a38da5e841aac8d3f5d6e4e50e2cdb727138b984d",
+        "19e91740e8fe163f1910c8bd2e98880c7908e41736221d9634be3927747b7a61"
+      ]
+    },
+    {
+      "view": "feet-raised",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 5.894551194766581e-07,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 1,
+      "changedPixels": 2,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "eb5db660ab0d1a1bb7bb998b4e49ad921b72ea53a2a5aae3459cd3e708d58c60",
+        "a6d384b3311ad5b50cdfcb0a8f17e8569665fc3bc6ad2a5a277e10926ed55f43"
+      ]
+    },
+    {
+      "view": "window-off",
+      "width": 1228,
+      "height": 921,
+      "meanRgbDelta": 5.894551194766581e-07,
+      "p99RgbDelta": 0.0,
+      "maxDelta": 1,
+      "changedPixels": 2,
+      "maxAlphaDelta": 0,
+      "sha256": [
+        "eb5db660ab0d1a1bb7bb998b4e49ad921b72ea53a2a5aae3459cd3e708d58c60",
+        "a6d384b3311ad5b50cdfcb0a8f17e8569665fc3bc6ad2a5a277e10926ed55f43"
+      ]
+    }
+  ],
+  "referenceCompletedFrameMs": {
+    "samples": 30,
+    "p50": 4370,
+    "p95": 4600,
+    "p99": 4650,
+    "max": 4650
+  },
+  "candidateCompletedFrameMs": {
+    "samples": 30,
+    "p50": 4371,
+    "p95": 4543,
+    "p99": 4632,
+    "max": 4632
+  },
+  "limits": [
+    "Fixed 60 Hz production simulation plus all ordinary render passes; wall time includes GPU completion. Not a physical-device or presentation-latency measurement.",
+    "This is one matched replay with three timed windows, not a physical GPU or whole-device benchmark."
+  ]
+}
