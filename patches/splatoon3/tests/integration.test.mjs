@@ -149,18 +149,37 @@ test('splatling diving cancels both charging and an active stream', async () => 
   a.reset();a.intent.squid=false;a.intent.fire=true;f.tick(a,73);a.intent.fire=false;f.tick(a,2);assert.equal(a.weaponRunner.streaming,true);
   const count=f.shots.length;a.intent.squid=true;f.tick(a,45);assert.equal(a.weaponRunner.streaming,false);assert.equal(f.shots.length,count);
 });
-test('charger short tap retains progressive payment, tops up to minimum and fires after its release gap', async () => {
+test('explicit Charger input cancellation before the 8F minimum preserves paid ink without a shot', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;
   r.update(1/60,{fire:true}); // current 1F humanoid startup
   for(let i=0;i<7;i++)r.update(1/60,{fire:true});
   const paid=100-a.ink;
   assert.ok(paid>0,'progressive charge committed ink before release');
+  // Since a69603e, a physical trigger release is a minimum tap shot, not a
+  // cancellation. Use the actual input-cancellation owner for this invariant.
+  a.intent.fire=false;r.cancelPendingInput();
+  for(let i=0;i<4;i++){
+    r.update(1/60,{fire:false});
+    assert.equal(f.shots.length,0,'explicit cancellation must not leave a delayed tap shot');
+    assert.ok(Math.abs((100-a.ink)-paid)<1e-9,'cancel neither refunds nor tops up committed charge ink');
+  }
+  assert.equal(r.charging,false);assert.equal(r.s3ReleaseHold,false);
+});
+test('a sub-8F physical Charger release pays only missing minimum ink and emits one deferred tap', async () => {
+  const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=100;a.intent.fire=true;
+  r.update(1/60,{fire:true});
+  for(let i=0;i<7;i++)r.update(1/60,{fire:true});
+  const paid=100-a.ink;
+  assert.ok(paid>0 && paid<a.weapon.inkMin,'partial progressive payment precedes the short release');
   a.intent.fire=false;r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,0,'minimum short tap still observes the one-frame release gate');
-  assert.ok(100-a.ink+1e-9>=paid,'short-tap top-up never refunds already committed ink');
-  assert.ok(Math.abs((100-a.ink)-a.weapon.inkMin)<1e-8,'paid minimum charge is exact');
+  assert.equal(f.shots.length,0,'the existing one-tick release gap is retained');
+  assert.ok(Math.abs((100-a.ink)-a.weapon.inkMin)<1e-9,'only the unpaid minimum is added, without refund');
   r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,1,'one minimum-charge shot after release gate');
+  assert.equal(f.shots.length,1);
+  assert.ok(Math.abs(f.shots[0].charge-a.weapon.minimumChargeTime/a.weapon.chargeTime)<1e-9);
+  for(let i=0;i<10;i++)r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,1,'released input does not repeat');
+  assert.ok(Math.abs((100-a.ink)-a.weapon.inkMin)<1e-9,'deferred emission cannot debit the already-paid minimum again');
 });
 test('an 8F legal Charger charge has already spent the 2.25 percent minimum before release', async () => {
   const f=await fixture(),a=f.make('charger'),r=a.weaponRunner;a.ink=2.25;a.intent.fire=true;
