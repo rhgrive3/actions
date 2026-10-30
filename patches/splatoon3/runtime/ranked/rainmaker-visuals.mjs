@@ -82,8 +82,8 @@ function glowMaterial(THREE, rays = false) {
         gl_Position=projectionMatrix*p;}`,
     fragmentShader: `varying vec2 vHokoUv; uniform float uPower; uniform float uTime;
       void main(){vec2 p=(vHokoUv-.5)*2.;float r=length(p);if(r>1.)discard;
-        float a=exp(-r*r*6.)*(1.-smoothstep(.35,1.,r));
-        ${rays ? 'float angle=atan(p.y,p.x);a+=pow(max(0.,cos(angle*13.+uTime*.25)),36.)*pow(1.-r,1.5)*.8;' : ''}
+        float a=exp(-r*r*3.)*(1.-smoothstep(.55,1.,r));
+        ${rays ? 'float angle=atan(p.y,p.x);a+=pow(max(0.,cos(angle*13.+uTime*.7)),24.)*pow(1.-r,.8)*1.2;' : ''}
         gl_FragColor=vec4(mix(vec3(1.,.52,.035),vec3(1.,.96,.46),exp(-r*5.)),a*uPower);}`,
     transparent: true, depthWrite: false, depthTest: true,
     blending: THREE.AdditiveBlending, toneMapped: false,
@@ -96,11 +96,31 @@ export function createRainmakerChargeAura(THREE) {
   body.name = 'rainmaker-body-glow'; body.position.y = 1.05; body.frustumCulled = false;
   const mouth = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), glowMaterial(THREE, true));
   mouth.name = 'rainmaker-muzzle-glow'; mouth.frustumCulled = false;
+  // A centre billboard is hidden by the carrier's opaque torso from the normal
+  // chase camera. Put a depth-tested shell around the body as well: its front
+  // surface/edge stays legible without disabling wall occlusion or editing any
+  // shared skin/cloth materials. Dimensions/intensity are presentation tuning.
+  const shellMaterial = new THREE.ShaderMaterial({
+    uniforms: { uPower: { value: 0 }, uTime: { value: 0 } },
+    vertexShader: `varying vec3 vHokoNormal; varying vec3 vHokoView;
+      void main(){vec4 p=modelViewMatrix*vec4(position,1.);vHokoView=-p.xyz;
+        vHokoNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*p;}`,
+    fragmentShader: `varying vec3 vHokoNormal;varying vec3 vHokoView;
+      uniform float uPower;uniform float uTime;
+      void main(){float facing=abs(dot(normalize(vHokoNormal),normalize(vHokoView)));
+        float pulse=.92+.08*sin(uTime*15.);
+        // Fade the proxy's outer edge instead of drawing an oval shield.
+        gl_FragColor=vec4(1.,.73,.12,pow(facing,2.)*.32*uPower*pulse);}`,
+    transparent: true, depthWrite: false, depthTest: true,
+    blending: THREE.AdditiveBlending, toneMapped: false,
+  });
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), shellMaterial);
+  shell.name = 'rainmaker-body-charge-shell'; shell.position.y = 1.02; shell.scale.set(.61, 1.02, .61);
   const material = new THREE.MeshBasicMaterial({ color: 0xffed8b, transparent: true,
     blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
   const motes = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 5, 4), material, 16);
   motes.name = 'rainmaker-charge-motes'; motes.frustumCulled = false;
-  group.add(body, mouth, motes);
+  group.add(body, shell, mouth, motes);
   const transform = new THREE.Object3D(), point = new THREE.Vector3();
   let age = 0, flash = 0, lastSequence = null;
   function update(carrier, charge, core, dt = 0, sequence = 0) {
@@ -109,19 +129,22 @@ export function createRainmakerChargeAura(THREE) {
     if (!group.visible) { lastSequence = null; flash = 0; return; }
     if (lastSequence !== null && sequence !== lastSequence) flash = .18;
     lastSequence = sequence; flash = Math.max(0, flash - delta);
-    const q = unit(charge), power = .26 + .48 * q + .5 * unit(flash / .18);
+    const q = unit(charge), power = .20 + .85 * q + .65 * unit(flash / .18);
     point.copy(carrier.pos); group.parent?.worldToLocal(point); group.position.copy(point);
     group.updateWorldMatrix(true, false); core.updateWorldMatrix(true, false);
     point.fromArray(core.userData.rainmakerModel.muzzle); core.localToWorld(point); group.worldToLocal(point);
     mouth.position.copy(point);
     body.material.uniforms.uPower.value = power;
+    shellMaterial.uniforms.uPower.value = .12 + .78 * q + .6 * unit(flash / .18);
+    shellMaterial.uniforms.uTime.value = age;
     mouth.material.uniforms.uPower.value = .22 + .75 * q + unit(flash / .18);
     body.material.uniforms.uTime.value = mouth.material.uniforms.uTime.value = age;
     for (let i = 0; i < 16; i++) {
       const phase = (age * (.30 + q * .25) + i / 16) % 1, angle = i * 2.39996 + age * .35;
       const radius = .25 + .35 * ((i * 7 % 13) / 13);
       transform.position.set(Math.cos(angle) * radius, .15 + phase * 1.8, Math.sin(angle) * radius);
-      transform.scale.setScalar((.018 + (i % 3) * .008) * (.6 + q) * Math.sin(phase * Math.PI));
+      const size = (.027 + (i % 3) * .014) * (.6 + q) * Math.sin(phase * Math.PI);
+      transform.scale.set(size, size * (1.5 + q), size);
       transform.updateMatrix(); motes.setMatrixAt(i, transform.matrix);
     }
     motes.instanceMatrix.needsUpdate = true;
@@ -163,7 +186,9 @@ export function createRainmakerAttackVisuals(THREE, scene) {
       material.forceSinglePass = true; materials.set(key, material); }
     headGeometry ||= new THREE.SphereGeometry(1, 20, 12);
     tailGeometry ||= inkTailGeometry(THREE);
-    dropletGeometry ||= new THREE.SphereGeometry(1, 7, 5);
+    // Shared by the small spray and the larger burst lobes. Seven sides made
+    // correctly scaled explosions read as faceted solid rocks in production.
+    dropletGeometry ||= new THREE.SphereGeometry(1, 12, 8);
     return material;
   }
   function shot(color, charge, position = null) {
@@ -171,7 +196,7 @@ export function createRainmakerAttackVisuals(THREE, scene) {
     group.name = 'rainmaker-shot';
     const head = new THREE.Mesh(headGeometry, material); head.name = 'rainmaker-shot-head';
     const tail = new THREE.Mesh(tailGeometry, material); tail.name = 'rainmaker-shot-ink-sheet';
-    const drops = new THREE.InstancedMesh(dropletGeometry, material, 12);
+    const drops = new THREE.InstancedMesh(dropletGeometry, material, 32);
     drops.name = 'rainmaker-shot-droplets'; drops.frustumCulled = false;
     group.add(head, tail, drops);
     group.userData.rainmakerShot = { head, tail, drops, q };
@@ -180,7 +205,7 @@ export function createRainmakerAttackVisuals(THREE, scene) {
   }
   function updateShot(group, velocity, age, landed = false, wait = 0) {
     const { head, tail, drops, q } = group.userData.rainmakerShot;
-    const radius = .20 + .25 * q;
+    const radius = .22 + .40 * q;
     if (landed) {
       group.quaternion.identity(); head.position.y = .08;
       const pulse = 1 + .12 * Math.sin(wait * 60);
@@ -193,11 +218,11 @@ export function createRainmakerAttackVisuals(THREE, scene) {
       tail.visible = drops.visible = true;
       tail.scale.set(.5 + .5 * q, .5 + .5 * q, Math.min(1, Math.max(.04, age * velocity.length() / 1.6)));
       transform.quaternion.identity();
-      for (let i = 0; i < 12; i++) {
-        const a = i * 2.39996 + age * 2, spread = .20 + (i % 4) * .10;
-        transform.position.set(Math.cos(a) * spread, Math.sin(a) * spread, -.12 - ((i / 12 + age * .6) % 1) * 1.25);
-        const size = (.035 + (i % 3) * .018) * (.6 + .4 * q);
-        transform.scale.set(size, size, size * (1.6 + i % 2));
+      for (let i = 0; i < 32; i++) {
+        const a = i * 2.39996 + age * 2, spread = .26 + (i % 5) * .14;
+        transform.position.set(Math.cos(a) * spread, Math.sin(a) * spread, -.12 - ((i / 32 + age * .6) % 1) * 2.4);
+        const size = (.045 + (i % 4) * .022) * (.6 + .4 * q);
+        transform.scale.set(size, size, size * (1.8 + i % 2));
         transform.updateMatrix(); drops.setMatrixAt(i, transform.matrix);
       }
       drops.instanceMatrix.needsUpdate = true;
@@ -235,10 +260,10 @@ export function createRainmakerAttackVisuals(THREE, scene) {
       // The first lobes remain a connected, rising ink mass while the rest
       // peel off as droplets. A ring of tiny beads alone loses the detonation.
       if (i < (kind === 'blast' ? 8 : 5)) {
-        const lobe = radius * (kind === 'blast' ? .26 : .17) * Math.sqrt(1 - t);
+        const lobe = radius * (kind === 'blast' ? .18 : .17) * Math.sqrt(1 - t);
         const spread = radius * (.12 + .55 * t);
         transform.position.set(Math.cos(a) * spread,
-          lobe * .65 + radius * .55 * Math.sin(Math.PI * t), Math.sin(a) * spread);
+          lobe * .65 + radius * .30 * Math.sin(Math.PI * t), Math.sin(a) * spread);
         transform.scale.set(lobe * (1.4 + t), lobe * (1.35 + (i % 3) * .23), lobe);
       }
       transform.updateMatrix(); mesh.setMatrixAt(i, transform.matrix);

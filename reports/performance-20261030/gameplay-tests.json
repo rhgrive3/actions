@@ -1,0 +1,70 @@
+{
+  "candidate": {
+    "cwd": "/workspace/actions-gameplay",
+    "summary": {
+      "tests": 34,
+      "pass": 21,
+      "fail": 7,
+      "skipped": 6,
+      "duration_ms": 25219.244087
+    },
+    "failedTests": [
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 30Hz",
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 60Hz",
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 120Hz",
+      "seven live bots spread from under the real bridge instead of staying at its centre",
+      "combat uses the path for an enemy on another floor; same-floor close combat still closes distance",
+      "failed/empty paint routes and dry refill scans respect their retry timers",
+      "Kelpline grate bridge is crossed in human form using actual ground/collision"
+    ],
+    "assertionMessages": [
+      "routes out through the real trench ramps",
+      "routes out through the real trench ramps",
+      "routes out through the real trench ramps",
+      "Expected values to be strictly equal:",
+      "Expected values to be strictly equal:",
+      "bounded failed-goal scans: 0",
+      "walks over the real grate support"
+    ],
+    "rawLog": "/workspace/scratch/performance-20261030/gameplay-tests.log",
+    "rawSha256": "a91666555fc86f826c87b79f8926a0b2a559f82b2fe96ed9b972e799666c0f10"
+  },
+  "baseline": {
+    "cwd": "/workspace/actions",
+    "summary": {
+      "tests": 12,
+      "pass": 5,
+      "fail": 7,
+      "skipped": 0,
+      "duration_ms": 23789.521318
+    },
+    "failedTests": [
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 30Hz",
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 60Hz",
+      "Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 120Hz",
+      "seven live bots spread from under the real bridge instead of staying at its centre",
+      "combat uses the path for an enemy on another floor; same-floor close combat still closes distance",
+      "failed/empty paint routes and dry refill scans respect their retry timers",
+      "Kelpline grate bridge is crossed in human form using actual ground/collision"
+    ],
+    "assertionMessages": [
+      "routes out through the real trench ramps",
+      "routes out through the real trench ramps",
+      "routes out through the real trench ramps",
+      "Expected values to be strictly equal:",
+      "Expected values to be strictly equal:",
+      "bounded failed-goal scans: 0",
+      "walks over the real grate support"
+    ],
+    "rawLog": "/workspace/scratch/performance-20261030/baseline-bot-navigation-tests.log",
+    "rawSha256": "5706d09cd8886e18b8ac0178f56bf941d7d7bbdb5b743c392dc4444c15aa89b1"
+  },
+  "baselineSha": "3715e29d1656a00b853f73e12a89624b17985b7c",
+  "candidateFiles": [
+    "patches/native-stages/runtime/native-bots.mjs"
+  ],
+  "sameFailuresAsBaseline": true,
+  "candidateCommand": "node --experimental-vm-modules --test --test-concurrency=2 patches/native-stages/tests/native-paint-goal-bounds.test.mjs patches/native-stages/tests/native-nav-time-slice.test.mjs patches/native-stages/tests/native-spawn-nav.test.mjs patches/native-stages/tests/native-integration.test.mjs patches/local-quality/tests/bot-navigation.test.mjs patches/local-quality/tests/nav-heuristic.test.mjs",
+  "baselineCommand": "node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation.test.mjs",
+  "scope": "Source-composed tests; six real-stage cases skipped because external source assets are unavailable. No browser or console verification in this agent."
+}

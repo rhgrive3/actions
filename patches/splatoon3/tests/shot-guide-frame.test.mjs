@@ -119,6 +119,7 @@ test('#769: the Heavy Splatling guide equals the launched round at exactly +11 f
 
 test('#769: minimum charge and first-circle-or-higher releases produce different guides', async () => {
   const r = await rig('splatling'), { a } = r;
+  a.weaponRunner.streaming = true; // the retained value belongs to an actual release
   const first = a.weapon.firstChargeTime / a.weapon.chargeTime;
   a.weaponRunner.fidelitySplatlingCharge = 0;
   const minimum = flat(r.f.computeShotGuide(a));
@@ -166,7 +167,7 @@ test('#769/#459: random spread and the spawn-speed bias never move the guide poi
   const points = new Set();
   for (const random of [() => 0, () => 0.25, () => 0.5, () => 0.999999]) {
     const r = await rig('splatling'), { a } = r;
-    a.weaponRunner.fidelitySplatlingCharge = 0.4;
+    a.weaponRunner.charge = 0.4;
     r.f.setRandom(random);
     const guide = flat(r.f.computeShotGuide(a));
     const spread = flat({ ...r.f.computeShotGuide(a) });
@@ -181,7 +182,7 @@ test('#769/#459: random spread and the spawn-speed bias never move the guide poi
 
 test('#769/#459: the guide draws no random number at all', async () => {
   const r = await rig('splatling'), { a } = r;
-  a.weaponRunner.fidelitySplatlingCharge = 0.4;
+  a.weaponRunner.charge = 0.4;
   let draws = 0;
   r.f.setRandom(() => { draws++; throw new Error('the shot guide consumed an RNG draw'); });
   let error = null;

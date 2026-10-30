@@ -49,7 +49,7 @@ test('production fixed-tick return improves49, preserves40/start/end and all nat
 });
 
 test('release before/at/after back, late release and repress preserve native gates and paint without a delayed tail',async()=>{
- const trace=[];for(const options of[{release:40},{release:46},{release:52},{release:55},{release:56},{release:48,repress:true},{release:1,airborne:true},{release:48,movingAim:true}]){
+ const trace=[];for(const options of[{release:40},{release:46},{release:49},{release:52},{release:55},{release:56},{release:48,repress:true},{release:1,airborne:true},{release:48,movingAim:true}]){
   const b=await run({...options,old:true}),c=await run(options);assert.deepEqual(c.fallbacks,[],'no continuity claim through fallback '+JSON.stringify(options));eq(c.map(r=>r.native),b.map(r=>r.native),JSON.stringify(options));
   for(let i=56;i<c.length;i++)eq(c[i],b[i],'no tail '+JSON.stringify(options)+' '+i);
   assert(c.every(r=>r.pose.every(Number.isFinite)&&r.gaps[0]<.002&&r.gaps[1]<.02));
@@ -104,7 +104,9 @@ test('same-attack repress never recaptures a late return; protect54/55 and decel
 });
 
 test('late release with no native floor correction keeps the entire clear native carry',async()=>{
- const trace=[];for(const release of[49,52,55]){const b=await run({old:true,release}),c=await run({release});
+ // The level forward follow-through still needs a floor correction at49.
+ // Keep genuinely clear late samples here;49 remains in the gate matrix above.
+ const trace=[];for(const release of[52,55]){const b=await run({old:true,release}),c=await run({release});
   assert.equal(b[release].floorSearch.axis,-1);assert.equal(b[release].floorSearch.a,0,'first eligible native sample needs no floor correction');
   eq(c,b,'clear native carry is never bent '+release);eq(c.paintTrace,b.paintTrace);assert.deepEqual(c.fallbacks,[]);
   trace.push({release,before:b,candidate:c,metrics:{before:motionMetrics(b),candidate:motionMetrics(c)}});

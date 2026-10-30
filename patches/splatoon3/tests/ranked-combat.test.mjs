@@ -49,7 +49,10 @@ function fullShot(actorId, team = 0) {
     pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
     shotOrigin: { actorId, team, life: 0, owner: null, body: [0, .7, 0], muzzle: [0, 1, 0] },
     damage: 60, blastDamage: 180, outerDamage: 40,
-    radius: 1.4, nearRadius: 0.92, paintRadius: 5, speed: 18,
+    // Explicit small-fixture ballistics keep these collision/identity cases
+    // independent of production tuning; source-scaled rule-to-contact reach
+    // is covered in rainmaker-attack-scale.test.mjs.
+    radius: 1.4, nearRadius: 0.92, paintRadius: 5, speed: 18, launchY: 3.36,
   };
 }
 

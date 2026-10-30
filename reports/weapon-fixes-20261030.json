@@ -1,0 +1,59 @@
+{
+  "status": "passed",
+  "sourceSha": "fd1a2857606eec423743c17e78ffb087e018f39e",
+  "contentHash": "925ff7142ace95aaecb23faed348b6466f5ff7e11123962cf566a38719c36f22",
+  "inputHash": "150432bf323506125089e09d82e966b9d5b0ec66ef630e815c4de4ba0bca8967",
+  "inputs": 1557,
+  "artifacts": 2275,
+  "checks": {
+    "rollerSource": {
+      "pass": 90,
+      "fail": 0
+    },
+    "integratedSource": {
+      "pass": 114,
+      "fail": 0
+    },
+    "integratedEmitted": {
+      "pass": 15,
+      "fail": 0
+    },
+    "finalRainmakerVFXSource": {
+      "pass": 8,
+      "fail": 0
+    },
+    "finalRainmakerVFXEmitted": {
+      "pass": 8,
+      "fail": 0
+    },
+    "quick": "passed",
+    "startupBudget": "passed",
+    "sourceMigrationAudit": "passed"
+  },
+  "browserEvidence": [
+    "roller-follow-through-wall-20261030/README.md",
+    "splatling-downward-aim-20261030/README.md",
+    "rainmaker-attack-2026-10-30.md"
+  ],
+  "scope": "All manifest input hashes and Git blobs and all emitted artifact hashes verified. Focused tests and Chromium/SwiftShader evidence, not full repository CI or Nintendo/Switch pixel parity.",
+  "latestMainIntegration": {
+    "status": "passed",
+    "sourceSha": "eba5b26777bc0c85cba887f462e7d2a65206351a",
+    "contentHash": "175f1afd5ef5f041c181f7bbb77e27c0a238c40cfae20022c4a7dc7ce556587b",
+    "inputHash": "d9022bc1c3a4e980e237f328b9a6b307ac15432fba1d81f18f2a625d949cbc72",
+    "inputs": 1561,
+    "artifacts": 2283,
+    "mainCommit": "3715e29d1656a00b853f73e12a89624b17985b7c",
+    "sourceTests": {
+      "pass": 15,
+      "fail": 0
+    },
+    "emittedTests": {
+      "pass": 15,
+      "fail": 0
+    },
+    "quick": "passed",
+    "startupBudget": "passed",
+    "conflictResolution": "Kept both independently appended behavior-report sections; no product-file conflicts."
+  }
+}

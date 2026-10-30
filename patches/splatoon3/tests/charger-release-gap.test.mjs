@@ -130,13 +130,18 @@ test('a special that owns the next tick cannot replay the old Charger release af
   assert.equal(f.shots.length, 0, 'no stale shot after the special');
 });
 
-test('current sub-minimum cancellation never arms the restored gap', async () => {
+test('short physical release tops up the paid minimum and retains the release gap', async () => {
   const f = await fixture(), a = await charged(f, 8), r = a.weaponRunner;
   const paid = a.ink;
-  a.intent.fire = false; f.tick(a, 3);
+  const missing = a.weapon.inkMin - r.s3ChargerSpent;
+  a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 0);
+  assert.equal(r.s3ReleaseHold, true);
+  assert.ok(Math.abs(a.ink - (paid - missing)) < 1e-9, 'only the unpaid minimum is debited');
+  f.tick(a, 2);
+  assert.equal(f.shots.length, 1);
+  assert.equal(f.shots[0].charge, a.weapon.minimumChargeTime / a.weapon.chargeTime);
   assert.equal(r.s3ReleaseHold, false);
-  assert.ok(a.ink >= paid, 'no second debit or invented pending shot');
 });
 
 test('reset retires a pending paid release and does not replay it', async () => {

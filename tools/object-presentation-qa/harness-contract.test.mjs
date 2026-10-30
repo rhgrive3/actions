@@ -79,12 +79,12 @@ for (const suite of Object.keys(SUITES)) test(suite + ' browser harness statical
     const {FORM_CAPTURE_PLAN,verifyFormScenario}=module.namespace;
     const plan=JSON.parse(JSON.stringify(FORM_CAPTURE_PLAN));
     assert.equal(plan.reduce((n,p)=>n+Object.values(p.frames).reduce((m,v)=>m+v.length,0),0)*2,20,'ten same-input camera pairs');
-    assert.deepEqual(plan.find(p=>p.name==='shooter-lower').frames[3],['rear','side']);
-    assert.deepEqual(plan.find(p=>p.name==='dualies-upper').frames[6],['rear','side']);
-    const history=plan.find(p=>p.name==='dualies-upper-history-event');assert.equal(history.priorFullForm,true);assert.equal(history.deliveryAt,3);assert.deepEqual(history.frames[3],['rear','side']);
-    const valid={deliveryAt:null,rows:Array.from({length:10},(_,i)=>({returnFrame:i,source:{status:'ready',active:true},poses:1,leftSolves:i<9?2:1,clamArmActive:false,pending:i<9,grip:.0001}))};
+    assert.deepEqual(plan.find(p=>p.name==='shooter-lower').frames[1],['rear','side']);
+    assert.deepEqual(plan.find(p=>p.name==='dualies-upper').frames[1],['rear','side']);
+    const history=plan.find(p=>p.name==='dualies-upper-history-event');assert.equal(history.priorFullForm,true);assert.equal(history.deliveryAt,1);assert.deepEqual(history.frames[1],['rear','side']);
+    const valid={deliveryAt:null,rows:Array.from({length:10},(_,i)=>({returnFrame:i,source:{status:'ready',active:true,state:i<2?'ToHuman':'idle',formKid:true,returnInterrupted:true,formTime:(i+1)/60,formDuration:.05},poses:1,leftSolves:i<2?2:1,clamArmActive:false,pending:i<2,grip:.0001}))};
     assert.equal(verifyFormScenario(valid),true);
-    for(const mutate of [r=>r.rows.pop(),r=>r.rows[0].returnFrame=1,r=>r.rows[0].poses=2,r=>r.rows[0].leftSolves=3,r=>r.rows[0].grip=.01,r=>r.rows[9].pending=true,r=>r.rows[0].source.active=false,r=>r.rows[0].source.active='yes',r=>delete r.rows[0].source.active,r=>r.rows[0].clamArmActive=true,r=>delete r.rows[0].clamArmActive]){const bad=JSON.parse(JSON.stringify(valid));mutate(bad);assert.throws(()=>verifyFormScenario(bad));}
+    for(const mutate of [r=>r.rows.pop(),r=>r.rows[0].returnFrame=1,r=>r.rows[0].poses=2,r=>r.rows[0].leftSolves=3,r=>r.rows[0].grip=.01,r=>r.rows[9].pending=true,r=>r.rows[2].pending=true,r=>r.rows[1].pending=false,r=>r.rows[0].source.formDuration=0,r=>delete r.rows[0].source.formTime,r=>r.rows[0].source.active=false,r=>r.rows[0].source.active='yes',r=>delete r.rows[0].source.active,r=>r.rows[0].clamArmActive=true,r=>delete r.rows[0].clamArmActive]){const bad=JSON.parse(JSON.stringify(valid));mutate(bad);assert.throws(()=>verifyFormScenario(bad));}
     const old=JSON.parse(JSON.stringify(valid));for(const row of old.rows){row.pending=false;row.leftSolves=1;row.grip=.07;}assert.equal(verifyFormScenario(old,{corrected:false}),true,'old gap is measured without weakening after threshold');
   }
   assert(cache.has('tools/object-presentation-qa/production-scene.mjs'), 'Uses actual common Environment/Renderer setup');
