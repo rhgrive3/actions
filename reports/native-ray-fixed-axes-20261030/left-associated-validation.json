@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "change": "Preserve (ni+3)+axis upper-bound index evaluation order for synthetic Proxy stack values above the safe integer range.",
+  "negativeControl": "Pre-fix candidate reads node 9007199254740996 where the old left-associated loop reads 9007199254740998; the test explicitly detects the collapsed-index control.",
+  "tests": {
+    "sourceRelated": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0
+    },
+    "focusedAfterFurtherCoercionCoverage": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "combinedUniqueTests": 30,
+    "cases": [
+      "Huge Proxy stack indices, including ni=2^53 and near-zero direction branches",
+      "nth valueOf raises only after queryCount=1 and traversal depth=1",
+      "far.valueOf raises on its first or second slab coercion",
+      "far.valueOf performs a nested ray query",
+      "far.valueOf repeatedly changes its returned primitive and mutates origin, direction, and node bounds"
+    ]
+  },
+  "nativeGeometryParity": "native-parity-left-associated.json",
+  "status": "Source functional checks passed. Rebuild and component remeasurement are waiting for the shared measurement/build slot; the prior component/build receipts refer to the earlier candidate."
+}

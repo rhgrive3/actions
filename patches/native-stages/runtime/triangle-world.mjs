@@ -47,6 +47,7 @@ export class TriangleWorld {
    }else{
    // Fixed axes retain the scalar read/calculation order, including early
    // rejection and the unordered/coercion fallback, without per-node axis dispatch.
+   // Keep (ni+3)+axis left-associated even for synthetic huge stack indices.
    {
     const o=origin.x,d=dir.x;
     if(d>-1e-12&&d<1e-12){if(o<nodes[ni]||o>nodes[ni+3])miss=true;}
@@ -59,9 +60,9 @@ export class TriangleWorld {
    }
    if(!miss){
     const o=origin.y,d=dir.y;
-    if(d>-1e-12&&d<1e-12){if(o<nodes[ni+1]||o>nodes[ni+4])miss=true;}
+    if(d>-1e-12&&d<1e-12){if(o<nodes[ni+1]||o>nodes[(ni+3)+1])miss=true;}
     else{
-     const a=(nodes[ni+1]-o)/d,b=(nodes[ni+4]-o)/d;
+     const a=(nodes[ni+1]-o)/d,b=(nodes[(ni+3)+1]-o)/d;
      if(a<=b&&typeof high==='number'&&high===high){if(a>low)low=a;if(b<high)high=b;if(high<low)miss=true;}
      else if(b<=a&&typeof high==='number'&&high===high){if(b>low)low=b;if(a<high)high=a;if(high<low)miss=true;}
      else{low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
@@ -69,9 +70,9 @@ export class TriangleWorld {
    }
    if(!miss){
     const o=origin.z,d=dir.z;
-    if(d>-1e-12&&d<1e-12){if(o<nodes[ni+2]||o>nodes[ni+5])miss=true;}
+    if(d>-1e-12&&d<1e-12){if(o<nodes[ni+2]||o>nodes[(ni+3)+2])miss=true;}
     else{
-     const a=(nodes[ni+2]-o)/d,b=(nodes[ni+5]-o)/d;
+     const a=(nodes[ni+2]-o)/d,b=(nodes[(ni+3)+2]-o)/d;
      if(a<=b&&typeof high==='number'&&high===high){if(a>low)low=a;if(b<high)high=b;if(high<low)miss=true;}
      else if(b<=a&&typeof high==='number'&&high===high){if(b>low)low=b;if(a<high)high=a;if(high<low)miss=true;}
      else{low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}

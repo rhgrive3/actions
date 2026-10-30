@@ -1,0 +1,51 @@
+(node:37340) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ fixed ray axes retain getter/coercion reads, early rejects and exceptions (78.155034ms)
+✔ fixed ray axes preserve reentrant getter queries and mutable node observations (1.643976ms)
+✔ fixed ray axes retain non-number operand coercions for every axis (5.268813ms)
+✖ fixed ray axes retain left-associated upper indices with huge proxy stack values (6.623157ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2477.422132
+
+✖ failing tests:
+
+test at patches/native-stages/tests/ray-fixed-axes.test.mjs:82:1
+✖ fixed ray axes retain left-associated upper indices with huge proxy stack values (6.623157ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      depth: 0,
+      error: [
+        'Error',
+        'after slab'
+  ...
+        'node:9007199254740994',
+  +     'node:9007199254740996',
+        'node:9007199254740998',
+  -     'node:9007199254740998'
+      ],
+      triangles: 0
+    }
+  
+      at TestContext.<anonymous> (file:///workspace/actions-ray-opt/patches/native-stages/tests/ray-fixed-axes.test.mjs:100:63)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { reads: [ 'stack:0', 'node:9007199254740992', 'node:9007199254740996', 'node:9007199254740992', 'node:9007199254740996', 'node:9007199254740994', 'node:9007199254740996', 'node:9007199254740998' ], error: [ 'Error', 'after slab' ], queries: 1, triangles: 0, depth: 0 },
+    expected: { reads: [ 'stack:0', 'node:9007199254740992', 'node:9007199254740996', 'node:9007199254740992', 'node:9007199254740996', 'node:9007199254740994', 'node:9007199254740998', 'node:9007199254740998' ], error: [ 'Error', 'after slab' ], queries: 1, triangles: 0, depth: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

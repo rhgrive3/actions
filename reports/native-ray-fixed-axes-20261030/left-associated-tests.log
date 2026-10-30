@@ -1,0 +1,54 @@
+{"bodyFitCallbacks":{"before":8730,"after":3262}}
+(node:37361) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen before implementations retain their hashes (1.380938ms)
+✔ default ray results stay independent; reusable output preserves every field and miss/anyHit returns (92.568357ms)
+✔ pooled stacks preserve traversal order during nested box and ray queries, exceptions and early exits (7.770452ms)
+✔ NativePhysics copies pooled hits into independent caller results and retains dynamic precedence (26.827085ms)
+✔ bodyFits preserves decisions and stops visiting triangles after the first obstruction (35.840642ms)
+✔ native contacts retain exact canonical-source movement at 30 Hz (41.462394ms)
+✔ native contacts retain exact canonical-source movement at 60 Hz (51.987987ms)
+✔ native contacts retain exact canonical-source movement at 120 Hz (56.937731ms)
+(node:37362) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ one masked ground traversal preserves every independent ray, tie, grate and counter (147.347129ms)
+✔ native batched footprint matches inherited source/dynamic support selection exactly (224.630869ms)
+✔ batch misses keep owned hit vectors and options/overrides retain scalar contracts (8.352884ms)
+(node:37363) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sparse ground masks preserve scalar hits, counters and the 30-ray boundary (144.287969ms)
+✔ sparse ground masks retain early-hit scalar fallback and recover after an exception (2.329544ms)
+(node:37382) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native any-hit LOS exactly matches nearest-hit LOS across source/moving geometry and endpoint guards (124.719605ms)
+✔ raycast and source-ray overrides retain inherited LOS dispatch and side effects (2.610683ms)
+{"queries":12401,"triangleTests":154435}
+(node:37389) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downward BVH specialization preserves exact hits, signed zero, ties, and traversal counters (476.80828ms)
+(node:37395) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ fixed ray axes retain getter/coercion reads, early rejects and exceptions (31.833646ms)
+✔ fixed ray axes preserve reentrant getter queries and mutable node observations (0.848964ms)
+✔ fixed ray axes retain non-number operand coercions for every axis (8.012792ms)
+✔ fixed ray axes retain left-associated upper indices with huge proxy stack values (3.575883ms)
+{"scalarQueries":1005400,"equal":true}
+{"adversarialFullRays":18144,"triangleTests":39776}
+(node:37406) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen nearest-ray and native-level oracles retain their SHA-256 (3.170903ms)
+✔ nearest rays preserve exact geometry and traversal counts with canonical source-ID ties (169.713474ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 30 Hz (183.737022ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 60 Hz (116.935153ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 120 Hz (171.665068ms)
+✔ ordered scalar predicate retains all special values and one million extreme finite cases (129.953221ms)
+✔ full source or emitted rays preserve inverted/NaN/extreme slab fallback and memory layout (51.773028ms)
+✔ non-number far coercions and exceptions retain original evaluation order (1.768594ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5473.932376

@@ -78,3 +78,67 @@ test('fixed ray axes retain non-number operand coercions for every axis',()=>{
  };
  for(const axis of ['x','y','z'])for(const mode of ['number','throw','far'])assert.deepEqual(run(After,axis,mode),run(Before,axis,mode));
 });
+
+test('fixed ray axes retain exceptions from operand coercion inside the slab loop',()=>{
+ const run=(World,axis,throwAt)=>{
+  const world=new World(geometry()),log=[],direction=f.V(.1,-1,.2),numeric=direction[axis];let calls=0,error;
+  direction[axis]={valueOf(){log.push({call:++calls,depth:world._queryDepth,queries:world.queryCount});if(calls===throwAt)throw Error('slab operand failure');return numeric;}};
+  try{world.ray(f.V(0,4,0),direction,10);}catch(e){error=[e.name,e.message];}
+  return {error,log,queries:world.queryCount,triangles:world.triangleTests,depth:world._queryDepth};
+ };
+ for(const axis of ['x','y','z'])for(const throwAt of axis==='y'?[2,3,4]:[2,3,4,5]){
+  const expected=run(Before,axis,throwAt);assert.deepEqual(run(After,axis,throwAt),expected);
+  assert.deepEqual(expected.error,['Error','slab operand failure']);assert.equal(expected.queries,1);
+  assert.equal(expected.log[0].queries,0,'first coercion validates the finite input');
+  assert.equal(expected.log.at(-1).depth,1,'the injected exception occurs inside the acquired traversal');
+  assert.equal(expected.depth,0);
+ }
+});
+
+test('fixed ray axes retain far coercion exceptions, nested rays and mutations',()=>{
+ const run=(World,mode,throwAt=1)=>{
+  const world=new World(geometry()),log=[],origin=f.V(0,4,0),direction=f.V(.1,-1,.2);
+  let calls=0,nested,hit,error;
+  const far={valueOf(){
+   log.push({call:++calls,depth:world._queryDepth,queries:world.queryCount});
+   if(mode==='throw'&&calls===throwAt)throw Error('slab far failure');
+   if(mode==='nested'&&calls===1)nested=flatten(world.ray(f.V(1,5,1),f.V(.2,-1,.3),9));
+   if(mode==='mutate'&&calls===1){origin.y-=.125;direction.z=-.2;world.nodes[0]-=.25;}
+   return mode==='changing'||mode==='mutate'?[10,NaN,2,8][(calls-1)%4]:10;
+  }};
+  try{hit=flatten(world.ray(origin,direction,far));}catch(e){error=[e.name,e.message];}
+  return {hit,error,nested,log,origin:origin.toArray(),direction:direction.toArray(),rootMin:world.nodes[0],queries:world.queryCount,triangles:world.triangleTests,depth:world._queryDepth};
+ };
+ for(const mode of ['throw','nested','changing','mutate'])for(const throwAt of mode==='throw'?[1,2]:[1]){
+  const expected=run(Before,mode,throwAt);assert.deepEqual(run(After,mode,throwAt),expected);
+  assert(expected.log.length>0);assert.equal(expected.log[0].depth,1,'far coercion first occurs in the slab traversal');
+  assert.equal(expected.depth,0);
+  if(mode==='throw')assert.deepEqual(expected.error,['Error','slab far failure']);
+  if(mode==='nested'){assert(expected.nested);assert.equal(expected.queries,2);}
+  if(mode==='changing'||mode==='mutate')assert(expected.log.length>1,'far must be coerced repeatedly');
+ }
+});
+
+test('fixed ray axes retain left-associated upper indices with huge proxy stack values',()=>{
+ const run=(World,nodeIndex,direction=[.1,-1,.2])=>{
+  const world=new World(geometry()),reads=[];
+  world._acquireStack=function(){
+   this._queryDepth++;
+   return new Proxy([],{get(_target,key){reads.push('stack:'+String(key));return nodeIndex;}});
+  };
+  let nodeReads=0;
+  world.nodes=new Proxy([],{get(_target,key){
+   reads.push('node:'+String(key));
+   // NaN bounds admit all axes; stop at the first child read so arbitrary
+   // node indices cannot start an unbounded synthetic traversal.
+   if(++nodeReads===7)throw Error('after slab');return NaN;
+  }});
+  let error;
+  try{world.ray(f.V(0,4,0),f.V(...direction),10);}catch(e){error=[e.name,e.message];}
+  return {reads,error,queries:world.queryCount,triangles:world.triangleTests,depth:world._queryDepth};
+ };
+ for(const index of [2**50,2**51,2**52,2**53,-(2**50)])for(const direction of [[.1,-1,.2],[0,-1,.2],[.1,0,.2],[.1,-1,0]])assert.deepEqual(run(After,index,direction),run(Before,index,direction));
+ const collapsed=source.replaceAll('(ni+3)+1','ni+4').replaceAll('(ni+3)+2','ni+5');
+ const Collapsed=load(collapsed);
+ assert.notDeepEqual(run(Collapsed,2**50),run(Before,2**50),'negative control observes changed floating-point index rounding');
+});

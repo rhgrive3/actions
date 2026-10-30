@@ -4,6 +4,14 @@
 
 調査に用いた900 tick native profileは `_frame` 内8,514 samples中、ray self419、rayDownBatch self195だった。負のtimeDeltaがあるため、この件数を時間比率や速度の根拠にしていない。rayDownBatchの共通Y再利用も検討したが、公開APIのgetter・途中書換・再入の読取契約を守る条件が重くなるため実装していない。
 
+## 独立レビュー後の加算順修正
+
+固定軸展開時に `ni+3+k` の左結合を `ni+4/5` に畳んでいた点を修正し、y/z上限を `(ni+3)+1/2` とした。通常のInt32子ノードでは起きないが、巨大なstack indexを返すProxyでは浮動小数の丸めが変わり、異なるプロパティを読む。[修正前の負例](huge-index-negative.log)を再現し、near-zero方向を含む巨大indexの読取順・例外・stack解放を検証した。
+
+また、初期finite検証でthrowしていた従来coercion試験を補い、nth valueOfでslab中のthrowを確認した。far.valueOf中のthrow、nested ray、反復する値変更、origin/direction/node途中変更も比較した。[追加6試験](coercion-tests.log)、[関連28試験](left-associated-tests.log)、[修正後の実形状16,000 ray](native-parity-left-associated.json)は成功した。集約は[left-associated validation](left-associated-validation.json)を参照。
+
+現時点の部品計測表と通常配信build receiptは加算順修正前の候補に対応する。修正後の再ビルド・部品再測定は共有枠の解放後に実施する。
+
 ## 実入力の記録と部品計測
 
 通常配信された基準ビルドで、low、shooter、60Hz、8人、900 tickの入力を記録した。ray wrapperがcanonical判定やbatch処理を変えないよう、判定を維持し、batch中だけ元のrayを呼ぶ。[記録器](record-harness.mjs.txt)と[照合結果](recording-parity.json)を保存した。元のprofile実行との initial、全フレームdigest、最終digest `1606414722`、塗り `[11915,10228]`、BVH `247281 / 5193821`、draw、resources、sceneが一致し、page errorsは0だった。記録器の時間は性能の根拠に使わない。
