@@ -79,6 +79,7 @@ export function spinnerClipDefinition(engine,id){
       src.buffer=buffer;src.loop=true;src.loopStart=start+fade;src.loopEnd=end;
       src.playbackRate.value=Math.max(.25,Math.min(3,p));
       src.connect(v.out);src.start(v.t,Math.max(0,Math.min(end-.01,opts.offset||0)));
+      src._end=Infinity; // V.kill must stop this loop, not leave a silent CPU/audio-graph leak.
       v.srcs.push(src);v.nodes.push(src);v.endless=true;
       return {pitch(value,now){src.playbackRate.setTargetAtTime(Math.max(.25,Math.min(3,value)),now,.045);}};
     }};
