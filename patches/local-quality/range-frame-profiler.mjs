@@ -1,8 +1,7 @@
-const percentile = (arr, pct) => {
-  if (!arr.length) return 0;
-  const sorted = arr.slice().sort((a,b) => a-b);
-  return sorted[Math.min(sorted.length-1, Math.ceil(pct * sorted.length)-1)];
-};
+// Each rolling array is copied/sorted once per snapshot, not once per
+// percentile. Keep the original nearest-rank definition unchanged.
+const percentile = (sorted, pct) => sorted.length
+  ? sorted[Math.min(sorted.length-1, Math.ceil(pct * sorted.length)-1)] : 0;
 
 export function createFrameTimingProbe({ now = () => performance.now(), env = globalThis, maxSamples = 240, game = null } = {}) {
   if (!Number.isInteger(maxSamples) || maxSamples < 24 || maxSamples > 2000) throw new RangeError('frame buffer limit');
@@ -18,20 +17,22 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
   };
   const values = (arr,count) => Array.from(arr.subarray(0,Math.min(arr.length,count)));
   const snapshot = () => {
-    const d=values(delivered,dc), r=values(callbacks,cc), c=values(cpu,nc);
+    const d=values(delivered,dc).sort((a,b)=>a-b),
+      r=values(callbacks,cc).sort((a,b)=>a-b), c=values(cpu,nc).sort((a,b)=>a-b);
+    const trace = tracer?.snapshot() ?? null;
     const budget = 1000 / Math.max(1, cap);
     return {
       mode, autoCapHz:cap, detectedRefreshHz:displayHz, dynamicScale:dynScale,
       presented:dc, rafCallbacks:cc, capSkips:skipped,
       frameP50Ms:percentile(d,.5), frameP95Ms:percentile(d,.95), frameP99Ms:percentile(d,.99),
-      frameMaxMs:d.length?Math.max(...d):0,
+      frameMaxMs:d.length?d[d.length-1]:0,
       rafP99Ms:percentile(r,.99), workP95Ms:percentile(c,.95),
-      workMaxMs:c.length?Math.max(...c):0,
+      workMaxMs:c.length?c[c.length-1]:0,
       framesOverBudget:d.filter(x=>x>budget*1.5).length,
       framesOver50Ms:d.filter(x=>x>=50).length,
       cpuStageAverageMs:perf?.sim??null, renderStageAverageMs:perf?.render??null,
-      gpuTimeMs: tracer?.snapshot().latestGPUCommandsMs ?? 'unmeasured', battery:'unmeasured',
-      trace: tracer?.snapshot() ?? null,
+      gpuTimeMs: trace?.latestGPUCommandsMs ?? 'unmeasured', battery:'unmeasured',
+      trace,
       traceError,
       // Date/user-agent/IP are deliberately absent; capture stays on device.
     };

@@ -169,7 +169,7 @@ const IDENTITY_FILES = [
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs', 'shooter-hud-hotpath-adapter.mjs',
-  'paint-render-regions-adapter.mjs', 'paint-profile-batch.mjs', 'paint-profile-bounds.mjs', 'paint-profile-shader.mjs', 'paint-profile-compatibility.mjs', 'paint-dry-regions.mjs', 'paint-dry-region-grid.mjs', 'paint-regional-mips.mjs', 'paint-native-mip-guard.mjs',
+  'paint-render-regions-adapter.mjs', 'paint-profile-batch.mjs', 'paint-profile-draw-runs.mjs', 'paint-profile-bounds.mjs', 'paint-profile-shader.mjs', 'paint-profile-compatibility.mjs', 'paint-dry-regions.mjs', 'paint-dry-region-grid.mjs', 'paint-regional-mips.mjs', 'paint-native-mip-guard.mjs',
   'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
   'range-frame-pacing.mjs', 'refresh-aware-dynres-adapter.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'debug-ab-runtime.mjs', 'range-frame-pacing-adapter.mjs',
   // Terminal composition dependencies are build inputs even when this layer's
