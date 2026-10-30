@@ -49,17 +49,26 @@ test('grounded full charge still takes 60 charge frames after startup begins', a
   assert.equal(f.shots.length, 0, 'holding never fires');
 });
 
-test('input order: release during startup fires nothing, release after charge fires once with that charge', async () => {
-  // (a) Press and release before any charge frame exists: nothing to release.
+test('input order: startup short tap fires one paid minimum shot, later release keeps its accumulated charge', async () => {
+  // (a) The newer minimum-shot owner intentionally admits a short ZR tap
+  // during startup. The 1F startup has no shot, and #680 still owns a
+  // separate 1F release gap before exactly one minimum-charge projectile.
   {
     const f = await fixture(), a = f.make('charger'), r = a.weaponRunner;
+    a.ink = 100;
     a.intent.fire = true;
     f.tick(a);                       // startup frame only
+    assert.equal(f.shots.length, 0);
     a.intent.fire = false;
-    f.tick(a, 4);
+    f.tick(a);
+    assert.equal(f.shots.length, 0, 'startup short tap still has a release-gap frame');
+    f.tick(a, 3);
     assert.equal(r.charging, false);
     assert.equal(r.chargeT, 0);
-    assert.equal(f.shots.length, 0, 'a release inside the startup window creates no shot');
+    assert.equal(f.shots.length, 1, 'startup short tap produces exactly one minimum shot');
+    const minimum = Math.min(1, (a.weapon.minimumChargeTime ?? 8 / 60) / a.weapon.chargeTime);
+    close(f.shots[0].charge, minimum, 'startup short-tap charge floor');
+    assert.ok(a.ink < 100, 'minimum shot debits ink');
   }
   // (b) Partial hold: startup + N charge frames, then one release shot whose
   // charge equals the accumulated progress (damage/paint mapping untouched).

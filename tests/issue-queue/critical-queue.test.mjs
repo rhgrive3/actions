@@ -10,6 +10,7 @@ import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import { sanitizeSettings, sanitizeSettingsChange, sanitizeProfile, awardProfileXP, validWeaponId, validStartRoster } from '../../inkwave-public/src/core/save-validation.mjs';
 import { crabTankShotGeometry } from '../../patches/splatoon3/runtime/crab-tank-aim.mjs';
 import { updateShotGuide } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';
+import { turfIntroAiming, updateTurfIntroCamera } from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';
 import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';
 import { kitPaintRadiusAllowed, consumeKitPaint } from '../../patches/network-replication/kit-paint-admission.mjs';
 import { packPaintAuthority, admitPaintAuthority, consumePaintAuthority } from '../../patches/network-replication/paint-authority.mjs';
@@ -159,7 +160,7 @@ test('composed fixed-step player aim uses current input yaw, not stale gameCam',
   const G={rig:{gameCam:cam},camera:cam,physics:{raycast(){return {hit:false}}},actors:[],boss:null};
   const fn=method('../../inkwave-public/src/game/player.js','  computeAim(simulation = false) {','\n  }\n}',{
     G,_v:new Vec(),_v2:new Vec(),_fwd:new Vec(),_c:new Vec(),_hit:{},
-    simulationAimCamera:()=>tickCam,
+    simulationAimCamera:()=>tickCam, turfIntroAiming, updateTurfIntroCamera, recordAimPose:null, THREE:{},
     Physics:{},PLAYER:{radius:.5},clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),updateShotGuide,
   },composed);
   const controller={a:actor,rig,onTarget:null,inRange:false};

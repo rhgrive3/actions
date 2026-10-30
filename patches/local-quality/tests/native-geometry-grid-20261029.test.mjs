@@ -20,7 +20,14 @@ test('native Uint16 display indices preserve exact vertex IDs with 65535 primiti
   const indices=new Uint32Array([9,0,1,maximum,7]),vertices=new Float32Array((maximum+2)*8);for(let i=0;i<vertices.length;i++)vertices[i]=Math.sin(i*.13);
   const data={indices,vertices,manifest:{materials:{},objects:[{active:true,material:'concrete',vo:1,vc:maximum+1,io:1,ic:3,collidable:true}]}};
   const displays=renderPair.map(k=>k.nativeDisplay(data,new Map(),'high')),a=displays[0].group.children[0],b=displays[1].group.children[0];
-  assert.deepEqual(Array.from(b.geometry.index.array),Array.from(a.geometry.index.array));assert.deepEqual(snap(b.geometry),snap(a.geometry));
+  assert.deepEqual(Array.from(b.geometry.index.array),Array.from(a.geometry.index.array));
+  const beforeAttrs=snap(a.geometry),afterAttrs=snap(b.geometry);
+  const {nativeNormalCone,...preservedAttrs}=afterAttrs;
+  assert.deepEqual(preservedAttrs,beforeAttrs,'new conservative cone must not change source attribute bytes');
+  if(nativeNormalCone){
+   assert.equal(nativeNormalCone.length,maximum+1,'one cone byte per source vertex');
+   assert.equal(b.geometry.getAttribute('nativeNormalCone').normalized,true);
+  }else assert.equal(maximum,0,'only the deliberately invalid one-vertex triangle omits its cone');
   assert.equal(b.geometry.index.array.BYTES_PER_ELEMENT,maximum<65535?2:4);assert.deepEqual(b.geometry.boundingSphere,a.geometry.boundingSphere);
   b.geometry.index.onUploadCallback();assert.equal(b.geometry.index.array,null);displays.forEach(d=>d.dispose());
  }

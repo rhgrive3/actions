@@ -31,6 +31,7 @@ const runtimeHelpers = [
 // Never infer this from '*-adapter' names: the emitted graph audit below must
 // still reject every static/dynamic runtime reference to an excluded module.
 const auditedBuildExports = new Map([
+  ['patches/local-quality/landscape-online-adapter.mjs', ['LANDSCAPE_ONLINE_CSS']],
   ['patches/local-quality/queue-visual-continuation-20261029-adapter.mjs', ['visualContinuationTargets']],
   ['patches/local-quality/queue-remaining-world-20261026-adapter.mjs', ['WORLD_DIRECT_PATHS', 'WORLD_REMAINING_PATHS']],
   ['patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs', ['restoreHistoricalSourceMotion20261026']],

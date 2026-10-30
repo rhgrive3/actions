@@ -34,9 +34,16 @@ test('#239 holding supports swim and bots submit an explicit press/release inste
   const f = await fixture(), p = system(f), a = chargeActor(f); a._startSpecial();
   a.intent.squid = true; f.tick(a); assert.equal(a.form, 'squid'); assert.equal(a.specialActive.phase, 'hold');
   a.intent.squid = false; f.tick(a); assert.equal(a.form, 'kid');
+  a.isBot = true;
   const brain = new f.BotBrain(a);
-  brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false); assert.equal(a.intent.sub, true); f.tick(a);
-  brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false); assert.equal(a.intent.sub, false); f.tick(a);
+  let pressed = false, released = false;
+  for (let i = 0; i < 240 && !p.bombs.length; i++) {
+    brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false);
+    if (a.intent.sub) pressed = true;
+    else if (pressed) released = true;
+    f.tick(a);
+  }
+  assert.ok(pressed && released, 'the bot aims, presses, then releases');
   assert.equal(p.bombs.length, 1); assert.equal(a.specialActive.phase, 'throw'); p.clear();
 });
 
