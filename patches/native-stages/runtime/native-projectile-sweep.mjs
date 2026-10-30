@@ -15,12 +15,12 @@ export function sweepNativeCatalogueSphere(physics,from,to,r0,r1,out,skipGrates,
  state.options.ignoreGrates=skipGrates;state.options.endRadius=r1;
  const source=level.triangleWorld.sweepSphere(from,to,r0,state.options,state.sourceHit);
  const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.physics,from,to,r0,r1,state.hit,skipGrates);
- out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
+ out.hit=false;out.block=out.face=out.triangle=-1;out.u=out.v=0;
  if(moving?.hit&&(!source||moving.dist<source.distance)){
   out.hit=true;out.dist=moving.dist;out.point.copy(moving.point);out.normal.copy(moving.normal);
   out.block=moving.block;out.face=moving.face;out.u=moving.u||0;out.v=moving.v||0;return out;
  }
- if(!source)return out;
+ if(!source){out.dist=from.distanceTo(to);return out;}
  out.hit=true;out.dist=source.distance;out.point.copy(source.point);out.normal.copy(source.normal);out.triangle=source.triangle;
  out.block=level.blockForTriangle(source.triangle);out.face=level.data.triangleFace[source.triangle];
  if(out.face>=0){const face=level.faces[out.face],x=out.point.x-face.origin.x,y=out.point.y-face.origin.y,z=out.point.z-face.origin.z;
@@ -38,12 +38,12 @@ export function sweepNativeLevelSphere(level,from,to,radius,out,skipGrates,sweep
  state.options.ignoreGrates=skipGrates;
  const source=level.triangleWorld.sweepSphere(from,to,radius,state.options,state.sourceHit);
  const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.view,from,to,radius,state.hit,skipGrates);
- out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
+ out.hit=false;out.block=out.face=out.triangle=-1;out.u=out.v=0;
  if(moving?.hit&&(!source||moving.dist<source.distance)){
   out.hit=true;out.dist=moving.dist;out.point.copy(moving.point);out.normal.copy(moving.normal);
   out.block=moving.block;out.face=moving.face;out.u=moving.u||0;out.v=moving.v||0;return out;
  }
- if(!source)return out;
+ if(!source){out.dist=from.distanceTo(to);return out;}
  out.hit=true;out.dist=source.distance;out.point.copy(source.point);out.normal.copy(source.normal);out.triangle=source.triangle;
  out.block=level.blockForTriangle(source.triangle);out.face=level.data.triangleFace[source.triangle];
  if(out.face>=0){const face=level.faces[out.face],x=out.point.x-face.origin.x,y=out.point.y-face.origin.y,z=out.point.z-face.origin.z;
