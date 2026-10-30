@@ -38,3 +38,5 @@ button invokes it, and restores the API before delegation. The real match must
 report duration 20. It does not overwrite a running match clock or fabricate
 a result. This explicit QA API input differs from the UI's normal 180-second
 default and is recorded in the receipt.
+
+Native screenshots use CDP Page.captureScreenshot (JPEG quality 80, viewport surface, no postprocessing). This reads the already rendered frame without Playwright adding two animation frames to a frozen software-GPU match. Viewport dimensions and original JPEG bytes are still checked.
