@@ -85,8 +85,9 @@ function ktx2Loader(renderer){
  return ktx2;
 }
 function releaseKtx2(entry){if(entry.retired&&!entry.pending&&!entry.disposed){entry.disposed=true;entry.loader.then(l=>l.dispose(),()=>{});}}
-export function releaseNativeTextureWorkers(renderer){
+export function releaseNativeTextureWorkers(renderer,idleOnly=false){
  const entry=ktx2;if(!entry||entry.renderer!==renderer)return false;
+ if(idleOnly&&entry.pending)return false;
  ktx2=null;entry.retired=true;releaseKtx2(entry);return true;
 }
 // Textures ship as whole KTX2 slices of per-stage packs. One load fetches a
@@ -328,5 +329,10 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
   let results;try{results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));}finally{packs.release();parentSignal?.removeEventListener?.('abort',abort);}const failed=results.find(r=>r.status==='rejected');
  if(failed||signal?.aborted){for(const t of new Set(textures.values()))if(!textures._nativeBorrowed.has(t)){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
+ // The compressed touch profile carries a PNG fallback budget. Its Basis
+ // workers otherwise keep their WebAssembly heaps alive throughout battle on
+ // iPad. Transferred mip buffers belong to the textures, so an idle decoder
+ // can be retired without changing pixels or disturbing another live parse.
+ textures._idleWorkersReleased=!!(fallback&&releaseNativeTextureWorkers(renderer,true));
  return textures;
 }
