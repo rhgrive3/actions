@@ -19,7 +19,7 @@ function battleReady(receipt) {
 export function classifyRetiredMenuAudioAbort({requests,siteURL,revision,receipt,gameplayState}={}) {
   const failures=Array.isArray(requests)?requests:[];
   const verified=[],unverified=[];
-  if(typeof siteURL!=='string'||typeof revision!=='string'||!/^[a-f0-9]{40}$/.test(revision))
+  if(typeof siteURL!=='string'||typeof revision!=='string'||!/^[a-f0-9]{64}$/.test(revision))
     return {verified,unverified:[...failures]};
   const menu=new URL(`_versions/${revision}/assets/audio/${MENU_RECORDING}`,siteURL).href;
   const ready=gameplayState==='playing'&&battleReady(receipt);
