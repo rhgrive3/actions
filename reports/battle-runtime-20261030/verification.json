@@ -1,0 +1,116 @@
+{
+  "testedCodeCommit": "f6ba8324987dfa91cce215c06e762233fc276f20",
+  "baselineCommit": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
+  "inputHash": "9b3f84d6c569e8d45e4187cb12f9ba3c9789c537aade6653e670ed08b6550186",
+  "contentHash": "c3785dd15be649ce72195cb0bcec2ea274ce37af641d012a049aa254c64f382f",
+  "quick": "passed",
+  "build": "passed",
+  "startupBudget": "passed",
+  "sourceTests": {
+    "latest-tests": {
+      "counts": {
+        "tests": 25,
+        "pass": 25,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256": "d846e9e877f5dd4e430f9a8bc8af324cd145fe586afecf902408d79921b4f625"
+    },
+    "null-final-tests": {
+      "counts": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "skipped": 0
+      },
+      "sha256": "08fb9b04ce59d25e756ba7b62a0f82e7041a4aae82788c4b5c91e7a6dfb44ddf"
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "sourceSha": "f6ba8324987dfa91cce215c06e762233fc276f20",
+    "contentHash": "c3785dd15be649ce72195cb0bcec2ea274ce37af641d012a049aa254c64f382f",
+    "gearSelects": 12,
+    "gameplay": {
+      "state": "playing",
+      "elapsedAt20Hz": 3.0000000000023874,
+      "movement": 2.7603360000000166,
+      "movementProbe": {
+        "state": "playing",
+        "paused": false,
+        "alive": true,
+        "form": "kid",
+        "grounded": true,
+        "controller": true,
+        "enabled": true,
+        "menuBlocked": false,
+        "samples": [
+          {
+            "key": "KeyW",
+            "keyPresent": true,
+            "enabled": true,
+            "menuBlocked": false,
+            "intent": [
+              0,
+              0,
+              1
+            ],
+            "vel": [
+              0,
+              0,
+              0.6
+            ],
+            "deltaAfterFirstTick": 0.010000000000001563
+          }
+        ]
+      },
+      "hp": 100,
+      "gear": [
+        {
+          "main": "runSpeed",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "velocityFinite": true,
+      "clockTicks": 948,
+      "paintedFloorArea": 0.625,
+      "coverage": [
+        0.00014398802830541628,
+        0
+      ]
+    },
+    "actionReliability": {
+      "before": 1,
+      "renderOnly": 1,
+      "after": 2,
+      "held": 2,
+      "jumps": 0,
+      "physicalKeyboardEvents": true,
+      "groundCollisionPinned": true
+    },
+    "verifiedResponses": 800,
+    "errors": []
+  },
+  "fullSuite": false,
+  "physicalDeviceFPS": false
+}

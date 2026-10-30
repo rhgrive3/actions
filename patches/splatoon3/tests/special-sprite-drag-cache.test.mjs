@@ -31,17 +31,20 @@ function spawn(p, i, drag) {
   p.spawn(i / 10, i % 7, -i / 3, .4 + i, 2 - i / 9, .6, .04 + (i % 11) / 20, .2, .5, 1, .5, .2, .8, i % 5,
     { drag, grav: i % 3, buoy: i % 2 ? .2 : 0, spin: .1, stretch: i % 3 ? .05 : 0 });
 }
-function equal(a, b, label) {
+function equal(a, b, label, motion = true) {
   assert.equal(a.n, b.n, label + ' count');
-  assert.deepEqual(a.p, b.p, label + ' particle state');
+  if (motion) assert.deepEqual(a.p, b.p, label + ' particle state');
+  else for (let i = 0; i < a.p.length; i++) if (i % a.S >= 6) assert.equal(a.p[i], b.p[i], label + ' nonmotion state ' + i);
   assert.equal(a.mesh.geometry.instanceCount, b.mesh.geometry.instanceCount);
   for (const key of ['aPos', 'aDir', 'aCol', 'aPar']) {
-    assert.deepEqual(a[key].array, b[key].array, label + ' ' + key);
-    assert.deepEqual(a[key].updateRanges, b[key].updateRanges);
-    assert.equal(a[key].version, b[key].version);
+    if (motion || key === 'aCol' || key === 'aPar') {
+      assert.deepEqual(a[key].array, b[key].array, label + ' ' + key);
+      assert.deepEqual(a[key].updateRanges, b[key].updateRanges);
+      assert.equal(a[key].version, b[key].version);
+    }
   }
 }
-test('complete sprite buffers match the frozen update through mixed drag, expiry, overflow and clear', () => {
+test('60 Hz buffers and all-cadence lifecycle match the frozen update through expiry, overflow and clear', () => {
   for (const hz of [30, 60, 120]) for (const additive of [false, true]) {
     const a = pool(baseline, 64, additive), b = pool(candidate, 64, additive);
     for (let frame = 0; frame < hz * 3; frame++) {
@@ -50,16 +53,18 @@ test('complete sprite buffers match the frozen update through mixed drag, expiry
         const rate = [0, .8, .8, 1.5, 1.5, 2.2, -0, .25][(frame + i) % 8];
         spawn(a.p, frame * 8 + i, rate); spawn(b.p, frame * 8 + i, rate);
       }
-      a.p.update(1 / hz); b.p.update(1 / hz); equal(a.p, b.p, hz + 'Hz/' + additive + '/' + frame);
+      a.p.update(1 / hz); b.p.update(1 / hz); equal(a.p, b.p, hz + 'Hz/' + additive + '/' + frame, hz === 60);
     }
   }
 });
 test('factor reuse is local to each finite update and each contiguous rate, including signed zero', () => {
-  const a = pool(baseline), b = pool(candidate);
-  for (let i = 0; i < 64; i++) { spawn(a.p, i, .8); spawn(b.p, i, .8); }
   for (const dt of [0, -0, 1 / 120, 1 / 60, 1 / 30, -.01]) {
-    a.reset(); b.reset(); a.p.update(dt); b.p.update(dt); equal(a.p, b.p, 'dt=' + dt);
+    const a = pool(baseline), b = pool(candidate);
+    for (let i = 0; i < 64; i++) { spawn(a.p, i, .8); spawn(b.p, i, .8); }
+    a.reset(); b.reset(); a.p.update(dt); b.p.update(dt); equal(a.p, b.p, 'dt=' + dt, dt <= 0 || dt === 1 / 60);
     assert.equal(a.calls(), a.p.n); assert.equal(b.calls(), 1, 'one exponential for the live equal-drag burst');
+    b.reset(); b.p.update(dt);
+    assert.equal(b.calls(), 1, 'factor is recalculated on the next live update');
   }
 });
 test('non-finite time/rates retain all original Float32 and renderer values', () => {

@@ -521,7 +521,7 @@ export class HUD {
         this._kick = 1; this._tank.wobble = Math.min(1, this._tank.wobble + 0.06);
         if (this._L.kind === 'dualies' && this._twin) { const el = this._twin[hand ? 1 : 0]; if (el && el.animate) el.animate(TWIN_KICK, TWIN_KICK_T); }
       }),
-      on('lowink', ({ actor }) => { if (actor === this._local() && this._live()) { this._tank.empty = 0.45; this._restart(this.tank, 'is-empty'); } }),
+      on('lowink', ({ actor }) => { if (actor === this._local() && this._live()) { this._tank.empty = 0.45; this._restartCssAnimation(this.tank, 'is-empty', this.tank, 'iw-shake'); } }),
       on('special:ready', ({ actor }) => { if (actor === this._local() && this._live()) this._restart(this.sp, 'is-flare'); }),
       on('superjump', ({ actor, phase, to }) => { if (actor === this._local() && phase === 'charge' && this._live()) this._snd('ui_confirm', { volume: 0.6 }); void to; }),
       on('match:state', ({ state, match }) => {
@@ -1091,7 +1091,7 @@ export class HUD {
     const el = h('span', { class: 'iw-tpop' + (big ? ' is-big' : ''), style: { '--x': `${(Math.random() * 16 - 8).toFixed(1)}px` } }, `+${n}`, h('small', null, 'p'));
     el.addEventListener('animationend', (e) => { if (e.target === el) el.remove(); });
     this.tpops.appendChild(el);
-    this._restart(this.turfEl, 'is-tick');
+    this._restartCssAnimation(this.turfEl, 'is-tick', this.turfEl.firstElementChild, 'iw-turf-tick');
   }
 
   _updHp(hp) {
@@ -1372,6 +1372,35 @@ export class HUD {
     this._fxTime += dt;
     for (const [name, fn] of this._fxMap) { let keep = true; try { keep = fn(dt) !== false; } catch (e) { console.error('[hud]', e); keep = false; } if (!keep) this._fxMap.delete(name); }
     this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;
+  }
+  _restartCssAnimation(el, cls, target, name) {
+    const cache = this._cssRestarts || (this._cssRestarts = new WeakMap());
+    const row = target && cache.get(target);
+    const animation = row?.animation;
+    const state = animation?.playState;
+    // Keep the CSS effect, including its easing, underlying values and pause
+    // rule. Only these two single-target pulses opt into seeking; other HUD
+    // animations (and effects overridden by a more specific rule) stay alone.
+    if (row?.cls === cls && row.name === name && target.isConnected && el.classList.contains(cls) &&
+        animation.effect?.target === target && animation.animationName === name &&
+        animation.playbackRate === 1 && (state === 'running' || state === 'finished')) {
+      animation.currentTime = 0;
+      // Seeking also reactivates a finished CSS effect. Calling play() here
+      // would override animation-play-state and break a later CSS pause.
+      return;
+    }
+    // Paused effects retain the original class mutation/event invalidation so
+    // geometry observers can refresh even with no running animation to see.
+    this._restart(el, cls);
+    if (!target?.isConnected || !target.getAnimations) return;
+    cache.delete(target);
+    for (const candidate of target.getAnimations()) {
+      if (candidate.animationName === name && candidate.effect?.target === target &&
+          candidate.playbackRate === 1 && candidate.playState !== 'idle') {
+        cache.set(target, { cls, name, animation: candidate });
+        break;
+      }
+    }
   }
   _restart(el, cls) {
     el.classList.remove(cls);

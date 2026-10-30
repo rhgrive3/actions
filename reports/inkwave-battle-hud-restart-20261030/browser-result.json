@@ -1,0 +1,149 @@
+{
+  "note": "Real Chromium DOM/CSS parity fixture; no frame-time or retail-fidelity claim.",
+  "scenarios": [
+    {
+      "reducedMotion": "no-preference",
+      "errors": [],
+      "diagnostics": [],
+      "rows": [
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 1,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 2,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "paused",
+          "oldReads": 3,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 4,
+          "candidateReads": 2
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 5,
+          "candidateReads": 2
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 6,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 7,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "paused",
+          "oldReads": 8,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 9,
+          "candidateReads": 4
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 10,
+          "candidateReads": 4
+        }
+      ],
+      "observerActive": true,
+      "finalReads": {
+        "old": 15,
+        "candidate": 16
+      }
+    },
+    {
+      "reducedMotion": "reduce",
+      "errors": [],
+      "diagnostics": [],
+      "rows": [
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 1,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 2,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "paused",
+          "oldReads": 3,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 4,
+          "candidateReads": 2
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 5,
+          "candidateReads": 2
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 6,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 7,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "paused",
+          "oldReads": 8,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 9,
+          "candidateReads": 4
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 10,
+          "candidateReads": 4
+        }
+      ],
+      "observerActive": true,
+      "finalReads": {
+        "old": 15,
+        "candidate": 16
+      }
+    }
+  ]
+}

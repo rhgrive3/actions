@@ -1,0 +1,353 @@
+{
+  "note": "Real Chromium DOM/CSS parity fixture; no frame-time or retail-fidelity claim.",
+  "scenarios": [
+    {
+      "reducedMotion": "no-preference",
+      "errors": [
+        "turf CSS pause lost",
+        "tank CSS pause lost",
+        "paused observer unexpectedly reports running effects",
+        "turf advanced while CSS paused",
+        "tank advanced while CSS paused",
+        "turf CSS resume phase differs",
+        "tank CSS resume phase differs"
+      ],
+      "diagnostics": [
+        {
+          "phase": "paused-observer",
+          "animations": [
+            {
+              "tag": "I",
+              "id": "",
+              "class": "",
+              "root": "lifecycle-original",
+              "connected": true,
+              "name": "iw-turf-tick",
+              "state": "paused",
+              "pending": false,
+              "currentTime": 0,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "iw-tank is-empty",
+              "root": "lifecycle-original",
+              "connected": true,
+              "name": "iw-shake",
+              "state": "paused",
+              "pending": false,
+              "currentTime": 0,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "I",
+              "id": "",
+              "class": "",
+              "root": "lifecycle-candidate",
+              "connected": true,
+              "name": "iw-turf-tick",
+              "state": "running",
+              "pending": false,
+              "currentTime": 33.3,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "iw-tank is-empty",
+              "root": "lifecycle-candidate",
+              "connected": true,
+              "name": "iw-shake",
+              "state": "running",
+              "pending": false,
+              "currentTime": 33.3,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            }
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 1,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 2,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "paused",
+          "oldReads": 3,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 4,
+          "candidateReads": 2
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 5,
+          "candidateReads": 2
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 6,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 7,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "paused",
+          "oldReads": 8,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 9,
+          "candidateReads": 4
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 10,
+          "candidateReads": 4
+        }
+      ],
+      "observerActive": true,
+      "finalReads": {
+        "old": 15,
+        "candidate": 13
+      }
+    },
+    {
+      "reducedMotion": "reduce",
+      "errors": [
+        "turf CSS pause lost",
+        "tank CSS pause lost",
+        "paused observer unexpectedly reports running effects",
+        "turf advanced while CSS paused",
+        "tank advanced while CSS paused",
+        "turf CSS resume phase differs",
+        "tank CSS resume phase differs"
+      ],
+      "diagnostics": [
+        {
+          "phase": "paused-observer",
+          "animations": [
+            {
+              "tag": "I",
+              "id": "",
+              "class": "",
+              "root": "lifecycle-original",
+              "connected": true,
+              "name": "iw-turf-tick",
+              "state": "paused",
+              "pending": false,
+              "currentTime": 0,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "iw-tank is-empty",
+              "root": "lifecycle-original",
+              "connected": true,
+              "name": "iw-shake",
+              "state": "paused",
+              "pending": false,
+              "currentTime": 0,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "I",
+              "id": "",
+              "class": "",
+              "root": "lifecycle-candidate",
+              "connected": true,
+              "name": "iw-turf-tick",
+              "state": "running",
+              "pending": false,
+              "currentTime": 16.634000000000036,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "iw-tank is-empty",
+              "root": "lifecycle-candidate",
+              "connected": true,
+              "name": "iw-shake",
+              "state": "running",
+              "pending": false,
+              "currentTime": 16.634000000000036,
+              "cssPlayState": "paused",
+              "timing": {
+                "delay": 0,
+                "direction": "normal",
+                "duration": 350,
+                "easing": "linear",
+                "endDelay": 0,
+                "fill": "none",
+                "iterationStart": 0,
+                "iterations": 1
+              }
+            }
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 1,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 2,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "paused",
+          "oldReads": 3,
+          "candidateReads": 1
+        },
+        {
+          "kind": "turf",
+          "nextState": "running",
+          "oldReads": 4,
+          "candidateReads": 2
+        },
+        {
+          "kind": "turf",
+          "nextState": "finished",
+          "oldReads": 5,
+          "candidateReads": 2
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 6,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 7,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "paused",
+          "oldReads": 8,
+          "candidateReads": 3
+        },
+        {
+          "kind": "tank",
+          "nextState": "running",
+          "oldReads": 9,
+          "candidateReads": 4
+        },
+        {
+          "kind": "tank",
+          "nextState": "finished",
+          "oldReads": 10,
+          "candidateReads": 4
+        }
+      ],
+      "observerActive": true,
+      "finalReads": {
+        "old": 15,
+        "candidate": 13
+      }
+    }
+  ]
+}

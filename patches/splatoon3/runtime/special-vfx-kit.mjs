@@ -301,17 +301,43 @@ class SpritePool {
     if(this.n===0&&this._emptyUploaded)return;
     // A burst's adjacent particles share drag. Reuse only this update's last
     // exact factor; keep non-finite time and NaN rates on the original path.
-    const finiteTime = Number.isFinite(dt);
-    let lastDrag = NaN, lastDragFactor = 0;
+    const finiteTime = Number.isFinite(dt), frame = 1 / 60;
+    let lastDrag = NaN, lastDragFactor = 0, travel = 0, kick = 0, fall = 0;
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
       // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
-      const rate = p[i + 10];
-      const drag = finiteTime && rate === lastDrag ? lastDragFactor
-        : (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));
-      p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
-      p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;
+      const rate = p[i + 10], fractional = finiteTime && dt > 0 && dt !== frame && rate >= 0 && Number.isFinite(rate);
+      if (!(finiteTime && rate === lastDrag)) {
+        lastDrag = rate; lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt);
+        if (fractional) {
+          // Fractional power of the established 60 Hz map:
+          // v' = exp(-drag/60) * v + acceleration/60; x' = x + v'/60.
+          // Integrating that same map keeps spray reach and falling arcs stable
+          // at 30/120 Hz without retuning the authored 60 Hz effect.
+          if (rate === 0) { travel = kick = dt; fall = dt * (dt + frame) * 0.5; }
+          else {
+            // Positive rate*dt can underflow; the exponential ratio tends to 1.
+            const a = rate * frame, b = rate * dt, s = a / Math.expm1(a), q = b === 0 ? 1 : -Math.expm1(-b) / b;
+            // Stable 1-s and 1-q near zero; direct subtraction loses the
+            // acceleration term for very small positive drag.
+            const ds = a < 1e-3 ? a * (0.5 - a / 12 + a * a * a / 720) : 1 - s;
+            const dq = b < 1e-3 ? b * (0.5 - b / 6 + b * b / 24 - b * b * b / 120) : 1 - q;
+            travel = dt * s * q; kick = dt * (s + a) * q;
+            fall = dt / rate * (s + a) * (ds + dq - ds * dq);
+          }
+        }
+      }
+      const drag = lastDragFactor;
+      if (fractional) {
+        const acceleration = p[i + 22] - p[i + 11];
+        p[i] += p[i + 3] * travel; p[i + 1] += p[i + 4] * travel + acceleration * fall; p[i + 2] += p[i + 5] * travel;
+        p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag + acceleration * kick;
+      } else {
+        p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
+        p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt;
+      }
+      p[i + 17] += p[i + 18] * dt;
     }
     const P = this.aPos.array, D = this.aDir.array, C = this.aCol.array, R = this.aPar.array;
     let dirStart = Infinity, dirEnd = 0;

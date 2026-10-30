@@ -13,7 +13,7 @@ import { createWailSpeakerBatch, updateWailSpeakerBatch, retireWailSpeakerBatch 
 // re-derives the kid's visibility each frame.
 
 import { buildSubModel, poseSubModel, subModelUsesSpeed, isSharedGeometry } from './sub-models.mjs';
-import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
+import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS, REEFSLIDER_GRIPS } from './special-models.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
@@ -26,6 +26,9 @@ const easeIn = x => { x = clamp01(x); return x * x * x; };
 const easeOut = x => 1 - Math.pow(1 - clamp01(x), 3);
 const easeOutBack = x => { x = clamp01(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 const kick = (age, rate = 18) => (age >= 0 && age < 2 ? Math.exp(-age * rate) : 0);   // 1 at the event, decaying
+// Compose the existing 60 Hz blend over elapsed presentation time. Repeated
+// zero-dt draws cannot advance a pose, and 30/60/120 Hz share its response.
+const response60 = (rate, dt) => 1 - Math.pow(1 - rate / 60, Math.max(0, dt) * 60);
 
 // Device motion keyed to the special's real events (local state or replayed
 // presentation marks, actor._s3SpecialMarks). INKWAVE calibration against the
@@ -43,28 +46,29 @@ export const SPECIAL_DEVICE_MOTION = Object.freeze({
 export const SPECIAL_DEVICES = Object.freeze({
   // Grip under the small crate (S2 promo render); pos keeps the right hand where
   // it was before the grip moved there; the left hand steadies the small crate.
-  tentaMissiles: [{ model: 'spTentaLauncher', host: 'kid', pos: [-0.31, 1.27, -0.07], rot: [-0.55, 0, 0.12], scale: 0.9, hideWeapon: true, hands: { R: [0.065, -0.34, 0.07], L: [0.16, -0.15, 0.15] } }],
+  tentaMissiles: [{ model: 'spTentaLauncher', host: 'kid', pos: [-0.31, 1.27, -0.07], rot: [-0.55, 0, 0.12], scale: 0.9, hideWeapon: true, hands: { R: [0.065, -0.34, 0.07], L: [0.16, -0.15, 0.15] }, handRot: { R: [-Math.PI / 2, 0, 0] } }],
   inkjet: [{ model: 'spInkjetPack', host: 'chest', pos: [0, -0.02, -0.21], rot: [0, 0, 0], scale: 0.62 },
-    { model: 'spInkjetCannon', host: 'kid', pos: [-0.12, 0.98, 0.32], rot: [0, 0, 0], scale: 0.9, aim: true, hideWeapon: true, hands: { R: [0, -0.11, 0.02], L: [0, -0.085, 0.25] } }],
-  booyahBomb: [{ model: 'spBooyahBall', host: 'kid', pos: [0, 1.95, 0.05], rot: [0, 0, 0], scale: 1, charge: true, hideWeapon: true, hands: { R: [0.12, -0.33, 0.02], L: [-0.12, -0.33, 0.02] } }],
+    { model: 'spInkjetCannon', host: 'kid', pos: [-0.12, 0.98, 0.32], rot: [0, 0, 0], scale: 0.9, aim: true, hideWeapon: true, hands: { R: [0, -0.11, 0.02], L: [0, -0.085, 0.25] }, handRot: { R: [-Math.PI / 2, 0, 0] } }],
+  // Preserve the floating sphere's overhead silhouette. Bringing it into the
+  // native standing arm reach embeds it in the head; that needs a body pose.
+  booyahBomb: [{ model: 'spBooyahBall', host: 'kid', pos: [0, 1.95, 0.05], rot: [0, 0, 0], scale: 1, charge: true, hideWeapon: true, fitHands: false, hands: { R: [0.12, -0.33, 0.02], L: [-0.12, -0.33, 0.02] } }],
   // Held by the handle end at the hands, head up in front (S3 screenshot);
   // the swing pivots about the grip.
-  ultraStamp: [{ model: 'spUltraStamp', host: 'kid', pos: [0, 0.88, 0.33], rot: [2.88, 0, 0], scale: 0.85, swing: true, grip: [0, -0.66, -1.15], hideWeapon: true, hands: { R: [0, 0.63, 1.085], L: [0, 0.48, 0.77] } }],
+  ultraStamp: [{ model: 'spUltraStamp', host: 'kid', pos: [0, 0.88, 0.33], rot: [2.88, 0, 0], scale: 0.85, swing: true, grip: [0, -0.66, -1.15], hideWeapon: true, hands: { R: [0, 0.63, 1.085], L: [0, 0.48, 0.77] }, handRot: { R: [-Math.atan2(0.15, 0.315), 0, 0], L: [-Math.atan2(0.15, 0.315), 0, 0] } }],
   killerWail: [{ model: 'spKillerSpeaker', host: 'kid', speakers: true, scale: 1, hideWeapon: true }],
-  // The tank stands on the ground round the standing kid (no riding pose):
-  // the cockpit rim is between the kid's waist and chest, the hands take
-  // the handlebars (CRAB_TANK_GRIPS).
-  crabTank: [{ model: 'spCrabTank', host: 'root', pos: CRAB_TANK_RIG.offset, rot: [0, 0, 0], scale: CRAB_TANK_RIG.scale, hideWeapon: true, crab: true, hands: CRAB_TANK_GRIPS }],
-  reefslider: [{ model: 'spReefShark', host: 'kid', pos: [0, -0.1, 0.12], rot: [0, 0, 0], scale: 1, hideWeapon: true, hands: { R: [-0.215, 0.54, 0.18], L: [0.215, 0.54, 0.18] } }],
+  // Ground rig and launch sockets stay at the physical feet. Rider posture
+  // belongs to special-motion; the hands wrap the two control bars here.
+  crabTank: [{ model: 'spCrabTank', host: 'root', pos: CRAB_TANK_RIG.offset, rot: [0, 0, 0], scale: CRAB_TANK_RIG.scale, hideWeapon: true, crab: true, hands: CRAB_TANK_GRIPS, handRot: { R: [0, Math.PI / 2, 0], L: [0, Math.PI / 2, 0] } }],
+  reefslider: [{ model: 'spReefShark', host: 'root', pos: [0, -0.1, 0.12], rot: [0, 0, 0], scale: 1, hideWeapon: true, hands: REEFSLIDER_GRIPS }],
   // Worn on the back with the lid shut, tray down and lid outward (S3 promo
   // image); the free hand throws the markers.
   tripleInkstrike: [{ model: 'spInkstrikeCase', host: 'chest', pos: [0, 0.05, -0.15], rot: [-Math.PI / 2, Math.PI, 0], scale: 0.85, hideWeapon: true, lidClosed: true }],
   // Held in front in both hands by the yoke arms, the globe tipped forward on
   // its pivots (the S3 Promotional 3D Render shows it turned in the yoke).
-  superChump: [{ model: 'spChumpLauncher', host: 'kid', pos: [0.1, 0.66, 0.34], rot: [0.2, 0, 0], scale: 0.78, tilt: 0.45, hideWeapon: true, hands: { R: [-0.13, 0.21, 0.03], L: [0.13, 0.21, 0.03] } }],
+  superChump: [{ model: 'spChumpLauncher', host: 'kid', pos: [0.1, 0.66, 0.34], rot: [0.2, 0, 0], scale: 0.78, tilt: 0.45, hideWeapon: true, hands: { R: [-0.13, 0.21, 0.03], L: [0.13, 0.21, 0.03] }, handRot: { R: [-Math.PI / 2, 0, 0], L: [-Math.PI / 2, 0, 0] } }],
   krakenRoyale: [{ model: 'spKraken', host: 'model', pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, hideKid: true }],
   splattercolorScreen: [{ model: 'spScreenJar', host: 'kid', pos: [0.15, 0.85, 0.3], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, hands: { R: [-0.1, 0.1, 0.02], L: [0.15, 0.12, 0] } }],
-  waveBreaker: [{ model: 'spWaveBreaker', host: 'kid', pos: [0.2, 0.62, 0.32], rot: [0.25, 0, 0], scale: 0.55, hideWeapon: true, hands: { R: [0.13, 0.3, 0], L: [-0.2, 0.62, 0] } }],
+  waveBreaker: [{ model: 'spWaveBreaker', host: 'kid', pos: [0.2, 0.62, 0.32], rot: [0.25, 0, 0], scale: 0.55, hideWeapon: true, hands: { R: [0.13, 0.3, 0], L: [-0.2, 0.62, 0] }, handRot: { R: [-Math.PI / 2, 0, 0] } }],
   zipcaster: [{ inkCoat: true, line: true }],
 });
 // Projectile models. hideBlob: the model replaces the native round's drawn ink blob (S3 175.9-179.9s: Tenta
@@ -98,11 +102,13 @@ function disposeModel(group) {
 
 // Ultra Stamp: hold → wind up overhead → slam to the source swing frame → recover for the next
 // (local: the next swing time is known; remote: the replayed swing mark drives the follow-through).
-function stampArc(a, s, state, t) {
+function stampArc(a, s, state, t, dt) {
   const M = SPECIAL_DEVICE_MOTION.stamp, marks = a._s3SpecialMarks || {};
   const last = Math.max(marks.swing ?? -99, marks.jumpSwing ?? -99), since = t - last;
   const holding = state ? !!state.stampHolding : since < 0.5;
-  if (state?.phase === 'aimThrow') { s.stampArc = (s.stampArc ?? 0) + (M.throwBack - (s.stampArc ?? 0)) * 0.25; return s.stampArc; }
+  // Preserve the old 60 Hz response, but render frequency and pause must not
+  // advance the wind-back. This is cosmetic; throw admission stays native.
+  if (state?.phase === 'aimThrow') { s.stampArc = (s.stampArc ?? 0) + (M.throwBack - (s.stampArc ?? 0)) * response60(15, dt); return s.stampArc; }
   let arc;
   if (since >= 0 && since < M.hold) arc = M.strike;
   else if (since >= M.hold && since < M.hold + M.recover) arc = M.strike + (holding ? M.raised - M.strike : M.rest - M.strike) * smooth((since - M.hold) / M.recover);
@@ -159,12 +165,23 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     const idx = state?.missileIndex ?? -1;
     if (idx !== s.launched) { if (idx > s.launched && s.launched >= 0) s.launchAt = t; s.launched = idx; }
     const k = kick(t - s.launchAt, 20), salvo = state?.phase === 'launching' ? 1 : 0;
-    s.salvo = (s.salvo ?? 0) + (salvo - (s.salvo ?? 0)) * Math.min(1, dt * 10);
+    s.salvo = (s.salvo ?? 0) + (salvo - (s.salvo ?? 0)) * response60(10, dt);
     d.holder.position.set(base.x, base.y + 0.05 * s.salvo, base.z - 0.07 * k);
     d.holder.rotation.x = spec.rot[0] - 0.25 * s.salvo + 0.08 * k;
   } else if (id === 'inkjet') {
     if (g.flame) { const f = 0.85 + 0.15 * Math.sin(t * 53) + 0.1 * Math.sin(t * 31); g.flame.scale.set(f, 0.8 + 0.4 * f, f); }
-    if (spec.aim) { const k = kick(t - (marks.shot ?? -99), 14); d.holder.position.set(base.x, base.y + 0.02 * k, base.z - 0.12 * k); d.holder.rotation.x = -(a.aimPitch || 0) - 0.25 * k; }
+    if (spec.aim) {
+      const k = kick(t - (marks.shot ?? -99), 14), rig = d.aimRig;
+      // The bore follows world aim, including yaw while the body catches up.
+      // Recoil then travels back along that bore, in the holder parent's frame.
+      rig.direction.copy(a.aimDir || rig.forward);
+      if (!Number.isFinite(rig.direction.lengthSq()) || rig.direction.lengthSq() < 1e-12) rig.direction.copy(rig.forward);
+      rig.direction.normalize();
+      d.holder.parent.getWorldQuaternion(rig.parentQ).invert();
+      rig.direction.applyQuaternion(rig.parentQ);
+      d.holder.quaternion.setFromUnitVectors(rig.forward, rig.direction);
+      d.holder.position.copy(base).addScaledVector(rig.direction, -0.12 * k);
+    }
   } else if (id === 'booyahBomb') {
     const c = clamp01(state?.charge || 0), pulse = 1 + 0.035 * Math.sin(t * (8 + 16 * c));
     d.holder.scale.multiplyScalar(pulse);
@@ -202,7 +219,7 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     d.holder.scale.setScalar(spec.scale * (0.7 + 0.3 * clamp01(up)) * (1 + 0.04 * brake * Math.sin(t * 40)));
   } else if (id === 'tripleInkstrike') {
     if (g.lid) { const open = smooth((t - (marks.marker ?? -99) + 0.25) / 0.12) * (1 - smooth((t - (marks.marker ?? -99) - 0.25) / 0.2));
-      const throwing = state && Number.isFinite(state.throwAt) ? 1 : 0; s.lid = (s.lid ?? 0) + (Math.max(open, throwing) - (s.lid ?? 0)) * Math.min(1, dt * 14);
+      const throwing = state && Number.isFinite(state.throwAt) ? 1 : 0; s.lid = (s.lid ?? 0) + (Math.max(open, throwing) - (s.lid ?? 0)) * response60(14, dt);
       g.lid.rotation.x = INKSTRIKE_LID_OPEN * (1 - s.lid); }
   } else if (id === 'superChump') {
     const k = kick(t - (marks.balloon ?? -99), 7);
@@ -253,7 +270,7 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     if (g.legR) g.legR.rotation.set(s.krakenArmX,0,-s.krakenArmZ);
   } else if (id === 'waveBreaker' || id === 'splattercolorScreen') {
     // raised ready to throw while the sub is held
-    const ready = a.intent?.sub ? 1 : 0; s.ready = (s.ready ?? 0) + (ready - (s.ready ?? 0)) * Math.min(1, dt * 12);
+    const ready = a.intent?.sub ? 1 : 0; s.ready = (s.ready ?? 0) + (ready - (s.ready ?? 0)) * response60(12, dt);
     d.holder.position.set(base.x, base.y + 0.35 * s.ready, base.z - 0.15 * s.ready);
     d.holder.rotation.x = spec.rot[0] - 0.6 * s.ready;
   }
@@ -291,7 +308,7 @@ export function installSpecialModels(api) {
   const colorOf = (owner, team) => owner?.color || G.teamColors?.[owner?.team ?? team] || 0xffcc33;
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
-  const leanQ = new THREE.Quaternion(), leanAxis = new THREE.Vector3(1, 0, 0), pivotA = new THREE.Vector3(), pivotB = new THREE.Vector3(), keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
+  const keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
   const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map(),speakerSeen=new Set();
   const roundSeen=new WeakMap(), worldLiveness=new WeakMap();
   let speakerMarks = new WeakMap();
@@ -543,6 +560,17 @@ export function installSpecialModels(api) {
       hostOf(ch, spec.host)?.add(holder);
       const d = { spec, holder, model: m };
       if (spec.crab) d.crabRig = { origin: new THREE.Vector3(), direction: new THREE.Vector3(), axis: new THREE.Vector3(), parentQ: new THREE.Quaternion(), aimQ: new THREE.Quaternion(), euler: new THREE.Euler() };
+      if (spec.aim) d.aimRig = { direction: new THREE.Vector3(), forward: new THREE.Vector3(0, 0, 1), parentQ: new THREE.Quaternion() };
+      if (spec.hands) {
+        // Character._solveLimb targets the wrist, while the model sockets mark
+        // the hole enclosed by the fingers (character-geo.js HAND.hole).
+        d.handRig = { kidQ: new THREE.Quaternion(), modelQ: new THREE.Quaternion(), shift: new THREE.Vector3(), delta: new THREE.Vector3(), shoulderQ: new THREE.Quaternion(), sides: [] };
+        for (const side of ['R', 'L']) if (spec.hands[side]) d.handRig.sides.push({
+          side, wrist: new THREE.Vector3(), shoulder: new THREE.Vector3(), q: new THREE.Quaternion(),
+          localQ: new THREE.Quaternion().setFromEuler(new THREE.Euler(...(spec.handRot?.[side] || [0, 0, 0]))),
+          hole: new THREE.Vector3(side === 'R' ? 0.0255 : -0.0255, -0.0525, 0),
+        });
+      }
       s.devices.push(d);
     }
     states.set(ch, s);
@@ -610,17 +638,18 @@ export function installSpecialModels(api) {
     let speakerDeployAge = NaN, speakerDeploy = 0, speakerYaw, speakerSin = 0, speakerCos = 1, speakerGlow;
     for (const d of s.devices) {
       const spec = d.spec;
+      // Fitting is a per-frame correction, not a new attachment rest point.
+      if (!spec.speakers) d.holder.position.set(...spec.pos);
       if (spec.hideWeapon && (s.id !== 'killerWail' || (state?.t ?? t - s.startedAt) < 40 / 60 - 1e-8)) hideWeapon = true;
       if (spec.hideKid) hideKid = true;
       if (!speedReady && subModelUsesSpeed(d.model.id)) { poseOptions.speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0); speedReady = true; }
       poseSubModel(d.model, poseOptions);
-      if (spec.aim) d.holder.rotation.x = -(a.aimPitch || 0);
       if (spec.charge) {
         const c = clamp01(state?.charge || 0);
         d.holder.scale.setScalar(spec.scale * (0.55 + 0.75 * c));
         if (d.model.groups.ribbons) d.model.groups.ribbons.rotation.y += dt * (4 + 6 * c);
       }
-      if (spec.swing) d.holder.rotation.x = spec.rot[0] + stampArc(a, s, state, t);
+      if (spec.swing) d.holder.rotation.x = spec.rot[0] + stampArc(a, s, state, t, dt);
       if (spec.speakers) {
         // Deploy: the six speakers fly out of the kid's back and pop to size, then bob;
         // each laser tick kicks the cone back (S3 footage, Killer Wail 5.1 activation).
@@ -670,35 +699,44 @@ export function installSpecialModels(api) {
       }
     }
     if (s.wailBatch) updateWailSpeakerBatch(s.wailBatch);
-    // Reefslider rider (S3 footage 102.8s): crouched forward over the shark, not sitting upright. Character.update
-    // rebuilds the kid transform every frame about the hips, so the lean is re-applied after it; the shark (a kid
-    // child) is counter-transformed to keep its own world pose, then the hands reach the handles below.
-    if (s.id === 'reefslider' && ch.kid && ch.kid.visible !== false) {
-      const phase = state?.phase ?? a.specialActive?.phase, age = t - s.startedAt;
-      const target = phase === 'dash' ? 0.72 : phase === 'brake' ? 0.55 : phase === 'recovery' ? 0.2 : 0.35 * smooth(age / 0.3);
-      s.lean = (s.lean ?? 0) + (target - (s.lean ?? 0)) * Math.min(1, dt * 9);
-      for(const d of s.devices){d.holder.updateWorldMatrix(true,false);(d.reefWorld ||= new THREE.Matrix4()).copy(d.holder.matrixWorld);}
-      pivotA.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
-      leanQ.setFromAxisAngle(leanAxis, s.lean); ch.kid.quaternion.multiply(leanQ);
-      pivotB.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
-      ch.kid.position.add(pivotA).sub(pivotB); ch.kid.position.y -= 0.16 * s.lean;
-      ch.kid.updateMatrixWorld(true);
-      for (const d of s.devices) {
-        const h=d.holder;inv.copy(h.parent.matrixWorld).invert(); keep.multiplyMatrices(inv, d.reefWorld);
-        keep.decompose(h.position, h.quaternion, h.scale); h.updateMatrixWorld(true);
-      }
-    }
-    // Hands on the device: the native two-bone arm solver reaches each grip
-    // (kid space), so a held device is carried, not floating.
+    // Body/rider posture belongs to special-motion. Fit only a hand-carried
+    // device to arm reach; moving a vehicle here would move its ground rig.
+    // The wrist orientation makes the fingers surround the model socket.
     if (ch.limbs && ch._solveLimb && ch.kid?.visible !== false) for (const d of s.devices) {
-      const hands = d.spec.hands;
-      if (!hands || !d.holder.visible) continue;
+      const hands = d.spec.hands, rig = d.handRig;
+      if (!hands || !rig || !d.holder.visible) continue;
       d.holder.updateWorldMatrix(true, true);
-      for (const side of ['R', 'L']) {
-        if (!hands[side]) continue;
-        grip.set(...hands[side]); d.model.root.localToWorld(grip); ch.kid.worldToLocal(grip);
+      ch.kid.getWorldQuaternion(rig.kidQ).invert();
+      d.model.root.getWorldQuaternion(rig.modelQ);
+      for (const hand of rig.sides) {
+        const limb = hand.side === 'L' ? ch.limbs.armL : ch.limbs.armR;
+        hand.q.copy(rig.kidQ).multiply(rig.modelQ).multiply(hand.localQ);
+        hand.wrist.set(...hands[hand.side]); d.model.root.localToWorld(hand.wrist); ch.kid.worldToLocal(hand.wrist);
+        hand.wrist.sub(grip.copy(hand.hole).applyQuaternion(hand.q));
+        if (ch._kidXform) {
+          ch._kidXform(limb.up.parent, hand.shoulder, rig.shoulderQ);
+          hand.shoulder.add(grip.copy(limb.up.position).applyQuaternion(rig.shoulderQ));
+        }
+      }
+      rig.shift.set(0, 0, 0);
+      if (d.spec.fitHands !== false && d.holder.parent === ch.kid && ch._kidXform) {
+        for (let i = 0; i < 20; i++) {
+          let changed = false;
+          for (const hand of rig.sides) {
+            const limb = hand.side === 'L' ? ch.limbs.armL : ch.limbs.armR;
+            rig.delta.copy(hand.wrist).add(rig.shift).sub(hand.shoulder);
+            const dist = rig.delta.length(), reach = (limb.a + limb.b) * 0.999;
+            if (dist > reach) { rig.shift.addScaledVector(rig.delta, -(dist - reach) / dist); changed = true; }
+          }
+          if (!changed) break;
+        }
+        d.holder.position.add(rig.shift);
+      }
+      for (const hand of rig.sides) {
+        const side = hand.side;
+        hand.wrist.add(rig.shift);
         pole.set(side === 'L' ? 0.8 : -0.8, -0.5, -0.22);
-        ch._solveLimb(side === 'L' ? ch.limbs.armL : ch.limbs.armR, grip, pole, null, 1, side === 'L' ? 0 : 1);
+        ch._solveLimb(side === 'L' ? ch.limbs.armL : ch.limbs.armR, hand.wrist, pole, hand.q, 1, side === 'L' ? 0 : 1);
       }
     }
     if (s.coat) { inkCoat(ch, s, true); zipLine(ch, s, state || {}, (state?.phase === 'zip' || state?.phase === 'hookFlight') && !!state.zipTarget); }
@@ -723,7 +761,7 @@ export function installSpecialModels(api) {
     let s = states.get(this);
     if (!id || !SPECIAL_DEVICES[id]) { if (s) retire(this); return out; }
     if (!s || s.id !== id) s = begin(this, id);
-    pose(this, s, Number.isFinite(dt) ? dt : 0);
+    pose(this, s, Number.isFinite(dt) ? Math.max(0, dt) : 0);
     return out;
   };
   if (dispose) cp.dispose = function (...args) { retire(this); return dispose.apply(this, args); };
