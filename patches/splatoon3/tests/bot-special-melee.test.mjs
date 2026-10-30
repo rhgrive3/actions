@@ -114,3 +114,51 @@ for (const id of ['tripleSplashdown', 'slam']) test(`${id} only activates on a l
   assert.ok(t.e.hp < 1000, 'native impact delivered damage');
   assert.equal(t.a.intent.fire, false); assert.equal(t.a.intent.jump, false);
 });
+
+// The full brain must carry its eye-based spring target through the special's
+// feet-based emitter, native windup and projectile collision before we count it.
+import { makeBotSpecialFixture } from './bot-special-fixture.mjs';
+test('Stamp full BotBrain throw hits stationary and moving enemies through native flight', async () => {
+  const f = await makeBotSpecialFixture();
+  const hits = [], apply = f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit = function (owner, victim, damage, cause, ...args) {
+    if (cause === 'ultraStamp') hits.push({ owner, victim, damage });
+    return apply.call(this, owner, victim, damage, cause, ...args);
+  };
+  for (const [distance, speed] of [[10, 0], [14, 0], [14, 2]]) {
+    const { a, b, enemy } = f.scenario('ultraStamp');
+    enemy.pos.z = distance; enemy.vel.x = speed; f.aim(a, b, enemy.pos); hits.length = 0;
+    for (let frame = 0; frame < 180 && !hits.some(h => h.owner === a && h.victim === enemy); frame++) {
+      enemy.pos.x += speed / 60; f.tick(a, b);
+    }
+    assert.ok(f.events.some(e => e.actor === a && e.action === 'throw'), 'native sub release emitted the throw');
+    assert.ok(hits.some(h => h.owner === a && h.victim === enemy && h.damage >= 60), `${distance}WU moving ${speed}: the special itself must hit`);
+  }
+});
+test('Reefslider and Splashdown full BotBrain inputs hit moving enemies with their actual explosions', async () => {
+  const f = await makeBotSpecialFixture();
+  const hits = [], apply = f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit = function (owner, victim, damage, cause, ...args) {
+    hits.push({ owner, victim, damage, cause }); return apply.call(this, owner, victim, damage, cause, ...args);
+  };
+  for (const [special, distance] of [['reefslider', 12], ['tripleSplashdown', 8]]) {
+    const { a, b, enemy } = f.scenario(special); enemy.pos.z = distance; enemy.vel.x = 2;
+    f.aim(a, b, enemy.pos); hits.length = 0;
+    for (let frame = 0; frame < 150; frame++) { enemy.pos.x += 2 / 60; f.tick(a, b); }
+    assert.ok(hits.some(h => h.owner === a && h.victim === enemy && h.cause === special), special + ' source-tagged explosion hit');
+    assert.ok(f.events.some(e => e.actor === a && e.action === 'impact'), special + ' completed its native explosion');
+  }
+});
+
+test('Stamp full BotBrain closes a four-unit gap before its direct jump swing', async () => {
+  const f = await makeBotSpecialFixture(), { a, b, enemy } = f.scenario('ultraStamp');
+  enemy.pos.z = 4; f.aim(a, b, enemy.pos);
+  const hits = [], apply = f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit = function (owner, victim, damage, cause, ...args) {
+    if (owner === a && victim === enemy && cause === 'ultraStamp') hits.push(damage);
+    return apply.call(this, owner, victim, damage, cause, ...args);
+  };
+  for (let frame = 0; frame < 180 && !hits.includes(100); frame++) f.tick(a, b);
+  assert.ok(a.pos.z > 1, 'native movement closes the gap instead of hopping in place');
+  assert.ok(hits.includes(100), 'native direct swing connects, not only its weak spray');
+});

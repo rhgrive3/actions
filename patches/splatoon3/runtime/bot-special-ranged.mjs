@@ -1,6 +1,7 @@
 import { trizookaState } from './kit-trizooka.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { tentaMissilesLockPreview } from './all-specials.mjs';
+import { crabTankMuzzle } from './crab-tank-aim.mjs';
 
 // INKWAVE bot heuristics, not retail CPU behaviour or new weapon parameters.
 // Only admitted Actor inputs and the existing aim spring are driven here.
@@ -19,6 +20,19 @@ function keepDistance(c,near,far) {
   if(c.distance<near)c.moveToward?.(c.enemy.pos,-1);
   else if(c.distance>far)c.moveToward?.(c.enemy.pos,.65);
   else stop(c);
+}
+function flyToward(c,point,scale=1) {
+  const {actor,world,move,memory:m}=c;
+  if(!finitePoint(point)||!move?.set)return false;
+  const dx=point.x-actor.pos.x,dz=point.z-actor.pos.z,d=Math.hypot(dx,dz);
+  if(d<.5){stop(c);return false;}
+  const step=Math.sign(scale)*Math.min(2,d),probe=(m.rangedFlightProbe ||= actor.pos.clone());
+  probe.set(actor.pos.x+dx/d*step,actor.pos.y,actor.pos.z+dz/d*step);
+  const floor=world?.level?.groundHeight?.(probe.x,probe.z,probe.y+.25);
+  // The common walking path correctly rejects a five-unit drop. Inkjet is
+  // already hovering, so check flight clearance and landing support instead.
+  if(!Number.isFinite(floor)||floor>probe.y+.1||probe.y-floor>14||world.physics?.los?.(actor.pos,probe)!==true){stop(c);return false;}
+  move.set(dx/d*Math.max(-1,Math.min(1,scale)),0,dz/d*Math.max(-1,Math.min(1,scale)));return true;
 }
 function inputsOff(c) {
   for(const key of ['fire','sub','special','squid','jump','booyah'])c.intent[key]=false;
@@ -67,6 +81,31 @@ function aimBooyah(c) {
   p.set(c.enemy.pos.x,c.actor.pos.y+Math.tan(bestPitch)*d,c.enemy.pos.z);
   aim(c,p,0);return bestError<=10;
 }
+// Cannon shells brake and drop much sooner than the rapid-fire rounds. Aim
+// their existing short arc toward the target's ground instead of reusing ZR.
+function aimCrabCannon(c) {
+  const m=c.memory,direction=(m.rangedCannonDirection ||= c.actor.pos.clone());
+  const origin=(m.rangedCannonOrigin ||= c.actor.pos.clone());
+  const point=(m.rangedAimPoint ||= c.actor.pos.clone());
+  const yaw=Math.atan2(c.enemy.pos.x-c.actor.pos.x,c.enemy.pos.z-c.actor.pos.z);
+  let error=Infinity;
+  for(let pitch=-.1;pitch<=1.00001;pitch+=.05){
+    const cp=Math.cos(pitch);direction.set(Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp);
+    crabTankMuzzle(c.actor,'cannon',origin,direction);
+    let x=origin.x,y=origin.y,z=origin.z,vx=direction.x*18,vy=direction.y*18,vz=direction.z*18;
+    for(let frame=0;frame<102;frame++){
+      if(frame>=8){vy-=(frame===8?144:180)/60;const retain=frame===8?.9:.88;vx*=retain;vy*=retain;vz*=retain;}
+      x+=vx/60;y+=vy/60;z+=vz/60;
+      if(y<=c.enemy.pos.y+.28&&vy<0){
+        const miss=Math.hypot(x-c.enemy.pos.x,z-c.enemy.pos.z);
+        if(miss<error){error=miss;point.copy(origin).addScaledVector(direction,Math.max(3,c.distance));}
+        break;
+      }
+    }
+  }
+  if(error>4)return false;
+  aim(c,point,0);return true;
+}
 function hookPoint(c) {
   const {actor,enemy,memory:m,world}=c,d=c.distance;
   if(!(d>1)||!world?.physics?.raycast)return null;
@@ -85,6 +124,19 @@ function hookPoint(c) {
   if(contact.point.distanceTo(point)>1.5||!safeFloor(c,contact.point))return null;
   // The aim point must be the actual surface, never an arbitrary enemy reticle.
   return point.copy(contact.point);
+}
+
+
+function hookAimedAtSurface(c,point) {
+  const m=c.memory,origin=(m.rangedHookOrigin ||= c.actor.pos.clone()).copy(c.actor.pos);
+  origin.y+=1.05;
+  const direction=(m.rangedHookDirection ||= c.actor.pos.clone()).copy(c.actor.aimPoint).sub(c.actor.pos);
+  if(direction.lengthSq()<4)return false;direction.normalize();
+  const hit=(m.rangedHookEmissionHit ||= {hit:false,point:c.actor.pos.clone(),normal:c.actor.pos.clone()});
+  hit.hit=false;
+  const contact=c.world.physics.raycast(origin,direction,35,hit,true);
+  return contact?.hit&&finitePoint(contact.point)&&contact.normal?.y>=.5
+    &&contact.point.distanceTo(point)<=.8&&safeFloor(c,contact.point);
 }
 
 export function driveRangedSpecial(c) {
@@ -158,14 +210,27 @@ export function driveRangedSpecial(c) {
     }
     return true;
   }
-  if(!enemy){stop(c);return true;}
+  if(!enemy){
+    if(c.special==='inkjet'&&finitePoint(s.origin))flyToward(c,s.origin,.65);
+    else if(c.special==='zipcaster'&&s.phase==='ready'){
+      // Entering swim cancels a held native charge; releasing ZR in kid form
+      // would fire at the last aim after recognition has already been lost.
+      it.squid=true;
+      if(finitePoint(s.origin))c.moveToward?.(s.origin,.65);
+    }
+    else stop(c);
+    return true;
+  }
   if(c.special==='trizooka'){
     aim(c,enemy.pos,.75,Math.min(.35,c.distance/67.5));keepDistance(c,12,28);
     it.fire=c.distance<=38&&Math.abs(c.height)<=12&&aimed(c,.12);return true;
   }
   if(c.special==='inkjet'){
-    aim(c,enemy.pos,.65,Math.min(.7,c.distance/21));keepDistance(c,16,24);
-    it.fire=Math.hypot(c.distance,c.height)<=29.5&&aimed(c,.14);
+    aim(c,enemy.pos,.65,Math.min(1.5,Math.hypot(c.distance,c.height)/21));
+    if(c.distance<16)flyToward(c,enemy.pos,-1);
+    else if(c.distance>24)flyToward(c,enemy.pos,.65);
+    else stop(c);
+    it.fire=Math.hypot(c.distance,c.height)<=29.5&&(c.aimDistance??0)<=30&&aimed(c,.14);
     return true;
   }
   if(c.special==='crabTank'){
@@ -174,24 +239,30 @@ export function driveRangedSpecial(c) {
     const rear=Math.cos(yaw-(actor.yaw||0))<0&&c.distance<12;
     const rolling=c.distance<6||rear||(actor.hp<35&&actor.lastDamage<.8)||bombThreat(c);
     if(rolling){it.squid=true;c.moveToward?.(enemy.pos,-1);return true;}
-    keepDistance(c,16,26);
     const cannon=c.distance<=9&&Math.abs(c.height)<=3&&enemy.hp<=50&&(s.t||0)>=(s.nextCannon||0);
     // R interrupts the accelerating ZR stream; use it only for a close finisher.
-    it.sub=cannon&&aimed(c,.15);it.fire=!it.sub&&c.distance<=32&&Math.abs(c.height)<=10&&aimed(c,.14);
+    // Settle this short lob before R instead of firing a flat shell into the floor.
+    if(cannon&&aimCrabCannon(c)){stop(c);it.sub=aimed(c,.05);return true;}
+    keepDistance(c,16,26);
+    it.fire=c.distance<=32&&Math.abs(c.height)<=10&&aimed(c,.14);
     return true;
   }
   if(c.special==='zipcaster'){
     stop(c);if(s.phase!=='ready')return true;
     if(c.distance<=mainRange(c)*1.05&&Math.abs(c.height)<=10){
       aim(c,enemy.pos,.65,Math.min(.25,c.distance/(actor.weapon?.projSpeed||30)));
-      it.fire=aimed(c,.14);return true;
+      // The native main policy owns charge/release cycles (Stringer/Splatana,
+      // Charger and Splatling); a permanent hold never fires release weapons.
+      it.fire=!!c.normalIntent?.fire&&aimed(c,.14);return true;
     }
     if((s.inkFuel??150)<15||(s.t||0)<(s.nextHookAt||0))return true;
     const point=hookPoint(c);if(!point)return true;
     // Hook uses aimPoint-minus-feet from a chest-height origin. Offset the
     // reticle so the actual emitted ray reaches the sampled floor surface.
     aim(c,point,-1.05);
-    it.sub=aimed(c,.1)&&!s.held?.sub;
+    // A loose angular gate can overshoot a shallow floor ray by many metres.
+    // Confirm the current emitted ray, not just its requested eye-angle.
+    it.sub=aimed(c,.1)&&hookAimedAtSurface(c,point)&&!s.held?.sub;
     return true;
   }
   return true;

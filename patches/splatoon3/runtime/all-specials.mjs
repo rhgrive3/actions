@@ -2641,6 +2641,7 @@ function installRuntime(api) {
   };
   if(typeof blast==='function')P._blastBurst=function(p,at,...args){
     rt.system=this;
+    const deferred=p.s3TerrainBurstDeferrals||0;
     const owner=p?.owner,previousCause=owner?._s3AllSpecialDamageCause;
     const cause=projectileObjectCause(p,'blast');
     if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=cause;
@@ -2648,6 +2649,9 @@ function installRuntime(api) {
     try{result=blast.call(this,p,at,...args);}finally{
       if(owner){if(previousCause===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previousCause;}
     }
+    // Terrain impact queues its complete special snapshot for the next tick.
+    // Object hits and special paint belong to that flush, once, with HP damage.
+    if((p.s3TerrainBurstDeferrals||0)!==deferred)return result;
     const weapon=p?.s3SpecialWeapon||p?.s3Weapon||api.WEAPONS?.[p?.wid]||api.WEAPONS?.blaster;
     const bands=weapon?.splashBands||weapon?.damageBands;
     if(!p?.ghost&&!p?.owner?.remote&&bands?.length&&p.s3AllSpecial!=='booyahBomb'){

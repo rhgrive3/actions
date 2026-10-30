@@ -96,7 +96,7 @@ test('Crab preserves its accelerating stream, uses cannon for a close finisher a
  for(let i=0;i<120;i++)x.drive();
  assert.ok(x.events.filter(e=>e.action==='shot').length>=10);
  assert.equal(x.events.filter(e=>e.action==='cannon').length,0,'ordinary stream is not reset by periodic R');
- x.enemy.pos.copy(x.a.pos).z+=8;x.enemy.hp=40;
+ x.enemy.pos.copy(x.a.pos).z+=6.8;x.enemy.hp=40;
  for(let i=0;i<20&&!x.events.some(e=>e.action==='cannon');i++)x.drive();
  assert.ok(x.events.some(e=>e.action==='cannon'));
  x.enemy.pos.copy(x.a.pos).z+=4;x.drive({apply:false});
@@ -143,4 +143,102 @@ test('Booyah eye-based aiming reaches the intended ground target with the real p
  };
  for(let i=0;i<150;i++)if(x.f.G.projectiles._step(p,1/60))break;
  assert.ok(p.pos.distanceTo(x.enemy.pos)<3,`landing ${p.pos.toArray()} should be near target ${x.enemy.pos.toArray()}`);
+});
+
+
+test('full BotBrain Zipcaster lands at its planned surface and releases its native Splatana main',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture(),{a,b,enemy}=f.scenario('zipcaster');
+ a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));
+ const before=enemy.hp;let landing=null;
+ for(let frame=0;frame<420;frame++){
+  const phase=a._s3AllSpecialState?.phase;f.tick(a,b);
+  if(!landing&&phase==='zip'&&a._s3AllSpecialState?.phase==='hookWait')landing=a.pos.clone();
+ }
+ assert.ok(landing,'native hook travel reaches a surface');
+ assert.ok(landing.z<enemy.pos.z,'hook must not overshoot its target to the wall behind it');
+ assert.ok(f.rounds.some(p=>p.owner===a),'native main receives a real release edge after arrival');
+ assert.ok(enemy.hp<before-60,'main attacks add damage beyond a hook body contact');
+});
+
+test('full BotBrain ranged damage is caused by the special projectile or special effect',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture();
+ for(const special of ['trizooka','tentaMissiles','inkjet','booyahBomb','killerWail','inkVac','crabTank']){
+  const {a,b,enemy}=f.scenario(special);
+  a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));
+  let projectile=null,damage=0;
+  const step=f.G.projectiles._step,apply=f.G.projectiles.applyHit,burst=f.G.projectiles._blastBurst;
+  f.G.projectiles._step=function(p,...args){const before=projectile;projectile=p;try{return step.call(this,p,...args);}finally{projectile=before;}};
+  f.G.projectiles._blastBurst=function(p,...args){const before=projectile;projectile=p;try{return burst.call(this,p,...args);}finally{projectile=before;}};
+  f.G.projectiles.applyHit=function(owner,victim,amount,cause,...args){
+   const before=victim?.hp,result=apply.call(this,owner,victim,amount,cause,...args);
+   if(owner===a&&victim===enemy&&(cause===special||projectile?.wid===special))damage+=Math.max(0,before-victim.hp);
+   return result;
+  };
+  for(let frame=0;frame<650;frame++)f.tick(a,b);
+  f.G.projectiles._step=step;f.G.projectiles.applyHit=apply;f.G.projectiles._blastBurst=burst;
+  assert.equal(a.stats.specials,1,special+' admitted exactly once');
+  assert.ok(damage>0,special+' damage must be attributable to its own projectile/effect');
+ }
+});
+
+test('full BotBrain Inkjet moves while hovering and returns toward its marker after target loss',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture(),{a,b,enemy}=f.scenario('inkjet');enemy.pos.z=28;
+ for(let frame=0;frame<150;frame++)f.tick(a,b);
+ assert.equal(a.specialActive?.id,'inkjet');assert.ok(a.pos.y>4,'real hover is active');
+ assert.ok(a.pos.z>2,'airborne navigation can approach beyond its preferred range');
+ const before=a.pos.z;b.target=null;b.seeTimer=0;b.think=100;
+ for(let frame=0;frame<90;frame++){f.tick(a,b);assert.equal(a.intent.fire,false,'target loss releases ZR');}
+ assert.ok(a.pos.z<before-1,'without a target it flies toward its actual return marker');
+});
+
+test('full BotBrain Zipcaster preserves native release cycles with other charged main weapons',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture();
+ for(const weapon of ['charger','splatling','s3-stringer-normal']){
+  const {a,b,enemy}=f.scenario('zipcaster');a.setWeapon(weapon);
+  assert.equal(f.applyCatalogueChoice(a,{sub:'bomb',special:'zipcaster'},f),true);
+  a.special=a.specialCost();enemy.pos.z=10;
+  a.character.getMuzzle=out=>out.copy(a.pos).add(new f.THREE.Vector3(0,1.05,.3));a._startSpecial();
+  let release=false,previous=false;
+  for(let frame=0;frame<240&&a.specialActive;frame++){f.tick(a,b);release||=previous&&!a.intent.fire;previous=a.intent.fire;}
+  assert.ok(release,weapon+' emits a fire-up edge');
+  assert.ok(enemy.hp<100000,weapon+' deals actual native main damage, including hitscan');
+ }
+});
+
+
+test('full BotBrain Crab uses an elevated cannon arc for a reachable close finisher',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture(),{a,b,enemy}=f.scenario('crabTank');
+ enemy.pos.z=6.8;enemy.hp=40;a._startSpecial();
+ let cannon=null,cannonDamage=0,inCannonBurst=false;
+ const burst=f.G.projectiles._blastBurst,hit=f.G.projectiles.applyHit;
+ f.G.projectiles._blastBurst=function(p,...args){const before=inCannonBurst;inCannonBurst=p.s3AllSpecialMode==='cannon';try{return burst.call(this,p,...args);}finally{inCannonBurst=before;}};
+ f.G.projectiles.applyHit=function(owner,victim,...args){const hp=victim.hp,result=hit.call(this,owner,victim,...args);if(inCannonBurst&&owner===a&&victim===enemy)cannonDamage+=Math.max(0,hp-victim.hp);return result;};
+ const push=f.G.projectiles._push;
+ f.G.projectiles._push=function(p){if(p.owner===a&&p.s3AllSpecialMode==='cannon')cannon={velocity:p.vel.clone(),point:a.aimPoint.clone()};return push.call(this,p);};
+ for(let frame=0;frame<90&&!cannonDamage;frame++)f.tick(a,b);
+ assert.ok(cannon,'a close finisher reaches the actual cannon input');
+ assert.ok(cannon.velocity.y>3,'the heavy cannon shell is aimed above the target for its falling arc');
+ assert.ok(cannon.point.y>enemy.pos.y+1.5,'cannon has its own reticle instead of the rapid-fire body aim');
+ assert.ok(cannonDamage>0,'the cannon blast itself reduces enemy HP, excluding rapid-fire hits');
+});
+
+
+test('full BotBrain Zipcaster cancels a held charge on target loss without an accidental shot',async()=>{
+ const {makeBotSpecialFixture}=await import('./bot-special-fixture.mjs');
+ const f=await makeBotSpecialFixture(),{a,b,enemy}=f.scenario('zipcaster');
+ a.setWeapon('charger');f.applyCatalogueChoice(a,{sub:'bomb',special:'zipcaster'},f);
+ a.special=a.specialCost();enemy.pos.z=10;a._startSpecial();
+ let shots=0;const fire=f.G.projectiles.fireCharger;
+ f.G.projectiles.fireCharger=function(owner,...args){if(owner===a)shots++;return fire.call(this,owner,...args);};
+ for(let frame=0;frame<15;frame++)f.tick(a,b);
+ assert.equal(a.weaponRunner.charging,true,'native charge is held before losing sight');
+ const before=shots;b.target=null;b.seeTimer=0;b.think=100;
+ for(let frame=0;frame<20;frame++)f.tick(a,b);
+ assert.equal(shots,before,'target loss cancels rather than fires the stored charge');
+ assert.equal(a.form,'squid');
 });
