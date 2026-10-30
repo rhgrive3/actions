@@ -81,6 +81,37 @@ test('HUD is revealed on spawn cut and READY only once; initial launch hands cam
   assert.equal(f.rig._turfIntro, null); assert.equal(handedBack, true); assert.equal(f.rig.blend.active, true);
 });
 
+test('the settled pre-GO view publishes same-tick aiming without moving the pod',async()=>{
+  const f=await setup(),local=f.match.local,start=local.pos.toArray();
+  f.match.stateT=455/60;f.rig.update(1/60);const before=f.camera.quaternion.toArray();
+  f.match.stateT=456/60;f.rig.yaw+=.3;f.rig.pitch=-.3;f.rig.update(1/60);
+  assert.notDeepEqual(f.camera.quaternion.toArray(),before);
+  assert.ok(f.rig._s3AimFrame,'the revealed camera owns the simulation aim');
+  assert.deepEqual(local.pos.toArray(),start);assert.equal(local.s3.squidSpawn.phase,'aim');
+});
+
+test('native Match enables pre-GO controller only in the settled spawn view and respects pause',async()=>{
+  const f=await fixture({productionComposition:true,
+    extraExports:"export { Match } from './inkwave-public/src/game/match.js';"});
+  const m=new f.Match({});m.local={alive:true,s3:{squidSpawn:{initial:true,phase:'aim'}}};
+  const enabled=[];m.controller={update(){enabled.push(this.enabled);}};m.state='intro';
+  for(const frame of [0,399,455,456,577]){m.stateT=frame/60;m.updateController(1/60);}
+  m.paused=true;m.updateController(1/60);
+  m.paused=false;m.bossMode={};m.updateController(1/60);
+  assert.deepEqual(enabled,[false,false,false,true,true,false,false]);
+});
+
+test('native controller publishes a last-frame pre-GO turn before computing the launch target',async()=>{
+  const f=await setup(),a=f.make('shooter');a.pos.copy(f.match.local.pos);
+  a.s3.squidSpawn={initial:true,phase:'aim'};f.match.local=a;f.G.actors=[a];
+  f.G.rig=f.rig;f.G.camera=f.camera;f.match.stateT=577/60;f.rig.update(1/60);
+  const old=f.camera.quaternion.toArray();f.rig.yaw+=.4;
+  f.PlayerController.prototype.computeAim.call({a,rig:f.rig},true);
+  assert.notDeepEqual(f.camera.quaternion.toArray(),old);
+  const direction=f.camera.getWorldDirection(new f.THREE.Vector3()),aim=a.aimPoint.clone().sub(f.camera.position).normalize();
+  assert.ok(direction.dot(aim)>1-1e-8,'native launch aim uses the current turn, not the preceding rendered ray');
+});
+
 test('abandoned match or flow cannot reveal HUD or replay a cinematic', async () => {
   for (const invalidate of [f => { f.game.match = {}; }, f => { f.game._matchFlow = {}; }, f => { f.match.state = 'results'; }]) {
     const f = await setup(); f.rig.mode = f.rig._prevMode = 'orbit'; f.rig._orbit = () => {};

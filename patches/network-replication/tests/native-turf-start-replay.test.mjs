@@ -76,8 +76,12 @@ test('native initial spawn and first Charger launch are replayed from uninterrup
   consume(row);
   assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},authorization).ok,false,'duplicate tick rejected');
   const advance=async()=>{await pace();p.step();q.step();consume(p.rows.at(-1));};
-  for(let i=1;i<260;i++)await advance();assert.equal(p.match.state,'playing');assert.equal(p.actor.s3.squidSpawn.phase,'aim');
-  p.actor.intent.fire=true;await advance();p.actor.intent.fire=false;
+  // The production Match owns the filmed intro budget. The old 260F wait
+  // stopped inside the 578F camera and never reached native GO.
+  const go=p.match.turfIntroFrames||253;
+  for(let i=1;i<go-1;i++)await advance();
+  assert.equal(p.match.state,'intro');assert.equal(p.actor.s3.squidSpawn.phase,'aim');
+  await advance();assert.equal(p.match.state,'playing');
   assert.equal(p.actor.s3.squidSpawn.phase,'flight');packetAt('launch');
   p.actor.intent.move.set(.25,0,0);
   for(let i=0;i<120&&p.actor.s3.squidSpawn;i++)await advance();

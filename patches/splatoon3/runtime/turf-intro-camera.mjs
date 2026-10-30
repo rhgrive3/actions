@@ -5,6 +5,11 @@ import { beginIntroPresentation, advanceIntroPresentation } from './intro-presen
 // nawabari_pc.mp4 clip, NOT recovered Nintendo camera data or a version-11.3
 // measurement. Camera distances/angles below are local visual calibration.
 export const TURF_INTRO_FRAMES = Object.freeze({ opponent: 209, spawn: 399, ready: 436, settle: 456, go: 578 });
+export function turfIntroAiming(match) {
+  return match?.state === 'intro' && !match.bossMode && match.local?.alive &&
+    match.local.s3?.squidSpawn?.initial && match.local.s3.squidSpawn.phase === 'aim' &&
+    match.stateT * 60 + 1e-8 >= TURF_INTRO_FRAMES.settle;
+}
 const clamp = x => Math.max(0, Math.min(1, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 
@@ -73,6 +78,7 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
   // The cinematic is sampled from Match.stateT, never integrated with render dt.
   // Pausing, repeated frames and 30/60/120-Hz rendering therefore share one pose.
   const shot = openingAim ? { name: 'spawn', team, progress: 1 } : turfIntroShot(match.stateT, team);
+  const aim = openingAim || turfIntroAiming(match);
   const tags = game.hud?._turfIntroLineup;
   if (tags?.match === match) {
     if (shot.name === 'spawn') { tags.el.remove(); game.hud._turfIntroLineup = null; }
@@ -103,11 +109,11 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
     r.finish.set(p.x + own.x * 2.5, p.y + 2.2, p.z + own.z * 2.5);
     r.start.set(p.x - own.x * 5.5, p.y + 3.4, p.z - own.z * 5.5);
     cam.position.lerpVectors(r.start, r.finish, e);
-    const yaw = openingAim ? rig.yaw : Math.atan2(own.x, own.z), pitch = openingAim ? rig.pitch : -0.45;
+    const yaw = aim ? rig.yaw : Math.atan2(own.x, own.z), pitch = aim ? rig.pitch : -0.45;
     const cp = Math.cos(pitch);
     r.look.set(cam.position.x + Math.sin(yaw) * cp * 10, cam.position.y + Math.sin(pitch) * 10, cam.position.z + Math.cos(yaw) * cp * 10);
     cam.lookAt(r.look); publish(rig, BATTLE_HUMANOID_VERTICAL_FOV, true);
-    if (openingAim) {
+    if (aim) {
       // Same-tick input rotates this spawn POV in place. Reuse the normal aim
       // snapshot rather than retaining an attract/portrait pivot for the ray.
       rig.pivot.copy(cam.position); recordAimPose?.(rig);
