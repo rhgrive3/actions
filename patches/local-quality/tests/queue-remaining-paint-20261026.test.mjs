@@ -26,6 +26,21 @@ function replayFinalPaintOwners(source,bytes=finalPaintOwnerBytes){
   for(const {before,after,label} of finalPaintOwners(bytes))source=replaceOnce(source,before,after,label);
   return source;
 }
+// Reviewed native-stage contact-plane routing, subsequently added to the
+// source chain. Keep every historical byte and prove each new anchor exactly.
+const nativeContactOwners = [
+  ["import { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';",
+   "import { nativeContactFace, nativeContactCoplanar } from '../../patches/native-stages/runtime/native-paint.mjs';\nimport { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';"],
+  ['    const faceIds = Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;',
+   '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    const faceIds = !contactFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;'],
+  ['          if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
+   '          if (fid < 0 || (!contactFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f))) continue;'],
+];
+function replayNativeContact(source, reverse=false){
+  for(const [before,after] of reverse?[...nativeContactOwners].reverse():nativeContactOwners)
+    source=replaceOnce(source,reverse?after:before,reverse?before:after,'reviewed native paint contact');
+  return source;
+}
 for (const row of Object.values(baseline)) if (row?.source) assert.equal(sha(row.source), row.sha256);
 assert.equal(sha(baseline.ownership.composedSource), baseline.ownership.composedSha256);
 const candidate = adaptRemainingPaint20261026('src/world/paint.js', baseline.paint.source);
@@ -227,8 +242,8 @@ test('paint source adapter is isolated and fail-closed', () => {
   const final=replayFinalPaintOwners(terminal),owners=finalPaintOwners();
   assert.equal(owners.length,2,'both reviewed final paint owners are represented');
   assert.notEqual(final,terminal,'reviewed final owner is distinct from the unchanged older chain');
-  assert.equal(current,final,'production composition is remaining-paint → combat-world → CPU → regional rendering → world-native → reviewed final owner');
-  let restored=current;
+  assert.equal(current,replayNativeContact(final),'production composition includes the reviewed native contact-plane owner');
+  let restored=replayNativeContact(current,true);
   for(const {before,after,label} of [...owners].reverse())restored=replaceOnce(restored,after,before,'reverse '+label);
   assert.equal(restored,terminal,'current paint source reverses to the complete independently composed older chain');
   for(const {before,after,label} of owners){

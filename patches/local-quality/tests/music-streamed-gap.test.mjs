@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { idleFixture, audioFixture } from './idle-fixture.mjs';
 
 async function rig({ pending = false, streamed = true } = {}) {
@@ -15,7 +17,13 @@ async function rig({ pending = false, streamed = true } = {}) {
     removeAttribute(name) { assert.equal(name, 'src'); this.src = ''; }
     load() {}
   }
-  const api = await idleFixture({ globals: { ...f.globals, ...(streamed ? { Audio } : {}), window: {}, document, addEventListener() {}, removeEventListener() {} } });
+  // The shared source fixture intentionally stops before later build adapters.
+  // Exercise the complete production music owner here, while leaving an
+  // already-built site untouched when CI supplies INKWAVE_IDLE_BUILD.
+  const transform = (rel, code) => !process.env.INKWAVE_IDLE_BUILD && rel === 'src/audio/music.js'
+    ? adaptBuildSource(rel, fs.readFileSync(new URL('../../../inkwave-public/src/audio/music.js', import.meta.url), 'utf8'))
+    : code;
+  const api = await idleFixture({ transform, globals: { ...f.globals, ...(streamed ? { Audio } : {}), window: {}, document, addEventListener() {}, removeEventListener() {} } });
   const music = new api.MusicEngine(); music._init(f.ctx, f.ctx.createGain()); music.play(streamed ? 'battle' : 'title', { fade: 0 });
   // Constructor names are minified in production; check the actual media owner.
   assert.equal(music.current.element instanceof Audio, streamed);

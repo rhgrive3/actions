@@ -150,12 +150,13 @@ test('#675 pre-minimum physical taps emit one authorized, paid minimum shot afte
     assert.equal(f.shots.length, 0, 'held startup / charging never fires');
     actor.intent.fire = false;
     f.tick(actor);
+    const paidOnRelease = 100 - actor.ink;
     assert.equal(f.shots.length, 0, 'one release-gap frame for ' + heldFrames + 'F tap');
     f.tick(actor, 4);
     assert.equal(f.shots.length, 1, 'exactly one authorized ' + heldFrames + 'F minimum shot');
     const minimum = (actor.weapon.minimumChargeTime ?? 8 / 60) / actor.weapon.chargeTime;
     close(f.shots[0].charge, Math.min(1, minimum), 'minimum release charge floor');
-    close(100 - actor.ink, actor.weapon.inkMin, 'minimum release ink payment');
+    close(paidOnRelease, actor.weapon.inkMin, 'minimum release ink payment before subsequent regeneration');
     assert.ok(actor.ink >= 0 && actor.ink <= 100);
   }
 });
