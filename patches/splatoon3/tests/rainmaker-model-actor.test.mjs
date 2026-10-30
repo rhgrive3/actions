@@ -16,6 +16,36 @@ function triangleIntersects(a,b,THREE,epsilon=1e-8){
  return true;
 }
 
+function checkConvexComponent(ts,planes,center){
+ assert.ok(ts.every(t=>[t.a,t.b,t.c].every(v=>[v.x,v.y,v.z].every(Number.isFinite))),'convex vertices are finite');
+ assert.ok(planes.every(pl=>[pl.normal.x,pl.normal.y,pl.normal.z,pl.constant].every(Number.isFinite)),'convex planes are finite');
+ assert.ok(ts.every(t=>[t.a,t.b,t.c].every(v=>planes.every(pl=>pl.distanceToPoint(v)<=1e-6))),'dorsal emitted component remains convex');
+ assert.ok(planes.every(pl=>pl.distanceToPoint(center)<-1e-6),'dorsal closed solid has a strict interior');
+}
+function buildPrisms(vertices,capPairs){
+ const out=[];
+ for(let i=0;i<capPairs;i++){
+  const a=[0,3,6].map(j=>vertices.slice(i*18+j,i*18+j+3));
+  const b=[0,6,3].map(j=>vertices.slice(i*18+9+j,i*18+9+j+3));
+  if([...a.flat(),...b.flat()].some(x=>!Number.isFinite(x)))throw Error("nonfinite fin");
+  const denom=(a[1][2]-a[2][2])*(a[0][1]-a[2][1])+(a[2][1]-a[1][1])*(a[0][2]-a[2][2]);
+  if(Math.abs(denom)<1e-12)throw Error("degenerate fin");
+  for(let j=0;j<3;j++)if(a[j][1]!==b[j][1]||a[j][2]!==b[j][2]||b[j][0]<=a[j][0])throw Error("bad paired extrusion");
+  out.push({a,b,denom,min:[0,1,2].map(k=>Math.min(...a.map(v=>v[k]),...b.map(v=>v[k]))),max:[0,1,2].map(k=>Math.max(...a.map(v=>v[k]),...b.map(v=>v[k])))});
+ }return out;
+}
+function insidePrisms(prisms,p,epsilon=1e-6){
+ if(!p.every(Number.isFinite))throw Error("nonfinite skin vertex");
+ for(const {a,b,denom,min,max}of prisms){
+  if(p.some((v,k)=>v<min[k]-epsilon||v>max[k]+epsilon))continue;
+  const u=((a[1][2]-a[2][2])*(p[1]-a[2][1])+(a[2][1]-a[1][1])*(p[2]-a[2][2]))/denom;
+  const v=((a[2][2]-a[0][2])*(p[1]-a[2][1])+(a[0][1]-a[2][1])*(p[2]-a[2][2]))/denom;
+  const w=1-u-v;if(Math.min(u,v,w)<-1e-10)continue;
+  const lo=u*a[0][0]+v*a[1][0]+w*a[2][0],hi=u*b[0][0]+v*b[1][0]+w*b[2][0];
+  if(p[0]>lo+epsilon&&p[0]<hi-epsilon)return true;
+ }return false;
+}
+
 const floor={id:0,solid:true,grate:false,faces:[-1,-1,-1,-1,-1,-1],center:new THREE.Vector3(0,-1,0),half:new THREE.Vector3(100,1,100),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],aabbMin:new THREE.Vector3(-100,-2,-100),aabbMax:new THREE.Vector3(100,0,100)};
 G.level={...G.level,blocks:[floor],groundHeight:()=>0,queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;}};G.physics=new f.installedRuntime.Physics(G.level);
 for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualies']))test(weapon+' actual Actor hand anchor and primary/left visibility ownership',async()=>{
@@ -30,26 +60,52 @@ for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualie
   let g=0,m=0;world.rainmakerCore.geometry.addEventListener('dispose',()=>g++);world.rainmakerCore.material.addEventListener('dispose',()=>m++);
   const geo=world.rainmakerCore.geometry,attr=geo.attributes.position;
   const triangles=Array.from({length:geo.index.count/3},(_,i)=>new THREE.Triangle(...[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(attr,geo.index.getX(i*3+j)))));
+  assert.ok(triangles.every(t=>[t.a,t.b,t.c].every(v=>[v.x,v.y,v.z].every(Number.isFinite))),'all emitted fish vertices are finite');
   // The model grew from 456 to 608 triangles. A stale face range can
   // misclassify open jaw/torus faces as convex solids, falsely trapping skin.
   // Only closed convex primitives use half-space containment; open or
   // nonconvex surfaces are still checked below by exact face intersection.
-  let faceOffset=0;const solidRuns=[];
+  let faceOffset=0;const solidRuns=[],finRuns=[];
   for(const [name,faceCount,closedConvex] of [
     ['body',64,true],['open-head',80,false],['outer-jaw',24,false],
     ['mouth-torus',96,false],['inner-jaw',24,false],['dark-bore',12,false],
     ['eye-L',36,true],['pupil-L',20,true],['fin-L',20,false],['tooth-L',8,true],
     ['eye-R',36,true],['pupil-R',20,true],['fin-R',20,false],['tooth-R',8,true],
-    ['tail-base',36,true],['tail-fin',60,false],['dorsal-fin',20,false],
+    ['tail-base',36,true],['tail-fin',60,false],['dorsal-fin',20,true],
     ['grip',12,true],['brace',12,true]
-  ]){assert.ok(faceCount>0,name);if(closedConvex)solidRuns.push([faceOffset,faceCount]);faceOffset+=faceCount;}
+  ]){assert.ok(faceCount>0,name);if(closedConvex)solidRuns.push([faceOffset,faceCount,name]);if(['fin-L','fin-R','tail-fin'].includes(name))finRuns.push({name,start:faceOffset,capPairs:(faceCount-4)/4});faceOffset+=faceCount;}
   assert.equal(faceOffset,triangles.length,'update the convex-component map when the emitted geometry changes');
-  const solids=solidRuns.map(([start,len])=>{const ts=triangles.slice(start,start+len),box=new THREE.Box3().setFromPoints(ts.flatMap(t=>[t.a,t.b,t.c])),center=box.getCenter(new THREE.Vector3());return{box,planes:ts.map(t=>{const pl=new THREE.Plane().setFromCoplanarPoints(t.a,t.b,t.c);if(pl.distanceToPoint(center)>0)pl.negate();return pl;})};});
-  const tail=[[.40,-.46],[.60,-.56],[.77,-.65],[.85,-.75],[.87,-.85],[.84,-.95],[.77,-.94],[.70,-.86],[.65,-.77],[.61,-.87],[.54,-.98],[.47,-1.00],[.40,-.95],[.38,-.84],[.40,-.72],[.32,-.62]];
-  function inTail(p){const x=(p.x+.30)/.6,y=(p.y+.02)/.6,z=(p.z-.44)/.6;if(Math.abs(x)>=.0225||y<=.32||y>=.87||z<=-1||z>=-.46)return false;let inside=false;for(let i=0,j=tail.length-1;i<tail.length;j=i++){const[a,b]=tail[i],[c,d]=tail[j];if((a>y)!==(c>y)&&z<(d-b)*(y-a)/(c-a)+b)inside=!inside;}return inside;}
+  const solids=solidRuns.map(([start,len,name])=>{
+   const ts=triangles.slice(start,start+len),box=new THREE.Box3().setFromPoints(ts.flatMap(t=>[t.a,t.b,t.c])),center=box.getCenter(new THREE.Vector3());
+   const planes=ts.map(t=>{const pl=new THREE.Plane().setFromCoplanarPoints(t.a,t.b,t.c);if(pl.distanceToPoint(center)>0)pl.negate();return pl;});
+   assert.ok(planes.every(pl=>[pl.normal.x,pl.normal.y,pl.normal.z,pl.constant].every(Number.isFinite)),'all convex planes are finite');
+   if(name==='dorsal-fin'){
+    checkConvexComponent(ts,planes,center);
+    const invalidPoint=center.clone();invalidPoint.x=NaN;
+    assert.throws(()=>checkConvexComponent([{a:invalidPoint,b:center,c:center}],planes,center),/vertices are finite/);
+    const invalidPlanes=planes.map(pl=>pl.clone());invalidPlanes[0].constant=Infinity;
+    assert.throws(()=>checkConvexComponent(ts,invalidPlanes,center),/planes are finite/);
+    const outside=center.clone().addScaledVector(planes[0].normal,1000);
+    assert.throws(()=>checkConvexComponent([{a:outside,b:center,c:center}],planes,center),/remains convex/);
+    const flatPlanes=planes.map(pl=>pl.clone());flatPlanes[0].constant=-flatPlanes[0].normal.dot(center);
+    assert.throws(()=>checkConvexComponent([{a:center,b:center,c:center}],flatPlanes,center),/strict interior/);
+   }
+   return{box,planes};
+  });
+  const finPrisms=finRuns.flatMap(({start,capPairs})=>buildPrisms(triangles.slice(start,start+capPairs*2).flatMap(t=>[...t.a.toArray(),...t.b.toArray(),...t.c.toArray()]),capPairs));
+  assert.equal(finPrisms.length,22,'all emitted tail and side-fin fan prisms are covered');
+  for(const prism of finPrisms){
+   const point=[0,1,2].map(k=>prism.a.reduce((sum,p)=>sum+p[k],0)/3);
+   point[0]=(prism.a.reduce((sum,p)=>sum+p[0],0)+prism.b.reduce((sum,p)=>sum+p[0],0))/6;
+   assert.ok(insidePrisms([prism],point),'fan cap centroid at mid-thickness is solid, including tail face 526');
+   assert.equal(insidePrisms([prism],[prism.max[0]+1,point[1],point[2]]),false,'outside thickness remains outside');
+  }
+  assert.throws(()=>insidePrisms(finPrisms,[NaN,0,0]),/nonfinite/);
+  assert.throws(()=>insidePrisms(finPrisms,[0,Infinity,0]),/nonfinite/);
   const regions={head:[],chest:[]};ch.root.traverseVisible(mesh=>{if(!mesh.isSkinnedMesh||!['skin','cloth'].includes(mesh.userData.iwMat))return;const attrs=mesh.geometry.attributes;for(let i=0;i<attrs.position.count;i++){const w={head:0,chest:0};for(let j=0;j<4;j++){const n=ch.skeleton.bones[attrs.skinIndex.getComponent(i,j)].name,v=attrs.skinWeight.getComponent(i,j);if(/^(head|eye|brow|mouth|jaw|cheek|ear)/.test(n))w.head+=v;if(['chest','spine','neck'].includes(n))w.chest+=v;}for(const k of['head','chest'])if(w[k]>=.5)regions[k].push([mesh,i]);}});
   const fishBoxes=triangles.map(t=>new THREE.Box3().setFromPoints([t.a,t.b,t.c]));const candidateFishFaces=createTriangleAabbIndex(fishBoxes);const regionMaps=new Map();for(const points of Object.values(regions))for(const[mesh,i]of points){if(!regionMaps.has(mesh))regionMaps.set(mesh,new Set());regionMaps.get(mesh).add(i);}
   const fishBounds=new THREE.Box3().setFromBufferAttribute(attr),nearest=new THREE.Vector3(),worstSnapshots={};
+  assert.ok([...fishBounds.min.toArray(),...fishBounds.max.toArray()].every(Number.isFinite),'fish bounds are finite');
   const result={extremeAim,faceChecks:[],vertexSurfaceMinimum:{head:{distance:Infinity,tick:-1},chest:{distance:Infinity,tick:-1}},weapon,team,sourceReceipt:{requested:sourceEnabled,status:ch.sourceMotion?.status??null,activeAfterFrame:false},counts:Object.fromEntries(Object.entries(regions).map(([k,p])=>[k,p.length])),minConvexPlaneValue:{head:Infinity,chest:Infinity},maxInside:{head:0,chest:0},samples:[]};
   assert.ok(regions.head.length>0&&regions.chest.length>0);const vertex=new THREE.Vector3();
   function checkSnapshot({tick,data}){let skinFaces=0,pairs=0,intersections=0;const examples=[],t=new THREE.Triangle(),box=new THREE.Box3();for(let i=0;i<data.length;i+=9){t.a.fromArray(data,i);t.b.fromArray(data,i+3);t.c.fromArray(data,i+6);skinFaces++;box.setFromPoints([t.a,t.b,t.c]);for(const fi of candidateFishFaces(box)){if(!box.intersectsBox(fishBoxes[fi]))continue;pairs++;if(triangleIntersects(t,triangles[fi],THREE)){intersections++;if(examples.length<5)examples.push({skinFace:i/9,fishFace:fi});}}}assert.ok(skinFaces>0);return{tick,skinFaces,fishFaces:triangles.length,pairs,intersections,examples};}
@@ -68,7 +124,7 @@ for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualie
     const grip=world.rainmakerCore.getWorldPosition(new THREE.Vector3());assert.ok(grip.distanceTo(hand)<1e-6,'actual hand attachment');assert.ok(world.rainmakerCore.matrixWorld.elements.every(Number.isFinite));
     for(const[p]of pivots)assert.equal(p.visible,false);assert.equal(world.rainmakerShield.visible,false);
     ch.skeleton.update();const core=world.rainmakerCore;const surfaceChanged=new Set();
-    for(const[k,points]of Object.entries(regions)){let inside=0,min=Infinity;for(const[mesh,i]of points){mesh.getVertexPosition(i,vertex);mesh.localToWorld(vertex);core.worldToLocal(vertex);let union=Infinity;for(const{planes}of solids){let d=-Infinity;for(const pl of planes)d=Math.max(d,pl.distanceToPoint(vertex));union=Math.min(union,d);}min=Math.min(min,union);if(union< -1e-6||inTail(vertex))inside++;
+    for(const[k,points]of Object.entries(regions)){let inside=0,min=Infinity;for(const[mesh,i]of points){mesh.getVertexPosition(i,vertex);mesh.localToWorld(vertex);core.worldToLocal(vertex);assert.ok([vertex.x,vertex.y,vertex.z].every(Number.isFinite),'actual skin vertex remains finite');let union=Infinity;for(const{planes}of solids){let d=-Infinity;for(const pl of planes)d=Math.max(d,pl.distanceToPoint(vertex));union=Math.min(union,d);}min=Math.min(min,union);if(union< -1e-6||insidePrisms(finPrisms,[vertex.x,vertex.y,vertex.z]))inside++;
       let distance=result.vertexSurfaceMinimum[k].distance;if(fishBounds.distanceToPoint(vertex)<distance){for(let fi=0;fi<triangles.length;fi++){if(fishBoxes[fi].distanceToPoint(vertex)>=distance)continue;triangles[fi].closestPointToPoint(vertex,nearest);const d=nearest.distanceTo(vertex);if(d<distance){distance=d;result.vertexSurfaceMinimum[k]={distance,tick};surfaceChanged.add(k);}}}
 }result.minConvexPlaneValue[k]=Math.min(result.minConvexPlaneValue[k],min);result.maxInside[k]=Math.max(result.maxInside[k],inside);if(inside)result.samples.push({tick,region:k,inside,min});}
     if(extremeAim||[0,30,60,89].includes(tick)||surfaceChanged.size){
