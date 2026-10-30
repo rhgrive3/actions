@@ -27,6 +27,9 @@ export function specializeNativeSourceAmbient(shader,roughSpecular=false,facingC
   // this also preserves the proof under nonuniform parent scaling.
   'float nativeFacing=clamp(dot(normalize(objectNormal),normalize(nativeView*normalMatrix)),-1.0,1.0);\n'+
   'bool nativeConeSafe=projectionMatrix[0][0]>0.0&&projectionMatrix[1][1]>0.0&&projectionMatrix[0][1]==0.0&&projectionMatrix[1][0]==0.0&&determinant(mat3(viewMatrix))>0.0;\n'+
+  // Transparent DoubleSide materials also render with BackSide/FLIP_SIDED.
+  // Three reverses both the transformed normal and front-face convention then.
+  '#ifdef FLIP_SIDED\nnativeFacing=-nativeFacing;\n#endif\n'+
   'bool nativeSingle=nativeConeSafe&&abs(nativeFacing)>nativeNormalCone;\n'+
   'vec3 nativeNormal=normalize(transformedNormal)*(nativeSingle&&nativeFacing<0.0?-1.0:1.0);\n'+
   'vNativeIrradianceFront=getIBLIrradiance(nativeNormal);vNativeIrradianceBack=vNativeIrradianceFront;\n'+

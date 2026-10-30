@@ -140,7 +140,7 @@
   "normalMaps": "All normal-mapped native materials retain pixel-frequency IBL; weak-normal interpolation is removed after prior WebKit regression and unbounded normal Z review.",
   "geometryPropertyCheck": {
     "status": "passed",
-    "implementationGitBlob": "3c49e9e2768c31d4b10c06753de1256bb9654ca5",
+    "implementationGitBlob": "72e075643fc8b728987b8a274d1f6ec2bee7a302",
     "randomMeshes": 1500,
     "triangleCorners": 46272,
     "certificates": 8059,
@@ -165,5 +165,6 @@
     },
     "framesPerWindow": 10,
     "windows": 3
-  }
+  },
+  "transparentPasses": "FLIP_SIDED adjusts the cone-facing sign before selecting a hemisphere. Added independent FrontSide/BackSide property coverage."
 }

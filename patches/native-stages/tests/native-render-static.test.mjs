@@ -54,6 +54,26 @@ test('normal cones conservatively certify every incident triangle, including tra
  assert.equal(cones(vertices,[0,1,-1]),null);assert.equal(cones(vertices,[0,1,99]),null);assert.equal(cones(vertices,[0,1]),null);
 });
 
+test('normal-cone hemisphere reuse preserves transparent FrontSide and BackSide passes',async()=>{
+ const {display,nativeNormalCones:cones}=await fixture();display.dispose();
+ const v=new Float32Array([0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0,1]);
+ const bound=cones(v,new Uint32Array([0,1,2])).array[0]/255;
+ let front=0,back=0;
+ for(const flip of [1,-1])for(let i=0;i<720;i++){
+  const eye=new THREE.Vector3(Math.sin(i*.71),Math.cos(i*.43),Math.sin(i*.37)).normalize();
+  const authored=new THREE.Vector3(0,0,1),facing=authored.dot(eye),passFacing=flip*facing;
+  if(Math.abs(passFacing)<=bound)continue;
+  const transformed=authored.clone().multiplyScalar(flip);
+  const optimized=transformed.clone().multiplyScalar(passFacing<0?-1:1);
+  const glFrontFacing=flip*eye.z>0;
+  const expected=transformed.clone().multiplyScalar(glFrontFacing?1:-1);
+  assert.ok(optimized.distanceTo(expected)<1e-12);
+  if(glFrontFacing)front++;else back++;
+  if(flip<0&&facing<0)assert.ok(optimized.z<0,'BackSide must not flip the already transformed normal twice');
+ }
+ assert.ok(front>100&&back>100);
+});
+
 test('cone shader falls back at silhouettes, unusual cameras and missing attributes',async()=>{
  const {display,specializeNativeSourceAmbient:specialize}=await fixture(),mesh=display.group.children[0];
  assert.deepEqual(Array.from(mesh.material.defaultAttributeValues.nativeNormalCone),[1]);
@@ -61,6 +81,8 @@ test('cone shader falls back at silhouettes, unusual cameras and missing attribu
  const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:false,envMapCubeUVHeight:1024};
  assert.equal(specialize(shader,true,true),true);
  assert.match(shader.vertexShader,/abs\(nativeFacing\)>nativeNormalCone/);
+ assert.ok(shader.vertexShader.includes('#ifdef FLIP_SIDED\nnativeFacing=-nativeFacing;\n#endif'));
+ assert.ok(shader.vertexShader.indexOf('nativeFacing=-nativeFacing;')<shader.vertexShader.indexOf('bool nativeSingle='),'apply the BackSide convention before selecting an environment hemisphere');
  assert.match(shader.vertexShader,/determinant\(mat3\(viewMatrix\)\)>0.0/);
  assert.match(shader.vertexShader,/if\(!nativeSingle\)\{vNativeIrradianceBack=getIBLIrradiance/);
  assert.match(shader.fragmentShader,/gl_FrontFacing\?vNativeRadianceFront:vNativeRadianceBack/);
