@@ -39,6 +39,10 @@ export function adaptWeaponAudio(rel,code){
       victim.stop(0.05);
     }`,'loop priority admission before graph creation');
     code=once(code,'    let stopped = false;\n    const h = {\n      name,','    let stopped = false;\n    const h = {\n      name, priority,','retain live loop admission priority');
+    code=once(code,
+      '    fadeG.linearRampToValueAtTime(1, t + 0.06);\n    const fadeNow = (now) => Math.min(1, Math.max(0, (now - t) / 0.06));',
+      '    const attack=Number.isFinite(o.fadeIn)?Math.max(.001,Math.min(.06,o.fadeIn)):.06;\n    fadeG.linearRampToValueAtTime(1,t+attack);\n    const fadeNow=(now)=>Math.min(1,Math.max(0,(now-t)/attack));',
+      'short phase crossfades preserve recorded charge-cue attacks');
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallAudioSpatialDsp(AudioEngine,distCut);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
@@ -125,7 +129,14 @@ export function adaptWeaponAudio(rel,code){
       "h = this._voiceLoop(a, near, 'spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge });",
       "const isSpinner = k === 'splatling' || (k === 'catalog' && (a.weapon.behaviorKind === 'splatling' || a.weapon.catalogRecord?.family === 'splatling')) || a.weapon.id?.startsWith('s3-spinner-');\n      h = this._voiceLoop(a, near, 'spinnerCharge', isSpinner && wr.charging && !wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4, progress: wr.charge });\n      h = this._voiceLoop(a, near, 'spin', isSpinner && wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });",
       'remote Spinner charges with Motor and streams with MotorFire, never one sustained old motor');
-    code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='spinnerCharge'?'charge':key==='spin'?'spin':'roll', {actor:a,pos:a.pos,volume:0})");
+    code=once(code,
+      "      h = this._voiceLoop(a, near, 'roll',",
+      "      const isBow = a.weapon.catalogRecord?.family === 'stringer' || a.weapon.behaviorKind === 'stringer' || a.weapon.id?.startsWith('s3-stringer-');\n      const chargeAudible = near && a.form !== 'squid' && !a.specialActive && !a.superJumpState;\n      h = this._voiceLoop(a, chargeAudible, 'bowCharge', isBow && wr.charging, 'charger_charge');\n      if(h)h.set({pos:a.pos,volume:.4,progress:wr.charge});\n      h = this._voiceLoop(a, near, 'roll',",
+      'remote Stringers own one progress-aware recorded charge loop');
+    code=code.replace("isSpinner && wr.charging && !wr.streaming", "isSpinner && wr.charging && !wr.streaming && a.form !== 'squid' && !a.specialActive && !a.superJumpState");
+    code=code.replace("isSpinner && wr.streaming,", "isSpinner && wr.streaming && !a.specialActive && !a.superJumpState,");
+    code=once(code, "    const L = a.net.loops;", "    const L = a.net.loops;\n    if(L[key]?.playing===false){L[key].stop?.(.02);L[key]=null;}", 'failed replica loops can recover');
+    code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='bowCharge'?'charge':key==='spinnerCharge'?'charge':key==='spin'?'spin':'roll', {actor:a,pos:a.pos,volume:0,progress:a.weaponRunner.charge})");
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }

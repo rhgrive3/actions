@@ -8,6 +8,8 @@ import { sourceEventRoute } from './extra-source-routes.mjs';
 import { syncCatalogSpinnerCharge } from './spinner-charge-layer.mjs';
 import { spinnerAudioIds, spinnerClipDefinition, spinnerPreload, spinnerReleaseCache } from './spinner-charge-clips.mjs';
 import { spinnerChargeAudioLoop } from './spinner-charge-control.mjs';
+import { usesStringerCharge, stringerChargeAudioLoop } from './stringer-charge-control.mjs';
+import { installChargeAudioLifecycle, prewarmChargeCue } from './charge-audio-lifecycle.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
@@ -53,6 +55,7 @@ export function installWeaponAudioEngine(Engine){
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
     if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')void spinnerPreload(this,requested).catch(()=>{});
+    if(spinnerAudioIds.has(requested)||usesStringerCharge(requested))prewarmChargeCue(this);
     const ownerKey=id;
     if(this._prewarmId!==ownerKey||this._prewarmLoader!==this._realS3Loader){
       this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
@@ -73,6 +76,8 @@ export function installWeaponAudioEngine(Engine){
       const isCharger=AUDIO_RECIPES[id].family==='charger';
       const main=loader?.ensure(id,isCharger?'charge':'fire',{priority:true,owner:prewarmOwner});
       if(isCharger)loader?.ensure(id,null,{owner:prewarmOwner});
+      if(usesStringerCharge(requested))for(const event of ['charge','fire_full'])
+        loader?.ensure(id,event,{owner:prewarmOwner});
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
@@ -136,7 +141,7 @@ export function installWeaponAudioEngine(Engine){
     // Otherwise an immediate full shot falls back to the tap-shot recording.
     const family=AUDIO_RECIPES[id]?.family;
     const required=family==='charger'?['charge','ready','fire_full']:
-      family==='splatling'?['charge','spin','ready']:[];
+      family==='splatling'?['charge','spin','ready']:family==='stringer'?['charge','fire_full']:[];
     const requiredRecordings=required.filter(event=>loader.declares(id,event)===true);
     if(requiredRecordings.length)await audioLoadDeadline(loader.ensureMany(requiredRecordings.map(event=>({id,event})),{priority:true}),12000);
     for(const event of requiredRecordings){
@@ -175,8 +180,10 @@ export function installWeaponAudioEngine(Engine){
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
       }
     }
-    // The selected Spinner's complete two-stage phrase / rising layer must
-    // decode before the first playable trigger; missing sample is an error.
+    // One small shared recorded cue must be resident before a very short
+    // LACT first stage. Unknown/test manifests do not invent this source.
+    if((spinnerAudioIds.has(requested)||usesStringerCharge(requested))&&loader.declares('charger','ready')===true)
+      await audioLoadDeadline(loader.ensure('charger','ready',{priority:true}),12000);
     // Optional charge textures must never block START on slow/failed decode.
     // prepareWeapon already opportunistically warms the selected clip; its
     // native Motor fallback owns the sound until the texture is resident.
@@ -242,9 +249,8 @@ export function installWeaponAudioEngine(Engine){
     id=borrowedRecordedMainId(mainAudioSourceId(id));
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
-    const decorate = h => h; // spinner charge is now handled by the source phrase router below
     if(id.startsWith('special:')&&this._realS3Loader?.declares(id,event)===false)return null;
-    if(bank.authorized.byEvent.has(`${id}:${event}`))return decorate(this.loop(name,options));
+    if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);
     // A loop can begin after its source is decoded, provided the effect still
     // exists. Returning a permanent silent handle here leaves special effects
     // muted for their entire lifetime in kit-runtime's active map.
@@ -269,7 +275,7 @@ export function installWeaponAudioEngine(Engine){
         if(!actual||actual.playing===false){actual=null;failed=true;}
       }catch{failed=true;actual=null;}
     }).catch(()=>{failed=true;/* Missing/unavailable remains silent. */});
-    return decorate(handle);
+    return handle;
   };
   p.syncSpinnerCharge=function(runner){ return syncCatalogSpinnerCharge(this,runner); };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
@@ -312,6 +318,9 @@ export function installWeaponAudioEngine(Engine){
     if(event==='charge'&&spinnerAudioIds.has(source))
       return spinnerChargeAudioLoop(this,source,options,()=>previousLoop.call(
         this,id,source==='s3-spinner-downpour'?'spin':'charge',options));
+    if(event==='charge'&&usesStringerCharge(source))
+      return stringerChargeAudioLoop(this,source,options,()=>previousLoop.call(this,id,event,options));
     return previousLoop.call(this,id,event,options);
   };
+  installChargeAudioLifecycle(Engine);
 }
