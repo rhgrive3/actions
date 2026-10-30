@@ -21,6 +21,7 @@ class Engine{
  constructor(){this.ctx={state:'running',currentTime:0,decodeAudioData:async()=>makeBuffer()};this.voices=[];this.cues=[];}
  loop(name,o){if(this.reject)return {playing:false,set(){},stop(){}};const h=source();this.voices.push({name,o,h});return h;}
  playWeapon(id,event,o){this.cues.push({id,event,o});return {};}
+ play(name,o){this.cues.push({name,o});return {};}
  stopAll(){for(const v of this.voices)if(v.h.playing)v.h.stop();}
 }
 installChargeAudioLifecycle(Engine);
@@ -35,10 +36,11 @@ test('premix never runs into the next charge stage; actual thresholds own source
  h.set({progress:18/27});assert.equal(e.voices.length,2);assert.equal(e.voices[1].o.phase,1);
  assert.ok(Math.abs(e.voices[1].o.offset-.406061)<1e-8);
  h.set({progress:1});assert.equal(e.voices.length,3);assert.equal(e.voices[2].o.phase,2);
- assert.ok(Math.abs(e.voices[2].o.offset-.633333)<1e-8);
+ assert.ok(Math.abs(e.voices[2].o.offset-(.633333+.30))<1e-8,'skip embedded full beep');
  for(let n=0;n<300;n++)h.set({progress:1});
  assert.equal(e.voices.length,3,'full hold never restarts either beep');
- assert.equal(e.cues.length,0,'no generic ready layered over the recorded mix');
+ assert.equal(e.cues.length,1,'sole independent unwarped full cue');
+ assert.equal(e.cues[0].name,'charge:confirmation');assert.equal(e.cues[0].o.pitch,1.15);
  h.stop();assert.ok(e.voices.every(v=>!v.h.playing));
  spinnerReleaseCache(e);
 });
@@ -108,7 +110,7 @@ test('Stringers use distinct source mid/full clocks, one recorded loop and two r
   const e=new Engine(),a=actor(id),base=source(),h=stringerChargeAudioLoop(e,id,{actor:a,volume:.6},()=>base);
   assert.equal(chargeFraction(a.weapon,'stringer'),first/full);
   for(let f=1;f<=full;f++){e.ctx.currentTime=f/60;h.set({progress:f/full});}
-  assert.deepEqual(e.cues.map(c=>[c.id,c.event]),[['charger','ready'],['charger','ready']]);
+  assert.deepEqual(e.cues.map(c=>[c.name,c.o.pitch]),[['charge:confirmation',1],['charge:confirmation',1.15]]);
   const count=base.updates.length;for(let i=0;i<300;i++)h.set({progress:1});
   assert.equal(base.updates.length,count,'stable local hold skips repeated automation');
   h.stop();assert.equal(base.playing,false);

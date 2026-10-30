@@ -15,6 +15,7 @@ on:
       - 'patches/splatoon3/runtime/splatling.mjs'
       - 'patches/local-quality/queue-audio-20261029-adapter.mjs'
       - 'patches/splatoon3/tests/charge-audio-review.test.mjs'
+      - 'patches/splatoon3/tests/charge-ink-audio-regression.test.mjs'
       - 'patches/splatoon3/runtime/kit-ink-vac.mjs'
       - 'patches/splatoon3/tests/audio*.test.mjs'
       - 'patches/splatoon3/tests/source-combat-hit-audio.test.mjs'
@@ -43,7 +44,7 @@ jobs:
       - name: Verify 381 audio sources
         run: python3 tools/audio/verify-s3-real-files.py
       - name: Verify reviewed Spinner and Stringer charge ownership
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/charge-audio-review.test.mjs patches/splatoon3/tests/spinner-charge-audio-lite.test.mjs patches/splatoon3/tests/splatling-recorded-motor-transition.test.mjs patches/splatoon3/tests/spinner-six-two-stage-source.test.mjs patches/splatoon3/tests/stringer-charge-hud.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/charge-ink-audio-regression.test.mjs patches/splatoon3/tests/charge-audio-review.test.mjs patches/splatoon3/tests/spinner-charge-audio-lite.test.mjs patches/splatoon3/tests/splatling-recorded-motor-transition.test.mjs patches/splatoon3/tests/spinner-six-two-stage-source.test.mjs patches/splatoon3/tests/stringer-charge-hud.test.mjs
       - name: Verify real-only event behavior
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/spinner-charge-samples.test.mjs patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/charger-charge-rise.test.mjs patches/splatoon3/tests/audio-borrowed-recorded-mains.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs patches/splatoon3/tests/audio-loader-lifetime.test.mjs patches/splatoon3/tests/audio-combat-events.test.mjs patches/splatoon3/tests/audio-extra-original-source.test.mjs patches/splatoon3/tests/audio-extra-source-cues.test.mjs patches/splatoon3/tests/audio-ink-vac-confirmed-source.test.mjs patches/splatoon3/tests/source-combat-hit-audio.test.mjs patches/splatoon3/tests/combat-source-charge-selector.test.mjs patches/local-quality/tests/ipad-audio-unlock.test.mjs tests/streamed-track.test.mjs
