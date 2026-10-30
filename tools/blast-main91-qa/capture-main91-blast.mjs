@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-export const HEAD='91c1aa89061ddeec0685a7b32899b3b711995c60';
+export const HEAD='0cc5ce3712f93c275095d36c1f35ffdbd8565e2e';
 // Source clip onset is approximately frame955. F0 is first positive FX tick, burst age1/60. Keep both encoded frames and seconds.
 export const FRAMES=[0,1,3,5,9,13,21,29];
 const sha=b=>createHash('sha256').update(b).digest('hex');

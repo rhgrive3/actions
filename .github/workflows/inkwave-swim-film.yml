@@ -49,9 +49,8 @@ jobs:
 
   main91_blast_reference:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.main91_blast_capture == true) || (github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/main91-blast-reference-20261030' && github.event.pull_request.base.ref == 'main') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
-      CHROMIUM_EXECUTABLE_PATH: /opt/google/chrome/chrome
       EXPECTED_QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 30
     steps:
@@ -65,7 +64,7 @@ jobs:
       - name: Checkout immutable production baseline separately
         uses: actions/checkout@v4
         with:
-          ref: 91c1aa89061ddeec0685a7b32899b3b711995c60
+          ref: 0cc5ce3712f93c275095d36c1f35ffdbd8565e2e
           path: source
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -77,49 +76,30 @@ jobs:
       - name: Install matching Playwright Chromium and supported system dependencies
         working-directory: source
         run: npx --no-install playwright install --with-deps chromium
-      - name: Read-only installed Chrome provenance and unchanged safety checks; no browser launch
+      - name: Require unchanged standard sandbox launcher with no executable override
+        working-directory: source
         run: |
-          mkdir -p "$RUNNER_TEMP/blast-artifacts"
           node --input-type=module <<'JS'
-          import fs from 'node:fs';
           import assert from 'node:assert/strict';
-          import {spawnSync} from 'node:child_process';
+          import fs from 'node:fs';
           import {createHash} from 'node:crypto';
-          const binary='/opt/google/chrome/chrome',profile='/etc/apparmor.d/chrome';
-          const receipt={binary,profile,diagnosticOnly:true,browserLaunched:false,pngCount:0,runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,checkedAt:new Date().toISOString(),observations:{},status:'collecting'};
-          const save=()=>fs.writeFileSync(process.env.RUNNER_TEMP+'/blast-artifacts/system-browser.json',JSON.stringify(receipt,null,2));
-          const observe=(key,fn)=>{try{receipt.observations[key]={ok:true,value:fn()};}catch(e){receipt.observations[key]={ok:false,error:String(e.stack||e)};}save();};
-          const stat=s=>({uid:s.uid,gid:s.gid,mode:s.mode,modeOctal:(s.mode&0o7777).toString(8),size:s.size,isFile:s.isFile(),isSymbolicLink:s.isSymbolicLink()});
-          const command=(exe,args)=>{const r=spawnSync(exe,args,{encoding:'utf8',timeout:20000,maxBuffer:2*1024*1024});return{exitCode:r.status,signal:r.signal,stdout:r.stdout,stderr:r.stderr,error:r.error?String(r.error):null};};
-          fs.mkdirSync(process.env.RUNNER_TEMP+'/blast-artifacts',{recursive:true});save();
-          // All observations precede evaluation. Commands only inspect installed package metadata;
-          // the Chrome binary is never executed, including --version.
-          observe('binaryLstat',()=>stat(fs.lstatSync(binary)));
-          observe('binaryStat',()=>stat(fs.statSync(binary)));
-          observe('realpath',()=>fs.realpathSync(binary));
-          observe('packageOwner',()=>command('dpkg-query',['-S',binary]));
-          observe('packageVersion',()=>command('dpkg-query',['-W','-f=${Package} ${Version}\n','google-chrome-stable']));
-          observe('packageVerify',()=>command('dpkg',['--verify','google-chrome-stable']));
-          observe('packageBinaryDigest',()=>{
-           const md5File='/var/lib/dpkg/info/google-chrome-stable.md5sums';
-           const manifest=fs.readFileSync(md5File,'utf8');
-           const entry=manifest.split(/\r?\n/).map(line=>line.match(/^([0-9a-f]{32})\s+(.+)$/)).find(m=>m&&m[2].replace(/^\.\//,'')===binary.slice(1));
-           assert.ok(entry,'package md5sums must explicitly list the binary');
-           const bytes=fs.readFileSync(binary),md5=createHash('md5').update(bytes).digest('hex');
-           return {md5File,manifestSHA256:createHash('sha256').update(manifest).digest('hex'),expectedMD5:entry[1],actualMD5:md5,match:md5===entry[1],binarySHA256:createHash('sha256').update(bytes).digest('hex'),scope:'package-installed checksum corroboration only, not standalone authenticity proof'};
-          });
-          observe('profileLstat',()=>stat(fs.lstatSync(profile)));
-          observe('profileStat',()=>stat(fs.statSync(profile)));
-          observe('profile',()=>{const text=fs.readFileSync(profile,'utf8');return{sha256:createHash('sha256').update(text).digest('hex'),text,containsStandardPath:text.includes(binary),containsUserns:/\buserns\s*,/.test(text),loadedStatus:'not established by file presence'};});
-          receipt.status='observations-saved-before-safety-evaluation';save();
-          try {
-           assert.equal(process.env.CHROMIUM_EXECUTABLE_PATH,binary);
-           for(const key of ['binaryStat','profileStat']){const item=receipt.observations[key];assert.equal(item.ok,true);assert.equal(item.value.uid,0,'must be preinstalled root-owned '+key);assert.equal(item.value.mode&0o022,0,'must not be group/world writable '+key);}
-           const p=receipt.observations.profile;assert.equal(p.ok,true);assert.equal(p.value.containsStandardPath,true);assert.equal(p.value.containsUserns,true);
-           receipt.status='diagnostic-only-prerequisites-pass-no-launch';save();
-          } catch(e){receipt.status='diagnostic-only-safety-check-failed-no-launch';receipt.safetyError=String(e.stack||e);save();throw e;}
-          // Parent review is required even if observations happen to satisfy the original checks.
-          throw Error('Read-only diagnostic complete; browser launch intentionally not permitted in this run');
+          import {createRequire} from 'node:module';
+          import {sandboxBrowserOptions,launchSandboxBrowser} from './scripts/lib/inkwave-sandbox-browser.mjs';
+          assert.ok(!process.env.CHROMIUM_EXECUTABLE_PATH,'system Chrome/custom executable override is forbidden for this capture');
+          const options=sandboxBrowserOptions(process.env);
+          assert.equal(options.chromiumSandbox,true);
+          assert.equal('executablePath' in options,false);
+          assert.deepEqual(options.args,['--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']);
+          assert.ok(!options.args.some(a=>/^--(?:no-sandbox|disable-setuid-sandbox|disable-namespace-sandbox|disable-seccomp-filter-sandbox)/.test(a)));
+          let attempts=0;
+          await assert.rejects(launchSandboxBrowser({launch:async got=>{attempts++;assert.deepEqual(got,options);throw Error('sentinel sandbox launch failure');}}),/sentinel sandbox launch failure/);
+          assert.equal(attempts,1,'failed launch must not retry insecurely');
+          const require=createRequire(import.meta.url),{chromium}=require('playwright');
+          const executable=chromium.executablePath();
+          assert.ok(!executable.startsWith('/opt/google/chrome/'));
+          const stat=fs.statSync(executable);
+          fs.mkdirSync(process.env.RUNNER_TEMP+'/blast-artifacts',{recursive:true});
+          fs.writeFileSync(process.env.RUNNER_TEMP+'/blast-artifacts/standard-launcher.json',JSON.stringify({checkedAt:new Date().toISOString(),options,advertisedBrowserExecutable:executable,executableObservationScope:'Playwright advertised full-browser executable; default headless launch may select its matching headless shell',mode:(stat.mode&0o7777).toString(8),playwrightVersion:require('playwright/package.json').version,launcherSHA256:createHash('sha256').update(fs.readFileSync('scripts/lib/inkwave-sandbox-browser.mjs')).digest('hex'),runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,negativeTestAttempts:attempts,browserLaunchedByPreflight:false},null,2));
           JS
       - name: Record source and QA provenance
         run: |

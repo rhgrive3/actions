@@ -11,7 +11,7 @@ assert.equal(git(source,'rev-parse','HEAD'),HEAD);
 assert.equal(git(source,'status','--porcelain','--untracked-files=no'),'');
 const reviewedScripts={
  'run-main91-blast.mjs':'be301892fc218cb6cd6cfd58a576cfc4d298012f248be2ae7731a01769d5af0f',
- 'capture-main91-blast.mjs':'b4ab0f924dd86c5ac8b844789e9c01128f22cdb4b22e4a27a37220cf9483cae8'
+ 'capture-main91-blast.mjs':'97de633af2b28f6d8ad6bb337f06ca363749f6abc76a98d3dca000961a9b8fdd'
 };
 const scripts=Object.fromEntries([...Object.keys(reviewedScripts),'verify-blast-artifacts.mjs'].map(f=>[f,hash(fs.readFileSync(new URL(f,import.meta.url)))]));
 for(const [file,expected] of Object.entries(reviewedScripts))assert.equal(scripts[file],expected,'reviewed QA script '+file);
@@ -20,7 +20,7 @@ assert.match(process.env.EXPECTED_QA_SHA||'',/^[0-9a-f]{40}$/,'workflow must bin
 assert.equal(qaHead,process.env.EXPECTED_QA_SHA,'QA checkout must equal event head');
 const lockSHA256=hash(fs.readFileSync(path.join(source,'package-lock.json')));
 if(mode==='provenance'){
- const receipt={sourceHead:HEAD,qaHead,sourceTrackedClean:true,lockSHA256,scripts,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,checkedAt:new Date().toISOString(),scope:'isolated main91 blast comparison; not PR1918/1919 checks, Ready transition, product change or merge'};
+ const receipt={sourceHead:HEAD,qaHead,sourceTrackedClean:true,lockSHA256,scripts,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,checkedAt:new Date().toISOString(),scope:'isolated main0cc5 blast comparison; not PR1918/1919 checks, Ready transition, product change or merge'};
  fs.writeFileSync(path.join(out,'provenance.json'),JSON.stringify(receipt,null,2));
 }else{
  assert.equal(mode,'verify');
