@@ -103,6 +103,14 @@ jobs:
             /*
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+
       - name: Assert exact source checkout and prepare workspace storage
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
