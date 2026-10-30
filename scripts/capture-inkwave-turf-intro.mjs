@@ -20,7 +20,8 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=http.createServer((req,res)=>{try{
  const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(site,'.'+(name==='/'?'/index.html':name));
  if(!file.startsWith(site+path.sep)||!fs.statSync(file).isFile())throw Error('Missing');
- res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(file).pipe(res);
+ const cacheControl=req.method==='GET'&&path.extname(file)!=='.html'?'no-cache, max-age=0, must-revalidate':'no-store';
+ res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':cacheControl});fs.createReadStream(file).pipe(res);
 }catch{res.writeHead(404);res.end();}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let context;

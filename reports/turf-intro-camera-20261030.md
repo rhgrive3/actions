@@ -24,19 +24,19 @@
 - `runtime/turf-intro-camera.mjs` が Match.stateT を直接サンプルする。209Fで相手、399Fで自陣へ切り替える。チーム番号ではなくローカルの所属を起点にする。
 - 両陣のパッドから前方向を計算し、Z軸に沿わない原典ステージとBravo側にも対応する。カメラだけを変え、Actor座標・発射・衝突・塗り・通信を変更しない。
 - ポートレートは正面斜めから緩やかに寄る。自陣カットではスポナー群の後方から前方へ進み、味方の頭が照準を覆わない発射待機視点へ移る。3Dの距離・角度・35度のポートレート画角・456Fの収束・0.35秒の発射後blendは**INKWAVEの表示調整値**。映像から抽出したNintendoのカメラ数値ではない。
-- READY/HUDは既存のpause-awareな `intro-presentation.mjs` を使う。旧VSオーバーレイはチーム紹介カメラを隠すためナワバリで表示しない。Bossのカードと演出は維持する。
+- READY/HUDは既存のpause-awareな `intro-presentation.mjs` を使う。既存の安全に文字列化されたSplashtag・名前・番号・バッジを保持し、撮影中のチームだけを画面下の一列へ並べる。209Fで相手へ切り替え、399Fで取り除く。Bossのカードと演出は維持する。
 - Matchは578Fでplayingへ入る。GO後の初期待機中も同じ光学視点を保ち、初回発射時に通常の追従へ戻す。マップは既存のdioramaを使う。同tickの照準には既存の `recordAimPose` を更新する。
-- QAのintro終了待ちは現在のMatchのフレーム予算を読む。壁時計の既存締切、所有権・paused・live-frame・UI/CSSの拒否条件は保持する。現行UI fixtureは実際の新しいintro関数を実行し、旧lineupが無い状態でも残存lineupを注入する負例を残す。
+- QAのintro終了待ちは現在のMatchのフレーム予算を読む。壁時計の既存締切、所有権・paused・live-frame・UI/CSSの拒否条件は保持する。現行UI fixtureは実際の新しいintro関数と名札を実行し、取り除けない名札の負例も残す。
 
 再現: ナワバリを通常開始し、入力せず開始演出を見る。両陣営・回転したパッド配置・30/60/120Hzと途中ポーズ、試合差し替え、GOから初期発射への復帰を検証する。
 
 ## 検証
 
-- `node --experimental-vm-modules --test` で開始カメラ・初期スポーン・照準・画角・Splashtag・Opening・intro寿命・Turf leadの関連回帰86件がskipなしで成功。
-- 配信生成物に `INKWAVE_BUILT_SITE` を指定し、CameraRig / Match / 照準 / 画角 / 初期スポーン35件を再実行し、skipなしで成功。
+- `node --experimental-vm-modules --test` で開始カメラ・初期スポーン・照準・画角・Splashtag・Opening・intro寿命・Turf leadの関連回帰87件がskipなしで成功。
+- 配信生成物に `INKWAVE_BUILT_SITE` を指定し、CameraRig / Match / 照準 / 画角 / 初期スポーン36件を再実行し、skipなしで成功。
 - introを実行する撮影用fixtureの契約58件と、実ChromiumのDOM/CSS/所有権・締切の負例8件が成功。
 - quick checks、通常の最適化ビルド、startup budgetが成功。
-- `node scripts/capture-inkwave-turf-intro.mjs --site _site --map wahoo --evidence-dir <永続保存先>` で実配信Game/Match/CameraRigを16時点で撮影。seed112358、1280×720、low、SwiftShader。専用のsandbox有効ブラウザを使い、生成物全ハッシュを開始前に照合する。比較元のTidewaterも同じseedで撮影した。キャプチャは試合をfreezeしたうえで実Game._frameを1/60ずつ実行し、撮影時だけdt=0で描画するため、GPU実時間性能の証拠ではない。
+- `node scripts/capture-inkwave-turf-intro.mjs --site _site --map wahoo --evidence-dir <永続保存先>` で実配信Game/Match/CameraRigを16時点で撮影。seed112358、1280×720、low、SwiftShader。専用のsandbox有効ブラウザを使い、生成物全ハッシュを開始前に照合する。比較元main 5b722cba8も同一Wahoo・同じseedで16時点を撮影した。キャプチャは試合をfreezeしたうえで実Game._frameを1/60ずつ実行し、撮影時だけdt=0で描画するため、GPU実時間性能の証拠ではない。
 
 画像と最終集計は `turf-intro-camera-20261030/` に保存する。ソースの論理回帰、配信生成物、実ブラウザは別々の証拠である。
 
@@ -45,3 +45,7 @@
 本家の3Dカメラ・各ステージの個別カメラデータは未取得。キャラクター／スポナーの入場・インクからの変形モーション、名前表示、音楽、GOの図形や飛沫も完全一致を認定していない。現在版のSwitch実機との制御された比較、全原典ステージ・実端末・実オンラインの開始同期は未確認。カットと観測時刻の修正を、本家イントロ全体の完全再現と呼ばない。
 
 [公式映像の要点](turf-intro-camera-20261030/reference.jpg) / [原典Wahooの16時点](turf-intro-camera-20261030/native-after.jpg) / [実ブラウザ数値](turf-intro-camera-20261030/native-after.json) / [集計](turf-intro-camera-20261030/validation.json)。原典16画像を確認し、ページエラー0、578Fでplaying、初期aimからflight／通常追従へ復帰することを確認した。全画面の画素一致や実機FPSの主張ではない。
+
+追加レビュー: 名札の既存セキュリティ処理・メタデータを保持し、表示チームと寿命だけをカメラへ接続。source87／emitted36、intro契約58、実ブラウザUI8、HTTPヘッダー保持4、CI runner契約119が成功した。#1915のHTTPヘッダー検証は既存sealをそのまま残し、新しいintro待ち関数だけを別sealで正確に逆変換して従来の全ファイル検証へ渡す。不完全・重複・無関係の変更とヘッダー後退の負例は失敗する。main #1922の独立したshader代数最適化もmergeで取り込み済み。
+
+[同一Wahooの変更前後](turf-intro-camera-20261030/before-after.jpg) / [基準版の数値](turf-intro-camera-20261030/native-before.json)。これは同一映像時刻のカット構成の比較で、旧版は4.2秒でplayingとなるため後半の試合状態は異なる。画素差や速度を評価する比較ではない。

@@ -60,6 +60,9 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
   const openingAim = match.state === 'playing' && local?.alive && local.s3?.squidSpawn?.initial && local.s3.squidSpawn.phase === 'aim';
   if (game.match !== match || G.match !== match || game._matchFlow !== r.flow ||
       (match.state !== 'intro' && !openingAim)) {
+    if (game.hud?._turfIntroLineup?.match === match) {
+      game.hud._turfIntroLineup.el.remove(); game.hud._turfIntroLineup = null;
+    }
     rig._turfIntro = null;
     if (game.match === match && match.state === 'playing' && local?.alive && rig.mode === 'follow') rig._startBlend(0.35);
     return false;
@@ -70,6 +73,11 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
   // The cinematic is sampled from Match.stateT, never integrated with render dt.
   // Pausing, repeated frames and 30/60/120-Hz rendering therefore share one pose.
   const shot = openingAim ? { name: 'spawn', team, progress: 1 } : turfIntroShot(match.stateT, team);
+  const tags = game.hud?._turfIntroLineup;
+  if (tags?.match === match) {
+    if (shot.name === 'spawn') { tags.el.remove(); game.hud._turfIntroLineup = null; }
+    else tags.el.dataset.team = String(shot.team);
+  }
   const cam = rig.camera, axis = forward(G.level, shot.team), right = { x: -axis.z, z: axis.x };
   cam.up.set(0, 1, 0);
   if (shot.name !== 'spawn') {

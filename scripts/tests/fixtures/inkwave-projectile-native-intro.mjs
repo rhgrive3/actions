@@ -28,7 +28,7 @@ export function installNativeIntroFixture(methods) {
     const advanceIntroPresentation=eval('('+methods.advanceIntroPresentation+')');
     const G = window.__G = { mode:'match', level:{spawnPads:[{x:0,y:0,z:0},{x:0,y:0,z:40}]}, projectiles:{}, teamHex:['#ff8a14','#2f5bff'] };
     const THREE = { Vector3:class {constructor(x=0,y=0,z=0){Object.assign(this,{x,y,z});} set(x,y,z){Object.assign(this,{x,y,z});return this;} copy(v){return this.set(v.x,v.y,v.z);} add(v){return this.set(this.x+v.x,this.y+v.y,this.z+v.z);} multiplyScalar(k){return this.set(this.x*k,this.y*k,this.z*k);} distanceTo(v){return Math.hypot(this.x-v.x,this.y-v.y,this.z-v.z);} lerpVectors(a,b,k){return this.set(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,a.z+(b.z-a.z)*k);}} };
-    const {beginTurfIntro,TURF_INTRO_FRAMES}=new Function('beginIntroPresentation','advanceIntroPresentation','battleVerticalFov','BATTLE_HUMANOID_VERTICAL_FOV',methods.turfRuntime+';return {beginTurfIntro,TURF_INTRO_FRAMES};')(beginIntroPresentation,advanceIntroPresentation,x=>x,55);
+    const {beginTurfIntro,updateTurfIntroCamera,TURF_INTRO_FRAMES}=new Function('beginIntroPresentation','advanceIntroPresentation','battleVerticalFov','BATTLE_HUMANOID_VERTICAL_FOV',methods.turfRuntime+';return {beginTurfIntro,updateTurfIntroCamera,TURF_INTRO_FRAMES};')(beginIntroPresentation,advanceIntroPresentation,x=>x,55);
     const TEAM_NAMES=['Alpha','Bravo'], WEAPONS={}, GLYPHS={}, tr=x=>x, tu=x=>x;
     const toHex=(x,f)=>x||f, colorVars=()=>{}, tagTitle=()=>'', tagNum=()=>'', tagArt=()=>'', fnv=()=>0, weaponIcon=()=>'', kindOf=x=>x, splatSVG=()=>'';
     const h = (tag, props, ...kids) => {
@@ -46,7 +46,7 @@ export function installNativeIntroFixture(methods) {
     hud.setVisible=eval('({'+methods.visible+'})').setVisible;
     hud._lineup=eval('({'+methods.lineup+'})')._lineup;
     hud.banner=eval('({'+methods.banner+'})').banner;
-    const m={turfIntroFrames:TURF_INTRO_FRAMES.go,state:'intro',stateT:0,time:180,duration:180,mode:'turf',attract:false,paused:false,actors:[],controller:{},local:{isLocal:true,team:0}};
+    const m={turfIntroFrames:TURF_INTRO_FRAMES.go,state:'intro',stateT:0,time:180,duration:180,mode:'turf',attract:false,paused:false,actors:[],controller:{},local:{isLocal:true,team:0,pos:new THREE.Vector3()}};
     const emit=(kind,data)=>{if(kind==='match:state'&&data.state==='playing')hud.banner('go');};
     m.update=eval('({'+methods.update+'})').update;m.setState=eval('({'+methods.setState+'})').setState;
     const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl2');
@@ -62,6 +62,7 @@ export function installNativeIntroFixture(methods) {
       else {calls.liveFrames++;if(game._skipRender)calls.skippedLiveFrames++;}
       m.update(dt);
       advanceIntroPresentation(game);
+      updateTurfIntroCamera(game.rig,G,THREE);
     };
     game._intro=eval('({'+methods.intro+'})')._intro;
     game._loop=eval('({'+methods.loop+'})')._loop;
@@ -69,6 +70,7 @@ export function installNativeIntroFixture(methods) {
     window.nativeIntroStartedAtMs=Date.now();
     game._intro();
     // Actual composed native lineup with a minimal non-playing presentation roster.
-    hud._lineup({actors:[{name:'Player',team:0,isLocal:true,weaponId:'shooter'}]});
+    m.actors=[{name:'Player',team:0,isLocal:true,alive:true,weaponId:'shooter',pos:new THREE.Vector3(),update(){}}];
+    hud._lineup(m);
     window.startNativeLoop=()=>game._loop();
 }

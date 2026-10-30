@@ -29,9 +29,11 @@ export function adaptTurfIntroCamera(rel, code) {
     code = once(code, 'if (this.stateT > (this.bossMode ? this.bossCfg.intro : 4.2))',
       'if (this.bossMode ? this.stateT > this.bossCfg.intro : this.stateT + 1e-9 >= TURF_INTRO_FRAMES.go / 60)', 'match duration');
   } else if (rel === 'src/ui/hud.js') {
-    // The old full-screen VS card hides both portrait shots. Boss retains its card.
-    code = once(code, '  _lineup(match) {', `  _lineup(match) {
-    if (!this.boss.on) { this.overLayer.querySelectorAll('.iw-lineup').forEach(e => e.remove()); return; }`, 'portrait visibility');
+    // Preserve the existing sanitized Splashtag renderer. Only its arrangement
+    // and lifetime change: one team's compact row follows the camera cuts.
+    code = once(code, "class: 'iw-lineup iw-lineup--stags'", "class: 'iw-lineup iw-lineup--stags iw-lineup--camera'", 'portrait tag layout');
+    code = once(code, "    setTimeout(() => el.classList.add('is-out'), 2900);\n    setTimeout(() => el.remove(), 3500);",
+      '    this._turfIntroLineup = { match, el };', 'portrait tag lifetime');
   }
   return code;
 }

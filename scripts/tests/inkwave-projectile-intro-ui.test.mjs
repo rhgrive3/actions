@@ -52,7 +52,7 @@ const callback=deadline=>atomicIntroFunction(nativeTurfIntroWithUiFunction(compl
 
 test('actual composed intro, lineup and match methods pass phase-correct helper without rendering early cinematic',async()=>{
   const f=fixture();const early=f.read({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true});
-  assert.equal(early.ready,true);assert.equal(early.captureReady,false);assert(early.captureFailed.includes('hud'));assert(!early.captureFailed.includes('lineup'));assert.equal(early.hud.flag,false);assert.equal(early.ui.lineupCount,0);assert.equal(f.read().ready,false);
+  assert.equal(early.ready,true);assert.equal(early.captureReady,false);assert(early.captureFailed.includes('hud'));assert(early.captureFailed.includes('lineup'));assert.equal(early.hud.flag,false);assert.equal(early.ui.lineupCount,1);assert.equal(f.read().ready,false);
   const pending=f.run(callback(10000));f.window.startNativeLoop();
   const result=await f.drive(pending);
   assert.equal(result.playingReady,true);assert.equal(result.intro.frames,TURF_INTRO_FRAMES.go);assert.equal(result.intro.matchTimeBefore,180);assert.equal(result.intro.matchTimeAfter,180);

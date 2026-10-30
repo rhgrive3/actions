@@ -115,3 +115,13 @@ test('same-tick initial aim rotates the settled optical ray in place', async () 
   for (const [i, axis] of ['x', 'y', 'z'].entries()) close(camera.position[axis], position[i]);
   assert.ok(camera.getWorldDirection(new f.THREE.Vector3()).distanceTo(direction) > 0.1);
 });
+
+test('existing Splashtags follow the filmed team and retire on the spawn cut', async () => {
+  const f = await setup(1), el = { dataset: {}, removed: 0, remove() { this.removed++; } };
+  f.game.hud._turfIntroLineup = { match: f.match, el };
+  f.rig.update(0); assert.equal(el.dataset.team, '1');
+  f.match.stateT = 209 / 60; f.rig.update(0); assert.equal(el.dataset.team, '0');
+  assert.equal(el.removed, 0);
+  f.match.stateT = 399 / 60; f.rig.update(0); assert.equal(el.removed, 1);
+  assert.equal(f.game.hud._turfIntroLineup, null);
+});

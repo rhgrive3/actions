@@ -1,5 +1,5 @@
 {
-  "candidateContentHash": "c2c07c8b884ea3f7cb698591f9bf511faafe01237ab01e08276dac3bd296bfe5",
+  "candidateContentHash": "4bab7a49a1e2f16a1593154ec64e492210de2713d3d8c1fd37bec8738147eff3",
   "nativeCapture": {
     "outcome": "passed",
     "frames": 16,
@@ -7,12 +7,12 @@
     "pageErrors": []
   },
   "sourceTests": {
-    "pass": 86,
+    "pass": 87,
     "fail": 0,
     "skip": 0
   },
   "emittedTests": {
-    "pass": 35,
+    "pass": 36,
     "fail": 0,
     "skip": 0
   },
@@ -30,18 +30,26 @@
   "build": "esbuild-minify",
   "startupBudget": {
     "status": "passed",
-    "revision": "21c6b3c167aa821bce0d4cd8c94b5d4b48e4b8636bf6eb7b4637a29c84d4621e",
+    "revision": "928257ba9c4517fc910fb0022d2b6a78351decb13a22dec799dd7d83525e3e5e",
     "initialJSRequests": 146,
     "modulePreloads": 145,
     "coreModulePreloads": 131,
     "practiceRangeModulePreloads": 14,
     "practiceRangePreloadBytes": 78620,
-    "initialJSBytes": 1819684,
+    "initialJSBytes": 1820225,
     "criticalHTMLBytes": 24043,
     "precacheCount": 584,
-    "precacheBytes": 7917848,
-    "workerBytes": 96130,
-    "declaredBytes": 16399345,
+    "precacheBytes": 7919731,
+    "workerBytes": 96261,
+    "declaredBytes": 16415955,
     "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "headerTests": {
+    "pass": 4,
+    "fail": 0
+  },
+  "ciRunnerContracts": {
+    "pass": 119,
+    "fail": 0
   }
 }

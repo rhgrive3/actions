@@ -40,7 +40,7 @@ test('native Match-clock presentation and real CSS settle before live gameplay',
   try {
     const early=await page.evaluate(()=>({admission:window.__iwProjectileCaptureUiGate({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}),capture:window.__iwProjectileCaptureUiGate()}));
     assert.equal(early.admission.ready,true);assert.equal(early.admission.admissionKind,'native-intro-structure');
-    assert.equal(early.admission.hud.flag,false);assert.equal(early.admission.ui.lineupCount,0);assert.equal(early.capture.ready,false);
+    assert.equal(early.admission.hud.flag,false);assert.equal(early.admission.ui.lineupCount,1);assert.equal(early.capture.ready,false);
     const deadline=Date.now()+10000,fn=callback(deadline);
     // Start the actual production rAF loop only after the helper has frozen the
     // cinematic, in the same browser task. Native DOM/CSS timers remain real.
@@ -87,7 +87,7 @@ for(const fault of ['hidden ancestor','permanent lineup','ownership change','nat
     await page.evaluate(fault=>{
       const g=window.__inkwave;
       if(fault==='hidden ancestor')g.hud.el.parentElement.style.opacity='0';
-      if(fault==='permanent lineup'){const el=document.createElement('div');el.className='iw-lineup';document.querySelector('.iw-hud-over').append(el);}
+      if(fault==='permanent lineup')document.querySelector('.iw-lineup').remove=()=>{};
       if(fault==='ownership change')setTimeout(()=>{window.__G.match={};},25);
       if(fault==='native pause')setTimeout(()=>{g.match.paused=true;},25);
     },fault);
