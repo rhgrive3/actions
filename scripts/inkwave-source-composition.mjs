@@ -35,7 +35,7 @@ import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
-import { adaptCombatGpuCpuPerfect } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
+import { adaptCombatGpuCpuPerfect, adaptCombatWave345 } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptPaintRenderRegions } from '../patches/local-quality/paint-render-regions-adapter.mjs';
 import { adaptRenderTransfers } from '../patches/local-quality/render-transfer-optimization-adapter.mjs';
 import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
@@ -142,7 +142,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
   code = adaptQueueUiContinuation20261029(rel, code);
   code = adaptQueueVisualContinuation20261029(rel, code);
-  return adaptLateRoot20261029(rel, code);
+  code = adaptLateRoot20261029(rel, code);
+  return adaptCombatWave345(rel, code, replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

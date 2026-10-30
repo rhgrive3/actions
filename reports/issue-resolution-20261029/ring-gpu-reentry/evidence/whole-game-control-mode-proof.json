@@ -1,0 +1,113 @@
+{
+  "kind": "read-only actual executed whole-game control construction attribution",
+  "originalResultSha256": "e76ba0408966a9c192b46ca4cba5b1a76b5e9fa5c9081aa5eea0d9ebf8dadca8",
+  "driver": {
+    "path": "scripts/diagnostics/inkwave-performance/measure-current-pair.mjs",
+    "sha256": "3ff7c196369b177df3fda0420efa7705483eefe36fab4a388679a6ed2e3ed718",
+    "actualResultHarnessHashMatches": true,
+    "actualMode": "calibrate",
+    "actualOrder": [
+      "C",
+      "B"
+    ],
+    "actualComparison": "Bounded current-pair C/B preflight; not a four-trial calibration",
+    "modeMeaning": "calibrate or measure, not an optimization/native producer toggle",
+    "nativeTrialsMeaning": "trial count used by pairOrder; no producer replacement",
+    "servedProductionJS": "hash-verified unchanged bytes from each distinct source manifest"
+  },
+  "variants": {
+    "C": {
+      "sourceSha": "4f5f7acc15e43016985d8b782bf3ba83551a9443",
+      "contentHash": "67e78b1a51080907c534e2df392b640b6124a6a494c1069705064453279bea1b",
+      "servedFx": [
+        {
+          "path": "_versions/31ba5aeff5aa919dea351a7d46bb28f81b71c0502a57a44b623b3ed74933bcae/src/fx/fx.js",
+          "artifactSha256": "cdaedcc9ea7eace62404268fc8d8d5967fe494e219f9b0f7e1088cde76c4abb0"
+        }
+      ],
+      "ringTransferDeclaredInput": null,
+      "nativeLevelFlag": false,
+      "ringsAttributes": [
+        {
+          "owner": "Scene:0/FX:11/FX_Rings:3",
+          "name": "aColA",
+          "arrayType": "Float32Array",
+          "byteLength": 4128,
+          "itemSize": 4,
+          "count": 258,
+          "normalized": false,
+          "stride": null,
+          "offset": null,
+          "version": 135,
+          "sha256": "f1b6c58d82bcf85fdac4936d4159afa79df0bee8d5e6edbeee0eda043611bd21"
+        },
+        {
+          "owner": "Scene:0/FX:11/FX_Rings:3",
+          "name": "aMisc",
+          "arrayType": "Float32Array",
+          "byteLength": 4128,
+          "itemSize": 4,
+          "count": 258,
+          "normalized": false,
+          "stride": null,
+          "offset": null,
+          "version": 135,
+          "sha256": "e1153b94df382ccbb74cb5f9e7fe8e7a1d40556ac16a5f920fc7325ee8c45cb0"
+        }
+      ]
+    },
+    "B": {
+      "sourceSha": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+      "contentHash": "27d49de07e8864caac45045f840a65055e4976d8b930ca8bb93366698f7a64fb",
+      "servedFx": [
+        {
+          "path": "_versions/2620eaa1f1b6b6d26df223e9b016eed432d4472a50b370f47c9ba097b1df16aa/src/fx/fx.js",
+          "artifactSha256": "c2f5453202df5533f8d7a892042d4384600d0b97141c573fe56fc538a9ff327f"
+        }
+      ],
+      "ringTransferDeclaredInput": "77542972da20bca66c910a7b367e57c9a9f00f620391b03243a7c899d857db7d",
+      "nativeLevelFlag": false,
+      "ringsAttributes": [
+        {
+          "owner": "Scene:0/FX:11/FX_Rings:3",
+          "name": "aColA",
+          "arrayType": "Float32Array",
+          "byteLength": 4128,
+          "itemSize": 4,
+          "count": 258,
+          "normalized": false,
+          "stride": null,
+          "offset": null,
+          "version": 134,
+          "sha256": "f1b6c58d82bcf85fdac4936d4159afa79df0bee8d5e6edbeee0eda043611bd21"
+        },
+        {
+          "owner": "Scene:0/FX:11/FX_Rings:3",
+          "name": "aMisc",
+          "arrayType": "Float32Array",
+          "byteLength": 4128,
+          "itemSize": 4,
+          "count": 258,
+          "normalized": false,
+          "stride": null,
+          "offset": null,
+          "version": 134,
+          "sha256": "e1153b94df382ccbb74cb5f9e7fe8e7a1d40556ac16a5f920fc7325ee8c45cb0"
+        }
+      ]
+    }
+  },
+  "actualEndpointShaderSources": {
+    "C": 179,
+    "B": 179,
+    "allExact": true
+  },
+  "sameBuildNativeControl": {
+    "path": "scripts/diagnostics/inkwave-performance/measure-mesa-native-control.mjs",
+    "sha256": "ade794913c49387d15d866822083f68a5d3f2fe158665904cef081558976c6e7",
+    "requiresSameSourceShaAndContent": true,
+    "servesSameBuildOnIndependentCBRoutes": true
+  },
+  "conclusion": "135/134 is an intentionally distinct common/optimized pair, not a native/native self-control. Native/native attribution to that run is incorrect; no incomplete global optimization-disable flag is implemented or proven. The native level flag denotes Scorch source-world type.",
+  "nextScope": "A new separately sealed same-build current/current control can test current repeatability; it cannot accept the old pair or establish comparative speedup."
+}

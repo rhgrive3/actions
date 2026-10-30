@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "status": "accepted-bounded-self-control",
+  "accepted": true,
+  "contractSha256": "2928c3e438f8e265eb2ea3a194d4c2a094d0cdb530bf3c80bb9c24ad1eafa5e4",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/measure-mesa-native-control.mjs",
+    "--out",
+    "/workspace/scratch/agent3-native-self-control-550-two/driver",
+    "--mode",
+    "calibrate",
+    "--stage",
+    "tidewater",
+    "--scenario",
+    "normal",
+    "--samples",
+    "60",
+    "--warmup",
+    "30",
+    "--native-trials",
+    "2",
+    "--width",
+    "480",
+    "--height",
+    "300",
+    "--camera-offset-x",
+    "0",
+    "--playwright",
+    "/workspace/wt-optimized/node_modules/playwright/index.mjs",
+    "--chromium",
+    "/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+    "--sha-C",
+    "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+    "--root-C",
+    "/workspace/wt-agent6",
+    "--site-C",
+    "/workspace/scratch/main-wave345-repaired-site",
+    "--sha-B",
+    "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+    "--root-B",
+    "/workspace/wt-agent6",
+    "--site-B",
+    "/workspace/scratch/main-wave345-repaired-site"
+  ],
+  "performanceClaimAllowed": false,
+  "oldPairAccepted": false,
+  "driverPid": 848182,
+  "exitCode": 0,
+  "driverRawSha256": "bac3b4c47a1f28b4dd4e3ba2ac291e4e18cf279e628326d99d54208c701bf2b1",
+  "driverStatus": "passed-bounded-mesa-native-repeat",
+  "driverError": null,
+  "images": [
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    }
+  ],
+  "validation": {
+    "accepted": true,
+    "comparison": "same immutable current build only",
+    "performanceClaimAllowed": false,
+    "oldPairAccepted": false,
+    "originalInputCardinalities": {
+      "buffers": 3022,
+      "textures": 48,
+      "meshStates": 488,
+      "lightStates": 2,
+      "materialStates": 174,
+      "shaderSources": 179,
+      "gpuColorTargets": 15
+    }
+  },
+  "sourceBuildHelpersExecutableAndFrozenUnchanged": true,
+  "remainingOwnedProcesses": []
+}

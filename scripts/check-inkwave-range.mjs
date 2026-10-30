@@ -267,6 +267,12 @@ for (const run of RUNS) {
       JSON.stringify({contentHash:manifest.contentHash,...out.checks.pauseEntrance},null,2));
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
     if (pauseReadinessError) throw pauseReadinessError;
+    // The native WEAPON tab creates its catalogue on first activation. Share
+    // the existing 30-second UI budget between the click and lazy construction.
+    const pickerDeadline = Date.now() + 30000;
+    const pickerRemainingMs = () => Math.max(1, pickerDeadline - Date.now());
+    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]').click({ timeout: pickerRemainingMs() });
+    await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').first().waitFor({ state: 'attached', timeout: pickerRemainingMs() });
     // The hub ring remains readable. The scrollable picker must expose
     // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
     // entries when its catalogue grows beyond the former 65-item limit.
@@ -286,8 +292,6 @@ for (const run of RUNS) {
         picker.variants !== 95 || picker.second !== 65 || picker.third !== 30 ||
         picker.catalog !== 142 || !picker.last?.startsWith('w-s3-'))
       throw new Error('range weapon picker ' + JSON.stringify(picker));
-    // The picker is the pause panel's WEAPON tab (TOOLS / TRAVEL / WEAPON).
-    await page.locator('.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]').click();
     await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);

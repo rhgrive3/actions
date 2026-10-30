@@ -1,0 +1,97 @@
+{
+  "kind": "DO_NOT_MERGE-targeted-ring-upload-and-GPU-reentry",
+  "schema": 1,
+  "oldWholeGamePairRemainsRejected": true,
+  "wholeGame135134EventTrace": false,
+  "productionChanged": false,
+  "site": {
+    "path": "/workspace/scratch/main-wave345-repaired-site",
+    "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+    "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+    "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+    "buildRevision": "2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd",
+    "fxArtifactSha256": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2"
+  },
+  "historical": {
+    "C": {
+      "sourceSha256": "78aa2dbc53cbafb2f5b52783419942a23e20bd902e4d3e75573487da6bd94802",
+      "fullComposedSha256": "7cafe383caa60b45720686dd9a4670e7dba238392c34075ac1aa624380fe5ee3",
+      "methods": {
+        "_initRings": "048bbdcaedb3ac8ae19dc1a2f6b269eae8ec4af412ecdf21d347dd09a26f3452",
+        "_ringRaw": "22893c6de3c1d25a28de7c0e912f2cfe122534d967ee2a4e12e90068f2538a72",
+        "_color": "89499ffaeaef6107b79587fdc991ec46a867f30b3be9b8ac3d7f5430241ee489",
+        "mark": "9a9c39a8c5c934ccacab59fc642043e399d34e09a715a9da1a9a8129ee3ef3c0",
+        "_updateRings": "d7213754baaec79bb41f38c79a659d0caf5f14db630473dabc331b55c1183c86",
+        "clear": "0d5b80d5089a89d031940340419e3243ec124cded5dd8361ad7cf857ac32094e"
+      },
+      "compressedSha256": "3912e5b2e048aef359fae5af63527c08bf867e65413ef897c4632dd1693a59fe",
+      "threeArtifacts": {
+        "vendor/three/build/three.module.js": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3"
+      },
+      "threeSourceInputs": {
+        "upstream/vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+        "upstream/vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+      }
+    },
+    "B": {
+      "sourceSha256": "2b522d942542d372507c6bbaed0dc6193c948fc55164ea61968a27bc16839dcf",
+      "fullComposedSha256": "9a5f8c19e76ab76597b18b46c13cb9cc270ced4204a82842ddde214c8b93957b",
+      "methods": {
+        "_initRings": "ab4a6881839cffcd255a5dcd7a73d8754dabbd77a2bbc2e6fd8b4e807aaac9e8",
+        "_ringRaw": "56916d30c7af4f065ec0336991e8f3248f7a492aeec7313275081a194e24adcd",
+        "_color": "89499ffaeaef6107b79587fdc991ec46a867f30b3be9b8ac3d7f5430241ee489",
+        "mark": "9a9c39a8c5c934ccacab59fc642043e399d34e09a715a9da1a9a8129ee3ef3c0",
+        "_updateRings": "8f2de75296301fc0b0ed23fc05b480f9d09fa612510643ea2d19c89bda971943",
+        "clear": "e35cceb798806be5bb83a72bc1a4f258498557b8103634c821054c822a6e9bbb"
+      },
+      "compressedSha256": "e05d38ac7f7ef4dc3a3ed6d9cadfe032bee9917e7aaa29d8f020fc34046624b5",
+      "threeArtifacts": {
+        "vendor/three/build/three.module.js": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3"
+      },
+      "threeSourceInputs": {
+        "upstream/vendor/three/build/three.module.js": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+        "upstream/vendor/three/build/three.core.js": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+      }
+    }
+  },
+  "helpers": {
+    "check-ring-gpu-reentry.mjs": "c5c2051266b97e2940591c99d9fdc4b45cbcc2a86d17b1f89dd254bdb61a469a",
+    "ring-gpu-reentry-source.mjs": "aee0f4d2d6020f01767a1e298d422dcfd0811ea3879a5e03d2dea8f5760de802",
+    "ring-gpu-reentry-browser.mjs": "5671bfa5b1b232f3a14fc7d704f95f70f9aded6515c42e92181295eac503cb57",
+    "mesa-native-condition.mjs": "5ca1e817cecc3e4ee0a646aa4dbe88cb4c238c29aca2516f1920d27bcc948e8d"
+  },
+  "condition": {
+    "backend": "Mesa llvmpipe ANGLE gl-egl surfaceless",
+    "browser": "151.0.7922.34",
+    "playwright": "1.62.1",
+    "viewport": [
+      256,
+      256
+    ],
+    "antialias": false,
+    "ringCapacity": 210,
+    "immediateMarkCapacity": 48,
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "staticTailSubUploads": {
+      "C": 2,
+      "B": 0,
+      "current": 0
+    }
+  },
+  "strictComparisonFields": [
+    "instances",
+    "draws",
+    "triangles",
+    "pixelSha256",
+    "shaderSources",
+    "all attribute versions/ranges/full CPU/full GPU/live CPU/live GPU bytes"
+  ],
+  "allowedVersionChanges": 0,
+  "allowedPixelChanges": 0,
+  "allowedBufferChanges": 0,
+  "comparisonAcceptanceChanged": false
+}

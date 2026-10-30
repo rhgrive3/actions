@@ -1,0 +1,48 @@
+{
+  "sourceEpoch": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+  "scope": "Source corroboration and native controlled fixture only; failed initial attempts remain separate.",
+  "files": [
+    {
+      "source": "README.md",
+      "sha256": "8d3d9616df84053c6a51a6085475d431f604b405b9b0ee1dbcb5d5e0b0b2f29e",
+      "bytes": 5976,
+      "packet": "README.md",
+      "packetSha256": "8d3d9616df84053c6a51a6085475d431f604b405b9b0ee1dbcb5d5e0b0b2f29e"
+    },
+    {
+      "source": "authority-missing-vm-flag.tap",
+      "sha256": "076d700b1a012f4aa647a8a7dd45221254777232ccbcd8f6a06293576a1b150e",
+      "bytes": 3392,
+      "packet": "authority-missing-vm-flag.tap.gz",
+      "packetSha256": "fa159d3301cc86517d7c9e051b43bd0bfa14e404b62617c8cd4461b5327fcb0e"
+    },
+    {
+      "source": "authority-source-vm.tap",
+      "sha256": "d97773f7ce5ed1f2987722f98ff64d16eca9c4f0be343a189a055671e36a7b8a",
+      "bytes": 2677,
+      "packet": "authority-source-vm.tap.gz",
+      "packetSha256": "08c5fe2aaeafc3fe65c57a5b231c93fb10017edc07d035865353b0480edb97f8"
+    },
+    {
+      "source": "crossfire-source.tap",
+      "sha256": "3a28b4e4473ee2154efd77b1f4f9d8332a2456d29830944c5f9c69c661a55d80",
+      "bytes": 647,
+      "packet": "crossfire-source.tap.gz",
+      "packetSha256": "38aca501f0e914abfec72bd25a964ffe9fbbbdf21fff28861a9079fada052032"
+    },
+    {
+      "source": "reject-emitted.tap",
+      "sha256": "40d2170bcd011f39e6d3c1d066ff4cbf3df933a2029ca3785ba5dfb5748f3ae5",
+      "bytes": 1202,
+      "packet": "reject-emitted.tap.gz",
+      "packetSha256": "10580c32c3e0bd218e5fdba4d746d6699c608eaec1857387bd1dd369b0c0f5cd"
+    },
+    {
+      "source": "same-volley-nondiscriminating-negative.tap",
+      "sha256": "3cec4e87e3221db218fbd62da181ac556adcbbd76d4c83a27dd3f02c09ca7c89",
+      "bytes": 1176,
+      "packet": "same-volley-nondiscriminating-negative.tap.gz",
+      "packetSha256": "2e1828dfb2525296150804d51744edea32e1e8526c42b4935984837a725771b7"
+    }
+  ]
+}

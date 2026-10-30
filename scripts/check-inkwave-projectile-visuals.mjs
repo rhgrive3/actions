@@ -146,6 +146,20 @@ async function openGameContext({ mobile = false } = {}) {
     reducedMotion: 'reduce',
   });
   const page = await context.newPage();
+  // Only primitive, bounded console receipts cross the browser boundary.
+  const characterTrace = [];
+  page.on('console', message => {
+    try {
+      const text = message.text(), prefix = '__IW_CHARACTER_PHASE_V1__';
+      if (!text.startsWith(prefix)) return;
+      const row = JSON.parse(text.slice(prefix.length));
+      if (!Array.isArray(row) || row.length !== 3 || typeof row[0] !== 'string' ||
+          row[0].length > 64 || typeof row[1] !== 'string' || row[1].length > 64 ||
+          typeof row[2] !== 'number' || !Number.isFinite(row[2])) return;
+      if (characterTrace.length === 64) characterTrace.shift();
+      characterTrace.push(row);
+    } catch { /* Observation cannot alter native capture. */ }
+  });
   page.setDefaultTimeout(30000);
   const streamedMusicReceipt = { mobile };
   (report.streamedMusicDiagnostics ||= []).push(streamedMusicReceipt);
@@ -450,7 +464,7 @@ async function openGameContext({ mobile = false } = {}) {
   });
   if (!report.provenance.browser) report.provenance.browser = version;
   await streamedMusic.snapshot('native-playing-capture-ready');
-  return { context, page, close: streamedMusic.close };
+  return { context, page, characterTrace, close: streamedMusic.close };
   } catch (error) {
     try { await streamedMusic.close(); }
     catch (cleanupError) {
@@ -698,6 +712,12 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
 }
 
 const visualSetup = async ({ name, seed, impact = null }) => {
+  // Console carries only fixed phase/status strings and a numeric timestamp.
+  // No Character, Actor, loader, controller, promise or callback is retained.
+  function traceCapturePhase(phase, status) {
+    try { console.debug('__IW_CHARACTER_PHASE_V1__' + JSON.stringify([phase, status, Date.now()])); } catch {}
+  }
+  traceCapturePhase('visual-setup', 'begin');
   const G = window.__G, g = window.__inkwave, a = g.match.local;
   const V = G.camera.position.constructor;
   const canonical = window.__iwCanonicalPlacement;
@@ -994,33 +1014,48 @@ const visualSetup = async ({ name, seed, impact = null }) => {
   const weapon = impact === 'wall' ? 'shooter' :
     name === 'floor-washtub' ? 's3-slosher-washtub' : name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
 async function resetCaptureCharacter(actor) {
+  traceCapturePhase('character-reset', 'begin');
   const old = actor.character, parent = old.root.parent;
   const fresh = new old.constructor({ color: actor.color, weapon: actor.weaponId,
     style: old.style, name: actor.name, isLocal: actor.isLocal });
+  traceCapturePhase('character-reset', 'constructed');
   fresh.actor = actor;
   fresh.onEvent = old.onEvent;
   try {
     // Character's normal loader also owns late source-motion initialization.
     // Do not let that initialization race the first physical capture.
+    traceCapturePhase('source-loader', 'await');
     await fresh._sourceMotionLoader;
-    if (fresh.sourceMotion?.status !== 'ready')
+    traceCapturePhase('source-loader', 'returned');
+    if (fresh.sourceMotion?.status !== 'ready') {
+      traceCapturePhase('source-loader', 'not-ready');
       throw new Error('Fresh native Character source motion failed readiness');
+    }
+    traceCapturePhase('source-loader', 'ready');
     fresh.root.position.copy(old.root.position);
     fresh.root.quaternion.copy(old.root.quaternion);
     fresh.setVisible(old.visible);
-  } catch (error) { fresh.dispose(); throw error; }
+    traceCapturePhase('character-reset', 'prepared');
+  } catch (error) { traceCapturePhase('character-reset', 'discard-begin'); fresh.dispose(); traceCapturePhase('character-reset', 'discarded'); throw error; }
   // Commit only after successful initialization; disposal failures must never
   // dispose the replacement now owned by the gameplay Actor.
   actor.character = fresh;
+  traceCapturePhase('character-reset', 'committed');
   if (parent) parent.add(fresh.root);
+  traceCapturePhase('character-reset', 'attached');
+  traceCapturePhase('old-character', 'dispose-begin');
   old.dispose();
+  traceCapturePhase('old-character', 'disposed');
   fresh.root.updateMatrixWorld(true);
+  traceCapturePhase('character-reset', 'complete');
   return fresh;
 }
 
   if (!g.frozen) throw new Error('Native loop must remain frozen during reset');
   const oldCharacter = a.character;
+  traceCapturePhase('visual-setup', 'reset-begin');
   await resetCaptureCharacter(a);
+  traceCapturePhase('visual-setup', 'reset-returned');
   if (!g.frozen) throw new Error('Native loop unfroze during async reset');
   window.__iwCharacterResetReceipt = { oldDisposed: oldCharacter._sourceMotionDisposed === true, oldDetached: oldCharacter.root.parent === null, actorOwned: a.character.actor === a, sceneOwned: a.character.root.parent === G.scene, constructorPreserved: a.character.constructor === oldCharacter.constructor, stylePreserved: JSON.stringify(a.character.style) === JSON.stringify(oldCharacter.style), sourceMotionStatus: a.character.sourceMotion.status };
   if (Object.entries(window.__iwCharacterResetReceipt).some(([key, value]) => key !== 'sourceMotionStatus' && value !== true)) throw new Error('Native Character ownership/disposal failed');
@@ -1154,6 +1189,7 @@ async function resetCaptureCharacter(actor) {
   window.__iwCurrentVisualSetupRng = setupRng.snapshot();
   window.__iwCurrentVisualSetupLifecycle = lifecycleReset;
   window.__iwCurrentVisualSetup = setup;
+  traceCapturePhase('visual-setup', 'complete');
   return { setup, lifecycleReset };
 };
 
@@ -1796,7 +1832,11 @@ try {
     const visual = await openGameContext();
     let visualFailed = false;
     try { await runVisuals(visual.page); }
-    catch (error) { visualFailed = true; throw error; }
+    catch (error) {
+      visualFailed = true;
+      try { report.browserDiagnostics.push({ event: 'visual-character-lifecycle', timeline: visual.characterTrace.slice() }); } catch {}
+      throw error;
+    }
     finally {
       try { await visual.close(); }
       catch (cleanupError) {

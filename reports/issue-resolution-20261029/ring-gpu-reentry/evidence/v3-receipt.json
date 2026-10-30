@@ -1,0 +1,967 @@
+{
+  "status": "completed-targeted-GL-diagnostic",
+  "rawBytes": 6340552,
+  "rawSha256": "7e5e88f8ae5e4d2a3863675593b62113ba06e528bba2fc92fcb95bb10f290d67",
+  "gzipBytes": 209444,
+  "gzipSha256": "990130b2b63f30ab9eab00b2ba2b7155b339e9ed75e6c459fb3736bba9f4c1fe",
+  "contractSha256": "37585849fbe0645e8a6e6efae2dc7adcda4b72fd1c909392ea2f9dbe7fbe7742",
+  "strictDiagnosticComparison": {
+    "strictAllObservedStateEqual": false,
+    "differences": [
+      {
+        "case": "30Hz/initial",
+        "variant": "B",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "30Hz/initial",
+        "variant": "B",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "30Hz/initial",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/initial",
+        "variant": "current",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "30Hz/initial",
+        "variant": "current",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "30Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/tail-removal",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/clear-empty",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/compaction-before",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/compaction-after",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/immediate-mark",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "30Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "30Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/capacity-recycling",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "30Hz/geometry-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "30Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "30Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/initial",
+        "variant": "B",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "60Hz/initial",
+        "variant": "B",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "60Hz/initial",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/initial",
+        "variant": "current",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "60Hz/initial",
+        "variant": "current",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "60Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/tail-removal",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/clear-empty",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/compaction-before",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/compaction-after",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/immediate-mark",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "60Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "60Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/capacity-recycling",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "60Hz/geometry-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "60Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "60Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/initial",
+        "variant": "B",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "120Hz/initial",
+        "variant": "B",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "120Hz/initial",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/initial",
+        "variant": "current",
+        "field": "attributes/aColA/ranges"
+      },
+      {
+        "case": "120Hz/initial",
+        "variant": "current",
+        "field": "attributes/aMisc/ranges"
+      },
+      {
+        "case": "120Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/tail-removal",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/tail-removal",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/tail-removal",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/birth-pending-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/birth-pending-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/clear-empty",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/clear-empty",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/clear-empty",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/compaction-before",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/compaction-before",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/compaction-before",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/compaction-after",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/compaction-after",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/compaction-after",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/immediate-mark",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/immediate-mark",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/immediate-mark",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/mark-tail-removed",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/mark-tail-removed",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuFullSha256"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/gpuBytesBase64"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuFullSha256"
+      },
+      {
+        "case": "120Hz/undrawn-mark-tail-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/gpuBytesBase64"
+      },
+      {
+        "case": "120Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/capacity-recycling",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/capacity-recycling",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/capacity-recycling",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/geometry-reentry",
+        "variant": "B",
+        "field": "attributes/aMisc/version"
+      },
+      {
+        "case": "120Hz/geometry-reentry",
+        "variant": "current",
+        "field": "shaderSources"
+      },
+      {
+        "case": "120Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aColA/version"
+      },
+      {
+        "case": "120Hz/geometry-reentry",
+        "variant": "current",
+        "field": "attributes/aMisc/version"
+      }
+    ],
+    "groupCount": 33
+  },
+  "processesClosed": true,
+  "manifestUnchanged": true,
+  "helperBytesUnchanged": true,
+  "servedArtifactsUnchanged": true,
+  "preservedEvidenceUnchanged": true,
+  "currentClearOwnerUnchanged": true,
+  "browserExecutableUnchanged": true,
+  "error": null
+}

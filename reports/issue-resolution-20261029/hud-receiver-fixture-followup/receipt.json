@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "at": "2026-10-29T20:01:17.236393+00:00",
+  "sourceBefore": "3c0f0e4ece4a5722e30fed8d57ad20240d3ce696",
+  "node": "22.23.4",
+  "physicalDeviceVerification": "waived",
+  "hostedRun": 40938891054,
+  "hostedFailedJobs": [
+    123681981687,
+    123681981697,
+    123681981851
+  ],
+  "hostedUniqueFailedCases": 12,
+  "primaryRootCauses": 1,
+  "cause": "Detached HUD receivers omit native constructor-owned spIcon; the visual probe shallow-clones it and native crosshair writes its initial special icon. Assertions are never reached in the failed fixtures.",
+  "changes": [
+    {
+      "path": "patches/splatoon3/tests/charger-reticle-delay.test.mjs",
+      "afterSha256": "47710f47952f257e79ebac474b7263d02ebef8f38d5e075f2210590a67dcd7dc"
+    },
+    {
+      "path": "patches/splatoon3/tests/dualies-reticle-state.test.mjs",
+      "afterSha256": "d4f80e5e86ed040c550ae16802346a284652552bc986c065a2012354221939b7"
+    },
+    {
+      "path": "patches/local-quality/tests/visual-probe-subchip.test.mjs",
+      "afterSha256": "6cbd0135cf47c1acb4ac891728b9d3329f7284682df7f98c33764a5ba9596d6f"
+    },
+    {
+      "path": "patches/splatoon3/tests/issue-1813-dynamo-crossfire-source.test.mjs",
+      "afterSha256": "ed257fccb492599ec43e09a1ffec5927efa6974d5a9c883e8795e7fe96abaece"
+    }
+  ],
+  "localResults": {
+    "chargerBefore": {
+      "tests": 7,
+      "pass": 1,
+      "fail": 6,
+      "skip": 0
+    },
+    "dualiesSubchipBefore": {
+      "tests": 6,
+      "pass": 0,
+      "fail": 6,
+      "skip": 0
+    },
+    "relatedAfter": {
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "skip": 0
+    },
+    "allHUDAfter": {
+      "tests": 153,
+      "pass": 151,
+      "fail": 0,
+      "skip": 2,
+      "skipReason": "Existing #724 reference image/manifest unavailable; no skip code changed"
+    },
+    "separateCrossfireAfter": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "scope": "Test fixtures only. All previous assertions retained. No application runtime inputs, production receiver behavior, skips or error filters changed. Overlapping test selections must not be summed.",
+  "artifacts": [
+    {
+      "source": "/workspace/scratch/agent2-pr1914-3c-failure-job-123681981687.log",
+      "file": "hosted-shard0-charger.log.gz",
+      "rawBytes": 934540,
+      "rawSha256": "5c5c50f7f846d0aedce59632c0965f6f00632ae57bf44ed9a36683162f15493e",
+      "gzipBytes": 155305,
+      "gzipSha256": "8972eb7da3223d3fc1f4463061783e3ba300998c377c1e8e6b8eb06f6cfe5d42"
+    },
+    {
+      "source": "/workspace/scratch/agent2-pr1914-3c-failure-job-123681981697.log",
+      "file": "hosted-shard4-subchip.log.gz",
+      "rawBytes": 1018205,
+      "rawSha256": "04236aaf855eb7f5b4b5c97ca2fc9933beee35f358dd0423c61d87ae9f21f779",
+      "gzipBytes": 160229,
+      "gzipSha256": "cf370f5fb870e49c709fcddbd5039e8cfa387b9ccd7ef48026140f788c4ab47d"
+    },
+    {
+      "source": "/workspace/scratch/agent2-pr1914-3c-failure-job-123681981851.log",
+      "file": "hosted-shard5-dualies.log.gz",
+      "rawBytes": 795441,
+      "rawSha256": "ec6b15e25826668bafe753fac9fe891ecdc7f614e6c2c4883df6484b04b5a4e5",
+      "gzipBytes": 145087,
+      "gzipSha256": "b469b1ac8743fad93e741c78742691b4e0b51dd5efe9bfcbb33f2eb0be978558"
+    },
+    {
+      "source": "/workspace/scratch/charger-spicon-3c-before.tap",
+      "file": "charger-before.tap.gz",
+      "rawBytes": 6091,
+      "rawSha256": "3b98340af2b52bae7ce1f6da1019db4d71e6c7582e8a8fdd1b30ce4744a4383e",
+      "gzipBytes": 1117,
+      "gzipSha256": "8e41b0a7f12adc8dd62cfcc3a186ce9d4874a379d394c952238772cac8bd3f48"
+    },
+    {
+      "source": "/workspace/scratch/agent4-hud-other-fixtures-3c-before.tap",
+      "file": "dualies-subchip-before.tap.gz",
+      "rawBytes": 6543,
+      "rawSha256": "bee57c320e51c07e4348e9fbc1257d198d8e692446f524fc5f5fe4d3f347cdcd",
+      "gzipBytes": 1222,
+      "gzipSha256": "1496f8f4822972c9deaac4d9352776e0a87e5bd28c1022f35278458ca8004507"
+    },
+    {
+      "source": "/workspace/scratch/charger-spicon-followup-related-after.tap",
+      "file": "related23-after.tap.gz",
+      "rawBytes": 6920,
+      "rawSha256": "b9b5edf78d168a90d32bf4b9a18afa55c2cb72a69a2ee5b6f61a675e65cee467",
+      "gzipBytes": 1714,
+      "gzipSha256": "6bd58206568398e88789727fe5cc97e9e230f4913393a1e71aad02d15be0b747"
+    },
+    {
+      "source": "/workspace/scratch/charger-spicon-followup-all-hud-after.tap",
+      "file": "hud153-after.tap.gz",
+      "rawBytes": 54298,
+      "rawSha256": "c5dd6d98198417f790fb75dcd91fff0fe3384541e34905656da3de3f526fb4af",
+      "gzipBytes": 8514,
+      "gzipSha256": "b26ef8598d74ea2a1a8460b8b067082e41ad44313ebde942218daed82534d03d"
+    },
+    {
+      "source": "/workspace/scratch/charger-spicon-followup-shared-target-after.tap",
+      "file": "crossfire2-after.tap.gz",
+      "rawBytes": 1024,
+      "rawSha256": "1da22d3bd80edfcd32f87ac66aac46ff497989e1df1bbbe16fe824868fb8a422",
+      "gzipBytes": 478,
+      "gzipSha256": "42131705ec5eea66df55c99fc429696792f463470414a606004adf6d430028af"
+    }
+  ],
+  "hostedAcceptance": "The three old3c shards remain failed; required CI on the repair commit has not run yet.",
+  "commands": {
+    "cwd": "/workspace/wt-agent5",
+    "nodeExecutable": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "nodeExecutableSha256": "94efd062ed066c1a0b332e18249859c905e920eeada5df55d24c99b919629a90",
+    "allHUDAfter": [
+      "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-concurrency=2",
+      "scripts/tests/inkwave-frozen-hud-capture.test.mjs",
+      "scripts/tests/inkwave-hud-spicon-fixture.test.mjs",
+      "patches/splatoon3/tests/charger-reticle-selected-matrix.test.mjs",
+      "patches/splatoon3/tests/charger-reticle-delay.test.mjs",
+      "patches/splatoon3/tests/blaster-reticle-css.test.mjs",
+      "patches/splatoon3/tests/stringer-charge-hud.test.mjs",
+      "patches/splatoon3/tests/issue-871-shooter-reticle-corners.test.mjs",
+      "patches/splatoon3/tests/health-hud-stability.test.mjs",
+      "patches/splatoon3/tests/hud-custom-special-icon.test.mjs",
+      "patches/splatoon3/tests/splatling-reticle-rebuild-state-review.test.mjs",
+      "patches/splatoon3/tests/issue-594-idle-reticle.test.mjs",
+      "patches/splatoon3/tests/score-hud.test.mjs",
+      "patches/splatoon3/tests/dualies-reticle-state.test.mjs",
+      "patches/splatoon3/tests/sub-hud.test.mjs",
+      "patches/splatoon3/tests/charger-hud-reach.test.mjs",
+      "patches/splatoon3/tests/match-hud.test.mjs",
+      "patches/splatoon3/tests/queue-ranked-hud-20261029.test.mjs",
+      "patches/splatoon3/tests/hud-slosher-reticle.test.mjs",
+      "patches/splatoon3/tests/respawn-hud-gate.test.mjs",
+      "patches/splatoon3/tests/issue-724-roller-reticle.test.mjs",
+      "patches/splatoon3/tests/issue-1100-splatling-reticle.test.mjs",
+      "patches/local-quality/tests/visual-probe-subchip.test.mjs"
+    ],
+    "separateCrossfireAfter": [
+      "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+      "--experimental-vm-modules",
+      "--test",
+      "patches/splatoon3/tests/issue-1813-dynamo-crossfire-source.test.mjs"
+    ]
+  }
+}

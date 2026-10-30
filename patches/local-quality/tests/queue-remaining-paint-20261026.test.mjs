@@ -17,6 +17,15 @@ import { geometryFixture } from './geometry-build-fixture.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url)), SRC = path.join(ROOT, 'inkwave-public');
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/queue-remaining-paint-before.json', import.meta.url)));
 const sha = b => createHash('sha256').update(b).digest('hex');
+const finalPaintOwnerBytes=fs.readFileSync(new URL('./fixtures/queue-remaining-paint-wave345-1915.json',import.meta.url));
+function finalPaintOwners(bytes=finalPaintOwnerBytes){
+  assert.equal(sha(bytes),'f9b4a7d39284fa5d943943f327ec00efdec854dfe3768505d58bf8b07d256bc3','sealed final paint owner tuples');
+  return JSON.parse(bytes);
+}
+function replayFinalPaintOwners(source,bytes=finalPaintOwnerBytes){
+  for(const {before,after,label} of finalPaintOwners(bytes))source=replaceOnce(source,before,after,label);
+  return source;
+}
 for (const row of Object.values(baseline)) if (row?.source) assert.equal(sha(row.source), row.sha256);
 assert.equal(sha(baseline.ownership.composedSource), baseline.ownership.composedSha256);
 const candidate = adaptRemainingPaint20261026('src/world/paint.js', baseline.paint.source);
@@ -214,8 +223,21 @@ test('paint source adapter is isolated and fail-closed', () => {
   assert.notEqual(cpu, candidate, 'CPU owner is actually exercised');
   assert.notEqual(regional, cpu, 'regional rendering owner is actually exercised');
   assert.notEqual(terminal, regional, 'native mip and stretch-factor owner is actually exercised');
-  assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), terminal,
-    'production composition is remaining-paint → combat-world → CPU → regional rendering → world-native');
+  const current=adaptBuildSource('src/world/paint.js',fs.readFileSync(path.join(SRC,'src/world/paint.js'),'utf8'));
+  const final=replayFinalPaintOwners(terminal),owners=finalPaintOwners();
+  assert.equal(owners.length,2,'both reviewed final paint owners are represented');
+  assert.notEqual(final,terminal,'reviewed final owner is distinct from the unchanged older chain');
+  assert.equal(current,final,'production composition is remaining-paint → combat-world → CPU → regional rendering → world-native → reviewed final owner');
+  let restored=current;
+  for(const {before,after,label} of [...owners].reverse())restored=replaceOnce(restored,after,before,'reverse '+label);
+  assert.equal(restored,terminal,'current paint source reverses to the complete independently composed older chain');
+  for(const {before,after,label} of owners){
+    assert.throws(()=>replayFinalPaintOwners(terminal.replace(before,'')),/expected exactly one/,'missing final paint owner site is rejected');
+    assert.throws(()=>replayFinalPaintOwners(terminal+before),/expected exactly one/,'duplicate final paint owner site is rejected');
+    assert.throws(()=>replaceOnce(current.replace(after,''),after,before,'missing reverse '+label),/expected exactly one/,'missing current owner cannot be reversed');
+    assert.throws(()=>replaceOnce(current+after,after,before,'duplicate reverse '+label),/expected exactly one/,'duplicate current owner cannot be reversed');
+  }
+  assert.throws(()=>replayFinalPaintOwners(terminal,Buffer.from(finalPaintOwnerBytes.toString().replace('paintShapeSeed','unreviewedPaintShapeSeed'))),/sealed final paint owner tuples/,'changed owner cannot acquire the frozen final paint identity');
   assert.throws(() => adaptPaintRenderRegions('src/world/paint.js', terminal, replaceOnce), /already composed/);
   assert.throws(() => adaptWorldNative20261029('src/world/paint.js', terminal), /anchor/);
   assert.equal(adaptRemainingPaint20261026('src/config.js', baseline.paint.source), baseline.paint.source);
