@@ -23,6 +23,12 @@
     ]
   },
   "nativeGeometryParity": "native-parity-left-associated.json",
-  "status": "Source functional checks and corrected-source ABBA/BAAB component remeasurement passed. Rebuild is waiting for the shared build/measurement slot; build-validation.json still refers to the earlier candidate.",
-  "componentReplay": "component-left-associated.json"
+  "status": "Corrected-source functional checks, real-geometry parity, ABBA/BAAB component remeasurement, normal native build, emitted tests and source/artifact binding passed.",
+  "componentReplay": "component-left-associated.json",
+  "emittedTests": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0
+  },
+  "build": "build-validation-left-associated.json"
 }

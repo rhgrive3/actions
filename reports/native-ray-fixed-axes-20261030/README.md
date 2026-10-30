@@ -10,7 +10,7 @@
 
 また、初期finite検証でthrowしていた従来coercion試験を補い、nth valueOfでslab中のthrowを確認した。far.valueOf中のthrow、nested ray、反復する値変更、origin/direction/node途中変更も比較した。[追加6試験](coercion-tests.log)、[関連28試験](left-associated-tests.log)、[修正後の実形状16,000 ray](native-parity-left-associated.json)は成功した。集約は[left-associated validation](left-associated-validation.json)を参照。
 
-加算順修正版 `88349c4c` で同じ実入力の部品計測を再実施した。下表と `component-left-associated.json` はこの修正版に対応する。通常配信build receiptは修正前の候補に対応し、再ビルドは共有枠の解放を待っている。
+加算順修正版 `88349c4c` で同じ実入力の部品計測を再実施した。下表と `component-left-associated.json` はこの修正版に対応する。[修正版の通常配信build・emitted30試験・ソース照合](build-validation-left-associated.json)も成功した。旧候補のbuild receiptは履歴として残す。
 
 ## 実入力の記録と部品計測
 
@@ -35,7 +35,7 @@
 - 既存ray/downward slab/BVH lifetime/ground batch/mask/LOSの24 tests成功。ランダム12,000 ray、異常slab 18,144回、極値predicate 1,005,400回、30/60/120Hzのnative移動と実weapon admission/damage/paintを含む。
 - [初回追加3 tests](fixed-axes-tests.log)成功。getter/proxyの全読取順、各軸early reject、読取例外、非number coercion、node getter中のnested rayとnode途中書換を、変更前の厳密なループと比較した。
 - [Hagglefish実形状の独立16,000 ray](native-parity.json)は全hit情報、query16,000、triangleTests4,157,951が一致した。
-- 通常配信ビルドとemitted testsの結果は `build-validation.json` を参照。候補ビルドの実battle全体・画像比較は親作業で確認する範囲として残す。
+- 修正版の通常配信ビルドとemitted30 testsの結果は [build-validation-left-associated.json](build-validation-left-associated.json) を参照（[旧候補の履歴](build-validation.json)も保持）。候補ビルドの実battle全体・画像比較は親作業で確認する範囲として残す。
 
 Splatoon 3の既存比較条件Ver.11.3.0を引き継ぎ、新しい移動・射撃・塗り・衝突の数値は導入しない。本家内部のBVH方式を推定せず、既存の実機挙動比較の未確認項目は維持する。
 
