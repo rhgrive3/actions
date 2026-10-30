@@ -1,0 +1,19 @@
+{
+  "frames": 1593,
+  "skinFrames": 75,
+  "sourceFrames": 351,
+  "inactiveFrames": 717,
+  "dualFrames": 126,
+  "differenceCount": 0,
+  "baseline": "84453765039f040cb937f6beb7fdb58d54f169dd",
+  "command": "node --experimental-vm-modules --test patches/local-quality/tests/native-weapon-target.test.mjs",
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "durationMs": 55303.211408,
+  "sha256": {
+    "patches/local-quality/tests/native-weapon-target.test.mjs": "2b18614b663484feaaf9f495aaa5f1bfd4d79ef67bdce6a3b16455934bafe50c",
+    "patches/local-quality/tests/native-weapon-target-fixture.mjs": "ff09d59efd021138e1a6ccc6daa629887d30f94059751f57fa295f268709c70d",
+    "patches/local-quality/tests/fixtures/native-weapon-target-84453765.js.txt": "3509256a7dcaa32cc9a9a421d56e220eb1b21533a09e88602fe5d7983a2100ef"
+  }
+}
