@@ -1,3 +1,21 @@
+// A rolling stamp covers the drum's width, not just the chart under its centre.
+// Native source charts split one physical floor by object and 8m tile. Keep the
+// event's struck face/seed, but let that contact reach other charts on its plane.
+export function nativeContactFace(level, faceId, kind) {
+ if (!level.native || kind !== 'ink-contact' || !Number.isInteger(faceId) || faceId < 0) return null;
+ const face = level.faces[faceId];
+ return face?.turf ? face : null;
+}
+
+export function nativeContactCoplanar(reference, face) {
+ if (reference === face) return true;
+ if (!face?.turf) return false;
+ const n = reference.n, m = face.n;
+ if (Math.abs(n.x*m.x + n.y*m.y + n.z*m.z - 1) > 1e-6) return false;
+ const a = reference.origin, b = face.origin;
+ return Math.abs((b.x-a.x)*n.x + (b.y-a.y)*n.y + (b.z-a.z)*n.z) <= 1e-4;
+}
+
 // #264: sub-cell dot cores can claim without exceeding the legacy fixed-sample
 // margin. Native cache pruning must opt into the same ownership rule.
 /** Conservative maximum interior depth of the existing signed-distance pieces.

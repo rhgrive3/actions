@@ -176,11 +176,15 @@ const game = new Game();`);
     if (!nativeStageCompatible(cfg)) { this._fail(new Error('Stage assets differ between players. Use the same reference build.')); return; }`);
  }
  if(rel==='src/world/paint.js'){
-  code="import { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeContactFace, nativeContactCoplanar } from '../../patches/native-stages/runtime/native-paint.mjs';\nimport { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _layout(maxDensity) {','  _layout(maxDensity) {\n    if (this.level.native) return layoutNativePaint(this, maxDensity);');
   // #1671: same ids/order as queryBlocks plus the loop's own first y rejection.
   once('    const ids = this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []));',
-   '    const faceIds = Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;\n    const ids = faceIds || (this.level.queryBlocksBand ? this.level.queryBlocksBand(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []), center.y, reach, 0) : this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = [])));');
+   '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    const faceIds = !contactFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;\n    const ids = faceIds || (this.level.queryBlocksBand ? this.level.queryBlocksBand(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []), center.y, reach, 0) : this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = [])));');
+  once('if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
+   'if (fid < 0 || (!contactFace && faceOnly >= 0 && fid !== faceOnly)) continue;');
+  once('          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
+   '          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f))) continue;');
   once('    const ids = this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));',
    '    const ids = this.level.queryBlocksBand ? this.level.queryBlocksBand(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []), y, 2.5, 1) : this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));');
   once('    const shouldRebuild = this._mipsDirty &&', '    const shouldRebuild = !this.level.native && this._mipsDirty &&');

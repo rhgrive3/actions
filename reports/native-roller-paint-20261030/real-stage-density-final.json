@@ -1,0 +1,42 @@
+{
+  "stage": "barnacle",
+  "base": "c22d9c332889fed013860c0f935a709923ee231f",
+  "rows": [
+    {
+      "size": 2048,
+      "requestedPpm": 4,
+      "actualPpm": 3.2,
+      "faces": 75857
+    },
+    {
+      "size": 2048,
+      "requestedPpm": 8,
+      "actualPpm": 3.276800000000001,
+      "faces": 75857
+    },
+    {
+      "size": 2048,
+      "requestedPpm": 18,
+      "actualPpm": 3.276800000000001,
+      "faces": 75857
+    },
+    {
+      "size": 4096,
+      "requestedPpm": 4,
+      "actualPpm": 4,
+      "faces": 75857
+    },
+    {
+      "size": 4096,
+      "requestedPpm": 8,
+      "actualPpm": 8,
+      "faces": 75857
+    },
+    {
+      "size": 4096,
+      "requestedPpm": 30,
+      "actualPpm": 9.830400000000004,
+      "faces": 75857
+    }
+  ]
+}
