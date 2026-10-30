@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLoggedTestProcess } from './run-logged-test-process.mjs';
-import { selectTestShard, discoverSourceTestFiles } from './lib/inkwave-test-shards.mjs';
+import { selectTestShard, selectIsolatedTestShard, discoverSourceTestFiles } from './lib/inkwave-test-shards.mjs';
 import vm from 'node:vm';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { checkCompatibility, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
@@ -53,7 +53,13 @@ try {
   }
   const files = discoverSourceTestFiles(ROOT).map(file => path.join(ROOT, file));
   if (!files.length) throw new Error('No patch tests discovered');
-  const shardFiles = selectTestShard(files, shardIndex, shardCount);
+  const isolationFlag = process.env.INKWAVE_TEST_ISOLATE_RAINMAKER;
+  if (isolationFlag !== undefined && isolationFlag !== '1')
+    throw new Error('INKWAVE_TEST_ISOLATE_RAINMAKER must be unset or 1');
+  const isolateRainmaker = isolationFlag === '1';
+  const shardFiles = isolateRainmaker
+    ? selectIsolatedTestShard(files, shardIndex, shardCount, [path.join(PATCH_ROOT, 'tests/rainmaker-model-actor.test.mjs')])
+    : selectTestShard(files, shardIndex, shardCount);
   if (!shardFiles.length) throw new Error(`Patch suite shard ${shardIndex + 1}/${shardCount} has no test files`);
   const logDir = path.resolve(process.env.INKWAVE_TEST_LOG_DIR || path.join(ROOT, '.ci-scratch/inkwave-patches'));
   const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));

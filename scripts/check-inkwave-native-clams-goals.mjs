@@ -14,7 +14,7 @@ try{for(const id of (process.env.NATIVE_STAGE_IDS||'manta,wahoo').split(',')){
  const report=await page.evaluate(async ({id,requirePower})=>{
   const G=NG,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),{buildFrame}=await import(new URL('patches/splatoon3/runtime/ranked/install.mjs',document.baseURI)),cases=[],random=Math.random;Math.random=()=>.5;
   try{for(const team of [0,1])for(const renderHz of [30,60,120]){
-   const g=G.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'clams',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
+   const g=G.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'clams',difficulty:'normal'});g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
    if(G.match.mode!=='clams'||G.match.ranked?.mode!=='clams'||G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7)throw Error('Actual Clams match/roster was not initialized');
    const L=G.level,V=G.local.pos.constructor,a=G.actors.find(a=>a.team===team&&a.bot),digest=async()=>{
     const hashes=[];for(const key of ['vertices','indices','triangles','flags','mask'])hashes.push(Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',L.data[key].buffer))).map(n=>n.toString(16).padStart(2,'0')).join(''));return hashes.join(':');

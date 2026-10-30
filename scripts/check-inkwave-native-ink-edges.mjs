@@ -29,7 +29,7 @@ try{
   await p.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});
   assert.equal(await p.locator('#boot-error').textContent(),'');
-  await p.evaluate(async id=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});for(let i=0;i<420;i++)g._frame(1/60);g.debug.freezeBots();},id);
+  await p.evaluate(async id=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+167;i<n;i++)g._frame(1/60);g.debug.freezeBots();},id);
   await p.evaluate('globalThis.selectNativeProjectileWall='+selectNativeProjectileWall.toString());
   const proof=await p.evaluate(async()=>{
    const G=NG,g=G.game,a=G.local,r=G.renderer,gl=r.getContext(),T=await import(new URL('vendor/three/build/three.module.js',document.baseURI));

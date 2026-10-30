@@ -1,0 +1,57 @@
+// Runs after the existing gameplay/native adapters. Original inputs remain locked.
+function once(code, before, after, label) {
+  const at = code.indexOf(before);
+  if (at < 0 || code.indexOf(before, at + before.length) >= 0)
+    throw new Error(`Turf intro camera conflict (${label}): expected one connection`);
+  return code.slice(0, at) + after + code.slice(at + before.length);
+}
+export function adaptTurfIntroCamera(rel, code) {
+  if (rel === 'src/main.js') {
+    code = "import { beginTurfIntro } from '../patches/splatoon3/runtime/turf-intro-camera.mjs';\n" + code;
+    const start = code.indexOf('  _intro() {'), end = code.indexOf('\n  pause() {', start);
+    if (start < 0 || end < 0 || code.indexOf('  _intro() {', start + 1) >= 0)
+      throw new Error('Turf intro camera conflict (Game intro method)');
+    const previous = code.slice(start, end);
+    if (!previous.includes('beginIntroPresentation(this, m, [[1.7, \'ready\'], [3, \'show\']])') || !previous.includes('nativeBasis'))
+      throw new Error('Turf intro camera conflict (composed native/clock intro)');
+    code = once(code, previous, `  _intro() {
+    if (this.match.boss) { this._bossIntro(this.match.boss); return; }
+    beginTurfIntro(this, G, THREE);
+  }
+`, 'turf intro');
+  } else if (rel === 'src/core/input.js') {
+    // Native pointer-lock fallback/reacquisition must recognize the newly
+    // interactive spawn reveal. Preserve activation, menu, pause, owner,
+    // generation and document guards; only extend the live-state predicate.
+    const yes="G.match?.state === 'playing'",no="G.match?.state !== 'playing'";
+    if(code.split(yes).length!==7||code.split(no).length!==2)
+      throw new Error('Turf intro camera conflict (pointer-lock live-state guards)');
+    code="import { turfIntroAiming } from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';\n"+code;
+    code=code.split(yes).join("(G.match?.state === 'playing' || turfIntroAiming(G.match))")
+      .split(no).join("!(G.match?.state === 'playing' || turfIntroAiming(G.match))");
+  } else if (rel === 'src/game/player.js') {
+    code="import { turfIntroAiming, updateTurfIntroCamera } from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';\n"
+      +"import { recordAimPose } from '../../patches/splatoon3/runtime/camera-aim-controls.mjs';\n"+code;
+    code=once(code,'  computeAim(simulation = false) {',
+      '  computeAim(simulation = false) {\n    if (simulation && turfIntroAiming(G.match)) updateTurfIntroCamera(this.rig, G, THREE, recordAimPose);',
+      'same-tick spawn aim before automatic launch');
+  } else if (rel === 'src/game/cameraRig.js') {
+    if (!code.includes('    recordAimPose(this);')) throw new Error('Turf intro camera conflict (simulation aim owner)');
+    code = "import { updateTurfIntroCamera } from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';\n" + code;
+    code = once(code, '  update(dt) {', '  update(dt) {\n    if (updateTurfIntroCamera(this, G, THREE, recordAimPose)) return;', 'CameraRig update');
+  } else if (rel === 'src/game/match.js') {
+    code = "import { TURF_INTRO_FRAMES, turfIntroAiming } from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';\n" + code;
+    code = once(code, "    this.state = 'init';", "    this.turfIntroFrames = TURF_INTRO_FRAMES.go;\n    this.state = 'init';", 'intro frame budget');
+    code = once(code, 'if (this.stateT > (this.bossMode ? this.bossCfg.intro : 4.2))',
+      'if (this.bossMode ? this.stateT > this.bossCfg.intro : this.stateT + 1e-9 >= TURF_INTRO_FRAMES.go / 60)', 'match duration');
+    code = once(code, "this.controller.enabled = this.state === 'playing' && !this.paused && this.local.alive && !this.controller.menuBlocked;",
+      "this.controller.enabled = (this.state === 'playing' || turfIntroAiming(this)) && !this.paused && this.local.alive && !this.controller.menuBlocked;", 'opening aim input');
+  } else if (rel === 'src/ui/hud.js') {
+    // Preserve the existing sanitized Splashtag renderer. Only its arrangement
+    // and lifetime change: one team's compact row follows the camera cuts.
+    code = once(code, "class: 'iw-lineup iw-lineup--stags'", "class: 'iw-lineup iw-lineup--stags iw-lineup--camera'", 'portrait tag layout');
+    code = once(code, "    setTimeout(() => el.classList.add('is-out'), 2900);\n    setTimeout(() => el.remove(), 3500);",
+      '    this._turfIntroLineup = { match, el };', 'portrait tag lifetime');
+  }
+  return code;
+}

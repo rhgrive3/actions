@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {TURF_INTRO_FRAMES} from '../../patches/splatoon3/runtime/turf-intro-camera.mjs';
 import { createRequire } from 'node:module';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from '../lib/inkwave-projectile-capture-ui.mjs';
 import { completeNativeTurfIntro } from '../lib/inkwave-projectile-ci-intro.mjs';
@@ -45,9 +46,9 @@ test('native Match-clock presentation and real CSS settle before live gameplay',
     // cinematic, in the same browser task. Native DOM/CSS timers remain real.
     const wrapped=new Function(`return async function(){const pending=(${fn.toString()})();window.startNativeLoop();return pending;}`)();
     const result=await requireAtomicIntro(page,wrapped,deadline);
-    assert.equal(result.playingReady,true);assert.equal(result.intro.frames,253);assert.equal(result.intro.matchTimeAfter,180);
+    assert.equal(result.playingReady,true);assert.equal(result.intro.frames,TURF_INTRO_FRAMES.go);assert.equal(result.intro.matchTimeAfter,180);
     const nativeIntroStartedAtMs=await page.evaluate(()=>window.nativeIntroStartedAtMs);
-    assert(result.intro.uiWait.uiReadyAtMs-nativeIntroStartedAtMs>=3500,'production lineup timer was not fast-forwarded');
+    assert(result.intro.uiWait.uiReadyAtMs-nativeIntroStartedAtMs>=350,'production HUD opacity transition was not fast-forwarded');
     const state=await page.evaluate(()=>({calls:window.calls,ui:window.__iwProjectileIntroUiReceipt,g:window.__inkwave.frozen,skip:window.__inkwave._skipRender,strict:window.__iwProjectileCaptureUiGate()}));
     assert.equal(state.calls.renderedIntroFrames,0);assert.equal(state.calls.skippedLiveFrames,0);
     assert.equal(state.g,false);assert.equal(state.skip,false);assert.equal(state.ui.lastUi.hud.dom.effectiveOpacity,1);
@@ -63,7 +64,7 @@ test('negative control: immediate native completion cannot bypass lineup and GO 
   const page=await fixture(browser);
   try {await page.evaluate(completeNativeTurfIntro);await page.waitForTimeout(3100);
     const r=await page.evaluate(()=>({hud:window.__inkwave.hud._visible,gate:window.__iwProjectileCaptureUiGate()}));
-    assert.equal(r.hud,true);assert.equal(r.gate.ready,false);assert(r.gate.failed.includes('lineup'));
+    assert.equal(r.hud,true);assert.equal(r.gate.ready,false);assert(r.gate.failed.includes('startupBanners'));
   }finally{await page.close();}
 });
 
@@ -71,7 +72,7 @@ test('real pending/paused HUD animation blocks settled capture even at opacity o
   const page=await fixture(browser);
   try {
     const r=await page.evaluate(()=>{
-      const g=window.__inkwave;g.hud.setVisible(true);document.querySelector('.iw-lineup').remove();
+      const g=window.__inkwave;g.hud.setVisible(true);document.querySelector('.iw-lineup')?.remove();
       // Test fault injection only: non-changing opacity must not allow a live animation.
       const a=g.hud.el.animate([{opacity:1},{opacity:1}],{duration:1000});a.pause();
       return {loose:window.__iwProjectileCaptureUiGate({allowIntro:true,settled:false}),strict:window.__iwProjectileCaptureUiGate({allowIntro:true})};
@@ -96,7 +97,7 @@ for(const fault of ['hidden ancestor','permanent lineup','ownership change','nat
     // run and restore before inspecting, without ever accepting a late result.
     await page.waitForFunction(()=>window.__iwProjectileIntroUiReceipt?.restoredAtMs,{},{timeout:1000});
     const s=await page.evaluate(()=>({calls:window.calls,frozen:window.__inkwave.frozen,skip:window.__inkwave._skipRender,state:window.__inkwave.match.state,receipt:window.__iwProjectileIntroUiReceipt}));
-    assert.equal(s.calls.frames,180);assert.equal(s.calls.liveFrames,0);assert.equal(s.state,'intro');assert.equal(s.frozen,false);assert.equal(s.skip,false);assert.equal(s.receipt.outcome,'failed');
+    assert.equal(s.calls.frames,TURF_INTRO_FRAMES.ready);assert.equal(s.calls.liveFrames,0);assert.equal(s.state,'intro');assert.equal(s.frozen,false);assert.equal(s.skip,false);assert.equal(s.receipt.outcome,'failed');
   }finally{await page.close();}
 });
 

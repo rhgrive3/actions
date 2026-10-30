@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, webkit, devices } from 'playwright';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
+import { createResponsiveDiagnostics, createResponsiveProgressWriter } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const source = path.resolve(arg('--source') || '_site');
@@ -61,15 +62,25 @@ const result = { source, audit, engine:engineName,viewportModel:resizableViewpor
 const server = createResponsiveAssetServer({ source, html });
 await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
 const chromiumPath = process.env.CHROMIUM_PATH;
-let context, page;
+let context, page, diagnostics, activeCase, cleanupRecorded=false;
+const markCleanup=()=>{if(diagnostics&&!cleanupRecorded){cleanupRecorded=true;diagnostics.record('context-close-start');}};
 try {
   for (const [name,width,height] of cases.filter(([n])=>!selected.length || selected.includes(n))) {
+    activeCase=name;cleanupRecorded=false;
+    diagnostics=createResponsiveDiagnostics({onChange:createResponsiveProgressWriter(path.join(evidence,`${name}-diagnostic-progress.json`),{engine:engineName,name,contentHash:manifest.contentHash,inputHash:manifest.inputHash,revision:manifest.build.revision})});
+    const caseDiagnostics=diagnostics;
+    diagnostics.record('context-launch-start');
     const touch = name !== 'desktop';
     context = await engine.launchPersistentContext(path.join(profile,name),{headless:true,...(touch ? devices['iPhone 13'] : {}),...(resizableViewport?{isMobile:false}:{}),viewport:{width,height},deviceScaleFactor:1,reducedMotion:'reduce',...(engineName==='chromium'?{...(chromiumPath?{executablePath:chromiumPath}:{}),args:['--no-sandbox','--disable-dev-shm-usage']}:{} )});
+    diagnostics.record('context-launch-complete');
+    context.on('close',()=>caseDiagnostics.record('context-close'));
+    context.browser()?.on('disconnected',()=>caseDiagnostics.record('browser-disconnected'));
     page = context.pages()[0] || await context.newPage();
-    page.on('pageerror',error=>result.errors.push({name,error:error.message}));
+    page.on('crash',()=>caseDiagnostics.unavailable('page-crash'));
+    page.on('close',()=>caseDiagnostics.unavailable('page-close'));
+    page.on('pageerror',error=>{result.errors.push({name,error:error.message});caseDiagnostics.record('page-error',error.message);});
     await page.goto(`http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`);
-    await page.waitForFunction(()=>window.menuReady);
+    await page.waitForFunction(()=>window.menuReady);diagnostics.stage('menu-ready');
     if(name==='notched')await page.evaluate(()=>{
       for(const [key,value] of [['--sal','44px'],['--sar','44px'],['--sab','21px']])menus.el.style.setProperty(key,value);
     });
@@ -173,7 +184,10 @@ try {
       if(touch)check(await page.locator('[data-id="start"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'start stays visible after scrolling stages');
       await tap('[data-id="time"]');
       const saved=await page.evaluate(()=>({id:menus._setup.mapId,time:menus._setup.times[menus._setup.mapId]}));
-      await tap('.iw-ss__foot [data-id="weapon"]');await page.waitForFunction(()=>menus._scr?.name==='loadout');
+      diagnostics.operation('setup-loadout-tap','before');
+      await tap('.iw-ss__foot [data-id="weapon"]');diagnostics.operation('setup-loadout-tap','after');
+      diagnostics.operation('setup-loadout-wait','before');
+      await page.waitForFunction(()=>menus._scr?.name==='loadout');diagnostics.operation('setup-loadout-wait','after');
       await page.waitForTimeout(400);await tap('.iw-loadout .iw-backbtn');await page.waitForFunction(()=>menus._scr?.name==='setup');
       await page.waitForTimeout(400);
       check(await page.evaluate(v=>menus._setup.mapId===v.id&&menus._setup.times[v.id]===v.time,saved),'stage and time survive equipment roundtrip');
@@ -203,7 +217,7 @@ try {
       check(await page.evaluate(()=>calls.filter(c=>c.kind==='start').length===1),'double start activates the existing match API once');
       check(await page.evaluate(expected=>{const actual=calls.find(c=>c.kind==='start').value;return Object.entries(expected).every(([key,value])=>actual[key]===value);},requested),'Start sends the selected stage, time and dialog settings to the match API');
     }
-    if(stageOnly) {await context.close();console.log(`${name}: ${entry.checks.length} stage checks`);continue;}
+    if(stageOnly) {diagnostics.stage('stage-checks-complete');markCleanup();await context.close();console.log(`${name}: ${entry.checks.length} stage checks`);continue;}
     for(const mode of (name==='phone'?['turf','boss','zones','tower','rainmaker','clams']:['turf','boss','zones'])) {
       await page.evaluate(mode=>{const d=menus._demoResults();d.mode=mode;if(mode==='boss'){d.boss={defeated:true,time:142,hpLeft:0,phase:3};d.players=d.players.map((p,i)=>({...p,team:0,damage:5000-i*340,weakHits:12+i}));}else if(mode!=='turf'){d.counts=[0,65];d.penalties=[0,12];d.knockout=true;d.winner=0;}menus._results=d;},mode);
       await show('results');
@@ -266,14 +280,17 @@ try {
         entry.rotation={status:'separate-resizable-viewport-check'};
       }
     }
-    await context.close();console.log(`${name}: ${entry.checks.length} checks`);
+    diagnostics.stage('all-case-checks-complete');markCleanup();await context.close();console.log(`${name}: ${entry.checks.length} checks`);
   }
   assert.deepEqual(result.errors,[]);result.status='passed';
 }catch(error){
+  diagnostics?.fail(error);
+  result.failedCase=activeCase??null;
+  console.error(JSON.stringify({event:'mobile-menu-primary-failure',engine:engineName,name:activeCase??null,diagnostics:diagnostics?.snapshot()??null}));
   result.status='failed';result.failure=error.stack;process.exitCode=1;
   if(page&&!page.isClosed()) {
     await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});
     result.layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,nodes:[...document.querySelectorAll('.iw-screen:not(.is-leaving), .s3-setup-scroll, .iw-ss__foot, .iw-ss__caption, .iw-ss__time, [data-id="start"]')].map(el=>({cls:el.className,rect:el.getBoundingClientRect().toJSON(),rows:getComputedStyle(el).gridTemplateRows,padding:getComputedStyle(el).padding}))})).catch(()=>null);
   }
 }
-finally{await context?.close();await new Promise(resolve=>server.close(resolve));fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(`${result.status}: ${evidence}`);if(result.failure)console.error(result.failure);}
+finally{markCleanup();await context?.close();if(diagnostics)result.diagnostics={name:activeCase,...diagnostics.snapshot()};await new Promise(resolve=>server.close(resolve));fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(`${result.status}: ${evidence}`);if(result.failure)console.error(result.failure);}

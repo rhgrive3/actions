@@ -1,0 +1,3239 @@
+{
+  "status": "passed",
+  "scope": "offline-and-online",
+  "contentHash": "4bab7a49a1e2f16a1593154ec64e492210de2713d3d8c1fd37bec8738147eff3",
+  "inputHash": "911092e832e7155bafb9330bca1d1f7eef020c56a83ca6709fb13bfef47ea08f",
+  "revision": "928257ba9c4517fc910fb0022d2b6a78351decb13a22dec799dd7d83525e3e5e",
+  "browser": {
+    "version": "151.0.7922.34",
+    "channel": "custom-executable"
+  },
+  "delayMs": 0,
+  "results": [
+    {
+      "mode": "zones",
+      "offline": {
+        "mode": "zones",
+        "state": "playing",
+        "time": 296.700000000003,
+        "actors": 8,
+        "ranked": true,
+        "hud": "ガチエリアアルファ100·ブラボー1004:57エリア1 0/0   エリア2 0/0"
+      },
+      "proof": {
+        "counts": [
+          98,
+          100
+        ],
+        "snapshotBytes": 543,
+        "weapon": null,
+        "winner": 0,
+        "overtime": false,
+        "state": "finish"
+      },
+      "online": [
+        {
+          "mode": "zones",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": false,
+          "actors": 8,
+          "time": 299.85000000000014
+        },
+        {
+          "mode": "zones",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": true,
+          "actors": 8,
+          "time": 299.85000000000014
+        }
+      ],
+      "remoteContactGear": {
+        "status": "passed",
+        "scope": "native two-context gameplay, real relay and WebAudio lifecycle; not acoustic listening",
+        "phases": [
+          {
+            "name": "native-ledge",
+            "lane": {
+              "attempts": 55,
+              "block": 4,
+              "yaw": -3.141592653589793,
+              "travelYaw": 0,
+              "edge": [
+                -23,
+                5.551115123125783e-17,
+                14.1
+              ],
+              "supported": [
+                -23,
+                5.551115123125783e-17,
+                17.1
+              ],
+              "observer": [
+                -20,
+                5.551115123125783e-17,
+                19.1
+              ],
+              "edgeSupport": {
+                "floor": false,
+                "wall": false,
+                "supported": false
+              },
+              "corridor": [
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  17.1
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  17.35
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  17.6
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  17.85
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  18.1
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  18.35
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  18.6
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  18.85
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  19.1
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  19.35
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  19.6
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  19.85
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  20.1
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  20.35
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  20.6
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  20.85
+                ],
+                [
+                  -23,
+                  5.551115123125783e-17,
+                  21.1
+                ]
+              ]
+            },
+            "identities": [
+              {
+                "nid": 0,
+                "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                "weapon": "roller",
+                "position": [
+                  0.9904027378916139,
+                  2.2,
+                  -38.52242903192596
+                ],
+                "yaw": 0
+              },
+              {
+                "nid": 4,
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "weapon": "dualies",
+                "position": [
+                  0.9904027378916139,
+                  2.2,
+                  39.877570968074046
+                ],
+                "yaw": 3.141592653589793
+              }
+            ]
+          },
+          {
+            "name": "supported-audio-clock",
+            "clock": {
+              "status": "running",
+              "frames": 2,
+              "batches": [
+                {
+                  "sent": {
+                    "frames": 2,
+                    "sequence": 170,
+                    "position": [
+                      -23,
+                      0,
+                      17.16
+                    ],
+                    "time": 72.26666666666385
+                  },
+                  "remote": false
+                }
+              ]
+            }
+          },
+          {
+            "name": "supported-audio-clock",
+            "clock": {
+              "status": "running",
+              "frames": 5,
+              "batches": [
+                {
+                  "sent": {
+                    "frames": 2,
+                    "sequence": 170,
+                    "position": [
+                      -23,
+                      0,
+                      17.16
+                    ],
+                    "time": 72.26666666666385
+                  },
+                  "remote": false
+                },
+                {
+                  "sent": {
+                    "frames": 3,
+                    "sequence": 171,
+                    "position": [
+                      -23,
+                      0,
+                      17.4
+                    ],
+                    "time": 72.31666666666385
+                  },
+                  "remote": {
+                    "nid": 0,
+                    "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "remote": true,
+                    "alive": true,
+                    "weapon": "roller",
+                    "grounded": true,
+                    "held": true,
+                    "suspended": false,
+                    "ready": true,
+                    "f": 4456753,
+                    "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "life": 1,
+                    "sampledLife": 1,
+                    "near": true,
+                    "rollLoop": true,
+                    "realRollLoops": [
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.0012984164446128473,
+                        "playing": true,
+                        "registered": true,
+                        "requestPlaying": true,
+                        "stops": 0
+                      }
+                    ],
+                    "audioState": "running",
+                    "audioTime": 17.40045351473923,
+                    "equipment": false,
+                    "gearOverride": null,
+                    "proof": {
+                      "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                      "life": 1,
+                      "sequence": 171,
+                      "source": "accepted-gear",
+                      "equipped": false
+                    },
+                    "acceptedSequence": 171,
+                    "sampledGear": "none",
+                    "turret": false
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "supported-audio-clock",
+            "clock": {
+              "status": "passed",
+              "frames": 5,
+              "batches": [
+                {
+                  "sent": {
+                    "frames": 2,
+                    "sequence": 170,
+                    "position": [
+                      -23,
+                      0,
+                      17.16
+                    ],
+                    "time": 72.26666666666385
+                  },
+                  "remote": false
+                },
+                {
+                  "sent": {
+                    "frames": 3,
+                    "sequence": 171,
+                    "position": [
+                      -23,
+                      0,
+                      17.4
+                    ],
+                    "time": 72.31666666666385
+                  },
+                  "remote": {
+                    "nid": 0,
+                    "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "remote": true,
+                    "alive": true,
+                    "weapon": "roller",
+                    "grounded": true,
+                    "held": true,
+                    "suspended": false,
+                    "ready": true,
+                    "f": 4456753,
+                    "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "life": 1,
+                    "sampledLife": 1,
+                    "near": true,
+                    "rollLoop": true,
+                    "realRollLoops": [
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.0012984164446128473,
+                        "playing": true,
+                        "registered": true,
+                        "requestPlaying": true,
+                        "stops": 0
+                      }
+                    ],
+                    "audioState": "running",
+                    "audioTime": 17.40045351473923,
+                    "equipment": false,
+                    "gearOverride": null,
+                    "proof": {
+                      "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                      "life": 1,
+                      "sequence": 171,
+                      "source": "accepted-gear",
+                      "equipped": false
+                    },
+                    "acceptedSequence": 171,
+                    "sampledGear": "none",
+                    "turret": false
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "supported-real-audio",
+            "remote": {
+              "nid": 0,
+              "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "remote": true,
+              "alive": true,
+              "weapon": "roller",
+              "grounded": true,
+              "held": true,
+              "suspended": false,
+              "ready": true,
+              "f": 4456753,
+              "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "life": 1,
+              "sampledLife": 1,
+              "near": true,
+              "rollLoop": true,
+              "realRollLoops": [
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.0012984164446128473,
+                  "playing": true,
+                  "registered": true,
+                  "requestPlaying": true,
+                  "stops": 0
+                }
+              ],
+              "audioState": "running",
+              "audioTime": 17.40045351473923,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                "life": 1,
+                "sequence": 171,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 171,
+              "sampledGear": "none",
+              "turret": false
+            },
+            "movement": {
+              "position": [
+                -23,
+                0,
+                17.4
+              ],
+              "distance": 0.29999999999999716
+            }
+          },
+          {
+            "name": "suspended-owner-to-remote",
+            "wire": {
+              "ts": 195.821,
+              "f": 272892177,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                0,
+                1,
+                177,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 0,
+              "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "remote": true,
+              "alive": true,
+              "weapon": "roller",
+              "grounded": true,
+              "held": true,
+              "suspended": true,
+              "ready": true,
+              "f": 272892177,
+              "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "life": 1,
+              "sampledLife": 1,
+              "near": true,
+              "rollLoop": false,
+              "realRollLoops": [
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.22658217449128853,
+                  "playing": false,
+                  "registered": false,
+                  "requestPlaying": false,
+                  "stops": 1
+                }
+              ],
+              "audioState": "running",
+              "audioTime": 18.07092970521542,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                "life": 1,
+                "sequence": 175,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 175,
+              "sampledGear": "none",
+              "turret": false
+            }
+          },
+          {
+            "name": "recovery-audio-clock",
+            "clock": {
+              "status": "running",
+              "frames": 4,
+              "batches": [
+                {
+                  "sent": {
+                    "frames": 4,
+                    "sequence": 182,
+                    "position": [
+                      -23,
+                      0,
+                      17.299999999999997
+                    ],
+                    "time": 73.46666666666378
+                  },
+                  "remote": {
+                    "nid": 0,
+                    "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "remote": true,
+                    "alive": true,
+                    "weapon": "roller",
+                    "grounded": true,
+                    "held": true,
+                    "suspended": false,
+                    "ready": true,
+                    "f": 4456753,
+                    "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "life": 1,
+                    "sampledLife": 1,
+                    "near": true,
+                    "rollLoop": true,
+                    "realRollLoops": [
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.22658217449128853,
+                        "playing": false,
+                        "registered": false,
+                        "requestPlaying": false,
+                        "stops": 1
+                      },
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.010734593911527233,
+                        "playing": true,
+                        "registered": true,
+                        "requestPlaying": true,
+                        "stops": 0
+                      }
+                    ],
+                    "audioState": "running",
+                    "audioTime": 18.770430839002266,
+                    "equipment": false,
+                    "gearOverride": null,
+                    "proof": {
+                      "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                      "life": 1,
+                      "sequence": 182,
+                      "source": "accepted-gear",
+                      "equipped": false
+                    },
+                    "acceptedSequence": 182,
+                    "sampledGear": "none",
+                    "turret": false
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "recovery-audio-clock",
+            "clock": {
+              "status": "passed",
+              "frames": 4,
+              "batches": [
+                {
+                  "sent": {
+                    "frames": 4,
+                    "sequence": 182,
+                    "position": [
+                      -23,
+                      0,
+                      17.299999999999997
+                    ],
+                    "time": 73.46666666666378
+                  },
+                  "remote": {
+                    "nid": 0,
+                    "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "remote": true,
+                    "alive": true,
+                    "weapon": "roller",
+                    "grounded": true,
+                    "held": true,
+                    "suspended": false,
+                    "ready": true,
+                    "f": 4456753,
+                    "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                    "life": 1,
+                    "sampledLife": 1,
+                    "near": true,
+                    "rollLoop": true,
+                    "realRollLoops": [
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.22658217449128853,
+                        "playing": false,
+                        "registered": false,
+                        "requestPlaying": false,
+                        "stops": 1
+                      },
+                      {
+                        "name": "main:roller:roll",
+                        "volume": 0.010734593911527233,
+                        "playing": true,
+                        "registered": true,
+                        "requestPlaying": true,
+                        "stops": 0
+                      }
+                    ],
+                    "audioState": "running",
+                    "audioTime": 18.770430839002266,
+                    "equipment": false,
+                    "gearOverride": null,
+                    "proof": {
+                      "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                      "life": 1,
+                      "sequence": 182,
+                      "source": "accepted-gear",
+                      "equipped": false
+                    },
+                    "acceptedSequence": 182,
+                    "sampledGear": "none",
+                    "turret": false
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "recovered-real-audio",
+            "remote": {
+              "nid": 0,
+              "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "remote": true,
+              "alive": true,
+              "weapon": "roller",
+              "grounded": true,
+              "held": true,
+              "suspended": false,
+              "ready": true,
+              "f": 4456753,
+              "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "life": 1,
+              "sampledLife": 1,
+              "near": true,
+              "rollLoop": true,
+              "realRollLoops": [
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.22658217449128853,
+                  "playing": false,
+                  "registered": false,
+                  "requestPlaying": false,
+                  "stops": 1
+                },
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.010734593911527233,
+                  "playing": true,
+                  "registered": true,
+                  "requestPlaying": true,
+                  "stops": 0
+                }
+              ],
+              "audioState": "running",
+              "audioTime": 18.770430839002266,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                "life": 1,
+                "sequence": 182,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 182,
+              "sampledGear": "none",
+              "turret": false
+            }
+          },
+          {
+            "name": "released",
+            "remote": {
+              "nid": 0,
+              "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "remote": true,
+              "alive": true,
+              "weapon": "roller",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 4456497,
+              "sampledOwner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+              "life": 1,
+              "sampledLife": 1,
+              "near": true,
+              "rollLoop": false,
+              "realRollLoops": [
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.22658217449128853,
+                  "playing": false,
+                  "registered": false,
+                  "requestPlaying": false,
+                  "stops": 1
+                },
+                {
+                  "name": "main:roller:roll",
+                  "volume": 0.10944386278303828,
+                  "playing": false,
+                  "registered": false,
+                  "requestPlaying": false,
+                  "stops": 1
+                }
+              ],
+              "audioState": "running",
+              "audioTime": 19.32190476190476,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_cf95b341-392c-47b2-909b-142c61e09daf",
+                "life": 1,
+                "sequence": 189,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 189,
+              "sampledGear": "none",
+              "turret": false
+            }
+          },
+          {
+            "name": "gear-1-turret-0",
+            "wire": {
+              "ts": 63.159,
+              "f": 4456465,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                4,
+                1,
+                205,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 4,
+              "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "remote": true,
+              "alive": true,
+              "weapon": "dualies",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 4456465,
+              "sampledOwner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "life": 1,
+              "sampledLife": 1,
+              "near": false,
+              "rollLoop": false,
+              "realRollLoops": [],
+              "audioState": "running",
+              "audioTime": 150.34049886621315,
+              "equipment": true,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "life": 1,
+                "sequence": 204,
+                "source": "accepted-gear",
+                "equipped": true
+              },
+              "acceptedSequence": 204,
+              "sampledGear": "objectShredder",
+              "turret": false
+            }
+          },
+          {
+            "name": "gear-0-turret-0",
+            "wire": {
+              "ts": 63.603,
+              "f": 4456465,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                4,
+                1,
+                209,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 4,
+              "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "remote": true,
+              "alive": true,
+              "weapon": "dualies",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 4456465,
+              "sampledOwner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "life": 1,
+              "sampledLife": 1,
+              "near": false,
+              "rollLoop": false,
+              "realRollLoops": [],
+              "audioState": "running",
+              "audioTime": 150.78167800453514,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "life": 1,
+                "sequence": 208,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 208,
+              "sampledGear": "none",
+              "turret": false
+            }
+          },
+          {
+            "name": "gear-0-turret-1",
+            "wire": {
+              "ts": 64.359,
+              "f": 138678321,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                4,
+                1,
+                216,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 4,
+              "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "remote": true,
+              "alive": true,
+              "weapon": "dualies",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 138678321,
+              "sampledOwner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "life": 1,
+              "sampledLife": 1,
+              "near": false,
+              "rollLoop": false,
+              "realRollLoops": [],
+              "audioState": "running",
+              "audioTime": 151.59147392290248,
+              "equipment": false,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "life": 1,
+                "sequence": 216,
+                "source": "accepted-gear",
+                "equipped": false
+              },
+              "acceptedSequence": 216,
+              "sampledGear": "none",
+              "turret": true
+            }
+          },
+          {
+            "name": "gear-1-turret-1",
+            "wire": {
+              "ts": 65.388,
+              "f": 138678321,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                4,
+                1,
+                220,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 4,
+              "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "remote": true,
+              "alive": true,
+              "weapon": "dualies",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 138678321,
+              "sampledOwner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "life": 1,
+              "sampledLife": 1,
+              "near": false,
+              "rollLoop": false,
+              "realRollLoops": [],
+              "audioState": "running",
+              "audioTime": 152.58412698412698,
+              "equipment": true,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "life": 1,
+                "sequence": 218,
+                "source": "accepted-gear",
+                "equipped": true
+              },
+              "acceptedSequence": 218,
+              "sampledGear": "objectShredder",
+              "turret": true
+            }
+          },
+          {
+            "name": "gear-1-turret-0",
+            "wire": {
+              "ts": 66.405,
+              "f": 4456497,
+              "life": 1,
+              "gear": [
+                "inkwave-gear-v1",
+                "phc4b1",
+                4,
+                1,
+                226,
+                [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            },
+            "remote": {
+              "nid": 4,
+              "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "remote": true,
+              "alive": true,
+              "weapon": "dualies",
+              "grounded": true,
+              "held": false,
+              "suspended": false,
+              "ready": true,
+              "f": 4460593,
+              "sampledOwner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+              "life": 1,
+              "sampledLife": 1,
+              "near": false,
+              "rollLoop": false,
+              "realRollLoops": [],
+              "audioState": "running",
+              "audioTime": 153.2110657596372,
+              "equipment": true,
+              "gearOverride": null,
+              "proof": {
+                "owner": "p_c1112f8c-63d4-4028-bb18-e7e813812911",
+                "life": 1,
+                "sequence": 224,
+                "source": "accepted-gear",
+                "equipped": true
+              },
+              "acceptedSequence": 224,
+              "sampledGear": "objectShredder",
+              "turret": false
+            }
+          }
+        ],
+        "nativeDodgeStart": {
+          "token": 1,
+          "nativeTime": 16.1333333333337,
+          "renderFrame": 494
+        },
+        "restoration": [
+          {
+            "profileWeapon": "shooter",
+            "profileUnchanged": true,
+            "rigYaw": 0,
+            "rigPitch": -0.45,
+            "frozen": true,
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "profileWeapon": "shooter",
+            "profileUnchanged": true,
+            "rigYaw": 3.141592653589793,
+            "rigPitch": -0.45,
+            "frozen": false,
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "terminal": [
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        },
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        }
+      ]
+    },
+    {
+      "mode": "tower",
+      "offline": {
+        "mode": "tower",
+        "state": "playing",
+        "time": 296.700000000003,
+        "actors": 8,
+        "ranked": true,
+        "hud": "ガチヤグラアルファ100·ブラボー1004:57中立のヤグラ · 47%"
+      },
+      "proof": {
+        "counts": [
+          96,
+          100
+        ],
+        "snapshotBytes": 812,
+        "weapon": null,
+        "winner": 0,
+        "overtime": false,
+        "state": "finish"
+      },
+      "online": [
+        {
+          "mode": "tower",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": false,
+          "actors": 8,
+          "time": 299.88333333333344
+        },
+        {
+          "mode": "tower",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": true,
+          "actors": 8,
+          "time": 299.88333333333344
+        }
+      ],
+      "terminal": [
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        },
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        }
+      ]
+    },
+    {
+      "mode": "rainmaker",
+      "offline": {
+        "mode": "rainmaker",
+        "state": "playing",
+        "time": 296.700000000003,
+        "actors": 8,
+        "ranked": true,
+        "hud": "ガチホコバトルアルファ100·ブラボー1004:57バリア 0 / 1000"
+      },
+      "proof": {
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 1133,
+        "weapon": {
+          "targetCondition": "unarmored",
+          "shots": 1,
+          "charge": 1,
+          "direct": 60,
+          "blast": 180,
+          "damage": [
+            60,
+            180
+          ],
+          "inkBefore": 100,
+          "inkAfter": 100,
+          "targetSplat": true,
+          "targetState": {
+            "before": {
+              "id": "1:0",
+              "weapon": "s3-roller-heavy",
+              "pos": [
+                0.7814988494707218,
+                0,
+                28.07530825051721
+              ],
+              "vel": [
+                0.4606913748293338,
+                0,
+                -5.259863390477482
+              ],
+              "hp": 100,
+              "alive": true,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 0,
+              "groundNormal": [
+                0,
+                1,
+                0
+              ],
+              "form": "kid",
+              "jump": null,
+              "spawn": null,
+              "runner": {
+                "charging": false,
+                "charge": 0,
+                "cooldown": -2.183333333333332,
+                "dodge": null,
+                "glide": null,
+                "catalogId": "s3-roller-heavy",
+                "chargeF": 0,
+                "stop": 0,
+                "roll": null,
+                "slip": null,
+                "lunge": null,
+                "pending": false,
+                "stepStick": []
+              }
+            },
+            "prepared": {
+              "id": "1:0",
+              "weapon": "s3-roller-heavy",
+              "pos": [
+                6.5,
+                5.551115123125783e-17,
+                2
+              ],
+              "vel": [
+                0,
+                0,
+                0
+              ],
+              "hp": 100,
+              "alive": true,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 0,
+              "groundNormal": [
+                0,
+                1,
+                0
+              ],
+              "form": "kid",
+              "jump": null,
+              "spawn": null,
+              "runner": {
+                "charging": false,
+                "charge": 0,
+                "cooldown": 0,
+                "dodge": null,
+                "glide": null,
+                "catalogId": null,
+                "chargeF": 0,
+                "stop": 0,
+                "roll": null,
+                "slip": null,
+                "lunge": null,
+                "pending": false,
+                "stepStick": []
+              }
+            },
+            "after": {
+              "id": "1:0",
+              "weapon": "s3-roller-heavy",
+              "pos": [
+                6.5,
+                5.551115123125783e-17,
+                2
+              ],
+              "vel": [
+                0,
+                0,
+                0
+              ],
+              "hp": 0,
+              "alive": false,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 0,
+              "groundNormal": [
+                0,
+                1,
+                0
+              ],
+              "form": "kid",
+              "jump": null,
+              "spawn": null,
+              "runner": {
+                "charging": false,
+                "charge": 0,
+                "cooldown": 0,
+                "dodge": null,
+                "glide": null,
+                "catalogId": null,
+                "chargeF": 0,
+                "stop": 0,
+                "roll": null,
+                "slip": null,
+                "lunge": null,
+                "pending": false,
+                "stepStick": []
+              }
+            }
+          },
+          "wall": {
+            "shots": 1,
+            "hpBefore": 800,
+            "hpAfter": 380,
+            "direct": 60,
+            "blast": 360
+          }
+        },
+        "winner": 0,
+        "overtime": false,
+        "state": "finish"
+      },
+      "online": [
+        {
+          "mode": "rainmaker",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": false,
+          "actors": 8,
+          "time": 299.8666666666668
+        },
+        {
+          "mode": "rainmaker",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": true,
+          "actors": 8,
+          "time": 299.8666666666668
+        }
+      ],
+      "onlineWeapon": [
+        [
+          {
+            "actorId": "4",
+            "charge": 1,
+            "damage": 60,
+            "blastDamage": 180,
+            "visualOnly": false
+          }
+        ],
+        [
+          {
+            "actorId": "4",
+            "charge": 1,
+            "damage": 60,
+            "blastDamage": 180,
+            "visualOnly": true
+          }
+        ]
+      ],
+      "onlineWall": [
+        {
+          "hp": 186,
+          "ghost": false,
+          "drops": [
+            60,
+            360
+          ],
+          "packets": []
+        },
+        {
+          "hp": 606,
+          "ghost": true,
+          "drops": [],
+          "packets": [
+            {
+              "damage": 60,
+              "cause": "Gachihoko_Bullet",
+              "targetOwnerId": 0,
+              "targetSeq": 1
+            },
+            {
+              "damage": 180,
+              "cause": "Gachihoko_BombCore",
+              "targetOwnerId": 0,
+              "targetSeq": 1
+            }
+          ]
+        }
+      ],
+      "onlineCharge": {
+        "status": "passed",
+        "actorId": "4",
+        "phases": [
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 4,
+              "seq": 194,
+              "fire": true,
+              "before": {
+                "hostTime": 48.71666666666518,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": false,
+                "at": null,
+                "age": null,
+                "localFire": false,
+                "charge": 0,
+                "seconds": 0,
+                "firing": false,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 48.783333333331846,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0,
+                "seconds": 0,
+                "firing": false,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.26666666666232,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 194,
+              "fire": true,
+              "at": 99.26666666666232,
+              "age": 0,
+              "localFire": false,
+              "charge": 0,
+              "seconds": 0,
+              "firing": false,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.33333333332898,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 194,
+              "fire": true,
+              "at": 99.26666666666232,
+              "age": 0.06666666666666288,
+              "localFire": false,
+              "charge": 0.05,
+              "seconds": 0.05,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 195,
+              "fire": true,
+              "before": {
+                "hostTime": 48.783333333331846,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0,
+                "seconds": 0,
+                "firing": false,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 48.833333333331844,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0,
+                "seconds": 0,
+                "firing": false,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.33333333332898,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 195,
+              "fire": true,
+              "at": 99.33333333332898,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.05,
+              "seconds": 0.05,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.38333333332898,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 195,
+              "fire": true,
+              "at": 99.33333333332898,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.09999999999999999,
+              "seconds": 0.09999999999999999,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 196,
+              "fire": true,
+              "before": {
+                "hostTime": 48.833333333331844,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 48.88333333333184,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.38333333332898,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 196,
+              "fire": true,
+              "at": 99.38333333332898,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.09999999999999999,
+              "seconds": 0.09999999999999999,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.43333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 196,
+              "fire": true,
+              "at": 99.38333333332898,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.15,
+              "seconds": 0.15,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 197,
+              "fire": true,
+              "before": {
+                "hostTime": 48.88333333333184,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 48.93333333333184,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.43333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 197,
+              "fire": true,
+              "at": 99.43333333332897,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.15,
+              "seconds": 0.15,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.48333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 197,
+              "fire": true,
+              "at": 99.43333333332897,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.19999999999999998,
+              "seconds": 0.19999999999999998,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 198,
+              "fire": true,
+              "before": {
+                "hostTime": 48.93333333333184,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 48.983333333331835,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.48333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 198,
+              "fire": true,
+              "at": 99.48333333332897,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.19999999999999998,
+              "seconds": 0.19999999999999998,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.53333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 198,
+              "fire": true,
+              "at": 99.48333333332897,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.24999999999999997,
+              "seconds": 0.24999999999999997,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 199,
+              "fire": true,
+              "before": {
+                "hostTime": 48.983333333331835,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.03333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.08333333333333333,
+                "seconds": 0.08333333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.53333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 199,
+              "fire": true,
+              "at": 99.53333333332897,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.24999999999999997,
+              "seconds": 0.24999999999999997,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.58333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 199,
+              "fire": true,
+              "at": 99.53333333332897,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.3,
+              "seconds": 0.3,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 200,
+              "fire": true,
+              "before": {
+                "hostTime": 49.03333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.08333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.58333333332897,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 200,
+              "fire": true,
+              "at": 99.58333333332897,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.3,
+              "seconds": 0.3,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.63333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 200,
+              "fire": true,
+              "at": 99.58333333332897,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.35,
+              "seconds": 0.35,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 201,
+              "fire": true,
+              "before": {
+                "hostTime": 49.08333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.13333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.63333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 201,
+              "fire": true,
+              "at": 99.63333333332896,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.35,
+              "seconds": 0.35,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.68333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 201,
+              "fire": true,
+              "at": 99.63333333332896,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.39999999999999997,
+              "seconds": 0.39999999999999997,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 202,
+              "fire": true,
+              "before": {
+                "hostTime": 49.13333333333183,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.183333333331824,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.68333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 202,
+              "fire": true,
+              "at": 99.68333333332896,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.39999999999999997,
+              "seconds": 0.39999999999999997,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.73333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 202,
+              "fire": true,
+              "at": 99.68333333332896,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.44999999999999996,
+              "seconds": 0.44999999999999996,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 203,
+              "fire": true,
+              "before": {
+                "hostTime": 49.183333333331824,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.23333333333182,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.2833333333333333,
+                "seconds": 0.2833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.73333333332896,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 203,
+              "fire": true,
+              "at": 99.73333333332896,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.44999999999999996,
+              "seconds": 0.44999999999999996,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.78333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 203,
+              "fire": true,
+              "at": 99.73333333332896,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.49999999999999994,
+              "seconds": 0.49999999999999994,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 204,
+              "fire": true,
+              "before": {
+                "hostTime": 49.23333333333182,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.28333333333182,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.78333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 204,
+              "fire": true,
+              "at": 99.78333333332895,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.49999999999999994,
+              "seconds": 0.49999999999999994,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.83333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 204,
+              "fire": true,
+              "at": 99.78333333332895,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.55,
+              "seconds": 0.55,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 205,
+              "fire": true,
+              "before": {
+                "hostTime": 49.28333333333182,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.333333333331815,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.83333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 205,
+              "fire": true,
+              "at": 99.83333333332895,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.55,
+              "seconds": 0.55,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.88333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 205,
+              "fire": true,
+              "at": 99.83333333332895,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.6000000000000002,
+              "seconds": 0.6000000000000002,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 206,
+              "fire": true,
+              "before": {
+                "hostTime": 49.333333333331815,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.38333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.88333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 206,
+              "fire": true,
+              "at": 99.88333333332895,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.6000000000000002,
+              "seconds": 0.6000000000000002,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.93333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 206,
+              "fire": true,
+              "at": 99.88333333332895,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.6500000000000004,
+              "seconds": 0.6500000000000004,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 207,
+              "fire": true,
+              "before": {
+                "hostTime": 49.38333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.43333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.4833333333333333,
+                "seconds": 0.4833333333333333,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.93333333332895,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 207,
+              "fire": true,
+              "at": 99.93333333332895,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.6500000000000004,
+              "seconds": 0.6500000000000004,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 99.98333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 207,
+              "fire": true,
+              "at": 99.93333333332895,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.7000000000000005,
+              "seconds": 0.7000000000000005,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 208,
+              "fire": true,
+              "before": {
+                "hostTime": 49.43333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.48333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 99.98333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 208,
+              "fire": true,
+              "at": 99.98333333332894,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.7000000000000005,
+              "seconds": 0.7000000000000005,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.03333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 208,
+              "fire": true,
+              "at": 99.98333333332894,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.7500000000000007,
+              "seconds": 0.7500000000000007,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 209,
+              "fire": true,
+              "before": {
+                "hostTime": 49.48333333333181,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.533333333331804,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.03333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 209,
+              "fire": true,
+              "at": 100.03333333332894,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.7500000000000007,
+              "seconds": 0.7500000000000007,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.08333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 209,
+              "fire": true,
+              "at": 100.03333333332894,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.8000000000000008,
+              "seconds": 0.8000000000000008,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 210,
+              "fire": true,
+              "before": {
+                "hostTime": 49.533333333331804,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.5833333333318,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.08333333332894,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 210,
+              "fire": true,
+              "at": 100.08333333332894,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.8000000000000008,
+              "seconds": 0.8000000000000008,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.13333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 210,
+              "fire": true,
+              "at": 100.08333333332894,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.850000000000001,
+              "seconds": 0.850000000000001,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 211,
+              "fire": true,
+              "before": {
+                "hostTime": 49.5833333333318,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.6333333333318,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.6833333333333338,
+                "seconds": 0.6833333333333338,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.13333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 211,
+              "fire": true,
+              "at": 100.13333333332893,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.850000000000001,
+              "seconds": 0.850000000000001,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.18333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 211,
+              "fire": true,
+              "at": 100.13333333332893,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.9000000000000011,
+              "seconds": 0.9000000000000011,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 212,
+              "fire": true,
+              "before": {
+                "hostTime": 49.6333333333318,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.683333333331795,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.18333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 212,
+              "fire": true,
+              "at": 100.18333333332893,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.9000000000000011,
+              "seconds": 0.9000000000000011,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.23333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 212,
+              "fire": true,
+              "at": 100.18333333332893,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0.9500000000000013,
+              "seconds": 0.9500000000000013,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "hold",
+            "sent": {
+              "frames": 3,
+              "seq": 213,
+              "fire": true,
+              "before": {
+                "hostTime": 49.683333333331795,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.73333333333179,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.23333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 213,
+              "fire": true,
+              "at": 100.23333333332893,
+              "age": 0,
+              "localFire": false,
+              "charge": 0.9500000000000013,
+              "seconds": 0.9500000000000013,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.28333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 213,
+              "fire": true,
+              "at": 100.23333333332893,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 1,
+              "seconds": 1,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            }
+          },
+          {
+            "phase": "release",
+            "sent": {
+              "frames": 3,
+              "seq": 214,
+              "fire": false,
+              "before": {
+                "hostTime": 49.73333333333179,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": true,
+                "at": null,
+                "age": null,
+                "localFire": true,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              },
+              "after": {
+                "hostTime": 49.78333333333179,
+                "match": "oqbf7e",
+                "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+                "life": 1,
+                "seq": null,
+                "fire": false,
+                "at": null,
+                "age": null,
+                "localFire": false,
+                "charge": 0.8833333333333344,
+                "seconds": 0.8833333333333344,
+                "firing": true,
+                "recovery": 0,
+                "pending": false,
+                "shots": []
+              }
+            },
+            "accepted": {
+              "hostTime": 100.28333333332893,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 214,
+              "fire": false,
+              "at": 100.28333333332893,
+              "age": 0,
+              "localFire": false,
+              "charge": 1,
+              "seconds": 1,
+              "firing": true,
+              "recovery": 0,
+              "pending": false,
+              "shots": []
+            },
+            "state": {
+              "hostTime": 100.33333333332892,
+              "match": "oqbf7e",
+              "owner": "p_61f02d26-f4b1-47c8-bcab-9d9d18bfee99",
+              "life": 1,
+              "seq": 214,
+              "fire": false,
+              "at": 100.28333333332893,
+              "age": 0.04999999999999716,
+              "localFire": false,
+              "charge": 0,
+              "seconds": 0,
+              "firing": false,
+              "recovery": 0.3,
+              "pending": false,
+              "shots": [
+                {
+                  "id": 0,
+                  "actorId": "4",
+                  "charge": 1,
+                  "damage": 60,
+                  "blastDamage": 180
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "terminal": [
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        },
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        }
+      ]
+    },
+    {
+      "mode": "clams",
+      "offline": {
+        "mode": "clams",
+        "state": "playing",
+        "time": 296.700000000003,
+        "actors": 8,
+        "ranked": true,
+        "hud": "ガチアサリアルファ100·ブラボー1004:57アサリ 0/8個 · 0点獲得 · バリアありアサリを投げる [C]"
+      },
+      "proof": {
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 5412,
+        "weapon": null,
+        "winner": null,
+        "overtime": true,
+        "state": "playing"
+      },
+      "clamVoidDrop": {
+        "fixture": "initial losing counts and held Power; outputs untouched",
+        "searches": 249,
+        "water": [
+          22,
+          -10.75
+        ],
+        "rows": [
+          {
+            "kind": "floor",
+            "team": 0,
+            "dropPos": [
+              -12,
+              0,
+              -9
+            ],
+            "floor": 0,
+            "lifetime": 10,
+            "aliveAtTick599": true,
+            "remainingAtTick599": 0.016666666666591442,
+            "expiredAtTick600": true,
+            "dropElapsed": 0.03333333333333333,
+            "endedAt": 10.033333333333411,
+            "reason": "clam-overtime-power-clams-lost"
+          },
+          {
+            "kind": "water",
+            "team": 0,
+            "deathPos": [
+              22,
+              -1.5735000000000001,
+              -10.75
+            ],
+            "floor": null,
+            "clams": 0,
+            "endedAt": 0.03333333333333333,
+            "reason": "clam-overtime-power-clams-lost"
+          }
+        ]
+      },
+      "online": [
+        {
+          "mode": "clams",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": false,
+          "actors": 8,
+          "time": 299.85000000000014
+        },
+        {
+          "mode": "clams",
+          "counts": [
+            65,
+            100
+          ],
+          "follower": true,
+          "actors": 8,
+          "time": 299.85000000000014
+        }
+      ],
+      "terminal": [
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        },
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "fullResultSha256": "04c2dab10e75906875034156f9a9cb9740115165c3c1ad56732831e6901496e3",
+  "servedCount": 674,
+  "runtimeSourceSha": "e0897216bfd40c1557f6ff8443004f15226157dc",
+  "qaStartupSourceSha": "95d3f6f672d4f793e8d78bb1bd6bbc5e240ddc21"
+}

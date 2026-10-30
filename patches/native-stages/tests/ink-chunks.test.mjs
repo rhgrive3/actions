@@ -1,17 +1,36 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {nativeFixture,readStage} from './fixture.mjs';
 import fs from 'node:fs';import path from 'node:path';
+// Shader templates are unit-test input data; the hook under test comes from
+// the real emitted engine in built mode. Browser replays exercise full linking.
+import {ShaderLib as shaderTemplates} from '../../../inkwave-public/vendor/three/build/three.module.js';
 
-test('native ink clips unpainted colour after evaluating shading derivatives',async()=>{
- const f=await nativeFixture(),{THREE}=f,paint={texture:new THREE.Texture(),size:256},material=f.nativeInkMaterial(paint,new THREE.Texture());
- const base=THREE.ShaderLib.physical,shader={uniforms:{},vertexShader:base.vertexShader,fragmentShader:base.fragmentShader};material.onBeforeCompile(shader);
- const clip=shader.fragmentShader.indexOf('if (texture2D(uPaint, vPaintUv).a < 0.015) discard;');
+test('native ink makes unpainted colour transparent after evaluating shading derivatives',async()=>{
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,paint={texture:new THREE.Texture(),size:256},material=f.nativeInkMaterial(paint,new THREE.Texture());
+ const base=shaderTemplates.physical,shader={uniforms:{},vertexShader:base.vertexShader,fragmentShader:base.fragmentShader};material.onBeforeCompile(shader);
+ const clip=shader.fragmentShader.indexOf('if (texture2D(uPaint, vPaintUv).a < 0.015) diffuseColor.a = 0.0;');
  assert(clip>shader.fragmentShader.lastIndexOf('dFdx(normal)'),'early discard makes ink edge derivatives undefined');
- assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);assert.match(shader.vertexShader,/vFaceData = vec4\(0\.0, 1\.0, nativeFaceSize\)/);assert.match(shader.vertexShader,/vFaceFlags = vec3\(nativeWall, 0\.0, -1\.0\)/);assert.match(shader.fragmentShader,/if \(vFaceData\.y > 0\.5\)/);assert.doesNotMatch(shader.vertexShader,/attribute vec4 faceData/);assert.deepEqual(Array.from(material.defaultAttributeValues.color),[1,1,1]);assert.deepEqual(Array.from(material.defaultAttributeValues.lightUv),[-1,-1]);material.dispose();
+ assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);assert.match(shader.vertexShader,/vFaceData = vec4\(0\.0, 1\.0, nativeFaceSize\)/);assert.match(shader.vertexShader,/vFaceFlags = vec3\(nativeWall, 0\.0, -1\.0\)/);assert.match(shader.fragmentShader,/if \(1\.0 > 0\.5\)/);assert.doesNotMatch(shader.fragmentShader,/\bvFaceData\.[xy]\b|\bvFaceFlags\.[yz]\b/);assert.match(shader.fragmentShader,/vFaceFlags\.x/,'wall orientation remains per face');assert.match(shader.fragmentShader,/vFaceData\.zw/,'face sizes remain per face');assert.doesNotMatch(shader.vertexShader,/attribute vec4 faceData/);assert.deepEqual(Array.from(material.defaultAttributeValues.color),[1,1,1]);assert.deepEqual(Array.from(material.defaultAttributeValues.lightUv),[-1,-1]);material.dispose();
+});
+
+test('native ink evaluates surface gradients before bypassing fully covered floor textures',async()=>{
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,material=f.nativeInkMaterial({texture:new THREE.Texture(),size:256},new THREE.Texture());
+ const shader={uniforms:{},vertexShader:shaderTemplates.physical.vertexShader,fragmentShader:shaderTemplates.physical.fragmentShader};
+ material.onBeforeCompile(shader);const s=shader.fragmentShader;
+ const gradients=s.indexOf('gNativeBaseDx=dFdx(tuv);gNativeBaseDy=dFdy(tuv);');
+ const branch=s.indexOf('if(gInk<1.0||gInkKeep>0.0||gTexKeep>0.0)');
+ assert.ok(gradients>0&&gradients<branch,'implicit coordinate derivatives must execute before the paint-dependent branch');
+ assert.ok(s.indexOf('gInkCol = inkCol;')<branch,'coverage is known before deciding whether the substrate contributes');
+ assert.ok(s.indexOf('    TexlibSample ts = texlibSample(',branch)>branch);
+ assert.ok(s.indexOf('    float halo = smoothstep(',branch)>branch,'the original ink/edge composition follows the substrate');
+ assert.match(s,/vec2 gx = gNativeBaseDx, gy = gNativeBaseDy;/,'partial fragments use explicit gradients');
+ assert.doesNotMatch(s,/vec2 gx = dFdx\(uv\), gy = dFdy\(uv\);/);
+ assert.doesNotMatch(s,/\bdiscard\s*;/,'zero-alpha output permits fixed-function rejection without killing derivative helpers');
+ material.dispose();
 });
 
 test('native ink attributes retain source order, UVs and exact typed allocation',async()=>{
- const f=await nativeFixture(),{THREE}=f;
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f;
  const triangles=new Float32Array([
   0,0,0, 2,0,0, 0,0,1,
   4,1,5, 6,1,5, 4,1,6,
@@ -55,7 +74,7 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
 });
 
 test('render chunks preserve crossing triangles and bound only their indexed vertices',async()=>{
- const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,g=new THREE.BufferGeometry();
  // First triangle spans tiles; second is far away. The chunks share positions
  // but must never share the full-stage sphere, or culling silently stops working.
  g.setAttribute('position',new THREE.Float32BufferAttribute([-20,0,0,20,0,0,0,3,4, 100,0,100,103,0,100,100,0,103],3));
@@ -89,7 +108,7 @@ test('render chunks preserve crossing triangles and bound only their indexed ver
 
 const sourceIds=process.env.INKWAVE_NATIVE_STAGE_ASSETS?JSON.parse(fs.readFileSync(path.join(process.env.INKWAVE_NATIVE_STAGE_ASSETS,'catalog.json'),'utf8')).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
 for(const id of sourceIds)test('source ink partition preserves every vertex, triangle and paint attribute: '+id,{skip:!process.env.INKWAVE_NATIVE_STAGE_ASSETS},async()=>{
- const f=await nativeFixture(),level=new f.NativeLevel(readStage(process.env.INKWAVE_NATIVE_STAGE_ASSETS,id));
+ const f=await nativeFixture({renderOnly:true}),level=new f.NativeLevel(readStage(process.env.INKWAVE_NATIVE_STAGE_ASSETS,id));
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  const paint=new Cpu(null,level,{atlasSize:2048,maxDensity:4}),g=f.nativeInkGeometry(level,paint),chunks=f.partitionNativeInk(g),seen=new Uint8Array(g.getAttribute('position').count/3),p=g.getAttribute('position'),point=new f.THREE.Vector3();
  assert(chunks.length>1);
@@ -113,7 +132,7 @@ for(const id of sourceIds)test('source ink partition preserves every vertex, tri
 });
 
 test('native ink bulk runs retain interleaved transparent source triangle order', async () => {
- const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}), {THREE}=f, g=new THREE.BufferGeometry();
  // Source order is near, far, near. Tile-grouped packing would change it.
  g.setAttribute('position',new THREE.Float32BufferAttribute([
   0,0,0, 1,0,0, 0,1,0,
@@ -139,7 +158,7 @@ test('native ink bulk runs retain interleaved transparent source triangle order'
 });
 
 test('native ink culling respects stage world transforms and camera clip changes', async () => {
- const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,g=new THREE.BufferGeometry();
  g.setAttribute('position',new THREE.Float32BufferAttribute([
   0,0,0, 1,0,0, 0,1,0,
   100,0,100, 101,0,100, 100,1,100,
@@ -160,7 +179,7 @@ test('native ink culling respects stage world transforms and camera clip changes
 });
 
 test('native ink bulk path retains separated source runs without changing blend order', async () => {
- const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry(),positions=[];
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,g=new THREE.BufferGeometry(),positions=[];
  const tri=(x,z)=>positions.push(x,0,z,x+0.7,0,z,x,0.7,z);
  for(let i=0;i<8;i++)tri(0+(i%4)*.2,i*.2);
  for(let i=0;i<8;i++)tri(120+(i%4)*.2,120+i*.2);
@@ -178,17 +197,23 @@ test('native ink bulk path retains separated source runs without changing blend 
  mesh.dispose();mesh.material.dispose();
 });
 test('signed projection zero is recognized by the cached view comparison', async () => {
- const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}), {THREE}=f, g=new THREE.BufferGeometry();
  g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,1,0],3));
  const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
- assert.equal(Object.is(0,-0),false);
- assert.match(f.NativeInkMesh.prototype.selectVisible.toString(),/Object\.is\(elements\[i\], previous\[i\]\)/);
+ const camera=new THREE.PerspectiveCamera(60,1,.1,40);mesh.updateMatrixWorld();
+ mesh._view.identity();mesh._view.multiplyMatrices=function(){return this;};mesh._view.multiply=function(){return this;};
+ let scans=0;const frustum=mesh._frustum.setFromProjectionMatrix;
+ mesh._frustum.setFromProjectionMatrix=function(...args){scans++;return frustum.apply(this,args);};
+ mesh.selectVisible(camera);assert.equal(scans,1);mesh.selectVisible(camera);assert.equal(scans,1);
+ mesh._view.elements[1]=-0;mesh.selectVisible(camera);assert.equal(scans,2,'+0 to -0 invalidates the cached view');
+ mesh.selectVisible(camera);assert.equal(scans,2,'the same signed zero keeps the cache');
+ mesh._view.elements[1]=0;mesh.selectVisible(camera);assert.equal(scans,3,'-0 to +0 also invalidates the cached view');
  mesh.dispose();mesh.material.dispose();
 });
 
 
 test('native painted-only culling keeps crossing triangles, clears and restores the colour pass',async()=>{
- const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}), {THREE}=f, g=new THREE.BufferGeometry();
  // The giant source triangle is assigned by centroid, but paint hits an edge.
  g.setAttribute('position',new THREE.Float32BufferAttribute([
   -20,0,0, 20,0,0, 0,0,20,
@@ -226,7 +251,7 @@ test('native painted-only culling keeps crossing triangles, clears and restores 
  assert.equal(paint.clear,originalClear);
 });
 test('painted-chart selection draws only reached charts, in source order, and fails open',async()=>{
- const f=await nativeFixture(),{THREE}=f;
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f;
  // Three charts in one 16m tile: A (2 triangles), B (1), C (1). Source order is A,B,C.
  const tri=(x)=>[x,0,0,x+1,0,0,x,0,1];
  const make=()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute([...tri(0),...tri(2),...tri(4),...tri(6)],3));return g;};
@@ -261,7 +286,7 @@ test('painted-chart selection draws only reached charts, in source order, and fa
  assert.equal(g3.drawRange.count,12);m3.dispose();mesh.material.dispose();m2.material.dispose();m3.material.dispose();
 });
 test('prepainted binding fails open rather than hiding an existing ink atlas',async()=>{
- const f=await nativeFixture(), {THREE}=f, g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}), {THREE}=f, g=new THREE.BufferGeometry();
  g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,0,1],3));
  const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
  const paint={grid:new Uint8Array([1]),_pushQuad(){},clear(){}};
@@ -273,7 +298,7 @@ test('prepainted binding fails open rather than hiding an existing ink atlas',as
  mesh.dispose();mesh.material.dispose();
 });
 test('native display excludes alpha and glass from AO without losing tiny-feature shadows',async()=>{
- const f=await nativeFixture(),{THREE}=f;
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f;
  const tri=(size)=>[[0,0,0],[size,0,0],[0,size,0]].flatMap((p)=>[...p,0,1,0,0,0]);
  const verts=new Float32Array([...tri(.01),...tri(1),...tri(1),...tri(1)]);
  const objects=['tiny','solid','glass','alpha'].map((name,i)=>({
@@ -301,7 +326,7 @@ test('native display excludes alpha and glass from AO without losing tiny-featur
 });
 
 test('#1671 face chunk lists mark exactly the chunks of a full scan, including moved faces',async()=>{
- const f=await nativeFixture(),{THREE}=f,proto=f.NativeInkMesh.prototype;
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,proto=f.NativeInkMesh.prototype;
  let word=0x1671;const random=()=>{word=(Math.imul(word,1664525)+1013904223)>>>0;return word/4294967296;};
  const box=()=>{const x=(random()-.5)*120,y=(random()-.5)*20,z=(random()-.5)*120,s=1+random()*24;
   return {boundingBox:new THREE.Box3(new THREE.Vector3(x,y,z),new THREE.Vector3(x+s,y+s*random(),z+s))};};
@@ -334,7 +359,7 @@ test('#1671 face chunk lists mark exactly the chunks of a full scan, including m
 
 
 test('native runtime runs are exact-sized typed arrays in original triangle order',async()=>{
- const f=await nativeFixture(),{THREE}=f;
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f;
  for(const order of [[],[0],[0,0,0],[0,1,0,1,2,2,0],Array.from({length:2000},(_,i)=>Math.floor(i/7)%31)]){
   const g=new THREE.BufferGeometry(),vertices=[];
   for(const tile of order){const x=tile*32;vertices.push(x,0,0,x+1,0,0,x,0,1);}
@@ -348,7 +373,7 @@ test('native runtime runs are exact-sized typed arrays in original triangle orde
 });
 
 test('known-empty native binding skips only the explicitly fresh grid scan',async()=>{
- const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
+ const f=await nativeFixture({renderOnly:true}),{THREE}=f,g=new THREE.BufferGeometry();
  g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,0,1],3));
  const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());let scans=0;
  const paint={grid:{some(){scans++;return true;}},paintFaces:[],_pushQuad(){},clear(){}};

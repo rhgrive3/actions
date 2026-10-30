@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "runtimeContentHash": "93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f",
+  "verifiedHeads": [
+    "b149f617b747bdbaa1cbcafa9d75211652e1990c",
+    "361b2dae6fa887970fe23b6767afa93a5b342f1c"
+  ],
+  "chromium": {
+    "run": 41042746572,
+    "job": 124019291679,
+    "fpsImprovementPercent": 52.72298998531573
+  },
+  "webkit": {
+    "initialRun": 41042746572,
+    "initialImprovementPercent": -0.10402036694500127,
+    "orderReversedRun": 41047721610,
+    "orderReversedJob": 124035819175,
+    "orderReversedImprovementPercent": 0.19331319020039484,
+    "interpretation": "approximately unchanged; aggregate gate passed on the single predeclared reversed-order pair, no meaningful acceleration established"
+  },
+  "independentSourceTests": {
+    "pass": 17,
+    "fail": 0,
+    "skip": 0
+  },
+  "receipts": [
+    "chromium-mako-comparison.json",
+    "chromium-source-verification.json",
+    "chromium-robo-comparison.json",
+    "chromium-materials-result.json",
+    "webkit-first-mako-comparison.json",
+    "webkit-first-source-verification.json",
+    "webkit-first-robo-comparison.json",
+    "webkit-first-materials-result.json",
+    "webkit-final-source-verification.json",
+    "webkit-final-robo-comparison.json"
+  ],
+  "limits": [
+    "Software Chromium and Linux WebKit, not physical iPad/Metal",
+    "Fixed SHA/source-verified runtime; subsequent intro-launch change requires separate integration validation",
+    "Broad repository CI still has queued/in-progress groups"
+  ]
+}

@@ -46,7 +46,7 @@ try {
         return { team: actor.team, slot: actor.slot, bot: !!actor.bot, yaw: actor.yaw, phase: spawn.phase, inwardDistance: inward };
       };
       const initial = G.actors.map(actor => check(actor, 'opening'));
-      for (let i = 0; i < 330; i++) g._frame(1 / 60);
+      for (let i = 0, frames = (g.match.turfIntroFrames ?? 253) + 77; i < frames; i++) g._frame(1 / 60);
       if (G.match.state !== 'playing') throw Error('Match introduction did not complete');
       const local = G.local, expectedYaw = nativeSpawnYaw(G.level, local.team, local.team ? Math.PI : 0);
       if (delta(g.rig.yaw, expectedYaw) > 1e-8 || delta(local.aimYaw, expectedYaw) > 1e-8) throw Error('Human camera and aim do not face the derived arena axis');

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
+import { TURF_INTRO_FRAMES } from '../runtime/turf-intro-camera.mjs';
 
 for (const hz of [30, 60, 120]) {
   test(`${hz} Hz: both teams wait through the intro and share the local opening launch clock`, async () => {
@@ -35,20 +36,19 @@ for (const hz of [30, 60, 120]) {
       ticks++; f.G.time += dt; match.update(dt);
     });
     match.start();
-    for (let i = 0; i < hz * 4; i++) frame();
+    for (let i = 0; i < hz * 9.5; i++) frame();
     for (const [i, a] of match.actors.entries()) {
       assert.equal(a.s3.squidSpawn?.phase, 'aim', `team ${a.team} slot ${a.slot} waits`);
       assert.ok(a.pos.distanceTo(starts[i]) < 1e-9);
       assert.equal(a.s3.spawnArmor, null);
     }
     assert.equal(launches.length, 0, 'no actor launches during the introduction');
-    match.setState('playing');
     match.local.intent.fire = false;
-    for (let i = 0; i < hz / 2; i++) frame();
-    assert.equal(launches.length, 0, 'bots cannot skip the shared opening delay via FIRE');
-    for (let i = 0; i < hz / 2; i++) frame();
+    while(ticks<TURF_INTRO_FRAMES.go)frame();
+    assert.equal(match.state,'playing');
     assert.equal(launches.length, 8);
     assert.equal(new Set(launches.map(v => v.ticks)).size, 1, 'all eight launch on the same fixed tick');
+    assert.equal(launches[0].ticks,TURF_INTRO_FRAMES.go,'launch coincides with the observed GO/start tick');
     for (const [i, a] of match.actors.entries()) {
       assert.equal(a.s3.squidSpawn.phase, 'flight');
       if (a.isBot) for (const k of ['x', 'y', 'z']) assert.equal(a.s3.squidSpawn.to[k], targets[i][k]);

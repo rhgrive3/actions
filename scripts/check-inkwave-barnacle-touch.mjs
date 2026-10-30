@@ -8,7 +8,7 @@ try{
  const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1}),p=await c.newPage(),cdp=await c.newCDPSession(p);p.on('pageerror',e=>report.errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
  await p.goto('http://127.0.0.1:'+server.address().port+'/?map=barnacle',{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await p.locator('#boot-error').textContent(),'');
- await p.evaluate(async()=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'barnacle',mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();g.menus.show(null);});
+ await p.evaluate(async()=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'barnacle',mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();g.menus.show(null);});
  const button=async id=>{const b=await p.locator('.iwm-b[data-c="'+id+'"]').boundingBox();assert(b,'touch control visible: '+id);return{x:b.x+b.width/2,y:b.y+b.height/2,id:1};};
  const touch=async(type,points)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points});
  await touch('touchStart',[await button('fire')]);

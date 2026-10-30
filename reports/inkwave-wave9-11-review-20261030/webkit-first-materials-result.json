@@ -1,0 +1,229 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "contentHash": "93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f",
+  "engine": "webkit",
+  "errors": [],
+  "scope": "Shader link check of actual emitted boss, character, lobby and special VFX factories. Synthetic geometry is used only to select program defines. Gameplay images and physical-device behavior are separate checks.",
+  "probe": {
+    "factories": [
+      "boss-steel",
+      "boss-cara",
+      "boss-flesh",
+      "boss-eye",
+      "boss-junk",
+      "boss-crablet",
+      "skin",
+      "cloth",
+      "hair",
+      "eye",
+      "glass",
+      "squid",
+      "squid-ghost",
+      "plastic",
+      "lobby-surface",
+      "lobby-ground",
+      "lobby-neon",
+      "lobby-glow",
+      "lobby-sky",
+      "lobby-steam"
+    ],
+    "captured": 20,
+    "programs": [
+      {
+        "name": "boss-steel",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "boss-cara",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "boss-flesh",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "boss-eye",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "boss-junk",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "boss-crablet",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "skin",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "cloth",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "hair",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "eye",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "glass",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "squid",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "squid-ghost",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "plastic",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-surface",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-ground",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-neon",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-glow",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-sky",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "lobby-steam",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-0",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-1",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-2",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-3",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-4",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-5",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-6",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-7",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-8",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-9",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-10",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      },
+      {
+        "name": "vfx-11",
+        "linked": true,
+        "log": "",
+        "shaderLogs": []
+      }
+    ],
+    "glError": 0,
+    "environment": true
+  }
+}

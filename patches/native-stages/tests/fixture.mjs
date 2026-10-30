@@ -1,8 +1,32 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import assert from 'node:assert/strict';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import {prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
+// Rendering tests exercise emitted owners without importing unrelated native
+// rule helpers that the production build legitimately removes as unreachable.
+const RENDER_EXPORTS=`
+ export {NativeLevel} from './patches/native-stages/runtime/native-level.mjs';
+ export {NativeInkMesh,partitionNativeInk} from './patches/native-stages/runtime/native-ink-chunks.mjs';
+ export {nativeInkGeometry,nativeInkMaterial,nativeDisplay} from './patches/native-stages/runtime/native-render.mjs';
+`;
+function exposeBundledRendering(source){
+ const position=marker=>{const at=source.indexOf(marker);assert.ok(at>=0&&at===source.lastIndexOf(marker),'unique emitted native owner marker: '+marker);return at;};
+ const functionBefore=marker=>{
+  const declarations=[...source.slice(0,position(marker)).matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)];
+  assert.ok(declarations.length,'emitted function owner: '+marker);return declarations.at(-1)[1];
+ };
+ const classes=[...source.slice(0,position('native-game-ink')).matchAll(/\bvar\s+([A-Za-z_$][\w$]*)=class\s+extends\b/g)];
+ assert.ok(classes.length,'emitted ink mesh owner');
+ // Export existing bundle bindings only inside this VM. No shipped helper
+ // body is replaced, reconstructed or substituted by authored source.
+ return source+'\nexport{'+[
+  classes.at(-1)[1]+' as NativeInkMesh',functionBefore('userData.nativeTile=')+' as partitionNativeInk',
+  functionBefore('"nativeFaceSize",2')+' as nativeInkGeometry',functionBefore('native-ink-overlay-v')+' as nativeInkMaterial',
+  functionBefore('native-source-display')+' as nativeDisplay',
+ ].join(',')+'};\n';
+}
 export async function nativeFixture(options={}){
  const prepared=prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS||null);
  // Use the builder's real sealed catalog, including independent definitions.
@@ -10,7 +34,10 @@ export async function nativeFixture(options={}){
  const adaptRuntime=(rel,source)=>rel==='patches/native-stages/runtime/build-config.mjs'
   ? `export const nativeStageBuild = ${JSON.stringify(prepared.config)};`
   : adaptBuildSource(rel,source);
- return fixture({fullRuntime:true,realProjectiles:true,includeCharacter:!!options.includeCharacter,adaptNative:adaptBuildSource,adaptRuntime,extraExports:`
+ const emitted=!!process.env.INKWAVE_BUILT_SITE;
+ return fixture({fullRuntime:true,realProjectiles:true,includeCharacter:!!options.includeCharacter,adaptNative:adaptBuildSource,adaptRuntime,
+ adaptEmittedRuntime:(rel,source)=>options.renderOnly&&rel==='patches/native-stages/runtime/engine.mjs'?exposeBundledRendering(source):source,
+ extraExports:options.renderOnly?(emitted?`export {NativeLevel,NativeInkMesh,partitionNativeInk,nativeInkGeometry,nativeInkMaterial,nativeDisplay} from './patches/native-stages/runtime/engine.mjs';`:RENDER_EXPORTS):`
  export {nativeStageBuild} from './patches/native-stages/runtime/build-config.mjs';
  export {nativeStageRuleStatus} from './patches/native-stages/runtime/rule-availability.mjs';
  export {NATIVE_MAPS,UNAVAILABLE_NATIVE_STAGES} from './patches/native-stages/runtime/registry.mjs';

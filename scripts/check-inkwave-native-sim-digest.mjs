@@ -46,7 +46,7 @@ async function digest(site){
    const state=()=>{let h=2166136261;for(const a of G.actors){for(const v of [a.pos.x,a.pos.y,a.pos.z,a.vel.x,a.vel.y,a.vel.z,a.hp,a.ink,a.alive?1:0,a.grounded?1:0,a.yaw??0,a.special??0,a.turf??0])h=num(h,v);h=mix(h,(a.form||'').length);}
     const P=G.paint;for(const v of [...P.counts,P.version,P.growing.length])h=num(h,v);return h;};
    const cells=a=>{let h=2166136261;for(let i=0;i<(a?.length||0);i++)h=mix(h,a[i]);return h;};
-   for(let i=0;i<300;i++)g._frame(1/60);
+   for(let i=0,n=(g.match.turfIntroFrames??253)+47;i<n;i++)g._frame(1/60);
    g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;
    g.debug.key('KeyW',true);g.debug.fire(true);const seq=[];
    for(let i=0;i<frames;i++){g.rig.yaw+=.5/hz;g.debug.key('Space',i%Math.round(hz*2)===0);g._frame(1/hz);seq.push(state());}

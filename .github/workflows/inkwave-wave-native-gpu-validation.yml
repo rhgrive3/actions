@@ -1,0 +1,204 @@
+name: INKWAVE WebKit native GPU order check
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - 'inkwave-public/**'
+      - 'patches/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/inkwave-wave-native-gpu-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wave-native-gpu-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  matched-native-gpu:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.ref == 'perf/wave9-11-native-gpu-20261030' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: webkit
+            device: ipad
+            quality: high
+            baseline: 45f5d98ba7944ae280f27f15d827b2132586ea14
+            minimum: '1.00'
+            preroll: '60'
+            warmup: '10'
+    env:
+      GIT_LFS_SKIP_SMUDGE: '1'
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASELINE_SHA: ${{ matrix.baseline }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /tests/
+            /native-prebuilt/robo/
+            /native-prebuilt/mako/
+            /native-prebuilt/packs/0ea1220dded1953ebc6bf130e3870e91.bin
+            /native-prebuilt/packs/a539e5f0d9b2d65a34d002f0aa41f537.bin
+            /native-prebuilt/packs/a520c306eaec5401e18c871c145ba5b9.bin
+            /native-prebuilt/packs/e2244a93fc62bdc58749eae6a34f54dc.bin
+      - name: Verify immutable candidate head
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.baseline }}
+          path: work/reference
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /tests/
+            /native-prebuilt/robo/
+            /native-prebuilt/mako/
+      - name: Load only the two authenticated stage payloads
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C work/reference rev-parse HEAD)" = "$BASELINE_SHA"
+          # Explicit pointer inputs avoid a full-tree LFS scan in this partial clone.
+          python3 - <<'PY'
+          import hashlib, os, subprocess
+          from pathlib import Path
+          files=[]
+          for stage in ['robo','mako']:
+              files.extend(sorted(p for p in Path('native-prebuilt',stage).rglob('*') if p.is_file()))
+          for name in ['0ea1220dded1953ebc6bf130e3870e91.bin','a539e5f0d9b2d65a34d002f0aa41f537.bin','a520c306eaec5401e18c871c145ba5b9.bin','e2244a93fc62bdc58749eae6a34f54dc.bin']:
+              files.append(Path('native-prebuilt/packs',name))
+          child_env=os.environ.copy()
+          child_env.pop('GIT_LFS_SKIP_SMUDGE',None)
+          child_env['GIT_LFS_SKIP_DOWNLOAD_ERRORS']='0'
+          loaded=0
+          for p in files:
+              with p.open('rb') as f:
+                  header=f.read(128)
+              if not header.startswith(b'version https://git-lfs.github.com/spec/v1\n'):
+                  continue
+              pointer=p.read_bytes()
+              lines=pointer.decode('ascii').splitlines()
+              expected=next(line[len('oid sha256:'):] for line in lines if line.startswith('oid sha256:'))
+              size=int(next(line[len('size '):] for line in lines if line.startswith('size ')))
+              target=p.with_name(p.name+'.verified-download')
+              print('Loading authenticated LFS payload '+str(p),flush=True)
+              try:
+                  with target.open('wb') as f:
+                      subprocess.run(['git','lfs','smudge',str(p)],input=pointer,stdout=f,env=child_env,check=True)
+                  digest=hashlib.sha256()
+                  with target.open('rb') as f:
+                      for chunk in iter(lambda:f.read(1024*1024),b''):
+                          digest.update(chunk)
+                  if target.stat().st_size!=size or digest.hexdigest()!=expected:
+                      raise RuntimeError('LFS pointer verification failed: '+str(p))
+                  target.replace(p)
+                  loaded+=1
+              finally:
+                  target.unlink(missing_ok=True)
+          print('Verified LFS payloads: '+str(loaded))
+          PY
+          cp -a native-prebuilt/robo native-prebuilt/mako work/reference/native-prebuilt/
+          mkdir -p work/reference/native-prebuilt/packs
+          for pack in 0ea1220dded1953ebc6bf130e3870e91.bin a539e5f0d9b2d65a34d002f0aa41f537.bin a520c306eaec5401e18c871c145ba5b9.bin e2244a93fc62bdc58749eae6a34f54dc.bin; do
+            cp "native-prebuilt/packs/$pack" work/reference/native-prebuilt/packs/
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned build and browser tools
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1 ws@8.22.0
+          npx playwright install --with-deps ${{ matrix.browser }}
+          python3 -m pip install --user numpy pillow
+          ln -s "$GITHUB_WORKSPACE/node_modules" work/reference/node_modules
+      - name: Run source regressions before timing
+        run: |
+          node --experimental-vm-modules --test patches/native-stages/tests/native-render-static.test.mjs patches/native-stages/tests/native-texture-profile-reuse.test.mjs patches/native-stages/tests/native-compressed-mip-legality.test.mjs patches/local-quality/tests/whole-game-gpu-wave9.test.mjs patches/local-quality/tests/combat-gpu-cpu-perfect.test.mjs patches/local-quality/tests/reviewed-wave67-gpu.test.mjs patches/local-quality/tests/issue-264-paint-hash.test.mjs scripts/tests/inkwave-build-packaging.test.mjs
+      - name: Build each literal source tree
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node scripts/build-inkwave.mjs inkwave-public work/site-candidate
+          (cd work/reference && node scripts/build-inkwave.mjs inkwave-public ../site-reference)
+      - name: Verify every emitted artifact and source input
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs';
+          const rows=[];
+          for(const [site,root,sha] of [['work/site-reference','work/reference',process.env.BASELINE_SHA],['work/site-candidate','.',process.env.SOURCE_SHA]]){
+            const m=verifyRuntimeBuild(site,root,sha);
+            const expected=site.includes('reference')?'66539990b663153c11877b8399267d521ea86d55a50f04507e15c1f503e64535':'93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f';
+            if(m.contentHash!==expected)throw Error('Runtime differs from the first measured trial');
+            rows.push({sha,contentHash:m.contentHash,inputs:Object.keys(m.files).length,artifacts:Object.keys(m.artifacts).length});
+          }
+          fs.mkdirSync('work/evidence',{recursive:true});
+          fs.writeFileSync('work/evidence/source-verification.json',JSON.stringify(rows,null,2));
+          console.log('WAVE_NATIVE_SOURCE '+JSON.stringify(rows));
+          JS
+      - name: Measure matched complete frames sequentially
+        env:
+          BENCH_BROWSER: ${{ matrix.browser }}
+          BENCH_DEVICE: ${{ matrix.device }}
+          BENCH_QUALITY: ${{ matrix.quality }}
+          BENCH_PREROLL: ${{ matrix.preroll }}
+          BENCH_WARMUP: ${{ matrix.warmup }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
+          sync_args=()
+          if [[ "$BENCH_BROWSER" == webkit ]]; then sync_args+=(--sync-frames); fi
+          for variant in candidate reference; do
+            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/robo-$variant" --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 925 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --occlusion-checks
+          done
+      - name: Enforce speed, replay and visual bounds
+        shell: bash
+        run: |
+          status=0
+          python3 scripts/compare-inkwave-native-render.py work/evidence/robo-reference work/evidence/robo-candidate --min-speedup ${{ matrix.minimum }} --out work/evidence/robo-comparison.json || status=1
+          exit "$status"
+      - name: Print available numeric evidence
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in sorted(Path('work/evidence').rglob('*.json')):
+              if p.name.endswith('comparison.json') or p.name=='source-verification.json' or p.parent.name=='materials':
+                  print('WAVE_NATIVE_NUMERIC '+json.dumps({'path':str(p),'data':json.loads(p.read_text())},separators=(',',':')))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wave-native-gpu-${{ matrix.browser }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            work/evidence/**/*.json
+          if-no-files-found: warn
+          retention-days: 7

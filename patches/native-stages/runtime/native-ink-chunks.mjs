@@ -83,6 +83,7 @@ export class NativeInkMesh extends THREE.Mesh {
         this._overrideHidden = false;
         this.geometry.setDrawRange(0, this._colourDrawCount);
       }
+      if(this._stencilMask)this.material.stencilWrite=!!_renderer?.getRenderTarget?.()?.stencilBuffer;
       this.selectVisible(camera);
     };
   }
@@ -194,7 +195,40 @@ export class NativeInkMesh extends THREE.Mesh {
     paint._pushQuad = wrappedPush;
     paint.clear = wrappedClear;
     this._paintBinding = { paint, push, clear, wrappedPush, wrappedClear };
+    this._installStencilMask(paint.renderer);
     return this;
+  }
+
+  // Reject unpainted pixels with fixed-function stencil before the expensive
+  // physical ink shader. Its derivative instructions remain in their original
+  // order: surviving fragment quads still get the GPU's helper invocations.
+  // Targets without stencil (notably water reflections) use the original draw.
+  _installStencilMask(renderer){
+    if(this._stencilMask||!renderer||!this.material.userData?.uniforms?.uPaint)return;
+    const owner=this,uniforms={uPaint:{value:null}};
+    const material=new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader:'attribute vec2 paintUv; varying vec2 vPaintUv; void main(){ vPaintUv=paintUv; vec4 mvPosition=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mvPosition; }',
+      fragmentShader:'uniform sampler2D uPaint; varying vec2 vPaintUv; void main(){ if(texture2D(uPaint,vPaintUv).a<0.015)discard; gl_FragColor=vec4(0.0); }',
+      transparent:true,colorWrite:false,depthWrite:false,depthTest:true,toneMapped:false,
+      polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,
+      stencilWrite:true,stencilWriteMask:1,stencilFunc:THREE.AlwaysStencilFunc,stencilRef:1,
+      stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.ReplaceStencilOp,
+    });
+    Object.defineProperty(material,'visible',{configurable:true,get(){return !!renderer.getRenderTarget?.()?.stencilBuffer;}});
+    const mask=new THREE.Mesh(this.geometry,material);
+    // Quality changes replace the owner's atlas geometry. Share its current
+    // geometry/index at lookup time, including during render-list collection.
+    Object.defineProperty(mask,'geometry',{configurable:true,get(){return owner.geometry;}});
+    mask.name='native-ink-stencil';mask.renderOrder=-1;mask.matrixAutoUpdate=false;
+    mask.onBeforeRender=(r,scene,camera)=>{
+      owner.onBeforeRender(r,scene,camera);
+      uniforms.uPaint.value=owner.material.userData.uniforms.uPaint.value;
+    };
+    this.material.stencilFunc=THREE.EqualStencilFunc;this.material.stencilRef=1;
+    this.material.stencilFuncMask=1;this.material.stencilWriteMask=0;
+    this.material.stencilFail=this.material.stencilZFail=this.material.stencilZPass=THREE.KeepStencilOp;
+    this._stencilMask=mask;this.add(mask);
   }
 
   clearPainted() {
@@ -504,6 +538,7 @@ export class NativeInkMesh extends THREE.Mesh {
   _disposeChunks() { for (const g of this.chunks || []) g.dispose?.(); this.chunks = []; }
   dispose() {
     this._detachPaint();
+    if(this._stencilMask){this._stencilMask.removeFromParent();this._stencilMask.material.dispose();this._stencilMask=null;}
     this.removeFromParent();
     this._disposeChunks();
     this._geometry?.dispose();

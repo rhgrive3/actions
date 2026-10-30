@@ -19,7 +19,7 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
  await page.evaluate(async()=>{window.swimG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G;});
  await page.waitForFunction(()=>window.swimG?.game?.menus&&swimG.s3?.installed&&swimG.mode!=='boot',null,{timeout:180000});
- await page.evaluate(async()=>{const g=swimG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();g._skipRender=true;try{for(let i=0;i<300;i++)g._frame(1/60);}finally{g._skipRender=false;}});
+ await page.evaluate(async()=>{const g=swimG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();g._skipRender=true;try{for(let i=0,n=(g.match.turfIntroFrames??253)+47;i<n;i++)g._frame(1/60);}finally{g._skipRender=false;}});
  const setup=await page.evaluate(async()=>{
   const G=swimG,g=G.game,a=g.match.local,c=a.character;
   await c._sourceMotionLoader;if(c.sourceMotion?.ready)await c.sourceMotion.ready;

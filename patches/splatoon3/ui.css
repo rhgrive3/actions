@@ -56,6 +56,20 @@
 }
 
 /* Issue #673: Splatoon 3 battle-start Splashtag intro presentation */
+.iw-lineup.iw-lineup--stags.iw-lineup--camera {
+  left: 3%; right: 3%; bottom: 3%; gap: 0;
+}
+.iw-lineup--camera .iw-lineup__col {
+  width: 100%; flex-direction: row; justify-content: center;
+  align-items: center; gap: calc(var(--u) * .7);
+}
+.iw-lineup--camera .iw-stag--intro {
+  flex: 0 1 calc(var(--u) * 22); min-width: 0;
+}
+.iw-lineup--camera[data-team="0"] .iw-lineup__col--b,
+.iw-lineup--camera[data-team="1"] .iw-lineup__col--a {
+  display: none;
+}
 .iw-lineup.iw-lineup--stags {
   display: flex;
   align-items: center;

@@ -40,7 +40,7 @@ try{
    await Promise.all(G.actors.map(a=>a.character._sourceMotionLoader));window.crowdSnapshot('source-loaders-settled');
    await Promise.all(G.actors.map(a=>a.character.warmAll()));window.crowdSnapshot('all-warm-settled');
    g._skipRender=false;window.crowdStep(900);window.crowdSnapshot('one-frame-seeded');
-   g._skipRender=true;for(let i=0;i<330;i++){window.crowdStep(1000+i);}
+   g._skipRender=true;for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++){window.crowdStep(1000+i);}
    window.crowdSnapshot('after-countdown-before-respawn');
    if(g.match.state!=='playing')throw Error('Expected playing after countdown');
    const nodes=G.nav.nodes.filter(n=>Number.isFinite(n.y)).sort((a,b)=>(a.x*a.x+a.z*a.z)-(b.x*b.x+b.z*b.z)||a.id-b.id),anchor=nodes[0];

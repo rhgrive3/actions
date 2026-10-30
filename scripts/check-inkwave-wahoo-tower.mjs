@@ -15,7 +15,7 @@ try{
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
  result.proof=await page.evaluate(async()=>{
   const G=NG,g=G.game;g.debug.freeze();g.menus.wipe.cancel();g._skipRender=true;await g.startMatch({mapId:'wahoo',mode:'tower',difficulty:'easy'});
-  for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);
+  for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);
   const m=G.match,e=m.ranked,w=m.rankedWorld,a=m.local;
   if(a.s3?.squidSpawn||!a.grounded)throw Error('Human initial squid spawn did not land');
   for(const b of G.actors)if(b!==a){b.pos.copy(G.level.spawnPads[b.team]);b._rankedOnTower=false;b.intent.fire=false;b.intent.move.set(0,0,0);b.vel.set(0,0,0);}

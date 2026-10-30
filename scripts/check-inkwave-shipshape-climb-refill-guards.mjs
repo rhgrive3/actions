@@ -27,7 +27,7 @@ try{
   const humanRadius=Number.isFinite(PLAYER.s3HumanoidTerrainRadiusRaw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;
   for(const hz of [30,60,120]){
    g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'shipshape',mode:'zones',difficulty:'normal'});g._skipRender=true;
-   for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
+   for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
    const L=G.level,V=G.local.pos.constructor,a=G.actors.find(a=>a.team===1&&a.bot),from=G.nav.nodes[16843],edge=from.nb.find(e=>e.to===16578&&e.type==='climb'&&!e.climb.kind),c=edge.climb;
    for(const other of G.actors){if(other===a)continue;const p=L.spawnPads[other.team].clone(),angle=other.slot/4*Math.PI*2+.6;p.x+=Math.cos(angle)*.7;p.z+=Math.sin(angle)*.7;const h=G.physics.raycast(p.clone().add(new V(0,.1,0)),new V(0,-1,0),.3);if(!h.hit||h.face<0)throw Error('Other actor lacks genuine source pad');other.spawnAt(p,other.team?Math.PI:0);other.intent.move.set(0,0,0);other.intent.fire=other.intent.squid=other.intent.jump=other.intent.sub=other.intent.special=false;}
    G.paint.clear();G.projectiles.clear();a.setWeapon('shooter');a.spawnAt(new V(...c.paintStance),0);a.invuln=0;a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;a.bot.update=()=>{};

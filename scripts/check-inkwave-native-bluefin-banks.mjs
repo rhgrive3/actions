@@ -23,7 +23,7 @@ try{
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
  await page.evaluate(()=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();globalThis.bluefinRandom=Math.random;Math.random=()=>.5;});
  for(const team of [0,1])for(const hz of [30,60,120]){
-  await page.evaluate(async hz=>{const g=NG.game;await g.startMatch({mapId:'bluefin',mode:'turf',difficulty:'normal'});g._skipRender=true;g.debug.freezeBots();for(let i=0;i<Math.ceil(hz*5.5);i++)g._frame(1/hz);g.input.mouse.left=true;for(let i=0;i<Math.ceil(hz*.05);i++)g._frame(1/hz);g.input.mouse.left=false;for(let i=0;i<hz*2;i++)g._frame(1/hz);g.menus.show(null);for(const a of NG.actors){a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;}},hz);
+  await page.evaluate(async hz=>{const g=NG.game;await g.startMatch({mapId:'bluefin',mode:'turf',difficulty:'normal'});g._skipRender=true;g.debug.freezeBots();for(let i=0;i<Math.ceil(hz*((g.match.turfIntroFrames??253)+77)/60);i++)g._frame(1/hz);g.input.mouse.left=true;for(let i=0;i<Math.ceil(hz*.05);i++)g._frame(1/hz);g.input.mouse.left=false;for(let i=0;i<hz*2;i++)g._frame(1/hz);g.menus.show(null);for(const a of NG.actors){a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;}},hz);
   const topology=await page.evaluate(team=>{
    const G=NG,N=G.nav,V=G.local.pos.constructor,sign=team?-1:1,id=N.nearest(new V(20*sign,9,40*sign),1.2),n=N.nodes[id];
    if(!n||Math.abs(n.y-9)>.1||Math.abs(n.z)<39||Math.sign(n.z)!==sign)throw Error('Opposing upper-bank source goal was substituted');

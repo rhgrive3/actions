@@ -58,16 +58,20 @@ vec3 sxInk(vec3 c, vec3 n, vec3 V, float g){
   float ndl = dot(n, uSunDirV);
   vec3 amb = mix(uGroundCol, uSkyCol, dot(n, uUpV) * 0.5 + 0.5);
   vec3 base = c * (amb * 0.5 + uSunCol * clamp(ndl * 0.5 + 0.5, 0.0, 1.0) * 0.5 + 0.1);
-  float edge = 1.0 - clamp(dot(n, V), 0.0, 1.0);
-  base += c * (c + 0.25) * pow(clamp(-ndl, 0.0, 1.0), 1.5) * (0.35 + 0.65 * edge) * 0.6 * g;
-  base *= mix(1.0, 0.55, pow(edge, 2.0) * g);
+  if (g <= 0.0) return base * 0.85;
+  float edge = 1.0 - clamp(dot(n, V), 0.0, 1.0), edge2 = edge * edge;
+  float bndl = clamp(-ndl, 0.0, 1.0);
+  base += c * (c + 0.25) * (bndl * sqrt(bndl)) * (0.35 + 0.65 * edge) * 0.6 * g;
+  base *= mix(1.0, 0.55, edge2 * g);
   vec3 R = reflect(-V, n);
   vec3 env = mix(uGroundCol * 0.7, uSkyCol * 1.3, smoothstep(-0.15, 0.35, dot(R, uUpV)));
   env = mix(env, env * (c * 0.8 + 0.2) * 1.6, 0.6);
-  vec3 col = mix(base, env, (0.03 + 0.97 * pow(edge, 4.0)) * g * 0.3);
+  vec3 col = mix(base, env, (0.03 + 0.97 * (edge2 * edge2)) * g * 0.3);
   float rl = clamp(dot(R, uSunDirV), 0.0, 1.0);
-  col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 24.0) * 0.22) * g;
-  col += vec3(1.0) * smoothstep(0.86, 0.9, rl) * 0.85 * g;             // the crisp, painted-looking gloss spot of S3 ink
+  if (rl > 0.0) {
+    col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 24.0) * 0.22) * g;
+    col += vec3(1.0) * smoothstep(0.86, 0.9, rl) * 0.85 * g;             // the crisp, painted-looking gloss spot of S3 ink
+  }
   return col * mix(0.85, 1.0, g);
 }
 `;
@@ -362,11 +366,11 @@ void main(){
       * sqrt(clamp(along / 0.05, 0.0, 1.0));   // a rounded head instead of a square cut   // fades by necking, not transparency
     float sd = s - wid, fw = max(fwidth(sd), 1e-3);
     a = 1.0 - smoothstep(-fw, fw, sd);
+    if (a < 0.005) discard;
     float u = clamp(side / max(wid, 0.05), -1.0, 1.0);
     vec3 n = normalize(normalize(vSide) * u * 0.7 + normalize(vFace) * sqrt(max(1.0 - u * u * 0.49, 0.0)));
     if (!gl_FrontFacing) n = reflect(n, normalize(vFace));
     col = sxInk(col, n, normalize(vV), 1.0);
-    if (a < 0.005) discard;
     gl_FragColor = uAdd > 0.5 ? vec4(col * a, a) : vec4(col, a);
     ${OUT}
     return;
@@ -563,14 +567,15 @@ void main(){
     float brk = (1.0 - vUv.y) - 0.35 * sxNoise(vec2(u * 5.0 + seed * 3.0, along * 1.3 - uTime * spd * 1.3));
     float fw = max(fwidth(brk), 1e-3);
     a = smoothstep(-fw, fw, brk - 0.2 - (1.0 - vCol.a) * 0.7) * smoothstep(0.02, 0.2, vFres);
+    if (a < 0.004) discard;
     vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
     N = normalize(N + normalize(vVv) * (streak - 0.5) * 0.5);
     col = uAdd > 0.5 ? col * (0.75 + 0.6 * streak) : sxInk(col, N, normalize(vVv), 1.0);
   } else if (style == 2) {      // line: thin glow, optional dash (seed > .5)
     float dash = seed > 0.5 ? step(0.45, fract(along * 1.2 - uTime * spd)) : 1.0;
-    a = pow(vFres, 1.5) * dash;
+    a = (vFres * sqrt(max(vFres, 0.0))) * dash;
   } else if (style == 3) {      // pillar: vertical light column fading up
-    a = pow(vFres, 2.0) * (1.0 - vUv.y) * (0.75 + 0.25 * sin(uTime * 14.0 + seed * 9.0));
+    a = (vFres * vFres) * (1.0 - vUv.y) * (0.75 + 0.25 * sin(uTime * 14.0 + seed * 9.0));
     a *= 0.6 + 0.4 * sxNoise(vec2(u * 6.0, vUv.y * 4.0 - uTime * spd));
   } else if (style == 4) {      // twister: liquid ink wound into a spiral, ragged gaps
     float sw = fract(u * 2.0 + vUv.y * 2.5 - uTime * spd);
@@ -578,10 +583,12 @@ void main(){
     float body = min(sw - 0.06, 0.8 - sw) + (n - 0.5) * 0.25 - (1.0 - vCol.a) * 0.4;
     float fw = max(fwidth(body), 1e-3);
     a = smoothstep(-fw, fw, body) * smoothstep(0.0, 0.06, vUv.y) * (1.0 - smoothstep(0.9, 1.0, vUv.y));
+    if (a < 0.004) discard;
     vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
     col = uAdd > 0.5 ? col * (0.65 + 0.55 * n) : sxInk(col, N, normalize(vVv), 1.0);
   } else {                      // charge: converging energy filaments
-    float f = pow(0.5 + 0.5 * sin((u * 7.0 + seed * 3.0) * 6.2831853), 10.0);
+    float f0 = 0.5 + 0.5 * sin((u * 7.0 + seed * 3.0) * 6.2831853), f2 = f0 * f0, f4 = f2 * f2;
+    float f = f4 * f4 * f2;
     float flow = fract(vUv.y + uTime * spd);
     a = f * smoothstep(0.0, 0.3, flow) * (1.0 - smoothstep(0.6, 1.0, flow)) * vFres;
   }
@@ -632,7 +639,8 @@ void main(){
     ${OUT}
     return;
   } else if (style == 1) {     // energy orb: fresnel glow with swirling filaments
-    float sw = pow(0.5 + 0.5 * sin((sph.x * 5.0 + sph.y * 2.5 - uTime * (1.2 + seed)) * 6.2831853), 6.0);
+    float sw0 = 0.5 + 0.5 * sin((sph.x * 5.0 + sph.y * 2.5 - uTime * (1.2 + seed)) * 6.2831853), sw2 = sw0 * sw0;
+    float sw = sw2 * sw2 * sw2;
     float n = sxNoise(vec2(sph.x * 18.0 + uTime * 0.7, sph.y * 6.0 - uTime * 0.9 + seed * 5.0));
     a = clamp(pow(f, 1.6) * 0.9 + sw * 0.35 + n * 0.12, 0.0, 1.0);
     col = mix(col, vec3(1.0) * max(col.r, max(col.g, col.b)), (1.0 - f) * 0.5);
@@ -640,13 +648,14 @@ void main(){
     vec2 gp = vec2(sph.x * 24.0, vL.y * 9.0);
     vec2 g = abs(fract(gp) - 0.5);
     float grid = 1.0 - smoothstep(0.0, 0.07, min(g.x, g.y));
-    float scan = exp(-pow((vL.y - fract(uTime * 0.6 + seed)) * 9.0, 2.0));
-    a = 0.06 + grid * 0.35 + pow(f, 2.5) * 0.55 + scan * 0.35;
+    float sc0 = (vL.y - fract(uTime * 0.6 + seed)) * 9.0;
+    float scan = exp(-(sc0 * sc0));
+    a = 0.06 + grid * 0.35 + (f * f * sqrt(max(f, 0.0))) * 0.55 + scan * 0.35;
   } else if (style == 3) {     // shock sphere: thin bright edge, distorted
     float n = sxNoise(vec2(sph.x * 12.0 + seed * 3.0, sph.y * 6.0));
     a = pow(f, 4.0 + 3.0 * n) * (1.0 - t);
   } else {                     // flash: blown-out core, soft fresnel falloff
-    a = (1.0 - f * f) * (1.0 - t) + pow(f, 3.0) * 0.4 * (1.0 - t);
+    a = (1.0 - f * f) * (1.0 - t) + (f * f * f) * 0.4 * (1.0 - t);
     col = mix(col, vec3(max(col.r, max(col.g, col.b))), 0.6);
   }
   a *= vCol.a;
@@ -679,7 +688,8 @@ void main(){
   if (style == 0) {             // wave wall: a translucent fence of vertical light lines, a bright crest line and a lit base
     // S3 (225.3-229.3s): a fence of bold bright vertical stripes (fewer, wider bars than a fine hatch)
     float stripe = 1.0 - smoothstep(0.0, 0.25, abs(fract(u * 72.0 + seed * 7.0) - 0.5) * 2.0 - 0.45);
-    float top = exp(-pow((v - 0.9) * 13.0, 2.0));
+    float tp0 = (v - 0.9) * 13.0;
+    float top = exp(-(tp0 * tp0));
     float base = exp(-v * 7.0);
     float flicker = 0.85 + 0.15 * sxNoise(vec2(u * 40.0 + seed * 9.0, uTime * spd * 2.0));
     a = (0.16 + 0.5 * stripe * (1.0 - v * 0.55) + top * 0.95 + base * 0.45) * flicker * (1.0 - smoothstep(0.96, 1.0, v));
@@ -690,11 +700,13 @@ void main(){
     float top = (0.18 + 0.5 * n + 0.42 * n2 * n2) * (1.0 - 0.55 * t) * (uAdd > 0.5 ? 1.0 : clamp(vCol.a, 0.0, 1.0)) - v;
     float fw = max(fwidth(top), 1e-3);
     a = smoothstep(-fw, fw, top) * smoothstep(0.0, 0.04, v) * (uAdd > 0.5 ? 1.0 - smoothstep(0.75, 1.0, t) : 1.0);
+    if (a < 0.004) discard;
     vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
     N = normalize(N + vec3(0.0, (n - 0.5) * 0.8, 0.0));
     col = uAdd > 0.5 ? col * (0.8 + 0.4 * n) : sxInk(col, N, normalize(vVv), 1.0);
   } else if (style == 2) {      // swirl: spinning streaked ribbon
-    float sw = pow(0.5 + 0.5 * sin((u * 3.0 + v * 1.5 - uTime * spd) * 6.2831853), 4.0);
+    float sw0 = 0.5 + 0.5 * sin((u * 3.0 + v * 1.5 - uTime * spd) * 6.2831853), sw2 = sw0 * sw0;
+    float sw = sw2 * sw2;
     // fade where the cylinder turns edge-on: otherwise its silhouette reads as a hard-edged sheet up close
     a = sw * sin(v * 3.14159) * (1.0 - t) * smoothstep(0.08, 0.55, vFres);
   } else if (style == 3) {      // twister: liquid ink wound in a spiral, with ragged gaps
@@ -703,6 +715,7 @@ void main(){
     float body = min(sw - 0.05, 0.72 - sw) + (n - 0.5) * 0.25 - (uAdd > 0.5 ? 0.0 : (1.0 - vCol.a) * 0.4);
     float fw = max(fwidth(body), 1e-3);
     a = smoothstep(-fw, fw, body) * smoothstep(0.0, 0.08, v) * (1.0 - smoothstep(0.85, 1.0, v));
+    if (a < 0.004) discard;
     vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
     N = normalize(N + vec3(0.0, (sw - 0.38) * 1.4, 0.0));
     col = uAdd > 0.5 ? col * (0.6 + 0.5 * n) : sxInk(col, N, normalize(vVv), 1.0);
@@ -758,6 +771,7 @@ void main(){
       float ring = w * (0.6 + 0.8 * n) * clamp(vCol.a, 0.0, 1.0) - abs(r - (0.86 + 0.1 * n));
       float fw = max(fwidth(ring), 1e-3);
       a = smoothstep(-fw, fw, ring);
+      if (a < 0.004) discard;
       col = sxPuddle(col, clamp((r - 0.86 - 0.1 * n) / max(w, 1e-3), -1.0, 1.0) * 0.6, 0.0);
     }
   } else if (style == 1) {     // reticle: double ring, four ticks, rotating brackets
@@ -773,7 +787,8 @@ void main(){
     float pulse = (1.0 - smoothstep(0.0, 0.05, abs(r - fract(uTime * 1.3 + seed)))) * 0.45;
     a = max(max(ring, cross), pulse) + 0.12 * (1.0 - r);
   } else if (style == 3) {     // flash disc: radial burst
-    float rays = pow(0.5 + 0.5 * sin(ang * 9.0 + seed * 20.0), 6.0) * (1.0 - r);
+    float ry0 = 0.5 + 0.5 * sin(ang * 9.0 + seed * 20.0), ry2 = ry0 * ry0;
+    float rays = (ry2 * ry2 * ry2) * (1.0 - r);
     a = (exp(-r * r * 6.0) + rays * 0.6) * (1.0 - t);
   } else if (style == 4) {     // rune circle: concentric rings with marks (special activation)
     float ring1 = 1.0 - smoothstep(0.0, 0.025, abs(r - 0.95));
@@ -802,10 +817,12 @@ void main(){
     a = max(max(arm * 0.75, rush * 0.55 * smoothstep(0.1, 0.3, r)), rim) + 0.08 * (1.0 - r);
     col = mix(col, vec3(max(col.r, max(col.g, col.b))), 0.35);
   } else {                     // splat: a glossy ink blot with tendrils, drying back in from its rim
+    float edgeScale = (1.0 - 0.35 * t * t) * (uAdd > 0.5 ? 1.0 : mix(0.25, 1.0, clamp(vCol.a, 0.0, 1.0)));
     float n = sxFbm(vec2(ang * 2.0 + seed * 9.0, r * 3.0));
-    float edge = (0.65 + 0.35 * n) * (1.0 - 0.35 * t * t) * (uAdd > 0.5 ? 1.0 : mix(0.25, 1.0, clamp(vCol.a, 0.0, 1.0)));
+    float edge = (0.65 + 0.35 * n) * edgeScale;
     float sd = edge - r, fw = max(fwidth(sd), 1e-3);
     a = smoothstep(-fw, fw, sd) * (uAdd > 0.5 ? 1.0 - smoothstep(0.75, 1.0, t) : 1.0);
+    if (a < 0.004) discard;
     col = uAdd > 0.5 ? col * (0.8 + 0.3 * n) : sxPuddle(col, smoothstep(edge - 0.18, edge, r), (n - 0.5) * 0.3);
   }
   if (uAdd > 0.5 || (style != 0 && style != 6)) a *= vCol.a;   // liquid styles already eroded by their alpha

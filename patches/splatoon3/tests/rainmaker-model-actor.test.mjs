@@ -30,8 +30,22 @@ for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualie
   let g=0,m=0;world.rainmakerCore.geometry.addEventListener('dispose',()=>g++);world.rainmakerCore.material.addEventListener('dispose',()=>m++);
   const geo=world.rainmakerCore.geometry,attr=geo.attributes.position;
   const triangles=Array.from({length:geo.index.count/3},(_,i)=>new THREE.Triangle(...[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(attr,geo.index.getX(i*3+j)))));
-  const solids=[[0,64],[64,64],[236,36],[272,20],[292,8],[300,36],[336,20],[356,8],[364,36],[420,12],[432,12],[444,12]].map(([start,len])=>{const ts=triangles.slice(start,start+len),box=new THREE.Box3().setFromPoints(ts.flatMap(t=>[t.a,t.b,t.c])),center=box.getCenter(new THREE.Vector3());return{box,planes:ts.map(t=>{const pl=new THREE.Plane().setFromCoplanarPoints(t.a,t.b,t.c);if(pl.distanceToPoint(center)>0)pl.negate();return pl;})};});
-  const tail=[[.40,-.46],[.82,-.72],[.87,-.97],[.63,-.85],[.52,-1],[.32,-.62]];
+  // The model grew from 456 to 608 triangles. A stale face range can
+  // misclassify open jaw/torus faces as convex solids, falsely trapping skin.
+  // Only closed convex primitives use half-space containment; open or
+  // nonconvex surfaces are still checked below by exact face intersection.
+  let faceOffset=0;const solidRuns=[];
+  for(const [name,faceCount,closedConvex] of [
+    ['body',64,true],['open-head',80,false],['outer-jaw',24,false],
+    ['mouth-torus',96,false],['inner-jaw',24,false],['dark-bore',12,false],
+    ['eye-L',36,true],['pupil-L',20,true],['fin-L',20,false],['tooth-L',8,true],
+    ['eye-R',36,true],['pupil-R',20,true],['fin-R',20,false],['tooth-R',8,true],
+    ['tail-base',36,true],['tail-fin',60,false],['dorsal-fin',20,false],
+    ['grip',12,true],['brace',12,true]
+  ]){assert.ok(faceCount>0,name);if(closedConvex)solidRuns.push([faceOffset,faceCount]);faceOffset+=faceCount;}
+  assert.equal(faceOffset,triangles.length,'update the convex-component map when the emitted geometry changes');
+  const solids=solidRuns.map(([start,len])=>{const ts=triangles.slice(start,start+len),box=new THREE.Box3().setFromPoints(ts.flatMap(t=>[t.a,t.b,t.c])),center=box.getCenter(new THREE.Vector3());return{box,planes:ts.map(t=>{const pl=new THREE.Plane().setFromCoplanarPoints(t.a,t.b,t.c);if(pl.distanceToPoint(center)>0)pl.negate();return pl;})};});
+  const tail=[[.40,-.46],[.60,-.56],[.77,-.65],[.85,-.75],[.87,-.85],[.84,-.95],[.77,-.94],[.70,-.86],[.65,-.77],[.61,-.87],[.54,-.98],[.47,-1.00],[.40,-.95],[.38,-.84],[.40,-.72],[.32,-.62]];
   function inTail(p){const x=(p.x+.30)/.6,y=(p.y+.02)/.6,z=(p.z-.44)/.6;if(Math.abs(x)>=.0225||y<=.32||y>=.87||z<=-1||z>=-.46)return false;let inside=false;for(let i=0,j=tail.length-1;i<tail.length;j=i++){const[a,b]=tail[i],[c,d]=tail[j];if((a>y)!==(c>y)&&z<(d-b)*(y-a)/(c-a)+b)inside=!inside;}return inside;}
   const regions={head:[],chest:[]};ch.root.traverseVisible(mesh=>{if(!mesh.isSkinnedMesh||!['skin','cloth'].includes(mesh.userData.iwMat))return;const attrs=mesh.geometry.attributes;for(let i=0;i<attrs.position.count;i++){const w={head:0,chest:0};for(let j=0;j<4;j++){const n=ch.skeleton.bones[attrs.skinIndex.getComponent(i,j)].name,v=attrs.skinWeight.getComponent(i,j);if(/^(head|eye|brow|mouth|jaw|cheek|ear)/.test(n))w.head+=v;if(['chest','spine','neck'].includes(n))w.chest+=v;}for(const k of['head','chest'])if(w[k]>=.5)regions[k].push([mesh,i]);}});
   const fishBoxes=triangles.map(t=>new THREE.Box3().setFromPoints([t.a,t.b,t.c]));const candidateFishFaces=createTriangleAabbIndex(fishBoxes);const regionMaps=new Map();for(const points of Object.values(regions))for(const[mesh,i]of points){if(!regionMaps.has(mesh))regionMaps.set(mesh,new Set());regionMaps.get(mesh).add(i);}

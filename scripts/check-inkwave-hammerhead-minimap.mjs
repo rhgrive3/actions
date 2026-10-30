@@ -33,7 +33,7 @@ try {
     await page.evaluate(async mode => {
       const g = NG.game; g.debug.freeze(); g._skipRender = true; g.menus.wipe.cancel();
       await g.startMatch({ mapId: 'hammerhead', mode, difficulty: 'normal' });
-      for (let i = 0; i < 330; i++) g._frame(1 / 60); g.debug.freezeBots();
+      for (let i = 0, frames = (g.match.turfIntroFrames ?? 253) + 77; i < frames; i++) g._frame(1 / 60); g.debug.freezeBots();
     }, mode);
     const proof = await page.evaluate(() => {
       const G = NG, map = G.game.minimap, level = G.level; map.ensure();

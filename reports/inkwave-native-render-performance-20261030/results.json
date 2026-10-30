@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "status": "passed",
+  "scope": "robo whole-production-frame throughput; software rendering only",
+  "baseCommit": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
+  "candidateCommit": "2917d9190e6324145d472636b875f7b525a58a15",
+  "candidateTree": "f1e95f02dbfffe91120fc4b65ba8bd0e90885dcf",
+  "referenceContentHash": "f13059a5b2afb7c4f10841e2748a22abf768e9ec1a21ad2d14c740272ae16188",
+  "candidateContentHash": "3e3881d803c8cfc45aff5c26c4422a8e839e206de05f5a5a1582c76e421de692",
+  "referenceInputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+  "candidateInputHash": "d7fdffda1a3a90e49fba63009cca491411a6094ac92927bd1f9157f2a7676973",
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "cpuQuota": 4,
+    "node": "v24.19.0",
+    "chromium": "154.0.8037.57",
+    "viewport": [
+      960,
+      540
+    ],
+    "renderer": "ANGLE Vulkan SwiftShader (Subzero)",
+    "physicalGpu": false,
+    "esbuild": "0.28.2",
+    "playwright": "1.62.1"
+  },
+  "workload": {
+    "stage": "robo",
+    "actors": 8,
+    "bots": 7,
+    "mode": "turf",
+    "difficulty": "normal",
+    "quality": "medium",
+    "setupFrames": 600,
+    "warmup": 30,
+    "framesPerWindow": 10,
+    "windows": 3,
+    "fixedStepSeconds": 0.016666666666666666,
+    "scale": 1,
+    "sceneMsaa": 2,
+    "shadowSize": 2048,
+    "bloom": true,
+    "paintAtlas": 2048,
+    "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+  },
+  "referenceFps": 0.19785029064207113,
+  "candidateFps": 0.28769279013099064,
+  "fpsImprovementPercent": 45.40933409668455,
+  "computation": "total measured frames / total elapsed seconds; GPU completion forced by synchronous readPixels after each window; shader compilation excluded",
+  "windows": [
+    {
+      "run": 0,
+      "firstStep": 630,
+      "frames": 10,
+      "referenceFps": 0.19651538912011624,
+      "candidateFps": 0.28959821144143366,
+      "speedup": 1.473666834633609,
+      "newPrograms": [
+        0,
+        0
+      ],
+      "traceSha256": "42324db89eaed8ee641634d428338903f4360b06548a7085755ff39fa3bd2dec",
+      "gridSha256": "841cd96309b630a60a3f42655111173e635200ce130ac64dfc1b64b7163efd08",
+      "actorAndPaintStateMatched": true,
+      "glError": [
+        0,
+        0
+      ]
+    },
+    {
+      "run": 1,
+      "firstStep": 640,
+      "frames": 10,
+      "referenceFps": 0.2082157781752321,
+      "candidateFps": 0.2816052626391541,
+      "speedup": 1.3524684109297338,
+      "newPrograms": [
+        0,
+        0
+      ],
+      "traceSha256": "9bdc1ce7d0de9d88747c721c64d63fc545a57eea5d1b8e98580eb9124b702698",
+      "gridSha256": "363ebcbe0aba8d4e7f38850904c51093c162a10061ab0e3de6f00743cd809cc9",
+      "actorAndPaintStateMatched": true,
+      "glError": [
+        0,
+        0
+      ]
+    },
+    {
+      "run": 2,
+      "firstStep": 650,
+      "frames": 10,
+      "referenceFps": 0.1896953682081891,
+      "candidateFps": 0.2920850785416967,
+      "speedup": 1.539758620891237,
+      "newPrograms": [
+        0,
+        0
+      ],
+      "traceSha256": "b089fa2ff7af23e6f5a8e483c006a9e86ce362b3869a282ec72b6bbaf743073a",
+      "gridSha256": "fd22db9286c8942800da27b2dc0f9bfa0770ddd7d4bc2782680162725b9495a4",
+      "actorAndPaintStateMatched": true,
+      "glError": [
+        0,
+        0
+      ]
+    }
+  ],
+  "imageBudget": {
+    "meanRgbDeltaMax": 1.25,
+    "p99RgbDeltaMax": 3,
+    "maxAlphaDelta": 0
+  },
+  "images": [
+    {
+      "view": "forward",
+      "meanRgbDelta": 0.017463991769547327,
+      "p99RgbDelta": 1,
+      "maxRgbDelta": 6,
+      "maxAlphaDelta": 0
+    },
+    {
+      "view": "left",
+      "meanRgbDelta": 0.00883101851851852,
+      "p99RgbDelta": 0,
+      "maxRgbDelta": 8,
+      "maxAlphaDelta": 0
+    },
+    {
+      "view": "back",
+      "meanRgbDelta": 0.001325874485596708,
+      "p99RgbDelta": 0,
+      "maxRgbDelta": 6,
+      "maxAlphaDelta": 0
+    },
+    {
+      "view": "right",
+      "meanRgbDelta": 0.014202031893004115,
+      "p99RgbDelta": 1,
+      "maxRgbDelta": 6,
+      "maxAlphaDelta": 0
+    }
+  ],
+  "additionalImageCheck": {
+    "stage": "mako",
+    "scope": "RGB images only; no FPS claim",
+    "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+    "images": [
+      {
+        "view": "forward",
+        "meanRgbDelta": 0.02237332818930041,
+        "p99RgbDelta": 1,
+        "maxRgbDelta": 14
+      },
+      {
+        "view": "left",
+        "meanRgbDelta": 0.03770833333333334,
+        "p99RgbDelta": 1,
+        "maxRgbDelta": 20
+      },
+      {
+        "view": "back",
+        "meanRgbDelta": 0.032743698559670784,
+        "p99RgbDelta": 1,
+        "maxRgbDelta": 11
+      },
+      {
+        "view": "right",
+        "meanRgbDelta": 0.03692322530864198,
+        "p99RgbDelta": 1,
+        "maxRgbDelta": 34
+      }
+    ]
+  },
+  "checks": {
+    "sourceFocused": {
+      "passed": 71,
+      "failed": 0,
+      "skipped": 5
+    },
+    "updatedRenderingSource": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 5
+    },
+    "emittedRenderingOwners": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 5
+    },
+    "skipReason": "five pre-existing cases require private original converted stage assets",
+    "buildInputsVerified": 1550,
+    "buildArtifactsVerified": 2267,
+    "gitTreeMatchedPublishedSource": true
+  },
+  "limits": [
+    "Software-rendered throughput, not physical-device or display FPS.",
+    "One full matched robo replay with three timed windows. Other native stages and quality profiles do not inherit a measured 45.4% guarantee.",
+    "Mako warmup-30 timing was rejected because one timed window created a shader program. Completion of the warmup-60 rerun could not be verified after the execution environment disconnected; no mako FPS is claimed.",
+    "Images and third-party model/texture payloads remain outside Git. RGB summaries are retained for mako; strict actor/paint/alpha comparison and timing acceptance apply to the robo replay."
+  ]
+}
