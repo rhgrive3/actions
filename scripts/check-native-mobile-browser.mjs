@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 // Normal startMatch/load/render smoke across all shipped native stages.
 // Caller holds .ci-scratch/native-stage-browser.lock; this is not a FPS test.
-// node scripts/check-native-mobile-browser.mjs --site SITE --out EVIDENCE --device ipad|phone|both
+// node scripts/check-native-mobile-browser.mjs --site SITE --out EVIDENCE --device ipad|phone|both [--browser chromium|webkit]
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {chromium} from 'playwright';
+import {chromium, webkit} from 'playwright';
 import {nativeStageCatalog} from './lib/inkwave-native-stages.mjs';
 
 const arg=(key,fallback)=>{const at=process.argv.indexOf(key);return at<0?fallback:process.argv[at+1];};
 const site=fs.realpathSync(arg('--site','_site'));
 const out=path.resolve(arg('--out','.browser-evidence/native-mobile'));
-const device=arg('--device','both'),frames=Number(arg('--render-frames','2'));
+const browserName=arg('--browser','chromium');
+assert(['chromium','webkit'].includes(browserName),'Unknown browser engine');
+const device=arg('--device',browserName==='webkit'?'ipad':'both'),frames=Number(arg('--render-frames','2'));
 assert(['ipad','phone','both'].includes(device),'Unknown device profile');
 assert(Number.isSafeInteger(frames)&&frames>=1&&frames<=3,'Use 1–3 rendered smoke frames');
 assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>out===p||out.startsWith(p+'/')),'Evidence requires a persistent directory');
@@ -47,8 +49,8 @@ const profiles={
   userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36'},
 };
 const result={schema:1,status:'running',site,pathBoundBuildSha256:hash(buildBytes),contentHash:build.contentHash,
- revision:build.build.revision,renderFrames:frames,requestedStages:ids,profiles:[],
- scope:'Chromium mobile emulation: normal stage load, intro render and disposal smoke; not physical iPad/phone FPS or full-match acceptance.'};
+ revision:build.build.revision,browser:browserName,renderFrames:frames,requestedStages:ids,profiles:[],
+ scope:browserName+' mobile emulation: normal stage load, intro render and disposal smoke; not physical iPad/phone FPS or full-match acceptance.'};
 const save=()=>{const file=path.join(out,'mobile-browser.json');fs.writeFileSync(file+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(file+'.pending',file);};
 save();
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.wasm':'application/wasm','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
@@ -62,7 +64,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
 let browser;
 try{
- browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,
+ browser=browserName==='webkit'?await webkit.launch({headless:true,executablePath:process.env.WEBKIT_PATH}):await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,
   args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  result.browserVersion=browser.version();
  for(const name of device==='both'?['ipad','phone']:[device]){
@@ -100,6 +102,8 @@ try{
      g.menus.wipe.cancel();
      if(!G.level?.native||G.level.layout.id!==id||g.nativeWorld?.level!==G.level)throw Error('Native stage publication mismatch');
      const world=g.nativeWorld,q=g.R.q,gl=G.renderer.getContext();
+     const dryState=G.paint._iwPaintDryRegions;
+     if(!dryState?.tracker||dryState.target!==G.paint.rt)throw Error('Native sparse paint drying was not admitted');
      if(!g.mobile?.touch)throw Error('Touch profile was not selected');
      if(G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7)throw Error('Normal eight-actor match missing');
      if(G.physics.level!==G.level||G.paint.level!==G.level||G.nav.level!==G.level||G.nav.physics!==G.physics)throw Error('Mismatched live native authorities');
@@ -124,6 +128,7 @@ try{
       touch:g.mobile,quality:q,textureQuality:world.metrics.quality,textureCount:world.metrics.textureCount,
       textureLimit:world.metrics.textureLimit,atlas:G.paint.size,framebuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight],
       prebuilt:true,nativeGroups,nativeInk,detailMaterials,previousDisposed:!previous||previous===world||previous.disposed,
+      paintDryRegions:{present:true,targetMatches:dryState.target===G.paint.rt,counters:{...dryState.counters}},
       sourceSha256:G.level.manifest.sourceSha256,geometry:G.level.manifest.geometry,frameRows,memory:{...G.renderer.info.memory}};
     },{id,index,frames},name+' '+id));
     assert.equal(row.sourceSha256,definitions.get(id).sourceSha256,id+' source identity');
@@ -138,7 +143,11 @@ try{
     return{nativeReleased:true,previousDisposed:true,rawPresetRestored:g.R.q===g.R.__nativeGpuBudget.raw};
    },undefined,name+' native release');
    assert.equal(record.release.rawPresetRestored,true);record.status='passed';save();
-  }catch(error){record.status='failed';record.error=error.stack;save();throw error;}
+  }catch(error){
+   record.status='failed';record.error=error.stack;
+   const pending=record.stages.at(-1);if(pending?.status==='running'){pending.status='failed';pending.error=error.stack;}
+   save();throw error;
+  }
   finally{await context.close();}
  }
  result.status='passed';
