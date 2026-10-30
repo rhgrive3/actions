@@ -92,3 +92,30 @@ test('actual departed Actor ownership transfers before the rebuilt GO barrier la
  assert.equal(c.net.state,'starting');assert.equal(c.launched,0);
  c.net._message('C',{k:'ready',id:c.cfg.id});assert.equal(c.net.state,'match');assert.equal(c.launched,1);c.close();
 });
+
+for (const failure of ['false','throw']) test(`composed host GO ${failure} fails the exact start instead of launching locally`,async()=>{
+ const x=await setup(),c=x.client({count:2});await c.begin;
+ let attempts=0;c.net.tr.broadcast=()=>{attempts++;if(failure==='throw')throw Error('closed');return false;};
+ c.net._control({t:'leave',id:'A',host:'B'});
+ assert.equal(attempts,1);assert.equal(c.launched,0);assert.equal(c.net.state,'error');
+ assert.equal(c.net.tr,null);assert.equal(c.net._goT,null);assert.equal(c.net.controlFailure.kind,'GO');
+ for(const timer of x.timers.values())timer.fn();assert.equal(c.launched,0);c.close();
+});
+
+for (const failure of ['false','throw']) test(`composed handoff READY ${failure} fails explicitly without a stalled barrier`,async()=>{
+ const x=await setup(),c=x.client({id:'C'});await c.begin;
+ let attempts=0;c.net.tr.sendTo=(to,data)=>{attempts++;assert.equal(to,'B');assert.equal(data.id,c.cfg.id);if(failure==='throw')throw Error('backpressure');return false;};
+ c.net._control({t:'leave',id:'A',host:'B'});
+ assert.equal(attempts,1);assert.equal(c.net.state,'error');assert.equal(c.net.tr,null);
+ assert.equal(c.net.controlFailure.kind,'READY');assert.equal(c.launched,0);assert.equal(c.net._goT,null);
+ c.net._message('B',{k:'go',id:c.cfg.id});assert.equal(c.launched,0);c.close();
+});
+
+test('synchronous room replacement during GO cannot launch or fail the replacement room',async()=>{
+ const x=await setup(),c=x.client({count:2});await c.begin;
+ const replacement={close(){}};
+ c.net.tr.broadcast=()=>{c.net.leave(true);c.net.tr=replacement;c.net.state='lobby';return true;};
+ c.net._control({t:'leave',id:'A',host:'B'});
+ assert.equal(c.launched,0);assert.equal(c.net.state,'lobby');assert.equal(c.net.tr,replacement);
+ assert.equal(c.net.controlFailure,undefined);c.close();
+});
