@@ -1,0 +1,122 @@
+{
+  "scope": "Final integration of special holds, rider posture, terminal VFX and splash cadence; no retail parity claim",
+  "initialBase": "fd6435a4dd2781928d211537c485c87bc50b3784",
+  "integratedMain": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
+  "finalProductCommit": "bc11846475824b2d8fe3350b1f3fe0f17bfd73b6",
+  "build": {
+    "contentHash": "2d63aa0e01a04c07166825cb7859d603f47562dc5a99301fb1fd853a96bd3368",
+    "revision": "ba22067a99ebda2001d9c7f345d9fb9ccfa2438b68968c08d0abb50f4993396f",
+    "runtimeInputs": {
+      "patch/runtime/special-models.mjs": "0aed9ae331dd1f6f7bd931572afb810caf3df788dfb4781b0b22b514a387d3ff",
+      "patch/runtime/special-motion.mjs": "788e37158c1ea2c657f726c5c48359b681580141b95139cba62dd4d396379de2",
+      "patch/runtime/special-presentation.mjs": "05972dc376048095cb2fbc9f0c962dbc9e0a1bf48e7ca3766f8c0ede13eea2cb",
+      "patch/runtime/special-vfx-kit.mjs": "326f5ec529bb53edc70606758bfbb92ef467a081d19c3ac5b5ea1689e97a7d79",
+      "patch/runtime/special-vfx.mjs": "e861b59a6c2960c8cd7184a1b23e5243aff3232971b3251e6c52334600e38cab"
+    }
+  },
+  "sourceTests": {
+    "initial": {
+      "total": 300,
+      "passed": 296,
+      "failed": 4,
+      "failures": [
+        "Synthetic old-fit extraction deleted riderPose; repaired extraction only, exact equality retained",
+        "Three Reef torso assertions encoded old whole-kid lean; updated to root-mounted pose and added strict real-grip tests"
+      ]
+    },
+    "finalFocused": {
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "covers": [
+        "Final loaded-source rider posture/grips at30/60/120Hz",
+        "Native gameplay-on/off trace",
+        "Cancellation, visibility, death, ball form and source restoration",
+        "Exception-safe source ownership",
+        "Splash motion and tiny-dt guard"
+      ]
+    },
+    "repairedHotpath": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "note": "Exact existing held/Wail equality retained; no numerical tolerance relaxation"
+    }
+  },
+  "finalTerminalVerification": {
+    "total": 149,
+    "passed": 149,
+    "failed": 0,
+    "componentSourceCases": 38,
+    "actualEmittedNativeCases": 111,
+    "note": "INKWAVE_BUILT_SITE points to final minified build. Component cases import the source module; native cases read emitted modules."
+  },
+  "browser": {
+    "priorIntegratedStandard": {
+      "status": "passed",
+      "contentHash": "2085016a5f5bf301f5161147f1fb3850830ce1ec4adda224e3b52481a627982d",
+      "errors": [],
+      "note": "Full standard special-presentation check before final Reef coordinate adjustment; final changed rider verified separately"
+    },
+    "finalRider": "See verification.md and visual/final-matched-60.json; same-order60Hz480px, additional30/120Hz128px",
+    "finalApplication": {
+      "status": "passed",
+      "sourceSha": "bc11846475824b2d8fe3350b1f3fe0f17bfd73b6",
+      "contentHash": "2d63aa0e01a04c07166825cb7859d603f47562dc5a99301fb1fd853a96bd3368",
+      "scope": "full-active",
+      "fullAcceptance": true,
+      "verifiedResponses": 803,
+      "gearSelects": 12,
+      "errors": [],
+      "consoleErrors": [],
+      "requestFailures": [],
+      "evidence": "validation/final-application-browser.json.gz",
+      "evidenceSHA256": "cbbea99363a3e0bf27e03d73a6023ba7fa94b19e1fc274467c14972aa7c106b7"
+    }
+  },
+  "gates": {
+    "quick": "passed",
+    "startupBudget": {
+      "status": "passed",
+      "revision": "ba22067a99ebda2001d9c7f345d9fb9ccfa2438b68968c08d0abb50f4993396f",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 78620,
+      "initialJSBytes": 1834056,
+      "criticalHTMLBytes": 24043,
+      "precacheCount": 594,
+      "precacheBytes": 7989657,
+      "workerBytes": 98004,
+      "declaredBytes": 16749672,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "migration": "passed; no failures"
+  },
+  "knownUnchangedFailure": "Crab thin-wall damage/paint test fails the same hit-list assertion on historical baseline and holds candidate; outside this display change. See holds.md.",
+  "logs": {
+    "initial-integrated-source": {
+      "log": "validation/initial-integrated-source.log.gz",
+      "sha256": "40410bb063ed1b76aaed742c6b429ace34c7cb6eaec7e889c4e09b4263d202ad"
+    },
+    "final-focused-source": {
+      "log": "validation/final-focused-source.log.gz",
+      "sha256": "e9c90bf4d23ad2ddc421fdcfb8dfc07572a096212f1a806b00522158bb4e3f37"
+    },
+    "final-emitted-terminal": {
+      "log": "validation/final-emitted-terminal.log.gz",
+      "sha256": "ec47b3b422c9ed1543aa8bd62ab9aee573d5483807d8cd9234629ecb97e32318"
+    },
+    "repaired-hotpath": {
+      "log": "validation/repaired-hotpath.log.gz",
+      "sha256": "f6ca9cb69de28d62c9fa88fa5d8191bbcf714b3288ec879a7c7b23e88b5fd0af"
+    }
+  },
+  "limits": [
+    "Original reference imagery includes prerelease footage with unknown gear/input/build",
+    "No Switch/iPad hardware qualification or full retail curve/shape parity",
+    "Whole Booyah overhead pose and impact surface normals remain open",
+    "Direct varying-dt browser fixture is not a fixed-clock physics equivalence test"
+  ]
+}
