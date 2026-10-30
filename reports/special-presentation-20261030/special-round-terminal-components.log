@@ -1,0 +1,46 @@
+✔ tentaMissiles: native terminal snapshots point, retires trail and deduplicates pooled lifetime (57.943574ms)
+✔ tentaMissiles: remove retires without impact (23.509489ms)
+✔ tentaMissiles: dead retires without impact (21.541591ms)
+✔ tentaMissiles: recycle retires without impact (37.880001ms)
+✔ tentaMissiles: clear retires without impact (15.052925ms)
+✔ tentaMissiles: dispose retires without impact (2.11698ms)
+✔ booyahBomb: native terminal snapshots point, retires trail and deduplicates pooled lifetime (6.977982ms)
+✔ booyahBomb: remove retires without impact (13.371883ms)
+✔ booyahBomb: dead retires without impact (2.066359ms)
+✔ booyahBomb: recycle retires without impact (4.697517ms)
+✔ booyahBomb: clear retires without impact (6.383041ms)
+✔ booyahBomb: dispose retires without impact (1.630916ms)
+✔ ultraStamp: native terminal snapshots point, retires trail and deduplicates pooled lifetime (10.234949ms)
+✔ ultraStamp: remove retires without impact (2.064691ms)
+✔ ultraStamp: dead retires without impact (1.779946ms)
+✔ ultraStamp: recycle retires without impact (37.203965ms)
+✔ ultraStamp: clear retires without impact (8.632221ms)
+✔ ultraStamp: dispose retires without impact (6.083096ms)
+✔ crabTank: native terminal snapshots point, retires trail and deduplicates pooled lifetime (2.135991ms)
+✔ crabTank: remove retires without impact (10.224238ms)
+✔ crabTank: dead retires without impact (10.512368ms)
+✔ crabTank: recycle retires without impact (16.671634ms)
+✔ crabTank: clear retires without impact (1.704841ms)
+✔ crabTank: dispose retires without impact (8.167089ms)
+✔ trizooka: native terminal snapshots point, retires trail and deduplicates pooled lifetime (9.698156ms)
+✔ trizooka: remove retires without impact (19.791839ms)
+✔ trizooka: dead retires without impact (6.390222ms)
+✔ trizooka: recycle retires without impact (11.42791ms)
+✔ trizooka: clear retires without impact (5.950342ms)
+✔ trizooka: dispose retires without impact (1.422472ms)
+✔ inkVac: native terminal snapshots point, retires trail and deduplicates pooled lifetime (6.591703ms)
+✔ inkVac: remove retires without impact (7.621642ms)
+✔ inkVac: dead retires without impact (1.63071ms)
+✔ inkVac: recycle retires without impact (3.731869ms)
+✔ inkVac: clear retires without impact (6.15223ms)
+✔ inkVac: dispose retires without impact (5.300491ms)
+✔ terminal observer ignores deferred snapshots, cancelled Trizooka and non-cannon Crab shots (19.769508ms)
+✔ native exception is preserved and failed/malformed callbacks do not consume valid impact (1.938738ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1735.8225
