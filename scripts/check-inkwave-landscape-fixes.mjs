@@ -28,8 +28,11 @@ export function clippingVisibility(element){
   for(let p=e;p;p=p.parentElement){
    const transform=getComputedStyle(p).transform;
    if(!transform||transform==='none')continue;
-   const match=transform.match(/^matrix\(([^)]+)\)$/);if(!match)throw Error('unsupported clipping transform');
-   const [pa,pb,pc,pd]=match[1].split(',').map(Number),next=[pa*a+pc*b,pb*a+pd*b,pa*c+pc*d,pb*c+pd*d];
+   const match=transform.match(/^matrix\(([^)]+)\)$/),flat3d=transform.match(/^matrix3d\(([^)]+)\)$/);
+   let values=match?.[1].split(',').map(Number);
+   if(flat3d){const m=flat3d[1].split(',').map(Number);if(m.length!==16||![2,3,6,7,8,9,14].every(i=>m[i]===0)||m[10]!==1||m[15]!==1)throw Error('unsupported perspective clipping transform: '+transform);values=[m[0],m[1],m[4],m[5],m[12],m[13]];}
+   if(values?.length!==6)throw Error('unsupported clipping transform: '+transform);
+   const [pa,pb,pc,pd]=values,next=[pa*a+pc*b,pb*a+pd*b,pa*c+pc*d,pb*c+pd*d];
    if(!next.every(Number.isFinite))throw Error('invalid clipping transform');[a,b,c,d]=next;
   }
   const number=k=>parseFloat(style[k])||0;
