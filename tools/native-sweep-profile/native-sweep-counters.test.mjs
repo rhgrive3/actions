@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -140,4 +141,15 @@ test('closed queryBox token matching rejects changes beyond bound local names',(
   let actual;try{actual=canonicalQueryBoxBindings(mutated);}catch{continue;}
   assert.notEqual(actual,expected);
  }
+});
+
+test('fresh VM lanes compare own-data receipts while numeric mutations remain failures',()=>{
+ const make=()=>vm.runInNewContext('({samples:[[{wid:"shooter",life:3,pos:[1,2,-0],vel:[4,5,6]}]],rng:{calls:4,state:217448501}})');
+ const before=make(),after=make();
+ assert.notDeepEqual(before,after,'independent realm prototypes reproduce the original false failure');
+ assert.deepEqual(captureObservedValue(before),captureObservedValue(after));
+ after.samples[0][0].pos[2]=0;
+ assert.notDeepEqual(captureObservedValue(before),captureObservedValue(after),'negative zero is still a real observed difference');
+ after.samples[0][0].pos[2]=-0;after.samples[0][0].vel[0]+=1;
+ assert.notDeepEqual(captureObservedValue(before),captureObservedValue(after),'a changed projectile velocity still fails');
 });

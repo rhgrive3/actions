@@ -77,7 +77,9 @@ for(const scenario of ['flat','wall','moving'])for(const weapon of ['shooter','s
   pair.push({result,counters:qa.snapshot()});
   }finally{delete f.context.__nativeSweepQA;f.restoreRandom();}
  }
- assert.deepEqual(pair[1].result,pair[0].result,'observer changes gameplay fixture output');
+ // Each lane owns a fresh VM realm. Compare the explicit own-data graph,
+ // preserving -0/nonfinite values and aliases while excluding realm prototypes.
+ assert.deepEqual(captureObservedValue(pair[1].result),captureObservedValue(pair[0].result),'observer changes gameplay fixture output');
  const counters=pair[1].counters,calls=counters.level+counters.catalogue;
  assert.ok(calls>0,'native wrappers must be exercised');
  assert.equal(counters.totalHits+counters.misses,calls);
