@@ -20,7 +20,7 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
       actions: {}, emittedRounds: 0, mainAttacks: 0, held: false, released: false, landed: false, landedCount: 0,
       waveReached: false, drinkApplied: false, shieldBlocked: false, hookArrived: false,
       paintArea: 0, specialPaintArea: 0, targetEnd: null, frames: 0, effectFrame: null,
-      ended: false, normalResumed: false, ownerAlive: true, pass: false };
+      ended: false, recovered: false, returnFlightSeen: false, normalResumed: false, ownerAlive: true, pass: false };
     const stops = [];
     if (special === 'bubbler') enemy.setWeapon('charger');
     stops.push(on('all:special', event => {
@@ -120,20 +120,26 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
         row.paintArea = a.stats.turf;
         if (succeeded() && row.effectFrame === null) row.effectFrame = frame + 1;
         row.ownerAlive = a.alive;
+        if (a.superJumpState?.phase === 'flight') row.returnFlightSeen = true;
         if (a.stats.specials === 1 && !a.specialActive) {
           row.ended = true;
-          if (endFrame === null) {
-            endFrame = frame; row.endPosition = a.pos.toArray();
-            if (special === 'zipcaster' || special === 'inkjet') row.returnDistance = a.pos.distanceTo(origin);
+          if (!row.specialEndPosition) row.specialEndPosition = a.pos.toArray();
+          const needsReturn = special === 'zipcaster' || special === 'inkjet';
+          const recovered = !a.superJumpState && (!needsReturn || a.grounded && row.returnFlightSeen);
+          if (recovered && endFrame === null) {
+            endFrame = frame; row.recovered = true; row.recoveryFrame = frame + 1;
+            row.endPosition = a.pos.toArray();
+            if (needsReturn) row.returnDistance = a.pos.distanceTo(origin);
           }
-          if (frame > endFrame && (a.intent.fire || a.intent.squid || a.intent.move.lengthSq() > .001)) row.normalResumed = true;
-          if (row.effectFrame !== null && frame - endFrame >= 6) break;
+          if (endFrame !== null && frame > endFrame && (a.intent.fire || a.intent.squid || a.intent.move.lengthSq() > .001)) row.normalResumed = true;
+          if (endFrame !== null && row.effectFrame !== null && frame - endFrame >= 6) break;
         }
       }
       row.targetEnd = enemy.pos.toArray();
       row.targetHp = enemy.hp; row.targetAlive = enemy.alive;
       row.ownerHp = a.hp;
-      row.pass = row.admissions === 1 && row.effectFrame !== null && row.ended && row.ownerAlive;
+      row.pass = row.admissions === 1 && row.effectFrame !== null && row.ended && row.recovered && row.ownerAlive &&
+        (row.returnDistance === undefined || row.returnDistance < .2);
       rows.push(row);
     } finally {
       enemy.damage = damage; a.addTurfNoSpecial = addSpecialPaint;
