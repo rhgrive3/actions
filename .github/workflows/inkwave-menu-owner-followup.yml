@@ -1,0 +1,107 @@
+name: INKWAVE focused menu owner followup
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - 'patches/local-quality/adapter.mjs'
+      - 'patches/local-quality/landscape-gear-native-keys-adapter.mjs'
+      - 'patches/local-quality/landscape-practice-weapons-adapter.mjs'
+      - 'patches/local-quality/online-async-entry-adapter.mjs'
+      - 'patches/local-quality/pause-modal-lifetime-adapter.mjs'
+      - 'patches/local-quality/settings-ui-adapter.mjs'
+      - 'patches/local-quality/tests/helpers/practice-gear-dom-fixture.mjs'
+      - 'patches/local-quality/tests/landscape-gear-native-keys.test.mjs'
+      - 'patches/local-quality/tests/landscape-practice-weapons.test.mjs'
+      - 'patches/local-quality/tests/pause-modal-lifetime.test.mjs'
+      - 'patches/local-quality/tests/ui-lifetime-followup.test.mjs'
+      - 'patches/touch-layout/mobile.js'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/lib/inkwave-build-only-modules.mjs'
+      - 'scripts/lib/inkwave-online-controlled-fixture.mjs'
+      - 'scripts/tests/inkwave-online-async-entry.test.mjs'
+      - 'scripts/tests/landscape-composition.test.mjs'
+      - 'scripts/tests/settings-reset-lifetime.test.mjs'
+      - 'scripts/tests/touch-layout-editor-lifetime.test.mjs'
+      - '.github/workflows/inkwave-menu-owner-followup.yml'
+permissions:
+  contents: read
+concurrency:
+  group: menu-owner-followup-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  focused-menu-owner:
+    if: github.head_ref == 'fix/menu-owner-lifetime-followup-20261030'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bind exact candidate source and install the pinned build tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-scratch/menu-owner-followup
+          printf 'source=%s\n' "$SOURCE_SHA" > .ci-scratch/menu-owner-followup/source-identity.log
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2
+      - name: Verify actual composed menu owner regressions and positive preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap \
+            patches/local-quality/tests/ui-lifetime-followup.test.mjs \
+            patches/local-quality/tests/pause-modal-lifetime.test.mjs \
+            patches/local-quality/tests/landscape-practice-weapons.test.mjs \
+            patches/local-quality/tests/landscape-gear-native-keys.test.mjs \
+            2>&1 | tee .ci-scratch/menu-owner-followup/regressions.tap.log
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const log = fs.readFileSync('.ci-scratch/menu-owner-followup/regressions.tap.log', 'utf8');
+          const counts = {};
+          for (const key of ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']) {
+            const match = log.match(new RegExp('^# ' + key + ' (\\d+)\\s*$', 'm'));
+            assert(match, 'missing complete test summary: ' + key);
+            counts[key] = Number(match[1]);
+          }
+          assert(counts.tests >= 56, 'focused regression inventory is incomplete');
+          assert.equal(counts.pass, counts.tests);
+          for (const key of ['fail', 'cancelled', 'skipped', 'todo']) assert.equal(counts[key], 0, key);
+          fs.writeFileSync('.ci-scratch/menu-owner-followup/regression-summary.json', JSON.stringify({sourceSha:process.env.SOURCE_SHA, ...counts}, null, 2) + '\n');
+          NODE
+          git diff --exit-code
+          git diff --cached --exit-code
+      - name: Build normal production output and enforce the unchanged startup budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-inkwave.mjs inkwave-public .ci-menu-owner-site \
+            2>&1 | tee .ci-scratch/menu-owner-followup/production-build.log
+          node scripts/check-inkwave-startup-budget.mjs .ci-menu-owner-site \
+            2>&1 | tee .ci-scratch/menu-owner-followup/startup-budget.json
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menu-owner-followup-metrics-${{ github.event.pull_request.head.sha }}
+          path: |
+            .ci-scratch/menu-owner-followup/*.log
+            .ci-scratch/menu-owner-followup/*.json
+          if-no-files-found: error
+          retention-days: 14

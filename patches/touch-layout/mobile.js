@@ -6,6 +6,7 @@ function installTouchLayout(MobileInput, controls) {
   const originalLayout = proto._layoutAll;
   const originalScale = proto._editScale;
   const originalReset = proto.resetPointers;
+  const originalEditAction = proto._editAction;
   const labels = {
     ja: { stick: '移動スティック', fire: '射撃', jump: 'ジャンプ', squid: 'イカ', sub: 'サブ', special: 'スペシャル', map: 'マップ', gyro: 'ジャイロ', pause: 'ポーズ' },
     en: { stick: 'Move stick', fire: 'Fire', jump: 'Jump', squid: 'Squid', sub: 'Sub', special: 'Special', map: 'Map', gyro: 'Gyro', pause: 'Pause' },
@@ -62,6 +63,7 @@ function installTouchLayout(MobileInput, controls) {
     const size = editor.querySelector('.iwm-edit__size');
     size.addEventListener('input', () => { if (this._sel) this._editScale(this._sel, +size.value / 100); }, { signal });
     for (const range of editor.querySelectorAll('[data-axis]')) range.addEventListener('input', () => {
+      if (!this.editing || !controls[this._sel]) return;
       const b = this._box(this._sel), safe = this._safeBox, ratio = +range.value / 100;
       this._layoutPosition(this._sel,
         range.dataset.axis === 'x' ? safe.l + b.d / 2 + ratio * (innerWidth - safe.l - safe.r - b.d) : b.x,
@@ -108,7 +110,7 @@ function installTouchLayout(MobileInput, controls) {
     originalReset.call(this);
   };
   proto._selectEdit = function (id) {
-    if (!controls[id]) return;
+    if (!this.editing || !controls[id]) return;
     this._sel = id;
     this.root.querySelectorAll('.is-sel').forEach(el => el.classList.remove('is-sel'));
     this.els[id].classList.add('is-sel');
@@ -131,7 +133,14 @@ function installTouchLayout(MobileInput, controls) {
     }
   };
   proto._editScale = function (id, scale) {
+    if (!this.editing || !controls[id]) return;
     originalScale.call(this, id, scale);
+  };
+  proto._editAction = function (action) {
+    // Native select/range/click events can arrive after Save or Cancel closed
+    // their editor. Only the active draft owns selection, reset and resize.
+    if (!this.editing) return;
+    originalEditAction.call(this, action);
   };
   proto.openEditor = function (onClose) {
     if (!this.root || this.editing) return;

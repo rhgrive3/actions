@@ -1,3 +1,7 @@
+import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
+import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
+import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
+import { adaptLandscapeGearNativeKeys } from '../patches/local-quality/landscape-gear-native-keys-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
@@ -155,6 +159,10 @@ export function adaptBuildSource(rel, code) {
   code = adaptLandscapeOnline(rel, code);
   code = adaptLandscapeSettings(rel, code);
   code = adaptLandscapeWeaponDrawer(rel, code);
+  code = adaptPauseModalLifetime(rel, code);
+  code = adaptOnlineAsyncEntry(rel, code);
+  code = adaptLandscapePracticeWeapons(rel, code);
+  code = adaptLandscapeGearNativeKeys(rel, code);
   return code;
 }
 
