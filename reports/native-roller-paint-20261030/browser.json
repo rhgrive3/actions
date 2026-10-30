@@ -1,6 +1,6 @@
 {
   "renderer": "Chromium / SwiftShader",
-  "contentHash": "318c6593467d22a49e5ce23a5f74b136854c0c904690110475bbd749a0ee9607",
+  "contentHash": "7977144e7650d81182eb1fbe2ab977c3b86ef183cc34c7d0d9b6ec3ab2c5df1f",
   "scope": "Real composed/emitted paint and native ink overlay; synthetic coplanar source geometry, not an original stage asset or retail capture.",
   "result": [
     {

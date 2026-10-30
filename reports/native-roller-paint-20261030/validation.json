@@ -1,10 +1,10 @@
 {
   "originalBase": "c22d9c332889fed013860c0f935a709923ee231f",
-  "parent": "d0a6c262589e5a81c09a095d730be5b0749ee9b5",
-  "contentHash": "318c6593467d22a49e5ce23a5f74b136854c0c904690110475bbd749a0ee9607",
+  "parent": "6443580c3e67c4b1069051a8604e9778197dd2c1",
+  "contentHash": "7977144e7650d81182eb1fbe2ab977c3b86ef183cc34c7d0d9b6ec3ab2c5df1f",
   "revision": null,
   "validation": {
-    "focusedAndRelatedCpuPassed": 57,
+    "focusedAndRelatedCpuPassed": 68,
     "assetDependentSkipped": 5,
     "failed": 0,
     "productionBuild": "passed",
@@ -18,7 +18,8 @@
     "cpuGaps": 0,
     "atlasAlphaGaps": 0,
     "stencilGaps": 0,
-    "priorPhysicalRollerAndMasks": 7
+    "priorPhysicalRollerAndMasks": 7,
+    "githubCI": "queued separately; local results above are completed"
   },
   "codeSha256": {
     "patches/native-stages/adapter.mjs": "de356604c3de7eb762890418f54487eea2aae2ed5c670872cd9a946b0fbc1ad7",

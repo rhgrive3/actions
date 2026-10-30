@@ -1,16 +1,16 @@
 {
   "status": "passed",
-  "revision": "69fdc96299f02d8aee24bd5c5e5b09cb3b5c4cbba008073877f20fe49339b9b3",
+  "revision": "05de24c5a64f3f5a9321125d3245c8de8f46ed679f5c8368414a40097bc0b4ee",
   "initialJSRequests": 146,
   "modulePreloads": 145,
   "coreModulePreloads": 131,
   "practiceRangeModulePreloads": 14,
   "practiceRangePreloadBytes": 78620,
-  "initialJSBytes": 1847072,
+  "initialJSBytes": 1848729,
   "criticalHTMLBytes": 24043,
   "precacheCount": 593,
-  "precacheBytes": 7901362,
+  "precacheBytes": 7903046,
   "workerBytes": 96894,
-  "declaredBytes": 16085559,
+  "declaredBytes": 16087243,
   "measurementKind": "deterministic file and dependency gates; not native browser timings"
 }

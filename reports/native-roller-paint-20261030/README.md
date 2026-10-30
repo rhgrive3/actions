@@ -15,7 +15,7 @@ The cache retains coverage only. Existing atlas data remains authoritative for t
 
 - Real source composition: coplanar roller continuity, height/wall/NoPaint negatives, ordinary-impact isolation, single-event network replay and unchanged custom-stage scope.
 - Detail lifecycle: immutable records after growth-pool reuse, fixed 16 resident tiles, eviction and replay, cleanup, inclined source planes and the actual game-camera fallback.
-- Existing native chunk visibility, paint cache, quality queue and static source rendering regressions. Exact totals and artifact identity are in [validation.json](validation.json).
+- Existing native chunk visibility, paint cache, quality queue and static source rendering regressions. After integration with the current native mobile budgets and sparse drying, 68 tests pass and 5 asset-dependent cases are skipped. Exact artifact identity is in [validation.json](validation.json).
 - Browser test uses actual composed and minified emitted PaintSystem/native materials, verifies emitted file hashes, and makes shader failures fatal. It covers horizontal and inclined source geometry, the real stencil target, camera travel and replay.
 - Chromium and Playwright WebKit both pass with touch/mobile context. Each case samples 391 interior points: no CPU holes, no atlas-alpha holes, no stencil-clipped holes and no GL/page errors.
 - At the real crowded-atlas density of 3.2768, the Chromium edge variation rises from 24 pixels to 218; the independent 30-density reference is 215. The silhouette intersection-over-union is 99.82%. WebKit measures 29 → 220, reference 220 and 99.75% overlap. These are controlled render measurements, not game frame-rate measurements.
