@@ -1,0 +1,29 @@
+    // ---- weapon anchor → right arm IK
+    _e1.set(P[ANCR], P[ANCR + 1], P[ANCR + 2], 'YXZ'); _aQ.setFromEuler(_e1);
+    _aP.set(P[ANC], P[ANC + 1], P[ANC + 2]);
+    // follow the chest (translation / rotation weights) so the weapon rides with the torso
+    const fol = P[AFOLT] > 0.001 || P[AFOLR] > 0.001;
+    if (fol) {
+      this._kidXform(B.chest, _cP, _cQ);
+      _q2.identity().slerp(_cQ, P[AFOLR]);
+      _v1.subVectors(_aP, this.rest.chest).applyQuaternion(_q2).add(_cP);
+      _aP.lerp(_v1, P[AFOLT]);
+      _aQ.premultiply(_q2);
+    }
+    _aP.y += s3ProportionAnchorLift(this, P[AFOLT]);
+    // sway (lags body acceleration / turning) — damped when aiming so the barrel stays true; none in the dualies' lock
+    const swW = lerp(1, 0.3, this.wAim) * (1 - this.lockW);
+    const sx = spr(sp, S_WPX, clamp(-this.kax * 0.0011, -0.035, 0.035), 3.0, 0.34, dt);
+    const sy = spr(sp, S_WPY, clamp(-this.vyS * 0.002, -0.03, 0.03), 3.4, 0.34, dt);
+    const sz = spr(sp, S_WPZ, clamp(-this.kaz * 0.0011, -0.035, 0.035), 3.0, 0.34, dt);
+    const rx = spr(sp, S_WRX, clamp(this.vyS * 0.01, -0.12, 0.12), 2.6, 0.32, dt);
+    const ry = spr(sp, S_WRY, clamp(-this.yawRate * 0.035, -0.22, 0.22), 2.6, 0.38, dt);
+    _aP.x += sx * swW; _aP.y += sy * swW; _aP.z += sz * swW;
+    _e1.set(rx * swW, ry * swW, 0, 'YXZ'); _q2.setFromEuler(_e1); _aQ.premultiply(_q2);
+    // recoil: kick back along the barrel + muzzle climb + jitter
+    _v1.set(0, 0, -this.rcZ).applyQuaternion(_aQ); _aP.add(_v1);
+    _e1.set(-this.rcP, sp[S_RCY], sp[S_RCR], 'YXZ'); _q2.setFromEuler(_e1); _aQ.multiply(_q2);
+    _q2.copy(_aQ).multiply(d.handR.quat);
+    _pT.copy(d.handR.pos).applyQuaternion(_aQ).add(_aP);
+    _pN.set(P[POLER], P[POLER + 1], P[POLER + 2]);
+    if (P[IKR] > 0.001 && !(this.sourceMotion?.active && this.sourceMotion.keepSourceArms)) this._solveLimb(this.limbs.armR, _pT, _pN, _q2, P[IKR], 1);

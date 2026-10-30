@@ -1,5 +1,5 @@
 import {CANONICAL_KITS} from './canonical-kits-data.mjs';
-import {createBotSpecialContext} from './bot-special-context.mjs';
+import {createBotSpecialContext,createBotSpecialFrame,completeBotSpecialContext} from './bot-special-context.mjs';
 import {driveMeleeSpecial} from './bot-special-melee.mjs';
 import {driveRangedSpecial} from './bot-special-ranged.mjs';
 import {driveSupportSpecial} from './bot-special-support.mjs';
@@ -15,8 +15,12 @@ export function validateCanonicalKits({WEAPONS,SUB,SPECIALS}){
 }
 // Bot input policy is intentionally INKWAVE AI, not a claim about retail AI.
 // It drives the SAME admitted Actor inputs rather than granting free effects.
-export function driveCanonicalBotSpecial(actor,intent,dt,target,options={}){
- const ctx=createBotSpecialContext(actor,intent,dt,target,options);
+// BotBrain's shared tail only reads perception after `handled` becomes true.
+// Its explicit opt-in can skip inactive perception; other callers keep the
+// complete public context, including current LOS and action helpers.
+export function driveCanonicalBotSpecial(actor,intent,dt,target,options={},deferInactiveContext=false){
+ const ctx=deferInactiveContext?createBotSpecialFrame(actor,intent,dt,options)
+  :createBotSpecialContext(actor,intent,dt,target,options);
  if(!ctx)return null;
  // Activation has one owner in every mode. A native painting/duel decision
  // must not bypass the category's range, terrain, recognition or team checks.
@@ -29,6 +33,7 @@ export function driveCanonicalBotSpecial(actor,intent,dt,target,options={}){
  // An uncharged bot still uses its ordinary main weapon. Avoid both the
  // category's preparation aim and its more expensive trajectory probes.
  if(!ctx.state&&!actor.specialReady?.())return ctx;
+ if(deferInactiveContext)completeBotSpecialContext(ctx,target,options);
  if(ctx.state){
   intent.fire=intent.sub=intent.jump=intent.squid=intent.booyah=false;
   if(ctx.brain)ctx.brain._bombAim=ctx.brain._releaseBomb=false;

@@ -24,7 +24,7 @@ function bossEnemy(actor, target, brain, world) {
   return finitePoint(pos) ? { alive: true, team: 1 - actor.team, pos, vel: { x: 0, y: 0, z: 0 }, botBossTarget: target } : null;
 }
 
-export function createBotSpecialContext(actor, intent, dt, target, options = {}) {
+function beginBotSpecialContext(actor, intent, dt, options) {
   if (!actor?.alive || actor.remote || actor.isLocal || actor.isBot === false || !finitePoint(actor.pos)
     || !intent || !Number.isFinite(dt) || dt <= 0) {
     if (actor && !actor.alive) resetBotSpecialMemory(actor);
@@ -43,6 +43,31 @@ export function createBotSpecialContext(actor, intent, dt, target, options = {})
   const memory = entry.memory;
   if (state) memory.time += dt;
   else memory.time = 0;
+
+  return { actor, intent, dt, special, state, memory, enemy: null, distance: Infinity, height: Infinity, visible: false,
+    world, brain, move, handled: false, aimChanged: false,
+    normalIntent: { fire: !!intent.fire, sub: !!intent.sub, jump: !!intent.jump, squid: !!intent.squid, booyah: !!intent.booyah },
+    wantYaw: 0, wantPitch: 0, aimDistance: 0 };
+}
+
+// Internal dispatcher phase: validate and advance memory every tick, even when
+// no special can be planned. Ordinary combat only consumes the control fields.
+export function createBotSpecialFrame(actor, intent, dt, options = {}) {
+  const ctx = beginBotSpecialContext(actor, intent, dt, options);
+  if (!ctx) return null;
+  const { brain } = ctx;
+  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));
+  const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
+  ctx.wantYaw = finite(options.wantYaw, actualYaw);
+  ctx.wantPitch = finite(options.wantPitch, actualPitch);
+  ctx.aimDistance = Math.max(0.1, finite(options.aimDistance, 6));
+  return ctx;
+}
+
+// Only the internal dispatcher defers this phase. The public constructor below
+// still returns the complete, current-tick perception and action helpers.
+export function completeBotSpecialContext(ctx, target, options = {}) {
+  const { actor, state, world, brain, move, special } = ctx;
 
   let enemy = target?.alive && target.team !== actor.team && finitePoint(target.pos) ? target : bossEnemy(actor, target, brain, world);
   const recognized = enemy?.botBossTarget ? true : brain && brain.target === target && brain.seeTimer > 0;
@@ -65,12 +90,10 @@ export function createBotSpecialContext(actor, intent, dt, target, options = {})
   const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
   const previousDistance = finitePoint(actor.aimPoint) ? Math.hypot(actor.aimPoint.x - eye.x,
     actor.aimPoint.y - eye.y, actor.aimPoint.z - eye.z) : 6;
-  const ctx = { actor, intent, dt, special, state, memory, enemy, distance, height, visible,
-    world, brain, move, handled: false, aimChanged: false,
-    normalIntent: { fire: !!intent.fire, sub: !!intent.sub, jump: !!intent.jump, squid: !!intent.squid, booyah: !!intent.booyah },
-    wantYaw: holdLook ? actualYaw : finite(options.wantYaw, actualYaw),
-    wantPitch: holdLook ? actualPitch : finite(options.wantPitch, actualPitch),
-    aimDistance: Math.max(0.1, holdLook ? previousDistance : finite(options.aimDistance, 6)) };
+  ctx.enemy = enemy; ctx.distance = distance; ctx.height = height; ctx.visible = visible;
+  ctx.wantYaw = holdLook ? actualYaw : finite(options.wantYaw, actualYaw);
+  ctx.wantPitch = holdLook ? actualPitch : finite(options.wantPitch, actualPitch);
+  ctx.aimDistance = Math.max(0.1, holdLook ? previousDistance : finite(options.aimDistance, 6));
 
   ctx.aimAt = (point, { height: lift = 0, lead = 0 } = {}) => {
     if (!finitePoint(point)) return false;
@@ -150,4 +173,9 @@ export function createBotSpecialContext(actor, intent, dt, target, options = {})
     return true;
   };
   return ctx;
+}
+
+export function createBotSpecialContext(actor, intent, dt, target, options = {}) {
+  const ctx = beginBotSpecialContext(actor, intent, dt, options);
+  return ctx ? completeBotSpecialContext(ctx, target, options) : null;
 }

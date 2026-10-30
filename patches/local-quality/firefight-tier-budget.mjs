@@ -206,6 +206,39 @@ export function adaptFirefightTierBudget(rel, code, replaceOnce) {
     if (!_sourceLegsOwnPose && (!this._oobPoseTailSkip || this.replant || !this.feetValid)) for (let i = 0; i < 2; i++) {
       const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;`,
       'preserve current offscreen IK behavior while skipping overwritten leg IK');
+    // A source-owned right arm rebuilds its weapon target in alignWeapon.
+    // Keep the sway springs advancing and the dual left-anchor inputs intact.
+    code = replaceOnce(code,
+      `    // ---- weapon anchor → right arm IK
+    _e1.set(P[ANCR], P[ANCR + 1], P[ANCR + 2], 'YXZ'); _aQ.setFromEuler(_e1);
+    _aP.set(P[ANC], P[ANC + 1], P[ANC + 2]);
+    // follow the chest (translation / rotation weights) so the weapon rides with the torso
+    const fol = P[AFOLT] > 0.001 || P[AFOLR] > 0.001;`,
+      `    // ---- weapon anchor → right arm IK
+    const nativeRightIk = P[IKR] > 0.001 && !(this.sourceMotion?.active && this.sourceMotion.keepSourceArms);
+    const nativeWeaponTarget = this.dual || nativeRightIk;
+    const fol = P[AFOLT] > 0.001 || P[AFOLR] > 0.001;
+    if (nativeWeaponTarget) {
+    _e1.set(P[ANCR], P[ANCR + 1], P[ANCR + 2], 'YXZ'); _aQ.setFromEuler(_e1);
+    _aP.set(P[ANC], P[ANC + 1], P[ANC + 2]);
+    // follow the chest (translation / rotation weights) so the weapon rides with the torso`,
+      'build a native weapon target only for a live consumer');
+    code = replaceOnce(code,
+      `    // sway (lags body acceleration / turning) — damped when aiming so the barrel stays true; none in the dualies' lock`,
+      `    }
+    // sway (lags body acceleration / turning) — damped when aiming so the barrel stays true; none in the dualies' lock`,
+      'close the unused native anchor guard before persistent sway springs');
+    code = replaceOnce(code,
+      `    const ry = spr(sp, S_WRY, clamp(-this.yawRate * 0.035, -0.22, 0.22), 2.6, 0.38, dt);
+    _aP.x += sx * swW; _aP.y += sy * swW; _aP.z += sz * swW;`,
+      `    const ry = spr(sp, S_WRY, clamp(-this.yawRate * 0.035, -0.22, 0.22), 2.6, 0.38, dt);
+    if (nativeWeaponTarget) {
+    _aP.x += sx * swW; _aP.y += sy * swW; _aP.z += sz * swW;`,
+      'skip unused native sway and recoil target math');
+    code = replaceOnce(code,
+      '    if (P[IKR] > 0.001 && !(this.sourceMotion?.active && this.sourceMotion.keepSourceArms)) this._solveLimb(this.limbs.armR, _pT, _pN, _q2, P[IKR], 1);',
+      '    }\n    if (nativeRightIk) this._solveLimb(this.limbs.armR, _pT, _pN, _q2, P[IKR], 1);',
+      'retain the exact native right IK predicate');
   }
   return code;
 }

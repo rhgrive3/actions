@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {createBotSpecialContext, resetBotSpecialMemory} from '../runtime/bot-special-context.mjs';
+import {createBotSpecialContext, createBotSpecialFrame, completeBotSpecialContext, resetBotSpecialMemory} from '../runtime/bot-special-context.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 const vector = (x=0,y=0,z=0) => ({ x,y,z,set(x,y,z){Object.assign(this,{x,y,z});return this;},clone(){return vector(this.x,this.y,this.z);} });
@@ -96,6 +96,7 @@ test('production composition has one final tail policy and no random or competin
   const source=fs.readFileSync(new URL('../../../inkwave-public/src/game/bots.js',import.meta.url),'utf8');
   const code=adaptBuildSource('src/game/bots.js',source);
   assert.equal((code.match(/driveCanonicalBotSpecial\(a,/g)||[]).length,1);
+  assert.ok(code.includes('    }, true);\n    if (specialControl?.handled)'), 'only the composed tail opts into inactive context deferral');
   assert.ok(code.indexOf('driveCanonicalBotSpecial(a,')<code.indexOf('this.aimYawV +='));
   assert.ok(code.indexOf('it.jump = specialJump;')>code.indexOf('if (this._needJump'));
   assert.ok(code.includes('resetBotSpecialMemory(this.a);'));
@@ -113,8 +114,8 @@ test('uncharged bots preserve ordinary combat without invoking category planning
     .replace(/^import .*;\n/gm,'').replace(/^export \{[^\n]*\n/gm,'').replaceAll('export function ','function ');
   let planned=0;
   const planner=ctx=>{planned++;ctx.wantYaw=2;ctx.move.set(1,0,0);ctx.intent.fire=false;return true;};
-  const dispatch=Function('createBotSpecialContext','driveMeleeSpecial','driveRangedSpecial','driveSupportSpecial',
-    source+'\nreturn driveCanonicalBotSpecial;')(createBotSpecialContext,planner,planner,planner);
+  const dispatch=Function('createBotSpecialContext','createBotSpecialFrame','completeBotSpecialContext','driveMeleeSpecial','driveRangedSpecial','driveSupportSpecial',
+    source+'\nreturn driveCanonicalBotSpecial;')(createBotSpecialContext,createBotSpecialFrame,completeBotSpecialContext,planner,planner,planner);
   const f=setup();f.actor.specialReady=()=>false;f.intent.move.set(.2,0,.7);
   const ctx=dispatch(f.actor,f.intent,.1,f.enemy,f.options);
   assert.equal(planned,0);assert.equal(ctx.handled,false);assert.equal(ctx.wantYaw,0);
