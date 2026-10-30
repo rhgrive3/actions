@@ -7040,3 +7040,6 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 `special-vfx.mjs`の弾消滅からの着弾推定を実際の終端バースト通知に置き換え、消去・再利用時の架空の飛沫と、初回描画より早い衝突で失う飛沫を修正した。`special-vfx-kit.mjs`は既存60Hzの速度・重力・位置更新を分割時間でも同じ軌道になるよう評価する。元の飛沫73個を使った30/60/120Hz比較で最大位置差は0.104274→0.000001907 world単位。これはINKWAVE内部の時間刻みの一致であり、本家の粒子軌道を計測した値ではない。
 
 ゲームの威力・塗り・入力・物理・通信を変更する目的の修正ではない。実Actor／Projectilesの表示有無比較、読み込み済みソース骨格、配信物のブラウザ描画とハッシュを確認する。正確な検証対象・失敗の修正・残る境界は[統合記録](special-presentation-20261030/README.md)と[検証記録](special-presentation-20261030/verification.md)を参照。ナイスダマの頭上姿勢全体、汎用飛沫の壁法線、Switch実機・全角度・本家との同条件動画比較は未確認として残す。
+
+
+同日の追補: 初回カニ姿勢は膝が股関節より後ろ、足首が腰より上にあり、逆方向へ折れていた。腰・上体を前へ倒し、膝を股関節より前、足を下へ戻した。旧姿勢を拒否する実骨格の方向テスト、30/60/120Hzの保持、正面・側面・機体を隠した描画で再確認した。[姿勢の修正](special-presentation-20261030/crab-posture-fix.md)と[最終の方向確認](special-presentation-20261030/crab-direction-verification.md)が、以前のカニの見た目評価を置き換える。
