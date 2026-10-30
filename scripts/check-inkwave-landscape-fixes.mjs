@@ -21,10 +21,33 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 // Document overflow propagates to the viewport around the fixed UI root.
 // A zero-height BODY box is NOT a clipping rectangle for that fixed subtree.
 export function clippingVisibility(element){
- const r=element.getBoundingClientRect(),clippedBy=[];let fixedSubtree=getComputedStyle(element).position==='fixed';
+ // Compare in each clipping ancestor's local coordinates. A rotated card's
+ // viewport bounding box cannot be combined with its untransformed clientWidth.
+ const quad=e=>{
+  const outer=e.getBoundingClientRect(),style=getComputedStyle(e);let a=1,b=0,c=0,d=1;
+  for(let p=e;p;p=p.parentElement){
+   const transform=getComputedStyle(p).transform;
+   if(!transform||transform==='none')continue;
+   const match=transform.match(/^matrix\(([^)]+)\)$/);if(!match)throw Error('unsupported clipping transform');
+   const [pa,pb,pc,pd]=match[1].split(',').map(Number),next=[pa*a+pc*b,pb*a+pd*b,pa*c+pc*d,pb*c+pd*d];
+   if(!next.every(Number.isFinite))throw Error('invalid clipping transform');[a,b,c,d]=next;
+  }
+  const number=k=>parseFloat(style[k])||0;
+  let width=parseFloat(style.width),height=parseFloat(style.height);
+  if(Number.isFinite(width)&&style.boxSizing==='content-box')width+=number('paddingLeft')+number('paddingRight')+number('borderLeftWidth')+number('borderRightWidth');
+  if(Number.isFinite(height)&&style.boxSizing==='content-box')height+=number('paddingTop')+number('paddingBottom')+number('borderTopWidth')+number('borderBottomWidth');
+  if(!Number.isFinite(width))width=e.offsetWidth??outer.width??outer.right-outer.left;
+  if(!Number.isFinite(height))height=e.offsetHeight??outer.height??outer.bottom-outer.top;
+  const points=[[0,0],[width,0],[width,height],[0,height]].map(([x,y])=>({x:a*x+c*y,y:b*x+d*y}));
+  const x=outer.left-Math.min(...points.map(p=>p.x)),y=outer.top-Math.min(...points.map(p=>p.y)),det=a*d-b*c;
+  if(!Number.isFinite(det)||Math.abs(det)<1e-9)throw Error('singular clipping transform');
+  return {points:points.map(p=>({x:p.x+x,y:p.y+y})),local:p=>({x:(d*(p.x-x)-c*(p.y-y))/det,y:(a*(p.y-y)-b*(p.x-x))/det})};
+ };
+ const points=quad(element).points,clippedBy=[];let fixedSubtree=getComputedStyle(element).position==='fixed';
  for(let p=element.parentElement;p;p=p.parentElement){const style=getComputedStyle(p),x=/auto|scroll|hidden|clip/.test(style.overflowX),y=/auto|scroll|hidden|clip/.test(style.overflowY);if(style.position==='fixed')fixedSubtree=true;if(!x&&!y)continue;
-  const root=p===document.documentElement||(p===document.body&&fixedSubtree),outer=p.getBoundingClientRect(),b=root?{left:0,top:0,right:innerWidth,bottom:innerHeight}:{left:outer.left+p.clientLeft,top:outer.top+p.clientTop,right:outer.left+p.clientLeft+p.clientWidth,bottom:outer.top+p.clientTop+p.clientHeight};
-  const rejectX=x&&(r.left<b.left-1||r.right>b.right+1),rejectY=y&&(r.top<b.top-1||r.bottom>b.bottom+1);
+  const root=p===document.documentElement||(p===document.body&&fixedSubtree),b=root?{left:0,top:0,right:innerWidth,bottom:innerHeight}:{left:p.clientLeft,top:p.clientTop,right:p.clientLeft+p.clientWidth,bottom:p.clientTop+p.clientHeight};
+  const measured=root?points:points.map(quad(p).local);
+  const rejectX=x&&measured.some(r=>r.x<b.left-1||r.x>b.right+1),rejectY=y&&measured.some(r=>r.y<b.top-1||r.y>b.bottom+1);
   if(rejectX||rejectY)clippedBy.push({tag:p.tagName,class:String(p.className||''),documentViewport:root,overflow:[style.overflowX,style.overflowY],position:style.position,bounds:b,axes:[rejectX?'x':null,rejectY?'y':null].filter(Boolean)});
  }return {unclipped:clippedBy.length===0,clippedBy};
 }

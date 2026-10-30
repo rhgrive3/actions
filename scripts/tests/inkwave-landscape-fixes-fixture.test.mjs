@@ -26,6 +26,23 @@ test('fixed-root document overflow uses viewport bounds but real nested scroller
 
 test('drawer coverage stays within existing canonical cases and uses real offline UI lifecycle',()=>{assert.match(script,/assert\(\[844,1133\]\.includes\(v\.width\)/);assert.match(script,/drawerAcceptance\(page,v,true\)/);assert.match(script,/G\.net\.isMock===true/);assert.match(script,/drawer last weapon/);assert.match(script,/reopened drawer lost equipped state/);assert.match(script,/drawer touch close/);assert.match(script,/Escape/);assert.match(script,/roomCleanup='offline'/);assert.match(script,/wipe\?\.running/);assert(!script.includes('startMatch('));});
 
+test('rotated clipping cards use local padding bounds and still reject real overflow',()=>{
+ const angle=-3*Math.PI/180,a=Math.cos(angle),b=Math.sin(angle),c=-b,d=a;
+ const node=(tag,x,y,width,height,parent,transform='none')=>{
+  const points=[[x,y],[x+width,y],[x+width,y+height],[x,y+height]].map(([px,py])=>({x:100+a*px+c*py,y:80+b*px+d*py}));
+  return {tagName:tag,className:tag,parentElement:parent,clientLeft:0,clientTop:0,clientWidth:width,clientHeight:height,offsetWidth:width,offsetHeight:height,
+   style:{width:String(width),height:String(height),boxSizing:'border-box',overflowX:'visible',overflowY:'visible',transform},
+   getBoundingClientRect:()=>({left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))})};
+ };
+ const card=node('BUTTON',0,0,143,112,null,`matrix(${a},${b},${c},${d},0,0)`);card.style.overflowX=card.style.overflowY='hidden';
+ const name=node('SPAN',4,62,139,32,card),measure=element=>vm.runInNewContext('('+clippingVisibility.toString()+')(element)',{element,document:{},innerWidth:844,innerHeight:390,getComputedStyle:e=>e.style});
+ assert(name.getBoundingClientRect().right>card.getBoundingClientRect().left+card.clientWidth+1,'reproduces the mixed-coordinate false failure');
+ assert.equal(measure(name).unclipped,true);
+ assert.equal(measure(node('SPAN',4,62,145,32,card)).unclipped,false,'real local right overflow still fails');
+ assert.equal(measure(node('SPAN',4,100,100,20,card)).unclipped,false,'real local bottom overflow still fails');
+ card.style.transform='matrix(0,0,0,0,0,0)';assert.throws(()=>measure(name),/singular/);
+});
+
 test('sticky drawer correction uses a normal bounded scroll without accepting occluded hits',()=>{const target={top:20},header={bottom:100},delta=stickyRevealDelta(target,header);assert.equal(delta,-88);assert(target.top-delta>=header.bottom+8);assert.equal(stickyRevealDelta({top:120},header),0);assert.match(script,/native-wheel-clear-sticky-header/);assert.match(script,/t\.inView&&t\.hit&&t\.unclipped/);});
 
 const row = (text,top=0,{height=16.9,slope=.34}={})=>[...text].map((char,i)=>({char,left:i*13,top:top+i*slope,width:13,height}));
