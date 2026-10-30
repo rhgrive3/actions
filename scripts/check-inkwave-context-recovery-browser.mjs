@@ -10,20 +10,26 @@ import { fileURLToPath } from 'node:url';
 // Diagnostic-only native delegation: do not change cancellation or admission.
 export function installContextCancellationDiagnostics() {
   const rows = globalThis.__contextCancellationDiagnostics = [];
+  const installedAt = new Date().toISOString(), wrappers = [];
+  globalThis.__contextCancellationStatus = () => ({ installedAt, realm: 'window',
+    wrappers: wrappers.map(({ kind, prototype, method, wrapper, installed }) => ({ kind, installed,
+      stillCurrent: installed && prototype?.[method] === wrapper })) });
   const record = (kind, reason) => {
     try { if (rows.length >= 32) return; rows.push({ kind, at: new Date().toISOString(), monotonic: performance.now(),
       reason: typeof reason === 'string' ? reason.slice(0, 500) : reason instanceof Error ? (reason.name + ': ' + reason.message).slice(0, 500) : typeof reason,
       stack: new Error('Cancellation origin').stack?.slice(0, 4000) }); } catch { /* Diagnostics cannot suppress native calls. */ }
   };
   const wrap = (prototype, method, kind) => {
-    if (!prototype) return;
+    if (!prototype) { wrappers.push({ kind, installed: false }); return; }
     const descriptor = Object.getOwnPropertyDescriptor(prototype, method);
-    if (!descriptor || typeof descriptor.value !== 'function' || !descriptor.configurable) return;
+    if (!descriptor || typeof descriptor.value !== 'function' || !descriptor.configurable) { wrappers.push({ kind, installed: false }); return; }
     const original = descriptor.value;
-    Object.defineProperty(prototype, method, { ...descriptor, value: function (...args) {
+    const wrapper = function (...args) {
       record(kind, args[0]);
       return Reflect.apply(original, this, args);
-    } });
+    };
+    Object.defineProperty(prototype, method, { ...descriptor, value: wrapper });
+    wrappers.push({ kind, prototype, method, wrapper, installed: true });
   };
   wrap(globalThis.AbortController?.prototype, 'abort', 'AbortController.abort');
   wrap(globalThis.ReadableStreamDefaultReader?.prototype, 'cancel', 'ReadableStreamDefaultReader.cancel');
@@ -285,6 +291,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     } catch { res.writeHead(404); res.end('Not found'); }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const audioNetworkDiagnostics = [], audioNetworkIds = new Set();
+  let audioNetworkAttached = false;
   let browser, context, page, startup = null, primary = null, result = null, lastStage = 'verified-build';
   try {
     const { chromium } = await import('playwright');
@@ -292,6 +300,29 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     context = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
     await context.tracing.start({ screenshots: false, snapshots: true, sources: false });
     page = await context.newPage();
+    // Native protocol observer only: no routes, headers, cookies or body capture.
+    const cdp = await context.newCDPSession(page);
+    const recordAudioNetwork = row => { if (audioNetworkDiagnostics.length < 96) audioNetworkDiagnostics.push(row); };
+    cdp.on('Network.requestWillBeSent', event => {
+      let url; try { url = new URL(event.request.url); } catch { return; }
+      if (url.origin !== 'http://127.0.0.1:' + server.address().port ||
+          !/^\/_versions\/[a-f0-9]{64}\/patches\/splatoon3\/runtime\/audio\/s3-real\/[^/]+\.mp3$/.test(url.pathname) || audioNetworkIds.size >= 32) return;
+      audioNetworkIds.add(event.requestId);
+      const frames = event.initiator?.stack?.callFrames || [];
+      recordAudioNetwork({ event: 'request', requestId: event.requestId, url: url.href, timestamp: event.timestamp,
+        wallTime: event.wallTime, type: event.type, initiatorType: event.initiator?.type,
+        frames: frames.slice(0, 12).map(frame => ({ functionName: frame.functionName?.slice(0, 180),
+          url: frame.url?.slice(0, 1000), lineNumber: frame.lineNumber, columnNumber: frame.columnNumber })) });
+    });
+    cdp.on('Network.loadingFailed', event => {
+      if (audioNetworkIds.has(event.requestId)) recordAudioNetwork({ event: 'failed', requestId: event.requestId,
+        timestamp: event.timestamp, errorText: event.errorText, canceled: event.canceled, blockedReason: event.blockedReason });
+    });
+    cdp.on('Network.loadingFinished', event => {
+      if (audioNetworkIds.has(event.requestId)) recordAudioNetwork({ event: 'finished', requestId: event.requestId,
+        timestamp: event.timestamp, encodedDataLength: event.encodedDataLength });
+    });
+    await cdp.send('Network.enable'); audioNetworkAttached = true;
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
     page.on('requestfailed', r => {
@@ -353,14 +384,22 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     primary = error;
     let partial = null, diagnosticError = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => {
-      let audioLoad;
-      try { audioLoad = { loader: globalThis.RG?.audio?._realS3Loader?.stats?.() || null, errors: globalThis.RG?.audio?._realS3Loader?.errors?.slice(-32) || [] }; }
+      let audioLoad, cancellationStatus;
+      try { cancellationStatus = globalThis.__contextCancellationStatus?.() || { missing: true }; }
+      catch (error) { cancellationStatus = { diagnosticError: String(error?.message || error).slice(0, 500) }; }
+      try {
+        const pack = globalThis.RG?.audio?._weaponBank?.authorized;
+        const combat = ['critical', 'damage', 'ink_focus_normal', 'ink_focus_strong', 'splat'].map(kind => ({ kind,
+          rows: (pack?.byEvent?.get('combat:' + kind + ':fire') || []).slice(0, 4).map(row => ({
+            file: row.file, sha256: row.sha256, bytes: row.bytes, duration: row.buffer?.duration,
+            length: row.buffer?.length, channels: row.buffer?.numberOfChannels, sampleRate: row.buffer?.sampleRate })) }));
+        audioLoad = { combat, loader: globalThis.RG?.audio?._realS3Loader?.stats?.() || null, errors: globalThis.RG?.audio?._realS3Loader?.errors?.slice(-32) || [] }; }
       catch (error) { audioLoad = { diagnosticError: String(error?.message || error).slice(0, 500) }; }
-      return { proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [], cancellationDiagnostics: globalThis.__contextCancellationDiagnostics || [], audioLoad };
+      return { proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [], cancellationDiagnostics: globalThis.__contextCancellationDiagnostics || [], cancellationStatus, audioLoad };
     }); } catch (e) { diagnosticError = e.message; }
     result = { ok: false, error: error.stack || String(error), partial, diagnosticError };
   } finally {
-    result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, audioNetworkAttached, audioNetworkDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }
