@@ -632,9 +632,13 @@ export function installSpecialModels(api) {
     if (len > 1e-6) s.line.quaternion.setFromUnitVectors(up, d.divideScalar(len));
   }
   function pose(ch, s, dt) {
+    const lease=s.poseOptionLease||=( {depth:0,frames:[]} ),depth=lease.depth++;
+    const poseOptions=lease.frames[depth]||{dt:0,speed:0};if(depth<8)lease.frames[depth]=poseOptions;
+    poseOptions.dt=dt;poseOptions.speed=0;
+    try {
     const a = ch.actor, state = a._s3AllSpecialState?.id === s.id ? a._s3AllSpecialState : null, t = G.time || 0;
     let hideWeapon = false, hideKid = false;
-    const poseOptions = { dt, speed: 0 }; let speedReady = false;
+    let speedReady = false;
     let speakerDeployAge = NaN, speakerDeploy = 0, speakerYaw, speakerSin = 0, speakerCos = 1, speakerGlow;
     for (const d of s.devices) {
       const spec = d.spec;
@@ -746,6 +750,7 @@ export function installSpecialModels(api) {
       ch.weapon.pivot.visible = false; if (ch.weapon.left) ch.weapon.left.pivot.visible = false;
     }
     if (hideKid) { if (ch.kid) ch.kid.visible = false; if (ch.squidRoot) ch.squidRoot.visible = false; }
+    } finally { lease.depth=depth; }
   }
   const cp = Character.prototype, chUpdate = cp.update, dispose = cp.dispose, setVisible = cp.setVisible;
   // Native dead actors stop calling Character.update. In particular, speakers
