@@ -38,12 +38,13 @@ export function assertSourceSuiteCoverage(workflow, suite, root = ROOT) {
   const patchSteps = patch?.split(/^      - /m).slice(1) || [];
   const owners = patchSteps.filter(step => step.includes(command));
   if (owners.length !== 1 || /^        (?:if|env|continue-on-error):/m.test(owners[0])
-      || !patch.includes("INKWAVE_TEST_SHARD_COUNT: '8'")
+      || !patch.includes("INKWAVE_TEST_SHARD_COUNT: '9'")
+      || !patch.includes("INKWAVE_TEST_ISOLATE_RAINMAKER: '1'")
       || !/^      fail-fast: false$/m.test(patch)
-      || !/^        shard: \[0, 1, 2, 3, 4, 5, 6, 7\]$/m.test(patch)
+      || !/^        shard: \[0, 1, 2, 3, 4, 5, 6, 7, 8\]$/m.test(patch)
       || !/^      INKWAVE_TEST_SHARD_INDEX: \$\{\{ matrix\.shard \}\}$/m.test(patch)
-      || !patch.includes("runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}")
-      || !patch.includes("INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}")
+      || !patch.includes("runs-on: ${{ (matrix.shard == 2 || matrix.shard == 8) && 'ubuntu-22.04' || 'ubuntu-latest' }}")
+      || !patch.includes("INKWAVE_TEST_CONCURRENCY: ${{ (matrix.shard == 2 || matrix.shard == 8) && '1' || '2' }}")
       || !workflow.includes('needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'))
     throw Error('Missing mandatory complete CPU source shards');
   const browserRun = '        run: node scripts/ci/run-inkwave-test-suite.mjs source-browser\n';
