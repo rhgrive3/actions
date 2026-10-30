@@ -1,0 +1,73 @@
+{
+  "status": "rejected",
+  "baselineCommit": "60e29562f8fa44c1bd12d1858cf6a995a84d6cd8",
+  "node": "v24.19.0",
+  "timingLock": ".ci-scratch/native-mobile-round2-cpu.lock",
+  "productPhysicsChanged": false,
+  "snapshots": {
+    "baseline-60e.mjs.txt": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+    "generic-slab-unrolled.mjs.txt": "50fc6918ca3cc8d73b106a9ed35a2733a38bcc07ef4eae94cce69ac53edb8307",
+    "footprint-xz.mjs.txt": "7a9b3bb260214916a77b42816c80d84a88e5ae02e3a9ef990829bcb55fe4e666",
+    "footprint-xz-multiple.mjs.txt": "2dfde028c100737c70f6cd1d7850e5b814fe90bb047557c32bf38708ec824964",
+    "footprint-xz-full.mjs.txt": "9763feba05378a3877c26c3662a501a3a317410dfca61acb7ec5471adbdd9b09",
+    "shared-y.mjs.txt": "078213d91578f345d9a52e250f32c2eb6c7e2bf5ba1bbc639b7c2b6f0c772e2e"
+  },
+  "matrixSummaries": [
+    {
+      "file": "all-ground.json",
+      "stages": 23,
+      "medianCpuReductionPercent": 6.838776795247348,
+      "worstCpuReductionPercent": -7.176063303659741,
+      "bestCpuReductionPercent": 18.82937770907217,
+      "allOutputAndTraversalCountersEqual": true
+    },
+    {
+      "file": "all-ground-full.json",
+      "stages": 23,
+      "medianCpuReductionPercent": 2.6009033950167626,
+      "worstCpuReductionPercent": -4.592408214063459,
+      "bestCpuReductionPercent": 16.96019300361882,
+      "allOutputAndTraversalCountersEqual": true
+    },
+    {
+      "file": "all-ground-y.json",
+      "stages": 23,
+      "medianCpuReductionPercent": -9.605225585379795,
+      "worstCpuReductionPercent": -22.693676430331244,
+      "bestCpuReductionPercent": 5.551877708233022,
+      "allOutputAndTraversalCountersEqual": true
+    }
+  ],
+  "decisions": [
+    {
+      "candidate": "generic-slab-unrolled.mjs.txt",
+      "decision": "rejected",
+      "reason": "Robo generic rays regressed10.18%CPU despite Shipshape10.21%gain."
+    },
+    {
+      "candidate": "footprint-xz-multiple.mjs.txt",
+      "decision": "rejected",
+      "reason": "23-stage median6.84%CPU reduction did not justify Undertow7.18%regression."
+    },
+    {
+      "candidate": "footprint-xz-full.mjs.txt",
+      "decision": "rejected",
+      "reason": "23-stage median2.60%CPU reduction with up to4.59%regression; insufficient stable gain."
+    },
+    {
+      "candidate": "shared-y.mjs.txt",
+      "decision": "rejected",
+      "reason": "Per-ray shared-height branch overhead outweighed saved divisions: Shipshape sameY12.67%slower, varyingY25.07%slower, single22.31%slower; dense2.17%faster only."
+    }
+  ],
+  "limits": [
+    "Node CPU components using real converted native stage geometry; not browser/device/GPU FPS.",
+    "Exact hit fields, queryCount and triangleTests parity passed for sampled foot positions; a rejected prototype is not a production change.",
+    "SharedY endpoint prototype was not adopted; no caller-certified flag or native-physics source edit was made."
+  ],
+  "reproduce": [
+    "Hydrate converted geometry: git lfs pull --include=native-prebuilt/** --exclude=native-prebuilt/packs/**",
+    "Copy *.mjs.txt snapshots/runners back to .ci-scratch/native-physics-round2/ with their .txt suffix removed and baseline-60e.mjs.txt renamed before.mjs; footprint snapshots correspond to broad.mjs,broad-multi.mjs,broad-full.mjs.",
+    "Run each saved runner from repository root under flock .ci-scratch/native-mobile-round2-cpu.lock; save stdout JSON. Runners never modify production files."
+  ]
+}

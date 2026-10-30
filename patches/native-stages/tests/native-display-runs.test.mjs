@@ -9,6 +9,7 @@ async function load(url) {
  const external={
   three:new vm.SyntheticModule(Object.keys(THREE),function(){for(const[k,v]of Object.entries(THREE))this.setExport(k,v);},{context}),
   '../../../src/world/levelMaterial.js':new vm.SyntheticModule(['createLevelMaterial'],function(){this.setExport('createLevelMaterial',()=>{throw Error('unused');});},{context}),
+  './native-paint-detail.mjs':new vm.SyntheticModule(['enableNativePaintDetail'],function(){this.setExport('enableNativePaintDetail',()=>{throw Error('unused');});},{context}),
  };
  const module=new vm.SourceTextModule(fs.readFileSync(url,'utf8'),{context});
  await module.link(name=>external[name]);await module.evaluate();

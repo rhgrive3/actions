@@ -1,0 +1,10 @@
+{
+  "baselineCommit": "60e29562f8fa44c1bd12d1858cf6a995a84d6cd8",
+  "baselineSourceSha256": "79c8b415fc3f40f2f1aea37315778838f09283aeef2ae8ab53f2d08e7bbdc118",
+  "acceptedCommit": "7fe40c36995f2e5c76cfa6cda1d1f264cd1d1cbe",
+  "acceptedSourceSha256": "11cbdbcdf0429757a803db6aa95f89c42c1dda94836ebc6e3bd7a45cd45dfe47",
+  "measuredFixtureCommit": "f110ffa169bfc10773cf74c2fa94643479326fd0",
+  "measuredFixtureSha256": "8954453c3575aa2328eb745756b88320bba991d7555ae7b632ca58c69179d41c",
+  "currentFixtureSha256": "6ff0dac314d236f26d46ccd5e64bc2fa9781c4d5d8472fa55417bb3b8401f298",
+  "fixtureNormalization": "Only an extra trailing blank line was removed after measurement; complete source excluding trailing LF bytes is identical."
+}
