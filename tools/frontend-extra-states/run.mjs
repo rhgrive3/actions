@@ -108,7 +108,11 @@ try{
  }
  if(batch==='battle')await attempt('offline-bot-match',async()=>{
   await page.goto(origin+'/?news=0&skipTitle=1&autopilot=1',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__inkwave?.debug&&window.__inkwave?.menus,null,{timeout:180000});await waitScreen('main');
-  await tap('.iw-main [data-id="play"]');await waitScreen('mode');await tap('[data-id="mode-turf"]');await waitScreen('setup');await tap('.iw-setup [data-id="start"]');await page.waitForFunction(()=>window.__G?.mode==='match'&&['intro','playing'].includes(window.__inkwave.match?.state)&&!window.__inkwave.match.attract,null,{timeout:60000});
+  await tap('.iw-main [data-id="play"]');await waitScreen('mode');await tap('[data-id="mode-turf"]');await waitScreen('setup');
+  // Keep the native START event/permission route, but supply the originally
+  // requested 20s to its real API once. No live match clock is overwritten.
+  await page.evaluate(()=>{const api=window.__inkwave.menus.api,original=api.startMatch;api.startMatch=function(options){api.startMatch=original;return original.call(this,{...options,duration:20});};});
+  await tap('.iw-setup [data-id="start"]');await page.waitForFunction(()=>window.__G?.mode==='match'&&['intro','playing'].includes(window.__inkwave.match?.state)&&!window.__inkwave.match.attract,null,{timeout:60000});
   // Native START has admitted the match. Step its existing intro simulation
   // instead of making software-GPU wall time a second admission condition.
   let introAdvancedMs=0;await page.evaluate(()=>window.__inkwave.debug.freeze());
@@ -118,7 +122,7 @@ try{
   }
   assert.equal(await page.evaluate(()=>window.__inkwave.match.state),'playing','native intro must complete through simulation');
   receipt.introClock={method:'existing debug.freeze/step after native START admission',stepMs:250,advancedMs:introAdvancedMs};persist();
-  const actualDuration=await page.evaluate(()=>{window.__inkwave.debug.freeze();return window.__inkwave.match.duration;});assert(actualDuration>0&&actualDuration<=300,'bounded actual match duration');
+  const actualDuration=await page.evaluate(()=>{window.__inkwave.debug.freeze();return window.__inkwave.match.duration;});assert.equal(actualDuration,20,'real API must honor the requested 20s Turf input');receipt.matchInput={duration:20,route:'native START with one original startMatch API call'};
   if(id==='ipad-mini-landscape'){await snap('offline-battle-hud',{scope:'actual-game-native-start',notes:['Actual local offline Turf match with bots; native START gesture with valid setup map; Native setup duration; autopilot; actual simulation advanced by supported audit clock after HUD; no result injection']});
   await page.evaluate(()=>window.__inkwave.pause());await waitScreen('pause');await snap('offline-battle-pause',{scope:'actual-game-api-pause'});await tap('[data-id="quit"]');await page.locator('.iw-modal').waitFor({state:'visible'});await snap('offline-battle-quit-confirm',{scope:'actual-game-api-pause',notes:['Confirmation not accepted']});await page.keyboard.press('Escape');await page.evaluate(()=>window.__inkwave.resume());}
   let advancedMs=0;for(let n=0;n<Math.ceil((actualDuration+60)/2);n++){const done=await page.evaluate(()=>window.__inkwave.menus?.current==='results'||window.__G?.mode==='results');if(done)break;await page.evaluate(()=>window.__inkwave.debug.step(2000));advancedMs+=2000;await page.waitForTimeout(10);}receipt.auditClock={method:'existing debug.freeze/step',stepMs:2000,advancedMs,configuredDuration:actualDuration};await page.evaluate(()=>window.__inkwave.debug.unfreeze());await page.waitForFunction(()=>window.__inkwave?.menus?.current==='results',null,{timeout:30000});await waitScreen('results');await tap('.iw-res__title');await page.waitForFunction(()=>window.__inkwave.menus._scr.el.classList.contains('is-done'));await snap('offline-battle-results',{scope:'actual-game',notes:['Actual offline bot simulation, audit-clock advanced; no injected winner, match.time or result']});

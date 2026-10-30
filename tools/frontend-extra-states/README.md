@@ -30,3 +30,11 @@ The main match uses 2000ms calls; the helper still advances every 1/60s simulati
 frame and renders once per call. No state, winner, match duration or result is
 assigned by the QA. These are simulated-time captures, not wall-clock pacing or
 real-device performance evidence.
+
+
+The recovery uses the originally requested 20-second Turf input. A single-use
+wrapper passes duration 20 to the original startMatch API when the native START
+button invokes it, and restores the API before delegation. The real match must
+report duration 20. It does not overwrite a running match clock or fabricate
+a result. This explicit QA API input differs from the UI's normal 180-second
+default and is recorded in the receipt.
