@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-const pins=[{"id":12969586617,"name":"frontend-phone-landscape-41035688850-1","size":8905124,"digest":"sha256:6e3fccfda1c7e5cd18455c391224760d5e8efaa0a48d4c8b9ecbe51c708747dc","device":"phone-landscape"},{"id":12969351732,"name":"frontend-phone-portrait-41035688850-1","size":7659650,"digest":"sha256:147ed2a56bf52fa1700a18b83eb1e786f6ae170a9980c90c9d6df8c9235c3c8d","device":"phone-portrait"}];
+const pins=[{"id":12969586617,"name":"frontend-phone-landscape-41035688850-1","size":8905124,"digest":"sha256:6e3fccfda1c7e5cd18455c391224760d5e8efaa0a48d4c8b9ecbe51c708747dc","device":"phone-landscape"},{"id":12969351732,"name":"frontend-phone-portrait-41035688850-1","size":7659650,"digest":"sha256:147ed2a56bf52fa1700a18b83eb1e786f6ae170a9980c90c9d6df8c9235c3c8d","device":"phone-portrait"},{"id":12970247003,"name":"frontend-ipad-mini-landscape-41035688850-1","size":13262407,"digest":"sha256:208bd7ca1bf785245782ead418c070b3eecc54a0d18f75eba9c234e625dc6b31","device":"ipad-mini-landscape"},{"id":12969304583,"name":"frontend-ipad-mini-portrait-41035688850-1","size":10727377,"digest":"sha256:3b2e1783cee7cf0d254ece028bb339cf0e0186ff2b1d9dd8cbb0f4d72ca1dd70","device":"ipad-mini-portrait"}];
 const pin=pins.find(x=>String(x.id)===process.argv[2]);assert.ok(pin,'unknown pinned artifact');
 const root=path.resolve(process.argv[3]),zip=path.resolve(process.argv[4]);
 const hash=b=>createHash('sha256').update(b).digest('hex');
