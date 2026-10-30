@@ -1,4 +1,9 @@
 import {CANONICAL_KITS} from './canonical-kits-data.mjs';
+import {createBotSpecialContext} from './bot-special-context.mjs';
+import {driveMeleeSpecial} from './bot-special-melee.mjs';
+import {driveRangedSpecial} from './bot-special-ranged.mjs';
+import {driveSupportSpecial} from './bot-special-support.mjs';
+export {resetBotSpecialMemory} from './bot-special-context.mjs';
 // Validate the shipped registries after all sub/special installers have run.
 export function validateCanonicalKits({WEAPONS,SUB,SPECIALS}){
  for(const [id,k]of Object.entries(CANONICAL_KITS)){
@@ -10,22 +15,25 @@ export function validateCanonicalKits({WEAPONS,SUB,SPECIALS}){
 }
 // Bot input policy is intentionally INKWAVE AI, not a claim about retail AI.
 // It drives the SAME admitted Actor inputs rather than granting free effects.
-export function driveCanonicalBotSpecial(actor,intent,dt,target){
- if(!actor?.alive||actor.remote||!Number.isFinite(dt)||dt<=0)return;
- const special=actor.weapon?.special;
- const range={ultraStamp:12,zipcaster:28,crabTank:30,reefslider:20,tentaMissiles:60,inkjet:30,booyahBomb:35,killerWail:60,tripleInkstrike:40,tacticooler:20,waveBreaker:22,superChump:40,krakenRoyale:15,splattercolorScreen:30,tripleSplashdown:9}[special];
- if(!range)return; // Mature native Trizooka/Bubbler/Vac/Storm owners remain.
- if(!actor.specialActive){actor.s3KitBotTime=0;if(target?.alive&&target.team!==actor.team&&actor.pos.distanceTo(target.pos)<=range&&actor.specialReady?.())intent.special=true;return;}
- const t=actor.s3KitBotTime=(actor.s3KitBotTime||0)+dt;
- const pulse=Math.floor(t*4)%2===0;
- intent.squid=false;
- if(special==='booyahBomb'){intent.booyah=pulse;intent.fire=false;intent.sub=t>2.2&&pulse;}
- else if(special==='zipcaster'){intent.fire=true;intent.sub=pulse;}
- else if(special==='crabTank'){intent.fire=true;intent.sub=pulse;}
- else if(special==='ultraStamp'){intent.fire=true;intent.sub=false;}
- else if(special==='inkjet'){intent.fire=true;intent.sub=false;}
- else if(special==='tentaMissiles'){intent.fire=t>.5&&pulse;intent.sub=false;}
- else if(special==='reefslider'){intent.fire=t>.8&&pulse;intent.sub=false;}
- else if(special==='krakenRoyale'){intent.fire=true;intent.jump=pulse;}
- else if(special!=='killerWail'){intent.fire=pulse;intent.sub=false;}
+export function driveCanonicalBotSpecial(actor,intent,dt,target,options={}){
+ const ctx=createBotSpecialContext(actor,intent,dt,target,options);
+ if(!ctx)return null;
+ // Activation has one owner in every mode. A native painting/duel decision
+ // must not bypass the category's range, terrain, recognition or team checks.
+ intent.special=false;
+ // An uncharged bot still uses its ordinary main weapon. Avoid both the
+ // category's preparation aim and its more expensive trajectory probes.
+ if(!ctx.state&&!actor.specialReady?.())return ctx;
+ if(ctx.state){
+  intent.fire=intent.sub=intent.jump=intent.squid=intent.booyah=false;
+  if(ctx.brain)ctx.brain._bombAim=ctx.brain._releaseBomb=false;
+ }
+ ctx.handled=driveMeleeSpecial(ctx)||driveRangedSpecial(ctx)||driveSupportSpecial(ctx);
+ // The original story-mode slam is outside the 19 competitive specials.
+ // Retain its short-range admission through the same perception gate.
+ if(!ctx.handled&&ctx.special==='slam'){
+  ctx.handled=true;
+  if(!ctx.state&&ctx.visible&&ctx.distance<4.5&&Math.abs(ctx.height)<2&&actor.specialReady?.())intent.special=true;
+ }
+ return ctx;
 }

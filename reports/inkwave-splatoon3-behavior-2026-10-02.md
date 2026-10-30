@@ -6984,3 +6984,8 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: 開始カメラのGOから初期発射への同期
 
 任天堂公式60fps映像nawabari_pc.mp4の578Fに見える開始エフェクトに合わせ、今回のTurfカメラを使うMatchはGOと同じtickで自動発射する。以前のINKWAVE独自の1秒待機を解消。456Fから開始前の照準を許可し、最後の1Fの旋回もnative computeAimの前に光学視点へ反映する。30/60/120Hzの全8人、通常復活、pointer-lock guard、native入力replayを検証した。456Fの入力許可・flight形状・3Dカメラ数値はINKWAVEの調整で、Nintendo内部の受付tickや現行Switchでの完全一致は未確認。[参照条件・再現・結果](turf-intro-camera-20261030.md)。
+
+
+### 2026-10-30: 全19スペシャルのAI使用監査・改善
+
+公開版のビルド時合成後19種を対象に、Splatoon3 Wikiの各個別ページの操作・用途・遮蔽・味方支援・前後の隙を参照した。旧AIでは4種の設置/投擲に必要なsub releaseが欠け、テイオウが敵不在でも周期ジャンプし、fire保持により突進へ移行できない入力契約の差分を確認した。メインの射程/照準/charge判断をそのままspecialへ流用する箇所も比較対象に含める。個別Wikiの基礎表は版が異なり、距離やAI閾値を本家の未公開数値と扱わない。共通入力判断と近接/射撃/支援3カテゴリを統合し、独立レビューでは過剰な床probeとBotミサイルの人間camera依存も修正した。コード `96c4ba9399283d4259dff5165696cac6f5c90a4f` の統合CPU83/83、追加回帰227/227、本番相当ビルド・startup budgetが成功。Chromium内の実BotBrain/Actor等による配信コード4ケースも成功し、旧版の投擲なし・突進なし・無人jumpの反例と区別した。このブラウザー確認はCPU paintの制御された平面fixtureであり、実ステージ描画や全19種のブラウザー比較ではない。PR #1942 CIは記録時queued、本家Switch実機比較は未確認。[全19種の根拠・旧実装・採用/維持候補・検証状態](inkwave-bot-special-ai-2026-10-30.md)。

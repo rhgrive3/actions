@@ -1165,7 +1165,8 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
     let x=null,y=null;
     if(missiles){
       const camera=rt.api.G.camera;
-      if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
+      // G.camera belongs to the human viewer; bots lock through their own aim cone.
+      if(camera?.isPerspectiveCamera&&!actor.isBot){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1;limit??=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
         if(preview){x=projected.x;y=projected.y;}
