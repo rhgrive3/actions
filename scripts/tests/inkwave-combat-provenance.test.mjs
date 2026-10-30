@@ -580,7 +580,7 @@ test('one shot no longer mints both a projectile and a fire-event proof',()=>{
   charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
   assert.equal(charger.hitCalls.length,1,'hitscan fire events still prove Charger shots');
 });
-test('Boss body behind cover rejects straight fire; crablets keep the ray gate',()=>{
+test('Boss body and direct-fire crablets behind cover reject without spending proof',()=>{
   const nm=new Stub();walled(nm);
   nm.onMessage('peerA',boss(1,-1,0,'shooter',36));
   fire(nm);
@@ -592,7 +592,19 @@ test('Boss body behind cover rejects straight fire; crablets keep the ray gate',
   const crab=new Stub();walled(crab);
   crab.onMessage('peerA',boss(1,7,0,'crab',36));
   fire(crab);
-  assert.equal(crab.bossCalls.length,1);
+  assert.equal(crab.bossCalls.length,0);
+  assert.equal(crab._bossSeq,0,'occluded claim does not spend native sequence');
+  const proof=crab._combatProvenance.proofs.get('peerA')[0];
+  assert.equal(proof.uses,0);
+  assert.equal(proof.bossTargets?.size??0,0);
+  walled(crab,{wallZ:20});
+  crab.onMessage('peerA',boss(1,7,0,'crab',36));
+  assert.equal(crab.bossCalls.length,1,'clear retry uses the original unspent proof');
+  assert.equal(crab._bossSeq,1);
+  assert.equal(proof.uses,1);
+  crab.onMessage('peerA',boss(2,7,0,'crab',36));
+  assert.equal(crab.bossCalls.length,1,'a new nonce cannot duplicate the crablet hit');
+  assert.equal(proof.uses,1);
 });
 test('nonpenetrating proof lands once; Charger and area retain their separate target capacity',()=>{
   const nm=new Stub();fire(nm);
