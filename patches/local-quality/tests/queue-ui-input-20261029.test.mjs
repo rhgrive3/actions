@@ -90,12 +90,14 @@ test('actual ally markers preserve final CSS while avoiding unchanged distance p
  assert.equal(l.markers[0].writes['--far'],120);assert.equal(r.markers[0].writes['--far'],1);
 });
 
-test('real platform deadline loop matches previous IEEE additions at terminal slots and exponent boundaries',()=>{
+test('real platform deadline loop consumes one target slot and retains IEEE additions at exponent boundaries',()=>{
  const s=read('patches/local-quality/platform-lifecycle.mjs');const extract=x=>between(x,'  _scheduleNext(frameTime) {','  reset(reason) {');
- let logs=0;const math=Object.create(Math);math.log2=x=>{logs++;return Math.log2(x);};const a=method(extract(before.platform),'_scheduleNext',{Math:math}),b=method(extract(s),'_scheduleNext',{Math:math});
+ let logs=0;const math=Object.create(Math);math.log2=x=>{logs++;return Math.log2(x);};const b=method(extract(s),'_scheduleNext',{Math:math});
  for(const fps of [30,45,48,55,60,120,144])for(const now of [0,16,100,1000,65535,65536,65537,86400000,2**40])for(const lag of [0,1,5,5000]){
-  const make=()=>({running:true,owner:{active:true},disposed:false,frameRate:()=>fps,_now:()=>now,nextDeadline:now-lag,frameInterval:1000/fps,_queueTimer(t){this.delay=t;}});
-  const l=make(),r=make();logs=0;a.call(l,now);const oldLogs=logs;logs=0;b.call(r,now);assert.equal(r.nextDeadline,l.nextDeadline);assert.equal(r.delay,l.delay);assert(logs<=oldLogs);
+  const interval=1000/fps;let expected=now-lag+interval;while(expected<=now)expected+=interval;
+  const r={running:true,owner:{active:true},disposed:false,frameRate:()=>fps,_now:()=>now,nextDeadline:now-lag,frameInterval:interval,timerOvershoot:0,_queueTimer(t){this.delay=t;},_queueRAF(){this.raf=true;}};
+  logs=0;b.call(r,now);assert.equal(r.nextDeadline,expected);const wait=expected-now-1;
+  if(wait>0)assert.equal(r.delay,wait);else assert.equal(r.raf,true);assert(logs<80);
  }
 });
 test('unfocused real platform input retires dirty pad authority and reuses the empty array until refocus',()=>{
