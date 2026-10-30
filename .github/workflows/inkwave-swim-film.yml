@@ -13,6 +13,8 @@ on:
       - 'patches/local-quality/tests/swim-presentation.test.mjs'
       - 'patches/local-quality/tests/swim-surface-fps.test.mjs'
       - 'patches/local-quality/tests/swim-film-offscreen.test.mjs'
+      - 'reports/private-rainmaker-ab/**'
+      - 'tools/native-sweep-profile/**'
       - '.github/workflows/inkwave-swim-film.yml'
   workflow_dispatch:
 permissions:
@@ -41,3 +43,100 @@ jobs:
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Film presentation, frame-rate parity and off-screen shape parity
         run: node --experimental-vm-modules --test patches/local-quality/tests/swim-presentation.test.mjs patches/local-quality/tests/swim-surface-fps.test.mjs patches/local-quality/tests/swim-film-offscreen.test.mjs
+
+  rainmaker_actor_diagnostic:
+    if: ${{ (github.event_name == 'pull_request' && github.head_ref == 'qa/rainmaker-native-shot-diagnostics-20261030' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qa/rainmaker-native-shot-diagnostics-20261030') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [source, emitted]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: reports/private-rainmaker-ab
+      - uses: actions/checkout@v4
+        with:
+          ref: af588fb0f3f74eefa681a3a4f776154999085814
+          path: product
+          filter: blob:none
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable QA and product inputs
+        env:
+          QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$QA_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C qa rev-parse HEAD)" = "$QA_SHA"
+          test "$(git -C product rev-parse HEAD)" = af588fb0f3f74eefa681a3a4f776154999085814
+          test -x /usr/bin/time
+          node --test qa/reports/private-rainmaker-ab/rainmaker-ab-contract.test.mjs
+      - name: Install locked dependencies
+        working-directory: product
+        run: npm ci --no-audit --no-fund
+      - name: Build exact production composition once
+        if: matrix.mode == 'emitted'
+        working-directory: product
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Actual Actor normal and extremes, old/new all receipts and resource times
+        run: node qa/reports/private-rainmaker-ab/run-rainmaker-ab.mjs '${{ matrix.mode }}' product 'evidence/${{ matrix.mode }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rainmaker-actor-ab-${{ matrix.mode }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/${{ matrix.mode }}/
+          if-no-files-found: error
+          retention-days: 14
+
+  native_shot_counter_diagnostic:
+    if: ${{ (github.event_name == 'pull_request' && github.head_ref == 'qa/rainmaker-native-shot-diagnostics-20261030' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qa/rainmaker-native-shot-diagnostics-20261030') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: tools/native-sweep-profile
+      - uses: actions/checkout@v4
+        with:
+          ref: 7d5446fafc42cf0a58bbaddc220884c5f3dceff1
+          path: product
+          filter: blob:none
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify separate immutable QA and main-product inputs
+        env:
+          QA_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$QA_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C qa rev-parse HEAD)" = "$QA_SHA"
+          test "$(git -C product rev-parse HEAD)" = 7d5446fafc42cf0a58bbaddc220884c5f3dceff1
+      - name: Install locked dependencies and build exact main composition once
+        working-directory: product
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Source and emitted actual-shot observer parity and counters
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/evidence"
+          node qa/tools/native-sweep-profile/run-native-sweep-profile-pair.mjs "$GITHUB_WORKSPACE/product" "$GITHUB_WORKSPACE/product/_site" "$GITHUB_WORKSPACE/evidence/native-shot" 7d5446fafc42cf0a58bbaddc220884c5f3dceff1
+          test -s "$GITHUB_WORKSPACE/evidence/native-shot/comparison.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-shot-counters-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/native-shot/
+          if-no-files-found: error
+          retention-days: 14
