@@ -1,13 +1,12 @@
 import * as THREE from 'three';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
-export function specializeNativeSourceAmbient(shader,roughSpecular=false,weakNormal=false,facingCones=false){
+export function specializeNativeSourceAmbient(shader,roughSpecular=false,facingCones=false){
  const height=shader.envMapCubeUVHeight;
- // Diffuse sky lighting is broad. Weak tangent-space detail keeps its direct
- // light and specular response per pixel; only that broad diffuse term uses
- // the source normal. Strong/unknown normal maps retain the original path.
- if(!shader.envMap||(shader.normalMap&&(!weakNormal||shader.normalMapObjectSpace))||!Number.isFinite(height)||height<=0)return false;
- if(shader.normalMap)roughSpecular=false;
+ // Diffuse sky lighting is broad, but a normalScale bound cannot prove the
+ // sampled normal's Z component. Preserve pixel-frequency lighting for every
+ // normal map; specialize only source materials with no normal map.
+ if(!shader.envMap||shader.normalMap||!Number.isFinite(height)||height<=0)return false;
  const common='#include <common>',normal='#include <normal_vertex>',maps='#include <lights_fragment_maps>';
  if(!shader.vertexShader?.includes(common)||!shader.vertexShader.includes(normal)||!shader.fragmentShader?.includes(common)||!shader.fragmentShader.includes(maps))return false;
  if((roughSpecular||facingCones)&&!shader.vertexShader.includes('#include <project_vertex>'))return false;
@@ -260,14 +259,13 @@ export function nativeDisplay(data,textures,quality){
    // Matte source surfaces can interpolate the broad sky lobe too. Ink and
    // glass retain their view-dependent reflections at full pixel frequency.
    const roughSpecular=()=>mat.roughness>=.7&&!mat.roughnessMap&&mat.metalness===0;
-   const weakNormal=()=>!!mat.normalMap&&mat.normalMapType===THREE.TangentSpaceNormalMap&&Math.max(Math.abs(mat.normalScale.x),Math.abs(mat.normalScale.y))<=.28;
    const syncChannelProgram=()=>{
      mat.onBeforeCompile=shader=>{
-      specializeNativeSourceAmbient(shader,roughSpecular(),weakNormal(),true);
+      specializeNativeSourceAmbient(shader,roughSpecular(),true);
       if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
       if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
      };
-     mat.customProgramCacheKey=()=>`native-ambient-v4-${roughSpecular()?1:0}-${weakNormal()?1:0}-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
+     mat.customProgramCacheKey=()=>`native-ambient-v5-${roughSpecular()?1:0}-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
    };
    syncChannelProgram();
    mat.defaultAttributeValues={...mat.defaultAttributeValues,nativeNormalCone:[1]};

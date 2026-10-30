@@ -59,7 +59,7 @@ test('cone shader falls back at silhouettes, unusual cameras and missing attribu
  assert.deepEqual(Array.from(mesh.material.defaultAttributeValues.nativeNormalCone),[1]);
  const attr=mesh.geometry.getAttribute('nativeNormalCone');assert.ok(attr);attr.onUploadCallback();assert.equal(attr.array,null);
  const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:false,envMapCubeUVHeight:1024};
- assert.equal(specialize(shader,true,false,true),true);
+ assert.equal(specialize(shader,true,true),true);
  assert.match(shader.vertexShader,/abs\(nativeFacing\)>nativeNormalCone/);
  assert.match(shader.vertexShader,/determinant\(mat3\(viewMatrix\)\)>0.0/);
  assert.match(shader.vertexShader,/if\(!nativeSingle\)\{vNativeIrradianceBack=getIBLIrradiance/);
@@ -84,12 +84,9 @@ test('native diffuse ambient keeps unapproved normal maps, unsupported and unfam
  assert.match(broad.fragmentShader,/gl_FrontFacing\?vNativeRadianceFront:vNativeRadianceBack/);
  const missing=source();missing.vertexShader=missing.vertexShader.replace('#include <project_vertex>','');const before={...missing};
  assert.equal(specialize(missing,true),false);assert.deepEqual(missing,before,'unsupported source layout fails open before mutating either stage');
- const weak=Object.assign(source(),{normalMap:true});assert.equal(specialize(weak,true,true),true);
- assert.match(weak.vertexShader,/vNativeIrradianceFront/);
- assert.doesNotMatch(weak.vertexShader,/vNativeRadiance/,'normal-mapped specular must remain at pixel frequency');
- assert.ok(weak.fragmentShader.includes('getIBLRadiance( geometryViewDir, geometryNormal, material.roughness )'));
- const object=Object.assign(source(),{normalMap:true,normalMapObjectSpace:true}),unchanged={...object};
- assert.equal(specialize(object,true,true),false);assert.deepEqual(object,unchanged);
+ const mapped=Object.assign(source(),{normalMap:true}),unchanged={...mapped};
+ assert.equal(specialize(mapped,true,true),false);assert.deepEqual(mapped,unchanged,'normal maps retain all pixel-frequency IBL, even with cones enabled');
+
 });
 
 test('native glass retains pixel-frequency reflections while matte source surfaces interpolate the broad lobe',async()=>{
@@ -104,16 +101,17 @@ test('native glass retains pixel-frequency reflections while matte source surfac
  glass.display.dispose();display.dispose();
 });
 
-test('source materials opt into diffuse interpolation only for bounded tangent-space normal detail',async()=>{
+test('source materials preserve pixel-frequency IBL for normal maps at every strength and encoding',async()=>{
  const {display}=await fixture(),mat=display.group.children[0].material;
  mat.normalMap=new THREE.Texture();
- const compile=()=>{const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:true,envMapCubeUVHeight:1024};mat.onBeforeCompile(shader);return shader;};
- assert.match(compile().vertexShader,/vNativeIrradiance/);
- assert.ok(compile().fragmentShader.includes('#include <normal_fragment_maps>'),'direct light and specular still use the normal map');
- assert.doesNotMatch(compile().vertexShader,/vNativeRadiance/);
- mat.normalScale.set(.29,.28);assert.doesNotMatch(compile().vertexShader,/vNativeIrradiance/);
- mat.normalScale.set(.28,-.28);assert.match(compile().vertexShader,/vNativeIrradiance/);
- mat.normalMapType=THREE.ObjectSpaceNormalMap;assert.doesNotMatch(compile().vertexShader,/vNativeIrradiance/);
+ for(const type of [THREE.TangentSpaceNormalMap,THREE.ObjectSpaceNormalMap])for(const scale of [0,.1,.28,-.28,.5,1]){
+  mat.normalMapType=type;mat.normalScale.set(scale,scale);
+  const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,envMap:true,normalMap:true,envMapCubeUVHeight:1024};
+  mat.onBeforeCompile(shader);
+  assert.doesNotMatch(shader.vertexShader,/vNativeIrradiance|vNativeRadiance/);
+  assert.ok(shader.fragmentShader.includes('#include <normal_fragment_maps>'));
+  assert.ok(shader.fragmentShader.includes('#include <lights_fragment_maps>'));
+ }
  mat.normalMap.dispose();display.dispose();
 });
 

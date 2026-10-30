@@ -29,7 +29,7 @@ test('Balanced to High commits inferred channels to the same shader and cache ke
  assert.equal(shader(mat),shader(directMat));
  assert.match(shader(mat),/max\(texelRoughness\.r, 0\.55\)/);
  const balanced=await upgraded.load('balanced',display.currentTextures());display.updateTextures(balanced,'balanced');
- assert.equal(mat.customProgramCacheKey(),'native-ambient-v4-1-0-r-g');
+ assert.equal(mat.customProgramCacheKey(),'native-ambient-v5-1-r-g');
  assert.doesNotMatch(shader(mat),/max\(texelRoughness\.r, 0\.55\)/);
  display.dispose();directDisplay.dispose();
 });
