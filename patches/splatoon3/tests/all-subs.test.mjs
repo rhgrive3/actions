@@ -380,7 +380,7 @@ test('only one live Torpedo is admitted and a blocked second release costs no in
   assert.equal(actor.ink,inkAfterFirst,'the active-object gate runs before the native ink payment');
 });
 
-test('remote ghost deployable hits become bounded owner proposals and only owner replay changes HP', async () => {
+test('remote ghost deployable hits emit bounded proposals but raw replay cannot change owner HP', async () => {
   const f = await fixture({ fullRuntime: true, realProjectiles: true });
   const owner = f.make('shooter'), shooter = f.make('shooter');
   owner.team = 0; owner.nid = 1; owner.netLife = 3;
@@ -407,13 +407,14 @@ test('remote ghost deployable hits become bounded owner proposals and only owner
   assert.equal(proposal.damage, 40);
   assert.equal(remoteBeacon.actor, shooter);
 
-  // A remote client's valid proposal reaches the authority that owns the wall.
+  // A raw proposal is not a native launch/contact receipt. Full native positive
+  // coverage lives in network-replication/tests/device-native-contact-20261030.
   const wall = deployed(f, owner, 'splashWall');
   const before = wall.hp;
   const hit = { ...proposal, targetOwnerId: owner.nid, targetLife: wall.sourceLife, targetOwnerLife: owner.netLife,
     targetSeq: wall.seq, targetSubId: 'splashWall', damage: 40, x: wall.pos.x, y: wall.pos.y, z: wall.pos.z, actor: shooter, life: shooter.netLife };
-  assert.equal(f.installedRuntime.replaySub(hit), true);
-  assert.equal(wall.hp, before - 40);
+  assert.equal(f.installedRuntime.replaySub(hit), false);
+  assert.equal(wall.hp, before);
   assert.equal(f.installedRuntime.replaySub(hit), false, 'duplicate object hit proposals are ignored');
 });
 
@@ -589,7 +590,7 @@ test('a custom sub sweep settles against the existing Big Bubbler and Splash Wal
     'the burst uses Bomb_DirectHit ×2 once, plus the wall’s 1/400-per-frame lifetime drain');
 });
 
-test('a locked Torpedo is shootable, defuses at 20 HP without bursting, and owner replay accepts its flight hit', async () => {
+test('a locked Torpedo is shootable and defuses at 20 HP; raw owner claims still require native contact', async () => {
   const f=await fixture({fullRuntime:true,realProjectiles:true});
   const owner=f.make('shooter'),shooter=f.make('shooter');
   owner.team=0;shooter.team=1;equip(owner,'torpedo');
@@ -641,8 +642,8 @@ test('a locked Torpedo is shootable, defuses at 20 HP without bursting, and owne
   const replay={...proposal,actor:remoteShooter,life:remoteShooter.netLife,targetOwnerId:localOwner.nid,
     targetOwnerLife:localOwner.netLife,targetLife:owned.sourceLife,targetSeq:owned.seq,targetSubId:'torpedo',
     x:10,y:1,z:0,damage:20};
-  assert.equal(receiver.installedRuntime.replaySub(replay),true,'owner replay accepts a validated flight-phase Torpedo hit');
-  assert.equal(owned.dead,true);
+  assert.equal(receiver.installedRuntime.replaySub(replay),false,'raw flight-phase proposal has no native launch/contact');
+  assert.equal(owned.dead,false);assert.equal(owned.hp,20);
   assert.equal(receiver.installedRuntime.replaySub(replay),false,'replayed Torpedo hits deduplicate');
 });
 
