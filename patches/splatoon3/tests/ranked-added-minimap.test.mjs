@@ -93,3 +93,11 @@ test('composed Tower sparse checkpoint teams retain team-index colours and inher
  const steps=[teams=>{delete teams[0];},teams=>{teams[0]=teams[1];delete teams[1];},teams=>{const inherited=teams[0];delete teams[0];const proto=Object.create(Array.prototype);Object.defineProperty(proto,'0',{value:inherited,configurable:true});Object.setPrototypeOf(teams,proto);},teams=>{teams[0][0].progress=.1;}];
  for(const change of steps){for(const h of pair){change(h.G.match.ranked.stage.tower.checkpoints);h.m.update(1/30,h===pair[0]);}assert.deepEqual(pair[1].snapshot().output,pair[0].snapshot().output);}
 });
+
+test('already-dirty overlay coalesces intermediate states and snapshots the actual final composite',()=>{
+ const old=minimapHarness(oldInstall),current=minimapHarness(installRankedUi);
+ for(const h of [old,current]){h.G.match.ranked=engine('tower');h.m.update(0,true);h.m._composeAcc=0;h.m._composeDirty=true;}
+ for(let i=0;i<3;i++)for(const h of [old,current]){h.G.match.ranked.rule.state.position[0]=i+2;h.m.update(1/120);}
+ const before=current.counts();for(const h of[old,current]){h.G.match.ranked.rule.state.position[0]=5;h.m.update(1/120);}assert.equal(current.counts().composes,before.composes+1);assert.deepEqual(current.snapshot().output,old.snapshot().output);
+ const stable=current.counts();for(let i=0;i<120;i++)current.m.update(1/60);assert.deepEqual(current.counts(),stable,'no extra redraw from an intermediate dirty-state snapshot');
+});
