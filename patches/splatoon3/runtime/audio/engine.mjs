@@ -5,6 +5,7 @@ import { chargerRiseBuffer, playChargerRise, prewarmChargerRise, disposeChargerR
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
+import { wrapSpinnerChargeLoop, syncCatalogSpinnerCharge } from './spinner-charge-layer.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
@@ -233,8 +234,10 @@ export function installWeaponAudioEngine(Engine){
     id=borrowedRecordedMainId(mainAudioSourceId(id));
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
+    const decorate = h => event === 'charge' && AUDIO_RECIPES[id]?.family === 'splatling'
+      ? wrapSpinnerChargeLoop(this,id,h,options) : h;
     if(id.startsWith('special:')&&this._realS3Loader?.declares(id,event)===false)return null;
-    if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);
+    if(bank.authorized.byEvent.has(`${id}:${event}`))return decorate(this.loop(name,options));
     // A loop can begin after its source is decoded, provided the effect still
     // exists. Returning a permanent silent handle here leaves special effects
     // muted for their entire lifetime in kit-runtime's active map.
@@ -259,8 +262,9 @@ export function installWeaponAudioEngine(Engine){
         if(!actual||actual.playing===false){actual=null;failed=true;}
       }catch{failed=true;actual=null;}
     }).catch(()=>{failed=true;/* Missing/unavailable remains silent. */});
-    return handle;
+    return decorate(handle);
   };
+  p.syncSpinnerCharge=function(runner){ return syncCatalogSpinnerCharge(this,runner); };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
     // Only selected Splat Charger loadouts request their separate rise clip.
     if(this.ctx&&this._warmWeapons?.size){
