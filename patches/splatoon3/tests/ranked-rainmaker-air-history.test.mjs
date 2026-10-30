@@ -96,7 +96,10 @@ for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick
       ch._applyPose=function(...args){try{return apply.apply(this,args);}finally{if(state!==null){this.sourceMotion.state=state;state=null;}}};
      }
     }
-    if(row.frame!==(scenario==='carry-jump'?113:305))return;
+    // The attack-scale fix clears charge/recovery before this landing. The
+    // historical control's measurable reach deficit is now later in the same
+    // native land clip (314), while frame 305 is already reachable.
+    if(row.frame!==(scenario==='carry-jump'?113:314))return;
     beforeDrop={frame:row.frame,grip:row.grip,pending:row.pending,source:row.source};assert.equal(row.source,'land');assert.equal(row.solves,1);
     if(corrected){assert.ok(row.grip<.001);assert.equal(row.pending,true);}else{assert.ok(row.grip>.001,'the control must reproduce a real landing gap');assert.equal(row.pending,false);}
     G.match.ranked.rule._drop({id:String(a.nid),team:a.team,pos:a.pos.toArray(),grounded:true},'qa-drop');a.intent.fire=a.intent.jump=a.intent.sub=false;

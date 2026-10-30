@@ -313,7 +313,7 @@ export function sourceFootLift(retarget, ankle, side) {
 /** 0..1 weight of the standing ready-stance corrections (ground idle only). */
 function idleWeight(retarget) {
   const c = controllerOf(retarget);
-  if (!enabled || !c || c.manual || c.formKid === false) return 0;
+  if (!enabled || !c || c.manual || c.formKid === false || !isCorrectedState(c.state)) return 0;
   const st = postureState(retarget);
   // Firing stands still on the sourced shoot clip and the native upper body:
   // its shot origin and stance stay the existing ones.

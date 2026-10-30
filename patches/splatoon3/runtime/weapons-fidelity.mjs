@@ -2623,9 +2623,9 @@ export function installWeaponsFidelity(context,profile) {
 //    install fails closed. The field is promoted, not invented.
 //  * The guide is a pure dry prediction. It reuses the installed projectile
 //    motion law (advanceFidelityProjectile + the installed move record) and the
-//    installed muzzle/aim/launch-speed law, advances exactly ShotGuideFrame
-//    fixed 60 Hz steps, and consumes no random draw. There is no second
-//    projectile engine and no spread sample.
+//    installed muzzle/aim/launch-speed law, advances at most ShotGuideFrame
+//    fixed 60 Hz steps (stopping on solid contact), and consumes no random draw.
+//    There is no second projectile engine and no spread sample.
 //  * Authoritative state is untouched: camera aim, aimPoint, onTarget, inRange,
 //    launch direction, damage, trajectory and the PRNG stream are not modified.
 //    The guide never steers a projectile toward a screen point.
@@ -2660,7 +2660,9 @@ function guideScratch() {
 function guideLaunchState(actor, weapon, out) {
   const projectiles = guideApi.G.projectiles;
   const probe = out.probe, runner = actor.weaponRunner;
-  const charge = runner?.fidelitySplatlingCharge ?? runner?.charge ?? 0;
+  // The stream's gauge drains independently of its released launch speed.
+  // During a new charge, a retained previous release must not drive the guide.
+  const charge = runner?.streaming ? (runner.fidelitySplatlingCharge ?? runner.charge ?? 0) : (runner?.charge ?? 0);
   projectiles._muzzle(actor, out.muzzle);
   // Match the installed centerline convergence before advancing the guide.
   // Skip the random cone and spawn-speed bias so this is a deterministic guide.
@@ -2687,9 +2689,9 @@ function guideLaunchState(actor, weapon, out) {
   return probe;
 }
 
-// World point the weapon's own projectile passes through after ShotGuideFrame
-// fixed steps. Returns the shared state object, or null when the weapon has no
-// guide frame / no installed launch path.
+// World point the weapon's own projectile reaches by ShotGuideFrame fixed steps,
+// stopping at its first solid field contact. Returns the shared state object,
+// or null when the weapon has no guide frame / no installed launch path.
 export function computeShotGuide(actor) {
   const weapon = actor?.weapon, frames = shotGuideFrames(weapon);
   // Partial/source-only test realms can execute the adapted PlayerController
@@ -2712,9 +2714,10 @@ export function computeShotGuide(actor) {
   for (let i = 0; i < frames; i++) {
     if(probe.inkProfile)guideApi.G.projectiles._advanceInkGuide(probe);
     else advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
-    // Shooter guide frame is a maximum age, not permission to draw through
-    // the field. Stop on the actual shot's sphere contact when aiming down.
-    if(weapon.kind==='shooter'&&s.hit){
+    // Guide frame is a maximum age, not permission to draw through the field.
+    // Both supported families stop on the actual shot's sphere contact; a
+    // below-floor Splatling endpoint otherwise projects far from its real hit.
+    if(s.hit){
       if(probe.inkProfile)guideApi.G.projectiles._inkGuideContact(probe,s.hit);
       else sweptWorldHit(guideApi.G.physics,probe.prev,probe.pos,fieldRadiusAt(probe,probe.fidelityPrevAge),fieldRadiusAt(probe,probe.age),s.hit,true);
       if(s.hit.hit){probe.pos.copy(s.hit.point);break;}

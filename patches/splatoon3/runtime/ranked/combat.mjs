@@ -195,12 +195,12 @@ export function createRankedEffects(api, match) {
       if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
       if (!attackVisuals()) return;
       const mesh = visuals.shot(G.teamColors[e.team], e.charge, e.shotOrigin.muzzle);
-      shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
-        actor: a, mesh, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
-      shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 3.36 : 1.68);
+      shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 90), age: 0, team: e.team,
+        actor: a, mesh, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 22, trailRadius: e.trailRadius ?? 2.4, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 5, nearRadius: e.nearRadius ?? 4.6, radius: e.radius ?? 7, visualOnly });
+      shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 16.8 : 8.4);
       visuals.updateShot(mesh, shots.at(-1).vel, 0);
       if (!a.remote && a.vel) {
-        const recoil = e.recoil ?? (e.charge >= 1 ? 1.44 : .72);
+        const recoil = e.recoil ?? (e.charge >= 1 ? 7.2 : 3.6);
         a.vel.x -= e.aim[0] * recoil; a.vel.z -= e.aim[2] * recoil;
       }
       G.audio?.play?.('shoot_charger', { pos: mesh.position });

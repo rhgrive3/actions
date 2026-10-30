@@ -20,7 +20,7 @@ function composed(rel) {
 
 test('#1158 post-roll Dualies exposes one centered ring and preserves normal twin shot cues', () => {
   const { code } = composed('src/ui/hud.js');
-  assert.match(code, /<circle cx="0" cy="0" r="6\.2" class="iw-ret__ring thin iw-ret__merged"\/>/);
+  assert.match(code, /<g class="iw-ret__merged"><circle r="12\.8" class="iw-ret__ring thin"\/><circle r="1\.7" class="iw-ret__dual-dot"\/><\/g>/);
   assert.match(code, /this\._twin = \[r\.querySelector\('\.iw-ret__twin\.r'\)/);
   const css = fs.readFileSync(path.join(ROOT, 'patches/splatoon3/ui.css'), 'utf8');
   assert.match(css, /\.iw-ret--dualies \.iw-ret__merged \{\s*opacity: 0;\s*visibility: hidden;\s*transition: none;/);

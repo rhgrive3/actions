@@ -707,6 +707,7 @@ export function installWeapons(context, profile) {
   };
   WeaponRunner.prototype._charger = function (dt, inp, w) {
     const a = this.a, held = !!a.intent.fire, epsilon = 1e-10;
+    const releasedStartup = this.s3ChargerStartupT > epsilon;
     // A held ZR must not reopen a new charge during the 6F ZL-cancel recovery.
     if (this.s3ChargerCancelSwimRemaining > epsilon) return;
     // #680: retain the already-paid charge across the one fixed release frame.
@@ -789,9 +790,26 @@ export function installWeapons(context, profile) {
       this.s3Stored = null;
     }
 
-    // A release before the sourced minimum release time cancels without firing.
-    if (this.charging && !held && this.s3ChargerHeldTime + epsilon < (w.minReleaseTime || 0)) {
-      cancelStored(this); this.s3ChargerHeldTime = 0; return;
+    // A short physical press is a minimum shot, including a release during
+    // the one-tick startup. Top up only the missing minimum ink; cancellation
+    // by squid/sub/special and stored-charge admission remain separate owners.
+    if (!held && !inp.fire && !releaseDue && a.form !== 'squid' && !inp.sub &&
+        !a.specialActive && !a.superJumpState && a.alive !== false &&
+        (this.charging || releasedStartup) && this.cooldown <= 0) {
+      const minimum = Math.min(1, (w.minimumChargeTime ?? 8 / 60) / Math.max(epsilon, w.chargeTime));
+      if (!this.charging || this.chargeT + epsilon < minimum ||
+          this.s3ChargerHeldTime + epsilon < (w.minReleaseTime || 0)) {
+        const missingInk = Math.max(0, w.inkMin - (this.s3ChargerSpent || 0));
+        if (a.ink + epsilon < missingInk) {
+          cancelStored(this); this.s3ChargerHeldTime = 0; this._empty(); return;
+        }
+        a.ink = Math.max(0, a.ink - missingInk);
+        this.s3ChargerSpent = (this.s3ChargerSpent || 0) + missingInk;
+        this.s3ChargerProgressiveSpend = true;
+        this.charging = true; this.charge = Math.max(this.charge || 0, minimum);
+        this.chargeT = Math.max(this.chargeT || 0, minimum);
+        this.s3ChargerHeldTime = Math.max(this.s3ChargerHeldTime || 0, w.minReleaseTime || 0);
+      }
     }
     if (!this.charging && !this.s3Stored) this.s3ChargerHeldTime = 0;
 

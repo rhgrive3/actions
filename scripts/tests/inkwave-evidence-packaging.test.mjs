@@ -1,7 +1,48 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
-import {packageEvidence} from '../ci/package-inkwave-evidence.mjs';
+import {packageEvidence,trimEvidenceInventory} from '../ci/package-inkwave-evidence.mjs';
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const fixture=()=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'recovery-evidence-')),input=path.join(root,'original'),output=path.join(root,'bounded');fs.mkdirSync(input);return {root,input,output};};
+test('inventory trimming retains the maximal original prefix at UTF-8 byte and omitted-count boundaries',()=>{
+ const encode=value=>Buffer.from(JSON.stringify(value,null,2)+'\n');
+ const original={schema:1,status:'over-budget',sourceSha:'a'.repeat(40),limitBytes:8192,originalBytes:9000,inventorySha256:'b'.repeat(64),inventoryEntries:129,omittedInventoryEntries:0,
+  files:Array.from({length:129},(_,i)=>({path:`証跡/é-${i}-"\\😀.json`,bytes:i,sha256:'c'.repeat(64),disposition:'omitted',reason:'artifact-budget'}))};
+ for(const retained of [0,1,29,30,119,120,128,129]){
+  const boundary=structuredClone(original);boundary.files.length=retained;boundary.omittedInventoryEntries=129-retained;
+  for(const delta of [-1,0,1]){
+   const limit=encode(boundary).length+delta,expected=structuredClone(original),actual=structuredClone(original);
+   // The former linear algorithm is the oracle, including an oversized empty manifest.
+   while(encode(expected).length>limit&&expected.files.length){expected.files.pop();expected.omittedInventoryEntries++;}
+   trimEvidenceInventory(actual,limit);
+   assert.deepEqual(encode(actual),encode(expected),`retained=${retained}, delta=${delta}`);
+   if(actual.files.length<original.files.length){
+    const next=structuredClone(original);next.files.length=actual.files.length+1;next.omittedInventoryEntries=129-next.files.length;
+    assert(encode(next).length>limit,'one more retained row must exceed the exact byte limit');
+   }
+  }
+ }
+});
+test('large inventory keeps copied rows aligned with priority and complete omission identity',async()=>{
+ const f=fixture();try{
+  const count=1000;
+  for(let i=0;i<count;i++)fs.writeFileSync(path.join(f.input,`証跡-${String(i).padStart(4,'0')}.json`),'x'.repeat(100));
+  fs.writeFileSync(path.join(f.input,'failure.log'),'last failure\n');fs.writeFileSync(path.join(f.input,'large.bin'),Buffer.alloc(65536));
+  const r=await packageEvidence(f.input,{output:f.output,limit:16384});
+  assert(r.failed&&r.overBudget);assert(r.submittedBytes<=16384);assert(r.manifest.omittedInventoryEntries>900);
+  assert.equal(r.manifest.inventoryEntries,count+2);assert.equal(r.manifest.files[0].path,'failure.log');assert.equal(r.manifest.files[0].disposition,'copied');
+  assert(r.manifest.files.some(row=>row.reason==='manifest-budget'),'expanded copy metadata exercises reverse cleanup');
+  for(const row of r.manifest.files){assert.equal(row.sha256,hash(fs.readFileSync(path.join(f.input,row.path))));if(row.disposition==='copied')assert.equal(row.submittedSha256,hash(fs.readFileSync(path.join(f.output,row.submittedPath))));}
+ }finally{fs.rmSync(f.root,{recursive:true,force:true});}
+});
+test('a file changing between inventory hashing and copying remains rejected',async()=>{
+ const f=fixture(),open=fs.openSync;try{
+  const changing=path.join(f.input,'failure.log');fs.writeFileSync(changing,'original failure\n');fs.writeFileSync(path.join(f.input,'large.bin'),Buffer.alloc(65536));
+  let reads=0;
+  fs.openSync=function(file,...args){if(file===changing&&++reads===2)fs.writeFileSync(changing,'modified failure\n');return open.call(this,file,...args);};
+  const r=await packageEvidence(f.input,{output:f.output,limit:8192});
+  assert(r.failed&&r.overBudget);const row=r.manifest.files.find(row=>row.path==='failure.log');
+  assert.equal(row.sha256,hash('original failure\n'));assert.equal(row.reason,'changed-during-packaging');assert.equal(row.disposition,'omitted');assert(!fs.existsSync(path.join(f.output,'files/failure.log')));
+ }finally{fs.openSync=open;fs.rmSync(f.root,{recursive:true,force:true});}
+});
 test('at the limit submits identical full originals; one byte over produces a failed bounded package',async()=>{
  const f=fixture();try{fs.writeFileSync(path.join(f.input,'record.bin'),Buffer.alloc(4096,7));const before=fs.readFileSync(path.join(f.input,'record.bin'));
  const full=await packageEvidence(f.input,{output:f.output,limit:4096});assert.equal(full.path,f.input);assert.equal(full.failed,false);assert.equal(full.submittedBytes,4096);assert(!fs.existsSync(f.output));

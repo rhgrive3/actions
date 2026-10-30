@@ -1,0 +1,68 @@
+import * as THREE from 'three';
+
+export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
+ const g=mesh.geometry,p=g.getAttribute('position'),source=g.index?.array;
+ if(!source||source.length<minTriangles*3||!Number.isFinite(tileSize)||tileSize<=0)return null;
+ const tiles=[],byKey=new Map(),ids=new Uint32Array(source.length/3),point=new THREE.Vector3();
+ for(let t=0;t<ids.length;t++){
+  const at=t*3,a=source[at],b=source[at+1],c=source[at+2];
+  const x=(p.getX(a)+p.getX(b)+p.getX(c))/3,y=(p.getY(a)+p.getY(b)+p.getY(c))/3,z=(p.getZ(a)+p.getZ(b)+p.getZ(c))/3;
+  const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
+  let id=byKey.get(key);
+  if(id===undefined){id=tiles.length;byKey.set(key,id);tiles.push({box:new THREE.Box3()});}
+  ids[t]=id;
+  const box=tiles[id].box;
+  box.expandByPoint(point.fromBufferAttribute(p,a));box.expandByPoint(point.fromBufferAttribute(p,b));box.expandByPoint(point.fromBufferAttribute(p,c));
+ }
+ // Small/local objects already have the renderer's per-object culling.
+ if(tiles.length<2)return null;
+ for(const tile of tiles){tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;}
+ const tileOf=tiles.length<=65536?new Uint16Array(ids):ids;
+ const index=new THREE.BufferAttribute(source.slice(),1).setUsage(THREE.DynamicDrawUsage);
+ g.setIndex(index);
+ const view=new THREE.Matrix4(),frustum=new THREE.Frustum(),last=new Float64Array(16),visible=new Uint8Array(tiles.length).fill(1);
+ const upload={start:0,count:0};
+ let valid=false,coordinateSystem,reversedDepth,disposed=false;
+ const select=camera=>{
+  if(disposed)return;
+  view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse).multiply(mesh.matrixWorld);
+  const e=view.elements;
+  let same=valid&&coordinateSystem===camera.coordinateSystem&&reversedDepth===camera.reversedDepth;
+  if(same)for(let i=0;i<16;i++)if(!Object.is(e[i],last[i])){same=false;break;}
+  if(same)return;
+  last.set(e);valid=true;coordinateSystem=camera.coordinateSystem;reversedDepth=camera.reversedDepth;
+  frustum.setFromProjectionMatrix(view,coordinateSystem,reversedDepth);
+  let changed=false;
+  for(let i=0;i<tiles.length;i++){
+   const on=frustum.intersectsSphere(tiles[i].sphere)?1:0;
+   if(on!==visible[i])changed=true;
+   visible[i]=on;
+  }
+  if(!changed)return;
+  const target=index.array;
+  let count=0,dirtyStart=Infinity;
+  for(let t=0;t<tileOf.length;t++){
+   if(!visible[tileOf[t]])continue;
+   const at=t*3;
+   for(let k=0;k<3;k++){
+    const value=source[at+k];
+    if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);target[count]=value;}
+    count++;
+   }
+  }
+  g.setDrawRange(0,count);
+  if(dirtyStart<count){
+   // A later camera (e.g. a water reflection) may change the selection before
+   // an upload. Preserve all pending writes until WebGL consumes the buffer.
+   let start=dirtyStart,end=count;
+   for(const range of index.updateRanges){start=Math.min(start,range.start);end=Math.max(end,range.start+range.count);}
+   upload.start=start;upload.count=end-start;
+   index.clearUpdateRanges();index.updateRanges.push(upload);index.needsUpdate=true;
+  }
+ };
+ const beforeRender=mesh.onBeforeRender,beforeShadow=mesh.onBeforeShadow;
+ mesh.onBeforeRender=function(r,s,c,geometry,material,group){select(c);return beforeRender.call(this,r,s,c,geometry,material,group);};
+ mesh.onBeforeShadow=function(r,o,c,shadowCamera,geometry,material,group){select(shadowCamera);return beforeShadow.call(this,r,o,c,shadowCamera,geometry,material,group);};
+ return {tiles:tiles.length,select,dispose(){disposed=true;mesh.onBeforeRender=beforeRender;mesh.onBeforeShadow=beforeShadow;}};
+}
+

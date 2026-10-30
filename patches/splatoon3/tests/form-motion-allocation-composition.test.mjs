@@ -155,7 +155,7 @@ function motionState(rigged) {
     reversing: !!state.start, blocked: state.blocked, previous: state.previous && { ...state.previous } };
 }
 
-test('full six-adapter native Actor keeps form trajectories identical and reuses per-Character snapshots', async () => {
+test('responsive form visuals preserve native gameplay and reuse per-Character snapshots', async () => {
   const baseline = await production({ legacy: true }), optimized = await production();
   baseline.context.__testSeed = 0x12345678;
   const old = rig(baseline, 'form allocation baseline');
@@ -169,14 +169,14 @@ test('full six-adapter native Actor keeps form trajectories identical and reuses
     const expected = old.step(dt);
     optimized.context.__testSeed = seed;
     const actual = current.step(dt);
-    const difference = firstDifference(actual, expected);
-    assert.deepEqual(actual, expected, difference ?
-      `native Actor/Character trajectory differs at frame=${frame} dt=${dt}: ${JSON.stringify({
-        difference, baselineState: motionState(old), optimizedState: motionState(current),
-        baselineFidget: old.ch.fidget, optimizedFidget: current.ch.fidget,
-        baselineTimer: Array.from(old.ch.tr), optimizedTimer: Array.from(current.ch.tr),
-        baselineSeed: baseline.context.__testSeed, optimizedSeed: optimized.context.__testSeed,
-      })}` : 'native Actor/Character trajectory differs');
+    // The 2026-10-30 user-requested exchange intentionally changes the old
+    // silhouette/pose trajectory. Keep the immutable allocation control and
+    // compare its gameplay, form clock and action timers independently.
+    assert.deepEqual(actual.actor, expected.actor, `gameplay at frame ${frame}`);
+    for (const key of ['form', 'formPrev', 'formT', 'timers']) {
+      assert.deepEqual(actual.character[key], expected.character[key], key);
+    }
+    assert.ok(actual.character.scales.every(Number.isFinite));
   };
   try {
     for (let i = 0; i < 90; i++) bothStep();

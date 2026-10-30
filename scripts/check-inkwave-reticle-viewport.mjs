@@ -78,7 +78,7 @@ try{
    assert.ok(Math.abs(row.hit.x-row.ret.x)<.03&&Math.abs(row.hit.y-row.ret.y)<.03,'confirmed hit follows projected position');
    if(row.kind==='shooter')assert.ok(Math.abs(Math.abs(row.expanded.x-row.zero.x)-18.3)<.07,'projected spread must not shrink twice');
    if(row.twins){
-    for(const [i,x] of [.1,-.13].entries())assert.ok(Math.abs(row.twins[i].x-row.ret.x-x*viewport.width/2)<.04,'dualies guide remains at projected impact');
+    for(const [i,x] of [.1,-.13].entries())assert.ok(Math.abs(row.twins[i].x-row.anchor.x-x*viewport.width/2)<.04,'dualies guide remains at projected impact without adding the cluster offset twice');
    }
    if(row.reach){const expected=[.1*viewport.width/2,-.1*viewport.height/2,.2*viewport.width/2,.1*viewport.height/2];row.reach.forEach((v,i)=>assert.ok(Math.abs(v-expected[i])<.06,'charger reach remains at projected impact'));}
   }
@@ -89,6 +89,13 @@ try{
  await page.setViewportSize({width:844,height:390});
  const resized=await page.evaluate(()=>{const h=viewportProbe.resized;h._updCrosshair({weapon:'shooter',crosshair:{spread:18.3}},1/60);return{scale:h._L.reticleScale,sp:+h.ret.style.getPropertyValue('--sp'),raw:h._L.spread};});
  assert.ok(Math.abs(resized.sp*resized.scale-18.3)<.06);assert.equal(resized.raw,18.3);
- fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({kind:'composed HUD component browser QA',rows,resized},null,2)+'\n');
+ // Reuse the same Dualies DOM while only height changes: projected X stays
+ // constant, but the artwork scale and its compensated SVG transform change.
+ await page.setViewportSize({width:1280,height:720});
+ await page.evaluate(()=>{const v=viewportProbe;v.local.weapon=v.WEAPONS.dualies;v.sameDual=v.make('dualies',0);v.sameDual._updCrosshair({weapon:'dualies',crosshair:{guide:{x:677,y:341}}},1/60);});
+ await page.setViewportSize({width:1280,height:390});
+ const dualResize=await page.evaluate(()=>{const h=viewportProbe.sameDual;h._updCrosshair({weapon:'dualies',crosshair:{guide:{x:677,y:176}}},1/60);const center=n=>{const r=n.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};};return{anchor:center(h.xh),twins:h._twin.map(center),scale:h._L.reticleScale};});
+ for(const [i,x]of [.1,-.13].entries())assert.ok(Math.abs(dualResize.twins[i].x-dualResize.anchor.x-x*640)<.04,'same Dualies DOM compensates a height-only resize');
+ fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({kind:'composed HUD component browser QA',rows,resized,dualResize},null,2)+'\n');
  console.log(JSON.stringify({pass:true,viewports:rows.length,weaponViews:rows.reduce((n,r)=>n+r.result.length,0),out}));
 }finally{await browser.close();}

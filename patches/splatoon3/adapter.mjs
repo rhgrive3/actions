@@ -89,7 +89,20 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);', 'c._kidXform(c.limbs.armR.lo,this.armPole,this.parentQ);this.armPole.sub(this.shoulderR);sourceStandPole(this,this.armPole);', 'source shooter standing elbow');
     // ToHuman/ToSquid own the whole body only for a grounded, stationary change (moving: locomotion steps; air: jump pose).
     code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
+    code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;',
+      'this.formTime=Math.max(0,dt);this.formEvent=true;this.s3FormClipDeclined=false;this.s3FormSupportRestored=false;', 'form presentation responds on its input tick');
     code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
+    code = replaceOnce(code, "this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)",
+      'this.formTime<this.formDuration', 'humanoid form clip ends with the silhouette exchange');
+    code = replaceOnce(code, "special={name:this.formKid?'ToHuman':'ToSquid',frame:this.formTime*HOST_MOTION.fps};",
+      "special={name:this.formKid?'ToHuman':'ToSquid',frame:sourceFormFrame(this,this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames)};", 'humanoid form clip follows exchange');
+    code = replaceOnce(code, "this.formTime<this.squidBank.clips.get(this.formKid?'Sqd_ToHuman':'Sqd_ToSquid').frames/HOST_MOTION.fps",
+      'this.formTime<this.formDuration', 'squid form clip ends with the silhouette exchange');
+    code = replaceOnce(code, "name=this.formKid?'Sqd_ToHuman':'Sqd_ToSquid';frame=this.formTime*HOST_MOTION.fps;",
+      "name=this.formKid?'Sqd_ToHuman':'Sqd_ToSquid';frame=sourceFormFrame(this,this.squidBank.clips.get(name).frames);", 'squid form clip follows exchange');
+    code = replaceOnce(code, "const groundEnabled=activation>=1&&this.state!=='manual'&&this.state!=='ToHuman'&&this.state!=='ToSquid'&&this.state!=='victory'&&this.state!=='defeat';",
+      "const formPlant=this.grounded&&(this.state==='ToHuman'||this.state==='ToSquid');\n  if(formPlant)this.contact.fill(1);\n  const groundEnabled=activation>=1&&this.state!=='manual'&&this.state!=='victory'&&this.state!=='defeat';", 'keep grounded transformation feet supported');
+    code = replaceOnce(code, '  const balanceActive=', '  restoreFormSupport(this,HOST_MOTION.transitionSeconds);\n  const balanceActive=', 'retire rejected transform contacts before settled idle');
     code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
     // #1116: the Player00 bank stores the Splatling (Glng) jump start only as `Jump_Glngl00_St` (sic; Player01
     // names it `Jump_Glng00_St`, which the regular lookup still prefers). Its last
@@ -104,7 +117,7 @@ export function adaptSource(rel, code) {
       '  if(this.transitionTime===0||this.s3StateBlendSeconds===undefined)this.s3StateBlendSeconds=special?Math.min(HOST_MOTION.transitionSeconds,this.bank.clips.get(special.name).frames/HOST_MOTION.fps/2):HOST_MOTION.transitionSeconds;\n  const blendSeconds=this.s3StateBlendSeconds;',
       'source state crossfade length fixed at state entry');
     return "import { nativeWeaponPoseRequired, sourceActionUpperOnly } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
-      "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
+      "import { sourceAirBlendStart, sourceFormClipAdmitted, sourceFormDuration, sourceFormFrame, restoreFormSupport } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
       "import { reverseShotRelease } from '../../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
       "import { sourceCarryWeapon, sourceStandGrip, sourceStandPole } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
@@ -562,12 +575,16 @@ export function adaptSource(rel, code) {
     // the circle otherwise replaces its SVG translate during each shot.
     code = replaceOnce(code,
       '<circle cx="-10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin l"/><circle cx="10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin r"/>',
-      '<g class="iw-ret__hand l"><circle cx="-10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin l"/></g><g class="iw-ret__hand r"><circle cx="10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin r"/></g>',
+      '<g class="iw-ret__dual-camera"><circle cx="-19.5" r="12.8"/><circle cx="19.5" r="12.8"/></g><g class="iw-ret__hand l"><circle cx="-19.5" r="12.8" class="iw-ret__ring thin iw-ret__twin l"/><circle cx="-19.5" r="1.7" class="iw-ret__dual-dot"/></g><g class="iw-ret__hand r"><circle cx="19.5" r="12.8" class="iw-ret__ring thin iw-ret__twin r"/><circle cx="19.5" r="1.7" class="iw-ret__dual-dot"/></g>',
       'Dualies separate guide and shot-kick transform owners');
     code = replaceOnce(code,
       "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];",
       "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];\n      this._twinGuide = [r.querySelector('.iw-ret__hand.r'), r.querySelector('.iw-ret__hand.l')];",
       'Dualies live projection handles rebuilt with their ring DOM');
+    code = replaceOnce(code,
+      "const TWIN_KICK = [{ transform: 'scale(1.55)', strokeWidth: '2.6px' }, { transform: 'scale(1)', strokeWidth: '1.8px' }];",
+      "const TWIN_KICK = [{ opacity: 1 }, { opacity: .65 }];",
+      'Dualies shot feedback preserves ring size and aim position');
     // Reticle art was calibrated at 720 CSS pixels high. Keep that geometry
     // on small viewports without scaling the projected impact coordinates.
     code = replaceOnce(code,
@@ -723,28 +740,36 @@ export function adaptSource(rel, code) {
     if (L.kind === 'dualies') {
       const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon, guideCam);
       const turret = !!guideMe?.weaponRunner?.s3Turret;
+      this.ret.classList.toggle('is-dual-firing', (guideMe?.weaponRunner?.firingT || 0) > 0);
       if (pair && this._twinGuide) {
         const previous = L.dualGuideValues || (L.dualGuideValues = []);
         for (let i = 0; i < 2; i++) {
           const point = this._project(guideCam, pair[i].x, pair[i].y, pair[i].z);
-          const x = point && point.z < 1 ? point.x * innerWidth * .5 : 0;
-          const y = point && point.z < 1 ? -point.y * innerHeight * .5 : 0;
+          const x = point && point.z >= -1 && point.z < 1 ? point.x * innerWidth * .5 - (L.guideX || 0) : 0;
+          const y = point && point.z >= -1 && point.z < 1 ? -point.y * innerHeight * .5 - (L.guideY || 0) : 0;
           const keyX = Math.round(x * 10), keyY = Math.round(y * 10);
-          if (!L.dualGuide || previous[i * 2] !== keyX || previous[i * 2 + 1] !== keyY || L.dualGuideTurret !== turret) {
+          if (!L.dualGuide || previous[i * 2] !== keyX || previous[i * 2 + 1] !== keyY || L.dualGuideTurret !== turret || L.dualGuideScale !== reticleScale) {
             previous[i * 2] = keyX; previous[i * 2 + 1] = keyY;
-            const baseX = i === 0 ? 10.5 : -10.5;
-            const lockX = turret ? (i === 0 ? 4 : -4) : 0;
+            const baseX = i === 0 ? 19.5 : -19.5;
             this._twinGuide[i]?.setAttribute('transform',
-              \`translate(\${(x / reticleScale - baseX + lockX).toFixed(2)} \${(y / reticleScale).toFixed(2)})\`);
+              \`translate(\${(x / reticleScale - baseX).toFixed(2)} \${(y / reticleScale).toFixed(2)})\`);
           }
         }
-        L.dualGuide = true; L.dualGuideTurret = turret;
+        L.dualGuide = true; L.dualGuideTurret = turret; L.dualGuideScale = reticleScale;
+        const cameraSight = this.ret.querySelector('.iw-ret__dual-camera');
+        cameraSight?.setAttribute('transform', \`translate(\${(-(L.guideX || 0) / reticleScale).toFixed(2)} \${(-(L.guideY || 0) / reticleScale).toFixed(2)})\`);
+        this.ret.classList.toggle('has-dual-guide', true);
         if (turret && this._dualMerged) {
           const point = this._project(guideCam, pair[0].x, pair[0].y, pair[0].z);
-          const x = point && point.z < 1 ? point.x * innerWidth * .5 / reticleScale : 0;
-          const y = point && point.z < 1 ? -point.y * innerHeight * .5 / reticleScale : 0;
+          const x = point && point.z >= -1 && point.z < 1 ? (point.x * innerWidth * .5 - (L.guideX || 0)) / reticleScale : 0;
+          const y = point && point.z >= -1 && point.z < 1 ? (-point.y * innerHeight * .5 - (L.guideY || 0)) / reticleScale : 0;
           this._dualMerged.setAttribute('transform', \`translate(\${x.toFixed(2)} \${y.toFixed(2)})\`);
         }
+      } else {
+        L.dualGuide = false;
+        this.ret.classList.toggle('has-dual-guide', false);
+        for (const twin of this._twinGuide || []) twin?.removeAttribute('transform');
+        this._dualMerged?.removeAttribute('transform');
       }
     } else if (L.dualGuide != null) {
       L.dualGuide = null;

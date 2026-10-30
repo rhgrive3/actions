@@ -225,7 +225,8 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     patch('  _configureInkRound(p, actor, weapon) {', `  _nominalInkGuide(p, actor, weapon, from, dir, target, speed) {
     const profile = profileFor(weapon);
     if (!profile) { p.inkProfile = null; return false; }
-    const charge = actor.weaponRunner?.fidelitySplatlingCharge ?? actor.weaponRunner?.charge ?? 0;
+    const runner = actor.weaponRunner;
+    const charge = runner?.streaming ? (runner.fidelitySplatlingCharge ?? runner.charge ?? 0) : (runner?.charge ?? 0);
     correctInkAim(profile, from, dir, target, speed,
       Math.min(weapon.range, referenceReach(profile, charge * (weapon.chargeTime || 0))));
     p.inkProfile=profile; p.inkFrame=0; p.inkPhase=0; p.age=0; p.life=INK_MODEL.headLife;

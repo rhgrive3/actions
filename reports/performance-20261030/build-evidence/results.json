@@ -1,0 +1,85 @@
+{
+  "baselineSha": "3715e29d1656a00b853f73e12a89624b17985b7c",
+  "baselineSourceSha256": "cc4b065b6a6b550f8b61e45045a49087fb60bfbee4e97190389411fcb1a070e6",
+  "candidateSourceSha256": "7c7a617ff31404adf828a6f294744ba7c93d4f7d4bfb01d179215a595c27f872",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "measuredAt": "2026-10-30T13:41:33.162Z",
+  "scope": "synthetic over-budget browser evidence; packaging time including hashing and copies",
+  "summaries": [
+    {
+      "generatedSmallFiles": 2500,
+      "totalFiles": 2504,
+      "limitBytes": 32768,
+      "rounds": 3,
+      "samplesMs": {
+        "baseline": [
+          2523.288788,
+          3392.9308210000004,
+          3814.4118609999996,
+          4680.366714,
+          6329.771268,
+          3203.0213949999998
+        ],
+        "candidate": [
+          298.83530900000005,
+          284.9027100000003,
+          349.0694060000005,
+          970.3742020000009,
+          676.9326799999981,
+          430.863949999999
+        ]
+      },
+      "medianMs": {
+        "baseline": 3603.671341,
+        "candidate": 389.9666779999998
+      },
+      "reductionPercent": 89.1786280962074,
+      "retained": 73,
+      "omitted": 2431,
+      "submittedBytes": 26459,
+      "identicalResults": true,
+      "identicalOutputHashes": true,
+      "originalFilesUnchanged": true,
+      "manifestSha256": "d126eb49f86578524d21a44616d99fd29a39fb199adcefc3646750866664e245"
+    },
+    {
+      "generatedSmallFiles": 5000,
+      "totalFiles": 5004,
+      "limitBytes": 32768,
+      "rounds": 3,
+      "samplesMs": {
+        "baseline": [
+          16482.621157,
+          10443.612733999995,
+          15000.459338999994,
+          12314.602232999998,
+          14896.528032000002,
+          15111.20534
+        ],
+        "candidate": [
+          1198.095325000002,
+          1243.7905170000013,
+          535.405786000003,
+          1118.141874000008,
+          502.5110399999976,
+          543.557025999995
+        ]
+      },
+      "medianMs": {
+        "baseline": 14948.493685499998,
+        "candidate": 830.8494500000015
+      },
+      "reductionPercent": 94.44191858069337,
+      "retained": 73,
+      "omitted": 4931,
+      "submittedBytes": 26459,
+      "identicalResults": true,
+      "identicalOutputHashes": true,
+      "originalFilesUnchanged": true,
+      "manifestSha256": "20c0a9163fb601f7720dc0c0839f726bac3986629b33057f4ca7e7fdd67a1e2b"
+    }
+  ]
+}

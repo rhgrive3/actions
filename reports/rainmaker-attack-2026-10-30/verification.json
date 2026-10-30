@@ -1,0 +1,134 @@
+{
+  "sourceRevision": "feab97625845680cf62f2dbc20fddf565e757dda",
+  "baselineRevision": "5d6480b2e2c1a8afa789bcc1415bae586e3156cb",
+  "commands": [
+    {
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/{rainmaker-attack-scale,ranked-combat,ranked-rainmaker}.test.mjs",
+      "status": "passed",
+      "tests": 52,
+      "log": "/workspace/rainmaker-scale-tests.log",
+      "logSha256": "eb5ba13f7e5327fae7fabf279ec07484ea9e67ebf8a4364544bc6d931d42f9f2",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/{ranked-integration,ranked-rainmaker-shot-origin,rainmaker-visuals,queue-combat-scratch}.test.mjs patches/local-quality/tests/rainmaker-merge-composition.test.mjs",
+      "status": "passed",
+      "tests": 61,
+      "log": "/workspace/rainmaker-regression-final.log",
+      "logSha256": "20be819d08a705c3fbfb292f117ecacb60aaec9a629e263798ef7f8288d9f7e0",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/{rainmaker-attack-scale,ranked-rainmaker-shot-origin}.test.mjs",
+      "status": "passed",
+      "tests": 22,
+      "log": "/workspace/rainmaker-emitted-tests.log",
+      "logSha256": "b623424a936b3e6f064386f33267f6dfa2790d4e8dde0f2192c03913f0a22086",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "INKWAVE_BUILT_SITE=_site-before node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/rainmaker-attack-scale.test.mjs",
+      "status": "expected negative control",
+      "tests": 8,
+      "passed": 1,
+      "failed": 7,
+      "log": "/workspace/rainmaker-scale-before.log",
+      "logSha256": "729d286739743e1b0a24bf0a71a6661ff460d28393ab490e335c61b39a0115b2",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "node scripts/check-inkwave-patches.mjs --quick",
+      "status": "passed",
+      "log": "/workspace/rainmaker-quick.log",
+      "logSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "node scripts/build-inkwave.mjs inkwave-public _site",
+      "status": "passed",
+      "log": "/workspace/rainmaker-final-build.log",
+      "logSha256": "0de93cb8bb1382bcd0b77732550b08970a91c361b4e3a6354808401824393770",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "node scripts/check-inkwave-startup-budget.mjs _site",
+      "status": "passed",
+      "log": "/workspace/rainmaker-startup-budget.log",
+      "logSha256": "c16938d68cab50c8a26c284a742b975cb453fb8c46b52cb4f832f0c8efd1b9fb",
+      "sourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3"
+    },
+    {
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-visuals.test.mjs patches/local-quality/tests/rainmaker-merge-composition.test.mjs",
+      "tests": 8,
+      "status": "passed",
+      "sourceRevision": "feab97625845680cf62f2dbc20fddf565e757dda",
+      "log": "/workspace/rainmaker-vfx-finish-tests.log",
+      "logSha256": "93c695fb81e7a90940067d313edcd6a05d07be4cdf5f257b7ebbd44da48af011"
+    },
+    {
+      "command": "INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/rainmaker-visuals.test.mjs patches/local-quality/tests/rainmaker-merge-composition.test.mjs",
+      "tests": 8,
+      "status": "passed",
+      "sourceRevision": "feab97625845680cf62f2dbc20fddf565e757dda",
+      "log": "/workspace/rainmaker-vfx-finish-emitted.log",
+      "logSha256": "67820e702458bcb9371cc577de02140f25fe9dcde0d3eac5d045bd072e710e99"
+    },
+    {
+      "command": "node scripts/build-inkwave.mjs inkwave-public _site; node scripts/check-inkwave-startup-budget.mjs _site",
+      "status": "passed",
+      "sourceRevision": "feab97625845680cf62f2dbc20fddf565e757dda"
+    }
+  ],
+  "sourceReference": {
+    "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpGachihoko.game__GameParameterTable.json",
+    "sha256": "682c5955cc7dd486080092d6d1d020595fbc2e356d49a7566ebaa2904bd93678",
+    "wikiFetch": "HTTP 403; prior repository audit retained"
+  },
+  "limitations": [
+    "No Switch retail measurement",
+    "No physical iPad or live online session",
+    "Gravity/range clamp/fuse remain local trajectory calibration",
+    "Procedural VFX dimensions and glow intensity are not extracted Nintendo animation",
+    "No full cross-repository CI or GPU timing claim"
+  ],
+  "attackSourceRevision": "edfcd7c3d84b4af3cd5b162c1fcfedfc806634d3",
+  "firstFinishBrowser": {
+    "status": "failed at strict cleanup framebuffer assertion",
+    "errors": [],
+    "activeShotOrSplashNodesAtCleanup": 0,
+    "cleanupChangedPixels": 3,
+    "cleanupMaxDelta": 53,
+    "passedStages": [
+      "actual chase-camera full body glow",
+      "flight",
+      "native impact",
+      "delayed detonation",
+      "expanding splash",
+      "GPU links"
+    ],
+    "receipt": "finish-first-browser-result.json",
+    "observationFollowup": "Keep strict zero threshold; settle same-camera native callbacks/post targets before paired readback without any simulation step."
+  },
+  "visualReference": {
+    "url": "https://www.nintendo.com/jp/bankara-king/assets_final/img/rule_step02_img_hoko.png",
+    "sha256": "8cfdc63b2f33bf82e0cba477d5f7189da436a7478646318d3e1a2a81daa78d48",
+    "inspection": "Downloaded and visually inspected with view_image; illustration, not frame/scale measurement; not redistributed in product or report."
+  },
+  "checkerSha256": "740e180b6ce00fd74c9c3690d8367e676d894efe165a5861d1bc321cc4b0b684",
+  "comparisonImages": {
+    "source": ".browser-evidence/rainmaker-attack/before-production and finish-warm-production",
+    "encoding": "Lossless WebP from browser PNG; decoded RGBA bytes asserted identical. Source PNGs persist in the worktree.",
+    "candidateStages": "Final passed feab976 build run, including same-camera pre-render settling.",
+    "conditions": "Common map, charge input, 60 Hz stepping and procedural cameras; Math.random setup seeded, but profile palettes/equipment/roster still vary. Each receipt records real colors; images are not pixel-for-pixel fidelity scores."
+  },
+  "finalBrowser": {
+    "status": "passed",
+    "sourceRevision": "feab97625845680cf62f2dbc20fddf565e757dda",
+    "command": "CHROMIUM_PATH=/usr/bin/chromium node scripts/check-inkwave-rainmaker-attack.mjs --site _site --phase candidate --evidence-dir .browser-evidence/rainmaker-attack/finish-warm-production --profile-dir .browser-evidence/rainmaker-attack/profile-finish-warm-production",
+    "receipt": "after-browser-result.json",
+    "captures": 12,
+    "maxTravel": 22,
+    "errors": [],
+    "comparisonCondition": "After camera/paint setup, three native Renderer draws before paired visibility readback; no simulation clock advances in those draws; strict zero cleanup threshold retained."
+  }
+}

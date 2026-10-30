@@ -5,11 +5,11 @@ const trs=b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArr
 const bank=b=>b?.map(x=>[...x.p.toArray(),...x.q.toArray(),...x.s.toArray()])??null;
 const digest=async x=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(x)))),b=>b.toString(16).padStart(2,'0')).join('');
 export const FORM_CAPTURE_PLAN=Object.freeze([
- {name:'shooter-lower',weapon:'shooter',pitch:-1.05,deliveryAt:null,frames:{3:['rear','side']}},
- {name:'dualies-upper',weapon:'dualies',pitch:1.15,deliveryAt:null,frames:{0:['side'],6:['rear','side'],9:['side']}},
- {name:'shooter-lower-event',weapon:'shooter',pitch:-1.05,deliveryAt:3,frames:{3:['side']}},
- {name:'dualies-upper-event',weapon:'dualies',pitch:1.15,deliveryAt:6,frames:{6:['side']}},
- {name:'dualies-upper-history-event',weapon:'dualies',pitch:1.15,deliveryAt:3,priorFullForm:true,frames:{3:['rear','side']}}
+ {name:'shooter-lower',weapon:'shooter',pitch:-1.05,deliveryAt:null,frames:{1:['rear','side']}},
+ {name:'dualies-upper',weapon:'dualies',pitch:1.15,deliveryAt:null,frames:{0:['side'],1:['rear','side'],2:['side']}},
+ {name:'shooter-lower-event',weapon:'shooter',pitch:-1.05,deliveryAt:1,frames:{1:['side']}},
+ {name:'dualies-upper-event',weapon:'dualies',pitch:1.15,deliveryAt:0,frames:{0:['side']}},
+ {name:'dualies-upper-history-event',weapon:'dualies',pitch:1.15,deliveryAt:1,priorFullForm:true,frames:{1:['rear','side']}}
 ]);
 // Same production input driver for source, emitted and native capture. No forced
 // bone/source state. Only a host event's delivery is deferred in network cases.
@@ -66,10 +66,13 @@ export async function runFormScenario({api,weapon,pitch,deliveryAt=null,priorFul
  }finally{THREE.Object3D.prototype.updateWorldMatrix=updateWorldMatrix;G.netm=null;G.scene.add=add;if(ch.s3RainmakerSupportPending)ch._restoreRainmakerSupport();display.release();G.scene.remove(mesh,ch.root);mesh.geometry.dispose();mesh.material.dispose();m.rankedEffects.dispose();ch.dispose();G.actors=[];G.projectiles.clear();}
 }
 export function verifyFormScenario(result,{corrected=true}={}){
- check(result.rows.length===10,'nine return frames plus first restored frame');
+ check(result.rows.length===10,'ten ordered return and restored samples');
+ check(result.rows[0].source.formTime<result.rows[0].source.formDuration,'first sample is inside the real return');
+ check(result.rows.at(-1).source.formTime>=result.rows.at(-1).source.formDuration,'last sample is restored');
  for(const [i,r]of result.rows.entries()){
   check(r.returnFrame===i&&r.source.status==='ready'&&r.source.active===true,'ordered active source');check(r.poses===1,'one existing pose owner');check(r.clamArmActive===false,'Clam inactive');check(Number.isFinite(r.grip),'finite world grip');
-  check(r.pending===(corrected&&i<9),'bounded nine-frame display transaction');check(r.leftSolves===(corrected&&i<9?2:1),'one extra left solve only on admitted frames');
+  const admitted=r.source.state==='ToHuman'&&r.source.formKid===true&&r.source.returnInterrupted===true&&r.source.formTime<r.source.formDuration;
+  check(r.pending===(corrected&&admitted),'display transaction follows the real return duration');check(r.leftSolves===(corrected&&admitted?2:1),'one extra left solve only on admitted frames');
   if(corrected)check(r.grip<.001,'world grip<.001 at return'+i+': '+r.grip);
  }
  if(result.deliveryAt!==null){check(result.births.length===1,'actual delayed shot');const row=result.rows[result.deliveryAt];check(row.delivered?.wrongHostRejected&&row.delivered?.duplicateRejected,'network negatives');check(row.source.formTime<row.source.formDuration,'shot admitted during return');}
