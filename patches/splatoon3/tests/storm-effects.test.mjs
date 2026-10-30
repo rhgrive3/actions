@@ -18,6 +18,27 @@ function chargeActor(f) {
   const a = f.make('charger'); a._resolve = () => { a.grounded = true; }; a.special = a.specialCost(); return a;
 }
 function release(f, a) { a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a); }
+function driveBotStorm(f, p, a, brain, maxFrames = 120) {
+  // Canonical policy owns neutral admission, aim convergence and safe release.
+  // This is a bounded test horizon, not a Nintendo AI/frame specification.
+  let wasDown = false, pressed = false, released = false;
+  for (let frame = 0; frame < maxFrames && p.bombs.length === 0; frame++) {
+    brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false);
+    const down = !!a.intent.sub;
+    if (frame === 0) assert.equal(down, false, 'fresh bot policy first admits a neutral sub frame');
+    if (down) pressed = true;
+    if (wasDown && !down) released = true;
+    assert.equal(a.intent.fire, false, 'held Storm does not fire the main weapon');
+    f.tick(a);
+    if (!released) assert.equal(p.bombs.length, 0, 'no device exists before the explicit press/release edge');
+    wasDown = down;
+  }
+  assert.equal(pressed, true, 'a real local bot must press sub while holding');
+  assert.equal(released, true, 'a real local bot must release the admitted sub command');
+  assert.equal(p.bombs.length, 1, 'the bot must not retain its held device forever');
+  assert.equal(p.bombs[0].kind, 'storm');
+  assert.equal(a.specialActive.phase, 'throw');
+}
 
 test('#239 activation holds without throwing; explicit sub command uses updated aim and blocks main/sub duplication', async () => {
   const f = await fixture(), p = system(f), a = chargeActor(f);
@@ -34,17 +55,38 @@ test('#239 holding supports swim and bots submit an explicit press/release inste
   const f = await fixture(), p = system(f), a = chargeActor(f); a._startSpecial();
   a.intent.squid = true; f.tick(a); assert.equal(a.form, 'squid'); assert.equal(a.specialActive.phase, 'hold');
   a.intent.squid = false; f.tick(a); assert.equal(a.form, 'kid');
+  // make() deliberately defaults to a non-bot Actor. The canonical bot input
+  // owner rejects that identity; BotBrain construction alone does not change it.
   a.isBot = true;
   const brain = new f.BotBrain(a);
-  let pressed = false, released = false;
-  for (let i = 0; i < 240 && !p.bombs.length; i++) {
+  driveBotStorm(f, p, a, brain);
+  f.tick(a, 10); assert.equal(p.bombs.length, 1, 'one release cannot duplicate the device'); p.clear();
+});
+
+test('#239 constructing BotBrain does not grant bot throw authority to a non-bot Actor', async () => {
+  const f = await fixture(), p = system(f), a = chargeActor(f); a._startSpecial();
+  assert.equal(a.isBot, false, 'fixture retains the native non-bot constructor default');
+  const brain = new f.BotBrain(a);
+  for (let frame = 0; frame < 60; frame++) {
     brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false);
-    if (a.intent.sub) pressed = true;
-    else if (pressed) released = true;
+    assert.equal(a.intent.sub, false, 'the bot policy cannot synthesize input for a non-bot');
     f.tick(a);
+    assert.equal(p.bombs.length, 0); assert.equal(a.specialActive.phase, 'hold');
   }
-  assert.ok(pressed && released, 'the bot aims, presses, then releases');
-  assert.equal(p.bombs.length, 1); assert.equal(a.specialActive.phase, 'throw'); p.clear();
+  p.clear();
+});
+
+test('#239 bot Storm holds across an unsafe throw path and releases only after it becomes usable', async () => {
+  const f = await fixture(), p = system(f), a = chargeActor(f); a.isBot = true; a._startSpecial();
+  const brain = new f.BotBrain(a);
+  let safe = false; f.G.physics.los = () => safe;
+  for (let frame = 0; frame < 60; frame++) {
+    brain._tail(STEP, new f.THREE.Vector3(), 0, 0, 6, false); f.tick(a);
+    assert.equal(p.bombs.length, 0, 'blocked prediction cannot cause a blind throw');
+    assert.equal(a.specialActive.phase, 'hold');
+  }
+  safe = true;
+  driveBotStorm(f, p, a, brain); p.clear();
 });
 
 test('#239 actual network pack and remote application retain held/released Storm pose state', async () => {
