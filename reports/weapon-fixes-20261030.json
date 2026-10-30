@@ -35,5 +35,25 @@
     "splatling-downward-aim-20261030/README.md",
     "rainmaker-attack-2026-10-30.md"
   ],
-  "scope": "All manifest input hashes and Git blobs and all emitted artifact hashes verified. Focused tests and Chromium/SwiftShader evidence, not full repository CI or Nintendo/Switch pixel parity."
+  "scope": "All manifest input hashes and Git blobs and all emitted artifact hashes verified. Focused tests and Chromium/SwiftShader evidence, not full repository CI or Nintendo/Switch pixel parity.",
+  "latestMainIntegration": {
+    "status": "passed",
+    "sourceSha": "eba5b26777bc0c85cba887f462e7d2a65206351a",
+    "contentHash": "175f1afd5ef5f041c181f7bbb77e27c0a238c40cfae20022c4a7dc7ce556587b",
+    "inputHash": "d9022bc1c3a4e980e237f328b9a6b307ac15432fba1d81f18f2a625d949cbc72",
+    "inputs": 1561,
+    "artifacts": 2283,
+    "mainCommit": "3715e29d1656a00b853f73e12a89624b17985b7c",
+    "sourceTests": {
+      "pass": 15,
+      "fail": 0
+    },
+    "emittedTests": {
+      "pass": 15,
+      "fail": 0
+    },
+    "quick": "passed",
+    "startupBudget": "passed",
+    "conflictResolution": "Kept both independently appended behavior-report sections; no product-file conflicts."
+  }
 }
