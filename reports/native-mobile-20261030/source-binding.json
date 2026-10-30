@@ -1,0 +1,31 @@
+[
+  {
+    "label": "before",
+    "commit": "23cb6847ab38466adf735ee5dd6da789701490dd",
+    "inputsVerified": 1561,
+    "contentHash": "c77616c7922af9df80545f67fe7fd12f6d2251a3664f8c07f9ac0ff871e04437",
+    "artifacts": 2283
+  },
+  {
+    "label": "candidate",
+    "commit": "d513f22b9d0cce6acc4aca2193c9e21a590782f0",
+    "inputsVerified": 1561,
+    "contentHash": "b0235ae6aec58fb76ed2d2ab41d238c343c3f1a767fd8a739fc95d4a325ce608",
+    "artifacts": 2283
+  },
+  {
+    "label": "integrated",
+    "commit": "79eeed4313bb79a5531a05b6d6a54ffeb5aee67a",
+    "inputsVerified": 1570,
+    "contentHash": "98070d0ae10bcd3a96a598acb43343a9d26d45bf5197bc0dfc854bc349d9e7fb",
+    "artifacts": 2299
+  },
+  {
+    "label": "final-integrated",
+    "commit": "c87d921697e07d0ab8eaea460e0ae284ffcb6428",
+    "inputsVerified": 1575,
+    "contentHash": "4c293c99386e842bdd0808173f4e04b08ce35b44a33cb86ac0f57183de4e7913",
+    "artifacts": 2299,
+    "artifactsVerified": 2299
+  }
+]
