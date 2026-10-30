@@ -13,3 +13,11 @@ PR #1925の最初の中心向きLOSは、実Physicsで2つの部分遮蔽反例�
 既存の正例fixtureには、y=1.05の弾に対して中心y=.35のcrabletを置いたものがあった。正例を実際のnative軌道上へ置き直し、弾のspreadを固定軸へ置き換えない。過去のscan比較は凍結ソースを変更せず、後から追加したreceiver trace metadataだけを比較対象から外す。metadata sandboxには新helperの実装を能力監査付きで読み込む。
 
 これは任天堂のBoss実装の再現でも、入力・インク・全targetのtrusted simulationでもない。ownerが有効なbirthを偽造できる問題、全接触の時刻や最初のActor/Boss body/kit-defenseとの競合、実機・実ネットワーク遅延の完全な検証は別に残る。#1665/#1666を解決済みとはしない。Splatoon 3 Ver.11.3.0のパラメータ、公開版の通常飛行、wire形式、locked upstream sourceを変更しない。
+
+## 最終の受入記録
+
+mainのGPUとGO/発射修正を統合したsource network群は1,187件成功、失敗0・skip0。実行開始は12efc9dd1で、その実行中にlegacy Charger fire eventのlife境界も補強したため、単一固定SHAの全群receiptとは扱わない。最後に変更した群は9f7ef9a57のsource71件と通常の最適化済み配信63件で再実行し、どちらも失敗0・skip0。既存の関連武器256件も成功した。通常build・quick checks・startup budgetが成功している。
+
+全1,556入力と2,275生成物をa0c5a7cfcのgit treeへ照合し、runtime contentHash `40691f788dd02ddc30b84d2bc5f90b51c748d35b0810d85854e14213cf5c2b95` を確認した。固定9f7の同じruntimeで、既存full-active Chromiumの受入を実行。65キット、796 response、移動・塗り・回避、既存HUD/quality検査が成功、errorsは0。このブラウザー手順は通常プレイの統合確認であり、実socketのcrablet遅延検証ではない。
+
+[数値とscope](crablet-native-trajectory-20261030/validation.json) / [既存full-activeの全receipt](crablet-native-trajectory-20261030/active-browser.json)。広いGitHub CIには待機・実行中が残る。terrain plausibilityと#1665/#1666の完全なauthority解決は引き続き区別する。

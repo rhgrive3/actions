@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "sourceInputVerifiedAt": "a0c5a7cfc89bfa6a906ce9b89c0495a8e8153377",
+  "activeBrowserSourceSha": "9f7ef9a57c300f1f8d1aaf835a4640b87c8863a1",
+  "contentHash": "40691f788dd02ddc30b84d2bc5f90b51c748d35b0810d85854e14213cf5c2b95",
+  "inputs": 1556,
+  "artifacts": 2275,
+  "networkSuite": {
+    "tests": 1187,
+    "pass": 1187,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 966852.219903,
+    "scope": "Source suite began at 12efc9dd1; legacy Charger life binding was added during this run. This is not a single-fixed-SHA full-suite receipt. Final affected source and emitted groups are separate below."
+  },
+  "finalLifeSource": {
+    "pass": 71,
+    "fail": 0,
+    "skip": 0
+  },
+  "finalEmitted": {
+    "pass": 63,
+    "fail": 0,
+    "skip": 0
+  },
+  "relatedWeapons": {
+    "pass": 256,
+    "fail": 0,
+    "skip": 0
+  },
+  "activeBrowser": {
+    "status": "passed",
+    "scope": "full-active",
+    "fullAcceptance": true,
+    "verifiedResponses": 796,
+    "errors": [],
+    "canonicalKits": 65,
+    "gameplay": {
+      "state": "playing",
+      "elapsedAt20Hz": 3.0000000000023874,
+      "movement": 2.7603360000000166,
+      "movementProbe": {
+        "state": "playing",
+        "paused": false,
+        "alive": true,
+        "form": "kid",
+        "grounded": true,
+        "controller": true,
+        "enabled": true,
+        "menuBlocked": false,
+        "samples": [
+          {
+            "key": "KeyW",
+            "keyPresent": true,
+            "enabled": true,
+            "menuBlocked": false,
+            "intent": [
+              0,
+              0,
+              1
+            ],
+            "vel": [
+              0,
+              0,
+              0.6
+            ],
+            "deltaAfterFirstTick": 0.010000000000001563
+          }
+        ]
+      },
+      "hp": 100,
+      "gear": [
+        {
+          "main": "runSpeed",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "velocityFinite": true,
+      "clockTicks": 967,
+      "paintedFloorArea": 0.625,
+      "coverage": [
+        0.00014398802830541628,
+        0
+      ]
+    }
+  },
+  "limitations": [
+    "Broad GitHub CI still queued/in-progress",
+    "No physical-device/Switch parity or complete trusted combat claim",
+    "Swim PR1928 is validated separately after this fixed runtime"
+  ]
+}
