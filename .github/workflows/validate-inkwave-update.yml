@@ -112,6 +112,10 @@ on:
         description: With diagnostic_only and without network opening, run only native wall verification; never full acceptance
         type: boolean
         default: false
+      full_success_evidence:
+        description: Retain all successful responsive screenshots for diagnosis
+        type: boolean
+        default: false
       deep_lifecycle:
         description: Run the full 10-cycle rematch lifecycle instead of the fast 3-cycle gate
         type: boolean
@@ -1137,6 +1141,7 @@ jobs:
         if: matrix.suite == 'startup'
         run: node --test scripts/tests/inkwave-update-recovery-browser.test.mjs
       - name: Bind passing browser evidence to the tested commit
+        id: bind_browser_evidence
         run: |
           python3 - <<'PY'
           import json, os, pathlib
@@ -1192,6 +1197,13 @@ jobs:
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
+      - name: Package verified responsive success evidence
+        if: success() && matrix.suite == 'responsive'
+        id: browser_success_evidence
+        env:
+          INKWAVE_BROWSER_STEP_OUTCOME: ${{ steps.bind_browser_evidence.outcome }}
+          INKWAVE_FULL_SUCCESS_EVIDENCE: ${{ inputs.full_success_evidence == true && '1' || '0' }}
+        run: node scripts/ci/package-inkwave-success-evidence.mjs responsive "$CI_STORAGE/evidence" "$CI_STORAGE/success-evidence" .built-site/_site/inkwave-build.json "$SOURCE_SHA"
       - name: Package bounded browser failure evidence
         if: always() && (failure() || cancelled())
         id: browser_failure_evidence
@@ -1210,7 +1222,7 @@ jobs:
           name: inkwave-browser-${{ matrix.suite }}-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: error
-          path: ${{ env.CI_STORAGE }}/evidence/
+          path: ${{ steps.browser_success_evidence.outputs.path || format('{0}/evidence/', env.CI_STORAGE) }}
           retention-days: 14
 
   render-diagnostic:
