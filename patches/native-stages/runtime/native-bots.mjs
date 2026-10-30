@@ -12,7 +12,12 @@ export function nativePaintGoalIds(brain,G){
  let stamp=work.stamp=(work.stamp+1)>>>0;if(!stamp){seen.fill(0);stamp=work.stamp=1;}seen[start]=stamp;
  for(let i=0;i<queue.length;i++){
   const n=nodes[queue[i]];
-  if(n.zone<0&&n.nativePaintable){if(Math.hypot(n.x-px,n.z-pz)<=34)ids.push(n.id);}
+  if(n.zone<0&&n.nativePaintable){
+   const dx=n.x-px,dz=n.z-pz;
+   // Keep the original circular test at its boundary. Most reachable nodes
+   // on a large source stage lie outside even this enclosing square.
+   if(!(dx< -34||dx>34||dz< -34||dz>34)&&Math.hypot(dx,dz)<=34)ids.push(n.id);
+  }
   const nb=n.nb;
   for(let j=0;j<nb.length;j++){const nextId=nb[j].to;if(seen[nextId]===stamp||!valid[nextId])continue;const next=nodes[nextId];if(next.zone===enemyZone)continue;seen[nextId]=stamp;queue.push(nextId);}
  }
