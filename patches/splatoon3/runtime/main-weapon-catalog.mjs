@@ -1119,7 +1119,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     system.s3DamageSubObjects?.(area,damageCentre,radius,damageAt,cause);
     system.s3DamageSpecialObjects?.(area,damageCentre,radius,damageAt,cause);
     G.boss?.splash(p.owner,damageCentre,radius,bands[0]?.Damage/10||0,0,p.wid);
-    G.fx?.explosion(p.pos,p.owner.color,radius);
+    G.fx?.explosion(p.pos,p.owner.color,radius,!p.s3SpecialWeapon && p.catalog.r.family==='blaster' ? 0.92 : 1);
     emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
   }
 

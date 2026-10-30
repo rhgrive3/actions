@@ -1319,7 +1319,7 @@ export class FX {
   // ribbons, ligaments flung off it, heavy gloops that paint satellite splats, fine spray, a fast ink wave over the
   // ground and a ripple through the wet ink. Volumetric parts (flash, sheet, mist) are capped so a big blast (e.g.
   // Tidal Slam) never swallows the camera; the ground wave + droplets still show the full radius.
-  explosion(pos, color, radius = 3) {
+  explosion(pos, color, radius = 3, shellAlpha = 1) {
     const col = this._color(color, this._col);
     const q = this.q, R = radius;
     const Rv = Math.min(R, 2.4);
@@ -1329,7 +1329,7 @@ export class FX {
     this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.4, Rv * 0.85, 0.12, 1, 2.2, 0, G_SOFT + 6.0, 0);
     this._colB.copy(col).multiplyScalar(1.15);
     this._sprite(this.glows, pos.x, pos.y, pos.z, 0, 0, 0, this._colB, Rv * 0.9, Rv * 1.6, 0.17, 0.5, 2.2, 0, G_SOFT, 0);
-    this._shell(pos, col, Rv * 0.2, Rv * 0.78, 0.09, 0.34, 1, 0, 0, 0.2);
+    this._shell(pos, col, Rv * 0.2, Rv * 0.78, 0.09, 0.34, shellAlpha, 0, 0, 0.2);
     this._burstDrops(pos, col, Rv, spd, paint, 26, 6, 18);
     if (this._probeDown(pos, R + 1.5, _v2, _v3)) {
       this._ripple(_v2, 0.011 + 0.0028 * R, 0.24 + 0.03 * R, 2.1 + 0.4 * R, 1.05, _v3, col);

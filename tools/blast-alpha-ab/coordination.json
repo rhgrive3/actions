@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-30T04:12:45Z",
+  "purpose": "QA-only coordination snapshot; no product runtime imports",
+  "sourceBase": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
+  "parallelLimit": {
+    "slots": 7,
+    "includesParent": true,
+    "registered": 7,
+    "verifiedSimultaneousProductWorkers": null,
+    "note": "Assignments are not evidence of seven simultaneous workers. Filesystem operations currently blocked by ENOSPC; connector/JS work continues where possible."
+  },
+  "preservedOriginal": "03:59 roster preserved by parent; exact local path not available to this child",
+  "stopConditions": [
+    "No main merge or product publication from this QA branch",
+    "No Work/Discord/stopped support",
+    "No hair/character edits",
+    "No sandbox/OS/profile/sysctl/permission weakening",
+    "Only single blaster shellAlpha .92 candidate"
+  ],
+  "slots": [
+    {
+      "slot": 1,
+      "owner": "/root",
+      "task": "integration",
+      "target": "coordination and publication review",
+      "head": null,
+      "lastResult": "Approved separate QA A/B Draft branch and roster persistence at04:12",
+      "state": "coordination",
+      "next": "review exact QA head and required evidence",
+      "dependencies": [
+        "child evidence"
+      ],
+      "savedAt": "conversation; prior03:59 roster"
+    },
+    {
+      "slot": 2,
+      "owner": "/root/recover_remote_integration",
+      "task": "PR1918 UI/CPU4 repair",
+      "target": "PR1918",
+      "head": null,
+      "lastResult": "parent reports UI/CPU4 repair assignment; child has not independently inspected latest result",
+      "state": "unverified",
+      "next": "CPU4 failure diagnosis/repair",
+      "dependencies": [
+        "filesystem capacity"
+      ],
+      "savedAt": "parent-managed"
+    },
+    {
+      "slot": 3,
+      "owner": "/root/recover_storage_and_review",
+      "task": "CPU4 and independent readback",
+      "target": "CPU4; main0cc immutable source view",
+      "head": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
+      "lastResult": "1956source inputs verified to official Git blobs, 8 regression/helper files added; static test closure402 missing0",
+      "state": "filesystem-blocked/other work unverified",
+      "next": "CPU4 repair and readback",
+      "dependencies": [
+        "ENOSPC recovery"
+      ],
+      "savedAt": "/tmp/blast-main0cc-0359/source-identity.json"
+    },
+    {
+      "slot": 4,
+      "owner": "/root/recover_hud_fixture_fix",
+      "task": "old/new benchmark",
+      "target": "HUD benchmark",
+      "head": null,
+      "lastResult": "parent reports interrupted, result undecided",
+      "state": "blocked/unverified",
+      "next": "recover evidence and determine results",
+      "dependencies": [
+        "filesystem capacity"
+      ],
+      "savedAt": "parent-managed"
+    },
+    {
+      "slot": 5,
+      "owner": "/root/recover_model_acceptance",
+      "task": "PR1919 shard split",
+      "target": "PR1919",
+      "head": null,
+      "lastResult": "parent reports shard split task; latest output not independently observed by this child",
+      "state": "unverified",
+      "next": "shard split and validation",
+      "dependencies": [
+        "parent review"
+      ],
+      "savedAt": "parent-managed"
+    },
+    {
+      "slot": 6,
+      "owner": "/root/recover_terminal_diagnostics",
+      "task": "independent candidate peer",
+      "target": "4 blaster candidate files and QA scripts",
+      "head": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
+      "lastResult": "03:59 peer plus official reconstructed catalog SHA matches;65records/55predicate cases checked; QA peer pending",
+      "state": "connector review",
+      "next": "review QA matrix, immutable heads and required tests",
+      "dependencies": [
+        "exact QA blob publication for readback"
+      ],
+      "savedAt": "/tmp/blast-alpha-peer-0359/result.json plus conversation"
+    },
+    {
+      "slot": 7,
+      "owner": "/root/recover_blast_capture",
+      "task": "blaster A/B",
+      "target": "4product candidate files; QA scripts/workflow",
+      "head": "0cc5ce3712f93c275095d36c1f35ffdbd8565e2e",
+      "lastResult": "baseline c16a run40998002783:16PNG verified; one .92 candidate:22focused checks+3syntax+2emitted sources passed; official catalog130predicate checks passed. Local5regression command exit1, log unavailable dueENOSPC; no success claimed.",
+      "state": "connector implementation",
+      "next": "QA peer then clean source/emitted CI and32 A/B frames",
+      "dependencies": [
+        "peer; GitHubActions"
+      ],
+      "savedAt": "/tmp/blast-alpha-0355 plus immutable QA Git blobs"
+    }
+  ]
+}

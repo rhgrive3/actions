@@ -1356,7 +1356,7 @@ export class Projectiles {
   _blastBurst(p, at, direct) {
     const w = WEAPONS.blaster;
     const c = at.clone();
-    G.fx?.explosion(c, p.owner.color, w.burstRadius);
+    G.fx?.explosion(c, p.owner.color, w.burstRadius, !p.s3SpecialWeapon && (p.s3Weapon || p.owner.weapon)?.kind === 'blaster' ? 0.92 : 1);
     G.audio?.play('blaster_boom', { pos: c, volume: 0.7 });
     emit('weapon:impact', { pos: c.clone(), normal: new THREE.Vector3(0, 1, 0), team: p.team, kind: 'blast', radius: w.burstRadius });
     // paint under the burst

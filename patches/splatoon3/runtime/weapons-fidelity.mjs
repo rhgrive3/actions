@@ -2533,7 +2533,7 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype._blastBurst=function(p,point,victim){
     if(p.ghost){
       const w=p.s3Weapon||WEAPONS.blaster;
-      context.G.fx?.explosion(point,p.owner.color,w.burstRadius);
+      context.G.fx?.explosion(point,p.owner.color,w.burstRadius,!p.s3SpecialWeapon && (p.s3Weapon || p.owner.weapon)?.kind === 'blaster' ? 0.92 : 1);
       context.G.audio?.play('blaster_boom',{pos:point,volume:.7});
       // Ordinary remote bursts are visual replays: the authenticated #574 hit
       // already owns the victim's impulse. Only the reduced terrain model has
