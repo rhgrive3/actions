@@ -106,6 +106,22 @@ test('Torpedo detached children clear with the world without inventing impact da
   assert.deepEqual([w.hits.length,w.stamps.length],before);
 });
 
+test('secondary landing time and footprint remain fixed across render rates',async()=>{
+  let baseline;
+  for(const hz of [30,60,120]){
+    const w=await world(),b=w.fire();w.contact(b);
+    const clock=new w.f.FixedClock(),start=w.f.G.time,landings=[];
+    const original=w.paint.splat.bind(w.paint);
+    w.paint.splat=(pos,r,team,opts)=>{
+      if(r===2)landings.push([+(w.f.G.time-start).toFixed(6),...pos.toArray().map(n=>+n.toFixed(6))]);
+      return original(pos,r,team,opts);
+    };
+    for(let frame=0;frame<hz*3;frame++)clock.advance(1/hz,()=>w.step());
+    assert.equal(landings.length,8);
+    if(baseline)assert.deepEqual(landings,baseline,`${hz} Hz render cadence`);else baseline=landings;
+  }
+});
+
 test('Torpedo JSON replay keeps native hit and paint authority while ghosts carry detached visuals only',async()=>{
   const clock={ms:1000},source=await world('a',clock),receiver=await world('b',clock);
   source.owner.pos.set(0,0,26);receiver.owner.pos.copy(source.owner.pos);source.owner.aimDir.set(0,0,1);
