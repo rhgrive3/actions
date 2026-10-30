@@ -21,6 +21,23 @@ function mainPlayReady(){
  return reachedRoot&&opacity>0.6;
 }
 
+// QA driver only. Await input admission; never change game/menu state.
+function setupButtonsReady(){
+ const g=window.__inkwave,G=window.__G,m=g?.menus,root=m?._scr?.el;
+ if(G?.mode!=='menu'||!g?.match?.attract||m?.current!=='setup'||m?._scr?.name!=='setup'||!root||root.inert||m._starting)return false;
+ for(const selector of ['.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']){
+  const controls=[...document.querySelectorAll(selector)];if(controls.length!==1)return false;
+  const control=controls[0];if(!control.isConnected||control.disabled||!root.contains(control)||control.closest('.is-leaving')||m._modal&&!m._modal.contains(control))return false;
+  let opacity=1,reached=false;
+  for(let e=control.closest('[data-nav]')||control;e&&e!==root.parentNode;e=e.parentElement){
+   const value=Number(getComputedStyle(e).opacity);if(!Number.isFinite(value))return false;
+   opacity*=value;if(e===root){reached=true;break;}
+  }
+  if(!reached||opacity<=.6)return false;
+ }
+ return true;
+}
+
 const [rootArg,siteArg,outArg]=process.argv.slice(2);assert.ok(rootArg&&siteArg&&outArg,'usage: node run-main91-blast.mjs EXACT_CHECKOUT BUILT_SITE PRIVATE_OUTPUT');
 const root=path.resolve(rootArg),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -43,11 +60,11 @@ const {chromium}=createRequire(path.join(root,'package.json'))('playwright');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg','.ogg':'audio/ogg'};
 const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),f=path.resolve(site,'.'+decodeURIComponent(u.pathname==='/'?'/index.html':u.pathname));assert.ok(f.startsWith(site+path.sep));serveProjectileCaptureFile(req,res,f,mime);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-let browser;
+let browser,page;
 const driver={head:HEAD,manifestHash:manifest.contentHash,launch:'existing launchSandboxBrowser; chromiumSandbox:true; no local --no-sandbox fallback',cases:[],status:'incomplete'};
 fs.mkdirSync(out,{recursive:true});const save=()=>fs.writeFileSync(path.join(out,'driver-receipt.json'),JSON.stringify(driver,null,2));save();
 try{
- browser=await launchSandboxBrowser(chromium);driver.browser=browser.version();driver.browserLaunched=true;save();const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,serviceWorkers:'block'});const page=await context.newPage();
+ browser=await launchSandboxBrowser(chromium);driver.browser=browser.version();driver.browserLaunched=true;save();const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,serviceWorkers:'block'});page=await context.newPage();
  const errors=driver.pageErrors=[];driver.requestFailures=[];driver.httpErrors=[];driver.menuAttempts=[];driver.consoleErrors=[];
  page.on('pageerror',e=>{driver.pageErrorCount=(driver.pageErrorCount||0)+1;if(errors.length<100)errors.push(String(e).slice(0,2000));save();});
  page.on('console',m=>{if(['error','warning'].includes(m.type())&&driver.consoleErrors.length<50){driver.consoleErrors.push({type:m.type(),text:m.text().slice(0,1000)});save();}});
@@ -65,13 +82,9 @@ try{
   const waitForPhase=async(fn,label)=>{while(Date.now()<deadline){
    if((label!==lastLabel||Date.now()-lastObservation>=10000)&&attempt.observations.length<24){
     lastLabel=label;lastObservation=Date.now();
-    try{const state=await page.evaluate(()=>{const g=window.__inkwave,G=window.__G,m=g?.menus;return {mode:G?.mode??null,current:m?.current??null,screen:m?._scr?.name??null,screenInert:m?._scr?.el?.inert??null,bootMs:g?.bootMs??null,matchState:g?.match?.state??null,attract:g?.match?.attract??null,visibility:document.visibilityState,readyState:document.readyState,stage:g?.match?.mapId??null,setup:m?._setup?{mode:m._setup.mode,mapId:m._setup.mapId}:null,screenText:m?._scr?.el?.textContent?.slice(0,1200)??null,visibleDialogs:[...document.querySelectorAll('[role=dialog]')].filter(e=>e.getBoundingClientRect().width>0).slice(0,8).map(e=>e.textContent?.slice(0,400)),play:[...document.querySelectorAll('.iw-main [data-id="play"]')].slice(0,8).map(e=>({disabled:e.disabled,connected:e.isConnected,leaving:!!e.closest('.is-leaving')}))};});attempt.observations.push({label,at:new Date().toISOString(),state});save();}catch(e){attempt.observations.push({label,error:String(e)});save();}
+    try{const state=await page.evaluate(()=>{const g=window.__inkwave,G=window.__G,m=g?.menus;return {mode:G?.mode??null,current:m?.current??null,screen:m?._scr?.name??null,screenInert:m?._scr?.el?.inert??null,starting:m?._starting??null,isLaunch:!!m?._scr?.el?.classList.contains('is-launch'),wipe:m?.wipe?{busy:m.wipe.busy,running:m.wipe.running,mode:m.wipe.r?.mode,t:m.wipe.r?.t,midDone:m.wipe.r?.midDone,midAt:m.wipe.r?.midAt,dur:m.wipe.r?.dur}:null,setupControls:[...document.querySelectorAll('.iw-setup [data-id="map-tidewater"],.iw-setup [data-id="start"].iw-btn--start')].slice(0,4).map(control=>{let opacity=1;const root=m?._scr?.el;for(let e=control.closest('[data-nav]')||control;e&&e!==root?.parentNode;e=e.parentElement){const v=Number(getComputedStyle(e).opacity);opacity*=v;if(e===root)break;}return{id:control.dataset.id,opacity,disabled:!!control.disabled,connected:control.isConnected,contained:!!root?.contains(control),leaving:!!control.closest('.is-leaving'),modalBlocked:!!m?._modal&&!m._modal.contains(control)};}),bootMs:g?.bootMs??null,matchState:g?.match?.state??null,attract:g?.match?.attract??null,visibility:document.visibilityState,readyState:document.readyState,stage:g?.match?.mapId??null,setup:m?._setup?{mode:m._setup.mode,mapId:m._setup.mapId}:null,screenText:m?._scr?.el?.textContent?.slice(0,1200)??null,visibleDialogs:[...document.querySelectorAll('[role=dialog]')].filter(e=>e.getBoundingClientRect().width>0).slice(0,8).map(e=>e.textContent?.slice(0,400)),play:[...document.querySelectorAll('.iw-main [data-id="play"]')].slice(0,8).map(e=>({disabled:e.disabled,connected:e.isConnected,leaving:!!e.closest('.is-leaving')}))};});attempt.observations.push({label,at:new Date().toISOString(),state});save();}catch(e){attempt.observations.push({label,error:String(e)});save();}
    }
-   if(label==='native mode menu'&&!driver.failureDiagnosticImage&&Date.now()-attempt.startedAt>=10000){
-    driver.failureDiagnosticImage={status:'attempted',label};save();
-    try{const dir=path.join(out,'diagnostics');fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,'menu-phase.png');await page.screenshot({path:file,timeout:Math.min(2000,Math.max(1,deadline-Date.now()))});driver.failureDiagnosticImage={status:'captured',file:'diagnostics/menu-phase.png',sha256:sha(fs.readFileSync(file)),scope:'QA navigation diagnostic, not blast comparison frame'};}catch(e){driver.failureDiagnosticImage.error=String(e);}save();
-   }
-   if(await page.evaluate(fn)&&(label!=='native main menu readiness'||await page.evaluate(mainPlayReady)))return;await page.waitForTimeout(250);
+   if(await page.evaluate(fn)&&(label!=='native main menu readiness'||await page.evaluate(mainPlayReady))&&(label!=='native setup menu'||await page.evaluate(setupButtonsReady)))return;await page.waitForTimeout(250);
   }throw Error(label+' timeout');};
   await startProjectileThroughMenu(page,{waitForPhase,remainingMs:()=>deadline-Date.now(),receipt:events});
   await waitForPhase(()=>{const g=window.__inkwave,G=window.__G;return G?.mode==='match'&&g?.match===G.match&&!g.match.attract&&g.match.local?.isLocal&&g.match.controller&&['intro','playing'].includes(g.match.state);},'native admission');
@@ -107,4 +120,7 @@ try{
  });
  await captureBlastPair({page,out,expectedContentHash:manifest.contentHash,prepareCase,admitRoll,camera,blastPosition});
  assert.deepEqual(errors,[]);driver.status='captured-not-reviewed';driver.browser=browser.version();save();
-} catch(e){driver.error=String(e.stack||e);save();throw e;}finally{await browser?.close();await new Promise(r=>server.close(r));}
+} catch(e){driver.error=String(e.stack||e);save();
+ driver.failureDiagnosticImage={scope:'post-failure QA navigation diagnostic, not blast comparison frame',status:'not-captured'};
+ if(page&&!page.isClosed())try{const dir=path.join(out,'diagnostics');fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,'menu-failure.png');await page.screenshot({path:file,timeout:10000});Object.assign(driver.failureDiagnosticImage,{status:'captured',file:'diagnostics/menu-failure.png',sha256:sha(fs.readFileSync(file))});}catch(imageError){driver.failureDiagnosticImage.error=String(imageError);}else driver.failureDiagnosticImage.error='owned page absent or already closed';
+ save();throw e;}finally{await browser?.close();await new Promise(r=>server.close(r));}

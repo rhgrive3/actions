@@ -10,7 +10,7 @@ const hash=b=>createHash('sha256').update(b).digest('hex');
 assert.equal(git(source,'rev-parse','HEAD'),HEAD);
 assert.equal(git(source,'status','--porcelain','--untracked-files=no'),'');
 const reviewedScripts={
- 'run-main91-blast.mjs':'61dd0a141b1c1c12e112bbd5436c80c4276453c7b2ea4e3d6af4ba72e9c10b8e',
+ 'run-main91-blast.mjs':'a7054d63db346d33f55747a2dc90ff1c4b94816d2f2a086ea2c78330c6bf7ba0',
  'capture-main91-blast.mjs':'97de633af2b28f6d8ad6bb337f06ca363749f6abc76a98d3dca000961a9b8fdd'
 };
 const scripts=Object.fromEntries([...Object.keys(reviewedScripts),'verify-blast-artifacts.mjs'].map(f=>[f,hash(fs.readFileSync(new URL(f,import.meta.url)))]));

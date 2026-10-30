@@ -105,7 +105,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/blast-artifacts"
           node qa/tools/blast-main91-qa/verify-blast-artifacts.mjs provenance source qa "$RUNNER_TEMP/blast-artifacts"
-      - name: Build clean pinned source and capture with existing sandbox-enabled launcher; wait for native PLAY readiness and retain bounded diagnostics
+      - name: Build clean pinned source and capture with existing sandbox-enabled launcher; wait for native PLAY and setup readiness; retain failure diagnostics
         run: |
           node qa/tools/blast-main91-qa/run-main91-blast.mjs "$GITHUB_WORKSPACE/source" "$RUNNER_TEMP/main91-blast-site" "$RUNNER_TEMP/blast-artifacts"
       - name: Require both complete eight-frame sequences and receipt hashes
