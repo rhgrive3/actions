@@ -283,7 +283,7 @@ async function assertBrowserOnlineLifetime(page) {
     }
     const net = G.net;
     const p = window.__onlineLifetimeProbe = {
-      net, clips: [], calls: [], originalJoin: net.join,
+      net, clips: [], calls: [], events: [], originalJoin: net.join,
       originalName: menuState().profile.name, originalMode: menus._input,
       clipboardDescriptor: Object.getOwnPropertyDescriptor(navigator, 'clipboard'),
       joinDescriptor: Object.getOwnPropertyDescriptor(net, 'join'),
@@ -315,17 +315,51 @@ async function assertBrowserOnlineLifetime(page) {
       delete window.__onlineLifetimeProbe;
       throw error;
     }
+    p.traceInput = event => {
+      if (!event.target?.closest?.('.iw-online')) return;
+      const row = {type:event.type, trusted:event.isTrusted, pointerType:event.pointerType,
+        current:menus.current, owner:menus._scr?.name};
+      p.events.push(row); if (p.events.length > 64) p.events.shift();
+      queueMicrotask(() => Object.assign(row, {prevented:event.defaultPrevented, reads:p.clips.length,
+        pressSame:menus._qualityPress?.screen === menus._scr?.el}));
+    };
+    for (const type of ['pointerdown','click']) document.addEventListener(type, p.traceInput, true);
   });
   const open = () => page.evaluate(() => {
     menus.wipe.cancel();
     menus.show('online', { force: true, wipe: false, light: false, instantLeave: true });
     menus.setInputMode('touch');
   });
+  // Playwright actionability deliberately ignores opacity. The real production
+  // capture guard does not: a fresh screen's entrance must own visible input.
+  const actionState = ({selector, readyOnly = false}) => {
+    const m = window.menus, scr = m?._scr, target = document.querySelector(selector);
+    let opacity = 1;
+    for (let el = target?.closest('[data-nav]') || target; el && el !== scr?.el?.parentNode; el = el.parentElement) {
+      const value = +getComputedStyle(el).opacity;
+      if (Number.isFinite(value)) opacity *= value;
+      if (el === scr.el) break;
+    }
+    const mounted = !!target?.isConnected && !!scr?.el.isConnected && !!scr?.el.contains(target);
+    const state = { current:m?.current, owner:scr?.name, mounted, inert:!!scr?.el?.inert, opacity,
+      disabled:!!target?.disabled, codeDisabled:!!scr?.el.querySelector('.iw-code-input')?.disabled,
+      mode:scr?.el.querySelector('.iw-hubcard--join')?.dataset.mode,
+      reads:window.__onlineLifetimeProbe?.clips.length, events:window.__onlineLifetimeProbe?.events.slice(-8),
+      ready:mounted && m.current === 'online' && scr.name === 'online' && !scr.el.inert && !target.disabled && opacity > .6 };
+    return readyOnly ? state.ready : state;
+  };
+  const clickReady = async locator => {
+    const selector = `${root} .iw-join__btns button:${locator === pasteButton ? 'first' : 'last'}-child`;
+    try { await page.waitForFunction(actionState, {selector, readyOnly:true}, {timeout:10000}); }
+    catch (error) { throw Error('online lifetime: native button not ready ' + JSON.stringify(await page.evaluate(actionState, {selector})), {cause:error}); }
+    const before = await page.evaluate(actionState, {selector});
+    await locator.click();
+    return {before, after:await page.evaluate(actionState, {selector})};
+  };
   const paste = async () => {
-    const before = await page.evaluate(() => __onlineLifetimeProbe.clips.length);
-    await pasteButton.click();
-    ensure(await page.evaluate(n => __onlineLifetimeProbe.clips.length === n + 1, before), 'exactly one controlled clipboard request');
-    return before;
+    const {before, after} = await clickReady(pasteButton);
+    ensure(after.reads === before.reads + 1, 'exactly one controlled clipboard request ' + JSON.stringify({before, after}));
+    return before.reads;
   };
   const settle = (list, index, reject, value) => page.evaluate(async ({ list, index, reject, value }) => {
     const item = __onlineLifetimeProbe[list][index];
@@ -393,11 +427,11 @@ async function assertBrowserOnlineLifetime(page) {
 
     // 3. The submitted join owns state across its controlled failure and old read.
     request = await paste();
-    await joinButton.click();
+    await clickReady(joinButton);
     s = await snapshot();
     ensure(s.disabled && s.mode === 'connecting' && s.calls === 1, 'actual JOIN enters busy state exactly once');
     const busyReads = s.reads;
-    await pasteButton.click();
+    await clickReady(pasteButton);
     // A real document paste event also must not mutate the disabled code.
     await page.evaluate(() => {
       document.activeElement?.blur();
@@ -441,7 +475,7 @@ async function assertBrowserOnlineLifetime(page) {
     await code.fill('bcefg');
     await waitPastAutoJoin();
     ensure((await snapshot()).code === 'BCEFG' && (await snapshot()).calls === 1, 'native valid entry sanitizes and remains explicit-submit');
-    await joinButton.click();
+    await clickReady(joinButton);
     await page.waitForFunction(() => menus.current === 'lobby' && G.net.isMock && G.net.state === 'lobby' && G.net.code === 'BCEFG');
     ensure(await page.evaluate(() => {
       const p = __onlineLifetimeProbe, call = p.calls.at(-1);
@@ -462,6 +496,7 @@ async function assertBrowserOnlineLifetime(page) {
         }
         await Promise.resolve(); await Promise.resolve();
       } finally {
+        for (const type of ['pointerdown','click']) document.removeEventListener(type, p.traceInput, true);
         for (const [object, key, descriptor] of [
           [navigator, 'clipboard', p.clipboardDescriptor], [p.net, 'join', p.joinDescriptor], [p.net, 'create', p.createDescriptor],
         ]) {

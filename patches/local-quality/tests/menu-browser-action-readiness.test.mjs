@@ -1,0 +1,80 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import path from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+const root=path.resolve(process.env.INKWAVE_SOURCE_ROOT || fileURLToPath(new URL('../../../',import.meta.url)));
+const {fixture}=await import(pathToFileURL(path.join(root,'scripts/lib/inkwave-online-controlled-fixture.mjs')));
+const {installMenuQuality}=await import(pathToFileURL(path.join(root,'patches/local-quality/menu.mjs')));
+const {adaptBuildSource}=await import(pathToFileURL(path.join(root,'scripts/inkwave-source-composition.mjs')));
+const composed=adaptBuildSource('src/ui/menus.js',fs.readFileSync(root+'/inkwave-public/src/ui/menus.js','utf8'));
+const a=composed.indexOf('  _scr_online() {'),b=composed.indexOf('  // ================================================================ SCREEN: lobby',a);
+assert(a>=0&&b>a);
+const candidate=fs.readFileSync(process.env.INKWAVE_OWNER_CHECKER || path.join(root,'scripts/check-inkwave-menu-focus.mjs'),'utf8');
+const start=candidate.indexOf('  const actionState = '),end=candidate.indexOf('\n  const clickReady = ',start);
+assert(start>=0&&end>start);
+const readinessSource=candidate.slice(start,end)+'\nactionState;';
+function setup(){
+  let reads=0;
+  const f=fixture(composed.slice(a,b),{readClipboard:()=>{reads++;return new Promise(()=>{});}}),m=f.api;
+  const E=f.screen.el.constructor;
+  E.prototype.contains=function(target){for(let p=target;p;p=p.parentNode)if(p===this)return true;return false;};
+  E.prototype.closest=function(selector){for(let p=this;p;p=p.parentNode)if(selector==='[data-nav]'&&p.dataset.nav)return p;return null;};
+  Object.defineProperty(E.prototype,'parentElement',{get(){return this.parentNode;},configurable:true});
+  Object.defineProperty(E.prototype,'isConnected',{get(){for(let p=this;p;p=p.parentNode)if(p===f.document)return true;return false;},configurable:true});
+  const ui=f.createElement('div');f.document.append(ui);ui.append(f.screen.el);
+  const paste=f.find('iw-join__btns').children[0],join=f.find('iw-hubcard--join'),input=f.find('iw-code-input');
+  join.dataset.nav='button';join.opacity=1;f.screen.name='online';
+  f.screen.el.querySelector=s=>s==='.iw-code-input'?input:s==='.iw-hubcard--join'?join:null;
+  f.document.querySelector=()=>paste;
+  const env={document:f.document,performance:{now:()=>1000},getComputedStyle:el=>({opacity:String(el.opacity??1)}),setTimeout:()=>1,clearTimeout(){},requestAnimationFrame:()=>0,cancelAnimationFrame(){},addEventListener(){},removeEventListener(){}};
+  class Native{_swap(){}}
+  installMenuQuality(Native,env);
+  Object.assign(m,{el:ui,_scr:f.screen});Native.prototype._swap.call(m);
+  const probe={clips:[],events:[]};const context={window:{menus:m,__onlineLifetimeProbe:probe},document:f.document,getComputedStyle:env.getComputedStyle};
+  const state=vm.runInNewContext(readinessSource,context);
+  const event=[];
+  const click=()=>{let stopped=false;const e={target:paste,stopImmediatePropagation(){stopped=true;event.push('capture-stop');},preventDefault(){this.defaultPrevented=true;}};
+    event.push('pointerdown');for(const cb of ui.listeners.get('pointerdown')||[])cb(e);
+    event.push('click-capture');for(const cb of ui.listeners.get('click')||[])cb(e);
+    if(!stopped){event.push('native-paste-callback');for(const cb of paste.listeners.get('click')||[])cb({...e,stopPropagation(){}});}
+    return !stopped;
+  };
+  return{f,m,ui,paste,join,input,state,click,event,get reads(){return reads;}};
+}
+test('actual quality capture plus composed online callback reproduce zero reads before visible entrance, exactly one after it',()=>{
+  const x=setup();x.join.opacity=.1;
+  assert.equal(x.state({selector:'paste',readyOnly:true}),false);
+  assert.equal(x.click(),false);assert.equal(x.reads,0);
+  assert.deepEqual(x.event,['pointerdown','click-capture','capture-stop']);
+  x.join.opacity=1;
+  assert.equal(x.state({selector:'paste',readyOnly:true}),true);
+  assert.equal(x.click(),true);assert.equal(x.reads,1);
+  assert.deepEqual(x.event.slice(3),['pointerdown','click-capture','native-paste-callback']);
+});
+test('readiness retains real ancestor opacity threshold, live owner, inert, disabled and mounted negative controls',()=>{
+  const x=setup();x.join.opacity=.6;assert.equal(x.state({selector:'paste',readyOnly:true}),false);
+  x.join.opacity=.9;x.f.screen.el.opacity=.6;assert.equal(x.state({selector:'paste',readyOnly:true}),false);
+  x.f.screen.el.opacity=1;assert.equal(x.state({selector:'paste',readyOnly:true}),true);
+  x.m.current='main';assert.equal(x.state({selector:'paste',readyOnly:true}),false);x.m.current='online';
+  x.f.screen.el.inert=true;assert.equal(x.state({selector:'paste',readyOnly:true}),false);x.f.screen.el.inert=false;
+  x.paste.disabled=true;assert.equal(x.state({selector:'paste',readyOnly:true}),false);x.paste.disabled=false;
+  x.ui.children=[];x.f.screen.el.parentNode=null;assert.equal(x.state({selector:'paste',readyOnly:true}),false);
+});
+test('busy code remains observable without falsely waiting for editable state before the busy-Paste negative action',()=>{
+  const x=setup();x.input.value='NETXX';x.input.dispatch('input');
+  x.f.find('iw-join__btns').children[1].dispatch('click');
+  const s=x.state({selector:'paste'});assert.equal(s.ready,true);assert.equal(s.codeDisabled,true);assert.equal(s.mode,'connecting');
+  assert.equal(x.click(),true,'real capture permits the visible busy-Paste negative action');
+  assert.equal(x.reads,0,'actual composed busy callback must not call clipboard');
+  assert.equal(x.f.requests.length,1,'only the intentional pending JOIN exists');
+});
+test('candidate waits before every online native button click and retains exact counts and all original acceptance conditions',()=>{
+  const block=candidate.slice(candidate.indexOf('async function assertBrowserOnlineLifetime'),candidate.indexOf('async function assertBrowserGearPractice'));
+  assert.equal((block.match(/await clickReady\(joinButton\)/g)||[]).length,2);
+  assert.equal((block.match(/await clickReady\(pasteButton\)/g)||[]).length,2);
+  assert(block.includes('after.reads === before.reads + 1'));
+  assert(!/force: ?true\s*\}\)/.test(block.match(/const clickReady[\s\S]*?const paste =/)[0]));
+  for(const text of ["s.disabled && s.mode === 'connecting' && s.calls === 1","s.reads === busyReads && s.code === 'NETXX' && s.calls === 1","p.calls.length === 2 && call.kind === 'join'","row.checks.online.length, 4","{width:844,height:390},{width:1133,height:744}","document.removeEventListener(type, p.traceInput, true)"])assert(candidate.includes(text),text);
+});
