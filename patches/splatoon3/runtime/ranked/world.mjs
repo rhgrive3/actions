@@ -1,3 +1,4 @@
+import { createTowerModel } from './tower-model.mjs';
 import { createRankedStage } from './stages.mjs';
 import { createZoneCoveragePair } from './zone-coverage-samples.mjs';
 import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
@@ -213,13 +214,7 @@ export class RankedWorld {
     this.towerInkMesh.name = 'tower-paintable-floor';
     this.towerInkMesh.visible = false;
     this.tower.add(this.towerInkMesh);
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.9, 10), this._material(0xd2a840, { metalness: 0.55, roughness: 0.4 }));
-    pole.position.set(0, 0.95, 0);
-    pole.name = 'tower-pole';
-    this.tower.add(pole);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.2, 0.12, 12), this._material(0xffdf66, { metalness: 0.3, roughness: 0.42 }));
-    cap.position.y = 1.95;
-    this.tower.add(cap);
+    this.tower.add(createTowerModel(THREE, this._towerHalfWidth, this._towerHalfLength));
     this.towerGroup.add(this.tower);
   }
 

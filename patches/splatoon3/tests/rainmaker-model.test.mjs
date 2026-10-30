@@ -14,12 +14,12 @@ function closeVec(a,b){assert.ok(a.distanceTo(b)<1e-6,JSON.stringify([a.toArray(
 test('single-draw gold fish silhouette has finite low-budget geometry and an open dark mouth',()=>{
  const mesh=createRainmakerModel(THREE),g=mesh.geometry,p=g.getAttribute('position');let bytes=0;
  for(const a of Object.values(g.attributes)){bytes+=a.array.byteLength;assert.ok(Array.from(a.array).every(Number.isFinite));}
- bytes+=g.index.array.byteLength;const triangles=g.index.count/3;assert.equal(triangles,456);assert.equal(bytes,16884);
+ bytes+=g.index.array.byteLength;const triangles=g.index.count/3;assert.equal(triangles,608);assert.equal(bytes,29172);
  assert.equal(mesh.isMesh,true);assert.equal(mesh.children.length,0);assert.ok(!Array.isArray(mesh.material));
  assert.ok(g.boundingBox.min.z<-.159&&g.boundingBox.max.z>.748);
  // The same tail is mounted above/outside the grip for shoulder carry.
  // Check the exact Float32 construction/scale path, not a looser height cutoff.
- assert.equal(g.boundingBox.max.y,Math.fround(Math.fround(.87)*.6-.02),'accepted tail clearance height');assert.equal(mesh.userData.rainmakerModel.revision,4);
+ assert.equal(g.boundingBox.max.y,Math.fround(Math.fround(.87)*.6-.02),'accepted tail clearance height');assert.equal(mesh.userData.rainmakerModel.revision,5);
  const c=g.getAttribute('color');let darkMouth=0;
  for(let i=0;i<p.count;i++)if(p.getZ(i)>.44&&c.getX(i)<.1&&c.getY(i)<.1)darkMouth++;
  assert.ok(darkMouth>=12);assert.equal(mesh.material.vertexColors,true);
@@ -53,3 +53,16 @@ test('objective resources have a single owner and presentation release is idempo
 });
 
 test('front centre sees the dark opening rather than a closed gold head',()=>{const m=createRainmakerModel(THREE);m.updateMatrixWorld();const hits=new THREE.Raycaster(new THREE.Vector3(-.30,.124,2),new THREE.Vector3(0,0,-1)).intersectObject(m);assert.ok(hits.length);const c=m.geometry.getAttribute('color');assert.ok(c.getX(hits[0].face.a)<.1,'front mouth aperture must remain visible');console.log(JSON.stringify({point:hits[0].point.toArray(),color:[c.getX(hits[0].face.a),c.getY(hits[0].face.a),c.getZ(hits[0].face.a)]}));m.geometry.dispose();m.material.dispose();});
+
+test('open jaw has a recessed bore, front-facing inner walls and two upper teeth',()=>{
+ const mesh=createRainmakerModel(THREE);mesh.updateMatrixWorld();
+ const hit=(x,y)=>new THREE.Raycaster(new THREE.Vector3(-.30+x,y,2),new THREE.Vector3(0,0,-1)).intersectObject(mesh)[0];
+ const centre=hit(0,.124),wall=hit(.10,.124),left=hit(-.078,.184),right=hit(.078,.184);
+ assert.ok(centre&&wall&&left&&right);
+ assert.ok(centre.point.z>.63&&centre.point.z<.64,'dark bore is recessed, not a front cap');
+ assert.ok(wall.point.z>.68&&wall.point.z<.69,'inner jaw must face forward rather than expose the rear body');
+ assert.ok(wall.point.z-centre.point.z>.04,'physical wall depth, not a painted flat annulus');
+ for(const tooth of [left,right])assert.ok(tooth.point.z>.73&&tooth.point.z<.745,'upper tooth remains in front of the jaw');
+ assert.deepEqual(mesh.userData.rainmakerModel.grip,[0,0,0]);assert.deepEqual(mesh.userData.rainmakerModel.muzzle,[-.30,.124,.749]);
+ mesh.geometry.dispose();mesh.material.dispose();
+});
