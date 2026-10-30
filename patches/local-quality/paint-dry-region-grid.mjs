@@ -16,22 +16,29 @@ export class PaintDryRegions {
     this.full = false;
     this.count = 0;
     this.live = 0;
+    this.nextExpiry = Infinity;
   }
   reset() {
     this.expiry.fill(0); this.credit = 0; this.dirty = true;
-    this.live = 0; this.full = false; this.count = 0;
+    this.live = 0; this.full = false; this.count = 0; this.nextExpiry = Infinity;
   }
   expire() {
-    let removed = false;
+    // Marks can refresh a tile before its old deadline. A stale earlier
+    // deadline only causes an extra scan; it can never expire ink too early.
+    if (!this.live || this.credit < this.nextExpiry) return;
+    let removed = false, next = Infinity;
     for (let i=0; i<this.expiry.length; i++) {
-      if (this.expiry[i] && this.expiry[i] <= this.credit) {
+      const expiry = this.expiry[i];
+      if (expiry && expiry <= this.credit) {
         this.expiry[i] = 0; this.live--; removed = true;
-      }
+      } else if (expiry && expiry < next) next = expiry;
     }
+    this.nextExpiry = next;
     if (removed) this.dirty = true;
   }
   markPositions(positions, quads, nextCredit) {
     const n=this.axis, nMax=n-1, N=this.size, tile=this.tile, expiry=nextCredit+256, exp=this.expiry;
+    if (quads > 0 && expiry < this.nextExpiry) this.nextExpiry = expiry;
     for(let i=0;i<quads;i++) {
       const at=i*8;
       const ax=positions[at], bx=positions[at+2], ay=positions[at+1], by=positions[at+5];
@@ -60,6 +67,7 @@ export class PaintDryRegions {
   // already include antialias and raster guards; retain another two texels.
   markPixelRects(rectangles, count, nextCredit) {
     const n=this.axis, nMax=n-1, tile=this.tile, expiry=nextCredit+256, exp=this.expiry;
+    if (count > 0 && expiry < this.nextExpiry) this.nextExpiry = expiry;
     for(let i=0;i<count;i++) {
       const k=i*4,x=rectangles[k],y=rectangles[k+1],w=rectangles[k+2],h=rectangles[k+3];
       if(w<=0||h<=0)continue;

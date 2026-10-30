@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { profilePaintBounds, PROFILE_BATCH_LIMIT } from './paint-profile-bounds.mjs';
 import { profileShaderSources } from './paint-profile-shader.mjs';
 import { profileShaderCompatibility } from './paint-profile-compatibility.mjs';
+import { buildProfileDrawRuns } from './paint-profile-draw-runs.mjs';
 const MATERIAL_KEYS = Object.freeze(['version','blending','blendSrc','blendDst','blendSrcAlpha','blendDstAlpha','blendEquation','blendEquationAlpha','transparent','premultipliedAlpha','depthTest','depthWrite','colorWrite','side','polygonOffset','stencilWrite','alphaTest','toneMapped','wireframe','wireframeLinewidth','alphaToCoverage','forceSinglePass','polygonOffsetFactor','polygonOffsetUnits']);
 function profileTextureOkay(texture) {
   return texture?.type===THREE.UnsignedByteType && texture.format===THREE.RGBAFormat &&
@@ -51,7 +52,8 @@ function allocate(paint) {
     positions: paint.geo.attributes.aPos?.array, local: paint.geo.attributes.aLocal?.array,
     splat: paint.geo.attributes.aSplat?.array, stretch: paint.geo.attributes.aStretch?.array,
     growth: paint.geo.attributes.aGrow?.array,
-    rectangles: new Int32Array(PROFILE_BATCH_LIMIT * 4), scissor: new THREE.Vector4(),
+    rectangles: new Int32Array(PROFILE_BATCH_LIMIT * 4),
+    drawRuns: new Int32Array(PROFILE_BATCH_LIMIT * 6), scissor: new THREE.Vector4(),
     rangeStart: 0, rangeCount: 0, scissorTest: false, active: false, prepared: false, preparedCount: 0,
     before: material.onBeforeRender, after: paint.mesh.onAfterRender,
     counters: { batches: 0, stampDraws: 0, originalRasterPixels: 0, clippedRasterPixels: 0, fallbacks: 0 } };
@@ -72,20 +74,21 @@ function allocate(paint) {
     state.scissorTest = state.target.scissorTest; state.scissor.copy(state.target.scissor); state.active = true;
     state.counters.batches++;
     try {
-      for (let q = 0; q < paint.quads; q++) {
-        const i = q * 4, v = q * 8, rect = state.rectangles;
-        let x = rect[i], y = rect[i + 1], right = x + rect[i + 2], top = y + rect[i + 3];
-        if (state.scissorTest) {
-          x = Math.max(x, state.scissor.x); y = Math.max(y, state.scissor.y);
-          right = Math.min(right, state.scissor.x + state.scissor.z); top = Math.min(top, state.scissor.y + state.scissor.w);
-        }
-        const w = Math.max(0, right - x), h = Math.max(0, top - y);
+      const runs = state.drawRuns;
+      const runCount = buildProfileDrawRuns(state.rectangles, paint.quads,
+        state.scissorTest ? state.scissor : null, runs);
+      for (let run = 0; run < runCount; run++) {
+        const at = run * 6, first = runs[at], count = runs[at + 1];
+        const x = runs[at + 2], y = runs[at + 3], w = runs[at + 4], h = runs[at + 5];
         state.target.scissor.set(x, y, w, h); state.target.scissorTest = true;
-        renderer.setRenderTarget(state.target); geometry.setDrawRange(q * 6, 6);
+        renderer.setRenderTarget(state.target); geometry.setDrawRange(first * 6, count * 6);
         renderer.renderBufferDirect(camera, scene, geometry, state.fast, object, group);
         state.counters.stampDraws++;
+        state.counters.clippedRasterPixels += w * h * count;
+      }
+      for (let q = 0; q < paint.quads; q++) {
+        const v = q * 8;
         state.counters.originalRasterPixels += (paint.aPos[v + 2] - paint.aPos[v]) * (paint.aPos[v + 5] - paint.aPos[v + 1]) * paint.size * paint.size * .25;
-        state.counters.clippedRasterPixels += w * h;
       }
       // One outer renderer.render owns the dry pass, upload, and native mip
       // generation. Its automatic paint draw is empty, not duplicated.
