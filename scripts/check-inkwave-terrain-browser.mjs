@@ -9,7 +9,7 @@ import {convertSource} from '../patches/native-stages/runtime/source-convert.mjs
 const [siteArg,assetsArg,outArg]=process.argv.slice(2);assert(siteArg&&assetsArg&&outArg,'Usage: check-inkwave-terrain-browser.mjs <built-site> <private-derived-assets|--synthetic> <evidence-dir>');
 const site=path.resolve(siteArg),out=path.resolve(outArg),synthetic=assetsArg==='--synthetic',assets=synthetic?null:path.resolve(assetsArg),catalog=nativeStageCatalog();fs.mkdirSync(out,{recursive:true});
 const source=fs.readFileSync('patches/native-stages/runtime/native-render.mjs');
-await build({stdin:{contents:"export {nativeDisplay} from './patches/native-stages/runtime/native-render.mjs';",resolveDir:process.cwd()},bundle:true,format:'esm',outfile:path.join(out,'probe.mjs'),external:['three'],plugins:[{name:'emitted-level-material',setup(b){b.onResolve({filter:/\/src\/world\/levelMaterial\.js$/},()=>({path:'/src/world/levelMaterial.js',external:true}));}}]});
+await build({stdin:{contents:"export {nativeDisplay} from './patches/native-stages/runtime/native-render.mjs';",resolveDir:process.cwd()},bundle:true,format:'esm',outfile:path.join(out,'probe.mjs'),external:['three'],plugins:[{name:'emitted-level-material',setup(b){b.onResolve({filter:/\/src\/world\/levelMaterial\.js$/},()=>({path:'/src/world/levelMaterial.js',external:true}));b.onResolve({filter:/\/src\/core\/ctx\.js$/},()=>({path:'/src/core/ctx.js',external:true}));}}]});
 const names={vertices:Float32Array,indices:Uint32Array,triangles:Float32Array,normals:Float32Array,flags:Uint32Array,objectIds:Uint32Array,nodes:Float32Array,order:Uint32Array,triangleFace:Int32Array,mask:Uint8Array},files={triangles:'collision',objectIds:'objects',nodes:'bvh'},synthetics=new Map();
 if(synthetic)for(const stage of catalog.stages){
  const ps=[[-3,0,-2],[-3,0,2],[-1,0,2],[-1,0,-2],[1,0,-2],[1,0,2],[3,0,2],[3,0,-2],[-3,2,-2],[-1,2,-2],[1,1,0],[3,1,0]];
@@ -84,3 +84,4 @@ try{
  }
  assert.equal(result.errors.length,0,JSON.stringify(result.errors));result.status='passed';
 }catch(error){result.status='failed';result.error=error.stack;throw error;}finally{save();await browser.close();await new Promise(r=>server.close(r));}
+
