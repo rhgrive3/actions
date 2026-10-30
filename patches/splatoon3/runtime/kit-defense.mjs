@@ -1,6 +1,9 @@
 import { distanceDamage } from './weapons.mjs';
 import { kitBombDamageBands, kitBombDamageMax } from './kit-subs.mjs';
 import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
+import {hasNativeSubDeviceBirth,observeSubDeviceContact} from '../../network-replication/sub-device-contact-proof.mjs';
+import {withNativeDeviceProbe} from '../../network-replication/native-device-probe.mjs';
+import {objectDamageRow} from './sub-resistance.mjs';
 // Special contacts are candidates in the native swept segment, never a second step.
 // Pinned spl__DamageRateInfoConfig row of an explosion's blast core against the
 // Big Bubbler (see BIG_BUBBLER_SOURCE_RATES in kit-big-bubbler.mjs).
@@ -32,7 +35,7 @@ export function installKitDefense(api) {
   // as ordinary projectiles without creating a second bomb integrator.
   Projectiles.prototype.kitBombDefenseCandidate = function (b, start, end) {
     if (!b || b.kind !== 'bomb' || !start || !end) return null;
-    const subId = b.s3Sub?.id || b.s3Resolved?.spec?.id || 'bomb';
+    const subId = (hasNativeSubDeviceBirth(b)?b.s3GhostResolved?.spec?.id:null) || b.s3Sub?.id || b.s3Resolved?.spec?.id || 'bomb';
     if (!['bomb', 'suction', 'curling'].includes(subId)) return this.coolerBombCandidate?.(b,start,end) || null;
     const length = start.distanceTo(end);
     if (!(length > 0)) return null;
@@ -56,12 +59,19 @@ export function installKitDefense(api) {
       if (!candidate || typeof candidate.onHit !== 'function' || !Number.isFinite(candidate.distance)
         || candidate.distance < 0 || candidate.distance > length) return;
       if (!best || candidate.distance < best.distance) {
+        const target=candidate.object||candidate.damageTarget;
+        // The sub-device candidate detonates ordinary bombs; it does not also
+        // deal a direct hit. Its native burst owner records that effect once.
+        const hit=hasNativeSubDeviceBirth(b)&&target&&!target.subId?()=>{
+          observeSubDeviceContact(b,target,probe.damage,objectDamageRow(probe),'direct');candidate.onHit();
+        }:candidate.onHit;
         best = { distance: candidate.distance, point: candidate.point?.clone?.() || null,
-          normal: candidate.normal?.clone?.() || null, onHit: candidate.onHit, kind: candidate.kind === 'tacticooler' ? 'tacticooler' : kind,
+          normal: candidate.normal?.clone?.() || null, onHit: hit, kind: candidate.kind === 'tacticooler' ? 'tacticooler' : kind,
           visualOnly: !!candidate.visualOnly };
       }
     };
-    consider(this.kitBarrierCandidate?.(probe, start, end), 'bubbler');
+    const barrier=()=>this.kitBarrierCandidate?.(probe, start, end);
+    consider(hasNativeSubDeviceBirth(b)?withNativeDeviceProbe(probe,barrier):barrier(), 'bubbler');
     if (api.inkVacAbsorbCandidate) for (const actor of G.actors || []) {
       if (actor.alive && actor.team !== b.team)
         consider(api.inkVacAbsorbCandidate(actor, start, end, probe), 'ink-vac');

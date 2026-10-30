@@ -92,6 +92,19 @@ const TOMBSTONE_MEMORY = 32;
 const MAX_KEY_LENGTH = 64;
 const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 
+// The isolated receiver contact probe shares the native exhale constants and
+// descriptor. It never joins the projectile pool or changes a live Vac state.
+export function restoreNativeInkVacProbe(p) {
+  if(p?.wid!==VAC_ID||p.type!=='blast'||!Number.isFinite(p.radius)||p.radius<BLAST_MIN-.011||p.radius>BLAST_MAX+.011)return false;
+  const charge=clamp01((p.radius-BLAST_MIN)/(BLAST_MAX-BLAST_MIN));
+  if(Math.abs(Math.hypot(p.vel.x,p.vel.y-SPAWN_SPEED_Y*60,p.vel.z)-exhaleSpeed(charge))>.025)return false;
+  const descriptor=inkVacBlastDescriptor(charge);
+  Object.assign(p,{s3SpecialWeapon:descriptor,s3Weapon:descriptor,damage:exhaleDamage(),
+    size:charge<=1e-10?MIN_PLAYER_RADIUS:.2,life:SPAWN_BLAST_WAIT/60,delay:0,straight:0,
+    grav:FLY_GRAVITY*3600,drag:FLY_AIR_RESIST*60});
+  return true;
+}
+
 export const INK_VAC_CALIBRATION = Object.freeze({
   // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
   actorContactDamagePerSecond: 90,
@@ -554,6 +567,7 @@ function updateVisual(state) {
   state.length = Math.min(INHALE_LENGTH, (state.inhaleAge ?? state.t) * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
   if (!state.mesh) return;
   state.mesh.visible=state.sucking!==false;
+  if(!state.mesh.visible)return;
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
@@ -651,6 +665,17 @@ function inkVacObjectContact(state, object) {
   const point = object?.pos;
   if (!point?.isVector3 || !Number.isFinite(firstEntry(state, point, point))) return false;
   return !api.G.physics?.los || !!api.G.physics.los(state._org, point);
+}
+
+// Detached receiver probe shares the native intake frustum and LOS owner.
+// It does not enter liveStates or mutate a presentation/absorption state.
+export function nativeInkVacObjectContact(actor,object,inhaleFrames,power=0){
+ if(!api||!actor||!(inhaleFrames>0)||!Number.isFinite(inhaleFrames))return false;
+ const V=api.THREE.Vector3,state={actor,remote:!!actor.remote,authorityOwner:actor.owner,
+  authorityLife:vacLife(actor),game:api.G,match:api.G.match,sucking:true,
+  length:Math.min(INHALE_LENGTH,inhaleFrames*INHALE_LENGTH_ADD_PER_FRAME),
+  nearR:intakeNearRadius(power),farR:intakeFarRadius(power),_org:new V(),_fwd:new V(),_m:new V(),_e:new V()};
+ return inkVacObjectContact(state,object);
 }
 
 // Big Bubbler is managed by kit-big-bubbler.mjs rather than the generic special

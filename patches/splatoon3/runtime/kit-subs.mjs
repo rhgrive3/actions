@@ -396,7 +396,7 @@ export function kitBombPresentation(b) {
 
 // The live global context, used only for the native actor scan. Captured at install
 // time from the running composition.
-let G_REF = null, PLAYER_REF = null, PHYSICS_REF = null;
+let G_REF = null, PLAYER_REF = null, PHYSICS_REF = null, CAPSULE_DISTANCE_REF = null;
 
 // ---- 1. sub release: selected spec and held charge ---------------------------
 
@@ -713,6 +713,13 @@ export function kitBombTrail(SUB, b, paint, projectiles, game = G_REF) {
       if (e.team === b.team || !e.alive || !e.pos) continue;
       b.s3ContactBase.copy(e.pos); b.s3ContactBase.y += e.smoothY || 0;
       const h = e.form === 'squid' ? PLAYER_REF.squidHeight : PLAYER_REF.height;
+      // A vertical capsule cannot reach farther on either horizontal axis
+      // than its existing contact threshold. Keep non-finite/custom solvers
+      // on the original path (NaN has observable comparison semantics).
+      const bound=PLAYER_REF.radius+.2+1e-9;
+      if(PHYSICS_REF.pointCapsuleDist===CAPSULE_DISTANCE_REF&&
+        (Math.abs(b.pos.x-b.s3ContactBase.x)>bound||Math.abs(b.pos.z-b.s3ContactBase.z)>bound)&&
+        Number.isFinite(b.pos.y)&&Number.isFinite(b.s3ContactBase.y)&&Number.isFinite(h)&&Number.isFinite(bound))continue;
       const distance = PHYSICS_REF.pointCapsuleDist(b.pos, b.s3ContactBase, PLAYER_REF.radius, h);
       if (distance > PLAYER_REF.radius + 0.2) continue;
       if (G_REF.physics?.los && !G_REF.physics.los(b.pos, b.s3ContactBase)) continue;
@@ -1006,6 +1013,7 @@ export function installKitSubs(api, profile) {
   if (!SUB || !Projectiles || !WeaponRunner) throw new Error('INKWAVE sub patch needs SUB, Projectiles and WeaponRunner');
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
+  CAPSULE_DISTANCE_REF = PHYSICS_REF?.pointCapsuleDist;
   registerKitSubs(SUB, profile);
 
   const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
