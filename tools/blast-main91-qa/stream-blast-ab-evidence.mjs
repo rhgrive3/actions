@@ -29,7 +29,7 @@ for(const variant of ['baseline','candidate']){
  assert.equal(r.authorityFixture.file,'test-blaster-knockback-authority.mjs');
  assert.equal(r.authorityFixture.sha256,p.scripts[r.authorityFixture.file]);
  assert.equal(r.authorityFixture.source,'passed');assert.equal(r.authorityFixture.emitted,'passed');
- assert.deepEqual(r.qaContracts,['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs']);
+ assert.deepEqual(r.qaContracts,['verify-blast-clocks.test.mjs','audio-request-trace.test.mjs','stable-scenario-random.test.mjs','paired-blast-diagnostics.test.mjs','settle-recorded-capture-audio.test.mjs']);
  assert.deepEqual(fs.readdirSync(dir).filter(n=>n.endsWith('.png')).sort(),pngNames);
  const captures=receipts['capture-receipt.json'].cases.flatMap(c=>c.captures),dimensions={};
  assert.equal(captures.length,16);

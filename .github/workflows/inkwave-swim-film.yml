@@ -60,6 +60,9 @@ jobs:
       BLAST_VARIANT: ${{ matrix.variant }}
     timeout-minutes: 30
     steps:
+      - name: Mark optional reference budget without changing capture limits
+        if: ${{ matrix.variant == 'candidate' }}
+        run: echo "REFERENCE_JOB_STARTED_SECONDS=$(date +%s)" >> "$GITHUB_ENV"
       - name: Checkout only the reviewed QA scripts
         uses: actions/checkout@v4
         with:
@@ -107,6 +110,8 @@ jobs:
           fs.mkdirSync(process.env.RUNNER_TEMP+'/blast-artifacts',{recursive:true});
           fs.writeFileSync(process.env.RUNNER_TEMP+'/blast-artifacts/standard-launcher.json',JSON.stringify({checkedAt:new Date().toISOString(),options,advertisedBrowserExecutable:executable,executableObservationScope:'Playwright advertised full-browser executable; default headless launch may select its matching headless shell',mode:(stat.mode&0o7777).toString(8),playwrightVersion:require('playwright/package.json').version,launcherSHA256:createHash('sha256').update(fs.readFileSync('scripts/lib/inkwave-sandbox-browser.mjs')).digest('hex'),runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,negativeTestAttempts:attempts,browserLaunchedByPreflight:false},null,2));
           JS
+      - name: Require exact QA contract wiring before capture
+        run: node --test qa/tools/blast-main91-qa/qa-contracts.test.mjs
       - name: Record source and QA provenance
         run: |
           mkdir -p "$RUNNER_TEMP/blast-artifacts"
@@ -124,6 +129,22 @@ jobs:
           path: ${{ runner.temp }}/blast-artifacts
           if-no-files-found: error
           retention-days: 7
+
+      - name: Recover optional reference with existing sandbox Chromium separately from A/B evidence
+        if: ${{ always() && matrix.variant == 'candidate' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          if ! [[ "$REFERENCE_JOB_STARTED_SECONDS" =~ ^[0-9]+$ ]] || (( $(date +%s) - REFERENCE_JOB_STARTED_SECONDS > 1320 )); then
+            echo 'BLAST_REFERENCE_BROWSER_V1 {"type":"error","recordId":"public-tweet-browser-frame","status":"not-recovered","error":"Insufficient remaining existing job budget; reference retrieval not attempted"}'
+            exit 0
+          fi
+          if node --test qa/tools/blast-main91-qa/recover-public-blast-reference.test.mjs qa/tools/blast-main91-qa/recover-public-blast-browser-reference.test.mjs; then
+            node qa/tools/blast-main91-qa/recover-public-blast-browser-reference.mjs "$GITHUB_WORKSPACE/source"
+          else
+            echo 'BLAST_REFERENCE_BROWSER_V1 {"type":"error","recordId":"reference-helper","status":"not-recovered","error":"Reference negative tests failed; network retrieval not attempted"}'
+            exit 1
+          fi
 
   blast_ab_evidence:
     needs: main91_blast_reference
@@ -146,18 +167,7 @@ jobs:
         with:
           node-version: 22
       - name: Require transport decoder integrity tests
-        run: node --test qa/tools/blast-main91-qa/decode-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/stream-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/compare-blast-ab.test.mjs
-      - name: Recover optional public reference separately from A/B evidence
-        if: ${{ matrix.shard == 0 }}
-        continue-on-error: true
-        timeout-minutes: 5
-        run: |
-          if node --test qa/tools/blast-main91-qa/recover-public-blast-reference.test.mjs; then
-            node qa/tools/blast-main91-qa/recover-public-blast-reference.mjs
-          else
-            echo 'BLAST_REFERENCE_V1 {"type":"error","recordId":"reference-helper","status":"not-recovered","error":"Reference helper negative tests failed; network retrieval not attempted"}'
-            exit 1
-          fi
+        run: node --test qa/tools/blast-main91-qa/decode-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/stream-blast-ab-evidence.test.mjs qa/tools/blast-main91-qa/compare-blast-ab.test.mjs qa/tools/blast-main91-qa/qa-contracts.test.mjs
       - name: Read baseline artifact from this run only
         uses: actions/download-artifact@v4
         with:
