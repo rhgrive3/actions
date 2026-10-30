@@ -38,6 +38,16 @@ export function refreshRecordedKitPrefetch(state,loader,context,sub,special,now=
   const stamp=now();
   if(!changed&&!row.dirty&&stamp<row.next)return row;
   row.resident=bank?.loaded;row.generation=bank?.generation;row.status=loader.status;row.dirty=false;row.next=Infinity;
+  const batch=[];
+  const submit=()=>{
+    if(!batch.length)return;
+    const combined=typeof loader.ensureMany==='function'?loader.ensureMany(batch,{owner:row.owner}):null;
+    for(const request of batch){
+      const promise=request.promise=combined?(loader.inFlight?.get(request.key)||combined):loader.ensure(request.id,request.event,{owner:row.owner});
+      promise?.then(()=>{if(state.kitPrefetch===row){if(loader.isEventResident?.(request.id,request.event))request.next=0;row.dirty=true;}},()=>{if(state.kitPrefetch===row)row.dirty=true;});
+    }
+    batch.length=0;
+  };
   for(const request of row.requests){
     const {id,event,key:requestKey}=request;
     if(loader.declares?.(id,event)===false)continue;
@@ -57,9 +67,9 @@ export function refreshRecordedKitPrefetch(state,loader,context,sub,special,now=
     const retry=Math.max(request.next,loader.manifestRetryAt||0,loader.retryAfter?.get(requestKey)||0);
     if(retry>stamp){row.next=Math.min(row.next,retry);continue;}
     request.attempted=true;request.next=stamp+1000;
-    const promise=request.promise=loader.ensure(id,event,{owner:row.owner});
-    promise?.then(()=>{if(state.kitPrefetch===row){if(loader.isEventResident?.(id,event))request.next=0;row.dirty=true;}},()=>{if(state.kitPrefetch===row)row.dirty=true;});
+    batch.push(request);if(batch.length===2)submit();
     row.next=Math.min(row.next,stamp+1000);
   }
+  submit();
   return row;
 }
