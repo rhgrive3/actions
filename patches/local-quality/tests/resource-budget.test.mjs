@@ -79,6 +79,42 @@ test('reflection cadence forces quality/resize/re-enable/clock-reset updates wit
   e.U.uReflOn.value = 1; e._frameId = -1; assert.ok(reflectionDue(e, p, 200, 100, .2));
 });
 
+test('native water reflection consumes renderer limits while ordinary stages retain their preset', () => {
+  const { Environment, G, THREE } = api;
+  const saved = { game: G.game, level: G.level, settings: G.settings };
+  const stop = new Error('reflection became due');
+  const renderer = { getDrawingBufferSize(out) { out.set(1000, 500); } };
+  const camera = new THREE.PerspectiveCamera(); camera.position.y = 12; camera.updateMatrixWorld();
+  function environment(width, height, policy) {
+    const env = Object.create(Environment.prototype);
+    Object.assign(env, { _marina: true, reflections: true, _frameId: 1,
+      U: { uReflOn: { value: 1 } }, _reflRT: { width, height },
+      _reflRenderedFrame: 0, _reflPolicy: policy });
+    Object.defineProperty(env, '_reflCam', { get() { throw stop; } });
+    return env;
+  }
+  try {
+    G.settings = { quality: 'high' };
+    G.game = { mobile: { touch: true, ios: true }, R: { q: {
+      reflectionScale: .1, reflectionInterval: 4, reflectionActors: false,
+    } } };
+    G.level = { native: true };
+    const native = environment(100, 64, '0.1:4:false');
+    native._renderReflection(renderer, {}, camera);
+    native._frameId = 4;
+    assert.throws(() => native._renderReflection(renderer, {}, camera), e => e === stop);
+    assert.equal(native._reflPendingPolicy, '0.1:4:false');
+    G.level = { native: false };
+    const ordinary = environment(200, 100, '0.2:2:false');
+    ordinary._renderReflection(renderer, {}, camera);
+    ordinary._frameId = 2;
+    assert.throws(() => ordinary._renderReflection(renderer, {}, camera), e => e === stop);
+    assert.equal(ordinary._reflPendingPolicy, '0.2:2:false');
+  } finally {
+    Object.assign(G, saved);
+  }
+});
+
 test('all five native resource connections compose strictly and new runtime files enter build identity', () => {
   for (const file of ['src/game/match.js', 'src/game/showcase.js', 'src/config.js', 'src/world/environment.js', 'src/core/shadowcache.js']) {
     const native = fs.readFileSync(new URL('inkwave-public/' + file, ROOT), 'utf8');
