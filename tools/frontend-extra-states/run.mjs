@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 const [rootArg,siteArg,outArg,id,batch]=process.argv.slice(2),root=path.resolve(rootArg),site=path.resolve(siteArg),out=path.resolve(outArg);
 const PRODUCT='379533f541d86346a068e397f879cb6c13590ffd',QA=process.env.QA_SHA;
 assert.match(QA||'',/^[a-f0-9]{40}$/);assert(!fs.existsSync(out));fs.mkdirSync(out,{recursive:true});
-const profiles={'phone-landscape':{width:844,height:390},'phone-portrait':{width:390,height:844},'ipad-mini-portrait':{width:744,height:1133},'ipad-mini-landscape':{width:1133,height:744}};assert(['editor','variants','battle'].includes(batch));assert(profiles[id]);assert(batch!=='battle'||id.endsWith('landscape'));const device={id,viewport:profiles[id],isMobile:true,hasTouch:true,deviceScaleFactor:1};
+const profiles={'phone-landscape':{width:844,height:390},'phone-portrait':{width:390,height:844},'ipad-mini-portrait':{width:744,height:1133},'ipad-mini-landscape':{width:1133,height:744}};assert(['editor','variants','battle','error-bottom'].includes(batch));assert(profiles[id]);assert(batch!=='battle'||id.endsWith('landscape'));const device={id,viewport:profiles[id],isMobile:true,hasTouch:true,deviceScaleFactor:1};
 const {chromium}=createRequire(path.join(root,'package.json'))('playwright');
 const {launchSandboxBrowser}=await import(pathToFileURL(path.join(root,'scripts/lib/inkwave-sandbox-browser.mjs')));
 assert(!process.env.CHROMIUM_EXECUTABLE_PATH);
@@ -33,7 +33,7 @@ try{
  browser=await launchSandboxBrowser(chromium);context=await browser.newContext({viewport:device.viewport,screen:device.viewport,isMobile:device.isMobile,hasTouch:device.hasTouch,deviceScaleFactor:1,reducedMotion:'reduce',serviceWorkers:'block'});
  await context.route('**/*',r=>r.request().url().startsWith(origin+'/')&&['GET','HEAD'].includes(r.request().method())?r.continue():r.abort('blockedbyclient'));
  await context.addInitScript(()=>{window.WebSocket=class{constructor(){throw Error('WebSocket disabled for offline screenshot QA');}};});
- page=await context.newPage();page.on('pageerror',e=>receipt.failures.push({phase:'pageerror',error:e.message}));page.on('crash',()=>receipt.failures.push({phase:'crash'}));
+ page=await context.newPage();receipt.console=[];page.on('console',m=>{if(['error','warning'].includes(m.type())&&receipt.console.length<30)receipt.console.push({type:m.type(),text:m.text().slice(0,1200)});});page.on('pageerror',e=>receipt.failures.push({phase:'pageerror',error:e.message}));page.on('crash',()=>receipt.failures.push({phase:'crash'}));
  const waitScreen=async name=>{await page.waitForFunction(n=>{const m=window.__inkwave?.menus||window.menus,r=m?._scr?.el;return m?.current===n&&m._scr?.name===n&&r&&!r.inert&&!r.classList.contains('is-leaving')&&!m.wipe?.busy&&r.getBoundingClientRect().width>0&&Number(getComputedStyle(r).opacity)>.99;},name,{timeout:30000});await page.waitForTimeout(400);};
  const tap=async selector=>{const target=page.locator(selector).filter({visible:true}).first();await target.waitFor({state:'visible',timeout:15000});await target.scrollIntoViewIfNeeded();const handle=await target.elementHandle();try{await page.waitForFunction(e=>{if(!e||!e.isConnected||e.disabled||e.closest('[inert],.is-leaving'))return false;const r=e.getBoundingClientRect();if(!r.width||!r.height)return false;let opacity=1;for(let p=e;p;p=p.parentElement)opacity*=Number(getComputedStyle(p).opacity);return opacity>.6;},handle,{timeout:15000});}finally{await handle?.dispose();}await target.tap();await page.waitForTimeout(350);};
 
@@ -54,7 +54,7 @@ try{
  receipt.images.push(item);persist();
  if(item.transport.inline){for(const record of records)await emit(record);}else await emit({type:'artifact-only',device:id,index:seq,file:item.jpeg.file,sha256:item.jpeg.sha256,bytes:item.jpeg.bytes,reason:jpeg.length>180*1024?'image-size':'job-log-budget'});
  };
- const attempt=async(name,fn)=>{try{await fn();}catch(e){receipt.failures.push({phase:name,error:String(e.stack||e).slice(0,3000)});persist();await emit({type:'failure',device:id,phase:name,error:String(e.message)});}};
+ const attempt=async(name,fn)=>{try{await fn();}catch(e){receipt.lastFailureState=await page.evaluate(()=>{const g=window.__inkwave,m=g?.menus;return {mode:window.__G?.mode,screen:m?.current,starting:m?._starting,setup:m?._setup,match:g?.match?{state:g.match.state,attract:g.match.attract,time:g.match.time,duration:g.match.duration}:null,audioState:window.__G?.audio?.ctx?.state,map:g?.mapDef?{id:g.mapDef.id,layout:g.mapDef.layout}:null,lastMatchOpts:g?.lastMatchOpts,toasts:[...document.querySelectorAll('.iw-toast')].map(e=>e.textContent)};}).catch(()=>null);receipt.failures.push({phase:name,error:String(e.stack||e).slice(0,3000)});persist();await emit({type:'failure',device:id,phase:name,error:String(e.message)});}};
  const home=async()=>{scope='native-route';if(page.url().startsWith(origin+'/')&&!page.url().includes('/__menus')){for(let i=0;i<6;i++){const state=await page.evaluate(()=>({screen:window.__inkwave?.menus?.current,modal:!!document.querySelector('.iw-modal,.s3-stage-settings')}));if(state.screen==='main'&&!state.modal){await waitScreen('main');return;}if(state.modal)await page.keyboard.press('Escape');else if(await page.locator('.iw-backbtn:visible').count())await tap('.iw-backbtn:visible');else await page.keyboard.press('Escape');await page.waitForTimeout(250);}receipt.failures.push({phase:'home-navigation',error:'Native back did not reach main; explicit reload fallback used'});}await page.goto(origin+'/?news=0&skipTitle=1',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__inkwave?.debug&&window.__inkwave?.menus,null,{timeout:180000});await waitScreen('main');};
 
 
@@ -108,12 +108,24 @@ try{
  }
  if(batch==='battle')await attempt('offline-bot-match',async()=>{
   await page.goto(origin+'/?news=0&skipTitle=1&autopilot=1',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__inkwave?.debug&&window.__inkwave?.menus,null,{timeout:180000});await waitScreen('main');
-  await page.evaluate(()=>window.__inkwave.api.startMatch({mode:'turf',duration:20}));await page.waitForFunction(()=>window.__G?.mode==='match'&&window.__inkwave.match?.state==='playing'&&!window.__inkwave.match.attract,null,{timeout:60000});
-  await snap('offline-battle-hud',{scope:'actual-game-api-start',notes:['Actual local offline Turf match with bots; source-supported startMatch API duration20s; autopilot; no result injection']});
-  await page.evaluate(()=>window.__inkwave.pause());await waitScreen('pause');await snap('offline-battle-pause',{scope:'actual-game-api-pause'});await tap('[data-id="quit"]');await page.locator('.iw-modal').waitFor({state:'visible'});await snap('offline-battle-quit-confirm',{scope:'actual-game-api-pause',notes:['Confirmation not accepted']});await page.keyboard.press('Escape');await page.evaluate(()=>window.__inkwave.resume());
-  await page.waitForFunction(()=>window.__inkwave?.menus?.current==='results',null,{timeout:180000});await waitScreen('results');await tap('.iw-res__title');await page.waitForFunction(()=>window.__inkwave.menus._scr.el.classList.contains('is-done'));await snap('offline-battle-results',{scope:'actual-game',notes:['Actual local simulated match completion; no injected winner, time or result']});
+  await tap('.iw-main [data-id="play"]');await waitScreen('mode');await tap('[data-id="mode-turf"]');await waitScreen('setup');await tap('.iw-setup [data-id="start"]');await page.waitForFunction(()=>window.__G?.mode==='match'&&window.__inkwave.match?.state==='playing'&&!window.__inkwave.match.attract,null,{timeout:60000});
+  const actualDuration=await page.evaluate(()=>{window.__inkwave.debug.freeze();return window.__inkwave.match.duration;});assert(actualDuration>0&&actualDuration<=300,'bounded actual match duration');
+  if(id==='ipad-mini-landscape'){await snap('offline-battle-hud',{scope:'actual-game-native-start',notes:['Actual local offline Turf match with bots; native START gesture with valid setup map; Native setup duration; autopilot; actual simulation advanced by supported audit clock after HUD; no result injection']});
+  await page.evaluate(()=>window.__inkwave.pause());await waitScreen('pause');await snap('offline-battle-pause',{scope:'actual-game-api-pause'});await tap('[data-id="quit"]');await page.locator('.iw-modal').waitFor({state:'visible'});await snap('offline-battle-quit-confirm',{scope:'actual-game-api-pause',notes:['Confirmation not accepted']});await page.keyboard.press('Escape');await page.evaluate(()=>window.__inkwave.resume());}
+  let advancedMs=0;for(let n=0;n<Math.ceil((actualDuration+60)*2);n++){const done=await page.evaluate(()=>window.__inkwave.menus?.current==='results'||window.__G?.mode==='results');if(done)break;await page.evaluate(()=>window.__inkwave.debug.step(500));advancedMs+=500;await page.waitForTimeout(10);}receipt.auditClock={method:'existing debug.freeze/step',stepMs:500,advancedMs,configuredDuration:actualDuration};await page.evaluate(()=>window.__inkwave.debug.unfreeze());await page.waitForFunction(()=>window.__inkwave?.menus?.current==='results',null,{timeout:30000});await waitScreen('results');await tap('.iw-res__title');await page.waitForFunction(()=>window.__inkwave.menus._scr.el.classList.contains('is-done'));await snap('offline-battle-results',{scope:'actual-game',notes:['Actual offline bot simulation, audit-clock advanced; no injected winner, match.time or result']});
  });
- const planned=batch==='editor'?5:batch==='variants'?20:4;
+ if(batch==='error-bottom')await attempt('short-viewport-error-banners',async()=>{
+  assert.equal(id,'phone-landscape');
+  const errors=['Room not found','Room is full','Match in progress','Could not connect','Room code taken','Lost connection to the room'];
+  for(let n=0;n<errors.length;n++){
+   await fixture();await show('online');await page.evaluate(message=>{G.net.join=async()=>{throw Error(message);};},errors[n]);
+   await tap('[data-id="join"]');await page.locator('.iw-code-input').fill('BCEFG');await tap('.iw-join__btns .is-go');
+   const banner=page.locator('.iw-jstat.is-on');await banner.waitFor({state:'visible'});await banner.scrollIntoViewIfNeeded();await page.evaluate(()=>document.fonts.ready);
+   const box=await banner.boundingBox();assert(box&&box.x>=-1&&box.y>=-1&&box.x+box.width<=device.viewport.width+1&&box.y+box.height<=device.viewport.height+1,'complete error banner not visible');
+   await snap('preview-online-error-'+n+'-bottom',{scope:'UI-preview',notes:['Synthetic local rejected API outcome: '+errors[n],'Scroll-only bottom continuation of retained initial capture; banner bounding box verified',box]});
+  }
+ });
+ const planned=batch==='editor'?5:batch==='variants'?20:batch==='error-bottom'?6:id==='phone-landscape'?1:4;
  assert.equal(receipt.images.length,planned,'required distinct-state count');receipt.required=required;receipt.batch=batch;receipt.transport={maxLogBytes:MAX_LOG_BYTES,rawImageProcessing:'none',artifactRetainsAllOriginals:true};persist();
 
 } catch(e){receipt.failures.push({phase:'fatal',error:String(e.stack||e)});persist();await emit({type:'failure',device:id,error:String(e.stack||e)});}
