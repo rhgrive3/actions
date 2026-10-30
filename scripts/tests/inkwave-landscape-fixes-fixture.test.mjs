@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import {fixtureHTML,createFixtureServer,assertBaselineReproduction,VIEWPORTS,clippingVisibility} from '../check-inkwave-landscape-fixes.mjs';
+import {fixtureHTML,createFixtureServer,assertBaselineReproduction,VIEWPORTS,clippingVisibility,stickyRevealDelta,groupGlyphLines} from '../check-inkwave-landscape-fixes.mjs';
 const script=fs.readFileSync(new URL('../check-inkwave-landscape-fixes.mjs',import.meta.url),'utf8');
 test('exact bounded landscape matrix has no portrait or battle case',()=>{assert.deepEqual(VIEWPORTS, [{width:844,height:390},{width:1133,height:744},{width:740,height:360},{width:915,height:412}]);assert(VIEWPORTS.every(v=>v.width>v.height));assert(!script.includes('screenshot('));assert(!script.includes('recordVideo'));assert(!script.includes('--no-sandbox'));});
 test('fixture uses actual packaged stylesheet order and offline runtime, not reconstructed CSS',()=>{const s=fixtureHTML({variant:'candidate',screen:'loadout',lang:'ja'});const order=['/candidate/styles/ui.css','/candidate/styles/mobile.css','/candidate/patches/splatoon3/ui.css'];assert(order.every((v,i)=>s.indexOf(v)>=0&&(i===0||s.indexOf(order[i-1])<s.indexOf(v))));assert(s.includes('G.net=new MockNet()'));assert(s.includes('localizeGameContent({...config,LANG})'));assert(s.includes('data:,'));assert(!s.includes('classList.add(\'iw-touch\')'));assert(!s.includes('new WebSocket'));});
@@ -25,3 +25,38 @@ test('fixed-root document overflow uses viewport bounds but real nested scroller
 });
 
 test('drawer coverage stays within existing canonical cases and uses real offline UI lifecycle',()=>{assert.match(script,/assert\(\[844,1133\]\.includes\(v\.width\)/);assert.match(script,/drawerAcceptance\(page,v,true\)/);assert.match(script,/G\.net\.isMock===true/);assert.match(script,/drawer last weapon/);assert.match(script,/reopened drawer lost equipped state/);assert.match(script,/drawer touch close/);assert.match(script,/Escape/);assert.match(script,/roomCleanup='offline'/);assert.match(script,/wipe\?\.running/);assert(!script.includes('startMatch('));});
+
+test('sticky drawer correction uses a normal bounded scroll without accepting occluded hits',()=>{const target={top:20},header={bottom:100},delta=stickyRevealDelta(target,header);assert.equal(delta,-88);assert(target.top-delta>=header.bottom+8);assert.equal(stickyRevealDelta({top:120},header),0);assert.match(script,/native-wheel-clear-sticky-header/);assert.match(script,/t\.inView&&t\.hit&&t\.unclipped/);});
+
+const row = (text,top=0,{height=16.9,slope=.34}={})=>[...text].map((char,i)=>({char,left:i*13,top:top+i*slope,width:13,height}));
+test('native tilted one-line Japanese name is not reported as many orphan fragments',()=>{
+  const glyphs=row('スプラシューター');
+  const old=new Map();for(const g of glyphs){const y=Math.round(g.top*2)/2;old.set(y,(old.get(y)||'')+g.char);}
+  assert([...old.values()].slice(1).some(s=>s.startsWith('ー')),'reproduce old rounded-top false failure');
+  assert.deepEqual(groupGlyphLines(glyphs,16.9),['スプラシューター']);
+});
+test('real wrapped orphan remains a second physical line and still fails the orphan policy',()=>{
+  const lines=groupGlyphLines([...row('スプラシュータ'),...row('ー',16.9)],16.9);
+  assert.deepEqual(lines,['スプラシュータ','ー']);
+  assert(lines.slice(1).some(s=>s.startsWith('ー')));
+});
+test('mixed fallback glyph metrics on one row do not create phantom physical rows',()=>{
+  const glyphs=row('スプラシューター').map((g,i)=>({...g,top:g.top+(i%2?1.2:0),height:i%2?14.5:16.9}));
+  assert.deepEqual(groupGlyphLines(glyphs,16.9),['スプラシューター']);
+});
+test('successive tilted long-name lines remain distinct',()=>{
+  assert.deepEqual(groupGlyphLines([...row('キャンピング',0),...row('シェルター',16.9),...row('ソレーラ',33.8)],16.9),['キャンピング','シェルター','ソレーラ']);
+});
+test('inverse native card rotation preserves one line and a genuine next-line orphan',()=>{
+  const angle=-1.5*Math.PI/180, matrix={a:Math.cos(angle),b:Math.sin(angle),c:-Math.sin(angle),d:Math.cos(angle)};
+  const rotate=gs=>gs.map(g=>{
+    const x=g.left+g.width/2,y=g.top+g.height/2;
+    const width=Math.abs(matrix.a)*g.width+Math.abs(matrix.c)*g.height,height=Math.abs(matrix.b)*g.width+Math.abs(matrix.d)*g.height;
+    return {...g,left:400+matrix.a*x+matrix.c*y-width/2,top:200+matrix.b*x+matrix.d*y-height/2,width,height};
+  });
+  assert.deepEqual(groupGlyphLines(rotate(row('スプラシューター',0,{slope:0})),16.9,matrix),['スプラシューター']);
+  const wrapped=rotate([...row('スプラシュータ',0,{slope:0}),...row('ー',16.9,{slope:0})]);
+  assert.deepEqual(groupGlyphLines(wrapped,16.9,matrix),['スプラシュータ','ー']);
+});
+
+test('line grouping fails closed on an invalid physical transform',()=>{assert.throws(()=>groupGlyphLines([],16.9,{a:0,b:0,c:0,d:0}),/invertible/);});

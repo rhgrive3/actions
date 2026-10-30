@@ -28,6 +28,29 @@ export function clippingVisibility(element){
   if(rejectX||rejectY)clippedBy.push({tag:p.tagName,class:String(p.className||''),documentViewport:root,overflow:[style.overflowX,style.overflowY],position:style.position,bounds:b,axes:[rejectX?'x':null,rejectY?'y':null].filter(Boolean)});
  }return {unclipped:clippedBy.length===0,clippedBy};
 }
+export function groupGlyphLines(glyphs, lineHeight, matrix = {a:1,b:0,c:0,d:1}) {
+  if (!(lineHeight > 0 && Number.isFinite(lineHeight))) throw Error('finite positive line-height required');
+  const {a,b,c,d} = matrix, determinant = a*d-b*c;
+  if (!Number.isFinite(determinant) || Math.abs(determinant)<1e-9) throw Error('invertible card transform required');
+  const lines = [];
+  for (const [index, glyph] of glyphs.entries()) {
+    if (!(glyph.width > 0 && glyph.height > 0)) continue;
+    // Project centers through the inverse card 2D linear transform. A global
+    // translation/transform-origin adds the same constant to every local Y,
+    // so does not affect line identity. This exactly removes native Z tilt.
+    const x = (glyph.left || 0) + glyph.width/2, y = glyph.top + glyph.height/2;
+    const center = (-b*x+a*y) / determinant;
+    const nearest = lines.map(line => ({line,delta:Math.abs(center-line.center)})).sort((a,b)=>a.delta-b.delta)[0];
+    // Less than half a physical line: handles native tilt/fallback metrics,
+    // but cannot merge successive real rows separated by one line-height.
+    let line = nearest?.delta <= lineHeight * .45 ? nearest.line : null;
+    if (!line) { line = {center,glyphs:[]}; lines.push(line); }
+    line.glyphs.push({index,char:glyph.char,center});
+    line.center = line.glyphs.reduce((sum,g)=>sum+g.center,0) / line.glyphs.length;
+  }
+  return lines.sort((a,b)=>a.center-b.center).map(line=>line.glyphs.sort((a,b)=>a.index-b.index).map(g=>g.char).join(''));
+}
+
 export function fixtureHTML({variant,screen,lang}) {
  assert(['baseline','candidate'].includes(variant));assert(SCREENS.includes(screen));assert(['ja','en'].includes(lang));
  const p='/'+variant;
@@ -35,7 +58,7 @@ export function fixtureHTML({variant,screen,lang}) {
  <link rel="stylesheet" href="${p}/styles/ui.css"><link rel="stylesheet" href="${p}/styles/mobile.css"><link rel="stylesheet" href="${p}/patches/splatoon3/ui.css">
  <style>html,body{margin:0;overflow:hidden;background:#0d1020;touch-action:none}#ui-root{position:fixed;inset:0}</style>
  <script type="importmap">{"imports":{"three":"${p}/vendor/three/build/three.module.js","three/addons/":"${p}/vendor/three/jsm/"}}</script><div id="ui-root"></div>
- <script>window.fixtureClip=${clippingVisibility.toString()};window.fixtureErrors=[];window.fixtureRequests=[];addEventListener('error',e=>fixtureErrors.push(e.message));addEventListener('unhandledrejection',e=>fixtureErrors.push(String(e.reason)));</script>
+ <script>window.fixtureGroupGlyphLines=${groupGlyphLines.toString()};window.fixtureClip=${clippingVisibility.toString()};window.fixtureErrors=[];window.fixtureRequests=[];addEventListener('error',e=>fixtureErrors.push(e.message));addEventListener('unhandledrejection',e=>fixtureErrors.push(String(e.reason)));</script>
  <script type="module">
  localStorage.setItem('inkwave.settings',JSON.stringify({lang:'${lang}'}));
  const [{Menus},{G},{MockNet},config,{install},{LANG},{localizeGameContent}]=await Promise.all([import('${p}/src/ui/menus.js'),import('${p}/src/core/ctx.js'),import('${p}/src/net/mock.js'),import('${p}/src/config.js'),import('${p}/patches/splatoon3/runtime/install.mjs'),import('${p}/src/i18n.js'),import('${p}/patches/splatoon3/runtime/content-language.mjs')]);
@@ -82,16 +105,23 @@ async function measure(page){return page.evaluate(()=>{
 function horizontal(r,w,label){assert(r.left>=-1&&r.right<=w+1,`${label}: horizontal overflow ${JSON.stringify(r)}`);}
 function usable(t,viewport,label,initial=false){assert(t&&t.rect.width>=43&&t.rect.height>=43,`${label}: missing/small touch target`);horizontal(t.rect,viewport.width,label);if(initial)assert(t.inView&&t.hit&&t.unclipped,`${label}: initially obscured/offscreen`);}
 async function tap(page,selector){const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.tap();await settle(page);}
-async function targetNow(locator){return locator.evaluate(e=>{const r=e.getBoundingClientRect(),h=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {...window.fixtureClip(e),hitOwner:h&&{tag:h.tagName,class:String(h.className?.baseVal||h.className||'')},rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},inView:r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1,hit:!!h&&(e===h||e.contains(h))};});}
-async function reachable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();await settle(page);const t=await targetNow(locator);attempts.push(t);if(t.inView&&t.hit&&t.unclipped){usable(t,viewport,label,true);return t;}}throw Error(label+': not reachable after four settled content-visibility corrections: '+JSON.stringify(attempts));}
+async function targetNow(locator){return locator.evaluate(e=>{const r=e.getBoundingClientRect(),h=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2),scrollOwners=[];for(let p=e.parentElement;p;p=p.parentElement){const s=getComputedStyle(p);if(/auto|scroll/.test(s.overflowY)&&p.scrollHeight>p.clientHeight+1)scrollOwners.push({tag:p.tagName,class:String(p.className||''),top:p.scrollTop,clientHeight:p.clientHeight,scrollHeight:p.scrollHeight});}return {scrollOwners,...window.fixtureClip(e),hitOwner:h&&{tag:h.tagName,class:String(h.className?.baseVal||h.className||'')},rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},inView:r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1,hit:!!h&&(e===h||e.contains(h))};});}
+export function stickyRevealDelta(target,header){return Math.min(0,target.top-header.bottom-8);}
+async function reachable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();await settle(page);const t=await targetNow(locator);attempts.push({attempt,...t});if(t.inView&&t.hit&&t.unclipped){usable(t,viewport,label,true);return t;}
+ // The drawer's real sticky header is not a viewport clip. Nearest scrolling
+ // may place an otherwise visible card underneath it; exercise a normal wheel
+ // correction, then keep exactly the same full-box/paint-hit requirements.
+ if(t.unclipped&&!t.hit&&/\biw-ldr__head\b/.test(t.hitOwner?.class||'')){const head=page.locator('.iw-ldr:not(.is-leaving) .iw-ldr__head');const b=await head.boundingBox();if(b){const delta=stickyRevealDelta(t.rect,{bottom:b.y+b.height});if(delta<0){await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.wheel(0,delta);attempts.push({kind:'native-wheel-clear-sticky-header',delta,offsetsBefore:t.scrollOwners});await settle(page);}}}
+ }throw Error(label+': not reachable after four settled content-visibility corrections: '+JSON.stringify(attempts));}
 async function readable(locator,page,viewport,label){const attempts=[];for(let attempt=0;attempt<4;attempt++){await locator.scrollIntoViewIfNeeded();await settle(page);const t=await targetNow(locator);attempts.push(t);if(t.rect.width>0&&t.rect.height>0&&t.inView&&t.hit&&t.unclipped){horizontal(t.rect,viewport.width,label);return t;}}throw Error(label+': complete notice not readable/paint-reachable: '+JSON.stringify(attempts));}
 async function cardDetails(locator){return locator.evaluate(card=>{
  const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
- const name=card.querySelector('.iw-wcard__name'),kit=card.querySelector('.s3-wkit'),style=getComputedStyle(name),lines=new Map(),walker=document.createTreeWalker(name,NodeFilter.SHOW_TEXT);let node;
- while(node=walker.nextNode())for(let i=0;i<node.textContent.length;i++){const range=document.createRange();range.setStart(node,i);range.setEnd(node,i+1);const r=range.getBoundingClientRect();if(r.width&&r.height){const y=Math.round(r.top*2)/2;lines.set(y,(lines.get(y)||'')+node.textContent[i]);}}
- return {id:card._wid,name:name.textContent,ariaLabel:card.getAttribute('aria-label'),rect:rect(name),card:rect(card),kit:kit&&rect(kit),client:[name.clientWidth,name.clientHeight],scroll:[name.scrollWidth,name.scrollHeight],font:style.fontSize,lineHeight:style.lineHeight,lineBreak:style.lineBreak,clamp:style.webkitLineClamp,lines:[...lines.values()]};
+ const name=card.querySelector('.iw-wcard__name'),kit=card.querySelector('.s3-wkit'),style=getComputedStyle(name),glyphs=[],walker=document.createTreeWalker(name,NodeFilter.SHOW_TEXT);let node;
+ while(node=walker.nextNode())for(let i=0;i<node.textContent.length;i++){const range=document.createRange();range.setStart(node,i);range.setEnd(node,i+1);const r=range.getBoundingClientRect();if(r.width&&r.height)glyphs.push({char:node.textContent[i],left:r.left,top:r.top,width:r.width,height:r.height});}
+ const transform=getComputedStyle(card).transform,m=transform==='none'?new DOMMatrixReadOnly():new DOMMatrixReadOnly(transform),lineMatrix={a:m.a,b:m.b,c:m.c,d:m.d};
+ return {id:card._wid,name:name.textContent,ariaLabel:card.getAttribute('aria-label'),rect:rect(name),card:rect(card),kit:kit&&rect(kit),client:[name.clientWidth,name.clientHeight],scroll:[name.scrollWidth,name.scrollHeight],font:style.fontSize,lineHeight:style.lineHeight,lineBreak:style.lineBreak,clamp:style.webkitLineClamp,lineMatrix,glyphs,lines:window.fixtureGroupGlyphLines(glyphs,parseFloat(style.lineHeight),lineMatrix)};
  });}
-function fullName(n){assert(n.rect.width>0&&n.rect.height>0,'dormant name measured');assert.equal(n.ariaLabel,n.name,'complete accessible name');assert(n.scroll[0]<=n.client[0]+1,`name horizontally clipped: ${n.name}`);assert(n.scroll[1]<=n.client[1]+1,`name vertically clipped: ${n.name}`);assert(!['1','2','3'].includes(n.clamp),`name remains clamped: ${n.name}`);assert.equal(n.lineBreak,'strict');assert(n.rect.bottom<=n.card.bottom+1,`name outside card: ${n.name}`);if(n.kit)assert(n.rect.bottom<=n.kit.top+1,`name overlaps kit: ${n.name}`);assert(n.lines.slice(1).every(l=>!/^\s*ー/.test(l)),`prolonged sound mark begins line: ${n.name}`);}
+function fullName(n){assert(n.rect.width>0&&n.rect.height>0,'dormant name measured');assert.equal(n.ariaLabel,n.name,'complete accessible name');assert(n.scroll[0]<=n.client[0]+1,`name horizontally clipped: ${n.name}`);assert(n.scroll[1]<=n.client[1]+1,`name vertically clipped: ${n.name}`);assert(!['1','2','3'].includes(n.clamp),`name remains clamped: ${n.name}`);assert.equal(n.lineBreak,'strict');assert(n.rect.bottom<=n.card.bottom+1,`name outside card: ${n.name}`);if(n.kit)assert(n.rect.bottom<=n.kit.top+1,`name overlaps kit: ${n.name}`);assert(n.lines.slice(1).every(l=>!/^\s*ー/.test(l)),`prolonged sound mark begins line: ${n.name} ${JSON.stringify({lines:n.lines,matrix:n.lineMatrix,glyphs:n.glyphs,lineHeight:n.lineHeight})}`);}
 async function observeLongNames(page,v,requireFull=false,scope=ACTIVE){
  const found=[];for(const id of ['shooter','s3-shelter-wide-01','s3-shelter-wide-02','s3-spinner-hypershort-01','s3-spinner-downpour-01','charger_scope']){const index=await page.locator(scope+' .iw-wcard').evaluateAll((els,id)=>els.findIndex(e=>e._wid===id),id);assert(index>=0,'missing canonical long-name item '+id);const card=page.locator(scope+' .iw-wcard').nth(index);await reachable(card,page,v,id);const details=await cardDetails(card);if(requireFull)fullName(details);found.push(details);}return found;
 }
