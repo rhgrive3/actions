@@ -233,8 +233,8 @@ function buildSourceBVHCompact(triangles){
 const roundEven=x=>{const floor=Math.floor(x),f=x-floor;return f===.5?(floor%2?floor+1:floor):Math.round(x);};
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
-function paintCharts(data){
- const {triangles:T,normals:N,flags,objectIds,areas}=data,groups=new Map(),ordered=[],count=flags.length;
+function paintCharts(data,packed=false){
+ const {triangles:T,normals:N,flags,objectIds,areas}=data,groups=new Map(),ordered=[],count=flags.length,triangleFace=new Int32Array(count).fill(-1);let eligible=0;
  for(let i=0;i<count;i++){
   if(!(flags[i]&2)||N[i*3+1]<=-.5||areas[i]<=.0004)continue;
   const j=i*9,k=i*3,nx=N[k],ny=N[k+1],nz=N[k+2],distance=F(F(F(T[j]*nx)+F(T[j+1]*ny))+F(T[j+2]*nz));
@@ -245,11 +245,24 @@ function paintCharts(data){
   const hash=(Math.imul(k0,73856093)^Math.imul(k1,19349663)^Math.imul(k2,83492791)^Math.imul(k3,49979687)^Math.imul(k4,86028121)^Math.imul(k5,104395301)^Math.imul(k6,122949829)^Math.imul(k7,141650939))>>>0;
   let bucket=groups.get(hash),group;
   if(bucket)for(const candidate of bucket){const key=candidate.key;if(key[0]===k0&&key[1]===k1&&key[2]===k2&&key[3]===k3&&key[4]===k4&&key[5]===k5&&key[6]===k6&&key[7]===k7){group=candidate;break;}}
-  if(group)group.ids.push(i);else{group={key:[k0,k1,k2,k3,k4,k5,k6,k7],ids:[i]};if(bucket)bucket.push(group);else groups.set(hash,[group]);ordered.push(group);}
+  if(group){if(packed)group.count++;else group.ids.push(i);}
+  else{group={key:[k0,k1,k2,k3,k4,k5,k6,k7],ids:packed?null:[i],count:1,ordinal:ordered.length};if(bucket)bucket.push(group);else groups.set(hash,[group]);ordered.push(group);}
+  // Reuse the final triangle-to-face column for temporary group ordinals.
+  // No parallel JS membership arrays or extra per-triangle scratch column.
+  if(packed){triangleFace[i]=group.ordinal;eligible++;}
  }
+ const byOrdinal=packed?ordered.slice():null;
  ordered.sort((a,b)=>{for(let k=0;k<a.key.length;k++){const d=a.key[k]-b.key[k];if(d)return d;}return 0;});
+ let faceTriangles;
+ if(packed){
+  faceTriangles=new Uint32Array(eligible);let offset=0;
+  for(const group of ordered){group.cursor=offset;group.ids=faceTriangles.subarray(offset,offset+group.count);offset+=group.count;}
+  // Original triangle insertion order is retained within each sorted chart.
+  for(let i=0;i<count;i++)if(triangleFace[i]>=0){const group=byOrdinal[triangleFace[i]];faceTriangles[group.cursor++]=i;}
+ }
+
  // Retain only five projection scalars per chart, rather than one mask allocation per face.
- const faces=[],projection=new Float64Array(ordered.length*5),triangleFace=new Int32Array(count).fill(-1);let grid=0,maxError=0;
+ const faces=[],projection=new Float64Array(ordered.length*5);let grid=0,maxError=0;
  for(const {ids} of ordered){
   const n=Array.from(N.subarray(ids[0]*3,ids[0]*3+3));let u=Math.abs(n[1])<.9?cross([0,1,0],n):[1-n[0]*n[0],-n[1]*n[0],-n[2]*n[0]];
   const len=Math.hypot(...u);u=u.map(x=>x/len);let v=cross(n,u);if(Math.abs(n[1])<.3&&v[1]<0){u=u.map(x=>-x);v=v.map(x=>-x);}
@@ -290,7 +303,7 @@ function paintCharts(data){
   }
  }
  if(maxError>.005)throw Error('Unsupported source paint charts');
- return {faces,mask,triangleFace,chartMaxPlaneError:maxError};
+ return {faces,mask,triangleFace,faceTriangles,chartMaxPlaneError:maxError};
 }
 function sourceTrianglePreparedOverlap(minX,maxX,minY,maxY,x0,y0,x1,y1,edges){
  const epsilon=1e-9;
@@ -319,7 +332,7 @@ export function parseSourceMaterials(text,objects,files){
  }
  return materials;
 }
-export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null,{compactBVHCenters=false,compactInactiveDisplay=false}={}){
+export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null,{compactBVHCenters=false,compactInactiveDisplay=false,packedPaintCharts=false}={}){
  progress('OBJ');let geometry=parseSourceOBJ(obj,stage.sourceSemantics,{compactInactiveDisplay:compactInactiveDisplay&&!placement});
  if(placement){
   if(placement.plan?.stageId!==stage.id)throw Error('Placement stage differs from requested source');
@@ -327,7 +340,7 @@ export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null
  }
  progress('collision');const data=collision(geometry);
  progress('BVH');Object.assign(data,buildSourceBVH(data.triangles,{compactCenters:compactBVHCenters}));
- progress('paint');const charts=paintCharts(data);
+ progress('paint');const charts=paintCharts(data,packedPaintCharts);
  const materials=parseSourceMaterials(mtl,geometry.objects,files);
  const integrity={};for(const m of Object.values(materials))for(const p of [m.albedo,...Object.values(m.maps)])if(p)integrity[p]=files[p];
  const manifest={schema:1,...stage,sourceCommit:SOURCE_COMMIT,sourceRecipe:SOURCE_RECIPE,sourceMode:'browser-direct',
@@ -339,5 +352,5 @@ export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null
  if(geometry.sourceGeometry)manifest.sourceGeometry={...manifest.geometry,...geometry.sourceGeometry};
  if(geometry.placementReceipt){manifest.diagnosticOnly=true;manifest.placementReceipt=geometry.placementReceipt;manifest.coordinates='Explicit actor-local Banc binding; scales/Euler convention declared in placementReceipt';manifest.spawnStatus='Existing inferred trial pads, not Banc respawns';}
  delete data.areas;
- return {...data,vertices:geometry.vertices,indices:geometry.indices,mask:charts.mask,triangleFace:charts.triangleFace,manifest,integrity};
+ return {...data,vertices:geometry.vertices,indices:geometry.indices,mask:charts.mask,triangleFace:charts.triangleFace,...(packedPaintCharts?{faceTriangles:charts.faceTriangles}:{}),manifest,integrity};
 }
