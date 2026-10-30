@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "status": "final-source-awaiting-ci",
+  "status": "source-verified-browser-launch-fixture-fixed-awaiting-ci",
   "sourceCommit": "b5b2a782e604614c382e6d93b954dba462a3731d",
   "sourceTree": "95b1a5e3d4b094c39837399b980422a8a9572acd",
   "localTestedSource": "f0951e3ed5e77d15549ed4798bcbdde1eb7f17e3",
@@ -136,7 +136,7 @@
       "description": "Current main including merged P1 native rendering and new intro camera; measures only this follow-up."
     }
   },
-  "qaCommit": "b5b2a782e604614c382e6d93b954dba462a3731d",
+  "qaCommit": "44087c8717a991be660b73164bac3db47ad2c5c8",
   "normalMaps": "All normal-mapped native materials retain pixel-frequency IBL; weak-normal interpolation is removed after prior WebKit regression and unbounded normal Z review.",
   "geometryPropertyCheck": {
     "status": "passed",
@@ -195,5 +195,32 @@
         "sha": "3b368948be962d1fad15cc04a6605bbfa9c397ea"
       }
     ]
+  },
+  "ciVerifiedSource": {
+    "head": "f416e48e79a1ae774add67a371fbbe9ef5688d23",
+    "jobId": 124015008873,
+    "sourceTests": {
+      "total": 55,
+      "passed": 50,
+      "skipped": 5,
+      "failed": 0
+    },
+    "verifiedLfsPayloads": 34,
+    "builds": [
+      {
+        "sha": "6ae5b34493e0744a7334025ba09b810f034194e8",
+        "contentHash": "2669bdec91f1ca26eb0e6a6bd36b91eb7cb42f919984e8f33f6112ed7c94dada",
+        "inputs": 1555,
+        "artifacts": 2275
+      },
+      {
+        "sha": "f416e48e79a1ae774add67a371fbbe9ef5688d23",
+        "contentHash": "93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f",
+        "inputs": 1555,
+        "artifacts": 2273
+      }
+    ],
+    "performanceAccepted": false,
+    "blocker": "Chromium singleton socket reached 108 bytes; no page or timed frame was executed. Both harnesses now use short persistent workspace temp paths."
   }
 }
