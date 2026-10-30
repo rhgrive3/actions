@@ -24,6 +24,38 @@ export function clippingVisibility(element){
  // Compare in each clipping ancestor's local coordinates. A rotated card's
  // viewport bounding box cannot be combined with its untransformed clientWidth.
  const quad=e=>{
+  // Hover/focus can add perspective plus X/Y tilt. Keep homogeneous points
+  // until they reach the clipping ancestor; an axis-aligned viewport box has
+  // already lost the depth needed to undo that transform.
+  if(typeof DOMMatrix!=='undefined'){
+   const layout=node=>{let x=0,y=0;for(let n=node;n;n=n.offsetParent){x+=n.offsetLeft||0;y+=n.offsetTop||0;if(n.offsetParent){x+=n.offsetParent.clientLeft||0;y+=n.offsetParent.clientTop||0;}}
+    for(let n=node?.parentElement;n;n=n.parentElement){x-=n.scrollLeft||0;y-=n.scrollTop||0;}return {x,y};};
+   const matrix=node=>{let result=new DOMMatrix();
+    for(let n=node;n;n=n.parentElement){const style=getComputedStyle(n),at=layout(n),parentAt=layout(n.parentElement),origin=style.transformOrigin.split(/\s+/).map(parseFloat);
+     const length=(value,size)=>String(value).endsWith('%')?parseFloat(value)*size/100:parseFloat(value)||0;
+     const translation=(style.translate&&style.translate!=='none'?style.translate:'0 0 0').split(/\s+/),scale=(style.scale&&style.scale!=='none'?style.scale:'1 1 1').split(/\s+/).map(Number);
+     const rotation=(style.rotate&&style.rotate!=='none'?style.rotate:'0deg').split(/\s+/),angleText=rotation.pop(),angle=parseFloat(angleText)*(angleText.endsWith('rad')?180/Math.PI:angleText.endsWith('turn')?360:angleText.endsWith('grad')?.9:1);
+     let axis=rotation.length===3?rotation.map(Number):rotation[0]==='x'?[1,0,0]:rotation[0]==='y'?[0,1,0]:[0,0,1];
+     const individual=new DOMMatrix().translate(length(translation[0],n.offsetWidth),length(translation[1],n.offsetHeight),length(translation[2],0)).rotateAxisAngle(...axis,angle).scale(scale[0],scale[1]??scale[0],scale[2]??1);
+     let step=new DOMMatrix().translate(at.x-parentAt.x,at.y-parentAt.y).translate(origin[0]||0,origin[1]||0,origin[2]||0)
+      .multiply(individual).multiply(new DOMMatrix(style.transform==='none'?undefined:style.transform)).translate(-(origin[0]||0),-(origin[1]||0),-(origin[2]||0));
+     const parent=n.parentElement;if(parent){const ps=getComputedStyle(parent),distance=parseFloat(ps.perspective);
+      if(Number.isFinite(distance)&&distance>0){const po=ps.perspectiveOrigin.split(/\s+/).map(parseFloat),perspective=new DOMMatrix();perspective.m34=-1/distance;
+       step=new DOMMatrix().translate(po[0]||0,po[1]||0).multiply(perspective).translate(-(po[0]||0),-(po[1]||0)).multiply(step);}}
+     result=step.multiply(result);
+    }return result;};
+   const width=e.offsetWidth,height=e.offsetHeight,raw=matrix(e),outer=e.getBoundingClientRect();
+   const project=p=>{if(!Number.isFinite(p.w)||Math.abs(p.w)<1e-9)throw Error('invalid clipping projection');return {x:p.x/p.w,y:p.y/p.w};};
+   const corners=[[0,0],[width,0],[width,height],[0,height]],projected=corners.map(([x,y])=>project(raw.transformPoint({x,y,z:0,w:1}))),xs=projected.map(p=>p.x),ys=projected.map(p=>p.y);
+   // Anchor the composed transform to the browser's measured viewport position.
+   // Fixed descendants and containing-block scroll offsets do not follow a
+   // simple offsetParent walk. Keep the orientation and homogeneous depth.
+   if(Math.abs(Math.max(...xs)-Math.min(...xs)-outer.width)>1.5||Math.abs(Math.max(...ys)-Math.min(...ys)-outer.height)>1.5)throw Error('clipping transform dimensions disagree with browser: '+JSON.stringify({tag:e.tagName,class:e.className,expected:[outer.width,outer.height],actual:[Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)],width,height}));
+   const m=new DOMMatrix().translate(outer.left-Math.min(...xs),outer.top-Math.min(...ys)).multiply(raw),inverse=m.inverse();
+   if(![...m.toFloat64Array(),...inverse.toFloat64Array(),width,height].every(Number.isFinite))throw Error('singular clipping transform');
+   const points=corners.map(([x,y])=>m.transformPoint({x,y,z:0,w:1}));
+   return {points:points.map(p=>({...project(p),homogeneous:p})),local:p=>project(inverse.transformPoint(p.homogeneous||{x:p.x,y:p.y,z:0,w:1}))};
+  }
   const outer=e.getBoundingClientRect(),style=getComputedStyle(e);let a=1,b=0,c=0,d=1;
   for(let p=e;p;p=p.parentElement){
    const transform=getComputedStyle(p).transform;
