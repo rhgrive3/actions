@@ -173,7 +173,8 @@ test('real Bubbler grows at the checked position and intercepts hostile Actor sh
   const dome=f.bigBubblerDomes().find(d=>d.owner===a);assert.ok(dome&&dome.radius>4);
   const deployment=f.events.find(e=>e.actor===a&&e.event==='kit:bubbler:deploy');
   assert.ok(deployment);assert.ok(dome.pos.distanceTo(deployment.pos)<.01,'same checked native forward placement');
-  const hp=dome.hp,field=dome.fieldHp;
+  const hp=dome.hp,field=dome.fieldHp,impacts=[];
+  f.on('kit:bubbler:hit',event=>{if(event.actor===a)impacts.push(event);});
   for(let i=0;i<90;i++){
     const dx=a.pos.x-enemy.pos.x,dz=a.pos.z-enemy.pos.z;
     enemy.aimYaw=Math.atan2(dx,dz);enemy.aimPitch=Math.atan2(a.pos.y+.85-enemy.pos.y-1.1,Math.hypot(dx,dz));
@@ -181,6 +182,8 @@ test('real Bubbler grows at the checked position and intercepts hostile Actor sh
     enemy.aimPoint.copy(a.pos);enemy.aimPoint.y+=.85;enemy.intent.fire=true;
     enemy.update(1/60);f.tick(a,b);
   }
+  assert.ok(f.rounds.some(round=>round.owner===enemy),'the hostile Actor really fired');
+  assert.ok(impacts.length>0,'native projectile contact events distinguish shielding from passive HP decay');
   assert.ok(dome.hp<hp||dome.fieldHp<field,'real enemy projectiles contact the barrier');
   assert.equal(a.hp,100,'the grown barrier shields the bot from outside shots');
 });
