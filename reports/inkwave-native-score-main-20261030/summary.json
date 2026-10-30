@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "status": "integration-and-functional-checks-complete-with-identical-baseline-harness-failures",
+  "baselineSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+  "candidateRuntimeSourceCommit": "ffad9e08f2e9d7fed049dd8dbe64987fc8308d6d",
+  "branch": "perf/native-score-main-20261030",
+  "cherryPicks": {
+    "6c5c2738": "ad04388b",
+    "f466fa1b": "89ee4c9f",
+    "9b0dedee": "49eb4327",
+    "e56320bf": "28e1c348",
+    "d580e030": "ffad9e08"
+  },
+  "variants": {
+    "baseline": {
+      "status": "passed",
+      "root": "/workspace/actions-score-base",
+      "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+      "inputHash": "b7a0866d430dc2ecb7b6388b6203f041c17232aba5a681c80f51520f03cf7376",
+      "revision": "f08f01745da3b46e5a9087428ba8986df3861deab92c9145381d58fdc2e4ec89",
+      "sourceInputs": 1588,
+      "artifacts": 2315,
+      "runtimeSourceSha256": "ac919d24d6af33eba196c4e3f19d3253c23998586040eb0d4a90b9206b30ad11",
+      "runtimeEmittedSha256": "7a59e821a1ec61c5ce54cda362832e16829d2b52023d3a3dce4bb2ff2a84ebe2",
+      "runtimeEmittedBytes": 1795,
+      "scoringRecompiledExact": true,
+      "prebuiltFiles": 17,
+      "prebuiltAssetsVerified": true,
+      "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+      "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+      "nativeRuntimeSourceSha256": "186331c0ebc7748a4ea6d3d02f74dacac3013ded454033d3fcc64d11f698119f",
+      "nativeEngineEmittedSha256": "11f5f7930c0ccfd3ef222fb30eb4e0cb1c90ab38b80cad0a8121dc0fcaedfc58",
+      "nativeEngineEmittedBytes": 228068,
+      "tests": {
+        "emitted": {
+          "tests": 66,
+          "suites": 0,
+          "pass": 63,
+          "fail": 3,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "emitted-supported": {
+          "tests": 62,
+          "suites": 0,
+          "pass": 62,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "source-native": {
+          "tests": 3,
+          "suites": 0,
+          "pass": 3,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      }
+    },
+    "candidate": {
+      "status": "passed",
+      "root": "/workspace/actions-score-main",
+      "sourceSha": "ffad9e08f2e9d7fed049dd8dbe64987fc8308d6d",
+      "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8",
+      "inputHash": "067ba5576be63a706ec90b610471c24235c48082301fd6587ed32b9fce3f9d3b",
+      "revision": "1e4aaa454611f3dbf38635a0442fa8de55b59db25944eaa9c77a70f418e80173",
+      "sourceInputs": 1588,
+      "artifacts": 2315,
+      "runtimeSourceSha256": "1796177c81f6cdf69ad5e120d3173ec9df3d9ba5b3762cc965b07fb88c381003",
+      "runtimeEmittedSha256": "526351a5fc2a117fa55421bbeef4ccfb5608732c6ffc0692563726c0ae873ad3",
+      "runtimeEmittedBytes": 4386,
+      "scoringRecompiledExact": true,
+      "prebuiltFiles": 17,
+      "prebuiltAssetsVerified": true,
+      "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+      "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+      "nativeRuntimeSourceSha256": "186331c0ebc7748a4ea6d3d02f74dacac3013ded454033d3fcc64d11f698119f",
+      "nativeEngineEmittedSha256": "4244a65992c8b5e30946a94e245bbd3015f646f72a3d52db2802ee41b2258b58",
+      "nativeEngineEmittedBytes": 228719,
+      "tests": {
+        "emitted": {
+          "tests": 66,
+          "suites": 0,
+          "pass": 63,
+          "fail": 3,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "emitted-supported": {
+          "tests": 62,
+          "suites": 0,
+          "pass": 62,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "source-native": {
+          "tests": 3,
+          "suites": 0,
+          "pass": 3,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "prefix-source": {
+          "tests": 12,
+          "suites": 0,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "prefix-emitted": {
+          "tests": 12,
+          "suites": 0,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      }
+    }
+  },
+  "buildComparison": {
+    "status": "passed",
+    "changedInputs": [
+      "patch/runtime/scoring.mjs"
+    ],
+    "changedArtifacts": [
+      "index.html",
+      "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json",
+      "patches/local-quality/ink-volume/assets/roller/manifest.json",
+      "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+      "patches/native-stages/runtime/engine.mjs",
+      "patches/splatoon3/runtime/scoring.mjs",
+      "sw.js"
+    ]
+  },
+  "parity": {
+    "status": "passed",
+    "scope": "One untimed functional replay; no browser or performance measurement",
+    "captureSha256": "1fc1eb9de12645487f304f5a145658eac9ce833a1cd5198e51a5c4a0d0278840",
+    "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+    "gridCells": 1401174,
+    "eligibleCells": 249161,
+    "capturedEvents": 531,
+    "directedEvents": 4,
+    "valuesPerVariant": 535,
+    "mismatches": 0
+  },
+  "observations": {
+    "sharedInitialEmittedFailures": [
+      {
+        "test": "source fixture executes the real sealed native catalog and qualified rule guards",
+        "reason": "The generic nativeFixture requests rule-availability.mjs as an emitted file; production bundles that owner in engine.mjs, so the standalone emitted path does not exist. Same baseline and candidate failure."
+      },
+      {
+        "test": "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives",
+        "reason": "Same generic nativeFixture emitted standalone rule-availability.mjs path mismatch. Both versions pass the original source-native test."
+      },
+      {
+        "test": "Python and worker masks agree for partial polygons and thin strips",
+        "reason": "Python runtime has numpy but no numba. Same baseline and candidate dependency failure. It is excluded from the supplementary source-native run, not counted as passing."
+      }
+    ],
+    "nativeEngineDelta": "The native bundle reaches scoring through paint-ownership.mjs importing notePaintMutation; the scoring module top-level declarations also affect that bundle. Source inputs differ only in scoring.mjs.",
+    "nativePayloads": "17 files copied from actions-native-base; exact committed LFS pointer SHA/size, all manifest chunk/pack SHA/size and 298 texture slice SHA/size checked in both worktrees and emitted copies. Payloads are not committed.",
+    "performanceScope": "No new browser or timing measurement. Native replay is one functional pass. Prior performance reports were cherry-picked as historical evidence."
+  },
+  "processes": {
+    "status": "passed",
+    "checkedUTC": "2026-10-30T21:02:09.885141+00:00",
+    "ownedRoots": [
+      "/workspace/actions-score-base",
+      "/workspace/actions-score-main"
+    ],
+    "activeNodePythonEsbuildWorkers": [],
+    "testProcessesAllExited": true,
+    "browserOrPerformanceMeasurementStarted": false
+  }
+}

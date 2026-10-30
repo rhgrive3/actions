@@ -1,0 +1,29 @@
+{
+  "root": "/workspace/actions-score-base",
+  "mode": "source-native",
+  "startedUTC": "2026-10-30T21:01:25.302078+00:00",
+  "endedUTC": "2026-10-30T21:01:28.550373+00:00",
+  "command": [
+    "node",
+    "--experimental-vm-modules",
+    "--test",
+    "--test-reporter=spec",
+    "--test-concurrency=2",
+    "--test-name-pattern=source fixture|source cell coverage|owned partial cells",
+    "patches/native-stages/tests/native-build-fixture.test.mjs",
+    "patches/native-stages/tests/source-paint-coverage.test.mjs"
+  ],
+  "nodePid": 47297,
+  "exit": 0,
+  "counts": {
+    "tests": 3,
+    "suites": 0,
+    "pass": 3,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "log": "/workspace/actions-score-base/.ci-scratch/score-main-verify/source-native-tests.log",
+  "processExited": true
+}

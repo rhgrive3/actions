@@ -1,0 +1,110 @@
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47135) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sparse ground masks preserve scalar hits, counters and the 30-ray boundary (114.387258ms)
+✔ sparse ground masks retain early-hit scalar fallback and recover after an exception (2.993474ms)
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47136) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native detail retains immutable coverage after pooled growth records are reused (1111.650046ms)
+✔ native detail has sixteen resident pages and replays an evicted floor on revisit (20.468096ms)
+✔ native detail clearing and disposal release history and restore the paint owner (32.809883ms)
+✔ native detail follows an inclined source floor in its own plane (31.203745ms)
+✔ native detail follows the game camera when PaintSystem.setView is unused (16.213564ms)
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47161) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ near and wide directed grids retain goals, enemy-zone barriers, nonpaintable nodes and visited order (52.763973ms)
+✔ circle and square boundaries, signed zeros and nonfinite inputs match the frozen predicate exactly (9.041818ms)
+✔ cache identity, start/team changes, graph replacement, resize and stamp wrap keep their contracts (3.929398ms)
+✔ wide queries skip only exterior hypot calls and still evaluate the exact boundary (57.792326ms)
+(node:47175) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ paint faces round-trip exactly, including key order (3.151568ms)
+✔ admission takes only current, complete records (12.770364ms)
+✔ site copy holds admitted stages and only their texture packs (1.419299ms)
+✔ runtime loader reassembles verified chunks into the worker data shape (22.142393ms)
+✔ streamed ranges preserve byte boundaries and reject truncated or oversized bodies (32.546151ms)
+✔ runtime loader rejects tampered chunks, stage records and incomplete faces (9.407206ms)
+✔ KTX2 textures skip PNG decoding and start their mip chain within the cap (5.825068ms)
+✔ one failed KTX2 pack is fetched once per load session and later sessions can retry (5.645017ms)
+✔ failed transcoder initialization backs off and a later loader recovers; idle release is idempotent (6.255094ms)
+✔ a failed KTX2 texture falls back to its pinned PNG; an abort does not (14.580326ms)
+✔ a renderer replacement waits for pending KTX2 parses before disposing the old loader (11.735849ms)
+✔ stage worker release waits for active parse callbacks and the next load gets a fresh owner (7.593511ms)
+✔ compressed touch loads retire only an idle decoder and retain every mip buffer (11.607132ms)
+✔ an abort during a KTX2 transcode settles the load; the late texture is disposed (6.554283ms)
+✔ aborted transcodes retain a replaced loader until every actual callback finishes (7.779427ms)
+✔ relieved touch budgets fall back to the uncompressed budget for PNG and RGBA32 output (9.865325ms)
+✔ images a partial prebuilt table does not cover keep the uncompressed fallback budget (9.689446ms)
+✔ committed prebuilt data stays a few hundred files (8.575994ms)
+✔ builder input identity hashes every scripts/lib helper it runs (4.133062ms)
+✔ cooperative face unpack preserves exact values and aborts between batches (10.360299ms)
+✔ shared native plane masks preserve every live CPU ink claim and causal order (2102.384504ms)
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47206) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native wall sourced paint keeps physical ownership bounded without inventing spatter credit (1080.036046ms)
+✔ native occluded-floor sourced paint keeps physical ownership bounded without inventing spatter credit (666.282577ms)
+✔ real native Slosher flight credits its source body once at finer supported paint-grid resolution (844.914329ms)
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47227) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native composed Actor and PaintSystem credit owned raw world area, exactly once (846.254291ms)
+✔ no-special owner still scores raw area without recharging special (640.133987ms)
+✔ unchanged main Turf credit respects active Storm and Tidal Slam gauge locks (713.478767ms)
+✔ native projectile and installed Slam callers credit initial body area exactly once (1626.756393ms)
+✔ missing or double initial body credit cannot satisfy the final owned-area ledger (1187.117304ms)
+✔ composed paint shader keeps decoration inside the source radius (no far satellites/spatter) (70.492374ms)
+✔ indexed live coverage is bit-identical to the reference scan (18.924067ms)
+✔ HUD ink tank repaint is limited to 30 Hz and carries the elapsed time (0.603521ms)
+✔ ScreenFX warm-up enables the pass imperceptibly for the boot frames only (76.097252ms)
+✔ SFX loop noise is pre-built after the audio context exists (25.304749ms)
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47262) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 30Hz (70.287822ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 60Hz (57.613248ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 120Hz (73.679612ms)
+✔ actual composed body batches affine row bounds but preserves dirty gen, cells, dead masks and score (527.325137ms)
+✔ coverage ignores known wall writes and preserves weighted scan order, while unknown writes and identity changes invalidate (1.396264ms)
+✔ actual composed body wall writes retain the coverage cache; turf body writes replace it (387.39064ms)
+✔ growth team guard follows retained, evicted, completed, reused and unexpected leases without changing eligible order (407.759838ms)
+✔ ShapePool escaped record and typed array cannot be recycled into another live lease (9.292519ms)
+✔ production splat opposing-growth guard preserves forced-completion order against unconditional scan (423.85153ms)
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47269) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a grounded Rainmaker carrier can advance below a bridge without a false fall/drop (660.258094ms)
+✔ Halyard Marina gangway footprint support retains the Rainmaker and advances the count (746.719779ms)
+✔ a Rainmaker carrier can jump across a gap and resume scoring on the next floor (474.101631ms)
+✔ a physical fall death still resets an own-side Rainmaker instead of becoming an ordinary splat drop (424.345799ms)
+✔ a Power Clam reaches the basket across a bridge through actual throw/segment/floor rules (481.791318ms)
+✔ a Power Clam reaches the basket across a gap through actual throw/segment/floor rules (451.813593ms)
+✔ the throw uses the new aim on the same tick as turning toward the basket (454.324222ms)
+✔ zone coverage reuses only matching paint revisions, grids and zone indices (2.283411ms)
+ℹ tests 62
+ℹ suites 0
+ℹ pass 62
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13958.177268
