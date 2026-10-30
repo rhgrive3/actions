@@ -7,6 +7,29 @@ import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
+// Diagnostic-only native delegation: do not change cancellation or admission.
+export function installContextCancellationDiagnostics() {
+  const rows = globalThis.__contextCancellationDiagnostics = [];
+  const record = (kind, reason) => {
+    try { if (rows.length >= 32) return; rows.push({ kind, at: new Date().toISOString(), monotonic: performance.now(),
+      reason: typeof reason === 'string' ? reason.slice(0, 500) : reason instanceof Error ? (reason.name + ': ' + reason.message).slice(0, 500) : typeof reason,
+      stack: new Error('Cancellation origin').stack?.slice(0, 4000) }); } catch { /* Diagnostics cannot suppress native calls. */ }
+  };
+  const wrap = (prototype, method, kind) => {
+    if (!prototype) return;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, method);
+    if (!descriptor || typeof descriptor.value !== 'function' || !descriptor.configurable) return;
+    const original = descriptor.value;
+    Object.defineProperty(prototype, method, { ...descriptor, value: function (...args) {
+      record(kind, args[0]);
+      return Reflect.apply(original, this, args);
+    } });
+  };
+  wrap(globalThis.AbortController?.prototype, 'abort', 'AbortController.abort');
+  wrap(globalThis.ReadableStreamDefaultReader?.prototype, 'cancel', 'ReadableStreamDefaultReader.cancel');
+  wrap(globalThis.ReadableStream?.prototype, 'cancel', 'ReadableStream.cancel');
+}
+
 // Every phase emitted by the shared menu helper has an explicit native control
 // admission. Unknown phases fail closed rather than skipping the input guard.
 export function contextMenuControlForPhase(label) {
@@ -280,6 +303,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       if (failedRequestURLs.has(r.url())) recordRequestDiagnostic('same-url-finished-after-failure', r);
     });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
+    await page.addInitScript(installContextCancellationDiagnostics);
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
     await page.evaluate(async () => {
@@ -324,11 +348,16 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
     assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
-    result = { ok: true, browser: browser.version(), identity, startup, proof }; lastStage = 'accepted';
+    result = { ok: true, browser: browser.version(), identity, startup, proof, cancellationDiagnostics: await page.evaluate(() => globalThis.__contextCancellationDiagnostics || []) }; lastStage = 'accepted';
   } catch (error) {
     primary = error;
     let partial = null, diagnosticError = null;
-    if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => ({ proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [] })); } catch (e) { diagnosticError = e.message; }
+    if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => {
+      let audioLoad;
+      try { audioLoad = { loader: globalThis.RG?.audio?._realS3Loader?.stats?.() || null, errors: globalThis.RG?.audio?._realS3Loader?.errors?.slice(-32) || [] }; }
+      catch (error) { audioLoad = { diagnosticError: String(error?.message || error).slice(0, 500) }; }
+      return { proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [], cancellationDiagnostics: globalThis.__contextCancellationDiagnostics || [], audioLoad };
+    }); } catch (e) { diagnosticError = e.message; }
     result = { ok: false, error: error.stack || String(error), partial, diagnosticError };
   } finally {
     result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
