@@ -57,7 +57,7 @@ test('native composed Slosher solver paints before terminal wall, never after it
  for(const [wall,count] of [[1.7,1],[1.5,0]]){
   const {f,p}=await live(wall);const dead=f.projectiles._step(p,1/60);
   assert.ok(p.pos.z<wall, "live projectile was clipped before the wall");settleLive(f);const samples=f.paints.filter(p=>Math.abs(p.radius-.7)<1e-9);
-  assert.equal(samples.length,count);if(count){const landing=(f.projectiles._s3SplashLandings||[]).find(d=>Math.abs(d.radius-.7)<1e-9);assert.ok(landing);assert.ok(Math.abs(landing.releaseZ-1.5)<1e-9);assert.ok(Math.abs(samples[0].stretchAmt-1.6)<1e-9);}
+  assert.equal(samples.length,count);if(count){const landing=(f.projectiles._s3SplashLandings||[]).find(d=>Math.abs(d.radius-.7)<1e-9);assert.ok(landing);assert.ok(Math.abs(landing.releaseZ-1.5)<1e-9);assert.equal(landing.normalY,0);assert.ok(Math.abs(landing.z-1.65)<1e-9);assert.equal(landing.depth,1);assert.equal(samples[0].stretchAmt,null);}
  }
 });
 test('native Slosher source slot trace is stable at 30, 60 and 120 Hz rendering',async()=>{
@@ -77,4 +77,15 @@ test('native actor-terminal segment retains the scheduled splash before capsule 
   assert.equal(f.projectiles._step(p,1/60),true);settleLive(f);
   assert.equal(f.paints.filter(p=>Math.abs(p.radius-.7)<1e-9).length,count);
  }
+});
+
+test('native Slosher intermediate splash retains source depth and centred footprint on an unobstructed floor',async()=>{
+ const {f,p}=await live();f.projectiles._step(p,1/60);settleLive(f);
+ const samples=f.paints.filter(p=>Math.abs(p.radius-.7)<1e-9);
+ assert.equal(samples.length,1);
+ const landing=(f.projectiles._s3SplashLandings||[]).find(d=>Math.abs(d.radius-.7)<1e-9);
+ assert.ok(landing);assert.equal(landing.normalY,1);assert.equal(landing.depth,2);
+ assert.ok(Math.abs(landing.releaseZ-1.5)<1e-9);
+ assert.ok(Math.abs(samples[0].stretchAmt-1.6)<1e-9);
+ assert.ok(Math.abs(samples[0].center[2]-(landing.z-.42))<1e-9);
 });

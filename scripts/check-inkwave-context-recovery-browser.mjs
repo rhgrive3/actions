@@ -298,6 +298,17 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   for (const file of ['inkwave-public/src/main.js', 'inkwave-public/src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs']) assert(sourceInputs.includes(file), 'Required source input omitted from identity: ' + file);
   const moduleHashes = Object.fromEntries(required.map(file => { const digest = build.artifacts[file]; assert(digest, 'Missing required emitted module: ' + file); return [file, digest]; }));
   const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set(), audioNetwork = [];
+  // Preserve strict zero-failure acceptance while classifying request cancellations.
+  const requestDiagnostics = [], failedRequestURLs = new Set();
+  let requestPhase = 'startup';
+  const recordRequestDiagnostic = (event, request) => {
+    if (requestDiagnostics.length >= 64) return;
+    let timing = null, timingError = null;
+    try { timing = request.timing(); } catch (error) { timingError = String(error); }
+    requestDiagnostics.push({ event, phase: requestPhase, at: new Date().toISOString(),
+      url: request.url(), resourceType: request.resourceType(), timing, timingError,
+      failure: request.failure()?.errorText ?? null });
+  };
   let preLossAudio = null;
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
@@ -347,6 +358,13 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     page.on('response', r => { if (audioRequest(r.request()) && audioNetwork.length < 512) audioNetwork.push({event:'headers',url:r.url(),at:Date.now(),status:r.status()}); });
     page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
     page.on('requestfailed', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'failed',url:r.url(),error:r.failure()?.errorText,at:Date.now(),timing:r.timing()}); });
+    page.on('requestfailed', r => {
+      if (failedRequestURLs.size < 32) failedRequestURLs.add(r.url());
+      recordRequestDiagnostic('failed', r);
+    });
+    page.on('requestfinished', r => {
+      if (failedRequestURLs.has(r.url())) recordRequestDiagnostic('same-url-finished-after-failure', r);
+    });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
     // Diagnostic only. Observe the actual owner that calls AbortController,
     // without delaying, replacing or suppressing any native audio/network call.
@@ -402,7 +420,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       recordedShooterFire: RG.audio?._weaponBank?.authorized?.byEvent?.has('shooter:fire') === true,
       audioOwner:(()=>{try{return globalThis.__contextAudioOwnerSnapshot?.() ?? null;}catch(error){return {diagnosticError:String(error?.message || error)};}})() }));
     validateContextStartupReceipt(startup); lastStage = 'playing';
+    requestPhase = 'context-proof';
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
+    requestPhase = 'post-context-proof';
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
     assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
@@ -425,7 +445,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   } finally {
     let audioTrace = null, audioOwnerFinal = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null}))); } catch {}
-    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }
