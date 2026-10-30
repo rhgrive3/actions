@@ -77,30 +77,49 @@ jobs:
       - name: Install matching Playwright Chromium and supported system dependencies
         working-directory: source
         run: npx --no-install playwright install --with-deps chromium
-      - name: Verify preinstalled system Chrome and its existing sandbox policy without changing it
+      - name: Read-only installed Chrome provenance and unchanged safety checks; no browser launch
         run: |
           mkdir -p "$RUNNER_TEMP/blast-artifacts"
           node --input-type=module <<'JS'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
-          import {execFileSync} from 'node:child_process';
+          import {spawnSync} from 'node:child_process';
           import {createHash} from 'node:crypto';
-          const binary=process.env.CHROMIUM_EXECUTABLE_PATH,profile='/etc/apparmor.d/chrome';
-          const receipt={binary,profile,runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,status:'incomplete',checkedAt:new Date().toISOString()};
+          const binary='/opt/google/chrome/chrome',profile='/etc/apparmor.d/chrome';
+          const receipt={binary,profile,diagnosticOnly:true,browserLaunched:false,pngCount:0,runnerImageOS:process.env.ImageOS,runnerImageVersion:process.env.ImageVersion,checkedAt:new Date().toISOString(),observations:{},status:'collecting'};
           const save=()=>fs.writeFileSync(process.env.RUNNER_TEMP+'/blast-artifacts/system-browser.json',JSON.stringify(receipt,null,2));
+          const observe=(key,fn)=>{try{receipt.observations[key]={ok:true,value:fn()};}catch(e){receipt.observations[key]={ok:false,error:String(e.stack||e)};}save();};
+          const stat=s=>({uid:s.uid,gid:s.gid,mode:s.mode,modeOctal:(s.mode&0o7777).toString(8),size:s.size,isFile:s.isFile(),isSymbolicLink:s.isSymbolicLink()});
+          const command=(exe,args)=>{const r=spawnSync(exe,args,{encoding:'utf8',timeout:20000,maxBuffer:2*1024*1024});return{exitCode:r.status,signal:r.signal,stdout:r.stdout,stderr:r.stderr,error:r.error?String(r.error):null};};
+          fs.mkdirSync(process.env.RUNNER_TEMP+'/blast-artifacts',{recursive:true});save();
+          // All observations precede evaluation. Commands only inspect installed package metadata;
+          // the Chrome binary is never executed, including --version.
+          observe('binaryLstat',()=>stat(fs.lstatSync(binary)));
+          observe('binaryStat',()=>stat(fs.statSync(binary)));
+          observe('realpath',()=>fs.realpathSync(binary));
+          observe('packageOwner',()=>command('dpkg-query',['-S',binary]));
+          observe('packageVersion',()=>command('dpkg-query',['-W','-f=${Package} ${Version}\n','google-chrome-stable']));
+          observe('packageVerify',()=>command('dpkg',['--verify','google-chrome-stable']));
+          observe('packageBinaryDigest',()=>{
+           const md5File='/var/lib/dpkg/info/google-chrome-stable.md5sums';
+           const manifest=fs.readFileSync(md5File,'utf8');
+           const entry=manifest.split(/\r?\n/).map(line=>line.match(/^([0-9a-f]{32})\s+(.+)$/)).find(m=>m&&m[2].replace(/^\.\//,'')===binary.slice(1));
+           assert.ok(entry,'package md5sums must explicitly list the binary');
+           const bytes=fs.readFileSync(binary),md5=createHash('md5').update(bytes).digest('hex');
+           return {md5File,manifestSHA256:createHash('sha256').update(manifest).digest('hex'),expectedMD5:entry[1],actualMD5:md5,match:md5===entry[1],binarySHA256:createHash('sha256').update(bytes).digest('hex'),scope:'package-installed checksum corroboration only, not standalone authenticity proof'};
+          });
+          observe('profileLstat',()=>stat(fs.lstatSync(profile)));
+          observe('profileStat',()=>stat(fs.statSync(profile)));
+          observe('profile',()=>{const text=fs.readFileSync(profile,'utf8');return{sha256:createHash('sha256').update(text).digest('hex'),text,containsStandardPath:text.includes(binary),containsUserns:/\buserns\s*,/.test(text),loadedStatus:'not established by file presence'};});
+          receipt.status='observations-saved-before-safety-evaluation';save();
           try {
-            assert.equal(binary,'/opt/google/chrome/chrome');
-            for(const file of [binary,profile]){const st=fs.statSync(file);assert.equal(st.uid,0,'must be preinstalled root-owned '+file);assert.equal(st.mode&0o022,0,'must not be group/world writable '+file);}
-            fs.accessSync(binary,fs.constants.X_OK);
-            receipt.resolvedExecutable=fs.realpathSync(binary);
-            const policy=fs.readFileSync(profile,'utf8');
-            assert.ok(policy.includes('/opt/google/chrome/chrome'),'existing profile must cover standard binary');
-            assert.match(policy,/\buserns\s*,/,'existing profile must admit browser sandbox namespaces');
-            receipt.profileSHA256=createHash('sha256').update(policy).digest('hex');
-            receipt.version=execFileSync(binary,['--version'],{encoding:'utf8'}).trim();
-            receipt.package=execFileSync('dpkg-query',['-W','-f=${Package} ${Version}\n','google-chrome-stable'],{encoding:'utf8'}).trim();
-            receipt.status='preinstalled-binary-and-policy-verified-not-yet-launched';save();
-          } catch(e){receipt.error=String(e.stack||e);save();throw e;}
+           assert.equal(process.env.CHROMIUM_EXECUTABLE_PATH,binary);
+           for(const key of ['binaryStat','profileStat']){const item=receipt.observations[key];assert.equal(item.ok,true);assert.equal(item.value.uid,0,'must be preinstalled root-owned '+key);assert.equal(item.value.mode&0o022,0,'must not be group/world writable '+key);}
+           const p=receipt.observations.profile;assert.equal(p.ok,true);assert.equal(p.value.containsStandardPath,true);assert.equal(p.value.containsUserns,true);
+           receipt.status='diagnostic-only-prerequisites-pass-no-launch';save();
+          } catch(e){receipt.status='diagnostic-only-safety-check-failed-no-launch';receipt.safetyError=String(e.stack||e);save();throw e;}
+          // Parent review is required even if observations happen to satisfy the original checks.
+          throw Error('Read-only diagnostic complete; browser launch intentionally not permitted in this run');
           JS
       - name: Record source and QA provenance
         run: |
