@@ -171,12 +171,12 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
           !runner?.charging || runner.streaming || runner.dodge || (runner.lockT || 0) > 0) return value;
       const move = this.intent?.move, input = move ? Math.min(1, Math.hypot(move.x, move.z)) : 0;
       if (input < .01) return value;
-      const before=Math.hypot(beforeX,beforeZ);
       // The provisional scalar slowdown only models forward charge entry.
       // Rescaling the ground solver's vector during an opposing or orthogonal
       // input cancels much of its braking/steering and can prolong a reversal.
       // Keep that solver in control; no retail directional rule is implied.
       if (beforeX * move.x + beforeZ * move.z <= 0) return value;
+      const before=Math.hypot(beforeX,beforeZ);
       const target = runner.moveSpeed() * input, after = Math.hypot(this.vel.x, this.vel.z);
       if (!(before > target + 1e-9) || !(after > 1e-9)) return value;
       const modeled = Math.max(target, before * Math.pow(1 - chargeDownRate, dt * 60));
