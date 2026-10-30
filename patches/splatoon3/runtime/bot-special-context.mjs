@@ -90,34 +90,40 @@ export function createBotSpecialContext(actor, intent, dt, target, options = {})
     ctx.aimChanged = false;
   } else ctx.aligned = false;
 
-  ctx.safePath = (point, maxDistance = Infinity) => {
+  ctx.safePath = (point, maxDistance = Infinity, halfWidth = 0.34) => {
     if (!finitePoint(point) || typeof world?.level?.groundHeight !== 'function'
       || typeof world?.physics?.los !== 'function' || !(maxDistance > 0)) return false;
     const dx = point.x - actor.pos.x, dz = point.z - actor.pos.z, length = Math.hypot(dx, dz);
     const reach = Math.min(length, maxDistance);
     if (reach < 1e-5) return true;
     const ux = dx / length, uz = dz / length, samples = Math.max(1, Math.ceil(reach / 0.45));
+    const width = Math.max(0, Math.min(1, finite(halfWidth, 0.34)));
     let ground = actor.pos.y;
     const start = { x: 0, y: 0, z: 0 }, end = { x: 0, y: 0, z: 0 };
-    const probe = { normal: { copy(n) { this.x = n.x; this.y = n.y; this.z = n.z; return this; } } };
+    // A zero-foot groundProbe still casts its complete nine-ray ring. These
+    // already width-sampled path columns need only one downward ray each.
+    const origin = special === 'krakenRoyale' ? actor.pos.clone?.() : null;
+    const down = origin?.clone().set(0, -1, 0);
+    const probe = origin ? { point: origin.clone(), normal: origin.clone() } : null;
     for (let i = 1; i <= samples; i++) {
       const travel = reach * i / samples;
-      for (const side of [0, -0.34, 0.34]) {
+      for (const side of [0, -width, width]) {
         const x = actor.pos.x + ux * travel - uz * side;
         const z = actor.pos.z + uz * travel + ux * side;
-        let y = world.level.groundHeight(x, z, ground + 0.65);
+        let y;
         if (special === 'krakenRoyale') {
           // Kraken remains a squid and falls through grates. The ordinary
           // navigation height includes them, so probe the actual support too.
-          if (typeof world.physics.groundProbe !== 'function') return false;
-          world.physics.groundProbe(x, ground, z, 0.65, 0.55, 0, probe, true);
-          y = probe.hit ? probe.y : -Infinity;
-        }
+          if (!probe || typeof world.physics.raycast !== 'function') return false;
+          origin.set(x, ground + 0.65, z);
+          world.physics.raycast(origin, down, 1.2, probe, true);
+          y = probe.hit && probe.normal.y >= 0.68 ? probe.point.y : -Infinity;
+        } else y = world.level.groundHeight(x, z, ground + 0.65);
         if (!Number.isFinite(y) || y < ground - 0.55 || y > ground + 0.65) return false;
         if (side === 0) ground = y;
       }
     }
-    for (const side of [0, -0.34, 0.34]) {
+    for (const side of [0, -width, width]) {
       start.x = actor.pos.x - uz * side; start.y = actor.pos.y + 0.45; start.z = actor.pos.z + ux * side;
       end.x = actor.pos.x + ux * reach - uz * side; end.y = ground + 0.45; end.z = actor.pos.z + uz * reach + ux * side;
       if (!world.physics.los(start, end)) return false;

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {createBotSpecialContext, resetBotSpecialMemory} from '../runtime/bot-special-context.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
-const vector = (x=0,y=0,z=0) => ({ x,y,z,set(x,y,z){Object.assign(this,{x,y,z});return this;} });
+const vector = (x=0,y=0,z=0) => ({ x,y,z,set(x,y,z){Object.assign(this,{x,y,z});return this;},clone(){return vector(this.x,this.y,this.z);} });
 function setup() {
   const actor={alive:true,isBot:true,team:0,pos:vector(),weapon:{special:'trizooka'},weaponId:'shooter',aimYaw:0,aimPitch:0};
   const enemy={alive:true,team:1,pos:vector(0,0,12),vel:vector(),form:'kid'};
@@ -38,7 +38,7 @@ test('AI memory resets on active token, equipment, death, life and explicit brai
   assert.equal(f.ctx().memory.prepared,true);
   f.actor.specialActive={id:'trizooka'};ctx=f.ctx(.1);
   assert.equal(ctx.memory.prepared,undefined);assert.equal(ctx.memory.time,.1);
-  assert.equal(f.ctx(.2).memory.time,.3+Number.EPSILON/4);
+  assert.ok(Math.abs(f.ctx(.2).memory.time-.3)<1e-9);
   f.actor.specialActive={id:'trizooka'};assert.equal(f.ctx(.1).memory.time,.1);
   f.actor.weapon={special:'trizooka'};assert.equal(f.ctx(.1).memory.time,.1);
   f.actor.netLife=2;assert.equal(f.ctx(.1).memory.time,.1);
@@ -62,9 +62,12 @@ test('safe movement rejects wall, drop, water and unsupported Kraken grates',()=
   f.world.level.groundHeight=(x,z)=>z>5?-2:0;assert.equal(f.ctx().safePath(f.enemy.pos),false);
   assert.equal(f.ctx().safePath(f.enemy.pos,1.2),true);
   f.world.level.groundHeight=()=>0;f.actor.weapon.special='krakenRoyale';
-  f.world.physics.groundProbe=(_x,_y,_z,_up,_down,_foot,out,skipGrates)=>{assert.equal(skipGrates,true);out.hit=false;};
+  let rays=0;
+  f.world.physics.raycast=(_origin,_down,_length,out,skipGrates)=>{rays++;assert.equal(skipGrates,true);out.hit=false;};
   assert.equal(f.ctx().safePath(f.enemy.pos),false);
-  f.world.physics.groundProbe=(_x,_y,_z,_up,_down,_foot,out)=>{out.hit=true;out.y=0;};assert.equal(f.ctx().safePath(f.enemy.pos),true);
+  f.world.physics.raycast=(_origin,_down,_length,out)=>{rays++;out.hit=true;out.point.y=0;out.normal.y=1;};
+  rays=0;assert.equal(f.ctx().safePath(f.enemy.pos),true);
+  assert.equal(rays,Math.ceil(12/.45)*3,'only one support ray per path column');
 });
 
 test('boss targets must remain in the living boss current hit-shape collection',()=>{
