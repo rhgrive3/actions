@@ -53,7 +53,7 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
   const mobile = cache.mobile;
   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
-  mobile.specialId = w.special; mobile.ink = frame.ink; mobile.inkLow = frame.inkLow; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
+  mobile.subId = w.sub; mobile.specialId = w.special; mobile.ink = frame.ink; mobile.inkLow = frame.inkLow; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
   return frame;
 }
 // Touch controls stay live while the full intro HUD is hidden. This transport
@@ -63,7 +63,7 @@ export function mobileHudSnapshot(game,a,w,PLAYER,subCost) {
   const cache=game._hudTransport||(game._hudTransport={frame:{},crosshair:{},map:{},mobile:{}}),mobile=cache.mobile;
   const spent=specialGaugeFraction(a);
   mobile.special=spent??a.specialFrac();mobile.ready=a.specialReady();mobile.activeSp=spent!==null||!!a.specialActive;
-  mobile.weapon=w.kind||a.weaponId;mobile.specialId=w.special;
+  mobile.weapon=w.kind||a.weaponId;mobile.subId=w.sub;mobile.specialId=w.special;
   mobile.ink=a.ink/PLAYER.inkMax;mobile.inkLow=game._lowInkFlash>0;mobile.subCost=subCost/PLAYER.inkMax;mobile.subReady=a.ink>=subCost;
   return mobile;
 }

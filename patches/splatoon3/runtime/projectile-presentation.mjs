@@ -180,7 +180,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Match the shared Bucket sheet's existing *visual* width calibration.
     // This is not a new retail draw-radius or world-unit conversion claim.
     const bucket=tri||d.sourceActor==='WeaponSlosherDouble';
-    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1));
+    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1)*(d.sourceActor==='WeaponSlosherStrong'?.5:1));
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

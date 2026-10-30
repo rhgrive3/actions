@@ -1126,10 +1126,14 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       if(side>ALL_SUB_SPECS.splashWall.wallWidth/2+(p.size||0)||y<object.pos.y-(p.size||0)||y>object.pos.y+ALL_SUB_SPECS.splashWall.wallHeight+(p.size||0))continue;
       nx=nX;ny=0;nz=nZ;
     } else {
-      const vx=end.x-start.x, vy=end.y-start.y, vz=end.z-start.z, denom=vx*vx+vy*vy+vz*vz, center=object.pos;
+      // A Beakon's position is its foot, while its dish and body extend above it.
+      // Centering the collision sphere on the foot makes ordinary shots pass
+      // through the visible upper half of the device.
+      const vx=end.x-start.x, vy=end.y-start.y, vz=end.z-start.z, denom=vx*vx+vy*vy+vz*vz;
+      const center=object.subId==='beakon'?(api._allSubBeakonCenter ||= new api.THREE.Vector3()).copy(object.pos).add(api._allSubBeakonOffset ||= new api.THREE.Vector3(0,.48,0)):object.pos;
       t=denom>1e-9?clamp(((center.x-start.x)*vx+(center.y-start.y)*vy+(center.z-start.z)*vz)/denom,0,1):0;
       x=start.x+vx*t;y=start.y+vy*t;z=start.z+vz*t;
-      const radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42;
+      const radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:object.subId==='beakon'?.5:.42;
       nx=x-center.x;ny=y-center.y;nz=z-center.z;const lim=radius+(p.size||0);
       if(nx*nx+ny*ny+nz*nz>lim*lim)continue;
       sphere=true;

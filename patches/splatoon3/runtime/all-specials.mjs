@@ -2069,7 +2069,8 @@ function activeStep(rt,actor,dt) {
       actor.ink=normalInk;
     }
     const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
-    if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>0){
+    if(!actor.intent.sub)state.hookConsumed=false;
+    if(state.phase==='ready'&&actor.intent.sub&&!state.hookConsumed&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>0){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z),direction=aimDirection(rt,actor,rt.v1);
       const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
       // WeaponSpSuperHook MinLengthHook_Floor=3 / MinLengthHook_Wall=0.
@@ -2080,6 +2081,7 @@ function activeStep(rt,actor,dt) {
       if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6||closeFloor){
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
+        state.hookConsumed=true;
         state.nextHookAt=elapsed+ZIPCASTER_MIN_HOOK_INTERVAL;
         const target=contact.point.clone();state.inkFuel=Math.max(0,state.inkFuel-hookInk);
         state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target,contact.normal);

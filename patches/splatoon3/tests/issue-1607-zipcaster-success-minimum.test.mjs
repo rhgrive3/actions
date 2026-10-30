@@ -58,12 +58,14 @@ test('#1607 successful near-wall hooks cannot repeat at 19F, and accept fresh 20
   console.log(JSON.stringify({successfulHookMinimum:proof}));
 });
 
-test('#1607 denied held input does not auto-repeat at20F; a later fresh press remains usable',async()=>{
+test('held input during recovery fires once when the 20F gate opens',async()=>{
   const f=await world();
   for(const hz of [20,30,60,120]){
     const rows=trace(f,{retry:19,hz,holdAcrossGate:true});
-    for(let t=19;t<25;t++)assert.equal(rows[t].phase,'ready','held denied input remains consumed at'+t);
-    assert.equal(rows[25].phase,'hookFlight','release/repress starts a valid hook');
+    assert.equal(rows[19].phase,'ready','the minimum interval is preserved');
+    assert.equal(rows[20].phase,'hookFlight','held input is accepted when the gate opens');
+    assert.equal(rows[20].failed,0);
+    assert.notEqual(rows[25].phase,'hookFlight','release/repress cannot skip active recovery');
   }
 });
 
