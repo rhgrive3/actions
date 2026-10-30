@@ -1,24 +1,40 @@
 import * as THREE from 'three';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
-export function specializeNativeSourceAmbient(shader,roughSpecular=false){
+export function specializeNativeSourceAmbient(shader,roughSpecular=false,weakNormal=false,facingCones=false){
  const height=shader.envMapCubeUVHeight;
- // Normal-mapped surfaces retain per-pixel irradiance. The source's ordinary
- // flat faces otherwise repeat the same diffuse PMREM fetch at every pixel;
- // evaluate both orientations at the vertices and interpolate smooth meshes.
- if(!shader.envMap||shader.normalMap||!Number.isFinite(height)||height<=0)return false;
+ // Diffuse sky lighting is broad. Weak tangent-space detail keeps its direct
+ // light and specular response per pixel; only that broad diffuse term uses
+ // the source normal. Strong/unknown normal maps retain the original path.
+ if(!shader.envMap||(shader.normalMap&&(!weakNormal||shader.normalMapObjectSpace))||!Number.isFinite(height)||height<=0)return false;
+ if(shader.normalMap)roughSpecular=false;
  const common='#include <common>',normal='#include <normal_vertex>',maps='#include <lights_fragment_maps>';
  if(!shader.vertexShader?.includes(common)||!shader.vertexShader.includes(normal)||!shader.fragmentShader?.includes(common)||!shader.fragmentShader.includes(maps))return false;
- if(roughSpecular&&!shader.vertexShader.includes('#include <project_vertex>'))return false;
+ if((roughSpecular||facingCones)&&!shader.vertexShader.includes('#include <project_vertex>'))return false;
  const mip=Math.log2(height)-2,width=3*Math.max(2**mip,7*16);
  if(!Number.isInteger(mip))return false;
  const varying='varying vec3 vNativeIrradianceFront,vNativeIrradianceBack;\n'+
   (roughSpecular?'varying vec3 vNativeRadianceFront,vNativeRadianceBack;\n':'');
- shader.vertexShader=shader.vertexShader.replace(common,common+'\n'+varying+
+ shader.vertexShader=shader.vertexShader.replace(common,common+'\n'+varying+(facingCones?'attribute float nativeNormalCone;\n':'')+
   '#define ENVMAP_TYPE_CUBE_UV\n#define CUBEUV_TEXEL_WIDTH '+(1/width)+'\n#define CUBEUV_TEXEL_HEIGHT '+(1/height)+'\n#define CUBEUV_MAX_MIP '+mip.toFixed(1)+'\n'+
   '#include <envmap_common_pars_fragment>\n#include <cube_uv_reflection_fragment>\n#include <envmap_physical_pars_fragment>\n'+(roughSpecular?'uniform float roughness;\n':''))
-  .replace(normal,normal+'\nvNativeIrradianceFront=getIBLIrradiance(normalize(transformedNormal));\nvNativeIrradianceBack=getIBLIrradiance(-normalize(transformedNormal));\n');
- if(roughSpecular)shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
+  .replace(normal,normal+(facingCones?'':'\nvNativeIrradianceFront=getIBLIrradiance(normalize(transformedNormal));\nvNativeIrradianceBack=getIBLIrradiance(-normalize(transformedNormal));\n'));
+ if(facingCones)shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
+  '#include <project_vertex>\nvec3 nativeView=isOrthographic?vec3(0.0,0.0,1.0):normalize(-mvPosition.xyz);\n'+
+  // The normal cone covers every triangle sharing this vertex. Outside that
+  // cone's silhouette band, all those primitives have the same facing, so
+  // the opposite hemisphere can never be consumed by the fragment shader.
+  // Transform the eye into object space with the transposed normal matrix;
+  // this also preserves the proof under nonuniform parent scaling.
+  'float nativeFacing=clamp(dot(normalize(objectNormal),normalize(nativeView*normalMatrix)),-1.0,1.0);\n'+
+  'bool nativeConeSafe=projectionMatrix[0][0]>0.0&&projectionMatrix[1][1]>0.0&&projectionMatrix[0][1]==0.0&&projectionMatrix[1][0]==0.0&&determinant(mat3(viewMatrix))>0.0;\n'+
+  'bool nativeSingle=nativeConeSafe&&abs(nativeFacing)>nativeNormalCone;\n'+
+  'vec3 nativeNormal=normalize(transformedNormal)*(nativeSingle&&nativeFacing<0.0?-1.0:1.0);\n'+
+  'vNativeIrradianceFront=getIBLIrradiance(nativeNormal);vNativeIrradianceBack=vNativeIrradianceFront;\n'+
+  (roughSpecular?'vNativeRadianceFront=getIBLRadiance(nativeView,nativeNormal,roughness);vNativeRadianceBack=vNativeRadianceFront;\n':'')+
+  'if(!nativeSingle){vNativeIrradianceBack=getIBLIrradiance(-normalize(transformedNormal));\n'+
+  (roughSpecular?'vNativeRadianceBack=getIBLRadiance(nativeView,-normalize(transformedNormal),roughness);\n':'')+'}\n');
+ else if(roughSpecular)shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
   '#include <project_vertex>\nvec3 nativeView=isOrthographic?vec3(0.0,0.0,1.0):normalize(-mvPosition.xyz);\n'+
   'vNativeRadianceFront=getIBLRadiance(nativeView,normalize(transformedNormal),roughness);\n'+
   'vNativeRadianceBack=getIBLRadiance(nativeView,-normalize(transformedNormal),roughness);\n');
@@ -27,6 +43,29 @@ export function specializeNativeSourceAmbient(shader,roughSpecular=false){
  shader.fragmentShader=shader.fragmentShader.replace(common,common+'\n'+varying)
   .replace(maps,lighting);
  return true;
+}
+
+// Conservative per-vertex cone around its authored normal. A byte rounded
+// upward includes every incident geometric normal plus a numerical margin.
+// Inverted normals, thin/invalid triangles and unused vertices keep both
+// hemispheres. Source vertices, normals, UVs and triangle order stay intact.
+export function nativeNormalCones(vertices,indices){
+ const count=vertices.length/8;if(!Number.isSafeInteger(count)||indices.length%3)return null;
+ const bounds=new Float32Array(count),seen=new Uint8Array(count);
+ for(let t=0;t<indices.length;t+=3){
+  const a=indices[t],b=indices[t+1],c=indices[t+2];if(![a,b,c].every(i=>Number.isSafeInteger(i)&&i>=0&&i<count))return null;
+  const ai=a*8,bi=b*8,ci=c*8,ux=vertices[bi]-vertices[ai],uy=vertices[bi+1]-vertices[ai+1],uz=vertices[bi+2]-vertices[ai+2],
+   vx=vertices[ci]-vertices[ai],vy=vertices[ci+1]-vertices[ai+1],vz=vertices[ci+2]-vertices[ai+2],x=uy*vz-uz*vy,y=uz*vx-ux*vz,z=ux*vy-uy*vx,cross=x*x+y*y+z*z;
+  if(cross===0)continue;
+  const thin=!Number.isFinite(cross)||cross<=1e-10*(ux*ux+uy*uy+uz*uz)*(vx*vx+vy*vy+vz*vz);
+  for(let k=0;k<3;k++){
+   const index=indices[t+k],i=index*8,nx=vertices[i+3],ny=vertices[i+4],nz=vertices[i+5],length=nx*nx+ny*ny+nz*nz,dot=x*nx+y*ny+z*nz;
+   const sine=thin||!(length>0)||!Number.isFinite(length)||!(dot>0)?1:Math.sqrt(Math.max(0,1-Math.min(1,dot*dot/(cross*length))));
+   bounds[index]=Math.max(bounds[index],sine);seen[index]=1;
+  }
+ }
+ const bytes=new Uint8Array(count);for(let i=0;i<count;i++)bytes[i]=seen[i]?Math.min(255,Math.ceil((bounds[i]+.008)*255)):255;
+ return new THREE.BufferAttribute(bytes,1,true);
 }
 
 export function specializeNativeInkSurface(fragment){
@@ -221,18 +260,21 @@ export function nativeDisplay(data,textures,quality){
    // Matte source surfaces can interpolate the broad sky lobe too. Ink and
    // glass retain their view-dependent reflections at full pixel frequency.
    const roughSpecular=()=>mat.roughness>=.7&&!mat.roughnessMap&&mat.metalness===0;
+   const weakNormal=()=>!!mat.normalMap&&mat.normalMapType===THREE.TangentSpaceNormalMap&&Math.max(Math.abs(mat.normalScale.x),Math.abs(mat.normalScale.y))<=.28;
    const syncChannelProgram=()=>{
      mat.onBeforeCompile=shader=>{
-      specializeNativeSourceAmbient(shader,roughSpecular());
+      specializeNativeSourceAmbient(shader,roughSpecular(),weakNormal(),true);
       if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
       if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
      };
-     mat.customProgramCacheKey=()=>`native-ambient-v2-${roughSpecular()?1:0}-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
+     mat.customProgramCacheKey=()=>`native-ambient-v4-${roughSpecular()?1:0}-${weakNormal()?1:0}-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
    };
    syncChannelProgram();
+   mat.defaultAttributeValues={...mat.defaultAttributeValues,nativeNormalCone:[1]};
    mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
+  const cones=nativeNormalCones(vb,ib);if(cones){g.setAttribute('nativeNormalCone',cones);cones.onUpload(releaseArray);}
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).

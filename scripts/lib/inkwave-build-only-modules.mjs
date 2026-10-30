@@ -27,6 +27,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/queue-extra-world-adapter.mjs',
   'patches/local-quality/queue-extra-decor-adapter.mjs',
   'patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs',
+  'patches/local-quality/reviewed-wave67-gpu-adapter.mjs',
   'patches/local-quality/render-transfer-optimization-adapter.mjs',
   'patches/local-quality/queue-ui-20261025-adapter.mjs',
   'patches/local-quality/queue-extra-weapons-fx-adapter.mjs',

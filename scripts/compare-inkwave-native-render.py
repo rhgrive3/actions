@@ -14,6 +14,7 @@ parser.add_argument('reference', type=Path)
 parser.add_argument('candidate', type=Path)
 parser.add_argument('--out', type=Path, required=True)
 parser.add_argument('--min-speedup', type=float, default=1.3)
+parser.add_argument('--images-only', action='store_true', help='Validate RGB/alpha and final replay state without claiming FPS')
 args = parser.parse_args()
 
 before = json.loads((args.reference / 'result.json').read_text())
@@ -24,7 +25,9 @@ for label, result in [('reference', before), ('candidate', after)]:
         errors.append(f'{label}: replay did not pass')
     if result['errors']:
         errors.append(f'{label}: browser errors')
-    if len(result['windows']) < 3:
+    if bool(result.get('imagesOnly')) != args.images_only:
+        errors.append(f'{label}: measurement mode differs from comparator mode')
+    if not args.images_only and len(result['windows']) < 3:
         errors.append(f'{label}: at least three complete windows required')
     if any(w['newPrograms'] for w in result['windows']):
         errors.append(f'{label}: cold shader in measured windows')
@@ -32,14 +35,21 @@ for label, result in [('reference', before), ('candidate', after)]:
 for key in ['stage', 'quality', 'setupFrames', 'warmup', 'frames', 'runs']:
     if before[key] != after[key]:
         errors.append(f'mismatched {key}')
-for key in ['native', 'actors', 'bots', 'state', 'quality', 'atlas', 'sourceSha256', 'renderer']:
-    if before['setup'][key] != after['setup'][key]:
+for key in ['syncFrames','occlusionChecks','imagesOnly']:
+    if bool(before.get(key)) != bool(after.get(key)):
+        errors.append(f'mismatched {key}')
+if before.get('activePreroll',0)!=after.get('activePreroll',0):
+    errors.append('mismatched active preroll')
+for key in ['native', 'actors', 'bots', 'state', 'quality', 'atlas', 'sourceSha256', 'renderer','device','framebuffer','paused','menu','textureQuality','textureLimit','textureCount']:
+    if before['setup'].get(key) != after['setup'].get(key):
         errors.append(f'mismatched setup: {key}')
-for key in ['cpu', 'node', 'viewport', 'renderer']:
-    if before['environment'][key] != after['environment'][key]:
+for key in ['cpu', 'node', 'viewport', 'renderer','browser','browserVersion','device']:
+    if before['environment'].get(key) != after['environment'].get(key):
         errors.append(f'mismatched environment: {key}')
 
 pairs = []
+if args.images_only and before.get('semantic') != after.get('semantic'):
+    errors.append('image replay: final actor/paint state differs')
 if len(before['windows']) != len(after['windows']):
     errors.append('window counts differ')
 for a, b in zip(before['windows'], after['windows']):
@@ -52,7 +62,10 @@ for a, b in zip(before['windows'], after['windows']):
                   'gridSha256': a['paint']['gridSha256']})
 
 images = []
-for name in ['forward', 'left', 'back', 'right']:
+views=['forward', 'left', 'back', 'right']
+if before.get('occlusionChecks'):
+    views+=['feet-lowered','feet-raised','window-off']
+for name in views:
     files = [args.reference / (name + '.png'), args.candidate / (name + '.png')]
     if not all(f.exists() for f in files):
         errors.append(f'{name}: missing image')
@@ -77,15 +90,17 @@ def throughput(result):
     windows = result['windows']
     return sum(w['frames'] for w in windows) * 1000 / sum(w['elapsedMs'] for w in windows)
 
-reference_fps, candidate_fps = throughput(before), throughput(after)
-speedup = candidate_fps / reference_fps
-if speedup < args.min_speedup:
+reference_fps, candidate_fps = (None,None) if args.images_only else (throughput(before), throughput(after))
+speedup = None if args.images_only else candidate_fps / reference_fps
+if speedup is not None and speedup < args.min_speedup:
     errors.append(f'whole-frame speedup {speedup:.4f} below {args.min_speedup}')
 report = {'schema': 1, 'status': 'failed' if errors else 'passed', 'errors': errors,
           'referenceContentHash': before['contentHash'], 'candidateContentHash': after['contentHash'],
           'environment': before['environment'], 'stage': before['stage'], 'quality': before['quality'],
           'referenceFps': reference_fps, 'candidateFps': candidate_fps, 'speedup': speedup,
-          'fpsImprovementPercent': (speedup - 1) * 100, 'pairs': pairs, 'images': images,
+          'fpsImprovementPercent': None if speedup is None else (speedup - 1) * 100, 'pairs': pairs, 'images': images,
+          'referenceCompletedFrameMs':before.get('completedFrameMs'),
+          'candidateCompletedFrameMs':after.get('completedFrameMs'),
           'limits': [before['measurement'], 'This is one matched replay with three timed windows, not a physical GPU or whole-device benchmark.']}
 args.out.parent.mkdir(parents=True, exist_ok=True)
 args.out.write_text(json.dumps(report, indent=2) + '\n')
