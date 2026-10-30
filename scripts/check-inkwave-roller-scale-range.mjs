@@ -393,6 +393,9 @@ try{
   // Menu and battle recordings do not use the procedural music scheduler.
   // After freezing every visual receipt, exercise an actual procedural track
   // so its observed Worker remains bound to the emitted creator and bytes.
+  const probeWorkerReady=page.waitForEvent('worker',{
+    predicate:worker=>worker.url().startsWith('blob:'+captureOrigin+'/'),timeout:15000,
+  }).catch(()=>null);
   await page.evaluate(async owner=>{
     const {MusicEngine}=await import(owner);
     const context=new AudioContext(), engine=new MusicEngine();
@@ -402,11 +405,28 @@ try{
       throw Error('Native procedural music Worker did not start');
     globalThis.__rollerWorkerProbe={context,engine};
   },'/_versions/'+buildManifest.build.revision+'/src/audio/music.js');
+  const probeWorker=await probeWorkerReady;
+  assert(probeWorker,'Native procedural music Worker was not observed');
   await page.evaluate(()=>{
     if(!globalThis.__inkwaveBlobWorkerAudit)throw Error('Missing Blob worker observer');
     return globalThis.__inkwaveBlobWorkerAudit.flush();
   });
-  await Promise.all(loadedTasks);
+  // A Worker event can arrive before its Blob response. Wait for that exact
+  // response and its asynchronous hash/creation evidence before binding; a
+  // snapshot of the pending response tasks alone can miss a late event.
+  const workerDeadline=Date.now()+15000;
+  do {
+    await Promise.all([...loadedTasks]);
+    if(blobWorkerEvidence.workers.includes(probeWorker.url())&&
+       blobWorkerEvidence.creations[probeWorker.url()]&&
+       blobWorkerEvidence.workers.length===Object.keys(blobWorkerEvidence.creations).length&&
+       blobWorkerEvidence.workers.length===blobWorkerEvidence.responses.length&&
+       blobWorkerEvidence.workers.every(url=>blobWorkerEvidence.responses.some(row=>row.url===url)))break;
+    await new Promise(resolve=>setTimeout(resolve,25));
+  } while(Date.now()<workerDeadline);
+  assert(blobWorkerEvidence.responses.some(row=>row.url===probeWorker.url()),
+    'Native procedural music Worker response was not observed');
+  await Promise.all([...loadedTasks]);
   assert.equal(loadedModules[optionalGeometry]?.sha256,buildManifest.artifacts[optionalGeometry],
     'Lazy geometry addon must be loaded from the immutable emitted manifest');
   assert.equal(loadedModules[optionalServiceWorker]?.sha256,buildManifest.artifacts[optionalServiceWorker],
