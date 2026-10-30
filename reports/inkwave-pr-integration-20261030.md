@@ -78,3 +78,12 @@ main反映の時点では広いGitHub CIに実行中・待機中の群がある�
 #1925の2つの部分遮蔽反例は、中心へのLOSではなくnative弾道・field sweep・位置履歴で修正した。network source全群1,187成功と最終変更群、配信63成功、固定runtimeのfull-active65キット・796 responseの結果と各scopeを[最終receipt](crablet-native-trajectory-20261030/validation.json)に保存した。途中のlife補強があるため、全群を単一固定SHAで実行したとは記さない。広いCIの全群完了とは別の検証である。
 
 Draftを再確認し、#1928の泳ぎ飛沫は本番向け変更として現行mainとの再検証を進めた。その他の#1924/#1927/#1930/#1931/#1934/#1935/#1936/#1937は、本文にQA専用・no main/do not mergeがあり、比較／参照回収／画像の受入が未完了である。これらを無条件で本番採用したり「全PR完了」と報告したりしない。
+
+### 追加反映の結果
+
+- #1933: main `c1af242aa`。最終GPU試行の固定runtimeを確認し、Chromium専用gate成功、WebKitは初回の微小悪化と順序反転でのほぼ同等の結果を両方保持した。
+- #1938: main `b4f84622a`。578Fの初期発射・開始前照準と、Wahoo実relayの全30/60/120Hzを確認。
+- #1925: main `806a0f286`。native弾道で部分遮蔽反例を修正し、source群・最後のlife補強群・配信・full-activeのscopeを区別して記録。
+- #1928: 上記mainへ本番用の泳ぎ飛沫を統合し、配信10件と多方向177描画が成功。[最終生成物のreceipt](swim-splash-multiview-20261030/integration-validation.json)。
+
+本番向け候補の反映と、QA専用Draft8件（#1924/#1927/#1930/#1931/#1934/#1935/#1936/#1937）の未完了を区別する。本家の現行Switch版、全stage固有カメラと全画素の完全一致は未確認。広いGitHub CIには引き続き待機・実行中の群があり、全CI完了とは報告しない。

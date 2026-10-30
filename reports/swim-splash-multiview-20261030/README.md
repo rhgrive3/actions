@@ -54,3 +54,9 @@ node scripts/check-inkwave-swim-multiview.mjs _site .browser-evidence/swim-multi
 node scripts/check-inkwave-swim-film.mjs _site .browser-evidence/swim-game
 node --experimental-vm-modules --test patches/local-quality/tests/swim-film-breakup.test.mjs patches/local-quality/tests/swim-film-offscreen.test.mjs patches/local-quality/tests/swim-surface-fps.test.mjs patches/local-quality/tests/swim-presentation.test.mjs patches/splatoon3/tests/flow-swim-surface.test.mjs
 ```
+
+## 現行mainへの統合確認
+
+本番向け変更としてDraftを再確認し、GPU・578Fの開始発射・crablet弾道修正を含むmain `806a0f286`へ統合した。泳ぎの製品コードは元のd01f943f7のまま。mainとの結合後、source10件、最終結合treeの通常build／emitted10件／多方向177描画が成功し、errorsは0。開口の実画素対照、床・坂・壁・4色・停止・Ninjaも既存の判定を維持して通過した。quick checksとstartup budgetも成功。変更前後と、最新配信の側面・真上の代表画像を目視した。177画像すべてを手作業で目視したとは記さない。
+
+[最終生成物／入力の照合](integration-validation.json) / [最新配信の177描画receipt](integrated-browser.json)。実機や全画素の本家一致、広いGitHub CI全体の完了は引き続き認定しない。

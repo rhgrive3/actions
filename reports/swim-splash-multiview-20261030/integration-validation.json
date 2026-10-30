@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "sourceSha": "a11a773e5f317f8e9562aaf8e24e4a43815988b0",
+  "mainBase": "806a0f286c707db9b492ade70bfa5264fe5543e2",
+  "contentHash": "35ff67f65c2387ab9035e88edd4bdf6ea0bf48492c94202d3377c01a85c6ba67",
+  "inputs": 1556,
+  "artifacts": 2275,
+  "source": {
+    "pass": 10,
+    "fail": 0,
+    "skip": 0
+  },
+  "emitted": {
+    "pass": 10,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": {
+    "images": 177,
+    "errors": [],
+    "tearControlPixels": 27141
+  },
+  "quickChecks": "passed",
+  "startupBudget": "passed",
+  "limits": [
+    "Controlled rendered Actor/FX fixture; not physical device or retail parameter recovery",
+    "Source10 tested prior to merging crablet-only update; emitted10 and 177 renders tested the final combined tree",
+    "Repository-wide CI remains separately queued/in-progress"
+  ]
+}
