@@ -13,6 +13,7 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
   const rows = [];
   for (const [special, distance] of selected) {
     const { a, b, enemy, ally } = await prepare(special, distance);
+    const origin = a.pos.clone();
     if (a.weapon.special !== special) throw Error('Wrong special fixture: ' + special);
     enemy.hp = 100; enemy.special = 0;
     const row = { special, main: a.weaponId, admissions: 0, initialDistance: distance, damage: 0, mainDamage: 0, mainHitCount: 0, damageCauses: [],
@@ -119,15 +120,19 @@ export async function observeBotSpecialFollowthrough(env, selected = FOLLOWTHROU
         row.paintArea = a.stats.turf;
         if (succeeded() && row.effectFrame === null) row.effectFrame = frame + 1;
         row.ownerAlive = a.alive;
-        if (row.effectFrame !== null && a.stats.specials === 1 && !a.specialActive) {
+        if (a.stats.specials === 1 && !a.specialActive) {
           row.ended = true;
-          endFrame ??= frame;
+          if (endFrame === null) {
+            endFrame = frame; row.endPosition = a.pos.toArray();
+            if (special === 'zipcaster' || special === 'inkjet') row.returnDistance = a.pos.distanceTo(origin);
+          }
           if (frame > endFrame && (a.intent.fire || a.intent.squid || a.intent.move.lengthSq() > .001)) row.normalResumed = true;
-          if (frame - endFrame >= 6) break;
+          if (row.effectFrame !== null && frame - endFrame >= 6) break;
         }
       }
       row.targetEnd = enemy.pos.toArray();
       row.targetHp = enemy.hp; row.targetAlive = enemy.alive;
+      row.ownerHp = a.hp;
       row.pass = row.admissions === 1 && row.effectFrame !== null && row.ended && row.ownerAlive;
       rows.push(row);
     } finally {
