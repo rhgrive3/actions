@@ -5,6 +5,22 @@ import {pathToFileURL} from 'node:url';import {createRequire} from 'node:module'
 import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {captureBlastPair,HEAD} from './capture-main91-blast.mjs';
+// QA-driver-only predicate; no product state mutation or helper navigation.
+function mainPlayReady(){
+ const g=window.__inkwave,G=window.__G,m=g?.menus,root=m?._scr?.el;
+ if(!g?.debug||!Number.isFinite(g.bootMs)||G?.mode!=='menu'||!g.match?.attract||m?.current!=='main'||m?._scr?.name!=='main'||!root||root.inert)return false;
+ const controls=[...document.querySelectorAll('.iw-main [data-id="play"]')];
+ if(controls.length!==1)return false;
+ const control=controls[0];
+ if(!control.isConnected||control.disabled||!root.contains(control)||control.closest('.is-leaving')||m._modal&&!m._modal.contains(control))return false;
+ let opacity=1,reachedRoot=false;
+ for(let e=control.closest('[data-nav]')||control;e&&e!==root.parentNode;e=e.parentElement){
+  const v=Number(getComputedStyle(e).opacity);if(!Number.isFinite(v))return false;
+  opacity*=v;if(e===root){reachedRoot=true;break;}
+ }
+ return reachedRoot&&opacity>0.6;
+}
+
 const [rootArg,siteArg,outArg]=process.argv.slice(2);assert.ok(rootArg&&siteArg&&outArg,'usage: node run-main91-blast.mjs EXACT_CHECKOUT BUILT_SITE PRIVATE_OUTPUT');
 const root=path.resolve(rootArg),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -31,17 +47,32 @@ let browser;
 const driver={head:HEAD,manifestHash:manifest.contentHash,launch:'existing launchSandboxBrowser; chromiumSandbox:true; no local --no-sandbox fallback',cases:[],status:'incomplete'};
 fs.mkdirSync(out,{recursive:true});const save=()=>fs.writeFileSync(path.join(out,'driver-receipt.json'),JSON.stringify(driver,null,2));save();
 try{
- browser=await launchSandboxBrowser(chromium);const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,serviceWorkers:'block'});const page=await context.newPage();
- const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ browser=await launchSandboxBrowser(chromium);driver.browser=browser.version();driver.browserLaunched=true;save();const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,serviceWorkers:'block'});const page=await context.newPage();
+ const errors=driver.pageErrors=[];driver.requestFailures=[];driver.httpErrors=[];driver.menuAttempts=[];driver.consoleErrors=[];
+ page.on('pageerror',e=>{driver.pageErrorCount=(driver.pageErrorCount||0)+1;if(errors.length<100)errors.push(String(e).slice(0,2000));save();});
+ page.on('console',m=>{if(['error','warning'].includes(m.type())&&driver.consoleErrors.length<50){driver.consoleErrors.push({type:m.type(),text:m.text().slice(0,1000)});save();}});
+ page.on('requestfailed',r=>{if(driver.requestFailures.length<100)driver.requestFailures.push({url:r.url().slice(0,2000),failure:r.failure()});save();});
+ page.on('response',r=>{if(r.status()>=400&&driver.httpErrors.length<100){driver.httpErrors.push({url:r.url().slice(0,2000),status:r.status()});save();}});
  await page.addInitScript(()=>{
   localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:true,minimap:false,cameraShake:0,colorblind:true,difficulty:'normal',matchLength:180,lastStage:'tidewater',lastMode:'turf',stageTimes:{tidewater:'day'}}));
   let boot=0x49574b33;Math.random=()=>{boot^=boot<<13;boot^=boot>>>17;boot^=boot<<5;return(boot>>>0)/4294967296;};
   window.__iwResetScenarioRandom=seed=>{let state=seed>>>0,draws=0;const callers=[];Math.random=()=>{state^=state<<13;state^=state>>>17;state^=state<<5;draws++;if(callers.length<12)callers.push({draw:draws,stack:(new Error('scenario Math.random').stack||'').split('\n').slice(2,8).map(s=>s.trim())});return(state>>>0)/4294967296;};return{snapshot:()=>({seed:seed>>>0,draws,state:state>>>0,callers})};};
  });
  async function bootAndWarm(){
-  const events=[];await page.goto(`http://127.0.0.1:${server.address().port}/?map=tidewater&difficulty=normal&skipTitle`,{waitUntil:'domcontentloaded',timeout:60000});
+  const events=[];const attempt={events,observations:[],startedAt:Date.now()};driver.menuAttempts.push(attempt);events.push=(...items)=>{const n=Array.prototype.push.apply(events,items);save();return n;};save();await page.goto(`http://127.0.0.1:${server.address().port}/?map=tidewater&difficulty=normal&skipTitle`,{waitUntil:'domcontentloaded',timeout:60000});
   const deadline=Date.now()+180000;
-  const waitForPhase=async(fn,label)=>{while(Date.now()<deadline){if(await page.evaluate(fn))return;await page.waitForTimeout(250);}throw Error(label+' timeout');};
+  let lastObservation=0,lastLabel='';
+  const waitForPhase=async(fn,label)=>{while(Date.now()<deadline){
+   if((label!==lastLabel||Date.now()-lastObservation>=10000)&&attempt.observations.length<24){
+    lastLabel=label;lastObservation=Date.now();
+    try{const state=await page.evaluate(()=>{const g=window.__inkwave,G=window.__G,m=g?.menus;return {mode:G?.mode??null,current:m?.current??null,screen:m?._scr?.name??null,screenInert:m?._scr?.el?.inert??null,bootMs:g?.bootMs??null,matchState:g?.match?.state??null,attract:g?.match?.attract??null,visibility:document.visibilityState,readyState:document.readyState,stage:g?.match?.mapId??null,setup:m?._setup?{mode:m._setup.mode,mapId:m._setup.mapId}:null,screenText:m?._scr?.el?.textContent?.slice(0,1200)??null,visibleDialogs:[...document.querySelectorAll('[role=dialog]')].filter(e=>e.getBoundingClientRect().width>0).slice(0,8).map(e=>e.textContent?.slice(0,400)),play:[...document.querySelectorAll('.iw-main [data-id="play"]')].slice(0,8).map(e=>({disabled:e.disabled,connected:e.isConnected,leaving:!!e.closest('.is-leaving')}))};});attempt.observations.push({label,at:new Date().toISOString(),state});save();}catch(e){attempt.observations.push({label,error:String(e)});save();}
+   }
+   if(label==='native mode menu'&&!driver.failureDiagnosticImage&&Date.now()-attempt.startedAt>=10000){
+    driver.failureDiagnosticImage={status:'attempted',label};save();
+    try{const dir=path.join(out,'diagnostics');fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,'menu-phase.png');await page.screenshot({path:file,timeout:Math.min(2000,Math.max(1,deadline-Date.now()))});driver.failureDiagnosticImage={status:'captured',file:'diagnostics/menu-phase.png',sha256:sha(fs.readFileSync(file)),scope:'QA navigation diagnostic, not blast comparison frame'};}catch(e){driver.failureDiagnosticImage.error=String(e);}save();
+   }
+   if(await page.evaluate(fn)&&(label!=='native main menu readiness'||await page.evaluate(mainPlayReady)))return;await page.waitForTimeout(250);
+  }throw Error(label+' timeout');};
   await startProjectileThroughMenu(page,{waitForPhase,remainingMs:()=>deadline-Date.now(),receipt:events});
   await waitForPhase(()=>{const g=window.__inkwave,G=window.__G;return G?.mode==='match'&&g?.match===G.match&&!g.match.attract&&g.match.local?.isLocal&&g.match.controller&&['intro','playing'].includes(g.match.state);},'native admission');
   const intro=await page.evaluate(completeNativeTurfIntro);
