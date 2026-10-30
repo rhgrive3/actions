@@ -15,7 +15,9 @@ const ELIGIBLE_WORD_MASKS = Uint32Array.from({ length: 16 }, (_, mask) => {
   return word >>> 0;
 });
 const TYPED_ARRAY = Object.getPrototypeOf(Uint8Array.prototype);
+const typedKind = Object.getOwnPropertyDescriptor(TYPED_ARRAY, Symbol.toStringTag).get;
 const typedLength = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'length').get;
+const typedByteLength = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'byteLength').get;
 const typedBuffer = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'buffer').get;
 const typedOffset = Object.getOwnPropertyDescriptor(TYPED_ARRAY, 'byteOffset').get;
 const bufferLength = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, 'byteLength').get;
@@ -81,11 +83,17 @@ function scanFloorCoverage({ cells, weights, area }, grid) {
 // No floating-point block sums are combined.
 function coverageReplay(index, grid) {
   if (!ArrayBuffer.isView(grid) || Object.getPrototypeOf(grid) !== Uint8Array.prototype ||
+      typedKind.call(grid) !== 'Uint8Array' ||
       Object.hasOwn(grid, 'buffer') || Object.hasOwn(grid, 'byteOffset') ||
       Object.hasOwn(grid, 'byteLength') || Object.hasOwn(grid, 'length')) return null;
   const length = typedLength.call(grid), buffer = typedBuffer.call(grid), offset = typedOffset.call(grid);
-  if (Object.getPrototypeOf(buffer) !== ArrayBuffer.prototype || bufferResizable?.call(buffer) ||
-      !length || length > 0x40000000 || offset % 4 || bufferLength.call(buffer) < offset + length) return null;
+  if (typedByteLength.call(grid) !== length || Object.getPrototypeOf(buffer) !== ArrayBuffer.prototype ||
+      !length || length > 0x40000000 || offset % 4) return null;
+  // Prototype substitution does not change the intrinsic ArrayBuffer brand.
+  // In particular, a disguised SharedArrayBuffer must retain the full scan.
+  try {
+    if (bufferResizable?.call(buffer) || bufferLength.call(buffer) < offset + length) return null;
+  } catch { return null; }
   const cached = index.replay;
   if (cached === null) return null;
   if (cached && cached.length === length) return cached;

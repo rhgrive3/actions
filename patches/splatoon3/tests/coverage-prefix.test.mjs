@@ -108,6 +108,26 @@ test('partial words ignore excluded bytes, retain high ownership bytes and fall 
   tail.grid[30]=2;notePaintMutation(tail,true);exact(tail,'partial final backing word');
 });
 
+test('prototype-disguised storage retains intrinsic brands and the original full-scan values', () => {
+  const variants = [new Uint16Array([1, 2, 1, 2]), new Int16Array([1, 2, 1, 2]),
+    new Uint32Array([1, 2, 1, 2]), new Float32Array([1, 2, 1, 2]),
+    new Float64Array([1, 2, 1, 2]), new Int8Array([1, 2, 1, 2]),
+    new Uint8ClampedArray([1, 2, 1, 2]), new BigInt64Array([1n, 2n, 1n, 2n])];
+  const dataView = new DataView(new ArrayBuffer(4));dataView[0] = 1;dataView[3] = 2;variants.push(dataView);
+  for (const grid of variants) {
+    Object.setPrototypeOf(grid, Uint8Array.prototype);
+    Object.defineProperty(grid, Symbol.toStringTag, { value: 'Uint8Array' });
+    const p = make(4);p.grid = grid;exact(p, 'disguised storage initial scan');
+    assert.equal(p._s3CoverageIndex.replay, undefined, 'intrinsic non-Uint8 storage falls back');
+    grid[0] = typeof grid[0] === 'bigint' ? 2n : 2;notePaintMutation(p, true);exact(p, 'disguised storage mutation');
+  }
+  const shared = new SharedArrayBuffer(4), grid = new Uint8Array(shared);grid.set([1, 2, 1, 2]);
+  Object.setPrototypeOf(shared, ArrayBuffer.prototype);
+  const p = make(4);p.grid = grid;exact(p, 'disguised SharedArrayBuffer');
+  assert.equal(p._s3CoverageIndex.replay, undefined);
+  grid[0] = 2;notePaintMutation(p, true);exact(p, 'disguised SharedArrayBuffer mutation');
+});
+
 test('Proxy, custom arrays, SharedArrayBuffer, resizable, unaligned and detached storage keep the original full path', () => {
   const variants = [Array.from(make(32).grid), new Uint8Array(new ArrayBuffer(33), 1, 32),
     new Uint8Array(new SharedArrayBuffer(32)), new Uint8Array(new ArrayBuffer(32, { maxByteLength: 64 }))];
