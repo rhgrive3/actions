@@ -39,7 +39,8 @@ async function setup(t,{family='shooter',catalog=false}={}) {
   const boss=Object.assign(Object.create(f.Boss.prototype),{
     sim:true,dead:false,visible:true,invuln:false,pos:new f.THREE.Vector3(0,0,3),
     hp:1000,maxHp:1000,match:nm.match,flashN:0,weakN:0,log:{recv:0,recvDmg:0},
-    crabs:new Map([[3,{id:3,x:0,y:0,z:5,hp:1000,dead:false}]]),
+    // Real direct-main births launch at y=1.05; the native sphere adds .35.
+    crabs:new Map([[3,{id:3,x:0,y:.7,z:5,hp:1000,dead:false}]]),
     model:{flash(){},hitShapes:[{active:true,weak:false,pos:new f.THREE.Vector3(0,1,3),r:1}]},
   });
   nm.match.boss=boss;f.clock.set(100);t.after(()=>nm.dispose());
@@ -57,6 +58,20 @@ async function setup(t,{family='shooter',catalog=false}={}) {
     captured=rows;
     const events=source==='presentation'?rows.filter(e=>e[1]==='ev')
       :source==='birth'?rows.filter(e=>e[1]==='p'):rows;
+    // This is a proof-capacity test. Put the positive target on the actual
+    // independently spread round, rather than assuming all muzzle rays are
+    // identical. Trajectory/occlusion negatives have their dedicated file.
+    const born=rows.find(e=>e[1]==='p'),probe=born&&f.projectiles.makeCrabletCombatProbe(attacker,born);
+    if(probe){
+      for(let i=0;i<120;i++){
+        f.projectiles.stepCrabletCombatProbe(probe);
+        if(probe.pos.z>=5){
+          const k=Math.max(0,Math.min(1,(5-probe.prev.z)/(probe.pos.z-probe.prev.z)));
+          const at=probe.prev.clone().lerp(probe.pos,k),crab=boss.crabs.get(3);
+          crab.x=at.x;crab.y=at.y-.35;crab.z=at.z;break;
+        }
+      }
+    }
     return deliver(events,ts);
   }
   return {f,nm,attacker,victims,boss,weapon,fire,hit,bossHit,deliver,captured:()=>captured};

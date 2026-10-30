@@ -115,6 +115,23 @@ export function installChargerFlight(api,completion) {
     const q=Math.max(0,Math.min(1,(c*fullFrames-minFrames)/(fullFrames-minFrames)));
     return c+1e-9>=1?move.DistanceFullCharge:move.DistanceMinCharge+(move.DistanceMaxCharge-move.DistanceMinCharge)*q;
   };
+  // Same finite straight flight/range and source collision radii for a
+  // receiver's non-rendering crablet query. No nominal .1 beam approximation.
+  P.makeCrabletChargerPath=function(proof){
+    const charge=Math.max(0,Math.min(1,Number.isFinite(proof.beamCharge)?proof.beamCharge:.5));
+    const speed=isChargerFullCharge(charge)?60*raw.SpawnSpeedFullCharge:chargerLaunchSpeed(raw,charge);
+    const distance=Math.min(reachFor(charge),Number.isFinite(proof.beamLength)?proof.beamLength:Infinity,proof.reach+8);
+    if(!(speed>0)||!(distance>0))return null;
+    const path=[];
+    for(let travel=0,i=0;travel<distance-EPS&&i<210;i++){
+      const end=Math.min(distance,travel+speed/60),o=proof.origin,u=proof.unit;
+      path.push([o[0]+u[0]*travel,o[1]+u[1]*travel,o[2]+u[2]*travel,
+        o[0]+u[0]*end,o[1]+u[1]*end,o[2]+u[2]*end,
+        collision.InitRadiusForField,collision.EndRadiusForField,collision.InitRadiusForPlayer]);
+      travel=end;
+    }
+    return path;
+  };
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
   function feetSplash(actor,w){
     const radius=w.feetPaintRadius;

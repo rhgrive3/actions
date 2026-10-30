@@ -18,8 +18,9 @@ async function setup(t,{kind='shooter'}={}) {
   const boss=Object.assign(Object.create(f.Boss.prototype),{
     sim:true,dead:false,visible:true,invuln:false,pos:new f.THREE.Vector3(0,0,7),
     hp:1000,maxHp:1000,match:nm.match,flashN:0,weakN:0,log:{recv:0,recvDmg:0},
-    crabs:new Map([[3,{id:3,x:0,y:0,z:7,hp:1000,dead:false}],
-      [4,{id:4,x:0,y:0,z:9,hp:1000,dead:false}]]),
+    // The real producer launches at y=1.05; native sphere centre is y+.35.
+    crabs:new Map([[3,{id:3,x:0,y:.7,z:7,hp:1000,dead:false}],
+      [4,{id:4,x:0,y:.7,z:9,hp:1000,dead:false}]]),
     model:{flash(){},hitShapes:[{active:true,weak:false,pos:new f.THREE.Vector3(0,1,7),r:1}]},
   });
   nm.match.boss=boss;f.clock.set(100);t.after(()=>nm.dispose());
