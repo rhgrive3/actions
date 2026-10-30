@@ -25,6 +25,7 @@ function cancelSplatlingStream(runner, refund, inkMax) {
   runner.s3Spin = null;
   runner.charging = runner.streaming = false;
   runner.charge = runner.chargeT = runner.burstT = runner.burstFrac = 0;
+  runner.s3ChargeAudioProgress = undefined;
   runner.spinLoop?.stop?.(.12); runner.spinLoop = null;
 }
 
@@ -270,6 +271,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       this.charge = clamp01(oldCharge + progress);
       if (1 - this.charge < EPS) this.charge = 1;
       this.chargeT = this.charge * w.chargeTime;
+      this.s3ChargeAudioProgress = Math.min(this.charge,splatlingChargeCap(Math.max(0,a.ink),w));
       a.fireFacing = .45;
       if(this.spinLoop)updateSpinLoop(this,pos);
       if (this.charge === 1 && !this.chargeDinged) {
@@ -277,7 +279,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
         if (a.isLocal) {
           // Use a recorded ready cue only if installed. Do not synthesize a
           // chime: the 2022 Standard Spinner archive has no mapped ready MP3.
-          G.audio?.playWeapon?.(w.id,'ready',{actor:a,volume:.7});
+          // The progress-aware charge handle owns the sole recorded full cue.
           if (!a.isBot) G.input?.rumble?.(.05, .28, 60);
         }
       }
