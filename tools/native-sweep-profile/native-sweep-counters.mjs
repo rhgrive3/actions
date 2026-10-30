@@ -37,7 +37,8 @@ export function createSweepCounters({enabled=true,normalizeQueryBox=source=>sour
   if(!Number.isFinite(world.queryCount)||!Number.isFinite(world.triangleTests)||!saved.nodes||typeof saved.queryBox!=='function'||typeof saved.sweepSphere!=='function'||typeof saved.acquire!=='function')throw Error('Incomplete TriangleWorld observer contract');
   // This counter relies on the current read-only queryBox visiting a[n] once per popped BVH node.
   if(!verifiedMethods.has(saved.queryBox)){
-   if(normalizeQueryBox(Function.prototype.toString.call(saved.queryBox))!==canonicalQueryBox)throw Error('Unreviewed queryBox traversal; do not infer visits');
+   const observedQueryBox=normalizeQueryBox(Function.prototype.toString.call(saved.queryBox));
+   if(observedQueryBox!==canonicalQueryBox)throw Error('Unreviewed queryBox traversal; do not infer visits; canonical-diagnostic='+JSON.stringify({expected:canonicalQueryBox.slice(0,8192),observed:observedQueryBox.slice(0,8192),expectedLength:canonicalQueryBox.length,observedLength:observedQueryBox.length}));
    verifiedMethods.add(saved.queryBox);
   }
   const descriptors=Object.fromEntries(['nodes','queryBox','sweepSphere','_acquireStack'].map(key=>[key,Object.getOwnPropertyDescriptor(world,key)]));

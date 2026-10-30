@@ -58,6 +58,7 @@ try{
   for(const k of ['NODE_OPTIONS','NODE_TEST_CONTEXT','INKWAVE_BUILT_ROOT','INKWAVE_BUILT_SITE','INKWAVE_UPSTREAM_SOURCE'])delete env[k];
   if(emitted)env.INKWAVE_BUILT_SITE=site;
   const fd=fs.openSync(log,'wx'),ef=fs.openSync(err,'wx');
+  console.log(JSON.stringify({event:'actor-pair-start',base:BASE,qaSha,mode,label}));
   const started=Date.now();
   let code,signal;
   try{
@@ -70,6 +71,8 @@ try{
   }finally{fs.closeSync(fd);fs.closeSync(ef);}
   const run={...item,label,code,signal,wallMs:Date.now()-started,timing:fs.existsSync(timing)?fs.readFileSync(timing,'utf8').trim():null};
   evidence.runs.push(run);save();
+  console.log(JSON.stringify({event:'actor-pair-child-exit',base:BASE,qaSha,mode,...run}));
+  if(code!==0||signal!==null){console.error(fs.readFileSync(log,'utf8').split(/\r?\n/).slice(-120).join('\n'));console.error(fs.readFileSync(err,'utf8').slice(-8192));}
   assert.equal(code,0,'child must pass; inspect '+log);assert.equal(signal,null);
   const values=run.timing.split(/\s+/).map(Number);assert.equal(values.length,4);assert.ok(values.every(Number.isFinite));
   [run.elapsedSeconds,run.userSeconds,run.systemSeconds,run.maxRssKiB]=values;
@@ -77,9 +80,10 @@ try{
   const bytes=JSON.stringify(rows);run.receiptsSha256=createHash('sha256').update(bytes).digest('hex');
   fs.writeFileSync(path.join(out,label+'.receipts.json'),bytes+'\n');
   receipts.set(label,rows);save();
+  console.log(JSON.stringify({event:'actor-pair-child-verified',base:BASE,qaSha,mode,...run,receiptCount:rows.length}));
  }
  for(const suite of ['normal','extremes'])compare(receipts.get(suite+'-old'),receipts.get(suite+'-new'));
  assert.equal(git('status','--porcelain','--untracked-files=no'),'');
  if(emitted)assert.deepEqual(directoryDigest(site),emitted);
- evidence.complete=true;save();
+ evidence.complete=true;save();console.log(JSON.stringify(evidence));
 }finally{for(const p of temporary)fs.unlinkSync(p);}
