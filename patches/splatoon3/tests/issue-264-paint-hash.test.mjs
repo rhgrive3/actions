@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 import { paintShapeSeed, paintShapeHash, PAINT_SHAPE_HASH_GLSL } from '../runtime/paint-ownership.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { adaptReviewedWave67Gpu } from '../../local-quality/reviewed-wave67-gpu-adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js', import.meta.url), 'utf8');
@@ -40,7 +41,28 @@ test('composed ancillary GLSL consumes the shared hash while body and cosmetic t
     assert.match(source, /hsh\(seed \* 1\.73\)/);
   }
   const body = source => source.match(/float wob\(float a, float s\) \{[^}]+\}/)[0];
-  assert.equal(body(composed), body(raw));
+  // The Wave 6/7 paint shader is allowed to replace only audited integer
+  // exponentiation; all other wob terms, the shape hash, and native tone stay
+  // unchanged. Do not weaken this guard to a loose substring check.
+  const replaceExactlyOnce = (code, before, after, label) => {
+    const at = code.indexOf(before);
+    assert.ok(at >= 0 && code.indexOf(before, at + before.length) === -1,
+      'single authored paint optimization anchor: ' + label);
+    return code.slice(0, at) + after + code.slice(at + before.length);
+  };
+  const expectedPaint = adaptReviewedWave67Gpu('src/world/paint.js', raw, replaceExactlyOnce);
+  assert.notEqual(body(expectedPaint), body(raw), 'pow(28/36) replacement must actually execute');
+  assert.equal(body(composed), body(expectedPaint), 'only the audited wob rewrite may alter native shaping');
+  for (let i = 0; i <= 2048; i++) {
+    const a = i * 0.013, seed = ((i * 239) % 2049) / 2048;
+    const c = Math.max(0, Math.cos(a - seed * 37.7));
+    const d = Math.max(0, Math.cos(a - seed * 53.3 - 2.1));
+    const c2 = c * c, c4 = c2 * c2, c8 = c4 * c4, c16 = c8 * c8;
+    const d2 = d * d, d4 = d2 * d2, d8 = d4 * d4, d16 = d8 * d8, d32 = d16 * d16;
+    const previous = 0.17 * Math.pow(c, 28) + 0.12 * Math.pow(d, 36);
+    const optimized = 0.17 * (c16 * c8 * c4) + 0.12 * (d32 * d4);
+    assert.ok(Math.abs(previous - optimized) <= 1e-12, 'wob power is numerically equivalent');
+  }
   assert.match(composed, /float paintSeed = floor\(vGrow.w \+ 0\.5\)/);
 });
 

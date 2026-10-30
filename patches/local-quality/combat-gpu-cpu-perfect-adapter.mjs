@@ -1,3 +1,4 @@
+import { adaptReviewedWave67Gpu } from './reviewed-wave67-gpu-adapter.mjs';
 // Audited build-time source transformer for the 2026-10-26 (e781229b) Combat GPU/CPU Perfect-Reconciled upgrade.
 // Respects all 18 Direct-Source owned modules (including src/game/nav.js, src/world/props-core.js, src/game/character-lod.js)
 // and composes cleanly with all upstream queue adapters on main @ dd93aac2c408f746adb0c9aa572ea2f06f3bed43 (Step 145, and d88aa683, e781229b).
@@ -838,6 +839,9 @@ export class SwimWake {`,
       'CPU-20 reuse cached renderer quality profile in Game._frame'
     );
   }
+
+  // Audited Wave 6/7 GPU transforms are appended after existing CPU/GPU owners.
+  code = adaptReviewedWave67Gpu(rel, code, replaceOnce);
 
   // Network-coupled modules (match.js and netmatch.js) are transformed after adaptNetworkSource and adaptQueueNetworkUi
   // when running inside the multi-stage build pipeline (stage !== 'quality').

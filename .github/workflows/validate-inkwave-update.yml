@@ -659,20 +659,22 @@ jobs:
     # Default GitHub full-suite behavior unless explicitly offloaded.
     needs: build_site
     if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
+    runs-on: ${{ (matrix.shard == 2 || matrix.shard == 8) && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       max-parallel: 8
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8]
     env:
-      INKWAVE_TEST_SHARD_COUNT: '8'
+      INKWAVE_TEST_SHARD_COUNT: '9'
+      INKWAVE_TEST_ISOLATE_RAINMAKER: '1'
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
       # Full-Character VM/geometry tests can retain large heaps. Keep the
-      # complete eight-way partition: shard 2 runs serially on Ubuntu 22.04;
+      # original eight-way assignment minus Rainmaker actor; shard 8 owns that file.
+      # Both shard 2 and the isolated actor lane run serially on Ubuntu 22.04;
       # other shards permit up to two test processes per VM.
-      INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}
+      INKWAVE_TEST_CONCURRENCY: ${{ (matrix.shard == 2 || matrix.shard == 8) && '1' || '2' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -724,7 +726,7 @@ jobs:
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
 
-  # Required /validate passes only when core and all eight regression shards pass.
+  # Required /validate passes only when core and all nine regression shards pass.
   circleci_offload_gate:
     # Refuse stale/partial/unrelated CircleCI results. Native perf branches stay on GitHub.
     if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}

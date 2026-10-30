@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "status": "checkpoint-performance-incomplete",
+  "target": "iPad Safari",
+  "publishedChange": {
+    "commit": "d747ab5c42fde843d0c2eb73fd8f323a625586e6",
+    "baseCommit": "1239a0b2eec20087f26f363207e8b6b3cc61cec6",
+    "nativeLoadBlob": "f2109f268875ef68fb17fd1a680e725faa5f50ee",
+    "testBlob": "a7a5587493c668aa1bea002ffb2082a88708e619",
+    "behavior": "Retire an idle KTX2 decoder pool after a successful compressed-touch texture load; retain every mip buffer and defer retirement while another parse is pending.",
+    "extraFpsClaim": null,
+    "memoryBytesClaim": null
+  },
+  "validation": {
+    "sourceWorktree": {
+      "tests": 120,
+      "passed": 115,
+      "skipped": 5,
+      "failed": 0,
+      "note": "Includes the uncommitted diffuse-lighting candidate; not a claim that this exact final tree was rebuilt."
+    },
+    "memoryUnit": "Idle/pending parse ownership, retained mip bytes, idempotent release and fresh next-load owner passed.",
+    "browser": {
+      "engine": "Chromium 154.0.8037.57",
+      "device": "iPad profile",
+      "stage": "robo",
+      "quality": "high",
+      "framebuffer": [
+        1228,
+        921
+      ],
+      "textures": 151,
+      "textureLimit": 1024,
+      "paintAtlas": 2048,
+      "idleWorkersReleased": true,
+      "scope": "Memory change observed in the completed depth-prepass experiment; the depth-prepass code is excluded from the published follow-up."
+    },
+    "webkit": {
+      "version": "26.5",
+      "host": "Linux",
+      "softwareGL": true,
+      "scope": "Baseline iPad-profile image-only replay passed. The new candidate was not run in WebKit."
+    }
+  },
+  "rejectedDepthPrepass": {
+    "status": "rejected",
+    "referenceContentHash": "ce0e1e20ebe5bda14f57ced05eed3980dc9ebba8a7d20f4fff36976f14c43827",
+    "candidateContentHash": "5a2d6fb06f577ac0f1e957d471bcf38c2beb48aeef13cf88f28e24418682f469",
+    "referenceFps": 0.17166075486100635,
+    "candidateFps": 0.16686560755210939,
+    "fpsImprovementPercent": -2.7933858922964627,
+    "windows": 3,
+    "framesPerWindow": 10,
+    "newProgramsPerWindow": 0,
+    "glErrors": 0,
+    "note": "Completed whole frames on SwiftShader, not physical iPad FPS. Exact actor/paint replay and all image guards passed, but throughput regressed."
+  },
+  "unpublishedDiffuseCandidate": {
+    "status": "image-preflight-passed-fps-unmeasured",
+    "scope": "Bounded tangent-space normal maps retain pixel-frequency direct light and specular; only broad diffuse sky irradiance is interpolated.",
+    "semanticState": "exact match with the same-build reference image-only replay",
+    "imageThreshold": {
+      "meanRgb": 1.25,
+      "p99Rgb": 3,
+      "maxAlpha": 0
+    },
+    "images": [
+      {
+        "view": "forward",
+        "meanRgb": 0.08206954155717539,
+        "p99Rgb": 1,
+        "maxDelta": 38,
+        "maxAlpha": 0
+      },
+      {
+        "view": "left",
+        "meanRgb": 0.022995528393463652,
+        "p99Rgb": 1,
+        "maxDelta": 34,
+        "maxAlpha": 0
+      },
+      {
+        "view": "back",
+        "meanRgb": 0.023266383020863174,
+        "p99Rgb": 1,
+        "maxDelta": 55,
+        "maxAlpha": 0
+      },
+      {
+        "view": "right",
+        "meanRgb": 0.058010341400616096,
+        "p99Rgb": 1,
+        "maxDelta": 36,
+        "maxAlpha": 0
+      },
+      {
+        "view": "feet-lowered",
+        "meanRgb": 0.08704395331043889,
+        "p99Rgb": 1,
+        "maxDelta": 180,
+        "maxAlpha": 0
+      },
+      {
+        "view": "feet-raised",
+        "meanRgb": 0.08206954155717539,
+        "p99Rgb": 1,
+        "maxDelta": 38,
+        "maxAlpha": 0
+      },
+      {
+        "view": "window-off",
+        "meanRgb": 0.08206954155717539,
+        "p99Rgb": 1,
+        "maxDelta": 38,
+        "maxAlpha": 0
+      }
+    ]
+  },
+  "blocked": {
+    "reason": "Execution environment became unavailable after image preflight.",
+    "remaining": [
+      "Full-frame throughput and p95 of the diffuse candidate",
+      "Candidate WebKit and second-stage comparisons",
+      "Exact published memory-only tree rebuild",
+      "Physical iPad Safari/Metal measurement"
+    ]
+  }
+}

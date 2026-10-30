@@ -245,6 +245,19 @@ if (!vm.SourceTextModule) {
     assert.equal(f.calls.disposedLoaders,1);const next=f.run();await new Promise(r=>setTimeout(r,0));
     assert.equal(f.calls.initialized,2);for(const finish of waiting.splice(0))finish(compressed());await next;
   });
+  test('compressed touch loads retire only an idle decoder and retain every mip buffer',async()=>{
+    const waiting=[],limit={maxDimension:1024,perRole:{},fallback:{quality:'balanced',maxDimension:512,perRole:{}}};
+    const f=await textures({manual:true,limit,parse:onLoad=>waiting.push(onLoad)}),pending=f.run();
+    await new Promise(r=>setTimeout(r,0));assert.equal(waiting.length,2);
+    assert.equal(f.m.namespace.releaseNativeTextureWorkers(f.renderer,true),false,'a live parse must keep its callback owner');
+    waiting.shift()(compressed());assert.equal(f.m.namespace.releaseNativeTextureWorkers(f.renderer,true),false);
+    waiting.shift()(compressed());const maps=await pending;await Promise.resolve();
+    assert.equal(maps._idleWorkersReleased,true);assert.equal(f.calls.disposedLoaders,1);
+    for(const texture of maps.values())assert.equal(texture.mipmaps[0].data.byteLength,1,'GPU upload/context recovery input remains intact');
+    assert.equal(maps._releaseWorkers(),false,'retirement is idempotent');
+    const next=f.run();await new Promise(r=>setTimeout(r,0));assert.equal(f.calls.initialized,2);
+    for(const finish of waiting.splice(0))finish(compressed());await next;await Promise.resolve();assert.equal(f.calls.disposedLoaders,2);
+  });
   test('an abort during a KTX2 transcode settles the load; the late texture is disposed', async () => {
     const waiting = [], controller = new AbortController();
     const {run} = await textures({manual: true, parse: onLoad => waiting.push(onLoad)});

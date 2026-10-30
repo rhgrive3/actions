@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { nativeFixture } from './fixture.mjs';
 
 test('new offscreen ink charts retain source-order rendering without reuploading the current view', async () => {
-  const { THREE, NativeInkMesh } = await nativeFixture();
+  const { THREE, NativeInkMesh } = await nativeFixture({renderOnly:true});
   const geometry = new THREE.BufferGeometry();
   const triangle = (x, z) => [x, 0, z, x + 1, 0, z, x, 0, z + 1];
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([

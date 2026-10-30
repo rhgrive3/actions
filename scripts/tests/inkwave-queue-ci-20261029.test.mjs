@@ -54,7 +54,7 @@ test('Pages delegates full quality coverage to mandatory Validate and retains bo
   const full='        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs\n';
   assert(validate.includes(full));
   for(const replacement of ['        run: true\n',full.trimEnd()+' --exclude patches/local-quality/tests\n'])assert.throws(()=>assertPagesDelegation(source,validate.replace(full,replacement)),/mandatory complete CPU source shards/);
-  const excessiveConcurrency=validate.replace("INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}","INKWAVE_TEST_CONCURRENCY: '4'");
+  const excessiveConcurrency=validate.replace("INKWAVE_TEST_CONCURRENCY: ${{ (matrix.shard == 2 || matrix.shard == 8) && '1' || '2' }}","INKWAVE_TEST_CONCURRENCY: '4'");
   assert.notEqual(excessiveConcurrency,validate,'negative changes the actual current CPU concurrency policy');
   assert.throws(()=>assertPagesDelegation(source,excessiveConcurrency),/mandatory complete CPU source shards/);
   const args=qualityCommand();assert.throws(()=>qualityCommand([...args.filter(x=>x!=='--test-concurrency=2'),'--test-concurrency=2']));

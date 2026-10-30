@@ -285,18 +285,19 @@ test('emitted menu focus is mandatory in the UI shard and source-bound in its re
   assert.ok(workflow.includes("if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
 
-test('all eight patch shards report into the existing required validate gate', () => {
+test('all nine patch shards report into the existing required validate gate', () => {
   const core = workflow.slice(workflow.indexOf('  validate_core:'),workflow.indexOf('  patch_tests:'));
   const shards = workflow.slice(workflow.indexOf('  patch_tests:'),workflow.indexOf('  validate:'));
   const gate = workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
   assert.ok(core.includes('scripts/check-inkwave-patches.mjs --quick'));
-  assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
+  assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7, 8]'));
   assert.ok(shards.includes('max-parallel: 8'));
   const {jobs}=assertValidateWorkflowContract(workflow);
-  assert.equal(jobs.patch_tests['runs-on'],"${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}");
-  assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7\]/g)||[]).length,1);
-  assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
-  assert.equal(jobs.patch_tests.env.INKWAVE_TEST_CONCURRENCY,"${{ matrix.shard == 2 && '1' || '2' }}",'Sandboxed Chromium shard has one process; the other seven retain two');
+  assert.equal(jobs.patch_tests['runs-on'],"${{ (matrix.shard == 2 || matrix.shard == 8) && 'ubuntu-22.04' || 'ubuntu-latest' }}");
+  assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7, 8\]/g)||[]).length,1);
+  assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '9'"));
+  assert.ok(shards.includes("INKWAVE_TEST_ISOLATE_RAINMAKER: '1'"));
+  assert.equal(jobs.patch_tests.env.INKWAVE_TEST_CONCURRENCY,"${{ (matrix.shard == 2 || matrix.shard == 8) && '1' || '2' }}",'Two dedicated VM lanes are serial; the other seven retain two processes');
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);

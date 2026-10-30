@@ -24,7 +24,7 @@ export async function preparePair({mapId,quality='low',shadows=false}){
  try{await g.startMatch({mapId,mode:'turf',difficulty:'normal',time:'day'});}finally{g._pickPalette=picker;}
  if(picks!==1||g.palette.id!=='aqua-cherry')throw Error('Native controlled palette selection did not match pinned config');
  g.debug.freeze();g.debug.freezeBots();g._skipRender=true;g.debug.fire(false);
- for(let i=0;i<240;i++)g._frame(1/60);G.paint.flush(1/60);
+ for(let i=0,n=(g.match.turfIntroFrames??253)-13;i<n;i++)g._frame(1/60);G.paint.flush(1/60);
  const gl=G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');
  return {baseURI:document.baseURI,mapId,actualMap:G.level.layout.id,native:!!G.level.native,source:G.level.manifest?.sourceSha256??null,teamHex:[...(G.teamHex||[])],quality:g.settings.quality,shadows:G.renderer.shadowMap.enabled,theme:g.theme,mobile:g.mobile,userAgent:navigator.userAgent,viewport:[innerWidth,innerHeight,devicePixelRatio],canvas:[G.renderer.domElement.width,G.renderer.domElement.height],renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),actor:G.local.pos.toArray(),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),projection:G.camera.projectionMatrix.toArray(),near:G.camera.near,far:G.camera.far},rig:{yaw:g.rig.yaw,pitch:g.rig.pitch},time:G.time};
 }

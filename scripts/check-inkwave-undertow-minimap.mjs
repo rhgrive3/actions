@@ -23,7 +23,7 @@ try{
  await page.waitForFunction(()=>globalThis.__G?.game?.menus&&globalThis.__G.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');
  await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI));if(G!==globalThis.__G)throw Error('Native probe context owner mismatch');globalThis.NG=G;});
- await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'undertow',mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();});
+ await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'undertow',mode:'turf',difficulty:'normal'});for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.debug.freezeBots();});
  result.proof=await page.evaluate(()=>{
   const G=NG,map=G.game.minimap,level=G.level,nav=G.nav,w=level.triangleWorld,origin=level.spawnPads[0].clone(),down=origin.clone().set(0,-1,0);
   if(level.nativeNav!==nav||nav.level!==level)throw Error('Minimap borrowed navigation from a different world');

@@ -28,6 +28,11 @@ export function slosherIntermediateSpec(projectile, scale = 1, staticPlans = nul
   const spawnNum = Math.min(spawn.SpawnNum ?? 0, combination.TotalNum ?? Infinity);
   const width = draw.PaintWidthHalf, depth = draw.PaintDepthScale;
   const playerRadius = draw.CollisionParam?.EndRadiusForPlayer;
+  // Explicit immediate field envelopes belong to collision, not DrawRadius or
+  // the much wider painted footprint. Sparse/dynamic envelopes retain the ray.
+  const collision=draw.CollisionParam;
+  const fieldRadius=collision?.ChangeFrameForField===0&&Number.isFinite(collision.EndRadiusForField)
+    ?Math.max(0,collision.EndRadiusForField)*scale:0;
   if (![min, max, between, width, depth].every(Number.isFinite) ||
       min < 0 || max < min || between <= 0 || width <= 0 || depth <= 0 ||
       !(spawnNum > 0) || playerRadius !== 0) return null;
@@ -40,12 +45,12 @@ export function slosherIntermediateSpec(projectile, scale = 1, staticPlans = nul
   if(staticPlans){
     let indices=staticPlans.get(unit);if(!indices){indices=new Map();staticPlans.set(unit,indices);}
     const old=indices.get(index);
-    if(old&&Object.is(old.scale,scale)&&Object.is(old.width,width)&&Object.is(old.depth,depth)&&Object.is(old.spawnNum,spawnNum))plan=old.plan;
+    if(old&&Object.is(old.scale,scale)&&Object.is(old.width,width)&&Object.is(old.depth,depth)&&Object.is(old.spawnNum,spawnNum)&&Object.is(old.fieldRadius,fieldRadius))plan=old.plan;
     else {
       plan=Object.freeze({widthHalf:width*scale,depthScale:depth,spawnNum:Math.max(0,Math.floor(spawnNum)),
         drop:Object.freeze({gravity:SPLASH_GRAVITY_PER_FRAME2*3600*scale,drag:SPLASH_DROP_AIR_RESIST,
-          depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,surfaceOnly:true,randomVelocity:null})});
-      indices.set(index,{scale,width,depth,spawnNum,plan});
+          depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,surfaceOnly:true,randomVelocity:null,...(fieldRadius>0?{fieldRadius}:{})})});
+      indices.set(index,{scale,width,depth,spawnNum,fieldRadius,plan});
     }
   }
   return Object.freeze({
@@ -56,7 +61,7 @@ export function slosherIntermediateSpec(projectile, scale = 1, staticPlans = nul
     depthScale: depth,
     spawnNum: plan?plan.spawnNum:Math.max(0, Math.floor(spawnNum)),
     drop: plan?plan.drop:Object.freeze({ gravity: SPLASH_GRAVITY_PER_FRAME2 * 3600 * scale, drag: SPLASH_DROP_AIR_RESIST,
-      depthScaleMax: depth, depthScaleMin: depth, dropHeightMax: 0, dropHeightMin: 0, surfaceOnly: true, randomVelocity: null }),
+      depthScaleMax: depth, depthScaleMin: depth, dropHeightMax: 0, dropHeightMin: 0, surfaceOnly: true, randomVelocity: null,...(fieldRadius>0?{fieldRadius}:{}) }),
   });
 }
 
@@ -122,9 +127,10 @@ export function installSlosherIntermediatePaint(api, profile) {
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
-    spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
+    const drop = spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
       salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
       radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop', footprint: mainInkFootprint(p.s3Weapon) });
+    if (drop) { drop.drawRadius = spec.drawRadius; drop.sourceActor = p.s3Weapon?.sourceActor ?? p.s3Weapon?.sourceMainActor; }
   };
   const before = new THREE.Vector3();
   Projectiles.prototype._step = function (p, dt) {

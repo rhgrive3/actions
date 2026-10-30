@@ -358,7 +358,7 @@ try{
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
   // Native intro presentation follows Match.stateT; the frozen game must
   // advance its real clock before waiting for wall-clock DOM/CSS settlement.
-  await advance(p,330);
+  await advance(p,await p.evaluate(()=>(RG.match.turfIntroFrames??253)+77));
   await p.waitForFunction(()=>RG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:30000});
   await p.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
   await advance(p,120);

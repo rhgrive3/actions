@@ -33,7 +33,7 @@ try{
  for(const mode of (process.env.NATIVE_MANTA_RANKED_MODES||'zones,rainmaker').split(',')){
   await page.evaluate(async mode=>{
    const G=NG,g=G.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'manta',mode,difficulty:'normal'});g._skipRender=true;
-   for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
+   for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
    if(!G.level.native||G.match.ranked?.mode!==mode||G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7||G.local.s3?.squidSpawn||!G.local.grounded)throw Error('Actual ranked match and source landing required');
    const flags=G.level.manifest.sourceNavigation;
    if(!flags?.wallClimb||!flags?.highDrops||!flags?.wallSurge)throw Error('Manta source traversal definition must stay intact');

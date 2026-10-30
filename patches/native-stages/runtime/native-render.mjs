@@ -1,19 +1,81 @@
 import * as THREE from 'three';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
+export function specializeNativeSourceAmbient(shader,roughSpecular=false){
+ const height=shader.envMapCubeUVHeight;
+ // Normal-mapped surfaces retain per-pixel irradiance. The source's ordinary
+ // flat faces otherwise repeat the same diffuse PMREM fetch at every pixel;
+ // evaluate both orientations at the vertices and interpolate smooth meshes.
+ if(!shader.envMap||shader.normalMap||!Number.isFinite(height)||height<=0)return false;
+ const common='#include <common>',normal='#include <normal_vertex>',maps='#include <lights_fragment_maps>';
+ if(!shader.vertexShader?.includes(common)||!shader.vertexShader.includes(normal)||!shader.fragmentShader?.includes(common)||!shader.fragmentShader.includes(maps))return false;
+ if(roughSpecular&&!shader.vertexShader.includes('#include <project_vertex>'))return false;
+ const mip=Math.log2(height)-2,width=3*Math.max(2**mip,7*16);
+ if(!Number.isInteger(mip))return false;
+ const varying='varying vec3 vNativeIrradianceFront,vNativeIrradianceBack;\n'+
+  (roughSpecular?'varying vec3 vNativeRadianceFront,vNativeRadianceBack;\n':'');
+ shader.vertexShader=shader.vertexShader.replace(common,common+'\n'+varying+
+  '#define ENVMAP_TYPE_CUBE_UV\n#define CUBEUV_TEXEL_WIDTH '+(1/width)+'\n#define CUBEUV_TEXEL_HEIGHT '+(1/height)+'\n#define CUBEUV_MAX_MIP '+mip.toFixed(1)+'\n'+
+  '#include <envmap_common_pars_fragment>\n#include <cube_uv_reflection_fragment>\n#include <envmap_physical_pars_fragment>\n'+(roughSpecular?'uniform float roughness;\n':''))
+  .replace(normal,normal+'\nvNativeIrradianceFront=getIBLIrradiance(normalize(transformedNormal));\nvNativeIrradianceBack=getIBLIrradiance(-normalize(transformedNormal));\n');
+ if(roughSpecular)shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
+  '#include <project_vertex>\nvec3 nativeView=isOrthographic?vec3(0.0,0.0,1.0):normalize(-mvPosition.xyz);\n'+
+  'vNativeRadianceFront=getIBLRadiance(nativeView,normalize(transformedNormal),roughness);\n'+
+  'vNativeRadianceBack=getIBLRadiance(nativeView,-normalize(transformedNormal),roughness);\n');
+ let lighting=THREE.ShaderChunk.lights_fragment_maps.replace('getIBLIrradiance( geometryNormal )','(gl_FrontFacing?vNativeIrradianceFront:vNativeIrradianceBack)');
+ if(roughSpecular)lighting=lighting.replace('getIBLRadiance( geometryViewDir, geometryNormal, material.roughness )','(gl_FrontFacing?vNativeRadianceFront:vNativeRadianceBack)');
+ shader.fragmentShader=shader.fragmentShader.replace(common,common+'\n'+varying)
+  .replace(maps,lighting);
+ return true;
+}
+
+export function specializeNativeInkSurface(fragment){
+ const originalStart=fragment.indexOf('  float big = fbm(');
+ const start=originalStart>=0?originalStart:fragment.indexOf('  float big, fine;');
+ const end=fragment.indexOf('  // ---- wet ink',start);
+ const split=fragment.indexOf('    float halo = smoothstep(',end);
+ const signature='TexlibSample texlibSample(sampler2DArray tA, sampler2DArray tN, sampler2DArray tO, vec2 uv, float layer, int mode, int sym) {';
+ const gradient='  vec2 gx = dFdx(uv), gy = dFdy(uv);';
+ if(start<0||end<start||split<end||fragment.split(signature).length!==2||fragment.split(gradient).length!==2)return fragment;
+ const surface=fragment.slice(start,end),setupStart=surface.indexOf('#ifdef USE_TEXLIB\n  {'),setupEnd=surface.indexOf('    TexlibSample ts = texlibSample(');
+ if(setupStart<0||setupEnd<setupStart)return fragment;
+ const uvSetup=surface.slice(setupStart,setupEnd)+
+  '    gNativeBaseDx=dFdx(tuv);gNativeBaseDy=dFdy(tuv);\n  }\n#endif\n';
+ // Evaluate every texture coordinate derivative before the paint-dependent
+ // branch; textureGrad inside texlibSample can then run on a partial quad.
+ const reordered=fragment.slice(0,start)+uvSetup+fragment.slice(end,split)+
+  '    if(gInk<1.0||gInkKeep>0.0||gTexKeep>0.0){\n'+surface+'    }\n'+fragment.slice(split);
+ return reordered.replace(signature,'vec2 gNativeBaseDx=vec2(0.0),gNativeBaseDy=vec2(0.0);\n'+signature)
+  .replace(gradient,'  vec2 gx = gNativeBaseDx, gy = gNativeBaseDy;');
+}
+
 export function nativeInkMaterial(paint, murals, texlib){
  const mat=createLevelMaterial(paint.texture,paint.size,murals,{paint,texlib,nativeInkOverlay:true});
  mat.transparent=true;mat.depthWrite=false;mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;
  const compile=mat.onBeforeCompile;
  mat.onBeforeCompile=shader=>{
   compile(shader);
+  // These channels are constants in nativeInkGeometry's vertex shader, but
+  // varyings hide that fact from the fragment compiler. Expose the same exact
+  // values so it can remove procedural stage patterns and mural branches
+  // that the native overlay can never use. Size and wall orientation remain
+  // interpolated as before; paint, lighting and derivative order are intact.
+  shader.fragmentShader=shader.fragmentShader
+   .replace(/\bvFaceData\.x\b/g,'0.0').replace(/\bvFaceData\.y\b/g,'1.0')
+   .replace(/\bvFaceFlags\.y\b/g,'0.0').replace(/\bvFaceFlags\.z\b/g,'(-1.0)');
+  shader.fragmentShader=specializeNativeInkSurface(shader.fragmentShader);
   // Ink shading uses dFdx/fwidth. Discarding at the start of a non-uniform
   // fragment quad makes those derivatives undefined at the ink edge. Evaluate
   // shading first, then suppress unpainted fragments before writing colour.
   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (texture2D(uPaint, vPaintUv).a < 0.015) discard;\ndiffuseColor.a *= gInk;\n#include <opaque_fragment>');
+  // This overlay never writes depth. A zero-alpha fragment preserves the
+  // destination colour/alpha just like discard, including alpha-to-coverage.
+  // Avoid shader kills so early stencil rejection can skip physical shading;
+  // reflection targets without stencil keep the same transparent result.
+  shader.fragmentShader=shader.fragmentShader.replace(/\bdiscard\s*;/g,'diffuseColor.a = 0.0;');
  };
  mat.defaultAttributeValues={...mat.defaultAttributeValues,color:[1,1,1],lightUv:[-1,-1]};
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v5';return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v8';return mat;
 }
 
 export function nativeInkGeometry(level,paint){
@@ -63,6 +125,76 @@ function objectBoundingSphere(g,bounds,prepared){
 
 function releaseArray(){this.array=null;}
 
+/** Cull whole source triangles inside large, baked opaque objects. One mesh
+ * still submits one draw in the original index order. No positions, normals,
+ * UVs, materials or collision data change. Tile bounds include every corner
+ * of boundary-crossing triangles, rather than just their centroid. */
+export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
+ const g=mesh.geometry,p=g.getAttribute('position'),source=g.index?.array;
+ if(!source||source.length<minTriangles*3||!Number.isFinite(tileSize)||tileSize<=0)return null;
+ const tiles=[],byKey=new Map(),ids=new Uint32Array(source.length/3),point=new THREE.Vector3();
+ for(let t=0;t<ids.length;t++){
+  const at=t*3,a=source[at],b=source[at+1],c=source[at+2];
+  const x=(p.getX(a)+p.getX(b)+p.getX(c))/3,y=(p.getY(a)+p.getY(b)+p.getY(c))/3,z=(p.getZ(a)+p.getZ(b)+p.getZ(c))/3;
+  const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
+  let id=byKey.get(key);
+  if(id===undefined){id=tiles.length;byKey.set(key,id);tiles.push({box:new THREE.Box3()});}
+  ids[t]=id;
+  const box=tiles[id].box;
+  box.expandByPoint(point.fromBufferAttribute(p,a));box.expandByPoint(point.fromBufferAttribute(p,b));box.expandByPoint(point.fromBufferAttribute(p,c));
+ }
+ // Small/local objects already have the renderer's per-object culling.
+ if(tiles.length<2)return null;
+ for(const tile of tiles){tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;}
+ const tileOf=tiles.length<=65536?new Uint16Array(ids):ids;
+ const index=new THREE.BufferAttribute(source.slice(),1).setUsage(THREE.DynamicDrawUsage);
+ g.setIndex(index);
+ const view=new THREE.Matrix4(),frustum=new THREE.Frustum(),last=new Float64Array(16),visible=new Uint8Array(tiles.length).fill(1);
+ const upload={start:0,count:0};
+ let valid=false,coordinateSystem,reversedDepth,disposed=false;
+ const select=camera=>{
+  if(disposed)return;
+  view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse).multiply(mesh.matrixWorld);
+  const e=view.elements;
+  let same=valid&&coordinateSystem===camera.coordinateSystem&&reversedDepth===camera.reversedDepth;
+  if(same)for(let i=0;i<16;i++)if(!Object.is(e[i],last[i])){same=false;break;}
+  if(same)return;
+  last.set(e);valid=true;coordinateSystem=camera.coordinateSystem;reversedDepth=camera.reversedDepth;
+  frustum.setFromProjectionMatrix(view,coordinateSystem,reversedDepth);
+  let changed=false;
+  for(let i=0;i<tiles.length;i++){
+   const on=frustum.intersectsSphere(tiles[i].sphere)?1:0;
+   if(on!==visible[i])changed=true;
+   visible[i]=on;
+  }
+  if(!changed)return;
+  const target=index.array;
+  let count=0,dirtyStart=Infinity;
+  for(let t=0;t<tileOf.length;t++){
+   if(!visible[tileOf[t]])continue;
+   const at=t*3;
+   for(let k=0;k<3;k++){
+    const value=source[at+k];
+    if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);target[count]=value;}
+    count++;
+   }
+  }
+  g.setDrawRange(0,count);
+  if(dirtyStart<count){
+   // A later camera (e.g. a water reflection) may change the selection before
+   // an upload. Preserve all pending writes until WebGL consumes the buffer.
+   let start=dirtyStart,end=count;
+   for(const range of index.updateRanges){start=Math.min(start,range.start);end=Math.max(end,range.start+range.count);}
+   upload.start=start;upload.count=end-start;
+   index.clearUpdateRanges();index.updateRanges.push(upload);index.needsUpdate=true;
+  }
+ };
+ const beforeRender=mesh.onBeforeRender,beforeShadow=mesh.onBeforeShadow;
+ mesh.onBeforeRender=function(r,s,c,geometry,material,group){select(c);return beforeRender.call(this,r,s,c,geometry,material,group);};
+ mesh.onBeforeShadow=function(r,o,c,shadowCamera,geometry,material,group){select(shadowCamera);return beforeShadow.call(this,r,o,c,shadowCamera,geometry,material,group);};
+ return {tiles:tiles.length,select,dispose(){disposed=true;mesh.onBeforeRender=beforeRender;mesh.onBeforeShadow=beforeShadow;}};
+}
+
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
 // WebGL2 reserves the largest index of each type for primitive restart. Match
@@ -75,7 +207,7 @@ export function compactNativeIndices(indices){
 
 export function nativeDisplay(data,textures,quality){
  let liveTextures=textures;
- const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
+ const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cullers=[],cache=new Map();group.name='native-source-display';
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
   let mat=cache.get(o.material)?.mat;
@@ -86,19 +218,16 @@ export function nativeDisplay(data,textures,quality){
    if(quality==='high'){mat.normalMap=textures.get(src.maps?.normal)||null;mat.normalScale.set(.28,.28);mat.roughnessMap=textures.get(src.maps?.roughness)||null;mat.emissiveMap=textures.get(src.maps?.emissive)||null;if(mat.emissiveMap){mat.emissive.set(0xffffff);mat.emissiveIntensity=.13;}}
    // Carry inferred channels through profile updates: they affect the shader program.
    const channels={opacity:src.channels?.opacity||'g',rough:src.channels?.roughness||'g'};
-   // A green-channel-only material uses Three's default shader. Dynamic
-   // texture profile updates may later require the red-channel override.
+   // Matte source surfaces can interpolate the broad sky lobe too. Ink and
+   // glass retain their view-dependent reflections at full pixel frequency.
+   const roughSpecular=()=>mat.roughness>=.7&&!mat.roughnessMap&&mat.metalness===0;
    const syncChannelProgram=()=>{
-    if(channels.opacity==='r'||channels.rough==='r'){
      mat.onBeforeCompile=shader=>{
+      specializeNativeSourceAmbient(shader,roughSpecular());
       if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
       if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
      };
-     mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
-    }else{
-     delete mat.onBeforeCompile;
-     delete mat.customProgramCacheKey;
-    }
+     mat.customProgramCacheKey=()=>`native-ambient-v2-${roughSpecular()?1:0}-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
    };
    syncChannelProgram();
    mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
@@ -107,7 +236,7 @@ export function nativeDisplay(data,textures,quality){
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
-  inter.onUpload(releaseArray);g.index.onUpload(releaseArray);
+  inter.onUpload(releaseArray);
   const mesh=new THREE.Mesh(g,mat);
   // Exporter positions are already baked; these per-object local transforms
   // stay identity. Skip hundreds of unchanged matrix compositions per frame,
@@ -121,6 +250,8 @@ export function nativeDisplay(data,textures,quality){
   const subTexelCaster=!!sphere&&Number.isFinite(sphere.radius)&&sphere.radius<0.025;
   mesh.castShadow=o.collidable&&!glass&&!alpha&&!subTexelCaster;
   mesh.receiveShadow=!glass;
+  const culler=!glass&&!alpha?installNativeDisplayCulling(mesh):null;
+  if(culler)cullers.push(culler);else g.index.onUpload(releaseArray);
   if(glass||alpha){
     // GTAO normal/depth override would turn transparent materials opaque.
     // Always restore the exact source draw range for colour rendering.
@@ -150,5 +281,5 @@ export function nativeDisplay(data,textures,quality){
    liveTextures.clear();liveTextures=next;
   }
   next._nativeBorrowed?.clear(); // the new displayed profile now owns all entries
- },dispose(){group.removeFromParent();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of new Set(liveTextures.values())){t.image?.close?.();t.dispose();}liveTextures.clear();}};
+ },dispose(){group.removeFromParent();cullers.forEach(c=>c.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of new Set(liveTextures.values())){t.image?.close?.();t.dispose();}liveTextures.clear();}};
 }

@@ -6961,3 +6961,12 @@ The main changes through 0904 (icons, transfer caches, Squid Roll effects and Hi
 A synchronous private replay world hook could return an unresolved Promise while advance still published a completed contact. An actual paid native Shooter contact reduced private target HP 100→64 before that pending phase completed. The five initialization/frame hooks now reject thenables; frame errors retire pending receipts and initialization failure disposes created actors and releases the realm. Normal sync results and method receivers remain intact. Seven added controls and existing native controls pass 131/131; the unchanged leaf passes only the normal synchronous case and fails six negative cases. This is a synchronous API correction, not cancellation, arbitrary callback rollback or a completed mandatory network authority. The fresh f277 emitted owner-claim diagnostic still deducts 36 HP from forged valid births in PvP/Boss/crablet without actual sender launch/contact; #1665/#1666 remain open. Protocol, native physics and Splatoon 3 Ver.11.3.0 parameters are unchanged; physical-device testing is waived.
 
 The main91c compact reticle owner changes and original capture-derived calibration are preserved. A separate current QA fix initializes a detached special icon before its first HUD call and leaves every original screenshot, request and failure gate active. The historical full probe body is retained by a sealed one-field inverse. Additional Dynamo evidence and independent crossfire controls are recorded separately; no original retail behavior measurement is invented.
+
+## 2026-10-30 ナワバリ開始カメラ
+
+公式60fpsのナワバリ紹介映像をフレームごとに解析。従来の上空から背後への一続きの移動を、味方→相手→自陣の3カットに置き換え、209F／399Fの切替、436FのREADY、578Fの開始エフェクト観測に合わせた。Match時計を共有し、ポーズ・試合差し替えと両チーム／回転したパッド配置に対応する。名札・番号・バッジは保持し、撮影中のチームを一列に表示する。画角・3D位置・寄りの曲線はINKWAVEの表示調整値で、本家の内部パラメータではない。初期入場モーション・現行実機・全ステージの完全一致は未確認。[比較と検証記録](turf-intro-camera-20261030.md)。
+
+
+### 2026-10-30: 開始カメラと既存PRの統合検証
+
+[統合記録](inkwave-pr-integration-20261030.md)。開始カメラ・native描画・ホコ／ヤグラモデルを含む最終mainのtreeを、検証済みの合成treeと照合した。ソース、最適化済み配信、実ブラウザー、実WebSocketの結果を分けて記録し、WahooオンラインQAの旧版でも起きる失敗、GO後の既存1秒猶予、全ステージ・現行Switch実機との完全一致の未確認を維持する。ソフトウェア描画やDOM検証を本家実機／iPad実機の測定に読み替えない。

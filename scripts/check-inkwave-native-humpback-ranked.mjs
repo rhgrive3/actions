@@ -33,7 +33,7 @@ try{
   await page.evaluate(async({mode,team,hz})=>{
    const G=NG,g=G.game,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),{PLAYER}=await import(new URL('src/config.js',document.baseURI));
    g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'humpback',mode,difficulty:'normal'});g._skipRender=true;
-   for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;
+   for(let i=0,n=(g.match.turfIntroFrames??253)+77;i<n;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;
    for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
    if(!G.local.grounded||G.local.s3?.squidSpawn||G.match.mode!==mode||G.match.ranked?.mode!==mode)throw Error('Actual human launch/ranked match initialization failed');
    const a=G.actors.find(o=>o.team===team&&o.bot&&o!==G.local),V=a.pos.constructor;

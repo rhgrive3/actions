@@ -19,14 +19,15 @@ const uiProbesOnly = process.argv.includes('--ui-probes-only');
 // share Match.stateT and correctly stop with offline pause; do not force UI
 // flags or restore abandoned wall-clock timers just to satisfy this probe.
 async function advanceFrozenNativeIntro(page) {
-  return page.evaluate(() => {
+  return page.evaluate(async () => {
+    const {TURF_INTRO_FRAMES}=await import(new URL('patches/splatoon3/runtime/turf-intro-camera.mjs',document.baseURI));
     const g=globalThis.s3ProbeG.game, m=g.match;
     if (!g.frozen || m?.state !== 'intro' || m.paused) throw Error('Native intro clock admission');
-    const before=m.stateT, skip=g._skipRender;
+    const before=m.stateT, skip=g._skipRender, steps=TURF_INTRO_FRAMES.ready+1;
     g._skipRender=true;
-    try { for(let i=0;i<186;i++) g._frame(1/60); } finally { g._skipRender=skip; }
-    if(g.match!==m || m.state!=='intro' || !(m.stateT-before>=3.09)) throw Error('Native intro did not advance unchanged component clock');
-    return {before,after:m.stateT,steps:186,hz:60,state:m.state};
+    try { for(let i=0;i<steps;i++) g._frame(1/60); } finally { g._skipRender=skip; }
+    if(g.match!==m || m.state!=='intro' || !(m.stateT-before+1e-9>=steps/60)) throw Error('Native intro did not advance unchanged component clock');
+    return {before,after:m.stateT,steps,hz:60,state:m.state};
   });
 }
 
