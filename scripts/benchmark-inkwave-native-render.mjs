@@ -21,7 +21,8 @@ assert.ok([warmup,frames,runs].every(Number.isSafeInteger)&&warmup>=1&&warmup<=6
 assert.ok(Number.isSafeInteger(setupFrames)&&setupFrames>=450&&setupFrames<=1800);
 assert.ok(!['/tmp','/var/tmp','/dev/shm'].some(p=>out===p||out.startsWith(p+'/')));
 fs.mkdirSync(out,{recursive:true});
-const browserTemp=path.resolve('.ci-scratch/native-render-tmp');
+const browserTemp=path.resolve('.ci-scratch/n');
+assert.ok(Buffer.byteLength(browserTemp)+54<108,'Browser temporary path exceeds the Unix socket budget');
 fs.mkdirSync(browserTemp,{recursive:true});
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=browserTemp;
 const {chromium,webkit}=await import('playwright');

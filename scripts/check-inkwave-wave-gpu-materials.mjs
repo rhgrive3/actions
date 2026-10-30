@@ -10,7 +10,7 @@ import {chromium,webkit} from 'playwright';
 const option=(n,d)=>{const i=process.argv.indexOf(n);return i<0?d:process.argv[i+1];};
 const site=fs.realpathSync(option('--site','_site')),out=path.resolve(option('--out','.browser-evidence/wave-materials'));
 assert.ok(!['/tmp','/var/tmp','/dev/shm'].some(p=>out===p||out.startsWith(p+'/')));fs.mkdirSync(out,{recursive:true});
-const scratch=path.resolve('.ci-scratch/wave-material-tmp');fs.mkdirSync(scratch,{recursive:true});
+const scratch=path.resolve('.ci-scratch/m');assert.ok(Buffer.byteLength(scratch)+54<108,'Browser temporary path exceeds the Unix socket budget');fs.mkdirSync(scratch,{recursive:true});
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=scratch;
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))),hash=b=>createHash('sha256').update(b).digest('hex');
 assert.equal(hash(JSON.stringify(build.artifacts)),build.contentHash);
