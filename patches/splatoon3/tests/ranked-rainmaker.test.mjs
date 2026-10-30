@@ -106,8 +106,8 @@ test('charge is carried through held fire and emits a normalized dedicated Rainm
   assert.deepEqual(event(engine, 'rainmaker-shot'), {
     id: 0, actorId: carrier.id, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
     damage: 60, blastDamage: 180, outerDamage: 40,
-    radius: 1.4, nearRadius: 0.92, directRange: 4.4, nearRange: 5.3, effectiveRange: 5.8,
-    paintRadius: 1, speed: 18, launchY: .28 * 10 * 60 * .02, recoil: 1.44, trailRadius: .48,
+    radius: 7, nearRadius: 4.6, directRange: 22, nearRange: 26.5, effectiveRange: 29,
+    paintRadius: 5, speed: 90, launchY: .28 * 60, recoil: 7.199999999999999, trailRadius: 2.4,
   });
   assert.equal(rule.state.charge.recovery, 20 / 60);
   assert.equal(rule.state.charge.pending, null);
@@ -124,9 +124,9 @@ test('partial shot keeps actor identity, sequence ID, and distinct direct, blast
   assert.equal(shot.blastDamage, 0, 'partial shots do not have a blast');
   assert.equal(shot.outerDamage, 0);
   assert.equal(shot.radius, 0);
-  assert.equal(shot.effectiveRange, 2.35);
-  assert.ok(Math.abs(shot.paintRadius - .39) < 1e-12);
-  assert.equal(shot.speed, 14.4, 'native DU/F projectile speed is converted to the host world scale');
+  assert.equal(shot.effectiveRange, 11.75);
+  assert.ok(Math.abs(shot.paintRadius - 1.95) < 1e-12);
+  assert.equal(shot.speed, 72, 'native engine-unit/F projectile speed is converted to the host world scale');
   assert.ok(Math.abs(Math.hypot(...shot.aim) - 1) < 1e-12);
 });
 
@@ -140,7 +140,7 @@ test('a short Rainmaker release completes its minimum charge instead of discardi
   const shot = event(engine, 'rainmaker-shot');
   assert.equal(shot.charge, 20 / 60);
   assert.equal(shot.damage, 30);
-  assert.equal(shot.effectiveRange, 2);
+  assert.equal(shot.effectiveRange, 10);
 });
 
 for (const hz of [30, 60, 120]) test(`one-tick Rainmaker tap fires once after minimum charge at ${hz}Hz`, () => {

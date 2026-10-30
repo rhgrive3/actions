@@ -805,7 +805,8 @@ export function horizontalRollerPose(elapsed, windup, interval, shape = null, he
 // carry returning f442-448. These are presentation fits, not input-frame data.
 // The horizontal early lift/long overhead hold is not the vertical trajectory.
 export const VERTICAL_ROLLER_SWING = Object.freeze({ whip: 4 / 60, crestLead: 2 / 60,
-  settle: 5 / 60, ret: 10 / 60, source: 'Nintendo NablZy7jqxO f400-448; normalized to live release' });
+  settle: 5 / 60, ret: 10 / 60, followPitch: 1.4,
+  source: 'Nintendo NablZy7jqxO f400-448; normalized to live release' });
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval, shape = null, held = false) {
@@ -817,12 +818,19 @@ export function verticalRollerPose(elapsed, windup, interval, shape = null, held
   const end = Math.max(release + 2 / 60, interval);
   const settle = release + Math.min(V.settle, (end - release) * .35);
   const back = Math.max(settle + (end - settle) * .1, end - V.ret);
+  // NablZy7jqxO f430-438: the released drum points forward beside the body,
+  // with its axle nearly level, before returning to carry. The former .6rad
+  // handle pitch left the real axle standing 40-50deg above the floor; landing
+  // then yawed it sideways to resolve penetration. Calibrate the paired grip
+  // through native IK, not a post-solve drum rotation. This is an INKWAVE rig
+  // fit, not a recovered retail joint angle; keep the unmeasured heavy path.
+  const follow = { a: VERTICAL_GRIPS[3].a, r: [V.followPitch, 0, Math.PI / 2] };
   const keys = [VERTICAL_GRIPS[0],
     { a: [.015, .88, .30], r: [-2.85, .03, 1.12] },
     { a: [.025, 1.00, .04], r: [-2.80, .02, 1.48] },
     VERTICAL_GRIPS[1],
     { a: [.005, 1.15, .10], r: [-1.90, .01, Math.PI / 2] },
-    VERTICAL_GRIPS[2], VERTICAL_GRIPS[3], VERTICAL_GRIPS[3], held ? ROLL_GRIP : VERTICAL_GRIPS[4]];
+    VERTICAL_GRIPS[2], follow, follow, held ? ROLL_GRIP : VERTICAL_GRIPS[4]];
   const times = [0, hold * .25, hold * .65, hold, crest, release, settle, back, end];
   const t = Math.max(0, Math.min(end, elapsed)), pose = hermiteKeys(keys, times, t);
   return { ...pose, weight: ease(t / (2 / 60)) * (held ? 1 : 1 - ease((t - back) / (end - back))),
@@ -951,7 +959,13 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // wrist targets must use the native solver, never roller drum alignment.
       this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
     if (!isRightRoller) {
-      if (limb === this.limbs.armR) shaftReturn.clear(this);
+      if (limb === this.limbs.armR) {
+        shaftReturn.clear(this);
+        // A form/special handoff invalidates the previous floor-search frame.
+        // Do not carry a return-path correction into the replacement pose.
+        const memory = this._s3RollerFloorSearch;
+        if (memory) { memory.valid = false; memory.axis = -1; memory.sign = 0; memory.a = 0; }
+      }
       return solve.call(this, limb, target, pole, orientation, weight, index);
     }
     const d = this.weapon.def, arms = this.limbs, rollFold = this.weapon.fold;
@@ -1088,12 +1102,6 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       !attack.rolling && attack.holdRoll !== true && this.actor?.intent?.fire !== true && !contacting);
     bestQ.copy(shaftPose || orientation);
     let bestGroundError = evaluate(bestQ);
-    if (shaftPose && bestGroundError > .003) {
-      // Safety fallback is an explicit failed path sample, never evidence of
-      // continuity. Preserve the original solver and its existing budget.
-      shaftReturn.reject(this);
-      bestQ.copy(orientation); bestGroundError = evaluate(bestQ);
-    }
     if (contacting) bestPoint.copy(target);
     // A roll surface must sit near the floor; a windup must never clip it.
     // Search purely in orientation, so the right hand remains the pivot and
@@ -1109,7 +1117,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     let chosenAxis = -1, chosenSign = 0, chosenA = 0;
     if (neededGround && bestGroundError > .003) {
       let bestCost = bestGroundError*30 + switchCost(-1, 0, 0);
-      baseQ.copy(orientation);
+      baseQ.copy(shaftPose || orientation);
       for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(let sign=-1;sign<=1;sign+=2) {
         const [x,y,z] = SEARCH_AXES[axisIndex];
         searchAxis.set(x,y,z);
@@ -1122,6 +1130,14 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
           if(floorError<=.003)break;
         }
       }
+    }
+    if (shaftPose && bestGroundError > .003) {
+      // Try the existing bounded floor search around the return candidate
+      // before abandoning it. A more level follow-through has a different
+      // floor envelope; rejecting before that search caused a one-frame jump.
+      shaftReturn.reject(this);
+      bestQ.copy(orientation); bestGroundError = evaluate(bestQ);
+      chosenAxis = -1; chosenSign = 0; chosenA = 0;
     }
     memory.valid = neededGround; memory.axis = chosenAxis; memory.sign = chosenSign; memory.a = chosenA;
     if (contacting) target.copy(bestPoint);

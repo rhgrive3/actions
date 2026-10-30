@@ -1,0 +1,807 @@
+{
+  "status": "passed",
+  "baselineSourceSha": "5d6480b2e2c1a8afa789bcc1415bae586e3156cb",
+  "candidateSource": {
+    "status": "passed",
+    "sourceSha": "166f9d152578c6df6e65de2579169d696fd4b04a",
+    "buildInputFiles": 1556,
+    "contentHash": "229b3e400e341bc8208b62685a8fd042edd3e2a579fc1ec80b2006b8a6bd8987",
+    "inputHash": "7ae0cc3fa08c49738403cc82fc580ffe0e400348f1998642b19c195be7785215",
+    "buildRevision": "5146e0aaef5bda2f9a85907122d2ea06a24d38b62a83a2d23c4f6ec9d3ba4a71",
+    "method": "Every manifest input SHA256 matches disk; every input git blob matches committed HEAD."
+  },
+  "sourceTests": {
+    "subject": 3,
+    "existingRelated": 43,
+    "actualPlaneContactComparisons": 96,
+    "nominalContactTolerance": 1e-8,
+    "emittedSubject": 3,
+    "preFixSubjectFailures": 3
+  },
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scriptSha256": "70350e932d2bcc1bf47ff3689098359313da8f98259094776422218ca0587b84",
+  "before": {
+    "contentHash": "35ff67f65c2387ab9035e88edd4bdf6ea0bf48492c94202d3377c01a85c6ba67",
+    "inputHash": "ba3874294084030df1b641e968a2737c1ca780d04a94c542fbb869b93313d448",
+    "revision": "077ed966587df7ffa5988f9eedce775835df063a797a91f932018f65521fc28f",
+    "receiptSha256": "4a1c68114de7dde7f6edab6ed883b61d25b2fc499feb3d4424bc1f04ec211d17"
+  },
+  "after": {
+    "contentHash": "229b3e400e341bc8208b62685a8fd042edd3e2a579fc1ec80b2006b8a6bd8987",
+    "inputHash": "7ae0cc3fa08c49738403cc82fc580ffe0e400348f1998642b19c195be7785215",
+    "revision": "5146e0aaef5bda2f9a85907122d2ea06a24d38b62a83a2d23c4f6ec9d3ba4a71",
+    "receiptSha256": "68b175438e62ecc18e561a7f0c6132a7bd536350cb50f73e2d02780165f5f364"
+  },
+  "comparedNativeTicks": 810,
+  "identical": [
+    "conditions",
+    "camera",
+    "position and aim",
+    "ink and charge",
+    "actual live-round state",
+    "actual fire events including muzzle/direction",
+    "actual emitted head contact points"
+  ],
+  "cases": [
+    {
+      "pitch": -1.05,
+      "hz": 60,
+      "ticks": 270,
+      "rendersEach": 5,
+      "conditions": {
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "name": "Splatling Aim QA",
+        "seed": 3178298348,
+        "style": {
+          "hair": 0,
+          "skin": 2,
+          "outfit": 0,
+          "eyes": 0,
+          "hat": 0,
+          "brows": 0
+        },
+        "weapon": "splatling",
+        "palette": [
+          "#10d2e6",
+          "#ff4150"
+        ],
+        "sourceMotion": "ready",
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "render": "Chromium SwiftShader; selected tick captures",
+        "viewport": [
+          800,
+          450
+        ]
+      },
+      "gameplaySha256": "0779716496e9cfe7c684d6e7e4348fac9c9607ece1b6b5774c62d2a9c4219ad2",
+      "cameraSha256": "ecd98a54d8057e2e10b96289c015f46438462360cff9b1e020bcc82040981d69",
+      "fireEvents": 41,
+      "fireEventsSha256": "ae296ff7920e7adf1b00a26f51175366ccbf0d34e199aaf0d596d38db7d27ea1",
+      "actualHeadContacts": 41,
+      "headContactsSha256": "0b4622e6396018fed788a9ae014fc12948e24777c9d65d1e768f2e55760ff720",
+      "snapshots": [
+        {
+          "tick": 24,
+          "charge": 0.3333333333333334,
+          "before": {
+            "guide": {
+              "x": -4.5961471656327095,
+              "y": -0.5431978867514573,
+              "z": 14.073558844056732,
+              "frames": 11
+            },
+            "screen": {
+              "x": 560.504380261004,
+              "y": 40,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": 0.1480492235598917,
+              "y": -0.0632674372189484,
+              "z": 0.22553751590792262,
+              "frames": 11
+            },
+            "screen": {
+              "x": 349.3108906706491,
+              "y": 311.4152736519499,
+              "frames": 11
+            },
+            "fieldContact": [
+              0.1480492235598917,
+              -0.0632674372189484,
+              0.22553751590792262
+            ]
+          }
+        },
+        {
+          "tick": 48,
+          "charge": 0.6666666666666662,
+          "before": {
+            "guide": {
+              "x": -5.985340300653664,
+              "y": -1.0754501765138411,
+              "z": 18.043716611168463,
+              "frames": 11
+            },
+            "screen": {
+              "x": 575.5596037233091,
+              "y": 40,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": 0.10028059236126204,
+              "y": -0.1043731711808698,
+              "z": 0.24614070477891165,
+              "frames": 11
+            },
+            "screen": {
+              "x": 354.77790204324987,
+              "y": 310.73672604764744,
+              "frames": 11
+            },
+            "fieldContact": [
+              0.10028059236126204,
+              -0.1043731711808698,
+              0.24614070477891165
+            ]
+          }
+        },
+        {
+          "tick": 72,
+          "charge": 1,
+          "before": {
+            "guide": {
+              "x": -6.017717620867006,
+              "y": -1.292020516943133,
+              "z": 18.03283108388216,
+              "frames": 11
+            },
+            "screen": {
+              "x": 574.2789236057682,
+              "y": 40,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": 0.08374395069778896,
+              "y": -0.10629039977173624,
+              "z": 0.25704653556345186,
+              "frames": 11
+            },
+            "screen": {
+              "x": 356.55208205666105,
+              "y": 309.71891085340076,
+              "frames": 11
+            },
+            "fieldContact": [
+              0.08374395069778896,
+              -0.10629039977173624,
+              0.25704653556345186
+            ]
+          }
+        },
+        {
+          "tick": 95,
+          "charge": 0.8757763975155279,
+          "before": {
+            "guide": {
+              "x": -5.92637346626157,
+              "y": -1.149808364507943,
+              "z": 18.080163427205292,
+              "frames": 11
+            },
+            "screen": {
+              "x": 572.6993623693728,
+              "y": 40,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": 0.10106890160162162,
+              "y": -0.0907021728905939,
+              "z": 0.26344347820207814,
+              "frames": 11
+            },
+            "screen": {
+              "x": 354.661764560409,
+              "y": 308.55794563636715,
+              "frames": 11
+            },
+            "fieldContact": [
+              0.10106890160162162,
+              -0.0907021728905939,
+              0.26344347820207814
+            ]
+          }
+        },
+        {
+          "tick": 251,
+          "charge": 0.15277777777777782,
+          "before": {
+            "guide": {
+              "x": -5.790845165677202,
+              "y": -0.6460748421799183,
+              "z": 18.08114615277404,
+              "frames": 11
+            },
+            "screen": {
+              "x": 573.9394353805305,
+              "y": 40,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": 0.1435360525895371,
+              "y": -0.06958172212008983,
+              "z": 0.20616972068575978,
+              "frames": 11
+            },
+            "screen": {
+              "x": 349.7299100570275,
+              "y": 313.5777053167512,
+              "frames": 11
+            },
+            "fieldContact": [
+              0.1435360525895371,
+              -0.06958172212008983,
+              0.20616972068575978
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "pitch": -0.45,
+      "hz": 60,
+      "ticks": 270,
+      "rendersEach": 5,
+      "conditions": {
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "name": "Splatling Aim QA",
+        "seed": 3178298348,
+        "style": {
+          "hair": 0,
+          "skin": 2,
+          "outfit": 0,
+          "eyes": 0,
+          "hat": 0,
+          "brows": 0
+        },
+        "weapon": "splatling",
+        "palette": [
+          "#10d2e6",
+          "#ff4150"
+        ],
+        "sourceMotion": "ready",
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "render": "Chromium SwiftShader; selected tick captures",
+        "viewport": [
+          800,
+          450
+        ]
+      },
+      "gameplaySha256": "4a9ad09215fe6dc94e86583b4a3cc054b89f4b6e3ba220e59f2cb5e857e78465",
+      "cameraSha256": "f034dedda367f39da9ba4a0842abf69d19dd1c6a144e008c50df4e913389e0d8",
+      "fireEvents": 41,
+      "fireEventsSha256": "126fb62a580400f80548f06db11d7dd4666dd50d6ce3e7fc5518a082c67d5032",
+      "actualHeadContacts": 41,
+      "headContactsSha256": "03c8a9bc1a1f6537a2e9bafc18810372cf320a1b18909caee0192b566b052faf",
+      "snapshots": [
+        {
+          "tick": 24,
+          "charge": 0.3333333333333334,
+          "before": {
+            "guide": {
+              "x": -1.0489453889706895,
+              "y": -0.9907813584995789,
+              "z": 15.183639388214916,
+              "frames": 11
+            },
+            "screen": {
+              "x": 417.06748659041165,
+              "y": 138.1844828920827,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.05299746529458156,
+              "y": 2.7755575615628914e-17,
+              "z": 0.8801837301600046,
+              "frames": 11
+            },
+            "screen": {
+              "x": 384.078634047878,
+              "y": 324.4579523597595,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.05299746529458156,
+              2.7755575615628914e-17,
+              0.8801837301600046
+            ]
+          }
+        },
+        {
+          "tick": 48,
+          "charge": 0.6666666666666662,
+          "before": {
+            "guide": {
+              "x": -1.3309184958404405,
+              "y": -1.3915243859742317,
+              "z": 19.365523598263593,
+              "frames": 11
+            },
+            "screen": {
+              "x": 419.40086275989506,
+              "y": 125.87537241158756,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.08506425041690002,
+              "y": 5.551115123125783e-17,
+              "z": 1.3161780110887813,
+              "frames": 11
+            },
+            "screen": {
+              "x": 387.14656057115906,
+              "y": 305.9969051104432,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.08506425041690002,
+              5.551115123125783e-17,
+              1.3161780110887813
+            ]
+          }
+        },
+        {
+          "tick": 72,
+          "charge": 1,
+          "before": {
+            "guide": {
+              "x": -1.3258812077760929,
+              "y": -1.4626685253627156,
+              "z": 19.367427382495006,
+              "frames": 11
+            },
+            "screen": {
+              "x": 419.28097425605796,
+              "y": 127.17917082332568,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.09800704916599665,
+              "y": 2.7755575615628914e-17,
+              "z": 1.4906570511013406,
+              "frames": 11
+            },
+            "screen": {
+              "x": 388.28084659332444,
+              "y": 299.21407625161686,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.09800704916599665,
+              2.7755575615628914e-17,
+              1.4906570511013406
+            ]
+          }
+        },
+        {
+          "tick": 95,
+          "charge": 0.8757763975155279,
+          "before": {
+            "guide": {
+              "x": -1.2797960312774725,
+              "y": -1.4160749822905576,
+              "z": 19.38738918768757,
+              "frames": 11
+            },
+            "screen": {
+              "x": 418.43318926569214,
+              "y": 126.23600183493951,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.09867567294875963,
+              "y": 0,
+              "z": 1.3750851853841741,
+              "frames": 11
+            },
+            "screen": {
+              "x": 388.1400234915226,
+              "y": 303.67083999179295,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.09867567294875963,
+              0,
+              1.3750851853841741
+            ]
+          }
+        },
+        {
+          "tick": 251,
+          "charge": 0.15277777777777782,
+          "before": {
+            "guide": {
+              "x": -1.3272628654268819,
+              "y": -1.2165534473859636,
+              "z": 19.356307341929003,
+              "frames": 11
+            },
+            "screen": {
+              "x": 419.4033271875316,
+              "y": 122.67192940080245,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.04811214920580388,
+              "y": 5.551115123125783e-17,
+              "z": 0.7711473982575852,
+              "frames": 11
+            },
+            "screen": {
+              "x": 383.4726756317847,
+              "y": 329.4484455425154,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.04811214920580388,
+              5.551115123125783e-17,
+              0.7711473982575852
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "pitch": 0,
+      "hz": 60,
+      "ticks": 270,
+      "rendersEach": 5,
+      "conditions": {
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "name": "Splatling Aim QA",
+        "seed": 3178298348,
+        "style": {
+          "hair": 0,
+          "skin": 2,
+          "outfit": 0,
+          "eyes": 0,
+          "hat": 0,
+          "brows": 0
+        },
+        "weapon": "splatling",
+        "palette": [
+          "#10d2e6",
+          "#ff4150"
+        ],
+        "sourceMotion": "ready",
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "render": "Chromium SwiftShader; selected tick captures",
+        "viewport": [
+          800,
+          450
+        ]
+      },
+      "gameplaySha256": "d109dc9e7e30a7e07c00b59f9f6400a649a8466f972e298f90908fd934a3d530",
+      "cameraSha256": "1038c260a0a29b8cd46090592568cec3c04008aaeb2a61508f6f2c036416f47d",
+      "fireEvents": 41,
+      "fireEventsSha256": "1d7b7495daa6d9fbc71f09fc97b4ca9d47ec07fa91c83a80ca31b2b36bdf7d0e",
+      "actualHeadContacts": 41,
+      "headContactsSha256": "6b46ee3f4d94e9a53cae64a75d3aa030580f8563862a244e43359d93ac0c63f9",
+      "snapshots": [
+        {
+          "tick": 24,
+          "charge": 0.3333333333333334,
+          "before": {
+            "guide": {
+              "x": -0.1308627210968206,
+              "y": 0.817945444543731,
+              "z": 15.128631424818435,
+              "frames": 11
+            },
+            "screen": {
+              "x": 396.7160084045863,
+              "y": 251.02875185860813,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.048605042666171196,
+              "y": 0.675307881133945,
+              "z": 4.92,
+              "frames": 11
+            },
+            "screen": {
+              "x": 389.38282856744723,
+              "y": 285.78128704015734,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.048605042666171196,
+              0.675307881133945,
+              4.92
+            ]
+          }
+        },
+        {
+          "tick": 48,
+          "charge": 0.6666666666666662,
+          "before": {
+            "guide": {
+              "x": -0.16540397340737123,
+              "y": 1.0243348389947649,
+              "z": 19.32450252553144,
+              "frames": 11
+            },
+            "screen": {
+              "x": 397.92101401903983,
+              "y": 242.70038850519427,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.051362322505957736,
+              "y": 0.7083455407756308,
+              "z": 4.919999999999999,
+              "frames": 11
+            },
+            "screen": {
+              "x": 389.50934175115634,
+              "y": 284.2654091654288,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.051362322505957736,
+              0.7083455407756308,
+              4.919999999999999
+            ]
+          }
+        },
+        {
+          "tick": 72,
+          "charge": 1,
+          "before": {
+            "guide": {
+              "x": -0.1659926659432403,
+              "y": 1.0332358395975476,
+              "z": 19.327878329517837,
+              "frames": 11
+            },
+            "screen": {
+              "x": 397.9319870276089,
+              "y": 242.53642291082528,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.05248452431404709,
+              "y": 0.7258113804907231,
+              "z": 4.919999999999999,
+              "frames": 11
+            },
+            "screen": {
+              "x": 389.56083210823107,
+              "y": 283.4640182595713,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.05248452431404709,
+              0.7258113804907231,
+              4.919999999999999
+            ]
+          }
+        },
+        {
+          "tick": 95,
+          "charge": 0.8757763975155279,
+          "before": {
+            "guide": {
+              "x": -0.17262529464437065,
+              "y": 1.0285849661532804,
+              "z": 19.347537339339436,
+              "frames": 11
+            },
+            "screen": {
+              "x": 398.05390386596616,
+              "y": 242.60626057738776,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.06543324452525201,
+              "y": 0.7148079836715312,
+              "z": 4.92,
+              "frames": 11
+            },
+            "screen": {
+              "x": 390.1549625244622,
+              "y": 283.96889075859133,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.06543324452525201,
+              0.7148079836715312,
+              4.92
+            ]
+          }
+        },
+        {
+          "tick": 251,
+          "charge": 0.15277777777777782,
+          "before": {
+            "guide": {
+              "x": -0.16603620761475665,
+              "y": 1.00351353878856,
+              "z": 19.32231854128877,
+              "frames": 11
+            },
+            "screen": {
+              "x": 397.9322943826498,
+              "y": 243.07978315161014,
+              "frames": 11
+            }
+          },
+          "after": {
+            "guide": {
+              "x": -0.05265756513202587,
+              "y": 0.6670020412073389,
+              "z": 4.92,
+              "frames": 11
+            },
+            "screen": {
+              "x": 389.568771797369,
+              "y": 286.1623866432265,
+              "frames": 11
+            },
+            "fieldContact": [
+              -0.05265756513202587,
+              0.6670020412073389,
+              4.92
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "path": "before-pitch--1.05-tick-72.png",
+      "sha256": "bb261436d8ddb5c74d6d28caf376572ab0718422f4108344328043b41183002d",
+      "bytes": 256024,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "after-pitch--1.05-tick-72.png",
+      "sha256": "fff57b76b9d50e74d81953e5ed2ce4794ef1ddd257c2860a6e97e69fabc5da19",
+      "bytes": 255544,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "before-pitch--0.45-tick-251.png",
+      "sha256": "ab3d931017fc6edda5a013fb804da9602baddaba5cc04992546352f75cbfcbb6",
+      "bytes": 296930,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "after-pitch--0.45-tick-251.png",
+      "sha256": "322bf9557753dde2b2737d64398b121192c08753999f2506936e5243ffac8b58",
+      "bytes": 295818,
+      "width": 800,
+      "height": 450
+    }
+  ],
+  "scope": "Matched native INKWAVE practice-range evidence; five WebGL samples per case. No retail Switch camera/pixel or device/FPS parity claim."
+}

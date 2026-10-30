@@ -15,7 +15,7 @@ test('vertical lift keeps rising to the late crest instead of borrowing the hori
     assert(late.anchor[1]>early.anchor[1]+.05,'no long early height plateau');
     assert.equal(verticalRollerPose(windup,windup,interval).rotation[0],VERTICAL_SWING.release);
     const settled=verticalRollerPose(windup+5/60,windup,interval);
-    assert.equal(settled.rotation[0],VERTICAL_SWING.follow,'follow-through completes promptly');
+    assert.equal(settled.rotation[0],VERTICAL_ROLLER_SWING.followPitch,'follow-through completes promptly');
     const ready=verticalRollerPose(interval,windup,interval);
     assert.deepEqual(ready.anchor,ROLLER_POSE.READY_ANCHOR);assert.equal(ready.weight,0);
   }

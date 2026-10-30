@@ -1,0 +1,117 @@
+{
+  "status": "passed",
+  "contentHash": "234c3d23b31eab74bc158b57ea6977e61edfefcfb4a6ca784e2bb696aecfa8ec",
+  "browser": "154.0.8037.57",
+  "rows": [
+    {
+      "volume": true,
+      "vertical": false,
+      "before": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 1
+      },
+      "after": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 0
+      },
+      "contact": {
+        "point": [
+          12.0616,
+          3,
+          -16.922429031925958
+        ],
+        "normal": [
+          -1,
+          0,
+          0
+        ]
+      },
+      "retainedWallDrop": true
+    },
+    {
+      "volume": true,
+      "vertical": true,
+      "before": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 1
+      },
+      "after": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 0
+      },
+      "contact": {
+        "point": [
+          12.0616,
+          3,
+          -16.922429031925958
+        ],
+        "normal": [
+          -1,
+          0,
+          0
+        ]
+      },
+      "retainedWallDrop": true
+    },
+    {
+      "volume": false,
+      "vertical": false,
+      "before": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 288,
+        "volumeInstances": 0
+      },
+      "after": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 0
+      },
+      "contact": {
+        "point": [
+          12.0616,
+          3,
+          -16.922429031925958
+        ],
+        "normal": [
+          -1,
+          0,
+          0
+        ]
+      },
+      "retainedWallDrop": true
+    },
+    {
+      "volume": false,
+      "vertical": true,
+      "before": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 288,
+        "volumeInstances": 0
+      },
+      "after": {
+        "airborneBlobs": 0,
+        "proceduralTriangles": 0,
+        "volumeInstances": 0
+      },
+      "contact": {
+        "point": [
+          12.0616,
+          3,
+          -16.922429031925958
+        ],
+        "normal": [
+          -1,
+          0,
+          0
+        ]
+      },
+      "retainedWallDrop": true
+    }
+  ],
+  "errors": [],
+  "scope": "Built practice-range WebGL renderers; explicit WallDrop admission on an actual raycast wall. Real swept collision and subsequent wall paint are covered separately by CPU tests."
+}

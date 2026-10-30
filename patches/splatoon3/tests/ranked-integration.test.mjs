@@ -297,7 +297,7 @@ for (const attacking of [false, true]) test('Rainmaker sweep reaches the real na
   const rings = [], removals = []; f.G.fx = { ...f.G.fx, ring: (...a) => rings.push(a) }; f.G.scene = { add() {}, remove: o => removals.push(o) };
   const effects = f.createRankedEffects(f.installedRuntime, m);
   effects.event({ kind: 'rainmaker-shot', shotOrigin: defenseShotOrigin(shooter, [0, 0, 0]), actorId: shooter.nid, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
-    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
+    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, launchY: 3.36, directRange: 4.4 });
   effects.update(.1); effects.update(.1); effects.update(.3);
   assert.equal(removals.length, 1);
   if (attacking) {
@@ -349,7 +349,7 @@ async function rainmakerWallHarness() {
   const fire = (visualOnly, mutateOrigin = origin => origin) => {
     effects.event({ kind: 'rainmaker-shot', shotOrigin: mutateOrigin(defenseShotOrigin(shooter, [0, 0, 0])), id: 0, actorId: String(shooter.nid), team: 0, pos: [0, 0, 0], aim: [0, 0, 1],
       charge: 1, damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92,
-      paintRadius: 1, speed: 18, directRange: 4.4 }, visualOnly);
+      paintRadius: 1, speed: 18, launchY: 3.36, directRange: 4.4 }, visualOnly);
     effects.update(.1); effects.update(.1); effects.update(.3);
   };
   return { ...f, shooter, owner, rear, front, wall, proposals, effects, fire };
@@ -517,7 +517,7 @@ test('an off-axis ground blast damages an otherwise empty native Bubbler without
   const before = f.dome.hp;
   f.G.physics.segment = (_start, _end, hit) => { hit.hit = true; hit.dist = 0; hit.point.copy(burst); return hit; };
   f.effects.event({ kind: 'rainmaker-shot', shotOrigin: defenseShotOrigin(f.shooter), id: 0, actorId: '301', team: 0, pos: f.shooter.pos.toArray(), aim: [0, 1, 0], charge: 1,
-    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
+    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, launchY: 3.36, directRange: 4.4 });
   f.effects.update(.1); assert.equal(f.dome.hp, before, 'there was no direct contact'); f.effects.update(.3);
   assert.ok(Math.abs(before - f.dome.hp - 40 * 2 * 10 * .64) < 1e-8, 'the far blast band reaches native canopy HP');
   f.effects.dispose();
