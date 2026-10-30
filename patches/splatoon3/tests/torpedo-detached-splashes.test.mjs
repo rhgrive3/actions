@@ -48,7 +48,7 @@ async function world(client=null,clock=null){
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
 function landing(drop){
-  const g=drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
+  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
   return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}
@@ -72,6 +72,11 @@ test('Torpedo main contact does not apply an immediate extra12 and each detached
   for(let i=0;i<45;i++)w.step();assert.equal(b.phase,'chase');
   w.victim.pos.set(0,0,30);b.pos.set(-1,.7,30);b.prev.copy(b.pos);b.vel.set(120,0,0);w.step();
   const drops=w.f.G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');assert.equal(drops.length,8);
+  for(const d of drops){
+    const destination=landing(d),distance=Math.hypot(destination.x-d.pos.x,destination.z-d.pos.z);
+    assert.ok(distance<12,'detached blasts stay near the parent rather than travelling across the stage');
+    assert.equal(d.gravity,60,'the chase splash does not inherit parent flight gravity');
+  }
   assert.deepEqual(w.hits.map(h=>h.amount),[60]);assert.equal(w.victim.hp,40);
   assert.equal(w.stamps.filter(s=>s.radius===2).length,0,'chase splash paint waits for its own terrain contact');
   for(const d of drops){

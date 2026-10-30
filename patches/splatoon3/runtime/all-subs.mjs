@@ -163,6 +163,9 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     chaseBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     splashRadius: 2.6, splashPaintRadius: 2, splashDamage: rawDamage(120),
+    // Detached chase droplets use their own calibrated gravity. The parent
+    // projectile's gravity is not the source of the secondary burst timing.
+    splashGravity: 60,
     splashAround: Object.freeze({count:8,pitchDegrees:65,velocityMin:speedPerSecond(.42),velocityMax:speedPerSecond(.48)}),
     findSplashAround: Object.freeze({count:6,pitchMinDegrees:30,pitchMaxDegrees:45,velocityMin:speedPerSecond(.15),velocityMax:speedPerSecond(.23),paintRadius:.7}),
     inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, ground fuse, 20F post-rotation wait, ground drag and throw tuple extracted; Wiki reports stop/transform then straight flight, approximate asymmetric search and provisional 45F total transform. Rotation25F is a calibration from that tentative total minus20F, not extracted; startup6F uses a legacy community estimate; chase speed/timeout, lost-target last-position aim and world mapping remain calibrated',
