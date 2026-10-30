@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import path from 'node:path';
-import {instrumentNativeSweep,createSweepCounters,isolateProfileEnvironment,captureObservedValue} from './native-sweep-counters.mjs';
+import {instrumentNativeSweep,createSweepCounters,isolateProfileEnvironment,captureObservedValue,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
 class World{
  constructor(){this.nodes=new Float32Array([-1,-1,-1,1,1,1,-1,1]);this.order=[0];this.triangleTests=0;this.queryCount=0;this._queryStacks=[];this._queryDepth=0;this.throwSource=false;}
  _acquireStack(){const d=this._queryDepth++,stack=this._queryStacks[d]||(this._queryStacks[d]=[]);stack[0]=0;return stack;}
@@ -80,13 +80,14 @@ test('minified export aliases and source declarations retain the same exported b
 test('pinned esbuild full-method canonicalization accepts minified traversal but rejects an extra node read',()=>{
  const esbuild=createRequire(path.join(process.env.PROFILE_ROOT||process.cwd(),'package.json'))('esbuild');
  assert.equal(esbuild.version,'0.28.2');
- const normalize=source=>esbuild.transformSync('globalThis.__qa={'+source+'};',{loader:'js',minify:true,target:'es2022'}).code;
- const holder={};new Function('globalThis',normalize(World.prototype.queryBox.toString()))(holder);
+ const compile=source=>esbuild.transformSync('globalThis.__qa={'+source+'};',{loader:'js',minify:true,target:'es2022'}).code;
+ const normalize=source=>canonicalQueryBoxBindings(compile(source));
+ const holder={};new Function('globalThis',compile(World.prototype.queryBox.toString()))(holder);
  const f=setup();f.world.queryBox=holder.__qa.queryBox;
  const q=createSweepCounters({normalizeQueryBox:normalize});q.invoke('catalogue',f.original,f.args);
  assert.equal(q.snapshot().bvhNodeVisits,1);
  const bad=World.prototype.queryBox.toString().replace('const left=','void a[n];const left=');
- const h={};new Function('globalThis',normalize(bad))(h);f.world.queryBox=h.__qa.queryBox;
+ const h={};new Function('globalThis',compile(bad))(h);f.world.queryBox=h.__qa.queryBox;
  assert.throws(()=>q.invoke('catalogue',f.original,f.args),/Unreviewed/);
 });
 
@@ -113,4 +114,30 @@ test('own __proto__ data survives graph capture without changing prototype',()=>
  assert.equal(Object.hasOwn(out.entries,'__proto__'),true);
  assert.equal(out.entries.__proto__.entries.sentinel,7);
  assert.match(JSON.stringify(out),/"__proto__"/);
+});
+
+const recordedCanonical={"expected":"globalThis.__qa={queryBox(o,l,f,h=!1){const t=this.nodes,s=this._acquireStack();let i=1;try{for(;i;){const e=s[--i]*8;if(t[e]>l.x||t[e+1]>l.y||t[e+2]>l.z||t[e+3]<o.x||t[e+4]<o.y||t[e+5]<o.z)continue;const r=t[e+6]|0,c=t[e+7]|0;if(r>=0){s[i++]=r,s[i++]=c;continue}const n=-r-1;for(let a=n;a<n+c;a++)if(f(this.order[a])===!1&&h)return}}finally{this._releaseStack(s)}}};\n","observed":"globalThis.__qa={queryBox(s,r,h,l=!1){const t=this.nodes,i=this._acquireStack();let n=1;try{for(;n;){const e=i[--n]*8;if(t[e]>r.x||t[e+1]>r.y||t[e+2]>r.z||t[e+3]<s.x||t[e+4]<s.y||t[e+5]<s.z)continue;const c=t[e+6]|0,a=t[e+7]|0;if(c>=0){i[n++]=c,i[n++]=a;continue}const f=-c-1;for(let o=f;o<f+a;o++)if(h(this.order[o])===!1&&l)return}}finally{this._releaseStack(i)}}};\n","expectedLength":368,"observedLength":368};
+
+test('official esbuild diagnostic pair differs only by reviewed local alpha-renaming',()=>{
+ assert.notEqual(recordedCanonical.expected,recordedCanonical.observed);
+ assert.equal(canonicalQueryBoxBindings(recordedCanonical.expected),canonicalQueryBoxBindings(recordedCanonical.observed));
+});
+test('closed queryBox token matching rejects changes beyond bound local names',()=>{
+ const expected=canonicalQueryBoxBindings(recordedCanonical.expected),s=recordedCanonical.observed;
+ const mutants=[
+  s.replace('const c=t[e+6]','void t[e];const c=t[e+6]'),
+  s.replace('this.nodes','this.order'),s.replace('>r.x','>s.x'),
+  s.replace('*8','*9'),s.replace('===!1','!==!1'),
+  s.replace('const c=t[e+6]','external();const c=t[e+6]'),
+  s.replace('const c=t[e+6]','{let t=1;}const c=t[e+6]'),
+  s.replace('const c=t[e+6]','{const c=t[e+6]').replace('finally','}finally'),
+  s.replace('let n=1','const n=1'),
+  s.replace('this.nodes','this["nodes"]'),
+  s.replace('this.nodes','this.unknown'),
+  s.replace('h(this.order[o])','r(this.order[o])')
+ ];
+ for(const mutated of mutants){
+  let actual;try{actual=canonicalQueryBoxBindings(mutated);}catch{continue;}
+  assert.notEqual(actual,expected);
+ }
 });

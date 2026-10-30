@@ -98,3 +98,43 @@ export function captureObservedValue(value){
  }
  return copy(value,'$',0);
 }
+
+
+// Restricted lexer/binder for the reviewed queryBox method after pinned esbuild.
+// It normalizes declared local names only, not properties, operators or control flow.
+export function canonicalQueryBoxBindings(code){
+ const compact=code.replace(/\s+/g,''),tokens=code.match(/[A-Za-z_$][\w$]*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|===|!==|==|!=|>=|<=|\+\+|--|&&|\|\||=>|[{}()[\].,;:+\-*/%<>=!&|?]/g)||[];
+ if(tokens.join('')!==compact)throw Error('Unsupported queryBox lexical form');
+ if(tokens.slice(0,7).join(' ')!=='globalThis . __qa = { queryBox (')throw Error('Unknown queryBox wrapper');
+ const identifier=s=>/^[A-Za-z_$][\w$]*$/.test(s),bindings=new Map();
+ const bind=name=>{if(!identifier(name)||['globalThis','this','const','let','try','finally','for','while','if','continue','return','false','true','void','queryBox','undefined','NaN','Infinity'].includes(name)||bindings.has(name))throw Error('Ambiguous/shadowed queryBox binding');bindings.set(name,'local'+bindings.size);};
+ let p=7;bind(tokens[p++]);
+ while(tokens[p]!==')'){
+  if(tokens[p]===','){bind(tokens[++p]);p++;}
+  else if(tokens[p]==='='&&tokens[p+1]==='!'&&tokens[p+2]==='1')p+=3;
+  else throw Error('Unreviewed queryBox parameters');
+ }
+ if(bindings.size!==4)throw Error('Expected four queryBox parameters');
+ for(let i=p+1;i<tokens.length;i++){
+  if(!['const','let'].includes(tokens[i]))continue;
+  let j=i+1;bind(tokens[j++]);if(tokens[j++]!=='=')throw Error('Unreviewed declaration');
+  let depth=0;
+  for(;j<tokens.length;j++){
+   const token=tokens[j];
+   if(['(','[','{'].includes(token))depth++;
+   else if([')',']','}'].includes(token)){if(--depth<0)throw Error('Unreviewed declaration boundary');}
+   else if(token===';'&&depth===0)break;
+   else if(token===','&&depth===0){bind(tokens[++j]);if(tokens[++j]!=='=')throw Error('Unreviewed declaration');}
+  }
+  if(j===tokens.length)throw Error('Unterminated declaration');
+  i=j;
+ }
+ if(bindings.size!==12)throw Error('Expected reviewed 12 bindings');
+ const reserved=new Set(['globalThis','this','const','let','try','finally','for','while','if','continue','return','false','true','void']);
+ return tokens.map((token,i)=>{
+  if(!identifier(token)||tokens[i-1]==='.'||i===5)return token;
+  if(bindings.has(token))return bindings.get(token);
+  if(reserved.has(token))return token;
+  throw Error('Unbound queryBox identifier '+token);
+ }).join(' ');
+}

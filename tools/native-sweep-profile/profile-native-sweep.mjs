@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
-import {instrumentNativeSweep,createSweepCounters,captureObservedValue} from './native-sweep-counters.mjs';
+import {instrumentNativeSweep,createSweepCounters,captureObservedValue,canonicalQueryBoxBindings} from './native-sweep-counters.mjs';
 const root=path.resolve(process.env.PROFILE_ROOT||process.cwd());
 const expected=process.env.PROFILE_SOURCE_SHA;
 assert.match(expected||'',/^[a-f0-9]{40}$/);
@@ -21,7 +21,7 @@ if(mode==='emitted')assert.equal(path.resolve(process.env.INKWAVE_BUILT_SITE),si
 const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
 const esbuild=createRequire(path.join(root,'package.json'))('esbuild');
 assert.equal(esbuild.version,'0.28.2');
-const normalizeQueryBox=source=>esbuild.transformSync('globalThis.__qa={'+source+'};',{loader:'js',minify:true,target:'es2022'}).code;
+const normalizeQueryBox=source=>canonicalQueryBoxBindings(esbuild.transformSync('globalThis.__qa={'+source+'};',{loader:'js',minify:true,target:'es2022'}).code);
 if(manifest){
  assert.match(manifest.build?.revision||'',/^[a-f0-9]{64}$/);assert.match(manifest.contentHash||'',/^[a-f0-9]{64}$/);
  assert.equal(crypto.createHash('sha256').update(JSON.stringify(manifest.artifacts)).digest('hex'),manifest.contentHash);
