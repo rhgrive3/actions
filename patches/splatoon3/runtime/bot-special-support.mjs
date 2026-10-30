@@ -72,7 +72,7 @@ function choosePoint(ctx, active) {
     point = toward(ctx, seen || goal, 3);
   } else if (special === 'waveBreaker') {
     // Keep the breakable generator on our side of the fight, on a useful level.
-    if (!active && (seen ? distance < 5 || distance > 25 || ctx.height > 3 || ctx.height < -5 :
+    if (!active && (seen ? distance < 5 || distance > 23 || ctx.height > 2.7 || ctx.height < -5 :
       atSpawn || !allies.length || goalDistance > 16)) return null;
     point = toward(ctx, seen || goal || actor.pos, 4);
     point.y = actor.pos.y;
@@ -87,7 +87,11 @@ function choosePoint(ctx, active) {
     }
     const target = seen || goal || toward(ctx, actor.pos, 12);
     const d = flatDistance(actor.pos, target);
-    const reach = special === 'superChump' ? clamp(d, 18, 30) :
+    // Decoys surround the selected center. Put the observed opponent near
+    // an edge of that footprint, not in its empty center.
+    const chumpAhead = clamp(d + 8, 18, 26), chumpBehind = clamp(d - 8, 18, 26);
+    const chumpCenter = Math.abs(d - chumpAhead) >= Math.abs(d - chumpBehind) ? chumpAhead : chumpBehind;
+    const reach = special === 'superChump' ? chumpCenter :
       special === 'splattercolorScreen' ? clamp(d * .45, 5, 12) : clamp(d, 8, 34);
     point = toward(ctx, target, reach);
     if (special === 'tripleInkstrike') {
@@ -166,9 +170,15 @@ export function driveSupportSpecial(ctx) {
     memory.shot = shot; memory.replanAt = memory.supportClock + .25;
   }
   const point = memory.point;
-  if (!point || !aimPlan(ctx, point)) { if (memory.holding) intent.sub = true; return true; }
+  // Inapplicable or duplicate support must not steal the ordinary gun aim.
+  if (!point || !state && (!actor.specialReady?.() || covered(ctx, point))) return true;
+  const normalAim = [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged];
+  if (!aimPlan(ctx, point)) {
+    [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged] = normalAim;
+    if (memory.holding) intent.sub = true;
+    return true;
+  }
   if (!state) {
-    if (!actor.specialReady?.() || covered(ctx, point)) return true;
     // A fresh activation never inherits an ordinary bomb release.
     intent.sub = false;
     if (actor._prevIntent?.sub || !ctx.isAimed(.12)) return true;
