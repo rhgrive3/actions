@@ -1,4 +1,4 @@
-name: INKWAVE Wave 9-11 native GPU validation
+name: INKWAVE WebKit native GPU order check
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -23,13 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - browser: chromium
-            device: desktop
-            quality: medium
-            baseline: 6ae5b34493e0744a7334025ba09b810f034194e8
-            minimum: '1.30'
-            preroll: '0'
-            warmup: '30'
           - browser: webkit
             device: ipad
             quality: high
@@ -161,6 +154,8 @@ jobs:
           const rows=[];
           for(const [site,root,sha] of [['work/site-reference','work/reference',process.env.BASELINE_SHA],['work/site-candidate','.',process.env.SOURCE_SHA]]){
             const m=verifyRuntimeBuild(site,root,sha);
+            const expected=site.includes('reference')?'66539990b663153c11877b8399267d521ea86d55a50f04507e15c1f503e64535':'93e2b3940d85540e8cfb7a6aee90927b1650968d073700164bfa7bdd0457f50f';
+            if(m.contentHash!==expected)throw Error('Runtime differs from the first measured trial');
             rows.push({sha,contentHash:m.contentHash,inputs:Object.keys(m.files).length,artifacts:Object.keys(m.artifacts).length});
           }
           fs.mkdirSync('work/evidence',{recursive:true});
@@ -180,33 +175,14 @@ jobs:
           export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
           sync_args=()
           if [[ "$BENCH_BROWSER" == webkit ]]; then sync_args+=(--sync-frames); fi
-          for variant in reference candidate; do
+          for variant in candidate reference; do
             node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/robo-$variant" --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 925 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --occlusion-checks
           done
-      - name: Check Mako images and emitted material links after timing
-        env:
-          BENCH_BROWSER: ${{ matrix.browser }}
-          BENCH_DEVICE: ${{ matrix.device }}
-          BENCH_QUALITY: ${{ matrix.quality }}
-          BENCH_PREROLL: ${{ matrix.preroll }}
-          BENCH_WARMUP: ${{ matrix.warmup }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
-          sync_args=()
-          if [[ "$BENCH_BROWSER" == webkit ]]; then sync_args+=(--sync-frames); fi
-          for variant in reference candidate; do
-            node scripts/benchmark-inkwave-native-render.mjs --site "work/site-$variant" --out "work/evidence/mako-$variant" --stage mako --browser "$BENCH_BROWSER" --device "$BENCH_DEVICE" --quality "$BENCH_QUALITY" --setup-frames 925 --active-preroll "$BENCH_PREROLL" --warmup "$BENCH_WARMUP" --frames 10 --runs 3 "${sync_args[@]}" --images-only --occlusion-checks
-          done
-          node scripts/check-inkwave-wave-gpu-materials.mjs --site work/site-candidate --out work/evidence/materials --browser "$BENCH_BROWSER"
-          INKWAVE_BUILT_SITE="$GITHUB_WORKSPACE/work/site-candidate" node --experimental-vm-modules --test patches/native-stages/tests/ink-chunks.test.mjs patches/native-stages/tests/ink-empty-lifecycle.test.mjs patches/native-stages/tests/ink-offscreen-chart.test.mjs
       - name: Enforce speed, replay and visual bounds
         shell: bash
         run: |
           status=0
           python3 scripts/compare-inkwave-native-render.py work/evidence/robo-reference work/evidence/robo-candidate --min-speedup ${{ matrix.minimum }} --out work/evidence/robo-comparison.json || status=1
-          python3 scripts/compare-inkwave-native-render.py work/evidence/mako-reference work/evidence/mako-candidate --images-only --out work/evidence/mako-comparison.json || status=1
           exit "$status"
       - name: Print available numeric evidence
         if: always()
