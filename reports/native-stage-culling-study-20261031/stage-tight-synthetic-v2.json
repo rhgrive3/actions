@@ -1,0 +1,624 @@
+{
+  "status": "passed",
+  "errors": [],
+  "scope": "Synthetic WebGL native culling, colour and directional shadow maps; not native-stage or device FPS",
+  "browser": "154.0.8037.57",
+  "result": {
+    "rows": [
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 0,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 336,
+        "trialIndices": 336,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 0.5235987755982988,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 408,
+        "trialIndices": 402,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 1.0471975511965976,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 408,
+        "trialIndices": 408,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 1.5707963267948966,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 342,
+        "trialIndices": 342,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 2.0943951023931953,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 300,
+        "trialIndices": 294,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 2.6179938779914944,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 192,
+        "trialIndices": 186,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 3.141592653589793,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 156,
+        "trialIndices": 156,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 3.665191429188092,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 198,
+        "trialIndices": 192,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 4.1887902047863905,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 294,
+        "trialIndices": 288,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 4.71238898038469,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 330,
+        "trialIndices": 330,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 5.235987755982989,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 402,
+        "trialIndices": 396,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0,
+          "s": [
+            1,
+            1,
+            1
+          ]
+        },
+        "angle": 5.759586531581287,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 402,
+        "trialIndices": 396,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 0,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 336,
+        "trialIndices": 336,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 0.5235987755982988,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 348,
+        "trialIndices": 348,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 1.0471975511965976,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 414,
+        "trialIndices": 414,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 1.5707963267948966,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 330,
+        "trialIndices": 330,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 2.0943951023931953,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 330,
+        "trialIndices": 330,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 2.6179938779914944,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 264,
+        "trialIndices": 264,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 3.141592653589793,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 156,
+        "trialIndices": 156,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 3.665191429188092,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 162,
+        "trialIndices": 162,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 4.1887902047863905,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 234,
+        "trialIndices": 234,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 4.71238898038469,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 300,
+        "trialIndices": 300,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 5.235987755982989,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 348,
+        "trialIndices": 348,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": 0.3,
+          "s": [
+            -1,
+            1,
+            1
+          ]
+        },
+        "angle": 5.759586531581287,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 420,
+        "trialIndices": 420,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 0,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 534,
+        "trialIndices": 534,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 0.5235987755982988,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 282,
+        "trialIndices": 282,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 1.0471975511965976,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 210,
+        "trialIndices": 210,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 1.5707963267948966,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 222,
+        "trialIndices": 222,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 2.0943951023931953,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 282,
+        "trialIndices": 282,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 2.6179938779914944,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 288,
+        "trialIndices": 288,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 3.141592653589793,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 288,
+        "trialIndices": 288,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 3.665191429188092,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 264,
+        "trialIndices": 264,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 4.1887902047863905,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 198,
+        "trialIndices": 198,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 4.71238898038469,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 216,
+        "trialIndices": 216,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 5.235987755982989,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 354,
+        "trialIndices": 354,
+        "glError": 0
+      },
+      {
+        "transform": {
+          "r": -0.35,
+          "s": [
+            0.6,
+            1,
+            1.6
+          ]
+        },
+        "angle": 5.759586531581287,
+        "differingBytes": 0,
+        "baselineNoise": 0,
+        "trialNoise": 0,
+        "baseIndices": 612,
+        "trialIndices": 612,
+        "glError": 0
+      }
+    ],
+    "shadowPixels": 174970,
+    "renderer": "WebKit WebGL"
+  }
+}

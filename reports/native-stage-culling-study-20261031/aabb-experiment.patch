@@ -1,0 +1,89 @@
+--- a/patches/native-stages/runtime/native-render.mjs
++++ b/patches/native-stages/runtime/native-render.mjs
+@@ -191,0 +192,38 @@
++// The combined plane walk below is valid only for the known, pure Three.js
++// implementations. Future/vendor-customized versions fail closed to the
++// original sphere path. Confirm both source and production-minified forms.
++const nativeFrustumSphere=THREE.Frustum.prototype.intersectsSphere;
++const nativeFrustumBox=THREE.Frustum.prototype.intersectsBox;
++const nativePlaneDistance=THREE.Plane.prototype.distanceToPoint;
++const nativeVectorDot=THREE.Vector3.prototype.dot;
++const nativeFnText=Function.prototype.toString;
++const nativeFnBody=f=>nativeFnText.call(f).replace(/\/\*[\s\S]*?\*\/|\/\/[^\n\r]*/g,'').replace(/\s+/g,'');
++const nativeKnownPlaneMath=(function(){
++ try{
++  return [
++   [nativeFrustumSphere,['intersectsSphere(sphere){constplanes=this.planes;constcenter=sphere.center;constnegRadius=-sphere.radius;for(leti=0;i<6;i++){constdistance=planes[i].distanceToPoint(center);if(distance<negRadius){returnfalse;}}returntrue;}','intersectsSphere(t){lete=this.planes,n=t.center,s=-t.radius;for(letr=0;r<6;r++)if(e[r].distanceToPoint(n)<s)return!1;return!0}']],
++   [nativeFrustumBox,['intersectsBox(box){constplanes=this.planes;for(leti=0;i<6;i++){constplane=planes[i];_vector$6.x=plane.normal.x>0?box.max.x:box.min.x;_vector$6.y=plane.normal.y>0?box.max.y:box.min.y;_vector$6.z=plane.normal.z>0?box.max.z:box.min.z;if(plane.distanceToPoint(_vector$6)<0){returnfalse;}}returntrue;}','intersectsBox(t){lete=this.planes;for(letn=0;n<6;n++){lets=e[n];if(da.x=s.normal.x>0?t.max.x:t.min.x,da.y=s.normal.y>0?t.max.y:t.min.y,da.z=s.normal.z>0?t.max.z:t.min.z,s.distanceToPoint(da)<0)return!1}return!0}']],
++   [nativePlaneDistance,['distanceToPoint(point){returnthis.normal.dot(point)+this.constant;}','distanceToPoint(t){returnthis.normal.dot(t)+this.constant}']],
++   [nativeVectorDot,['dot(v){returnthis.x*v.x+this.y*v.y+this.z*v.z;}','dot(t){returnthis.x*t.x+this.y*t.y+this.z*t.z}']],
++  ].every(([f,allowed])=>typeof f==='function'&&allowed.includes(nativeFnBody(f)));
++ }catch{return false;}
++})();
++function nativeRigidCameraMatrix(a){
++ if(a[3]!==0||a[7]!==0||a[11]!==0||a[15]!==1||Math.max(Math.abs(a[12]),Math.abs(a[13]),Math.abs(a[14]))>1000)return false;
++ const ax=a[0],ay=a[1],az=a[2],bx=a[4],by=a[5],bz=a[6],cx=a[8],cy=a[9],cz=a[10];
++ return Math.abs(ax*ax+ay*ay+az*az-1)<1e-5&&Math.abs(bx*bx+by*by+bz*bz-1)<1e-5&&Math.abs(cx*cx+cy*cy+cz*cz-1)<1e-5&&
++  Math.abs(ax*bx+ay*by+az*bz)<1e-5&&Math.abs(ax*cx+ay*cy+az*cz)<1e-5&&Math.abs(bx*cx+by*cy+bz*cz)<1e-5;
++}
++function nativeTightFrustumHit(frustum,tile){
++ const planes=frustum.planes,center=tile.sphere.center,radius=tile.sphere.radius,min=tile.box.min,max=tile.box.max;
++ for(let i=0;i<6;i++){
++  const plane=planes[i],n=plane.normal,x=n.x,y=n.y,z=n.z;
++  const d=x*center.x+y*center.y+z*center.z+plane.constant;
++  if(d < -radius)return false;
++  // When the sphere lies entirely inside this plane, its unexpanded source
++  // box does too. Test the padded box only at the sphere boundary.
++  if(d<radius&&x*(x>0?max.x:min.x)+y*(y>0?max.y:min.y)+z*(z>0?max.z:min.z)+plane.constant<0)return false;
++ }
++ return true;
++}
++
+@@ -196,2 +234,2 @@
+-export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){return consumeNativeWork(nativeDisplayCullingSteps(mesh,tileSize,minTriangles));}
+-function* nativeDisplayCullingSteps(mesh,tileSize=16,minTriangles=512){
++export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512,tightBounds=false){return consumeNativeWork(nativeDisplayCullingSteps(mesh,tileSize,minTriangles,tightBounds));}
++function* nativeDisplayCullingSteps(mesh,tileSize=16,minTriangles=512,tightBounds=false){
+@@ -229 +267,11 @@
+- for(const tile of tiles){tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;}
++ for(const tile of tiles){
++  tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());
++  tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;
++  // Tightening is reserved for nativeDisplay's static baked geometry. An
++  // expanded source box contains every corner; retain the original sphere
++  // test and conservatively allow space for float GPU transforms at edges.
++  const {min,max}=tile.box;
++  const maxCoord=Math.max(Math.abs(min.x),Math.abs(min.y),Math.abs(min.z),Math.abs(max.x),Math.abs(max.y),Math.abs(max.z));
++  tile.tight=!!tightBounds&&Number.isFinite(maxCoord)&&Number.isFinite(tile.sphere.radius);
++  if(tile.tight)tile.box.expandByScalar(Math.max(1,Math.max(maxCoord,tile.sphere.radius)*1e-4));
++ }
+@@ -248 +296,15 @@
+- let valid=false,coordinateSystem,reversedDepth,disposed=false;
++ let valid=false,coordinateSystem,reversedDepth,lastTight,disposed=false;
++ // Source geometry is baked in world coordinates. The extra box test is used
++ // only for the usual unmoved stage and finite, bounded rigid cameras. Any
++ // custom transform or projection keeps the original sphere-only selection.
++ const canTighten=camera=>{
++  if(!tightBounds||!camera||!(camera.near>=.01)||!(camera.far<=10000)||!(camera.far>camera.near))return false;
++  const m=mesh.matrixWorld.elements;
++  for(let i=0;i<16;i++)if(m[i]!==((i%5===0)?1:0))return false;
++  if(!nativeKnownPlaneMath||frustum.intersectsSphere!==nativeFrustumSphere||frustum.intersectsBox!==nativeFrustumBox||
++    THREE.Frustum.prototype.intersectsSphere!==nativeFrustumSphere||THREE.Frustum.prototype.intersectsBox!==nativeFrustumBox||
++    THREE.Plane.prototype.distanceToPoint!==nativePlaneDistance||THREE.Vector3.prototype.dot!==nativeVectorDot)return false;
++  const v=camera.matrixWorldInverse.elements,w=camera.matrixWorld.elements,p=camera.projectionMatrix.elements;
++  for(let i=0;i<16;i++)if(!Number.isFinite(v[i])||!Number.isFinite(w[i])||!Number.isFinite(p[i])||Math.abs(p[i])>1000)return false;
++  return nativeRigidCameraMatrix(v)&&nativeRigidCameraMatrix(w);
++ };
+@@ -253 +315,2 @@
+-  let same=valid&&coordinateSystem===camera.coordinateSystem&&reversedDepth===camera.reversedDepth;
++  const tight=canTighten(camera);
++  let same=valid&&coordinateSystem===camera.coordinateSystem&&reversedDepth===camera.reversedDepth&&lastTight===tight;
+@@ -256 +319 @@
+-  last.set(e);valid=true;coordinateSystem=camera.coordinateSystem;reversedDepth=camera.reversedDepth;
++  last.set(e);valid=true;coordinateSystem=camera.coordinateSystem;reversedDepth=camera.reversedDepth;lastTight=tight;
+@@ -260 +323 @@
+-   const on=frustum.intersectsSphere(tiles[i].sphere)?1:0;
++   const tile=tiles[i],on=(tight&&tile.tight?nativeTightFrustumHit(frustum,tile):frustum.intersectsSphere(tile.sphere))?1:0;
+@@ -386 +449 @@
+-  const culler=!glass&&!alpha?yield* nativeDisplayCullingSteps(mesh):null;
++  const culler=!glass&&!alpha?yield* nativeDisplayCullingSteps(mesh,16,512,true):null;
