@@ -16,7 +16,8 @@ import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // approximations, not a claim of retail frame-for-frame equivalence.
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
-import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
+import { bombReleasePosition, bombPreviewPosition, bombPredictionPosition } from './bomb-motion.mjs';
+import { forecastSubRelease } from './sub-release-forecast.mjs';
 import { gearCurve } from './gear.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
@@ -26,6 +27,8 @@ import { spawnTorpedoSplashes, spawnFizzySplashes, stepTorpedoSplashes, clearTor
 import { coolerSegmentContact } from './support-cooler-collision.mjs';
 import {captureSubAttachment,syncSubAttachment,towerAttachmentFields,replayTowerAttachment} from './sub-surface-attachment.mjs';
 import {mineTowerPaintReference} from '../../network-replication/tower-paint-support.mjs';
+import { createThrowPrediction, appendThrowPredictionPoint, noteThrowPredictionImpact,
+  finishThrowPrediction, throwPredictionLimit, snapshotThrowCollisionSystem } from './throw-prediction-record.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
@@ -307,7 +310,7 @@ function canPlaceInkMine(projectiles,owner,level=null){
 }
 
 function emitEvent(api, object, phase, extra = {}) {
-  if (!object || object.ghost || !localOwner(object.owner)) return null;
+  if (!object || object.s3Prediction || object.ghost || !localOwner(object.owner)) return null;
   const p = object.pos;
   const payload = {
     v: 1, phase, subId: object.subId, seq: object.seq, eventSeq: nextSeq(object.owner),
@@ -522,6 +525,12 @@ function replaceVisual(api, object) {
 }
 function removeObject(api, projectiles, object, silent = false) {
   if (!object || object.dead) return false;
+  if (object.s3Prediction) {
+    object.dead = true;
+    const result = object.s3Prediction;
+    if (!result.complete) finishThrowPrediction(result, object.pos, result.time, 'no-contact', false);
+    return true;
+  }
   retireReceiverTorpedoObservation(object);
   object.dead = true;
   if(object.subId==='inkMine'){
@@ -561,6 +570,14 @@ function deploy(api, projectiles, object, pos, normal = null, blockId = null, vi
   if (finite3(pos)) object.pos.copy(pos);
   object.vel.set(0,0,0); object.phase = 'deployed';
   const spec = object.spec;
+  if (object.s3Prediction) {
+    // Keep the live placement's final centre offset without allocating a
+    // device, replacing another owner's placement, painting or broadcasting.
+    if (!['splashWall','inkMine','beakon'].includes(object.subId)) object.pos.y += .02;
+    if (normal?.clone) object.s3Prediction.normal = normal.clone();
+    finishThrowPrediction(object.s3Prediction, object.pos, object.s3Prediction.time, 'deploy');
+    return;
+  }
   const cap = spec.maxOwnerObjects || (object.subId === 'splashWall' ? 1 : 1);
   const siblings = ownerObjects(projectiles,object).sort((a,b) => b.age-a.age);
   while (object.subId!=='splashWall'&&siblings.length >= cap) {
@@ -668,6 +685,7 @@ function markSeconds(spec, owner, apOverride = null) {
 }
 
 function markAngleTarget(api,object,target){
+  if(object.s3Prediction)return;
   const life=ownerLife(target);
   if(object.ghost||object.seenMarks.get(target)===life)return;
   const frames=Math.round(markSeconds(object.spec,object.owner,object.subPowerAP)*60);
@@ -681,6 +699,7 @@ function markAngleTarget(api,object,target){
     targetId:target.nid,targetLife:life,frames,markAgeFrames,sourceTeam:object.team,actor:object.owner});
 }
 function appendAngleLine(api,projectiles,object,start,end){
+  if(object.s3Prediction)return;
   if(!object.lineSegments||object.lineSegments.length>=object.spec.flightFrames||start.distanceToSquared(end)<1e-10)return;
   object.lineSegments.push([start.clone(),end.clone()]);
   object._angleBounds=null;
@@ -721,6 +740,8 @@ function appendAngleLine(api,projectiles,object,start,end){
 function finishAngleFlight(api,object){
   object.phase='line';object.vel.set(0,0,0);
   object.lineEndsAtAge=object.age+frameSeconds(object.spec.tailFrames);
+  if(object.s3Prediction)finishThrowPrediction(object.s3Prediction,object.pos,object.s3Prediction.time,
+    object.s3Prediction.firstImpact?.kind==='actor'?'contact':'range-end');
   if(object.mesh)object.mesh.visible=false;
 }
 function updateAngleLine(api,projectiles,object,dt){
@@ -881,6 +902,16 @@ function blast(api, object, pos, burstIndex = 0) {
       splashPaintRadius: object.chasedTarget ? object.spec.splashPaintRadius : 0,
       splashDamage: object.chasedTarget ? object.spec.splashDamage : 0,
     } : object.spec;
+  if (object.s3Prediction) {
+    const result = object.s3Prediction;
+    result.explosions.push({ point: pos.clone(), time: result.time, index: burstIndex,
+      radius: sourceSpec.radius || sourceSpec.damageOuter || 0 });
+    result.radius = sourceSpec.radius || sourceSpec.damageOuter || 0;
+    appendThrowPredictionPoint(result, pos);
+    if (object.subId !== 'fizzy' || object.pops <= 0)
+      finishThrowPrediction(result, pos, result.time, 'explosion');
+    return;
+  }
   // Burst Bomb's Wiki-measured 25 direct hit is followed one frame later by
   // the ordinary 35/25 blast bands. Preserve both separately-timed events.
   const spec = object.subId === 'burst' ? { ...sourceSpec, directDamage: undefined } : sourceSpec;
@@ -1005,6 +1036,11 @@ function captureTorpedo(api,object,target){
   object.torpedoAim=target.pos.clone();object.torpedoAim.y+=.7;
   object.phase='torpedoRotate';object.chasedTarget=true;object.torpedoStageAge=0;
   object.vel.set(0,0,0);
+  if(object.s3Prediction){
+    object.s3Prediction.targetDependent=true;
+    finishThrowPrediction(object.s3Prediction,object.pos,object.s3Prediction.time,'target-dependent',false);
+    return;
+  }
   emitEvent(api,object,'torpedoLock');
   spawnTorpedoSplashes(api,api.G.projectiles,object,object.pos,'find');
 }
@@ -1514,7 +1550,17 @@ function updateFlight(api, projectiles, object, dt) {
     appendAngleLine(api,projectiles,object,object.prev,end);
   }
   if(defense&&defenseDistance<=Math.min(worldDistance,actorDistance)){
-    object.pos.copy(defense.point||object.pos);defense.onHit?.();
+    object.pos.copy(defense.point||object.pos);
+    if(object.s3Prediction){
+      noteThrowPredictionImpact(object.s3Prediction,object.pos,defense.normal,object.s3Prediction.time,defense.kind||'defense');
+      if(defense.object?.subId==='splashWall'&&defenseDamage>0&&['burst','autobomb','fizzy','torpedo'].includes(object.subId)){
+        if(object.vel.lengthSq()>0)object.pos.addScaledVector(object.vel.clone().normalize(),-.001);
+        blast(api,object,object.pos);
+        // Shield contact consumes a Fizzy immediately, including its unused
+        // charged hops, just as the live candidate's onHit handler does.
+        finishThrowPrediction(object.s3Prediction,object.pos,object.s3Prediction.time,'explosion');
+      }else finishThrowPrediction(object.s3Prediction,object.pos,object.s3Prediction.time,'intercepted');
+    }else defense.onHit?.();
     // A defense contact consumes the thrown object. Angle Shooter still bounces
     // from ordinary surfaces and actors below; a Vac, dome, or deployable shield
     // is an interception and must not let the same projectile continue next tick.
@@ -1523,18 +1569,19 @@ function updateFlight(api, projectiles, object, dt) {
   }
   if(actor&&actorDistance<worldDistance){
     object.pos.lerpVectors(object.prev,object.pos,actor.t);
+    if(object.s3Prediction)noteThrowPredictionImpact(object.s3Prediction,object.pos,null,object.s3Prediction.time,'actor');
     if(object.ghost){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
       if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
-      if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
+      if(amount>0&&!object.s3Prediction)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
       if(object.subId==='burst'){
         object.phase='burstWait';object.fuse=frameSeconds(spec.contactBurstDelayFrames);object.vel.set(0,0,0);
         return;
       }
       if(object.subId==='angleShooter'){
         markAngleTarget(api,object,actor.actor);
-        surfacePaint(api,object.owner,object.team,object.pos,spec.directPaintRadius,object.seed);
+        if(!object.s3Prediction)surfacePaint(api,object.owner,object.team,object.pos,spec.directPaintRadius,object.seed);
       }
     }
     if(DEPLOY_ON_ACTOR_CONTACT.includes(object.subId)){
@@ -1550,6 +1597,7 @@ function updateFlight(api, projectiles, object, dt) {
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){
+    if(object.s3Prediction)noteThrowPredictionImpact(object.s3Prediction,world.point,world.normal,object.s3Prediction.time,world.s3Tacticooler?'tacticooler':'world');
     object.pos.copy(world.point).addScaledVector(world.normal,world.s3Tacticooler?standRadius+.03:.03);
     // Replicas may mirror pure terrain flight (including Cooler reflection),
     // but deployments and detonations still wait for the owner's event.
@@ -1569,7 +1617,7 @@ function updateFlight(api, projectiles, object, dt) {
           .addScaledVector(normal,Math.sin(angle)*speed*speedRate);
       }else object.vel.addScaledVector(normal,-2*vn).multiplyScalar(speedRate);
       object.bounceCount++;
-      if(!object.ghost){
+      if(!object.ghost&&!object.s3Prediction){
         surfacePaint(api,object.owner,object.team,object.pos,spec.paintRadius,object.seed^object.bounceCount);
         emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});
       }
@@ -1896,6 +1944,76 @@ export function replaySub(api,event,report){
   return false;
 }
 
+// Fizzy's guide topology changes at effective charge boundaries, including
+// readiness/startup and the already queued shake credit. This key can be read
+// every rendered frame without stepping a trajectory or draining live charge.
+export function catalogueSubPredictionChargeKey(actor,options={}){
+  const id=options.id||options.kind||actor?.weapon?.sub;
+  if(id!=='fizzy')return null;
+  const spec=ALL_SUB_SPECS.fizzy;
+  const hold=forecastSubRelease(actor?.weaponRunner,{anticipateRelease:options.anticipateRelease,
+    queuedFrames:actor?.weaponRunner?.s3FizzyCharge?.queue,
+    queueFramesPerSecond:FIZZY_ACCEL.drainPerSecond}).hold;
+  const pops=hold>=frameSeconds(spec.chargeFrames[0]+spec.chargeFrames[1])?3
+    :hold>=frameSeconds(spec.chargeFrames[0])?2:1;
+  return `fizzy:${pops}`;
+}
+
+// Forecast on an unregistered record through the very same contact, rolling,
+// hop and fuse transitions used by live catalogue subs. The guarded terminal
+// handlers above record outcomes; they never paint, hit, mark, emit or allocate
+// a scene object. In particular a Fizzy preview includes every charged hop.
+export function predictCatalogueSub(api, projectiles, actor, options = {}) {
+  const id = options.id || options.kind || actor?.weapon?.sub;
+  const base = ALL_SUB_SPECS[id];
+  if (!base || id === 'sprinkler' || id === 'autobomb' || !finite3(actor?.pos)) return null;
+  const ap = actor.s3?.abilityPoints?.subPower || 0;
+  const spec = id === 'inkMine' ? { ...base,
+    radius: base.radius * gearCurve(ap, ...base.damageDistanceRate),
+    sensorRadius: gearCurve(ap, ...base.sensorRadiusTiers),
+  } : base;
+  const placed = id === 'inkMine' || id === 'beakon';
+  const pos = placed ? actor.pos.clone() : bombPredictionPosition(actor, actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
+  const velocity = placed ? new api.THREE.Vector3() : launchVelocity(api,projectiles,actor,spec);
+  const result = createThrowPrediction(id,pos,velocity,options);
+  result.radius = spec.radius || spec.damageOuter || spec.paintRadius || 0;
+  // Isolate both sweep scratch and attachment/collider refreshes from live
+  // objects, including reentrant prediction during an effect/physics callback.
+  const previewSystem = snapshotThrowCollisionSystem(projectiles);
+  previewSystem._s3SubHit = new api.Hit();
+  previewSystem._s3FizzyGroundHit = new api.Hit();
+  previewSystem._s3TorpedoGroundHit = new api.Hit();
+  if (placed) {
+    if(id==='inkMine')for(const object of previewSystem._s3SubObjects)
+      if(!object.dead&&object.owner===actor&&object.subId==='inkMine'&&object.phase==='deployed')syncObjectAttachment(api,object);
+    const admitted = id === 'inkMine' ? canPlaceInkMine(previewSystem,actor,api.G.level) : !!actor.grounded;
+    if (actor.ground?.normal?.clone) result.normal = actor.ground.normal.clone();
+    return finishThrowPrediction(result,pos,0,admitted?'deploy':'invalid-placement',admitted);
+  }
+  const hold = forecastSubRelease(actor.weaponRunner,{anticipateRelease:options.anticipateRelease,
+    queuedFrames:id==='fizzy'?actor.weaponRunner?.s3FizzyCharge?.queue:0,
+    queueFramesPerSecond:id==='fizzy'?FIZZY_ACCEL.drainPerSecond:0}).hold;
+  const popLimit = id === 'fizzy'
+    ? hold >= frameSeconds(spec.chargeFrames[0]+spec.chargeFrames[1]) ? 3
+      : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1 : 0;
+  const object = { subId:id,spec,owner:actor,team:actor.team,pos,prev:pos.clone(),vel:velocity.clone(),
+    phase:'flight',age:0,ghost:false,dead:false,seed:0,seq:0,sourceLife:ownerLife(actor),
+    subPowerAP:ap,yaw:actor.aimYaw||actor.yaw||0,charge:Math.min(1,hold/(spec.maxChargeTime||1)),
+    grounded:false,fuse:id==='fizzy'?frameSeconds(spec.firstGroundFuseFrames):0,
+    pops:popLimit,popLimit,bounceCount:0,pulse:.15,s3Prediction:result,
+    lineSegments:id==='angleShooter'?[]:null,seenMarks:null,seenToxic:null };
+  const limit = throwPredictionLimit(options), steps = Math.ceil(limit / STEP);
+  for (let frame=0;frame<steps;frame++) {
+    result.time=(frame+1)*STEP;
+    updateFlight(api,previewSystem,object,STEP);
+    appendThrowPredictionPoint(result,object.pos);
+    if(object.dead||result.complete||result.targetDependent)break;
+  }
+  if(!result.complete&&!result.targetDependent)
+    finishThrowPrediction(result,object.pos,result.time,'no-contact',false);
+  return result;
+}
+
 function registerSpecs(api,profile){
   const {SUB}=api;
   for(const [id,base] of Object.entries(ALL_SUB_SPECS)){
@@ -1947,6 +2065,14 @@ export function installAllSubs(api,profile={}){
     const result=nativeBombExplode.call(this,bomb,...args);
     damageNativeBombObjects(api,this,bomb);
     return result;
+  };
+  const priorPrediction=Projectiles.prototype.s3PredictSubTrajectory;
+  Projectiles.prototype.s3PredictSubTrajectory=function(actor,options={}){
+    return predictCatalogueSub(api,this,actor,options) || priorPrediction?.call(this,actor,options) || null;
+  };
+  const priorChargeKey=Projectiles.prototype.s3SubPredictionChargeKey;
+  Projectiles.prototype.s3SubPredictionChargeKey=function(actor,options={}){
+    return catalogueSubPredictionChargeKey(actor,options)??priorChargeKey?.call(this,actor,options)??null;
   };
   const nativeThrow=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...args){
@@ -2141,3 +2267,4 @@ export function installAllSubs(api,profile={}){
 }
 
 export default installAllSubs;
+
