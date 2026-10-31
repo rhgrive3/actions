@@ -6,6 +6,8 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/fx-shader-stability-adapter.mjs',
   'patches/local-quality/ordered-shader-smoothstep.mjs',
   'patches/local-quality/menu-card-layout-adapter.mjs',
+  'patches/local-quality/title-demo-budget-adapter.mjs',
+  'patches/local-quality/title-presentation-adapter.mjs',
   'patches/local-quality/pause-modal-lifetime-adapter.mjs',
   'patches/local-quality/online-async-entry-adapter.mjs',
   'patches/local-quality/landscape-practice-weapons-adapter.mjs',
