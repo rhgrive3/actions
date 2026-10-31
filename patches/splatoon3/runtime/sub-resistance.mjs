@@ -98,7 +98,13 @@ export function installObjectDamageCause({NetMatch,Projectiles}) {
   const step=Projectiles?.prototype?._step,apply=Projectiles?.prototype?.applyHit;
   if(step)Projectiles.prototype._step=function(p,...args){
     if(p?.s3SpecialWeapon||p?.s3AllSpecial||p?.s3Sub||p?.wid!==p?.owner?.weapon?.id)return step.call(this,p,...args);
-    return withObjectDamageCause(p,()=>step.call(this,p,...args));
+    // The native step already has its invocation arguments. Keep the exact
+    // cause lifetime here without allocating a callback on every fixed tick.
+    const cause=catalogueAttackRow(p),owner=p?.owner&&typeof p.owner==='object'?p.owner:p;
+    if(!owner||!cause)return step.call(this,p,...args);
+    const previous=owner._s3AllSpecialDamageCause;owner._s3AllSpecialDamageCause=cause;
+    try{return step.call(this,p,...args);}
+    finally{if(previous===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previous;}
   };
   if(apply)Projectiles.prototype.applyHit=function(attacker,victim,amount,weapon,...args){
     if(weapon==='roller'&&attacker?.weaponRunner?.rolling&&!attacker._s3AllSpecialDamageCause)

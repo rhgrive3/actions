@@ -178,8 +178,11 @@ export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALK
   const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
   const shape = w?.releaseFootPaint?.[mode];
   if (!shape || a.remote || a.alive === false || w.kind !== 'roller' || !G.paint?.splat || !G.physics?.groundProbe) return 0;
-  const forwardX = Math.sin(a.yaw), forwardZ = Math.cos(a.yaw);
-  const rightX = Math.cos(a.yaw), rightZ = -Math.sin(a.yaw);
+  const forwardYaw=a.yaw, forwardX = Math.sin(forwardYaw), sideYaw=a.yaw, forwardZ = Math.cos(sideYaw);
+  // Keep all four Actor reads in order. Dynamic accessors retain their
+  // separate values; the normal equal-yaw path shares both trig results.
+  const rightYaw=a.yaw, rightX = Object.is(rightYaw,sideYaw)?forwardZ:Math.cos(rightYaw);
+  const backYaw=a.yaw, rightZ = -(Object.is(backYaw,forwardYaw)?forwardX:Math.sin(backYaw));
   const x = a.pos.x + rightX * shape.offset.x + forwardX * shape.offset.z;
   const z = a.pos.z + rightZ * shape.offset.x + forwardZ * shape.offset.z;
   let lease=footPaintFrames.get(system);
