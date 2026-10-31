@@ -86,10 +86,21 @@ for (const id of ['tidewater', 'kelpline']) {
 }
 test('material textures are shared by live stages and are released once after last dispose', () => {
   const scene = new THREE.Scene(), a = createMap3Art(scene, { layout: MAP3_LAYOUTS.tidewater }), b = createMap3Art(scene, { layout: MAP3_LAYOUTS.kelpline });
-  const texture = a.group.children.find(m => m.material.map?.name === 'map3-stone-micrograin').material.map;
-  assert.equal(texture, b.group.children.find(m => m.material.map?.name === texture.name).material.map);
-  let disposed = 0; texture.addEventListener('dispose', () => disposed++);
-  a.dispose(); assert.equal(disposed, 0); b.dispose(); assert.equal(disposed, 1);
+  const textures = new Map(a.group.children.filter(m => m.material.map).map(m => [m.material.map.name, m.material.map]));
+  assert.ok(textures.has('map3-shared-print-atlas'), 'both stage owners must share the print artwork');
+  const disposals = new Map();
+  for (const [name, texture] of textures) {
+    assert.equal(texture, b.group.children.find(m => m.material.map?.name === name).material.map);
+    disposals.set(texture, 0); texture.addEventListener('dispose', () => disposals.set(texture, disposals.get(texture) + 1));
+  }
+  a.dispose(); for (const count of disposals.values()) assert.equal(count, 0);
+  b.dispose(); for (const count of disposals.values()) assert.equal(count, 1);
+  a.dispose(); b.dispose(); for (const count of disposals.values()) assert.equal(count, 1);
+  const rebuilt = createMap3Art(scene, { layout: MAP3_LAYOUTS.tidewater });
+  const next = rebuilt.group.children.find(m => m.material.map?.name === 'map3-shared-print-atlas').material.map;
+  assert.notEqual(next, textures.get('map3-shared-print-atlas'), 're-entering after disposal rebuilds a live atlas');
+  assert.equal(next.image.width, 512); assert.equal(next.image.height, 512);
+  assert.equal(next.image.data.length, 512 * 512 * 4); rebuilt.dispose();
 });
 test('unrelated stages receive neither colliders nor a visual root', () => {
   const scene = new THREE.Scene(); assert.equal(createMap3Art(scene, { layout: { id: 'halyard' } }), null);

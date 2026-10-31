@@ -5,6 +5,9 @@
 // joinery, fascias and hardware belong here. See art-direction.md for envelopes.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createMap3SignAtlas, MAP3_SIGN_TILES } from './map3-sign-atlas.js';
+import { dressTidewaterLife } from './map3-tidewater-life.js';
+import { dressKelplineLife } from './map3-kelpline-life.js';
 
 const TAU = Math.PI * 2;
 export const MAP3_ART_SKIN_EPSILON = 0.035;
@@ -34,6 +37,7 @@ function acquireTextures() {
       t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
       textures[kind] = t;
     }
+    textures.signage = createMap3SignAtlas();
   }
   textureUsers++; return textures;
 }
@@ -43,6 +47,7 @@ function releaseTextures() {
 
 const box = new THREE.BoxGeometry(1, 1, 1);
 const cylinder = new THREE.CylinderGeometry(1, 1, 1, 12);
+const leafCluster = new THREE.SphereGeometry(1, 6, 4);
 const unitY = new THREE.Vector3(0, 1, 0);
 const matrix = new THREE.Matrix4(), quaternion = new THREE.Quaternion(), vector = new THREE.Vector3(), scale = new THREE.Vector3();
 
@@ -68,6 +73,15 @@ class ArtBuilder {
   }
   box(mat, col, x, y, z, w, h, d, ry = 0) { this.add(mat, box, col, [x, y, z], [w, h, d], [0, ry, 0]); }
   cylinder(mat, col, x, y, z, radius, height, rotation = null) { this.add(mat, cylinder, col, [x, y, z], [radius, height, radius], rotation); }
+  decal(tile, position, width, height, rotation = [0, 0, 0]) {
+    const r = MAP3_SIGN_TILES[tile];
+    if (!r) throw new Error(`Unknown MAP3 print tile: ${tile}`);
+    const g = new THREE.PlaneGeometry(width, height), uv = g.attributes.uv;
+    // DataTexture rows are stored top first. Keep each face inside the tile's
+    // quiet outer border, including when minified and sampled with mipmaps.
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, (r.x + 2 + uv.getX(i) * (r.w - 4)) / 512, (r.y + 2 + (1 - uv.getY(i)) * (r.h - 4)) / 512);
+    this.add('signage', g, '#ffffff', position, [1, 1, 1], rotation); g.dispose();
+  }
   beam(mat, col, a, b, width = 0.12, depth = width) {
     const axis = new THREE.Vector3().fromArray(b).sub(vector.fromArray(a)), length = axis.length();
     if (length < 1e-5) return;
@@ -440,6 +454,7 @@ export function createMap3Art(scene, level, { castShadow = true } = {}) {
     canopy: new THREE.MeshStandardMaterial({ ...base, map: tex.stone, side: THREE.DoubleSide, roughness: 0.64 }),
     glass: new THREE.MeshStandardMaterial({ ...base, side: THREE.DoubleSide, roughness: 0.38, transparent: true, opacity: 0.73, depthWrite: false }),
     glow: new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true }),
+    signage: new THREE.MeshStandardMaterial({ ...base, map: tex.signage, roughness: 0.86 }),
   };
   try {
     stage.floors.forEach(f => floorArt(b, f));
@@ -447,6 +462,7 @@ export function createMap3Art(scene, level, { castShadow = true } = {}) {
     assemblyArt(b, level.layout);
     stage.obstacles.forEach((o, i) => stage.id === 'tidewater' ? tidewaterCover(b, o, i) : kelplineCover(b, o, i));
     if (stage.id === 'tidewater') tidewaterExterior(b); else kelplineExterior(b);
+    if (stage.id === 'tidewater') dressTidewaterLife(b, level.layout); else dressKelplineLife(b, level.layout);
     b.finish(group, materials, castShadow); scene.add(group);
   } catch (error) {
     for (const parts of b.buckets.values()) parts.forEach(g => g.dispose());
@@ -482,12 +498,13 @@ export function map3ArtAssemblies(layout) {
       a.parts.push({ kind, center, size, min, max, color, ...extra });
     };
     if (family === 'vendor' || family === 'terminal-kiosk') {
+      const fabricColor = /market_screen/.test(o.id) ? '#b6634a' : /civic_screen/.test(o.id) ? '#6d9480' : '#c0a163';
       const rise = Math.min(w * 0.18, 0.85), lift = family === 'vendor' ? 0.85 : 1.15, count = 8, width = w - 0.18, depth = d - 0.16;
       for (let i = 0; i < count; i++) {
         const left = x - width / 2 + i * width / count, right = left + width / count;
         const yl = y + lift + Math.sin(i / count * Math.PI) * rise, yr = y + lift + Math.sin((i + 1) / count * Math.PI) * rise;
         const height = Math.abs(yr - yl) + 0.16;
-        part('roof-strip', [(left + right) / 2, (yl + yr) / 2, z], [right - left + 0.065, height, depth], family === 'vendor' ? i % 2 ? p.stone : p.warm : p.glass, { left, right, yl, yr, clear: family === 'terminal-kiosk' });
+        part('roof-strip', [(left + right) / 2, (yl + yr) / 2, z], [right - left + 0.065, height, depth], family === 'vendor' ? i % 2 ? p.stone : fabricColor : p.glass, { left, right, yl, yr, clear: family === 'terminal-kiosk' });
       }
       for (const xx of [x0 + 0.18, x1 - 0.18]) for (const zz of [z0 + 0.18, z1 - 0.18]) part('post', [xx, y + lift / 2, zz], [0.17, lift + 0.05, 0.17], p.dark);
       part('sign', [x, y + lift * 0.62, teamSign > 0 ? z1 - 0.08 : z0 + 0.08], [Math.max(0.5, w - 0.58), 0.42, 0.12], p.accent, { front: teamSign });
@@ -541,9 +558,18 @@ function assemblyArt(b, layout) {
         } else if (p.kind === 'post') b.cylinder('metal', p.color, x, y, z, w / 2, h);
         else if (p.kind === 'arch-rod') b.beam('metal', p.color, p.a0, p.a1, p.radius * 1.5, p.radius * 1.5);
         else if (p.kind === 'foliage') {
-          for (let i = 0; i < 8; i++) {
-            const g = new THREE.SphereGeometry(1, 7, 5), xx = x - w * 0.41 + i * w * 0.117;
-            b.add('foliage', g, i % 2 ? palette.leaf : '#9da773', [xx, y + Math.sin(i * 2) * 0.035, z], [w * 0.10, h * 0.40, d * 0.46]); g.dispose();
+          // Layered, oblique leaves replace the evenly spaced bead-like balls.
+          // Every stem/leaf remains inside the existing non-inkable crown.
+          for (let i = 0; i < 7; i++) {
+            const xx = x + (i / 6 - 0.5) * w * 0.78;
+            const yy = p.min[1] + h * (0.51 + (i % 3) * 0.04);
+            b.beam('foliage', '#536d49', [xx, p.min[1] + 0.025, z], [xx, yy, z], 0.028);
+            for (let k = 0; k < 3; k++) {
+              const a = i * 1.7 + k * 2.1, r = Math.min(w * 0.048, d * 0.24);
+              b.add('foliage', leafCluster, ['#698457', '#88996b', '#a6ad7d'][(i + k) % 3],
+                [xx + Math.cos(a) * r * 0.25, yy, z + Math.sin(a) * d * 0.10],
+                [r, h * 0.30, d * 0.16], [0, a, 0.28 * Math.sin(a)]);
+            }
           }
         } else if (p.kind === 'fan') {
           b.cylinder('metal', palette.dark, x, p.min[1] + 0.08, z, w / 2, 0.16);

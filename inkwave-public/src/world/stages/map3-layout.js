@@ -22,8 +22,21 @@ function floorStyle(stage, floor) {
   if (floor.material === 'grate') return { color: p.grate, pattern: PATTERN.grate, grate: true };
   if (floor.id.endsWith('_spawn')) return { color: '#ebe5d5', pattern: PATTERN.spawn };
   const color = p.floor[Math.round(floor.y / 1.2)] || p.floor[0];
-  if (stage.id === 'kelpline') return { color, pattern: /cargo|service|quay/.test(floor.id) ? PATTERN.yard : PATTERN.concrete };
-  return { color, pattern: /market/.test(floor.id) ? PATTERN.planks : floor.y === 0 ? PATTERN.concrete : PATTERN.pavers };
+  // Material follows the place's use, not only its height. These are the
+  // existing ink-aware texlib layers: no coplanar overlays hide painted turf.
+  if (stage.id === 'kelpline') {
+    if (/cargo/.test(floor.id)) return { color: '#aaada2', pattern: PATTERN.yard };
+    if (/service|recovery_foot/.test(floor.id)) return { color: '#a5b3ad', pattern: PATTERN.asphalt };
+    if (/quay|outer_foot|ferry/.test(floor.id)) return { color: '#d1c9b4', pattern: PATTERN.concrete };
+    if (/gantry|high_neck|outer_top/.test(floor.id)) return { color: '#b4c4bd', pattern: PATTERN.nonslip };
+    if (/boarding|central_/.test(floor.id)) return { color: '#c4d2c6', pattern: PATTERN.concrete };
+    return { color: '#dfd4b9', pattern: PATTERN.tiles };
+  }
+  if (/market/.test(floor.id)) return { color, pattern: PATTERN.planks };
+  if (/low_|underpass|central_arm/.test(floor.id)) return { color: '#b0b8ad', pattern: PATTERN.concrete };
+  if (/arrival|civic|lower_court|belvedere/.test(floor.id)) return { color: '#dfdcc7', pattern: PATTERN.tiles };
+  if (/west_terrace/.test(floor.id)) return { color: '#cfb293', pattern: PATTERN.pavers };
+  return { color: '#d7cbb4', pattern: PATTERN.pavers };
 }
 
 function rampDefinition(stage, ramp) {

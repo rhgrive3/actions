@@ -60,7 +60,14 @@ const report = {
 };
 for (const id of ['tidewater', 'kelpline']) {
   const layout = MAP3_LAYOUTS[id], art = createMap3Art(new THREE.Scene(), { layout });
-  const regions = clone(art.group.userData.map3Art.records), byId = new Map(regions.map(r => [r.id, r]));
+  const regions = clone(art.group.userData.map3Art.records), byId = new Map();
+  // A fitted print and its existing board may share the same collider id.
+  // Report the full rendered assembly, not just the last decorative scope.
+  for (const region of regions) {
+    const previous = byId.get(region.id);
+    byId.set(region.id, previous ? { ...region, ...union([previous, region]), parts: previous.parts + region.parts,
+      styles: [...previous.styles, ...region.styles] } : region);
+  }
   const colliders = map3ArtColliders(layout).map(c => ({
     id: c.map3ArtSupport, owner: c.map3ArtOwner || `${c.map3ArtSupport[0]}_market_hall`, family: c.map3ArtKind || 'market-pier',
     definition: clone(c), flags: { solid: true, paint: false, hidden: true, roof: !!c.roof, rail: !!c.rail, grate: !!c.rail, obox: !!c.obox, perch: false },
