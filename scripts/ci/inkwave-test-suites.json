@@ -149,6 +149,22 @@
       {
         "program": "node",
         "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-marina-hull-band-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-marina-grid-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
           "--test",
           "patches/local-quality/tests/queue-swim-film-20261031.test.mjs"
         ]

@@ -2,6 +2,9 @@ name: INKWAVE alpha volume geometry and game rendering
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/fx/fx.js'
+      - 'inkwave-public/src/main.js'
+      - 'inkwave-public/src/game/weapons.js'
       - 'scripts/build-inkwave.mjs'
       - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/prepare-inkwave-ci-apt.py'

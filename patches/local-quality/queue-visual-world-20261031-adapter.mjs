@@ -106,8 +106,26 @@ export function adaptQueueVisualWorld20261031(rel, code) {
     replace(' _vertex(x,y,z,nx,ny,nz,r,g,b){', ` _reserveVertices(required){if(required*3<=this.p.length)return;const cap=required*3,used=this._vc*3;for(const key of ['p','n','c']){const a=new this[key].constructor(cap);a.set(this[key].subarray(0,used));this[key]=a;}}
  _vertex(x,y,z,nx,ny,nz,r,g,b){`, 'reserve known marina surface capacity');
     replace('const ni = rows.length, nj = rows[0].length, ids = [];', 'const ni = rows.length, nj = rows[0].length, ids = [];\n    mb._reserveVertices(mb._vc + ni * nj);', 'reserve before grid append');
+    code = scoped(code, '  function gridSurface(', '\n  // Flat polygon', part => {
+      // This private helper is called only for the local dense MB, and every
+      // caller discards its result. Tests pin both contracts and emitted bytes.
+      part = once(part, 'const ni = rows.length, nj = rows[0].length, ids = [];', 'const ni = rows.length, nj = rows[0].length, base = mb._vc;', 'grid dense vertex base');
+      part = once(part, 'mb._reserveVertices(mb._vc + ni * nj);', 'mb._reserveVertices(base + ni * nj);', 'retain grid capacity reservation');
+      part = once(part, '      const row = [];\n', '', 'omit grid ID row');
+      part = once(part, 'row.push(mb.v(p[0], p[1], p[2], nx, ny, nz, colorFn ? colorFn(p[0], p[1], p[2], i, j) : null));', 'mb.v(p[0], p[1], p[2], nx, ny, nz, colorFn ? colorFn(p[0], p[1], p[2], i, j) : null);', 'retain grid vertex order');
+      part = once(part, '      ids.push(row);\n', '', 'omit grid ID matrix');
+      part = once(part, '    for (let i = 0; i < ni - 1; i++) for (let j = 0; j < nq; j++) mb.quad(ids[i][j], ids[i + 1][j], ids[i + 1][(j + 1) % nj], ids[i][(j + 1) % nj]);', `    for (let i = 0; i < ni - 1; i++) {
+      const a = base + i * nj, b = a + nj;
+      for (let j = 0; j < nq; j++) { const k = (j + 1) % nj; mb.quad(a + j, b + j, b + k, a + k); }
+    }`, 'derive dense grid indices');
+      return once(part, '    return ids;\n', '', 'omit unused grid return');
+    });
     replace('const t = (k + 0.5) / 4.4, p = ropePts(hy0, hy1, 0.04, 40)[Math.round(t * 40)];', 'const t = (k + 0.5) / 4.4, p = pennantPoints[Math.round(t * 40)];', 'reuse pennant samples');
     replace("const pc = [C.teal, C.mustard, C.coral, C.navy];", "const pc = [C.teal, C.mustard, C.coral, C.navy];\n      const pennantPoints = ropePts(hy0, hy1, 0.04, 40);", 'one pennant sampling pass');
+    code = scoped(code, '  function makeHull(sp) {', '\n  function hullOf(', part => {
+      part = once(part, '        const row = [];\n        for (const side of [-1, 1]) {', '        const row = [], s0 = yAt(t, a0), s1 = yAt(t, a1);\n        for (const side of [-1, 1]) {', 'hull band shares side-independent height bisection');
+      return once(part, 'const pa = at(t, yAt(t, a0), side), pb = at(t, yAt(t, a1), side);', 'const pa = at(t, s0, side), pb = at(t, s1, side);', 'hull band retains ordered side vertices');
+    });
   }
   if (rel === 'src/world/props-core.js') {
     code = scoped(code, 'function* mergePartSteps(parts, withUV=true) {', '\nconst triCountOf', part => {
