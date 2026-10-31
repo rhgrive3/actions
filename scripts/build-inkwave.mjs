@@ -709,7 +709,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-lightmap-index.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs', 'lib/inkwave-account-bundle.mjs', 'lib/inkwave-client-csp.mjs', 'lib/inkwave-network-source-coverage.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-lightmap-index.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs', 'lib/inkwave-account-bundle.mjs', 'lib/inkwave-client-csp.mjs', 'lib/inkwave-browser-policy.mjs', 'lib/inkwave-network-source-coverage.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files['native-stages/' + file] = hash;
