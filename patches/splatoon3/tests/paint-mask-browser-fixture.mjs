@@ -598,6 +598,35 @@ function unmergedOwnerRuns(face, orderId, u0, u1, v0, v1) {
     return runCount;
   };
 
+// Geometry may merge only within the same ordered draw phase. Keep the tick
+// and every shader/splat parameter exact, and compare rectangle coverage with
+// integer signed-corner events. This detects overlaps as well as missing area,
+// without accepting a pixel tolerance or changing the GPU byte assertion.
+function checkOwnedRunCoverage(before,after){
+ const phases=draws=>{
+  const result=[];let current;
+  for(const draw of draws){
+   const key=JSON.stringify([draw.tick,...draw.values.slice(4)]);
+   if(!current||current.key!==key){current={key,rectangles:[]};result.push(current);}
+   current.rectangles.push(draw.values);
+  }
+  return result;
+ };
+ const original=phases(before),merged=phases(after);
+ check(original.length===merged.length,'run scan changed ordered draw phase count');
+ for(let i=0;i<original.length;i++){
+  check(original[i].key===merged[i].key,'run scan changed ordered draw parameters');
+  check(merged[i].rectangles.length<=original[i].rectangles.length,'run scan increased draw phase rectangles');
+  const corners=new Map(),corner=(x,y,delta)=>{let column=corners.get(x);if(!column)corners.set(x,column=new Map());column.set(y,(column.get(y)||0)+delta);};
+  const add=(rectangles,sign)=>{for(const [x0,x1,y0,y1]of rectangles){
+   check(Number.isFinite(x0)&&Number.isFinite(x1)&&Number.isFinite(y0)&&Number.isFinite(y1)&&x1>x0&&y1>y0,'run scan emitted an invalid rectangle');
+   corner(x0,y0,sign);corner(x1,y0,-sign);corner(x0,y1,-sign);corner(x1,y1,sign);
+  }};
+  add(original[i].rectangles,1);add(merged[i].rectangles,-1);
+  for(const column of corners.values())for(const delta of column.values())check(delta===0,'run scan changed exact draw coverage');
+ }
+}
+
 function ownedRunScanRows() {
   const rows=[],renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(32,32);
   try {
@@ -626,7 +655,9 @@ function ownedRunScanRows() {
         const encode=bytes=>{let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw);};
         globalThis.paintMaskDiagnostic={wall,seed,mismatch,maxDifference,alphaMismatch,solidAlphaChanges,channelMismatches,examples,beforeQuads:before.quads,afterQuads:after.quads,beforeDrawRectangles:before.drawRectangles,afterDrawRectangles:after.drawRectangles,pixels:{width:512,height:512,format:'RGBA8',before:encode(before.pixels),after:encode(after.pixels)}};
       }
-      check(mismatch===0,'run scan changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));check(after.quads===before.quads,'run scan changed native submissions');check(JSON.stringify(after.drawRectangles)===JSON.stringify(before.drawRectangles),'run scan changed exact ordered quad inputs');
+      check(mismatch===0,'run scan changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));
+      check(after.quads<=before.quads,'run scan increased native submissions');
+      checkOwnedRunCoverage(before.drawRectangles,after.drawRectangles);
       rows.push({wall,seed,beforeQuads:before.quads,afterQuads:after.quads,mismatch});
     }
   } finally {renderer.dispose();}

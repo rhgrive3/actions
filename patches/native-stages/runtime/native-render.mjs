@@ -177,16 +177,29 @@ function releaseArray(){this.array=null;}
 export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  const g=mesh.geometry,p=g.getAttribute('position'),source=g.index?.array;
  if(!source||source.length<minTriangles*3||!Number.isFinite(tileSize)||tileSize<=0)return null;
- const tiles=[],byKey=new Map(),ids=new Uint32Array(source.length/3),point=new THREE.Vector3();
+ const tiles=[],byKey=new Map(),ids=new Uint32Array(source.length/3);
+ // Bypass virtual attribute reads only for ordinary, non-normalized arrays.
+ // Half-float, normalized integer and custom accessors retain Three's decoding.
+ const proto=p.isInterleavedBufferAttribute?THREE.InterleavedBufferAttribute.prototype:THREE.BufferAttribute.prototype;
+ const direct=!p.normalized&&!p.isFloat16BufferAttribute&&ArrayBuffer.isView(p.array)&&
+  p.getX===proto.getX&&p.getY===proto.getY&&p.getZ===proto.getZ;
+ const array=direct?p.array:null,stride=p.isInterleavedBufferAttribute?p.data.stride:p.itemSize,offset=p.isInterleavedBufferAttribute?p.offset:0;
  for(let t=0;t<ids.length;t++){
-  const at=t*3,a=source[at],b=source[at+1],c=source[at+2];
-  const x=(p.getX(a)+p.getX(b)+p.getX(c))/3,y=(p.getY(a)+p.getY(b)+p.getY(c))/3,z=(p.getZ(a)+p.getZ(b)+p.getZ(c))/3;
-  const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
+  const at=t*3,a=source[at],b=source[at+1],c=source[at+2],ia=a*stride+offset,ib=b*stride+offset,ic=c*stride+offset;
+  const ax=direct?array[ia]:p.getX(a),ay=direct?array[ia+1]:p.getY(a),az=direct?array[ia+2]:p.getZ(a);
+  const bx=direct?array[ib]:p.getX(b),by=direct?array[ib+1]:p.getY(b),bz=direct?array[ib+2]:p.getZ(b);
+  const cx=direct?array[ic]:p.getX(c),cy=direct?array[ic+1]:p.getY(c),cz=direct?array[ic+2]:p.getZ(c);
+  // Keep the original division order at tile boundaries; reciprocal products
+  // can move a centroid by one ULP and alter the selected tile.
+  const tx=Math.floor(((ax+bx+cx)/3)/tileSize),ty=Math.floor(((ay+by+cy)/3)/tileSize),tz=Math.floor(((az+bz+cz)/3)/tileSize);
+  const key=tx>=-512&&tx<512&&ty>=-512&&ty<512&&tz>=-512&&tz<512
+   ?(tx+512)|((ty+512)<<10)|((tz+512)<<20):tx+','+ty+','+tz;
   let id=byKey.get(key);
   if(id===undefined){id=tiles.length;byKey.set(key,id);tiles.push({box:new THREE.Box3()});}
   ids[t]=id;
-  const box=tiles[id].box;
-  box.expandByPoint(point.fromBufferAttribute(p,a));box.expandByPoint(point.fromBufferAttribute(p,b));box.expandByPoint(point.fromBufferAttribute(p,c));
+  const {min,max}=tiles[id].box;
+  min.x=Math.min(min.x,ax,bx,cx);min.y=Math.min(min.y,ay,by,cy);min.z=Math.min(min.z,az,bz,cz);
+  max.x=Math.max(max.x,ax,bx,cx);max.y=Math.max(max.y,ay,by,cy);max.z=Math.max(max.z,az,bz,cz);
  }
  // Small/local objects already have the renderer's per-object culling.
  if(tiles.length<2)return null;
@@ -208,7 +221,7 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  const index=new THREE.BufferAttribute(source.slice(),1).setUsage(THREE.DynamicDrawUsage);
  g.setIndex(index);
  const view=new THREE.Matrix4(),frustum=new THREE.Frustum(),last=new Float64Array(16),visible=new Uint8Array(tiles.length).fill(1);
- const upload={start:0,count:0};
+ const upload={start:0,count:0},previousVisible=visible.slice();
  let valid=false,coordinateSystem,reversedDepth,disposed=false;
  const select=camera=>{
   if(disposed)return;
@@ -227,26 +240,35 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
   }
   if(!changed)return;
   const target=index.array;
-  let count=0,dirtyStart=Infinity;
+  let count=0,dirtyStart=Infinity,dirtyEnd=0;
   if(runs){
-   // Different tiles can still occupy one contiguous visible source span.
-   // Merge those neighbouring runs before copying: the index order and
-   // unchanged-prefix comparison stay identical, without a subarray per tile.
-   let spanStart=-1,spanEnd=0;
+   // An unchanged run prefix already has the same packed source order. Skip
+   // whole runs without reading their indices, then coalesce the changed tail.
+   let spanStart=-1,spanEnd=0,prefixIntact=true;
    for(let r=0;r<=runs.tiles.length;r++){
-    if(r<runs.tiles.length&&visible[runs.tiles[r]]){
-     if(spanStart<0)spanStart=runs.starts[r];
-     spanEnd=runs.ends[r];continue;
+    if(r<runs.tiles.length){
+     const tile=runs.tiles[r],on=visible[tile];
+     if(prefixIntact&&on===previousVisible[tile]){
+      if(on)count+=runs.ends[r]-runs.starts[r];
+      continue;
+     }
+     prefixIntact=false;
+     if(on){if(spanStart<0)spanStart=runs.starts[r];spanEnd=runs.ends[r];continue;}
     }
     if(spanStart<0)continue;
     let start=spanStart,end=spanEnd;spanStart=-1;
-    // Only the unchanged prefix can narrow the pending upload. Once a value
-    // differs the full remaining selected tail is uploaded either way.
     if(dirtyStart===Infinity){
      while(start<end&&target[count]===source[start]){start++;count++;}
      if(start<end)dirtyStart=count;
     }
-    if(start<end){target.set(source.subarray(start,end),count);count+=end-start;}
+    if(start<end){
+     // Preserve the unchanged suffix as well. Pending writes from another
+     // camera are still merged below, including currently hidden tails.
+     let changedEnd=end;
+     while(changedEnd>start&&target[count+changedEnd-start-1]===source[changedEnd-1])changedEnd--;
+     if(changedEnd>start){target.set(source.subarray(start,changedEnd),count);dirtyEnd=count+changedEnd-start;}
+     count+=end-start;
+    }
    }
   }else{
    for(let t=0;t<tileOf.length;t++){
@@ -254,16 +276,17 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
     const at=t*3;
     for(let k=0;k<3;k++){
      const value=source[at+k];
-     if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);target[count]=value;}
+     if(target[count]!==value){dirtyStart=Math.min(dirtyStart,count);dirtyEnd=count+1;target[count]=value;}
      count++;
     }
    }
   }
+  previousVisible.set(visible);
   g.setDrawRange(0,count);
-  if(dirtyStart<count){
+  if(dirtyStart<dirtyEnd){
    // A later camera (e.g. a water reflection) may change the selection before
    // an upload. Preserve all pending writes until WebGL consumes the buffer.
-   let start=dirtyStart,end=count;
+   let start=dirtyStart,end=dirtyEnd;
    for(const range of index.updateRanges){start=Math.min(start,range.start);end=Math.max(end,range.start+range.count);}
    upload.start=start;upload.count=end-start;
    index.clearUpdateRanges();index.updateRanges.push(upload);index.needsUpdate=true;

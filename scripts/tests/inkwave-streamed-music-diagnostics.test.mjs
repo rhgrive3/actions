@@ -332,12 +332,13 @@ test('snapshot cap is explicit and close failures keep their original rejection'
  f.context.close=async()=>{throw Error('close failed');};await assert.rejects(f.observer.close(),/close failed/);assert.ok(f.receipt.closeStartedAt);assert.ok(f.receipt.closeFinishedAt);
 });
 
-test('both harnesses explicitly resolve their actual game global and report missing bindings',async()=>{
- for(const ownerGlobal of ['__G','s3ProbeG']) {
-  const f=await fixture({ownerGlobal});if(ownerGlobal==='s3ProbeG'){f.window.s3ProbeG=f.window.__G;delete f.window.__G;}
+test('all supported harnesses explicitly resolve their actual game global and report missing bindings',async()=>{
+ for(const ownerGlobal of ['__G','s3ProbeG','RG']) {
+  const f=await fixture({ownerGlobal});if(ownerGlobal!=='__G'){f.window[ownerGlobal]=f.window.__G;delete f.window.__G;}
   await f.observer.snapshot('bound');assert.equal(f.receipt.snapshots[0].state.ownerGlobal,ownerGlobal);assert.equal(f.receipt.snapshots[0].state.ownerPresent,true);assert.equal(f.receipt.snapshots[0].state.musicPresent,true);assert.equal(f.receipt.snapshots[0].state.current.element.currentTime,1);
   delete f.window[ownerGlobal];await f.observer.snapshot('unbound');assert.equal(f.receipt.snapshots[1].state.ownerPresent,false);assert.equal(f.receipt.snapshots[1].state.musicPresent,false);
  }
+ for(const ownerGlobal of ['', 'G', '__proto__', 'constructor']) await assert.rejects(fixture({ownerGlobal}),/Explicit supported game owner required/);
 });
 
 // Execute the verbatim runner functions with bounded Playwright API doubles.

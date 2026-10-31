@@ -201,12 +201,11 @@ function makeResources(ch, s, THREE) {
     ownedMaterials: [glintMat, ribbonMat, shellMat] };
   s.resources = r; return r;
 }
-function syncShell(ch, s, r, THREE, shown) {
+function ensureKidShells(ch, r, THREE, tier) {
   // Reuse each actual indexed/skinned mesh and its skeleton. No copied rig,
   // AABB proxy or assets. LOD caches are bounded by the Character's three tiers.
-  const lod = ch.lod, tier = lod.to >= 0 && lod.f >= .5 ? lod.to : lod.tier;
   const source = ch.lodSets?.[tier];
-  if (shown && ch.kid.visible && source && r.kidSources.get(tier) !== source) {
+  if (source && r.kidSources.get(tier) !== source) {
     // Native quality changes rebuild the source tier objects. Retire stale
     // siblings before reconnecting, otherwise old geometry would accumulate.
     for (const { shell } of r.kidShells.get(tier) || []) retireShell(r, shell);
@@ -222,11 +221,15 @@ function syncShell(ch, s, r, THREE, shown) {
       const view = geometryView(mesh.geometry, THREE); r.ownedGeometries.push(view);
       const shell = gate(new THREE.SkinnedMesh(view, r.shellMaterials.get(kind)));
       shell.name = 's3-flow-edge:' + mesh.name; shell.bind(mesh.skeleton, mesh.bindMatrix);
-      shell.frustumCulled = false; shell.renderOrder = 4; shell.matrixAutoUpdate = false;
+      shell.frustumCulled = false; shell.renderOrder = 4; shell.matrixAutoUpdate = false; shell.visible = false;
       mesh.parent.add(shell); shells.push({ source: mesh, shell });
     }
     r.kidShells.set(tier, shells); r.kidSources.set(tier, source);
   }
+}
+function syncShell(ch, s, r, THREE, shown) {
+  const lod = ch.lod, tier = lod.to >= 0 && lod.f >= .5 ? lod.to : lod.tier;
+  if (shown && ch.kid.visible) ensureKidShells(ch, r, THREE, tier);
   for (const [t, shells] of r.kidShells) for (const { source: mesh, shell } of shells) {
     shell.visible = shown && t === tier && ch.kid.visible && mesh.visible;
     if (shell.visible) { shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true; }
@@ -384,13 +387,31 @@ export function flowMotionSnapshot(ch) {
     resources: r ? r.ownedGeometries.length + r.ownedMaterials.length : 0, disposed: false };
 }
 
-export function installFlowMotion({ THREE, Character, Actor }) {
+export function installFlowMotion({ THREE, Character, Actor, G }) {
   if (!THREE || !Character?.prototype?._owner || !Actor?.prototype?.reset)
     throw Error('Flow motion requires production THREE, Character and Actor');
   const C = Character.prototype, A = Actor.prototype;
   if (Object.prototype.hasOwnProperty.call(C, INSTALL)) return;
   Object.defineProperty(C, INSTALL, { value: true });
   const update = C.update, setVisible = C.setVisible, dispose = C.dispose;
+  const warmAll = C.warmAll;
+  if (typeof warmAll === 'function') {
+    C.warmAll = async function (renderer = G?.renderer, camera = G?.camera, target = G?.scene, ...rest) {
+      if (!disposed.has(this) && !this._sourceMotionDisposed && renderer?.compileAsync && camera && target) {
+        if (this._sourceMotionLoader) await this._sourceMotionLoader;
+        if (disposed.has(this) || this._sourceMotionDisposed) return false;
+        const state = makeState(this, THREE), resources = state.resources || makeResources(this, state, THREE);
+        // Native warmAll builds these same tiers. Build their real borrowed
+        // skinning views first so its HDR compile includes every Flow variant.
+        for (let tier = 0; tier < 3; tier++) {
+          this._tierSet?.(tier);
+          ensureKidShells(this, resources, THREE, tier);
+        }
+      }
+      return warmAll.call(this, renderer, camera, target, ...rest);
+    };
+    Object.defineProperty(C.warmAll, Symbol.for('inkwave.characterWarmParent'), { value: warmAll });
+  }
   C.update = function (...args) {
     if (disposed.has(this)) return;
     const result = update.apply(this, args);
