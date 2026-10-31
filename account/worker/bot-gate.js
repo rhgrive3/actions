@@ -124,12 +124,31 @@ export async function serveGameWithBotGate(request, env) {
       return textResponse('Invalid form', 415);
     const declaredLength = Number(request.headers.get('Content-Length'));
     if (Number.isFinite(declaredLength) && declaredLength > 4096) return textResponse('Form too large', 413);
-    let token;
+    // Do not trust Content-Length. Bound the streamed body even if transfer
+    // encoding omits the header, so automated form floods cannot grow memory.
+    const reader = request.body?.getReader();
+    if (!reader) return textResponse('Invalid form', 400);
+    const chunks = [];
+    let length = 0;
     try {
-      const form = await request.formData();
-      token = form.get('cf-turnstile-response');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > 4096) {
+          await reader.cancel().catch(() => {});
+          return textResponse('Form too large', 413);
+        }
+        chunks.push(value);
+      }
     } catch { return textResponse('Invalid form', 400); }
-    if (typeof token !== 'string' || !token || token.length > MAX_TOKEN_LENGTH)
+    finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const tokens = new URLSearchParams(new TextDecoder().decode(bytes)).getAll('cf-turnstile-response');
+    const token = tokens.length === 1 ? tokens[0] : null;
+    if (!token || token.length > MAX_TOKEN_LENGTH)
       return textResponse('Verification required', 403);
     try {
       if (!(await verifyTurnstile(token, request, env, url.hostname)))
