@@ -43,6 +43,10 @@ export function adaptWeaponAudio(rel,code){
       '    fadeG.linearRampToValueAtTime(1, t + 0.06);\n    const fadeNow = (now) => Math.min(1, Math.max(0, (now - t) / 0.06));',
       '    const attack=Number.isFinite(o.fadeIn)?Math.max(.001,Math.min(.06,o.fadeIn)):.06;\n    fadeG.linearRampToValueAtTime(1,t+attack);\n    const fadeNow=(now)=>Math.min(1,Math.max(0,(now-t)/attack));',
       'short phase crossfades preserve recorded charge-cue attacks');
+    code=once(code,
+      'if (p.pitch != null && Number.isFinite(+p.pitch) && ctl.pitch) ctl.pitch(Math.max(0.05, +p.pitch), now);',
+      'if (p.pitch != null && Number.isFinite(+p.pitch) && ctl.pitch) ctl.pitch(Math.max(d.progressControlled?0:0.05, +p.pitch), now);',
+      'recorded charge can truly pause without changing other loop pitch admission');
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallAudioSpatialDsp(AudioEngine,distCut);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
@@ -117,7 +121,7 @@ export function adaptWeaponAudio(rel,code){
     // joins this onset route. Other catalogue families keep their existing audio.
     code=once(code,
       "let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');\n      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });",
-      "if (a.net.loops?.charge) { a.net.loops.charge.stop?.(.05); a.net.loops.charge=null; }\n      const chargerStarting = wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger');\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { const wid=a.weapon.id,chargeTime=a.weapon.chargeTime; G.audio?.prewarmChargerChargeRise?.(wid,chargeTime); a.net._chargerRise = usesChargerRise(wid)?G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime})||null:null; }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
+      "if (a.net.loops?.charge) { a.net.loops.charge.stop?.(.05); a.net.loops.charge=null; }\n      const chargerStarting = wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger');\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { const wid=a.weapon.id,chargeTime=a.weapon.chargeTime; G.audio?.prewarmChargerChargeRise?.(wid,chargeTime); a.net._chargerRise = usesChargerRise(wid)?G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime,progress:wr.charge})||null:null; }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      if(chargerStarting)a.net._chargerRise?.set?.({progress:wr.charge,pos:a.pos});\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
       'network Charger onset is a one-shot, never a remote loop');
     code=once(code,
       "_stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }",
@@ -284,6 +288,24 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/emit\('weapon:impact',\s*\{\s*pos:/g,"emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:");
   }
   if(rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'){
+    code=once(code,
+      "      cost=Math.min(Math.max(0,a.ink),Object.is(target,fundedTarget)?cost:Math.max(0,inkAt(r,target)*mod-s.paid));",
+      "      const chargeInkNeeded=Object.is(target,fundedTarget)?cost:Math.max(0,inkAt(r,target)*mod-s.paid);\n      cost=Math.min(Math.max(0,a.ink),chargeInkNeeded);",
+      'retain canonical unpaid charge delta for audio only');
+    code=once(code,
+      "      s.chargeF=target;",
+      `      s.chargeF=target;
+      let audibleFrames=target;
+      if(cost+EPS<chargeInkNeeded){
+        if(s.audioPaid!==s.paid||s.audioMod!==mod){
+          s.audioPaid=s.paid;s.audioMod=mod;
+          s.audioFundedFrames=fundedChargeFrames(r,s.paid,mod);
+        }
+        audibleFrames=Math.min(target,s.audioFundedFrames);
+      }
+      runner.s3ChargeAudioProgress=audibleFrames/full;`,
+      'do not announce unfunded visual charge as ready');
+
     // Added S3 catalogue weapons already emit weapon:fire. Avoid a second
     // legacy family shot alongside the admitted weapon-specific real sample.
     code=once(code,
