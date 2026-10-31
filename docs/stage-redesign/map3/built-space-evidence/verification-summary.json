@@ -1,0 +1,153 @@
+{
+  "scope": "Public Tidewater Plaza / Kelpline Terminal built-space additions; baseline d57ec104668ea38af760cb0569ef326f5d585fa8",
+  "implementationCommits": [
+    "3f26301ef553e57a37eb8a0a58d29d629feeeb66",
+    "213efe3a962aa61d61d6a663e2204d708ec39c5b"
+  ],
+  "buildRevision": "87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c",
+  "contentHash": "dfb970c90250495aa016af0168091445a9cd56a358fb92af92024d771e87ec8c",
+  "buildManifestSha256": "e194fbafd8625e55897981695b67582efb0d2bea92c78ebc97e04624a0250cde",
+  "tests": {
+    "total": 58,
+    "passed": 58,
+    "failed": 0,
+    "suites": [
+      {
+        "log": "terrain-structure-tests.log",
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "architecture-gameplay-tests.log",
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "ranked-movement-tests.log",
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "art-tests.log",
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "minimap-tests.log",
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "log": "water-edges-tests.log",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "logicChecks": {
+    "actorTraversals": 336,
+    "directedNavigationSearches": 1000,
+    "wallClimbs": 12,
+    "wallProjectilePaintHits": 4,
+    "blockedSightlines": 8,
+    "cameraConditions": 90,
+    "towerPositions": 1196,
+    "waterSprayCandidates": 638,
+    "dryCoveredWaterSprayCandidates": 0
+  },
+  "browser": {
+    "status": "passed",
+    "stageModes": [
+      {
+        "stage": "tidewater",
+        "mode": "turf",
+        "state": "playing"
+      },
+      {
+        "stage": "kelpline",
+        "mode": "turf",
+        "state": "playing"
+      },
+      {
+        "stage": "tidewater",
+        "mode": "zones",
+        "state": "playing"
+      },
+      {
+        "stage": "tidewater",
+        "mode": "tower",
+        "state": "playing"
+      },
+      {
+        "stage": "tidewater",
+        "mode": "rainmaker",
+        "state": "playing"
+      },
+      {
+        "stage": "tidewater",
+        "mode": "clams",
+        "state": "playing"
+      },
+      {
+        "stage": "kelpline",
+        "mode": "zones",
+        "state": "playing"
+      },
+      {
+        "stage": "kelpline",
+        "mode": "tower",
+        "state": "playing"
+      },
+      {
+        "stage": "kelpline",
+        "mode": "rainmaker",
+        "state": "playing"
+      },
+      {
+        "stage": "kelpline",
+        "mode": "clams",
+        "state": "playing"
+      }
+    ],
+    "pageErrors": 0,
+    "httpFailures": 0,
+    "warnings": [
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "environment": "minified production site in Chromium/SwiftShader; setup teleports are controlled test inputs; no physical-device FPS claim",
+    "note": "Auxiliary acceptance image hashes are in browser-validation.json. Durable before/after comparison images and their metadata are in the before/ and after/ folders."
+  },
+  "comparisonImages": {
+    "before": "a86a7ac2cba38b551bf47f974ac0dca56e006e75f55195ff7f8b76778014d804",
+    "after": "87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c",
+    "imagesPerBuild": 6
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 79604,
+    "initialJSBytes": 1898464,
+    "criticalHTMLBytes": 23986,
+    "precacheCount": 618,
+    "precacheBytes": 8328588,
+    "workerBytes": 101420,
+    "declaredBytes": 24119991,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "unverified": [
+    "Physical iPad/Safari FPS",
+    "Human 4v4 weapon/mode balance",
+    "Full match completion for every mode",
+    "Matched-condition measurements against Splatoon 3 hardware"
+  ]
+}
