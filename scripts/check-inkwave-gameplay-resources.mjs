@@ -82,7 +82,17 @@ try{
   },diagnostic=>{report.combatWindowTimeout={phase,...diagnostic};checkpoint();});
   const combat=report.windows.at(-1);combat.wait=combatWait;checkpoint();if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
   if(!(combat.time>report.windows.find(w=>w.label==='warm-'+cycle).time))throw Error('Gameplay simulation did not advance');
-  await page.screenshot({path:path.join(out,'combat-'+cycle+'.png'),timeout:120000});
+  // Capture the real composited viewport through CDP rather than waiting for
+  // Playwright's post-frame screenshot synchronization while SwiftShader is
+  // saturated. No simulated frame, render skip, freeze, or gameplay mutation.
+  const capturePixels=await cdp.send('Page.captureScreenshot',{
+    format:'png',captureBeyondViewport:false,fromSurface:false,
+  });
+  const png=Buffer.from(capturePixels.data||'','base64');
+  if(png.length<512||!png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+    ||png.readUInt32BE(16)<width||png.readUInt32BE(20)<height)
+    throw Error('Native combat viewport PNG was missing or incomplete');
+  fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);
   if(crabLifecycle){
    phase='crab-active-'+cycle;
    await page.waitForFunction(()=>__G.local?.alive&&!__G.local.specialActive&&!__G.local.superJumpState,null,{timeout:180000});
