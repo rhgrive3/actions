@@ -132,14 +132,14 @@ test('Point Sensor per-record sweep scratch resets partial capsule outputs and p
   // scratch object, varying the terrain/body precedence and missing outputs.
   const {stepPointSensorFlight,POINT_SENSOR_FLIGHT}=await import('../runtime/support-sensor-flight.mjs');
   assert.equal(POINT_SENSOR_FLIGHT.gravity,24);
-  const sensor={pos:new THREE.Vector3(0,3,0),prev:new THREE.Vector3(),vel:new THREE.Vector3(0,0,6),
+  const sensor={pos:new THREE.Vector3(0,3,0),prev:new THREE.Vector3(),vel:new THREE.Vector3(0,0,60),
    age:0,team:0,hit:{},s3SensorRemainder:0};
   const actors=[0,1,2].map(k=>({team:1,alive:true,form:k%2?'squid':'kid',
    pos:new THREE.Vector3(k*.2,0,0),smoothY:k*.02}));
   for(let i=0;i<90;i++){
    const mode=i%4,terrain=mode!==2;
    sensor.pos.set(0,3,0);sensor.prev.set(0,3,0);
-   sensor.vel.set(0,0,6);sensor.age=0;sensor.s3SensorRemainder=0;
+   sensor.vel.set(0,0,60);sensor.age=0;sensor.s3SensorRemainder=0;
    let calls=0;
    const G={time:i/60,actors,physics:{segment(a,b,h){
     h.hit=terrain;
