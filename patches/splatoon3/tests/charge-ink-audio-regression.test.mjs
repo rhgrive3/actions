@@ -110,8 +110,11 @@ test('Stringer visual full without paid ink is not a full-charge sound',()=>{
 
 test('pause is explicit to progress-controlled recordings; ordinary motor pitch clamp is unchanged',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/audio/audio.js',import.meta.url),'utf8');
- const composed=adaptWeaponAudio('src/audio/audio.js',source);
+ // The finite-input guard is installed after the platform loop adapter.
+ // Exercise the real production composition, not adaptWeaponAudio in isolation.
+ const composed=adaptBuildSource('src/audio/audio.js',source);
  assert.ok(composed.includes('Math.max(d.progressControlled?0:0.05, +p.pitch)'));
+ assert.ok(composed.includes('installFiniteAudioInputs(AudioEngine);'));
  const remote=adaptWeaponAudio('src/net/netmatch.js',fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
  assert.ok(remote.includes('progress:wr.charge'));
  assert.ok(remote.includes('a.net._chargerRise?.set?.({progress:wr.charge,pos:a.pos})'));
