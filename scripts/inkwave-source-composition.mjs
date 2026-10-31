@@ -92,7 +92,7 @@ function adaptRollerBandParity(rel, code) {
 }
 
 // Keep the tested source path identical to the production build's adapters.
-export function adaptBuildSource(rel, code) {
+export function adaptBuildSource(rel, code, options = {}) {
   // Source lives under inkwave-public/, whereas compiled modules share the
   // versioned site's root with patches/. Keep direct Node imports working and
   // remap exactly this import in published output.
@@ -160,7 +160,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueVisualContinuation20261029(rel, code);
   code = adaptLateRoot20261029(rel, code);
   code = adaptQueueBots20261030(rel, code);
-  code = adaptTurfIntroCamera(rel, adaptCombatWave345(rel, code, replaceOnce));
+  code = adaptTurfIntroCamera(rel, adaptCombatWave345(rel, code, replaceOnce, options));
   code = adaptQueueNetwork20261030(rel, code);
   code = adaptQueueUiAudio20261030(rel, code);
   code = adaptQueueRender20261030(rel, code);
