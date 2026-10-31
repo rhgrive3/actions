@@ -1,7 +1,7 @@
 // QA-only observation. This module never authorizes/ignores a failed request,
 // changes music, controls playback, retries a load, or advances game time.
 export async function observeStreamedMusic({ context, page, assetURL, receipt, ownerGlobal = '__G' }) {
-  if (!['__G', 's3ProbeG'].includes(ownerGlobal)) throw new Error('Explicit supported game owner required');
+  if (!['__G', 's3ProbeG', 'RG'].includes(ownerGlobal)) throw new Error('Explicit supported game owner required');
   Object.assign(receipt, { schema: 1, assetURL, ownerGlobal, media: [], network: [], snapshots: [], diagnostics: [], dropped: { media: 0, network: 0, snapshots: 0, association: 0 } });
   const requests = new Set(), jetPlayers = new Set(), pendingPlayers = new Map();
   let closing = false, capturedBytes = 0, pendingCharacters = 0;

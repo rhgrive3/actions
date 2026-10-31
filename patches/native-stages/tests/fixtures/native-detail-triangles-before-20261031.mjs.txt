@@ -1,0 +1,33 @@
+// Frozen from df8a4b8f8c29bf68a3480e8be14624c82f6d5190; independent output oracle.
+return ({
+  triangles(f,u0,u1,v0,v1,lu,lv,dn,R,team,seed,kind,sdu,sdv,sa,tn,dT,mode) {
+    const page=this.drawing;if(!floorSurface(f)||this.planeByFace.get(f)!==page.plane)return;
+    const T=this.paint.level.data.triangles,ox=(page.slot%4)*NATIVE_DETAIL_TILE+PAD,oy=Math.floor(page.slot/4)*NATIVE_DETAIL_TILE+PAD;
+    for(const id of f.triangles){
+      const points=this.triangle;let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity,minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+      for(let k=0;k<3;k++){
+        const n=id*9+k*3,x=T[n],y=T[n+1],z=T[n+2],dx=x-f.origin.x,dy=y-f.origin.y,dz=z-f.origin.z;
+        const u=dx*f.u.x+dy*f.u.y+dz*f.u.z,v=dx*f.v.x+dy*f.v.y+dz*f.v.z;
+        const a=x*page.plane.u.x+y*page.plane.u.y+z*page.plane.u.z,b=x*page.plane.v.x+y*page.plane.v.y+z*page.plane.v.z;
+        const q=k*4;points[q]=a;points[q+1]=b;points[q+2]=u;points[q+3]=v;
+        minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);
+        minX=Math.min(minX,a);maxX=Math.max(maxX,a);minZ=Math.min(minZ,b);maxZ=Math.max(maxZ,b);
+      }
+      if(maxU<u0||minU>u1||maxV<v0||minV>v1||maxX<page.x-GUARD||minX>page.x+SIDE+GUARD||maxZ<page.z-GUARD||minZ>page.z+SIDE+GUARD)continue;
+      if(this.vertexCount+3>VERTEX_LIMIT)this.draw();
+      const word=paintShapeSeed(seed);
+      for(let q=0;q<12;q+=4){
+        const x=points[q],z=points[q+1],u=points[q+2],v=points[q+3];
+        const i=this.vertexCount++,a=this.arrays;
+        a.aPos[i*2]=((ox+(x-page.x)*NATIVE_DETAIL_PPM)/NATIVE_DETAIL_SIZE)*2-1;
+        a.aPos[i*2+1]=((oy+(z-page.z)*NATIVE_DETAIL_PPM)/NATIVE_DETAIL_SIZE)*2-1;
+        const i3=i*3,i4=i*4;
+        a.aLocal[i3]=u-lu;a.aLocal[i3+1]=v-lv;a.aLocal[i3+2]=dn;
+        a.aSplat[i4]=R;a.aSplat[i4+1]=team;a.aSplat[i4+2]=seed;a.aSplat[i4+3]=kind*2;
+        a.aStretch[i3]=sdu;a.aStretch[i3+1]=sdv;a.aStretch[i3+2]=sa;
+        a.aGrow[i4]=tn;a.aGrow[i4+1]=dT;a.aGrow[i4+2]=mode;a.aGrow[i4+3]=word;
+      }
+    }
+  }
+
+}).triangles;

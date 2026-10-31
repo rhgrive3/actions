@@ -34,6 +34,9 @@ test('real source inventory covers all CPU owners once and reserves browsers for
   assert.equal(files.length, new Set(files).size);
   for (const file of [
     'patches/splatoon3/tests/turf-finish.test.mjs',
+    'patches/splatoon3/tests/paint-run-coalescing.test.mjs',
+    'patches/splatoon3/tests/special-ink-glint.test.mjs',
+    'patches/splatoon3/tests/remaining-combat-prewarm.test.mjs',
     'patches/reliability/tests/start.test.mjs',
     'patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs',
     'patches/local-quality/tests/catalog-charge-bot-release.test.mjs',
