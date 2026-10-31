@@ -10,6 +10,40 @@ function scoped(code, start, end, edit) {
   return code.slice(0, a) + edit(code.slice(a, b)) + code.slice(b);
 }
 export function adaptQueueVisualWorld20261031(rel, code) {
+  // Promoted direct-owned source modules are already the complete reviewed
+  // result. Do not rewrite them again in the build graph. Historical frozen
+  // originals still exercise the exact transform below; partially promoted
+  // sources fail closed rather than silently mixing direct and build owners.
+  if (rel === 'src/world/props-core.js') {
+    const marks = [
+      '  const mergedBox = new THREE.Box3();',
+      '      mergedBox.min.x = Math.min(mergedBox.min.x, pos[o]);',
+      '      mergedBox.max.x = Math.max(mergedBox.max.x, pos[o]);',
+      '    const box = g.boundingBox = mergedBox;',
+    ];
+    const found = marks.filter(mark => code.includes(mark)).length;
+    if (found) {
+      if (found !== marks.length || code.includes('    const box = g.boundingBox = new THREE.Box3();'))
+        throw new Error('partial direct-owned prop-core optimization');
+      return code;
+    }
+  }
+  if (rel === 'src/world/props-marina-vessels.js') {
+    const marks = [
+      ' _reserveVertices(required){',
+      'const ni = rows.length, nj = rows[0].length, base = mb._vc;',
+      'mb._reserveVertices(base + ni * nj);',
+      '      const a = base + i * nj, b = a + nj;',
+      'const pennantPoints = ropePts(hy0, hy1, 0.04, 40);',
+      'const row = [], s0 = yAt(t, a0), s1 = yAt(t, a1);',
+    ];
+    const found = marks.filter(mark => code.includes(mark)).length;
+    if (found) {
+      if (found !== marks.length || code.includes('      ids.push(row);'))
+        throw new Error('partial direct-owned marina-vessels optimization');
+      return code;
+    }
+  }
   const replace = (a, b, label) => { code = once(code, a, b, label); };
   if (rel === 'src/game/character.js') {
     replace('const lml = Math.hypot(lm.x, lm.z);', 'const lml = this.hs < 0.12 && sv > 0.4 ? Math.hypot(lm.x, lm.z) : 0;', 'unused treadmill norm');
