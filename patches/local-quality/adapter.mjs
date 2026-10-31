@@ -107,6 +107,8 @@ const IDENTITY_FILES = [
   'fx-shader-stability-adapter.mjs',
   'ordered-shader-smoothstep.mjs',
   'menu-card-layout-adapter.mjs',
+  'title-demo-budget-adapter.mjs',
+  'title-presentation-adapter.mjs',
   'landscape-weapon-drawer-adapter.mjs',
   'landscape-home-adapter.mjs',
   'landscape-weapons-adapter.mjs',

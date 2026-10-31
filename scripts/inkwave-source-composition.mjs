@@ -5,6 +5,8 @@ import { adaptLandscapeGearNativeKeys } from '../patches/local-quality/landscape
 import { adaptCharacterVisualStability } from '../patches/local-quality/character-visual-stability-adapter.mjs';
 import { adaptFxShaderStability } from '../patches/local-quality/fx-shader-stability-adapter.mjs';
 import { adaptMenuCardLayout } from '../patches/local-quality/menu-card-layout-adapter.mjs';
+import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
+import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
@@ -173,6 +175,10 @@ export function adaptBuildSource(rel, code, options = {}) {
   if (options.characterVisualStability !== false) code = adaptCharacterVisualStability(rel, code);
   code = adaptFxShaderStability(rel, code);
   code = adaptMenuCardLayout(rel, code, replaceOnce);
+  // The title owns its decorative demo budget and presentation after all
+  // shared menu/gameplay passes, without changing playable match settings.
+  code = adaptTitleDemoBudget(rel, code);
+  code = adaptTitlePresentation(rel, code, replaceOnce);
   return code;
 }
 
