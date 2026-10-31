@@ -725,7 +725,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function spawn(a,r,descriptor,direction,at,options={}) {
     const system=G.projectiles, p=system._new(),scratch=collisionScratch(p);
-    p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0);
+    p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0,true);
     Object.assign(p,{type:'shot',wid:r.id,owner:a,team:a.team,age:0,life:descriptor.life,straight:finite(descriptor.m.GoStraightToBrakeStateFrame,4)/HZ,
       radius:descriptor.radius,damage:descriptor.damage,size:finite(descriptor.c.InitRadiusForPlayer,.2),
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
@@ -1393,7 +1393,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     p.catalog=null;p.catalogVisual=null;
     return recycle.call(this,p,...args);
   };
-  P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
+  P._new=function(){const p=fresh.apply(this,arguments);p.catalog=null;p.catalogVisual=null;return p;};
   function applyPlayerContact(system,p,target,t){
     const s=p.catalog,d=s.descriptor;
     if(p.ghost||target.team===p.team)return;
@@ -1725,7 +1725,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const d=catalogDepletedDescriptor(source,source.packet,marker),scratch=collisionScratch(p);
         p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
-        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);
+        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index,true);updateCatalogVisual(p);
         // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
         // Feed only validated shot metadata into its presentation clock, never
         // a melee collider, ink payment or lunge. Old/repeated births cannot
@@ -1827,7 +1827,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     stroke.radius=radius;stroke.depth=rollerContactDepth(paintParam);stroke.speed=speed;stroke.dt=dt;
     stroke.pending=r.family==='roller'&&!!a.character?.weapon?.drum&&!!a.character.weapon.def?.drum;
     if(!stroke.pending)paintRollingStroke(a,stroke);
-    s.contactTimes ||= new Map();
+    // Only get/set are consumed; a departed Actor must not be retained by a
+    // surviving roller's cooldown state for the rest of the match.
+    s.contactTimes ||= new WeakMap();
     // Owner report 2026-10-18: contact follows the body heading like the paint
     // above, and occlusion is tested at body height. The former aimDir point
     // left the floor with the camera pitch, and a floor-level LOS between two

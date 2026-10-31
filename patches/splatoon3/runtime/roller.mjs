@@ -1000,7 +1000,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     rightOrigin.add(delta.copy(arms.armR.up.position).applyQuaternion(rightParentQ));
     const reachR = (arms.armR.a + arms.armR.b) * .9995 - .001;
     delta.subVectors(target, rightOrigin);
-    if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+    const unclampedDistance = delta.length();
+    if (unclampedDistance > reachR) target.copy(rightOrigin).add(delta.divideScalar(unclampedDistance || 1).multiplyScalar(reachR));
     this._kidXform(arms.armL.up.parent, leftOrigin, leftParentQ);
     leftOrigin.add(delta.copy(arms.armL.up.position).applyQuaternion(leftParentQ));
     const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
@@ -1171,7 +1172,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         target.y += penetration * delta.y / scale.y;
         target.z += penetration * delta.z / scale.z;
         delta.subVectors(target, rightOrigin);
-        if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+        const unclampedDistance = delta.length();
+    if (unclampedDistance > reachR) target.copy(rightOrigin).add(delta.divideScalar(unclampedDistance || 1).multiplyScalar(reachR));
         alignLeft(bestQ);
       }
     }
