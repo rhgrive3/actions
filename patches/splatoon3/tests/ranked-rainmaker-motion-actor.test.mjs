@@ -7,6 +7,9 @@ for(const weapon of ['shooter','roller','dualies'])test(weapon+' final pose and 
  const a=new f.Actor({team:0,weapon,isLocal:true,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
  a.nid='carrier';ch.actor=a;ch.onEvent=null;a.form='kid';a.kidT=10;a.grounded=a.ground.hit=true;a.pos.set(0,0,0);a.vel.set(0,0,0);
  G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.actors=[a];G.scene.add(ch.root);G.time=0;
+ // Exercise the public equip lifecycle after the real Character has been
+ // parented to the scene, matching source-loaded and interactive actors.
+ a.setWeapon(weapon);
  const state={carrier:null,charge:{value:0}},match={mode:'rainmaker',ranked:{rule:{state}},playing:()=>true};G.match=match;
  const mesh=f.createRainmakerModel(THREE);G.scene.add(mesh);const display=f.createRainmakerPresentation(THREE,mesh);
  const originalSolve=ch._solveLimb;let solves=0;ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)solves++;return originalSolve.call(this,limb,...args);};
@@ -22,7 +25,15 @@ for(const weapon of ['shooter','roller','dualies'])test(weapon+' final pose and 
     a.aimPitch=.1*Math.sin(i*.04);a.aimDir.set(0,Math.sin(a.aimPitch),Math.cos(a.aimPitch));
     if(i===10){ch.trigger(weapon==='roller'?'flick':'throw');}
     step();maxSolves=Math.max(maxSolves,solves);
-    ch.weapon.pivot.getWorldPosition(hand);mesh.getWorldPosition(grip);maxRight=Math.max(maxRight,hand.distanceTo(grip));
+    ch.weapon.pivot.getWorldPosition(hand);mesh.getWorldPosition(grip);
+    const rightDist=hand.distanceTo(grip);
+    if(!Number.isFinite(rightDist)&&!ch._reportedInvalidRainmakerGrip){
+      ch._reportedInvalidRainmakerGrip=true;
+      console.log(JSON.stringify({invalidRightGrip:true,weapon,frame:G.time,hand:hand.toArray(),
+       grip:grip.toArray(),pivotLocal:ch.weapon.pivot.position.toArray(),
+       pivotParent:ch.weapon.pivot.parent?.type,ikErr:ch.ikErr?.[1],kidScale:ch.kidScale}));
+    }
+    maxRight=Math.max(maxRight,rightDist);
     left.copy(ch.weapon.pivot.position);left.x=-left.x;ch.bones.handL.localToWorld(left);
     target.set(0,0,.07);mesh.localToWorld(target);if(ch._rainmakerPose && left.distanceTo(target)>maxLeft){maxLeft=left.distanceTo(target);if(maxLeft>.02)console.log(JSON.stringify({weapon,err:maxLeft,pitch:a.aimPitch,form:a.form,kidScale:ch.kidScale,scale:ch.kid.scale.toArray()}));}
     assert.equal(ch._rainmakerPose,true);assert.equal(ch.P[f.CHARACTER_CHANNELS.LTW],0);assert.equal(solves,1,'one replacement left-arm solve');
