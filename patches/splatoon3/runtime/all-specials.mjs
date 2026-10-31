@@ -545,8 +545,9 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
   for (const victim of G.actors || []) {
     if (!victim?.alive || victim.team === actor.team || victim === actor || once?.has(victim)) continue;
     const point = rt.v6.set(victim.pos.x, victim.pos.y + .75, victim.pos.z);
+    if (Math.abs(point.y - center.y) > height) continue;
     const d = point.distanceTo(center);
-    if (d > radius || Math.abs(point.y - center.y) > height) continue;
+    if (d > radius) continue;
     if (G.physics?.los && !G.physics.los(center, point)) continue;
     const amount = bands.find(([r]) => d <= r)?.[1] ?? 0;
     if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); hitCount++; }
@@ -1151,7 +1152,8 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
-    const dot=offset.normalize().dot(dir);if(dot<=0)continue;
+    // Keep Three's zero/NaN divisor rule; the length was just sampled.
+    const dot=offset.divideScalar(d||1).dot(dir);if(dot<=0)continue;
     let x=null,y=null;
     if(missiles){
       const camera=rt.api.G.camera;

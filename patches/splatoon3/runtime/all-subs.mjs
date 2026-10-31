@@ -938,7 +938,8 @@ export function applySubObjectHit(api, projectiles, object, projectile, point, d
 }
 
 function isSubObjectBlastTarget(target){
-  return target.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(target.subId) ||
+  const deployed=target.phase==='deployed',id=deployed?target.subId:null;
+  return deployed&&(id==='splashWall'||id==='sprinkler'||id==='beakon') ||
     targetableTorpedo(target);
 }
 function subObjectBlastPoint(api,target,origin){
@@ -2318,13 +2319,16 @@ export function installAllSubs(api,profile={}){
     const id=actor?.weapon?.sub,spec=ALL_SUB_SPECS[id];
     if(!show||!actor?.alive||!spec||id==='autobomb'||id==='sprinkler')return nativeArc.call(this,actor,show);
     if(id==='inkMine'||id==='beakon')return nativeArc.call(this,actor,false);
-    return drawSubTrajectory(api,this,actor,s=>{
+    return drawSubTrajectory(api,this,actor,(s,traceOnly=false)=>{
+      if(!traceOnly){
       launchVelocity(api,this,actor,spec,0,s);
       s.p.copy(actor.pos);s.p.y+=1.35;subLaunchPosition(actor,s.p);
-      Object.assign(s.flight,{owner:actor,team:actor.team,subId:id,spec,vel:s.vel,pos:s.p});
-      Object.assign(s.contact,{owner:actor,team:actor.team});
+      s.flight.owner=actor;s.flight.team=actor.team;s.flight.subId=id;s.flight.spec=spec;s.flight.vel=s.vel;s.flight.pos=s.p;
+      s.contact.owner=actor;s.contact.team=actor.team;
       s.frames=id==='angleShooter'?spec.flightFrames:(spec.maxFlightSeconds||2.2)*60;
       s.inkCost=resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,SUB)?.inkCost;
+      return;
+      }
       s.advance=(state,dt)=>{advanceInitialSubFlight(state.flight,dt);state.p.addScaledVector(state.vel,dt);};
       if(id==='torpedo')s.stopBefore=state=>state.age+1e-10>=frameSeconds(spec.findStartFrames)&&!!findTorpedoTarget(api,state.flight);
       s.contactAt=state=>{
@@ -2340,7 +2344,7 @@ export function installAllSubs(api,profile={}){
         state.p.copy(world.point).addScaledVector(world.normal,world.s3Tacticooler?radius+.03:.03);
         state.normal.copy(world.normal);return true;
       };
-    });
+    },true);
   };
 
   // Native WeaponRunner owns ink payment and release timing. Suppress a second
