@@ -44,7 +44,7 @@ test('CSP source HTML remains compatible with original scripts and importmap', (
   assert.match(secured.policy, /sha256-/);
   assert.match(secured.html, /type="importmap"/);
   assert.match(secured.html, /src="\.\/src\/main\.js"/);
-  assert.match(source, /event\.key === 'F12'/);
+  assert.match(secured.html, /event\.key==='F12'/);
 });
 
 test('gate HMAC cannot be forged, replayed on another host or used after expiry', async () => {
