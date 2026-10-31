@@ -81,6 +81,101 @@
         "args": [
           "patches/local-quality/tests/performance-v2-topology.test.mjs"
         ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-ui-audio-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.character.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.startup.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/queue-weapons-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/queue-weapons-20261031-rejections.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/native-stages/tests/queue-native-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.residual.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-marina-hull-band-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-marina-grid-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "patches/local-quality/tests/queue-swim-film-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/reliability/tests/queue-boss-fixed-copy-20261031.test.mjs"
+        ]
       }
     ]
   },
