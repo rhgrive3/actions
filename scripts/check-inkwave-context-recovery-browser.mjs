@@ -6,6 +6,8 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
+import { classifyRetiredMenuAudioAbort } from './lib/inkwave-browser-media-admission.mjs';
 
 // Diagnostic-only; suitable for page.addInitScript serialization. No promise
 // reactions are added: native fetch/read promises retain rejection observability.
@@ -270,6 +272,31 @@ export function validateContextStartupReceipt(receipt) {
   assert.equal(receipt.admission.recordedShooterFire, true);
 }
 
+// Only pre-loss playback evidence can admit the known retired-menu request.
+// Keep a detached, immutable copy so a later request cannot inherit that proof.
+export function captureContextRecoveryAudioAdmission({ requests, siteURL, revision, receipt }) {
+  const snapshot = receipt?.snapshots?.at(-1);
+  assert.equal(receipt?.enabled, true, 'Streamed music observation is unavailable');
+  assert.equal(snapshot?.reason, 'native-playing-capture-ready', 'Missing pre-loss music snapshot');
+  assert(!snapshot.error && snapshot.state?.ownerGlobal === 'RG' && snapshot.state.ownerPresent && snapshot.state.musicPresent,
+    'Missing pre-loss music owner evidence');
+  const raw = Object.freeze(requests.map(row => Object.freeze({ ...row })));
+  const admission = classifyRetiredMenuAudioAbort({ requests: raw, siteURL, revision, receipt,
+    gameplayState: snapshot.state.matchState });
+  return Object.freeze({ requests: raw,
+    verified: Object.freeze(admission.verified.map(row => Object.freeze(row))),
+    unverified: Object.freeze(admission.unverified.map(row => Object.freeze(row))) });
+}
+
+export function validateContextRecoveryAudioAdmission(admission, { requests, httpFailures, errors, events }) {
+  assert(admission && Array.isArray(admission.requests), 'Missing pre-loss audio admission');
+  assert.deepEqual(admission.unverified, [], 'Audio startup produced unverified failed network requests');
+  assert.deepEqual(requests, admission.requests, 'New or changed failed request after pre-loss audio admission');
+  assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
+  assert.deepEqual(errors, []);
+  assert.deepEqual(events, []);
+}
+
 export function recoveryInputPath(key) {
   const namespaces = { 'upstream/': 'inkwave-public/', 'patch/': 'patches/splatoon3/', 'touch-layout/': 'patches/touch-layout/',
     'reliability/': 'patches/reliability/', 'local-quality/': 'patches/local-quality/', 'network-replication/': 'patches/network-replication/',
@@ -290,15 +317,17 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const sourceInputs = Object.entries(build.files).map(([key, digest]) => { const file = recoveryInputPath(key); assert.equal(hash(fs.readFileSync(path.join(root, file))), digest, key); return file; });
   assert.equal(hash(fs.readFileSync(path.join(root, 'scripts/build-inkwave.mjs'))), build.build.script, 'Build pipeline mismatch');
-  sourceInputs.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-context-recovery-browser.mjs',
-    'scripts/lib/inkwave-projectile-menu-start.mjs', 'scripts/lib/inkwave-range-menu-entry.mjs');
+  const harnessInputs = ['scripts/check-inkwave-context-recovery-browser.mjs',
+    'scripts/lib/inkwave-projectile-menu-start.mjs', 'scripts/lib/inkwave-range-menu-entry.mjs',
+    'scripts/lib/inkwave-streamed-music-diagnostics.mjs', 'scripts/lib/inkwave-browser-media-admission.mjs'];
+  sourceInputs.push('scripts/build-inkwave.mjs', ...harnessInputs);
   const blobs = execFileSync('git', ['hash-object', '--', ...sourceInputs], { cwd: root, encoding: 'utf8' }).trim().split('\n');
   sourceInputs.forEach((file, i) => assert.equal(blobs[i], tree.get(file), 'Build input differs from checkout: ' + file));
   const required = ['src/main.js', 'src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs'];
   for (const file of ['inkwave-public/src/main.js', 'inkwave-public/src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs']) assert(sourceInputs.includes(file), 'Required source input omitted from identity: ' + file);
   const moduleHashes = Object.fromEntries(required.map(file => { const digest = build.artifacts[file]; assert(digest, 'Missing required emitted module: ' + file); return [file, digest]; }));
   const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set(), audioNetwork = [];
-  // Preserve strict zero-failure acceptance while classifying request cancellations.
+  // Preserve every raw failure; only proved pre-loss menu retirement is admitted.
   const requestDiagnostics = [], failedRequestURLs = new Set();
   let requestPhase = 'startup';
   const recordRequestDiagnostic = (event, request) => {
@@ -309,18 +338,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       url: request.url(), resourceType: request.resourceType(), timing, timingError,
       failure: request.failure()?.errorText ?? null });
   };
-  let preLossAudio = null;
-  // Native page transitions may abort a single optional menu BGM fetch.
-  // Retain the raw failure log, but do not misclassify it as a failed game asset.
-  const acceptedMenuTrackAbort = request =>
-    request.error === 'net::ERR_ABORTED' &&
-    /\/assets\/audio\/menu_the_ika_swing_aoi_kenban\.mp3(?:[?#]|$)/.test(request.url);
-  const verifyLiveRequests = () => {
-    const cancellations=requests.filter(acceptedMenuTrackAbort);
-    assert(cancellations.length<=1, 'Unexpected repeated menu BGM cancellation');
-    assert.deepEqual(requests.filter(request=>!acceptedMenuTrackAbort(request)),[],
-      'Non-cancelled startup request failed');
-  };
+  let preLossAudio = null, preLossAudioAdmission = null;
+  const streamedMusicReceipt = { sourceSha, revision: build.build.revision, contentHash: build.contentHash };
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -333,6 +352,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     } catch { res.writeHead(404); res.end('Not found'); }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const siteURL = 'http://127.0.0.1:' + server.address().port + '/';
   let browser, context, page, startup = null, primary = null, result = null, lastStage = 'verified-build';
   try {
     const { chromium } = await import('playwright');
@@ -340,6 +360,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     context = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
     await context.tracing.start({ screenshots: false, snapshots: true, sources: false });
     page = await context.newPage();
+    const streamedMusic = await observeStreamedMusic({ context, page, ownerGlobal: 'RG',
+      assetURL: new URL('_versions/' + build.build.revision + '/assets/audio/Jet_Arrow.mp3', siteURL).href,
+      receipt: streamedMusicReceipt });
     const pendingAudio = new Set();
     const audioRequest = r => /\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
     page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); });
@@ -347,7 +370,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     page.on('requestfinished', r => pendingAudio.delete(r));
     page.on('requestfinished', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'finished',url:r.url(),at:Date.now(),timing:r.timing()}); });
     await page.exposeFunction('__awaitContextRecoveryAudioIdle', async () => {
-      // Wait only for a stable quiet period, never suppress a failed request.
+      // Observe stable quiet and live battle playback without altering either.
       const deadline = Date.now() + 30000;
       let quietSince = null;
       for (;;) {
@@ -361,8 +384,10 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       }
       try { preLossAudio = await page.evaluate(() => globalThis.__contextAudioOwnerSnapshot?.() ?? null); }
       catch (error) { preLossAudio = { diagnosticError:String(error?.message || error) }; }
-      verifyLiveRequests();
-      assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
+      await streamedMusic.snapshot('native-playing-capture-ready');
+      preLossAudioAdmission = captureContextRecoveryAudioAdmission({ requests, siteURL,
+        revision: build.build.revision, receipt: streamedMusicReceipt });
+      validateContextRecoveryAudioAdmission(preLossAudioAdmission, { requests, httpFailures, errors, events });
     });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
@@ -435,7 +460,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
     requestPhase = 'post-context-proof';
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
-    assert.deepEqual(errors, []); verifyLiveRequests(); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
+    // Do not reclassify post-loss failures against stale pre-loss playback.
+    validateContextRecoveryAudioAdmission(preLossAudioAdmission, { requests, httpFailures, errors, events });
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
     result = { ok: true, browser: browser.version(), identity, startup, proof }; lastStage = 'accepted';
   } catch (error) {
@@ -456,7 +482,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   } finally {
     let audioTrace = null, audioOwnerFinal = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null}))); } catch {}
-    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossAudioAdmission, streamedMusicReceipt, startup, lastStage, harnessBlobs: Object.fromEntries(harnessInputs.map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }

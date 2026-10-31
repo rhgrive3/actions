@@ -50,7 +50,10 @@ export class BossBrain {
     b.bt += dt;
     const px = b.pos.x, pz = b.pos.z, pyaw = b.yaw;
     this.cd.crablets -= dt; this.cd.frenzy -= dt;
-    for (const [k, v] of this.dmgBy) this.dmgBy.set(k, v * Math.exp(-dt / 8));   // "who hurt me lately"
+    if (this.dmgBy.size) {
+      const decay = Math.exp(-dt / 8);   // "who hurt me lately": one coefficient per update
+      for (const [k, v] of this.dmgBy) this.dmgBy.set(k, v * decay);
+    }
     // intro: it bursts out of its home ground, roars, then the round starts
     if (!b.visible && b.bt >= BOSS.introAt) { b.visible = true; b.anim = 1; b.animT0 = b.bt; }
     if (b.anim === 1 && b.bt - b.animT0 >= BOSS.introLen) b.anim = 0;
