@@ -1,0 +1,28 @@
+{
+  "command": [
+    "node",
+    "--experimental-vm-modules",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "patches/local-quality/tests/world-geometry-20261029.test.mjs"
+  ],
+  "returnCode": 0,
+  "durationSeconds": 54.645,
+  "testSha256Before": "ce870265317a6aa72790f0ef93a39d278c4293798bcb59409a9956abb4ef7126",
+  "testSha256After": "ce870265317a6aa72790f0ef93a39d278c4293798bcb59409a9956abb4ef7126",
+  "maxChildRssKiB": 570768,
+  "resourcesBefore": {
+    "memory.current": "1486479360",
+    "memory.peak": "8591540224",
+    "memory.max": "8589934592",
+    "memory.events": "low 0\nhigh 0\nmax 2715291\noom 30\noom_kill 8\noom_group_kill 0"
+  },
+  "resourcesAfter": {
+    "memory.current": "1489657856",
+    "memory.peak": "8591540224",
+    "memory.max": "8589934592",
+    "memory.events": "low 0\nhigh 0\nmax 2715291\noom 30\noom_kill 8\noom_group_kill 0"
+  },
+  "scope": "Exact full test file with bounded diagnostics and sealed fdb74165 shape successor; no GPU or runtime edits."
+}

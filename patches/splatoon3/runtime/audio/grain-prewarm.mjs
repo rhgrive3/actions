@@ -7,6 +7,7 @@ export function cancelGrainPrewarm(engine) {
   engine._grainPrewarm = null;
 }
 export function prewarmGrainTextures(engine, fallback, { workerFactory, delay = 60, timeout = 20000 } = {}) {
+  if (engine._sfxSilent?.()) { engine._grainWarmDeferred = true; return true; }
   if (!engine.ctx || engine.ctx.state === 'closed' || engine._grainWorkerFailed || (!workerFactory && typeof Worker === 'undefined')) return false;
   if (engine._grainPrewarm?.ctx === engine.ctx) return true;
   cancelGrainPrewarm(engine);
@@ -17,6 +18,7 @@ export function prewarmGrainTextures(engine, fallback, { workerFactory, delay = 
   const fail = () => { const retry = live(); finish(); if (retry) { engine._grainWorkerFailed = true; engine._grainPrewarm = null; fallback?.(); } };
   state.admission = setTimeout(() => {
     if (!live()) { finish(); return; }
+    if (engine._sfxSilent?.()) { engine._grainWarmDeferred = true; cancelGrainPrewarm(engine); return; }
     const kinds = Object.keys(TEX).filter(kind => !hasTexture(ctx, kind));
     state.remaining = new Set(kinds);
     if (!kinds.length) { finish(); return; }
@@ -39,8 +41,20 @@ export function prewarmGrainTextures(engine, fallback, { workerFactory, delay = 
   return true;
 }
 export function installGrainPrewarmCleanup(Engine) {
+  const setVolumes = Engine.prototype.setVolumes;
+  if (setVolumes) Engine.prototype.setVolumes = function (...args) {
+    const result = setVolumes.apply(this, args);
+    if (this._sfxSilent?.()) {
+      if (this._grainPrewarm && !this._grainPrewarm.done) {
+        this._grainWarmDeferred = true; cancelGrainPrewarm(this);
+      }
+    } else if (this._grainWarmDeferred && this.ctx && this.ctx.state !== 'closed') {
+      this._grainWarmDeferred = false; this._warm?.();
+    }
+    return result;
+  };
   const dispose = Engine.prototype.disposeWeaponAudio;
   Engine.prototype.disposeWeaponAudio = function (...args) {
-    cancelGrainPrewarm(this); return dispose?.apply(this, args);
+    this._grainWarmDeferred = false; cancelGrainPrewarm(this); return dispose?.apply(this, args);
   };
 }

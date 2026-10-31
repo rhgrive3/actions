@@ -182,7 +182,8 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if(!event || !s.boundary)return sample.call(this,x,y,z,dt);
     if(event.kind==='orientation') {
       if(s.boundary.time===this._tQ && !(s.attitudes?.length)){
-        const result=sample.call(this,x,y,z,dt);s.boundary={time:event.time,q:this._q.slice()};return result;
+        const result=sample.call(this,x,y,z,dt);s.boundary={time:event.time,q:this._q.slice()};
+        event.boundary=s.boundary;return result;
       }
       consumeThrough(this,s,event.time,sample);return;
     }
@@ -224,13 +225,19 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     const yaw = this.dYaw, pitch = this.dPitch;
     const s=observed,hadQ=this._hasQ,previousTime=this._tQ,previousEvent=s.event,depth=s.eventDepth||0;
     // Reuse internal metadata only. Never retain or replace the browser event.
-    const events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0});
-    event.kind='orientation';event.time=t;s.event=event;s.eventDepth=depth+1;
+    const events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0,boundary:null});
+    event.kind='orientation';event.time=t;event.boundary=null;s.event=event;s.eventDepth=depth+1;
     try {
       const result=orientation.call(this,e);
       if(this._hasQ && this._tQ===t && (!hadQ || t>previousTime)){
         if(!s.boundary)s.boundary={time:t,q:this._q.slice()};
-        else if(s.boundary.time===t)s.boundary.q=this._q.slice();
+        else if(s.boundary.time===t){
+          // Only this event's fast-path snapshot can suppress the second copy.
+          // A nested event or calibration hook may have replaced or changed it.
+          const q=s.boundary.q;
+          if(event.boundary!==s.boundary || !Object.is(q[0],this._q[0]) || !Object.is(q[1],this._q[1]) ||
+              !Object.is(q[2],this._q[2]) || !Object.is(q[3],this._q[3]))s.boundary.q=this._q.slice();
+        }
         else if(this._src==='ori')consumeThrough(this,s,t,sample);
         else if(t>s.boundary.time)(s.attitudes||(s.attitudes=[])).push({time:t,q:this._q.slice()});
       }
@@ -241,7 +248,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
         this.dYaw = yaw; this.dPitch = pitch; this._sm.y = this._sm.p = 0;
       }
       return result;
-    } finally { s.event=previousEvent;s.eventDepth=depth; }
+    } finally { event.boundary=null;s.event=previousEvent;s.eventDepth=depth; }
   };
   P._motion = function (e) {
     if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteGyroAxes(e.rotationRate)) return;
@@ -257,7 +264,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     // Any sample above this gate still takes the native orientation path.
     s.stationaryMotion = Math.hypot(e.rotationRate.alpha, e.rotationRate.beta, e.rotationRate.gamma) <= STILL_DEG;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
-    const previousEvent=s.event,depth=s.eventDepth||0,events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0});
+    const previousEvent=s.event,depth=s.eventDepth||0,events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0,boundary:null});
     event.kind='motion';event.time=t;s.event=event;s.eventDepth=depth+1;
     try {
       // As in #524, the initial sub-2ms burst keeps the adoption origin until

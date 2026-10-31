@@ -1,0 +1,37 @@
+TAP version 13
+# {"cases":72,"vertices":265378,"scope":"real Three.js complete hair/accessories/hat and squid geometry, no device speed claim"}
+# (node:255355) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: fdb74165 shape successor is reversible against complete raw and historical fixture identities
+ok 1 - fdb74165 shape successor is reversible against complete raw and historical fixture identities
+  ---
+  duration_ms: 59.97724
+  type: 'test'
+  ...
+# Subtest: geometry diagnostics retain full-buffer decisions while bounding failure output
+ok 2 - geometry diagnostics retain full-buffer decisions while bounding failure output
+  ---
+  duration_ms: 14.48613
+  type: 'test'
+  ...
+# Subtest: complete hair, hats, accessories and squid meshes retain all independent baseline buffers
+ok 3 - complete hair, hats, accessories and squid meshes retain all independent baseline buffers
+  ---
+  duration_ms: 52307.105103
+  type: 'test'
+  ...
+# Subtest: tentacle point scratch preserves callback count, independent returned vectors and custom offset override
+ok 4 - tentacle point scratch preserves callback count, independent returned vectors and custom offset override
+  ---
+  duration_ms: 1822.292946
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54609.039219

@@ -515,15 +515,16 @@ export class ClamsRule {
     const basket = this.state.baskets[team];
     if (!basket.goal) return false;
     const radius = Number.isFinite(this.stage?.clams?.goalRadius) ? this.stage.clams.goalRadius : 0.95;
-    const center = [basket.goal[0], basket.goal[1] + 0.55, basket.goal[2]];
+    const cx = basket.goal[0], cy = basket.goal[1] + 0.55, cz = basket.goal[2];
     const broadRadius = radius + 1e-6;
-    if (radius >= 0 && radius <= 100 && Math.abs(center[0]) < 1000 && Math.abs(center[1]) < 1000 && Math.abs(center[2]) < 1000 &&
+    if (radius >= 0 && radius <= 100 && Math.abs(cx) < 1000 && Math.abs(cy) < 1000 && Math.abs(cz) < 1000 &&
         Math.abs(previous[0]) < 1000 && Math.abs(previous[1]) < 1000 && Math.abs(previous[2]) < 1000 &&
         Math.abs(next[0]) < 1000 && Math.abs(next[1]) < 1000 && Math.abs(next[2]) < 1000 &&
-        ((previous[0] < center[0] - broadRadius && next[0] < center[0] - broadRadius) ||
-         (previous[0] > center[0] + broadRadius && next[0] > center[0] + broadRadius) ||
-         (previous[2] < center[2] - broadRadius && next[2] < center[2] - broadRadius) ||
-         (previous[2] > center[2] + broadRadius && next[2] > center[2] + broadRadius))) return false;
+        ((previous[0] < cx - broadRadius && next[0] < cx - broadRadius) ||
+         (previous[0] > cx + broadRadius && next[0] > cx + broadRadius) ||
+         (previous[2] < cz - broadRadius && next[2] < cz - broadRadius) ||
+         (previous[2] > cz + broadRadius && next[2] > cz + broadRadius))) return false;
+    const center = [cx, cy, cz];
     const closestT = (() => {
       const d = sub(next, previous);
       const n = this._distanceSq(d, [0, 0, 0]);

@@ -1,0 +1,114 @@
+{
+  "head": "7b240d5c4d75ff7ccf231517f3ea65ff4d6ea05d",
+  "changedFile": "scripts/tests/inkwave-context-recovery-browser.test.mjs",
+  "fixtureFix": "One finite Float32Array(80) and exact channel-0 getChannelData supplied to synthetic decodeAudioData output; no delay added, same ensure promise awaited.",
+  "beforeFixtureSha256": "25ae4e1d4c7ae535afca4bdddd2e5e0d0d20b19ca86c9222296225124045b146",
+  "afterFixtureSha256": "faa672767884a0f941d72fc48e9a89e74d117f6cfd2eb6506348b1c573c061fe",
+  "runtimeAndHarnessUnchanged": true,
+  "results": [
+    {
+      "name": "target",
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "scripts/tests/inkwave-context-recovery-browser.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.419,
+      "summary": [
+        "# tests 28",
+        "# suites 0",
+        "# pass 28",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 0",
+        "# todo 0",
+        "# duration_ms 372.265728"
+      ],
+      "log": "context-audio-fixture-target.log"
+    },
+    {
+      "name": "ci-step",
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "patches/native-stages/tests/native-attract-composition.test.mjs",
+        "patches/native-stages/tests/native-world-cancellation.test.mjs",
+        "patches/native-stages/tests/native-world-texture-ownership.test.mjs",
+        "patches/native-stages/tests/native-world-recovery.test.mjs",
+        "patches/native-stages/tests/native-world-recovery-ui.test.mjs",
+        "patches/native-stages/tests/native-world-recovery-start.test.mjs",
+        "patches/native-stages/tests/native-world-recovery-clock.test.mjs",
+        "patches/splatoon3/tests/context-recovery-clock.test.mjs",
+        "patches/splatoon3/tests/context-recovery-attract.test.mjs",
+        "patches/reliability/tests/start.test.mjs",
+        "scripts/tests/inkwave-native-stage-publish-rollback.test.mjs",
+        "scripts/tests/inkwave-context-recovery-browser.test.mjs",
+        "scripts/tests/inkwave-webgl-context-recovery.test.mjs",
+        "tools/native-recovery-qa/stage-contract.test.mjs",
+        "tools/native-recovery-qa/emitted-fixture.test.mjs",
+        "tools/native-recovery-qa/workflow.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.631,
+      "summary": [
+        "# tests 309",
+        "# suites 0",
+        "# pass 309",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 0",
+        "# todo 0",
+        "# duration_ms 2579.117394"
+      ],
+      "log": "context-audio-fixture-ci-step.log"
+    }
+  ],
+  "gpuStarted": false,
+  "baselineFileEquality": {
+    "head": "7b240d5c4d75ff7ccf231517f3ea65ff4d6ea05d",
+    "base": "fdb74165bc1a1668afe6f674db064474655fd05f",
+    "command": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-reporter=tap",
+      "--test-name-pattern=audio trace preserves fetch/read results",
+      "scripts/tests/inkwave-context-recovery-browser.test.mjs"
+    ],
+    "exitCode": 1,
+    "durationSeconds": 0.294,
+    "sourceIdentity": {
+      "scripts/tests/inkwave-context-recovery-browser.test.mjs": {
+        "baseSha256": "25ae4e1d4c7ae535afca4bdddd2e5e0d0d20b19ca86c9222296225124045b146",
+        "currentSha256": "25ae4e1d4c7ae535afca4bdddd2e5e0d0d20b19ca86c9222296225124045b146",
+        "identical": true
+      },
+      "scripts/check-inkwave-context-recovery-browser.mjs": {
+        "baseSha256": "5485b21162463dfea3613f9f4ec4ddc958d604e047545f73c235d161a4c42219",
+        "currentSha256": "5485b21162463dfea3613f9f4ec4ddc958d604e047545f73c235d161a4c42219",
+        "identical": true
+      },
+      "patches/splatoon3/runtime/audio/real-s3-loader.mjs": {
+        "baseSha256": "04bb0fee46013353b5554d4c8a1659e16a22c9c44fc0e723fb34d20fab7129b0",
+        "currentSha256": "04bb0fee46013353b5554d4c8a1659e16a22c9c44fc0e723fb34d20fab7129b0",
+        "identical": true
+      },
+      "patches/splatoon3/runtime/audio/authorized-samples.mjs": {
+        "baseSha256": "ede264ec32fa4d3b0998772e17c606b3d19e1cd1dff304a4214a2324f41984f7",
+        "currentSha256": "ede264ec32fa4d3b0998772e17c606b3d19e1cd1dff304a4214a2324f41984f7",
+        "identical": true
+      },
+      "patches/splatoon3/runtime/audio/finite-pcm.mjs": {
+        "baseSha256": "8991d1d17549854bee309e1760ee1aae2dbf50e86c9ec8d5dab82ae44dac13c4",
+        "currentSha256": "8991d1d17549854bee309e1760ee1aae2dbf50e86c9ec8d5dab82ae44dac13c4",
+        "identical": true
+      }
+    },
+    "log": "context-audio-fixture-before.log"
+  }
+}

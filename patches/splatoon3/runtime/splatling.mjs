@@ -215,8 +215,6 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       cancel(this); return;
     }
     const pos = a.isLocal ? undefined : a.pos;
-    // Remote replication owns its own motor voices through NetMatch._voices.
-    const ownAudio = !a.remote && (a.isLocal || a._nearCamera());
     if (this.streaming) {
       const state = this.s3Spin;
       if (!state) { cancel(this, false); return; }
@@ -254,7 +252,8 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
         // pulsing layer ("won-won") over the actual recorded gunshot.
         // Use the selected weapon's native Motor MP3, never G.audio.loop.
         this.spinLoop?.stop?.(.04);
-        this.spinLoop = ownAudio
+        // Remote replication owns its voices; camera range matters only at admission.
+        this.spinLoop = !a.remote && (a.isLocal || a._nearCamera())
           ? G.audio?.loopWeapon?.(w.id,'charge',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
           : null;
       }
@@ -300,7 +299,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       // Charge Motor must stop when trigger releases. MotorFire starts exactly
       // once for an admitted stream; both are source-recorded loops at 1x.
       this.spinLoop?.stop?.(.04);
-      this.spinLoop = this.streaming && ownAudio
+      this.spinLoop = this.streaming && !a.remote && (a.isLocal || a._nearCamera())
         ? G.audio?.loopWeapon?.(w.id,'spin',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
         : null;
       if (!this.streaming) cancel(this);

@@ -1128,6 +1128,7 @@ function* mergePartSteps(parts, withUV=true) {
   const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), colr = new Float32Array(nv * 3), uv = withUV ? new Float32Array(nv * 2) : null;
   const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
   let vo = 0, io = 0;
+  const mergedBox = new THREE.Box3();
   for (const p of parts) {
     const g = p.g, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv, C = g.attributes.color;
     normalMatrix.getNormalMatrix(p.m);
@@ -1137,6 +1138,9 @@ function* mergePartSteps(parts, withUV=true) {
       _v.fromBufferAttribute(P, i).applyMatrix4(p.m);
       const o = (vo + i) * 3;
       pos[o] = _v.x; pos[o + 1] = _v.y; pos[o + 2] = _v.z;
+      // Match Box3.expandByPoint using the stored Float32 coordinates; _v remains double for AO.
+      mergedBox.min.x = Math.min(mergedBox.min.x, pos[o]); mergedBox.min.y = Math.min(mergedBox.min.y, pos[o + 1]); mergedBox.min.z = Math.min(mergedBox.min.z, pos[o + 2]);
+      mergedBox.max.x = Math.max(mergedBox.max.x, pos[o]); mergedBox.max.y = Math.max(mergedBox.max.y, pos[o + 1]); mergedBox.max.z = Math.max(mergedBox.max.z, pos[o + 2]);
       let ao = 1;
       if (p.ao != null) { const hh = Math.max(0, _v.y - p.ao); const t = Math.min(1, hh / 0.55); ao = 0.72 + 0.28 * t * t * (3 - 2 * t); }
       _v.fromBufferAttribute(N, i).applyMatrix3(normalMatrix).normalize();
@@ -1169,8 +1173,7 @@ function* mergePartSteps(parts, withUV=true) {
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   let complete = false;
   try {
-    const box = g.boundingBox = new THREE.Box3();
-    for (let i = 0; i < nv; i++) { box.expandByPoint(_v.fromArray(pos, i * 3)); if ((i & 1023) === 1023) yield; }
+    const box = g.boundingBox = mergedBox;
     const sphere = g.boundingSphere = new THREE.Sphere(); box.getCenter(sphere.center); let radiusSq = 0;
     for (let i = 0; i < nv; i++) { radiusSq = Math.max(radiusSq, sphere.center.distanceToSquared(_v.fromArray(pos, i * 3))); if ((i & 1023) === 1023) yield; }
     sphere.radius = Math.sqrt(radiusSq); complete = true; return g;

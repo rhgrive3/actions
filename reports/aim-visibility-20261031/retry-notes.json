@@ -1,0 +1,68 @@
+{
+  "build": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+  "observed_failures": [
+    {
+      "receipt": "receipts/desktop720.json.gz",
+      "sha256": "abd5f5e346a7d59d4485602ab22dbaecaed1faba7d1561f2ccf1691645c15d74",
+      "status": "failed",
+      "contentHash": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+      "failure": "Error: page.waitForFunction: Target crashed ",
+      "scenarios": [
+        {
+          "name": "desktop720",
+          "status": "passed",
+          "weapons": 16
+        },
+        {
+          "name": "desktop1080",
+          "status": null,
+          "weapons": 0
+        }
+      ]
+    },
+    {
+      "receipt": "receipts/desktop1080.json.gz",
+      "sha256": "09006a1e250533096994e5d75f6d375f680a586142d802e9b8865e277f9e7b00",
+      "status": "passed",
+      "contentHash": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+      "failure": null,
+      "scenarios": [
+        {
+          "name": "desktop1080",
+          "status": "passed",
+          "weapons": 16
+        }
+      ]
+    },
+    {
+      "receipt": "receipts/mobile-initial-failure.json.gz",
+      "sha256": "d904776da091e47321b04a3b85537b986a0895dd4e0e3295d92babc0785a7125",
+      "status": "failed",
+      "contentHash": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+      "failure": "Error: page.evaluate: Error: High quality must provide the actual GTAOPass\n    at eval (eval at evaluate (:311:30), <anonymous>:4:67)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "scenarios": [
+        {
+          "name": "mobile844",
+          "status": null,
+          "weapons": 16
+        }
+      ]
+    }
+  ],
+  "environment_observed_after_browser_crash": {
+    "root_and_tmp_free_bytes": 0,
+    "root_capacity": "32 GiB overlay",
+    "dev_shm_available": "approximately 3.9 GiB",
+    "cgroup_memory_max_bytes": 8589934592,
+    "oom_count": 31,
+    "oom_kill_count": 9,
+    "oom_counters_increased_during_isolated_retry": false
+  },
+  "interpretation": [
+    "First combined run passed desktop720 and Chromium target crashed while entering desktop1080; page, console and HTTP error lists were empty.",
+    "Fresh-process desktop1080 passed under the same /tmp setting, so disk exhaustion alone is not established as the cause. Accumulated Chromium/SwiftShader resources remain another possible cause.",
+    "The QA harness now fully closes/relaunches Chromium between independent viewports and records temporary storage capacity. Later touch runs use TMPDIR=/dev/shm/inkwave-aim-browser-tmp.",
+    "The first standalone mobile run passed all weapon, projection, native jump, cache, natural fade and restore checks, then hit a desktop-only GTAO assertion. Native Renderer explicitly requires !mobile.touch for GTAO, so the harness was corrected to assert this policy and also test high-quality touch fade/restore."
+  ],
+  "remaining_retry": "Completed: receipts/mobile844.json.gz passed"
+}

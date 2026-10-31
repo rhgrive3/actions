@@ -32,8 +32,16 @@ export const SOURCE_DRAW_1130=Object.freeze(Object.fromEntries(
     TailLengthMin:row[5],TailLengthMax:row[6],TailSolidFrame:row[7],
   })))])));
 
-export function catalogVisualSpec(record,descriptor,index=0){
+export function catalogVisualSpec(record,descriptor,index=0,ownedDescriptor=false){
   const family=record?.family, b=descriptor?.b||{}, c=descriptor?.c||{};
+  // The catalogue emitter opts in for its compiled descriptors. General
+  // callers retain the source/draw reads below, including accessor behavior.
+  if(ownedDescriptor){
+    if(family==='shooter'||family==='dualies'||family==='splatling')
+      return {style:'rod',draw:null,index,baseRadius:clamp(finite(c.EndRadiusForPlayer,.2)*.32,.045,.08)};
+    if(family==='charger')
+      return {style:'rod',draw:null,index,baseRadius:clamp(finite(c.EndRadiusForPlayer,.125)*.38,.04,.09)};
+  }
   // Normal records own a data sourceActor. Preserve the original helper path
   // for inherited/accessor/dynamic records whose value may change on a read.
   const source=record && Object.getOwnPropertyDescriptor(record,'sourceActor');

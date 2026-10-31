@@ -48,6 +48,25 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
     const id=kind-3,clock=time*(1.9+Math.max(0,id)*.137)+Math.max(0,id)*.618034;
     const cycle=Math.floor(clock),age=fract(clock),seed=hash(cycle*19+id*73);
     const pulse=Math.sin(Math.PI*age),side=id%2?-1:1;
+    // Shoulder columns share time/u inputs. Keep each vertex's arithmetic and
+    // final row-major address, while evaluating invariant sines once per column.
+    if(kind<2){
+      const sign=kind===0?1:-1;
+      for(let i=0;i<=nu;i++){
+        const u=i/nu,wave=u*15-time*14+kind*2.3,waveSin=Math.sin(wave);
+        const irregular=.78+.15*waveSin+.07*Math.sin(u*25-time*9.3+kind);
+        const edge=Math.sin(Math.PI*u),belly=Math.sin(Math.PI*Math.min(1,u*1.4));
+        const curlK=.78+.09*Math.sin(wave*.61),height=k*(.18+.09*belly)*edge*irregular;
+        for(let j=0;j<=nv;j++){
+          const v=j/nv,curl=v*Math.PI*curlK,curlSin=Math.sin(curl);
+          let x=sign*(.19*(1-.4*u)+.10*belly-.20*curlSin*edge+.02*v*v*waveSin);
+          let z=.19-u*.78-v*.07*edge;const y=.003+height*curlSin;
+          x*=spread;z*=spread;x+=turn*.10*u*u;
+          const n=(start+j*(nu+1)+i)*3;p[n]=x;p[n+1]=y;p[n+2]=z;
+        }
+      }
+      continue;
+    }
     for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
       const u=i/nu,v=j/nv;let x,y,z;
       if(kind<3){

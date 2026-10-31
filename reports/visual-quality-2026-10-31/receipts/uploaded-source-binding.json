@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "uploadedCommit": "2f79ced153ce82750f810ae7f85abb32b0ee5cb2",
+  "localSnapshotCommit": "8099eee60996f40036fa199f72f3069fd3d46442",
+  "tree": "c92673021ebad60bbdd2d96ad0d7de675d7417b9",
+  "productionContentHash": "0475983339d4ebbb41c4cf1ccbe3745eebf42427f3f81d62373a71d336387401",
+  "productionInputHash": "fe1df10dfbdc6274652bd68b4ae241f207ca449dd5b77982a8ce558a45666f3f",
+  "verifiedInputs": 1601,
+  "verifiedArtifacts": 2333,
+  "browserWitnessLocalCommit": "13422e7c5533549133624d4b84e1170d19395014",
+  "method": "Every build input is matched to a Git blob in the uploaded commit; every emitted artifact is rehashed. Browser witness covers these exact production bytes."
+}

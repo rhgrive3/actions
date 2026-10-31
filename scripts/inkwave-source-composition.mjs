@@ -1,7 +1,16 @@
+import { adaptBlasterReticle } from '../patches/splatoon3/blaster-reticle-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
 import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
 import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
 import { adaptLandscapeGearNativeKeys } from '../patches/local-quality/landscape-gear-native-keys-adapter.mjs';
+import { adaptCharacterVisualStability } from '../patches/local-quality/character-visual-stability-adapter.mjs';
+import { adaptFxShaderStability } from '../patches/local-quality/fx-shader-stability-adapter.mjs';
+import { adaptMenuCardLayout } from '../patches/local-quality/menu-card-layout-adapter.mjs';
+import { adaptQueueVisualWorld20261031 } from '../patches/local-quality/queue-visual-world-20261031-adapter.mjs';
+import { adaptQueueUiAudio20261031 } from '../patches/local-quality/queue-ui-audio-20261031-adapter.mjs';
+import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
+import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
+import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
@@ -165,6 +174,19 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptOnlineAsyncEntry(rel, code);
   code = adaptLandscapePracticeWeapons(rel, code);
   code = adaptLandscapeGearNativeKeys(rel, code);
+  // In-process A/B harnesses can isolate this final material pass. The site
+  // builder always uses the default enabled path; no runtime toggle is exposed.
+  if (options.characterVisualStability !== false) code = adaptCharacterVisualStability(rel, code);
+  code = adaptFxShaderStability(rel, code);
+  code = adaptMenuCardLayout(rel, code, replaceOnce);
+  if (options.queueVisualWorld20261031 !== false) code = adaptQueueVisualWorld20261031(rel, code);
+  if (options.queueUiAudio20261031 !== false) code = adaptQueueUiAudio20261031(rel, code);
+  if (options.queueWeapons20261031 !== false) code = adaptQueueWeapons20261031(rel, code);
+  // The title owns its decorative demo budget and presentation after all
+  // shared menu/gameplay passes, without changing playable match settings.
+  code = adaptTitleDemoBudget(rel, code);
+  code = adaptTitlePresentation(rel, code, replaceOnce);
+  code = adaptBlasterReticle(rel, code, replaceOnce);
   return code;
 }
 

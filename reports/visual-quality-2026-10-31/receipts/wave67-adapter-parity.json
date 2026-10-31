@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "rows": [
+    {
+      "rel": "src/fx/fx.js",
+      "input": "af7a19f37e3cc141a6c3463f4767c0913754c122c7e3d79f0030e0780a67e4d2",
+      "before": "6786175e4d4e8e48f4631379001849582913fb63c5babf9a4b2fd3f97d9074af",
+      "after": "6786175e4d4e8e48f4631379001849582913fb63c5babf9a4b2fd3f97d9074af",
+      "identical": true
+    },
+    {
+      "rel": "src/fx/screenfx.js",
+      "input": "5b8ccc2c3b7596a7da396438088445d98179ec09bb0a1fc2839928c4b3d1d246",
+      "before": "b52a4a149ec3518fff18743440eeade5dc6bf465916d4bbb445f1406b0ab292b",
+      "after": "b52a4a149ec3518fff18743440eeade5dc6bf465916d4bbb445f1406b0ab292b",
+      "identical": true
+    }
+  ]
+}

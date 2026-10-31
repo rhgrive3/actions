@@ -13,6 +13,7 @@ import { adaptPaintRenderRegions } from '../paint-render-regions-adapter.mjs';
 import { adaptWorldNative20261029 } from '../queue-world-native-20261029-adapter.mjs';
 import { replaceOnce } from '../adapter.mjs';
 import { geometryFixture } from './geometry-build-fixture.mjs';
+import { parse } from '../../loading-cache/vendor/acorn.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url)), SRC = path.join(ROOT, 'inkwave-public');
 const baseline = JSON.parse(fs.readFileSync(new URL('./fixtures/queue-remaining-paint-before.json', import.meta.url)));
@@ -25,6 +26,59 @@ function finalPaintOwners(bytes=finalPaintOwnerBytes){
 function replayFinalPaintOwners(source,bytes=finalPaintOwnerBytes){
   for(const {before,after,label} of finalPaintOwners(bytes))source=replaceOnce(source,before,after,label);
   return source;
+}
+// Run coalescing is a later, independently reviewed presentation owner. Keep
+// the frozen ownership epoch intact and project only this complete method so
+// the remaining-paint A/B comparison uses the same rectangle topology.
+// The successor is frozen from fdb74165bc1a1668afe6f674db064474655fd05f;
+// paint-owned-run-scan.test.mjs separately proves exact half-open coverage and
+// multiplicity for 1200 raw / 160 actual composed grids against its old oracle.
+const runScannerBytes=fs.readFileSync(new URL('./fixtures/paint-owned-run-scanner-successor-20261031.mjs.txt',import.meta.url));
+const FROZEN_OWNERSHIP_SHA='c1cb897a6d2ce534b893246e2cd123417338d5cea387f7555a96cf85a9e1f343';
+const OLD_RUN_SCANNER_SHA='52fb78cd24963287c76812746e6744e0906fbeaf178fc5f10db38e0d8bca476f';
+const NEW_RUN_SCANNER_SHA='1079cf2778d01256d2518a318390bfd843057a9ef33b059854985394d30719f9';
+const PROJECTED_OWNERSHIP_SHA='e2989e48e75d5e772454de436371db600f94a8298ffaf103f843060dca4d34f9';
+function ownedRunScanner(source){
+  const owners=[];
+  function walk(node){
+    if(!node||typeof node!=='object')return;
+    const e=node.expression;
+    if(node.type==='ExpressionStatement'&&e?.type==='AssignmentExpression'&&e.operator==='='&&
+      e.left.type==='MemberExpression'&&!e.left.computed&&e.left.object.name==='proto'&&e.left.property.name==='_paintOrderRuns')owners.push(node);
+    for(const value of Object.values(node)){
+      if(Array.isArray(value))value.forEach(walk);
+      else if(value&&typeof value==='object')walk(value);
+    }
+  }
+  walk(parse(source,{ecmaVersion:'latest',sourceType:'module'}));
+  assert.equal(owners.length,1,'one actual paint run scanner owner');
+  return source.slice(owners[0].start,owners[0].end);
+}
+function reviewedRunScanner(bytes=runScannerBytes){
+  assert.equal(sha(bytes),NEW_RUN_SCANNER_SHA,'sealed successor paint run scanner');
+  const source=bytes.toString('utf8');
+  assert.equal(ownedRunScanner(source),source,'complete successor scanner statement');
+  return source;
+}
+function frozenRunScanner(){
+  assert.equal(sha(baseline.ownership.composedSource),FROZEN_OWNERSHIP_SHA,'complete frozen paint ownership epoch');
+  const source=ownedRunScanner(baseline.ownership.composedSource);
+  assert.equal(sha(source),OLD_RUN_SCANNER_SHA,'frozen predecessor run scanner');
+  return source;
+}
+function restoreOwnershipRunScanner(source,bytes=runScannerBytes){
+  assert.equal(sha(source),PROJECTED_OWNERSHIP_SHA,'reviewed projected ownership epoch');
+  const restored=replaceOnce(source,reviewedRunScanner(bytes),frozenRunScanner(),'reverse reviewed paint run scanner');
+  assert.equal(restored,baseline.ownership.composedSource,'complete frozen ownership bytes restored');
+  return restored;
+}
+function projectOwnershipRunScanner(source,bytes=runScannerBytes){
+  assert.equal(sha(source),FROZEN_OWNERSHIP_SHA,'complete frozen paint ownership epoch');
+  assert.equal(source,baseline.ownership.composedSource,'independent frozen ownership bytes');
+  const projected=replaceOnce(source,frozenRunScanner(),reviewedRunScanner(bytes),'reviewed paint run scanner successor');
+  assert.equal(sha(projected),PROJECTED_OWNERSHIP_SHA,'reviewed projected ownership epoch');
+  assert.equal(restoreOwnershipRunScanner(projected,bytes),source,'one-hunk ownership projection is reversible');
+  return projected;
 }
 // Reviewed native-stage contact-plane routing, subsequently added to the
 // source chain. Keep every historical byte and prove each new anchor exactly.
@@ -44,6 +98,10 @@ function replayNativeContact(source, reverse=false){
 for (const row of Object.values(baseline)) if (row?.source) assert.equal(sha(row.source), row.sha256);
 assert.equal(sha(baseline.ownership.composedSource), baseline.ownership.composedSha256);
 const candidate = adaptRemainingPaint20261026('src/world/paint.js', baseline.paint.source);
+const ownershipRel='patches/splatoon3/runtime/paint-ownership.mjs';
+const currentOwnership=adaptBuildSource(ownershipRel,fs.readFileSync(path.join(ROOT,ownershipRel),'utf8'));
+assert.equal(ownedRunScanner(currentOwnership),reviewedRunScanner(),'actual current scanner matches the independently sealed successor');
+const historicalOwnershipWithCurrentRuns=projectOwnershipRunScanner(baseline.ownership.composedSource);
 const names = [['aPos', 2], ['aLocal', 3], ['aSplat', 4], ['aStretch', 3], ['aGrow', 4]];
 const plain = x => structuredClone(x);
 
@@ -65,7 +123,7 @@ async function loadPaint(changed) {
     if (modules.has(file)) return modules.get(file);
     const rel = path.relative(SRC, file), raw = fs.readFileSync(file, 'utf8');
     let source = rel === 'src/world/paint.js' ? (changed ? candidate : baseline.paint.source)
-      : file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs') ? (changed ? adaptBuildSource('patches/splatoon3/runtime/paint-ownership.mjs', raw) : baseline.ownership.composedSource)
+      : file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs') ? (changed ? currentOwnership : historicalOwnershipWithCurrentRuns)
       : rel.startsWith('..') ? raw : adaptBuildSource(rel, raw);
     const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(m) { m.url = pathToFileURL(file).href; } });
     modules.set(file, mod); return mod;
@@ -109,6 +167,23 @@ function state(p) {
       for (let i = 0; i < g.entries.length; i += stride) entries.push([g.entries[i].id, ...g.entries.slice(i + 1, i + 7)]);
       return [g.R, g.team, g.seed, g.kind, g.age, g.dur, g.dripDur, g.paintOrder, g.netOrderId, entries]; }) };
 }
+
+test('the common run-scanner epoch preserves its frozen predecessor and rejects missing, duplicate or tampered owners',()=>{
+  const old=frozenRunScanner(),next=reviewedRunScanner();
+  assert.equal(sha(baseline.ownership.composedSource),baseline.ownership.composedSha256,'original full fixture pin is unchanged');
+  assert.equal(restoreOwnershipRunScanner(historicalOwnershipWithCurrentRuns),baseline.ownership.composedSource);
+  assert.equal(ownedRunScanner(currentOwnership),next,'production scanner remains the actual subject');
+  for(const source of [baseline.ownership.composedSource.replace(old,''),baseline.ownership.composedSource+'\n'+old]){
+    assert.throws(()=>ownedRunScanner(source),/one actual paint run scanner owner/);
+    assert.throws(()=>projectOwnershipRunScanner(source),/complete frozen paint ownership epoch/);
+  }
+  for(const source of [historicalOwnershipWithCurrentRuns+'\n',historicalOwnershipWithCurrentRuns.replace(next,''),historicalOwnershipWithCurrentRuns+'\n'+next])
+    assert.throws(()=>restoreOwnershipRunScanner(source),/reviewed projected ownership epoch/);
+  const tampered=Buffer.from(next.replace('scratch[prior + 3] === y0','scratch[prior + 3] !== y0'));
+  assert.notEqual(sha(tampered),NEW_RUN_SCANNER_SHA,'negative control changes the real continuity guard');
+  assert.throws(()=>projectOwnershipRunScanner(baseline.ownership.composedSource,tampered),/sealed successor paint run scanner/);
+  assert.throws(()=>restoreOwnershipRunScanner(historicalOwnershipWithCurrentRuns,tampered),/sealed successor paint run scanner/);
+});
 
 test('roller interior skips only exact zero hypots; real CPU ownership and dirty rows are identical', async () => {
   const api = await runtimes; let random = 0x47b92a1;

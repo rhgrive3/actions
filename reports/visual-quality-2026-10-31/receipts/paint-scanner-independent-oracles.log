@@ -1,0 +1,10 @@
+✔ patches/splatoon3/tests/paint-owned-run-scan.test.mjs (1900.567085ms)
+✔ patches/splatoon3/tests/paint-run-coalescing.test.mjs (295.799213ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1912.617616

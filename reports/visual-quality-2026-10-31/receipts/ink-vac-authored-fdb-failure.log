@@ -1,0 +1,21 @@
+✖ actual Ink Vac authored emitter reaches the installed native birth hook (5.786865ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21.149132
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs:83:1
+✖ actual Ink Vac authored emitter reaches the installed native birth hook (5.786865ms)
+  ReferenceError: inkVacExhaleKinematics is not defined
+      at Projectiles.fireInkVacExhale (evalmachine.<anonymous>:4:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs:92:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)

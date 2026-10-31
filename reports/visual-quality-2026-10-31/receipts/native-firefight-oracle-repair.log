@@ -1,0 +1,29 @@
+✔ NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches full Triangle.containsPoint across 2000 random points (40.173258ms)
+✔ NAT-02 TriangleWorld.resolveCapsule returns a stable independently owned normal (1.497479ms)
+✔ NAT-03 through NAT-06 native runtime modules use preallocated scratch vectors and closure-free edge helpers (0.354244ms)
+✔ CMB-01 through CMB-06 firefight paint, splash drop, graze, and native scans preserve exact combat behavior (29.434953ms)
+✔ NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch vectors, and closure-free climb/surge/jump helpers (0.493864ms)
+✔ CMB-08 through CMB-10 ranked combat, catalogue cover, and exact Charger scan with owned scratch (0.705985ms)
+✔ NAT-11 through NAT-17 and CMB-11/MOV-09 Wave-2 scalar clamp, segment/point-triangle distance, quadraticEntry, drop clearance, and regionStats/edgeGuard parity (31.558506ms)
+✔ sub release recomputes gear-sensitive cost without stale descriptor reuse (0.849531ms)
+✔ CMB-10 native local Charger warming reuses reset scratch while flight/event geometry stays independent (601.047778ms)
+✔ CMB-10 nested native muzzle/aim callbacks keep distinct reusable depth leases (343.427522ms)
+✔ CMB-10 a throwing native callback restores the scratch depth before the next shot (339.30215ms)
+✔ CMB-10 independent Charger installations own their scratch and duplicate install is inert (348.558261ms)
+✔ CMB-10 remote and each custom callback retain independent outputs and returned-vector ownership (366.647516ms)
+▶ CMB-10 ownership and warming oracles reject controlled subject regressions
+  ✔ always-new output vectors (346.425279ms)
+  ✔ one slot for all nested depths (340.926996ms)
+  ✔ one module-global pool for independent installs (345.698558ms)
+  ✔ unconditional reuse for remote/custom callbacks (335.369935ms)
+✔ CMB-10 ownership and warming oracles reject controlled subject regressions (1370.747616ms)
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3555.571423

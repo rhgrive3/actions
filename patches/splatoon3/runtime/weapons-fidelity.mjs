@@ -1854,11 +1854,11 @@ export function installWeaponsFidelity(context,profile) {
     this._s3DetachedWallDrops?.splice(0);clearSplashDrops(this);return result;
   };
   Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceSplashDrops(this,dt,context.G,Number.isFinite(context.PLAYER?.waterY)?context.PLAYER.waterY:-Infinity);return updateSystem.call(this,dt);};
-  Projectiles.prototype._new=function(...args){
+  Projectiles.prototype._new=function(){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.s3BlasterFlightPaint=null;p.s3RollerFlightPaint=null;p.s3Weapon=null;p.s3SpecialPowerAP=0;
+    const p=fresh.apply(this,arguments);kitTrizookaClearPooled(p);p.s3BlasterFlightPaint=null;p.s3RollerFlightPaint=null;p.s3Weapon=null;p.s3SpecialPowerAP=0;
     p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
@@ -2080,12 +2080,15 @@ export function installWeaponsFidelity(context,profile) {
     'runnerBlasterJump','runnerBlasterWindup',
     'game','stage','gameLevel','physics','physicsLos','physicsRaycast','level','levelLayout','levelExtra',
     'levelBlocks','levelFaces','levelHash','levelBlocksLength','levelFacesLength','levelHashLength','geometryGeneration',
+    'physicsSegment','physicsCollisionRevision','levelCollisionRevision','gameCollisionRevision','levelNative','triangleWorld',
+    'fieldCollision','fieldInitial','fieldEnd','fieldChangeFrame',
     'poseX','poseY','poseZ'
   ]);
   const S3_GUIDE_CORE_FIELDS=Object.freeze(S3_GUIDE_FIELDS.filter(k=>k!=='poseX'&&k!=='poseY'&&k!=='poseZ'));
   function s3GuideCache(system){
     return system._s3GuideCache||(system._s3GuideCache={
-      sample:{},key:{},point:new THREE.Vector3(),queryIds:[],valid:false,mode:null,clearRadius:0,
+      sample:{},key:{},point:new THREE.Vector3(),impactPoint:new THREE.Vector3(),impactReady:false,
+      queryIds:[],valid:false,mode:null,clearRadius:0,
       pose:{muzzle:new THREE.Vector3(),aimMuzzle:new THREE.Vector3(),base:new THREE.Vector3(),fallback:new THREE.Vector3(),
         delta:new THREE.Vector3(),relative:new THREE.Vector3()},pointX:0,pointY:0,pointZ:0
     });
@@ -2135,6 +2138,11 @@ export function installWeaponsFidelity(context,profile) {
     s.levelBlocks=level?.blocks;s.levelFaces=level?.faces;s.levelHash=level?.hash;
     s.levelBlocksLength=level?.blocks?.length;s.levelFacesLength=level?.faces?.length;s.levelHashLength=level?.hash?.length;
     s.geometryGeneration=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
+    s.physicsSegment=physics?.segment;s.physicsCollisionRevision=physics?.collisionRevision;
+    s.levelCollisionRevision=level?.collisionRevision;s.gameCollisionRevision=game?.collisionRevision;
+    s.levelNative=level?.native;s.triangleWorld=level?.triangleWorld;
+    s.fieldCollision=raw?.CollisionParam;s.fieldInitial=raw?.CollisionParam?.InitRadiusForField;
+    s.fieldEnd=raw?.CollisionParam?.EndRadiusForField;s.fieldChangeFrame=raw?.CollisionParam?.ChangeFrameForField;
     s.poseX=pose.muzzle.x;s.poseY=pose.muzzle.y;s.poseZ=pose.muzzle.z;
     return true;
   }
@@ -2214,7 +2222,7 @@ export function installWeaponsFidelity(context,profile) {
     // Level + those references/counts above act as the geometry generation.
     return r;
   }
-  function cachedS3Guide(system,actor,w,mode,camera,width,height){
+  function cachedS3Guide(system,actor,w,mode,camera,width,height,reticle=false){
     const cache=s3GuideCache(system),guide=w?.shotGuide,raw=rawWeapon(w);
     const unit=mode==='slosher'&&guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum];
     const index=guide?.bulletOrderNumInUnit;
@@ -2222,10 +2230,12 @@ export function installWeaponsFidelity(context,profile) {
       if(w?.kind!=='slosher'||!unit||!Number.isInteger(index)||index<0||index>=(unit.BulletNum??1)||!Number.isFinite(guide.frame)||
          ((unit.RandomRotateYDegree||0)!==0&&!unit.RandomRotateYOffOrderNum?.includes(index))){cache.valid=false;return null;}
     }else if(mode!=='blaster'||w?.kind!=='blaster'||!Number.isFinite(w.shotGuideFrame)){cache.valid=false;return null;}
-    if(!captureS3Guide(system,actor,w,mode,cache)){cache.valid=false;return mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);}
-    if(cache.valid&&cache.mode===mode&&cache.point.x===cache.pointX&&cache.point.y===cache.pointY&&cache.point.z===cache.pointZ){
+    if(!captureS3Guide(system,actor,w,mode,cache)){cache.valid=false;return mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w,reticle);}
+    if(cache.valid&&cache.mode===mode&&cache.point.x===cache.pointX&&cache.point.y===cache.pointY&&cache.point.z===cache.pointZ&&(!reticle||cache.impactReady&&cache.reticleTime===context.G.time)){
       if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_FIELDS))return cache.point;
-      if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_CORE_FIELDS)){
+      // The old nominal-only pose tolerance cannot certify first wall contact.
+      // A paired sight uses exact muzzle inputs and shares only that result.
+      if(!reticle&&sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_CORE_FIELDS)){
         const moved=Math.hypot(cache.sample.poseX-cache.key.poseX,cache.sample.poseY-cache.key.poseY,cache.sample.poseZ-cache.key.poseZ);
         if(moved<=cache.clearRadius){
           const error=s3GuidePoseError(cache,mode,moved);
@@ -2233,10 +2243,13 @@ export function installWeaponsFidelity(context,profile) {
         }
       }
     }
-    cache.valid=false;
-    const point=mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w);
+    cache.valid=false;cache.impactReady=false;
+    const point=mode==='slosher'?computeS3SlosherGuide(system,actor,w):computeS3BlasterGuide(system,actor,w,reticle);
     if(!point)return null;
     cache.point.copy(point);cache.pointX=cache.point.x;cache.pointY=cache.point.y;cache.pointZ=cache.point.z;
+    if(reticle&&mode==='blaster'){
+      cache.impactPoint.copy(system._s3BlasterGuideProjectile._s3GuideImpact);cache.impactReady=true;cache.reticleTime=context.G.time;
+    }
     copyS3GuideFields(cache.key,cache.sample);cache.mode=mode;cache.valid=true;cache.clearRadius=0;
     const projectile=mode==='slosher'?system._s3SlosherGuideProjectile:system._s3BlasterGuideProjectile;
     if(projectile?.start)cache.clearRadius=certifyS3GuideMuzzleRadius(cache,actor,projectile.start);
@@ -2269,7 +2282,7 @@ export function installWeaponsFidelity(context,profile) {
     while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
     return p.pos;
   }
-  function computeS3BlasterGuide(system,actor,w){
+  function computeS3BlasterGuide(system,actor,w,contacts=false){
     const frame=w?.shotGuideFrame;
     if(w?.kind!=='blaster'||!Number.isFinite(frame))return null;
     const p=system._s3BlasterGuideProjectile||(system._s3BlasterGuideProjectile={
@@ -2284,8 +2297,18 @@ export function installWeaponsFidelity(context,profile) {
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
     applyBlasterSpawnVelocity(p);
-    let remaining=Math.max(0,frame/60);
-    while(remaining>EPSILON){const step=Math.min(1/60,remaining);advanceFidelityProjectile(p,step);remaining-=step;}
+    const impact=contacts?(p._s3GuideImpact||(p._s3GuideImpact=new THREE.Vector3())):null;
+    const hit=contacts?(p._s3GuideHit||(p._s3GuideHit=new context.Hit())):null;
+    let contacted=false,remaining=Math.max(0,frame/60);
+    while(remaining>EPSILON){
+      const step=Math.min(1/60,remaining),r0=contacts&&!contacted?fieldRadiusAt(p,p.age):0;
+      advanceFidelityProjectile(p,step);remaining-=step;
+      if(contacts&&!contacted){
+        sweptWorldHit(context.G.physics,p.prev,p.pos,r0,fieldRadiusAt(p,p.age),hit,true);
+        if(hit.hit){impact.copy(hit.point);contacted=true;}
+      }
+    }
+    if(contacts&&!contacted)impact.copy(p.pos);
     return p.pos;
   }
   Projectiles.prototype.s3SlosherGuide=function(actor,w){
@@ -2388,9 +2411,26 @@ export function installWeaponsFidelity(context,profile) {
     return cachedS3Guide(this,actor,w,'slosher',camera,width,height);
   };
   Projectiles.prototype.s3WeaponGuide=function(actor,w,camera,width,height){
+    if(w?.catalogRecord?.family==='blaster')
+      return this.s3CatalogBlasterGuide?.(actor,w,camera,width,height) || null;
     if(w?.kind==='slosher')return this.s3SlosherGuide(actor,w,camera,width,height);
     if(w?.kind!=='blaster'){if(this._s3GuideCache)this._s3GuideCache.valid=false;return null;}
     return cachedS3Guide(this,actor,w,'blaster',camera,width,height);
+  };
+  // Two display endpoints share one dry trajectory. The nominal endpoint
+  // explains the observed moving grey sight; its retail formula is not known.
+  // Legacy s3WeaponGuide keeps its historical return value for other callers.
+  Projectiles.prototype.s3BlasterReticleGuides=function(actor,w,camera,width,height){
+    if(w?.catalogRecord?.family==='blaster')
+      return this.s3CatalogBlasterReticleGuides?.(actor,w,camera,width,height) || null;
+    if(w?.kind!=='blaster')return null;
+    const point=cachedS3Guide(this,actor,w,'blaster',camera,width,height,true);
+    if(!point)return null;
+    const cache=s3GuideCache(this);
+    const view=this._s3BlasterReticleView||(this._s3BlasterReticleView={aim:new THREE.Vector3(),impact:new THREE.Vector3()});
+    view.aim.copy(point);
+    view.impact.copy(cache.valid&&cache.impactReady?cache.impactPoint:this._s3BlasterGuideProjectile._s3GuideImpact);
+    return view;
   };
   // Issue #94: the Shooter-only weapon-side reticle previews the nominal
   // (unspread) shot's first field contact. Spawn state comes from the same

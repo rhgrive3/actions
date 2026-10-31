@@ -10,7 +10,12 @@ import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 // Each action still goes through Actor's ordinary special and throw inputs.
 const IDS = new Set(['bubbler', 'storm', 'tripleInkstrike', 'tacticooler',
   'superChump', 'splattercolorScreen', 'waveBreaker']);
-const finitePoint = p => p && [p.x, p.y, p.z].every(Number.isFinite);
+const finitePoint = p => {
+  if(!p)return p;
+  // Preserve eager x/y/z reads, including accessor order, without a triplet.
+  const x=p.x,y=p.y,z=p.z;
+  return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z);
+};
 const flatDistance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
