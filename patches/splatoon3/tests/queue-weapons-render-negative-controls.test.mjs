@@ -131,4 +131,4 @@ test('targeted special hand matrix refresh omits a synchronous unrelated descend
  record('special-motion-trizooka-inkvac-targeted-ik-matrix-refresh',{baseline,candidate:targeted,reason:'The actual fit body can match all three immediately measured nodes while changing other synchronous consumers. Unlike bomb preview there is no enclosing whole-rig rollback transaction. Full traversal remains until guarded downstream equivalence and device benefit are established.'});
 });
 
-test.after(()=>fs.writeFileSync(new URL('../../../reports/queue-weapons-render-20261030/negative-controls.json',import.meta.url),JSON.stringify(receipt,null,2)+'\n'));
+test.after(()=>{const file=new URL('../../../reports/queue-weapons-render-20261030/negative-controls.json',import.meta.url);fs.mkdirSync(new URL('./',file),{recursive:true});fs.writeFileSync(file,JSON.stringify(receipt,null,2)+'\n');});

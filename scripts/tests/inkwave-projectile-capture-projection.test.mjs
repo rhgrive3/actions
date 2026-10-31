@@ -124,6 +124,10 @@ test('phase exception cannot authorize a changed sealed workflow hash',async()=>
   try{
     const lib=path.join(root,'scripts/lib'),fixtures=path.join(root,'scripts/fixtures');fs.mkdirSync(lib,{recursive:true});fs.mkdirSync(fixtures,{recursive:true});
     for(const file of ['inkwave-slosher-phase-workflow.mjs','inkwave-slosher-phase-control.mjs'])fs.copyFileSync(new URL('../lib/'+file,import.meta.url),path.join(lib,file));
+    // The imported validator checks this separately sealed sparse-checkout epoch
+    // before reaching the deliberately corrupted phase-only fixture. Copy the
+    // original metadata byte-for-byte so only the intended seal is under test.
+    fs.copyFileSync(new URL('../fixtures/inkwave-projectile-sparse-checkout-epoch-20261031.json',import.meta.url),path.join(fixtures,'inkwave-projectile-sparse-checkout-epoch-20261031.json'));
     const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-slosher-phase-workflow-20261027.json',import.meta.url),'utf8'));fixture.afterSha256='0'.repeat(64);
     fs.writeFileSync(path.join(fixtures,'inkwave-slosher-phase-workflow-20261027.json'),JSON.stringify(fixture));
     const changed=await import(pathToFileURL(path.join(lib,'inkwave-slosher-phase-workflow.mjs')).href);

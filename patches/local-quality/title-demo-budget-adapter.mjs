@@ -120,9 +120,27 @@ export function adaptTitleDemoBudget(rel, code) {
   if (rel !== 'src/main.js') return code;
   code = once(code, 'new Match({ attract: true, duration: 99999,',
     'new Match({ titleDemo: !DEV_STAGE, attract: true, duration: 99999,', 'attract roster opt-in');
-  code = once(code, '  _frame(dt) {',
-    '  _frame(dt) {\n    const titleDemo = prepareTitleDemoFrame(this, G, dt);\n    if (holdTitleDemoFrame(this, G, dt, titleDemo)) return;',
-    'title lifecycle before static menu gate');
+  // The native world switch fence must run before title presentation touches
+  // the retired world. Keep it the first statement when the native adapter is
+  // installed; standalone legacy source transformations retain their old form.
+  const frameHead = '  _frame(dt) {';
+  const nativeFence = [
+    frameHead,
+    '    if (this._nativeStageSwitchPending) {',
+    '      G.time += Math.max(0, dt);',
+    '      this.input?.pollPad?.();',
+    '      this._padMenus?.();',
+    '      G.net?.update?.(dt);',
+    '      this.menus?.update?.(dt);',
+    '      this.input?.endFrame?.();',
+    '      this.s3Clock?.reset?.();',
+    '      return;',
+    '    }',
+  ].join('\n');
+  const titleHook='\n    const titleDemo = prepareTitleDemoFrame(this, G, dt);\n    if (holdTitleDemoFrame(this, G, dt, titleDemo)) return;';
+  if (code.includes(nativeFence))
+    code = once(code,nativeFence,nativeFence+titleHook,'title demo after native stage retirement fence');
+  else code = once(code,frameHead,frameHead+titleHook,'standalone title frame hook');
   code = once(code, '  _onScreen(s) {',
     "  _onScreen(s) {\n    if (s !== 'title') releaseTitleDemoBudget(this);", 'restore gameplay density on menu exit');
   code = once(code, '    if (!portraitFrame.offline) runSimulation(this, portraitFrame.released ? 0 : dt);',
