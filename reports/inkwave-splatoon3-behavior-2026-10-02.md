@@ -7089,3 +7089,12 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: チャージ音とインク残量
 
 統合した音声修正では、チャージャー・スピナー・ストリンガーの音を実際にインクで充填できた進行量に追従させ、スピナーの満充電音を共通ビープに変更した。参照は旧作系コミュニティ資料と既存の試聴であり、Splatoon 3 Ver.11.3.0実機の音色・音程・タイミングとの一致は未確認。対象ブキ、残量条件、音源、音声回帰と検証の限界は[チャージ音の修正記録](charge-ink-audio-fix-20261031.md)を参照。
+
+## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
+
+比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
+
+既存の有限高さguardを維持し、canonical OBB worldで、雨volumeに接触する全active sphereの全投影がそれぞれ1つの非grate固体に遮られると証明できる場合だけBoss雨を拒否する。最遅entry列の同一block実nearest rayと既存upward LOSを使う。near-parallel軸はbodyTop平面だけでなくsphere全体を含む必要があり、端の実LOSが通る誤免疫の負対照を固定した。形状・モデル・数値reach・owner/Map/batch/flushは変更しない。
+
+正式LOS9＋既finite8はsource/選択的既存emitterで17/17、別の実owner18はsource/emitted・30/60/120Hz・JSON host/guestで18/18（重複合算しない）。合成Boss.rainのclear/屋根/far/旧5引数のMap判定と逆配線負対照を含む。全身の部分露出、unknown、body始点inside、NativePhysics/custom world、複数OBBの未証明unionは従来damageを維持する。全LOS・本家実機一致・full build成功を示すものではなく、#735はOpenを維持する。
+
