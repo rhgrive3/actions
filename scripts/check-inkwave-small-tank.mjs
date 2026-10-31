@@ -44,14 +44,18 @@ try {
    const caseStarted=Date.now();
    const row=await page.evaluate(async()=>{
     const G=window.__G,g=window.__inkwave,h=G.hud,cv=h.tankCanvas,a=G.local;
+    // DPR2 on software GPUs settles its live HUD level more slowly. Use an
+    // explicitly bounded second cadence, never replace the actual render path.
+    const cadenceFrames=window.devicePixelRatio>1?12:6;
     const snapshots=[],nativePixels=[];
     for(const ink of [100,0,50]) {
      // Let real input, actor, HUD interpolation/throttle and renderer execute.
      // No tank visibility, dimensions, method or controller replacement.
-     // Six 30Hz frames settle the HUD exponential within 6.1% of the target.
+     // Six real frames suffice at DPR1; DPR2 uses twelve render frames to
+     // settle the live interpolation without forcing any tank state.
      // Yield each real render to the browser instead of queuing 72 GPU frames
      // synchronously before asking its compositor for a screenshot.
-     for(let i=0;i<6;i++){a.ink=ink;g._frame(1/30);await new Promise(resolve=>requestAnimationFrame(resolve));}
+     for(let i=0;i<cadenceFrames;i++){a.ink=ink;g._frame(1/30);await new Promise(resolve=>requestAnimationFrame(resolve));}
      const pixels=h.tankCtx.getImageData(0,0,cv.width,cv.height).data;
      let opaque=0,coloured=0,checksum=0;
      for(let i=0;i<pixels.length;i+=4){if(pixels[i+3])opaque++;if(pixels[i+3]&&Math.max(pixels[i],pixels[i+1],pixels[i+2])-Math.min(pixels[i],pixels[i+1],pixels[i+2])>20)coloured++;for(let j=0;j<4;j++)checksum=(Math.imul(checksum,31)+pixels[i+j])>>>0;}
@@ -88,9 +92,9 @@ try {
     };
     const full=probe(1),empty=probe(0),half=probe(.5),noInk=probe(1,true);
     const inkProbe={roi,fullVsEmpty:distance(full.pixels,empty.pixels,roi),halfVsEmpty:distance(half.pixels,empty.pixels,roi),suppressedFullVsEmpty:distance(noInk.pixels,empty.pixels,roi),suppressedRects:noInk.suppressedRects,images:[{name:'full',png:full.png},{name:'empty',png:empty.png},{name:'half',png:half.png},{name:'suppressed-full',png:noInk.png}]};
-    return {viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,canvas:[cv.clientWidth,cv.clientHeight,cv.width,cv.height],well:{x:c.wx,y:c.wy,width:c.ww,height:c.wh},form:a.form,hudVisible:getComputedStyle(h.el).display!=='none',tankDisplay:style.display,tankVisibility:style.visibility,tankOpacity:style.opacity,canvasDisplay:canvasStyle.display,snapshots,nativeFullVsEmpty:distance(nativePixels[0],nativePixels[1]),inkProbe};
+    return {viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,canvas:[cv.clientWidth,cv.clientHeight,cv.width,cv.height],well:{x:c.wx,y:c.wy,width:c.ww,height:c.wh},form:a.form,hudVisible:getComputedStyle(h.el).display!=='none',tankDisplay:style.display,tankVisibility:style.visibility,tankOpacity:style.opacity,canvasDisplay:canvasStyle.display,snapshots,nativeFullVsEmpty:distance(nativePixels[0],nativePixels[1]),inkProbe,cadenceFrames};
    });
-   row.elapsedMs=Date.now()-caseStarted;row.framesPerInkState=6;row.frameDt=1/30;
+   row.elapsedMs=Date.now()-caseStarted;row.framesPerInkState=row.cadenceFrames;row.frameDt=1/30;
    const prefix=`${width}x${height}-dpr${dpr}-${result.cases.length+1}`;
    for(const [name,shot] of [...row.snapshots.map(s=>['native-'+s.ink,s]),...row.inkProbe.images.map(s=>['probe-'+s.name,s])]){
     shot.image=`${prefix}-${name}.png`;fs.writeFileSync(path.join(out,shot.image),Buffer.from(shot.png.split(',')[1],'base64'));delete shot.png;

@@ -103,11 +103,16 @@ test('Screen catches swept crossings and collider contact, excludes allies and o
   }finally{f.G.projectiles.applyHit=apply;}
 });
 
-test('Remote Screen contact changes recipient status without authoring damage',async()=>{
+test('unproven remote Screen replay cannot write local status or damage',async()=>{
   const f=await world(),ghost=f.make(),victim=f.make();ghost.remote=true;ghost.team=1;victim.team=0;victim.isLocal=true;
   assert.equal(f.replaySpecial(f,{actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,0,0],target:[0,0,1],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9}),true);
   const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');screen.moveSpeed=0;victim.pos.copy(screen.pos);
   let hits=0;f.G.projectiles.applyHit=()=>{hits++;};
   for(let i=0;i<60;i++)advance(f,1/60);
-  assert.equal(hits,0);assert.ok(victim.s3.splattercolorUntil>f.G.time);
+  // The remote actor did not produce a paid native event/tick receipt.
+  // A decorative replay is not authority to apply a local contact debuff.
+  // The positive paid-flight path is checked by screen-native-contact-20261030.test.mjs.
+  assert.equal(hits,0);
+  assert.equal(victim.s3?.splattercolorUntil>f.G.time,false,
+    'unverified Screen ghosts are purely visual and cannot alter local status');
 });

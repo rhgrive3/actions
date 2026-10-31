@@ -148,14 +148,18 @@ test('replacement and match clear retire only the matching cooler lock without c
   a.stormGaugeLock = 0; a.addTurf(10); near(a.special, 10, 'clear removes the cooler gate');
 });
 
-test('authenticated remote stand replay never owns a local gauge lock; a new match cannot retain one', async () => {
+test('unproven remote stand replay cannot create a cooler or local gauge lock; a new match cannot retain one', async () => {
   const w = await world(), { f, G, a } = w;
   const local = f.make('support'); local.special = 23;
   a.remote = true; a.owner = 'peer';
   const nm = Object.create(f.NetMatch.prototype);
   nm.byNid = new Map([[7, a]]); nm.match = G.match; G.netm = nm;
   nm._play('peer', [0, 'ks', 'c', 7, 1, 0, 0, 0, a.netLife || 0, 1020]);
-  assert.equal(G.projectiles._s3SupportCoolers.length, 1);
+  // This lone replay row has no authenticated native tick, paid special use,
+  // or receiver-owned throw. The positive admitted path is separately covered
+  // by support-native-contact-20261030.test.mjs.
+  assert.equal(G.projectiles._s3SupportCoolers?.length||0, 0,
+    'unauthenticated stand creation is rejected, not materialized');
   assert.equal(a.s3TacticoolerGauge, undefined); assert.equal(f.tacticoolerGaugeLocked(local), false);
   near(local.special, 23, 'peer replay leaves local charge alone');
   a.remote = false; G.netm = null; G.projectiles.clear(); w.activate(); w.throwDevice(); w.land();
