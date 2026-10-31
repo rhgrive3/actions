@@ -189,6 +189,20 @@ export function bombPreviewPosition(a, out) {
   if (!a?.weaponRunner?.aimingSub) return out;
   return sampleRelease(a, out);
 }
+// Storm has an independent special-owned throw pose; it is deliberately not
+// classified as a Splat Bomb recovery above. Share its actual native launch
+// origin with the predictor instead of sampling an unrelated held-bomb rig.
+export function stormThrowPosition(a, out) {
+  out.copy(a.pos); out.y += 1.45;
+  return out;
+}
+// A forecast may be requested during release recovery as well as while held.
+// Sample the same release pose without writing the live releasePosition record.
+export function bombPredictionPosition(a, out) {
+  const ch=a?.character,value=ch&&stateMap(ch).get(ch);
+  if(!a?.weaponRunner?.aimingSub&&!value?.throwing)return out;
+  return sampleRelease(a,out);
+}
 export function installBombMotion({ Character, WeaponRunner, THREE, CHARACTER_TIMERS: timers, CHARACTER_BOMB_POSE: curves }) {
   if (!Character || !Number.isInteger(timers?.T_THROW))
     throw Error('Bomb motion requires the actual Character and exact exported T_THROW');
@@ -321,3 +335,4 @@ export function installBombMotion({ Character, WeaponRunner, THREE, CHARACTER_TI
     return dispose.apply(this, args);
   };
 }
+
