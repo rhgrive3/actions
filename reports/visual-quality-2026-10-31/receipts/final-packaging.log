@@ -1,0 +1,19 @@
+✔ every terminal quality composer dependency is bound to the build input identity (54.727271ms)
+✔ excluded modules have audited build-only exports; mixed runtime adapters remain shipped (168.225357ms)
+✔ runtime helper URLs retain their exports without carrying build-time source transforms (45.090348ms)
+✔ minified static ESM imports are found without whitespace and with re-exports (0.465742ms)
+✔ emitted lossless lightmaps preserve every pixel while reducing the offline snapshot (130.325132ms)
+✔ ESM minification preserves the emitted module export interface (1151.652338ms)
+✔ network identity contains only exact paths owned by its namespace (3.130278ms)
+✔ emitted identity binds every input to one canonical tracked path including S3 dodge dependencies (543.137379ms)
+✔ emitted gameplay profile preserves all JSON values without shipping indentation (4.601394ms)
+✔ emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes (2062.102491ms)
+✔ indexed worker precache decodes strictly before offline graph checks (1.350012ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4175.179945

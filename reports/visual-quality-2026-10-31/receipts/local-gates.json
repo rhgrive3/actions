@@ -1,0 +1,53 @@
+{
+  "visualImplementationCommit": "13422e7c5533549133624d4b84e1170d19395014",
+  "productionContentHash": "0475983339d4ebbb41c4cf1ccbe3745eebf42427f3f81d62373a71d336387401",
+  "quality": {
+    "passed": 88,
+    "failed": 0,
+    "skipped": 0
+  },
+  "productionPackaging": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0
+  },
+  "sourceIdentityAndCIContracts": {
+    "rootRunPassed": 107,
+    "rootRunFailed": 1,
+    "rootFailure": "POSIX chmod permission test is not meaningful with root privileges",
+    "sameUnmodifiedFileAsNobody": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "stage2Passed": true
+  },
+  "repairedMotionFixtureFiles": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "actualCharacterComparisons": 867
+  },
+  "nativeMethodOracle": {
+    "passed": 18,
+    "failed": 0,
+    "runtimeChanges": 0
+  },
+  "paintFixtureEpoch": {
+    "passed": 7,
+    "failed": 0,
+    "runtimeChanges": 0
+  },
+  "productionBrowser": {
+    "status": "passed",
+    "scope": "full-active",
+    "fullAcceptance": true,
+    "sourceSha": "13422e7c5533549133624d4b84e1170d19395014",
+    "contentHash": "0475983339d4ebbb41c4cf1ccbe3745eebf42427f3f81d62373a71d336387401",
+    "verifiedResponses": 841,
+    "errors": [],
+    "consoleErrors": [],
+    "unverifiedRequestFailures": [],
+    "canonicalKitSelections": 65
+  }
+}

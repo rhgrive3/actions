@@ -1,0 +1,44 @@
+{"scope":"actual composed head/face, no rendered-device claim","comparisons":100364,"faceVariants":12,"vertices":77242,"centerShapeCalls":[4,3]}
+{"scope":"actual composed geometry and callback order","tubes":24,"cups":164,"trig":[{"tubeCalls":3560,"cupCalls":432},{"tubeCalls":114,"cupCalls":18}]}
+{"scope":"actual Three.js fit arithmetic, no rendered-device claim","cases":12000,"before":480000,"after":156430,"nonconverged":2788,"stableChecks":[40,2]}
+(node:247742) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ reviewed hair detail successor preserves the complete prior raw source and frozen arithmetic kernel (1.757745ms)
+✔ reviewed hair detail successor rejects missing, duplicate, changed anchors and a relabelled descriptor (2.0002ms)
+✔ head center reuse preserves signed-zero/nonfinite surface outputs and all twelve face builds (2772.882575ms)
+✔ tube bases and suction angle tables preserve callbacks, custom methods and exact buffers (163.875913ms)
+✔ special held fit exits only after both constraints perform no projection (439.209716ms)
+{"scope":"real Character transforms and geometry; no screenshot/device claim","emitted":false,"comparisons":336,"quaternionMultiplyCalls":[182894,146830],"rngCalls":[0,0]}
+✔ real source-loaded Characters preserve hair/manual/held-special poses and geometry at 30/60/120Hz (22662.799128ms)
+{"scope":"owned strap cutoff and actual teeFold","boundaryComparisons":3600,"teeComparisons":600}
+{"scope":"real Three.js construction; no GPU/device speed claim","surfaceVariants":24}
+{"scope":"real face/eye geometry and AO","variants":12,"faceVertices":77242}
+(node:248125) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ shared limb tables preserve independent live hints, caller outputs and bounded coordinate invalidation (98.642614ms)
+✔ owned strap blocks retain all near-boundary distances and exact tee displacement; unowned mutable polylines retain full distances (63.660647ms)
+✔ plate tilt slots keep exact scalar/nonfinite values and nonnumeric coercion order (29.015101ms)
+✔ eyeball ring reuse observes cornea mutation between eyes and preserves accessor read order (93.760229ms)
+✔ historical character source retains independently pinned input and both later owner anchors (text only) (129.338908ms)
+✔ actual Three.js surfaces, tube attributes and suction geometry preserve exact bytes with half as many arc mappings (84.359195ms)
+✔ all 12 actual face LOD/quality variants and both eyeballs remain byte exact (2406.299002ms)
+{"scope":"source-loaded actual Character; no browser/GPU/retail claim","poseComparisons":288,"randomCalls":[0,0]}
+✔ real source-loaded actor poses, all mesh attributes and RNG match at 30/60/120 Hz (22055.000848ms)
+(node:248299) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ pinned source-controller reconstructs the walk owner and historical queue (text only) (49.671638ms)
+✔ action candidate removal preserves 17920 native-map priorities and live map mutations (25.30037ms)
+✔ action getters, replacement banks, string coercion and thrown lookups retain their original order (1.693865ms)
+✔ response slots preserve signed zero, abnormal dt and exact arithmetic and share all same-dt actors (1.831236ms)
+✔ changed Math callbacks and coercing dt use uncached calls with the original Math receiver (1.123101ms)
+✔ historical lazy dance shortcut has observable mutable-roster counterexamples and remains unadopted (1.094999ms)
+{"scope":"actual source-loaded Character; no browser FPS claim","poseComparisons":243,"randomCalls":[0,0]}
+✔ actual source-loaded poses remain exact at 30/60/120 Hz with actions, dt normalization and shared actor gains (20261.075239ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72717.727758

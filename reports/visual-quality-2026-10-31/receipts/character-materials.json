@@ -1,0 +1,458 @@
+{
+  "renderer": "Chromium/ANGLE SwiftShader",
+  "sourceHashes": {
+    "raw": "fffceb3eed97b6691a503e32b5217e98761f685904a4a35bed1e1a40a1e841f0",
+    "baseline": "a66a4d03572c265beee54bda1a31e7240b5d4a36baa3b14cb0a2fef5ec7abdd0",
+    "candidate": "b0665b973516bb5408d8babfe745aed033d32f9b0dfa87f865ce193db5f8b42c"
+  },
+  "scope": "latest source composed modules; character-only isolated scene, no stage or postprocessing",
+  "stats": {
+    "baseline/identity": {
+      "contextIsolation": "Separate browser page and WebGLRenderer for this variant",
+      "programKeys": {
+        "skin": "iw-skin4|iwRim|iwSpawnCoating1",
+        "cloth": "iw-cloth4|iwRim|iwSpawnCoating1",
+        "hair": "iw-hair4|iwRim|iwSpawnCoating1",
+        "eye": "iw-eye4",
+        "squid": "iw-squid-neutral5|iwSpawnCoating1",
+        "squidGhost": "iw-squid-ghost-world-depth7|iwSpawnCoating1",
+        "plastic": "iw-plastic3"
+      }
+    },
+    "baseline/character-front": {
+      "name": "character-front",
+      "calls": 10,
+      "triangles": 100865,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "baseline/character-oblique": {
+      "name": "character-oblique",
+      "calls": 10,
+      "triangles": 100865,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "baseline/character-close": {
+      "name": "character-close",
+      "calls": 8,
+      "triangles": 100696,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "baseline/metal-close-0": {
+      "name": "metal-close-0",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-close-1": {
+      "name": "metal-close-1",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-close-2": {
+      "name": "metal-close-2",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-close-3": {
+      "name": "metal-close-3",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-close-4": {
+      "name": "metal-close-4",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-medium-0": {
+      "name": "metal-medium-0",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-medium-1": {
+      "name": "metal-medium-1",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-medium-2": {
+      "name": "metal-medium-2",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-medium-3": {
+      "name": "metal-medium-3",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/metal-medium-4": {
+      "name": "metal-medium-4",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "baseline/compiled": {
+      "programs": [
+        {
+          "name": "EquirectangularToCubeUV",
+          "runnable": true
+        },
+        {
+          "name": "PMREMGGXConvolution",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "iw-plastic",
+          "runnable": true
+        },
+        {
+          "name": "iw-ink-physical",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "iw-dark",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        }
+      ],
+      "glError": 0
+    },
+    "candidate/identity": {
+      "contextIsolation": "Separate browser page and WebGLRenderer for this variant",
+      "programKeys": {
+        "skin": "iw-skin4|visual-stability1|iwRim|iwSpawnCoating1",
+        "cloth": "iw-cloth4|visual-stability1|iwRim|iwSpawnCoating1",
+        "hair": "iw-hair4|visual-stability1|iwRim|iwSpawnCoating1",
+        "eye": "iw-eye4|visual-stability1",
+        "squid": "iw-squid-neutral5|visual-stability1|iwSpawnCoating1",
+        "squidGhost": "iw-squid-ghost-world-depth7|visual-stability1|iwSpawnCoating1",
+        "plastic": "iw-plastic3|visual-stability1"
+      }
+    },
+    "candidate/character-front": {
+      "name": "character-front",
+      "calls": 10,
+      "triangles": 100865,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "candidate/character-oblique": {
+      "name": "character-oblique",
+      "calls": 10,
+      "triangles": 100865,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "candidate/character-close": {
+      "name": "character-close",
+      "calls": 8,
+      "triangles": 100696,
+      "geometryCount": 19,
+      "textureCount": 4
+    },
+    "candidate/metal-close-0": {
+      "name": "metal-close-0",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-close-1": {
+      "name": "metal-close-1",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-close-2": {
+      "name": "metal-close-2",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-close-3": {
+      "name": "metal-close-3",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-close-4": {
+      "name": "metal-close-4",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-medium-0": {
+      "name": "metal-medium-0",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-medium-1": {
+      "name": "metal-medium-1",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-medium-2": {
+      "name": "metal-medium-2",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-medium-3": {
+      "name": "metal-medium-3",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/metal-medium-4": {
+      "name": "metal-medium-4",
+      "calls": 1,
+      "triangles": 2,
+      "geometryCount": 20,
+      "textureCount": 4
+    },
+    "candidate/compiled": {
+      "programs": [
+        {
+          "name": "EquirectangularToCubeUV",
+          "runnable": true
+        },
+        {
+          "name": "PMREMGGXConvolution",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "iw-plastic",
+          "runnable": true
+        },
+        {
+          "name": "iw-ink-physical",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "iw-dark",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        },
+        {
+          "name": "",
+          "runnable": true
+        }
+      ],
+      "glError": 0
+    }
+  },
+  "diffs": {
+    "character-front": {
+      "maxChannelByte": 1,
+      "meanAbsoluteByte": 0.0000042724609375,
+      "changedChannels": 7,
+      "totalChannels": 1638400
+    },
+    "character-oblique": {
+      "maxChannelByte": 1,
+      "meanAbsoluteByte": 0.000003662109375,
+      "changedChannels": 6,
+      "totalChannels": 1638400
+    },
+    "character-close": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 1638400
+    },
+    "metal-close-0": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 409600
+    },
+    "metal-close-1": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 409600
+    },
+    "metal-close-2": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 409600
+    },
+    "metal-close-3": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 409600
+    },
+    "metal-close-4": {
+      "maxChannelByte": 0,
+      "meanAbsoluteByte": 0,
+      "changedChannels": 0,
+      "totalChannels": 409600
+    },
+    "metal-medium-0": {
+      "maxChannelByte": 8,
+      "meanAbsoluteByte": 1.95908935546875,
+      "changedChannels": 274189,
+      "totalChannels": 409600
+    },
+    "metal-medium-1": {
+      "maxChannelByte": 8,
+      "meanAbsoluteByte": 1.95901123046875,
+      "changedChannels": 274555,
+      "totalChannels": 409600
+    },
+    "metal-medium-2": {
+      "maxChannelByte": 8,
+      "meanAbsoluteByte": 1.95220703125,
+      "changedChannels": 273858,
+      "totalChannels": 409600
+    },
+    "metal-medium-3": {
+      "maxChannelByte": 8,
+      "meanAbsoluteByte": 1.94974609375,
+      "changedChannels": 273285,
+      "totalChannels": 409600
+    },
+    "metal-medium-4": {
+      "maxChannelByte": 8,
+      "meanAbsoluteByte": 1.94867919921875,
+      "changedChannels": 273065,
+      "totalChannels": 409600
+    }
+  },
+  "temporal": {
+    "baseline/close": {
+      "averageMeanAbsoluteByte": 0.0432843017578125,
+      "maxChannelByte": 1
+    },
+    "baseline/medium": {
+      "averageMeanAbsoluteByte": 0.8530493164062499,
+      "maxChannelByte": 6
+    },
+    "candidate/close": {
+      "averageMeanAbsoluteByte": 0.0432843017578125,
+      "maxChannelByte": 1
+    },
+    "candidate/medium": {
+      "averageMeanAbsoluteByte": 0,
+      "maxChannelByte": 0
+    }
+  },
+  "shots": {
+    "baseline/character-front": "baseline-character-front.png",
+    "baseline/character-oblique": "baseline-character-oblique.png",
+    "baseline/character-close": "baseline-character-close.png",
+    "baseline/metal-close-0": "baseline-metal-close-0.png",
+    "baseline/metal-medium-0": "baseline-metal-medium-0.png",
+    "candidate/character-front": "candidate-character-front.png",
+    "candidate/character-oblique": "candidate-character-oblique.png",
+    "candidate/character-close": "candidate-character-close.png",
+    "candidate/metal-close-0": "candidate-metal-close-0.png",
+    "candidate/metal-medium-0": "candidate-metal-medium-0.png"
+  },
+  "errors": []
+}

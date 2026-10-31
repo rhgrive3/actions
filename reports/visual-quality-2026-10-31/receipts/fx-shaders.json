@@ -1,0 +1,56 @@
+{
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "width": 128,
+  "height": 128,
+  "runs": [
+    {
+      "type": "puff",
+      "cases": 36,
+      "channels": 2359296,
+      "differingChannels": 0,
+      "changedPixels": 0,
+      "maxByteDifference": 0,
+      "meanByteDifference": 0
+    },
+    {
+      "type": "glow",
+      "cases": 12,
+      "channels": 786432,
+      "differingChannels": 0,
+      "changedPixels": 0,
+      "maxByteDifference": 0,
+      "meanByteDifference": 0
+    },
+    {
+      "type": "ring",
+      "cases": 60,
+      "channels": 3932160,
+      "differingChannels": 0,
+      "changedPixels": 0,
+      "maxByteDifference": 0,
+      "meanByteDifference": 0
+    },
+    {
+      "type": "beam",
+      "cases": 8,
+      "channels": 524288,
+      "differingChannels": 0,
+      "changedPixels": 0,
+      "maxByteDifference": 0,
+      "meanByteDifference": 0
+    },
+    {
+      "type": "screen",
+      "cases": 45,
+      "channels": 2949120,
+      "differingChannels": 0,
+      "changedPixels": 0,
+      "maxByteDifference": 0,
+      "meanByteDifference": 0
+    }
+  ],
+  "glError": 0,
+  "browser": "151.0.7922.34",
+  "beforeSnapshotSha256": "ba4a9fa1048efeb2e4f2b7a4757bf66e18032295db5758fa56d29dfc50ace51f",
+  "scope": "Composed fragment shaders in a deterministic standalone WebGL2 fixture. No iPad FPS or Nintendo hardware equivalence claim."
+}

@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { clippingVisibility } from './check-inkwave-landscape-fixes.mjs';
-import { ICON_MENU_INSTALLER_SHA256, SQUIDROLL_MENU_INSTALLER_SHA256, MENU_ICON_INPUT_SHA256, SQUIDROLL_MENU_INPUT_SHA256, verifyMenuInstallerSourceIdentity, verifyMenuLayoutSourceIdentity } from './lib/inkwave-menu-focus-source-identity.mjs';
+import { ICON_MENU_INSTALLER_SHA256, SQUIDROLL_MENU_INSTALLER_SHA256, THROW_PREDICTION_MENU_INSTALLER_SHA256, MENU_ICON_INPUT_SHA256, SQUIDROLL_MENU_INPUT_SHA256, THROW_PREDICTION_MENU_INPUT_SHA256, verifyMenuInstallerSourceIdentity, verifyMenuLayoutSourceIdentity } from './lib/inkwave-menu-focus-source-identity.mjs';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const source = path.resolve(arg('--source') || path.join(repo, '.built-site/_site'));
@@ -24,13 +24,16 @@ const menuLayoutEpoch=verifyMenuLayoutSourceIdentity(fs.readFileSync(path.join(r
 const installerSource=fs.readFileSync(path.join(repo,'patches/splatoon3/runtime/install.mjs'),'utf8');
 const frozenInstaller=fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-icons-1915.mjs.txt',import.meta.url),'utf8');
 const installerHash=hash(installerSource),iconInputs={};
-const frozenIconInstaller=installerHash===SQUIDROLL_MENU_INSTALLER_SHA256?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8'):undefined;
-const requiredInputs=installerHash===SQUIDROLL_MENU_INSTALLER_SHA256?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256}:installerHash===ICON_MENU_INSTALLER_SHA256?MENU_ICON_INPUT_SHA256:{};
+const includesPrediction=installerHash===THROW_PREDICTION_MENU_INSTALLER_SHA256;
+const includesSquidroll=includesPrediction||installerHash===SQUIDROLL_MENU_INSTALLER_SHA256;
+const frozenIconInstaller=includesSquidroll?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8'):undefined;
+const frozenSquidrollInstaller=includesPrediction?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-throw-prediction-20261031.mjs.txt',import.meta.url),'utf8'):undefined;
+const requiredInputs=includesPrediction?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256}:includesSquidroll?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256}:installerHash===ICON_MENU_INSTALLER_SHA256?MENU_ICON_INPUT_SHA256:{};
 for(const key of Object.keys(requiredInputs)){
  const file=key.replace(/^patch\//,'patches/splatoon3/');
  iconInputs[key]={source:fs.readFileSync(path.join(repo,file),'utf8'),manifestDigest:manifest.files[key]};
 }
-const menuInstallerEpoch=verifyMenuInstallerSourceIdentity(installerSource,manifest.files['patch/runtime/install.mjs'],pins.inputs['patch/runtime/install.mjs'],frozenInstaller,iconInputs,frozenIconInstaller);
+const menuInstallerEpoch=verifyMenuInstallerSourceIdentity(installerSource,manifest.files['patch/runtime/install.mjs'],pins.inputs['patch/runtime/install.mjs'],frozenInstaller,iconInputs,frozenIconInstaller,frozenSquidrollInstaller);
 for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key],key==='patch/runtime/menu-layout.mjs'?menuLayoutEpoch.sourceSha256:key==='patch/runtime/install.mjs'?menuInstallerEpoch.sourceSha256:digest, `Pinned composed UI input: ${key}`);
 const files = ['src/ui/menus.js', 'patches/splatoon3/runtime/menu-layout.mjs', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/profile.json'];
 for(const key of [...Object.keys(menuInstallerEpoch.iconInputs),...Object.keys(menuInstallerEpoch.effectInputs)])files.push(key.replace(/^patch\//,'patches/splatoon3/'));

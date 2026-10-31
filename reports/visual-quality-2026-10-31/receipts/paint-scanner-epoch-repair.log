@@ -1,0 +1,18 @@
+{"scope":"actual shelf methods and five authored stage face sets","layouts":187,"attempts":5167,"retries":4980}
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the common run-scanner epoch preserves its frozen predecessor and rejects missing, duplicate or tampered owners (47.146928ms)
+✔ roller interior skips only exact zero hypots; real CPU ownership and dirty rows are identical (791.054718ms)
+✔ actual splat/growth/ownership/GPU attributes match at 30/60/120 Hz, including pool reuse and network order (1892.479219ms)
+✔ unclamped growth radius preserves NaN/signed zero, legacy records, radius invalidation and hidden snapshots (3.954214ms)
+✔ native settled-mask and cell-replay caches keep integer face slots for eight-slot growth entries (157.895153ms)
+✔ shelf retries preserve stable face ordering and atomic atlas commits for five stages and adversarial layouts (496.854203ms)
+✔ paint source adapter is isolated and fail-closed (9.354644ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3558.894954
