@@ -21,7 +21,7 @@ function scenario(f,id,{enemy=false,ground=1,moving=false}={}){
  b._pathTo=()=>false;
  if(enemy){const e=f.make('shooter');e.team=1;e.pos.set(0,0,3);b.target=e;b.seeTimer=100;b.react=0;}
  const events=[],trace=[];const unsub=f.on('weapon:fire',e=>{if(e.actor===a)events.push({charge:e.charge??0,mode:b.mode,foot:!!b._footPaint});});
- return {a,b,events,trace,unsub,step(hz=60){const dt=1/hz;f.G.time+=dt;b.update(dt);a.update(dt);trace.push({fire:a.intent.fire,pitch:b.aimPitch,foot:b._footPaint,charge:a.weaponRunner.charge,rounds:a.weaponRunner.catalogState?.rounds||0,ink:a.ink});}};
+ return {a,b,events,trace,unsub,step(hz=60){const dt=1/hz;f.G.time+=dt;b.update(dt);a.update(dt);trace.push({fire:a.intent.fire,pitch:b.aimPitch,foot:b._footPaint,move:a.intent.move.length(),aimDist:Math.hypot(a.aimPoint.x-a.pos.x,a.aimPoint.z-a.pos.z),charge:a.weaponRunner.charge,rounds:a.weaponRunner.catalogState?.rounds||0,ink:a.ink});}};
 }
 test('R-PEN charges fully and spends multiple loaded shots',async()=>{
  const f=await setup(),s=scenario(f,'s3-charger-pencil');for(let i=0;i<60*8;i++)s.step();s.unsub();
@@ -36,7 +36,7 @@ test('Soituber and LACT paint with short charges while regular charger uses a ch
  const s=scenario(f,'charger');for(let i=0;i<60*4;i++)s.step();s.unsub();assert.ok(s.events.some(e=>e.charge>=.7),JSON.stringify(s.events));
 });
 test('safe enemy ink invokes a bounded floor-aim attempt; visible threats take priority',async()=>{
- const f=await setup();const s=scenario(f,'shooter',{ground:2,moving:true});for(let i=0;i<60*4;i++)s.step();s.unsub();assert.ok(s.trace.some(x=>x.foot&&x.pitch<-.6&&x.fire),JSON.stringify(s.trace.slice(0,20)));assert.ok(s.trace.some((x,i)=>i>120&&!x.foot),'attempt is bounded');
+ const f=await setup();const s=scenario(f,'shooter',{ground:2,moving:true});for(let i=0;i<60*4;i++)s.step();s.unsub();assert.ok(s.trace.some(x=>x.foot&&x.pitch<-.25&&x.pitch>-.6&&x.fire&&x.move>.7&&x.aimDist>3),JSON.stringify(s.trace.slice(0,20)));assert.ok(s.trace.some((x,i)=>i>120&&!x.foot),'attempt is bounded');
  const combat=scenario(f,'shooter',{ground:2,moving:true,enemy:true});for(let i=0;i<60;i++)combat.step();combat.unsub();assert.ok(combat.trace.every(x=>!x.foot),'visible enemy retains priority');
 });
 

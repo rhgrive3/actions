@@ -290,10 +290,9 @@ export class BotBrain {
       if (this._footPaintTime > 1.5) { this._footPaintTime = 0; this._footPaintCooldown = 2; }
       else {
         this._footPaint = true;
-        wantPitch = -1.0; wantYaw = wantMove ? Math.atan2(move.x, move.z) : a.yaw;
+        wantPitch = -0.42; wantYaw = wantMove ? Math.atan2(move.x, move.z) : a.yaw;
         it.squid = false; it.sub = false; it.special = false;
-        if (family !== 'roller') move.multiplyScalar(0.15);
-        const runner = a.weaponRunner, aimedDown = this.aimPitch < -0.60;
+        const runner = a.weaponRunner, aimedDown = this.aimPitch < -0.25;
         if (!aimedDown) it.fire = !!runner.charging;
         else if (family === 'splatling') it.fire = !runner.streaming && !(runner.charging && runner.charge >= 0.45);
         else if (family === 'charger' || family === 'stringer' || family === 'splatana')
