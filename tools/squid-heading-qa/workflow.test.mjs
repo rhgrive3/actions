@@ -11,8 +11,8 @@ function verify(code){
  assert(code.includes('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"\n          test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
  assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"'));
  assert(code.includes('test -z "$(git -C _squid_heading_reference status --porcelain)"'));
- assert(code.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
- assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
+ assert.equal(code.split('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"').length-1,2,'candidate identity before reference and build');
+ assert.equal(code.split('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"').length-1,2,'reference identity before mutation and build');
  assert(code.includes('node tools/squid-heading-qa/reference.mjs _squid_heading_reference "$SOURCE_SHA" .qa-evidence/squid-heading-reference.json'));
  assert(code.includes('--expect baseline --reference-proof ../.qa-evidence/squid-heading-reference.json'));
  assert.equal((code.match(/node scripts\/build-inkwave.mjs/g)||[]).length,2,'only existing two builds');
@@ -27,6 +27,7 @@ test('native heading workflow keeps one shallow checkout, exact local counterfac
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
+  s=>s.replace('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','true'),
   s=>s.replace('node tools/squid-heading-qa/reference.mjs','echo tools/squid-heading-qa/reference.mjs'),
   s=>s.replace('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"','git worktree add --detach _squid_heading_reference main'),
   s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"','true'),

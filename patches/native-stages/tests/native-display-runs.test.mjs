@@ -7,6 +7,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 async function load(url) {
  const context=vm.createContext({console});
  const external={
+  './native-work.mjs':new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-work.mjs',import.meta.url),'utf8'),{context}),
   three:new vm.SyntheticModule(Object.keys(THREE),function(){for(const[k,v]of Object.entries(THREE))this.setExport(k,v);},{context}),
   '../../../src/world/levelMaterial.js':new vm.SyntheticModule(['createLevelMaterial'],function(){this.setExport('createLevelMaterial',()=>{throw Error('unused');});},{context}),
   './native-paint-detail.mjs':new vm.SyntheticModule(['enableNativePaintDetail'],function(){this.setExport('enableNativePaintDetail',()=>{throw Error('unused');});},{context}),
