@@ -47,8 +47,8 @@ window.addEventListener('keydown',event=>{
   if (!html.includes('</body>')) throw new Error('INKWAVE CSP: missing body end');
   const guarded = html.replace('</body>', shortcutScript + '\n</body>');
   const policy = clientScriptPolicy(guarded);
-  const secured = guarded.replace(/<head(?:\\s[^>]*)?>/i,
-    tag => tag + '\\n<meta http-equiv="Content-Security-Policy" content="' + policy + '">');
+  const secured = guarded.replace(/<head(?:\s[^>]*)?>/i,
+    tag => tag + '\n<meta http-equiv="Content-Security-Policy" content="' + policy + '">');
   if (secured === html) throw new Error('INKWAVE CSP: missing head');
   return { html: secured, policy };
 }
