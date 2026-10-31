@@ -138,7 +138,7 @@ export function adaptWeaponCatalog(rel, code) {
       'special aim spring combat response');
     code = replaceOnce(code,
       "      const d = fighting && this.target ? aimDist : this.mode === 'refill' ? 1.6 : 6;",
-      "      const d = specialControl?.handled && (specialControl.state || specialControl.aimChanged) ? aimDist : fighting && this.target ? aimDist : this.mode === 'refill' ? 1.6 : 6;",
+      "      const d = specialControl?.handled && (specialControl.state || specialControl.aimChanged) ? aimDist : this._footPaint ? 1.6 : fighting && this.target ? aimDist : this.mode === 'refill' ? 1.6 : 6;",
       'special actual aim ray distance');
     return replaceOnce(code,
       '    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }',

@@ -25,6 +25,8 @@ const botBehaviorKind = (weapon) => {
   return family; // Do not fold Stringer/Splatana into Charger: both release on Fire-up.
 };
 
+const botReadyPress = a => a.weaponRunner.cooldown <= 1e-6 && !a.weaponRunner.catalogState?.pending && !a._prevIntent?.fire;
+
 export class BotBrain {
   constructor(actor, difficulty = 'normal') {
     this.a = actor;
@@ -47,6 +49,8 @@ export class BotBrain {
     this.refillUntil = 0;
     this.chargeRelease = 0.95 + Math.random() * 0.05;
     this.paintPause = 0;
+    this._footPaintTime = 0; this._footPaintCooldown = 0; this._footPaint = false;
+    this._chargeAimWait = 0;
     this.aimYawV = 0; this.aimPitchV = 0;
     this.acqT = 9; this.acqSignY = 0; this.acqSignP = 0;
     this.ph1 = Math.random() * 20; this.ph2 = Math.random() * 20; this.t = Math.random() * 10;
@@ -93,6 +97,12 @@ export class BotBrain {
     const inkFrac = a.ink / PLAYER.inkMax;
     const hpFrac = a.hp / PLAYER.hp;
     const w = a.weapon, family = botBehaviorKind(w);
+    // Brush flicks and the divided charger need press/release edges.
+    const brush = w.catalogRecord?.family === 'brush';
+    const pencil = w.sourceMainActor === 'WeaponChargerPencil';
+    const fastPaint = !pencil && (w.sourceMainActor === 'WeaponChargerKeeper' ||
+      w.sourceMainActor === 'WeaponStringerShort' ||
+      (family === 'charger' || family === 'stringer') && a.groundTeam !== 1);
     if (this.mode === 'retreat') {
       this.retreatT -= dt;
       if (hpFrac > 0.85 || this.retreatT <= 0 || (!this.target && hpFrac > 0.6)) { this.mode = 'paint'; this.path = null; this.goalTimer = 0; }
@@ -134,6 +144,13 @@ export class BotBrain {
       const dist = Math.hypot(dx, dz);
       fightDist = dist;
       const range = this._range();
+      // LACT and Wellstring have useful first-charge attacks: at closer
+      // range release at their own first-charge threshold, otherwise charge long.
+      const midStringer = family === 'stringer' &&
+        (w.sourceMainActor === 'WeaponStringerShort' || w.sourceMainActor === 'WeaponStringerExplosion') &&
+        dist < range * 0.7 && w.firstChargeTime > 0 && w.chargeTime > 0;
+      const fightCharge = pencil ? 1 : family === 'splatana' ? 0.45 :
+        midStringer ? clamp(w.firstChargeTime / w.chargeTime, 0.1, 1) : this.chargeRelease;
       // lead the target a little (projectile flight time)
       // lead the target by the projectile's time to arrive (lobs: the heave windup + a slower, longer arc)
       const lead = family === 'charger' ? 0 : family === 'slosher' ? (w.windup || 0.13) + dist / ((w.projSpeed || 15) * 0.88) : dist / (w.projSpeed || 30);
@@ -167,12 +184,14 @@ export class BotBrain {
         const aimed = off < tol;
         this._firing = false;
         if (enemyVisible && this.react <= 0 && aimed && inkFrac > 0.02) {
+          this._chargeAimWait = 0;
           if (family === 'charger' || family === 'stringer' || family === 'splatana') {
-            const releaseAt = family === 'splatana' ? 0.45 : this.chargeRelease;
-            it.fire = !(a.weaponRunner.charging && a.weaponRunner.charge >= releaseAt);
+            const releaseAt = fightCharge;
+            it.fire = pencil && a.weaponRunner.catalogState?.rounds > 0
+              ? botReadyPress(a) : !(a.weaponRunner.charging && a.weaponRunner.charge >= releaseAt);
             if (a.weaponRunner.charging) move.multiplyScalar(0.3);
           } else if (family === 'roller') {
-            it.fire = dist < 5.5 || (a.weaponRunner.rolling && dist < 8);
+            it.fire = brush ? dist < 5.5 && botReadyPress(a) : dist < 5.5 || (a.weaponRunner.rolling && dist < 8);
           } else if (family === 'splatling') {
             // spin up (a full charge at range, a quicker partial one up close), release, track while the stream runs
             const wr = a.weaponRunner, want = dist > range * 0.55 ? this.chargeRelease : 0.55 + 0.25 * this.chargeRelease;
@@ -188,10 +207,14 @@ export class BotBrain {
             it.sub = true; this.bombCd = 5 + Math.random() * 6;
             this._bombAim = true;
           }
+        } else if ((family === 'charger' || family === 'splatling' || family === 'stringer' || family === 'splatana') && a.weaponRunner.charging && enemyVisible) {
+          // Keep the charge while turning, with a bounded wait after it is ready.
+          this._chargeAimWait += dt;
+          it.fire = a.weaponRunner.charge < fightCharge || this._chargeAimWait < 1.2;
         } else if (['charger', 'splatling', 'stringer', 'splatana'].includes(family) && a.weaponRunner.charging && !enemyVisible) {
-          // Hold across a brief loss of sight, but never beyond full charge.
-          it.fire = a.weaponRunner.charge < this.chargeRelease;
-        }
+          this._chargeAimWait = 0;
+          it.fire = a.weaponRunner.charge < (pencil ? 1 : this.chargeRelease);
+        } else this._chargeAimWait = 0;
         // out of range with own ink underfoot: swim in (fast, hard to hit) instead of walking
         if (!it.fire && !a.weaponRunner.charging && dist > range * 1.15 && a.groundTeam === 1) it.squid = true;
         // dodge: a strafe-hop right after taking a hit
@@ -224,8 +247,12 @@ export class BotBrain {
         it.fire = inkFrac > 0.08 && (needPaint || Math.random() < 0.02) && wantMove;
       } else if (family === 'charger' || family === 'stringer' || family === 'splatana') {
         // Catalogue Stringers/Splatanas also emit on a Fire-off edge.
-        const releaseAt = family === 'splatana' ? 0.45 : family === 'stringer' ? 0.75 : 0.7;
-        if (a.weaponRunner.charging) {
+        const releaseAt = pencil ? 1 : family === 'splatana' ? 0.45 : family === 'stringer' ? 0.75 : 0.7;
+        if (pencil && a.weaponRunner.catalogState?.rounds > 0) {
+          it.fire = needPaint && botReadyPress(a);
+        } else if (fastPaint) {
+          it.fire = a.weaponRunner.charging ? false : needPaint && inkFrac > 0.18 && botReadyPress(a);
+        } else if (a.weaponRunner.charging) {
           it.fire = a.weaponRunner.charge < releaseAt;
           if (!it.fire) this.paintPause = 0.3 + Math.random() * 0.35;
         } else it.fire = needPaint && inkFrac > (!!w.catalogRecord ? 0.12 : 0.3) && this.paintPause <= 0;
@@ -250,6 +277,29 @@ export class BotBrain {
         // no ink here: paint a puddle to swim in
         it.squid = false; it.fire = true;
         wantPitch = -1.0;
+      }
+    }
+    // Repaint a short escape route when it is safe; never hold this recovery forever.
+    this._footPaintCooldown = Math.max(0, this._footPaintCooldown - dt);
+    this._footPaint = false;
+    const canClearFeet = a.grounded && a.groundTeam === 2 && this.mode !== 'retreat' && !enemyVisible && !a.specialActive &&
+      !a.superJumpState && !a.s3?.squidSpawn && !a.climbing && inkFrac > 0.18;
+    if (!canClearFeet) this._footPaintTime = 0;
+    else if (this._footPaintCooldown <= 0) {
+      this._footPaintTime += dt;
+      if (this._footPaintTime > 1.5) { this._footPaintTime = 0; this._footPaintCooldown = 2; }
+      else {
+        this._footPaint = true;
+        wantPitch = -1.0; wantYaw = wantMove ? Math.atan2(move.x, move.z) : a.yaw;
+        it.squid = false; it.sub = false; it.special = false;
+        if (family !== 'roller') move.multiplyScalar(0.15);
+        const runner = a.weaponRunner, aimedDown = this.aimPitch < -0.60;
+        if (!aimedDown) it.fire = !!runner.charging;
+        else if (family === 'splatling') it.fire = !runner.streaming && !(runner.charging && runner.charge >= 0.45);
+        else if (family === 'charger' || family === 'stringer' || family === 'splatana')
+          it.fire = runner.charging ? false : botReadyPress(a);
+        else if (family === 'roller') it.fire = wantMove ? true : botReadyPress(a);
+        else it.fire = true;
       }
     }
     this._tail(dt, move, wantYaw, wantPitch, aimDist, wantMove);
