@@ -38,7 +38,7 @@ for(const [workflow,entries,extra]of[
  ['inkwave-runtime-frame-parity.yml',[quality,'patches/local-quality/tests/runtime-frame-scratch.test.mjs','patches/local-quality/tests/hud-hotpath.test.mjs'],[]],
  ['inkwave-paint-hotpath.yml',[quality,'patches/local-quality/tests/paint-hotpath.test.mjs'],[]],
  ['inkwave-composed-cpu.yml',['patches/local-quality/tests/body-balance-work.test.mjs','patches/local-quality/tests/body-balance-work-fixture.mjs','scripts/benchmark-inkwave-body-balance.mjs'],['inkwave-public/src/game/motion/locomotion-profile.js','inkwave-public/src/game/motion/source-bank.js','inkwave-public/src/game/motion/run-foot-path.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/check-inkwave-patches.mjs','scripts/check-inkwave-startup-budget.mjs','scripts/prepare-inkwave-ci-apt.py','patches/local-quality/tests/motion-fk-hotpath.test.mjs']],
- ['inkwave-ink-micro-surface.yml',['patches/local-quality/tests/ink-micro-surface.test.mjs','patches/local-quality/tests/grate-normal.test.mjs','patches/local-quality/tests/paint-hotpath.test.mjs','scripts/tests/inkwave-ci-video-tools.test.mjs'],['inkwave-public/src/world/inkShading.js','inkwave-public/src/world/levelMaterial.js','inkwave-public/src/world/texlib.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/prepare-inkwave-ci-apt.py']],
+ ['inkwave-ink-micro-surface.yml',['patches/local-quality/tests/ink-micro-surface.test.mjs','patches/local-quality/tests/grate-normal.test.mjs','patches/local-quality/tests/paint-hotpath.test.mjs','scripts/tests/inkwave-ci-video-tools.test.mjs'],['inkwave-public/src/world/inkShading.js','inkwave-public/src/world/levelMaterial.js','inkwave-public/src/world/texlib.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/prepare-inkwave-ci-apt.py','patches/local-quality/adapter.mjs']],
 ])test(workflow+' covers direct executed-test inputs',()=>covered(workflow,new Set([...entries.flatMap(entry=>[...directInputs(entry)]),...extra])));
 
 const composedCpuBrowserInstall = `      - name: Install Chromium for emitted CPU trace smoke
@@ -103,7 +103,7 @@ for(const [workflow,tool]of[['inkwave-squid-heading-qa.yml','squid-heading-qa'],
 });
 test('swim film covers its imported shared fixtures and their composition/cache dependencies',()=>{
  const entries=['swim-presentation','swim-surface-fps','swim-film-offscreen'].map(name=>'patches/local-quality/tests/'+name+'.test.mjs');
- covered('inkwave-swim-film.yml',new Set([...entries.flatMap(entry=>[...directInputs(entry)]),'scripts/inkwave-source-composition.mjs','patches/splatoon3/tests/fixture-cache.mjs']));
+ covered('inkwave-swim-film.yml',new Set([...entries.flatMap(entry=>[...directInputs(entry)]),'scripts/inkwave-source-composition.mjs','patches/splatoon3/tests/fixture-cache.mjs','patches/local-quality/adapter.mjs','inkwave-public/src/game/actor.js','inkwave-public/src/game/character.js','patches/splatoon3/runtime/swim-stealth.mjs']));
 });
 test('audio source audit has focused relevant triggers and an immutable manual entry',()=>{
  covered('inkwave-audio-source-audit.yml',['patches/splatoon3/runtime/audio/s3-real/manifest.json','patches/splatoon3/audio-adapter.mjs','inkwave-public/src/audio/audio.js','tools/audio/collect-public-reference-recordings.py']);
