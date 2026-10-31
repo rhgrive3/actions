@@ -241,6 +241,14 @@ export function trizookaProjectileDescriptor(p) {
 // Fires one volley through the native throw velocity and the native list.
 // `System` must be the real Projectiles instance so `_push` records the packet.
 // Returns the real projectile objects that entered the one native list.
+export function trizookaLaunchGeometry(System,actor,origin,direction){
+  const muzzle=System._muzzle(actor,origin)||origin;
+  if(muzzle!==origin)origin.copy(muzzle);
+  const aim=System._aimFrom(actor,origin,direction)||direction;
+  if(aim!==direction)direction.copy(aim);
+  return {origin,direction};
+}
+
 export function throwVolley(System, actor, descriptor) {
   const count = VOLLEY_CONFIG.lobes;
   // The camera-ray aim path, exactly as the native shooter uses it: the muzzle
@@ -251,8 +259,8 @@ export function throwVolley(System, actor, descriptor) {
   // The scratch vectors come from the native pool, so no new vector type and no
   // extra import is needed.
   const seed = System._new();
-  const muzzle = System._muzzle(actor, seed.pos);
-  const aim = System._aimFrom(actor, muzzle, seed.vel).clone();
+  const {origin:muzzle,direction}=trizookaLaunchGeometry(System,actor,seed.pos,seed.vel);
+  const aim = direction.clone();
   const fired = [];
   const volleyDamage = new Map();
   const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
