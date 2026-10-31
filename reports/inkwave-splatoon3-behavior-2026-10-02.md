@@ -7131,3 +7131,5 @@ PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニ�
 ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
 
 形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+
+同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
