@@ -243,14 +243,25 @@ export async function installWiperProbe(testCase) {
   return {firstBirth,held,initial:window.__wiperProbe.initial};
 }
 
-// Always attempt context cleanup. Preserve a primary capture error if close
-// also fails, and record the cleanup failure rather than silently discarding it.
-export async function finishWiperContext(context,row,save,errors,primaryError) {
-  let cleanupError;
+function formatWiperError(error) {
+  try { return String(error?.stack ?? error); }
+  catch { return '<unprintable error>'; }
+}
+
+// Always attempt close and save. An explicit presence flag distinguishes a
+// thrown falsy value from no capture failure; old five-argument calls retain
+// their truthy-primary convention.
+export async function finishWiperContext(context,row,save,errors,primaryError,hadPrimaryError=!!primaryError) {
+  let cleanupError,hadCleanupError=false;
+  const note=(error,label)=>{
+    if(!hadCleanupError){cleanupError=error;hadCleanupError=true;}
+    try { errors.push(label+formatWiperError(error)); } catch { /* Never replace the original cleanup value. */ }
+  };
   try { await context.close(); row.contextClosed=true; }
-  catch(error) { cleanupError=error; errors.push('context cleanup: '+String(error?.stack||error)); }
-  finally { save(); }
-  if(cleanupError&&!primaryError)throw cleanupError;
+  catch(error) { note(error,'context cleanup: '); }
+  try { save(); }
+  catch(error) { note(error,'context save: '); }
+  if(hadCleanupError&&!hadPrimaryError)throw cleanupError;
 }
 
 export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPath(new URL('../',import.meta.url))}={}) {
@@ -269,7 +280,8 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
       'Draw/projection/non-flat-pixel receipts do not certify an unoccluded silhouette. Original full-frame PNG visual review required; no retail timing/fidelity claim.'],
     harnessSha256:hash(fs.readFileSync(new URL(import.meta.url))),contractSha256:hash(fs.readFileSync(new URL('./lib/inkwave-wiper-acceptance-contract.mjs',import.meta.url))),
     launcherSha256:hash(fs.readFileSync(new URL('./lib/inkwave-sandbox-browser.mjs',import.meta.url)))};
-  let browser,server,failure,expectedBuild;const pending=[];
+  let browser,server,failure,hadFailure=false,expectedBuild;const pending=[];
+  const fail=error=>{if(!hadFailure){failure=error;hadFailure=true;}result.status='failed';result.error=formatWiperError(failure);};
   const save=()=>fs.writeFileSync(path.join(out,'wiper-native-result.json'),JSON.stringify(result,null,2)+'\n');
   try {
     assert.equal(result.sourceIdentity.checkoutSha,sourceSha,'Capture checkout must equal exact build source head');
@@ -295,7 +307,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
     for(const c of WIPER_CAPTURE_CASES){
       const row={...c,frames:[],contextClosed:false};result.cases.push(row);save();
       const context=await browser.newContext({viewport:{width:960,height:720},deviceScaleFactor:1});
-      let primaryError;
+      let primaryError,hadPrimaryError=false;
       try{
         const page=await context.newPage();page.setDefaultTimeout(120000);
         page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
@@ -320,18 +332,23 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
           captured.screenshotStateStable=true;row.frames.push(captured);save();console.log('Wiper controlled frame',c.key,frame);
         }
         Object.assign(row,await page.evaluate(()=>window.__wiperProbe.finish()));
-      }catch(error){primaryError=error;throw error;}
-      finally{await finishWiperContext(context,row,save,result.errors,primaryError);}
+      }catch(error){primaryError=error;hadPrimaryError=true;throw error;}
+      finally{await finishWiperContext(context,row,save,result.errors,primaryError,hadPrimaryError);}
     }
     await Promise.all(pending);assert.deepEqual(result.errors,[]);result.status='passed';
-  }catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
+  }catch(error){fail(error);}
   finally{
-    result.cleanup=await closeWiperCaptureOwners({browser,server},result.errors);
+    const cleanupFailures=[];
+    try {
+      result.cleanup=await closeWiperCaptureOwners({browser,server},result.errors,cleanupFailures);
+      for(const error of cleanupFailures)fail(error);
+    } catch(error) { fail(error); }
     if(result.errors.length)result.status='failed';
-    if(result.status==='passed')try{assertWiperCaptureReceipt(result,{sourceSha,...expectedBuild});}catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
-    save();
+    if(result.status==='passed')try{assertWiperCaptureReceipt(result,{sourceSha,...expectedBuild});}catch(error){fail(error);}
+    try { save(); } catch(error) { fail(error); }
   }
-  if(failure||result.status!=='passed')throw failure||Error('Wiper capture failed: '+result.errors.join('; '));
+  if(hadFailure)throw failure;
+  if(result.status!=='passed')throw Error('Wiper capture failed: '+result.errors.join('; '));
   return result;
 }
 
