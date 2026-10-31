@@ -124,8 +124,47 @@ test('Torpedo/Fizzy share exact geometry while individual birth colors, cap evic
  spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,2);clearTorpedoSplashes(p);assert.equal(disposed,2);
 });
 
-test('Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact',()=>{
- const globals={aliveInMatch:()=>false,vec3:p=>p?.isVector3,POINT_SENSOR:{maxFlightSeconds:3,areaSeconds:2.5},poseSensorVisual(){},retireDrink(){}};
+test('Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact',async()=>{
+ const support=runtime('kit-support.mjs');
+ if(!support.includes('function advanceSensorFlight(')){
+  // Current main shares a fixed-step flight kernel between the live Sensor and
+  // its predicted guide. Test that real exported kernel with one persistent
+  // scratch object, varying the terrain/body precedence and missing outputs.
+  const {stepPointSensorFlight,POINT_SENSOR_FLIGHT}=await import('../runtime/support-sensor-flight.mjs');
+  assert.equal(POINT_SENSOR_FLIGHT.gravity,24);
+  const sensor={pos:new THREE.Vector3(0,3,0),prev:new THREE.Vector3(),vel:new THREE.Vector3(0,0,6),
+   age:0,team:0,hit:{},s3SensorRemainder:0};
+  const actors=[0,1,2].map(k=>({team:1,alive:true,form:k%2?'squid':'kid',
+   pos:new THREE.Vector3(k*.2,0,0),smoothY:k*.02}));
+  for(let i=0;i<90;i++){
+   const mode=i%4,terrain=mode!==2;
+   sensor.pos.set(0,3,0);sensor.prev.set(0,3,0);
+   sensor.vel.set(0,0,6);sensor.age=0;sensor.s3SensorRemainder=0;
+   let calls=0;
+   const G={time:i/60,actors,physics:{segment(a,b,h){
+    h.hit=terrain;
+    if(h.hit){h.point=a.clone().lerp(b,.75);h.normal=new THREE.Vector3(0,1,0);}
+    return h;
+   }}};
+   const Physics={segmentCapsuleDist(a,b,base,r,height,out){
+    const k=calls++%actors.length;
+    // A missing output must never inherit the last record's t/dist.
+    const t=mode===0?(k===0?.25:k===2?.85:null):
+      mode===1?(k===0?.95:k===2?.85:null):
+      mode===3?(k===1?.45:null):null;
+    if(t!==null){out.dist=.1;out.t=t;}
+   }};
+   const contact=stepPointSensorFlight(sensor,{G,THREE,Physics,PLAYER:{radius:.3,height:1.7,squidHeight:.6}},1/60);
+   const expected=mode===2?null:mode===1?'world':'actor';
+   assert.equal(contact?.kind??null,expected,'case '+i);
+   if(contact)assert(Number.isFinite(sensor.pos.x)&&Number.isFinite(sensor.pos.y)&&Number.isFinite(sensor.pos.z));
+   assert.equal(calls,actors.length,'all potentially colliding actors are checked');
+  }
+  return;
+ }
+ const gravity=Number(support.match(/const SENSOR_GRAVITY = ([0-9.]+);/)?.[1]);
+ assert.equal(gravity,24,'keep the pinned local flight calibration');
+ const globals={SENSOR_GRAVITY:gravity,aliveInMatch:()=>false,vec3:p=>p?.isVector3,POINT_SENSOR:{maxFlightSeconds:3,areaSeconds:2.5},poseSensorVisual(){},retireDrink(){}};
  const old=compile(oracle.kernels.sensor,['stepSupport'],globals).stepSupport;
  const now=compile(cut(runtime('kit-support.mjs'),'const SUPPORT_EMPTY_ROSTER','export function installSupportGameplay'),['stepSupport'],globals).stepSupport;
  for(let i=0;i<90;i++){
