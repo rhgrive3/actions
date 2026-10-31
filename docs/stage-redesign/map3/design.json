@@ -1,0 +1,4470 @@
+{
+  "schema": 1,
+  "sourceHead": "b208addacc61009fba44ae973d5288b6f315f303",
+  "units": "WU; no SI calibration",
+  "stages": [
+    {
+      "id": "tidewater",
+      "name": "Tidewater Plaza",
+      "concept": "折れた段丘市場 / Folded market terraces",
+      "bounds": [
+        -42,
+        42,
+        -72,
+        72
+      ],
+      "waterY": -1.6,
+      "floors": [
+        {
+          "id": "A_spawn",
+          "rect": [
+            -10,
+            10,
+            -72,
+            -64
+          ],
+          "y": 4.8,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "protected launch court; three exits"
+        },
+        {
+          "id": "A_arrival",
+          "rect": [
+            -18,
+            18,
+            -56,
+            -46
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "civic arrival court and ranked goal approach"
+        },
+        {
+          "id": "A_west_landing",
+          "rect": [
+            -30,
+            -18,
+            -70,
+            -58
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "west departure landing"
+        },
+        {
+          "id": "A_west_terrace",
+          "rect": [
+            -38,
+            -18,
+            -50,
+            -30
+          ],
+          "y": 2.4,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "broad inhabited terrace; decision to high market or low street"
+        },
+        {
+          "id": "A_east_civic",
+          "rect": [
+            22,
+            34,
+            -70,
+            -46
+          ],
+          "y": 2.4,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "east civic courtyard; no continuous back-row floor"
+        },
+        {
+          "id": "A_lower_court",
+          "rect": [
+            -14,
+            10,
+            -34,
+            -20
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "lower civic court; regroup and exchange routes"
+        },
+        {
+          "id": "A_market_hall",
+          "rect": [
+            -36,
+            -24,
+            -18,
+            -6
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "upper market hall above low street"
+        },
+        {
+          "id": "A_market_edge",
+          "rect": [
+            -36,
+            -30,
+            -6,
+            0
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "solid waterside market edge"
+        },
+        {
+          "id": "A_market_grate",
+          "rect": [
+            -30,
+            -24,
+            -6,
+            0
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "grate",
+          "role": "short mesh section; swim falls onto low underpass"
+        },
+        {
+          "id": "A_market_bridge",
+          "rect": [
+            -24,
+            -8,
+            -6,
+            0
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "inhabited bridge across lower routes; offset from opponent"
+        },
+        {
+          "id": "A_low_entry",
+          "rect": [
+            -28,
+            -22,
+            -30,
+            -24
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "low street ramp landing"
+        },
+        {
+          "id": "A_low_turn",
+          "rect": [
+            -28,
+            -16,
+            -24,
+            -20
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "wide turn; choose underpass or return up"
+        },
+        {
+          "id": "A_low_street",
+          "rect": [
+            -28,
+            -22,
+            -20,
+            -6
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "continuous street underneath market; open at both ends"
+        },
+        {
+          "id": "A_east_terrace",
+          "rect": [
+            18,
+            38,
+            -38,
+            -28
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "waterside middle terrace; width changes at forecourt"
+        },
+        {
+          "id": "A_east_turn",
+          "rect": [
+            18,
+            26,
+            -28,
+            -20
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "turn landing beside belvedere rise"
+        },
+        {
+          "id": "A_court_cross",
+          "rect": [
+            10,
+            18,
+            -32,
+            -24
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "lateral merge with lower civic court"
+        },
+        {
+          "id": "A_belvedere",
+          "rect": [
+            24,
+            38,
+            -20,
+            -8
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "east viewing court; attack mid from a different height"
+        },
+        {
+          "id": "A_central_arm",
+          "rect": [
+            10,
+            16,
+            -18,
+            -8
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "low return from belvedere; grounded alternative to high market"
+        },
+        {
+          "id": "B_spawn",
+          "rect": [
+            -10,
+            10,
+            64,
+            72
+          ],
+          "y": 4.8,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "protected launch court; three exits"
+        },
+        {
+          "id": "B_arrival",
+          "rect": [
+            -18,
+            18,
+            46,
+            56
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "civic arrival court and ranked goal approach"
+        },
+        {
+          "id": "B_west_landing",
+          "rect": [
+            18,
+            30,
+            58,
+            70
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "west departure landing"
+        },
+        {
+          "id": "B_west_terrace",
+          "rect": [
+            18,
+            38,
+            30,
+            50
+          ],
+          "y": 2.4,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "broad inhabited terrace; decision to high market or low street"
+        },
+        {
+          "id": "B_east_civic",
+          "rect": [
+            -34,
+            -22,
+            46,
+            70
+          ],
+          "y": 2.4,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "east civic courtyard; no continuous back-row floor"
+        },
+        {
+          "id": "B_lower_court",
+          "rect": [
+            -10,
+            14,
+            20,
+            34
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "lower civic court; regroup and exchange routes"
+        },
+        {
+          "id": "B_market_hall",
+          "rect": [
+            24,
+            36,
+            6,
+            18
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "upper market hall above low street"
+        },
+        {
+          "id": "B_market_edge",
+          "rect": [
+            30,
+            36,
+            0,
+            6
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "solid waterside market edge"
+        },
+        {
+          "id": "B_market_grate",
+          "rect": [
+            24,
+            30,
+            0,
+            6
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "grate",
+          "role": "short mesh section; swim falls onto low underpass"
+        },
+        {
+          "id": "B_market_bridge",
+          "rect": [
+            8,
+            24,
+            0,
+            6
+          ],
+          "y": 4.8,
+          "bottom": 4.2,
+          "material": "solid",
+          "role": "inhabited bridge across lower routes; offset from opponent"
+        },
+        {
+          "id": "B_low_entry",
+          "rect": [
+            22,
+            28,
+            24,
+            30
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "low street ramp landing"
+        },
+        {
+          "id": "B_low_turn",
+          "rect": [
+            16,
+            28,
+            20,
+            24
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "wide turn; choose underpass or return up"
+        },
+        {
+          "id": "B_low_street",
+          "rect": [
+            22,
+            28,
+            6,
+            20
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "continuous street underneath market; open at both ends"
+        },
+        {
+          "id": "B_east_terrace",
+          "rect": [
+            -38,
+            -18,
+            28,
+            38
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "waterside middle terrace; width changes at forecourt"
+        },
+        {
+          "id": "B_east_turn",
+          "rect": [
+            -26,
+            -18,
+            20,
+            28
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "turn landing beside belvedere rise"
+        },
+        {
+          "id": "B_court_cross",
+          "rect": [
+            -18,
+            -10,
+            24,
+            32
+          ],
+          "y": 1.2,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "lateral merge with lower civic court"
+        },
+        {
+          "id": "B_belvedere",
+          "rect": [
+            -38,
+            -24,
+            8,
+            20
+          ],
+          "y": 3.6,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "east viewing court; attack mid from a different height"
+        },
+        {
+          "id": "B_central_arm",
+          "rect": [
+            -16,
+            -10,
+            8,
+            18
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "low return from belvedere; grounded alternative to high market"
+        },
+        {
+          "id": "C_basin",
+          "rect": [
+            -16,
+            16,
+            -8,
+            8
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "neutral civic basin; center objective with several entrances"
+        },
+        {
+          "id": "C_west_underpass",
+          "rect": [
+            -30,
+            -16,
+            -6,
+            6
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "market underpass; open central and street exits"
+        },
+        {
+          "id": "C_east_underpass",
+          "rect": [
+            16,
+            30,
+            -6,
+            6
+          ],
+          "y": 0.0,
+          "bottom": -4.0,
+          "material": "solid",
+          "role": "rotated lower market underpass"
+        }
+      ],
+      "ramps": [
+        {
+          "id": "A_arrival_ramp",
+          "rect": [
+            -7,
+            7,
+            -64,
+            -56
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "14-wide descent; 4-wide exits around spawn screen"
+        },
+        {
+          "id": "A_west_exit",
+          "rect": [
+            -18,
+            -10,
+            -70,
+            -64
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "independent west spawn exit"
+        },
+        {
+          "id": "A_west_descent",
+          "rect": [
+            -30,
+            -18,
+            -58,
+            -50
+          ],
+          "axis": "z",
+          "y0": 3.6,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "descend beside arrival court"
+        },
+        {
+          "id": "A_east_exit",
+          "rect": [
+            10,
+            22,
+            -70,
+            -64
+          ],
+          "axis": "x",
+          "y0": 4.8,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "independent east spawn exit"
+        },
+        {
+          "id": "A_civic_cross",
+          "rect": [
+            18,
+            22,
+            -54,
+            -48
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "lateral recovery between arrival and east court"
+        },
+        {
+          "id": "A_main_descent",
+          "rect": [
+            -10,
+            2,
+            -46,
+            -34
+          ],
+          "axis": "z",
+          "y0": 3.6,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "12-wide local descent; tower-compatible corridor"
+        },
+        {
+          "id": "A_west_exchange",
+          "rect": [
+            -18,
+            -14,
+            -34,
+            -30
+          ],
+          "axis": "x",
+          "y0": 2.4,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "short terrace-to-court connection; 4-wide landing"
+        },
+        {
+          "id": "A_central_descent",
+          "rect": [
+            0,
+            10,
+            -20,
+            -8
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 0.0,
+          "thickness": 0.6,
+          "role": "direct approach to neutral basin"
+        },
+        {
+          "id": "A_market_west_rise",
+          "rect": [
+            -36,
+            -28,
+            -30,
+            -18
+          ],
+          "axis": "z",
+          "y0": 2.4,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "8-wide rise from west terrace"
+        },
+        {
+          "id": "A_low_street_entry",
+          "rect": [
+            -22,
+            -14,
+            -30,
+            -24
+          ],
+          "axis": "x",
+          "y0": 0.0,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "court to sheltered low market street"
+        },
+        {
+          "id": "A_market_return",
+          "rect": [
+            -22,
+            -16,
+            -20,
+            -6
+          ],
+          "axis": "z",
+          "y0": 0.0,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "second high-market access, 34.3 percent grade"
+        },
+        {
+          "id": "A_east_descent",
+          "rect": [
+            22,
+            34,
+            -46,
+            -38
+          ],
+          "axis": "z",
+          "y0": 2.4,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "east court to waterside middle terrace"
+        },
+        {
+          "id": "A_belvedere_rise",
+          "rect": [
+            26,
+            34,
+            -28,
+            -20
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "rise at outside edge; not full-width"
+        },
+        {
+          "id": "A_belvedere_descent",
+          "rect": [
+            16,
+            24,
+            -18,
+            -10
+          ],
+          "axis": "x",
+          "y0": 0.0,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "transverse ramp down to low central arm"
+        },
+        {
+          "id": "B_arrival_ramp",
+          "rect": [
+            -7,
+            7,
+            56,
+            64
+          ],
+          "axis": "z",
+          "y0": 3.6,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "14-wide descent; 4-wide exits around spawn screen"
+        },
+        {
+          "id": "B_west_exit",
+          "rect": [
+            10,
+            18,
+            64,
+            70
+          ],
+          "axis": "x",
+          "y0": 4.8,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "independent west spawn exit"
+        },
+        {
+          "id": "B_west_descent",
+          "rect": [
+            18,
+            30,
+            50,
+            58
+          ],
+          "axis": "z",
+          "y0": 2.4,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "descend beside arrival court"
+        },
+        {
+          "id": "B_east_exit",
+          "rect": [
+            -22,
+            -10,
+            64,
+            70
+          ],
+          "axis": "x",
+          "y0": 2.4,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "independent east spawn exit"
+        },
+        {
+          "id": "B_civic_cross",
+          "rect": [
+            -22,
+            -18,
+            48,
+            54
+          ],
+          "axis": "x",
+          "y0": 2.4,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "lateral recovery between arrival and east court"
+        },
+        {
+          "id": "B_main_descent",
+          "rect": [
+            -2,
+            10,
+            34,
+            46
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "12-wide local descent; tower-compatible corridor"
+        },
+        {
+          "id": "B_west_exchange",
+          "rect": [
+            14,
+            18,
+            30,
+            34
+          ],
+          "axis": "x",
+          "y0": 1.2,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "short terrace-to-court connection; 4-wide landing"
+        },
+        {
+          "id": "B_central_descent",
+          "rect": [
+            -10,
+            0,
+            8,
+            20
+          ],
+          "axis": "z",
+          "y0": 0.0,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "direct approach to neutral basin"
+        },
+        {
+          "id": "B_market_west_rise",
+          "rect": [
+            28,
+            36,
+            18,
+            30
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "8-wide rise from west terrace"
+        },
+        {
+          "id": "B_low_street_entry",
+          "rect": [
+            14,
+            22,
+            24,
+            30
+          ],
+          "axis": "x",
+          "y0": 1.2,
+          "y1": 0.0,
+          "thickness": 0.6,
+          "role": "court to sheltered low market street"
+        },
+        {
+          "id": "B_market_return",
+          "rect": [
+            16,
+            22,
+            6,
+            20
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 0.0,
+          "thickness": 0.6,
+          "role": "second high-market access, 34.3 percent grade"
+        },
+        {
+          "id": "B_east_descent",
+          "rect": [
+            -34,
+            -22,
+            38,
+            46
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "east court to waterside middle terrace"
+        },
+        {
+          "id": "B_belvedere_rise",
+          "rect": [
+            -34,
+            -26,
+            20,
+            28
+          ],
+          "axis": "z",
+          "y0": 3.6,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "rise at outside edge; not full-width"
+        },
+        {
+          "id": "B_belvedere_descent",
+          "rect": [
+            -24,
+            -16,
+            10,
+            18
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 0.0,
+          "thickness": 0.6,
+          "role": "transverse ramp down to low central arm"
+        }
+      ],
+      "obstacles": [
+        {
+          "id": "A_spawn_front_screen",
+          "rect": [
+            -3,
+            3,
+            -64.8,
+            -64
+          ],
+          "y0": 4.8,
+          "y1": 7.8,
+          "role": "block long center-to-spawn sightlines; two 4-wide ramp entries",
+          "paint": true
+        },
+        {
+          "id": "A_arrival_screen",
+          "rect": [
+            -16,
+            -10,
+            -55,
+            -53
+          ],
+          "y0": 3.6,
+          "y1": 6.8,
+          "role": "turn the spawn-side sightline, leave goal and three exits open",
+          "paint": true
+        },
+        {
+          "id": "A_terrace_screen",
+          "rect": [
+            -34,
+            -30,
+            -44,
+            -38
+          ],
+          "y0": 2.4,
+          "y1": 5.6,
+          "role": "divide broad terrace into entry and forward court",
+          "paint": true
+        },
+        {
+          "id": "A_civic_screen",
+          "rect": [
+            28,
+            32,
+            -60,
+            -55
+          ],
+          "y0": 2.4,
+          "y1": 5.6,
+          "role": "east departure sightline break",
+          "paint": true
+        },
+        {
+          "id": "A_court_cover",
+          "rect": [
+            5,
+            9,
+            -32,
+            -30
+          ],
+          "y0": 1.2,
+          "y1": 2.4,
+          "role": "low regroup cover, outside tower corridor",
+          "paint": true
+        },
+        {
+          "id": "A_east_screen",
+          "rect": [
+            33,
+            37,
+            -37,
+            -34
+          ],
+          "y0": 1.2,
+          "y1": 4.2,
+          "role": "turn waterside approach without blocking the inner merge",
+          "paint": true
+        },
+        {
+          "id": "A_market_screen",
+          "rect": [
+            -35,
+            -31,
+            -16,
+            -13
+          ],
+          "y0": 4.8,
+          "y1": 7.8,
+          "role": "upper-market long sightline break",
+          "paint": true
+        },
+        {
+          "id": "A_bridge_cover",
+          "rect": [
+            -13,
+            -11,
+            -6,
+            -4
+          ],
+          "y0": 4.8,
+          "y1": 6.0,
+          "role": "partial bridge cover leaves a 4-wide passage and return-ramp outlet clear",
+          "paint": true
+        },
+        {
+          "id": "A_mid_screen",
+          "rect": [
+            -6,
+            -4,
+            -1,
+            4
+          ],
+          "y0": 0.0,
+          "y1": 2.4,
+          "role": "offset central sightline break; objectives remain clear",
+          "paint": true
+        },
+        {
+          "id": "A_market_sea_lip",
+          "rect": [
+            -36,
+            -35.5,
+            -12,
+            0
+          ],
+          "y0": 4.8,
+          "y1": 5.7,
+          "role": "visible water-edge lip; jumpable, not safety guarantee",
+          "paint": false
+        },
+        {
+          "id": "A_belvedere_sea_lip",
+          "rect": [
+            37.5,
+            38,
+            -20,
+            -8
+          ],
+          "y0": 3.6,
+          "y1": 4.5,
+          "role": "water-edge reading and brief cover",
+          "paint": false
+        },
+        {
+          "id": "B_spawn_front_screen",
+          "rect": [
+            -3,
+            3,
+            64,
+            64.8
+          ],
+          "y0": 4.8,
+          "y1": 7.8,
+          "role": "block long center-to-spawn sightlines; two 4-wide ramp entries",
+          "paint": true
+        },
+        {
+          "id": "B_arrival_screen",
+          "rect": [
+            10,
+            16,
+            53,
+            55
+          ],
+          "y0": 3.6,
+          "y1": 6.8,
+          "role": "turn the spawn-side sightline, leave goal and three exits open",
+          "paint": true
+        },
+        {
+          "id": "B_terrace_screen",
+          "rect": [
+            30,
+            34,
+            38,
+            44
+          ],
+          "y0": 2.4,
+          "y1": 5.6,
+          "role": "divide broad terrace into entry and forward court",
+          "paint": true
+        },
+        {
+          "id": "B_civic_screen",
+          "rect": [
+            -32,
+            -28,
+            55,
+            60
+          ],
+          "y0": 2.4,
+          "y1": 5.6,
+          "role": "east departure sightline break",
+          "paint": true
+        },
+        {
+          "id": "B_court_cover",
+          "rect": [
+            -9,
+            -5,
+            30,
+            32
+          ],
+          "y0": 1.2,
+          "y1": 2.4,
+          "role": "low regroup cover, outside tower corridor",
+          "paint": true
+        },
+        {
+          "id": "B_east_screen",
+          "rect": [
+            -37,
+            -33,
+            34,
+            37
+          ],
+          "y0": 1.2,
+          "y1": 4.2,
+          "role": "turn waterside approach without blocking the inner merge",
+          "paint": true
+        },
+        {
+          "id": "B_market_screen",
+          "rect": [
+            31,
+            35,
+            13,
+            16
+          ],
+          "y0": 4.8,
+          "y1": 7.8,
+          "role": "upper-market long sightline break",
+          "paint": true
+        },
+        {
+          "id": "B_bridge_cover",
+          "rect": [
+            11,
+            13,
+            4,
+            6
+          ],
+          "y0": 4.8,
+          "y1": 6.0,
+          "role": "partial bridge cover leaves a 4-wide passage and return-ramp outlet clear",
+          "paint": true
+        },
+        {
+          "id": "B_mid_screen",
+          "rect": [
+            4,
+            6,
+            -4,
+            1
+          ],
+          "y0": 0.0,
+          "y1": 2.4,
+          "role": "offset central sightline break; objectives remain clear",
+          "paint": true
+        },
+        {
+          "id": "B_market_sea_lip",
+          "rect": [
+            35.5,
+            36,
+            0,
+            12
+          ],
+          "y0": 4.8,
+          "y1": 5.7,
+          "role": "visible water-edge lip; jumpable, not safety guarantee",
+          "paint": false
+        },
+        {
+          "id": "B_belvedere_sea_lip",
+          "rect": [
+            -38,
+            -37.5,
+            8,
+            20
+          ],
+          "y0": 3.6,
+          "y1": 4.5,
+          "role": "water-edge reading and brief cover",
+          "paint": false
+        }
+      ],
+      "spawns": [
+        {
+          "id": "A",
+          "point": [
+            0,
+            4.8,
+            -68
+          ],
+          "floor": "A_spawn"
+        },
+        {
+          "id": "B",
+          "point": [
+            0,
+            4.8,
+            68
+          ],
+          "floor": "B_spawn"
+        }
+      ],
+      "routes": [
+        {
+          "id": "A_direct",
+          "team": "A",
+          "role": "central descent, regroup, neutral basin",
+          "points": [
+            [
+              0,
+              4.8,
+              -68
+            ],
+            [
+              5,
+              4.8,
+              -68
+            ],
+            [
+              5,
+              4.8,
+              -64
+            ],
+            [
+              5,
+              3.6,
+              -56
+            ],
+            [
+              -4,
+              3.6,
+              -50
+            ],
+            [
+              -4,
+              3.6,
+              -46
+            ],
+            [
+              -4,
+              1.2,
+              -34
+            ],
+            [
+              -4,
+              1.2,
+              -26
+            ],
+            [
+              4,
+              1.2,
+              -26
+            ],
+            [
+              4,
+              1.2,
+              -20
+            ],
+            [
+              4,
+              0,
+              -8
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "A_market",
+          "team": "A",
+          "role": "west terrace and high market; drop to center",
+          "points": [
+            [
+              0,
+              4.8,
+              -68
+            ],
+            [
+              -10,
+              4.8,
+              -67
+            ],
+            [
+              -18,
+              3.6,
+              -67
+            ],
+            [
+              -24,
+              3.6,
+              -64
+            ],
+            [
+              -24,
+              3.6,
+              -58
+            ],
+            [
+              -24,
+              2.4,
+              -50
+            ],
+            [
+              -24,
+              2.4,
+              -34
+            ],
+            [
+              -32,
+              2.4,
+              -34
+            ],
+            [
+              -32,
+              2.4,
+              -30
+            ],
+            [
+              -32,
+              4.8,
+              -18
+            ],
+            [
+              -32,
+              4.8,
+              -17.2
+            ],
+            [
+              -28,
+              4.8,
+              -17.2
+            ],
+            [
+              -28,
+              4.8,
+              -10
+            ],
+            [
+              -27,
+              4.8,
+              -3
+            ],
+            [
+              -16,
+              4.8,
+              -3
+            ],
+            [
+              -10,
+              4.8,
+              -3
+            ]
+          ]
+        },
+        {
+          "id": "A_low",
+          "team": "A",
+          "role": "sheltered low market street; attack center below bridge",
+          "points": [
+            [
+              -4,
+              1.2,
+              -26
+            ],
+            [
+              -14,
+              1.2,
+              -27
+            ],
+            [
+              -22,
+              0,
+              -27
+            ],
+            [
+              -25,
+              0,
+              -27
+            ],
+            [
+              -25,
+              0,
+              -22
+            ],
+            [
+              -25,
+              0,
+              -12
+            ],
+            [
+              -25,
+              0,
+              -3
+            ],
+            [
+              -10,
+              0,
+              -3
+            ],
+            [
+              -2,
+              0,
+              -3
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          "parentRoute": "A_direct"
+        },
+        {
+          "id": "A_east",
+          "team": "A",
+          "role": "east court, local rise, transverse descent to center",
+          "points": [
+            [
+              0,
+              4.8,
+              -68
+            ],
+            [
+              10,
+              4.8,
+              -67
+            ],
+            [
+              22,
+              2.4,
+              -67
+            ],
+            [
+              25,
+              2.4,
+              -64
+            ],
+            [
+              25,
+              2.4,
+              -46
+            ],
+            [
+              25,
+              1.2,
+              -38
+            ],
+            [
+              30,
+              1.2,
+              -31
+            ],
+            [
+              30,
+              1.2,
+              -28
+            ],
+            [
+              30,
+              3.6,
+              -20
+            ],
+            [
+              30,
+              3.6,
+              -14
+            ],
+            [
+              24,
+              3.6,
+              -14
+            ],
+            [
+              16,
+              0,
+              -14
+            ],
+            [
+              13,
+              0,
+              -14
+            ],
+            [
+              13,
+              0,
+              -8
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              2,
+              0,
+              -5
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "A_market_return",
+          "team": "A",
+          "role": "safe mesh/drop recovery via second ramp",
+          "points": [
+            [
+              -25,
+              0,
+              -3
+            ],
+            [
+              -25,
+              0,
+              -12
+            ],
+            [
+              -25,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -20
+            ],
+            [
+              -19,
+              4.8,
+              -6
+            ],
+            [
+              -16,
+              4.8,
+              -3
+            ]
+          ]
+        },
+        {
+          "id": "A_mesh_recovery",
+          "team": "A",
+          "role": "exact mesh landing to upper market",
+          "points": [
+            [
+              -27,
+              0,
+              -3
+            ],
+            [
+              -25,
+              0,
+              -3
+            ],
+            [
+              -25,
+              0,
+              -12
+            ],
+            [
+              -25,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -20
+            ],
+            [
+              -19,
+              4.8,
+              -6
+            ],
+            [
+              -16,
+              4.8,
+              -3
+            ]
+          ]
+        },
+        {
+          "id": "A_bridge_recovery",
+          "team": "A",
+          "role": "exact bridge drop landing to upper market",
+          "points": [
+            [
+              -6.8,
+              0,
+              -3
+            ],
+            [
+              -25,
+              0,
+              -3
+            ],
+            [
+              -25,
+              0,
+              -12
+            ],
+            [
+              -25,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -22
+            ],
+            [
+              -19,
+              0,
+              -20
+            ],
+            [
+              -19,
+              4.8,
+              -6
+            ],
+            [
+              -16,
+              4.8,
+              -3
+            ]
+          ]
+        },
+        {
+          "id": "B_direct",
+          "team": "B",
+          "role": "central descent, regroup, neutral basin",
+          "points": [
+            [
+              0,
+              4.8,
+              68
+            ],
+            [
+              -5,
+              4.8,
+              68
+            ],
+            [
+              -5,
+              4.8,
+              64
+            ],
+            [
+              -5,
+              3.6,
+              56
+            ],
+            [
+              4,
+              3.6,
+              50
+            ],
+            [
+              4,
+              3.6,
+              46
+            ],
+            [
+              4,
+              1.2,
+              34
+            ],
+            [
+              4,
+              1.2,
+              26
+            ],
+            [
+              -4,
+              1.2,
+              26
+            ],
+            [
+              -4,
+              1.2,
+              20
+            ],
+            [
+              -4,
+              0,
+              8
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B_market",
+          "team": "B",
+          "role": "west terrace and high market; drop to center",
+          "points": [
+            [
+              0,
+              4.8,
+              68
+            ],
+            [
+              10,
+              4.8,
+              67
+            ],
+            [
+              18,
+              3.6,
+              67
+            ],
+            [
+              24,
+              3.6,
+              64
+            ],
+            [
+              24,
+              3.6,
+              58
+            ],
+            [
+              24,
+              2.4,
+              50
+            ],
+            [
+              24,
+              2.4,
+              34
+            ],
+            [
+              32,
+              2.4,
+              34
+            ],
+            [
+              32,
+              2.4,
+              30
+            ],
+            [
+              32,
+              4.8,
+              18
+            ],
+            [
+              32,
+              4.8,
+              17.2
+            ],
+            [
+              28,
+              4.8,
+              17.2
+            ],
+            [
+              28,
+              4.8,
+              10
+            ],
+            [
+              27,
+              4.8,
+              3
+            ],
+            [
+              16,
+              4.8,
+              3
+            ],
+            [
+              10,
+              4.8,
+              3
+            ]
+          ]
+        },
+        {
+          "id": "B_low",
+          "team": "B",
+          "role": "sheltered low market street; attack center below bridge",
+          "points": [
+            [
+              4,
+              1.2,
+              26
+            ],
+            [
+              14,
+              1.2,
+              27
+            ],
+            [
+              22,
+              0,
+              27
+            ],
+            [
+              25,
+              0,
+              27
+            ],
+            [
+              25,
+              0,
+              22
+            ],
+            [
+              25,
+              0,
+              12
+            ],
+            [
+              25,
+              0,
+              3
+            ],
+            [
+              10,
+              0,
+              3
+            ],
+            [
+              2,
+              0,
+              3
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          "parentRoute": "A_direct"
+        },
+        {
+          "id": "B_east",
+          "team": "B",
+          "role": "east court, local rise, transverse descent to center",
+          "points": [
+            [
+              0,
+              4.8,
+              68
+            ],
+            [
+              -10,
+              4.8,
+              67
+            ],
+            [
+              -22,
+              2.4,
+              67
+            ],
+            [
+              -25,
+              2.4,
+              64
+            ],
+            [
+              -25,
+              2.4,
+              46
+            ],
+            [
+              -25,
+              1.2,
+              38
+            ],
+            [
+              -30,
+              1.2,
+              31
+            ],
+            [
+              -30,
+              1.2,
+              28
+            ],
+            [
+              -30,
+              3.6,
+              20
+            ],
+            [
+              -30,
+              3.6,
+              14
+            ],
+            [
+              -24,
+              3.6,
+              14
+            ],
+            [
+              -16,
+              0,
+              14
+            ],
+            [
+              -13,
+              0,
+              14
+            ],
+            [
+              -13,
+              0,
+              8
+            ],
+            [
+              -8,
+              0,
+              5
+            ],
+            [
+              -2,
+              0,
+              5
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B_market_return",
+          "team": "B",
+          "role": "safe mesh/drop recovery via second ramp",
+          "points": [
+            [
+              25,
+              0,
+              3
+            ],
+            [
+              25,
+              0,
+              12
+            ],
+            [
+              25,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              20
+            ],
+            [
+              19,
+              4.8,
+              6
+            ],
+            [
+              16,
+              4.8,
+              3
+            ]
+          ]
+        },
+        {
+          "id": "B_mesh_recovery",
+          "team": "B",
+          "role": "exact mesh landing to upper market",
+          "points": [
+            [
+              27,
+              0,
+              3
+            ],
+            [
+              25,
+              0,
+              3
+            ],
+            [
+              25,
+              0,
+              12
+            ],
+            [
+              25,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              20
+            ],
+            [
+              19,
+              4.8,
+              6
+            ],
+            [
+              16,
+              4.8,
+              3
+            ]
+          ]
+        },
+        {
+          "id": "B_bridge_recovery",
+          "team": "B",
+          "role": "exact bridge drop landing to upper market",
+          "points": [
+            [
+              6.8,
+              0,
+              3
+            ],
+            [
+              25,
+              0,
+              3
+            ],
+            [
+              25,
+              0,
+              12
+            ],
+            [
+              25,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              22
+            ],
+            [
+              19,
+              0,
+              20
+            ],
+            [
+              19,
+              4.8,
+              6
+            ],
+            [
+              16,
+              4.8,
+              3
+            ]
+          ]
+        }
+      ],
+      "drops": [
+        {
+          "id": "A_mesh_drop",
+          "fromPoint": [
+            -27,
+            4.8,
+            -3
+          ],
+          "to": [
+            -27,
+            0,
+            -3
+          ],
+          "returnRoute": "A_mesh_recovery",
+          "kind": "grate",
+          "note": "4.8-WU fall; animation/hard landing unverified"
+        },
+        {
+          "id": "A_bridge_drop",
+          "fromPoint": [
+            -8.8,
+            4.8,
+            -3
+          ],
+          "to": [
+            -6.8,
+            0,
+            -3
+          ],
+          "returnRoute": "A_bridge_recovery",
+          "kind": "edge",
+          "note": "predeparture point; move east past x=-8 then fall, never vertically through the solid slab"
+        },
+        {
+          "id": "B_mesh_drop",
+          "fromPoint": [
+            27,
+            4.8,
+            3
+          ],
+          "to": [
+            27,
+            0,
+            3
+          ],
+          "returnRoute": "B_mesh_recovery",
+          "kind": "grate",
+          "note": "4.8-WU fall; animation/hard landing unverified"
+        },
+        {
+          "id": "B_bridge_drop",
+          "fromPoint": [
+            8.8,
+            4.8,
+            3
+          ],
+          "to": [
+            6.8,
+            0,
+            3
+          ],
+          "returnRoute": "B_bridge_recovery",
+          "kind": "edge",
+          "note": "predeparture point; move east past x=-8 then fall, never vertically through the solid slab"
+        }
+      ],
+      "notes": [
+        "All rules are proposed isolated placements; production ranked definitions are unchanged.",
+        "Five substantial horizontal heights, counted separately from ramps, cover tops and mesh.",
+        "Water plane y=-1.6 matches the current runtime. Water beneath a suspended floor must be distinguished from lower walkable floor: roof silhouette never implies ground beneath it.",
+        "Market underpasses have 4.2 WU nominal clear height. No return route requires a jump or a paintable wall.",
+        "Spawn protection is a proposed 4.2-WU radius in the separate blockout; enemy exclusion and launch arcs need live-engine testing.",
+        "A_low is a branch from A_direct at the lower court. Exact mesh/bridge recovery routes include each landing point before the shared return ramp.",
+        "Objective and tower envelopes are static proposal checks, not proof of composed ranked runtime correctness."
+      ],
+      "rules": {
+        "zones": [
+          {
+            "rect": [
+              -4,
+              4,
+              -4,
+              4
+            ],
+            "y": 0.0
+          }
+        ],
+        "rainmaker": {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "checkpoints": [
+            [
+              7,
+              1.2,
+              -25
+            ],
+            [
+              -7,
+              1.2,
+              25
+            ]
+          ],
+          "goals": [
+            [
+              8,
+              3.6,
+              -50
+            ],
+            [
+              -8,
+              3.6,
+              50
+            ]
+          ]
+        },
+        "tower": {
+          "path": [
+            [
+              -4,
+              3.6,
+              -50
+            ],
+            [
+              -4,
+              3.6,
+              -46
+            ],
+            [
+              -4,
+              1.2,
+              -34
+            ],
+            [
+              -4,
+              1.2,
+              -26
+            ],
+            [
+              4,
+              1.2,
+              -26
+            ],
+            [
+              4,
+              1.2,
+              -20
+            ],
+            [
+              4,
+              0,
+              -8
+            ],
+            [
+              0,
+              0,
+              -8
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              8
+            ],
+            [
+              -4,
+              0,
+              8
+            ],
+            [
+              -4,
+              1.2,
+              20
+            ],
+            [
+              -4,
+              1.2,
+              26
+            ],
+            [
+              4,
+              1.2,
+              26
+            ],
+            [
+              4,
+              1.2,
+              34
+            ],
+            [
+              4,
+              3.6,
+              46
+            ],
+            [
+              4,
+              3.6,
+              50
+            ]
+          ],
+          "sweepRadius": 2.5,
+          "assumedHeight": 8.0
+        },
+        "clams": {
+          "baskets": [
+            [
+              -12,
+              3.6,
+              -49
+            ],
+            [
+              12,
+              3.6,
+              49
+            ]
+          ],
+          "pickupPoints": [
+            [
+              -24,
+              2.4,
+              -36
+            ],
+            [
+              24,
+              2.4,
+              36
+            ],
+            [
+              22,
+              1.2,
+              -30
+            ],
+            [
+              -22,
+              1.2,
+              30
+            ],
+            [
+              -25,
+              0,
+              -22
+            ],
+            [
+              25,
+              0,
+              22
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "kelpline",
+      "name": "Kelpline Terminal",
+      "concept": "Offset ferry basins and interlocking transfer decks",
+      "bounds": [
+        -44,
+        44,
+        -72,
+        72
+      ],
+      "waterY": -1.6,
+      "floors": [
+        {
+          "id": "A_spawn",
+          "rect": [
+            -12,
+            12,
+            -72,
+            -66
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "protected departure terrace"
+        },
+        {
+          "id": "B_spawn",
+          "rect": [
+            -12,
+            12,
+            66,
+            72
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "protected departure terrace"
+        },
+        {
+          "id": "A_headhouse",
+          "rect": [
+            -38,
+            -4,
+            -66,
+            -60
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer departure terrace"
+        },
+        {
+          "id": "B_headhouse",
+          "rect": [
+            4,
+            38,
+            60,
+            66
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer departure terrace"
+        },
+        {
+          "id": "A_outer_top",
+          "rect": [
+            -44,
+            -38,
+            -66,
+            -58
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer switchback landing"
+        },
+        {
+          "id": "B_outer_top",
+          "rect": [
+            38,
+            44,
+            58,
+            66
+          ],
+          "y": 6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer switchback landing"
+        },
+        {
+          "id": "A_high_neck",
+          "rect": [
+            -38,
+            -30,
+            -60,
+            -52
+          ],
+          "y": 6,
+          "bottom": 5.4,
+          "material": "solid",
+          "role": "transfer gallery above service quay"
+        },
+        {
+          "id": "B_high_neck",
+          "rect": [
+            30,
+            38,
+            52,
+            60
+          ],
+          "y": 6,
+          "bottom": 5.4,
+          "material": "solid",
+          "role": "transfer gallery above service quay"
+        },
+        {
+          "id": "A_high_gantry",
+          "rect": [
+            -38,
+            -20,
+            -52,
+            -34
+          ],
+          "y": 6,
+          "bottom": 5.4,
+          "material": "solid",
+          "role": "transfer gantry above service quay"
+        },
+        {
+          "id": "B_high_gantry",
+          "rect": [
+            20,
+            38,
+            34,
+            52
+          ],
+          "y": 6,
+          "bottom": 5.4,
+          "material": "solid",
+          "role": "transfer gantry above service quay"
+        },
+        {
+          "id": "A_rear_concourse",
+          "rect": [
+            -20,
+            22,
+            -60,
+            -50
+          ],
+          "y": 4.8,
+          "bottom": -4,
+          "material": "solid",
+          "role": "public distribution concourse"
+        },
+        {
+          "id": "B_rear_concourse",
+          "rect": [
+            -22,
+            20,
+            50,
+            60
+          ],
+          "y": 4.8,
+          "bottom": -4,
+          "material": "solid",
+          "role": "public distribution concourse"
+        },
+        {
+          "id": "A_rear_wing",
+          "rect": [
+            12,
+            22,
+            -66,
+            -60
+          ],
+          "y": 4.8,
+          "bottom": -4,
+          "material": "solid",
+          "role": "return terrace beside spawn ramp"
+        },
+        {
+          "id": "B_rear_wing",
+          "rect": [
+            -22,
+            -12,
+            60,
+            66
+          ],
+          "y": 4.8,
+          "bottom": -4,
+          "material": "solid",
+          "role": "return terrace beside spawn ramp"
+        },
+        {
+          "id": "A_low_quay",
+          "rect": [
+            -38,
+            -20,
+            -58,
+            -34
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "service quay beneath transfer gantry"
+        },
+        {
+          "id": "B_low_quay",
+          "rect": [
+            20,
+            38,
+            34,
+            58
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "service quay beneath transfer gantry"
+        },
+        {
+          "id": "A_outer_foot",
+          "rect": [
+            -44,
+            -38,
+            -42,
+            -34
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer ramp recovery landing"
+        },
+        {
+          "id": "B_outer_foot",
+          "rect": [
+            38,
+            44,
+            34,
+            42
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "outer ramp recovery landing"
+        },
+        {
+          "id": "A_boarding_rear",
+          "rect": [
+            -12,
+            12,
+            -42,
+            -32
+          ],
+          "y": 3.6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "boarding approach"
+        },
+        {
+          "id": "B_boarding_rear",
+          "rect": [
+            -12,
+            12,
+            32,
+            42
+          ],
+          "y": 3.6,
+          "bottom": -4,
+          "material": "solid",
+          "role": "boarding approach"
+        },
+        {
+          "id": "A_boarding_main",
+          "rect": [
+            -22,
+            12,
+            -32,
+            -10
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "boarding court above service street"
+        },
+        {
+          "id": "B_boarding_main",
+          "rect": [
+            -12,
+            22,
+            10,
+            32
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "boarding court above service street"
+        },
+        {
+          "id": "A_boarding_west",
+          "rect": [
+            -30,
+            -22,
+            -22,
+            -10
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "boarding balcony and local recovery entrance"
+        },
+        {
+          "id": "B_boarding_west",
+          "rect": [
+            22,
+            30,
+            10,
+            22
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "boarding balcony and local recovery entrance"
+        },
+        {
+          "id": "A_boarding_grate",
+          "rect": [
+            -30,
+            -22,
+            -28,
+            -22
+          ],
+          "y": 3.6,
+          "bottom": 3.45,
+          "material": "grate",
+          "role": "optional side grate beside existing recovery loop"
+        },
+        {
+          "id": "B_boarding_grate",
+          "rect": [
+            22,
+            30,
+            22,
+            28
+          ],
+          "y": 3.6,
+          "bottom": 3.45,
+          "material": "grate",
+          "role": "optional side grate beside existing recovery loop"
+        },
+        {
+          "id": "A_service",
+          "rect": [
+            -30,
+            0,
+            -28,
+            -10
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "covered service street with two exits"
+        },
+        {
+          "id": "B_service",
+          "rect": [
+            0,
+            30,
+            10,
+            28
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "covered service street with two exits"
+        },
+        {
+          "id": "A_service_turn",
+          "rect": [
+            -42,
+            -30,
+            -28,
+            -20
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "open drop landing and recovery court"
+        },
+        {
+          "id": "B_service_turn",
+          "rect": [
+            30,
+            42,
+            20,
+            28
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "open drop landing and recovery court"
+        },
+        {
+          "id": "A_recovery_foot",
+          "rect": [
+            -42,
+            -38,
+            -20,
+            -12
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "local boarding ramp landing"
+        },
+        {
+          "id": "B_recovery_foot",
+          "rect": [
+            38,
+            42,
+            12,
+            20
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "local boarding ramp landing"
+        },
+        {
+          "id": "A_cargo",
+          "rect": [
+            20,
+            40,
+            -50,
+            -24
+          ],
+          "y": 2.4,
+          "bottom": -4,
+          "material": "solid",
+          "role": "cargo court around ferry basin"
+        },
+        {
+          "id": "B_cargo",
+          "rect": [
+            -40,
+            -20,
+            24,
+            50
+          ],
+          "y": 2.4,
+          "bottom": -4,
+          "material": "solid",
+          "role": "cargo court around ferry basin"
+        },
+        {
+          "id": "A_cargo_inner",
+          "rect": [
+            12,
+            20,
+            -42,
+            -30
+          ],
+          "y": 2.4,
+          "bottom": -4,
+          "material": "solid",
+          "role": "cargo approach terrace"
+        },
+        {
+          "id": "B_cargo_inner",
+          "rect": [
+            -20,
+            -12,
+            30,
+            42
+          ],
+          "y": 2.4,
+          "bottom": -4,
+          "material": "solid",
+          "role": "cargo approach terrace"
+        },
+        {
+          "id": "A_ferry",
+          "rect": [
+            24,
+            40,
+            -16,
+            -4
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "low ferry finger beside central channel"
+        },
+        {
+          "id": "B_ferry",
+          "rect": [
+            -40,
+            -24,
+            4,
+            16
+          ],
+          "y": 1.2,
+          "bottom": -4,
+          "material": "solid",
+          "role": "low ferry finger beside central channel"
+        },
+        {
+          "id": "central_service",
+          "rect": [
+            -18,
+            18,
+            -10,
+            10
+          ],
+          "y": 0,
+          "bottom": -4,
+          "material": "solid",
+          "role": "low cross-terminal junction"
+        },
+        {
+          "id": "central_west",
+          "rect": [
+            -12,
+            -4,
+            -10,
+            10
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "central transfer bridge"
+        },
+        {
+          "id": "central_east",
+          "rect": [
+            4,
+            12,
+            -10,
+            10
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "central transfer bridge"
+        },
+        {
+          "id": "central_solid",
+          "rect": [
+            -4,
+            4,
+            -10,
+            10
+          ],
+          "y": 3.6,
+          "bottom": 3.0,
+          "material": "solid",
+          "role": "solid objective saddle"
+        }
+      ],
+      "ramps": [
+        {
+          "id": "A_spawn_ramp",
+          "rect": [
+            -4,
+            12,
+            -66,
+            -60
+          ],
+          "axis": "z",
+          "y0": 6,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "broad primary spawn descent"
+        },
+        {
+          "id": "B_spawn_ramp",
+          "rect": [
+            -12,
+            4,
+            60,
+            66
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 6,
+          "thickness": 0.6,
+          "role": "broad primary spawn descent"
+        },
+        {
+          "id": "A_high_to_concourse",
+          "rect": [
+            -30,
+            -20,
+            -60,
+            -54
+          ],
+          "axis": "x",
+          "y0": 6,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "local terrace connector"
+        },
+        {
+          "id": "B_high_to_concourse",
+          "rect": [
+            20,
+            30,
+            54,
+            60
+          ],
+          "axis": "x",
+          "y0": 4.8,
+          "y1": 6,
+          "thickness": 0.6,
+          "role": "local terrace connector"
+        },
+        {
+          "id": "A_outer_descent",
+          "rect": [
+            -44,
+            -38,
+            -58,
+            -42
+          ],
+          "axis": "z",
+          "y0": 6,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "waterside switchback to service quay"
+        },
+        {
+          "id": "B_outer_descent",
+          "rect": [
+            38,
+            44,
+            42,
+            58
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 6,
+          "thickness": 0.6,
+          "role": "waterside switchback to service quay"
+        },
+        {
+          "id": "A_main_descent",
+          "rect": [
+            -8,
+            8,
+            -50,
+            -42
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "main boarding approach"
+        },
+        {
+          "id": "B_main_descent",
+          "rect": [
+            -8,
+            8,
+            42,
+            50
+          ],
+          "axis": "z",
+          "y0": 3.6,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "main boarding approach"
+        },
+        {
+          "id": "A_gantry_to_boarding",
+          "rect": [
+            -20,
+            -12,
+            -42,
+            -34
+          ],
+          "axis": "x",
+          "y0": 6,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "high flank rejoins boarding court"
+        },
+        {
+          "id": "B_gantry_to_boarding",
+          "rect": [
+            12,
+            20,
+            34,
+            42
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 6,
+          "thickness": 0.6,
+          "role": "high flank rejoins boarding court"
+        },
+        {
+          "id": "A_quay_to_service",
+          "rect": [
+            -30,
+            -22,
+            -34,
+            -28
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 0,
+          "thickness": 0.6,
+          "role": "low flank enters covered street"
+        },
+        {
+          "id": "B_quay_to_service",
+          "rect": [
+            22,
+            30,
+            28,
+            34
+          ],
+          "axis": "z",
+          "y0": 0,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "low flank enters covered street"
+        },
+        {
+          "id": "A_boarding_recovery",
+          "rect": [
+            -38,
+            -30,
+            -20,
+            -12
+          ],
+          "axis": "x",
+          "y0": 0,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "local return from safe drop court"
+        },
+        {
+          "id": "B_boarding_recovery",
+          "rect": [
+            30,
+            38,
+            12,
+            20
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 0,
+          "thickness": 0.6,
+          "role": "local return from safe drop court"
+        },
+        {
+          "id": "A_rear_to_cargo",
+          "rect": [
+            12,
+            20,
+            -50,
+            -42
+          ],
+          "axis": "z",
+          "y0": 4.8,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "independent cargo approach"
+        },
+        {
+          "id": "B_rear_to_cargo",
+          "rect": [
+            -20,
+            -12,
+            42,
+            50
+          ],
+          "axis": "z",
+          "y0": 2.4,
+          "y1": 4.8,
+          "thickness": 0.6,
+          "role": "independent cargo approach"
+        },
+        {
+          "id": "A_cargo_to_boarding",
+          "rect": [
+            12,
+            20,
+            -30,
+            -24
+          ],
+          "axis": "x",
+          "y0": 3.6,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "cross-route choice between cargo and boarding"
+        },
+        {
+          "id": "B_cargo_to_boarding",
+          "rect": [
+            -20,
+            -12,
+            24,
+            30
+          ],
+          "axis": "x",
+          "y0": 2.4,
+          "y1": 3.6,
+          "thickness": 0.6,
+          "role": "cross-route choice between cargo and boarding"
+        },
+        {
+          "id": "A_cargo_to_ferry",
+          "rect": [
+            28,
+            36,
+            -24,
+            -16
+          ],
+          "axis": "z",
+          "y0": 2.4,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "ferry basin descent"
+        },
+        {
+          "id": "B_cargo_to_ferry",
+          "rect": [
+            -36,
+            -28,
+            16,
+            24
+          ],
+          "axis": "z",
+          "y0": 1.2,
+          "y1": 2.4,
+          "thickness": 0.6,
+          "role": "ferry basin descent"
+        },
+        {
+          "id": "A_ferry_to_center",
+          "rect": [
+            18,
+            24,
+            -10,
+            -6
+          ],
+          "axis": "x",
+          "y0": 0,
+          "y1": 1.2,
+          "thickness": 0.6,
+          "role": "low central side entrance"
+        },
+        {
+          "id": "B_ferry_to_center",
+          "rect": [
+            -24,
+            -18,
+            6,
+            10
+          ],
+          "axis": "x",
+          "y0": 1.2,
+          "y1": 0,
+          "thickness": 0.6,
+          "role": "low central side entrance"
+        }
+      ],
+      "obstacles": [
+        {
+          "id": "A_spawn_screen",
+          "rect": [
+            -4,
+            4,
+            -66.8,
+            -66
+          ],
+          "y0": 6,
+          "y1": 8.6,
+          "role": "spawn sightline screen; two side exits",
+          "paint": true
+        },
+        {
+          "id": "B_spawn_screen",
+          "rect": [
+            -4,
+            4,
+            66,
+            66.8
+          ],
+          "y0": 6,
+          "y1": 8.6,
+          "role": "spawn sightline screen; two side exits",
+          "paint": true
+        },
+        {
+          "id": "A_concourse_kiosk",
+          "rect": [
+            -12,
+            -8,
+            -56,
+            -52
+          ],
+          "y0": 4.8,
+          "y1": 7.2,
+          "role": "concourse view break",
+          "paint": true
+        },
+        {
+          "id": "B_concourse_kiosk",
+          "rect": [
+            8,
+            12,
+            52,
+            56
+          ],
+          "y0": 4.8,
+          "y1": 7.2,
+          "role": "concourse view break",
+          "paint": true
+        },
+        {
+          "id": "A_gantry_cargo",
+          "rect": [
+            -34,
+            -30,
+            -48,
+            -44
+          ],
+          "y0": 6,
+          "y1": 8.4,
+          "role": "upper gantry view break",
+          "paint": true
+        },
+        {
+          "id": "B_gantry_cargo",
+          "rect": [
+            30,
+            34,
+            44,
+            48
+          ],
+          "y0": 6,
+          "y1": 8.4,
+          "role": "upper gantry view break",
+          "paint": true
+        },
+        {
+          "id": "A_quay_cargo",
+          "rect": [
+            -34,
+            -30,
+            -48,
+            -44
+          ],
+          "y0": 1.2,
+          "y1": 3.4,
+          "role": "lower service quay view break",
+          "paint": true
+        },
+        {
+          "id": "B_quay_cargo",
+          "rect": [
+            30,
+            34,
+            44,
+            48
+          ],
+          "y0": 1.2,
+          "y1": 3.4,
+          "role": "lower service quay view break",
+          "paint": true
+        },
+        {
+          "id": "A_boarding_kiosk",
+          "rect": [
+            -16,
+            -10,
+            -24,
+            -18
+          ],
+          "y0": 3.6,
+          "y1": 6.0,
+          "role": "boarding court shelter",
+          "paint": true
+        },
+        {
+          "id": "B_boarding_kiosk",
+          "rect": [
+            10,
+            16,
+            18,
+            24
+          ],
+          "y0": 3.6,
+          "y1": 6.0,
+          "role": "boarding court shelter",
+          "paint": true
+        },
+        {
+          "id": "A_service_cover",
+          "rect": [
+            -10,
+            -6,
+            -24,
+            -20
+          ],
+          "y0": 0,
+          "y1": 1.8,
+          "role": "lower street corner shelter clear of grate landing",
+          "paint": true
+        },
+        {
+          "id": "B_service_cover",
+          "rect": [
+            6,
+            10,
+            20,
+            24
+          ],
+          "y0": 0,
+          "y1": 1.8,
+          "role": "lower street corner shelter clear of grate landing",
+          "paint": true
+        },
+        {
+          "id": "A_cargo_stack",
+          "rect": [
+            28,
+            34,
+            -38,
+            -35
+          ],
+          "y0": 2.4,
+          "y1": 4.8,
+          "role": "cargo court view break",
+          "paint": true
+        },
+        {
+          "id": "B_cargo_stack",
+          "rect": [
+            -34,
+            -28,
+            35,
+            38
+          ],
+          "y0": 2.4,
+          "y1": 4.8,
+          "role": "cargo court view break",
+          "paint": true
+        },
+        {
+          "id": "A_ferry_cover",
+          "rect": [
+            34,
+            38,
+            -12,
+            -8
+          ],
+          "y0": 1.2,
+          "y1": 3.2,
+          "role": "ferry finger shelter",
+          "paint": true
+        },
+        {
+          "id": "B_ferry_cover",
+          "rect": [
+            -38,
+            -34,
+            8,
+            12
+          ],
+          "y0": 1.2,
+          "y1": 3.2,
+          "role": "ferry finger shelter",
+          "paint": true
+        },
+        {
+          "id": "A_bridge_edge",
+          "rect": [
+            -12,
+            -10,
+            -9,
+            -5
+          ],
+          "y0": 3.6,
+          "y1": 5.8,
+          "role": "bridge edge shelter clear of tower envelope",
+          "paint": true
+        },
+        {
+          "id": "B_bridge_edge",
+          "rect": [
+            10,
+            12,
+            5,
+            9
+          ],
+          "y0": 3.6,
+          "y1": 5.8,
+          "role": "bridge edge shelter clear of tower envelope",
+          "paint": true
+        },
+        {
+          "id": "central_service_cover",
+          "rect": [
+            -3,
+            3,
+            -2,
+            2
+          ],
+          "y0": 0,
+          "y1": 1.8,
+          "role": "low junction view break",
+          "paint": true
+        }
+      ],
+      "spawns": [
+        {
+          "id": "A",
+          "point": [
+            0,
+            6,
+            -68
+          ],
+          "floor": "A_spawn"
+        },
+        {
+          "id": "B",
+          "point": [
+            0,
+            6,
+            68
+          ],
+          "floor": "B_spawn"
+        }
+      ],
+      "routes": [
+        {
+          "id": "A_main",
+          "team": "A",
+          "role": "primary upper approach",
+          "points": [
+            [
+              0,
+              6,
+              -68
+            ],
+            [
+              8,
+              6,
+              -68
+            ],
+            [
+              8,
+              6,
+              -66
+            ],
+            [
+              8,
+              4.8,
+              -60
+            ],
+            [
+              0,
+              4.8,
+              -54
+            ],
+            [
+              0,
+              4.8,
+              -50
+            ],
+            [
+              0,
+              3.6,
+              -42
+            ],
+            [
+              0,
+              3.6,
+              -32
+            ],
+            [
+              7,
+              3.6,
+              -16
+            ],
+            [
+              7,
+              3.6,
+              0
+            ],
+            [
+              0,
+              3.6,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B_main",
+          "team": "B",
+          "role": "primary upper approach",
+          "points": [
+            [
+              0,
+              6,
+              68
+            ],
+            [
+              -8,
+              6,
+              68
+            ],
+            [
+              -8,
+              6,
+              66
+            ],
+            [
+              -8,
+              4.8,
+              60
+            ],
+            [
+              0,
+              4.8,
+              54
+            ],
+            [
+              0,
+              4.8,
+              50
+            ],
+            [
+              0,
+              3.6,
+              42
+            ],
+            [
+              0,
+              3.6,
+              32
+            ],
+            [
+              -7,
+              3.6,
+              16
+            ],
+            [
+              -7,
+              3.6,
+              0
+            ],
+            [
+              0,
+              3.6,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "A_high_flank",
+          "team": "A",
+          "role": "outer high transfer route",
+          "points": [
+            [
+              0,
+              6,
+              -68
+            ],
+            [
+              -8,
+              6,
+              -68
+            ],
+            [
+              -8,
+              6,
+              -63
+            ],
+            [
+              -34,
+              6,
+              -63
+            ],
+            [
+              -34,
+              6,
+              -56
+            ],
+            [
+              -34,
+              6,
+              -50
+            ],
+            [
+              -26,
+              6,
+              -50
+            ],
+            [
+              -26,
+              6,
+              -38
+            ],
+            [
+              -20,
+              6,
+              -38
+            ],
+            [
+              -12,
+              3.6,
+              -38
+            ],
+            [
+              -6,
+              3.6,
+              -38
+            ],
+            [
+              -6,
+              3.6,
+              -14
+            ],
+            [
+              -6,
+              3.6,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "B_high_flank",
+          "team": "B",
+          "role": "outer high transfer route",
+          "points": [
+            [
+              0,
+              6,
+              68
+            ],
+            [
+              8,
+              6,
+              68
+            ],
+            [
+              8,
+              6,
+              63
+            ],
+            [
+              34,
+              6,
+              63
+            ],
+            [
+              34,
+              6,
+              56
+            ],
+            [
+              34,
+              6,
+              50
+            ],
+            [
+              26,
+              6,
+              50
+            ],
+            [
+              26,
+              6,
+              38
+            ],
+            [
+              20,
+              6,
+              38
+            ],
+            [
+              12,
+              3.6,
+              38
+            ],
+            [
+              6,
+              3.6,
+              38
+            ],
+            [
+              6,
+              3.6,
+              14
+            ],
+            [
+              6,
+              3.6,
+              0
+            ]
+          ]
+        },
+        {
+          "id": "A_low_flank",
+          "team": "A",
+          "role": "waterside low service route",
+          "points": [
+            [
+              0,
+              6,
+              -68
+            ],
+            [
+              -8,
+              6,
+              -68
+            ],
+            [
+              -8,
+              6,
+              -63
+            ],
+            [
+              -41,
+              6,
+              -63
+            ],
+            [
+              -41,
+              6,
+              -58
+            ],
+            [
+              -41,
+              1.2,
+              -42
+            ],
+            [
+              -41,
+              1.2,
+              -38
+            ],
+            [
+              -26,
+              1.2,
+              -38
+            ],
+            [
+              -26,
+              1.2,
+              -34
+            ],
+            [
+              -26,
+              0,
+              -28
+            ],
+            [
+              -26,
+              0,
+              -26
+            ],
+            [
+              -18,
+              0,
+              -26
+            ],
+            [
+              -18,
+              0,
+              -16
+            ],
+            [
+              -8,
+              0,
+              -12
+            ],
+            [
+              -8,
+              0,
+              -4
+            ]
+          ]
+        },
+        {
+          "id": "B_low_flank",
+          "team": "B",
+          "role": "waterside low service route",
+          "points": [
+            [
+              0,
+              6,
+              68
+            ],
+            [
+              8,
+              6,
+              68
+            ],
+            [
+              8,
+              6,
+              63
+            ],
+            [
+              41,
+              6,
+              63
+            ],
+            [
+              41,
+              6,
+              58
+            ],
+            [
+              41,
+              1.2,
+              42
+            ],
+            [
+              41,
+              1.2,
+              38
+            ],
+            [
+              26,
+              1.2,
+              38
+            ],
+            [
+              26,
+              1.2,
+              34
+            ],
+            [
+              26,
+              0,
+              28
+            ],
+            [
+              26,
+              0,
+              26
+            ],
+            [
+              18,
+              0,
+              26
+            ],
+            [
+              18,
+              0,
+              16
+            ],
+            [
+              8,
+              0,
+              12
+            ],
+            [
+              8,
+              0,
+              4
+            ]
+          ]
+        },
+        {
+          "id": "A_cargo_flank",
+          "team": "A",
+          "role": "cargo and ferry approach to low center",
+          "points": [
+            [
+              0,
+              6,
+              -68
+            ],
+            [
+              8,
+              6,
+              -68
+            ],
+            [
+              8,
+              6,
+              -66
+            ],
+            [
+              8,
+              4.8,
+              -60
+            ],
+            [
+              16,
+              4.8,
+              -54
+            ],
+            [
+              16,
+              4.8,
+              -50
+            ],
+            [
+              16,
+              2.4,
+              -42
+            ],
+            [
+              24,
+              2.4,
+              -38
+            ],
+            [
+              32,
+              2.4,
+              -30
+            ],
+            [
+              32,
+              2.4,
+              -24
+            ],
+            [
+              32,
+              1.2,
+              -16
+            ],
+            [
+              28,
+              1.2,
+              -8
+            ],
+            [
+              24,
+              1.2,
+              -8
+            ],
+            [
+              18,
+              0,
+              -8
+            ],
+            [
+              15,
+              0,
+              -4
+            ]
+          ]
+        },
+        {
+          "id": "B_cargo_flank",
+          "team": "B",
+          "role": "cargo and ferry approach to low center",
+          "points": [
+            [
+              0,
+              6,
+              68
+            ],
+            [
+              -8,
+              6,
+              68
+            ],
+            [
+              -8,
+              6,
+              66
+            ],
+            [
+              -8,
+              4.8,
+              60
+            ],
+            [
+              -16,
+              4.8,
+              54
+            ],
+            [
+              -16,
+              4.8,
+              50
+            ],
+            [
+              -16,
+              2.4,
+              42
+            ],
+            [
+              -24,
+              2.4,
+              38
+            ],
+            [
+              -32,
+              2.4,
+              30
+            ],
+            [
+              -32,
+              2.4,
+              24
+            ],
+            [
+              -32,
+              1.2,
+              16
+            ],
+            [
+              -28,
+              1.2,
+              8
+            ],
+            [
+              -24,
+              1.2,
+              8
+            ],
+            [
+              -18,
+              0,
+              8
+            ],
+            [
+              -15,
+              0,
+              4
+            ]
+          ]
+        },
+        {
+          "id": "A_recovery",
+          "team": "A",
+          "role": "short return from drop court to boarding",
+          "points": [
+            [
+              -31.5,
+              0,
+              -21
+            ],
+            [
+              -40,
+              0,
+              -21
+            ],
+            [
+              -40,
+              0,
+              -16
+            ],
+            [
+              -38,
+              0,
+              -16
+            ],
+            [
+              -30,
+              3.6,
+              -16
+            ],
+            [
+              -26,
+              3.6,
+              -16
+            ]
+          ]
+        },
+        {
+          "id": "B_recovery",
+          "team": "B",
+          "role": "short return from drop court to boarding",
+          "points": [
+            [
+              31.5,
+              0,
+              21
+            ],
+            [
+              40,
+              0,
+              21
+            ],
+            [
+              40,
+              0,
+              16
+            ],
+            [
+              38,
+              0,
+              16
+            ],
+            [
+              30,
+              3.6,
+              16
+            ],
+            [
+              26,
+              3.6,
+              16
+            ]
+          ]
+        },
+        {
+          "id": "A_grate_recovery",
+          "team": "A",
+          "role": "short return from side grate landing to boarding",
+          "points": [
+            [
+              -26,
+              0,
+              -25
+            ],
+            [
+              -40,
+              0,
+              -25
+            ],
+            [
+              -40,
+              0,
+              -16
+            ],
+            [
+              -38,
+              0,
+              -16
+            ],
+            [
+              -30,
+              3.6,
+              -16
+            ],
+            [
+              -26,
+              3.6,
+              -16
+            ]
+          ]
+        },
+        {
+          "id": "B_grate_recovery",
+          "team": "B",
+          "role": "short return from side grate landing to boarding",
+          "points": [
+            [
+              26,
+              0,
+              25
+            ],
+            [
+              40,
+              0,
+              25
+            ],
+            [
+              40,
+              0,
+              16
+            ],
+            [
+              38,
+              0,
+              16
+            ],
+            [
+              30,
+              3.6,
+              16
+            ],
+            [
+              26,
+              3.6,
+              16
+            ]
+          ]
+        }
+      ],
+      "drops": [
+        {
+          "id": "A_boarding_drop",
+          "fromPoint": [
+            -29.2,
+            3.6,
+            -21
+          ],
+          "to": [
+            -31.5,
+            0,
+            -21
+          ],
+          "returnRoute": "A_recovery",
+          "departure": "move west past x=-30 before descent; the landing is outside the balcony footprint"
+        },
+        {
+          "id": "B_boarding_drop",
+          "fromPoint": [
+            29.2,
+            3.6,
+            21
+          ],
+          "to": [
+            31.5,
+            0,
+            21
+          ],
+          "returnRoute": "B_recovery",
+          "departure": "move east past x=30 before descent; the landing is outside the balcony footprint"
+        },
+        {
+          "id": "A_grate_drop",
+          "fromPoint": [
+            -26,
+            3.6,
+            -25
+          ],
+          "to": [
+            -26,
+            0,
+            -25
+          ],
+          "returnRoute": "A_grate_recovery"
+        },
+        {
+          "id": "B_grate_drop",
+          "fromPoint": [
+            26,
+            3.6,
+            25
+          ],
+          "to": [
+            26,
+            0,
+            25
+          ],
+          "returnRoute": "B_grate_recovery"
+        }
+      ],
+      "rules": {
+        "zones": [
+          {
+            "rect": [
+              -18,
+              -12,
+              -6,
+              2
+            ],
+            "y": 0
+          },
+          {
+            "rect": [
+              12,
+              18,
+              -2,
+              6
+            ],
+            "y": 0
+          }
+        ],
+        "rainmaker": {
+          "center": [
+            0,
+            3.6,
+            0
+          ],
+          "checkpoints": [
+            [
+              0,
+              3.6,
+              -35
+            ],
+            [
+              0,
+              3.6,
+              35
+            ]
+          ],
+          "goals": [
+            [
+              0,
+              4.8,
+              -54
+            ],
+            [
+              0,
+              4.8,
+              54
+            ]
+          ]
+        },
+        "tower": {
+          "path": [
+            [
+              7,
+              3.6,
+              -28
+            ],
+            [
+              7,
+              3.6,
+              -14
+            ],
+            [
+              7,
+              3.6,
+              0
+            ],
+            [
+              -7,
+              3.6,
+              0
+            ],
+            [
+              -7,
+              3.6,
+              14
+            ],
+            [
+              -7,
+              3.6,
+              28
+            ]
+          ],
+          "sweepRadius": 2.5
+        },
+        "clams": {
+          "baskets": [
+            [
+              0,
+              4.8,
+              -54
+            ],
+            [
+              0,
+              4.8,
+              54
+            ]
+          ],
+          "pickupPoints": [
+            [
+              -18,
+              0,
+              -16
+            ],
+            [
+              18,
+              0,
+              16
+            ],
+            [
+              24,
+              2.4,
+              -32
+            ],
+            [
+              -24,
+              2.4,
+              32
+            ],
+            [
+              -26,
+              6,
+              -48
+            ],
+            [
+              26,
+              6,
+              48
+            ],
+            [
+              0,
+              3.6,
+              0
+            ]
+          ]
+        }
+      },
+      "notes": [
+        "Design WU only; no real-world metre calibration is established.",
+        "The six horizontal levels are genuine floor destinations, excluding ramps and cover tops; each has a different circulation role.",
+        "All terrain, obstacles and rule placements have 180-degree rotational correspondence; this is geometric parity, not match-balance evidence.",
+        "Main upper and low center routes intersect in plan but remain separate under the bridge; bridge underside is y3.0 above lower y0, and high gantry underside y5.4 above lower quay y1.2.",
+        "Water occupies actual absent terrain between terminal fingers and along the outer switchback. No hidden full-bounds floor is present.",
+        "Ramps are nominal planar design surfaces, grade at most45%; their emitted collision/ramp-end geometry must be tested before game integration.",
+        "Designated drops land on solid floor but fall stun, momentum, squid grate fall-through and camera performance remain untested.",
+        "Outer water edges require visible edge treatment and selected non-paint guardrails during later detailed dressing; those guards are not represented as certified collision geometry here.",
+        "Zones occupy the uncovered six-unit-wide strips alongside the central bridge; explicit y bands remain required for any later target moved below stacked floors.",
+        "Tower uses a conservative2.5WU planar envelope on y3.6. Continuous game collision, objective support and all rule scoring still require integration tests.",
+        "Paint supports separate faces in source; HUD minimap still collapses stacked locations to the topmost surface, so this design does not imply minimap readiness."
+      ]
+    }
+  ]
+}

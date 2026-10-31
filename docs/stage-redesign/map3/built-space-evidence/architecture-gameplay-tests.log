@@ -1,0 +1,28 @@
+✔ new connected streets have solid support and human/squid clearance over the entire authored routes (1406.623308ms)
+ℹ 12 added routes / 1434 sampled supports with human and conservative squid clearance.
+✔ composed Actor traverses the added connections while walking, swimming and firing at 30/60/120 Hz (2054.144795ms)
+ℹ 108 composed Actor traversals / 41364 ticks; maximum waypoint height error 0.05280 WU.
+✔ every added floor has a retained navigation node and real paths to and from both spawns (833.479979ms)
+ℹ tidewater: 9704 retained navigation nodes, including every added floor.
+ℹ kelpline: 11944 retained navigation nodes, including every added floor.
+ℹ 152 directed new-floor/spawn navigation queries.
+✔ new architectural walls interrupt actual shot sightlines that were open in the frozen blockout (56.444255ms)
+ℹ 8 formerly open, mirrored sightlines now end at a paintable physical wall.
+✔ the installed weapon admission and real projectiles paint the new cover walls on both halves (2840.721453ms)
+ℹ 4 admitted-projectile impacts produce ink on the new cover faces.
+✔ inked architectural cover can be climbed and crested by the actual squid controller at 30/60/120 Hz (1521.609652ms)
+ℹ 12 wall climbs reach the supported wall top under real Actor movement.
+✔ new wall approaches leave CameraRig lens and near plane outside solids through turns and jumps (3766.20467ms)
+ℹ 36 mirrored new-wall camera scenarios, including near-plane corners and jumps.
+✔ new circulation preserves actual opposing-spawn exclusion on both sides at 30/60/120 Hz (104.409118ms)
+ℹ 12 opposing-spawn approach attempts retain the existing exclusion volume.
+(node:7) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12594.258129

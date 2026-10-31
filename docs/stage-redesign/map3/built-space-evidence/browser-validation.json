@@ -1,0 +1,1093 @@
+{
+  "status": "passed",
+  "buildRevision": "87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c",
+  "contentHash": "dfb970c90250495aa016af0168091445a9cd56a358fb92af92024d771e87ec8c",
+  "buildManifestSha256": "e194fbafd8625e55897981695b67582efb0d2bea92c78ebc97e04624a0250cde",
+  "scope": "minified production site in Chromium/SwiftShader; setup teleports are controlled test inputs; no physical-device FPS claim",
+  "errors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "badResponses": [],
+  "stages": [
+    {
+      "stage": "tidewater",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 312,
+      "textures": 62,
+      "firing": {
+        "setupTeleport": [
+          0,
+          0.02,
+          -5
+        ],
+        "before": [
+          0,
+          0
+        ],
+        "after": [
+          517,
+          0
+        ]
+      },
+      "underpassSetupTeleport": [
+        -26,
+        0.02,
+        -14
+      ],
+      "minimapLayer": "lower"
+    },
+    {
+      "stage": "kelpline",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": false,
+      "retiredDetached": true,
+      "geometryDisposals": 7,
+      "materialDisposals": 7,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 430,
+      "textures": 56,
+      "firing": {
+        "setupTeleport": [
+          7,
+          3.62,
+          -7
+        ],
+        "before": [
+          0,
+          0
+        ],
+        "after": [
+          503,
+          0
+        ]
+      },
+      "underpassSetupTeleport": [
+        7,
+        0.02,
+        -8
+      ],
+      "minimapLayer": "lower"
+    }
+  ],
+  "ruleModes": [
+    {
+      "stage": "tidewater",
+      "mode": "zones",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            8,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          -8,
+          3.6,
+          50
+        ],
+        [
+          8,
+          3.6,
+          -50
+        ]
+      ],
+      "clamGoals": [
+        [
+          12,
+          3.6,
+          49
+        ],
+        [
+          -12,
+          3.6,
+          -49
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 1,
+        "tower": 0,
+        "rainmaker": 0,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "tidewater",
+      "mode": "tower",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            8,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": "ranked-tower",
+      "towerPosition": [
+        0,
+        0.28,
+        0
+      ],
+      "rainmakerGoals": [
+        [
+          -8,
+          3.6,
+          50
+        ],
+        [
+          8,
+          3.6,
+          -50
+        ]
+      ],
+      "clamGoals": [
+        [
+          12,
+          3.6,
+          49
+        ],
+        [
+          -12,
+          3.6,
+          -49
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 2,
+        "rainmaker": 0,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "tidewater",
+      "mode": "rainmaker",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            8,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          -8,
+          3.6,
+          50
+        ],
+        [
+          8,
+          3.6,
+          -50
+        ]
+      ],
+      "clamGoals": [
+        [
+          12,
+          3.6,
+          49
+        ],
+        [
+          -12,
+          3.6,
+          -49
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 0,
+        "rainmaker": 7,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "tidewater",
+      "mode": "clams",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            8,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          -8,
+          3.6,
+          50
+        ],
+        [
+          8,
+          3.6,
+          -50
+        ]
+      ],
+      "clamGoals": [
+        [
+          12,
+          3.6,
+          49
+        ],
+        [
+          -12,
+          3.6,
+          -49
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 0,
+        "rainmaker": 0,
+        "clams": 32
+      }
+    },
+    {
+      "stage": "kelpline",
+      "mode": "zones",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            -15,
+            0,
+            -2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        },
+        {
+          "center": [
+            15,
+            0,
+            2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "clamGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 2,
+        "tower": 0,
+        "rainmaker": 0,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "kelpline",
+      "mode": "tower",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            -15,
+            0,
+            -2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        },
+        {
+          "center": [
+            15,
+            0,
+            2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": "ranked-tower",
+      "towerPosition": [
+        0,
+        3.8799999999999994,
+        0
+      ],
+      "rainmakerGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "clamGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 2,
+        "rainmaker": 0,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "kelpline",
+      "mode": "rainmaker",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            -15,
+            0,
+            -2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        },
+        {
+          "center": [
+            15,
+            0,
+            2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "clamGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 0,
+        "rainmaker": 7,
+        "clams": 0
+      }
+    },
+    {
+      "stage": "kelpline",
+      "mode": "clams",
+      "state": "playing",
+      "ranked": true,
+      "zones": [
+        {
+          "center": [
+            -15,
+            0,
+            -2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        },
+        {
+          "center": [
+            15,
+            0,
+            2
+          ],
+          "size": [
+            6,
+            8
+          ],
+          "heightTolerance": 0.35
+        }
+      ],
+      "towerCollider": null,
+      "towerPosition": null,
+      "rainmakerGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "clamGoals": [
+        [
+          0,
+          4.8,
+          54
+        ],
+        [
+          0,
+          4.8,
+          -54
+        ]
+      ],
+      "objectiveChildren": {
+        "zones": 0,
+        "tower": 0,
+        "rainmaker": 0,
+        "clams": 32
+      }
+    }
+  ],
+  "lifecycle": [
+    {
+      "stage": "tidewater",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 312,
+      "textures": 62
+    },
+    {
+      "stage": "tidewater",
+      "mode": "zones",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        4.800000000000001,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 358,
+      "textures": 62
+    },
+    {
+      "stage": "tidewater",
+      "mode": "tower",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        4.800000000000001,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 347,
+      "paintCells": 390601,
+      "turfArea": 9989.2648472175,
+      "navNodes": 9784,
+      "geometries": 379,
+      "textures": 62
+    },
+    {
+      "stage": "tidewater",
+      "mode": "rainmaker",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        4.800000000000001,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 397,
+      "textures": 62
+    },
+    {
+      "stage": "tidewater",
+      "mode": "clams",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        4.800000000000001,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 419,
+      "textures": 62
+    },
+    {
+      "stage": "kelpline",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": false,
+      "retiredDetached": true,
+      "geometryDisposals": 7,
+      "materialDisposals": 7,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 430,
+      "textures": 56
+    },
+    {
+      "stage": "kelpline",
+      "mode": "zones",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        6,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 476,
+      "textures": 62
+    },
+    {
+      "stage": "kelpline",
+      "mode": "tower",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        6,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 218,
+      "paintCells": 457609,
+      "turfArea": 12388.882960557175,
+      "navNodes": 12088,
+      "geometries": 489,
+      "textures": 62
+    },
+    {
+      "stage": "kelpline",
+      "mode": "rainmaker",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        6,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 509,
+      "textures": 62
+    },
+    {
+      "stage": "kelpline",
+      "mode": "clams",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.9904027378916139,
+        6,
+        -67.32242903192596
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 524,
+      "textures": 62
+    },
+    {
+      "stage": "tidewater",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "sameArt": false,
+      "retiredDetached": true,
+      "geometryDisposals": 8,
+      "materialDisposals": 8,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "navNodes": 9784,
+      "geometries": 519,
+      "textures": 56
+    },
+    {
+      "stage": "kelpline",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "sameArt": false,
+      "retiredDetached": true,
+      "geometryDisposals": 7,
+      "materialDisposals": 7,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "navNodes": 12088,
+      "geometries": 543,
+      "textures": 56
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "tidewater-play.jpg",
+      "sha256": "01ddedb739d065a226c22c12538d2958bcbeefc4caa98aae0a8c23bffb0d4143",
+      "hud": true,
+      "manualInspectionCamera": false,
+      "calls": 159,
+      "triangles": 826719,
+      "geometries": 331,
+      "textures": 62,
+      "camera": [
+        -0.28000398166079826,
+        3.8349091260057753,
+        -9.108871316143134
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": true
+    },
+    {
+      "file": "tidewater-overview.jpg",
+      "sha256": "eb31f7f2a1cebc556d8360e96104883d07896336fabb8f7a3621a96bbfdbaca3",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 217,
+      "triangles": 880139,
+      "geometries": 341,
+      "textures": 62,
+      "camera": [
+        83,
+        85,
+        -103
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    },
+    {
+      "file": "tidewater-bridge.jpg",
+      "sha256": "07387d4151d2ac9b29cec29c2eeee809c9f349303395b39f6bf76857dae711a7",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 159,
+      "triangles": 826719,
+      "geometries": 341,
+      "textures": 62,
+      "camera": [
+        -47,
+        19,
+        -30
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    },
+    {
+      "file": "tidewater-underpass.jpg",
+      "sha256": "cf59be1dcdbd7815d3a15a007cf427c48f8744561de0d390e72b579d64ca843a",
+      "hud": true,
+      "manualInspectionCamera": false,
+      "calls": 159,
+      "triangles": 826735,
+      "geometries": 341,
+      "textures": 62,
+      "camera": [
+        -26.280000415337682,
+        2.449250130173576,
+        -18.477516304542963
+      ],
+      "state": "playing",
+      "layer": "lower",
+      "hudObserved": true
+    },
+    {
+      "file": "kelpline-play.jpg",
+      "sha256": "74d0cb332929dafe1902d5d6c9b273162c97b052b1a17f65fcb504b7353fae85",
+      "hud": true,
+      "manualInspectionCamera": false,
+      "calls": 166,
+      "triangles": 814003,
+      "geometries": 457,
+      "textures": 62,
+      "camera": [
+        6.719995808491026,
+        7.434909126005776,
+        -11.108871316143134
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": true
+    },
+    {
+      "file": "kelpline-overview.jpg",
+      "sha256": "66ea21bcfd8d600fe6050c0b7f38b21d2c0e79b3ee1f2a84701266cd1c4cffbd",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 222,
+      "triangles": 858819,
+      "geometries": 466,
+      "textures": 62,
+      "camera": [
+        88,
+        88,
+        -103
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    },
+    {
+      "file": "kelpline-bridge.jpg",
+      "sha256": "8bd1d7f2ace560e5ec9f615caf2bd42b79406c88a5d95e5518ff25bd79894f97",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 166,
+      "triangles": 814003,
+      "geometries": 466,
+      "textures": 62,
+      "camera": [
+        -43,
+        21,
+        -51
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    },
+    {
+      "file": "kelpline-underpass.jpg",
+      "sha256": "2339a993c3f964ff4b495b7ffdcbbd620f5eefcb2463f57345364b48c4029d3c",
+      "hud": true,
+      "manualInspectionCamera": false,
+      "calls": 166,
+      "triangles": 813949,
+      "geometries": 466,
+      "textures": 62,
+      "camera": [
+        6.639613417509291,
+        2.270268836278014,
+        -10.679032812499337
+      ],
+      "state": "playing",
+      "layer": "lower",
+      "hudObserved": true
+    },
+    {
+      "file": "tidewater-dusk.jpg",
+      "sha256": "1b98462803c937b1e73f2e8b6baa74ac753d2423275a04818ddce1f32a2d9bc5",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 183,
+      "triangles": 1007065,
+      "geometries": 549,
+      "textures": 62,
+      "camera": [
+        -47,
+        19,
+        -30
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    },
+    {
+      "file": "kelpline-dusk.jpg",
+      "sha256": "31d85887f4edf82f51e8d42293fa8fbc3ab6de8f92ea14e9a6eb586359c257c3",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 185,
+      "triangles": 1000808,
+      "geometries": 570,
+      "textures": 62,
+      "camera": [
+        -43,
+        21,
+        -51
+      ],
+      "state": "playing",
+      "layer": "upper",
+      "hudObserved": false
+    }
+  ],
+  "baseURI": "http://127.0.0.1:35205/_versions/87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c/"
+}

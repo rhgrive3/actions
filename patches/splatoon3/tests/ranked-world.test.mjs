@@ -4,8 +4,10 @@ import { fixture } from './source-fixture.mjs';
 
 const f = await fixture({
   fullRuntime: true,
+  productionComposition: true,
   extraExports: `
     export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+    export { map3ArtColliders } from './inkwave-public/src/world/stages/map3-art.js';
     export { LAYOUT as BLOCKOUT_SCORCH } from './patches/splatoon3/stage/scorch-layout.mjs';
     export { createRankedStage, RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';
   `,
@@ -19,7 +21,7 @@ function makeMap(id) {
   // loading descriptor. This suite exercises the five blockout geometries;
   // the native descriptor requires its separate asynchronous world loader.
   const layout = id === 'scorch' && f.MAP_LAYOUTS[id].nativeSource ? f.BLOCKOUT_SCORCH : f.MAP_LAYOUTS[id];
-  const level = new f.Level(layout);
+  const level = new f.Level(layout, f.map3ArtColliders(layout));
   const physics = new f.Physics(level);
   Object.assign(f.G, { level, physics, scene: new f.THREE.Scene(), time: 0 });
   return { level, physics, stage: f.createRankedStage(f.G) };
@@ -132,7 +134,7 @@ function paintRenderer(THREE) {
 }
 
 test('zone capture uses the live paint grid and reaches full exposed turf coverage', () => {
-  const { level, stage } = makeMap('tidewater');
+  const { level, stage } = makeMap('kelpline');
   const paint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, cell: 0.5 });
   f.G.paint = paint;
   const world = new f.RankedWorld({ G: f.G, THREE: f.THREE, Hit: f.Hit }, { mode: 'zones', actors: [] }, stage);
@@ -151,8 +153,8 @@ test('zone capture uses the live paint grid and reaches full exposed turf covera
 });
 
 test('a calibrated floor band excludes box tops and other storeys from zone scoring and capture paint', () => {
-  const { level, stage } = makeMap('tidewater');
-  stage.zones = [{ center: stage.zones[0].center, size: [13, 11] }];
+  const { level, stage } = makeMap('kelpline');
+  stage.zones = [{ center: [0, 0, 0], size: [13, 11] }];
   const paint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, cell: 0.5 });
   f.G.paint = paint;
   const api = { G: f.G, THREE: f.THREE, Hit: f.Hit };
@@ -295,7 +297,7 @@ test('objective visuals stay mode-specific and Rainmaker markers reflect rule st
   } } }, 1 / 60);
   assert.equal(rainmaker.towerBlock, undefined);
   assert.equal(rainmaker.zoneGroup.children.length, 0);
-  assert.equal(rainmaker.rainmakerMarkers.checkpoints.length, 4);
+  assert.equal(rainmaker.rainmakerMarkers.checkpoints.length, 2);
   assert.equal(rainmaker.rainmakerMarkers.goals.length, 2);
   assert.equal(rainmaker.rainmakerCore.position.y, 1);
   assert.ok(rainmaker.rainmakerShield.scale.x > 1, 'a pressured barrier grows to its collision radius');

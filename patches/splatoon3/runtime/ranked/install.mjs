@@ -2,6 +2,7 @@ import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } f
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
+import { map3RankedGoalReachable } from '../../../../src/world/stages/map3-ranked-goals.js';
 import { RankedEngine, isRankedMode, OWNED_RANKED_FRAME } from './engine.mjs';
 import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
@@ -191,6 +192,9 @@ export function buildFrame(match, api) {
     const frame = { actors: [], inputs: {}, zoneCoverage: [], barrierHits: [],
       floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
       blocked: (a, b) => match.rankedWorld.blocked(a, b) };
+    if (api.G.level?.layout?.map3 && !api.G.level?.native) {
+      frame.botGoalRoute = (actor, target) => map3RankedGoalReachable(api.G, actor, target, api.PLAYER);
+    }
     Object.defineProperty(frame, OWNED_RANKED_FRAME, { value: frame.inputs });
     scratch = match._rankedFrameScratch = { frame, rows: new WeakMap(), inputIds: [] };
   }

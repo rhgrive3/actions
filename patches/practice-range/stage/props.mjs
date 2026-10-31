@@ -9,6 +9,40 @@ const P = Math.PI;
 const ALONG_Z = -P / 2;                 // rotY that turns a prop's local +X onto world +Z
 
 export function register(D, H) {
+  // Architectural dressing is deliberately visual only: the existing range slabs and rails remain the
+  // authoritative collision and paint geometry. The high roof leaves the firing lanes unobstructed.
+  D.range_hall = {
+    desc: 'Practice Range: industrial training hall shell, roof beams and suspended strip lights.',
+    params: {}, variants: 1, mount: 'ground',
+    build(B) {
+      const concrete = '#c5c8be', dark = '#35454b', steel = '#697b7e', light = '#fff4d9';
+      // Walls start at the parapet top. Repeated posts and recessed dark bands give
+      // the space the layered, warehouse-like silhouette of an indoor training facility.
+      for (const x of [-37.15, 34.15]) {
+        B.box('paint~ns', concrete, 0.3, 10.8, 72, x, 6.6, 15);
+        B.box('paint~ns', dark, 0.34, 1.15, 72, x, 10.3, 15);
+        B.box('paint~ns', '#e3a847', 0.36, 0.26, 72, x, 3.15, 15);
+        for (let z = -18; z <= 48; z += 6) {
+          B.box('metal~ns', steel, 0.48, 10.7, 0.42, x, 6.65, z);
+          B.box('paint~ns', '#e9e3cf', 0.38, 0.14, 4.8, x, 5.1, z + 2.5);
+        }
+      }
+      B.box('paint~ns', concrete, 71.6, 10.8, 0.3, -1.5, 6.6, 51.15);
+      B.box('paint~ns', dark, 71.6, 1.15, 0.34, -1.5, 10.3, 51.15);
+      B.box('paint~ns', '#e3a847', 71.6, 0.26, 0.36, -1.5, 3.15, 51.15);
+      for (let x = -34; x <= 32; x += 6) B.box('metal~ns', steel, 0.42, 10.7, 0.48, x, 6.65, 51.15);
+      // A dark ceiling, repeated beams and warm light strips frame the view downrange.
+      // Keep the existing outdoor lighting readable under the visual ceiling.
+      B.box('paint~ns', '#87928f', 71.6, 0.35, 72.4, -1.5, 12.15, 15);
+      for (let z = -18; z <= 48; z += 6) {
+        B.box('metal~ns', dark, 71.2, 0.42, 0.34, -1.5, 11.82, z);
+        for (const x of [-25, -4, 18]) {
+          B.box('metal', dark, 7.4, 0.13, 0.55, x, 11.39, z + 2.5);
+          B.box('glow', light, 6.8, 0.05, 0.32, x, 11.29, z + 2.5, { glow: 1.4 });
+        }
+      }
+    },
+  };
   // ---- a steel truss gantry spanning a zone entrance (pos = left foot, runs along local +X for `length`)
   D.range_gantry = {
     desc: 'Practice Range: painted steel box-truss gantry on two square legs (along +X), zone colour band on the beam.',
@@ -42,6 +76,7 @@ for (const [x0, x1] of [[X.west + 0.6, X.f1[1]], [X.f2[0], X.east - 0.6]]) {
 }
 
 export const PLACEMENTS = [
+  { type: 'range_hall', pos: [0, 0, 0], mirror: false },
   ...rails,
   // flood masts frame the firing line and the far corners (heads face the zones they light)
   { type: 'lightpole', pos: [-16.5, 0, -14.2], rotY: P * 0.75, height: 9, variant: 0, mirror: false },

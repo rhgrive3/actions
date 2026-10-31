@@ -1,0 +1,19 @@
+✔ tidewater at -19,-3: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (5100.435545ms)
+ℹ real paint turf 9982.01 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ kelpline at 7,0: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (2577.716386ms)
+ℹ real paint turf 12381.63 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ tidewater at -32,-10: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (2597.593163ms)
+ℹ real paint turf 9982.01 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ kelpline at 6,-16: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (3063.276977ms)
+ℹ real paint turf 12381.63 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ ordinary layouts without MAP3 retain the original highest-floor projection (1416.100123ms)
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14807.381975

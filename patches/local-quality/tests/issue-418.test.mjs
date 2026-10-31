@@ -273,7 +273,7 @@ test('real native PropKit: quality update rebuilds props at new tier without mut
   const scene = new THREE.Scene();
   const props = new PropKit(scene, { quality: 'high', headless: true });
 
-  const dressing = dressingFor('tidewater');
+  const dressing = dressingFor('halyard');
   for (const it of dressing) {
     props.add(it.type, it);
   }
@@ -286,7 +286,7 @@ test('real native PropKit: quality update rebuilds props at new tier without mut
 
   const game = {
     props,
-    layoutId: 'tidewater',
+    layoutId: 'halyard',
     _applyNight: () => {},
     _shadowRoots: () => {},
     shadowCache: { invalidate: () => {} },

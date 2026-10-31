@@ -1,0 +1,12 @@
+{
+  "tidewater": [
+    {"id":"play","title":"Tidewater — normal central play camera","hud":true,"actor":[0,0.02,-5],"yaw":0,"pitch":-0.30},
+    {"id":"street","title":"Tidewater — market walls and connected lower street","position":[-6,6.6,-30],"look":[-24,1.6,-8]},
+    {"id":"overview","title":"Tidewater — built play area and water gaps","position":[60,66,-79],"look":[0,1,-7]}
+  ],
+  "kelpline": [
+    {"id":"play","title":"Kelpline — normal central play camera","hud":true,"actor":[7,3.62,-7],"yaw":0,"pitch":-0.30},
+    {"id":"street","title":"Kelpline — warehouse wall and connected freight quay","position":[10,6.7,-16],"look":[30,4,-34]},
+    {"id":"overview","title":"Kelpline — built play area and water gaps","position":[64,70,-83],"look":[0,2,-7]}
+  ]
+}

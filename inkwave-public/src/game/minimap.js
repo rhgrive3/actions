@@ -93,6 +93,7 @@ export class Minimap {
   // ------------------------------------------------------------------------------------------ static layers
   _build() {
     const W = this.w, H = this.h, N = W * H, lvl = this.level, s = this.s;
+    const map3Clip = lvl.layout?.minimapProjection?.prepare(this);
     const hgt = (this.hgt = new Float32Array(N).fill(-99));
     // Keep the -1 sea sentinel and fall back for custom/nonsequential block IDs.
     const BlockIds = lvl.blocks.every((b) => Number.isInteger(b.id) && b.id >= 0 && b.id <= 32767) ? Int16Array : Int32Array;
@@ -102,6 +103,7 @@ export class Minimap {
     // 1) rasterise every solid block's top surface (ramps included) → height + owning block + normal
     for (const b of lvl.blocks) {
       if (!b.solid) continue;
+      if (lvl.layout?.map3 && b.hidden && !b.paint) continue;
       if (b.hidden && (b.roof || b.perch) && b.aabbMin.y > 3) continue;   // overhead steel (crane girders, booms): not over the turf
       const n = b.axes[1];
       if (n.y < 0.45) continue;
@@ -119,6 +121,7 @@ export class Minimap {
           const dx = x - b.center.x, dy = y - 0.01 - b.center.y, dz = z - b.center.z;
           if (Math.abs(dx * a0.x + dy * a0.y + dz * a0.z) > b.half.x || Math.abs(dx * a2.x + dy * a2.y + dz * a2.z) > b.half.z) continue;
           const i = py * W + px;
+          if (map3Clip && y > map3Clip[i]) continue;
           if (y > hgt[i]) { hgt[i] = y; top[i] = b.id; }
         }
       }
@@ -148,6 +151,7 @@ export class Minimap {
           const i = py * W + px;
           if (hgt[i] > faceTop + 0.05) continue;             // something taller covers this face here
           const x = this._worldX(px + 0.5);
+          if (map3Clip && f.origin.y - (f.n.x * (x - f.origin.x) + f.n.z * (z - f.origin.z)) / f.n.y > map3Clip[i]) continue;
           const dx = x - f.origin.x, dz = z - f.origin.z;
           const a = (dx * ux + dz * uz) / uh, c = (dx * vx + dz * vz) / vh;   // metres along u / v
           if (a < 0 || c < 0 || a >= f.su || c >= f.sv) continue;
@@ -167,6 +171,7 @@ export class Minimap {
     this._drawBase();
     this.owner = new Uint8Array(N);
     this._built = true;
+    lvl.layout?.minimapProjection?.remember(this);
   }
 
   _drawBase() {
@@ -343,10 +348,14 @@ export class Minimap {
     this.time += dt;
     this.timer -= dt;
     let dirty = false;
+    if (this.level.layout?.minimapProjection) {
+      this.level.layout.minimapProjection.update(this, G.local, dt);
+      if (!this._built) this._build();
+    }
     const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';
     if (teamKey !== this._teamKey) { this._teamKey = teamKey; this.version = -1; }
     const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';
-    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this._drawBase(); dirty = true; } }
+    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this.level.layout?.minimapProjection?.invalidateTheme(this); this._drawBase(); dirty = true; } }
     const BANDS = 3;
     if (this._band > 0) {
       const b = this._band;
@@ -465,6 +474,7 @@ export class Minimap {
       c.beginPath(); c.arc(tc.x - r * 0.3, tc.y - r * 0.3, r * 0.3, 0, TAU); c.fillStyle = 'rgba(255,255,255,.75)'; c.fill();
     }
     c.globalAlpha = 1;
+    this.level.layout?.minimapProjection?.drawLabel(this);
     void W; void H;
   }
 

@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "remoteParent": "b86f972e02a73b40d3e274455048015ee15d11e5",
+  "localSparseParent": "0582bb1ee6ac03dfb54e292ea839d18463e33fcc",
+  "designSha256": "878312eeb34be46d5d6859c2142ed55bc3c6b808fd8c20a91ee9e97f9d31358f",
+  "buildRevision": "d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24",
+  "contentHash": "b243a420ac7daf666704dbaaa2cd6c54224ec6d5afa7cac33129e29c3a24926d",
+  "buildInputHash": "6e10d0f048ee214d1409add92fc37f2918e66f70ca298c31d07329aecf363a33",
+  "sourceFiles": [
+    {
+      "path": "inkwave-public/src/game/character-geo.js",
+      "sha256": "48630e8e77a5112a2ce9a700682c62f0fb35651c0346d5387da50ff92d97f89a",
+      "gitBlobSha": "712768ac32f2459ee369e12a540d25edb9fc1b56"
+    },
+    {
+      "path": "inkwave-public/src/game/character-hair.js",
+      "sha256": "d2c37ea08621c6ae047b9c31d5bb0d7958f9bb68106415c2e076b2cd8fdc672e",
+      "gitBlobSha": "8b89e9c6b4e54cab5137dbc59b0e4c75a4d20d74"
+    },
+    {
+      "path": "inkwave-public/src/game/character-mats.js",
+      "sha256": "fffceb3eed97b6691a503e32b5217e98761f685904a4a35bed1e1a40a1e841f0",
+      "gitBlobSha": "09bc6e24762110efbd4da8904fb2d1d383b42e00"
+    },
+    {
+      "path": "inkwave-public/src/game/minimap.js",
+      "sha256": "01f6856605b2347182d7e732b9c3487dff667134389721bee2be4fcab63cee30",
+      "gitBlobSha": "2c7f3ca0446db9cbe82767c1ee9f95115894d8bb"
+    },
+    {
+      "path": "inkwave-public/src/game/nav.js",
+      "sha256": "d6fc1bd855d59dc4a459387c8b1e4b7dabb30443c89b47ac0d5f9b1ac8bdb97b",
+      "gitBlobSha": "09c5b9cddabf73c07c00eb21eaf98d33e409f311"
+    },
+    {
+      "path": "inkwave-public/src/main.js",
+      "sha256": "015c2ed2d8ea7ecddb6f844897904c706bf150c41ad2e700b0db0e40933d896c",
+      "gitBlobSha": "926fb55ebe28807fad1c1feba5016b8bf1c46571"
+    },
+    {
+      "path": "inkwave-public/src/world/decor.js",
+      "sha256": "333f6b0002b938cdf62727f7ebad2d8b48d6e9ec15390779e3594c6c0909276b",
+      "gitBlobSha": "8eb13e14c6ef9c67b24efe85061b04994ad4b6de"
+    },
+    {
+      "path": "inkwave-public/src/world/dressing.js",
+      "sha256": "490e8ed2c1197322e81b3218fad943f71cd6430a68a835a15ffe6506e8f24cec",
+      "gitBlobSha": "062fba2cd3b6bf884786035f64863bfeced2b4e6"
+    },
+    {
+      "path": "inkwave-public/src/world/maps.js",
+      "sha256": "13a5f9649819036bd896ca665541aaf7c2615980a707401f99ec1680696d1519",
+      "gitBlobSha": "1fea6a3b2eed528c39b1d02633d57330c1bc51c5"
+    },
+    {
+      "path": "inkwave-public/src/world/stages/map3-art.js",
+      "sha256": "55f8b8a64b48cda52b62d4cd060c405f2e4cfb779429d27a81361857feec62b9",
+      "gitBlobSha": "49ed170e673f80f46cb45b13bad0ddb3ab1366a1"
+    },
+    {
+      "path": "inkwave-public/src/world/stages/map3-data.js",
+      "sha256": "eed97d33e62c547a0189df250a1fa0cdf7a45f9ebc9e6c2edb7c310e35e48251",
+      "gitBlobSha": "4976a08cf5e4b1fb822eb596997b69d371dd3686"
+    },
+    {
+      "path": "inkwave-public/src/world/stages/map3-layout.js",
+      "sha256": "3f8170dcc8b8faaa92572ca156bdd31a9cf56eadca1e8895d1db7e3284f4862a",
+      "gitBlobSha": "9c240acd0d27596531d847906606e04fd8ff2756"
+    },
+    {
+      "path": "inkwave-public/src/world/stages/map3-minimap.js",
+      "sha256": "c956a604c6ad2ee636491aeed48681fc480ee0e6bba9334908e342eb23129a27",
+      "gitBlobSha": "3a1d327c37d8b9a366edbc828c920020e550df09"
+    },
+    {
+      "path": "inkwave-public/src/world/stages/map3-ranked-goals.js",
+      "sha256": "fa3257ac175df4fd0958e39890ffb74c48b6904ce955699df442e58e6f2425e3",
+      "gitBlobSha": "e374f549d4736b3ff8e7786efd0e57fcb9edd149"
+    },
+    {
+      "path": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+      "sha256": "ff151f1da8ad48b428b2b183d57300ca7becc5a21a7f1e72c34e67cf3d785f3d",
+      "gitBlobSha": "b674fc14eb3af69667dfa3df59fe459a86946561"
+    },
+    {
+      "path": "patches/practice-range/stage/props.mjs",
+      "sha256": "3e25e26649a3360fae11c5a3992e335c4bf47b759d56907f864c7ed58565ed85",
+      "gitBlobSha": "f871a6aa749b0a702867c1914b94ed662ee76186"
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+      "sha256": "a33e28646b0ef199ec46b3bf6db09a73322df9181a3131d0df85f20b20cd6b29",
+      "gitBlobSha": "8700dc2a6637ec490cca59d866936733216673a1"
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/install.mjs",
+      "sha256": "d48a5d449b5700274ec1abd4af2b8abbb8f9ab97c01a7c1ac3199b19eaa1ce08",
+      "gitBlobSha": "9caf09d456059467585c9919e2a6fbb6389594ac"
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/stages.mjs",
+      "sha256": "e1aee79f2dd838990ee949b1bddfbaa3c7a03d66b0d0e64b06ba99daed259e11",
+      "gitBlobSha": "cad6874e943b40173a9da518f051bc86150a2393"
+    },
+    {
+      "path": "patches/splatoon3/upstream-lock.json",
+      "sha256": "a7a1ca28fb3c70e690ee44339ad7c62855f03b20a7819727a5a53c16a1079d54",
+      "gitBlobSha": "b3424a48f156f4e23f634321184d6535f1a4d9ea"
+    },
+    {
+      "path": "scripts/check-inkwave-map3-browser.mjs",
+      "sha256": "d808027c315702165474c7e39bb38e888ed149f55d4b29de7810af2f14398464",
+      "gitBlobSha": "e939096e33a4be64f4d8b068d40201ae5555f1f8"
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "sha256": "71212668b768a15d2e48f3739045c0b9640b1c176c786a51083e78ca59a86c46",
+      "gitBlobSha": "3d2ce31abac4e946902e16f342f328d988b6fe12"
+    }
+  ],
+  "verified": {
+    "browserModes": 10,
+    "browserPageErrors": 0,
+    "browserHttpFailures": 0,
+    "imageHashes": 10,
+    "rankedGeometryTests": 2,
+    "rankedBootDiagnosticsTests": 29,
+    "restoredPriorPRMovementTests": 11,
+    "restoredPriorPRRouteTests": 1,
+    "restoredPriorPRRankedPaintTests": 7,
+    "postMergeWave9GpuTests": 12,
+    "postMergeActualSourcePoseTests": 1,
+    "postMergeExplosherMuzzleTests": 1,
+    "postMergeBrowserStatus": "passed",
+    "postMergeBrowserImageHashes": 10,
+    "postMergeHudObservedMatches": true
+  },
+  "limits": [
+    "Software GPU; no physical-device FPS or human4v4 balance claim.",
+    "Build restored exact unchanged prior PR practice-range props; neither that existing change nor prior props-core/ranked-world changes are new MAP3 changes.",
+    "Old optional minimap default and display:none HUD recapture issues were harness setup errors; final harness enables normal minimap setting and asserts observed HUD CSS visibility.",
+    "Main integration preserves its reviewed character changes; checksums/notes are merged, not disabled. Earlier build evidence is retained in the c4f49f5 commit."
+  ],
+  "initialRuntimeCommit": "c4f49f567b2d05cf7a7d7d75d56978e305d06cfc",
+  "integratedMain": "fdb74165bc1a1668afe6f674db064474655fd05f",
+  "mergeParents": [
+    "c4f49f567b2d05cf7a7d7d75d56978e305d06cfc",
+    "fdb74165bc1a1668afe6f674db064474655fd05f"
+  ]
+}

@@ -5,16 +5,19 @@ import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptBotNavigation } from '../bot-navigation-adapter.mjs';
 import { replaceOnce } from '../adapter.mjs';
+import { LEGACY_KELPLINE_TRENCH } from './bot-navigation-legacy-layout.fixture.mjs';
 
 const exports = `
 export { BotBrain } from './inkwave-public/src/game/bots.js';
 export { NavGraph } from './inkwave-public/src/game/nav.js';
 export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+export { map3ArtColliders } from './inkwave-public/src/world/stages/map3-art.js';
 export { botTravelForm, botGoalAllowed, rememberBotGoalFailure } from './patches/local-quality/bot-navigation.mjs';`;
 async function world(layout = 'kelpline') {
   const f = await fixture({ fullRuntime: true, realProjectiles: true, productionComposition: true, adaptRuntime: adaptBuildSource, extraExports: exports });
   const { G } = f;
-  G.level = new f.Level(typeof layout === 'string' ? f.MAP_LAYOUTS[layout] : layout);
+  const definition = typeof layout === 'string' ? f.MAP_LAYOUTS[layout] : layout;
+  G.level = new f.Level(definition, f.map3ArtColliders(definition));
   G.physics = new f.Physics(G.level);
   G.nav = new f.NavGraph(G.level, G.physics);
   class CpuPaint extends f.PaintSystem { _initGPU() { this.quads = 0; } _pushQuad() {} }
@@ -35,8 +38,8 @@ async function world(layout = 'kelpline') {
   return f;
 }
 
-for (const hz of [30, 60, 120]) test(`Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at ${hz}Hz`, async () => {
-  const f = await world(), a = f.bot(); a.pos.set(0, -2, 0);
+for (const hz of [30, 60, 120]) test(`legacy Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at ${hz}Hz`, async () => {
+  const f = await world(LEGACY_KELPLINE_TRENCH), a = f.bot(); a.pos.set(0, -2, 0);
   assert.equal(a.bot._wet(0, 0, -2), false);
   assert.equal(a.bot._wet(30, 0, -2), true, 'open sea is still unsafe');
   let left = false, upper = false;
@@ -50,24 +53,24 @@ for (const hz of [30, 60, 120]) test(`Kelpline: actual Actor/Brain leaves the dr
 });
 
 test('negative control: the former sea-height test strands the same actual Actor for 10 seconds', async () => {
-  const f = await world(), a = f.bot(); a.pos.set(0, -2, 0);
+  const f = await world(LEGACY_KELPLINE_TRENCH), a = f.bot(); a.pos.set(0, -2, 0);
   a.bot._wet = (x, z, y) => { const gy = f.G.level.groundHeight(x, z, y + .6); return gy === -Infinity || gy < f.PLAYER.fallDeathY; };
   for (let i = 0; i < 600; i++) f.step([a]);
   assert.deepEqual(Array.from(a.pos.toArray()), [0, -2, 0]);
 });
 
-test('seven live bots spread from under the real bridge instead of staying at its centre', async () => {
-  const f = await world();
+test('legacy Kelpline: seven live bots spread from under the real bridge instead of staying at its centre', async () => {
+  const f = await world(LEGACY_KELPLINE_TRENCH);
   const actors = Array.from({ length: 7 }, (_, i) => { const a = f.bot('shooter', 0); a.pos.set((i - 3) * .4, -2, 0); return a; });
   const escaped = new Set();
   for (let i = 0; i < 1800; i++) { f.step(actors); actors.forEach((a, j) => { if (Math.hypot(a.pos.x, a.pos.z) > 7) escaped.add(j); }); }
   assert.equal(escaped.size, 7);
-  console.log(JSON.stringify({ scenario: 'Kelpline seven bots / 30 seconds / CPU 60Hz', escaped: escaped.size }));
+  console.log(JSON.stringify({ scenario: 'legacy Kelpline seven bots / 30 seconds / CPU 60Hz', escaped: escaped.size }));
 });
 
 test('combat uses the path for an enemy on another floor; same-floor close combat still closes distance', async () => {
   const f = await world('tidewater'), a = f.bot('roller'), enemy = f.make('shooter');
-  enemy.team = 1; a.pos.set(0, 0, -20); enemy.pos.set(0, 4, -19);
+  enemy.team = 1; a.pos.set(0, 0, 0); enemy.pos.set(0, 4, 1);
   // Isolate the tactical decision: verified path goes east, target is north.
   f.G.physics.los = () => true;
   a.bot._pathTo = () => { a.bot.path = [0]; a.bot.pi = 0; a.bot.repath = 10; };
@@ -85,7 +88,7 @@ test('combat uses the path for an enemy on another floor; same-floor close comba
 });
 
 test('failed/empty paint routes and dry refill scans respect their retry timers', async () => {
-  const f = await world('tidewater'), a = f.bot(); a.pos.set(0, 0, -20);
+  const f = await world('tidewater'), a = f.bot(); a.pos.set(0, 0, 0);
   f.G.nav.validIds = [];
   a.bot._perceive = () => {};
   let goals = 0, refills = 0;
@@ -101,8 +104,8 @@ test('failed/empty paint routes and dry refill scans respect their retry timers'
 });
 
 test('goal shortlist tries a reachable alternative and never repeats the same failed ID in one decision', async () => {
-  const f = await world('tidewater'), a = f.bot(); a.pos.set(0, 0, -20);
-  const nodes = [{ id: 0, x: 8, y: 0, z: -20, zone: -1 }, { id: 1, x: -8, y: 0, z: -20, zone: -1 }];
+  const f = await world('tidewater'), a = f.bot(); a.pos.set(0, 0, 0);
+  const nodes = [{ id: 0, x: 8, y: 0, z: 0, zone: -1 }, { id: 1, x: -8, y: 0, z: 0, zone: -1 }];
   f.G.nav.nodes = nodes; f.G.nav.validIds = [0, 1];
   let i = 0; f.setRandom(() => (++i % 4 < 2 ? .1 : .9));
   const tried = [];
@@ -117,18 +120,46 @@ test('goal shortlist tries a reachable alternative and never repeats the same fa
   a.bot.reset(); assert.equal(a.bot._failedGoals, null);
 });
 
-test('Kelpline grate bridge is crossed in human form using actual ground/collision', async () => {
-  const f = await world(), a = f.bot(); a.pos.set(14, 0, -5);
+test('legacy Kelpline grate bridge is crossed in human form using actual ground/collision', async () => {
+  const f = await world(LEGACY_KELPLINE_TRENCH), a = f.bot(); a.pos.set(14, 0, -5);
   assert(a.bot._pathTo(new f.THREE.Vector3(14, 0, 5)));
   a.bot.mode = 'refill'; a.bot.repath = 100; a.ink = 2;
-  let crossed = false;
+  let crossed = false, touchedGrate = false;
   for (let i = 0; i < 600; i++) {
     f.step([a]);
     if (a.pos.z > -3 && a.pos.z < 3) assert(a.pos.y > -.2, 'does not swim through the bridge');
-    if (a.ground.grate) assert.equal(a.intent.squid, false);
+    if (a.ground.grate) { touchedGrate = true; assert.equal(a.intent.squid, false); }
     if (a.pos.z > 3.2) { crossed = true; break; }
   }
-  assert(crossed, 'walks over the real grate support');
+  assert(crossed && touchedGrate, 'walks over the real grate support');
+});
+
+for (const hz of [30, 60, 120]) test(`MAP3 Kelpline: actual BotBrain recovers from the grate landing and walks onto the optional grate at ${hz}Hz`, async () => {
+  const f = await world('kelpline'), a = f.bot();
+  const follow = async (from, to, requireGrate) => {
+    a.spawnAt(new f.THREE.Vector3(...from), 0);
+    // Establish real floor contact before asking the brain to choose travel form.
+    a.update(1 / hz);
+    assert(a.bot._pathTo(new f.THREE.Vector3(...to)), 'actual MAP3 route exists');
+    a.bot.mode = 'refill'; a.bot.refillUntil = .95; a.bot.repath = 100; a.ink = 2;
+    let reached = false, touchedGrate = false;
+    for (let i = 0; i < hz * 35; i++) {
+      f.step([a], hz);
+      assert(a.alive && Number.isFinite(a.pos.y), 'real collision and water rules stay active');
+      if (a.ground.grate) {
+        touchedGrate = true;
+        assert.equal(a.intent.squid, false, 'brain keeps human form over the real MAP3 grate');
+        assert(a.pos.y > 3.4, 'human remains on its upper support');
+      }
+      if (Math.hypot(a.pos.x - to[0], a.pos.z - to[2]) < 1.5 && Math.abs(a.pos.y - to[1]) < .2) {
+        reached = true; break;
+      }
+    }
+    assert(reached, `actual BotBrain reaches ${to} from ${from}; stopped at ${a.pos.toArray()}`);
+    if (requireGrate) assert(touchedGrate, 'scenario contacted an actual grate, rather than a nearby solid bypass');
+  };
+  await follow([-26, 0, -25], [-26, 3.6, -16], false);
+  await follow([-26, 3.6, -20], [-26, 3.6, -26], true);
 });
 
 const wallLayout = paint => ({ bounds: { minX: -5, maxX: 5, minZ: -5, maxZ: 5 }, spawnPads: [[-3, 0, -3], [3, 0, 3]], spawnBarrier: 0, half: [], single: [

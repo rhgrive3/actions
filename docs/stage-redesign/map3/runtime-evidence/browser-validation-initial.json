@@ -1,0 +1,96 @@
+{
+  "status": "failed",
+  "buildRevision": "e00c02d506eb3a45dcf9660392f212cae1d7b0e61ff9bf486b7b36c1906707f0",
+  "contentHash": "8c405a1c04244585af42c72a7b6e0196417706c615051935f5a2ba6340a85761",
+  "buildManifestSha256": "e588d963a9fc3706a1c19eca3dbae48d472ca2aa5caa7b7f36c5b26685737c0a",
+  "scope": "minified production site in Chromium/SwiftShader; setup teleports are controlled test inputs; no physical-device FPS claim",
+  "errors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "badResponses": [],
+  "stages": [],
+  "ruleModes": [],
+  "lifecycle": [
+    {
+      "stage": "tidewater",
+      "mode": "turf",
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "artGroups": 1,
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "sameArt": true,
+      "retiredDetached": false,
+      "geometryDisposals": 0,
+      "materialDisposals": 0,
+      "levelBlocks": 301,
+      "paintCells": 305104,
+      "turfArea": 8462.829471444813,
+      "navNodes": 8340,
+      "geometries": 312,
+      "textures": 58
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "tidewater-play.jpg",
+      "sha256": "e53ce49cce57e2fa86363a63c19483f3cc3603c4d1e9820ba8866d9460e5ba03",
+      "hud": true,
+      "manualInspectionCamera": false,
+      "calls": 155,
+      "triangles": 787535,
+      "geometries": 327,
+      "textures": 58,
+      "camera": [
+        -0.28000398166079826,
+        3.8349091260057753,
+        -9.108871316143134
+      ],
+      "state": "playing"
+    },
+    {
+      "file": "tidewater-overview.jpg",
+      "sha256": "78456ec50463fa6ea5779993f87b77e2001d3d2e5a7a17292cebcbfbff83ea4b",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 205,
+      "triangles": 831825,
+      "geometries": 336,
+      "textures": 58,
+      "camera": [
+        83,
+        85,
+        -103
+      ],
+      "state": "playing"
+    },
+    {
+      "file": "tidewater-bridge.jpg",
+      "sha256": "9b57dfc3ef468d3d6d8be7ade94ea5c8a655df903e6f60bb19804ca6f072ddf9",
+      "hud": false,
+      "manualInspectionCamera": true,
+      "calls": 155,
+      "triangles": 787535,
+      "geometries": 336,
+      "textures": 58,
+      "camera": [
+        -47,
+        19,
+        -30
+      ],
+      "state": "playing"
+    }
+  ],
+  "baseURI": "http://127.0.0.1:39963/_versions/e00c02d506eb3a45dcf9660392f212cae1d7b0e61ff9bf486b7b36c1906707f0/",
+  "error": "AssertionError [ERR_ASSERTION]: tidewater actual actor under bridge chooses lower minimap\n+ actual - expected\n\n+ undefined\n- 'lower'\n\n    at file:///workspace/scratch/aa397237a07c/actions-stage-design/scripts/check-inkwave-map3-browser.mjs:139:12",
+  "harnessDiagnosis": "The optional minimap was disabled by the existing default settings. The test now enables it through the real settings API before asserting its visible projection; no production behavior changed."
+}

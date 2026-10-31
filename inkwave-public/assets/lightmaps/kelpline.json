@@ -1,1 +1,1 @@
-{"id":"kelpline","hash":"7dfce20","size":1024,"ppm":8,"rays":96,"dist":3.5}
+{"id":"kelpline","hash":"d749d14b","size":2048,"ppm":5,"rays":64,"dist":3.5,"colliderHash":"41fa494cc753ceb063072eb63f3254f6022bef9d4baab979eef675c34e84068e","pngSha256":"da1a04bf7af5ae854100649913f83e3ceab3a8446f32caec482e749569218348","source":"scripts/bake-map3-ao.mjs","structuralColliders":93,"faces":524,"texels":1002838}

@@ -17,6 +17,7 @@ import { PaintSystem } from './world/paint.js';
 import { createLevelMaterial, setLevelLamps } from './world/levelMaterial.js';
 import { SwimWake } from './fx/swimWake.js';
 import { Decor } from './world/decor.js';
+import { map3ArtColliders } from './world/stages/map3-art.js';
 import { createMuralTexture } from './world/murals.js';
 import { layoutThumbSVG } from './world/mapThumb.js';
 import { dressingFor } from './world/dressing.js';
@@ -248,6 +249,7 @@ class Game {
         this.props.build();
       } catch (e) { console.error('[inkwave] props failed', e); this.props = null; }
     }
+    colliders.push(...map3ArtColliders(MAP_LAYOUTS[layoutId]));
     const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));
     G.physics = new Physics(level);
     const lightmap = await this._loadLightmap(level, layoutId, lightmapMetadata);

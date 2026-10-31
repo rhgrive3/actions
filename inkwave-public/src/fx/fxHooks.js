@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { on } from '../core/ctx.js';
 import { PLAYER, SUB, SPECIALS, WEAPONS } from '../config.js';
 import { Hit } from '../game/physics.js';
+import { createMap3WaterEdges } from '../world/stages/map3-water-edges.js';
 
 export function initFxHooks(G) { return new FxHooks(G); }
 
@@ -683,6 +684,8 @@ class FxHooks {
     const G = this.G;
     this.edgeLevel = G.level;
     this.edges = [];
+    const map3Edges = createMap3WaterEdges(G.level);
+    if (map3Edges) { this.edges = map3Edges; return; }
     const rects = (G.env && G.env.footprint && G.env.footprint.length ? G.env.footprint : null) || (G.level ? [G.level.bounds] : []);
     // (turned slabs — env.footprint rects with aligned === false: Cargo Terminal — use their own edges, not the AABB)
     const inR = (r, x, z) => (r.aligned !== false ? x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ

@@ -1,0 +1,194 @@
+{
+  "method": "Common upward collision triangle XZ union, center-cell sampling. Resolution sensitivity only, not exact-union error bound.",
+  "stepsWU": [
+    0.5,
+    0.25
+  ],
+  "rows": [
+    {
+      "id": "airport",
+      "unionHalfWU2": 8011.1468252,
+      "unionQuarterWU2": 8009.2092252,
+      "deltaWU2": -1.9376000000002023,
+      "deltaPercentOfHalf": -0.024186299942790396
+    },
+    {
+      "id": "barnacle",
+      "unionHalfWU2": 9067.75,
+      "unionQuarterWU2": 9058.25,
+      "deltaWU2": -9.5,
+      "deltaPercentOfHalf": -0.10476689366160294
+    },
+    {
+      "id": "bluefin",
+      "unionHalfWU2": 7758.25,
+      "unionQuarterWU2": 7835.9375,
+      "deltaWU2": 77.6875,
+      "deltaPercentOfHalf": 1.0013533979956821
+    },
+    {
+      "id": "brinewater",
+      "unionHalfWU2": 7908.5,
+      "unionQuarterWU2": 7886.9375,
+      "deltaWU2": -21.5625,
+      "deltaPercentOfHalf": -0.27264968072327245
+    },
+    {
+      "id": "crableg",
+      "unionHalfWU2": 7991.5,
+      "unionQuarterWU2": 8037.125,
+      "deltaWU2": 45.625,
+      "deltaPercentOfHalf": 0.5709191015453919
+    },
+    {
+      "id": "eeltail",
+      "unionHalfWU2": 9328.25,
+      "unionQuarterWU2": 9383.75,
+      "deltaWU2": 55.5,
+      "deltaPercentOfHalf": 0.5949669016160587
+    },
+    {
+      "id": "flounder",
+      "unionHalfWU2": 9179.25,
+      "unionQuarterWU2": 9170.6875,
+      "deltaWU2": -8.5625,
+      "deltaPercentOfHalf": -0.0932810414794237
+    },
+    {
+      "id": "hagglefish",
+      "unionHalfWU2": 7968.6991,
+      "unionQuarterWU2": 7982.7634,
+      "deltaWU2": 14.064300000000003,
+      "deltaPercentOfHalf": 0.17649430381930223
+    },
+    {
+      "id": "hammerhead",
+      "unionHalfWU2": 8532.5,
+      "unionQuarterWU2": 8503.25,
+      "deltaWU2": -29.25,
+      "deltaPercentOfHalf": -0.34280691473776737
+    },
+    {
+      "id": "humpback",
+      "unionHalfWU2": 10359.48,
+      "unionQuarterWU2": 10359.48,
+      "deltaWU2": 0.0,
+      "deltaPercentOfHalf": 0.0
+    },
+    {
+      "id": "inkblot",
+      "unionHalfWU2": 12533.2832,
+      "unionQuarterWU2": 12538.4707,
+      "deltaWU2": 5.1875,
+      "deltaPercentOfHalf": 0.04138979321874734
+    },
+    {
+      "id": "mako",
+      "unionHalfWU2": 7402.5,
+      "unionQuarterWU2": 7433.8125,
+      "deltaWU2": 31.3125,
+      "deltaPercentOfHalf": 0.42299898682877407
+    },
+    {
+      "id": "manta",
+      "unionHalfWU2": 6292.733016967773,
+      "unionQuarterWU2": 6287.505218505859,
+      "deltaWU2": -5.2277984619140625,
+      "deltaPercentOfHalf": -0.08307675612198685
+    },
+    {
+      "id": "mincemeat",
+      "unionHalfWU2": 8392.0,
+      "unionQuarterWU2": 8380.9375,
+      "deltaWU2": -11.0625,
+      "deltaPercentOfHalf": -0.1318219733079123
+    },
+    {
+      "id": "museum",
+      "unionHalfWU2": 13404.0,
+      "unionQuarterWU2": 13403.25,
+      "deltaWU2": -0.75,
+      "deltaPercentOfHalf": -0.005595344673231871
+    },
+    {
+      "id": "robo",
+      "unionHalfWU2": 6173.5,
+      "unionQuarterWU2": 6185.5,
+      "deltaWU2": 12.0,
+      "deltaPercentOfHalf": 0.19437920142544748
+    },
+    {
+      "id": "scorch",
+      "unionHalfWU2": 6862.0,
+      "unionQuarterWU2": 6861.75,
+      "deltaWU2": -0.25,
+      "deltaPercentOfHalf": -0.003643252696006995
+    },
+    {
+      "id": "shipshape",
+      "unionHalfWU2": 9280.0,
+      "unionQuarterWU2": 9280.0,
+      "deltaWU2": 0.0,
+      "deltaPercentOfHalf": 0.0
+    },
+    {
+      "id": "sturgeon",
+      "unionHalfWU2": 7502.5,
+      "unionQuarterWU2": 7511.25,
+      "deltaWU2": 8.75,
+      "deltaPercentOfHalf": 0.1166277907364212
+    },
+    {
+      "id": "umami",
+      "unionHalfWU2": 7999.0,
+      "unionQuarterWU2": 8013.625,
+      "deltaWU2": 14.625,
+      "deltaPercentOfHalf": 0.1828353544193024
+    },
+    {
+      "id": "undertow",
+      "unionHalfWU2": 6864.5,
+      "unionQuarterWU2": 6852.625,
+      "deltaWU2": -11.875,
+      "deltaPercentOfHalf": -0.17299147789351008
+    },
+    {
+      "id": "urchin",
+      "unionHalfWU2": 11497.122,
+      "unionQuarterWU2": 11492.2515,
+      "deltaWU2": -4.870499999999083,
+      "deltaPercentOfHalf": -0.042362775658108906
+    },
+    {
+      "id": "wahoo",
+      "unionHalfWU2": 11286.627891540527,
+      "unionQuarterWU2": 11267.10366821289,
+      "deltaWU2": -19.52422332763672,
+      "deltaPercentOfHalf": -0.17298544361748983
+    },
+    {
+      "id": "tidewater",
+      "unionHalfWU2": 11968.0,
+      "unionQuarterWU2": 11968.0,
+      "deltaWU2": 0.0,
+      "deltaPercentOfHalf": 0.0
+    },
+    {
+      "id": "kelpline",
+      "unionHalfWU2": 12672.0,
+      "unionQuarterWU2": 12672.0,
+      "deltaWU2": 0.0,
+      "deltaPercentOfHalf": 0.0
+    }
+  ],
+  "nativeMedianHalfWU2": 8011.1468252,
+  "nativeMedianQuarterWU2": 8037.125,
+  "largestAbsoluteChange": {
+    "id": "bluefin",
+    "unionHalfWU2": 7758.25,
+    "unionQuarterWU2": 7835.9375,
+    "deltaWU2": 77.6875,
+    "deltaPercentOfHalf": 1.0013533979956821
+  },
+  "ordinaryQuarterDetails": "ordinary-quarter-metrics.json"
+}

@@ -980,7 +980,7 @@ export class ClamsRule {
     }
 
     // Seven carried small clams still need the eighth pickup to form Power.
-    // Only an explicitly source-qualified native route extends the legacy
+    // Only an explicitly qualified stage route extends the legacy
     // seven-small goal policy; pickup, throw and direct rays remain unchanged.
     const sourceFinalClam = !inv.power && inv.small === MAX_SMALL_CLAMS && inv.small < CLAMS_PER_POWER
       && typeof frame.botGoalRoute === 'function';

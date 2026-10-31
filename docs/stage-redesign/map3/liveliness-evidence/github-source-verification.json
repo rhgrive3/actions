@@ -1,0 +1,19 @@
+{
+  "baseline": "2258fb970d8741dd1fe6a90e9de833c9757474ae",
+  "commit": "d6bafc28fbaaeef6c516ce7981f0ee2d94c9b83d",
+  "changed": [
+    "docs/stage-redesign/map3/runtime-art-coordinates.json",
+    "inkwave-public/src/world/stages/map3-art.js",
+    "inkwave-public/src/world/stages/map3-kelpline-life.js",
+    "inkwave-public/src/world/stages/map3-layout.js",
+    "inkwave-public/src/world/stages/map3-sign-atlas.js",
+    "inkwave-public/src/world/stages/map3-tidewater-life.js",
+    "patches/local-quality/tests/map3-art-geometry.test.mjs",
+    "scripts/check-map3-liveliness.mjs",
+    "scripts/document-map3-art.mjs",
+    "scripts/generate-map3-sign-atlas.py"
+  ],
+  "removed": [],
+  "unchanged": 11330,
+  "allExpectedChanges": true
+}

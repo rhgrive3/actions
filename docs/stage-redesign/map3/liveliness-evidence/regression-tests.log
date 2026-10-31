@@ -1,0 +1,61 @@
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ tidewater: every structural skin stays within a real volume, exterior art stays beyond arena (1643.147959ms)
+✔ tidewater: supports never overlap lower floors or route bodies (201.764052ms)
+✔ kelpline: every structural skin stays within a real volume, exterior art stays beyond arena (1487.387751ms)
+✔ kelpline: supports never overlap lower floors or route bodies (69.931704ms)
+✔ material textures are shared by live stages and are released once after last dispose (3844.336418ms)
+✔ unrelated stages receive neither colliders nor a visual root (0.254722ms)
+✔ tidewater: every art collider has a 180-degree counterpart with the same roof/rail behavior (3.360192ms)
+✔ kelpline: every art collider has a 180-degree counterpart with the same roof/rail behavior (0.91159ms)
+✔ baked AO agrees with real face layout, every hidden art collider and exact PNG bytes (50.418776ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7310.314068
+✔ ordinary public stages preserve every frozen MAP3 coordinate and contain no legacy base floor (163.911436ms)
+✔ real Level ramp OBBs retain exact tops and nominal vertical thickness including the low toe (2.426201ms)
+✔ all 26 nominal routes have real support and body clearance, with independently selected lower/upper layers (175.010904ms)
+ℹ 26 routes / 10770 actual support + human/conservative-squid body samples
+✔ actual underpasses retain headroom and real grates distinguish human support from squid drops (0.585271ms)
+ℹ tidewater: 3 measured underpasses; two grates have human support / distinct solid squid landings.
+ℹ kelpline: 3 measured underpasses; two grates have human support / distinct solid squid landings.
+✔ composed Actor walks, swims and fires along MAP3 routes at 30/60/120 Hz through real Level and Physics (13452.580894ms)
+ℹ 228 composed Actor traversals / 224532 simulation ticks; maximum waypoint height error 0.08099 WU. Rendering/audio/ink sample are fixtures; no browser/Switch claim.
+✔ production NavGraph keeps every MAP3 floor reachable in both directions and resolves all route waypoints on their own layer (1372.602987ms)
+ℹ tidewater: 8340/8340 retained nodes; every floor has directed paths to/from both spawns. Legacy 6,000-budget misses now resolved: [{"floor":"A_market_hall","team":1,"direction":"out"},{"floor":"A_market_edge","team":1,"direction":"out"},{"floor":"A_market_grate","team":1,"direction":"out"},{"floor":"A_market_bridge","team":1,"direction":"out"},{"floor":"B_market_hall","team":0,"direction":"out"},{"floor":"B_market_edge","team":0,"direction":"out"},{"floor":"B_market_grate","team":0,"direction":"out"},{"floor":"B_market_bridge","team":0,"direction":"out"}]
+ℹ kelpline: 11174/11174 retained nodes; every floor has directed paths to/from both spawns. Legacy 6,000-budget misses now resolved: [{"floor":"A_high_gantry","team":1,"direction":"out"},{"floor":"A_outer_foot","team":1,"direction":"out"},{"floor":"B_cargo","team":0,"direction":"out"},{"floor":"A_ferry","team":1,"direction":"return"},{"floor":"B_ferry","team":0,"direction":"out"},{"floor":"B_ferry","team":0,"direction":"return"}]
+ℹ 848 successful directed A* queries; no claim that BotBrain follows every path without steering errors.
+✔ composed Actor drops through grates to the lower floor and dies over actual open water at 30/60/120 Hz (106.326979ms)
+ℹ 12 real grate landings and 6 actual open-water deaths.
+✔ production CameraRig underpasses keep lens and near plane out of solids during grounded turns, looking and jumps (5996.382794ms)
+ℹ 54 camera scenarios; 0 with geometry intersection. First failures: []
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21295.697675
+✔ tidewater: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (4417.336087ms)
+ℹ real paint turf 8462.83 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ kelpline: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis (2753.553979ms)
+ℹ real paint turf 11351.95 WU²; separate same-XZ paint cells, two cached rasters, label, jump hysteresis and viewer flip verified
+✔ ordinary layouts without MAP3 retain the original highest-floor projection (1495.36061ms)
+(node:19) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8709.178218

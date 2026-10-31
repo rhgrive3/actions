@@ -1,0 +1,145 @@
+{
+  "family": "Map3 JP",
+  "sourceFamily": "Noto Sans JP",
+  "requiredCJKCodepoints": 206,
+  "verifiedCoveredCodepoints": 206,
+  "missingCodepoints": [],
+  "subsetBytes": 36176,
+  "subsetSha256": "e2eb41f88d7a2c362aa6678e2d3ef4df056d93a3b9e44bf961247ef1f54368f9",
+  "sources": [
+    {
+      "file": "noto-sans-jp-62-400-normal.woff",
+      "githubBlobSha": "4fcb262328b39b2699411c3800ab7cd469740be3"
+    },
+    {
+      "file": "noto-sans-jp-69-400-normal.woff",
+      "githubBlobSha": "3c06eed2a45c5d30007eb9740c633f36126dc6ab"
+    },
+    {
+      "file": "noto-sans-jp-74-400-normal.woff",
+      "githubBlobSha": "2dfb244cf01ef4dd66ded0bf73e87df265e130ad"
+    },
+    {
+      "file": "noto-sans-jp-82-400-normal.woff",
+      "githubBlobSha": "99368f3f129b066622a746fc6181acc349f058a2"
+    },
+    {
+      "file": "noto-sans-jp-88-400-normal.woff",
+      "githubBlobSha": "36f4de82068193ce6ab1418f401ab4d350a057c0"
+    },
+    {
+      "file": "noto-sans-jp-90-400-normal.woff",
+      "githubBlobSha": "b8c6a6901f4339a0a7c7ed2ccb923dd284b9999c"
+    },
+    {
+      "file": "noto-sans-jp-91-400-normal.woff",
+      "githubBlobSha": "b85d8c87a6f985f0f6e0e6850a8045d97de88fac"
+    },
+    {
+      "file": "noto-sans-jp-92-400-normal.woff",
+      "githubBlobSha": "c5e3dae00c8b338ac219e506af81461a53aa5088"
+    },
+    {
+      "file": "noto-sans-jp-94-400-normal.woff",
+      "githubBlobSha": "2ede3de25f494759c3c4ee5500dee861e1d528e6"
+    },
+    {
+      "file": "noto-sans-jp-95-400-normal.woff",
+      "githubBlobSha": "9e04be9f73e42c66ae8804b191ec219725674bdb"
+    },
+    {
+      "file": "noto-sans-jp-97-400-normal.woff",
+      "githubBlobSha": "89b02be41d09e83ba6f209fd5097fbe0194ddd31"
+    },
+    {
+      "file": "noto-sans-jp-98-400-normal.woff",
+      "githubBlobSha": "384a50539c3041378d5bcf63f5884efb9c4a1bb8"
+    },
+    {
+      "file": "noto-sans-jp-99-400-normal.woff",
+      "githubBlobSha": "1b60693f6fc60bd448a965e39f8c1376c9514b21"
+    },
+    {
+      "file": "noto-sans-jp-100-400-normal.woff",
+      "githubBlobSha": "5ada616d5dcfce578649b73db1d9936b53bee6b6"
+    },
+    {
+      "file": "noto-sans-jp-101-400-normal.woff",
+      "githubBlobSha": "a2364901cc2376d509ad1c07550190d620b56b64"
+    },
+    {
+      "file": "noto-sans-jp-102-400-normal.woff",
+      "githubBlobSha": "4aa0d789dd8abee1e52c30178f111cf54d5b176c"
+    },
+    {
+      "file": "noto-sans-jp-103-400-normal.woff",
+      "githubBlobSha": "eb45834964a88a3ff90fdd804e075140a25bb86b"
+    },
+    {
+      "file": "noto-sans-jp-104-400-normal.woff",
+      "githubBlobSha": "e29ffd8fec5bf9d3d42db4f4ad4761d157985318"
+    },
+    {
+      "file": "noto-sans-jp-105-400-normal.woff",
+      "githubBlobSha": "6db83c5d5181ad96ced626f9f8ea6ecde55aba71"
+    },
+    {
+      "file": "noto-sans-jp-106-400-normal.woff",
+      "githubBlobSha": "f45a63e69ebea64c160c2721c39e03022ce4c3c8"
+    },
+    {
+      "file": "noto-sans-jp-107-400-normal.woff",
+      "githubBlobSha": "0777b8a9e9e8ac268e8e66daa6f2f9e0562237c8"
+    },
+    {
+      "file": "noto-sans-jp-108-400-normal.woff",
+      "githubBlobSha": "41a3519282205222cc4bf110099889d08ad01938"
+    },
+    {
+      "file": "noto-sans-jp-109-400-normal.woff",
+      "githubBlobSha": "06172aa0ee0aa84d742a6c5c6e431a8139086168"
+    },
+    {
+      "file": "noto-sans-jp-110-400-normal.woff",
+      "githubBlobSha": "e96ff86edca532aa499628acb5c269e90c98ac37"
+    },
+    {
+      "file": "noto-sans-jp-111-400-normal.woff",
+      "githubBlobSha": "d6e133ea93fd0748470d5da9207c5b3a8b7339ab"
+    },
+    {
+      "file": "noto-sans-jp-112-400-normal.woff",
+      "githubBlobSha": "8870fb02e5673ff138bc77044dcf0c073c1ef07c"
+    },
+    {
+      "file": "noto-sans-jp-113-400-normal.woff",
+      "githubBlobSha": "de1545b4b4dcb66ee254ef74d9d9e9633d4cae3d"
+    },
+    {
+      "file": "noto-sans-jp-114-400-normal.woff",
+      "githubBlobSha": "672567440b30e36ddc0fcf04a4762d370173a854"
+    },
+    {
+      "file": "noto-sans-jp-115-400-normal.woff",
+      "githubBlobSha": "aea8682aed962f7956b901ce9d45260e92f008db"
+    },
+    {
+      "file": "noto-sans-jp-116-400-normal.woff",
+      "githubBlobSha": "ff133adced9c84dcfe955116205b67584d75f672"
+    },
+    {
+      "file": "noto-sans-jp-117-400-normal.woff",
+      "githubBlobSha": "11d181c0f4a2f63395e34f7ec9c7cff86846032c"
+    },
+    {
+      "file": "noto-sans-jp-118-400-normal.woff",
+      "githubBlobSha": "c4b1e0c00dba511507efb11eb4924acf8a8ecd69"
+    },
+    {
+      "file": "noto-sans-jp-119-400-normal.woff",
+      "githubBlobSha": "3d46da669ef43c7c84b5f7acb8a78f627a7f0513"
+    }
+  ],
+  "originalFontFamilyURL": "https://github.com/google/fonts/tree/main/ofl/notosansjp",
+  "distributionURL": "https://github.com/fontsource/font-files/tree/main/fonts/google/noto-sans-jp"
+}
