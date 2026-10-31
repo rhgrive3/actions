@@ -21,7 +21,10 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
     const end = code.indexOf('\n  // Carving a hard turn', start);
     if (start < 0 || end < 0) throw new Error('INKWAVE swim splash conflict: missing wake recipe');
     const before = code.slice(start, end);
-    const after = `  wake(pos, dir, color, speed = 8, normal = UP, actor = null) {
+    const after = `  warmSwimSurface(renderer, camera, target) {
+    return warmSwimSurface(this, renderer, camera, target);
+  }
+  wake(pos, dir, color, speed = 8, normal = UP, actor = null) {
     touchSwimSurface(this, actor);
   }
 `;
@@ -34,7 +37,7 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
     code = replaceOnce(code, '    this._updateDrops(dt);', '    updateSwimSurface(this, camera);\n    this._updateDrops(dt);', 'continuous film frame owner');
     code = replaceOnce(code, '    this.dN = 0; this.dGeo.instanceCount = 0;', '    clearSwimSurface(this);\n    this.dN = 0; this.dGeo.instanceCount = 0;', 'film match reset');
     code = replaceOnce(code, '    this.scene.remove(this.root);', '    this.scene.remove(this.root);\n    disposeSwimSurface(this);', 'film resource lifetime');
-    return "import { touchSwimSurface, updateSwimSurface, clearSwimSurface, disposeSwimSurface } from '../../patches/local-quality/swim-surface.mjs';\n" + code;
+    return "import { warmSwimSurface, touchSwimSurface, updateSwimSurface, clearSwimSurface, disposeSwimSurface } from '../../patches/local-quality/swim-surface.mjs';\n" + code;
   }
 
   if (rel === 'src/world/levelMaterial.js') {
