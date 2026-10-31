@@ -16,6 +16,39 @@ GitHub Pages uses the HTML meta policy because repository-defined response
 headers are not available there. Cosmetic F12/Ctrl+Shift+I/Ctrl+U keyboard
 interception does not prevent opening DevTools via browser menus.
 
+## Safari, Chrome, installed WebApp only
+
+The Cloudflare site now defaults to BROWSER_ALLOWLIST_ENABLED = "true".
+Requests for static game files are checked **before** the optional Turnstile
+challenge. The production HTML has a separate CSP-hashed startup guard, so
+GitHub Pages also displays a browser-unsupported screen instead of starting
+the game on known unsupported browsers.
+
+Permitted:
+- Safari on macOS, iOS and iPadOS.
+- Google Chrome on Windows, macOS, Linux and Android; CriOS on iOS/iPadOS.
+- Installed Safari/Chrome PWAs. An iOS home-screen WebApp can omit the Safari
+  token: the edge admits that WebKit Mobile UA candidate, but the startup
+  guard requires navigator.standalone or display-mode: standalone.
+
+Denied when identifiable: Firefox/FxiOS, Edge/EdgiOS, Opera, Samsung Internet,
+other distinctly branded browsers, embedded Android WebViews, identifiable
+in-app browsers, unknown UAs and command-line clients without a suitable UA.
+WebView apps on iOS can imitate standalone WebApps at HTTP level; the client
+guard blocks ordinary non-standalone views.
+
+Limitations: browser names/standalone flags are spoofable, and some Chromium
+forks identify indistinguishably as Chrome. Do not use browser filtering as
+authentication, copyright protection or bot detection. Separately validate
+real iPad Home Screen and Android installed PWA flows before public launch.
+The Cloudflare filter applies to static game files, not /api/account/*.
+A browser family policy cannot override local PWA caches already downloaded.
+
+To temporarily revert the Cloudflare side for compatibility, set
+BROWSER_ALLOWLIST_ENABLED = "false" and redeploy; the build-time startup guard
+continues to apply to new HTML. Reverting both requires rebuilding without
+the guard rather than modifying locked upstream game HTML.
+
 ## Enable bot gate on Cloudflare Workers (optional, initially OFF)
 
 1. Create a Cloudflare Turnstile widget restricted to the production hostname.
