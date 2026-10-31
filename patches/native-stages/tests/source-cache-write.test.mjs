@@ -3,6 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
+import {convertSource} from '../runtime/source-convert.mjs';
 const here=new URL('.',import.meta.url),arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 const bytes=value=>arrays.reduce((n,k)=>n+(value?.[k]?.byteLength||0),0);
 const data=(id,n=8)=>({...Object.fromEntries(arrays.map((k,i)=>[k,new Uint8Array(n).fill(i+id)])),manifest:{id}});
@@ -99,4 +101,70 @@ test('failure after staged publication settles completion without losing previou
  db.failPut=(store,row)=>store==='stage-times'&&row.key==='early';
  await use('candidate',db,async m=>{const staged=await m.beginDerivedWrite('early',data(2));assert(staged);assert.equal(await staged.completion,false);});
  assert.deepEqual(db.stores,before);assert.equal(db.aborts,1);
+});
+
+
+// Integrate the actual worker handler with the actual converter and derived
+// cache implementation. Only authenticated ingress and the DB-opening boundary
+// are controlled; postMessage really clones/transfers every listed buffer.
+async function transferredWorker(cache){
+ const stage={id:'packed-stage',internal:'stage',sourceSha256:'a'.repeat(64),tree:'b'.repeat(40),sourceSemantics:{inactiveObjectPatterns:['^Fld_Inactive'],nonCollidableObjectPatterns:[],nonPaintableObjectPatterns:[]}};
+ const obj=[];let first=1;
+ for(let i=0;i<9;i++){
+  obj.push('o '+(i%3===1?'Fld_Inactive_':'Fld_floor')+i,'usemtl Concrete00');
+  for(const [x,z]of [[0,0],[0,1],[1,0]])obj.push('v '+[i*8+x,0,z].join(' '));
+  for(let k=0;k<3;k++)obj.push('vt 0 0','vn 0 1 0');
+  obj.push('f '+[0,1,2].map(k=>[first+k,first+k,first+k].join('/')).join(' '));first+=3;
+ }
+ const objectBytes=new TextEncoder().encode(obj.join('\n')+'\n'),tree={sha:stage.tree,truncated:false,tree:[{type:'blob',path:'stage.mtl',size:0,sha:'c'.repeat(40)}]};
+ const messages=[],calls={convert:0,read:0,write:0,download:0};
+ const self={navigator:{deviceMemory:8,userAgent:'desktop'},postMessage(message,transfer=[]){
+  const before=message.result?structuredClone(message.result):null;
+  const moved=structuredClone(message,{transfer});
+  if(before){
+   assert.equal(transfer.length,11);assert.equal(new Set(transfer).size,11);
+   assert(transfer.every(b=>b.byteLength===0),'all sender-side columns are detached');
+   assert.equal(message.result.manifest.faces[0].triangles.byteLength,0);
+   assert.deepEqual(moved.result,before);
+  }
+  messages.push(moved);
+ }};
+ const context=vm.createContext({self,TextDecoder,TextEncoder,AbortController,performance,
+  ArrayBuffer,Uint8Array,Uint32Array,Int32Array,Float32Array,Float64Array});
+ const imports={
+  './source-catalog.mjs':{SOURCE_RECIPE:'packed-peer-recipe',SOURCE_STAGES:[stage],sourceURL:(_stage,file)=>file,sourceObjectBytes:()=>objectBytes.byteLength},
+  './source-convert.mjs':{convertSource(...args){calls.convert++;return convertSource(...args);}},
+  './source-cache.mjs':{async sourceBytes(_id,url){calls.download++;return url.endsWith('.obj')?objectBytes.slice().buffer:new ArrayBuffer(0);},async sourceTree(){return structuredClone(tree);},async readDerived(key){calls.read++;return cache.readDerived(key);},async beginDerivedWrite(key,data){calls.write++;return cache.beginDerivedWrite(key,data);}},
+ };
+ const worker=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/source-worker.mjs',here),'utf8'),{context});
+ await worker.link(name=>{const values=imports[name];assert(values,name);return new vm.SyntheticModule(Object.keys(values),function(){for(const [key,value]of Object.entries(values))this.setExport(key,value);},{context});});
+ await worker.evaluate();await self.onmessage({data:{id:stage.id,runtimeSha256:'runtime-peer'}});
+ const result=messages.find(m=>m.result);assert(result,JSON.stringify(messages));assert(!messages.some(m=>m.error));
+ for(const face of result.result.manifest.faces){assert.equal(face.triangles.buffer,result.result.faceTriangles.buffer);assert(face.triangles.length>0);}
+ return {data:result.result,messages,calls,key:'packed-peer-recipe/runtime-peer/'+stage.sourceSha256};
+}
+
+test('actual worker packed transfer preserves views and isolates both renderer and durable cache ownership',async()=>{
+ const db=database();await use('candidate',db,async cache=>{
+  const cold=await transferredWorker(cache);assert.equal(cold.calls.convert,1);assert.equal(cold.calls.write,1);assert.equal(cold.data.sourceMetrics.cached,false);
+  assert.equal(cold.messages.find(m=>m.result).cachePending,true);assert.equal(cold.messages.at(-1).cacheComplete,true);
+  const expected=structuredClone(cold.data);delete expected.sourceMetrics;
+  cold.data.faceTriangles[0]^=1;cold.data.vertices[0]+=100;
+  const warm=await transferredWorker(cache);assert.equal(warm.calls.convert,0);assert.equal(warm.calls.download,0);assert.equal(warm.calls.write,0);assert.equal(warm.data.sourceMetrics.cached,true);
+  assert.equal(warm.messages.find(m=>m.result).cachePending,false);
+  const actual=structuredClone(warm.data);delete actual.sourceMetrics;assert.deepEqual(actual,expected);
+  const stored=await cache.readDerived(warm.key);assert(stored);assert.notEqual(stored.faceTriangles.buffer,warm.data.faceTriangles.buffer);
+  warm.data.faceTriangles.fill(0);warm.data.vertices.fill(0);const again=await cache.readDerived(warm.key);assert.deepEqual(again,stored);
+ });
+});
+
+test('actual worker publication survives optional commit failure and the next load reconverts cleanly',async()=>{
+ const db=database();await use('candidate',db,async cache=>{
+  db.failPut=(store)=>store==='stage-times';
+  const first=await transferredWorker(cache);assert.equal(first.data.sourceMetrics.cached,false);assert.equal(first.messages.at(-1).cacheComplete,true);
+  assert.equal(await cache.readDerived(first.key),null);assert.equal(db.aborts,1);
+  db.failPut=null;const retry=await transferredWorker(cache);assert.equal(retry.calls.convert,1);assert.equal(retry.data.sourceMetrics.cached,false);
+  assert(await cache.readDerived(retry.key));
+  const hit=await transferredWorker(cache);assert.equal(hit.data.sourceMetrics.cached,true);assert.equal(hit.calls.convert,0);
+ });
 });
