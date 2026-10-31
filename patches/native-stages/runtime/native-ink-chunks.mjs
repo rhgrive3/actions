@@ -27,17 +27,31 @@ function publishIndexRange(attribute, dirty, count) {
  * culling. The tile size has no relation to retail collision or paint cells. */
 export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,boundsOnly=false){
  if(!Number.isFinite(tileSize)||tileSize<=0)throw new RangeError('Invalid native ink tile size');
- const p=geometry.getAttribute('position'),groups=new Map(),point=new THREE.Vector3();
+ const p=geometry.getAttribute('position'),groups=new Map();
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
  // The in-game mesh needs just the tile mapping and bounds, not index arrays.
  const direct=triangleTile!==null;
  if(direct&&(!(triangleTile instanceof Uint32Array)||triangleTile.length!==p.count/3))throw new TypeError('Invalid native ink triangle-tile output');
+ const proto=p.isInterleavedBufferAttribute?THREE.InterleavedBufferAttribute.prototype:THREE.BufferAttribute.prototype;
+ const raw=!p.normalized&&!p.isFloat16BufferAttribute&&ArrayBuffer.isView(p.array)&&
+  p.getX===proto.getX&&p.getY===proto.getY&&p.getZ===proto.getZ;
+ const array=raw?p.array:null,stride=p.isInterleavedBufferAttribute?p.data.stride:p.itemSize,offset=p.isInterleavedBufferAttribute?p.offset:0;
  for(let i=0;i<p.count;i+=3){
-  const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3;
-  const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
-  let g=groups.get(key);if(!g){g={key,indices:direct?null:[],bounds:new THREE.Box3(),tile:groups.size};groups.set(key,g);}
+  const ia=i*stride+offset,ib=ia+stride,ic=ib+stride;
+  const ax=raw?array[ia]:p.getX(i),ay=raw?array[ia+1]:p.getY(i),az=raw?array[ia+2]:p.getZ(i);
+  const bx=raw?array[ib]:p.getX(i+1),by=raw?array[ib+1]:p.getY(i+1),bz=raw?array[ib+2]:p.getZ(i+1);
+  const cx=raw?array[ic]:p.getX(i+2),cy=raw?array[ic+1]:p.getY(i+2),cz=raw?array[ic+2]:p.getZ(i+2);
+  const tx=Math.floor(((ax+bx+cx)/3)/tileSize),ty=Math.floor(((ay+by+cy)/3)/tileSize),tz=Math.floor(((az+bz+cz)/3)/tileSize);
+  const key=tx>=-512&&tx<512&&ty>=-512&&ty<512&&tz>=-512&&tz<512
+   ?(tx+512)|((ty+512)<<10)|((tz+512)<<20):tx+','+ty+','+tz;
+  // Only diagnostic tile metadata needs a string; do not allocate one per
+  // triangle. Keep the public nativeTile value and the original centroid math.
+  let g=groups.get(key);if(!g){g={key:tx+','+ty+','+tz,indices:direct?null:[],bounds:new THREE.Box3(),tile:groups.size};groups.set(key,g);}
   if(direct)triangleTile[i/3]=g.tile;
-  for(let j=i;j<i+3;j++){if(!direct)g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
+  else g.indices.push(i,i+1,i+2);
+  const {min,max}=g.bounds;
+  min.x=Math.min(min.x,ax,bx,cx);min.y=Math.min(min.y,ay,by,cy);min.z=Math.min(min.z,az,bz,cz);
+  max.x=Math.max(max.x,ax,bx,cx);max.y=Math.max(max.y,ay,by,cy);max.z=Math.max(max.z,az,bz,cz);
  }
  return [...groups.values()].map(({key,indices,bounds})=>{
   // Runtime tiles are culling metadata, never drawables. Public partitions
@@ -334,7 +348,7 @@ export class NativeInkMesh extends THREE.Mesh {
    * has reached has no ink texels, so its triangles need no draw. Any mismatch
    * leaves this map off and keeps the tile-only selection. */
   _bindFaces(paint) {
-    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
+    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = this._faceSingleTile = null;
     this._faceDirty = true;
     const triangles = this._triangleTile.length, index = new Map(), starts = [0];
     for (const f of paint.paintFaces || []) {
@@ -348,6 +362,14 @@ export class NativeInkMesh extends THREE.Mesh {
     this._faceStart = Uint32Array.from(starts);
     this._facePainted = new Uint8Array(index.size);
     this._paintedFaceWords = new Uint32Array(Math.ceil(index.size/32));
+    // A chart entirely inside one render tile needs one visibility lookup.
+    // Mixed charts retain the per-triangle path and original source order.
+    const single=this._faceSingleTile=new Int32Array(index.size),tileOf=this._triangleTile;
+    for(let face=0;face<single.length;face++){
+      const start=starts[face],end=starts[face+1];let tile=start<end?tileOf[start]:-1;
+      for(let tri=start+1;tri<end;tri++)if(tileOf[tri]!==tile){tile=-1;break;}
+      single[face]=tile;
+    }
   }
 
   _markFace(face) {
@@ -356,7 +378,7 @@ export class NativeInkMesh extends THREE.Mesh {
     const id = this._faceIndex.get(face);
     if (id === undefined) {
       // An atlas write outside the bound chart list: fail open to tiles.
-      this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
+      this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = this._faceSingleTile = null;
     } else if (painted[id]) return;
     else {
       painted[id] = 1;
@@ -365,8 +387,9 @@ export class NativeInkMesh extends THREE.Mesh {
       // does not change today's draw index; keep the bit for a future view.
       if (!this._faceCulling) return;
       if (!this._faceDirty) {
-        let visible = false;
-        for (let tri = this._faceStart[id], end = this._faceStart[id+1]; tri < end; tri++) {
+        const tile=this._faceSingleTile?.[id]??-1;
+        let visible = tile>=0?!!this._visible[tile]:false;
+        if(tile<0)for (let tri = this._faceStart[id], end = this._faceStart[id+1]; tri < end; tri++) {
           if (this._visible[this._triangleTile[tri]]) { visible = true; break; }
         }
         if (!visible) return;
@@ -381,7 +404,7 @@ export class NativeInkMesh extends THREE.Mesh {
     // A face-list entry retains its face, chunks and their shared attributes.
     // Keep this cache within one paint binding/geometry lifetime.
     this._faceChunkLists=null;
-    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
+    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = this._faceSingleTile = null;
     const binding = this._paintBinding;
     if (!binding) return;
     if (binding.paint._pushQuad === binding.wrappedPush) binding.paint._pushQuad = binding.push;
@@ -448,7 +471,7 @@ export class NativeInkMesh extends THREE.Mesh {
     const dirty=this._indexDirty;dirty.start=Infinity;dirty.end=0;
     if (faces) {
       // Painted charts in visible tiles, still in source triangle order.
-      const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
+      const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible, single=this._faceSingleTile;
       let count = 0;
       // Most paint stamps append source-ordered charts without changing tile
       // visibility. Compare only that path; moving-camera rebuilds retain the
@@ -459,6 +482,17 @@ export class NativeInkMesh extends THREE.Mesh {
         while(word){
         const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
         if(face>=faces.length)continue;
+        const tile=single?.[face]??-1;
+        if(tile>=0){
+          if(!visible[tile])continue;
+          let start=starts[face]*3;const end=starts[face+1]*3;
+          if(dirty.start===Infinity){
+            while(start<end&&index[count]===start){count++;start++;}
+            if(start<end)dirty.start=count;
+          }
+          count=writeIdentityRange(index,count,start,end);
+          continue;
+        }
         for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
           if (!visible[tileOf[tri]]) continue;
           const i = tri * 3;
@@ -477,6 +511,11 @@ export class NativeInkMesh extends THREE.Mesh {
         while(word){
         const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
         if(face>=faces.length)continue;
+        const tile=single?.[face]??-1;
+        if(tile>=0){
+          if(visible[tile])count=writeIdentityRange(index,count,starts[face]*3,starts[face+1]*3);
+          continue;
+        }
         for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
           if (!visible[tileOf[tri]]) continue;
           const i = tri * 3;
