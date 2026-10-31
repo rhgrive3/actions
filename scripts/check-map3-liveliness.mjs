@@ -208,11 +208,20 @@ try {
     assert.ok(!opening.phase && opening.grounded && opening.supported, `${stage}: native opening must land before art capture`);
     const state = await page.evaluate(() => {
       const G = __G, game = G.game, art = game.decor.stageArt;
+      const waterEdges = game.fxHooks?.edges || [], waterY = G.level.layout.map3.waterY;
       return { stage:G.level.layout.id, state:game.match.state, mode:game.match.mode,
         art:art?.stats, artRecords:art?.group.userData.map3Art.records.length,
-        levelBlocks:G.level.blocks.length, paintCells:G.paint.grid.length, turfArea:G.paint.turfArea };
+        levelBlocks:G.level.blocks.length, paintCells:G.paint.grid.length, turfArea:G.paint.turfArea,
+        builtSpace:!!G.level.layout.map3Playable,
+        seaSprayCandidates:waterEdges.length,
+        coveredSeaSprayCandidates:waterEdges.filter(e => G.level.groundHeight(e.x, e.z) > waterY ||
+          G.level.groundHeight(e.x + e.nx * .55, e.z + e.nz * .55) > waterY).length };
     });
     assert.equal(state.stage, stage); assert.equal(state.state, 'playing'); assert.ok(state.art);
+    if (state.builtSpace) {
+      assert.ok(state.seaSprayCandidates > 0, 'Open-water ambient spray remains active');
+      assert.equal(state.coveredSeaSprayCandidates, 0, 'No sea spray may originate beneath dry streets or ramps');
+    }
     result.stages = result.stages.filter(item => item.stage !== stage);
     result.stages.push({ ...state, opening }); save();
     for (const view of VIEWS[stage]) if (!onlyView || view.id === onlyView) await capture(stage, view);

@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "baselineHead": "d57ec104668ea38af760cb0569ef326f5d585fa8",
+  "methodology": {
+    "units": "WU; no SI calibration",
+    "gridStep": 0.25,
+    "sampleOffset": 0.125,
+    "coverage": "Union of all floor and ramp authored XZ rectangles within stage bounds. Includes upper/lower footprint overlap once, and includes grate footprints. Ignores wall tops; coverage is not usable-floor area or turf/scoring area.",
+    "water": "Bounds rectangle minus the floor/ramp XZ union; a geometry footprint proxy, not measured visible water pixels.",
+    "spawn": "Minimum horizontal distance between either spawn center and every new floor/ramp/wall footprint. This does not prove every combat or super-jump outcome."
+  },
+  "stages": {
+    "tidewater": {
+      "boundsArea": 12096,
+      "coverageBefore": 8104,
+      "coverageAfter": 9512,
+      "addedCoverage": 1408,
+      "waterFootprintBefore": 3992,
+      "waterFootprintAfter": 2584,
+      "waterFootprintReductionPercent": 35.27054108216433,
+      "addedFloors": 22,
+      "addedRamps": 4,
+      "addedWalls": 18,
+      "addedRoutes": 8,
+      "wallHeightRange": [
+        3.3999999999999995,
+        5.2
+      ],
+      "nearestNewGeometryToSpawn": {
+        "distance": 8.06225774829855,
+        "record": "A_market_rear_west",
+        "spawn": "A"
+      },
+      "spawnBarrierRadius": 4.2,
+      "preservedOpenWaterProbe": [
+        40,
+        1,
+        0
+      ]
+    },
+    "kelpline": {
+      "boundsArea": 12672,
+      "coverageBefore": 9032,
+      "coverageAfter": 9656,
+      "addedCoverage": 624,
+      "waterFootprintBefore": 3640,
+      "waterFootprintAfter": 3016,
+      "waterFootprintReductionPercent": 17.142857142857142,
+      "addedFloors": 16,
+      "addedRamps": 6,
+      "addedWalls": 18,
+      "addedRoutes": 4,
+      "wallHeightRange": [
+        3,
+        5.4
+      ],
+      "nearestNewGeometryToSpawn": {
+        "distance": 19.697715603592208,
+        "record": "A_concourse_approach_east",
+        "spawn": "A"
+      },
+      "spawnBarrierRadius": 4.2,
+      "preservedOpenWaterProbe": [
+        43,
+        1,
+        0
+      ]
+    }
+  },
+  "localVerification": {
+    "scope": "Composed Actor/Level/Physics fixtures and CPU geometry; not browser or physical device evidence",
+    "existingRoutes": 26,
+    "newRoutes": 12,
+    "existingMovementTraversals": 228,
+    "newMovementTraversals": 108,
+    "frequenciesHz": [
+      30,
+      60,
+      120
+    ],
+    "movementModes": [
+      "walk",
+      "swim",
+      "fire"
+    ],
+    "existingSimulationTicks": 224532,
+    "newSimulationTicks": 41364,
+    "newMaximumWaypointHeightError": 0.0528,
+    "existingAStarQueries": 848,
+    "newAStarQueries": 152,
+    "existingCameraScenarios": 54,
+    "existingCameraSolidIntersections": 0,
+    "realGrateLandings": 12,
+    "realWaterDeaths": 6,
+    "terrainAndGameplaySubtestsPassed": 11,
+    "structureSubtestsPassed": 2
+  },
+  "sourceSha256": {
+    "inkwave-public/src/world/stages/map3-architecture.js": "05c3326ffa1de3d7b9567eee9ea44e895aca08b9be244f3fde53159163d7109f",
+    "inkwave-public/src/world/stages/map3-layout.js": "5138061ff88fe2365f89d74181d36355944f15fd2008b248dbd20620248a84dc"
+  }
+}
