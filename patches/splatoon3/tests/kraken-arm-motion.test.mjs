@@ -1,3 +1,5 @@
+// Both source and emitted special-fidelity CI already invoke this entry.
+import './kraken-body-spin.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
