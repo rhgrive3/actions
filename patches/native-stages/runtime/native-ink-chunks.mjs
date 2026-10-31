@@ -29,23 +29,34 @@ function publishIndexRange(attribute, dirty, count) {
 export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,boundsOnly=false){return consumeNativeWork(partitionNativeInkSteps(geometry,tileSize,triangleTile,boundsOnly));}
 function* partitionNativeInkSteps(geometry,tileSize=16,triangleTile=null,boundsOnly=false){
  if(!Number.isFinite(tileSize)||tileSize<=0)throw new RangeError('Invalid native ink tile size');
- const p=geometry.getAttribute('position'),groups=[],columns=new Map(),point=new THREE.Vector3();
+ const p=geometry.getAttribute('position'),groups=new Map();
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
  // The in-game mesh needs just the tile mapping and bounds, not index arrays.
  const direct=triangleTile!==null;
  if(direct&&(!(triangleTile instanceof Uint32Array)||triangleTile.length!==p.count/3))throw new TypeError('Invalid native ink triangle-tile output');
+ const proto=p.isInterleavedBufferAttribute?THREE.InterleavedBufferAttribute.prototype:THREE.BufferAttribute.prototype;
+ const raw=!p.normalized&&!p.isFloat16BufferAttribute&&ArrayBuffer.isView(p.array)&&
+  p.getX===proto.getX&&p.getY===proto.getY&&p.getZ===proto.getZ;
+ const array=raw?p.array:null,stride=p.isInterleavedBufferAttribute?p.data.stride:p.itemSize,offset=p.isInterleavedBufferAttribute?p.offset:0;
  for(let i=0;i<p.count;i+=3){
   if(i&&i%768===0)yield;
-  const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3;
-  const ix=Math.floor(x/tileSize),iy=Math.floor(y/tileSize),iz=Math.floor(z/tileSize);
-  let column=columns.get(ix);if(!column)columns.set(ix,column=new Map());
-  let row=column.get(iy);if(!row)column.set(iy,row=new Map());
-  let g=row.get(iz);
-  if(!g){g={key:ix+','+iy+','+iz,indices:direct?null:[],bounds:new THREE.Box3(),tile:groups.length};row.set(iz,g);groups.push(g);}
+  const ia=i*stride+offset,ib=ia+stride,ic=ib+stride;
+  const ax=raw?array[ia]:p.getX(i),ay=raw?array[ia+1]:p.getY(i),az=raw?array[ia+2]:p.getZ(i);
+  const bx=raw?array[ib]:p.getX(i+1),by=raw?array[ib+1]:p.getY(i+1),bz=raw?array[ib+2]:p.getZ(i+1);
+  const cx=raw?array[ic]:p.getX(i+2),cy=raw?array[ic+1]:p.getY(i+2),cz=raw?array[ic+2]:p.getZ(i+2);
+  const tx=Math.floor(((ax+bx+cx)/3)/tileSize),ty=Math.floor(((ay+by+cy)/3)/tileSize),tz=Math.floor(((az+bz+cz)/3)/tileSize);
+  const key=tx>=-512&&tx<512&&ty>=-512&&ty<512&&tz>=-512&&tz<512
+   ?(tx+512)|((ty+512)<<10)|((tz+512)<<20):tx+','+ty+','+tz;
+  // Only diagnostic tile metadata needs a string; do not allocate one per
+  // triangle. Keep the public nativeTile value and the original centroid math.
+  let g=groups.get(key);if(!g){g={key:tx+','+ty+','+tz,indices:direct?null:[],bounds:new THREE.Box3(),tile:groups.size};groups.set(key,g);}
   if(direct)triangleTile[i/3]=g.tile;
-  for(let j=i;j<i+3;j++){if(!direct)g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
+  else g.indices.push(i,i+1,i+2);
+  const {min,max}=g.bounds;
+  min.x=Math.min(min.x,ax,bx,cx);min.y=Math.min(min.y,ay,by,cy);min.z=Math.min(min.z,az,bz,cz);
+  max.x=Math.max(max.x,ax,bx,cx);max.y=Math.max(max.y,ay,by,cy);max.z=Math.max(max.z,az,bz,cz);
  }
- return groups.map(({key,indices,bounds})=>{
+ return [...groups.values()].map(({key,indices,bounds})=>{
   // Runtime tiles are culling metadata, never drawables. Public partitions
   // retain BufferGeometry ownership and their existing shared attributes.
   const g=boundsOnly&&direct?{userData:{}}:new THREE.BufferGeometry();

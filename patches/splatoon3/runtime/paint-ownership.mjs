@@ -212,7 +212,8 @@ function pointInsideAncillary(mask, x, y, seed, p) {
     const along = px * mask.sdu + py * mask.sdv;
     const scale = along > 0 ? 1 + mask.sa : 1 + 0.25 * mask.sa;
     const perpX = px - along * mask.sdu, perpY = py - along * mask.sdv;
-    px = perpX + mask.sdu * (along / scale); py = perpY + mask.sdv * (along / scale);
+    const stretchedAlong = along / scale;
+    px = perpX + mask.sdu * stretchedAlong; py = perpY + mask.sdv * stretchedAlong;
   }
   const sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
   if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) return false;
@@ -261,6 +262,11 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
     dotWitness[0] = cx; dotWitness[1] = cy; return dotWitness;
   }
   const radHi = radius * (1 + 1e-5) + 1e-8, radHiSq = radHi * radHi;
+  // These affine factors belong to the piece, not to a rectangle edge. Keep
+  // the original division and subtraction order at ownership boundaries.
+  const frontInv = stretched ? 1 / (1 + mask.sa) : 1;
+  const backInv = stretched ? 1 / (1 + mask.sa * 0.25) : 1;
+  const ellipseScale = piece.type === 2 ? 1 / piece.el - 1 : 0;
   for (let side = 0; side < 4; side++) {
     const ax = side === 0 || side === 3 ? x0 : x1, ay = side < 2 ? y0 : y1;
     const bx = side < 2 ? x1 : x0, by = side === 0 || side === 3 ? y0 : y1;
@@ -273,7 +279,7 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
         if (a < 0) lo = a / (a - b);
         if (b < 0) hi = a / (a - b);
       }
-      const invScale = stretched ? 1 / (1 + mask.sa * (branch ? 1 : 0.25)) : 1;
+      const invScale = branch ? frontInv : backInv;
       let qx = ax + (bx - ax) * lo, qy = ay + (by - ay) * lo;
       let vx = (bx - ax) * (hi - lo), vy = (by - ay) * (hi - lo);
       let a = qx * du + qy * dv, b = vx * du + vy * dv;
@@ -281,8 +287,8 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
       vx += du * b * (invScale - 1); vy += dv * b * (invScale - 1);
       qx -= piece.x; qy -= piece.y;
       if (piece.type === 2) {
-        a = (qx * piece.ux + qy * piece.uy) * (1 / piece.el - 1);
-        b = (vx * piece.ux + vy * piece.uy) * (1 / piece.el - 1);
+        a = (qx * piece.ux + qy * piece.uy) * ellipseScale;
+        b = (vx * piece.ux + vy * piece.uy) * ellipseScale;
         qx += piece.ux * a; qy += piece.uy * a;
         vx += piece.ux * b; vy += piece.uy * b;
       }
@@ -701,9 +707,18 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     const j0 = Math.max(0, Math.floor(Math.max(0, v0) / face.cv));
     const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
     let scratch = this._paintOrderRunScratch, runCount = 0;
+    // Only rectangles from the immediately preceding row can extend into
+    // this row. Their x intervals are sorted; merge with a linear cursor.
+    // A reverse scan of all output rectangles is both quadratic and wrong
+    // when a newer, already-ended rectangle hides an older continuing one.
+    const capacity = Math.max(1, Math.ceil((i1 - i0 + 1) / 2));
+    if (!this._paintOrderRunRows || this._paintOrderRunRows[0].length < capacity) {
+      this._paintOrderRunRows = [new Uint32Array(capacity), new Uint32Array(capacity)];
+    }
+    let previous = this._paintOrderRunRows[0], current = this._paintOrderRunRows[1], previousCount = 0;
     for (let j = j0; j <= j1; j++) {
       const row = face.grid + j * face.nu, owners = this._paintOwnershipOrder;
-      let i = i0;
+      let i = i0, previousCursor = 0, currentCount = 0;
       while (i <= i1) {
         while (i <= i1 && owners[row + i] !== orderId) i++;
         if (i > i1) break;
@@ -717,6 +732,13 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
         if (j === 0) y0 = Math.max(v0, -padM);
         if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
         if (x1 > x0 && y1 > y0) {
+          while (previousCursor < previousCount && scratch[previous[previousCursor]] < x0) previousCursor++;
+          const prior = previousCursor < previousCount ? previous[previousCursor] : -1;
+          if (prior >= 0 && scratch[prior] === x0 && scratch[prior + 1] === x1 && scratch[prior + 3] === y0) {
+            scratch[prior + 3] = y1;
+            current[currentCount++] = prior;
+            continue;
+          }
           const offset = runCount * 4;
           if (offset + 4 > scratch.length) {
             const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
@@ -724,9 +746,11 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
           }
           scratch[offset] = x0; scratch[offset + 1] = x1;
           scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+          current[currentCount++] = offset;
           runCount++;
         }
       }
+      const swap = previous; previous = current; current = swap; previousCount = currentCount;
     }
     return runCount;
   };
@@ -807,6 +831,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._paintOwnershipOrder = null;
     this._paintOrderRecords = null;
     this._paintOrderIds = null;
+    this._paintOrderRunRows = null;
     return result;
   };
   Object.defineProperty(proto, INSTALLED, { value: true });
