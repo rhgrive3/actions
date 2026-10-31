@@ -53,7 +53,9 @@ test('gate HMAC cannot be forged, replayed on another host or used after expiry'
   assert.equal(await verifyGameGateCookie(cookie, host, env().BOT_GATE_HMAC_KEY, now + 1000), true);
   assert.equal(await verifyGameGateCookie(cookie, 'other.example', env().BOT_GATE_HMAC_KEY, now + 1000), false);
   assert.equal(await verifyGameGateCookie(cookie, host, env().BOT_GATE_HMAC_KEY, now + 12 * 60 * 60 * 1000), false);
-  assert.equal(await verifyGameGateCookie(cookie.slice(0, -1) + (cookie.at(-1) === 'A' ? 'B' : 'A'),
+  const fields = cookie.split('.');
+  const forgedMac = (fields[2][0] === 'A' ? 'B' : 'A') + fields[2].slice(1);
+  assert.equal(await verifyGameGateCookie(fields[0] + '.' + fields[1] + '.' + forgedMac,
     host, env().BOT_GATE_HMAC_KEY, now + 1000), false);
 });
 
@@ -115,7 +117,11 @@ test('server-side Turnstile proof issues a signed session and unlocks assets', a
     globalThis.fetch = async () => new Response(JSON.stringify({
       success: true, hostname: 'wrong-host.example', action: 'inkwave_access'
     }), { status: 200 });
-    const rejected = await serveGameWithBotGate(request.clone(), settings);
+    const rejected = await serveGameWithBotGate(new Request(origin + '/__inkwave-access/verify', {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cf-turnstile-response=test-token',
+    }), settings);
     assert.equal(rejected.status, 403);
   } finally {
     globalThis.fetch = originalFetch;
