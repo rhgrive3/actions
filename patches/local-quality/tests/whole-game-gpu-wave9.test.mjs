@@ -95,7 +95,7 @@ const WAVE9_10_11_GPU_TARGETS = [
     'float tgX = vIwUv.x / 0.12;',
     'if (r > 0.006) {',
     'if (crLod > 0.0) iwH += iwTeeCrease(p, th) * crLod;',
-    'float groove = (gb2 * gb2 * gb2) * crown;',
+    'float groove = (gb2 * gb2) * crown;',
     'float dl = length(dv) - L.z * (1.0 + 0.9 * (lc2 * lc2 * lc0));',
     'if (vIwPos.z < 0.0 && abs(vIwPos.y) <= 0.0745) {',
     'float fres = fr0 * fr0 * fr0;',
@@ -325,12 +325,24 @@ const REVIEW_DRIFT_CASES = [
   ['src/world/paint.js', 'float tsp = 1.0 - tns * tns * tns;', 'GPU-PNT1c'],
   ['src/game/character-mats.js', 'float back = bk0 * bk0 * sqrt(bk0);', 'GPU-CHR-02b'],
   ['src/game/character-mats.js', 'mix(0.9, 1.08, fib)', 'GPU-CHR-02d'],
+  ['src/game/character-mats.js', 'float groove = (gb2 * gb2) * crown;', 'GPU-CHR-03i'],
   ['src/fx/fx.js', 'tr0 * sqrt(tr0)', 'GPU-FX1'],
   ['src/fx/fx.js', 'if (vCol.a < 0.004 || r >= 1.18) discard;', 'GPU-FX-02a'],
   ['src/fx/fx.js', 'float fill = ivT4 * 0.45', 'GPU-FX3a'],
   ['src/fx/fx.js', 'rSun > 0.0 ? pow(rSun, 70.0) * 3.2 : 0.0', 'GPU-FX4'],
   ['src/fx/fx.js', 'float fwd = fw2 * fw2;', 'GPU-FX5b'],
 ];
+
+test('scalp groove optimization supports both reviewed exponents and rejects unknown ones', () => {
+  const rel = 'src/game/character-mats.js';
+  const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+  const groove = 'float groove = pow(1.0 - abs(bundles), 4.0) * crown;';
+  assert.ok(raw.includes(groove));
+  const oldRaw = raw.replace(groove, groove.replace('4.0', '6.0'));
+  assert.ok(adaptCombatWave345(rel, oldRaw, replaceOnce).includes('float groove = (gb2 * gb2 * gb2) * crown;'));
+  const unknown = raw.replace(groove, groove.replace('4.0', '5.0'));
+  assert.throws(() => adaptCombatWave345(rel, unknown, replaceOnce), /GPU-CHR-03i/);
+});
 
 test('every reported raw/composed collision rejects mutated production algebra instead of skipping it', () => {
   const built = new Map();
