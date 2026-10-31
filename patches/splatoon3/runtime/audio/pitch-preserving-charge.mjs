@@ -10,6 +10,7 @@
  */
 
 import { audioWorkerDeadline } from './worker-deadline.mjs';
+import { isFinitePCM, hasFiniteAudioBufferPCM } from './finite-pcm.mjs';
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 export const CHARGE_REFERENCE_SECONDS = 1; // legacy/base Splat Charger gameplay clock
 export const CHARGE_SPEED_LIMITS = Object.freeze({ minRatio: .30, maxRatio: 1.65 });
@@ -32,7 +33,7 @@ export function chargerOnsetRatio(chargeTime) {
  */
 export function stretchChargerPCM(channels, sampleRate, ratio) {
   if (!Array.isArray(channels) || !channels.length || channels.length > 2 ||
-      channels.some(a => !(a instanceof Float32Array) || a.length !== channels[0].length) ||
+      channels.some(a => !isFinitePCM(a) || a.length !== channels[0].length) ||
       !Number.isFinite(sampleRate) || sampleRate < 8000 || sampleRate > 192000 ||
       !Number.isFinite(ratio) || ratio < CHARGE_SPEED_LIMITS.minRatio || ratio > CHARGE_SPEED_LIMITS.maxRatio) {
     throw new RangeError('Invalid Charger time stretch arguments');
@@ -148,6 +149,7 @@ export class PitchPreservingChargeCache {
     if (old?.source === source) return true;
     if (this.pending.get(spec.key)?.source === source) return true;
     if (this.pending.size >= 4 || this.unavailable || Date.now() < this.retryAfter) return false;
+    if (!hasFiniteAudioBufferPCM(source)) return false;
     if (!this.worker) {
       try {
         if (!this.workerFactory && typeof Worker === 'undefined') return false;
@@ -200,7 +202,7 @@ export class PitchPreservingChargeCache {
     this._retireIdleWorker();
     const samples = data.samples;
     if (!Array.isArray(samples) || samples.length !== job.source.numberOfChannels ||
-        samples.some(ch => !(ch instanceof Float32Array) || ch.length < 1 || ch.length > this.ctx.sampleRate * 5) ||
+        samples.some(ch => !(ch instanceof Float32Array) || ch.length > this.ctx.sampleRate * 5 || !isFinitePCM(ch)) ||
         samples.some(ch => ch.length !== samples[0].length) ||
         this.ctx.state === 'closed' || this.ctx.sampleRate !== job.source.sampleRate) return;
     const bytes = samples[0].byteLength * samples.length;

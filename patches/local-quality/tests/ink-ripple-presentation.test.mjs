@@ -33,8 +33,16 @@ test('empty table has zero Vector4 writes; full-table fallback remains byte/orde
  for(let i=0;i<120;i++)after.inkBeforeRender(b,p);assert.equal(writes,0);assert.equal(b.uRipActiveCount.value,0);
  p.clock=1.2;for(let i=0;i<96;i++){p.rip[i]=i*.01;p.ripP[i]=i*.02;}before.inkBeforeRender(a,p);after.inkBeforeRender(fallback,p);assert.deepEqual(rows(fallback),rows(a));assert.equal(fallback.uRipActiveCount.value,24);
 });
-test('GLSL retains every original ripple arithmetic statement and supports an actual full-table material variant',()=>{
- const full=after.INK_SLOPE.replace(/#ifndef INK_RIPPLE_FULL_TABLE\n[\s\S]*?#endif\n/g,'');assert.equal(full,before.INK_SLOPE);assert.match(after.INK_SLOPE,/if \(i >= uRipActiveCount\) break/);
+test('GLSL retains every original ripple arithmetic statement after the derivative scope repair and supports an actual full-table material variant',()=>{
+ const full=after.INK_SLOPE.replace(/#ifndef INK_RIPPLE_FULL_TABLE\n[\s\S]*?#endif\n/g,'');
+ // Preserve the frozen arithmetic oracle. Reverse only the independently
+ // reviewed footprint relocation; missing/duplicate declarations fail closed.
+ const hoisted='  // Keep the pixel footprint outside every spatial ripple/coverage branch.\n  float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));\n';
+ const clamp='    if (rl > 0.75) rS *= 0.75 / rl;';
+ const frozenLayout=once(once(full,hoisted,''),clamp,clamp+'\n    float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));');
+ assert.equal(frozenLayout,before.INK_SLOPE);
+ assert.ok(full.indexOf('fwidth(vWPos)')<full.indexOf('if (gInk > 0.01)'));
+ assert.match(after.INK_SLOPE,/if \(i >= uRipActiveCount\) break/);
  let source=fs.readFileSync(new URL('../../../inkwave-public/src/world/levelMaterial.js',import.meta.url),'utf8');source=adaptInkRipplePresentation('src/world/levelMaterial.js',source,once);
  const names=Object.keys(after),factory=new Function('THREE','TEXLIB_GLSL','STAGE_SURFACES','FIRST_STAGE_SLOT','LAST_STAGE_SLOT','G',...names,source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+';return createLevelMaterial;')(THREE,'',[],28,28,{},...names.map(k=>after[k]));
  for(const packed of [true,false]){const mat=factory(null,1024,null,{ripplePacking:packed});assert.equal(mat.userData.uniforms.uRipActiveCount.packed,packed);assert.equal(!!mat.defines?.INK_RIPPLE_FULL_TABLE,!packed);const sh={uniforms:{},vertexShader:THREE.ShaderLib.physical.vertexShader,fragmentShader:THREE.ShaderLib.physical.fragmentShader};mat.onBeforeCompile(sh);assert.match(sh.fragmentShader,/uRipActiveCount/);mat.dispose();}

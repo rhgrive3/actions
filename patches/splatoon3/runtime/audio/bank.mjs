@@ -6,6 +6,7 @@ import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
 export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO});
 import { renderSound } from './render.mjs';
 import { audioWorkerDeadline } from './worker-deadline.mjs';
+import { isFinitePCM } from './finite-pcm.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
@@ -30,6 +31,7 @@ export class WeaponSoundBank {
   }
   _store(key,pcm){
     const found=this.cache.get(key);if(found)return found.buffer;
+    if(!isFinitePCM(pcm))throw new RangeError('Invalid or non-finite authored PCM');
     const buffer=this.ctx.createBuffer(1,pcm.length,this.ctx.sampleRate);buffer.getChannelData(0).set(pcm);
     const bytes=pcm.byteLength;while(this.bytes+bytes>this.maxBytes&&this.cache.size){const first=this.cache.keys().next().value;this.bytes-=this.cache.get(first).bytes;this.cache.delete(first);if(this._proceduralMruKey===first)this._proceduralMruKey=null;this.evicted++;}
     if(bytes<=this.maxBytes){this.cache.set(key,{buffer,bytes});this._proceduralMruKey=key;this.bytes+=bytes;}return buffer;

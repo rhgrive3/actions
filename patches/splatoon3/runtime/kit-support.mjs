@@ -12,9 +12,16 @@ import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge, cl
 import { installCoolerCollision } from './support-cooler-collision.mjs';
 import { cancelStormPendingInput } from './storm-effects.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
+import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
+import { segmentCapsuleEntry } from './projectile-collision.mjs';
+import { resolveSubForThrow } from './kit-subs.mjs';
+import { drawSubTrajectory } from './sub-trajectory-preview.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
+// Existing INKWAVE flight calibration. The pinned Sensor table does not
+// establish this gravity; do not replace it with Splat Bomb's sourced value.
+const SENSOR_GRAVITY = 24;
 const aliveInMatch = G => !!G.match?.range || G.match?.state === 'playing' || G.match?.playing?.() === true;
 const life = a => Math.max(
   Number.isSafeInteger(a?.netLife) && a.netLife >= 0 ? a.netLife : 0,
@@ -118,7 +125,7 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
 }
 function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, record = null) {
   const pos = record ? new THREE.Vector3(record[0],record[1],record[2]) :
-    owner.pos.clone().add(new THREE.Vector3(0,1.35,0));
+    bombPreviewPosition(owner,bombReleasePosition(owner,owner.pos.clone().add(new THREE.Vector3(0,1.35,0))));
   const vel = record ? new THREE.Vector3(record[3],record[4],record[5]) :
     projectile.throwVelocity(owner, pointSensorThrowSpeed(owner.s3?.abilityPoints?.subPower, gearCurve), new THREE.Vector3());
   if (!vec3(pos) || !vec3(vel)) return null;
@@ -184,33 +191,33 @@ function throwCooler(owner,projectile,G,THREE,Hit) {
   startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);
 }
 const SUPPORT_EMPTY_ROSTER = Object.freeze([]);
+function advanceSensorFlight(sensor,dt) {
+  sensor.age+=dt;sensor.prev.copy(sensor.pos);
+  sensor.vel.y-=SENSOR_GRAVITY*dt;sensor.pos.addScaledVector(sensor.vel,dt);
+}
+function sensorFlightContact(sensor,G,THREE,PLAYER) {
+  const hit=G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
+  const scratch=sensor.contactScratch ||= {delta:new THREE.Vector3(),base:new THREE.Vector3(),point:new THREE.Vector3()};
+  const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
+  let body=false,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
+  for(const actor of G.actors||SUPPORT_EMPTY_ROSTER) {
+    if(!actor.alive||actor.team===sensor.team)continue;
+    const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
+    const t=segmentCapsuleEntry(sensor.prev,sensor.pos,base,PLAYER.radius,
+      actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,PLAYER.radius+.2);
+    if(Number.isFinite(t)&&length*t<best){body=true;scratch.point.copy(sensor.prev).addScaledVector(delta,t);best=length*t;}
+  }
+  if(body){sensor.pos.copy(scratch.point);sensor.contactNormal?.set(0,1,0);return true;}
+  if(hit?.hit&&vec3(hit.point)){sensor.pos.copy(hit.point).addScaledVector(hit.normal,.03);sensor.contactNormal?.copy(hit.normal);return true;}
+  return false;
+}
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
-  if (!(dt>0) || !Number.isFinite(G.time)) return;
+  if (!(dt>0) || !Number.isFinite(dt) || !Number.isFinite(G.time)) return;
   const playing = aliveInMatch(G);
   for(const sensor of projectile._s3SupportSensors || SUPPORT_EMPTY_ROSTER) {
     if(sensor.activeAt===null) {
-      sensor.age+=dt;
-      sensor.prev.copy(sensor.pos);
-      sensor.vel.y-=24*dt;
-      sensor.pos.addScaledVector(sensor.vel,dt);
-      const hit = G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
-      const scratch=sensor.contactScratch ||= {delta:new THREE.Vector3(),base:new THREE.Vector3(),
-        point:new THREE.Vector3(),result:{t:0,dist:Infinity}};
-      const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
-      let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
-      const reach=PLAYER.radius+.2, minX=Math.min(sensor.prev.x,sensor.pos.x)-reach, maxX=Math.max(sensor.prev.x,sensor.pos.x)+reach,
-        minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach, maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach;
-      for(const actor of G.actors||SUPPORT_EMPTY_ROSTER){
-        if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
-        if(actor.pos.x<minX||actor.pos.x>maxX||actor.pos.z<minZ||actor.pos.z>maxZ)continue;
-        const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
-        const result=scratch.result;result.t=0;result.dist=Infinity;
-        Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);
-        if(result.dist<=PLAYER.radius+.2&&length*result.t<best){body=scratch.point.copy(sensor.prev).addScaledVector(delta,result.t);best=length*result.t;}
-      }
-      if(body || hit?.hit || sensor.age>=POINT_SENSOR.maxFlightSeconds) {
-        if(body)sensor.pos.copy(body);
-        else if(hit?.hit && vec3(hit.point)) sensor.pos.copy(hit.point).addScaledVector(hit.normal, .03);
+      advanceSensorFlight(sensor,dt);
+      if(sensorFlightContact(sensor,G,THREE,PLAYER)||sensor.age+TINY>=POINT_SENSOR.maxFlightSeconds) {
         sensor.activeAt=G.time;sensor.expires=G.time+POINT_SENSOR.areaSeconds;
       }
     }
@@ -268,7 +275,8 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   }
   for(const a of G.actors || SUPPORT_EMPTY_ROSTER) if(!a.remote) retireDrink(a,G.time);
 }
-export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
+export function installSupportGameplay(api) {
+  const { Actor, WeaponRunner, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER, SUB }=api;
   if (Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});
   const cancelInput=(actor,sub)=>{
@@ -296,6 +304,19 @@ export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMa
     const result=update.call(this,dt,...args);
     stepSupport(this,G,THREE,dt,Physics,PLAYER);
     return result;
+  };
+  const updateArc=Projectiles.prototype.updateArc;
+  Projectiles.prototype.updateArc=function(actor,show) {
+    if(!show||!actor?.alive||actor.weapon?.sub!=='pointSensor')return updateArc.call(this,actor,show);
+    return drawSubTrajectory(api,this,actor,s=>{
+      s.p.copy(actor.pos);s.p.y+=1.35;bombPreviewPosition(actor,bombReleasePosition(actor,s.p));
+      this.throwVelocity(actor,pointSensorThrowSpeed(actor.s3?.abilityPoints?.subPower,gearCurve),s.vel);
+      Object.assign(s.flight,{owner:actor,team:actor.team,age:0,pos:s.p,prev:s.prev,vel:s.vel,hit:s.hit,contactNormal:s.normal});
+      s.frames=POINT_SENSOR.maxFlightSeconds*60;s.timeoutContact=true;
+      s.inkCost=resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,SUB)?.inkCost;
+      s.advance=(state,dt)=>advanceSensorFlight(state.flight,dt);
+      s.contactAt=state=>sensorFlightContact(state.flight,G,THREE,PLAYER);
+    });
   };
   Projectiles.prototype.clear=function(...args) {
     for(const owner of new Set([...(G.actors||[]),...(this.clouds||[]).map(c=>c.owner),...(this.bombs||[]).map(b=>b.owner),...(this._s3SupportCoolerThrows||[]).map(d=>d.owner)]))clearSpecialGaugeLocks(owner,false);

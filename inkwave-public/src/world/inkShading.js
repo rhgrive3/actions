@@ -207,7 +207,7 @@ roughnessFactor = mix(gBaseRough, mix(0.26, 0.14, gFresh), gInk);`;
 // ---------------------------------------------------------------------------------------------------- normal
 // Inside levelMaterial's normal block before the face frame is built: adds the gel micro-surface to \`slope\`.
 export const INK_GEL = /* glsl */`
-  if (gInk > 0.01) {
+  {
     // gel micro-surface: broad soft swells (≈ 1.5 m) so the sun and sky reflections break into long wet lines, as on
     // Splatoon 3 turf, not a grainy sparkle. Read three mips coarser than the pixel footprint (only the swells survive;
     // fades to flat by itself at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and
@@ -215,9 +215,15 @@ export const INK_GEL = /* glsl */`
     vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.19, 0.09) : vec2(0.16));
     float fr2 = gFresh * gFresh;
     gp += vec2(uTime * 0.011, -uTime * 0.007) + fr2 * 0.022 * vec2(sin(uTime * 2.3), cos(uTime * 1.9));
+    // Derivatives must be evaluated before the per-fragment ink coverage gate.
+#ifdef USE_TEXLIB
+    vec2 gx = dFdx(gp) * 8.0, gy = dFdy(gp) * 8.0;
+#else
+    float gf = 1.0 - smoothstep(0.03, 0.12, length(fwidth(vWPos)));
+#endif
+    if (gInk > 0.01) {
 #ifdef USE_TEXLIB
     if (uGel >= 0.0) {
-      vec2 gx = dFdx(gp) * 8.0, gy = dFdy(gp) * 8.0;
       vec3 gn = textureGrad(tNormal, vec3(gp, uGel), gx, gy).xyz * 2.0 - 1.0;
       slope += -gn.xy / max(gn.z, 0.3) * (0.95 - 0.5 * gFresh) * 1.6 * gInk * gInkS;
     }
@@ -227,14 +233,16 @@ export const INK_GEL = /* glsl */`
       vec2 q = gp * 2.2;
       float hx = vnoise(q + vec2(e, 0.0)) - vnoise(q - vec2(e, 0.0));
       float hy = vnoise(q + vec2(0.0, e)) - vnoise(q - vec2(0.0, e));
-      float gf = 1.0 - smoothstep(0.03, 0.12, length(fwidth(vWPos)));
       slope += vec2(hx, hy) / (2.0 * e) * 0.035 * gf * gInk;
     }
 #endif
+    }
   }`;
 
 // After the swim wakes (T, Bt = the face's world tangent frame): expanding ripples in the ink surface.
 export const INK_SLOPE = /* glsl */`
+  // Keep the pixel footprint outside every spatial ripple/coverage branch.
+  float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));
   if (gInk > 0.01) {
     // ripples: a wave packet runs out from every impact / footstep / dive, thinning as it spreads; the crests catch
     // the light (glossier). Height field → analytic gradient in the face plane.
@@ -263,7 +271,6 @@ export const INK_SLOPE = /* glsl */`
     }
     float rl = length(rS);
     if (rl > 0.75) rS *= 0.75 / rl;
-    float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));
     slope += vec2(dot(rS, T), dot(rS, Bt)) * gInk * rFar;
     gWake = max(gWake, clamp(rG * 0.5, 0.0, 1.0) * gInk * rFar);
   }`;

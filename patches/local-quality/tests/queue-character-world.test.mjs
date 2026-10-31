@@ -93,7 +93,7 @@ test('GTAO resize is delegated to the composer at its effective pixel ratio', ()
   const resize=new Function('window','resizeBattleCamera','G','return function '+method(adaptBuildSource('src/core/renderer.js',read('src/core/renderer.js')),'resize'))({innerWidth:800,innerHeight:600},()=>{},{});
   for(const dpr of [.75,1,1.5,2]){
     const sizes=[],gtao={setSize:(w,h)=>sizes.push([w,h])};
-    const owner={_dpr:1,renderer:{setSize(){}},composer:{setSize:(w,h)=>gtao.setSize(w*dpr,h*dpr)},gtao,_fxaaTexel(){},grade:{uniforms:{uAspect:{}}}};
+    const owner={_dpr:1,renderer:{getPixelRatio:()=>dpr,setSize(){}},composer:{setSize:(w,h)=>gtao.setSize(w*dpr,h*dpr)},gtao,_fxaaTexel(){},grade:{uniforms:{uAspect:{}}}};
     resize.call(owner);assert.deepEqual(sizes,[[800*dpr,600*dpr]]);
   }
 });

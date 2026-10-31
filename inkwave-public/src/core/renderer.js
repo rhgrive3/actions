@@ -197,7 +197,9 @@ export class Renderer {
     const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
     const pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio, mobileCap) * this.dynScale;
     r.setPixelRatio(pr);
-    const w = window.innerWidth, h = window.innerHeight;
+    // Keep at least one physical pixel even at fractional quality/dynamic scale.
+    const minDimension = Math.max(1, Math.ceil(1 / pr));
+    const w = Math.max(minDimension, window.innerWidth), h = Math.max(minDimension, window.innerHeight);
     r.setSize(w, h);
     const samples = this.mobile.touch ? 0 : (q.msaa || 0);
     const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples });
@@ -289,6 +291,7 @@ export class Renderer {
     const pr = Math.min(window.devicePixelRatio || 1, this.q.pixelRatio, mobileCap) * s;
     this.renderer.setPixelRatio(pr);
     this.composer.setPixelRatio(pr);
+    this.resize(); // a tiny viewport may need a larger logical size at the new density
     this.composer.setSize(this._w, this._h);
     this._fxaaTexel(this._w, this._h, pr);
   }
@@ -297,18 +300,20 @@ export class Renderer {
   }
 
   resize() {
-    const w = window.innerWidth, h = window.innerHeight;
     const dpr = window.devicePixelRatio || 1;
-    if (w === this._w && h === this._h && dpr === this._dpr) return;
+    let pr = this.renderer.getPixelRatio();
     if (dpr !== this._dpr) {
       // A monitor/display-density change can leave CSS dimensions unchanged.
       // Preserve quality and dynamic-resolution limits while updating pixels.
       const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
-      const pr = Math.round(Math.min(dpr, this.q.pixelRatio, mobileCap) * (this.dynScale || 1) * 1e6) / 1e6;
-      if (pr !== this.renderer.getPixelRatio()) {
-        this.renderer.setPixelRatio(pr);
-        this.composer.setPixelRatio(pr);
-      }
+      pr = Math.round(Math.min(dpr, this.q.pixelRatio, mobileCap) * (this.dynScale || 1) * 1e6) / 1e6;
+    }
+    const minDimension = Math.max(1, Math.ceil(1 / pr));
+    const w = Math.max(minDimension, window.innerWidth), h = Math.max(minDimension, window.innerHeight);
+    if (w === this._w && h === this._h && dpr === this._dpr) return;
+    if (pr !== this.renderer.getPixelRatio()) {
+      this.renderer.setPixelRatio(pr);
+      this.composer.setPixelRatio(pr);
     }
     this._dpr = dpr;
     this._w = w; this._h = h;

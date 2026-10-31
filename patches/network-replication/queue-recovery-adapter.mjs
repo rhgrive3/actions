@@ -47,7 +47,15 @@ export function adaptQueuedBugRecovery(rel, input, once) {
     code = code.split(oldLoop).join("settleProgression(p, PROGRESSION);");
   }
   if (rel === 'src/net/session.js') {
-    code = "import { validStartRoster } from '../../patches/network-replication/queue-recovery.mjs';\n" + code;
+    code = "import { normalizeQueueProfile, validStartRoster } from '../../patches/network-replication/queue-recovery.mjs';\n" + code;
+    patch("    const p = G.game?.profile || {};",
+      "    const p = normalizeQueueProfile(G.game?.profile || {}, WEAPONS);",
+      'outgoing profile repairs saved or subsequently changed identity');
+    patch("  _blankLobby() {\n    const g = G.game;",
+      "  _blankLobby() {\n    const g = G.game;\n    const savedDuration = g?.settings?.matchLength;\n    const duration = typeof savedDuration === 'number' && Number.isFinite(savedDuration) && savedDuration > 0 && savedDuration <= 86400 ? savedDuration : MATCH.defaultDuration;\n    const savedDifficulty = g?.settings?.difficulty;\n    const difficulty = ['easy', 'normal', 'hard'].includes(savedDifficulty) ? savedDifficulty : 'normal';",
+      'local lobby preferences satisfy the existing wire admission');
+    patch("duration: g?.settings?.matchLength || MATCH.defaultDuration", "duration", 'finite saved lobby duration');
+    patch("difficulty: g?.settings?.difficulty || 'normal'", "difficulty", 'known saved lobby difficulty');
     // The reliability net layer has already inserted its room-attempt / transport
     // guard before this adapter runs. Validate before *any* state or timer mutation.
     patch("  async _begin(cfg) {\n",

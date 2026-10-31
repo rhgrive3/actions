@@ -10,7 +10,7 @@ function mock({duration=1.82857}={}){
  const sources=[],connections=[],decoded=[],fetches=[];
  const ctx={
    sampleRate:44100,currentTime:2,
-   async decodeAudioData(bytes){decoded.push(bytes.byteLength);return{duration,sampleRate:44100,numberOfChannels:2};},
+   async decodeAudioData(bytes){decoded.push(bytes.byteLength);const length=Math.round(duration*44100);return{duration,sampleRate:44100,numberOfChannels:2,length,getChannelData:()=>new Float32Array(length)};},
    createBufferSource(){
      const x={playbackRate:{value:0},loop:true,connect:to=>connections.push(['source',to]),
        start(when,offset,span){x.started={when,offset,span};},

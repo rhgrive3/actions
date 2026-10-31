@@ -1,5 +1,6 @@
 import { readEncodedAudioResponse } from './encoded-response.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
+import { hasFiniteAudioBufferPCM } from './finite-pcm.mjs';
 /**
  * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
  * Replacement is transactional: an in-progress download NEVER changes the live bank.
@@ -240,7 +241,7 @@ export class AuthorizedSamplePack {
           scope.check();
           if(!current())throw cancelled;
           if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
-             !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
+             !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8||!hasFiniteAudioBufferPCM(pcm))
             throw new Error('Invalid decoded sample');
           return pcm;
         }));
