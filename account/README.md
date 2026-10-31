@@ -70,6 +70,10 @@ API のテスト：
 npm run test:account
 ```
 
+Workers Static Assets の配信ヘッダー・キャッシュ・開発用ファイルの非公開を workerd で確認する場合は、`account/` で依存をインストールして `npm run test:assets` を実行します。最小の配信 fixture を使う統合試験です。
+
+実ブラウザで外部オリジンからの素材利用・埋め込み拒否と同一オリジンのオフライン表示を確認するには、ルートの Playwright と Chromium を用意して `node account/tests/workers-assets.browser.mjs` を実行します。システムの Chromium を使う場合は `CHROMIUM_PATH=/usr/bin/chromium` などを指定できます。
+
 ## 本番ビルド
 
 ```sh
@@ -85,6 +89,18 @@ node scripts/check-inkwave-startup-budget.mjs dist
 3. `dist/_headers` を書き出す。`_versions/*` は 1 年間の不変キャッシュ、`index.html` と `sw.js` は毎回再検証
 
 ゲーム本体のモジュールは、これまでどおり既存のパイプライン（パッチ適用、ファイルごとの最小化、modulepreload、オフライン用 Service Worker）で処理します。ゲームの読み込み時間を短くしている主な要素は、内容が変わらないファイルをブラウザと Cloudflare のエッジに長期キャッシュさせる設定です。
+
+### 軽量な無断流用対策
+
+本番ビルドは Workers Static Assets の `_headers` / `.assetsignore` に次の制限を出力します。ゲームへの追加 JS、定期監視、追加認証はありません。
+
+- `Cross-Origin-Resource-Policy: same-origin`：別オリジンのサイトが公式配信の画像・音声・classic script などを `no-cors` で直接利用することをブラウザ側で拒否します。ES modules と通常のクロスオリジン fetch は従来どおり CORS の制限を受けます。公式オリジンの素材を参照するだけのコピーサイトは、自前で素材も配信する必要があります。
+- `Content-Security-Policy: frame-ancestors 'self'` と `X-Frame-Options: SAMEORIGIN`：外部サイトからゲームを iframe などに埋め込むことを拒否します。この HTTP CSP は埋め込み元だけを制限し、既存 HTML の script 制限に追加して適用されます。
+- ソースマップ（`**/*.map`）、`.git` ディレクトリ、`.env` / `.env.*` はデプロイ対象から除外します。アカウント UI もソースマップを生成しません。ビルド検証に必要な `inkwave-build.json` は引き続き公開します。
+
+これらは公式サーバーへのただ乗りと開発用ファイルの公開を抑える対策です。ブラウザに渡す JS・素材の保存や、一式を別サーバーにコピーして改造することは防げません。公開 GitHub リポジトリからのソース取得も対象外です。F12 の追加妨害やプレイヤーのデータを壊す処理は行いません。
+
+`_headers` は Workers Static Assets の配信に適用されます。`/api/*` の Worker 応答には適用されず、別 CDN を使う場合はその配信元にも設定が必要です。公式アセットを別オリジンから直接利用する正規のクライアントがある場合も、この制限の影響を受けます。
 
 `INKWAVE_ACCOUNT_BUILD` を指定しない `npm run build`（GitHub Pages 用）の出力は、これまでと同じです。
 
