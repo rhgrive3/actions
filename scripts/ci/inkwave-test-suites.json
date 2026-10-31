@@ -46,6 +46,8 @@
           "scripts/tests/inkwave-character-visual-stability.test.mjs",
           "scripts/tests/inkwave-fx-shader-stability.test.mjs",
           "patches/local-quality/tests/menu-card-layout.test.mjs",
+          "patches/local-quality/tests/title-demo-budget.test.mjs",
+          "patches/local-quality/tests/title-presentation.test.mjs",
           "patches/local-quality/tests/reviewed-wave67-fx-stability-compatibility.test.mjs",
           "patches/splatoon3/tests/special-vfx-cylinder-seam.test.mjs",
           "scripts/tests/inkwave-boss-processing.test.mjs",
