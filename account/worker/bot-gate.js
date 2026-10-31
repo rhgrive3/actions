@@ -1,3 +1,4 @@
+import { classifyInkwaveBrowser, INKWAVE_UNSUPPORTED_BROWSER_HTML } from '../../scripts/lib/inkwave-browser-policy.mjs';
 // Optional edge entry gate for ZEVANT/INKWAVE static game assets.
 // Configure BOT_GATE_ENABLED, BOT_GATE_HMAC_KEY and Turnstile keys before enabling.
 // This is bot deterrence, not DRM: an authorized browser can save received bytes.
@@ -101,6 +102,19 @@ async function verifyTurnstile(token, request, env, host) {
 export async function serveGameWithBotGate(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
+  if (env.BROWSER_ALLOWLIST_ENABLED === 'true' &&
+      classifyInkwaveBrowser(request.headers.get('User-Agent')) === 'blocked') {
+    // Browser family filtering is only a UA-based deterrent. Do not mistakenly
+    // treat it as proof that requests come from an unmodified browser.
+    const navigation = path === '/' || path === '/index.html' || path === ACCESS_PAGE;
+    return textResponse(request.method === 'HEAD' ? null :
+      navigation ? INKWAVE_UNSUPPORTED_BROWSER_HTML : 'Safari/Chrome/WebApp required', 403,
+      navigation ? {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'",
+        'X-Frame-Options': 'DENY'
+      } : { 'Content-Type': 'text/plain; charset=utf-8' });
+  }
   if (env.BOT_GATE_ENABLED !== 'true') {
     if (path === ACCESS_PAGE || path === VERIFY_PATH) return textResponse('Not found', 404);
     return env.ASSETS?.fetch(request) || textResponse('Not found', 404);
