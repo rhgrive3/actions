@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {geometryFixture} from './geometry-build-fixture.mjs';
-import {baseline,raw,composed,declaration,restore,sameGeometry} from './queue-visual-world-20261031.helper.mjs';
+import {baseline,raw,composed,declaration,restore,sameGeometry,directWorldBaseline} from './queue-visual-world-20261031.helper.mjs';
 import {adaptQueueVisualWorld20261031} from '../queue-visual-world-20261031-adapter.mjs';
 const same=(a,b,expanded=false)=>{
  const x=expanded&&a.index?a.toNonIndexed():a,y=expanded&&b.index?b.toNonIndexed():b;
@@ -16,11 +16,14 @@ const same=(a,b,expanded=false)=>{
 const fixture=before=>geometryFixture({transform(rel,s){if(before)s=restore(rel,s);if(rel==='src/world/environment.js')s+='\nimport {Decor} from "./decor.js";globalThis.__world={G,makeIsland,Decor};';return s;}});
 const fixtures=Promise.all([fixture(true),fixture(false)]);
 
-test('final pass composes each affected module once and preserves upstream source',()=>{
+test('final pass composes each affected module once and preserves direct-source owners',()=>{
  assert.equal(baseline.main,'4423b1ea47a5be387991f3de9a70f900fb4d1b26');
  for(const rel of Object.keys(baseline.modules)){
   const before=composed(rel,true),after=composed(rel);new vm.SourceTextModule(after);
-  assert.equal(adaptQueueVisualWorld20261031(rel,before),after,rel);
+  if(directWorldBaseline.modules[rel]){
+   assert.equal(after,raw(rel),'migrated owner is authored directly: '+rel);
+   assert.equal(adaptQueueVisualWorld20261031(rel,before),before,'adapter no longer rewrites even old direct source: '+rel);
+  }else assert.equal(adaptQueueVisualWorld20261031(rel,before),after,rel);
  }
  assert.equal(adaptQueueVisualWorld20261031('src/unrelated.js','const keep = 1;'),'const keep = 1;');
 });
