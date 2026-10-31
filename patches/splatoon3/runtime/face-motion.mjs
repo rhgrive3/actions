@@ -81,7 +81,8 @@ function applyAim(ch, s) {
     if (i === 0) { gaze.x = boundedYaw / .6 - look.x * 1.25; gaze.y = boundedPitch / .6 - look.y * 1.25; }
     else { gaze.z = boundedYaw / .6 - look.x * 1.25; gaze.w = boundedPitch / .6 - look.y * 1.25; }
   }
-  s.clamped = s.wanted.some((v, i) => Math.abs(v - s.applied[i]) > 1e-8);
+  s.clamped = Math.abs(s.wanted[0] - s.applied[0]) > 1e-8 || Math.abs(s.wanted[1] - s.applied[1]) > 1e-8
+    || Math.abs(s.wanted[2] - s.applied[2]) > 1e-8 || Math.abs(s.wanted[3] - s.applied[3]) > 1e-8;
   s.origin.copy(EYE_FRAMES[0].C).add(EYE_FRAMES[1].C).multiplyScalar(.5);
   s.direction.copy(s.local).sub(s.origin);
   ch.face.gazeX = Math.atan2(s.direction.x, s.direction.z);

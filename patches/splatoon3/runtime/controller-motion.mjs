@@ -439,7 +439,9 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
       padIndex: options.padIndex ?? (pad?.index ?? undefined)
     };
     if (integrated) {
-      Object.assign(sample, { yawDelta, pitchDelta, sampleSeconds });
+      sample.yawDelta = yawDelta;
+      sample.pitchDelta = pitchDelta;
+      sample.sampleSeconds = sampleSeconds;
       yawDelta = pitchDelta = sampleSeconds = firstArrival = 0;
     }
     return sample;

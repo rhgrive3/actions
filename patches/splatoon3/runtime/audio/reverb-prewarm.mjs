@@ -2,7 +2,7 @@
 // context reports that exact rate; every cold/mismatch path falls back now.
 import { isFinitePCM } from './finite-pcm.mjs';
 export class ReverbPrewarm {
-  constructor({ workerFactory, sampleRate = 48000, ttl = 30000 } = {}) {
+  constructor({ workerFactory, sampleRate = 48000, includeMusic = true, ttl = 30000 } = {}) {
     this.sampleRate = sampleRate; this.generation = 1; this.pair = null; this.worker = null;
     if (!workerFactory && typeof Worker === 'undefined') return;
     try {
@@ -10,12 +10,12 @@ export class ReverbPrewarm {
       worker.onmessage = ({ data }) => {
         if (this.worker !== worker || data.generation !== this.generation || data.sampleRate !== sampleRate) return;
         const pair = data.pair;
-        if (!Array.isArray(pair) || pair.length !== 2 || pair.some((channels, i) =>
+        if (!Array.isArray(pair) || pair.length !== (includeMusic ? 2 : 1) || pair.some((channels, i) =>
           !Array.isArray(channels) || channels.length !== 2 || channels.some(a => !(a instanceof Float32Array) || a.length !== Math.floor(sampleRate * (i ? 2.2 : 1.5)) || !isFinitePCM(a)))) { this.dispose(); return; }
         this.pair = pair; worker.terminate(); this.worker = null;
       };
       worker.onerror = () => this.dispose();
-      worker.postMessage({ sampleRate, generation: this.generation });
+      worker.postMessage({ sampleRate, generation: this.generation, includeMusic });
       this.timer = setTimeout(() => this.dispose(), ttl); this.timer.unref?.();
     } catch { this.dispose(); }
   }
