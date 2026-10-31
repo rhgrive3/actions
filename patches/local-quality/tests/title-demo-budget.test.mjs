@@ -179,6 +179,8 @@ test('actual Match.setup constructs only the title 2v2 roster; battle, boss, man
 test('title adapter rejects missing or repeated semantic anchors and leaves unrelated files untouched', () => {
   assert.throws(() => adaptTitleDemoBudget('src/main.js', ''), /expected 1 anchor/);
   assert.throws(() => adaptTitleDemoBudget('src/main.js', source), /expected 1 anchor/);
+  const changedFence = 'new Match({ attract: true, duration: 99999,\n  _frame(dt) {\n    if (this._nativeStageSwitchPending) { return; }';
+  assert.throws(() => adaptTitleDemoBudget('src/main.js', changedFence), /unrecognized native stage retirement fence/);
   assert.equal(adaptTitleDemoBudget('src/game/weapons.js', 'unchanged'), 'unchanged');
   assert.match(source, /new Match\(\{ titleDemo: !DEV_STAGE, attract: true/);
 });

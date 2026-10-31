@@ -138,9 +138,16 @@ export function adaptTitleDemoBudget(rel, code) {
     '    }',
   ].join('\n');
   const titleHook='\n    const titleDemo = prepareTitleDemoFrame(this, G, dt);\n    if (holdTitleDemoFrame(this, G, dt, titleDemo)) return;';
-  if (code.includes(nativeFence))
-    code = once(code,nativeFence,nativeFence+titleHook,'title demo after native stage retirement fence');
-  else code = once(code,frameHead,frameHead+titleHook,'standalone title frame hook');
+  const nativeFenceWithDelta = nativeFence.replace('this._padMenus?.();', 'this._padMenus?.(dt);');
+  if (code.includes(nativeFenceWithDelta))
+    code = once(code,nativeFenceWithDelta,nativeFenceWithDelta+titleHook,'title demo after native stage retirement fence');
+  else if (code.includes(nativeFence))
+    code = once(code,nativeFence,nativeFence+titleHook,'title demo after legacy native stage retirement fence');
+  else {
+    if (code.includes('if (this._nativeStageSwitchPending)'))
+      throw new Error('INKWAVE title demo conflict: unrecognized native stage retirement fence');
+    code = once(code,frameHead,frameHead+titleHook,'standalone title frame hook');
+  }
   code = once(code, '  _onScreen(s) {',
     "  _onScreen(s) {\n    if (s !== 'title') releaseTitleDemoBudget(this);", 'restore gameplay density on menu exit');
   code = once(code, '    if (!portraitFrame.offline) runSimulation(this, portraitFrame.released ? 0 : dt);',
