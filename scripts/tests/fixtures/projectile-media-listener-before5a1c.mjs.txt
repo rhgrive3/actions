@@ -1,0 +1,12 @@
+  page.on('requestfailed', r => {
+    const failure=r.failure()?.errorText || 'unknown', url=new URL(r.url());
+    const root=`/_versions/${manifest.build.revision}/`;
+    const asset=url.pathname.startsWith(root) ? url.pathname.slice(root.length) : null;
+    // A media element cancelled while the capture changes scenes can abort an
+    // authenticated local MP3 fetch. Both the origin and exact versioned path
+    // must name bytes checked against the site manifest at startup; preserve a diagnostic,
+    // but keep real 404s, corrupt bytes and all other network failures fatal.
+    if (failure==='net::ERR_ABORTED' && url.origin===new URL(address).origin && /^patches\/splatoon3\/runtime\/audio\/s3-real\/[^/]+\.mp3$/.test(asset||'') && Object.hasOwn(manifest.artifacts,asset) && Object.hasOwn(manifest.artifacts,url.pathname.slice(1))) {
+      report.browserDiagnostics.push({event:'verified-audio-fetch-cancelled',asset,mobile,at:new Date().toISOString()});
+    } else mimeErrors.push(`request failed ${r.url()}: ${failure}`);
+  });

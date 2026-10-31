@@ -10,6 +10,7 @@ import { installProjectileCaptureProjection } from './lib/inkwave-projectile-cap
 import { captureSourceIdentity } from './lib/inkwave-capture-source-identity.mjs';
 import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
+import {installContextMediaTrace,correlateContextMediaRequests,classifyContextRequestFailures} from './check-inkwave-context-recovery-browser.mjs';
 import {audioDiagnosticURL,audioBuildManifestReceipt,sha256 as audioReceiptSha256} from './lib/inkwave-audio-readiness-diagnostics.mjs';
 import path from 'node:path';
 import http from 'node:http';
@@ -132,6 +133,8 @@ const report = {
   errors: [],
 };
 const mimeErrors = [];
+const mediaRetirementErrorIndices=new Map();
+const unexplainedBrowserErrors=()=>mimeErrors.filter((error,index)=>!mediaRetirementErrorIndices.has(index)||mediaRetirementErrorIndices.get(index)!==error);
 browser.on('disconnected', () => report.browserDiagnostics.push({ event: 'browser-disconnected', at: new Date().toISOString() }));
 
 async function openGameContext({ mobile = false } = {}) {
@@ -167,6 +170,7 @@ async function openGameContext({ mobile = false } = {}) {
     assetURL: new URL(`_versions/${manifest.build.revision}/assets/audio/Jet_Arrow.mp3`, address).href,
     receipt: streamedMusicReceipt });
 
+  let closeObservedMedia=streamedMusic.close;
   try {
   const audioNetwork = [], audioSnapshots = [];
   const audioReceipt = { ...sourceIdentity,
@@ -212,9 +216,19 @@ async function openGameContext({ mobile = false } = {}) {
     }
   });
 
+  const mediaRequestIDs=new WeakMap(),mediaErrorStarts=new WeakMap(),mediaLedger=[],mediaDiagnostics=[],mediaRawFailures=[],mediaErrorBindings=[],mediaApprovedIndices=new Set();
+  let mediaSerial=0,mediaLedgerDropped=0,mediaPhase='startup',mediaErrorReported=false,mediaObservation=0;
+  const mediaID=r=>mediaRequestIDs.get(r)||(mediaRequestIDs.set(r,++mediaSerial),mediaSerial);
+  const isObservedAudio=r=>/\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
+  const settleMedia=(r,terminal)=>{const row=mediaLedger.find(x=>x.id===mediaID(r));if(row){row.endedAt=Date.now();row.terminal=terminal;row.error=r.failure()?.errorText??null;}};
+  const expectedMenuURL=new URL(`_versions/${manifest.build.revision}/assets/audio/menu_the_ika_swing_aoi_kenban.mp3`,address).href;
+  const mediaReceipt={mobile,expectedMenuURL,helperSha256:hash(fs.readFileSync(new URL('./check-inkwave-context-recovery-browser.mjs',import.meta.url)))};
+  (report.mediaRetirementObservations ||= []).push(mediaReceipt);
   page.on('crash', () => report.browserDiagnostics.push({ event: 'page-crash', mobile, at: new Date().toISOString() }));
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
+  // Capture the exact append boundary before the unchanged strict listener.
+  page.on('requestfailed',r=>mediaErrorStarts.set(r,mimeErrors.length));
   page.on('requestfailed', r => {
     const failure=r.failure()?.errorText || 'unknown', url=new URL(r.url());
     const root=`/_versions/${manifest.build.revision}/`;
@@ -227,6 +241,35 @@ async function openGameContext({ mobile = false } = {}) {
       report.browserDiagnostics.push({event:'verified-audio-fetch-cancelled',asset,mobile,at:new Date().toISOString()});
     } else mimeErrors.push(`request failed ${r.url()}: ${failure}`);
   });
+  const observeMediaRetirements=async label=>{
+    const observation=++mediaObservation;
+    for(const index of mediaApprovedIndices)mediaRetirementErrorIndices.delete(index);
+    mediaApprovedIndices.clear();
+    let snapshot=null;try{snapshot=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null);}catch(error){snapshot={diagnosticError:String(error?.message||error)};}
+    if(observation!==mediaObservation)return;
+    const mediaTrace=correlateContextMediaRequests(snapshot,mediaLedger,mediaLedgerDropped);
+    const classification=classifyContextRequestFailures({requests:mediaRawFailures,ledger:mediaLedger,diagnostics:mediaDiagnostics,mediaTrace,expectedMenuURL});
+    // Bind the exact original error-array append, not a URL/string-wide waiver.
+    for(const receipt of classification.unexpected.length?[]:classification.expectedRetirements){
+      const bindings=mediaErrorBindings.filter(b=>b.id===receipt.id&&b.url===receipt.url&&b.error==='net::ERR_ABORTED');
+      if(bindings.length!==1)continue;const b=bindings[0],message=`request failed ${b.url}: ${b.error}`;
+      if(Number.isSafeInteger(b.index)&&b.index>=0&&mimeErrors[b.index]===message&&mediaErrorBindings.filter(x=>x.index===b.index).length===1)
+        {mediaRetirementErrorIndices.set(b.index,message);mediaApprovedIndices.add(b.index);}
+    }
+    if(!mediaErrorReported&&mediaTrace.records.some(e=>e.event==='media-error'||e.mediaError!=null)){mediaErrorReported=true;mimeErrors.push('native media error observed');}
+    Object.assign(mediaReceipt,{label,rawFailures:mediaRawFailures,ledger:mediaLedger,diagnostics:mediaDiagnostics,ledgerDropped:mediaLedgerDropped,mediaTrace,classification,errorBindings:mediaErrorBindings});
+  };
+  closeObservedMedia=async()=>{await observeMediaRetirements('before-context-close');return streamedMusic.close();};
+  page.on('request',r=>{mediaID(r);if(isObservedAudio(r)){if(mediaLedger.length<512)mediaLedger.push({id:mediaID(r),url:r.url(),resourceType:r.resourceType(),phase:mediaPhase,startedAt:Date.now(),endedAt:null});else mediaLedgerDropped++;}});
+  page.on('requestfinished',r=>settleMedia(r,'finished'));
+  page.on('requestfailed',r=>{
+    settleMedia(r,'failed');const failure=r.failure()?.errorText||'unknown',url=r.url(),id=mediaID(r),before=mediaErrorStarts.get(r);
+    if(mediaRawFailures.length<32)mediaRawFailures.push({url,error:failure});
+    if(mediaDiagnostics.length<64)mediaDiagnostics.push({event:'failed',phase:mediaPhase,id,url,resourceType:r.resourceType(),failure});
+    if(Number.isSafeInteger(before)&&mimeErrors.length===before+1&&mimeErrors[before]===`request failed ${url}: ${failure}`)
+      mediaErrorBindings.push({id,url,error:failure,index:before});
+  });
+  await page.addInitScript(installContextMediaTrace);
   await page.addInitScript(installAudioTimingObserver);
   await page.addInitScript(installProjectileCaptureUiGate);
   await page.addInitScript(installProjectileCaptureProjection);
@@ -464,9 +507,10 @@ async function openGameContext({ mobile = false } = {}) {
   });
   if (!report.provenance.browser) report.provenance.browser = version;
   await streamedMusic.snapshot('native-playing-capture-ready');
-  return { context, page, characterTrace, close: streamedMusic.close };
+  mediaPhase='capture';
+  return { context, page, characterTrace, close: closeObservedMedia };
   } catch (error) {
-    try { await streamedMusic.close(); }
+    try { await closeObservedMedia(); }
     catch (cleanupError) {
       report.browserDiagnostics.push({ event: 'streamed-music-cleanup-failed', route: 'open', mobile,
         error: String(cleanupError?.message || cleanupError).slice(0, 1000) });
@@ -1850,10 +1894,10 @@ try {
     if (device !== 'mobile') report.performance.push(await runFiringPerformance({ mobile: false }));
     if (device !== 'desktop') report.performance.push(await runFiringPerformance({ mobile: true }));
   }
-  report.errors.push(...mimeErrors);
+  report.errors.push(...unexplainedBrowserErrors());
   report.status = report.errors.length ? 'failed' : 'passed';
 } catch (error) {
-  report.status = 'failed'; report.error = error.stack || String(error); report.errors.push(...mimeErrors);
+  report.status = 'failed'; report.error = error.stack || String(error); report.errors.push(...unexplainedBrowserErrors());
 } finally {
   try { await browser.close(); }
   catch (cleanupError) {
@@ -1871,6 +1915,9 @@ try {
     ? `Captured from Playwright browser diagnostics; it is the browser log block attached to the failed page operation.\n${browserLogBlock}\n`
     : 'No browser stderr block was reported for this invocation. See projectile-visuals-result.json for page errors and event diagnostics.\n');
   report.browserTrace = tracePath;
+  report.rawBrowserErrors=mimeErrors.slice();
+  for(const error of unexplainedBrowserErrors())if(!report.errors.includes(error))report.errors.push(error);
+  if(report.errors.length)report.status='failed';
   const outfile = path.join(evidence, 'projectile-visuals-result.json');
   fs.writeFileSync(outfile, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({

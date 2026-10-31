@@ -69,7 +69,7 @@ export function installContextMediaTrace(){
   const isMedia=o=>{try{return typeof env.HTMLMediaElement==='function'&&o instanceof env.HTMLMediaElement;}catch{return false;}};
   const owners=element=>{
     try{
-      const music=env.RG?.music;if(!music)return [];
+      const music=(env.RG??env.__G)?.music;if(!music)return [];
       const list=[...(Array.isArray(music.players)?music.players:[]),music.current,music._preloadedFile?.player],seen=new Set(),out=[];
       for(const p of list)if(p&&p.element===element&&!seen.has(p)){
         seen.add(p);out.push({owner:identify(p),engine:identify(music),track:read(p,'id'),disposed:read(p,'disposed'),failed:read(p,'failed'),
@@ -130,6 +130,83 @@ export function correlateContextMediaRequests(snapshot,ledger,ledgerDropped=0){
     const ids=ledger.filter(r=>urls.has(r.url)&&r.startedAt<=event.wall&&(r.endedAt==null||r.endedAt>=event.wall)).map(r=>r.id);
     return {...event,inflightRequestIDs:ids,requestCorrelation:!evidenceComplete?'incomplete-evidence':ids.length===1?'unique-url-time-candidate':ids.length?'ambiguous':'none'};
   })};
+}
+
+// Keep every raw failure. Only a fully observed, already-faded menu owner's
+// exact media request can be labelled expected; uncertainty stays unexpected.
+export function classifyContextRequestFailures({requests,ledger,diagnostics,mediaTrace,expectedMenuURL}={}){
+  const result={unexpected:[],expectedRetirements:[],rejections:[]};
+  if(!Array.isArray(requests))return {...result,unexpected:[{diagnosticError:'missing raw request failures'}]};
+  const reject=(failure,reason)=>{result.unexpected.push(failure);result.rejections.push({url:failure?.url??null,error:failure?.error??null,reason});};
+  const finite=Number.isFinite,safe=Number.isSafeInteger;
+  const complete=requests.length<32&&Array.isArray(diagnostics)&&diagnostics.length<64&&Array.isArray(ledger)&&ledger.length<512&&
+    Array.isArray(mediaTrace?.records)&&mediaTrace.records.length<512&&mediaTrace?.available===true&&mediaTrace.hooksComplete===true&&mediaTrace.evidenceComplete===true&&
+    !mediaTrace.diagnosticError&&mediaTrace.dropped===0&&mediaTrace.ledgerDropped===0&&['pause','load','removeAttribute','src'].every(k=>mediaTrace.hooks?.[k]===true);
+  const recordedFailures=Array.isArray(ledger)?ledger.filter(r=>r?.terminal==='failed'):[];
+  const orphan=recordedFailures.find(r=>requests.filter(f=>f?.url===r.url&&f?.error===r.error).length!==1);
+  const orphanDiagnostic=Array.isArray(diagnostics)&&diagnostics.find(d=>d?.event==='failed'&&requests.filter(f=>f?.url===d.url&&f?.error===d.failure).length!==1);
+  if(orphan||orphanDiagnostic){result.unexpected.push({diagnosticError:'unmatched recorded request failure'});}
+  if(Array.isArray(mediaTrace?.records)&&mediaTrace.records.some(e=>e?.event==='media-error'||e?.mediaError!=null))result.unexpected.push({diagnosticError:'native media error observed'});
+  let approvedURL=false;try{const url=new URL(expectedMenuURL);approvedURL=url.href===expectedMenuURL&&url.pathname.endsWith('/assets/audio/menu_the_ika_swing_aoi_kenban.mp3')&&!url.search&&!url.hash;}catch{}
+  for(const failure of requests){
+    if(!complete||!Array.isArray(mediaTrace.records)||!Array.isArray(ledger)||!Array.isArray(diagnostics)){reject(failure,'incomplete observation');continue;}
+    if(!approvedURL||failure?.url!==expectedMenuURL||failure?.error!=='net::ERR_ABORTED'){reject(failure,'not the observed menu cancellation');continue;}
+    const failed=ledger.filter(r=>r?.url===failure.url&&r.terminal==='failed');
+    if(requests.filter(r=>r?.url===failure.url).length!==1||failed.length!==1){reject(failure,'ambiguous raw failure or request');continue;}
+    const request=failed[0],id=request.id;
+    if(!safe(id)||id<1||ledger.filter(r=>r?.id===id).length!==1||request.resourceType!=='media'||request.phase!=='startup'||request.error!==failure.error||
+      !finite(request.startedAt)||!finite(request.endedAt)||request.endedAt<request.startedAt){reject(failure,'invalid media request identity');continue;}
+    const diagnostic=diagnostics.filter(d=>d?.event==='failed'&&d.id===id);
+    if(diagnostic.length!==1||diagnostic[0].url!==failure.url||diagnostic[0].resourceType!=='media'||diagnostic[0].phase!=='startup'||diagnostic[0].failure!==failure.error){reject(failure,'missing exact failed-request diagnostic');continue;}
+    const records=mediaTrace.records;
+    const sourceElements=new Set(records.filter(e=>e&&[e.sourceURL,e.src,e.currentSrc].includes(failure.url)).map(e=>e.element));
+    if(sourceElements.size!==1||![...sourceElements].every(e=>safe(e)&&e>0)){reject(failure,'ambiguous source element');continue;}
+    const element=[...sourceElements][0],events=records.filter(e=>e?.element===element);
+    const owners=events.flatMap(e=>Array.isArray(e.owners)?e.owners:[]),ownerIDs=new Set(owners.map(o=>o?.owner)),engines=new Set(owners.map(o=>o?.engine));
+    if(ownerIDs.size!==1||engines.size!==1||!owners.length||owners.some(o=>!safe(o?.owner)||o.owner<1||!safe(o.engine)||o.engine<1||o.track!=='menu'||o.failed!==false)){
+      reject(failure,'ambiguous or failed owner');continue;
+    }
+    const owner=[...ownerIDs][0],engine=[...engines][0];
+    if(events.some(e=>e.event==='media-error'||e.mediaError!=null)){reject(failure,'media error observed');continue;}
+    let lastWall=-Infinity,lastMono=-Infinity;
+    if(events.some(e=>{const invalid=!finite(e.wall)||!finite(e.mono)||e.wall<lastWall||e.mono<lastMono;lastWall=e.wall;lastMono=e.mono;return invalid;})){reject(failure,'nonmonotonic media trace');continue;}
+    const exact=e=>e?.requestCorrelation==='unique-url-time-candidate'&&Array.isArray(e.inflightRequestIDs)&&e.inflightRequestIDs.length===1&&e.inflightRequestIDs[0]===id;
+    const hasOwner=(e,disposed,pausedAfterFade)=>Array.isArray(e?.owners)&&e.owners.length===1&&e.owners[0].owner===owner&&e.owners[0].engine===engine&&
+      e.owners[0].track==='menu'&&e.owners[0].failed===false&&e.owners[0].disposed===disposed&&e.owners[0].pausedAfterFade===pausedAfterFade&&
+      e.owners[0].current===false&&e.owners[0].preloaded===false&&e.owners[0].desiredTrack===null&&finite(e.owners[0].stopAt)&&e.owners[0].stopAt>0;
+    const retirementStack=e=>typeof e?.stack==='string'&&e.stack.includes('/src/audio/streamedTrack.js')&&e.stack.includes('/patches/local-quality/music-idle.mjs')&&e.stack.includes('retireStream')&&e.stack.includes('.dispose');
+    const sequence=['media-canplay','pause-before','pause-after','pause-before','pause-after','removeAttribute-before','removeAttribute-after','load-before','load-after','media-abort','media-emptied'];
+    // Only repeated healthy readiness before the first fade pause is harmless.
+    // Reloads, source writes, extra aborts and all post-pause events remain exact.
+    let readyEnd=3;while(events[readyEnd]?.event==='media-canplay')readyEnd++;
+    const ready=events.slice(3,readyEnd),tail=events.slice(readyEnd),startup=['src-set-before','src-set-after','media-loadstart'];
+    if(!ready.length||tail.length!==sequence.length-1||events.some(e=>!Array.isArray(e.owners))||
+      startup.some((name,i)=>events[i]?.event!==name)||tail.some((event,i)=>event.event!==sequence[i+1])){reject(failure,'extra or missing menu lifecycle event');continue;}
+    if(events[0].src!==''||events[1].src!==failure.url||events[2].src!==failure.url||events[2].currentSrc!==failure.url){reject(failure,'initial media source not proved');continue;}
+    const matched=[ready[0],...tail];
+    const [canplay,fadePause,fadePaused,disposePause,disposedPaused,remove,removed,load,loaded,abort,emptied]=matched;
+    if(!ready.every(e=>exact(e)&&e.paused===false&&e.src===failure.url&&e.currentSrc===failure.url&&e.owners.length===1&&
+      e.owners[0].owner===owner&&e.owners[0].engine===engine&&e.owners[0].disposed===false&&e.owners[0].failed===false&&e.owners[0].preloaded===false&&
+      ((e.owners[0].current===true&&e.owners[0].desiredTrack==='menu')||
+       (e.owners[0].current===false&&e.owners[0].desiredTrack===null&&e.owners[0].stopAt===fadePause.owners?.[0]?.stopAt)))||
+      !matched.every(exact)||canplay.paused!==false||canplay.owners?.length!==1||canplay.owners[0].owner!==owner||canplay.owners[0].disposed!==false||canplay.owners[0].current!==true||canplay.owners[0].desiredTrack!=='menu'||
+      !hasOwner(fadePause,false,false)||fadePause.paused!==false||typeof fadePause.stack!=='string'||!fadePause.stack.includes('/src/audio/streamedTrack.js')||fadePause.stack.includes('.dispose')||fadePause.stack.includes('retireStream')||
+      !hasOwner(fadePaused,false,false)||fadePaused.paused!==true||fadePaused.owners[0].stopAt!==fadePause.owners[0].stopAt||
+      ![disposePause,disposedPaused,remove,removed,load,loaded].every(e=>hasOwner(e,true,true)&&e.paused===true&&e.owners[0].stopAt===fadePause.owners?.[0]?.stopAt)||
+      ![disposePause,remove,load].every(retirementStack)){
+      reject(failure,'not a normal completed menu fade');continue;
+    }
+    if(remove.sourceURL!==failure.url||removed.sourceURL!==failure.url||load.sourceURL!==failure.url||loaded.sourceURL!==failure.url||
+      remove.src!==failure.url||removed.src!==''||load.src!==''||loaded.src!==''||abort.src!==''||emptied.src!==''||
+      !matched.every(e=>e.currentSrc===failure.url)||events.some(e=>e.wall>=remove.wall&&e.event==='src-set-after')||
+      events.filter(e=>e.event==='load-before').length!==1||events.filter(e=>e.event==='removeAttribute-before').length!==1||
+      request.startedAt>canplay.wall||request.endedAt<emptied.wall||events.some(e=>e.wall>request.endedAt&&e.event==='media-canplay')){
+      reject(failure,'source changed or request/unload order unproved');continue;
+    }
+    result.expectedRetirements.push({id,url:failure.url,element,owner,engine,retiredAt:remove.wall,failedAt:request.endedAt,
+      reason:'fully observed normal faded menu retirement'});
+  }
+  return result;
 }
 
 // Every phase emitted by the shared menu helper has an explicit native control
@@ -385,7 +462,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       id: requestID(request), url: request.url(), resourceType: request.resourceType(), timing, timingError,
       failure: request.failure()?.errorText ?? null });
   };
-  let preLossAudio = null, preLossMedia = null;
+  let preLossAudio = null, preLossMedia = null, requestClassification = null, expectedMenuURL = null;
+  const classifyObservedRequests = snapshot => classifyContextRequestFailures({requests,ledger:audioRequestLedger,diagnostics:requestDiagnostics,
+    mediaTrace:correlateContextMediaRequests(snapshot,audioRequestLedger,audioRequestLedgerDropped),expectedMenuURL});
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -429,7 +508,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       try { preLossAudio = await page.evaluate(() => globalThis.__contextAudioOwnerSnapshot?.() ?? null); }
       catch (error) { preLossAudio = { diagnosticError:String(error?.message || error) }; }
       try { preLossMedia=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null); } catch(error){preLossMedia={diagnosticError:String(error?.message||error)};}
-      assert.deepEqual(requests, [], 'Audio startup produced failed network requests');
+      requestClassification=classifyObservedRequests(preLossMedia);
+      assert.deepEqual(requestClassification.unexpected, [], 'Audio startup produced unexplained failed network requests');
       assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
     });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
@@ -480,7 +560,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     await page.waitForFunction(() => (globalThis.RG?.game?.menus && RG.s3?.installed && RG.mode !== 'boot') || !!document.querySelector('#boot-error')?.textContent, null, { timeout: remainingMs() });
     const bootError = await page.evaluate(() => document.querySelector('#boot-error')?.textContent || ''); assert(!bootError, bootError);
     const identity = await page.evaluate(() => ({ baseURI: document.baseURI, revision: new URL(document.baseURI).pathname.split('/').filter(Boolean).at(-1) }));
-    assert.equal(identity.revision, build.build.revision); lastStage = 'booted';
+    assert.equal(identity.revision, build.build.revision); expectedMenuURL=new URL('assets/audio/menu_the_ika_swing_aoi_kenban.mp3',identity.baseURI).href; lastStage = 'booted';
     const { startProjectileThroughMenu } = await import('./lib/inkwave-projectile-menu-start.mjs');
     const { rangeMenuControlReady } = await import('./lib/inkwave-range-menu-entry.mjs');
     startup = { route: 'native-menu-start', events: [] };
@@ -505,7 +585,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
     requestPhase = 'post-context-proof';
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
-    assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
+    const finalMedia=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null);
+    requestClassification=classifyObservedRequests(finalMedia);
+    assert.deepEqual(errors, []); assert.deepEqual(requestClassification.unexpected, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
     result = { ok: true, browser: browser.version(), identity, startup, proof }; lastStage = 'accepted';
   } catch (error) {
@@ -526,7 +608,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   } finally {
     let audioTrace = null, audioOwnerFinal = null, mediaTrace = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal,mediaTrace} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null,mediaTrace:globalThis.__contextMediaTraceSnapshot?.()??null}))); } catch {}
-    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossMedia, mediaTrace:correlateContextMediaRequests(mediaTrace,audioRequestLedger,audioRequestLedgerDropped), audioRequestLedger, audioRequestLedgerDropped, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossMedia, mediaTrace:correlateContextMediaRequests(mediaTrace,audioRequestLedger,audioRequestLedgerDropped), audioRequestLedger, audioRequestLedgerDropped, requestClassification, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }
