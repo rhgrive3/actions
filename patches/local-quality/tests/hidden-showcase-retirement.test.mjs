@@ -5,6 +5,7 @@ import { parse } from '../../loading-cache/vendor/acorn.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { retireHiddenStudio } from '../showcase-shadow.mjs';
+import { prepareTitleDemoFrame, holdTitleDemoFrame } from '../title-demo-budget-adapter.mjs';
 
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const studioSource = adaptBuildSource('src/game/showcase.js', read('src/game/showcase.js'));
@@ -68,8 +69,9 @@ function frameGate(showcase, { baseline = false, screen = 'loadout', current = s
   const owner = { showcase, match: { attract }, menus: { current, _scr: { name: screen }, update() {} },
     input: { pollPad() {}, endFrame() {} }, _padMenus() {} };
   const frame = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage',
+    'prepareTitleDemoFrame', 'holdTitleDemoFrame',
     'return function(dt) {\n' + native + '\nthrow Error("full-world-frame");\n};')(
-      G, SCREENS, () => { lockerFrames++; });
+      G, SCREENS, () => { lockerFrames++; }, prepareTitleDemoFrame, holdTitleDemoFrame);
   return { run(dt = 1 / 60) { return frame.call(owner, dt); }, get lockerFrames() { return lockerFrames; } };
 }
 

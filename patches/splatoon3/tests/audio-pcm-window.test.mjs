@@ -12,7 +12,7 @@ const newIds=['combat:critical','combat:damage','combat:ink_focus_normal','comba
 const row=(id,n,variant=0,extra={})=>({id,event:'fire',variant,file:`pcm${n}.mp3`,...extra});
 const manifest=clips=>({schema:1,usageRights:'Synthetic fixture PCM only; no game-owned audio',clips});
 function rig({clipBytes=10*MiB,maxBytes=40*MiB}={}){
- const gates=new Map(),requests=[],decoded=[],ctx={state:'running',sampleRate:48000,async decodeAudioData(bytes){const n=new Uint8Array(bytes)[0];decoded.push(n);const gate=gates.get(n);if(gate){gate.started.resolve();await gate.release.promise;}return {tag:n,length:clipBytes/32,numberOfChannels:8,sampleRate:48000,duration:clipBytes/32/48000,getChannelData(){throw Error('one-shot fixture must not read or repair PCM');}};}};
+ const gates=new Map(),requests=[],decoded=[],ctx={state:'running',sampleRate:48000,async decodeAudioData(bytes){const n=new Uint8Array(bytes)[0];decoded.push(n);const gate=gates.get(n);if(gate){gate.started.resolve();await gate.release.promise;}const pcm=new Float32Array(clipBytes/32);return {tag:n,length:pcm.length,numberOfChannels:8,sampleRate:48000,duration:pcm.length/48000,getChannelData(channel){assert.ok(channel>=0&&channel<8);return pcm;}};}};
  const fetcher=async url=>{requests.push(String(url));const n=Number(String(url).match(/pcm(\d+)/)[1]);return{ok:true,headers:{get:()=>null},arrayBuffer:async()=>new Uint8Array([n]).buffer};};
  const pack=new AuthorizedSamplePack(ctx,{maxBytes,fetcher});
  return {pack,ctx,requests,decoded,gate(n){const g={started:deferred(),release:deferred()};gates.set(n,g);return g;}};
