@@ -408,6 +408,11 @@ const patches = {
       1
     ],
     [
+      "    on('match:dispose', ({ match }) => {",
+      "    subscribe('match:dispose', ({ match }) => {",
+      1
+    ],
+    [
       "    on('match:state', ({ state, match }) => {",
       "    subscribe('match:state', ({ state, match }) => {",
       1

@@ -15,6 +15,7 @@ import { installAgent3WeaponPhysics } from './agent3-weapon-physics.mjs';
 import { installRollerLogic } from './roller.mjs';
 import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
+import { resolveSubForThrow, kitThrowVelocity } from './kit-subs.mjs';
 let api;
 const AGE_GRAVITY_FAMILIES=Object.freeze(['shooter', 'dualies', 'splatling']);
 const dualiesLockConfigs = new WeakMap();
@@ -1342,19 +1343,20 @@ const ARC_PREVIEW_INSTALL = Symbol.for('inkwave.s3.arc-preview-performance.insta
 const ARC_PREVIEW_STATE = Symbol('inkwave.s3.arc-preview-performance.state');
 
 function previewInputs(system, api, actor) {
-  const speed = system.s3PreviewSubSpeed ?? api.SUB?.bomb?.throwSpeed;
+  const resolved=resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,api.SUB);
+  const speed = system.s3PreviewSubSpeed ?? resolved?.throwSpeed ?? api.SUB?.bomb?.throwSpeed;
   if (typeof system.throwVelocity !== 'function' || !Number.isFinite(speed)) return null;
   const scratch = system._arcPreviewPerfScratch
     || (system._arcPreviewPerfScratch = new api.THREE.Vector3());
   try {
-    system.throwVelocity.call(system, actor, speed, scratch);
+    kitThrowVelocity(actor,resolved,speed,scratch)||system.throwVelocity.call(system, actor, speed, scratch);
   } catch {
     return null;
   }
   return {
     px: actor.pos.x, py: actor.pos.y + 1.35, pz: actor.pos.z,
     vx: scratch.x, vy: scratch.y, vz: scratch.z,
-    speed,
+    speed, subPowerAP:actor.s3?.abilityPoints?.subPower, inkCost:resolved?.inkCost,
   };
 }
 
@@ -1368,7 +1370,8 @@ function hasLargeInputStep(previous, current) {
 
 function throwSpeedChanged(previous, current) {
   return !!(previous && current
-    && Math.abs((previous.speed ?? 0) - (current.speed ?? 0)) > ARC_PREVIEW_SPEED_EPSILON);
+    && (Math.abs((previous.speed ?? 0) - (current.speed ?? 0)) > ARC_PREVIEW_SPEED_EPSILON
+      ||previous.subPowerAP!==current.subPowerAP||previous.inkCost!==current.inkCost));
 }
 
 function nativeCacheReady(system, physics) {
@@ -1381,7 +1384,7 @@ function nativeCacheReady(system, physics) {
 
 function refreshPresentationOnly(system, api, actor) {
   const cache = system._arcCache;
-  const inkCost = api.SUB?.bomb?.inkCost;
+  const inkCost = resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,api.SUB)?.inkCost ?? api.SUB?.bomb?.inkCost;
   const hasInk = !(Number.isFinite(inkCost) && actor.ink < inkCost);
   const color = hasInk ? actor.color : system._arcPreviewPerfGrey
     || (system._arcPreviewPerfGrey = new api.THREE.Color(0.6, 0.6, 0.6));
@@ -1398,14 +1401,16 @@ export function installArcPreviewPerformance(api) {
   if (!Projectiles?.prototype?.updateArc || Projectiles.prototype[ARC_PREVIEW_INSTALL]) return;
   const nativeUpdateArc = Projectiles.prototype.updateArc;
   Projectiles.prototype.updateArc = function (actor, show) {
-    if (!show || !actor || !actor.alive) {
+    const hiddenSub=['curling','inkMine','beakon'].includes(actor?.weapon?.sub);
+    if (!show || !actor || !actor.alive || hiddenSub) {
       delete this[ARC_PREVIEW_STATE];
-      return nativeUpdateArc.call(this, actor, show);
+      return nativeUpdateArc.call(this, actor, hiddenSub?false:show);
     }
     const now = Number.isFinite(G?.time) ? G.time : 0;
     const inputs = previewInputs(this, api, actor);
     const state = this[ARC_PREVIEW_STATE];
     const actorChanged = !state || state.actor !== actor;
+    const subChanged = !state || state.subId !== actor.weapon?.sub;
     const physicsChanged = !state || state.physics !== G.physics;
     const inputsUnknown = !inputs;
     const largeInputStep = !inputsUnknown && hasLargeInputStep(state?.lastInputs, inputs);
@@ -1418,7 +1423,7 @@ export function installArcPreviewPerformance(api) {
     // 30 Hz. A long scheduling gap or reversed clock still refreshes at once.
     const cadenceReady = intervalElapsed && (!state || state.hits > 0
       || now < state.time || now - state.time > 2 * ARC_PREVIEW_MIN_INTERVAL_S + 1e-9);
-    const mustRecompute = actorChanged || physicsChanged || inputsUnknown
+    const mustRecompute = actorChanged || subChanged || physicsChanged || inputsUnknown
       || !state?.inputs || cacheStale || cadenceReady || largeInputStep || speedChanged;
     if (!mustRecompute && state && state.inputs) {
       refreshPresentationOnly(this, api, actor);
@@ -1431,7 +1436,7 @@ export function installArcPreviewPerformance(api) {
     }
     const result = nativeUpdateArc.call(this, actor, show);
     this[ARC_PREVIEW_STATE] = {
-      actor, physics: G.physics, time: now,
+      actor, subId:actor.weapon?.sub, physics: G.physics, time: now,
       inputs: inputsUnknown ? null : { ...inputs },
       lastInputs: inputsUnknown ? null : inputs,
       hits: 0,

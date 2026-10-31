@@ -29,6 +29,9 @@ import {captureSubAttachment,syncSubAttachment,towerAttachmentFields,replayTower
 import {mineTowerPaintReference} from '../../network-replication/tower-paint-support.mjs';
 import { createThrowPrediction, appendThrowPredictionPoint, noteThrowPredictionImpact,
   finishThrowPrediction, throwPredictionLimit, snapshotThrowCollisionSystem } from './throw-prediction-record.mjs';
+import { segmentCapsuleEntry } from './projectile-collision.mjs';
+import { resolveSubForThrow } from './kit-subs.mjs';
+import { drawSubTrajectory, clearSubTrajectory } from './sub-trajectory-preview.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
@@ -1099,6 +1102,10 @@ function applyFlightPositionAirResist(object,dt){
   // same retention if its outer caller advances at another frame rate.
   object.vel.multiplyScalar(dt===STEP?1-resist:Math.pow(1-resist,dt*60));
 }
+function advanceInitialSubFlight(object,dt){
+  object.vel.y-=object.spec.gravity*dt;
+  applyFlightPositionAirResist(object,dt);
+}
 
 function paintFizzyFlight(api,object,start,end){
   if(object.subId!=='fizzy'||object.ghost)return;
@@ -1127,16 +1134,16 @@ function paintFizzyFlight(api,object,start,end){
 
 function contactActor(api, object, start, end, size = .25) {
   const length = start.distanceTo(end);
-  if (!(length > 1e-7) || !api.Physics?.segmentCapsuleDist) return null;
-  const base = api._allSubBase ||= new api.THREE.Vector3(), res=api._allSubCapsule ||= {t:0,dist:Infinity};
+  if (!Number.isFinite(length)) return null;
+  const base = api._allSubBase ||= new api.THREE.Vector3();
   let best=null;
   { const __iwHostiles = hostileActors(api,object.owner);
     try {
       for (const target of __iwHostiles) {
     const height=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
     base.copy(target.pos);base.y+=target.smoothY||0;
-    api.Physics.segmentCapsuleDist(start,end,base,api.PLAYER.radius,height,res);
-    if(res.dist <= api.PLAYER.radius+size && (!best||res.t*length<best.distance)) best={actor:target,distance:res.t*length,t:res.t};
+    const t=segmentCapsuleEntry(start,end,base,api.PLAYER.radius,height,api.PLAYER.radius+size);
+    if(Number.isFinite(t) && (!best||t*length<best.distance)) best={actor:target,distance:t*length,t};
   }
     } finally { releaseHostileActors(api); }
   }
@@ -1522,8 +1529,7 @@ function updateFlight(api, projectiles, object, dt) {
   // Zero gravity preserves the pitched launch velocity. Clearing y here made
   // Angle Shooter incapable of hitting above or below its release height.
   if(!(object.subId==='torpedo'&&object.phase==='chase')){
-    object.vel.y-=spec.gravity*dt;
-    applyFlightPositionAirResist(object,dt);
+    advanceInitialSubFlight(object,dt);
   }
   object.pos.addScaledVector(object.vel,dt);
   let world=api.G.physics?.segment?.(object.prev,object.pos,projectiles._s3SubHit ||= new api.Hit());
@@ -2099,46 +2105,36 @@ export function installAllSubs(api,profile={}){
     return object;
   };
 
-  // Burst Bomb's first contact is the end of its preview. Use the same hand
-  // origin, AP/movement inheritance, fixed step, gravity and drag as its live
-  // flight, instead of the unrelated native Splat Bomb preview.
+  // Every guide uses its actual throw owner. These guides show first contact,
+  // not the later bounce/chase/explosion position. Placed subs have no throw arc.
   const nativeArc=Projectiles.prototype.updateArc;
   Projectiles.prototype.updateArc=function(actor,show){
-    if(!show||!actor?.alive||actor.weapon?.sub!=='burst')return nativeArc.call(this,actor,show);
-    const state=this._s3BurstArcScratch ||= {depth:0,frames:[]},depth=state.depth++;
-    const scratch=state.frames[depth] ||= {vel:new api.THREE.Vector3(),p:new api.THREE.Vector3(),start:new api.THREE.Vector3(),initial:new api.THREE.Vector3(),prev:new api.THREE.Vector3(),offset:new api.THREE.Vector3(0,1.35,0),up:new api.THREE.Vector3(0,1,0),gray:new api.THREE.Color(.6,.6,.6),hit:new api.Hit(),template:{...SUB_SPECIAL_FIDELITY.bomb},flight:{},contact:{}};
-    try{
-    const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec,0,scratch);
-    const p=subLaunchPosition(actor,scratch.p.copy(actor.pos).add(scratch.offset));
-    const start=scratch.start.copy(p),initial=scratch.initial.copy(vel),prev=scratch.prev.copy(p),hit=scratch.hit;
-    hit.hit=false;hit.dist=0;hit.point.set(0,0,0);hit.normal.set(0,0,0);hit.block=hit.face=-1;hit.u=hit.v=0;
-    const flight=scratch.flight,contact=scratch.contact;flight.vel=vel;flight.spec=spec;contact.owner=actor;contact.team=actor.team;
-    const position=this.arcGeo.attributes.position,per=2;let count=1,landed=false;
-    position.setXYZ(0,p.x,p.y,p.z);
-    for(let i=0;i<(this.arcN-1)*per;i++){
-      prev.copy(p);vel.y-=spec.gravity*STEP;
-      applyFlightPositionAirResist(flight,STEP);p.addScaledVector(vel,STEP);
-      const world=G.physics.segment(prev,p,hit),target=contactActor(api,contact,prev,p,.22);
-      if(target&&(!world.hit||target.t*prev.distanceTo(p)<world.dist)){
-        p.lerpVectors(prev,p,target.t);landed=true;
-      }else if(world.hit){p.copy(world.point).addScaledVector(world.normal,.03);landed=true;}
-      if(landed){position.setXYZ(count++,p.x,p.y,p.z);this.arcRing.position.copy(p);this.arcRing.quaternion.setFromUnitVectors(scratch.up,world.hit?world.normal:scratch.up);break;}
-      if((i+1)%per===0)position.setXYZ(count++,p.x,p.y,p.z);
-      if(count>=this.arcN)break;
-    }
-    position.needsUpdate=true;this.arcGeo.setDrawRange(0,count);
-    const lineDistance=this.arcGeo.attributes.lineDistance,distance=lineDistance.array,points=position.array;
-    distance[0]=0;let totalDistance=0;
-    for(let i=1;i<count;i++){
-      const k=i*3,dx=points[k]-points[k-3],dy=points[k+1]-points[k-2],dz=points[k+2]-points[k-1];
-      totalDistance+=Math.sqrt(dx*dx+dy*dy+dz*dz);distance[i]=totalDistance;
-    }
-    lineDistance.clearUpdateRanges();lineDistance.addUpdateRange(0,count);lineDistance.needsUpdate=true;
-    const color=actor.ink>=spec.inkCost?actor.color:scratch.gray;
-    this.arcLine.material.color.copy(color).multiplyScalar(1.4);this.arcRing.material.color.copy(color).multiplyScalar(1.4);
-    this.arcLine.visible=true;this.arcRing.visible=landed;
-    const cache=this._s3BurstArcCache ||= {};cache.physics=G.physics;cache.px=start.x;cache.py=start.y;cache.pz=start.z;cache.vx=initial.x;cache.vy=initial.y;cache.vz=initial.z;cache.landed=landed;this._arcCache=cache;
-    }finally{scratch.contact.owner=null;state.depth--;}
+    const id=actor?.weapon?.sub,spec=ALL_SUB_SPECS[id];
+    if(!show||!actor?.alive||!spec||id==='autobomb'||id==='sprinkler')return nativeArc.call(this,actor,show);
+    if(id==='inkMine'||id==='beakon')return nativeArc.call(this,actor,false);
+    return drawSubTrajectory(api,this,actor,s=>{
+      launchVelocity(api,this,actor,spec,0,s);
+      s.p.copy(actor.pos);s.p.y+=1.35;subLaunchPosition(actor,s.p);
+      Object.assign(s.flight,{owner:actor,team:actor.team,subId:id,spec,vel:s.vel,pos:s.p});
+      Object.assign(s.contact,{owner:actor,team:actor.team});
+      s.frames=id==='angleShooter'?spec.flightFrames:(spec.maxFlightSeconds||2.2)*60;
+      s.inkCost=resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,SUB)?.inkCost;
+      s.advance=(state,dt)=>{advanceInitialSubFlight(state.flight,dt);state.p.addScaledVector(state.vel,dt);};
+      if(id==='torpedo')s.stopBefore=state=>state.age+1e-10>=frameSeconds(spec.findStartFrames)&&!!findTorpedoTarget(api,state.flight);
+      s.contactAt=state=>{
+        let world=G.physics.segment(state.prev,state.p,state.hit);
+        const radius=id==='angleShooter'?spec.collisionRadius:.2;
+        const stand=coolerSegmentContact(this,state.prev,state.p,radius);
+        if(stand&&(!world?.hit||stand.distance<world.dist))world={hit:true,point:stand.point,normal:stand.normal,dist:stand.distance,s3Tacticooler:true};
+        const target=NO_FLIGHT_ACTOR_CONTACT.includes(id)?null:contactActor(api,state.contact,state.prev,state.p,id==='angleShooter'?spec.collisionRadius:.22);
+        if(target&&(!world?.hit||target.distance<world.dist)){
+          state.p.lerpVectors(state.prev,state.p,target.t);state.normal.copy(state.up);return true;
+        }
+        if(!world?.hit)return false;
+        state.p.copy(world.point).addScaledVector(world.normal,world.s3Tacticooler?radius+.03:.03);
+        state.normal.copy(world.normal);return true;
+      };
+    });
   };
 
   // Native WeaponRunner owns ink payment and release timing. Suppress a second
@@ -2221,8 +2217,7 @@ export function installAllSubs(api,profile={}){
     for(const object of [...this._s3SubObjects||[]])removeObject(api,this,object,true);
     this._s3SubObjects=[];this._s3SubAccumulator=0;
     mineOwners.set(this,{list:this._s3SubObjects,counts:new WeakMap()});delete this._s3SubSnapshots;
-    if(this._arcCache===this._s3BurstArcCache)this._arcCache=null;
-    delete this._s3BurstArcCache;delete this._s3BurstArcScratch;
+    clearSubTrajectory(this);
     markBirths.delete(this);
     api.G.s3Beakons=[];
     for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;delete actor.s3.toxicMistJumpScale;}

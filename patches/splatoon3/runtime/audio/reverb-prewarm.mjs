@@ -1,5 +1,6 @@
 // One speculative rate only. A ready result is consumed only when the real
 // context reports that exact rate; every cold/mismatch path falls back now.
+import { isFinitePCM } from './finite-pcm.mjs';
 export class ReverbPrewarm {
   constructor({ workerFactory, sampleRate = 48000, ttl = 30000 } = {}) {
     this.sampleRate = sampleRate; this.generation = 1; this.pair = null; this.worker = null;
@@ -10,7 +11,7 @@ export class ReverbPrewarm {
         if (this.worker !== worker || data.generation !== this.generation || data.sampleRate !== sampleRate) return;
         const pair = data.pair;
         if (!Array.isArray(pair) || pair.length !== 2 || pair.some((channels, i) =>
-          !Array.isArray(channels) || channels.length !== 2 || channels.some(a => !(a instanceof Float32Array) || a.length !== Math.floor(sampleRate * (i ? 2.2 : 1.5))))) { this.dispose(); return; }
+          !Array.isArray(channels) || channels.length !== 2 || channels.some(a => !(a instanceof Float32Array) || a.length !== Math.floor(sampleRate * (i ? 2.2 : 1.5)) || !isFinitePCM(a)))) { this.dispose(); return; }
         this.pair = pair; worker.terminate(); this.worker = null;
       };
       worker.onerror = () => this.dispose();

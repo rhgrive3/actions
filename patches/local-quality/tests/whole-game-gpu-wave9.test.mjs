@@ -28,11 +28,12 @@ const WAVE9_10_11_GPU_TARGETS = [
     'if (grime > 0.0) {',
     'if (bed > 0.0) {',
     'if (rawPaintM > 0.0 || bay > 0.0) {',
-    'if (tStr != 0.0) nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr);',
+    'nBase = tStr != 0.0 ? texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr) : normalize(vWNorm * gTexN.z);',
     'float wFar = 1.0 - smoothstep(0.05, 0.16, length(fwidth(vWPos)));',
     'if (d2 > maxD * maxD) continue;',
   ]],
   ['src/world/inkShading.js', 9, [
+    'bool wallF = abs(vWNorm.y) < 0.5; // face frame is evaluated only by the active halo',
     'if (halo > 0.0) {',
     'if (gInk > 0.0) {',
     'uRipCount: { value: INK_RIPPLES },',
@@ -62,20 +63,20 @@ const WAVE9_10_11_GPU_TARGETS = [
   ['src/world/environment.js', 12, [
     'if (rs > 0.0 && shadow > 0.0 && under < 1.0 && occl < 1.0) {',
     'if (detail > 0.0 && (dEdge < 3.4 || dObj < 2.2)) {',
-    'if (wl2 > 0.0 && wl2 < 1.1) {',
+    'if (wl2 >= 0.0 && wl2 < 1.1) {',
     'float fnv1 = 1.0 - NdV, fnv2 = fnv1 * fnv1;',
     'if (wood > 0.0) {',
     'if (hzWin > 0.0) {',
     'c += uGlowColor * (pow(sd, uGlowParams.x) * uGlowParams.y + (sd2 * sd2 * sd2) * uGlowParams.w);',
     'col += uGlowColor * (sd32 * sd32) * 1.2;',
     'return sqrt(d2) - sqrt(d1);',
-    'if (facing > 0.002 && fall > 0.002 && uStripK.x > 0.001) {',
-    'if (uNight <= 0.001) discard;',
+    'if (facing > 0.002 && fall > 0.0 && uStripK.x != 0.0) {',
+    'if (uNight == 0.0) discard;',
   ]],
   ['src/world/decor.js', 2, [
     'if (r < 0.62) {',
     'if (pool > 0.0) {',
-    'if (uAlpha + uPulse <= 0.0005 && vUv.y >= 0.035) discard;',
+    'if (uAlpha == 0.0 && uPulse == 0.0 && vUv.y >= 0.035) discard;',
     'float rim = rm0 * rm0;',
   ]],
   ['src/world/paint.js', 3, [
@@ -87,12 +88,12 @@ const WAVE9_10_11_GPU_TARGETS = [
   ['src/game/character-mats.js', 18, [
     'if (dhx == 0.0 && dhy == 0.0) return n;',
     'float mottLod = iwLod(vBindPos.y * 60.0, 1.0);',
-    'if (region > 0.002) {',
+    'float fk = iwFill(fd) * step(0.45, rnd) * region;',
     'if (iwThin > 0.0) {',
     'float back = bk0 * bk0 * bk0;',
     'if (irisM > 0.0 && fl > 0.0) {',
     'float tgX = vIwUv.x / 0.12;',
-    'if (r > 0.006 && r < 0.135) {',
+    'if (r > 0.006) {',
     'if (crLod > 0.0) iwH += iwTeeCrease(p, th) * crLod;',
     'float groove = (gb2 * gb2 * gb2) * crown;',
     'float dl = length(dv) - L.z * (1.0 + 0.9 * (lc2 * lc2 * lc0));',
@@ -102,11 +103,11 @@ const WAVE9_10_11_GPU_TARGETS = [
   ]],
   ['src/boss/bossMats.js', 7, [
     'if (dhx == 0.0 && dhy == 0.0) return n;',
-    'if (uCrack > 0.001) {',
+    'if (uCrack != 0.0) {',
     'dot(bRimC, bRimC) > 0.0 ? bRimC * pow(1.0 - abs(dot(normal, normalize(vViewPosition))), bRimP) : vec3(0.0)',
-    'if (wall && pid < 2.5 && uDrip > 0.001) {',
+    'float pool = uDrip != 0.0 ? smoothstep(0.16, 0.05, fromTop)',
     'float r = sqrt(sqrt(dx2 * dx2 + dy2 * dy2));',
-    'if (uDrip > 0.001 && ex < 9.5 && cls <= 0.5) {',
+    'if (uDrip != 0.0 && ex < 9.5 && cls <= 0.5) {',
     'if (uCrack > 0.001 && cls < 0.5) {',
     'float qa = iris > 0.0 ? atan(q.y, q.x) : 0.0;',
   ]],
@@ -123,13 +124,13 @@ const WAVE9_10_11_GPU_TARGETS = [
     'vec3 m = inside > 0.0 ? textureGrad(tMask, iwMaskCenterUv, iwMaskCenterDx, iwMaskCenterDy).rgb : vec3(0.0);',
     'if (water > 0.0) {',
     'if (e > 0.02 && e < 0.9) {',
-    'if (d.a > 0.001) {',
-    'if (uReflOn > 0.5 && kRefl > 0.001) {',
+    'if (d.a > 0.0) {',
+    'if (uReflOn > 0.5 && kRefl > 0.0) {',
     'vec3 col = c * I * (0.45 + 0.55 * f) + vec3(1.0) * I * 0.4 * (f2 * f2) + c * 0.06;',
-    'if (edge <= 0.001) discard;',
+    'if (edge == 0.0) discard;',
   ]],
-  ['src/world/texlib.js', 20, [
-    'return vec4(sqrt(F1), sqrt(F2), id, id2);',
+  ['src/world/texlib.js', 19, [
+    'return vec4(F1, F2, id, id2);',
     'if (strength == 0.0 || (nTS.x == 0.0 && nTS.y == 0.0)) return normalize(N * nTS.z);',
     'float lyN = (ly - PW * 0.5) / (PW * 0.5);',
     'float dome = sqrt(max(1.0 - rdN * rdN, 0.0));',
@@ -141,7 +142,7 @@ const WAVE9_10_11_GPU_TARGETS = [
   ['src/game/weapons.js', 3, [
     'float tau = back > 0.5 ? (1.0 - 0.42 * pow(u, 1.3)) : 1.0;',
     'float iwRim = iwR0 * iwR0 * iwR0;',
-    'if (drawn <= 0.0005) discard;',
+    'if (drawn == 0.0) discard;',
   ]],
   ['src/game/character-weapons.js', 1, [
     'float ce0 = (uCharge - vSeg + 0.05) * 11.0;',
@@ -159,28 +160,31 @@ const WAVE9_10_11_GPU_TARGETS = [
     'float rays = exp(-abs(p.y) * 30.0) * (rx * rx) + exp(-abs(p.x) * 30.0) * (ry * ry);',
   ]],
   ['src/boss/bossHazards.js', 1, [
-    'if (uAlpha <= 0.001 || vUv.y >= 1.0) discard;',
+    'if (uAlpha == 0.0 || vUv.y >= 1.0) discard;',
   ]],
 ];
 
-test('Wave 9 + Wave 10 + Wave 11 Ultimate Whole-Game GPU Optimization Suite (42 IDs / 115+ sites) applies cleanly + idempotently across all 19 GPU modules', () => {
+test('reviewed Wave 9–11 raw and production epochs resolve every GPU site and remain idempotent', () => {
   assert.equal(adaptCombatGpuCpuPerfectTargets.length, 24);
 
   let totalAdapterSites = 0;
+  let rawResolvedSites = 0, productionResolvedSites = 0;
   for (const [rel, minSites, expectedSnippets] of WAVE9_10_11_GPU_TARGETS) {
     const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
     let sites = 0;
     const pass1 = adaptCombatWave345(rel, raw, (c, b, a, l) => {
       sites++;
       return replaceOnce(c, b, a, l);
-    });
+    }, { onGpuSite: site => { rawResolvedSites++; assert.ok(site.status, site.id); } });
     assert.ok(sites >= minSites, `Expected at least ${minSites} sites in ${rel}, got ${sites}`);
     totalAdapterSites += sites;
 
     for (const snip of expectedSnippets) {
       assert.ok(pass1.includes(snip), `Missing expected snippet in ${rel}: ${snip}`);
     }
-    const production = adaptBuildSource(rel, raw);
+    const production = adaptBuildSource(rel, raw, {
+      onGpuSite: site => { productionResolvedSites++; assert.ok(site.status, site.id); },
+    });
     // Current main's audited algebra has equivalent expressions with different
     // names. Require those exact expressions instead of rewriting their owner.
     const reviewed67 = new Map([
@@ -207,7 +211,9 @@ test('Wave 9 + Wave 10 + Wave 11 Ultimate Whole-Game GPU Optimization Suite (42 
       assert.ok(production.includes('float d2 = dot(D, D);'));
       assert.ok(!production.includes('uRipCount'), 'do not publish a redundant count alongside the packed owner');
     }
-    assert.equal(adaptCombatWave345(rel, production, replaceOnce), production, `${rel}: the final composed epoch must also be idempotent`);
+    assert.equal(adaptCombatWave345(rel, production, replaceOnce, {
+      onGpuSite: site => assert.notEqual(site.status, 'applied', `${rel}: ${site.id} must not reapply`),
+    }), production, `${rel}: the final composed epoch must also be idempotent`);
     if (rel === 'src/fx/fx.js') {
       assert.ok(!pass1.includes('gl_Position = vec4(2.0, 2.0, 2.0, 1.0)'), 'per-vertex alpha cannot prove the whole triangle invisible');
       assert.ok(!production.includes('if (vA < 0.002) { vUv'), 'retain the audited fragment-only particle rejection');
@@ -225,7 +231,11 @@ test('Wave 9 + Wave 10 + Wave 11 Ultimate Whole-Game GPU Optimization Suite (42 
     assert.equal(pass2Sites, 0, `Expected 0 replacements on second pass for ${rel}`);
     assert.equal(pass2, pass1, `Expected idempotent output on second pass for ${rel}`);
   }
-  assert.ok(totalAdapterSites >= 109, `Expected >= 109 total adapter sites across 17 GPU target modules, got ${totalAdapterSites}`);
+  // 111 raw semantic sites, including the preserved ID-bearing Worley rank;
+  // production proves three legacy ripple-count sites equivalent to its packed owner.
+  assert.equal(rawResolvedSites, 111);
+  assert.equal(productionResolvedSites, 111);
+  assert.ok(totalAdapterSites >= 108, `Expected >= 108 safe adapter replacements across 18 GPU target modules, got ${totalAdapterSites}`);
 
   // Verify ink-volume/runtime.mjs and special-vfx-kit.mjs
   const inkVol = fs.readFileSync(path.join(repoRoot, 'patches/local-quality/ink-volume/runtime.mjs'), 'utf8');
@@ -242,6 +252,9 @@ test('Wave 9 + Wave 10 + Wave 11 Ultimate Whole-Game GPU Optimization Suite (42 
 test('composed shader derivatives precede spatial masks and retain the current ink tuning', () => {
   const built = rel => adaptBuildSource(rel, fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8'));
   const ink = built('src/world/inkShading.js');
+  const color = ink.slice(ink.indexOf('export const INK_COLOR'), ink.indexOf('export const INK_ROUGH'));
+  assert.equal((color.match(/vec3 Tf =/g) || []).length, 1, 'the tangent/sun frame must have one lazy definition');
+  assert.ok(!color.slice(0, color.indexOf('if (halo > 0.0)')).includes('vec3 Tf ='), 'the old eager frame must actually be removed');
   const coat = ink.slice(ink.indexOf('export const INK_LIGHTS'), ink.indexOf('export const INK_LIGHT_MAPS'));
   for (const term of ['0.034, 0.026', '0.97 * gInk', '0.02, gInk', '0.45, gInk']) assert.ok(coat.includes(term), term);
   assert.ok(coat.indexOf('dFdx(normal)') < coat.indexOf('if (gInk > 0.0)'));
@@ -283,13 +296,152 @@ test('lobby mask sampling has explicit gradients before spatial gates in raw and
   }
 });
 
-test('an unknown wake epoch retains its locally declared fade rather than removing an unhoisted dependency', () => {
+test('an unknown wake epoch fails closed with its module and optimization ID', () => {
   const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public/src/world/levelMaterial.js'), 'utf8');
   const unusual = raw.replace('float r = 0.1 + age * 0.95', 'float r = 0.101 + age * 0.95');
   assert.notEqual(unusual, raw);
-  const result = adaptCombatWave345('src/world/levelMaterial.js', unusual, replaceOnce);
-  assert.ok(!result.includes('if (gInk > 0.01 && wFar > 0.0) {'));
-  assert.ok(result.includes('float wFar = 1.0 - smoothstep(0.05, 0.16, length(fwidth(vWPos)));'));
+  assert.throws(() => adaptCombatWave345('src/world/levelMaterial.js', unusual, replaceOnce), /src\/world\/levelMaterial\.js: GPU-LVL-07a/);
+});
+
+const REVIEW_DRIFT_CASES = [
+  ['src/world/levelMaterial.js', 'vec3 stone = vec3(0.9, 0.885, 0.845)', 'GPU-LVL-01'],
+  ['src/world/levelMaterial.js', 'normalize(vWNorm * gTexN.z)', 'GPU-LVL-06'],
+  ['src/world/levelMaterial.js', 'r = 0.08 + age * 0.35', 'GPU-LVL-07a'],
+  ['src/world/levelMaterial.js', 'slope += vec2(dot(wS, T), dot(wS, Bt)) * gInk * wFar;', 'GPU-LVL-07b'],
+  ['src/world/inkShading.js', 'uniform int uRipActiveCount;', 'GPU-INK-03'],
+  ['src/world/inkShading.js', 'float maxD = front + sg * 3.0, minD = front - Qr.y * 4.0;', 'GPU-INK-03c'],
+  ['src/world/inkShading.js', '5.0 * key + 0.3 * gFresh', 'GPU-INK-04c'],
+  ['src/core/renderer.js', 'if (uExposure != 1.0) c.rgb *= uExposure;', 'GPU-POST-01'],
+  ['src/fx/screenfx.js', 'uSwim.a > 0.001 && r > 0.35', 'GPU-SFX-03c'],
+  ['src/world/environment.js', 'if (detail > 0.0 && (dEdge < 3.4 || dObj < 2.2))', 'GPU-ENV-01'],
+  ['src/world/environment.js', '0.025 + 0.975 * (fnv2 * fnv2 * fnv)', 'GPU-ENV2a'],
+  ['src/world/environment.js', 'float fres = 0.05 + 0.95 * (fnv2 * fnv2 * fnv);', 'GPU-ENV2c'],
+  ['src/world/paint.js', 'c16 * c8 * c4', 'GPU-PNT1a'],
+  ['src/world/paint.js', 'float tb = 1.0 - tnc2 * tnc2;', 'GPU-PNT1b'],
+  ['src/world/paint.js', 'float tsp = 1.0 - tns * tns * tns;', 'GPU-PNT1c'],
+  ['src/game/character-mats.js', 'float back = bk0 * bk0 * sqrt(bk0);', 'GPU-CHR-02b'],
+  ['src/game/character-mats.js', 'mix(0.9, 1.08, fib)', 'GPU-CHR-02d'],
+  ['src/fx/fx.js', 'tr0 * sqrt(tr0)', 'GPU-FX1'],
+  ['src/fx/fx.js', 'if (vCol.a < 0.004 || r >= 1.18) discard;', 'GPU-FX-02a'],
+  ['src/fx/fx.js', 'float fill = ivT4 * 0.45', 'GPU-FX3a'],
+  ['src/fx/fx.js', 'rSun > 0.0 ? pow(rSun, 70.0) * 3.2 : 0.0', 'GPU-FX4'],
+  ['src/fx/fx.js', 'float fwd = fw2 * fw2;', 'GPU-FX5b'],
+];
+
+test('every reported raw/composed collision rejects mutated production algebra instead of skipping it', () => {
+  const built = new Map();
+  for (const [rel, anchor, id] of REVIEW_DRIFT_CASES) {
+    if (!built.has(rel)) built.set(rel, adaptBuildSource(rel, fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8')));
+    const source = built.get(rel);
+    assert.ok(source.includes(anchor), `${rel}: fixture for ${id}`);
+    const mutated = source.replace(anchor, 'unknownGpuEpoch');
+    assert.throws(() => adaptCombatWave345(rel, mutated, replaceOnce), error =>
+      /optimization drift/.test(error.message) && error.message.includes(rel) && error.message.includes(id), `${rel}: ${id}`);
+  }
+  for (const [rel] of WAVE9_10_11_GPU_TARGETS) {
+    assert.throws(() => adaptCombatWave345(rel, 'unknown upstream shader', replaceOnce), /optimization drift|Missing anchor/, rel);
+  }
+  assert.equal(adaptCombatWave345('src/world/level.js', 'unrelated owner epoch', replaceOnce), 'unrelated owner epoch');
+});
+
+test('spatial support gates preserve freckle derivatives, pad gradients, and the ripple fade derivative', () => {
+  for (const [rel] of WAVE9_10_11_GPU_TARGETS) {
+    const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+    for (const source of [adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+      if (rel === 'src/game/character-mats.js') {
+        assert.ok(!source.includes('if (region >'), 'freckle iwFill requires uniform fwidth and preserves the positive region tail');
+        assert.ok(source.includes('if (r > 0.006) {'));
+        assert.ok(!source.includes('r < 0.135'), 'the crease exponential is positive beyond three standard deviations');
+      }
+      if (rel === 'src/world/decor.js') {
+        const pad = source.slice(source.indexOf('const PAD_FRAG'), source.indexOf('const BARRIER_FRAG'));
+        assert.ok(pad.indexOf('dFdx(eu)') < pad.indexOf('if (r < 0.62)'));
+        assert.ok(pad.indexOf('dFdx(eu)') < pad.indexOf('discard;'), 'subpixel discs retain gradients before any fragment is discarded');
+        assert.ok(pad.includes('textureGrad(uEmblem, eu, euDx, euDy).a'));
+        assert.ok(!pad.includes('texture2D(uEmblem'));
+      }
+    }
+  }
+  const rel = 'src/world/inkShading.js';
+  const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+  for (const source of [raw, adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+    const gel = source.slice(source.indexOf('export const INK_GEL'), source.indexOf('export const INK_SLOPE'));
+    const slope = source.slice(source.indexOf('export const INK_SLOPE'), source.indexOf('export const INK_EMISSIVE'));
+    for (const [chunk, derivatives] of [[gel, ['dFdx(gp)', 'dFdy(gp)', 'fwidth(vWPos)']], [slope, ['fwidth(vWPos)']]]) {
+      const gate = chunk.indexOf('if (gInk > 0.01)');
+      assert.ok(gate >= 0, 'the original ink coverage gate still bounds sampling and ripple work');
+      for (const derivative of derivatives) {
+        const at = chunk.indexOf(derivative);
+        assert.ok(at >= 0 && at < gate, `${derivative} must precede the outer ink coverage branch`);
+      }
+      assert.ok(!/\b(?:dFdx|dFdy|fwidth)\s*\(/.test(chunk.slice(gate)), 'no hidden derivative remains within the outer spatial gate');
+    }
+    assert.ok(gel.indexOf('textureGrad(tNormal') > gel.indexOf('if (gInk > 0.01)'), 'gel texture reads remain bounded by ink coverage');
+    assert.ok(gel.indexOf('vnoise(q') > gel.indexOf('if (gInk > 0.01)'), 'fallback noise remains bounded by ink coverage');
+  }
+});
+
+test('nonzero fades, authored roof drips, and zero-strength normal orientation survive both epochs', () => {
+  const required = new Map([
+    ['src/game/lobbySet-mats.js', ['if (d.a > 0.0)', 'kRefl > 0.0', 'if (edge == 0.0) discard;']],
+    ['src/game/weapons.js', ['if (drawn == 0.0) discard;']],
+    ['src/world/environment.js', ['wl2 >= 0.0', 'fall > 0.0 && uStripK.x != 0.0']],
+    ['src/world/levelMaterial.js', [': normalize(vWNorm * gTexN.z)']],
+    ['src/boss/bossMats.js', ['if (wall && pid < 2.5) {', 'bCC = max(bCC, ink); bCCR = 0.04;', 'float pool = uDrip != 0.0 ?', 'if (uCrack != 0.0)', 'uGlowL != 0.0']],
+  ]);
+  for (const [rel, snippets] of required) {
+    const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+    for (const source of [adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+      for (const snippet of snippets) assert.ok(source.includes(snippet), `${rel}: ${snippet}`);
+    }
+  }
+  // These inputs were lost by the proposed thresholds despite positive output.
+  assert.ok(Math.exp(-Math.pow(0.14 / 0.045, 2)) > 0);
+  assert.ok(0.0005 * (1 - 0.8 * 0.5) > 0);
+  assert.ok(0.0005 * 0.8 > 0);
+  const n = [0, 2, 0], slope = [0.2, 0, 0];
+  const normalize = v => { const l = Math.hypot(...v); return v.map(x => x / l); };
+  const authored = normalize(normalize(n).map((x, i) => x - slope[i]));
+  const unnormalized = normalize(n.map((x, i) => x - slope[i]));
+  assert.notDeepEqual(authored, unnormalized, 'normalization before slope application is observable');
+});
+
+test('ID-bearing Worley keeps stable rounded-length ties while distance-only caustics defer sqrt', () => {
+  const rel = 'src/world/texlib.js', raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+  const worley = source => source.match(/vec4 worR\(WReq q\) \{[\s\S]*?return vec4\(F1, F2, id, id2\);\n\}/)?.[0];
+  assert.ok(worley(raw));
+  for (const source of [adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) assert.equal(worley(source), worley(raw));
+  const f = Math.fround, candidates = [
+    { d2: f(0.5746048092842102), id: 0.8665964007377625 },
+    { d2: f(0.5746047496795654), id: 0.21772730350494385 },
+  ];
+  assert.ok(candidates[1].d2 < candidates[0].d2);
+  assert.equal(f(Math.sqrt(candidates[0].d2)), f(Math.sqrt(candidates[1].d2)));
+  const original = candidates.reduce((a, b) => f(Math.sqrt(b.d2)) < f(Math.sqrt(a.d2)) ? b : a);
+  const squared = candidates.reduce((a, b) => b.d2 < a.d2 ? b : a);
+  assert.notEqual(original.id, squared.id, 'ranking squared distances changes the material ID at rounded-length ties');
+  const envRel = 'src/world/environment.js';
+  const environment = adaptBuildSource(envRel, fs.readFileSync(path.join(repoRoot, 'inkwave-public', envRel), 'utf8'));
+  assert.ok(environment.includes('return sqrt(d2) - sqrt(d1);'));
+});
+
+test('squared ripple rejection preserves the sign domain and wake skips only already rejected envelopes', () => {
+  const rel = 'src/world/inkShading.js', raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
+  for (const source of [adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+    assert.ok(source.includes('if (maxD < 0.0 || d2 > maxD * maxD || (minD > 0.0 && d2 < minD * minD)) continue;'));
+  }
+  const front = -1, sg = 0.2, d = 0.2, maxD = front + sg * 3;
+  assert.ok(d - front > sg * 3, 'the original distance comparison rejects a negative upper radius');
+  assert.equal(d * d > maxD * maxD, false, 'squaring alone loses the upper radius sign');
+  assert.ok(maxD < 0, 'the explicit sign check restores rejection');
+  for (const age of [1e-6, 0.1, 0.5, 1, 1.15]) {
+    for (const [r, w] of [[0.1 + age * 0.95, 0.075 + age * 0.085], [0.08 + age * 0.35, 0.045 + age * 0.055]]) {
+      const radius = r + w * 2.45;
+      for (const distance of [radius, radius + w * 1e-4, radius + w, radius * 2]) {
+        if (distance * distance > radius * radius) assert.ok(Math.exp(-Math.pow((distance - r) / w, 2)) < 0.003);
+      }
+    }
+  }
 });
 
 test('polynomial and zero-contribution bounds hold for the explicitly tested domains', () => {

@@ -66,3 +66,15 @@ test('pending damage releases its retired attacker without advancing the timer o
   emit('match:dispose', {match}); emit('match:dispose', {match});
   assert.equal(fx.s.dmgAtk, newer, 'late old-roster events cannot erase the new attacker');
 });
+
+test('disposed screen effects no longer receive match retirement events', async () => {
+  const {fx, emit, G} = await fixture(), local = {}, attacker = {};
+  fx._local = local; fx.s.dmgAtk = attacker;
+  G.screenfx = fx;
+  fx.dispose(); fx.dispose();
+  assert.equal(fx._unsubs.length, 0);
+  assert.equal(G.screenfx, null);
+  emit('match:dispose', {match: {actors: [local, attacker]}});
+  assert.equal(fx._local, local, 'the retired owner must not keep an active match listener');
+  assert.equal(fx.s.dmgAtk, attacker, 'the retired listener cannot mutate cached damage state');
+});

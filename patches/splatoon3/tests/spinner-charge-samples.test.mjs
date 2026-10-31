@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {spinnerAudioIds,spinnerClipKey,spinnerClipFull,spinnerUsesPremix} from '../runtime/audio/spinner-charge-clips.mjs';
+const decodedClip=()=>({duration:3,length:48000,numberOfChannels:1,sampleRate:16000,getChannelData:()=>new Float32Array(48000)});
 test('all six Spinner types have a charge soundtrack',()=>{
  assert.equal(spinnerAudioIds.size,6);
  for(const id of spinnerAudioIds){assert.ok(spinnerClipKey(id));assert.ok(spinnerClipFull(id)>0);}
@@ -20,7 +21,7 @@ test('MP3 fetching is shared and cached by audio context',async()=>{
  const {spinnerPreload,spinnerCached}=await import('../runtime/audio/spinner-charge-clips.mjs');
  const old=globalThis.fetch;let calls=0;
  globalThis.fetch=async()=>{calls++;return {ok:true,arrayBuffer:async()=>new ArrayBuffer(64)};};
- const context={state:'running',decodeAudioData:async()=>({duration:3,length:48000,numberOfChannels:1})};
+ const context={state:'running',decodeAudioData:async()=>decodedClip()};
  const engine={ctx:context};
  try{
   const [first,second]=await Promise.all([spinnerPreload(engine,'splatling'),spinnerPreload(engine,'splatling')]);
@@ -33,7 +34,7 @@ test('one charge starts one premix and cancels its native fallback',async()=>{
  const {spinnerChargeAudioLoop}=await import('../runtime/audio/spinner-charge-control.mjs');
  const old=globalThis.fetch;
  globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(64)});
- const ctx={state:'running',currentTime:0,decodeAudioData:async()=>({duration:3,length:48000,numberOfChannels:1})};
+ const ctx={state:'running',currentTime:0,decodeAudioData:async()=>decodedClip()};
  const sounds=[],base={playing:true,stops:0,set(){},stop(){this.stops++;this.playing=false;}};
  const engine={ctx,loop(name,opts){const h={playing:true,stops:0,set(){},stop(){this.stops++;this.playing=false;}};sounds.push({name,opts,h});return h;}};
  try{

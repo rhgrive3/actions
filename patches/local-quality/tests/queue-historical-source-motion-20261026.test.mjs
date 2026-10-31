@@ -24,6 +24,31 @@ function adoptCurrentProfileOwner(source,bytes=profileOwnerBytes){
  const {before,after,label}=JSON.parse(bytes);
  return replaceOnce(source,before,after,label);
 }
+// The historical fixture predates the reviewed form-duration/support owner.
+// Replay its exact changes independently of the runtime adapters, preserving
+// the frozen oracle and every older full-source equality and inversion below.
+const formOwnerPairs=[
+ ["import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';",
+  "import { sourceAirBlendStart, sourceFormClipAdmitted, sourceFormDuration, sourceFormFrame, restoreFormSupport } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';"],
+ ['this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;',
+  'this.formTime=Math.max(0,dt);this.formEvent=true;this.s3FormClipDeclined=false;this.s3FormSupportRestored=false;'],
+ ['this.formDuration=nextKid?0.15:Math.min(human.frames,squid.frames)/HOST_MOTION.fps;',
+  'this.formDuration=sourceFormDuration(this,Math.min(human.frames,squid.frames)/HOST_MOTION.fps);'],
+ ["  if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){\n   special={name:this.formKid?'ToHuman':'ToSquid',frame:this.formTime*HOST_MOTION.fps};state=special.name;",
+  "  if(this.formEvent&&this.formTime<this.formDuration&&sourceFormClipAdmitted(this)){\n   special={name:this.formKid?'ToHuman':'ToSquid',frame:sourceFormFrame(this,this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames)};state=special.name;"],
+ ["  const balanceActive=(this.state==='move'||this.state==='idle')&&!this.manual;",
+  "  restoreFormSupport(this,HOST_MOTION.transitionSeconds);\n  const balanceActive=(this.state==='move'||this.state==='idle')&&!this.manual;"],
+ ["  const groundEnabled=activation>=1&&this.state!=='manual'&&this.state!=='ToHuman'&&this.state!=='ToSquid'&&this.state!=='victory'&&this.state!=='defeat';",
+  "  const formPlant=this.grounded&&(this.state==='ToHuman'||this.state==='ToSquid');\n  if(formPlant)this.contact.fill(1);\n  const groundEnabled=activation>=1&&this.state!=='manual'&&this.state!=='victory'&&this.state!=='defeat';"],
+ ['const keep=1-smooth5(this.formTime/this.formDuration);for(let i=0;i<this.character.boneList.length;i++){',
+  'const keep=1-smooth5(this.formTime/this.formDuration);if(!this.formGroundBones){const b=this.character.bones;this.formGroundBones=new Set([b.hips,b.thighL,b.shinL,b.footL,b.thighR,b.shinR,b.footR,b.toeL,b.toeR]);}for(let i=0;i<this.character.boneList.length;i++){'],
+ ['const b=this.character.boneList[i],old=this.diveFrom[i];b.position.lerp(old.p,keep);',
+  'const b=this.character.boneList[i],old=this.diveFrom[i];if(this.grounded&&keep<1&&this.formGroundBones.has(b))continue;b.position.lerp(old.p,keep);'],
+ ["   if(this.formEvent&&this.formKid&&this.formTime<this.formDuration){name='Sqd_ToHuman';frame=Math.min(this.formTime*HOST_MOTION.fps,Math.max(0,this.squidBank.clips.get(name).frames-1));}\n   else if(this.formEvent&&this.formTime<this.squidBank.clips.get(this.formKid?'Sqd_ToHuman':'Sqd_ToSquid').frames/HOST_MOTION.fps){name=this.formKid?'Sqd_ToHuman':'Sqd_ToSquid';frame=this.formTime*HOST_MOTION.fps;}",
+  "   if(this.formEvent&&this.formTime<this.formDuration){name=this.formKid?'Sqd_ToHuman':'Sqd_ToSquid';frame=sourceFormFrame(this,this.squidBank.clips.get(name).frames);}"],
+];
+const adoptCurrentFormOwner=source=>formOwnerPairs.reduce((code,[from,to],i)=>replaceOnce(code,from,to,'pinned form owner '+i),source);
+const reverseCurrentFormOwner=source=>[...formOwnerPairs].reverse().reduce((code,[from,to],i)=>replaceOnce(code,to,from,'reverse pinned form owner '+i),source);
 const method=s=>{const a=s.indexOf(' actionClip('),b=s.indexOf('\n sampleManual',a);return new Function('return ({'+s.slice(a,b)+'});')().actionClip;};
 const methods=[method(before),method(after)];
 const helper=after.slice(after.indexOf('// Historical queue: one exact dt slot'));
@@ -124,6 +149,7 @@ const adoptCurrentClipPool=source=>clipPoolChanges.reduce((code,[from,to])=>repl
 
 test('pinned source-controller reconstructs the walk owner and historical queue (text only)',()=>{
  assert.equal(sha(fixtureBytes),'92b24e5c1ff331c66623e73988d176561c8b47875fc6bdeffc85c799870c598a','frozen fixture bytes');
+ assert.equal(sha(JSON.stringify(formOwnerPairs)),'521cfb5815a34ad018990c2a0d17a23a59786fec9bc98536d7981807737897a6','pinned form owner anchor pairs');
  assert.equal(sha(before),fixture.modules[REL].sha256);
  assert.equal(restoreHistoricalSourceMotion20261026(REL,after),before);
  assert.equal(adaptHistoricalSourceMotion20261026('unrelated','same'),'same');
@@ -133,7 +159,16 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const currentGitBlob=createHash('sha1').update('blob '+Buffer.byteLength(rawCurrent)+'\0').update(rawCurrent).digest('hex');
  assert.equal(currentGitBlob,'111747a0ab4141af1cb3c58258e6ca24b88716f2','the separately reviewed current raw controller remains exact');
  const current=reverseReviewedMotionEpoch(adaptBuildSource(REL,rawCurrent),'motion');
- const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,current);
+ const beforeCurrentForm=reverseCurrentFormOwner(current);
+ assert.notEqual(beforeCurrentForm,current,'the subsequent form owner is exercised');
+ assert.equal(adoptCurrentFormOwner(beforeCurrentForm),current,'independent form owner reverses the full current composition');
+ for(const [from,to] of formOwnerPairs){
+  assert.throws(()=>adoptCurrentFormOwner(beforeCurrentForm.replace(from,'')),/expected exactly one/,'missing form owner anchor');
+  assert.throws(()=>adoptCurrentFormOwner(beforeCurrentForm+from),/expected exactly one/,'duplicate form owner anchor');
+  assert.throws(()=>reverseCurrentFormOwner(current.replace(to,'')),/expected exactly one/,'missing reverse form owner anchor');
+  assert.throws(()=>reverseCurrentFormOwner(current+to),/expected exactly one/,'duplicate reverse form owner anchor');
+ }
+ const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,beforeCurrentForm);
  assert.equal(sha(JSON.stringify(laterOwnerPairs)),'26654dc4115ea24a28d7fad6c73eacafcd41298c7c4a34f183fbe790de638976','pinned later owner anchor pairs');
  const beforeWorldNative=reverseWorldNativeMotionOwner(afterHistoricalRestore);
  assert.equal(adaptWorldNative20261029(REL,beforeWorldNative),afterHistoricalRestore,'world/native owner reverses and recomposes the complete current historical inversion');
@@ -151,7 +186,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- const restored=restoreHistoricalSourceMotion20261026(REL,current);
+ const restored=restoreHistoricalSourceMotion20261026(REL,beforeCurrentForm);
  assert.equal(restored.split("import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n").length-1,1,'exactly one walk owner import survives historical inversion');
  assert.ok(restored.includes('this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk)'), 'walk speed owner preserved');
  assert.ok(restored.includes('sampleContactPair,feasibleContact,feasibleContactPrepared'), 'newer contact-pair and prepared contact source owners retained');
@@ -166,7 +201,8 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const restoredCurrent=reverseHairOwner(currentBeforeLaterOwner,hairPairs);
  const priorOwnerChain=adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair)));
  assert.notEqual(current,priorOwnerChain,'current profile owner remains distinct from the unchanged prior owner chain');
- assert.equal(current,adoptCurrentProfileOwner(priorOwnerChain),'pinned walk, clip pool, hair owner, historical owner, subsequent visual queue and current profile owner compose exactly');
+ assert.equal(beforeCurrentForm,adoptCurrentProfileOwner(priorOwnerChain),'pinned walk, clip pool, hair owner, historical owner, subsequent visual queue and current profile owner compose exactly');
+ assert.equal(current,adoptCurrentFormOwner(adoptCurrentProfileOwner(priorOwnerChain)),'the full historical chain plus independent form owner retains the complete current source');
  assert.throws(()=>adoptCurrentProfileOwner(priorOwnerChain,Buffer.from(profileOwnerBytes.toString().replace('item._profName===name','item._profName!==name'))),/pinned current profile owner descriptor bytes/,'changed current owner cannot acquire the pinned descriptor identity');
  assert.equal(restoredCurrent,pooled,'pinned historical source plus exact walk and clip-pool anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
@@ -175,7 +211,9 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
  assert.ok(restored.includes('const rawTravelSpeed=dt>0?dist/dt:0;'),'current composition retains the independently reviewed walk calculation');
- assert.equal(current,adoptCurrentProfileOwner(adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected)))))),'walk adapter, clip pool and later hair/visual/profile owners retain the pinned source composition');
+ const expectedProfile=adoptCurrentProfileOwner(adaptWorldNative20261029(REL,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(adoptCurrentClipPool(expected))))));
+ assert.equal(beforeCurrentForm,expectedProfile,'walk adapter, clip pool and later hair/visual/profile owners retain the pinned source composition');
+ assert.equal(current,adoptCurrentFormOwner(expectedProfile),'the second independent full chain includes the subsequent form owner');
  assert.equal(restoredCurrent,adoptCurrentClipPool(expected),'prior composition plus reviewed walking and clip-pool ownership is retained');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');

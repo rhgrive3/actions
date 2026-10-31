@@ -226,7 +226,9 @@ export function makeSkinMaterial(u, skinHex) {
           iwWet = 0.7;
         }
         float hl = length(vHead);
-        if (hl > 0.5 && iwSub < 0.5) {
+        // aHead is zero on non-head parts. Keep helper fragments on the same
+        // primitive branch when their head directions extrapolate off a tiny triangle.
+        if (hl > 0.0 && iwSub < 0.5) {
           vec3 d = vHead / hl;
           float az = atan(d.x, d.z), el = asin(clamp(d.y, -1.0, 1.0));
           float fw = max(fwidth(el), 1e-4);

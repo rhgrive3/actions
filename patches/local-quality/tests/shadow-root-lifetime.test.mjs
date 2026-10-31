@@ -43,3 +43,43 @@ test('old native root setter retains the disposed caster until a render opportun
  assert.equal(cache.static.length,1);assert.equal(cache.static[0].o.material.map,a.atlas);
  cache.setStaticRoots([b.root]);assert.equal(cache.static.length,0);cache.dispose();b.dispose();
 });
+
+test('disabled renderer shadows bypass the cache before any native shadow map exists',()=>{
+ const {cache,renderer}=fixture(),scene=new f.THREE.Scene(),camera=new f.THREE.Camera();
+ f.G.scene=scene;
+ const sun=new f.THREE.DirectionalLight();sun.castShadow=true;
+ assert.equal(sun.shadow.map,null);
+ let cached=0;
+ cache._render=function(sm,lights,actualScene,actualCamera){
+  cached++;
+  assert.equal(sm,renderer.shadowMap);assert.equal(lights[0],sun);
+  assert.equal(actualScene,scene);assert.equal(actualCamera,camera);
+ };
+ renderer.shadowMap.render([sun],scene,camera);
+ assert.equal(cached,0,'native OFF does not allocate a map, so the cache must not dereference one');
+ assert.equal(cache.dirty,true,'reenabling still needs the first complete shadow build');
+ renderer.shadowMap.enabled=true;renderer.shadowMap.render([sun],scene,camera);
+ assert.equal(cached,1,'reenabling reaches the existing cache path');
+ renderer.shadowMap.enabled=false;renderer.shadowMap.render([sun],scene,camera);
+ assert.equal(cached,1);
+ cache.dispose();
+});
+
+test('restored disabled shadow maps keep the same bypass and restore the current native owner on disposal',()=>{
+ const {cache,renderer,listeners}=fixture(),scene=new f.THREE.Scene(),camera=new f.THREE.Camera();
+ f.G.scene=scene;
+ let abandoned=0,nativeCalls=0,cached=0;
+ cache.cache={abandon(){abandoned++;}};cache.dirty=false;
+ cache._render=()=>{cached++;};
+ const native=function(){assert.equal(this,renderer.shadowMap);nativeCalls++;};
+ renderer.shadowMap={enabled:false,render:native};
+ listeners.get('webglcontextrestored')();
+ assert.equal(abandoned,1);assert.equal(cache.cache,null);assert.equal(cache.dirty,true);
+ const lights=[new f.THREE.DirectionalLight()];
+ renderer.shadowMap.render(lights,scene,camera);
+ assert.equal(nativeCalls,1);assert.equal(cached,0);
+ renderer.shadowMap.enabled=true;renderer.shadowMap.render(lights,scene,camera);
+ assert.equal(cached,1);
+ cache.dispose();
+ assert.equal(renderer.shadowMap.render,native);assert.equal(listeners.size,0);
+});

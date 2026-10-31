@@ -116,13 +116,11 @@ export function adaptCombatGpuCpuPerfect(rel, code, replaceOnce, options = {}) {
       code,
       `    float rl = length(rS);
     if (rl > 0.75) rS *= 0.75 / rl;
-    float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));
     slope += vec2(dot(rS, T), dot(rS, Bt)) * gInk * rFar;
     gWake = max(gWake, clamp(rG * 0.5, 0.0, 1.0) * gInk * rFar);`,
       `    if (rG > 0.0 || dot(rS, rS) > 0.0) {
       float rl = length(rS);
       if (rl > 0.75) rS *= 0.75 / rl;
-      float rFar = 1.0 - smoothstep(0.05, 0.18, length(fwidth(vWPos)));
       slope += vec2(dot(rS, T), dot(rS, Bt)) * gInk * rFar;
       gWake = max(gWake, clamp(rG * 0.5, 0.0, 1.0) * gInk * rFar);
     }`,
@@ -1202,9 +1200,54 @@ export class SwimWake {`,
 }
 }
 
-// Final Wave 3–5 pass runs after strict world/audio/UI queue adapters.
-// Conditional misses retain those owners; they are not counted as applied.
-export function adaptCombatWave345(rel, code, replaceOnce) {
+// Earlier Wave 3–5 candidates remain optional because current queue owners may
+// supersede them. Every Wave 9–11 semantic site must instead resolve to one of
+// its exact raw/composed epochs or to the separately audited Wave 6/7 algebra.
+const applyOptionalWave345Compatible = applyWave345Compatible;
+const REVIEWED67_GPU_EQUIVALENTS = new Map([
+  ['src/world/levelMaterial.js', ['GPU-LVL-01']],
+  ['src/world/environment.js', ['GPU-ENV-02a', 'GPU-ENV-04a', 'GPU-ENV-04b']],
+  ['src/world/paint.js', ['GPU-PNT-01a', 'GPU-PNT-01b', 'GPU-PNT-01c']],
+  ['src/fx/fx.js', ['GPU-FX-02b', 'GPU-FX-03', 'GPU-FX-04', 'GPU-FX-05a', 'GPU-FX-05b', 'GPU-FX-05c']],
+]);
+
+// Mandatory semantic sites are independent of which compatibility branch runs.
+// Adding/removing an epoch cannot silently remove its obligation from the audit.
+const WHOLE_GAME_GPU_REQUIRED_SITES = new Map([
+  ['src/world/levelMaterial.js', ['GPU-LVL-01', 'GPU-LVL-02', 'GPU-LVL-03', 'GPU-LVL-04', 'GPU-LVL-05', 'GPU-LVL-06', 'GPU-LVL-07a', 'GPU-LVL-07b']],
+  ['src/world/inkShading.js', ['GPU-INK-01a', 'GPU-INK-01b', 'GPU-INK-02', 'GPU-INK-03a', 'GPU-INK-03b', 'GPU-INK-03c', 'GPU-INK-03d', 'GPU-INK-04a', 'GPU-INK-04b', 'GPU-INK-04c']],
+  ['src/core/renderer.js', ['GPU-POST-01']],
+  ['src/fx/screenfx.js', ['GPU-POST-02a', 'GPU-POST-02b', 'GPU-SFX-03a', 'GPU-SFX-03b', 'GPU-SFX-03c', 'GPU-SFX-03d', 'GPU-SFX-03e']],
+  ['src/world/environment.js', ['GPU-ENV-02a', 'GPU-ENV-01', 'GPU-ENV-03', 'GPU-ENV-04a', 'GPU-ENV-04b', 'GPU-ENV-04c', 'GPU-ENV-04d', 'GPU-ENV-05a', 'GPU-ENV-05b', 'GPU-ENV-05c1', 'GPU-ENV-05c2', 'GPU-ENV-05d']],
+  ['src/world/decor.js', ['GPU-DEC-01', 'GPU-DEC-02']],
+  ['src/world/paint.js', ['GPU-PNT-01a', 'GPU-PNT-01b', 'GPU-PNT-01c']],
+  ['src/game/character-mats.js', ['GPU-CHR-01a', 'GPU-CHR-01b', 'GPU-CHR-02a', 'GPU-CHR-02b', 'GPU-CHR-02c', 'GPU-CHR-02d', 'GPU-CHR-03b', 'GPU-CHR-03c', 'GPU-CHR-03d', 'GPU-CHR-03e', 'GPU-CHR-03f', 'GPU-CHR-03g', 'GPU-CHR-03h', 'GPU-CHR-03i', 'GPU-CHR-03j', 'GPU-CHR-03k', 'GPU-CHR-03l', 'GPU-CHR-03m']],
+  ['src/boss/bossMats.js', ['GPU-BOS-01a', 'GPU-BOS-01b', 'GPU-BOS-02a', 'GPU-BOS-02b', 'GPU-BOS-03a', 'GPU-BOS-03b', 'GPU-BOS-03c']],
+  ['src/fx/fx.js', ['GPU-FX-01', 'GPU-FX-02a', 'GPU-FX-02b', 'GPU-FX-03', 'GPU-FX-04', 'GPU-FX-05a', 'GPU-FX-05b', 'GPU-FX-05c']],
+  ['src/game/lobbySet-mats.js', ['GPU-LOB-01a', 'GPU-LOB-01b', 'GPU-LOB-01c', 'GPU-LOB-02a', 'GPU-LOB-02b', 'GPU-LOB-02c', 'GPU-LOB-02d']],
+  ['src/world/texlib.js', ['GPU-TXL-01a', 'GPU-TXL-01b', 'GPU-TXL-01c', 'GPU-TXL-01d', 'GPU-TXL-01e', 'GPU-TXL-01f', 'GPU-TXL-01g', 'GPU-TXL-01h', 'GPU-TXL-01i', 'GPU-TXL-01j', 'GPU-TXL-01k', 'GPU-TXL-01l', 'GPU-TXL-01m', 'GPU-TXL-01n', 'GPU-TXL-01o', 'GPU-TXL-01p', 'GPU-TXL-01q', 'GPU-TXL-01r', 'GPU-TXL-01s', 'GPU-TXL-01t']],
+  ['src/game/weapons.js', ['GPU-WPN-01a', 'GPU-WPN-01b', 'GPU-WPN-01c']],
+  ['src/game/character-weapons.js', ['GPU-WPN-01d']],
+  ['src/game/character.js', ['GPU-CHR-03a']],
+  ['src/game/lobbySet.js', ['GPU-LOB-03']],
+  ['src/game/showcase.js', ['GPU-SHW-01']],
+  ['src/boss/bossHazards.js', ['GPU-BHZ-01']],
+]);
+
+export function adaptCombatWave345(rel, code, replaceOnce, options = {}) {
+  const sites = new Map();
+  const applyWave345Compatible = (input, before, after, replace, label) => {
+    const id = /^GPU-[A-Z]{2,}-\S+/.exec(label)?.[0];
+    if (id) {
+      const site = sites.get(id) || { id, labels: [], epochs: [], status: null };
+      site.labels.push(label);
+      site.epochs.push(after);
+      if (input.includes(after)) site.status ||= before === after ? 'preserved' : 'already-optimized';
+      else if (input.includes(before)) site.status = 'applied';
+      sites.set(id, site);
+    }
+    return applyOptionalWave345Compatible(input, before, after, replace, label);
+  };
     if (rel === 'src/world/level.js') {
       // LVL-01: Ternary hash clamping, scalar OBB test and scalar ground plane.
       code = applyWave345Compatible(
@@ -2083,16 +2126,16 @@ export class FX {`,
       replaceOnce,
       'GPU-LVL-05 remove dead chamfer fwidth(e) calculation'
     );
-    // GPU-LVL-06: Skip tangent-space relief normal perturbation & normalization when thick ink masks out relief.
+    // GPU-LVL-06: Skip tangent-frame synthesis at zero strength, retaining normal magnitude/sign semantics.
     code = applyWave345Compatible(
       code,
       `  float keep = max((vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0, gTexKeep);   // containers + stairs
   nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep))));`,
       `  float keep = max((vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0, gTexKeep);   // containers + stairs
   float tStr = gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep)));
-  if (tStr != 0.0) nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr);`,
+  nBase = tStr != 0.0 ? texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr) : normalize(vWNorm * gTexN.z);`,
       replaceOnce,
-      'GPU-LVL-06 gate texlibPerturbNormal on positive relief strength'
+      'GPU-LVL-06 retain normalized flat relief while gating tangent-frame synthesis'
     );
   }
 
@@ -2109,7 +2152,7 @@ export class FX {`,
     vec3 sunW = normalize(vec3(-0.41, 0.83, -0.38));
 #endif
     vec2 sunF = vec2(dot(sunW, Tf), dot(sunW, Bf));        // sun direction in the face's (u, v) plane`,
-      `    bool wallF = abs(vWNorm.y) < 0.5;`,
+      `    bool wallF = abs(vWNorm.y) < 0.5; // face frame is evaluated only by the active halo`,
       replaceOnce,
       'GPU-INK-01a remove eager per-pixel Tf/Bf/sunW/sunF evaluation in INK_COLOR'
     );
@@ -2214,7 +2257,7 @@ uniform int uRipCount;`,
       float sg = Qr.y * 0.8;
       float maxD = front + sg * 3.0, minD = front - Qr.y * 4.0;
       float d2 = dot(D, D);
-      if (d2 > maxD * maxD || (minD > 0.0 && d2 < minD * minD)) continue;
+      if (maxD < 0.0 || d2 > maxD * maxD || (minD > 0.0 && d2 < minD * minD)) continue;
       float d = sqrt(d2);
       float x = d - front;`,
       replaceOnce,
@@ -2427,7 +2470,7 @@ uniform int uRipCount;`,
       replaceOnce,
       'GPU-ENV-01 gate open-sea sun glitter 3x pow and shoreline/object foam ALU'
     );
-    // GPU-ENV-03: Gate horizon waterline caustic 4x sin + normalize on wl2 in (0.0, 1.1).
+    // GPU-ENV-03: Gate horizon waterline caustic 4x sin + normalize on wl2 in [0.0, 1.1).
     code = applyWave345Compatible(
       code,
       `#ifdef HZ_WATERLINE
@@ -2439,7 +2482,7 @@ uniform int uRipCount;`,
 #endif`,
       `#ifdef HZ_WATERLINE
   float wl2 = vHzWorld.y - \${WATER_Y.toFixed(3)};
-  if (wl2 > 0.0 && wl2 < 1.1) {
+  if (wl2 >= 0.0 && wl2 < 1.1) {
     vec2 cq = vHzWorld.xz * 1.7 + vec2(vHzWorld.y * 2.3, 0.0);
     float cz = sin(cq.x + uTime * 1.3 + sin(cq.y * 1.3 + uTime * 0.9) * 1.6) * sin(cq.y * 1.1 - uTime * 1.1 + sin(cq.x * 0.9 - uTime * 0.7) * 1.4);
     float side = 1.0 - abs(normalize(vHzNormal).y);
@@ -2453,9 +2496,18 @@ uniform int uRipCount;`,
 
   if (rel === 'src/world/decor.js') {
     // GPU-DEC-01: Gate spawn pad center ink pool 2x dNoise, pow(n, 7.0), and emblem texture fetch on r < 0.62 (>61% of disc skipped).
+    // Gradients precede the disc discard too, so even subpixel pads retain a
+    // complete derivative quad before either spatial gate removes fragments.
     code = applyWave345Compatible(
       code,
-      `  // pooled ink in the centre: slow liquid swirl, wet highlight
+      `  vec2 q = vUv * 2.0 - 1.0; float r = length(q); float a = atan(q.y, q.x + 1e-5);
+  if (r > 1.0) discard;
+  vec3 V = normalize(cameraPosition - vW);
+  // glossy dark base with a soft sky reflection band and a moving sun glint
+  vec3 base = mix(vec3(0.035, 0.04, 0.055), vec3(0.075, 0.085, 0.11), smoothstep(1.0, 0.0, r));
+  float fres = pow(max(1.0 - clamp(V.y, 0.0, 1.0), 0.0), 3.0);
+  base += vec3(0.16, 0.2, 0.26) * fres;
+  // pooled ink in the centre: slow liquid swirl, wet highlight
   float n = dNoise(q * 3.2 + vec2(uTime * 0.25, -uTime * 0.18)) * 0.6 + dNoise(q * 7.0 - uTime * 0.3) * 0.4;
   float pool = smoothstep(0.58, 0.5, r + (n - 0.5) * 0.06);
   vec3 ink = uColor * (0.42 + 0.3 * n) + vec3(0.9) * pow(n, 7.0) * 1.4;
@@ -2464,7 +2516,16 @@ uniform int uRipCount;`,
   vec2 eu = q / 0.46 * 0.5 + 0.5;
   float em = (eu.x > 0.0 && eu.x < 1.0 && eu.y > 0.0 && eu.y < 1.0) ? texture2D(uEmblem, eu).a : 0.0;
   base = mix(base, vec3(1.0) * (0.9 + 0.2 * uPulse), em * pool);`,
-      `  // pooled ink in the centre: slow liquid swirl, wet highlight
+      `  vec2 q = vUv * 2.0 - 1.0; float r = length(q); float a = atan(q.y, q.x + 1e-5);
+  vec2 eu = q / 0.46 * 0.5 + 0.5;
+  vec2 euDx = dFdx(eu), euDy = dFdy(eu);
+  if (r > 1.0) discard;
+  vec3 V = normalize(cameraPosition - vW);
+  // glossy dark base with a soft sky reflection band and a moving sun glint
+  vec3 base = mix(vec3(0.035, 0.04, 0.055), vec3(0.075, 0.085, 0.11), smoothstep(1.0, 0.0, r));
+  float fres = pow(max(1.0 - clamp(V.y, 0.0, 1.0), 0.0), 3.0);
+  base += vec3(0.16, 0.2, 0.26) * fres;
+  // pooled ink in the centre: slow liquid swirl, wet highlight
   float pool = 0.0;
   if (r < 0.62) {
     float n = dNoise(q * 3.2 + vec2(uTime * 0.25, -uTime * 0.18)) * 0.6 + dNoise(q * 7.0 - uTime * 0.3) * 0.4;
@@ -2474,8 +2535,7 @@ uniform int uRipCount;`,
       vec3 ink = uColor * (0.42 + 0.3 * n) + vec3(0.9) * (n2 * n2 * n2 * n) * 1.4;
       base = mix(base, ink, pool);
       // emblem (white squid) in the pool
-      vec2 eu = q / 0.46 * 0.5 + 0.5;
-      float em = (eu.x > 0.0 && eu.x < 1.0 && eu.y > 0.0 && eu.y < 1.0) ? texture2D(uEmblem, eu).a : 0.0;
+      float em = (eu.x > 0.0 && eu.x < 1.0 && eu.y > 0.0 && eu.y < 1.0) ? textureGrad(uEmblem, eu, euDx, euDy).a : 0.0;
       base = mix(base, vec3(1.0) * (0.9 + 0.2 * uPulse), em * pool);
     }
   }`,
@@ -2526,7 +2586,7 @@ uniform int uRipCount;`,
   }
 
   if (rel === 'src/boss/bossMats.js') {
-    // GPU-BOS-01: Early-exit bBumpN when height derivatives are zero & gate phase-2 STEEL Voronoi fracture on uCrack > 0.001.
+    // GPU-BOS-01: Early-exit bBumpN when height derivatives are zero & gate phase-2 STEEL Voronoi fracture on uCrack != 0.0.
     code = applyWave345Compatible(
       code,
       `vec3 bBumpN(vec3 n, float h, vec3 pos){
@@ -2553,7 +2613,7 @@ uniform int uRipCount;`,
       float g = (rim + cracks) * uCrack * pulse;
       c = mix(c, vec3(0.01), g * 0.8);
       bEmis += uWeak * g * (2.5 + 3.0 * uOpen);`,
-      `      if (uCrack > 0.001) {
+      `      if (uCrack != 0.0) {
         float ang = atan(d.y, d.x);
         float jag = 1.0 + 0.1 * sin(ang * 7.0 + (pid < 1.5 ? 1.0 : -1.0)) + 0.06 * sin(ang * 13.0 + 2.0) + 0.05 * sin(ang * 23.0);
         float edge = abs(r - jag) * 0.5;
@@ -2567,7 +2627,7 @@ uniform int uRipCount;`,
         bEmis += uWeak * g * (2.5 + 3.0 * uOpen);
       }`,
       replaceOnce,
-      'GPU-BOS-01b gate STEEL phase-2 Voronoi fractures on uCrack > 0.001'
+      'GPU-BOS-01b gate STEEL phase-2 Voronoi fractures on uCrack != 0.0'
     );
   }
 
@@ -3005,7 +3065,6 @@ uniform int uRipCount;`,
       replaceOnce,
       'GPU-LVL-07a hoist wFar gate before 4x11 swim-wake loop and cull out-of-range segments via squared distance'
     );
-    if (code.includes('if (gInk > 0.01 && wFar > 0.0) {')) {
     code = applyWave345Compatible(
       code,
       `    float wl = length(wS);
@@ -3020,7 +3079,6 @@ uniform int uRipCount;`,
       replaceOnce,
       'GPU-LVL-07b reuse hoisted wFar after swim-wake loop'
     );
-    }
   }
 
   if (rel === 'src/world/inkShading.js') {
@@ -3196,7 +3254,7 @@ uniform int uRipCount;`,
       code,
       `  vec3 V = normalize(cameraPosition - vW);
   float rim = pow(max(1.0 - abs(dot(normalize(vN), V)), 0.0), 2.0);`,
-      `  if (uAlpha + uPulse <= 0.0005 && vUv.y >= 0.035) discard;
+      `  if (uAlpha == 0.0 && uPulse == 0.0 && vUv.y >= 0.035) discard;
   vec3 V = normalize(cameraPosition - vW);
   float rm0 = max(1.0 - abs(dot(normalize(vN), V)), 0.0);
   float rim = rm0 * rm0;`,
@@ -3206,7 +3264,7 @@ uniform int uRipCount;`,
   }
 
   if (rel === 'src/game/character-mats.js') {
-    // GPU-CHR-02: Gate 3x iwHash2 freckle noise on nose/cheek region, gate iwThin back-light pow on iwThin > 0.0, polynomial pow2/pow3 in makeSkinMaterial & GUMMY_LIGHT, and gate 2x 3D iwNoise in makeEyeMaterial on irisM > 0.0 && fl > 0.0.
+    // GPU-CHR-02: Preserve freckle derivatives and tails, gate iwThin back-light pow on iwThin > 0.0, polynomial pow2/pow3 in makeSkinMaterial & GUMMY_LIGHT, and gate 2x 3D iwNoise in makeEyeMaterial on irisM > 0.0 && fl > 0.0.
     code = applyWave345Compatible(
       code,
       `          // ---- blush: soft warm gradient over the cheek apples (+ uMouth2.w flush), stronger on fair skin
@@ -3235,21 +3293,19 @@ uniform int uRipCount;`,
           if (uFreckle > 0.5) {
             float frX = (abs(az) - 0.3) / 0.28, frY = (el + 0.14) / 0.1;
             float region = exp(-(frX * frX) - (frY * frY));
-            if (region > 0.002) {
-              vec2 fp = vec2(az, el + 0.12) * 42.0;
-              vec2 cell = floor(fp); vec2 fr = fract(fp) - 0.5;
-              float rnd = iwHash2(cell);
-              vec2 off = vec2(iwHash2(cell + 3.1), iwHash2(cell + 7.7)) - 0.5;
-              float fd = length(fr - off * 0.5) - 0.13 * rnd;
-              float fk = iwFill(fd) * step(0.45, rnd) * region;
-              diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.78, 0.6, 0.5), fk * 0.7);
-            }
+            vec2 fp = vec2(az, el + 0.12) * 42.0;
+            vec2 cell = floor(fp); vec2 fr = fract(fp) - 0.5;
+            float rnd = iwHash2(cell);
+            vec2 off = vec2(iwHash2(cell + 3.1), iwHash2(cell + 7.7)) - 0.5;
+            float fd = length(fr - off * 0.5) - 0.13 * rnd;
+            float fk = iwFill(fd) * step(0.45, rnd) * region;
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.78, 0.6, 0.5), fk * 0.7);
           }
           // ---- nose tip + nostril rims: slightly warmer
           float nsX1 = az / 0.06, nsY1 = (el + 0.13) / 0.06, nsX2 = (abs(az) - 0.045) / 0.03, nsY2 = (el + 0.165) / 0.025;
           float nose = exp(-(nsX1 * nsX1) - (nsY1 * nsY1)) + 0.6 * exp(-(nsX2 * nsX2) - (nsY2 * nsY2));`,
       replaceOnce,
-      'GPU-CHR-02a makeSkinMaterial gate 3x iwHash2 freckle noise on region > 0.002 and polynomial pow2 in blush/freckles/nose'
+      'GPU-CHR-02a makeSkinMaterial polynomial squares preserve all freckle tails and uniform derivatives'
     );
     code = applyWave345Compatible(
       code,
@@ -3302,7 +3358,7 @@ uniform int uRipCount;`,
   }
 
   if (rel === 'src/boss/bossMats.js') {
-    // GPU-BOS-02: Gate boss rim emissive normalize(vViewPosition) + pow(..., bRimP) on dot(bRimC, bRimC) > 0.0, and gate STEEL roof-hatch drip noise on uDrip > 0.001.
+    // GPU-BOS-02: Gate boss rim emissive normalize(vViewPosition) + pow(..., bRimP) on dot(bRimC, bRimC) > 0.0, and gate only zero-weight roof-pool noise; roof drips and bCCR remain unconditional.
     code = applyWave345Compatible(
       code,
       `.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\\n totalEmissiveRadiance += bEmis + bRimC * pow(1.0 - abs(dot(normal, normalize(vViewPosition))), bRimP);')`,
@@ -3327,7 +3383,7 @@ uniform int uRipCount;`,
       bRough = mix(bRough, 0.08, ink); bMetal = mix(bMetal, 0.0, ink); bCC = max(bCC, ink); bCCR = 0.04;
     }`,
       `    // ink drips down the walls from the roof hatches + pooled along the top rail
-    if (wall && pid < 2.5 && uDrip > 0.001) {
+    if (wall && pid < 2.5) {
       float cw = uv.x * 3.2; float ci = floor(cw); float cf = fract(cw);
       float h0 = bH2(vec2(ci, pid + 9.0));
       float L = (0.25 + 1.4 * h0 * h0) * uDrip * (0.92 + 0.08 * sin(uTime * 0.7 + h0 * 20.0));
@@ -3335,18 +3391,18 @@ uniform int uRipCount;`,
       float w = 0.06 + 0.05 * h0;
       float xc = 0.3 + 0.4 * bH2(vec2(ci, pid + 3.0));
       float drip = step(0.35, h0) * (1.0 - smoothstep(w * 0.8, w, abs(cf - xc) * 3.2 / (1.0 + 0.8 * smoothstep(L - 0.12, L, fromTop)))) * step(fromTop, L);
-      float pool = smoothstep(0.16, 0.05, fromTop) * uDrip * smoothstep(0.3, 0.6, bN2(vec2(uv.x * 2.0, pid)));
+      float pool = uDrip != 0.0 ? smoothstep(0.16, 0.05, fromTop) * uDrip * smoothstep(0.3, 0.6, bN2(vec2(uv.x * 2.0, pid))) : 0.0;
       float ink = max(drip, pool);
       c = mix(c, uInk * 0.55, ink);
       bRough = mix(bRough, 0.08, ink); bMetal = mix(bMetal, 0.0, ink); bCC = max(bCC, ink); bCCR = 0.04;
     }`,
       replaceOnce,
-      'GPU-BOS-02b gate STEEL roof-hatch drip noise on uDrip > 0.001'
+      'GPU-BOS-02b gate zero-weight pool noise while preserving roof drips and clearcoat roughness'
     );
   }
 
   if (rel === 'src/game/lobbySet-mats.js') {
-    // GPU-LOB-02: Gate decal wear lsF + lsN (20 hashes/px) on d.a > 0.001, gate 5-tap planar reflection textureLod blur on k > 0.001 with polynomial pow5, polynomial pow4 in neonMaterial, and early discard transparent steam border before 3x lsF (48 hashes/px).
+    // GPU-LOB-02: Gate decal wear lsF + lsN (20 hashes/px) on d.a > 0.0, gate 5-tap planar reflection textureLod blur on k > 0.0 with polynomial pow5, polynomial pow4 in neonMaterial, and early discard transparent steam border before 3x lsF (48 hashes/px).
     code = applyWave345Compatible(
       code,
       `  if (vDec.z > 0.5) {
@@ -3363,7 +3419,7 @@ uniform int uRipCount;`,
       `  if (vDec.z > 0.5) {
     vec4 d = texture2D(tDecal, vDec.xy);
     if (vDec.z > 2.5 && d.a < 0.08) discard;
-    if (d.a > 0.001) {
+    if (d.a > 0.0) {
       if (mod(vDec.z + 0.5, 2.0) < 1.0) d.rg = d.gr;
       float wear = smoothstep(0.45, 0.85, lsF(vUvM * 2.3 + 11.0)) * 0.75 + smoothstep(0.5, 0.9, lsN(vUvM * 14.0)) * 0.25;
       float cov = d.a * (1.0 - wear * 0.8);
@@ -3375,7 +3431,7 @@ uniform int uRipCount;`,
     }
   }`,
       replaceOnce,
-      'GPU-LOB-02a surfaceMaterial gate decal wear lsF + lsN (20 hashes/px) on d.a > 0.001'
+      'GPU-LOB-02a surfaceMaterial gate decal wear lsF + lsN (20 hashes/px) on d.a > 0.0'
     );
     code = applyWave345Compatible(
       code,
@@ -3394,7 +3450,7 @@ uniform int uRipCount;`,
     reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, rc * F * mix(0.8, 1.0, gWater), k);
   }`,
       `  float kRefl = clamp(gWater + gDamp * 0.5 + gInk * 0.5, 0.0, 1.0);
-  if (uReflOn > 0.5 && kRefl > 0.001) {
+  if (uReflOn > 0.5 && kRefl > 0.0) {
     vec4 rp = uReflMat * vec4(vLsW, 1.0);
     vec3 nw = (vec4(normal, 0.0) * viewMatrix).xyz;          // view → world normal
     vec2 ruv = rp.xy / rp.w + nw.xz * vec2(0.05, 0.08) * (1.0 - gWater * 0.6);
@@ -3409,7 +3465,7 @@ uniform int uRipCount;`,
     reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, rc * F * mix(0.8, 1.0, gWater), kRefl);
   }`,
       replaceOnce,
-      'GPU-LOB-02b groundMaterial gate 5-tap planar reflection textureLod on kRefl > 0.001 and polynomial pow5 Fresnel'
+      'GPU-LOB-02b groundMaterial gate 5-tap planar reflection textureLod on kRefl > 0.0 and polynomial pow5 Fresnel'
     );
     code = applyWave345Compatible(
       code,
@@ -3428,7 +3484,7 @@ uniform int uRipCount;`,
         float edge = smoothstep(0.0, 0.3, vUv.x) * smoothstep(1.0, 0.7, vUv.x) * smoothstep(0.0, 0.12, vUv.y) * smoothstep(1.0, 0.35, vUv.y);`,
       `      void main() {
         float edge = smoothstep(0.0, 0.3, vUv.x) * smoothstep(1.0, 0.7, vUv.x) * smoothstep(0.0, 0.12, vUv.y) * smoothstep(1.0, 0.35, vUv.y);
-        if (edge <= 0.001) discard;
+        if (edge == 0.0) discard;
         vec2 p = vUv * vec2(1.6, 3.0); float t = uTime * 0.35 + vSeed * 7.0;
         vec2 q = vec2(lsF(p + vec2(0.0, -t)), lsF(p * 1.3 + vec2(3.1, -t * 1.3)));
         float n = lsF(p * 1.1 + q * 1.4 + vec2(vSeed * 3.0, -t * 0.8));`,
@@ -3441,7 +3497,8 @@ uniform int uRipCount;`,
   // WAVE 11 ULTIMATE ZERO-HEADROOM WHOLE-GAME GPU OPTIMIZATIONS
   // ============================================================================
   if (rel === 'src/world/texlib.js') {
-    // GPU-TXL-01a: Worley 3x3 cell loop squared distance (eliminates 72 sqrt calls per baked texel across 4x2 Worley passes).
+    // GPU-TXL-01a: Audit the authored Worley rank and stable ID ties. Squared ranking
+    // can split rounded-length ties and change material cell IDs; retain length().
     code = applyWave345Compatible(
       code,
       `vec4 worR(WReq q) {
@@ -3459,17 +3516,17 @@ uniform int uRipCount;`,
       `vec4 worR(WReq q) {
   if (q.n.x == 0) return vec4(0.0);
   vec2 x = q.uv * vec2(q.n); ivec2 i = ivec2(floor(x)); vec2 f = x - vec2(i);
-  float F1 = 81.0, F2 = 81.0, id = 0.0, id2 = 0.0;
+  float F1 = 9.0, F2 = 9.0, id = 0.0, id2 = 0.0;
   for (int y = -uOne; y <= uOne; y++) for (int xx = -uOne; xx <= uOne; xx++) {
     ivec2 c = ivec2(xx, y); ivec2 w = wrp(i + c, q.n);
-    vec2 df = vec2(c) + 0.5 + (hf2(w, q.seed) - 0.5) * q.jit - f;
-    float d = dot(df, df);
+    vec2 o = vec2(c) + 0.5 + (hf2(w, q.seed) - 0.5) * q.jit;
+    float d = length(o - f);
     if (d < F1) { F2 = F1; F1 = d; id2 = id; id = hf(w, q.seed + 7u); } else if (d < F2) { F2 = d; }
   }
-  return vec4(sqrt(F1), sqrt(F2), id, id2);
+  return vec4(F1, F2, id, id2);
 }`,
       replaceOnce,
-      'GPU-TXL-01a texlib worR 3x3 loop squared distance (eliminates 72 sqrts/texel)'
+      'GPU-TXL-01a preserve Worley rounded-length ranking and stable material cell IDs'
     );
 
     // GPU-TXL-01b: texlibPerturbNormal zero-strength / flat-normal early exit.
@@ -3737,7 +3794,7 @@ uniform int uRipCount;`,
       'GPU-ENV-05b SKY_FRAG gate sun disk pow1400 on sd > 0.0 and polynomial pow64 in ENV_PASS'
     );
 
-    // GPU-ENV-05c: STRIP_FRAG cellEdge 3x3 Voronoi squared distance (eliminates 14 sqrts/px) and gate caustic on fall > 0.002.
+    // GPU-ENV-05c: STRIP_FRAG cellEdge 3x3 Voronoi squared distance (eliminates 14 sqrts/px) and gate caustic on fall > 0.0.
     code = applyWave345Compatible(
       code,
       `float cellEdge(vec2 p, float t) {
@@ -3779,7 +3836,7 @@ uniform int uRipCount;`,
     }
   }`,
       `  float fall = exp(-max(h, 0.0) * 0.8) * smoothstep(-0.02, 0.05, h);
-  if (facing > 0.002 && fall > 0.002 && uStripK.x > 0.001) {
+  if (facing > 0.002 && fall > 0.0 && uStripK.x != 0.0) {
     float lit = getShadowMask();
     if (lit > 0.002) {
       float c = caustic(vPw.xz, uTime, 0.02 + max(h, 0.0) * 0.1);
@@ -3788,7 +3845,7 @@ uniform int uRipCount;`,
     }
   }`,
       replaceOnce,
-      'GPU-ENV-05c2 STRIP_FRAG gate shadow and 18-cell caustic evaluation on fall > 0.002'
+      'GPU-ENV-05c2 STRIP_FRAG gate shadow and 18-cell caustic evaluation on fall > 0.0'
     );
 
     // GPU-ENV-05d: LighthouseBeam early discard in daytime (uNight <= 0.001) and polynomial pow2.
@@ -3797,9 +3854,9 @@ uniform int uRipCount;`,
       `      fragmentShader: /* glsl */\`uniform float uNight; uniform vec3 uCol; varying float vA; varying vec3 vN; varying vec3 vV;
         void main(){ float e = pow(clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0), 2.0); float a = e * pow(max(1.0 - vA, 0.0), 1.6) * smoothstep(0.0, 0.03, vA) * 0.5 * uNight;`,
       `      fragmentShader: /* glsl */\`uniform float uNight; uniform vec3 uCol; varying float vA; varying vec3 vN; varying vec3 vV;
-        void main(){ if (uNight <= 0.001) discard; float e0 = clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0); float e = e0 * e0; float a = e * pow(max(1.0 - vA, 0.0), 1.6) * smoothstep(0.0, 0.03, vA) * 0.5 * uNight;`,
+        void main(){ if (uNight == 0.0) discard; float e0 = clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0); float e = e0 * e0; float a = e * pow(max(1.0 - vA, 0.0), 1.6) * smoothstep(0.0, 0.03, vA) * 0.5 * uNight;`,
       replaceOnce,
-      'GPU-ENV-05d LighthouseBeam early discard when uNight <= 0.001 and polynomial pow2'
+      'GPU-ENV-05d LighthouseBeam early discard when uNight == 0.0 and polynomial pow2'
     );
   }
 
@@ -3903,7 +3960,7 @@ uniform int uRipCount;`,
     float t = uT;
     float front = t * 1100.0;
     float drawn = smoothstep(front + 0.6, front - 0.6, m) * smoothstep(0.0, 0.3, m) * smoothstep(uLen + 0.05, uLen - 0.12, m);
-    if (drawn <= 0.0005) discard;
+    if (drawn == 0.0) discard;
     float head = exp(-max(0.0, front - m) * 0.8) * (1.0 - smoothstep(0.02, 0.05, t));
     float k0 = -0.35 + 1.5 * (t / uLife);
     float br = iwN(m * 1.9 - t * 7.0) * 0.72 + iwN(m * 6.3 + 3.1) * 0.28;
@@ -3990,7 +4047,7 @@ uniform int uRipCount;`,
   h += 0.00032 * side * exp(-(pyN * pyN)) * (0.5 + 0.5 * sin(wy * 6.2831));
   vec2 q = vec2(ax - 0.114, p.y - 0.884);
   float r = length(q), rN = r / 0.045;
-  if (r > 0.006 && r < 0.135) {
+  if (r > 0.006) {
     float ang = atan(q.y, -q.x);
     h += 0.00011 * sin(ang * 17.0 + 1.3 + (p.z > 0.0 ? 0.0 : 2.1) + 2.5 * iwNoise(vec3(ang * 3.0, r * 60.0, p.z * 20.0))) * exp(-(rN * rN)) * smoothstep(0.006, 0.02, r) * (0.4 + 0.6 * iwNoise(p * 90.0));
   }
@@ -3998,7 +4055,7 @@ uniform int uRipCount;`,
   return h;
 }`,
       replaceOnce,
-      'GPU-CHR-03c iwTeeCrease polynomial pow2 and gate 2x 3D iwNoise (16 hashes/px) on underarm radius band'
+      'GPU-CHR-03c iwTeeCrease polynomial squares and exact inner support gate retain exponential tails'
     );
     code = applyWave345Compatible(
       code,
@@ -4254,7 +4311,7 @@ uniform int uRipCount;`,
   }
 
   if (rel === 'src/boss/bossMats.js') {
-    // GPU-BOS-03a/b/c: Replace 3x pow in STEEL tear flap with 2x mul + 2x sqrt; gate CARA bFbm(P * 2.6 + 9.0) (24 hashes/px) on uDrip > 0.001 && ex < 9.5 && cls <= 0.5 and gate CARA Voronoi cracks (60 hashes/px) on tone < 0.55; gate EYE strie (2x atan + 2x sin) on iris > 0.0 inside uEyeMode < 0.5.
+    // GPU-BOS-03a/b/c: Replace 3x pow in STEEL tear flap with 2x mul + 2x sqrt; gate CARA bFbm(P * 2.6 + 9.0) (24 hashes/px) on uDrip != 0.0 && ex < 9.5 && cls <= 0.5 and gate CARA Voronoi cracks (60 hashes/px) on tone < 0.55; gate EYE strie (2x atan + 2x sin) on iris > 0.0 inside uEyeMode < 0.5.
     code = applyWave345Compatible(
       code,
       `      float r = pow(pow(abs(d.x), 4.0) + pow(abs(d.y), 4.0), 0.25);`,
@@ -4279,13 +4336,13 @@ uniform int uRipCount;`,
   }
   // phase cracks: carapace fracture lines glowing in the weak-point colour
   if (uCrack > 0.001 && cls < 0.5) {`,
-      `  if (uDrip > 0.001 && ex < 9.5 && cls <= 0.5) {
+      `  if (uDrip != 0.0 && ex < 9.5 && cls <= 0.5) {
     inkM = max(inkM, smoothstep(0.78, 0.84, bFbm(P * 2.6 + 9.0)) * uDrip);
   }
   c = mix(c, uInk * 0.32, inkM); bRough = mix(bRough, 0.06, inkM); bCCR = mix(bCCR, 0.03, inkM); bSheen *= 1.0 - inkM;
   // crusher charge veins (slam telegraph) — ink colour
   float cw = (ex > 0.2 && ex < 1.5) ? ex : 0.0;
-  if (cw > 0.0 && uGlowL > 0.001) {
+  if (cw > 0.0 && uGlowL != 0.0) {
     // a few fat fissures that light up (not a net): ridged noise at low frequency, masked to the upper carapace
     float rv = abs(bNoise(P * 2.3 + 5.0) * 2.0 - 1.0);
     float veins = bLine(rv, 0.03) * smoothstep(0.35, 0.65, bNoise(P * 1.1 + 2.0)) + 0.4 * bLine(abs(bNoise(P * 5.5 + 9.0) * 2.0 - 1.0), 0.02) * smoothstep(0.6, 0.8, bNoise(P * 1.7));
@@ -4356,24 +4413,60 @@ uniform int uRipCount;`,
   }
 
   if (rel === 'src/boss/bossHazards.js') {
-    // GPU-BHZ-01: Early discard invisible boss hazard lanes and rings when uAlpha <= 0.001 or vUv.y >= 1.0.
+    // GPU-BHZ-01: Early discard invisible boss hazard lanes and rings when uAlpha == 0.0 or vUv.y >= 1.0.
     code = applyWave345Compatible(
       code,
       `void main() {
   float edge = smoothstep(0.08, 0.0, min(vUv.x, 1.0 - vUv.x));`,
       `void main() {
-  if (uAlpha <= 0.001 || vUv.y >= 1.0) discard;
+  if (uAlpha == 0.0 || vUv.y >= 1.0) discard;
   float edge = smoothstep(0.08, 0.0, min(vUv.x, 1.0 - vUv.x));`,
       replaceOnce,
       'GPU-BHZ-01 bossHazards LANE_FRAG early discard when inactive or past end'
     );
   }
 
-    return adaptWholeGpuComposedEpochs(rel, code, replaceOnce);
+  code = adaptWholeGpuComposedEpochs(rel, code, replaceOnce, applyWave345Compatible);
+  // A successful replacement is insufficient: require its actual final epoch
+  // after all later candidates, including supported composed variants.
+  for (const site of sites.values()) if (!site.epochs.some(epoch => code.includes(epoch))) site.status = null;
+  const reviewed = REVIEWED67_GPU_EQUIVALENTS.get(rel) || [];
+  if (reviewed.some(id => sites.has(id) && !sites.get(id).status)) {
+    // This verifier recognizes the complete reviewed expressions, including
+    // their exact coefficients and supported nesting. It must never mutate an
+    // epoch merely to satisfy a missing Wave 9 anchor.
+    try {
+      adaptReviewedWave67Gpu(rel, code, (_code, _before, _after, label) => {
+        throw new Error(`Reviewed equivalent would rewrite ${label}`);
+      });
+    } catch (error) {
+      const unresolved = reviewed.filter(id => sites.has(id) && !sites.get(id).status).join(', ');
+      throw new Error(`Whole-game GPU optimization drift (${rel}: ${unresolved}): ${error.message}`, { cause: error });
+    }
+    for (const id of reviewed) if (sites.has(id) && !sites.get(id).status) sites.get(id).status = 'reviewed-equivalent';
+  }
+  if (rel === 'src/world/inkShading.js' && code.includes('uRipActiveCount')) {
+    for (const anchor of [
+      'uRipActiveCount: { value: packedRipples ? 0 : INK_RIPPLES, packed: packedRipples }',
+      'uniform int uRipActiveCount;',
+      'if (i >= uRipActiveCount) break;',
+      'updateRippleUniforms(U, P, INK_RIPPLES);',
+    ]) if (!code.includes(anchor)) throw new Error(`Whole-game GPU optimization drift (${rel}: GPU-INK-03 packed count): ${anchor}`);
+    for (const id of ['GPU-INK-03a', 'GPU-INK-03b', 'GPU-INK-03d']) sites.set(id, { id, labels: ['packed ripple count owner'], status: 'packed-equivalent' });
+  }
+  for (const id of WHOLE_GAME_GPU_REQUIRED_SITES.get(rel) || []) {
+    if (!sites.has(id)) throw new Error(`Whole-game GPU optimization drift (${rel}: ${id}): mandatory site was not checked`);
+  }
+  for (const site of sites.values()) {
+    if (!site.status) throw new Error(`Whole-game GPU optimization drift (${rel}: ${site.id}): no recognized raw, composed, or reviewed epoch`);
+    const { epochs: _epochs, ...audit } = site;
+    options.onGpuSite?.({ rel, ...audit, verifiedOutput: true });
+  }
+  return code;
 }
 
 // Exact composed epochs retain the earlier queue owners and visual tuning.
-function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
+function adaptWholeGpuComposedEpochs(rel, code, replaceOnce, applyWave345Compatible) {
   if (rel === "src/world/inkShading.js") code = applyWave345Compatible(code,
     `      vec3 D = vWPos - Pr.xyz;
       float off = dot(D, vWNorm);
@@ -4392,7 +4485,7 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
       float sg = Qr.y * 0.8;
       float maxD = front + sg * 3.0, minD = front - Qr.y * 4.0;
       float d2 = dot(D, D);
-      if (d2 > maxD * maxD || (minD > 0.0 && d2 < minD * minD)) continue;
+      if (maxD < 0.0 || d2 > maxD * maxD || (minD > 0.0 && d2 < minD * minD)) continue;
       float d = sqrt(d2);
       float x = d - front;`, replaceOnce, "GPU-INK-03c packed ripple table keeps its active-count owner and gains squared-distance rejection");
   if (rel === "src/world/levelMaterial.js") code = applyWave345Compatible(code,
@@ -4400,7 +4493,7 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
   nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep))));`,
     `  float keep = max((vFaceData.x > 4.5 && vFaceData.x < 5.5) ? 0.55 : 0.0, gTexKeep);
   float tStr = gTexStr * (1.0 - gInk * (1.0 - max(keep, gInkKeep)));
-  if (tStr != 0.0) nBase = texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr);`, replaceOnce, "GPU-LVL-06 composed relief normal epoch");
+  nBase = tStr != 0.0 ? texlibPerturbNormal(gTexN, T, Bt, vWNorm, tStr) : normalize(vWNorm * gTexN.z);`, replaceOnce, "GPU-LVL-06 composed relief normal epoch");
   if (rel === "src/world/levelMaterial.js") code = applyWave345Compatible(code,
     `  if (gInk > 0.01) {
     // swim wakes: the ink itself ripples where a squid swims. Each trail segment sheds an expanding ripple (a stadium
@@ -4453,7 +4546,7 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
         float x = d - r;
         float env = exp(-x * x / (w * w));
         if (env < 0.003) continue;`, replaceOnce, "GPU-LVL-07a composed wake bounds preserve the tuned radius and wavelength");
-  if (rel === "src/world/levelMaterial.js" && code.includes('if (gInk > 0.01 && wFar > 0.0) {')) code = applyWave345Compatible(code,
+  if (rel === "src/world/levelMaterial.js") code = applyWave345Compatible(code,
     `    if (wG > 0.0 || dot(wS, wS) > 0.0) {
       float wl = length(wS);
       if (wl > 0.9) wS *= 0.9 / wl;
@@ -4606,7 +4699,6 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
           // ---- freckles across the nose bridge + cheeks
           if (uFreckle > 0.5) {
             float region = exp(-(((abs(az) - 0.3) / 0.28) * ((abs(az) - 0.3) / 0.28)) - (((el + 0.14) / 0.1) * ((el + 0.14) / 0.1)));
-            if (region > 0.002) {
             vec2 fp = vec2(az, el + 0.12) * 42.0;
             vec2 cell = floor(fp); vec2 fr = fract(fp) - 0.5;
             float rnd = iwHash2(cell);
@@ -4614,7 +4706,6 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
             float fd = length(fr - off * 0.5) - 0.13 * rnd;
             float fk = iwFill(fd) * step(0.45, rnd) * region;
             diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.78, 0.6, 0.5), fk * 0.7);
-            }
           }
           // ---- nose tip + nostril rims: slightly warmer
           float nose = exp(-((az / 0.1) * (az / 0.1)) - (((el + 0.19) / 0.06) * ((el + 0.19) / 0.06)));   // S3: a warm, rosy nose tip
@@ -4747,12 +4838,12 @@ function adaptWholeGpuComposedEpochs(rel, code, replaceOnce) {
               // leg: inseam
               float dxi = min(th, 1.0 - th) * circ;
               iwH -= 0.0004 * exp(-((dxi / 0.0015) * (dxi / 0.0015)));`, replaceOnce, "GPU-CHR-03f composed shorts retain front/back ownership and replace scalar squares");
-  return adaptReviewed67WaveComposedEpochs(rel, code, replaceOnce);
+  return adaptReviewed67WaveComposedEpochs(rel, code, replaceOnce, applyWave345Compatible);
 }
 
 // Current main already owns the audited Wave 6/7 algebra. Add only missing
 // support gates, preserving its coefficients, naming and paint hash contract.
-function adaptReviewed67WaveComposedEpochs(rel, code, replaceOnce) {
+function adaptReviewed67WaveComposedEpochs(rel, code, replaceOnce, applyWave345Compatible) {
   if (rel === "src/fx/screenfx.js") code = applyWave345Compatible(code,
     `    if (uSwim.a > 0.001) {
       float v = smoothstep(0.35, 1.05, r);

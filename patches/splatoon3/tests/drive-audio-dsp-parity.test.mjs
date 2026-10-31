@@ -29,7 +29,7 @@ test('bounded articulation cache shares deeply frozen plans across variants with
 });
 test('default recorded Charger fetch retains the browser receiver and injected fetchers remain callable',async()=>{
  const original=globalThis.fetch;let calls=0;
- const ctx={state:'running',decodeAudioData:async()=>({duration:2,sampleRate:44100,numberOfChannels:1})};
+ const ctx={state:'running',decodeAudioData:async()=>({duration:2,sampleRate:44100,numberOfChannels:1,length:88200,getChannelData:()=>new Float32Array(88200)})};
  globalThis.fetch=async function(){assert.equal(this,globalThis);calls++;return{ok:true,arrayBuffer:async()=>new ArrayBuffer(20000)};};
  try{assert.ok(await chargerRiseBuffer(ctx));assert.equal(calls,1);disposeChargerRise(ctx);
   assert.ok(await chargerRiseBuffer(ctx,{fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(20000)})}));assert.equal(calls,1);
