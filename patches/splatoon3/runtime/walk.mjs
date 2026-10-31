@@ -229,7 +229,7 @@ export function installWalkMotion(context,profile){
   C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt);};
   // Native foot damping consumes the current frame delta too. Preserve it when
   // an airborne, landing or special-action frame falls through this layer.
-  C._footPose=function(f,dt){return state(this).active?footPose(this,f):oldPose.call(this,f,dt);};
+  C._footPose=function(f,dt){return state(this).active?footPose(this,f):oldPose.apply(this,arguments);};
   C._gaitTarget=function(f,remaining,out){
     if(!state(this).active)return oldTarget.call(this,f,remaining,out);
     const motion=state(this),v=Math.hypot(motion.vx,motion.vz),yaw=this.yaw+this.hipTwist+clamp(this.yawRate*remaining*.55,-.2,.2),half=clamp(v*this.duty/this.cad*.5,0,tuning.runHalfStride),w=mix(Math.abs(this.stance[f.side>0?0:3]),.078,this.runW)*f.side;
