@@ -8,6 +8,7 @@ import {gameplayVerdict,validateLifecycleExpectation} from './lib/inkwave-gamepl
 import {sampleChromiumProcessMemory} from './lib/inkwave-chromium-process-memory.mjs';
 import {waitForNativeCombatWindow} from './lib/inkwave-native-combat-window.mjs';
 import {createGameplayCpuProfileCapture} from './lib/inkwave-gameplay-cpu-profile.mjs';
+import {captureGameplayViewportPng} from './lib/inkwave-gameplay-viewport.mjs';
 import {verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,sampleStats,hash} from './lib/inkwave-runtime-evidence.mjs';
 const opt=(k,d)=>{const i=process.argv.indexOf(k);return i<0?d:process.argv[i+1];};
 const root=process.cwd(),site=path.resolve(opt('--site','_site')),out=persistentDirectory(opt('--evidence-dir','.ci-scratch/gameplay/run'));
@@ -16,7 +17,7 @@ const crabLifecycle=process.argv.includes('--crab-lifecycle');
 const expectedLifecycle=validateLifecycleExpectation(opt('--expect-lifecycle','released'),crabLifecycle,process.argv.includes('--expect-lifecycle'));
 const maps=opt('--maps','tidewater,kelpline,halyard').split(',');
 if(!maps.length||maps.some(id=>!id||!/^[-a-z0-9]+$/.test(id)))throw Error('Nonempty comma-separated map IDs required');
-const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs','lib/inkwave-native-combat-window.mjs','lib/inkwave-gameplay-cpu-profile.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
+const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs','lib/inkwave-native-combat-window.mjs','lib/inkwave-gameplay-cpu-profile.mjs','lib/inkwave-gameplay-viewport.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
 const width=Number(opt('--width','480')),height=Number(opt('--height','300')),dpr=Number(opt('--dpr','1'));
 if(!Number.isFinite(dpr)||dpr<=0||!Number.isInteger(width)||width<=0||!Number.isInteger(height)||height<=0)throw Error('Positive viewport dimensions and device scale required');
 const cycles=Number(opt('--cycles','6')),seconds=Number(opt('--seconds','60')),quality=opt('--quality','high'),mobile=process.argv.includes('--mobile');
@@ -82,17 +83,9 @@ try{
   },diagnostic=>{report.combatWindowTimeout={phase,...diagnostic};checkpoint();});
   const combat=report.windows.at(-1);combat.wait=combatWait;checkpoint();if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
   if(!(combat.time>report.windows.find(w=>w.label==='warm-'+cycle).time))throw Error('Gameplay simulation did not advance');
-  // Capture the real composited viewport through CDP rather than waiting for
-  // Playwright's post-frame screenshot synchronization while SwiftShader is
-  // saturated. No simulated frame, render skip, freeze, or gameplay mutation.
-  const capturePixels=await cdp.send('Page.captureScreenshot',{
-    format:'png',captureBeyondViewport:false,fromSurface:false,
-  });
-  const png=Buffer.from(capturePixels.data||'','base64');
-  if(png.length<512||!png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
-    ||png.readUInt32BE(16)<width||png.readUInt32BE(20)<height)
-    throw Error('Native combat viewport PNG was missing or incomplete');
-  fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);
+  // Same native CDP view capture, now bounded and checked before persistence.
+  await captureGameplayViewportPng({cdp,width,height,timeoutMs:120000,
+   save:png=>fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png)});
   if(crabLifecycle){
    phase='crab-active-'+cycle;
    await page.waitForFunction(()=>__G.local?.alive&&!__G.local.specialActive&&!__G.local.superJumpState,null,{timeout:180000});

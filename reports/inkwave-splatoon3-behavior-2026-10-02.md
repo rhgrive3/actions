@@ -7171,3 +7171,10 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 - 対象は `scripts/ci/inkwave-test-suites.json` の `runner-contracts`。既存 `scripts/tests/inkwave-queue-ci-20261031.test.mjs` を明示入力へ1件だけ追加した。全13 suite の既存順序・引数・フラグ・他レーン収録は保持した。ゲームの runtime・数値・モデル・見た目は変更していない。
 - 再現は同契約の既存登録テストで未登録件数0（期待1）による失敗。追加後は同テスト1/1 PASS。実 runner の no-spawn plan が公式22ファイル・2 step・対象1回を確認し、独立した構造/逆変換検証3/3と既存 runner 選択5/5が PASS。物理 full-suite 実行・同head hosted CI・ブラウザはこのローカル結果に含まれない。
 - プレイ挙動の変更やスプラトゥーン3との一致を示す修正ではなく、既存CI経路契約の受入漏れを閉じる配線修正。本家参照version・ブキ・ギア・操作frameの新規実機比較は実施していない。旧 menu 候補・Storm 保留変更は含めない。
+
+
+### 2026-10-31: 現行 source epoch の Character QA と gameplay capture 入力検証
+
+- Character は既存の現行 shape/hair を変えず、歴史テキスト検証だけに sealed epoch 逆写像と公式3 pass の順次 replay を加えた。実 geometry/pose は既定 production composer のまま。旧 assertion 式82件と数値/geometry/pose 7 callback 本文を全保持し、独立 source 全9/9（288 pose、RNG 0/0）および別 text 契約3/3が PASS。旧2 text 失敗と旧 pose SIGKILL は過去の未受入として保持し、今回の成功へ読み替えない。
+- gameplay resource の既存共有 CDP screenshot 経路は120000msの単一 monotonic deadline と完全PNG検証を経て既存PNG書込みへ進む。追加 fallback/session/detach はなく、早期timerを再armし、timeout後の遅延完了は保存しない。既存共有session所有権・出力名・ゲームguardは保持。現行43件、候補57件、独立15件は別 cohort で PASS（合算しない）。実 browser の timeout 原因解消・GPU/FPS改善・最終head CI成功は未確認。
+- 変更は QA/test/harness と記録のみで、モデルの形状/外観・武器数値・ゲームruntimeを変更しない。本家参照version/ブキ/ギア/操作frameの新規実機比較は未実施で、スプラトゥーン3との挙動一致を判定する根拠にはしない。旧 menu 候補および保留 Storm は対象外。

@@ -5,6 +5,9 @@ import {createHash} from 'node:crypto';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptQueueVisualWorld20261031} from '../queue-visual-world-20261031-adapter.mjs';
+import {adaptQueueUiAudio20261031} from '../queue-ui-audio-20261031-adapter.mjs';
+import {adaptQueueWeapons20261031} from '../queue-weapons-20261031-adapter.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
@@ -15,11 +18,25 @@ import {replaceOnce} from '../adapter.mjs';
 import {reverseReviewedMotionEpoch,reverseReviewedCharacterWave} from './reviewed-motion-epoch.mjs';
 import {reverseReviewedRenderQueueOwner,replayReviewedRenderQueueOwner,reviewedRenderOwnerPaths,reviewedRenderHunkCount} from './reviewed-render-queue-owner.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
+import {adoptReviewedHairDetail,restoreReviewedHairDetail} from './reviewed-hair-detail.mjs';
+import {adoptReviewedCharacterShape,restoreReviewedCharacterShape} from './reviewed-character-shape.mjs';
 const oracleBytes=fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url));
 const oracle=JSON.parse(oracleBytes);
 const raw=rel=>fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
-const baseline=(rel,source)=>oracle.modules[rel]?.source??adaptBuildSource(rel,source);
+const baseline=(rel,source)=>{
+ const frozen=oracle.modules[rel]?.source;
+ if(frozen===undefined)return adaptBuildSource(rel,source);
+ return rel==='src/game/character-hair.js'?adoptReviewedHairDetail(frozen):frozen;
+};
 const candidate=(rel,source)=>adaptBuildSource(rel,source);
+// Only the frozen textual boundary uses the preceding composition. Runtime
+// geometry and pose cases below still compare the complete default pipeline.
+function historicalOwnerCandidate(rel,source){
+ const prior=adaptBuildSource(rel,source,{queueVisualWorld20261031:false,queueUiAudio20261031:false,queueWeapons20261031:false});
+ const replay=adaptQueueWeapons20261031(rel,adaptQueueUiAudio20261031(rel,adaptQueueVisualWorld20261031(rel,prior)));
+ assert.equal(replay,candidate(rel,source),rel+' complete later queue replay retains the default production composition');
+ return prior;
+}
 const pair=rel=>[baseline(rel,raw(rel)),candidate(rel,raw(rel))];
 const bytes=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength);
 const geometry=g=>Object.fromEntries([...Object.entries(g.attributes).map(([k,a])=>[k,bytes(a.array)]),['index',g.index?bytes(g.index.array):null]]);
@@ -102,9 +119,9 @@ const characterWeaponAfter="  // Weapon contact poses also need this frame's rep
 test('historical character source retains independently pinned input and both later owner anchors (text only)',()=>{
  assert.equal(sha(oracleBytes),'8a9fb6e48fb8078e73e6a8a0a7156ac97792378390409dba063113abaceddf77','frozen fixture bytes');
  for(const[rel,entry]of Object.entries(oracle.modules)){
-  assert.equal(sha(entry.source),entry.sha256,rel);const emitted=candidate(rel,raw(rel));parse(emitted,{ecmaVersion:'latest',sourceType:'module'});
+  assert.equal(sha(entry.source),entry.sha256,rel);const emitted=historicalOwnerCandidate(rel,raw(rel));parse(emitted,{ecmaVersion:'latest',sourceType:'module'});
   const beforeRender=reverseReviewedRenderQueueOwner(emitted,rel);
-  const next=rel==='src/game/character.js'?reverseReviewedMotionEpoch(beforeRender,'character'):beforeRender;
+  const next=rel==='src/game/character.js'?reverseReviewedMotionEpoch(beforeRender,'character'):rel==='src/game/character-hair.js'?restoreReviewedHairDetail(beforeRender):beforeRender;
   if(rel==='src/game/character-outfit.js'){
    assert.equal(next,raw(rel),'current direct outfit source remains authoritative');assert.equal(adaptHistoricalCharacter20261026(rel,next),next);
   }else{
@@ -185,10 +202,11 @@ test('historical character source retains independently pinned input and both la
     assert.notEqual(terminal,worldNative,'teeth/tongue continuation owner is exercised');
     assert.throws(()=>adaptQueueVisualContinuation20261029(rel,terminal),/Visual continuation anchor/);
    }
-   let currentTerminal=terminal,rimmedTerminal=null;
+   let currentTerminal=terminal,rimmedTerminal=null,beforeRimTerminal=terminal;
    if(rel==='src/game/character.js'){
     const {before,after,label}=finalCharacterOwner();
     currentTerminal=replayFinalCharacterOwner(terminal);
+    beforeRimTerminal=currentTerminal;
     assert.notEqual(currentTerminal,terminal,'final scalar transform owner is separate from the unchanged older chain');
     // Wave 3–5 also gates this rim calculation. Pin that distinct shader edit
     // independently so the complete comparison cannot silently omit it.
@@ -204,15 +222,22 @@ test('historical character source retains independently pinned input and both la
     // its weapon-IK owner. Compare that earlier boundary without removing it
     // a second time from next.
     assert.equal(next,withoutRim,'sealed motion inversion agrees with the independently reconstructed pre-rim boundary');
+    assert.equal(withoutRim,next,'independent rim inverse equals the complete sealed prior Character epoch');
     assert.equal(replaceOnce(withoutRim,after,before,'reverse '+label),terminal,'current Character reverses to the complete independently reconstructed older chain');
     assert.throws(()=>replaceOnce(rimmedTerminal.replace(rimAfter,''),rimAfter,rimBefore,'missing reverse rim owner'),/expected exactly one/);
     assert.throws(()=>replaceOnce(rimmedTerminal+rimAfter,rimAfter,rimBefore,'duplicate reverse rim owner'),/expected exactly one/);
+    {
+      const currentTerminal=rimmedTerminal;
+    assert.throws(()=>replaceOnce(currentTerminal.replace(rimAfter,''),rimAfter,rimBefore,'missing reverse rim owner'),/expected exactly one/);
+    assert.throws(()=>replaceOnce(currentTerminal+rimAfter,rimAfter,rimBefore,'duplicate reverse rim owner'),/expected exactly one/);
+    }
     assert.throws(()=>replayFinalCharacterOwner(terminal.replace(before,'')),/expected exactly one/,'missing final owner site is rejected');
     assert.throws(()=>replayFinalCharacterOwner(terminal+before),/expected exactly one/,'duplicate final owner site is rejected');
     assert.throws(()=>replaceOnce(next.replace(after,''),after,before,'missing reverse '+label),/expected exactly one/,'missing current final owner site cannot be reversed');
     assert.throws(()=>replaceOnce(next+after,after,before,'duplicate reverse '+label),/expected exactly one/,'duplicate current final owner site cannot be reversed');
     assert.throws(()=>replayFinalCharacterOwner(terminal,Buffer.from(finalCharacterOwnerBytes.toString().replace('quat._onChangeCallback();','quat._onChangeCallback?.();'))),/sealed final Character owner tuple/,'changed final owner cannot acquire the frozen tuple identity');
    }
+   assert.equal(next,beforeRimTerminal,rel+' exact owner composition including visual continuation and reviewed final owner');
    assert.equal(next,currentTerminal,rel+' exact owner composition including visual continuation and reviewed final owner');
    // Wave 3–5 is a separate final owner, after all frozen historical and
    // 2026-10-29 continuations. Preserve the earlier byte-for-byte equality.
@@ -227,6 +252,10 @@ test('historical character source retains independently pinned input and both la
    const priorWave=rel==='src/game/character.js'?reverseReviewedCharacterWave(currentEpoch):currentEpoch;
    assert.equal(next,priorWave,rel+' exact owner composition including visual continuation and terminal Wave 3–5');
    assert.equal(currentTerminal,priorWave,rel+' independently sealed final tuple matches the prior final owner');
+   {
+    const currentTerminal=rel==='src/game/character.js'?rimmedTerminal:beforeRimTerminal;
+    assert.equal(currentTerminal,currentEpoch,rel+' independently sealed final tuple and rim match the complete Wave owner');
+   }
    // Retain the separately reviewed raw source identities from the current
    // owner epoch as additional guards, rather than substituting them for the
    // complete historical + current owner composition equality.
@@ -235,7 +264,9 @@ test('historical character source retains independently pinned input and both la
     'src/game/character-face.js':'202d0b52b33d7df8b8df425e17e752416890f729',
     'src/game/character.js':'d9979a6c4b98614a91ad79fc9f55096812c5ae70',
    };
-   const source=raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
+   // Keep the independently pinned old raw identity after reversing only the
+   // sealed fdb74165 detail policy, just as the full-source comparison above.
+   const source=rel==='src/game/character-hair.js'?restoreReviewedHairDetail(raw(rel)):raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
    assert.equal(blob,currentRawSha[rel],rel+' reviewed current Git blob');
    const reviewedOwners={
     'src/game/character-hair.js':['getUtoTmapping(i / N)','getPoint(t)'],
@@ -251,7 +282,20 @@ test('historical character source retains independently pinned input and both la
 test('later render owner reverses all 18 exact hunks and rejects missing, repeated or changed source (text only)',()=>{
  let count=0;
  for(const rel of reviewedRenderOwnerPaths) {
-  const current=candidate(rel,raw(rel)),prior=reverseReviewedRenderQueueOwner(current,rel);
+  const currentRaw=raw(rel);
+  // The eighteen-hunk owner was sealed before fdb's independent shape commit.
+  // Use main's strict fifteen-hunk raw projection only at this text-only
+  // boundary. Actual model/pose cases below still use the complete current raw
+  // shape and default production composer; no shape is changed in production.
+  const renderOwnerRaw=rel==='src/game/character-geo.js'?restoreReviewedCharacterShape(currentRaw,'raw'):currentRaw;
+  if(rel==='src/game/character-geo.js'){
+   const restoredCurrent=adoptReviewedCharacterShape(renderOwnerRaw,'raw');
+   assert.equal(restoredCurrent,currentRaw,'complete reviewed current shape is preserved');
+   assert.equal(candidate(rel,restoredCurrent),candidate(rel,currentRaw),'shape handoff recomposes the complete default production owner');
+   assert.equal(sha(historicalOwnerCandidate(rel,currentRaw)),'d08fef1125204550b50023ab19cac07125b744d3d0dfd36f20b5c7f82185d611','separately reviewed current shape and render successor');
+   for(const changed of [currentRaw+'\n',currentRaw.slice(1)])assert.throws(()=>restoreReviewedCharacterShape(changed,'raw'),/complete raw character shape input epoch/);
+  }
+  const current=historicalOwnerCandidate(rel,renderOwnerRaw),prior=reverseReviewedRenderQueueOwner(current,rel);
   assert.notEqual(prior,current,rel+' later owner is exercised');
   assert.equal(replayReviewedRenderQueueOwner(prior,rel),current,rel+' independent complete round trip');
   assert.throws(()=>reverseReviewedRenderQueueOwner(current+'\n',rel),/complete current render owner/);
