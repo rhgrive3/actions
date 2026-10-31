@@ -1,5 +1,11 @@
-import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY, applySplatBombSurfaceResponse,
+  applySplatBombRestingResistance } from './sub-special-fidelity.mjs';
 import { captureSubAttachment, syncSubAttachment } from './sub-surface-attachment.mjs';
+import { bombPredictionPosition, stormThrowPosition } from './bomb-motion.mjs';
+import { forecastSubRelease } from './sub-release-forecast.mjs';
+import { createThrowPrediction, appendThrowPredictionPoint, noteThrowPredictionImpact,
+  finishThrowPrediction, throwPredictionLimit, snapshotThrowCollisionSystem,
+  THROW_PREDICTION_STEP as PREDICT_STEP } from './throw-prediction-record.mjs';
 import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
 import { drawSubTrajectory, previewWorldContact, colorSubTrajectory } from './sub-trajectory-preview.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
@@ -350,7 +356,8 @@ function actorSubSpec(actor, sub) {
 }
 export function resolveSubForThrow(actor, subHoldSeconds, SUB) {
   const id = actor?.weapon?.sub;
-  const sub = actor?.weaponRunner?.s3Sub
+  const selected = actor?.weaponRunner?.s3Sub;
+  const sub = (selected?.id === id ? selected : null)
     || (id ? (SUB?.[id] || KIT_SUBS[id]) : null)
     || kitSubFor(actor?.weapon, SUB);
   if (!sub) return null;
@@ -1002,6 +1009,117 @@ export function splatBombAxisVelocity(actor, forwardSpeed, verticalSpeed, out) {
 }
 const KIT_KEY = '__kitSubsInstalled';
 
+// Cheap per-frame invalidation for the throttled guide. Selection and charge
+// match predictKitSub without sampling a rig or performing any physics query.
+export function kitSubPredictionChargeKey(SUB,actor,options={}){
+  const id=options.id||options.kind||actor?.weapon?.sub;
+  if(id!=='curling')return null;
+  const selected=id===actor?.weapon?.sub?actor?.weaponRunner?.s3Sub:null;
+  const spec=(selected?.id===id?selected:null)||SUB?.[id]||KIT_SUBS[id];
+  const hold=forecastSubRelease(actor?.weaponRunner,{anticipateRelease:options.anticipateRelease}).hold;
+  return `curling:${spec?.chargeable?curlingChargeFraction(hold,spec):0}`;
+}
+
+// Native bombs keep a single gameplay integrator. This read-only forecast uses
+// its exact per-sub launch, step, gravity, contact and fuse helpers; no trail,
+// explosion, recorder, sound or scene callback is invoked by the forecast.
+export function predictKitSub(api, projectiles, actor, options = {}) {
+  const {THREE,G,SUB,SPECIALS,PLAYER}=api;
+  const id=options.id||options.kind||actor?.weapon?.sub||'bomb';
+  if(!['bomb','suction','curling','sprinkler','autobomb','storm'].includes(id)||!actor?.pos?.isVector3)return null;
+  const storm=id==='storm';
+  const release=forecastSubRelease(actor.weaponRunner,{anticipateRelease:!storm&&options.anticipateRelease});
+  const held=release.hold,override=SUB[id]||KIT_SUBS[id];
+  const resolved=storm?null:id===actor.weapon?.sub?resolveSubForThrow(actor,held,SUB)
+    :override?resolveSubAtCharge(actorSubSpec(actor,override),override.chargeable?curlingChargeFraction(held,override):0):null;
+  if(!storm&&!resolved)return null;
+  const origin=storm?stormThrowPosition(actor,new THREE.Vector3())
+    :bombPredictionPosition(actor,actor.pos.clone().add(new THREE.Vector3(0,1.35,0)));
+  const velocity=new THREE.Vector3();
+  if(storm){
+    const scale=actor.s3?.stormPowerSnapshot?.throwScale??actor.s3?.modifiers?.stormThrowScale??1;
+    fidelityThrowVelocity(actor,'storm',velocity,(SPECIALS?.storm?.throwSpeed??SUB_SPECIAL_FIDELITY.storm.spawnSpeedZ)*scale);
+  }else kitThrowVelocity(actor,resolved,resolved.throwSpeed,velocity)
+    ||fidelityThrowVelocity(actor,'bomb',velocity,resolved.throwSpeed);
+  const result=createThrowPrediction(id,origin,velocity,options);
+  result.radius=storm?(SPECIALS?.storm?.radius??SUB_SPECIAL_FIDELITY.storm.radius):resolved.radius||0;
+  const b={kind:storm?'storm':'bomb',owner:actor,team:actor.team,pos:origin.clone(),vel:velocity.clone(),
+    fuse:resolved?.spec?.mode==='roll'?resolved.fuse:-1,age:0,spin:new THREE.Vector3(),
+    s3Sub:resolved?.spec,s3Resolved:resolved,s3Charge:resolved?.charge||0,s3Mode:'flight',s3Bounces:0,s3Prediction:result};
+  const previous=new THREE.Vector3(),hit=new api.Hit(),probe=new api.Hit(),direction=new THREE.Vector3();
+  const previewSystem=snapshotThrowCollisionSystem(projectiles);
+  const steps=Math.ceil(throwPredictionLimit(options,storm?8:10)/PREDICT_STEP);
+  const finishExplosion=()=>{
+    result.explosions.push({point:b.pos.clone(),time:b.age,index:0,radius:result.radius});
+    return finishThrowPrediction(result,b.pos,b.age,'explosion');
+  };
+  for(let frame=0;frame<steps;frame++){
+    b.age+=PREDICT_STEP;
+    kitBombStep(SUB,b,PREDICT_STEP);
+    b.vel.y-=kitBombGravity(SUB,b)*PREDICT_STEP;
+    previous.copy(b.pos);b.pos.addScaledVector(b.vel,PREDICT_STEP);
+    hit.hit=false;hit.s3Tacticooler=false;
+    const world=G.physics?.segment?.(previous,b.pos,hit)||hit;
+    world.s3Tacticooler=false;
+    const defense=previewSystem.kitBombDefenseCandidate?.(b,previous,b.pos);
+    const distance=previous.distanceTo(b.pos),worldDistance=world.hit?previous.distanceTo(world.point):Infinity;
+    if(defense&&defense.distance<worldDistance-1e-10){
+      if(distance>1e-10)b.pos.copy(previous).lerp(b.pos,Math.max(0,Math.min(1,defense.distance/distance)));
+      noteThrowPredictionImpact(result,b.pos,defense.normal,b.age,defense.kind||'defense');
+      if(defense.kind==='tacticooler'){
+        world.hit=true;world.point.copy(defense.point||b.pos);world.normal.copy(defense.normal);world.s3Tacticooler=true;
+      }else if(defense.kind==='bubbler')return finishExplosion();
+      else return finishThrowPrediction(result,b.pos,b.age,'intercepted');
+    }
+    if(!world.hit&&G.boss&&b.kind==='bomb'){
+      const bossHit=G.boss.segHit?.(previous,b.pos,.2),shell=bossHit?.target?.pos&&bossHit.target;
+      if(shell){
+        direction.copy(b.pos).sub(shell.pos).normalize();b.pos.copy(shell.pos).addScaledVector(direction,shell.r+.22);
+        const vn=b.vel.dot(direction);if(vn<0)b.vel.addScaledVector(direction,-vn*1.35);b.vel.multiplyScalar(.55);
+        noteThrowPredictionImpact(result,b.pos,direction,b.age,'boss');result.targetDependent=true;
+        return finishThrowPrediction(result,b.pos,b.age,'target-dependent',false);
+      }
+    }
+    if(world.hit){
+      noteThrowPredictionImpact(result,world.point,world.normal,b.age,world.s3Tacticooler?'tacticooler':'world');
+      const took=kitBombContact(SUB,b,world,PREDICT_STEP);
+      if(storm){
+        b.pos.copy(world.point).addScaledVector(world.normal,.03);
+        return finishThrowPrediction(result,b.pos,b.age,'deploy');
+      }
+      if(!took){
+        b.pos.copy(world.point).addScaledVector(world.normal,.21);
+        b.s3FuseNormal||=new THREE.Vector3();b.s3FuseNormal.copy(world.normal);
+        applySplatBombSurfaceResponse(b,world.normal,undefined,PREDICT_STEP);
+        if(b.fuse<0)b.fuse=SUB.bomb.fuse;
+      }
+      if(b.s3Mode==='sprinkling')return finishThrowPrediction(result,b.pos,b.age,'deploy');
+      if(b.s3SuctionAttachment){
+        result.targetDependent=true;
+        return finishThrowPrediction(result,b.pos,b.age,'target-dependent',false);
+      }
+    }
+    // The actual native trail hook advances Robot state after integration.
+    // Its target acquisition reads the current world. Do not promise a future
+    // chase impact after it starts depending on an opponent's next movement.
+    if(b.s3Mode==='chasing'){
+      stepAutobomb(b,G);
+      if(b.s3Auto?.target){result.targetDependent=true;return finishThrowPrediction(result,b.pos,b.age,'target-dependent',false);}
+    }
+    let contact=kitBombKeepsFuse(b)||b.kind!=='bomb'||world.hit;
+    if(!contact&&b.s3FuseNormal&&G.physics?.raycast){
+      direction.copy(b.s3FuseNormal).negate();
+      contact=!!G.physics.raycast(b.pos,direction,.21+1e-8,probe)?.hit;
+    }
+    if(!world.hit&&contact&&b.s3FuseNormal)applySplatBombRestingResistance(b,b.s3FuseNormal,PREDICT_STEP);
+    if(b.fuse>=0&&contact){b.fuse-=PREDICT_STEP;if(b.fuse<=1e-10)return finishExplosion();}
+    appendThrowPredictionPoint(result,b.pos);
+    if(Number.isFinite(PLAYER?.waterY)&&b.pos.y<PLAYER.waterY-1.8)
+      return finishThrowPrediction(result,b.pos,b.age,'out-of-bounds',false);
+  }
+  return finishThrowPrediction(result,b.pos,b.age,'no-contact',false);
+}
+
 export function installKitSubs(api, profile) {
   const { SUB: _unused, Projectiles, WeaponRunner, G } = api;
   const SUB = _unused;
@@ -1009,6 +1127,15 @@ export function installKitSubs(api, profile) {
   if (SUB[KIT_KEY]) return api;   // idempotent: no double wrapping
   G_REF = G; PLAYER_REF = api.PLAYER; PHYSICS_REF = api.Physics;
   registerKitSubs(SUB, profile);
+
+  const priorPrediction=Projectiles.prototype.s3PredictSubTrajectory;
+  Projectiles.prototype.s3PredictSubTrajectory=function(actor,options={}){
+    return predictKitSub(api,this,actor,options)||priorPrediction?.call(this,actor,options)||null;
+  };
+  const priorChargeKey=Projectiles.prototype.s3SubPredictionChargeKey;
+  Projectiles.prototype.s3SubPredictionChargeKey=function(actor,options={}){
+    return kitSubPredictionChargeKey(SUB,actor,options)??priorChargeKey?.call(this,actor,options)??null;
+  };
 
   const nativeThrowVelocity = Projectiles.prototype.throwVelocity;
   Projectiles.prototype.throwVelocity = function (actor, speed, out) {
@@ -1082,3 +1209,4 @@ export function installKitSubs(api, profile) {
 }
 
 export default installKitSubs;
+
