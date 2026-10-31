@@ -41,7 +41,7 @@ const buildAuditProfile=[...buildProfile,'# The global metadata AST guard reads 
 const coreAuditProfile=[...coreProfile,'# Include audit code while keeping excluded authoring binaries absent.',...auditJavaScriptProfile];
 // Main-weapon jobs also consume the exact tracked JavaScript closure, while
 // retaining only ink-volume source under reports (no historical evidence).
-const weaponProfile=[...profile,'!/reports/*','/reports/ink-volume/','!/reports/ink-volume/*','/reports/ink-volume/source/',...auditJavaScriptProfile];
+const weaponProfile=[...profile.slice(0,-1),'!/reports/*','/reports/ink-volume/','!/reports/ink-volume/*','/reports/ink-volume/source/','/docs/',...auditJavaScriptProfile];
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
 const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/','/package-lock.json'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}

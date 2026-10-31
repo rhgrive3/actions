@@ -12,14 +12,38 @@ const raw=fs.readFileSync(new URL('../../../inkwave-public/src/audio/audio.js',i
 const source=adaptBuildSource('src/audio/audio.js',raw);
 const music=fs.readFileSync(new URL('../../../inkwave-public/src/audio/music.js',import.meta.url),'utf8');
 const declaration=(text,name)=>parse(text,{ecmaVersion:'latest',sourceType:'module'}).body.find(row=>row.type==='ExportNamedDeclaration'&&row.declaration?.id?.name===name).declaration;
+// Preserve real private module constants lost by the method-only test loader.
+// import.meta.url is bound to the original module URL, never the test's URL.
+function nativeConstant(text,name,moduleURL){
+  const ast=parse(text,{ecmaVersion:'latest',sourceType:'module'});
+  const matches=ast.body.flatMap(row=>{
+    const decl=row.type==='ExportNamedDeclaration'?row.declaration:row;
+    return decl?.type==='VariableDeclaration'?decl.declarations.filter(d=>d.id.type==='Identifier'&&d.id.name===name):[];
+  });
+  assert.equal(matches.length,1,'one actual private declaration '+name);
+  const init=matches[0].init;assert(init,'actual initializer '+name);
+  let code=text.slice(init.start,init.end);const edits=[];
+  function visit(node){
+    if(!node||typeof node!=='object')return;
+    if(node.type==='MemberExpression'&&!node.computed&&node.object?.type==='MetaProperty'&&
+       node.object.meta.name==='import'&&node.object.property.name==='meta'&&node.property.name==='url'){
+      edits.push([node.start-init.start,node.end-init.start]);return;
+    }
+    for(const value of Object.values(node))if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);
+  }
+  visit(init);
+  for(const [start,end] of edits.sort((a,b)=>b[0]-a[0]))code=code.slice(0,start)+'sourceURL'+code.slice(end);
+  return new Function('sourceURL','return ('+code+');')(moduleURL);
+}
+const resolver=nativeConstant(source,'RESOLVE_WEAPON_OCCLUSION',new URL('../../../inkwave-public/src/audio/audio.js',import.meta.url).href);
 const VDecl=declaration(music,'V'),V=new Function('return ('+music.slice(VDecl.start,VDecl.end)+');')();
 const Engine=declaration(source,'AudioEngine');
 const names=['_voice','_panner','_dist','_sendScale','play','_steal','loop','_requestSfxLoop','_activateSfxReq','_loopLive','_duckAt','duck','stopAll','_sfxSilent'];
 const methods=Engine.body.body.filter(row=>names.includes(row.key.name));
-const definitions=new Function('V','validPos','distCut','audioEmitterKey','selectVictim','MAX_VOICES','MAX_LOOPS','NOOP_HANDLE','taper',
+const definitions=new Function('V','validPos','distCut','audioEmitterKey','selectVictim','MAX_VOICES','MAX_LOOPS','NOOP_HANDLE','taper','RESOLVE_WEAPON_OCCLUSION',
   'return ({'+methods.map(row=>source.slice(row.start,row.end)).join(',\n')+'});')(
   V,p=>p&&[p.x,p.y,p.z].every(Number.isFinite),d=>d<10?22000:Math.max(900,22000*Math.pow(.5,(d-10)/13)),
-  audioEmitterKey,selectVictim,48,24,Object.freeze({playing:false,set(){},stop(){}}),v=>Math.pow(Math.min(1,Math.max(0,+v||0)),1.5));
+  audioEmitterKey,selectVictim,48,24,Object.freeze({playing:false,set(){},stop(){}}),v=>Math.pow(Math.min(1,Math.max(0,+v||0)),1.5),resolver);
 function rig(guarded=true){
   const writes=[],nodes=[];
   function parameter(name){
@@ -124,7 +148,8 @@ test('recorded Charger rejects non-finite volume without starting sources and re
 
 function musicRig(text){
   const decl=declaration(text,'MusicEngine'),methods=decl.body.body.filter(row=>['play','stop'].includes(row.key.name));
-  const proto=new Function('SONGS','return ({'+methods.map(row=>text.slice(row.start,row.end)).join(',\n')+'});')({battle:{}});
+  const tracks=nativeConstant(text,'FILE_TRACK_URLS',new URL('../../../inkwave-public/src/audio/music.js',import.meta.url).href);
+  const proto=new Function('SONGS','FILE_TRACK_URLS','return ({'+methods.map(row=>text.slice(row.start,row.end)).join(',\n')+'});')({battle:{}},tracks);
   const events=[],current={id:'battle',fadeOut(...args){for(const value of args)assert.ok(Number.isFinite(value));events.push(['fadeOut',...args]);}};
   const player=Object.assign(Object.create(proto),{ctx:{},current,_desiredTrack:'battle',_fileRetryCount:3,_fileErrorReported:true,_fileFailures:new Set(),
     now:()=>10,_cancelFileRetry(){events.push(['cancelRetry']);},remap(){events.push(['remap']);}});
@@ -145,4 +170,19 @@ test('valid and default music fades retain this, return value, and original tran
     const a=musicRig(composedMusic),b=musicRig(music);
     assert.equal(a.player.stop(fade),b.player.stop(fade));assert.deepEqual(a.events,b.events);assert.equal(a.player.current,null);
   }
+});
+
+test('method loader retains actual private constant identity and source-relative track URLs',()=>{
+  assert.equal(resolver,Symbol.for('inkwave.weapon-audio.resolve-occlusion'));
+  const url=new URL('../../../inkwave-public/src/audio/music.js',import.meta.url).href;
+  const tracks=nativeConstant(music,'FILE_TRACK_URLS',url);
+  assert(Object.isFrozen(tracks));
+  assert.equal(tracks.menu,new URL('../../assets/audio/menu_the_ika_swing_aoi_kenban.mp3',url).href);
+  assert.equal(tracks.battle,new URL('../../assets/audio/Jet_Arrow.mp3',url).href);
+  assert.deepEqual(nativeConstant(composedMusic,'FILE_TRACK_URLS',url),tracks);
+});
+test('private constant extraction rejects missing bindings and evaluates the real initializer',()=>{
+  assert.throws(()=>nativeConstant('const other=1;','wanted','file:///unused.js'),/one actual private declaration/);
+  assert.equal(nativeConstant('const wanted=Symbol.for("actual-initializer");','wanted','file:///unused.js'),Symbol.for('actual-initializer'));
+  assert.equal(nativeConstant('const wanted=new URL("./asset",import.meta.url).href;','wanted','file:///exact/source.js'),'file:///exact/asset');
 });
