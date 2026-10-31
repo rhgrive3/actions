@@ -182,9 +182,14 @@ export class RoomDurableObject {
         compat: this.compat,
         relayClock: m.relayClock === true,
         emoteAt: m.emoteAt ?? null,
-        ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft,
-          roomBudgetAt: this.roomBudgetAt, roomFramesLeft: this.roomFramesLeft, roomBytesLeft: this.roomBytesLeft } : {}),
       };
+      if (m.id === this.hostId) {
+        next.joinBudgetAt = this.joinBudgetAt;
+        next.joinsLeft = this.joinsLeft;
+        next.roomBudgetAt = this.roomBudgetAt;
+        next.roomFramesLeft = this.roomFramesLeft;
+        next.roomBytesLeft = this.roomBytesLeft;
+      }
       const previous = m.attachmentSnapshot;
       // Accepted frames usually change at least one budget scalar. Prove a
       // difference first; retain full key equality for general unchanged sync.

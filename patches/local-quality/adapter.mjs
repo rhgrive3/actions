@@ -99,6 +99,9 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'queue-visual-world-20261031-adapter.mjs',
+  'queue-ui-audio-20261031-adapter.mjs',
+  'queue-weapons-20261031-adapter.mjs',
   'pause-modal-lifetime-adapter.mjs',
   'online-async-entry-adapter.mjs',
   'landscape-practice-weapons-adapter.mjs',

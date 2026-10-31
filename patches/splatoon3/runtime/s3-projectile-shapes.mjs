@@ -374,7 +374,7 @@ function createRenderer(THREE, scene) {
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
   scene.add(body, slashH, slashV, shell, core, sparks);
   const sheets = createInkSheets(THREE, scene, { nearDither: NEAR_DITHER, rim: RIM });
-  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, sparkleCoefficients: new WeakMap(), fireVolleys: new WeakSet(), lastFire: { owner: null, kind: '', x: 0, y: 0, z: 0, t: -1 },
+  return { body, bodyData, slashH, slashV, shell, core, idleMeshes: [body, slashH, slashV, shell, core], sparks, sparkPos, sparkSize, sheets, sparkleCoefficients: new WeakMap(), fireVolleys: new WeakSet(), lastFire: { owner: null, kind: '', x: 0, y: 0, z: 0, t: -1 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
@@ -535,7 +535,7 @@ export function drawS3Shapes(system, THREE, G) {
     return { body: 0, slashH: 0, slashV: 0, shell: 0, core: 0, sparkles: 0, sheets: 0, drills: 0 };
   if (!R) R = system._s3Shapes = createRenderer(THREE, system.scene);
   if (!system.list.length && !R.sheets.bursts.length && !R.sheets.drills.length) {
-    for (const mesh of [R.body, R.slashH, R.slashV, R.shell, R.core]) { mesh.count = 0; mesh.visible = false; }
+    for (const mesh of R.idleMeshes) { mesh.count = 0; mesh.visible = false; }
     // Preserve a zero-instance wet mesh until the final owned renderer disposes it.
     // The lazy Normal/Lite charged mesh shares the same retirement boundary.
     if (R.wetSlashV) { R.wetSlashV.count = 0; R.wetSlashV.visible = false; }

@@ -28,7 +28,7 @@ function walkNode(node, visitor) {
   for (const v of Object.values(node)) if (Array.isArray(v)) v.forEach(n=>walkNode(n,visitor)); else if (v && typeof v === 'object') walkNode(v,visitor);
 }
 const phaseNames = ['ui-modules','diorama-module','progress-mixing','game-audio-modules','props-module','progress-plaza','mural-generation','texture-library-module','procedural-textures','stage-build','progress-harbor','progress-swim','fx-hooks','screen-fx','net-session','progress-tuning','progress-warmup','shader-compile','progress-post-compile','warmup-frame-yield','progress-ready','readiness-dwell'];
-function reviewedBootPhases(ast, boot, awaits) {
+function reviewedBootPhases(ast, boot, awaits, methods) {
   const declarations=[], waveCalls=[];
   walkNode(boot.value.body,node=>{
     if (['FunctionExpression','ArrowFunctionExpression','FunctionDeclaration','ClassDeclaration'].includes(node.type)) return false;
@@ -41,22 +41,66 @@ function reviewedBootPhases(ast, boot, awaits) {
     // The reviewed concurrent epoch starts both resources before texlib and joins
     // mural, then wave, before world construction. Resolve lexical bindings so
     // minifier renaming cannot relabel or silently omit either join.
-    names=[...phaseNames.slice(0,6),'texture-library-module','procedural-textures','mural-generation','wave-generation',...phaseNames.slice(9)];
+    const deferredLegacy = awaits.length === phaseNames.length;
+    const prefix = phaseNames.slice(0,6).filter(name=>!deferredLegacy||name!=='props-module');
+    names=[...prefix,'texture-library-module','procedural-textures','mural-generation','wave-generation',...phaseNames.slice(9)];
     const binding=node=>node?.type==='Identifier'?declarations.find(d=>d.id.type==='Identifier'&&d.id.name===node.name)?.init:null;
-    const wave=waveCalls[0], mural=binding(awaits[8]?.argument);
+    const at=name=>awaits[names.indexOf(name)]?.argument;
+    const wave=waveCalls[0];let mural=binding(at('mural-generation'));
     const env=declarations.find(d=>d.init===awaits[3]&&d.id.type==='ArrayPattern')?.id.elements[2];
     const muralAlias=ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value==='./world/murals.js').flatMap(n=>n.specifiers).find(s=>s.imported?.name==='createMuralTexture')?.local.name;
-    const texlib=declarations.find(d=>d.init===awaits[6]&&d.id.type==='ObjectPattern')?.id.properties.find(p=>p.key.name==='createTextureLibrary')?.value;
+    const texlib=declarations.find(d=>d.init===awaits[names.indexOf('texture-library-module')]&&d.id.type==='ObjectPattern')?.id.properties.find(p=>p.key.name==='createTextureLibrary')?.value;
     const signal=wave.arguments[0]?.properties?.[0]?.value, controller=binding(signal?.object);
+    if(deferredLegacy){
+      // Reviewed successor: only a URL-confirmed native autostart resolves the
+      // unused mural to null. Its legacy alternate and both resource joins stay
+      // bound to the original factories. Legacy props move behind the native
+      // early return; an arbitrary missing boot await is never accepted.
+      const imported=(file,name)=>ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value===file).flatMap(n=>n.specifiers).find(s=>s.imported?.name===name)?.local.name;
+      const enabled=imported('../patches/native-stages/runtime/registry.mjs','nativeStageEnabled');
+      const ids=imported('../patches/native-stages/runtime/registry.mjs','NATIVE_IDS');
+      const nativeBuild=imported('../patches/native-stages/runtime/engine.mjs','buildNativeWorld');
+      const isId=(n,name)=>!!name&&n?.type==='Identifier'&&n.name===name;
+      const member=(n,name)=>n?.type==='MemberExpression'&&!n.computed&&n.property.name===name;
+      const call=(n,object,name)=>n?.type==='CallExpression'&&member(n.callee,name)&&isId(n.callee.object,object);
+      const and=n=>n?.type==='LogicalExpression'&&n.operator==='&&'?[...and(n.left),...and(n.right)]:[n];
+      const layout=(n,name)=>n?.type==='LogicalExpression'&&n.operator==='||'&&member(n.left,'layout')&&isId(n.left.object,name)&&member(n.right,'id')&&isId(n.right.object,name);
+      const condition=and(binding(mural?.test)||mural?.test), params=condition[0]?.callee?.object;
+      const moduleBinding=ast.body.filter(n=>n.type==='VariableDeclaration').flatMap(n=>n.declarations).find(d=>isId(d.id,params?.name))?.init;
+      const worldCall=at('stage-build'), map=worldCall?.arguments[0]?.name;
+      const skip=mural?.consequent, props=skip?.arguments?.[0]?.properties;
+      const truth=n=>n?.type==='Literal'&&n.value===true||n?.type==='UnaryExpression'&&n.operator==='!'&&n.argument.type==='Literal'&&n.argument.value===0;
+      const world=methods.get('_buildWorld'), helper=methods.get('_prepareLegacyPropRuntime');
+      const helperImports=[], bootImports=[], helperCalls=[], muralCalls=[];
+      walkNode(helper?.value?.body,n=>{if(n.type==='ImportExpression')helperImports.push(n);});
+      walkNode(boot.value.body,n=>{if(n.type==='ImportExpression'&&n.source.value==='./world/prop-packs.js')bootImports.push(n);});
+      walkNode(world?.value?.body,n=>{if(n.type==='AwaitExpression'&&n.argument.type==='CallExpression'&&n.argument.callee.object?.type==='ThisExpression'){
+        if(n.argument.callee.property?.name==='_prepareLegacyPropRuntime')helperCalls.push(n);
+        if(n.argument.callee.property?.name==='_prepareLegacyMurals')muralCalls.push(n);
+      }});
+      const h=helperCalls[0], hm=muralCalls[0], worldLayout=h?.argument.arguments[0]?.name, current=h?.argument.arguments[1]?.name;
+      const branch=world?.value?.body.body.find(n=>n.type==='IfStatement'&&and(n.test).length===2&&isId(and(n.test)[0],enabled)&&call(and(n.test)[1],ids,'includes'));
+      const branchCall=branch?.consequent.body?.[0]?.expression?.argument;
+      if(mural?.type!=='ConditionalExpression'||condition.length!==3||!call(condition[0],params?.name,'has')||condition[0].arguments.length!==1||condition[0].arguments[0].value!=='autostart'||
+        moduleBinding?.type!=='NewExpression'||moduleBinding.callee.name!=='URLSearchParams'||moduleBinding.arguments.length!==1||!member(moduleBinding.arguments[0],'search')||!isId(moduleBinding.arguments[0].object,'location')||
+        !isId(condition[1],enabled)||!call(condition[2],ids,'includes')||condition[2].arguments.length!==1||!layout(condition[2].arguments[0],map)||
+        !call(skip,'Promise','resolve')||skip.arguments.length!==1||skip.arguments[0].type!=='ObjectExpression'||props?.length!==2||props[0].key.name!=='ok'||!truth(props[0].value)||props[1].key.name!=='value'||props[1].value.type!=='Literal'||props[1].value.value!==null||
+        mural.alternate?.callee?.object?.arguments?.length!==1||!layout(mural.alternate.callee.object.arguments[0],map)||
+        !helper?.value.async||helperImports.length!==1||helperImports[0].source.value!=='./world/prop-packs.js'||bootImports.length||helperCalls.length!==1||muralCalls.length!==1||!methods.get('_prepareLegacyMurals')?.value.async||
+        !branch||branch.consequent.type!=='BlockStatement'||branch.consequent.body.length!==2||branch.consequent.body[0].expression.type!=='AwaitExpression'||branch.consequent.body[1].type!=='ReturnStatement'||branch.consequent.body[1].argument||
+        !isId(branchCall?.callee,nativeBuild)||branchCall.arguments.length!==3||branchCall.arguments[0].type!=='ThisExpression'||!isId(branchCall.arguments[1],world.value.params[0]?.name)||!isId(branchCall.arguments[2],current)||
+        !isId(and(branch.test)[1].arguments[0],worldLayout)||h.start<branch.end||hm.start<h.end||hm.argument.arguments.length!==2||!isId(hm.argument.arguments[0],worldLayout)||!isId(hm.argument.arguments[1],current))topology();
+      mural=mural.alternate;
+    }
     if(waveCalls.length!==1||awaits.length!==names.length||
-      awaits[6]?.argument.type!=='ImportExpression'||awaits[6].argument.source.value!=='./world/texlib.js'||
-      !texlib||awaits[7]?.argument.type!=='CallExpression'||awaits[7].argument.callee.name!==texlib.name||
+      at('texture-library-module')?.type!=='ImportExpression'||at('texture-library-module').source.value!=='./world/texlib.js'||
+      !texlib||at('procedural-textures')?.type!=='CallExpression'||at('procedural-textures').callee.name!==texlib.name||
       mural?.type!=='CallExpression'||mural.callee.type!=='MemberExpression'||mural.callee.property.name!=='then'||mural.arguments.length!==2||
       mural.callee.object.type!=='CallExpression'||mural.callee.object.callee.name!==muralAlias||!muralAlias||
-      binding(awaits[9]?.argument)!==wave||wave.callee.object.name!==env?.name||!env||
+      binding(at('wave-generation'))!==wave||wave.callee.object.name!==env?.name||!env||
       wave.arguments.length!==1||wave.arguments[0].type!=='ObjectExpression'||wave.arguments[0].properties.length!==1||wave.arguments[0].properties[0].key.name!=='signal'||
       signal?.type!=='MemberExpression'||signal.property.name!=='signal'||controller?.type!=='NewExpression'||controller.callee.name!=='AbortController'||controller.arguments.length!==0||
-      awaits[10]?.argument.type!=='CallExpression'||awaits[10].argument.callee.object?.type!=='ThisExpression'||awaits[10].argument.callee.property?.name!=='_buildWorld')topology();
+      at('stage-build')?.type!=='CallExpression'||at('stage-build').callee.object?.type!=='ThisExpression'||at('stage-build').callee.property?.name!=='_buildWorld')topology();
   }
   const shader=awaits[names.indexOf('shader-compile')]?.argument;
   if(awaits.length!==names.length||shader?.type!=='CallExpression'||shader.callee.type!=='MemberExpression'||shader.callee.property.name!=='compileAsync')topology();
@@ -74,7 +118,7 @@ export function adaptCompiledMain(source) {
     if (['FunctionExpression','ArrowFunctionExpression','FunctionDeclaration','ClassDeclaration'].includes(node.type)) return false;
     if (node.type==='AwaitExpression') { awaits.push(node); return false; }
   });
-  const phases=reviewedBootPhases(ast,boot,awaits);
+  const phases=reviewedBootPhases(ast,boot,awaits,methods);
   const dwell=awaits.at(-1).argument;
   const callback=dwell.arguments?.[0];
   if (dwell.type!=='NewExpression'||dwell.callee.name!=='Promise'||callback?.type!=='ArrowFunctionExpression'||callback.params.length!==1||callback.body.type!=='CallExpression'||callback.body.callee.name!=='setTimeout'||callback.body.arguments.length!==2||callback.body.arguments[0].name!==callback.params[0].name||callback.body.arguments[1].value!==250) throw new Error('loading-cache compatibility: expected explicit 250ms ready dwell');

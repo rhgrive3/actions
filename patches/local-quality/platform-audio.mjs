@@ -186,7 +186,10 @@ export function installAudioLoopDedupe(AudioEngine) {
     const h=loop.call(this,name,options),o=options||{};
     if((!h?.playing&&!h?._sfxDeferred)||typeof h.set!=='function')return h;
     const set=h.set;
-    let volume=Math.max(0,+(o.volume??1)||0),pitch=Math.max(.05,+(o.pitch??1));
+    // Spinner premixes follow funded charge progress. Their explicit zero
+    // target pauses the recording; ordinary loops retain the historical floor.
+    const pitchFloor=typeof name==='string'&&name.startsWith('spinnerClip:')?0:.05;
+    let volume=Math.max(0,+(o.volume??1)||0),pitch=Math.max(pitchFloor,+(o.pitch??1));
     let x=o.pos?.x,y=o.pos?.y,z=o.pos?.z;
     h.set=function(p={}){
       if((!h.playing&&!h._sfxDeferred)||!p)return;
@@ -196,7 +199,7 @@ export function installAudioLoopDedupe(AudioEngine) {
         if(Math.abs(nextVolume-volume)>1e-5||!Number.isFinite(volume))(changes||={}).volume=nextVolume;
       }
       if(p.pitch!=null&&Number.isFinite(+p.pitch)){
-        nextPitch=Math.max(.05,+p.pitch);
+        nextPitch=Math.max(pitchFloor,+p.pitch);
         if(Math.abs(nextPitch-pitch)>1e-4||!Number.isFinite(pitch))(changes||={}).pitch=nextPitch;
       }
       const pos=p.pos;

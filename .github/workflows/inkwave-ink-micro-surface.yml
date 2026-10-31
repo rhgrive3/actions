@@ -2,6 +2,8 @@ name: INKWAVE ink micro surface QA
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/adapter.mjs'
+      - 'scripts/tests/inkwave-queue-ci-20261031.test.mjs'
       - 'inkwave-public/src/config.js'
       - 'inkwave-public/src/world/inkShading.js'
       - 'inkwave-public/src/world/levelMaterial.js'

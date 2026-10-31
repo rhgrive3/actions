@@ -26,6 +26,10 @@ jobs:
             /*
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
