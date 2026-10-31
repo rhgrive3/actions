@@ -3,6 +3,11 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
+      - 'inkwave-public/src/main.js'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'scripts/inkwave-range-profile-acceptance.mjs'
+      - 'scripts/tests/inkwave-queue-ci-20261031.test.mjs'
       - 'patches/loading-cache/tests/cargo-offline-precache.test.mjs'
       - "patches/local-quality/**"
       - "!patches/local-quality/tests/*.test.mjs"
