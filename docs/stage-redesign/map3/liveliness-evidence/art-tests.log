@@ -1,0 +1,19 @@
+(node:19) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ tidewater: every structural skin stays within a real volume, exterior art stays beyond arena (1577.385905ms)
+✔ tidewater: supports never overlap lower floors or route bodies (154.489556ms)
+✔ kelpline: every structural skin stays within a real volume, exterior art stays beyond arena (1373.836801ms)
+✔ kelpline: supports never overlap lower floors or route bodies (68.656952ms)
+✔ material textures are shared by live stages and are released once after last dispose (4086.365832ms)
+✔ unrelated stages receive neither colliders nor a visual root (0.365229ms)
+✔ tidewater: every art collider has a 180-degree counterpart with the same roof/rail behavior (4.962457ms)
+✔ kelpline: every art collider has a 180-degree counterpart with the same roof/rail behavior (1.108398ms)
+✔ baked AO agrees with real face layout, every hidden art collider and exact PNG bytes (81.690821ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7359.971631

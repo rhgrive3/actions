@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "baselineCommit": "2258fb970d8741dd1fe6a90e9de833c9757474ae",
+  "implementationCommit": "d6bafc28fbaaeef6c516ce7981f0ee2d94c9b83d",
+  "browser": {
+    "beforeStatus": "passed",
+    "afterStatus": "passed",
+    "revision": "a86a7ac2cba38b551bf47f974ac0dca56e006e75f55195ff7f8b76778014d804",
+    "contentHash": "a765c9e89155153db865d48bce17ea280d58b01abf545983984768838946fc04",
+    "errors": [],
+    "badResponses": [],
+    "warnings": [
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "capturedImages": 16
+  },
+  "regressions": {
+    "artGeometryAndLifetime": 9,
+    "terrain": 8,
+    "paintAndMinimap": 3,
+    "passed": 20
+  },
+  "stages": [
+    {
+      "stage": "tidewater",
+      "beforeArt": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "afterArt": {
+        "draws": 7,
+        "triangles": 130596,
+        "parts": 5880
+      },
+      "geometryBytesBefore": 8887712,
+      "geometryBytesAfter": 10260832,
+      "geometryBytesDelta": 1373120,
+      "beforeSceneDraws": 155,
+      "afterSceneDraws": 157,
+      "beforeStage": {
+        "stage": "tidewater",
+        "state": "playing",
+        "mode": "turf",
+        "art": {
+          "draws": 6,
+          "triangles": 113656,
+          "parts": 5086
+        },
+        "artRecords": 303,
+        "levelBlocks": 301,
+        "paintCells": 305104,
+        "turfArea": 8462.829471444813,
+        "opening": {
+          "phase": null,
+          "grounded": true,
+          "supported": true
+        }
+      },
+      "afterStage": {
+        "stage": "tidewater",
+        "state": "playing",
+        "mode": "turf",
+        "art": {
+          "draws": 7,
+          "triangles": 130596,
+          "parts": 5880
+        },
+        "artRecords": 327,
+        "levelBlocks": 301,
+        "paintCells": 305104,
+        "turfArea": 8462.829471444813,
+        "opening": {
+          "phase": null,
+          "grounded": true,
+          "supported": true
+        }
+      }
+    },
+    {
+      "stage": "kelpline",
+      "beforeArt": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "afterArt": {
+        "draws": 8,
+        "triangles": 128102,
+        "parts": 6156
+      },
+      "geometryBytesBefore": 9883120,
+      "geometryBytesAfter": 11244444,
+      "geometryBytesDelta": 1361324,
+      "beforeSceneDraws": 152,
+      "afterSceneDraws": 162,
+      "beforeStage": {
+        "stage": "kelpline",
+        "state": "playing",
+        "mode": "turf",
+        "art": {
+          "draws": 6,
+          "triangles": 113452,
+          "parts": 5683
+        },
+        "artRecords": 175,
+        "levelBlocks": 176,
+        "paintCells": 389000,
+        "turfArea": 11351.951891071018,
+        "opening": {
+          "phase": null,
+          "grounded": true,
+          "supported": true
+        }
+      },
+      "afterStage": {
+        "stage": "kelpline",
+        "state": "playing",
+        "mode": "turf",
+        "art": {
+          "draws": 8,
+          "triangles": 128102,
+          "parts": 6156
+        },
+        "artRecords": 204,
+        "levelBlocks": 176,
+        "paintCells": 389000,
+        "turfArea": 11351.951891071018,
+        "opening": {
+          "phase": null,
+          "grounded": true,
+          "supported": true
+        }
+      }
+    }
+  ],
+  "physicalDeviceFPSMeasured": false,
+  "mainMerged": false
+}
