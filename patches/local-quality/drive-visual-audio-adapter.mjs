@@ -2,6 +2,13 @@
 // Native snapshots and source locks stay unchanged; fail on a moved or duplicate anchor.
 const CHANGES = [
   [
+    "src/audio/music.js",
+    "    if (!preservePreload && track && track !== 'opening' && !FILE_TRACK_URLS[track]) this._dropPreload();",
+    "    if (!preservePreload && track && track !== 'opening' && this._preloadedFile?.id !== track) this._dropPreload();",
+    "music-retire-unrelated-stream-preload",
+    1
+  ],
+  [
     "src/game/showcase.js",
     "this.splats.count = this._span(this.SA, this.SL, this.SN, sTop);\n    this.rings.count = this._span(this.RA, this.RL, this.RN, rTop);",
     "this.splats.count = sTop + 1;\n    this.rings.count = rTop + 1;",
@@ -248,8 +255,8 @@ const CHANGES = [
   ],
   [
     "src/audio/music.js",
-    "  // Recorded music is the ONLY soundtrack for live turf battles. Retry transient",
-    "  _clearFileRecovery() {\n    const recovery = this._fileRecovery; this._fileRecovery = null;\n    if (recovery) for (const [target, type, listener] of recovery.listeners) target.removeEventListener?.(type, listener);\n  }\n  _armFileRecovery(track, reason) {\n    // A malformed/unsupported media asset needs a new asset, not event-driven retries.\n    if (reason?.code === 3 || reason?.code === 4 || reason?.name === 'NotSupportedError') return;\n    if (this._fileRecovery || typeof window === 'undefined' || this._desiredTrack !== track) return;\n    const recovery = this._fileRecovery = { track, listeners: [] };\n    const retry = event => {\n      if (this._fileRecovery !== recovery || this._desiredTrack !== track || !this.ctx || this.ctx.state === 'closed') return;\n      if (event.type === 'visibilitychange' && globalThis.document?.hidden) return;\n      if ((event.type === 'pointerdown' || event.type === 'keydown') && event.isTrusted !== true) return;\n      if (reason?.name === 'NotAllowedError' && event.type !== 'pointerdown' && event.type !== 'keydown') return;\n      this._clearFileRecovery(); this._fileRetryCount = 0; this._fileErrorReported = false;\n      this._fileFailures.delete(track);\n      try { this.ctx.resume?.()?.catch?.(() => {}); } catch (_) { /* a closed context stays silent */ }\n      this.play(track, { fade: 0.2, _fileRetry: true });\n    };\n    const listen = (target, type) => {\n      if (!target?.addEventListener) return;\n      target.addEventListener(type, retry, { passive: true }); recovery.listeners.push([target, type, retry]);\n    };\n    for (const type of ['online', 'focus', 'pointerdown', 'keydown']) listen(window, type);\n    listen(globalThis.document, 'visibilitychange');\n  }\n\n  // Recorded music is the ONLY soundtrack for live turf battles. Retry transient",
+    "  // The licensed menu and battle recordings are mandatory in a live browser.\n  // Retry transient media errors twice; do not fall back to the former synth BGM.",
+    "  _clearFileRecovery() {\n    const recovery = this._fileRecovery; this._fileRecovery = null;\n    if (recovery) for (const [target, type, listener] of recovery.listeners) target.removeEventListener?.(type, listener);\n  }\n  _armFileRecovery(track, reason) {\n    // A malformed/unsupported media asset needs a new asset, not event-driven retries.\n    if (reason?.code === 3 || reason?.code === 4 || reason?.name === 'NotSupportedError') return;\n    if (this._fileRecovery || typeof window === 'undefined' || this._desiredTrack !== track) return;\n    const recovery = this._fileRecovery = { track, listeners: [] };\n    const retry = event => {\n      if (this._fileRecovery !== recovery || this._desiredTrack !== track || !this.ctx || this.ctx.state === 'closed') return;\n      if (event.type === 'visibilitychange' && globalThis.document?.hidden) return;\n      if ((event.type === 'pointerdown' || event.type === 'keydown') && event.isTrusted !== true) return;\n      if (reason?.name === 'NotAllowedError' && event.type !== 'pointerdown' && event.type !== 'keydown') return;\n      this._clearFileRecovery(); this._fileRetryCount = 0; this._fileErrorReported = false;\n      this._fileFailures.delete(track);\n      try { this.ctx.resume?.()?.catch?.(() => {}); } catch (_) { /* a closed context stays silent */ }\n      this.play(track, { fade: 0.2, _fileRetry: true });\n    };\n    const listen = (target, type) => {\n      if (!target?.addEventListener) return;\n      target.addEventListener(type, retry, { passive: true }); recovery.listeners.push([target, type, retry]);\n    };\n    for (const type of ['online', 'focus', 'pointerdown', 'keydown']) listen(window, type);\n    listen(globalThis.document, 'visibilitychange');\n  }\n\n  // The licensed menu and battle recordings are mandatory in a live browser.\n  // Retry transient media errors twice; do not fall back to the former synth BGM.",
     "music-event-recovery",
     1
   ],

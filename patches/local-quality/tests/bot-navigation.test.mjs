@@ -23,7 +23,7 @@ async function world(layout = 'kelpline') {
   let seed = 142;
   f.setRandom(() => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296));
   f.bot = (weapon = 'shooter', team = 0) => {
-    const a = f.make(weapon); a.team = team; a._integrate = f.Actor.prototype._integrate;
+    const a = f.make(weapon); a.isBot = true; a.team = team; a._integrate = f.Actor.prototype._integrate;
     a.specialReady = () => false; a.bot = new f.BotBrain(a); a.bot.think = 0;
     return a;
   };
