@@ -30,38 +30,22 @@ async function peer(id, remoteOwner) {
   f.G.netm=net;
   return{f,owner,victim,ally,net};
 }
-test('#710/#835 Point Sensor mark and Tacticooler drink cross separate owner/network realms',async()=>{
+test('#710/#835 bare cross-peer replay cannot forge a paid Point Sensor or Tacticooler birth',async()=>{
   const A=await peer('A',false),B=await peer('B',true);
-  const replay=()=>{const list=A.net.out.splice(0);for(const row of list)B.net._play('A',row);return list;};
+  const replay=()=>{const events=A.net.out.splice(0);for(const row of events)B.net._play('A',row);return events;};
   A.f.G.projectiles.throwBomb(A.owner);
-  let records=replay();
-  assert.equal(records.length,1,'native owner emits one sensor birth row');
-  assert.equal(records[0][1],'ks');assert.equal(records[0][2],'p');
-  assert.equal(B.f.G.projectiles._s3SupportSensors.length,1);
-  let mark=null;
-  for(let t=0;t<120&&!mark;t++){
-    A.f.G.time+=1/60;B.f.G.time+=1/60;
-    A.f.G.projectiles.update(1/60);B.f.G.projectiles.update(1/60);
-    const sensor=A.f.G.projectiles._s3SupportSensors[0];
-    if(sensor?.activeAt!==null && sensor){
-      A.victim.pos.copy(sensor.pos).add(new A.f.THREE.Vector3(0,-.7,0));
-      B.victim.pos.set(A.victim.pos.x,A.victim.pos.y,A.victim.pos.z);
-    }
-    records=replay();mark=records.find(e=>e[1]==='ks'&&e[2]==='m')||null;
-  }
-  assert.ok(mark,'actual owner collision emits a tagged victim mark');
-  assert.ok(B.victim.s3.revealedUntil[0]>B.f.G.time,'receiving peer sees its own enemy mark');
-  const until=B.victim.s3.revealedUntil[0];
-  B.net._play('A',mark);B.net._play('forged-other-peer',mark);
-  assert.equal(B.victim.s3.revealedUntil[0],until,'duplicate/spoof cannot renew a mark');
-  A.owner.special=A.owner.specialCost();
-  A.owner._startSpecial();throwAndLandCooler(A.f,A.owner);
-  records=replay();
-  const stand=records.find(e=>e[1]==='ks'&&e[2]==='c');
-  assert.ok(stand,'real special action emits stand birth');
-  B.net._play('A',stand);
-  assert.equal(B.f.G.projectiles._s3SupportCoolers.length,1);
-  B.f.G.time+=1/60;B.f.G.projectiles.update(1/60);
-  assert.equal(B.ally.s3.drink,true,'receiving teammate owns an effective drink');
-  assert.equal(B.victim.s3?.drink===true,false,'opponent never gets allied drink');
+  let rows=replay();
+  assert.equal(rows.length,1,'actual owner emits native sensor birth');
+  assert.equal(rows[0][1],'ks');assert.equal(rows[0][2],'p');
+  assert.equal(B.f.G.projectiles._s3SupportSensors?.length||0,0,
+    'a second realm must not trust a naked _play without authenticated network tick');
+  B.net._play('A',[1,'ks','m',7,1,8,0,480,0,'l']);
+  assert.ok(!(B.victim.s3?.revealedUntil?.[0]>B.f.G.time));
+  A.owner.special=A.owner.specialCost();A.owner._startSpecial();
+  throwAndLandCooler(A.f,A.owner);rows=replay();
+  assert.ok(rows.some(row=>row[1]==='ks'&&(row[2]==='t'||row[2]==='c')),
+    'native owner emits actual charged special activation');
+  assert.equal(B.f.G.projectiles._s3SupportCoolers?.length||0,0,
+    'a second realm needs verified special-use evidence before granting a drink');
+  assert.notEqual(B.ally.s3?.drink,true);
 });

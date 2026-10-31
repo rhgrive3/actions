@@ -135,11 +135,20 @@ test('Point Sensor per-record sweep scratch resets partial capsule outputs and p
    const p={_s3SupportSensors:[source]},G={time:0,actors:[0,1,2].map(k=>({team:1,alive:true,form:k%2?'squid':'kid',pos:new THREE.Vector3(k*.2,0,0),smoothY:k*.02})),physics:{segment(a,b,h){h.hit=i%3===0;if(h.hit){h.point=a.clone().lerp(b,.75);h.normal=new THREE.Vector3(0,1,0);}return h;}}};
    const rows=[],capsules=[];let calls=0;
    const Physics={segmentCapsuleDist(a,b,base,r,height,out){capsules.push([base.toArray(),height,out.t,out.dist]);const k=calls++%3;
+     // The original broadphase queried every actor, even when the projectile
+     // was several metres above the actor's capsule. The mocked narrowphase
+     // must never manufacture a contact beyond that conservative bound.
+     const axisLo=base.y+r,axisHi=base.y+Math.max(r,height-r);
+     const dy=Math.max(0,axisLo-Math.max(a.y,b.y),Math.min(a.y,b.y)-axisHi);
+     if(dy>r+.2){out.dist=2;out.t=0;return;}
      if(i%7===0&&k===1)return;out.dist=k===2?.1:2;out.t=(i%4)*.1;}};
    for(let j=0;j<4;j++){G.time+=1/60;step(p,G,THREE,1/60,Physics,{radius:.3,height:1.7,squidHeight:.6});rows.push([source.pos.toArray(),source.vel.toArray(),source.age,source.activeAt,source.expires]);}
    traces.push({rows,capsules});
   }
-  assert.deepEqual(traces[0],traces[1],String(i));
+  // The optimization deliberately avoids distant capsule calls; preserve
+  // observable projectile/paint states, not the removed narrowphase probes.
+  assert.deepEqual(traces[0].rows,traces[1].rows,String(i));
+  assert.ok(traces[1].capsules.length<=traces[0].capsules.length,'conservative broadphase cannot add probes');
  }
 });
 
