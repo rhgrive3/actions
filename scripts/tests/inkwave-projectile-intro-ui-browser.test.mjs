@@ -88,15 +88,24 @@ for(const fault of ['hidden ancestor','permanent lineup','ownership change','nat
       const g=window.__inkwave;
       if(fault==='hidden ancestor')g.hud.el.parentElement.style.opacity='0';
       if(fault==='permanent lineup')document.querySelector('.iw-lineup').remove=()=>{};
-      if(fault==='ownership change')setTimeout(()=>{window.__G.match={};},25);
-      if(fault==='native pause')setTimeout(()=>{g.match.paused=true;},25);
+      if(fault==='ownership change'||fault==='native pause'){
+        // Inject after the cinematic owns the frame, not a fixed number of
+        // milliseconds after scheduling: a busy browser may start late.
+        const timer=setInterval(()=>{
+          if(!g.frozen)return;
+          clearInterval(timer);window.__iwIntroFaultInjected=true;
+          if(fault==='ownership change')window.__G.match={};
+          else g.match.paused=true;
+        },1);
+      }
     },fault);
-    const deadline=Date.now()+(fault==='ownership change'||fault==='native pause'?175:3800);
+    const deadline=Date.now()+3800;
     await assert.rejects(requireAtomicIntro(page,callback(deadline),deadline),/deadline|budget|ownership/);
     // Host timeout is not cancellation. Let the browser's same deadline check
     // run and restore before inspecting, without ever accepting a late result.
     await page.waitForFunction(()=>window.__iwProjectileIntroUiReceipt?.restoredAtMs,{},{timeout:1000});
-    const s=await page.evaluate(()=>({calls:window.calls,frozen:window.__inkwave.frozen,skip:window.__inkwave._skipRender,state:window.__inkwave.match.state,receipt:window.__iwProjectileIntroUiReceipt}));
+    const s=await page.evaluate(()=>({calls:window.calls,frozen:window.__inkwave.frozen,skip:window.__inkwave._skipRender,state:window.__inkwave.match.state,receipt:window.__iwProjectileIntroUiReceipt,faultInjected:window.__iwIntroFaultInjected}));
+    if(fault==='ownership change'||fault==='native pause')assert.equal(s.faultInjected,true,'exercise the fault after cinematic ownership');
     assert.equal(s.calls.frames,TURF_INTRO_FRAMES.ready);assert.equal(s.calls.liveFrames,0);assert.equal(s.state,'intro');assert.equal(s.frozen,false);assert.equal(s.skip,false);assert.equal(s.receipt.outcome,'failed');
   }finally{await page.close();}
 });
