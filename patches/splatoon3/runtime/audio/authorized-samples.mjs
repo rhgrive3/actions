@@ -218,8 +218,11 @@ export class AuthorizedSamplePack {
       trim(key);lastStagedTouchKey=key;
     }};
     this._lruStage=stage;
-    const remainingByFile=new Map();
-    for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
+    const remainingByFile=new Map(),remainingByPCM=new Map(),preparedPCM=new Map();
+    for(const clip of valid){
+      remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
+      const key=pcmKey(clip);if(key!==null)remainingByPCM.set(key,(remainingByPCM.get(key)||0)+1);
+    }
     const hashedFiles=new Set(),directHashes=new Map();
     for(const clip of valid){
       const hash=clip.sha256?.toLowerCase()||null;
@@ -262,14 +265,54 @@ export class AuthorizedSamplePack {
           scope.check();
           if(!current())throw cancelled;
           if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
-             !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8||!hasFiniteAudioBufferPCM(pcm))
+             !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
             throw new Error('Invalid decoded sample');
+          const decodedBytes=pcm.length*pcm.numberOfChannels*4;
+          if(!Number.isSafeInteger(decodedBytes)||decodedBytes<=0)throw new Error('Invalid decoded sample size');
+          // Never channel-scan a PCM buffer that cannot fit the resource budget.
+          if(decodedBytes>this.maxBytes)throw new Error('Sample cache budget exceeded');
+          if(!hasFiniteAudioBufferPCM(pcm))throw new Error('Invalid decoded sample');
           decodedPCM?.set(clip.file,pcm);observe('decoded');
           return pcm;
         }));
         return file;
       });
       decoded.set(clip.file,promise);return promise;
+    };
+    // Share verified loop-compatible audio within the same transaction, even
+    // when equal-content clips have different source filenames. A rejected
+    // filename is never used to suppress an independent valid source.
+    const prepareBuffer=async(clip,rawWindup)=>{
+      const decodedFile=rawWindup?null:await getDecoded(clip);
+      if(!current())throw cancelled;
+      if(clip.sha256&&!rawWindup){
+        if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
+        if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
+          .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
+        const sha=await decodedFile.digest;
+        if(!current())throw cancelled;
+        if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
+      }
+      const pcm=rawWindup?rawWindup.buffer:await decodedFile.decode();
+      if(!current())throw cancelled;
+      if(clip.loopEnd!=null&&clip.loopEnd>pcm.duration)throw new Error('Loop end exceeds decoded duration');
+      const shouldLoop=LOOP_EVENTS.has(clip.event),shouldRepair=shouldLoop&&clip.seamlessLoop!==false;
+      const buffer=shouldRepair?repairLoopSeam(this.ctx,pcm,clip.loopStart??0,clip.loopEnd??pcm.duration):pcm;
+      if(buffer!==pcm)repairs++;
+      return buffer;
+    };
+    const sharedBuffer=async(clip,rawWindup)=>{
+      const key=pcmKey(clip);
+      for(let prior=key===null?null:preparedPCM.get(key);prior;prior=preparedPCM.get(key)){
+        try{return await prior;}
+        catch(error){
+          if(!current())throw cancelled;
+          if(preparedPCM.get(key)===prior)preparedPCM.delete(key);
+        }
+      }
+      const pending=prepareBuffer(clip,rawWindup);
+      if(key!==null)preparedPCM.set(key,pending);
+      return await pending;
     };
     const publish=()=>{
       let byEvent;
@@ -317,24 +360,8 @@ export class AuthorizedSamplePack {
             let buffer;
             if(existing){buffer=existing.buffer;}
             else {
-              const decodedFile=rawWindup?null:await getDecoded(clip);
+              buffer=await sharedBuffer(clip,rawWindup);
               if(!current())return;
-              if(clip.sha256&&!rawWindup){
-                if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
-                // Memoize only this transaction's actual fetched bytes; every
-                // manifest row still compares its own declared checksum.
-                if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
-                  .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
-                const sha=await decodedFile.digest;
-                if(!current())return;
-                if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
-              }
-              const pcm=rawWindup?rawWindup.buffer:await decodedFile.decode();
-              if(!current())return;
-              if(clip.loopEnd!=null&&clip.loopEnd>pcm.duration)throw new Error('Loop end exceeds decoded duration');
-              const shouldLoop=LOOP_EVENTS.has(clip.event),shouldRepair=shouldLoop&&clip.seamlessLoop!==false;
-              buffer=shouldRepair?repairLoopSeam(this.ctx,pcm,clip.loopStart??0,clip.loopEnd??pcm.duration):pcm;
-              if(buffer!==pcm)repairs++;
             }
             const cost=buffer.length*buffer.numberOfChannels*4;
             if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
@@ -354,6 +381,12 @@ export class AuthorizedSamplePack {
             this.pending--;
             // A shared decoded file remains live until its last manifest borrower
             // finishes, even if jobs run concurrently or one clip fails checksum.
+            const keyPCM=pcmKey(clip);
+            if(keyPCM!==null){
+              const leftPCM=remainingByPCM.get(keyPCM)-1;
+              if(leftPCM===0){remainingByPCM.delete(keyPCM);preparedPCM.delete(keyPCM);}
+              else remainingByPCM.set(keyPCM,leftPCM);
+            }
             const left=remainingByFile.get(clip.file)-1;
             if(left===0){remainingByFile.delete(clip.file);decoded.delete(clip.file);decodedPCM?.delete(clip.file);const scope=scopes.get(clip.file);scope?.finish();this._loadScopes.delete(scope);scopes.delete(clip.file);}
             else remainingByFile.set(clip.file,left);
