@@ -7089,3 +7089,17 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: チャージ音とインク残量
 
 統合した音声修正では、チャージャー・スピナー・ストリンガーの音を実際にインクで充填できた進行量に追従させ、スピナーの満充電音を共通ビープに変更した。参照は旧作系コミュニティ資料と既存の試聴であり、Splatoon 3 Ver.11.3.0実機の音色・音程・タイミングとの一致は未確認。対象ブキ、残量条件、音源、音声回帰と検証の限界は[チャージ音の修正記録](charge-ink-audio-fix-20261031.md)を参照。
+
+### 2026-10-31: Zero-headroom 提案の監査と挙動を保つ最適化
+
+比較基準は main `df8a4b8f8c29bf68a3480e8be14624c82f6d5190`、本家の参照版は既存と同じ Splatoon 3 Ver.11.3.0。指定された Drive のアダプターと全挙動レビューを読み、公開版 `inkwave-public/` の実行経路へ照合した。添付の過去のモデル再構成 PDF を 11.3.0 の全数値ダンプとは扱わず、既存の未確認事項を引き継ぐ。特定ブキの威力、射撃間隔、塗り・衝突半径、インク消費、ギア倍率の再校正は行っていない。
+
+native の描画区間、タイル分類、単一タイルの塗装チャート選択、detail 投影再利用、三角形内判定、塗り所有矩形、ボス処理を最適化した。可視インデックスのソース順、未消費の複数カメラ GPU 転送、属性の正規化・half-float・独自 getter、三角形共有辺の浮動小数点順序を維持する。detail 投影配列は 2 MiB / 64 面に制限し、clear/dispose と元データ・基底の置換に対応する。塗り矩形の縦結合は描画用の表現を変えるが、所有セル・turf・被覆を変えない。床・壁 × line/shot/roller の 6 条件を実 PaintSystem/GLSL で比較し、最終 RGBA8 は全条件で差 0 だった。
+
+ボスの damage history は非空のフレームで減衰係数を一度計算するだけとし、微小履歴の削除はしない。attention は従来どおりターゲット選択時に 0.8 倍し、毎フレームの指数減衰へ変えない。提供ヘルパーの時計置換は finalTick・入力・RNG・回復の所有者を落とすため不採用とし、既存の固定 60 Hz と catch-up 方針を維持した。20〜144 Hz の外側更新を含む clock 回帰を確認した。
+
+VFX の鏡面反射だけは、利用者が許可した微小な見た目差として乗算列と弱い裾の省略を採用した。これはビット一致ではない。Chromium 151 / ANGLE SwiftShader の 96 条件、25,165,824 ピクセルを、実際の Three NeutralToneMapping + sRGB で比較したところ、表示チャンネル差は最大 1/255、変化したピクセルは 0.014448% だった。強いハイライトの既存境界、粒子・攻撃の時間進行や塗り判定は維持する。全ゲーム画面や本家実機の画質一致を示す測定ではない。
+
+Flow の instanced/skinned mesh、Zipcaster の skinned coat、泳ぎ film の専用 geometry と Physical material を、実際の所有者の prewarm に接続した。一般的な平面ダミーで代用せず、非使用時の可視性と資源寿命を維持する。最適化した配信物と source-loaded Character を使う実 WebGL 検査では、対象 8 material の制御した初回発動で追加 program variant 0、coat 2 回再利用時の借用 geometry 廃棄 0、film の最初の swimmer に同一 slot 再利用を確認した。FX/scene がステージをまたいで残るため、GL context を共有する renderer facade の重複処理を抑えつつ、FX.clear と context 復旧では prewarm をやり直す。scene のライト追加後に新しい film variant が実際に link することも確認した。
+
+通常ビルド、composition、互換性、source owner、起動サイズ予算のゲートが成功した。検査した配信物の content hash は `9f4f5f403173e82d19570d6b423af6d65e1dd36dfd153189eae0a94432e2b5d5`。Node の局所測定では描画選択 20.6%、partition 初期化 45.8%、detail replay 42.9% の処理時間減少が得られたが、対戦全体や端末 FPS の改善率ではない。5 件の native asset 依存テストは payload 不在で skip、23 stage の prebuilt payload は今回ローカル未検証で browser conversion fallback を使用した。iPad mini 6 / Safari の性能、全ステージ、本家実機との全挙動比較は未確認。main マージと公開更新の状態は別の統合記録で確認する。[採否・境界条件・測定・再実行コマンド・検証の限界](zero-headroom-review-20261031.md)。
