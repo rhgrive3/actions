@@ -1,3 +1,4 @@
+import { installSelfOcclusion } from './self-occlusion.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
@@ -204,6 +205,7 @@ export function install(profile) {
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
+  installSelfOcclusion(api);
   installChargerSurface(api);
   // #1097: preserve the composed ordinary muzzle pose while drawing the
   // render-only weapon-class hit layer; install after every pose/muzzle adapter.

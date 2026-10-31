@@ -917,6 +917,9 @@ jobs:
       - name: Verify PR1171 rendered reticle and GPU paint parity
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-pr1171.mjs .built-site/_site "$CI_STORAGE/evidence/roller-ownership"
+      - name: Verify emitted Blaster aim and local self visibility
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-aim-visibility.mjs .built-site/_site "$CI_STORAGE/evidence/aim-visibility"
       - name: Verify emitted menu focus lifecycle
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-menu-focus.mjs --source .built-site/_site --evidence-dir "$CI_STORAGE/evidence/menu-focus"
@@ -1153,6 +1156,7 @@ jobs:
           }[suite]
           if suite=='active': checks.extend(['motion-cache-chromium.json','motion-cache-webkit.json','native-normal-webkit/native-normal-browser.json'])
           if suite=='active': checks.append('roller-ownership/roller-ownership-result.json')
+          if suite=='active': checks.append('aim-visibility/receipt.json')
           if suite=='active': checks.extend(['post-depth-chromium.json','post-depth-webkit.json'])
           if suite=='active': checks.extend(['grate-normal/grate-normal-result.json','grate-normal-webkit/grate-normal-result.json'])
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
@@ -1181,6 +1185,8 @@ jobs:
             for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='active':
             assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['aim-visibility/receipt.json']['sourceSha']==os.environ['SOURCE_SHA']
+            assert reports['aim-visibility/receipt.json']['contentHash']==build['contentHash']
             assert reports['weapon-models/weapon-models-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             assert reports['ballpoint/ballpoint-result.json']['sourceSha']==os.environ['SOURCE_SHA']
             for name in ['grate-normal/grate-normal-result.json','grate-normal-webkit/grate-normal-result.json']:

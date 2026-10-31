@@ -1,9 +1,9 @@
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
-import {composed,raw,declaration} from './queue-visual-world-20261031.helper.mjs';
+import {composed,rawBefore,declaration} from './queue-visual-world-20261031.helper.mjs';
 
 const rel='src/world/props-marina-vessels.js';
 export const source=composed(rel);
-export const baselineHull=declaration(raw(rel),null,'makeHull').source;
+export const baselineHull=declaration(rawBefore(rel),null,'makeHull').source;
 export const candidateHull=declaration(source,null,'makeHull').source;
 const common=[declaration(source,'IWMarinaStaging',null),declaration(source,'MB',null),declaration(source,null,'gridSurface'),declaration(source,null,'polyFan')].map(x=>x.source).join('\n');
 

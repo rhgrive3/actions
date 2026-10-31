@@ -1,5 +1,6 @@
 import { queueChargerPaintDrop } from './charger-paint-drop.mjs';
 import { catalogChargeStage } from './catalog-charge-stages.mjs';
+import { installCatalogBlasterGuide } from './catalog-blaster-guide.mjs';
 
 import { traceRollingFloor } from './rolling-floor.mjs';
 import { toxicMistScale } from './toxic-mist.mjs';
@@ -1271,6 +1272,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return {field0,field1:collisionRadius(d.c,'Field',p.age*HZ,s.index,0),
       pad:collisionRadius(d.c,'Player',p.age*HZ,s.index,0),done:p.pos.y<PLAYER.waterY-1.8};
   };
+  // Read-only HUD prediction shares these exact catalogue motion owners.
+  installCatalogBlasterGuide(api, { mode, advance, collisionRadius,
+    applyPlayerVelocity: applyCatalogPlayerVelocity, defaults });
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
     if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub'&&d.key!=='arrow')return true;
