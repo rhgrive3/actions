@@ -260,6 +260,17 @@ test('the runner keeps readiness/window thresholds, successful capture path and 
 // Playwright's post-frame screenshot synchronization. Exercise its exact
 // binary acceptance block with complete and corrupted PNG headers; this never
 // replaces live RAF, the actual screenshot API, or gameplay-window thresholds.
+test('real GPU-less CI uses the explicit WebGL-only software fallback, never synthetic frames',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
+ assert.match(source,/['"]--use-gl=angle['"]/);
+ assert.match(source,/['"]--use-angle=swiftshader-webgl['"]/);
+ assert.match(source,/['"]--enable-unsafe-swiftshader['"]/);
+ assert.doesNotMatch(source,/['"]--disable-gpu['"]/);
+ assert.match(source,/waitForNativeCombatWindow\(page,\{mapId,minimumMs:seconds\*1000\}/);
+ assert.match(source,/Page\.captureScreenshot/);
+ assert.match(source,/await page\.evaluate\(\(\)=>__startGameplayObserver\(\)\)/);
+});
+
 test('native combat CDP screenshot rejects empty, truncated and wrong-size PNG payloads',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
  assert(source.includes('await captureGameplayViewportPng({cdp,width,height,timeoutMs:120000,'));

@@ -10,6 +10,40 @@ function scoped(code, start, end, edit) {
   return code.slice(0, a) + edit(code.slice(a, b)) + code.slice(b);
 }
 export function adaptQueueVisualWorld20261031(rel, code) {
+  // Promoted direct-owned source modules are already the complete reviewed
+  // result. Do not rewrite them again in the build graph. Historical frozen
+  // originals still exercise the exact transform below; partially promoted
+  // sources fail closed rather than silently mixing direct and build owners.
+  if (rel === 'src/world/props-core.js') {
+    const marks = [
+      '  const mergedBox = new THREE.Box3();',
+      '      mergedBox.min.x = Math.min(mergedBox.min.x, pos[o]);',
+      '      mergedBox.max.x = Math.max(mergedBox.max.x, pos[o]);',
+      '    const box = g.boundingBox = mergedBox;',
+    ];
+    const found = marks.filter(mark => code.includes(mark)).length;
+    if (found) {
+      if (found !== marks.length || code.includes('    const box = g.boundingBox = new THREE.Box3();'))
+        throw new Error('partial direct-owned prop-core optimization');
+      return code;
+    }
+  }
+  if (rel === 'src/world/props-marina-vessels.js') {
+    const marks = [
+      ' _reserveVertices(required){',
+      'const ni = rows.length, nj = rows[0].length, base = mb._vc;',
+      'mb._reserveVertices(base + ni * nj);',
+      '      const a = base + i * nj, b = a + nj;',
+      'const pennantPoints = ropePts(hy0, hy1, 0.04, 40);',
+      'const row = [], s0 = yAt(t, a0), s1 = yAt(t, a1);',
+    ];
+    const found = marks.filter(mark => code.includes(mark)).length;
+    if (found) {
+      if (found !== marks.length || code.includes('      ids.push(row);'))
+        throw new Error('partial direct-owned marina-vessels optimization');
+      return code;
+    }
+  }
   const replace = (a, b, label) => { code = once(code, a, b, label); };
   if (rel === 'src/game/character.js') {
     replace('const lml = Math.hypot(lm.x, lm.z);', 'const lml = this.hs < 0.12 && sv > 0.4 ? Math.hypot(lm.x, lm.z) : 0;', 'unused treadmill norm');
@@ -149,9 +183,9 @@ export function adaptQueueVisualWorld20261031(rel, code) {
    this.v.y+=0.26;this.v.addScaledVector(normal,-c.climbInset-0.07);
    sq.pivot.position.copy(c.model.parent===c.root?this.v.applyMatrix4(this.m.copy(c.model.matrixWorld).invert()):c.model.worldToLocal(this.v));`, 'reuse current climb ancestor matrices');
   }
-  // SourceSquidRig.apply keeps a local player's eyes visible even while
-  // swimming/climbing. Only remote hidden eyes may skip CPU deformation.
-  if (rel === 'src/game/motion/source-controller.js') replace('this._driveSquidArgs.scale=this.character.sqScale,this._driveSquidArgs)', "this._driveSquidArgs.scale=this.character.sqScale,this._driveSquidArgs.deformVisibleEyes=!((s.form==='swim'||s.form==='climb')&&!this.character.isLocal),this._driveSquidArgs)", 'S3 final submerged-eye visibility');
+  // Grounded swim and all climb eyes are hidden; remote airborne swim is
+  // also hidden. Preserve CPU skinning for every actually visible state.
+  if (rel === 'src/game/motion/source-controller.js') replace('this._driveSquidArgs.scale=this.character.sqScale,this._driveSquidArgs)', "this._driveSquidArgs.scale=this.character.sqScale,this._driveSquidArgs.deformVisibleEyes=!(s.form==='climb'||(s.form==='swim'&&(this.character.grounded||!this.character.isLocal))),this._driveSquidArgs)", 'S3 final submerged-eye visibility');
   if (rel === 'src/game/bots.js') {
     code += '\nconst IW_NEAR_WATER_BASIS = Array.from({length:8}, (_, k) => { const t = (k / 8) * Math.PI * 2; return [Math.cos(t), Math.sin(t)]; });\nconst _egCos0 = Math.cos(0.8), _egSin0 = Math.sin(0.8), _egCos1 = Math.cos(1.45), _egSin1 = Math.sin(1.45);\n';
     replace('for (let k = 0; k < 8; k++) { const t = (k / 8) * Math.PI * 2; if (this._wet(a.pos.x + Math.cos(t) * r, a.pos.z + Math.sin(t) * r, a.pos.y)) return true; }',

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Complete production game, unmodified RAF, bots, collision, paint and rendering.
 // SwiftShader is a software renderer: these results are not iPad hardware FPS.
+// Use Chromium's explicit WebGL-only SwiftShader fallback on GPU-less CI.
+// It retains the complete WebGL2 render path but avoids rendering the whole
+// Chromium compositor through CPU Vulkan. No gameplay/RAF/paint acceptance is changed.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 import {installGameplayObserver} from './lib/inkwave-gameplay-observer.mjs';
@@ -32,7 +35,7 @@ const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://x
 let browser,context,page,cdp,system,sampler;let phase='boot',sampling=false;
 try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
- browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader-webgl','--enable-unsafe-swiftshader']});
  context=await browser.newContext({viewport:{width,height},deviceScaleFactor:dpr,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',...(mobile?{userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
  page.on('pageerror',e=>{report.errors.push(e.message);checkpoint();});
  await page.addInitScript(installGameplayObserver);

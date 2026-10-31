@@ -8,7 +8,6 @@ import {World} from '../../patches/loading-cache/tests/worker-fixture.mjs';
 import {fileURLToPath} from 'node:url';
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../inkwave-source-composition.mjs';
-import {adaptQueueVisualWorld20261031} from '../../patches/local-quality/queue-visual-world-20261031-adapter.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const optional=new Set(['src/world/props.js','src/world/stages/index.js','src/world/props-marina-vessels.js','src/world/props-marina-dock.js','src/world/stages/cargo/props.js']);
 const read=rel=>fs.readFileSync(path.join(root,rel.startsWith('src/')||rel.startsWith('vendor/')?'inkwave-public/'+rel:rel),'utf8');
@@ -39,16 +38,10 @@ test('public PropKit facade retains the exact original named exports and both ow
  const exports=code=>parse(code,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='ExportNamedDeclaration').flatMap(n=>n.specifiers.map(s=>s.exported.name).concat(n.declaration?.id?[n.declaration.id.name]:n.declaration?.declarations?.map(d=>d.id.name)||[])).sort();
  const baseline=fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/props-before-selected-packs.js.txt',import.meta.url),'utf8');
  assert.deepEqual(exports(read('src/world/props.js')),exports(baseline));
- // The compatibility facade is byte-identical. The selected core now has a
- // separately reviewed, source-only bounding-box pass whose exact output is
- // the sole admitted difference. Other build passes cannot rewrite either.
- const facade='src/world/props.js',core='src/world/props-core.js',raw=read(core);
- assert.equal(adaptBuildSource(facade,read(facade)),read(facade));
- assert.equal(adaptBuildSource(core,raw,{queueVisualWorld20261031:false}),raw);
- const reviewed=adaptQueueVisualWorld20261031(core,raw);
- assert.notEqual(reviewed,raw,'production bounds pass is not accidentally omitted');
- assert.equal(adaptBuildSource(core,raw),reviewed,'only the explicit queued bounds owner may transform core');
- assert.throws(()=>adaptQueueVisualWorld20261031(core,raw.replace('  let vo = 0, io = 0;','  let vo = 0, io = 1;')),/visual\/world queue anchor/);
+ // Each publicly selected module is now a direct owner of its reviewed
+ // source. Build passes must never silently reintroduce secondary transforms.
+ for(const rel of ['src/world/props.js','src/world/props-core.js','src/world/props-marina-vessels.js'])
+  assert.equal(adaptBuildSource(rel,read(rel)),read(rel),rel+' direct source identity');
 
 });
 
