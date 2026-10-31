@@ -14,6 +14,8 @@ import { cancelStormPendingInput } from './storm-effects.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { observeSupportTick, consumeSupportEvent, consumeCoolerUse, clearSupportAdmission } from './support-replay-admission.mjs';
 import { SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
+import { createCoolerFlight, stepCoolerFlight } from './support-cooler-flight.mjs';
+import { pointSensorLaunch, stepPointSensorFlight, predictPointSensor } from './support-sensor-flight.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -111,10 +113,11 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
       !WEAPON_ORDER.includes('support')) WEAPON_ORDER.push('support');
 }
 function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, record = null) {
-  const pos = record ? new THREE.Vector3(record[0],record[1],record[2]) :
-    owner.pos.clone().add(new THREE.Vector3(0,1.35,0));
-  const vel = record ? new THREE.Vector3(record[3],record[4],record[5]) :
-    projectile.throwVelocity(owner, pointSensorThrowSpeed(owner.s3?.abilityPoints?.subPower, gearCurve), new THREE.Vector3());
+  // Native throw and its read-only predicted trajectory share the exact
+  // source launch tuple. Authenticated receiver rows supply their own tuple.
+  const launch=record?null:pointSensorLaunch(owner,THREE);
+  const pos=record?new THREE.Vector3(record[0],record[1],record[2]):launch.origin;
+  const vel=record?new THREE.Vector3(record[3],record[4],record[5]):launch.velocity;
   if (!vec3(pos) || !vec3(vel)) return null;
   const sensor = { owner, team:owner.team, pos, vel, prev:pos.clone(), age:0,
     activeAt:null, expires:Infinity, seq:remote ? record[6] : serial(owner),
@@ -170,48 +173,35 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   return stand;
 }
 function throwCooler(owner,projectile,G,THREE,Hit,record=null) {
-  const pos=record?new THREE.Vector3(...record.pos):owner.pos.clone();if(!record)pos.y+=1.1;
-  const vel=record?new THREE.Vector3(...record.vel):owner.aimDir.clone().normalize().multiplyScalar(TACTICOOLER_SOURCE.spawnSpeedZ*60);if(!record)vel.y+=TACTICOOLER_SOURCE.spawnSpeedY*60;
-  const device={owner,pos,prev:pos.clone(),vel,age:0,hit:new Hit(),mesh:coolerVisual(owner,pos,THREE,G),ghost:!!record,seq:record?.seq||serial(owner),sourceLife:life(owner)};
+  // A remote verified throw replays the admitted birth velocity and identity.
+  // Local throw uses precisely the shared launch primitive from the preview.
+  const device=record?{
+    owner,pos:new THREE.Vector3(...record.pos),vel:new THREE.Vector3(...record.vel),
+    age:0,flightCarry:0,hit:new Hit(),normal:new THREE.Vector3(0,1,0),outcome:'flight'
+  }:createCoolerFlight({G,THREE,Hit},owner);
+  if(record)device.prev=device.pos.clone();
+  device.ghost=!!record;device.seq=record?.seq||serial(owner);device.sourceLife=life(owner);
+  device.mesh=coolerVisual(owner,device.pos,THREE,G);
   if(device.mesh)device.mesh.scale.setScalar(.35);
   (projectile._s3SupportCoolerThrows ||= []).push(device);
-  if(!record){startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);emitNet(G,owner,['t',owner.nid,device.seq,pos.x,pos.y,pos.z,vel.x,vel.y,vel.z,device.sourceLife]);}
+  if(!record){
+    startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);
+    const {pos,vel}=device;
+    emitNet(G,owner,['t',owner.nid,device.seq,pos.x,pos.y,pos.z,vel.x,vel.y,vel.z,device.sourceLife]);
+  }
   return device;
 }
 // Both the native field and its aim preview use this exact fixed-step flight.
 // Preview state is private and never joins the live sensor registry.
 function advancePointSensorFlight(sensor,G,THREE,dt,Physics,PLAYER,time) {
-      sensor.age+=dt;
-      sensor.prev.copy(sensor.pos);
-      sensor.vel.y-=24*dt;
-      sensor.pos.addScaledVector(sensor.vel,dt);
-      const hit = G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
-      const scratch=sensor.contactScratch ||= {delta:new THREE.Vector3(),base:new THREE.Vector3(),
-        point:new THREE.Vector3(),result:{t:0,dist:Infinity}};
-      const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
-      let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
-      const reach=PLAYER.radius+.2, minX=Math.min(sensor.prev.x,sensor.pos.x)-reach, maxX=Math.max(sensor.prev.x,sensor.pos.x)+reach,
-        minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach, maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach,
-        lowY=Math.min(sensor.prev.y,sensor.pos.y),highY=Math.max(sensor.prev.y,sensor.pos.y);
-      for(const actor of G.actors||SUPPORT_EMPTY_ROSTER){
-        if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
-        if(actor.pos.x<minX||actor.pos.x>maxX||actor.pos.z<minZ||actor.pos.z>maxZ)continue;
-        const baseY=actor.pos.y+(actor.smoothY||0),height=actor.form==='squid'?PLAYER.squidHeight:PLAYER.height;
-        const axisLo=baseY+PLAYER.radius,axisHi=baseY+Math.max(PLAYER.radius,height-PLAYER.radius);
-        const yPad=32*Number.EPSILON*Math.max(1,Math.abs(lowY),Math.abs(highY),Math.abs(axisLo),Math.abs(axisHi),Math.abs(reach));
-        if(Number.isFinite(yPad)&&reach>=0&&(highY<axisLo-reach-yPad||lowY>axisHi+reach+yPad))continue;
-        const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
-        const result=scratch.result;result.t=0;result.dist=Infinity;
-        Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);
-        if(result.dist<=PLAYER.radius+.2&&length*result.t<best){body=scratch.point.copy(sensor.prev).addScaledVector(delta,result.t);best=length*result.t;}
-      }
-      if(body || hit?.hit || sensor.age>=POINT_SENSOR.maxFlightSeconds) {
-        if(body)sensor.pos.copy(body);
-        else if(hit?.hit && vec3(hit.point)) sensor.pos.copy(hit.point).addScaledVector(hit.normal, .03);
-        sensor.activeAt=time;sensor.expires=time+POINT_SENSOR.areaSeconds;
-        if(sensor.previewNormal){if(!body&&hit?.hit&&vec3(hit.normal))sensor.previewNormal.copy(hit.normal);else sensor.previewNormal.set(0,1,0);}
-      }
-  return sensor.activeAt!==null;
+  const contact=stepPointSensorFlight(sensor,{G,THREE,Physics,PLAYER},dt);
+  if(!contact)return false;
+  sensor.activeAt=time;sensor.expires=time+POINT_SENSOR.areaSeconds;
+  if(sensor.previewNormal){
+    if(contact.normal&&vec3(contact.normal))sensor.previewNormal.copy(contact.normal);
+    else sensor.previewNormal.set(0,1,0);
+  }
+  return true;
 }
 const SUPPORT_EMPTY_ROSTER = Object.freeze([]);
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
@@ -246,19 +236,16 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
   const throws=projectile._s3SupportCoolerThrows||SUPPORT_EMPTY_ROSTER;
-  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);
-    // EnergyStand.MoveParam, 11.3.0: source frames -> seconds. Preserve
-    // native gravity-then-drag order; exponentiate retention for subframes.
-    d.vel.y-=TACTICOOLER_SOURCE.flyGravity*3600*dt;
-    d.vel.multiplyScalar(Math.pow(1-TACTICOOLER_SOURCE.flyPositionAirResist,60*dt));
-    d.pos.addScaledVector(d.vel,dt);
-    const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
-    if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
-    const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z,Math.max(d.prev.y,d.pos.y)+.001);
-    if(!landed&&Number.isFinite(floor)&&d.pos.y<=floor){d.pos.y=floor;landed=true;}
-    if(landed){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,d.ghost,d.pos.toArray(),d.seq);}
-    else if(d.age>5||!playing){releaseVisual(d,G);throws.splice(i,1);}
-    else d.mesh?.position.copy(d.pos);
+  for(let i=throws.length-1;i>=0;i--){
+    const d=throws[i],outcome=stepCoolerFlight({G,THREE,PLAYER},d,dt);
+    if(outcome==='landed'){
+      releaseVisual(d,G);throws.splice(i,1);
+      // Retain the verified remote birth identity. A ghost must not
+      // incorrectly gain owner-local gauge authority at landing.
+      deployCooler(d.owner,projectile,G,THREE,d.ghost,d.pos.toArray(),d.seq);
+    }else if(outcome==='expired'||outcome==='lost'||!playing){
+      releaseVisual(d,G);throws.splice(i,1);
+    }else d.mesh?.position.copy(d.pos);
   }
   const coolers=projectile._s3SupportCoolers || SUPPORT_EMPTY_ROSTER;
   for(let i=coolers.length-1;i>=0;i--) {
@@ -293,6 +280,14 @@ export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMa
   }
   installTacticoolerGauge({Actor,G});
   installCoolerCollision({Actor,Projectiles,G,THREE,Hit,Physics,PLAYER});
+  // Chain the latest source predictor without removing the existing catalogue
+  // or native Sub forecast owner. It has no live paint, status or packet effect.
+  const priorSubPrediction=Projectiles.prototype.s3PredictSubTrajectory;
+  Projectiles.prototype.s3PredictSubTrajectory=function(actor,options={}){
+    const id=options.id||options.kind||actor?.weapon?.sub;
+    return id==='pointSensor' ? predictPointSensor({G,THREE,Hit,Physics,PLAYER},actor,options)
+      : priorSubPrediction?.call(this,actor,options)||null;
+  };
   const throwBomb=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...rest) {
     if(actor?.weapon?.sub==='pointSensor' && !actor.remote && aliveInMatch(G))
@@ -307,8 +302,9 @@ export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMa
     if(!scratch){scratch={pos:new THREE.Vector3(),prev:new THREE.Vector3(),vel:new THREE.Vector3(),hit:new Hit(),previewNormal:new THREE.Vector3(),up:new THREE.Vector3(0,1,0),gray:new THREE.Color(.6,.6,.6)};if(depth<8)pool.frames[depth]=scratch;}
     try{
       scratch.owner=actor;scratch.team=actor.team;scratch.age=0;scratch.activeAt=null;scratch.expires=Infinity;
-      scratch.pos.copy(actor.pos);scratch.pos.y+=1.35;scratch.prev.copy(scratch.pos);
-      this.throwVelocity(actor,pointSensorThrowSpeed(actor.s3?.abilityPoints?.subPower,gearCurve),scratch.vel);
+      const forecast=pointSensorLaunch(actor,THREE,true);
+      scratch.pos.copy(forecast.origin);scratch.prev.copy(scratch.pos);
+      scratch.vel.copy(forecast.velocity);scratch.s3SensorRemainder=0;
       const position=this.arcGeo.attributes.position,per=2,dt=1/60;let count=1,landed=false;
       position.setXYZ(0,scratch.pos.x,scratch.pos.y,scratch.pos.z);
       for(let i=0;i<(this.arcN-1)*per;i++){
