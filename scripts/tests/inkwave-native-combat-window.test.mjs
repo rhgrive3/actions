@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {parse as parseResourceSource} from '../../patches/loading-cache/vendor/acorn.mjs';
 import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWindow,nativeCombatWindowTimeoutState} from '../lib/inkwave-native-combat-window.mjs';
 
 function fixture(){
@@ -267,7 +268,20 @@ test('real GPU-less CI uses the explicit WebGL-only software fallback, never syn
  assert.match(source,/['"]--enable-unsafe-swiftshader['"]/);
  assert.doesNotMatch(source,/['"]--disable-gpu['"]/);
  assert.match(source,/waitForNativeCombatWindow\(page,\{mapId,minimumMs:seconds\*1000\}/);
- assert.match(source,/Page\.captureScreenshot/);
+ const ast=parseResourceSource(source,{ecmaVersion:'latest',sourceType:'module'});
+ const walk=(node,visit)=>{if(!node||typeof node!=='object')return;if(typeof node.type==='string')visit(node);for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)walk(child,visit);}else if(value&&typeof value==='object')walk(value,visit);};
+ const properties=node=>{assert.equal(node?.type,'ObjectExpression');assert(node.properties.every(p=>p.type==='Property'&&!p.computed&&p.kind==='init'));return Object.fromEntries(node.properties.map(p=>[p.key.name??p.key.value,p.value]));};
+ const imports=ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value==='./lib/inkwave-gameplay-viewport.mjs');
+ assert.equal(imports.length,1,'a comment or string is not an actual helper import');
+ const bindings=imports[0].specifiers.filter(n=>n.type==='ImportSpecifier'&&n.imported.name==='captureGameplayViewportPng');assert.equal(bindings.length,1);
+ const local=bindings[0].local.name,calls=[];walk(ast,node=>{if(node.type==='AwaitExpression'&&node.argument.type==='CallExpression'&&node.argument.callee.type==='Identifier'&&node.argument.callee.name===local)calls.push(node.argument);});
+ assert.equal(calls.length,1,'one actual awaited helper call, not a commented-out call');assert.equal(calls[0].arguments.length,1);
+ const capture=properties(calls[0].arguments[0]);assert.deepEqual(Object.keys(capture).sort(),['cdp','height','save','timeoutMs','width']);
+ for(const name of ['cdp','width','height']){assert.equal(capture[name].type,'Identifier');assert.equal(capture[name].name,name);}assert.equal(capture.timeoutMs.type,'Literal');assert.equal(capture.timeoutMs.value,120000);
+ const helperAst=parseResourceSource('('+captureNativeViewport.toString()+')',{ecmaVersion:'latest'}),api=[];
+ walk(helperAst,node=>{if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&node.callee.object.type==='Identifier'&&node.callee.object.name==='cdp'&&node.callee.property.name==='send'&&node.arguments[0]?.type==='Literal'&&node.arguments[0].value==='Page.captureScreenshot')api.push(node);});
+ assert.equal(api.length,1,'the imported helper calls the real screenshot API');const options=properties(api[0].arguments[1]);assert.deepEqual(Object.keys(options).sort(),['captureBeyondViewport','format','fromSurface']);
+ for(const [name,value] of Object.entries({format:'png',captureBeyondViewport:false,fromSurface:false})){assert.equal(options[name].type,'Literal');assert.equal(options[name].value,value);}
  assert.match(source,/await page\.evaluate\(\(\)=>__startGameplayObserver\(\)\)/);
 });
 

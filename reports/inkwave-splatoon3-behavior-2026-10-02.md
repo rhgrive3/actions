@@ -7190,3 +7190,28 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 ### 2026-10-31: Kit 予測の未使用距離
 
 - `patches/splatoon3/runtime/kit-subs.mjs::predictKitSub` は defense が falsy の場合だけ、未使用の `previous.distanceTo` を省く。`world.hit` の読取り、truthy defense の距離、全query/horizon/RNG/接触結果は保持。新3件（28scenario）と既存145件、独立追加getter/throw4件は別cohortでPASS。実12秒void対照のnative queryは720→720、未使用distance評価だけ720→0で、query削減/FPS改善は主張しない。専用記録は `reports/kit-prediction-unused-distance-20261031.md`。実機参照version/ブキ/ギア/frameの新規比較、full site/emitted/browser/GPUは未確認。
+
+### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+
+基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+
+新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+
+### 2026-10-31: Library キューの既存PR照合と追加最適化
+
+監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+
+ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+
+形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+
+同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
+
+
+### 2026-10-31: native guide/Clam/Spinner QA と paint upload の限定差分
+
+- `throw-prediction-native-guide.test.mjs` は実native forecastのpublic guideと接触・cadenceを追加受入するQA2件。独立source2件、f98 kit更新との再照合2件は別cohortで、旧whole fidelity SIGKILLを合格に読み替えない。`bomb-motion.test.mjs` は既存200assert/18callbackを保持し、移動中roller/Flowの同じreleaseと実床の正規positiveを補う（19件PASS）。新しいゲーム挙動の修正やbare/private capabilityの捏造ではない。
+- Spinner QAはmain bee246cの既存3秒stereo/実sampleRate予約を参照し、旧192kHz・409600frame入力3276800Bを境界内positiveとして保持。独立計算した4608000Bのexact edgeと+1 stereo frame、NaN/不一致channelの拒否を確認し全15件PASS、容量/runtime/音質を変更しない。旧contextのchannel0追加4行は丸適用せず、既finite PCMの実境界とwrong-channel反証が検出済みであることを確認した。
+- paintはbit-identicalなsource-owned Float32有効prefixだけの重複range/version markを省く。WeakMap寿命、異なる属性/配列/offset/外部version・range変更、signed zero/NaN bits、可変ArrayBuffer等の安全fallbackを保持する。記録GLの15tick/14stampではbufferSubDataが65→17、draw/dry/payload/CPU ownerは同じ。formal34PASS/元WebGL1SKIP、独立source10/emitted10は別cohortで、full site/実GPUや125秒combat timeout解消を証明しない。
+- targetのdirect-source promotionは旧props原本2件全bytesをimmutable fixtureへ保存し、旧正式adapter/default出力と新direct/defaultが完全一致。A+同auditは公式123入力・DIRECT18件・failure0、既ownership unit14件PASS。モデル外観/形状を再設計した成果ではなく、既存reviewed出力のsource所有位置を保つもの。本家参照version・ブキ・ギア・実機frame測定は新規未実施。
+- 直前のmain由来4011Bは出典の元bytesをそのまま保全復元した歴史記録で、今回headのCI/本家一致/whole-suite合格を追加で宣言するものではない。最終headでの全必須CI・fresh build/browser受入は別に必要であり、未受入版や保留Storm変更は含めない。

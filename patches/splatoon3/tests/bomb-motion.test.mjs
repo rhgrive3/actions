@@ -49,6 +49,7 @@ async function production() {
     export { install } from './patches/splatoon3/runtime/install.mjs';
     export { updateStormHold, isStormHolding } from './patches/splatoon3/runtime/storm-effects.mjs';
     export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';
+    export { Level } from './inkwave-public/src/world/level.js';
     export { CHARACTER_BOMB_POSE } from './inkwave-public/src/game/character.js';
     export { installBombMotion, bombMotionSnapshot, bombReleasePosition, bombPreviewPosition } from './patches/splatoon3/runtime/bomb-motion.mjs';
     ${DETAIL_HOOKS.map(([module, snapshot]) => `export { ${snapshot} } from './patches/splatoon3/runtime/${module}-motion.mjs';`).join('\n')}
@@ -414,6 +415,7 @@ test('release and per-frame preview sample native rig without changing any live 
   const api = await production();
   for (const kind of ['shooter', 'dualies', 'slosher', 'charger', 'splatling', 'roller']) {
     const r = rig(api, kind); let flowEvents = 0;
+    const previousLevel = api.G.level, previousPhysics = api.G.physics;
     const stop = api.on('actor:flow', event => { if (event.actor === r.a) flowEvents++; });
     try {
       api.emit('turf', { actor: r.a, area: api.profile.flow.threshold / api.profile.flow.weights.turf + 1 });
@@ -456,6 +458,30 @@ test('release and per-frame preview sample native rig without changing any live 
         }
         assert.ok(new api.THREE.Vector3().fromBufferAttribute(r.projectiles.arcGeo.getAttribute('position'),0).distanceTo(preview)<1e-6,
           'Curling guide begins at the same actual native release sample');
+        // Keep the empty-world outcome contract above. In this same moved,
+        // Flow-active roller rig, separately confirm a real-floor forecast
+        // before the normal paid release below; geometry/cadence have their
+        // own native-guide suite, so no buffer-quality oracle is duplicated.
+        api.G.level = new api.Level({
+          bounds: { minX: -400, maxX: 400, minZ: -400, maxZ: 400 },
+          spawnPads: [[-390, 0, 0], [390, 0, 0]], spawnBarrier: 0, half: [],
+          single: [{ kind: 'box', min: [-400, -1, -400], max: [400, 0, 400] }],
+        });
+        api.G.physics = new api.Physics(api.G.level);
+        const groundedBefore = preservedRig(r, api);
+        r.projectiles.updateArc(r.a, true);
+        assert.equal(r.projectiles._s3ThrowPrediction?.complete, true,
+          'moved Flow-active Curling release has a confirmed real-floor explosion');
+        assert.equal(r.projectiles._s3ThrowPrediction.outcome, 'explosion');
+        assert.equal(r.projectiles._s3ThrowPrediction.firstImpact?.kind, 'world');
+        assert.equal(r.projectiles.arcRing.visible, true);
+        assert.ok(r.projectiles._s3ThrowPrediction.origin.distanceTo(preview) < 1e-12,
+          'confirmed floor guide uses the same live native release sample');
+        assert.deepEqual(preservedRig(r, api), groundedBefore,
+          'confirmed floor preview preserves the moved Flow-active native rig');
+        assert.deepEqual(calls, beforeCalls,
+          'confirmed floor preview adds no Character tick, secondary update or native Character RNG call');
+
       } else {
         assert.equal(r.projectiles.arcLine.visible, true, 'other held bombs retain their native trajectory guide');
         const attribute = r.projectiles.arcGeo.getAttribute('position');
@@ -471,7 +497,10 @@ test('release and per-frame preview sample native rig without changing any live 
       assert.ok(r.projectiles.bombs[0].pos.distanceTo(preview) < 1e-12, 'preview and creation use the same pose and physical origin');
       assert.deepEqual(calls, beforeCalls, 'actual source throw samples without an extra Character tick');
       assert.equal(flowEvents, 1, 'Flow is not reactivated or extended by preview/release sampling');
-    } finally { stop(); r.close(); }
+    } finally {
+      try { stop(); r.close(); }
+      finally { api.G.level = previousLevel; api.G.physics = previousPhysics; }
+    }
   }
 });
 
