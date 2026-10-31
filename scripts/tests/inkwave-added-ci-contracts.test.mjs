@@ -171,6 +171,50 @@ test('reviewed touch CI fixture delta reverses to its immutable original source 
 // none is an input consumed by the build or runtime. The owning constructs
 // are pinned as a whole: permitting an otherwise legitimate identifier as an
 // arbitrary subexpression would allow an alias, import, or filesystem read.
+
+const queueCiFixtureFile='scripts/tests/inkwave-queue-ci-20261031.test.mjs';
+// The inherited queue-CI lane uses excluded workbench paths only as negative
+// data in a temporary sparse-checkout repository. Pin the complete source and
+// admit exactly the four literal data nodes belonging to those tests.
+const QUEUE_CI_FIXTURE_GIT_BLOB='285f581cab436ebf799c2ed3bf79d805f0ef4d15';
+const QUEUE_CI_NEGATIVE_OWNERS=[
+ 'ink-volume actual sparse checkout retains all three production adapter entrypoints',
+ 'Non-Drive sparse checkout retains source dependencies and original volume inputs while excluding historical reports',
+];
+function maskReviewedQueueCiFixture(source){
+ const observed=execFileSync('git',['hash-object','--stdin'],{cwd:root,input:source,encoding:'utf8'}).trim();
+ assert.equal(observed,QUEUE_CI_FIXTURE_GIT_BLOB,'exact audited queue-CI source, no executable authoring references');
+ const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+ const literals=[];
+ const expected=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png'];
+ for(const title of QUEUE_CI_NEGATIVE_OWNERS){
+  const tests=ast.body.filter(n=>n.type==='ExpressionStatement'&&n.expression?.type==='CallExpression'
+    &&n.expression.callee?.name==='test'&&n.expression.arguments?.[0]?.value===title);
+  assert.equal(tests.length,1,'exact negative-only CI test owner: '+title);
+  const callback=tests[0].expression.arguments[1];
+  assert.equal(callback?.body?.type,'BlockStatement','literal data only in selected fixture body');
+  const arrays=callback.body.body.filter(n=>n.type==='VariableDeclaration'&&n.kind==='const')
+    .flatMap(n=>n.declarations).filter(n=>n.id?.name==='removed');
+  assert.equal(arrays.length,1,'one local excluded-fixture list');
+  assert.equal(arrays[0].init?.type,'ArrayExpression');
+  assert.deepEqual(arrays[0].init.elements.map(n=>n.type==='Literal'?n.value:null),expected,
+    'only two exact excluded fixture paths');
+  literals.push(...arrays[0].init.elements);
+ }
+ assert.equal(literals.length,4);
+ let checked=source;
+ for(const node of literals.sort((a,b)=>b.start-a.start))
+  checked=checked.slice(0,node.start)+"''"+checked.slice(node.end);
+ return checked;
+}
+test('queue sparse CI authoring exclusions remain literal fixture data and reject source drift',()=>{
+ const source=fs.readFileSync(new URL(queueCiFixtureFile,root),'utf8');
+ const checked=maskReviewedQueueCiFixture(source);
+ assert.ok(!checked.includes('tools/inkwave-modeler/'));
+ assert.throws(()=>maskReviewedQueueCiFixture(source+' // unreviewed fixture mutation'));
+ assert.throws(()=>maskReviewedQueueCiFixture(source.replace('tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/src/editor.js')));
+});
+
 const volumeFixtureFile='scripts/tests/continuous-browser-video.test.mjs';
 const volumeSparseLiteral='          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n';
 const volumeConsumerPins={
@@ -218,7 +262,8 @@ function maskReviewedVolumeFixture(source){
 function assertNoAuthoringDependency(file,source){
  if(Object.hasOwn(fixtureSourcePins,file))
   assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[file],'audited fixture changed; re-review before updating its narrow literal exemption');
- let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source):source;
+ let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source)
+  :file===queueCiFixtureFile?maskReviewedQueueCiFixture(source):source;
  if(file===sparseFixtureFile){
   const checkedSource=restoreNewSparseSuccessor(source);
   restoreReviewedSparseSource(checkedSource);

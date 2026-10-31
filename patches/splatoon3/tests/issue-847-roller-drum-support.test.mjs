@@ -395,9 +395,11 @@ test('847 rejects missing or modified fault inputs before VM linking and keeps e
     assert.throws(() => exactFault(roller.replace(before,''), before, after, name), /counterfactual anchor/);
     assert.throws(() => exactFault(roller+before, before, after, name), /counterfactual anchor/);
   }
-  for (const [after,before,name] of MAIN_ROLLER_CLAMP_REVERSE) {
-    assert.throws(() => exactFault(roller.replace(after,''),after,before,name), /counterfactual anchor/);
-    assert.throws(() => exactFault(roller+after,after,before,name), /counterfactual anchor/);
+  // One four-space clamp is also a substring of the eight-space variant.
+  // Validate the *entire* reversible pair, not a single substring match.
+  for (const [after] of MAIN_ROLLER_CLAMP_REVERSE) {
+    assert.throws(() => beforeMainClamp(roller.replace(after,'')));
+    assert.throws(() => beforeMainClamp(roller+after));
   }
   let reviewed = beforeMainClamp(roller);
   for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
