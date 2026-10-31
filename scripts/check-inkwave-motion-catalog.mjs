@@ -493,6 +493,10 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // Exercise the real Match dependency entry, including its deadline helper.
   const { Match } = await import(prefix + 'src/game/match.js');
   const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);
+  // The Boss entry owns the storm volume helper outside the Turf graph.
+  // Load the real owner so its immutable dependency is observed as well.
+  const { Boss } = await import(prefix + 'src/boss/boss.js');
+  if(typeof Boss!=='function'||typeof Boss.prototype.rain!=='function')throw Error('Installed Boss rain owner missing');
   // Prefer native named exports. Only older frozen builds need the strictly
   // source-verified adjacent-slot fallback, never an unverified inferred index.
   const contactChannels = footLayout.named ? [C.WPL, C.WPR] : [C.WPL ?? C.STAB - footLayout.leftBeforeStab, C.WPR ?? C.STAB - footLayout.rightBeforeStab];

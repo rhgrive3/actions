@@ -1,0 +1,61 @@
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+{"bodyFitCallbacks":{"before":8730,"after":3262}}
+(node:36633) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen before implementations retain their hashes (1.513574ms)
+✔ default ray results stay independent; reusable output preserves every field and miss/anyHit returns (95.195676ms)
+✔ pooled stacks preserve traversal order during nested box and ray queries, exceptions and early exits (5.395563ms)
+✔ NativePhysics copies pooled hits into independent caller results and retains dynamic precedence (4.658981ms)
+✔ bodyFits preserves decisions and stops visiting triangles after the first obstruction (30.004148ms)
+✔ native contacts retain exact canonical-source movement at 30 Hz (26.558967ms)
+✔ native contacts retain exact canonical-source movement at 60 Hz (27.134424ms)
+✔ native contacts retain exact canonical-source movement at 120 Hz (54.212911ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+(node:36634) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ one masked ground traversal preserves every independent ray, tie, grate and counter (240.9204ms)
+✔ native batched footprint matches inherited source/dynamic support selection exactly (361.417959ms)
+✔ batch misses keep owned hit vectors and options/overrides retain scalar contracts (2.388692ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+(node:36635) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sparse ground masks preserve scalar hits, counters and the 30-ray boundary (132.222476ms)
+✔ sparse ground masks retain early-hit scalar fallback and recover after an exception (2.215368ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+(node:36654) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native any-hit LOS exactly matches nearest-hit LOS across source/moving geometry and endpoint guards (80.355527ms)
+✔ raycast and source-ray overrides retain inherited LOS dispatch and side effects (1.437326ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+{"queries":12401,"triangleTests":154435}
+(node:36671) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downward BVH specialization preserves exact hits, signed zero, ties, and traversal counters (744.016292ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+(node:36687) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ fixed ray axes retain getter/coercion reads, early rejects and exceptions (34.752413ms)
+✔ fixed ray axes preserve reentrant getter queries and mutable node observations (0.824134ms)
+✔ fixed ray axes retain non-number operand coercions for every axis (3.610124ms)
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+INKWAVE built fixture /workspace/actions-ray-opt/_site contentHash=5ecb390fa2fd7e60988eaa2384d1a5930bf81e3b4857c814eaf4cd4b6cf34765
+{"scalarQueries":1005400,"equal":true}
+{"adversarialFullRays":18144,"triangleTests":39776}
+(node:36696) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ frozen nearest-ray and native-level oracles retain their SHA-256 (2.392121ms)
+✔ nearest rays preserve exact geometry and traversal counts with canonical source-ID ties (157.227262ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 30 Hz (174.417856ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 60 Hz (182.725003ms)
+✔ real weapon-admission damage and paint commands retain the frozen native result at 120 Hz (177.774684ms)
+✔ ordered scalar predicate retains all special values and one million extreme finite cases (147.120617ms)
+✔ full source or emitted rays preserve inverted/NaN/extreme slab fallback and memory layout (44.010393ms)
+✔ non-number far coercions and exceptions retain original evaluation order (1.323833ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4194.963575

@@ -1,0 +1,999 @@
+{
+  "schema": 1,
+  "purpose": "Node ray component A/B on instrumented real 900tick battle input; no whole-battle/device/FPS claim",
+  "stage": "hagglefish",
+  "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+  "sourceTriangles": 163625,
+  "recordingSha256": "0c7f6cb7a78e141d89fa299049bd2ee5648e0cd39b5e3808f12b430f4672fd60",
+  "recording": {
+    "frames": 900,
+    "hz": 60,
+    "ticks": 900,
+    "actors": 8,
+    "minLiving": 7,
+    "digest": 1606414722,
+    "bvh": {
+      "queries": 247281,
+      "triangleTests": 5193821
+    },
+    "baselineSourceSha": "5637c8038e00466a8022c4d2b705ec9e5dc1c8d2",
+    "contentHash": "e3c3937b58cf2259cb76d724d83c38cd172704e84f63e1b4bd518f1534e7f7af",
+    "recordingHarnessSha256": "3326880a8e9856a2942cf922f01be905759cd54e3e5a6df78a8c72cc75fbd3a6",
+    "baselineParity": {
+      "initial": true,
+      "frames": true,
+      "hz": true,
+      "ticks": true,
+      "minActors": true,
+      "minLiving": true,
+      "digest": true,
+      "digests": true,
+      "counts": true,
+      "state": true,
+      "draw": true,
+      "resources": true,
+      "scene": true,
+      "bvh": true
+    },
+    "limits": [
+      "Input recorder adds wrappers but preserves canonical batch and anyHit paths; all recorded baseline state/BVH/resource counters match the uninstrumented baseline.",
+      "JSON normalizes signed zeros; source edge tests independently check signed-zero equivalence. No recording timings are used."
+    ]
+  },
+  "sourceSha256": {
+    "A": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+    "B": "4e72a356fee1d30adc4b927dfd90c6705068699406fc2ca63875f057be9ecf11"
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "quota": "400000 100000"
+  },
+  "order": "Alternating ABBA and BAAB blocks, after ABBA warmup. All unfavorable samples retained.",
+  "categories": [
+    {
+      "category": "all",
+      "calls": 138886,
+      "outputsOwned": 129765,
+      "preflightHits": 57291,
+      "measurements": [
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 301.18274500000007,
+          "cpuMs": 301.167,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 274.464919,
+          "cpuMs": 274.504,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 273.65878699999985,
+          "cpuMs": 273.662,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 302.1879309999995,
+          "cpuMs": 302.208,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 274.925972,
+          "cpuMs": 274.935,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 298.60995699999967,
+          "cpuMs": 298.538,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 303.4390059999996,
+          "cpuMs": 303.457,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 273.65165999999954,
+          "cpuMs": 273.683,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 300.97407099999964,
+          "cpuMs": 300.984,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 277.4916860000003,
+          "cpuMs": 278.539,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 275.7912209999995,
+          "cpuMs": 275.826,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 304.55102700000043,
+          "cpuMs": 304.562,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 271.44547500000044,
+          "cpuMs": 271.465,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 303.0048079999997,
+          "cpuMs": 303.025,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 303.79831000000013,
+          "cpuMs": 303.845,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 271.87948700000015,
+          "cpuMs": 271.889,
+          "calls": 138886,
+          "queries": 138886,
+          "triangleTests": 2123754,
+          "hits": 57291
+        }
+      ],
+      "summary": {
+        "wallMs": {
+          "before": 302.5963694999996,
+          "after": 274.0618529999999,
+          "reductionPercent": 9.429893870554086,
+          "beforeMin": 298.60995699999967,
+          "beforeMax": 304.55102700000043,
+          "afterMin": 271.44547500000044,
+          "afterMax": 277.4916860000003
+        },
+        "cpuMs": {
+          "before": 302.6165,
+          "after": 274.0935,
+          "reductionPercent": 9.425460938184127,
+          "beforeMin": 298.538,
+          "beforeMax": 304.562,
+          "afterMin": 271.465,
+          "afterMax": 278.539
+        }
+      }
+    },
+    {
+      "category": "vertical-down",
+      "calls": 50426,
+      "outputsOwned": 47498,
+      "preflightHits": 48954,
+      "measurements": [
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 93.09915899999942,
+          "cpuMs": 93.113,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 89.50321199999962,
+          "cpuMs": 89.514,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 91.88314399999945,
+          "cpuMs": 91.884,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 89.35311199999887,
+          "cpuMs": 89.363,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 89.34513100000004,
+          "cpuMs": 89.355,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 92.20252000000073,
+          "cpuMs": 92.213,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 90.9259320000001,
+          "cpuMs": 90.938,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 98.05941100000018,
+          "cpuMs": 98.071,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 94.26036100000056,
+          "cpuMs": 94.27,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 91.20629899999949,
+          "cpuMs": 91.21,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 110.32756900000095,
+          "cpuMs": 110.871,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 96.0601200000001,
+          "cpuMs": 96.074,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 89.19872299999952,
+          "cpuMs": 89.2,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 91.25480099999913,
+          "cpuMs": 91.265,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 89.56053900000006,
+          "cpuMs": 89.571,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 90.59631799999988,
+          "cpuMs": 90.606,
+          "calls": 50426,
+          "queries": 50426,
+          "triangleTests": 1436634,
+          "hits": 48954
+        }
+      ],
+      "summary": {
+        "wallMs": {
+          "before": 91.72866049999993,
+          "after": 90.90130849999969,
+          "reductionPercent": 0.9019558287349572,
+          "beforeMin": 89.35311199999887,
+          "beforeMax": 96.0601200000001,
+          "afterMin": 89.19872299999952,
+          "afterMax": 110.32756900000095
+        },
+        "cpuMs": {
+          "before": 91.739,
+          "after": 90.90799999999999,
+          "reductionPercent": 0.9058306717971809,
+          "beforeMin": 89.363,
+          "beforeMax": 96.074,
+          "afterMin": 89.2,
+          "afterMax": 110.871
+        }
+      }
+    },
+    {
+      "category": "general-anyHit",
+      "calls": 6193,
+      "outputsOwned": 0,
+      "preflightHits": 1248,
+      "measurements": [
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 10.300993000000744,
+          "cpuMs": 10.309,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 8.977820000000065,
+          "cpuMs": 8.986,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 9.95242700000017,
+          "cpuMs": 9.961,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 10.329388000000108,
+          "cpuMs": 10.338,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 8.965011000000231,
+          "cpuMs": 8.973,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 10.556751000000077,
+          "cpuMs": 10.564,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 10.657489999999598,
+          "cpuMs": 10.667,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 9.158290999999736,
+          "cpuMs": 9.165,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 10.454921000000468,
+          "cpuMs": 10.462,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 9.513557000000219,
+          "cpuMs": 9.521,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 9.219414999999572,
+          "cpuMs": 9.227,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 11.894653999999719,
+          "cpuMs": 11.903,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 10.826068000000305,
+          "cpuMs": 10.834,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 11.556760999999824,
+          "cpuMs": 11.566,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 11.0215649999991,
+          "cpuMs": 11.03,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 9.649989999999889,
+          "cpuMs": 9.659,
+          "calls": 6193,
+          "queries": 6193,
+          "triangleTests": 26428,
+          "hits": 1248
+        }
+      ],
+      "summary": {
+        "wallMs": {
+          "before": 10.607120499999837,
+          "after": 9.366485999999895,
+          "reductionPercent": 11.696242161102644,
+          "beforeMin": 10.300993000000744,
+          "beforeMax": 11.894653999999719,
+          "afterMin": 8.965011000000231,
+          "afterMax": 10.826068000000305
+        },
+        "cpuMs": {
+          "before": 10.6155,
+          "after": 9.374,
+          "reductionPercent": 11.695162733738407,
+          "beforeMin": 10.309,
+          "beforeMax": 11.903,
+          "afterMin": 8.973,
+          "afterMax": 10.834
+        }
+      }
+    },
+    {
+      "category": "general-nearest-short",
+      "calls": 62552,
+      "outputsOwned": 62552,
+      "preflightHits": 4093,
+      "measurements": [
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 128.49122199999874,
+          "cpuMs": 128.505,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 116.52267799999936,
+          "cpuMs": 116.697,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 119.46380200000021,
+          "cpuMs": 119.469,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 128.15356300000167,
+          "cpuMs": 128.168,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 126.65469699999994,
+          "cpuMs": 126.668,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 127.21077399999922,
+          "cpuMs": 127.25,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 129.40419399999882,
+          "cpuMs": 129.41,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 123.39467700000023,
+          "cpuMs": 123.408,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 132.62574499999937,
+          "cpuMs": 132.623,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 120.72184199999901,
+          "cpuMs": 120.739,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 119.52437199999986,
+          "cpuMs": 119.533,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 132.26372099999935,
+          "cpuMs": 132.281,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 124.09921199999917,
+          "cpuMs": 124.116,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 127.35864599999877,
+          "cpuMs": 127.354,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 134.40781600000082,
+          "cpuMs": 134.417,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 111.27559099999962,
+          "cpuMs": 111.292,
+          "calls": 62552,
+          "queries": 62552,
+          "triangleTests": 456294,
+          "hits": 4093
+        }
+      ],
+      "summary": {
+        "wallMs": {
+          "before": 128.94770799999878,
+          "after": 120.12310699999944,
+          "reductionPercent": 6.84355010016885,
+          "beforeMin": 127.21077399999922,
+          "beforeMax": 134.40781600000082,
+          "afterMin": 111.27559099999962,
+          "afterMax": 126.65469699999994
+        },
+        "cpuMs": {
+          "before": 128.95749999999998,
+          "after": 120.136,
+          "reductionPercent": 6.840625787565657,
+          "beforeMin": 127.25,
+          "beforeMax": 134.417,
+          "afterMin": 111.292,
+          "afterMax": 126.668
+        }
+      }
+    },
+    {
+      "category": "general-nearest-long",
+      "calls": 19715,
+      "outputsOwned": 19715,
+      "preflightHits": 2996,
+      "measurements": [
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 48.584859000000506,
+          "cpuMs": 48.595,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 42.72958100000142,
+          "cpuMs": 42.722,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 0,
+          "key": "B",
+          "wallMs": 42.48403999999937,
+          "cpuMs": 42.493,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 0,
+          "key": "A",
+          "wallMs": 48.936838999999964,
+          "cpuMs": 48.97,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 43.710385999998834,
+          "cpuMs": 43.719,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 49.83726000000024,
+          "cpuMs": 49.846,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 1,
+          "key": "A",
+          "wallMs": 49.20822799999951,
+          "cpuMs": 49.217,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 1,
+          "key": "B",
+          "wallMs": 43.567714999999225,
+          "cpuMs": 43.603,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 50.36974799999916,
+          "cpuMs": 50.38,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 44.040641999999934,
+          "cpuMs": 44.049,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 2,
+          "key": "B",
+          "wallMs": 41.930216000000655,
+          "cpuMs": 41.938,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 2,
+          "key": "A",
+          "wallMs": 49.841895999999906,
+          "cpuMs": 49.842,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 42.89328399999977,
+          "cpuMs": 42.902,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 48.08900300000096,
+          "cpuMs": 48.097,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 3,
+          "key": "A",
+          "wallMs": 47.331019999999626,
+          "cpuMs": 47.339,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        },
+        {
+          "block": 3,
+          "key": "B",
+          "wallMs": 43.61211100000037,
+          "cpuMs": 43.619,
+          "calls": 19715,
+          "queries": 19715,
+          "triangleTests": 204398,
+          "hits": 2996
+        }
+      ],
+      "summary": {
+        "wallMs": {
+          "before": 49.072533499999736,
+          "after": 43.230499499999496,
+          "reductionPercent": 11.904895841581665,
+          "beforeMin": 47.331019999999626,
+          "beforeMax": 50.36974799999916,
+          "afterMin": 41.930216000000655,
+          "afterMax": 44.040641999999934
+        },
+        "cpuMs": {
+          "before": 49.0935,
+          "after": 43.2525,
+          "reductionPercent": 11.89770539888173,
+          "beforeMin": 47.339,
+          "beforeMax": 50.38,
+          "afterMin": 41.938,
+          "afterMax": 44.049
+        }
+      }
+    }
+  ],
+  "median": "Average of the two central observations for an even sample count; all original measurements retained.",
+  "measurementHarnessSha256": "b8b560bb1674d1a346a51c041563f96f5c5d9d56b6fe22c5e76fd05fa3256391",
+  "summaryHarnessSha256": "48ccec40b6cb7485aef75cd926e23399763f15d23dd483c20581a3cdb632a78d",
+  "harnessNote": "Post-measurement changes add gzip input reading and conventional even-count median calculation only. The measured invocation loop and every raw sample are unchanged; measurement-harness.mjs.txt preserves the exact capture implementation."
+}

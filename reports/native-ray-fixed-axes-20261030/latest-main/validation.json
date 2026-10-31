@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "completedAt": "2026-10-30T19:36:02.635132+00:00",
+  "command": "INKWAVE_NATIVE_PREBUILT=1 npm run build",
+  "order": [
+    "baseline build, binding, startup budget, emitted tests",
+    "candidate build, binding, startup budget, emitted tests, native emitted geometry parity"
+  ],
+  "browserStarted": false,
+  "builds": {
+    "baseline": {
+      "schema": 1,
+      "status": "passed",
+      "command": "INKWAVE_NATIVE_PREBUILT=1 npm run build",
+      "sourceSha": "db2134a71ffe3360626fdadba78916d9b702d31b",
+      "site": "/workspace/actions-main-native/_site",
+      "contentHash": "a0a4342576cc16e7480afe08e98b04c039b4979926844bc348a6b43e40438b61",
+      "inputHash": "d763230bb9bfa990cc7ce4e1f06e049f09e53511a5b2843b4b52e1ca48c767e8",
+      "revision": "02b5411e94150b87513081b0f3f5befe89ad643e4d6d8855970606bcef7988ce",
+      "sourceAndArtifactsVerified": true,
+      "artifactCount": 2315,
+      "sourceInputCount": 1588,
+      "nativeStageMode": "browser-direct",
+      "nativeStages": {
+        "hagglefish": {
+          "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+          "bytes": 237478
+        }
+      },
+      "nativeAssetAdmission": {
+        "status": "passed",
+        "files": 17,
+        "bytes": 68045256,
+        "paths": [
+          "native-prebuilt/hagglefish/faceF64.0.bin",
+          "native-prebuilt/hagglefish/faceI32.0.bin",
+          "native-prebuilt/hagglefish/faceTriangleOffsets.0.bin",
+          "native-prebuilt/hagglefish/faceTriangles.0.bin",
+          "native-prebuilt/hagglefish/flags.0.bin",
+          "native-prebuilt/hagglefish/indices.0.bin",
+          "native-prebuilt/hagglefish/mask.0.bin",
+          "native-prebuilt/hagglefish/nodes.0.bin",
+          "native-prebuilt/hagglefish/normals.0.bin",
+          "native-prebuilt/hagglefish/objectIds.0.bin",
+          "native-prebuilt/hagglefish/order.0.bin",
+          "native-prebuilt/hagglefish/stage.json",
+          "native-prebuilt/hagglefish/triangleFace.0.bin",
+          "native-prebuilt/hagglefish/triangles.0.bin",
+          "native-prebuilt/hagglefish/vertices.0.bin",
+          "native-prebuilt/packs/0bf2832473e3d41ef06934c19a369195.bin",
+          "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+        ]
+      },
+      "buildExitCode": 0,
+      "startupBudget": {
+        "status": "passed",
+        "revision": "02b5411e94150b87513081b0f3f5befe89ad643e4d6d8855970606bcef7988ce",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 78620,
+        "initialJSBytes": 1849040,
+        "criticalHTMLBytes": 24043,
+        "precacheCount": 599,
+        "precacheBytes": 8032888,
+        "workerBytes": 99082,
+        "declaredBytes": 23823670,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      },
+      "emittedTests": {
+        "tests": 24,
+        "pass": 24,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "files": [
+          "ray-down-parity.test.mjs",
+          "vertical-slab-parity.test.mjs",
+          "bvh-query-lifetime.test.mjs",
+          "native-ground-batch.test.mjs",
+          "native-ground-mask.test.mjs",
+          "native-los-anyhit.test.mjs"
+        ]
+      },
+      "worktreeStatus": "Only 17 hydrated native assets and untracked node_modules symlink"
+    },
+    "candidate": {
+      "schema": 1,
+      "status": "passed",
+      "command": "INKWAVE_NATIVE_PREBUILT=1 npm run build",
+      "sourceSha": "df2491c6096c173efc14504dc5d00ea5b8458df5",
+      "site": "/workspace/actions-ray-main/_site",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+      "inputHash": "b7a0866d430dc2ecb7b6388b6203f041c17232aba5a681c80f51520f03cf7376",
+      "revision": "f08f01745da3b46e5a9087428ba8986df3861deab92c9145381d58fdc2e4ec89",
+      "sourceAndArtifactsVerified": true,
+      "artifactCount": 2315,
+      "sourceInputCount": 1588,
+      "nativeStageMode": "browser-direct",
+      "nativeStages": {
+        "hagglefish": {
+          "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+          "bytes": 237478
+        }
+      },
+      "nativeAssetAdmission": {
+        "status": "passed",
+        "files": 17,
+        "bytes": 68045256,
+        "paths": [
+          "native-prebuilt/hagglefish/faceF64.0.bin",
+          "native-prebuilt/hagglefish/faceI32.0.bin",
+          "native-prebuilt/hagglefish/faceTriangleOffsets.0.bin",
+          "native-prebuilt/hagglefish/faceTriangles.0.bin",
+          "native-prebuilt/hagglefish/flags.0.bin",
+          "native-prebuilt/hagglefish/indices.0.bin",
+          "native-prebuilt/hagglefish/mask.0.bin",
+          "native-prebuilt/hagglefish/nodes.0.bin",
+          "native-prebuilt/hagglefish/normals.0.bin",
+          "native-prebuilt/hagglefish/objectIds.0.bin",
+          "native-prebuilt/hagglefish/order.0.bin",
+          "native-prebuilt/hagglefish/stage.json",
+          "native-prebuilt/hagglefish/triangleFace.0.bin",
+          "native-prebuilt/hagglefish/triangles.0.bin",
+          "native-prebuilt/hagglefish/vertices.0.bin",
+          "native-prebuilt/packs/0bf2832473e3d41ef06934c19a369195.bin",
+          "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+        ]
+      },
+      "buildExitCode": 0,
+      "startupBudget": {
+        "status": "passed",
+        "revision": "f08f01745da3b46e5a9087428ba8986df3861deab92c9145381d58fdc2e4ec89",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 78620,
+        "initialJSBytes": 1849574,
+        "criticalHTMLBytes": 24043,
+        "precacheCount": 599,
+        "precacheBytes": 8033422,
+        "workerBytes": 99082,
+        "declaredBytes": 23824204,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      },
+      "emittedTests": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "files": [
+          "ray-fixed-axes.test.mjs",
+          "ray-down-parity.test.mjs",
+          "vertical-slab-parity.test.mjs",
+          "bvh-query-lifetime.test.mjs",
+          "native-ground-batch.test.mjs",
+          "native-ground-mask.test.mjs",
+          "native-los-anyhit.test.mjs"
+        ]
+      },
+      "worktreeStatus": "Only 17 hydrated native assets and untracked node_modules symlink"
+    }
+  },
+  "candidateNativeEmittedParity": {
+    "schema": 1,
+    "purpose": "Native source-geometry ray functional parity; no performance measurements",
+    "stage": "hagglefish",
+    "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+    "triangles": 163625,
+    "baselineSha256": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+    "candidateSha256": "526a3671bf7b448b63784a22445e3d9aac85d065460d7de633c8c7455cf28107",
+    "queries": 16000,
+    "queryCount": 16000,
+    "triangleTests": 4157951,
+    "identical": true,
+    "builtSite": "/workspace/actions-ray-main/_site",
+    "fixtureSwitch": "INKWAVE_BUILT_SITE=/workspace/actions-ray-main/_site",
+    "baselineSourceSha": "db2134a71ffe3360626fdadba78916d9b702d31b",
+    "candidateSourceSha": "df2491c6096c173efc14504dc5d00ea5b8458df5"
+  },
+  "processCheck": {
+    "liveBrowserProcesses": [],
+    "liveWorktreeBuildOrTestProcesses": [],
+    "existingBrowserAndEsbuildZombies": 248,
+    "browserStarted": false
+  },
+  "sourceDiffCheck": true,
+  "limits": [
+    "Build, source/artifact/native-asset binding, deterministic startup gates and emitted Node VM functionality only; no whole-battle timing or image comparison performed.",
+    "Only Hagglefish payloads are hydrated; the other 22 stages use documented browser conversion fallback.",
+    "Initial temporary admission harness rejected JSON-serialized zero versus catalog negative zero. Harness now compares the exact JSON form produced by the builder; product source and builds were unchanged."
+  ],
+  "evidenceSha256": {
+    "baseline-binding-initial-harness-negative.log": "1a5b5d248ce949af1b6904879c1fb86420a09bae30a73bb7fb31f07fda003111",
+    "baseline-binding.json": "3d7d70783ac3c6ba1fd82d8963529804a900ca43911171ea31b3ececdf0016f9",
+    "baseline-binding.log": "fd47123e9902a69d0c31d60a5ed81a03646c4afdcca0f83e3673ff09b5122b56",
+    "baseline-build.log": "80f4cffef5d5d8d32a90827c9b5abe302119cc590367190dc1ca5a2c65296145",
+    "baseline-emitted-tests.log": "0d2642f47ef4cf177372c3481206fa60209bd22a8b1c529424a000ed2f2033b2",
+    "baseline-startup-budget.json": "c4d9e8fd21301d70af126cbe8e5b5977082caf921ca51e890dc75382b860328e",
+    "candidate-binding.json": "89a14236d1b0796200d405ccf90e981502cd046b5b71e409fd7b315c0b46380c",
+    "candidate-binding.log": "2e1f295c2a8ee3c6990c2a57d9f59eb87ae75b0c2d45a9462df60c34cc6c18e8",
+    "candidate-build.log": "f16634f20258b4b9303b33998236e51a507d0801b0dfc634dd45e3149563d5c2",
+    "candidate-emitted-tests.log": "277bc030692b280bb9adfc608f16113a0c5ff0a6b7b43a93b6f40dfc6c2963b5",
+    "candidate-native-emitted-parity.json": "8b6a862878807734b87cedc81b318abe1d9f1d13b5ab9b3f004382d625696490",
+    "candidate-native-emitted-parity.log": "87ef9bcdd2074dbe9dd101f15db16ccfb046fc99cf20664522af7540b829cf19",
+    "candidate-startup-budget.json": "594c06ead981efd9bdd58ebbc29e4a210c5149480e6f3486e31f50864f6e92d3",
+    "triangle-baseline.mjs": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+    "verify-build.mjs": "9dfa9f20b773bbae93ec160dc265573709857f46a99cd75f8ae7ab3e78273854"
+  }
+}

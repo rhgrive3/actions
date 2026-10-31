@@ -48,7 +48,7 @@ async function world(client=null,clock=null){
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
 function landing(drop){
-  const g=drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
+  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
   return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}

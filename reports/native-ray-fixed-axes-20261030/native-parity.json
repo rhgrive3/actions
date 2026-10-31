@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "purpose": "Native source-geometry ray functional parity; no performance measurements",
+  "stage": "hagglefish",
+  "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+  "triangles": 163625,
+  "baselineSha256": "0e0fe827402be246d61ff0b9a4c1319032882de3faaf9da3a885c9fbab9e84cd",
+  "candidateSha256": "4e72a356fee1d30adc4b927dfd90c6705068699406fc2ca63875f057be9ecf11",
+  "queries": 16000,
+  "queryCount": 16000,
+  "triangleTests": 4157951,
+  "identical": true
+}
