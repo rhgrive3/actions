@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {withFrozenRankedCapture} from './lib/ranked-capture-freeze.mjs';
 import {proveMainAudioFailureRecovery} from './lib/ranked-main-audio-failure-probe.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -572,11 +573,13 @@ try{
     assert.deepEqual(onlineWall[1].packets.map(e=>e.damage),[60,180]);assert.deepEqual(onlineWall[1].packets.map(e=>e.cause),['Gachihoko_Bullet','Gachihoko_BombCore']);
    }finally{await guest.evaluate(()=>{RG.input.mouse.left=false;if(globalThis.rankedWallRec)RG.netm._rec=rankedWallRec;});await p.evaluate(()=>{if(globalThis.rankedWallPlay)RG.netm._play=rankedWallPlay;RG.game.debug.freeze();});}
   }
-  for(const [i,pg] of [p,guest].entries()){
-   await pg.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
-   await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
-   await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
-  }
+  await Promise.all([p,guest].map(pg=>pg.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000})));
+  await withFrozenRankedCapture([p,guest],async()=>{
+   for(const [i,pg] of [p,guest].entries()){
+    await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
+    await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
+   }
+  });
   let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;if(onlineCharge)record.onlineCharge=onlineCharge;if(remoteContactGear)record.remoteContactGear=remoteContactGear;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
   await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});

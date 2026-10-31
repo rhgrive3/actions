@@ -237,6 +237,7 @@
           "scripts/tests/inkwave-evidence-packaging.test.mjs",
           "scripts/tests/ranked-roller-audio.test.mjs",
           "scripts/tests/ranked-trace-policy.test.mjs",
+          "scripts/tests/ranked-capture-freeze.test.mjs",
           "scripts/tests/inkwave-quality-account-scope.test.mjs",
           "scripts/tests/cxx-openttd-projection.test.mjs",
           "scripts/tests/inkwave-native-combat-window.test.mjs",

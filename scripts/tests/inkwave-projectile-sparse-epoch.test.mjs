@@ -5,20 +5,10 @@ import {createHash} from 'node:crypto';
 import {restoreBeforeSlosherPhaseWorkflow as restore} from '../lib/inkwave-slosher-phase-workflow.mjs';
 const current=fs.readFileSync(new URL('../../.github/workflows/inkwave-projectile-visuals.yml',import.meta.url),'utf8');
 const sha=s=>createHash('sha256').update(s).digest('hex');
-const block=`          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
-            !/reports/*
-            /reports/ink-volume/
-            !/reports/ink-volume/*
-            /reports/ink-volume/source/
-            *.js
-            *.mjs
-            *.cjs
-          sparse-checkout-cone-mode: false
-          filter: blob:none
-`;
+// The same sealed inverse is fixture data, not an executable authoring dependency.
+const sparseCheckoutMetadataBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-sparse-checkout-epoch-20261031.json',import.meta.url));
+assert.equal(sha(sparseCheckoutMetadataBytes),'f609e9d8a3c7ad9e36cb11598e33ef31a7c6fb8410f7047811312e9b302ba14d','Exact reviewed sparse checkout inverse metadata');
+const block=JSON.parse(sparseCheckoutMetadataBytes).checkoutBlock;
 test('exact sparse successor maps to the original phase-only seal and original predecessor',()=>{
  assert.equal(sha(current),'4c360faa9ad52c4766770b1839f43fcee8098167bdfd423444fccfa7af9136cd');
  assert.equal(current.split(block).length,4);

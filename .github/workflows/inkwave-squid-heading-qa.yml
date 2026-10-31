@@ -45,6 +45,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          lfs: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
@@ -61,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          git worktree add --detach _squid_heading_reference "$SOURCE_SHA"
+          GIT_LFS_SKIP_SMUDGE=1 git worktree add --detach _squid_heading_reference "$SOURCE_SHA"
           test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"
           test -z "$(git -C _squid_heading_reference status --porcelain)"

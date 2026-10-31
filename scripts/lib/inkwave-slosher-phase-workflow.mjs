@@ -7,20 +7,18 @@ const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-slosher-ph
 // Exact additive checkout-only successor from 339029d9. Preserve the old
 // phase seal and reject every unknown byte before normalizing the three blocks.
 const sparseCheckoutEpochSha='4c360faa9ad52c4766770b1839f43fcee8098167bdfd423444fccfa7af9136cd';
-const sparseCheckoutBlock=`          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
-            !/reports/*
-            /reports/ink-volume/
-            !/reports/ink-volume/*
-            /reports/ink-volume/source/
-            *.js
-            *.mjs
-            *.cjs
-          sparse-checkout-cone-mode: false
-          filter: blob:none
-`;
+// Read exact inverse metadata as data: checkout exclusions are not source dependencies.
+const sparseCheckoutMetadataBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-sparse-checkout-epoch-20261031.json',import.meta.url));
+assert.equal(sha256(sparseCheckoutMetadataBytes),'f609e9d8a3c7ad9e36cb11598e33ef31a7c6fb8410f7047811312e9b302ba14d','Exact reviewed sparse checkout inverse metadata');
+const sparseCheckoutMetadata=JSON.parse(sparseCheckoutMetadataBytes);
+assert.equal(sparseCheckoutMetadata.schema,1);
+assert.equal(sparseCheckoutMetadata.currentSha256,sparseCheckoutEpochSha);
+assert.equal(sparseCheckoutMetadata.phaseOnlySha256,fixture.afterSha256);
+assert.equal(sparseCheckoutMetadata.predecessorSha256,fixture.beforeSha256);
+assert.equal(sparseCheckoutMetadata.checkoutBlockCount,3);
+assert.equal(sparseCheckoutMetadata.checkoutBlockSha256,'7c255a631746827313f436441cf82bb5b05055882d04b80bb78dee9a222b66f4');
+const sparseCheckoutBlock=sparseCheckoutMetadata.checkoutBlock;
+assert.equal(sha256(sparseCheckoutBlock),sparseCheckoutMetadata.checkoutBlockSha256);
 export function restoreBeforeSlosherPhaseWorkflow(text){
   if(sha256(text)===sparseCheckoutEpochSha){
     assert.equal(text.split(sparseCheckoutBlock).length,4,'three exact reviewed sparse checkout blocks');

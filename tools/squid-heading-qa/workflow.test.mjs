@@ -5,6 +5,8 @@ function verify(code){
  assert(!/fetch-depth:\s*0\b|git (?:fetch|clone)\b/.test(code),'no repository history checkout');
  assert.equal((code.match(/uses: actions\/checkout@v4/g)||[]).length,1);
  assert.equal((code.match(/fetch-depth: 1\b/g)||[]).length,1);
+ assert.equal((code.match(/^\s*lfs:\s*false\s*$/gm)||[]).length,1,'candidate checkout keeps canonical pointer bytes');
+ assert(code.includes('GIT_LFS_SKIP_SMUDGE=1 git worktree add --detach _squid_heading_reference "$SOURCE_SHA"'),'reference checkout keeps the same pointer bytes');
  assert(code.includes('ref: ${{ github.event.pull_request.head.sha || github.sha }}'));
  assert(!code.includes('BASE_SHA:'),'historical main is not this counterfactual');
  assert.equal((code.match(/git worktree add/g)||[]).length,1);
@@ -26,6 +28,10 @@ function verify(code){
 test('native heading workflow keeps one shallow checkout, exact local counterfactual and emitted/paired gates',()=>{
  verify(workflow);
  for(const mutate of [
+  s=>s.replace('lfs: false','lfs: true'),
+  s=>s.replace('          lfs: false\n',''),
+  s=>s.replace('GIT_LFS_SKIP_SMUDGE=1 ',''),
+  s=>s.replace('GIT_LFS_SKIP_SMUDGE=1 ','GIT_LFS_SKIP_SMUDGE=0 '),
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
   s=>s.replace('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','true'),
   s=>s.replace('node tools/squid-heading-qa/reference.mjs','echo tools/squid-heading-qa/reference.mjs'),
