@@ -1,6 +1,7 @@
 // A low bow, torn shoulder sheets and returning ligaments. These are INKWAVE visual
 // settings; their curves are not claimed as extracted retail VFX parameters.
 import * as THREE from 'three';
+import {warmProgramReflection} from './shader-program-reflection.mjs';
 import { G } from '../../src/core/ctx.js';
 import { swimSplashVisible } from '../splatoon3/runtime/swim-stealth.mjs';
 
@@ -315,7 +316,10 @@ export function warmSwimSurface(fx,renderer,camera,target){
     renderer.setRenderTarget(renderTarget);
     work=renderer.compileAsync(slot.mesh,camera,target);
   }finally{renderer.setRenderTarget(previous,face,mip);}
-  const pending=Promise.resolve(work).catch(error=>{if(surface.warmPromise===pending)surface.warmPromise=null;throw error;});
+  const pending=Promise.resolve(work).then(value=>{
+    if(!surface.disposed&&surface.warmContext===context&&surface.warmPromise===pending)warmProgramReflection(renderer,slot.mesh.material);
+    return value;
+  }).catch(error=>{if(surface.warmPromise===pending)surface.warmPromise=null;throw error;});
   surface.warmScene=target;surface.warmRenderTarget=renderTarget;surface.warmMaterialVersion=slot.mesh.material.version;surface.warmPromise=pending;
   return pending;
 }
