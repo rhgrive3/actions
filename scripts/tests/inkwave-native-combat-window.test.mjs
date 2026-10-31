@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
-import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWindow} from '../lib/inkwave-native-combat-window.mjs';
+import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWindow,nativeCombatWindowTimeoutState} from '../lib/inkwave-native-combat-window.mjs';
 
 function fixture(){
  let now=0;
@@ -13,6 +13,10 @@ function fixture(){
  const context=vm.createContext({__G:G,__inkwave:game,__gameplayProbe:probe,performance:{now:()=>now}});
  const run=(fn,arg)=>vm.runInContext(`(${fn.toString()})(${JSON.stringify(arg)??''})`,context);
  return {G,probe,game,coverage,run,at(ms,frames=0){now=ms;probe.totalFrames+=frames;probe.windowFrames+=frames;G.time+=frames/60;}};
+}
+function storedCoverage(f){
+ const paint=f.G.paint;Object.assign(paint,{grid:{},dead:{},paintFaces:[],version:1,_s3ObservedPaintVersion:1,_s3TurfVersion:1,_s3CoverageVersion:1,_s3Coverage:f.coverage.slice()});
+ paint._s3CoverageGrid=paint.grid;paint._s3CoverageDead=paint.dead;paint._s3CoverageFaces=paint.paintFaces;
 }
 
 test('the hosted three-frame window waits for actual native paint without advancing the scene',()=>{
@@ -140,4 +144,95 @@ test('a lost begin response still attempts lease cleanup and preserves the origi
  try{await waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000});assert.fail('expected failure');}
  catch(error){caught=true;assert.equal(error,undefined);}
  assert.equal(caught,true);assert.equal(evaluations,2);assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('timeout snapshot separates clock, actual-frame and paint predicates without advancing the scene',()=>{
+ const f=fixture();storedCoverage(f);f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000,leaseId:'lease'});f.at(125000,2);
+ const before={time:f.G.time,frames:f.probe.totalFrames,match:f.G.match,level:f.G.level};
+ const state=f.run(nativeCombatWindowTimeoutState,{leaseId:'lease'});
+ assert.equal(state.frames,2);assert.equal(state.minimumDurationMet,true);assert.equal(state.threeFramesMet,false);assert.equal(state.timeAdvanced,true);assert.equal(state.paintPositive,true);
+ assert.equal(state.sameMatch,true);assert.equal(state.sameLevel,true);assert.equal(state.actorCount,8);
+ assert.deepEqual({time:f.G.time,frames:f.probe.totalFrames,match:f.G.match,level:f.G.level},before);
+ assert.equal(f.run(inspectNativeCombatWindow,{leaseId:'lease'}),false,'metadata cannot turn a two-frame failure into acceptance');
+});
+
+test('nonfinite timeout diagnostics remain null/unobserved and contain no actor identities',()=>{
+ const f=fixture();f.G.actors[0].name='PRIVATE-NAME';f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000,leaseId:'lease'});
+ f.probe.totalFrames=Infinity;f.G.time=NaN;storedCoverage(f);f.G.paint._s3Coverage[0]=NaN;
+ const state=f.run(nativeCombatWindowTimeoutState,{leaseId:'lease'});assert.equal(state.totalFrames,null);assert.equal(state.frames,null);assert.equal(state.endTime,null);assert.equal(state.coverage,null);assert.equal(state.paintPositive,null);
+ assert(!JSON.stringify(state).includes('PRIVATE-NAME'));assert(!JSON.stringify(state).includes('Infinity'));assert(!JSON.stringify(state).includes('NaN'));
+});
+
+test('wrong timeout lease does not query another window paint or expose its scene',()=>{
+ const f=fixture();f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000,leaseId:'new'});let queries=0;f.G.paint.coverage=()=>{queries++;return [1,1];};
+ const state=f.run(nativeCombatWindowTimeoutState,{leaseId:'old'});assert.deepEqual(JSON.parse(JSON.stringify(state)),{available:false,leaseMatches:false});assert.equal(queries,0);
+});
+
+test('a real TimeoutError persists bounded primitive state before cleanup and preserves the primary failure',async()=>{
+ const f=fixture(),primary=Object.assign(Error('native predicate timeout'),{name:'TimeoutError'}),diagnostics=[];let captured=false;
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(fn,arg,options){assert.deepEqual(options,{polling:100,timeout:125000});f.at(125000,2);throw primary;}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},()=>{captured=true;},value=>diagnostics.push(value)),error=>error===primary);
+ assert.equal(captured,false);assert.equal(diagnostics.length,1);assert.equal(diagnostics[0].status,'captured');assert.equal(diagnostics[0].state.frames,2);assert.equal(diagnostics[0].state.threeFramesMet,false);assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('diagnostic read or persistence failure cannot replace a TimeoutError',async()=>{
+ for(const failRead of [false,true]){
+  const f=fixture(),primary=Object.assign(Error('primary'),{name:'TimeoutError'});let callbacks=0;
+  const page={async evaluate(fn,arg){if(fn===nativeCombatWindowTimeoutState&&failRead)throw Error('diagnostic read unavailable');return f.run(fn,arg);},async waitForFunction(){throw primary;}};
+  await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},null,diagnostic=>{callbacks++;if(failRead)assert.equal(diagnostic.status,'unavailable');throw Error('persistence unavailable');}),error=>error===primary);
+  assert.equal(callbacks,1);assert.equal(f.probe.combatWindow,undefined);
+ }
+});
+
+test('unresponsive failure-only diagnostic has a finite independent budget, without extending admission',async()=>{
+ const f=fixture(),primary=Object.assign(Error('primary'),{name:'TimeoutError'});let diagnostic;
+ const page={async evaluate(fn,arg){if(fn===nativeCombatWindowTimeoutState)return new Promise(()=>{});return f.run(fn,arg);},async waitForFunction(fn,arg,options){assert.equal(options.timeout,125000);throw primary;}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},null,value=>diagnostic=value),error=>error===primary);
+ assert.deepEqual(diagnostic,{status:'diagnostic-timeout'});assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('normal success and non-timeout failure never issue a diagnostic query',async()=>{
+ for(const success of [true,false]){
+  const f=fixture();let diagnostics=0,queries=0;
+  const page={async evaluate(fn,arg){if(fn===nativeCombatWindowTimeoutState)queries++;return f.run(fn,arg);},async waitForFunction(fn,arg){if(!success)throw Error('not a timeout');f.at(6000,3);return {jsonValue:async()=>f.run(fn,arg),dispose:async()=>{}};}};
+  const work=waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},null,()=>diagnostics++);
+  if(success)assert.equal((await work).frames,3);else await assert.rejects(work,/not a timeout/);
+  assert.equal(queries,0);assert.equal(diagnostics,0);
+ }
+});
+
+test('resource reporter persists timeout metadata separately from the original raw error',()=>{
+ const source=readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
+ assert.match(source,/diagnostic=>\{report\.combatWindowTimeout=\{phase,\.\.\.diagnostic\};checkpoint\(\);\}/);
+ assert.match(source,/report\.errors\.push\(e\.stack\)/);
+});
+
+test('timeout snapshot never calls scoring.coverage or refreshes stale production caches',()=>{
+ const f=fixture();storedCoverage(f);f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000,leaseId:'lease'});let calls=0;
+ f.G.paint.coverage=()=>{calls++;f.G.paint._s3ObservedPaintVersion=99;throw Error('mutating scoring query');};
+ const before={...f.G.paint};let state=f.run(nativeCombatWindowTimeoutState,{leaseId:'lease'});
+ assert.equal(calls,0);assert.equal(state.paintCache.fresh,true);assert.deepEqual(Array.from(state.coverage),[0.01,0]);assert.deepEqual(f.G.paint,before);
+ for(const mutate of [()=>f.G.paint.version++,()=>f.G.paint.grid={},()=>f.G.paint._s3CoverageVersion++,()=>delete f.G.paint._s3ObservedPaintVersion]){
+  Object.assign(f.G.paint,before);mutate();const current={...f.G.paint};state=f.run(nativeCombatWindowTimeoutState,{leaseId:'lease'});
+  assert.notEqual(state.paintCache.fresh,true);assert.equal(state.coverage,null);assert.equal(state.paintPositive,null);assert.equal(calls,0);assert.deepEqual(f.G.paint,current);
+ }
+});
+
+test('an asynchronous diagnostic rejection is consumed without replacing the native timeout',async()=>{
+ const f=fixture(),primary=Object.assign(Error('primary timeout'),{name:'TimeoutError'});
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(){throw primary;}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},null,async()=>{throw Error('async persistence rejected');}),error=>error===primary);
+ assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('unresponsive asynchronous persistence shares the same finite diagnostic budget',async()=>{
+ const f=fixture(),primary=Object.assign(Error('primary timeout'),{name:'TimeoutError'});let captured=0;
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(){throw primary;}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},null,()=>{captured++;return new Promise(()=>{});}),error=>error===primary);
+ assert.equal(captured,1);assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('failure diagnostic budget uses the Node monotonic clock rather than wall-clock time',()=>{
+ const source=readFileSync(new URL('../lib/inkwave-native-combat-window.mjs',import.meta.url),'utf8');
+ assert.match(source,/diagnosticStarted=performance\.now\(\)/);assert.match(source,/2000-\(performance\.now\(\)-diagnosticStarted\)/);assert.doesNotMatch(source,/Date\.now\(\)/);
 });

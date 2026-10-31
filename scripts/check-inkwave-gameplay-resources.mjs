@@ -76,7 +76,7 @@ try{
   const combatWait=await waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000},async receipt=>{
    const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile));
    await capture('combat-'+cycle,false,receipt.leaseId);
-  });
+  },diagnostic=>{report.combatWindowTimeout={phase,...diagnostic};checkpoint();});
   const combat=report.windows.at(-1);combat.wait=combatWait;checkpoint();if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
   if(!(combat.time>report.windows.find(w=>w.label==='warm-'+cycle).time))throw Error('Gameplay simulation did not advance');
   await page.screenshot({path:path.join(out,'combat-'+cycle+'.png'),timeout:120000});
