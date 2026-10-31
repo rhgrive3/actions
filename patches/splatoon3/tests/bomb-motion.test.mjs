@@ -438,8 +438,13 @@ test('release and per-frame preview sample native rig without changing any live 
       assert.deepEqual(preservedRig(r, api), before, 'actual native arc path does not mutate Character/runner/Flow');
       assert.deepEqual(calls, beforeCalls);
       if (r.a.weapon.sub === 'curling') {
-        assert.equal(r.projectiles.arcLine.visible, false, 'Curling has no drawn trajectory guide');
-        assert.equal(r.projectiles.arcRing.visible, false, 'Curling has no predicted blast circle');
+        const forecast=r.projectiles._s3ThrowPrediction;
+        assert.equal(forecast?.kind,'curling','the production Curling forecast is owned by the current predictor');
+        assert.equal(forecast?.complete,true,'Curling forecast must reach a confirmed explosion');
+        assert.equal(r.projectiles.arcLine.visible,true,'Curling draws its live trajectory guide');
+        assert.equal(r.projectiles.arcRing.visible,true,'Curling draws the confirmed blast position');
+        assert.ok(new api.THREE.Vector3().fromBufferAttribute(r.projectiles.arcGeo.getAttribute('position'),0).distanceTo(preview)<1e-6,
+          'Curling guide begins at the same actual native release sample');
       } else {
         assert.equal(r.projectiles.arcLine.visible, true, 'other held bombs retain their native trajectory guide');
         const attribute = r.projectiles.arcGeo.getAttribute('position');
