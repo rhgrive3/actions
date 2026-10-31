@@ -10,18 +10,13 @@ import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge, clearSpecialGaugeLocks, startHeldSpecialGauge, startPendingSpecialGauge } from './tacticooler-gauge.mjs';
 import { installCoolerCollision } from './support-cooler-collision.mjs';
+import { createCoolerFlight, stepCoolerFlight } from './support-cooler-flight.mjs';
 import { cancelStormPendingInput } from './storm-effects.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
-import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
-import { segmentCapsuleEntry } from './projectile-collision.mjs';
-import { resolveSubForThrow } from './kit-subs.mjs';
-import { drawSubTrajectory } from './sub-trajectory-preview.mjs';
+import { pointSensorLaunch, stepPointSensorFlight, predictPointSensor } from './support-sensor-flight.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
-// Existing INKWAVE flight calibration. The pinned Sensor table does not
-// establish this gravity; do not replace it with Splat Bomb's sourced value.
-const SENSOR_GRAVITY = 24;
 const aliveInMatch = G => !!G.match?.range || G.match?.state === 'playing' || G.match?.playing?.() === true;
 const life = a => Math.max(
   Number.isSafeInteger(a?.netLife) && a.netLife >= 0 ? a.netLife : 0,
@@ -124,10 +119,9 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
       !WEAPON_ORDER.includes('support')) WEAPON_ORDER.push('support');
 }
 function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, record = null) {
-  const pos = record ? new THREE.Vector3(record[0],record[1],record[2]) :
-    bombPreviewPosition(owner,bombReleasePosition(owner,owner.pos.clone().add(new THREE.Vector3(0,1.35,0))));
-  const vel = record ? new THREE.Vector3(record[3],record[4],record[5]) :
-    projectile.throwVelocity(owner, pointSensorThrowSpeed(owner.s3?.abilityPoints?.subPower, gearCurve), new THREE.Vector3());
+  const launch = record ? null : pointSensorLaunch(owner,THREE);
+  const pos = record ? new THREE.Vector3(record[0],record[1],record[2]) : launch.origin;
+  const vel = record ? new THREE.Vector3(record[3],record[4],record[5]) : launch.velocity;
   if (!vec3(pos) || !vec3(vel)) return null;
   const sensor = { owner, team:owner.team, pos, vel, prev:pos.clone(), age:0,
     activeAt:null, expires:Infinity, seq:remote ? record[6] : serial(owner),
@@ -183,41 +177,20 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   return stand;
 }
 function throwCooler(owner,projectile,G,THREE,Hit) {
-  const pos=owner.pos.clone();pos.y+=1.1;
-  const dir=owner.aimDir.clone().normalize(),vel=dir.multiplyScalar(TACTICOOLER_SOURCE.spawnSpeedZ*60);vel.y+=TACTICOOLER_SOURCE.spawnSpeedY*60;
-  const device={owner,pos,prev:pos.clone(),vel,age:0,hit:new Hit(),mesh:coolerVisual(owner,pos,THREE,G)};
+  const device=createCoolerFlight({G,THREE,Hit},owner);
+  device.mesh=coolerVisual(owner,device.pos,THREE,G);
   if(device.mesh)device.mesh.scale.setScalar(.35);
   (projectile._s3SupportCoolerThrows ||= []).push(device);
   startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);
 }
 const SUPPORT_EMPTY_ROSTER = Object.freeze([]);
-function advanceSensorFlight(sensor,dt) {
-  sensor.age+=dt;sensor.prev.copy(sensor.pos);
-  sensor.vel.y-=SENSOR_GRAVITY*dt;sensor.pos.addScaledVector(sensor.vel,dt);
-}
-function sensorFlightContact(sensor,G,THREE,PLAYER) {
-  const hit=G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
-  const scratch=sensor.contactScratch ||= {delta:new THREE.Vector3(),base:new THREE.Vector3(),point:new THREE.Vector3()};
-  const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
-  let body=false,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
-  for(const actor of G.actors||SUPPORT_EMPTY_ROSTER) {
-    if(!actor.alive||actor.team===sensor.team)continue;
-    const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
-    const t=segmentCapsuleEntry(sensor.prev,sensor.pos,base,PLAYER.radius,
-      actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,PLAYER.radius+.2);
-    if(Number.isFinite(t)&&length*t<best){body=true;scratch.point.copy(sensor.prev).addScaledVector(delta,t);best=length*t;}
-  }
-  if(body){sensor.pos.copy(scratch.point);sensor.contactNormal?.set(0,1,0);return true;}
-  if(hit?.hit&&vec3(hit.point)){sensor.pos.copy(hit.point).addScaledVector(hit.normal,.03);sensor.contactNormal?.copy(hit.normal);return true;}
-  return false;
-}
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
-  if (!(dt>0) || !Number.isFinite(dt) || !Number.isFinite(G.time)) return;
+  if (!(dt>0) || !Number.isFinite(G.time)) return;
   const playing = aliveInMatch(G);
   for(const sensor of projectile._s3SupportSensors || SUPPORT_EMPTY_ROSTER) {
     if(sensor.activeAt===null) {
-      advanceSensorFlight(sensor,dt);
-      if(sensorFlightContact(sensor,G,THREE,PLAYER)||sensor.age+TINY>=POINT_SENSOR.maxFlightSeconds) {
+      const contact = stepPointSensorFlight(sensor,{G,THREE,Physics,PLAYER},dt);
+      if(contact) {
         sensor.activeAt=G.time;sensor.expires=G.time+POINT_SENSOR.areaSeconds;
       }
     }
@@ -245,18 +218,10 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
   const throws=projectile._s3SupportCoolerThrows||SUPPORT_EMPTY_ROSTER;
-  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);
-    // EnergyStand.MoveParam, 11.3.0: source frames -> seconds. Preserve
-    // native gravity-then-drag order; exponentiate retention for subframes.
-    d.vel.y-=TACTICOOLER_SOURCE.flyGravity*3600*dt;
-    d.vel.multiplyScalar(Math.pow(1-TACTICOOLER_SOURCE.flyPositionAirResist,60*dt));
-    d.pos.addScaledVector(d.vel,dt);
-    const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
-    if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
-    const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z,Math.max(d.prev.y,d.pos.y)+.001);
-    if(!landed&&Number.isFinite(floor)&&d.pos.y<=floor){d.pos.y=floor;landed=true;}
-    if(landed){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,false,d.pos.toArray());}
-    else if(d.age>5||!playing){releaseVisual(d,G);throws.splice(i,1);}
+  for(let i=throws.length-1;i>=0;i--){
+    const d=throws[i],outcome=stepCoolerFlight({G,THREE,PLAYER},d,dt);
+    if(outcome==='landed'){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,false,d.pos.toArray());}
+    else if(outcome==='expired'||outcome==='lost'||!playing){releaseVisual(d,G);throws.splice(i,1);}
     else d.mesh?.position.copy(d.pos);
   }
   const coolers=projectile._s3SupportCoolers || SUPPORT_EMPTY_ROSTER;
@@ -275,8 +240,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   }
   for(const a of G.actors || SUPPORT_EMPTY_ROSTER) if(!a.remote) retireDrink(a,G.time);
 }
-export function installSupportGameplay(api) {
-  const { Actor, WeaponRunner, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER, SUB }=api;
+export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
   if (Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});
   const cancelInput=(actor,sub)=>{
@@ -293,6 +257,12 @@ export function installSupportGameplay(api) {
   }
   installTacticoolerGauge({Actor,G});
   installCoolerCollision({Actor,Projectiles,G,THREE,Hit,Physics,PLAYER});
+  const priorSubPrediction=Projectiles.prototype.s3PredictSubTrajectory;
+  Projectiles.prototype.s3PredictSubTrajectory=function(actor,options={}){
+    const id=options.id||options.kind||actor?.weapon?.sub;
+    return id==='pointSensor' ? predictPointSensor({G,THREE,Hit,Physics,PLAYER},actor,options)
+      : priorSubPrediction?.call(this,actor,options)||null;
+  };
   const throwBomb=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...rest) {
     if(actor?.weapon?.sub==='pointSensor' && !actor.remote && aliveInMatch(G))
@@ -304,19 +274,6 @@ export function installSupportGameplay(api) {
     const result=update.call(this,dt,...args);
     stepSupport(this,G,THREE,dt,Physics,PLAYER);
     return result;
-  };
-  const updateArc=Projectiles.prototype.updateArc;
-  Projectiles.prototype.updateArc=function(actor,show) {
-    if(!show||!actor?.alive||actor.weapon?.sub!=='pointSensor')return updateArc.call(this,actor,show);
-    return drawSubTrajectory(api,this,actor,s=>{
-      s.p.copy(actor.pos);s.p.y+=1.35;bombPreviewPosition(actor,bombReleasePosition(actor,s.p));
-      this.throwVelocity(actor,pointSensorThrowSpeed(actor.s3?.abilityPoints?.subPower,gearCurve),s.vel);
-      Object.assign(s.flight,{owner:actor,team:actor.team,age:0,pos:s.p,prev:s.prev,vel:s.vel,hit:s.hit,contactNormal:s.normal});
-      s.frames=POINT_SENSOR.maxFlightSeconds*60;s.timeoutContact=true;
-      s.inkCost=resolveSubForThrow(actor,actor.weaponRunner?.s3SubHold,SUB)?.inkCost;
-      s.advance=(state,dt)=>advanceSensorFlight(state.flight,dt);
-      s.contactAt=state=>sensorFlightContact(state.flight,G,THREE,PLAYER);
-    });
   };
   Projectiles.prototype.clear=function(...args) {
     for(const owner of new Set([...(G.actors||[]),...(this.clouds||[]).map(c=>c.owner),...(this.bombs||[]).map(b=>b.owner),...(this._s3SupportCoolerThrows||[]).map(d=>d.owner)]))clearSpecialGaugeLocks(owner,false);
@@ -429,3 +386,4 @@ export function installSupportGameplay(api) {
     }
   };
 }
+
