@@ -197,9 +197,13 @@ function maskReviewedQueueCiFixture(source){
     .flatMap(n=>n.declarations).filter(n=>n.id?.name==='removed');
   assert.equal(arrays.length,1,'one local excluded-fixture list');
   assert.equal(arrays[0].init?.type,'ArrayExpression');
-  assert.deepEqual(arrays[0].init.elements.map(n=>n.type==='Literal'?n.value:null),expected,
-    'only two exact excluded fixture paths');
-  literals.push(...arrays[0].init.elements);
+  const values=arrays[0].init.elements.map(n=>n.type==='Literal'?n.value:null);
+  const expectedValues=title===QUEUE_CI_NEGATIVE_OWNERS[0]?expected:
+    ['reports/old-proof.json','reports/archive/history.png','reports/ink-volume/result.json',...expected];
+  assert.deepEqual(values,expectedValues,'only reviewed temporary fixture data');
+  const prohibited=arrays[0].init.elements.filter(n=>expected.includes(n.value));
+  assert.equal(prohibited.length,2,'only two excluded literals per negative test');
+  literals.push(...prohibited);
  }
  assert.equal(literals.length,4);
  let checked=source;
