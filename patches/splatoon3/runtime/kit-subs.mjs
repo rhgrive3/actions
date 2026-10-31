@@ -1069,7 +1069,7 @@ export function predictKitSub(api, projectiles, actor, options = {}) {
     const world=G.physics?.segment?.(previous,b.pos,hit)||hit;
     world.s3Tacticooler=false;
     const defense=previewSystem.kitBombDefenseCandidate?.(b,previous,b.pos);
-    const distance=previous.distanceTo(b.pos),worldDistance=world.hit?previous.distanceTo(world.point):Infinity;
+    const distance=defense?previous.distanceTo(b.pos):0,worldDistance=world.hit?previous.distanceTo(world.point):Infinity;
     if(defense&&defense.distance<worldDistance-1e-10){
       if(distance>1e-10)b.pos.copy(previous).lerp(b.pos,Math.max(0,Math.min(1,defense.distance/distance)));
       noteThrowPredictionImpact(result,b.pos,defense.normal,b.age,defense.kind||'defense');

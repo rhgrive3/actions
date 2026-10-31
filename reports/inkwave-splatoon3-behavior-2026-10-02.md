@@ -7178,3 +7178,15 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 - Character は既存の現行 shape/hair を変えず、歴史テキスト検証だけに sealed epoch 逆写像と公式3 pass の順次 replay を加えた。実 geometry/pose は既定 production composer のまま。旧 assertion 式82件と数値/geometry/pose 7 callback 本文を全保持し、独立 source 全9/9（288 pose、RNG 0/0）および別 text 契約3/3が PASS。旧2 text 失敗と旧 pose SIGKILL は過去の未受入として保持し、今回の成功へ読み替えない。
 - gameplay resource の既存共有 CDP screenshot 経路は120000msの単一 monotonic deadline と完全PNG検証を経て既存PNG書込みへ進む。追加 fallback/session/detach はなく、早期timerを再armし、timeout後の遅延完了は保存しない。既存共有session所有権・出力名・ゲームguardは保持。現行43件、候補57件、独立15件は別 cohort で PASS（合算しない）。実 browser の timeout 原因解消・GPU/FPS改善・最終head CI成功は未確認。
 - 変更は QA/test/harness と記録のみで、モデルの形状/外観・武器数値・ゲームruntimeを変更しない。本家参照version/ブキ/ギア/操作frameの新規実機比較は未実施で、スプラトゥーン3との挙動一致を判定する根拠にはしない。旧 menu 候補および保留 Storm は対象外。
+
+
+### 2026-10-31: relay host attachment の現行7 field保持と一時object削減
+
+- `server/src/index.js::_syncMemberAttachment` のhost予算組立だけを、既存mainの条件付き代入方式へ戻す。現行 `rejectedJoinBudgetAt/rejectedJoinsLeft` を含む7 field・値・順序を全保持し、他のadmission/host権限/hibernation処理は変更しない。新たなゲーム不具合の修正ではなく、mainに存在したsource-level冗長処理の復活漏れを閉じる。
+- 実moduleの対照でhost/guest・7 getter順序と各例外・非有限値/符号付き0・host交替・再入serialization・既存20,000反復のwire/snapshotが一致。新6件と既存11件は別にPASS、独立peerも実17件＋別4境界を確認。既存relay globが新testを1回収録するno-spawn planを確認した。観測用AST wrapperでは100同期呼出の条件budget-object評価が100→0。V8の実heap allocation/GC/FPS/ネットワーク性能の改善量は未計測で、最終head CI/Cloudflare実配備の受入ではない。
+- ゲーム数値/モデル形状/見た目を変更せず、本家参照version・ブキ・ギア・実機frame比較の新規測定は行っていない。
+
+
+### 2026-10-31: Kit 予測の未使用距離
+
+- `patches/splatoon3/runtime/kit-subs.mjs::predictKitSub` は defense が falsy の場合だけ、未使用の `previous.distanceTo` を省く。`world.hit` の読取り、truthy defense の距離、全query/horizon/RNG/接触結果は保持。新3件（28scenario）と既存145件、独立追加getter/throw4件は別cohortでPASS。実12秒void対照のnative queryは720→720、未使用distance評価だけ720→0で、query削減/FPS改善は主張しない。専用記録は `reports/kit-prediction-unused-distance-20261031.md`。実機参照version/ブキ/ギア/frameの新規比較、full site/emitted/browser/GPUは未確認。
