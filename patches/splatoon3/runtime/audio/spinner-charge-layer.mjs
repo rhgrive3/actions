@@ -1,3 +1,4 @@
+import {chargeAudioProgress} from './charge-audio-state.mjs';
 // Presentation-only Splatling charge state/threshold helpers. Actual authored
 // recordings are owned by spinner-charge-clips.mjs and spinner-charge-control.mjs.
 // This module never changes the gameplay timing, ballistics or network packets.
@@ -51,7 +52,7 @@ export function syncCatalogSpinnerCharge(engine, runner) {
     });
   }
   if (phase === 'charge') runner.spinLoop?.set?.({
-    progress: runner.charge, pos: actor.isLocal ? undefined : actor.pos,
+    progress: chargeAudioProgress(actor,runner.charge), pos: actor.isLocal ? undefined : actor.pos,
   });
   else if (phase === 'spin') runner.spinLoop?.set?.({
     pos: actor.isLocal ? undefined : actor.pos,

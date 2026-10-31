@@ -1,3 +1,4 @@
+import {chargeAudioProgress} from './charge-audio-state.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
@@ -64,11 +65,11 @@ export function installWeaponAudioRuntime(api){
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing&&!s.loops[event]?._sfxDeferred){
         s.loops[event]?.stop?.(.04);
-        s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch,progress:event==='charge'?r.charge:undefined});
+        s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch,progress:event==='charge'?chargeAudioProgress(a,r.charge):undefined});
       }
       if(s.loops[event]){
         const update=s.loopUpdates[event] ||= {pos:undefined,pitch:1,volume:.68};
-        update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;update.progress=event==='charge'?r.charge:undefined;
+        update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;update.progress=event==='charge'?chargeAudioProgress(a,r.charge):undefined;
         s.loops[event].set(update);
       }
       active.add(r);
@@ -181,9 +182,11 @@ export function installWeaponAudioRuntime(api){
         // Do not layer a separate weapon-specific HoldNoise at charge start.
         s.chargeRise=usesChargerRise(id)?G.audio?.playChargerChargeRise?.({
           volume:a.isLocal?.55:.28,pos:a.isLocal?undefined:a.pos,weaponId:id,chargeTime:a.weapon?.chargeTime,
+          progress:chargeAudioProgress(a,this.charge),
         })||null:null;
         if(s.chargeRise)active.add(this);
       }
+      if(nowCharging)s.chargeRise?.set?.({progress:chargeAudioProgress(a,this.charge),pos:a.isLocal?undefined:a.pos});
       if(!nowCharging){
         s.chargeRise?.stop?.(.04);s.chargeRise=null;
         if(isCharger)active.delete(this);
@@ -204,7 +207,7 @@ export function installWeaponAudioRuntime(api){
       if(s.sBlastMode!==null&&mode!==s.sBlastMode)play(a,'mode_change',a.pos,.30);
       s.sBlastMode=mode;
     }
-    const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
+    const charging=!!this.charging,q=chargeAudioProgress(a,this.charge);
     const spinnerOwned=r.family==='splatling'&&typeof G.audio?.syncSpinnerCharge==='function';
     if(!isCharger&&!spinnerOwned)keepLoop(this,'charge',charging,.66+q*.78);
     if(!spinnerOwned)keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
