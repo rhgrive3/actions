@@ -1,4 +1,5 @@
 import { canStageSuperJumpSub, chargerPostShotBlocksSub } from './weapon-gates.mjs';
+import { SUB_USE_STARTUP_SECONDS } from './sub-release-forecast.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 export function selectedSubReadyCost(a, SUB) {
@@ -89,7 +90,7 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
     // #1037: after the 5F/10F preparation owner admits release, S3 still
     // has one independent fixed use-startup frame before the bomb exists.
     if(s.useStartup===null){
-     s.useStartup=1/60;
+     s.useStartup=SUB_USE_STARTUP_SECONDS;
      next={...input,sub:true,subReleased:false};
     }else{
      s.useStartup=Math.max(0,s.useStartup-Math.max(0,dt));
