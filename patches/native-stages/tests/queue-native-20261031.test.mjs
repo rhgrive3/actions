@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
+import {consumeNativeWork} from '../runtime/native-work.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 const old=read('./fixtures/native-display-tile-ids-before-20261031.mjs.txt');
 const current=read('../runtime/native-render.mjs');
 const source=current.slice(current.indexOf('export function installNativeDisplayCulling('),current.indexOf('\nexport function compactNativeIndices('));
 function factory(source,allocations){
  const proxy=Type=>new Proxy(Type,{construct(target,args){const a=Reflect.construct(target,args);allocations.push({type:Type.name,bytes:a.byteLength,copy:ArrayBuffer.isView(args[0])});return a;}});
- return new Function('THREE','Uint16Array','Uint32Array',source.replace('export function','function')+'\nreturn installNativeDisplayCulling;')(THREE,proxy(Uint16Array),proxy(Uint32Array));
+ return new Function('THREE','Uint16Array','Uint32Array','consumeNativeWork',source.replace('export function','function')+'\nreturn installNativeDisplayCulling;')(THREE,proxy(Uint16Array),proxy(Uint32Array),consumeNativeWork);
 }
 function mesh(count,tiles){
  const p=new Float32Array(tiles*9),index=new Uint32Array(count*3);

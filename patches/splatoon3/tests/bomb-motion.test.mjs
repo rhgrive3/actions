@@ -440,9 +440,20 @@ test('release and per-frame preview sample native rig without changing any live 
       if (r.a.weapon.sub === 'curling') {
         const forecast=r.projectiles._s3ThrowPrediction;
         assert.equal(forecast?.kind,'curling','the production Curling forecast is owned by the current predictor');
-        assert.equal(forecast?.complete,true,'Curling forecast must reach a confirmed explosion');
-        assert.equal(r.projectiles.arcLine.visible,true,'Curling draws its live trajectory guide');
-        assert.equal(r.projectiles.arcRing.visible,true,'Curling draws the confirmed blast position');
+        // This pose-only VM has no stage collision triangles. Curling must
+        // not fabricate a floor or an explosion when its puck exits this
+        // empty-world physics boundary. Real grounded explosion forecasts are
+        // exercised separately with collision-enabled kit fixtures.
+        assert.equal(api.G.level.blocks.length,0,'pose-only fixture contains no real surface');
+        assert.equal(r.projectiles.arcLine.visible,true,'Curling still shows its observed flight trajectory');
+        if (forecast?.complete) {
+          assert.equal(forecast.outcome,'explosion','a claimed Curling endpoint is a real burst');
+          assert.equal(r.projectiles.arcRing.visible,true,'confirmed blast gets a marker');
+        } else {
+          assert.ok(['out-of-bounds','no-contact'].includes(forecast?.outcome),
+            'no-contact Curling cannot claim a resolved blast: '+forecast?.outcome);
+          assert.equal(r.projectiles.arcRing.visible,false,'unknown blast location must not receive a ring');
+        }
         assert.ok(new api.THREE.Vector3().fromBufferAttribute(r.projectiles.arcGeo.getAttribute('position'),0).distanceTo(preview)<1e-6,
           'Curling guide begins at the same actual native release sample');
       } else {
