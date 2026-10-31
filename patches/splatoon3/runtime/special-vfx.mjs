@@ -1422,13 +1422,18 @@ const DIRECTORS = {
       // landing points the throw would use (superChumpLandingPreview), local caster only.
       const pv = a.isLocal ? superChumpLandingPreview(this.api, a) : null;
       t.d.preview = pv;
+      // Admission can end before the next shape-pool update (committed throw,
+      // lost local ownership or a paused presentation step). Hide the retained
+      // records immediately, and reuse them if aiming becomes available again.
+      if (t.d.center) t.d.center.v[11] = pv ? 0.75 : 0;
+      for (const mark of t.d.marks || []) mark.v[11] = pv ? 0.7 : 0;
       if (!pv) return;
       if (!t.d.marks) {
         const c = t.color;
         t.d.center = this.disc(true, 0, DISC.TARGET, pv.target, this.up, 2.4, 2.4, this.hdr(c, 1.4, 0.5), 0.75, { fade: false, spin: 1.5,
-          follow: (rec) => { const p = t.d.preview; if (!p) return; rec.v[0] = p.target.x; rec.v[1] = p.target.y + 0.06; rec.v[2] = p.target.z; } });
+          follow: (rec) => { const p = t.d.preview; rec.v[11] = p ? 0.75 : 0; if (!p) return; rec.v[0] = p.target.x; rec.v[1] = p.target.y + 0.06; rec.v[2] = p.target.z; } });
         t.d.marks = pv.positions.map((_, i) => this.disc(true, 0, DISC.RETICLE, pv.positions[i], this.up, 1.2, 1.2, this.hdr(c, 1.3, 0.4), 0.7, { fade: false, spin: 2,
-          follow: (rec) => { const p = t.d.preview?.positions[i]; if (!p) return; rec.v[0] = p.x; rec.v[1] = p.y + 0.06; rec.v[2] = p.z; } }));
+          follow: (rec) => { const p = t.d.preview?.positions[i]; rec.v[11] = p ? 0.7 : 0; if (!p) return; rec.v[0] = p.x; rec.v[1] = p.y + 0.06; rec.v[2] = p.z; } }));
         (t.d.recs ||= []).push(t.d.center, ...t.d.marks);
       }
     },

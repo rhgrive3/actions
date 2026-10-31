@@ -18,6 +18,7 @@ import {validSpecialWorldPayload,admitsRemoteWorldBirth} from './special-world-p
 // may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
+import { specialProjectileFlight as sourceFlight, configureSpecialProjectile, stepSpecialProjectileForces, specialProjectileOptions, INKJET_RANGE, INKJET_SPEED } from './special-projectile-flight.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { validDamageGroup } from './final-damage.mjs';
 import { disposeInkVac, inkVacAbsorbCandidate } from './kit-ink-vac.mjs';
@@ -26,7 +27,7 @@ import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZ
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, startHeldSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
-import { specialDeviceFlight, stepSpecialDeviceFlight, deviceBelowWorld } from './special-device-flight.mjs';
+import { specialDeviceFlight, specialDeviceLaunchOrigin, settleSpecialDeviceContact, stepSpecialDeviceFlight, deviceBelowWorld } from './special-device-flight.mjs';
 import { wailSpeakerOrigin } from './wail-speakers.mjs';
 import { activeSpecialGaugeState, syncActiveSpecialGauge, startActiveSpecialGauge, endActiveSpecialGauge, clearActiveSpecialGauges } from './active-special-gauge.mjs';
 import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
@@ -34,6 +35,7 @@ import { configureCrabProjectile, paintCrabFlight, crabShooterDamage, withCrabIm
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 import { SPECIAL_DEVICES } from './special-presentation.mjs';
 import { updateCrabSplashVisuals, clearCrabSplashVisuals } from './crab-tank-splash-visual.mjs';
+import { installSpecialTrajectory, specialTrajectoryAimReady } from './special-trajectory.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
@@ -258,19 +260,6 @@ function specialPaintParams(id,ap=0) {
   }
   return result;
 }
-function sourceFlight(id,mode,type,ap=0) {
-  // Pinned 11.3.0 source unit conversions: velocity/F ×60, gravity/F² ×3600,
-  // and AirResist as per-frame retention, exponentiated by dt×60 in the stepper.
-  if(id==='booyahBomb')return {spawnSpeed:gearCurve(ap,1,1,1)*60,spawnYMin:-.4*60,gravity:.021*3600,
-    positionAirResist:.045,source:'WeaponSpNiceBall.MoveParam'};
-  if(id==='ultraStamp'&&(mode==='throw'||type==='blast'))return {spawnSpeed:gearCurve(ap,.85,.85,.85)*60,
-    spawnY:.17*60,spawnYMin:-.4*60,gravity:.013*3600,positionAirResist:.03,source:'WeaponSpUltraStamp.ThrowMoveParam'};
-  if(id==='crabTank'&&(mode==='shooter'||type==='shot'))return {spawnSpeed:3.36*60,straightFrames:7,maxSpeed:2.232*60,
-    gravity:.016*3600,source:'WeaponSpChariot.ShooterMoveParam'};
-  if(id==='crabTank'&&(mode==='cannon'||type==='blast'))return {straightFrames:8,brakeFrames:1,
-    brakeGravity:.04*3600,brakeAirResist:.1,gravity:.05*3600,airResist:.12,source:'WeaponSpChariot.CannonParam.MoveParam'};
-  return null;
-}
 function stepSourceFlight(system,p,dt,step,game) {
   const source=p?.s3AllSpecialFlight;
   if(!source||!(dt>0)||!finite(dt))return step.call(system,p,dt);
@@ -278,16 +267,7 @@ function stepSourceFlight(system,p,dt,step,game) {
   p.s3AllSpecialFlightCarry=carry-frames/FPS;
   if(!frames)return false;
   for(let i=0;i<frames;i++){
-    const frame=Math.round((p.age||0)*FPS),straight=source.straightFrames||0;
-    if(source.maxSpeed&&frame===straight){const speed=p.vel.length();if(speed>source.maxSpeed)p.vel.multiplyScalar(source.maxSpeed/speed);}
-    let gravity=source.gravity||0,resistance=source.airResist||0,positionResistance=source.positionAirResist||0;
-    if(source.brakeFrames){
-      if(frame<straight){gravity=0;resistance=0;}
-      else if(frame<straight+source.brakeFrames){gravity=source.brakeGravity;resistance=source.brakeAirResist;}
-    }else if(frame<straight){gravity=0;resistance=0;positionResistance=0;}
-    if(gravity)p.vel.y-=gravity/FPS;
-    if(resistance)p.vel.multiplyScalar(1-resistance);
-    if(positionResistance){const retain=1-positionResistance;p.vel.x*=retain;p.vel.z*=retain;}
+    stepSpecialProjectileForces(p);
     // The source force is integrated once per source frame above. Disable the
     // native generic force pass for this substep so host render Hz cannot alter
     // the trajectory or apply the same force a second time.
@@ -337,36 +317,10 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
   const ap=actorStates.get(actor)?.specialPowerAP||0;
-  const descriptor=opts.directOnly&&opts.radius!=null&&opts.damage!=null?null:projectileDescriptor(id,ap),p=system._new();
-  const dir = direction.clone();
-  if (dir.lengthSq() < 1e-9) dir.copy(actor.aimDir);
-  dir.normalize();
-  const speed = opts.speed || 17;
-  Object.assign(p, {
-    type: opts.type || 'blast', wid:id, owner: actor, team: actor.team, age: 0,
-    life: opts.life || 1.8, straight: opts.straight ?? .16,
-    radius: opts.radius ?? descriptor.paintRadius, damage: opts.damage ?? descriptor.directDamage,
-    size: opts.size ?? .22, trail: 0, trailEvery: opts.trailEvery || 0,
-    trailRadius: .45, grav: opts.grav ?? 20, drag: opts.drag ?? .24,
-    seed: seedUnit(opts.seed ?? nextSeed(actorStates.get(actor) || { seed: 1 }), 0),
-    vis: .19, tail0: .55, tailK: .9, wob: .04, wobF: 23, nose: .12, sats: 2,
-  });
-  if(opts.sourceMode)p.s3AllSpecialMode=opts.sourceMode;
-  p.pos.copy(origin); p.prev.copy(origin); p.start.copy(origin);
-  p.vel.copy(dir).multiplyScalar(speed);
-  if (opts.arc) p.vel.y += opts.arc;
-  const flight=sourceFlight(id,opts.sourceMode,p.type,ap);
-  if(flight){
-    p.s3AllSpecialFlight=flight;p.s3AllSpecialFlightCarry=0;
-    p.straight=flight.straightFrames!==undefined?flight.straightFrames/FPS:0;
-    if(flight.spawnSpeed){p.vel.copy(dir).multiplyScalar(flight.spawnSpeed);if(flight.spawnY)p.vel.y+=flight.spawnY;}
-    if(flight.spawnYMin!==undefined)p.vel.y=Math.max(flight.spawnYMin,p.vel.y);
-  }
-  // Direct rounds still need a special identity so main-weapon wrappers cannot
-  // substitute the owner's gravity, collision, flight paint or weapon id.
-  p.s3SpecialWeapon = opts.directOnly ? directProjectileDescriptor(id, opts.radius ?? .22) : descriptor;
-  p.s3Weapon = opts.weapon || p.s3SpecialWeapon || { id, kind: 'special', special: id };
-  p.s3AllSpecial = id;p.s3SpecialPowerAP=ap;
+  const descriptor=opts.directOnly?directProjectileDescriptor(id,opts.radius??.22):projectileDescriptor(id,ap),p=system._new();
+  configureSpecialProjectile(p,actor,id,origin,direction,opts,ap,descriptor);
+  p.seed=seedUnit(opts.seed??nextSeed(actorStates.get(actor)||{seed:1}),0);
+  Object.assign(p,{vis:.19,tail0:.55,tailK:.9,wob:.04,wobF:23,nose:.12,sats:2});
   p.s3PaintNoSpecial = true;
   const paint = specialPaintParams(id, ap);
   p.s3AllSpecialPaintRadius = opts.paintRadius ?? paint.radius ?? 0;
@@ -899,7 +853,7 @@ function candidate(rt, p, start, end) {
   if(activeStampCount>0)for(const owner of rt.api.G.actors||[]) {
     const state=actorStates.get(owner);
     if(!state||state.id!=='ultraStamp'||state.phase==='throw'||!owner?.alive||owner.team===p?.team)continue;
-    if(state.expiresAt&&rt.api.G.time>state.expiresAt){deleteActorState(owner);continue;}
+    if(state.expiresAt&&rt.api.G.time>state.expiresAt){if(!p?.s3Prediction)deleteActorState(owner);continue;}
     const d=stampGuardCandidate(rt,p,start,end,owner,state);
     if(d&&(!best||d.distance<best.distance))best=d;
   }
@@ -1217,7 +1171,7 @@ function launchMissileStep(rt, actor, state) {
 // the round is a Blaster-type straight shot that bursts at that range or on
 // contact. Its speed is not in the table: 21 WU/s is the existing INKWAVE
 // calibration, kept unchanged.
-export const INKJET_RANGE=30, INKJET_SPEED=21;
+export { INKJET_RANGE, INKJET_SPEED };
 const INKJET_CANNON=SPECIAL_DEVICES.inkjet.find(device=>device.aim).pos;
 export function inkjetLaunchOrigin(rt,actor,out) {
   const [x,y,z]=INKJET_CANNON,yaw=actor.yaw||0,c=Math.cos(yaw),s=Math.sin(yaw);
@@ -1235,24 +1189,47 @@ export function inkjetLaunchDirection(actor,origin,out) {
   if(out.lengthSq()<1e-9)out.set(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
   return out.normalize();
 }
+// Shared launch geometry for live rounds and the read-only special guide.
+function specialLaunchGeometry(rt,actor,id,mode,origin,direction){
+  if(id==='inkjet'){inkjetLaunchOrigin(rt,actor,origin);inkjetLaunchDirection(actor,origin,direction);}
+  else if(id==='crabTank')crabLaunchGeometry(rt,actor,mode,origin,direction);
+  else {origin.copy(actor.pos);origin.y+=id==='booyahBomb'?1.2:1.1;aimDirection(rt,actor,direction);}
+  return {origin,direction};
+}
+function specialPredictionRound(rt,actor,id,mode,ap,options){
+  const V=rt.api.THREE.Vector3,p={pos:new V(),prev:new V(),start:new V(),vel:new V(),fieldRadius:0,ghost:false,s3Prediction:true,fidelityMove:null};
+  const geometry=specialLaunchGeometry(rt,actor,id,mode,new V(),new V());
+  const opts=specialProjectileOptions(id,mode,options.charge??1,ap);
+  const descriptor=opts.directOnly?directProjectileDescriptor(id,opts.radius??.22):projectileDescriptor(id,ap);
+  configureSpecialProjectile(p,actor,id,geometry.origin,geometry.direction,opts,ap,descriptor);
+  if(id==='crabTank'){configureCrabProjectile(p,0);delete p.s3CrabFlightPaint;}
+  return p;
+}
+function zipcasterHookPlan(rt,actor){
+  const origin=new rt.api.THREE.Vector3(actor.pos.x,actor.pos.y+1.05,actor.pos.z);
+  const direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());
+  const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
+  const hit=!!contact?.hit&&finite3(contact.point);
+  const point=hit?contact.point.clone():origin.clone().addScaledVector(direction,35);
+  const normal=hit&&finite3(contact.normal)?contact.normal.clone():new rt.api.THREE.Vector3(0,1,0);
+  const distance=origin.distanceTo(point),closeFloor=hit&&normal.y>.5&&distance<3;
+  return {origin,direction,point,normal,valid:hit&&distance<=35+1e-6&&!closeFloor};
+}
 function launchInkjet(rt,actor,state) {
-  const origin=inkjetLaunchOrigin(rt,actor,rt.v0).clone(),dir=inkjetLaunchDirection(actor,origin,rt.v1);
-  launch(rt,actor,'inkjet',origin,dir,{speed:INKJET_SPEED,grav:0,drag:0,straight:INKJET_RANGE/INKJET_SPEED+1,
-    life:INKJET_RANGE/INKJET_SPEED,seed:nextSeed(state),size:.24,
-    paintRadius:gearCurve(state.specialPowerAP,3.2,3.6,4)});
+  const dir=rt.v1,origin=specialLaunchGeometry(rt,actor,'inkjet',null,rt.v0,dir).origin.clone();
+  launch(rt,actor,'inkjet',origin,dir,{...specialProjectileOptions('inkjet',null,1,state.specialPowerAP),seed:nextSeed(state)});
   emitAction(rt,actor,'inkjet',state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,INKJET_RANGE),nextSeed(state));
 }
 function throwBooyah(rt,actor,state,charge) {
-  const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'booyahBomb',origin,dir,{speed:13+charge*4,grav:19,drag:.16,life:2.1,arc:4.2,
-    radius:3.7,damage:0,paintRadius:13.5,seed:nextSeed(state),size:.48});
+  const dir=rt.v1,origin=specialLaunchGeometry(rt,actor,'booyahBomb',null,rt.v0,dir).origin.clone();
+  launch(rt,actor,'booyahBomb',origin,dir,{...specialProjectileOptions('booyahBomb',null,charge),seed:nextSeed(state)});
   emitAction(rt,actor,'booyahBomb',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,12),nextSeed(state),{charge:q3(charge)});
   const armor={id:'booyahBomb',t:state.t,armorHP:state.armorHP,booyahArmorGroups:state.booyahArmorGroups,until:(rt.api.G.time||0)+65/FPS};
   endSpecial(rt,actor,'thrown');booyahAfterArmor.set(actor,armor);
 }
 function throwStamp(rt,actor,state) {
-  const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'ultraStamp',origin,dir,{speed:22,grav:17,drag:.13,life:1.8,sourceMode:'throw',seed:nextSeed(state),size:.4,damage:220,paintRadius:5});
+  const dir=rt.v1,origin=specialLaunchGeometry(rt,actor,'ultraStamp','throw',rt.v0,dir).origin.clone();
+  launch(rt,actor,'ultraStamp',origin,dir,{...specialProjectileOptions('ultraStamp','throw'),seed:nextSeed(state)});
   emitAction(rt,actor,'ultraStamp',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,18),nextSeed(state));
   endSpecial(rt,actor,'thrown');
 }
@@ -1302,7 +1279,7 @@ function paintReefRut(rt,actor,state,from,to,dt) {
   state.rutPaintCarry=(elapsed+dt)%span;
 }
 function deployInkstrike(rt,actor,state,index) {
-  const launchAt=rt.v2.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone();
+  const launchAt=specialDeviceLaunchOrigin(actor,rt.v2).clone();
   const flight=specialDeviceFlight(rt.api,actor,'tripleInkstrike',state.specialPowerAP);
   const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{...flight,phase:'flight',dur:82/FPS+51/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,scale:[.36,.36,.36]});
   marker.origin=launchAt.clone();
@@ -1366,8 +1343,9 @@ function throwChumps(rt,actor,state) {
   }
   endSpecial(rt,actor,'deployed');
 }
-// Presentation preview of throwChumps: the same aim, clamp and ellipse, with the seed advanced once per decoy exactly
-// as the throw does (nextSeed in each deploy). Read-only: works on a copy of the seed and returns new vectors.
+// Presentation preview of throwChumps: the same aim, clamp and ellipse without
+// advancing the activation seed. This VFX owner reuses per-activation vectors;
+// the public trajectory API uses a private state copy and owns no live cache.
 // Presentation read-out of the Tenta Missiles lock: the circle limit (fraction of the half screen height) and the
 // opponents prepareMissiles would lock right now, so the HUD draws exactly what launches.
 export function tentaMissilesLockPreview(api,actor) {
@@ -1381,7 +1359,7 @@ export function tentaMissilesLockPreview(api,actor) {
 }
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
-  if(!rt||!state||state.id!=='superChump'||!actor?.alive||actor.remote)return null;
+  if(!rt||!state||state.id!=='superChump'||!specialTrajectoryAimReady(actor,'superChump',state))return null;
   // Collision queries stay fresh: Physics/Level expose no revision that could
   // safely certify a cached landing plan after moving colliders or platforms.
   const V=rt.api.THREE.Vector3;
@@ -1413,7 +1391,7 @@ function chumpLandingPlan(rt,actor,state,out=null){
   return out||{target,positions};
 }
 function deployScreen(rt,actor,state) {
-  const pos=actor.pos.clone();pos.y+=1.1;
+  const pos=specialDeviceLaunchOrigin(actor,actor.pos.clone());
   const direction=aimDirection(rt,actor,rt.v2).setY(0).normalize();
   const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{...specialDeviceFlight(rt.api,actor,'splattercolorScreen',state.specialPowerAP),phase:'flight',dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
@@ -1454,7 +1432,7 @@ function paintScreenDrops(rt,o,deviceAge){
   } finally {if(lease)o._screenPaintDepth=depth;}
 }
 function deployWave(rt,actor,state) {
-  const pos=actor.pos.clone();pos.y+=1.1;const ap=state.specialPowerAP;
+  const pos=specialDeviceLaunchOrigin(actor,actor.pos.clone());const ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
   const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{...specialDeviceFlight(rt.api,actor,'waveBreaker',ap),phase:'flight',dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
@@ -1735,13 +1713,8 @@ function updateWorld(rt,dt) {
       }
       if(deviceBelowWorld(rt.api,o)){removeWorld(rt,o,'expire');continue;}
       if(!hit)continue;
-      if(o.kind==='wave'&&hit.normal.y<=.5){
-        // A generator needs a floor. Keep gravity and slide along a contacted
-        // wall/ceiling rather than creating an operational airborne device.
-        const vn=o.vel.dot(hit.normal);if(vn<0)o.vel.addScaledVector(hit.normal,-vn);
-        o.pos.addScaledVector(hit.normal,.08);continue;
-      }
-      o.landedAt=o.age;o.vel=null;o.pos.addScaledVector(hit.normal,.08);
+      if(!settleSpecialDeviceContact(o,hit))continue;
+      o.landedAt=o.age;o.vel=null;
       o.phase=o.kind==='marker'?'warning':'active';
       if(o.kind==='marker')o.target=o.pos.clone();
       if(o.kind==='screen')paintScreenDrops(rt,o,0);
@@ -2071,14 +2044,10 @@ function activeStep(rt,actor,dt) {
     const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
     if(!actor.intent.sub)state.hookConsumed=false;
     if(state.phase==='ready'&&actor.intent.sub&&!state.hookConsumed&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>0){
-      const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z),direction=aimDirection(rt,actor,rt.v1);
-      const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
-      // WeaponSpSuperHook MinLengthHook_Floor=3 / MinLengthHook_Wall=0.
-      // Close floor hits fail like an empty hook; close walls remain usable.
-      const closeFloor=contact?.hit&&finite3(contact.point)&&contact.normal?.y>.5&&origin.distanceTo(contact.point)<3;
-      // A reticle coordinate is not a surface. Missed hooks neither spend
-      // hook ink nor pull the player into empty space (Wiki: 45F miss wait).
-      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6||closeFloor){
+      const contact=zipcasterHookPlan(rt,actor);
+      // Missing terrain and floor contacts within MinLengthHook_Floor=3
+      // fail exactly as the read-only hook guide reports.
+      if(!contact.valid){
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
         state.hookConsumed=true;
@@ -2133,8 +2102,8 @@ function activeStep(rt,actor,dt) {
       else state.rollPaintLast=null;
     } finally {if(rollFrom)state._rollPaintFromDepth=rollDepth;}
     if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
-      const origin=rt.v0,dir=rt.v1;crabLaunchGeometry(rt,actor,'cannon',origin,dir);
-      launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
+      const {origin,direction:dir}=specialLaunchGeometry(rt,actor,'crabTank','cannon',rt.v0,rt.v1);
+      launch(rt,actor,'crabTank',origin,dir,{...specialProjectileOptions('crabTank','cannon'),seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
       state.nextCannon=elapsed+75/FPS;state.nextShot=Math.max(state.nextShot,elapsed+32/FPS);state.fireStart=null;state.cannonT=elapsed+32/60;
     }
@@ -2143,8 +2112,8 @@ function activeStep(rt,actor,dt) {
       if(state.fireStart===null)state.fireStart=elapsed;
     }else state.fireStart=null;
     if(!rolling&&actor.intent.fire&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextShot){
-      const origin=rt.v0,dir=rt.v1;crabLaunchGeometry(rt,actor,'shooter',origin,dir);
-      launch(rt,actor,'crabTank',origin,dir,{type:'shot',directOnly:true,damage:32,radius:1.6,size:.2,speed:3.36*FPS,grav:4,drag:.04,life:1.25,sourceMode:'shooter',sequence:state.shotSequence++,seed:nextSeed(state),damageReduce:{max:32,min:16,start:9/60,end:25/60}});
+      const {origin,direction:dir}=specialLaunchGeometry(rt,actor,'crabTank','shooter',rt.v0,rt.v1);
+      launch(rt,actor,'crabTank',origin,dir,{...specialProjectileOptions('crabTank','shooter'),sequence:state.shotSequence++,seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state),{damage:32});
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
       state.nextShot=elapsed+interval/60;
@@ -2636,9 +2605,9 @@ function installRuntime(api) {
     return result;
   };
   if(typeof baseCandidate==='function')P.kitDefenseCandidate=function(p,...args){
-    rt.system=this;
+    const ownerRt=p?.s3Prediction?predictionRt:rt;ownerRt.system=this;
     const base=baseCandidate.call(this,p,...args),from=args[0]||p?.prev,to=args[1]||p?.pos;
-    const extra=from&&to?candidate(rt,p,from,to):null;
+    const extra=from&&to?candidate(ownerRt,p,from,to):null;
     return extra&&(!base||extra.distance<base.distance)?extra:base;
   };
   if(typeof blast==='function')P._blastBurst=function(p,at,...args){
@@ -2682,7 +2651,7 @@ function installRuntime(api) {
         splashAroundPitchMax:p.s3AllSpecialSplashAroundPitchMax},p.s3AllSpecialSeed||0);
     if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial==='booyahBomb'){
       const seed=normalizedSeed(p.s3AllSpecialSeed||0),state=actorStates.get(p.owner)||{serial:p.s3AllSpecialActivation||1,seed,objectSerial:0};
-      const pos=groundAt(rt,at,rt.v0).clone();
+      const pos=at.clone();
       deployObject(rt,p.owner,'booyahBomb','booyahBlast',pos,state,{dur:80/FPS,startDelay:40/FPS,expand:40/FPS,maxRadius:12.6,paintRadius:13.5,damage:3.3,seed,target:pos});
     }
     return result;
@@ -2711,6 +2680,18 @@ function installRuntime(api) {
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);
   api.allSpecialObjectHit=(p,object)=>objectHitProposal(rt,p,object);
+  // A separate scratch owner keeps preview queries from corrupting an active
+  // combat event's vectors. State/cache writes are confined to this owner.
+  const predictionRt={api,system:null,up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),hit:api.Hit?new api.Hit():{hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0}};
+  for(let i=0;i<16;i++)predictionRt['v'+i]=new THREE.Vector3();
+  installSpecialTrajectory(api,{
+    stateOf:actor=>actorStates.get(actor)||null,
+    projectile:(actor,id,mode,ap,options)=>specialPredictionRound(predictionRt,actor,id,mode,ap,options),
+    description:specialDescription,
+    chumps:(actor,state)=>chumpLandingPlan(predictionRt,actor,{...state}),
+    missiles:actor=>selectTargets(predictionRt,actor,5,Infinity,true).map(x=>x.actor),
+    zipHook:actor=>zipcasterHookPlan(predictionRt,actor),
+  });
   api.superChumpLandingPreview=superChumpLandingPreview;
   api.tentaMissilesLockPreview=tentaMissilesLockPreview;
   P.s3DamageSpecialObjects=function(attack,center,radius,damageAtDistance,cause=null,options={}){
