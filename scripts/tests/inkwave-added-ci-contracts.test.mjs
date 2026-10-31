@@ -92,7 +92,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // prevents an added prototype mutation or dynamic side effect from intercepting
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
- [sparseFixtureFile]:'05303588abb91c74e0925b410702f72ca7e0e91e1e0f361134f8e226af30a0fb',
+ [sparseFixtureFile]:'83f64c3958ed05d5622fc031a85c48a7f43eb585b8fd48e33419d3f6bc7078e5',
  'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
 };
 // Re-reviewed touch CI delta: crypto import, test title/unused-install expectation,
@@ -117,6 +117,22 @@ const reviewedSparseSourceDelta = [
     "after": "\ntest('touch test-only dependency removal restores the exact reviewed prior workflow',()=>{\n const source=read('.github/workflows/inkwave-touch-frame-pacing.yml');\n const boundary=\"      - name: Verify touch cadence, profiler and final composed main loop\\n\";\n assert.equal(source.split(boundary).length,2);\n const restored=source.replace(boundary,\"      - name: Install pinned build dependency\\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\\n\"+boundary);\n assert.equal(createHash('sha256').update(restored).digest('hex'),\"3894070c7ca5bdd936c5eecec84f5ffe5b9c6a20e6d347941e0651a672cf9371\");\n});\n"
   }
 ];
+// Newer main adds sparse-report controls and direct touch triggers. Review
+// exactly these four reversible source hunks, then retain the historical
+// fixture pin and its AST consumer safeguards unchanged.
+const ORIGINAL_REVIEWED_SPARSE_SHA256='05303588abb91c74e0925b410702f72ca7e0e91e1e0f361134f8e226af30a0fb';
+const REVIEWED_NEW_SPARSE_INVERSE=Object.freeze([[" const source=read('.github/workflows/'+workflow);assert.match(source,/sparse-checkout-cone-mode: false/);if(['inkwave-object-presentation-qa.yml','inkwave-runtime-frame-parity.yml','inkwave-small-tank.yml'].includes(workflow))assert.match(source,/filter: blob:none/);else assert.doesNotMatch(source,/\\n\\s+filter:/);\n"," const source=read('.github/workflows/'+workflow);assert.match(source,/sparse-checkout-cone-mode: false/);if(workflow==='inkwave-object-presentation-qa.yml')assert.match(source,/filter: blob:none/);else assert.doesNotMatch(source,/\\n\\s+filter:/);\n"],["  const prunedReports=['inkwave-runtime-frame-parity.yml','inkwave-small-tank.yml'].includes(workflow);\n",""],["  const sourceExamples=examples.filter(file=>!(prunedReports&&file.startsWith('reports/')));\n  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):sourceExamples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml','inkwave-runtime-frame-parity.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));\n","  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):examples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));\n"],[" const triggerAdditions=['inkwave-public/src/main.js','scripts/inkwave-source-composition.mjs','patches/splatoon3/adapter.mjs','scripts/inkwave-range-profile-acceptance.mjs','scripts/tests/inkwave-queue-ci-20261031.test.mjs'];\n let predecessor=source;\n for(const file of triggerAdditions){const line=\"      - '\"+file+\"'\\n\";assert.equal(predecessor.split(line).length,2,'exact reviewed trigger addition '+file);predecessor=predecessor.replace(line,'');}\n const restored=predecessor.replace(boundary,\"      - name: Install pinned build dependency\\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\\n\"+boundary);\n"," const restored=source.replace(boundary,\"      - name: Install pinned build dependency\\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\\n\"+boundary);\n"]]);
+function restoreNewSparseSuccessor(source){
+ assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[sparseFixtureFile],
+  'reviewed current sparse source identity');
+ for(const [after,before] of [...REVIEWED_NEW_SPARSE_INVERSE].reverse()){
+  assert.equal(source.split(after).length,2,'exact successor sparse owner hunk');
+  source=source.replace(after,before);
+ }
+ assert.equal(createHash('sha256').update(source).digest('hex'),ORIGINAL_REVIEWED_SPARSE_SHA256,
+  'reviewed complete predecessor unchanged');
+ return source;
+}
 function restoreReviewedSparseSource(source) {
  let restored=source;
  for(const {before,after} of reviewedSparseSourceDelta) {
@@ -131,17 +147,22 @@ function restoreReviewedSparseSource(source) {
 test('reviewed touch CI fixture delta reverses to its immutable original source seal',()=>{
  const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
  assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[sparseFixtureFile]);
- restoreReviewedSparseSource(source);
+ const predecessor=restoreNewSparseSuccessor(source);
+ restoreReviewedSparseSource(predecessor);
  const boundary='\n// The metadata guard deliberately audits every tracked JavaScript module, not';
- assert.equal(source.split(boundary).length,2);
- assert.equal(createHash('sha256').update(source.split(boundary)[0]).digest('hex'),
+ assert.equal(predecessor.split(boundary).length,2);
+ assert.equal(createHash('sha256').update(predecessor.split(boundary)[0]).digest('hex'),
   'd1c3a8e8702f0033e2df9c7a0b9ce1244c02e3f8cd0d030f3870087f2053c2fb',
   'global-audit suffix removal retains the exact author-reviewed touch epoch');
  for(const {after} of reviewedSparseSourceDelta) {
-  assert.throws(()=>restoreReviewedSparseSource(source.replace(after,'')));
-  assert.throws(()=>restoreReviewedSparseSource(source+after));
+  assert.throws(()=>restoreReviewedSparseSource(predecessor.replace(after,'')));
+  assert.throws(()=>restoreReviewedSparseSource(predecessor+after));
  }
- assert.throws(()=>restoreReviewedSparseSource(source+'\n// unrelated fixture mutation\n'));
+ assert.throws(()=>restoreReviewedSparseSource(predecessor+'\n// unrelated fixture mutation\n'));
+ for(const [after] of REVIEWED_NEW_SPARSE_INVERSE){
+  assert.throws(()=>restoreNewSparseSuccessor(source.replace(after,'')));
+  assert.throws(()=>restoreNewSparseSuccessor(source+after));
+ }
 });
 // Re-reviewed 2026-10-29: removed only the byte-identical second sparse-negative
 // loop. All three immutable consumer hashes and all original workflow blob
@@ -199,10 +220,11 @@ function assertNoAuthoringDependency(file,source){
   assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[file],'audited fixture changed; re-review before updating its narrow literal exemption');
  let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source):source;
  if(file===sparseFixtureFile){
-  restoreReviewedSparseSource(source);
+  const checkedSource=restoreNewSparseSuccessor(source);
+  restoreReviewedSparseSource(checkedSource);
   // Only the reviewed literal data in this temporary-repository fixture is
   // exempt. Imports, filesystem references and the rest of its code are scanned.
-  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+  const ast=parse(checkedSource,{ecmaVersion:'latest',sourceType:'module'});
   const bindings=ast.body.filter(n=>n.type==='VariableDeclaration'&&n.kind==='const').flatMap(n=>n.declarations);
   const declarations=bindings.filter(n=>n.id.type==='Identifier'&&n.id.name==='excludedAuthoringFixturePaths');
   assert.equal(declarations.length,1,'one explicit synthetic fixture declaration');
@@ -215,7 +237,7 @@ function assertNoAuthoringDependency(file,source){
   assert.equal(examples?.type,'ArrayExpression');
   const loops=ast.body.filter(n=>n.type==='ForOfStatement');
   assert.equal(loops.length,1,'one audited temporary-repository consumer');
-  const hash=node=>createHash('sha256').update(source.slice(node.start,node.end)).digest('hex');
+  const hash=node=>createHash('sha256').update(checkedSource.slice(node.start,node.end)).digest('hex');
   assert.equal(hash(examples),'d4adf6f46026455bd6a5de54b1c53b292882aabc3c6f92239824cdda4ceb6b51','examples are only reviewed synthetic data');
   assert.equal(hash(loops[0]),'a2d12f255e47de617fd9304380266dddc110d5d1a2fdaada4ee1c31edb748ad8','synthetic data are only used in the audited temporary fixture');
   const visit=(node,parent,grandparent,ancestors=[])=>{
@@ -232,13 +254,13 @@ function assertNoAuthoringDependency(file,source){
    for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,node,parent,[...ancestors,node]);}else if(value&&typeof value==='object')visit(value,node,parent,[...ancestors,node]);
   };
   visit(ast);
-  checked=source.slice(0,data.start)+'[]'+source.slice(data.end);
+  checked=checkedSource.slice(0,data.start)+'[]'+checkedSource.slice(data.end);
  }
  assert.doesNotMatch(checked,/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
 }
 test('expanded sparse audit retains the complete historical fixture bytes',()=>{
  const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
- const restored=restoreReviewedSparseSource(source);
+ const restored=restoreReviewedSparseSource(restoreNewSparseSuccessor(source));
  const boundary=restored.indexOf('\n// The metadata guard deliberately audits every tracked JavaScript module, not');
  assert.ok(boundary>0,'one explicit boundary for the later global metadata tests');
  assert.equal(createHash('sha256').update(restored.slice(0,boundary)).digest('hex'),historicalSparseFixtureSha256);

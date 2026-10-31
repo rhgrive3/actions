@@ -25,8 +25,15 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const QUEUE_20261030_ROLLER_INVERSE = Object.freeze([["// A vertical mode is already a private ordinary data record. Later overlays\n// can define its data fields directly instead of copying the whole weapon a\n// second/third time. DefineProperty keeps spread's own-property semantics even\n// when Object.prototype has a setter; no source config or getter is cached.\nconst MODE_FIELD={value:null,writable:true,enumerable:true,configurable:true};\nfunction setModeField(mode,key,value){\n  MODE_FIELD.value=value;\n  try{Object.defineProperty(mode,key,MODE_FIELD);}finally{MODE_FIELD.value=null;}\n}\n","","queue-optimization-0"],["    if (state) {\n      if(mode===w)mode={...mode,flickWindup:state.windup,flickInterval:state.interval};\n      else {setModeField(mode,'flickWindup',state.windup);setModeField(mode,'flickInterval',state.interval);}\n    }\n","    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };\n","queue-optimization-1"],["      if (drops !== null) {\n        setModeField(mode,'s3Depletion',true);setModeField(mode,'s3DepletionDrops',drops);setModeField(mode,'flickDrops',drops);\n      }\n","      if (drops !== null) mode = { ...mode, s3Depletion: true, s3DepletionDrops: drops, flickDrops: drops };\n","queue-optimization-2"]]);
+// Preserve the current main's two exact roller clamp optimizations and
+// separately verify they restore the entire prior #847 source without drift.
+const BEFORE_MAIN_CLAMP_SHA256 = '9f672b542dfd9cf1b2820ac29009afdaebfea3f98d3591342a1dc449b7c37ce3';
+const MAIN_ROLLER_CLAMP_REVERSE = Object.freeze([
+  ["        const unclampedDistance = delta.length();\n    if (unclampedDistance > reachR) target.copy(rightOrigin).add(delta.divideScalar(unclampedDistance || 1).multiplyScalar(reachR));", "        if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));", 'main-clamp-left'],
+  ["    const unclampedDistance = delta.length();\n    if (unclampedDistance > reachR) target.copy(rightOrigin).add(delta.divideScalar(unclampedDistance || 1).multiplyScalar(reachR));", "    if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));", 'main-clamp-right'],
+]);
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "9f672b542dfd9cf1b2820ac29009afdaebfea3f98d3591342a1dc449b7c37ce3",
+  "patches/splatoon3/runtime/roller.mjs": "be669b23402d1639d4d00451c0ae84dbf1cf3d7ac209fee8e87abffe072e0f5e",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "a4af2a6a78adafe886a291a3dab0a6d15f65c84999e74dcc6e28317f49f50b2d"
 });
 const headlessPaintRenderer = () => ({
@@ -55,6 +62,12 @@ function frozenRollerSource() {
 function exactFault(source, needle, replacement, name) {
   assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
   return source.replace(needle,replacement);
+}
+function beforeMainClamp(source) {
+  for (const [after,before,name] of MAIN_ROLLER_CLAMP_REVERSE) source=exactFault(source,after,before,name);
+  assert.equal(createHash('sha256').update(source).digest('hex'), BEFORE_MAIN_CLAMP_SHA256,
+    'main roller clamp inverse preserves the exact complete previous source');
+  return source;
 }
 const ROLLER_PERFORMANCE_REVERSE_EDITS = Object.freeze([
   ["    if (runner.s3RollStop) {\n      const live = rollStopBlocks(now, runner.s3RollStop);\n      if (live.main || live.sub || live.squid) return false;\n    }\n    if (!rollWillStop(runner, fire)) return false;", "    const live = rollStopBlocks(now, runner.s3RollStop);\n    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;", "performance-owner-1"],
@@ -85,7 +98,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
       const followThroughBytes=fs.readFileSync(new URL('./fixtures/roller-follow-through-20261030-reviewed-delta.json',import.meta.url));
       assert.equal(createHash('sha256').update(followThroughBytes).digest('hex'),
         '359dc78dfdf663069f20e6a2ea5d35a1d7e68661e78763737c94a82a77d2ab25');
-      const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=raw;
+      const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=beforeMainClamp(raw);
       for(const [after,before,name] of QUEUE_20261030_ROLLER_INVERSE)
         beforeFollowThrough=exactFault(beforeFollowThrough,after,before,name);
       assert.equal(createHash('sha256').update(beforeFollowThrough).digest('hex'),
@@ -382,7 +395,11 @@ test('847 rejects missing or modified fault inputs before VM linking and keeps e
     assert.throws(() => exactFault(roller.replace(before,''), before, after, name), /counterfactual anchor/);
     assert.throws(() => exactFault(roller+before, before, after, name), /counterfactual anchor/);
   }
-  let reviewed = roller;
+  for (const [after,before,name] of MAIN_ROLLER_CLAMP_REVERSE) {
+    assert.throws(() => exactFault(roller.replace(after,''),after,before,name), /counterfactual anchor/);
+    assert.throws(() => exactFault(roller+after,after,before,name), /counterfactual anchor/);
+  }
+  let reviewed = beforeMainClamp(roller);
   for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
   const downhillImport = "import { traceRollingFloor } from './rolling-floor.mjs';\n";
   for (const epoch of [roller, reviewed]) {
