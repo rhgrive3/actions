@@ -20,6 +20,7 @@ for(const n of [...ast.body].reverse()){
 }
 const css=adaptBuildSource('styles/hud.css',read('inkwave-public/styles/hud.css'))+'\n'+read('patches/splatoon3/ui.css');
 const splatling=read('patches/local-quality/splatling-reticle.mjs').replaceAll('export function ','function ');
+const blaster=read('patches/splatoon3/runtime/blaster-reticle-presentation.mjs').replaceAll('export const ','const ').replaceAll('export function ','function ');
 const out=path.resolve(process.argv[2]||'reports/reticle-viewport-20261025');fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-dev-shm-usage']});
 const rows=[];
@@ -27,14 +28,15 @@ try{
  const page=await browser.newPage();
  await page.setContent('<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#273b48;color:white;font:14px sans-serif;--u:10px;--self-light:white}*{transition:none!important;animation:none!important}</style>');
  await page.addStyleTag({content:css});
- await page.evaluate(({executable,imports,cls,guide,splatling})=>{
+ await page.evaluate(({executable,imports,cls,guide,splatling,blaster})=>{
   const local={alive:true,form:'kid',invuln:0,weaponRunner:{charging:true,chargeT:.5,charge:.5},weapon:{}};
   const G={match:{local},camera:{},projectiles:{s3DualiesGuides:()=>[{x:.1,y:.1,z:0},{x:-.13,y:.1,z:0}],s3WeaponGuide:()=>null}};
   const kinds=['shooter','blaster','dualies','slosher','splatling','charger','roller'];
   const WEAPONS=Object.fromEntries(kinds.map(kind=>[kind,{kind,chargeTime:1,firstChargeTime:.5,reticleDelayF:5,special:'slam'}]));
   const values={G,WEAPONS,SUB:{bomb:{inkCost:70}},PLAYER:{},MATCH:{},clamp:(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),
    applyShotGuide:Function('return ('+guide+')')(),updateSplatlingStages:Function(splatling+'\nreturn updateSplatlingStages')(),
-   selectedSub:()=> 'bomb',selectedSubCost:()=>70,chargerScopeFactor:()=>0,specialIcon:()=>'',t:s=>s};
+   selectedSub:()=> 'bomb',selectedSubCost:()=>70,chargerScopeFactor:()=>0,specialIcon:()=>'',t:s=>s,
+   ...Function(blaster+'\nreturn {blasterReticleMarkup,bindBlasterReticle,updateBlasterReticle}')()};
   const bindings={...values};for(const [name,origin] of imports)bindings[name]=values[origin]||(()=>{});
   const HUD=Function(...Object.keys(bindings),executable+'\nreturn '+cls)(...Object.values(bindings));
   const el=html=>{const d=document.createElement('div');d.innerHTML=html||'';return d;};
@@ -50,8 +52,8 @@ try{
    h._project=(_cam,x,y,z)=>({x,y,z});return h;
   }
   globalThis.viewportProbe={local,G,kinds,WEAPONS,make};
- },{executable,imports,cls:cls.id.name,guide:applyShotGuide.toString(),splatling});
- for(const viewport of [{width:1280,height:720},{width:1024,height:600},{width:844,height:390},{width:390,height:844}]){
+ },{executable,imports,cls:cls.id.name,guide:applyShotGuide.toString(),splatling,blaster});
+ for(const viewport of [{width:1280,height:720},{width:1920,height:1080},{width:2560,height:1080},{width:1024,height:600},{width:844,height:390},{width:390,height:844}]){
   await page.setViewportSize(viewport);
   const result=await page.evaluate(()=>{
    for(const node of [...document.body.children])if(node.tagName!=='STYLE')node.remove();
@@ -61,21 +63,30 @@ try{
     const h=make(kind,index),frame={weapon:kind,charge:.5,crosshair:{spread:0,guide:{x:innerWidth/2+37,y:innerHeight/2-19},
      chargerCurrent:{x:.1,y:.1,z:0},chargerFull:{x:.2,y:-.1,z:0}}};
     h._updCrosshair(frame,1/60);const anchor=center(h.xh),art=center(h.ret.querySelector('svg')),zero=center(h.ret.querySelector('.iw-ret__tick')||h.ret);
-    frame.crosshair.spread=18.3;h._updCrosshair(frame,1/120);
+    frame.crosshair.spread=18.3;local.weaponRunner.spread=kind==='blaster'?10:0;h._updCrosshair(frame,1/120);
     const scale=h._L.reticleScale,expanded=center(h.ret.querySelector('.iw-ret__tick')||h.ret),ret=center(h.ret);
     h.hitMarker('hit',{damage:36});const hit=center(h.hitEl),style=getComputedStyle(h.ret);
     const twins=kind==='dualies'?h._twin.map(center):null;
     const reach=kind==='charger'?['--crx','--cry','--cfx','--cfy'].map(k=>parseFloat(h.ret.style.getPropertyValue(k))*scale):null;
-    records.push({kind,scale,art,anchor,ret,hit,zero,expanded,twins,reach,spread:h._L.spread,cssSpread:+h.ret.style.getPropertyValue('--sp'),transform:style.transform,tank:center(h.tank)});
+    const cameraMark=kind==='blaster'?center(h.ret.querySelector('[data-blaster="camera"]')):null;
+    const impactMark=kind==='blaster'?center(h.ret.querySelector('[data-blaster="impact"]')):null;
+    records.push({kind,scale,art,anchor,ret,hit,zero,expanded,twins,reach,cameraMark,impactMark,spread:h._L.spread,cssSpread:+h.ret.style.getPropertyValue('--sp'),transform:style.transform,tank:center(h.tank)});
     if(kind==='shooter')viewportProbe.resized=h;
    }
    return records;
   });
   for(const row of result){
-   const scale=Math.min(1,Math.max(.5,Math.min(viewport.height/720,viewport.width/1280)));
+   const fit=Math.min(viewport.height/720,viewport.width/1280),scale=row.kind==='blaster'?fit:Math.min(1,Math.max(.5,fit));
    assert.equal(row.scale,scale);assert.ok(Math.abs(row.art.width-80*scale)<.03,`${row.kind}: SVG art scale`);
-   assert.ok(Math.abs(row.ret.x-row.anchor.x-37)<.03&&Math.abs(row.ret.y-row.anchor.y+19)<.03,'projected guide remains in screen pixels');
-   assert.ok(Math.abs(row.hit.x-row.ret.x)<.03&&Math.abs(row.hit.y-row.ret.y)<.03,'confirmed hit follows projected position');
+   if(row.kind==='blaster'){
+    assert.ok(Math.abs(row.ret.x-row.anchor.x)<.03&&Math.abs(row.ret.y-row.anchor.y)<.03,'Blaster root stays at the camera centre');
+    assert.ok(Math.abs(row.cameraMark.x-row.anchor.x)<.04&&Math.abs(row.cameraMark.y-row.anchor.y)<.04,'Blaster camera mark stays fixed');
+    assert.ok(Math.abs(row.impactMark.x-row.anchor.x-37)<.07&&Math.abs(row.impactMark.y-row.anchor.y+19)<.07,'Blaster impact follows its real projected point');
+    assert.ok(Math.abs(row.hit.x-row.impactMark.x)<.07&&Math.abs(row.hit.y-row.impactMark.y)<.07,'confirmed Blaster hit follows impact');
+   }else{
+    assert.ok(Math.abs(row.ret.x-row.anchor.x-37)<.03&&Math.abs(row.ret.y-row.anchor.y+19)<.03,'projected guide remains in screen pixels');
+    assert.ok(Math.abs(row.hit.x-row.ret.x)<.03&&Math.abs(row.hit.y-row.ret.y)<.03,'confirmed hit follows projected position');
+   }
    if(row.kind==='shooter')assert.ok(Math.abs(Math.abs(row.expanded.x-row.zero.x)-18.3)<.07,'projected spread must not shrink twice');
    if(row.twins){
     for(const [i,x] of [.1,-.13].entries())assert.ok(Math.abs(row.twins[i].x-row.anchor.x-x*viewport.width/2)<.04,'dualies guide remains at projected impact without adding the cluster offset twice');

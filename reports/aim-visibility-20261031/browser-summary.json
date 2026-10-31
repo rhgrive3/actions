@@ -1,0 +1,288 @@
+{
+  "result": "All three viewport scenarios passed after recorded retries",
+  "contentHash": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+  "sourceSha": null,
+  "firstCombinedReceiptRemainsFailed": true,
+  "retryNotes": "retry-notes.json",
+  "viewports": [
+    {
+      "name": "desktop720",
+      "receipt": "receipts/desktop720.json.gz",
+      "receiptSha256": "abd5f5e346a7d59d4485602ab22dbaecaed1faba7d1561f2ccf1691645c15d74",
+      "receiptStatus": "failed",
+      "scenarioStatus": "passed",
+      "viewport": [
+        1280,
+        720
+      ],
+      "dpr": 1,
+      "touch": false,
+      "weaponSelections": 16,
+      "maxMarkPositionErrorCssPixels": 0.0006510703137149918,
+      "naturalFadeOpacity": 0.10000000000152086,
+      "restoredOpacity": 1,
+      "nearestBodyCameraDistance": 5.675809320730067,
+      "headRadiusCssPixels": 32.9557436695799,
+      "impactToHeadCssPixels": 32.44801818666638,
+      "nonlocalActorCount": 11,
+      "nonlocalFadeMaterials": 0,
+      "sharedSourceChanges": [],
+      "frameCache": {
+        "calls": [
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 13.983066666666943,
+            "viewport": [
+              1280,
+              720
+            ],
+            "delta": {
+              "muzzle": 1,
+              "aim": 1,
+              "los": 1,
+              "segment": 0,
+              "raycast": 2,
+              "blocks": 6
+            },
+            "valid": true
+          },
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 13.983066666666943,
+            "viewport": [
+              1280,
+              720
+            ],
+            "delta": {
+              "muzzle": 0,
+              "aim": 0,
+              "los": 0,
+              "segment": 0,
+              "raycast": 0,
+              "blocks": 0
+            },
+            "valid": true
+          }
+        ]
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "shaderErrors": [],
+      "screenshots": [
+        "desktop720-blaster.png",
+        "desktop720-s3-blaster-short.png",
+        "desktop720-s3-blaster-long.png",
+        "desktop720-s3-blaster-lightshort.png",
+        "desktop720-s3-blaster-light.png",
+        "desktop720-s3-blaster-lightlong.png",
+        "desktop720-s3-blaster-precision.png",
+        "desktop720-jump.png",
+        "desktop720-sblast-air.png",
+        "desktop720-actual-down-fade.png",
+        "desktop720-restored.png",
+        "desktop720-gtao-restored.png",
+        "desktop720-gtao-fade.png"
+      ],
+      "gtao": {
+        "faded": {
+          "normalCalls": 1,
+          "hiddenCalls": 1,
+          "visible": true
+        },
+        "restored": {
+          "normalCalls": 1,
+          "hiddenCalls": 0,
+          "visible": true
+        }
+      }
+    },
+    {
+      "name": "desktop1080",
+      "receipt": "receipts/desktop1080.json.gz",
+      "receiptSha256": "09006a1e250533096994e5d75f6d375f680a586142d802e9b8865e277f9e7b00",
+      "receiptStatus": "passed",
+      "scenarioStatus": "passed",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "dpr": 1,
+      "touch": false,
+      "weaponSelections": 16,
+      "maxMarkPositionErrorCssPixels": 0.0009766054704903084,
+      "naturalFadeOpacity": 0.10000000000014543,
+      "restoredOpacity": 1,
+      "nearestBodyCameraDistance": 5.680608542870438,
+      "headRadiusCssPixels": 49.39630486471923,
+      "impactToHeadCssPixels": 50.222406019645945,
+      "nonlocalActorCount": 11,
+      "nonlocalFadeMaterials": 0,
+      "sharedSourceChanges": [],
+      "frameCache": {
+        "calls": [
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 15.583200000000362,
+            "viewport": [
+              1920,
+              1080
+            ],
+            "delta": {
+              "muzzle": 1,
+              "aim": 1,
+              "los": 1,
+              "segment": 0,
+              "raycast": 2,
+              "blocks": 6
+            },
+            "valid": true
+          },
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 15.583200000000362,
+            "viewport": [
+              1920,
+              1080
+            ],
+            "delta": {
+              "muzzle": 0,
+              "aim": 0,
+              "los": 0,
+              "segment": 0,
+              "raycast": 0,
+              "blocks": 0
+            },
+            "valid": true
+          }
+        ]
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "shaderErrors": [],
+      "screenshots": [
+        "desktop1080-blaster.png",
+        "desktop1080-s3-blaster-short.png",
+        "desktop1080-s3-blaster-long.png",
+        "desktop1080-s3-blaster-lightshort.png",
+        "desktop1080-s3-blaster-light.png",
+        "desktop1080-s3-blaster-lightlong.png",
+        "desktop1080-s3-blaster-precision.png",
+        "desktop1080-jump.png",
+        "desktop1080-sblast-air.png",
+        "desktop1080-actual-down-fade.png",
+        "desktop1080-restored.png",
+        "desktop1080-gtao-restored.png",
+        "desktop1080-gtao-fade.png"
+      ],
+      "gtao": {
+        "faded": {
+          "normalCalls": 1,
+          "hiddenCalls": 1,
+          "visible": true
+        },
+        "restored": {
+          "normalCalls": 1,
+          "hiddenCalls": 0,
+          "visible": true
+        }
+      }
+    },
+    {
+      "name": "mobile844",
+      "receipt": "receipts/mobile844.json.gz",
+      "receiptSha256": "31d15746eeeb85ac46c0f28ea60f1d14f521bf98a31b58a11d98f0b0a5d84a72",
+      "receiptStatus": "passed",
+      "scenarioStatus": "passed",
+      "viewport": [
+        844,
+        390
+      ],
+      "dpr": 2,
+      "touch": true,
+      "weaponSelections": 16,
+      "maxMarkPositionErrorCssPixels": 0.00034729363404620333,
+      "naturalFadeOpacity": 0.10000000000152086,
+      "restoredOpacity": 1,
+      "nearestBodyCameraDistance": 5.675809320730067,
+      "headRadiusCssPixels": 17.85102782102245,
+      "impactToHeadCssPixels": 17.57600985111094,
+      "nonlocalActorCount": 11,
+      "nonlocalFadeMaterials": 0,
+      "sharedSourceChanges": [],
+      "frameCache": {
+        "calls": [
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 14.899933333333665,
+            "viewport": [
+              844,
+              390
+            ],
+            "delta": {
+              "muzzle": 1,
+              "aim": 1,
+              "los": 1,
+              "segment": 0,
+              "raycast": 2,
+              "blocks": 6
+            },
+            "valid": true
+          },
+          {
+            "weapon": "s3-blaster-short-01",
+            "time": 14.899933333333665,
+            "viewport": [
+              844,
+              390
+            ],
+            "delta": {
+              "muzzle": 0,
+              "aim": 0,
+              "los": 0,
+              "segment": 0,
+              "raycast": 0,
+              "blocks": 0
+            },
+            "valid": true
+          }
+        ]
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "shaderErrors": [],
+      "screenshots": [
+        "mobile844-blaster.png",
+        "mobile844-s3-blaster-short.png",
+        "mobile844-s3-blaster-long.png",
+        "mobile844-s3-blaster-lightshort.png",
+        "mobile844-s3-blaster-light.png",
+        "mobile844-s3-blaster-lightlong.png",
+        "mobile844-s3-blaster-precision.png",
+        "mobile844-jump.png",
+        "mobile844-sblast-air.png",
+        "mobile844-actual-down-fade.png",
+        "mobile844-restored.png",
+        "mobile844-touch-high-fade.png"
+      ],
+      "gtao": {
+        "status": "not-applicable",
+        "reason": "Native Renderer disables GTAO on touch devices",
+        "policy": {
+          "touch": true,
+          "hasPass": false,
+          "renderedPixelRatio": 1.35
+        },
+        "highQualityOpacity": 0.10000000000062245,
+        "highQualityRestoredOpacity": 1
+      }
+    }
+  ],
+  "limits": [
+    "SwiftShader validation, not a retail Switch pixel-parity claim.",
+    "Aim/impact guide is a source-motion endpoint plus first terrain contact; actor capsule damage equivalence was not measured.",
+    "Native renderer intentionally omits GTAO on touch devices."
+  ]
+}

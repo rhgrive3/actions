@@ -1,0 +1,157 @@
+{
+  "baseMain": "b60a2216a4a553be9ffa6b80f2c30c325aebfd55",
+  "contentHash": "fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4",
+  "inputHash": "dba0f3c69e9eda7e639ff86d37ab280781811fba3941fced7d053603a2ffbb99",
+  "revision": "26081d9bc714d1dad166d3ace251c9135569028831bb1379c8a136d668783da1",
+  "canonicalInputs": 1610,
+  "scope": "Selected feature and adjacent regressions; groups may overlap, no aggregate total claimed",
+  "checks": [
+    {
+      "name": "new-self-reticle-hud",
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "768d20fb865a6ad90357533f5989117b6cf0ef67925bdf19e8b743aef44668c5"
+    },
+    {
+      "name": "emitted-guide-and-jump",
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "02b91d228278f423e5e75fa097ed7b7041ad4e8ae4144f6aca0680fd822f852f"
+    },
+    {
+      "name": "exact-build-packaging",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "e7605272320ee566b7a0d8bfd4b99245b0090901b74a6fae2b28724fd61a337d"
+    },
+    {
+      "name": "existing-aim",
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "8b1c25439587ff85a853cc8705d3056fa7adb178ce641f2a01a617eb5dd23faf"
+    },
+    {
+      "name": "existing-weapon-and-guide",
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "bb4edc1100e5047928d76c3ad65a2666d8cba6becb0202c1458a3f6ffa5caab6"
+    },
+    {
+      "name": "world-owner-migration",
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "efdf331f5d6d098f7a07d7e05503a5fadf874196801c9be8af21fb9589db5373"
+    }
+  ],
+  "startup": {
+    "status": "passed",
+    "revision": "26081d9bc714d1dad166d3ace251c9135569028831bb1379c8a136d668783da1",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78620,
+    "initialJSBytes": 1866092,
+    "criticalHTMLBytes": 24056,
+    "precacheCount": 611,
+    "precacheBytes": 8159256,
+    "workerBytes": 100660,
+    "declaredBytes": 23951019,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "compositionPreflight": "Production composition preflight OK: 119 source files; 75 adapted",
+  "worldMigration": {
+    "status": "passed",
+    "started": "2026-10-31T14:14:41.015Z",
+    "finished": "2026-10-31T14:15:27.940Z",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-concurrency=1",
+      "patches/local-quality/tests/queue-direct-world-ownership-20261031.test.mjs",
+      "patches/local-quality/tests/queue-visual-world-20261031.test.mjs",
+      "patches/local-quality/tests/queue-visual-world-20261031.residual.test.mjs",
+      "patches/local-quality/tests/queue-marina-hull-band-20261031.test.mjs",
+      "patches/local-quality/tests/queue-marina-grid-20261031.test.mjs",
+      "scripts/tests/inkwave-direct-source-ownership.test.mjs"
+    ],
+    "exitCode": 0,
+    "log": "/dev/shm/inkwave-world-owner-regressions.log",
+    "logSha256": "efdf331f5d6d098f7a07d7e05503a5fadf874196801c9be8af21fb9589db5373",
+    "directOwners": {
+      "props-core.js": "c300e9d340096615402d2416c2ae916602623aae68543d7e737a032a0cab44c6",
+      "props-marina-vessels.js": "2861991c2d7d4af28d6fc9cd72c8b70cbe25e92903359740ba27cfad905aa335"
+    }
+  },
+  "browserSummary": "browser-summary.json",
+  "retryNotes": "retry-notes.json",
+  "screenshots": [
+    {
+      "file": "self-fade.webp",
+      "basis": "compressed preview; original screenshot used for visual review",
+      "originalSha256": "5fdfa089f06693b0c5025aae5a08d76fd4abc329dd376f04969e21993a76b7a5"
+    },
+    {
+      "file": "self-restored.webp",
+      "basis": "compressed preview; original screenshot used for visual review",
+      "originalSha256": "3673ae260ab971e788940c50d4d425b3d8ec30093079871bfb1cef10e5763964"
+    }
+  ],
+  "ciNote": "Base main already had failing full-repository checks. New hosted check status is recorded on the pull request; local receipts do not claim full CI acceptance.",
+  "ciBaselineFixture": {
+    "time": "2026-10-31T14:49:56.859439+00:00",
+    "baseSha": "b60a2216a4a553be9ffa6b80f2c30c325aebfd55",
+    "officialRepository": "rhgrive3/actions",
+    "fixture": {
+      "path": "scripts/tests/inkwave-ci-sparse-checkout.test.mjs",
+      "githubBlobSha": "130d24a0ea816d9818dac236063d8dcbeb4622b7",
+      "sha256": "83f64c3958ed05d5622fc031a85c48a7f43eb585b8fd48e33419d3f6bc7078e5",
+      "byteLength": 8115,
+      "currentMatchesOfficial": true,
+      "testExpectedSha256": "05303588abb91c74e0925b410702f72ca7e0e91e1e0f361134f8e226af30a0fb",
+      "conclusion": "fixture seal mismatch exists at unchanged official base b60; verifier untouched"
+    },
+    "restored": [
+      {
+        "path": ".circleci/config.yml",
+        "blobSha": "6eed261aeb4c2fcc4a26ed0be9e082430dcafaf7",
+        "bytes": 1480
+      },
+      {
+        "path": "tools/backup/tests/test_auto_delta_kinds.py",
+        "blobSha": "a23f6fc9b099304a35698aa0c50fc388366f0dc1",
+        "bytes": 3941
+      },
+      {
+        "path": "tools/backup/tests/test_backup_and_restore.py",
+        "blobSha": "e29b50e5cbd441760daad7df5bbdbfdf1b4e8a29",
+        "bytes": 28215
+      },
+      {
+        "path": "tools/backup/tests/test_directory_symlinks.py",
+        "blobSha": "94b2a2513c3ec7bdf5d168997d718a608f065baf",
+        "bytes": 6478
+      }
+    ],
+    "suiteRetest": {
+      "time": "2026-10-31T14:50:06.227941+00:00",
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-concurrency=1",
+        "scripts/tests/inkwave-test-suites.test.mjs"
+      ],
+      "exitCode": 0,
+      "log": "/dev/shm/inkwave-aim-ci-restored-suites.log",
+      "logSha256": "58b860504aabe630e0a49683bb0c997f03dbb16134b83e0383dfeab7254a6b51"
+    }
+  }
+}

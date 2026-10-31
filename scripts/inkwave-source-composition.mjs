@@ -1,3 +1,4 @@
+import { adaptBlasterReticle } from '../patches/splatoon3/blaster-reticle-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
 import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
 import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
@@ -185,6 +186,7 @@ export function adaptBuildSource(rel, code, options = {}) {
   // shared menu/gameplay passes, without changing playable match settings.
   code = adaptTitleDemoBudget(rel, code);
   code = adaptTitlePresentation(rel, code, replaceOnce);
+  code = adaptBlasterReticle(rel, code, replaceOnce);
   return code;
 }
 
