@@ -50,7 +50,7 @@ try{
     window.qaResetRandom(0x18550001);
   });
   result.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000,onProgress:r=>console.log('native entry',r.route.join('/'))});
-  if(measureMain)await page.addScriptTag({content:'window.installHissenCaptureObserver='+installHissenCaptureObserver.toString()+';'});
+  if(measureMain)await page.evaluate(new Function('window.installHissenCaptureObserver='+installHissenCaptureObserver.toString()+';'));
   await page.evaluate(async measureMain=>{
     const G=window.__G,g=window.__inkwave;g.debug.freeze();
     // The trusted menu route above proves ordinary admission. Restart through

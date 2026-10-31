@@ -7164,3 +7164,61 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 - **実装・再現・影響**: `patches/splatoon3/runtime/ranked/{engine,install,network,rainmaker-device-contact}.mjs`。host ranked 更新が正常完了した release だけを送信・host-local 認可の根拠とし、表示側で消費する event map とは独立に completion fact を保持する。実 native release 0 の後で update を throw させた対照では、次 tick 以降も失敗 0 を wire／遠隔 Splash Wall 損傷へ進めず、正常 0 と次の正常 1 を維持する。失敗時の local queue／visual は巻き戻さず、既存 current-host trust／receipt／native contact admission を広げない。E2E 確認対象は Wall に限る。
 - **確認状態**: base `83e682d69110feaa82f274a11988e7bf3114c7bb`＋code 14 paths の同一 partial source root、Node24 source/VM で QA68（streamed51＋roof17）と Rainmaker formal9 を確認。native selected2／host-local 代表2／lexical10 は別 cohort で非合算。旧373 assert 式は維持したが、最終 base の旧 ranked35 再実行や旧 monolithic SIGKILL の合格化はしていない。物理 full collector は partial root の空 test directory guard により未受入であり、logical inventory の所属確認を全件テスト PASS と扱わない。
 - **未確認・対象外**: 今回の本家実機比較の参照 version・ギア・操作 frame 条件は未固定／未計測で、Splatoon 3 挙動一致は未判定。production emitted／full build／browser・GPU／real audio／FPS／最終 head の hosted CI は別受入を要する。Storm staged-birth 5 paths／v2 は除外し proof `04b4e29d…` を維持するため、その新しい合法反例は未解消。#1665 全体・全 device の security 合格や、髪／character model の編集・見た目比較を主張しない。
+
+
+### 2026-10-31: queue CI 契約自身の受入レーン登録
+
+- 対象は `scripts/ci/inkwave-test-suites.json` の `runner-contracts`。既存 `scripts/tests/inkwave-queue-ci-20261031.test.mjs` を明示入力へ1件だけ追加した。全13 suite の既存順序・引数・フラグ・他レーン収録は保持した。ゲームの runtime・数値・モデル・見た目は変更していない。
+- 再現は同契約の既存登録テストで未登録件数0（期待1）による失敗。追加後は同テスト1/1 PASS。実 runner の no-spawn plan が公式22ファイル・2 step・対象1回を確認し、独立した構造/逆変換検証3/3と既存 runner 選択5/5が PASS。物理 full-suite 実行・同head hosted CI・ブラウザはこのローカル結果に含まれない。
+- プレイ挙動の変更やスプラトゥーン3との一致を示す修正ではなく、既存CI経路契約の受入漏れを閉じる配線修正。本家参照version・ブキ・ギア・操作frameの新規実機比較は実施していない。旧 menu 候補・Storm 保留変更は含めない。
+
+
+### 2026-10-31: 現行 source epoch の Character QA と gameplay capture 入力検証
+
+- Character は既存の現行 shape/hair を変えず、歴史テキスト検証だけに sealed epoch 逆写像と公式3 pass の順次 replay を加えた。実 geometry/pose は既定 production composer のまま。旧 assertion 式82件と数値/geometry/pose 7 callback 本文を全保持し、独立 source 全9/9（288 pose、RNG 0/0）および別 text 契約3/3が PASS。旧2 text 失敗と旧 pose SIGKILL は過去の未受入として保持し、今回の成功へ読み替えない。
+- gameplay resource の既存共有 CDP screenshot 経路は120000msの単一 monotonic deadline と完全PNG検証を経て既存PNG書込みへ進む。追加 fallback/session/detach はなく、早期timerを再armし、timeout後の遅延完了は保存しない。既存共有session所有権・出力名・ゲームguardは保持。現行43件、候補57件、独立15件は別 cohort で PASS（合算しない）。実 browser の timeout 原因解消・GPU/FPS改善・最終head CI成功は未確認。
+- 変更は QA/test/harness と記録のみで、モデルの形状/外観・武器数値・ゲームruntimeを変更しない。本家参照version/ブキ/ギア/操作frameの新規実機比較は未実施で、スプラトゥーン3との挙動一致を判定する根拠にはしない。旧 menu 候補および保留 Storm は対象外。
+
+
+### 2026-10-31: relay host attachment の現行7 field保持と一時object削減
+
+- `server/src/index.js::_syncMemberAttachment` のhost予算組立だけを、既存mainの条件付き代入方式へ戻す。現行 `rejectedJoinBudgetAt/rejectedJoinsLeft` を含む7 field・値・順序を全保持し、他のadmission/host権限/hibernation処理は変更しない。新たなゲーム不具合の修正ではなく、mainに存在したsource-level冗長処理の復活漏れを閉じる。
+- 実moduleの対照でhost/guest・7 getter順序と各例外・非有限値/符号付き0・host交替・再入serialization・既存20,000反復のwire/snapshotが一致。新6件と既存11件は別にPASS、独立peerも実17件＋別4境界を確認。既存relay globが新testを1回収録するno-spawn planを確認した。観測用AST wrapperでは100同期呼出の条件budget-object評価が100→0。V8の実heap allocation/GC/FPS/ネットワーク性能の改善量は未計測で、最終head CI/Cloudflare実配備の受入ではない。
+- ゲーム数値/モデル形状/見た目を変更せず、本家参照version・ブキ・ギア・実機frame比較の新規測定は行っていない。
+
+
+### 2026-10-31: Kit 予測の未使用距離
+
+- `patches/splatoon3/runtime/kit-subs.mjs::predictKitSub` は defense が falsy の場合だけ、未使用の `previous.distanceTo` を省く。`world.hit` の読取り、truthy defense の距離、全query/horizon/RNG/接触結果は保持。新3件（28scenario）と既存145件、独立追加getter/throw4件は別cohortでPASS。実12秒void対照のnative queryは720→720、未使用distance評価だけ720→0で、query削減/FPS改善は主張しない。専用記録は `reports/kit-prediction-unused-distance-20261031.md`。実機参照version/ブキ/ギア/frameの新規比較、full site/emitted/browser/GPUは未確認。
+
+### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+
+基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+
+新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+
+### 2026-10-31: Library キューの既存PR照合と追加最適化
+
+監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+
+ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+
+形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+
+同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
+
+
+### 2026-10-31: native guide/Clam/Spinner QA と paint upload の限定差分
+
+- `throw-prediction-native-guide.test.mjs` は実native forecastのpublic guideと接触・cadenceを追加受入するQA2件。独立source2件、f98 kit更新との再照合2件は別cohortで、旧whole fidelity SIGKILLを合格に読み替えない。`bomb-motion.test.mjs` は既存200assert/18callbackを保持し、移動中roller/Flowの同じreleaseと実床の正規positiveを補う（19件PASS）。新しいゲーム挙動の修正やbare/private capabilityの捏造ではない。
+- Spinner QAはmain bee246cの既存3秒stereo/実sampleRate予約を参照し、旧192kHz・409600frame入力3276800Bを境界内positiveとして保持。独立計算した4608000Bのexact edgeと+1 stereo frame、NaN/不一致channelの拒否を確認し全15件PASS、容量/runtime/音質を変更しない。旧contextのchannel0追加4行は丸適用せず、既finite PCMの実境界とwrong-channel反証が検出済みであることを確認した。
+- paintはbit-identicalなsource-owned Float32有効prefixだけの重複range/version markを省く。WeakMap寿命、異なる属性/配列/offset/外部version・range変更、signed zero/NaN bits、可変ArrayBuffer等の安全fallbackを保持する。記録GLの15tick/14stampではbufferSubDataが65→17、draw/dry/payload/CPU ownerは同じ。formal34PASS/元WebGL1SKIP、独立source10/emitted10は別cohortで、full site/実GPUや125秒combat timeout解消を証明しない。
+- targetのdirect-source promotionは旧props原本2件全bytesをimmutable fixtureへ保存し、旧正式adapter/default出力と新direct/defaultが完全一致。A+同auditは公式123入力・DIRECT18件・failure0、既ownership unit14件PASS。モデル外観/形状を再設計した成果ではなく、既存reviewed出力のsource所有位置を保つもの。本家参照version・ブキ・ギア・実機frame測定は新規未実施。
+- 直前のmain由来4011Bは出典の元bytesをそのまま保全復元した歴史記録で、今回headのCI/本家一致/whole-suite合格を追加で宣言するものではない。最終headでの全必須CI・fresh build/browser受入は別に必要であり、未受入版や保留Storm変更は含めない。
+
+### 2026-10-31 — 非同期stage待機とQA受入経路の限定修復
+
+- `patches/local-quality/title-demo-budget-adapter.mjs`：最新targetのnativeFence分岐/standalone fallbackを保持し、既ownerの `_padMenus?.(dt)` と一致するanchor1行だけを補正。stage publication pending中は既fenceがtitleのGPU密度変更・保持snapshotより先に走り、clock/network/menu入力だけを進める。fresh titleのresize先行と、hidden titleがpending-clockを迂回する条件を実composed frameで再現し、publication後の通常title動作と既30/60/90/120/144Hz回帰を保持した。guard要求・ゲーム数値・外観は変更しない。
+- CSPのQA修復は `inkwave-accepted-default-probe` とWiper/Hissen capture callerに限定。既観測関数を通常のcallableとして渡し、CSP設定/bypass/unsafe-eval/unsafe-inline追加を行わず、元の描画・出生相対phase・復元/エラー条件を保持する。projection QAは最新metadataを残したまま、正常隔離importのcontrolと変更sealの厳密import拒否を比較する。responsive QAは正規buildのtitle品質markerがある時だけ実native buttonをクリック/タップし、raw baseline経路・geometry・main遷移の要求を保持する。これらはゲームのsecurity guardを緩める修正ではない。
+- 最新targetの外部修復は履歴/原bytesごと保持し、失効した旧stage/title/Marina候補をwholefile上書きしない。旧967のA+/resource成功は旧head自身の結果であり、追加headのbrowser/CI証明には流用しない。本家Splatoon 3の参照版・ブキ・ギア・操作frame条件の新規実機比較は未測定で、本家挙動一致・FPS改善・残る全CI解消を主張しない。別GPU診断、Trizooka等の後続修復、保留Storm payloadは本便と分離する。
+- Tacticoolerの既fidelity QAは裸placementを正規生成と見なさず、実paid producer→accepted tick→JSON wire→receiver-owned native flightを使う。既1.8/1.8001・gauge/drink/duplicate・geometry/damage要求は保持し、時計差し替えはreceiver VM内だけでfinally復元する。製品runtimeのadmission変更ではない。局所122PASSと、同入力を成功peerと同じheap512条件に固定した別21PASSは別cohortであり、143一括成功とはしない。既default heap条件のSIGKILL2件を保護し、原因をOOMと断定しない。

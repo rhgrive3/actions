@@ -316,7 +316,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
         }).catch(e=>result.errors.push('consumed artifact: '+e.message)));});
         await page.addInitScript(initializeWiperCapture,c);
         row.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000});
-        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__wrapWiperComposerPasses='+wrapWiperComposerPasses.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'});
+        await page.evaluate(new Function('window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__wrapWiperComposerPasses='+wrapWiperComposerPasses.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'));
         Object.assign(row,await page.evaluate(installWiperProbe,c));
         for(const frame of WIPER_CAPTURE_FRAMES[c.action]){
           let captured;
