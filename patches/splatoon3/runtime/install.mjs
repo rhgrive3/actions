@@ -94,6 +94,7 @@ import { installTripleSlamFists } from './triple-slam-fists.mjs';
 import { installDeathBlast } from './death-blast.mjs';
 import { installAllSubs, replaySub } from './all-subs.mjs';
 import { installAllSpecials, replaySpecial } from './all-specials.mjs';
+import { installThrowPrediction } from './throw-prediction.mjs';
 import { installSpecialModels } from './special-presentation.mjs';
 import { installSpecialVfx, observeSpecialReplay } from './special-vfx.mjs';
 import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
@@ -253,5 +254,8 @@ export function install(profile) {
   // fails even valid source kits because their registry entries do not exist.
   // Retain all previously installed legacy wrappers (this is deliberately last).
   installMainWeaponCatalogRuntime(api, profile);
+  // Every weapon-specific flight/activation owner is now installed. Render
+  // its exact prediction instead of falling back to the Splat Bomb equation.
+  installThrowPrediction(api);
   return api;
 }
