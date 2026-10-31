@@ -1,6 +1,7 @@
 import { nonWailVfxTicks, consumeVfxPeriod } from './nonwail-vfx-clock.mjs';
 const STORM_RAIN_OPTIONS = Object.freeze({ drag: 0, grav: 0, stretch: 0.05, fadeIn: 0.01 });
 const STORM_DRIP_OPTIONS = Object.freeze({ grav: 16, drag: 0 });
+const MUZZLE_DROP_OPTIONS=Object.freeze({drag:2,grav:12,stretch:0.03});
 const TENTA_BRACKET_CORNERS = Object.freeze([[-1, -1], [1, -1], [1, 1], [-1, 1]]);
 // Splatoon 3 special-weapon effects: activation, sustain, attack, impact and end
 // for all nineteen specials (presentation only).
@@ -24,14 +25,13 @@ const TENTA_BRACKET_CORNERS = Object.freeze([[-1, -1], [1, -1], [1, 1], [-1, 1]]
 // are presentation timestamps only.
 
 import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
-import { LayoutSample } from '../../local-quality/layout-sample.mjs';
 import { inkjetVfxAdmission, inkjetVfxRoom } from './inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from './inkjet-vfx-clock.mjs';
 import { areaSpecialVfxTicks } from './area-special-vfx-clock.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel, trizookaPresentationMuzzle, inkVacPresentationMuzzle } from './special-motion.mjs';
-import { superChumpLandingPreview, tentaMissilesLockPreview } from './all-specials.mjs';
+import { superChumpLandingPreview, tentaMissilesLockRowsForVfx } from './all-specials.mjs';
 import { remoteKrakenPhase } from './special-presentation.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
 
@@ -265,7 +265,7 @@ class Director {
     this.disc(true, 0.12, DISC.FLASH, pos, dir, 0.15 * size, 0.5 * size, this.hdr(col, 1.3, 0.8), 0.55, { hold: 0.05 });
     for (let i = 0; i < Math.round(10 * size * this.kit.q); i++) {
       const s = rnd(14, 6) * size;
-      this.drop(pos, (dir.x + rnd(0.3, -0.3)) * s, (dir.y + rnd(0.3, -0.3)) * s, (dir.z + rnd(0.3, -0.3)) * s, rnd(0.45, 0.25), 0.07 * size * rnd(1.4, 0.7), col, { drag: 2, grav: 12, stretch: 0.03 });
+      this.drop(pos, (dir.x + rnd(0.3, -0.3)) * s, (dir.y + rnd(0.3, -0.3)) * s, (dir.z + rnd(0.3, -0.3)) * s, rnd(0.45, 0.25), 0.07 * size * rnd(1.4, 0.7), col, MUZZLE_DROP_OPTIONS);
     }
   }
   // ------------------------------------------------------------------ actor tracks
@@ -519,15 +519,13 @@ class Director {
     }
     if (!h) return true;
     if (h.svg.parentNode !== layer) layer.appendChild(h.svg);
-    if (!h.layout || h.layer !== layer || h.canvas !== canvas) {
-      h.layout?.dispose(); h.layer = layer; h.canvas = canvas;
-      h.layout = new LayoutSample(layer, h.svg);
-    }
     const display = show ? '' : 'none';
     if (h.svg.style.display !== display) h.svg.style.display = display;
     if (!show) return true;
-    h.layout.begin();
-    const lr = h.layout.rect(layer), cr = h.layout.rect(canvas);
+    // Only two rectangles are needed. Live reads preserve CSS/WAAPI/ancestor
+    // movement without enumerating every animation in the document or retaining
+    // an observer graph for a short-lived lock HUD.
+    const lr = layer.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
     const cx = cr.left - lr.left + cr.width / 2, cy = cr.top - lr.top + cr.height / 2, R = limit * cr.height / 2, k = this.time;
     const RO = R * 2.3;
     if (h.cx !== cx || h.cy !== cy || h.radius !== R) {
@@ -953,8 +951,10 @@ const KIT_FX = {
     start(r, c) { const p = c.group?.position || c.pos; if (!p) return; this.smoke(p, 12, this.hdr(r.color, 0.7), { kind: PUFF.SMOKE, size: 1.4, speed: 3, rise: 0.4, buoy: 0, life: 1.2, alpha: 0.6 }); this.flash(p, r.color, 1.4, 0.3); },
     frame(r, c, dt) {
       const p = c.group?.position || c.pos; if (!p || !this.near(p, 70)) return;
-      const grow = clamp01((c.t || 0) / 0.5) * clamp01(((c.dur || 6) - (c.t || 0)) / 0.6), R = 3.4 * grow, ground = groundBelowPoint(this, p, finite(c.groundY) ? c.groundY : p.y - 8);
+      const grow = clamp01((c.t || 0) / 0.5) * clamp01(((c.dur || 6) - (c.t || 0)) / 0.6), R = 3.4 * grow;
       r.acc = (r.acc || 0) + dt; r.drip = (r.drip || 0) + dt;
+      if(!(r.acc>0.02||r.drip>0.09))return;
+      const ground=groundBelowPoint(this,p,finite(c.groundY)?c.groundY:p.y-8);
       while (r.acc > 0.02) { r.acc -= 0.02;
         const th = rnd(TAU), rr = R * Math.sqrt(vfxRandom());
         this.v[0].set(p.x + Math.cos(th) * rr, p.y - 0.5, p.z + Math.sin(th) * rr);
@@ -1049,16 +1049,16 @@ const DIRECTORS = {
       // TargetInCircleRadius 140/190/240 by Special Power Up, over 360 of the half screen height) read through
       // tentaMissilesLockPreview, so the brackets are exactly the opponents the salvo would lock. Local caster only;
       // hidden once the salvo launches.
-      const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockPreview(this.api, a) : null;
+      const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockRowsForVfx(this.api, a) : null;
       const held = t.d.tentaRows ||= { inside: [], rows: [], busy: false };
       const scratch = held.busy ? { inside: [], rows: [], busy: false } : held;
       const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = scratch.inside, rows = scratch.rows;
       scratch.busy = true; inside.length = 0;
       try {
-      if (pv && cam?.isPerspectiveCamera) for (let i=0;i<pv.targets.length;i++) {
-        const e=pv.targets[i],screen=pv.screen?.[i];
+      if (pv && cam?.isPerspectiveCamera) for (let i=0;i<pv.rows.length;i++) {
+        const selected=pv.rows[i],e=selected.actor;
         const row = rows[inside.length] || (rows[inside.length] = [null, 0, 0]); row[0] = e;
-        if (screen && screen[0] !== null && screen[1] !== null) { row[1] = screen[0]; row[2] = screen[1]; }
+        if (selected.x !== null && selected.y !== null) { row[1] = selected.x; row[2] = selected.y; }
         else {
           const q=this.v[0].copy(e.pos);q.y+=.7;q.project(cam);
           row[1] = q.x; row[2] = q.y;
@@ -1092,7 +1092,7 @@ const DIRECTORS = {
         this.smoke(pos, 8, [0.92, 0.92, 0.95], { size: 0.5, speed: 2.5, life: 1.2, alpha: 0.55, rise: 2 });
       }
     },
-    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; this.tentaHud(t, false); t.d.hud?.layout?.dispose(); t.d.hud?.svg?.remove?.(); t.d.hud = null; },
+    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; this.tentaHud(t, false); t.d.hud?.svg?.remove?.(); t.d.hud = null; },
   },
   // ---------------------------------------------------------------- Inkjet
   inkjet: {

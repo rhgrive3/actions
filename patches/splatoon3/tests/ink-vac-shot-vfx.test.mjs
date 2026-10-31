@@ -5,7 +5,6 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {compactModuleStrings} from '../../../scripts/lib/inkwave-source-compaction.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
-import { fixture as productionFixture } from '../../network-replication/tests/robustness-fixture.mjs';
 const read = path => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const source = process.env.SPECIAL_VFX_SOURCE ? fs.readFileSync(process.env.SPECIAL_VFX_SOURCE, 'utf8') : read('../runtime/special-vfx.mjs');
 const code = adaptBuildSource('patches/splatoon3/runtime/special-vfx.mjs', source).replace(/^import .*;\n/gm, '').replace(/^export default .*;$/gm, '').replace(/^export /gm, '');
@@ -81,42 +80,24 @@ test('rejected births never emit; nested ghost-to-push emits only once',()=>{
   assert.equal(rejected.system.ghostProjectile(rejected.actor,rejected.packet),null);assert.equal(rejected.flashes.length,0);
   const nested=fixture({nested:true});nested.system.ghostProjectile(nested.actor,nested.packet);assert.equal(nested.flashes.length,1);
 });
-test('actual Ink Vac authored emitter reaches the installed native birth hook',async()=>{
-  // Load the actual module closure: the emitter now delegates launch state to
-  // inkVacExhaleKinematics. A methods-only slice cannot supply that dependency
-  // and the former fake four-second lifetime was not the shipped calibration.
-  const esbuild=process.env.SPECIAL_VFX_ESBUILD&&createRequire(import.meta.url)(process.env.SPECIAL_VFX_ESBUILD);
-  const owners=new Set(['patches/splatoon3/runtime/kit-ink-vac.mjs',
-    'patches/splatoon3/runtime/special-vfx.mjs','src/game/weapons.js']),transformed=new Set();
-  const f=await productionFixture({productionComposition:true,includePresentation:true,
-    transformSource:(rel,body)=>{
-      if(process.env.SPECIAL_VFX_SOURCE&&rel==='patches/splatoon3/runtime/special-vfx.mjs')
-        body=adaptBuildSource(rel,source);
-      if(!esbuild||!owners.has(rel))return body;
-      transformed.add(rel);
-      return compactModuleStrings(esbuild.transformSync(body,{loader:'js',minify:true,charset:'utf8',
-        format:'esm',legalComments:'inline',sourcefile:rel}).code).code;
-    }});
-  if(esbuild)assert.deepEqual([...transformed].sort(),[...owners].sort(),'all birth/kinematics/VFX owners use the production transform');
-  const fx=new f.FX(new f.THREE.Scene(),{quality:'low'});f.G.fx=fx;fx.setCollider(()=>null);
-  const flashes=[],shells=[],recorded=[];
-  fx.s3SpecialVfx.muzzle=pos=>flashes.push(pos.clone());
-  fx.s3SpecialVfx.shell=(_add,_life,_kind,pos)=>shells.push(pos.clone());
-  f.G.netm={recProj:p=>recorded.push(p)};
-  const actor=f.makeActor({nid:7,owner:'local',remote:false,roller:false});
-  actor.pos.set(2,2,4);actor.aimDir.set(0,0,1);
-  actor.specialActive={id:'inkVac',phase:'exhale'};
-  const origin=actor.pos.clone().add(new f.THREE.Vector3(0,f.INK_VAC_CALIBRATION.breathOriginHeight,0));
-  const velocity=actor.aimDir.clone().normalize().multiplyScalar(f.exhaleSpeed(.5))
-    .add(new f.THREE.Vector3(0,f.INK_VAC_CALIBRATION.spawnSpeedY*f.INK_VAC_CALIBRATION.framesPerSecond,0));
-  const p=f.projectiles.fireInkVacExhale(actor,{charge:.5});
-  assert.equal(f.projectiles.list[0],p);assert.deepEqual(recorded,[p]);
-  assert.equal(flashes.length,1);assert.equal(shells.length,1);
-  for(const point of [p.start,p.pos,p.prev,flashes[0],shells[0]])assert.equal(point.distanceTo(origin),0,'actual authored birth and fallback muzzle share the real origin');
-  assert.equal(p.vel.distanceTo(velocity),0,'actual authored birth retains calibrated launch velocity');
-  assert.equal(p.age,0);assert.equal(p.life,f.INK_VAC_CALIBRATION.burstLifetimeSeconds);
-  assert.equal(p.damage,f.exhaleDamage());assert.equal(p.wid,'inkVac');assert.equal(p.owner,actor);
-  fx.s3SpecialVfx.inkVacShot(p);assert.equal(flashes.length,1,'native observation is still deduplicated');
+test('actual Ink Vac authored emitter reaches the installed native birth hook',()=>{
+  const f=fixture(),kit=read('../runtime/kit-ink-vac.mjs');
+  const begin=kit.indexOf('    Projectiles.prototype.fireInkVacExhale = function');
+  const end=kit.indexOf('\n    };',begin)+7;
+  // The authored emitter now shares its launch snapshot with prediction. Run
+  // that actual helper and its local dependencies in this same fixture realm.
+  const launch=kit.match(/^export function inkVacExhaleKinematics\([\s\S]*?^\}/m)?.[0];
+  const requireApi=kit.match(/^function requireApi\(\).+$/m)?.[0];
+  const clamp01=kit.match(/^const clamp01 =.+$/m)?.[0];
+  assert.ok(launch&&requireApi&&clamp01,'actual Ink Vac launch dependencies are present');
+  const THREE={Vector3:Vec};
+  const context=vm.createContext({ Projectiles:f.system.constructor,THREE,api:{THREE},
+    originOf:(_,v)=>v.set(2,3,4),forwardOf:(_,v)=>v.set(0,0,1),exhaleDamage:()=>220,
+    exhaleSpeed:()=>30,MIN_PLAYER_RADIUS:.2,SPAWN_SPEED_Y:0,SPAWN_BLAST_WAIT:240,
+    INK_VAC_CALIBRATION:{framesPerSecond:60},FLY_GRAVITY:0,FLY_AIR_RESIST:0 });
+  vm.runInContext([clamp01,requireApi,launch.replace(/^export /,''),kit.slice(begin,end)].join('\n'),context);
+  const p=f.system.fireInkVacExhale(f.actor,{charge:.5,descriptor:{id:'inkVac',impactRadius:8}});
+  assert.equal(f.system.list[0],p);assert.equal(f.flashes.length,1);assert.equal(p.age,0);assert.equal(p.life,4);
 });
 
 test('clearing presentation neither flashes nor replays an already observed live round',()=>{

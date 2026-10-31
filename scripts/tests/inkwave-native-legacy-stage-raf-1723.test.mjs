@@ -83,8 +83,18 @@ function guardedFrame(G,runSimulation=()=>{throw Error('disposed world advanced'
  const game=ast.body.find(n=>n.type==='ClassDeclaration'&&n.id?.name==='Game');
  const method=game?.body.body.find(n=>n.type==='MethodDefinition'&&n.key?.name==='_frame');
  assert.ok(method,'production Game._frame');
- const [guard]=method.value.body.body;
- assert.equal(guard?.type,'IfStatement','the stage fence is the first frame statement');
+ const statements=method.value.body.body;
+ const index=statements.findIndex(n=>n.type==='IfStatement'
+   && main.slice(n.test.start,n.test.end)==='this._nativeStageSwitchPending');
+ assert.ok(index>=0,'a real pending-stage early return remains in the published frame');
+ // Independent render-clock instrumentation may read performance.now() first,
+ // but no input, simulation, GPU work or effect may execute before the fence.
+ const prior=statements.slice(0,index);
+ assert.ok(prior.every(n=>n.type==='VariableDeclaration'&&n.kind==='const'
+   && n.declarations.every(d=>d.init?.type==='CallExpression'
+    && main.slice(d.init.callee.start,d.init.callee.end)==='performance.now')),
+   'only independent clock reads can precede the pending-stage guard');
+ const guard=statements[index];
  assert.equal(main.slice(guard.test.start,guard.test.end),'this._nativeStageSwitchPending','the leading guard checks the actual pending stage');
  assert.equal(guard.consequent.type,'BlockStatement');
  assert.equal(guard.consequent.body.at(-1)?.type,'ReturnStatement','the fence exits before world work');

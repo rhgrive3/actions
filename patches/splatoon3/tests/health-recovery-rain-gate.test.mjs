@@ -4,14 +4,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {fixture} from './source-fixture.mjs';
-const OLD=`  const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
-  if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {`;
+const OLD=`  const P = api.PLAYER, r = tuning;
+  const clouds=api.G.projectiles?.clouds;
+  const rain=Array.isArray(clouds)&&clouds.length===0?null:stormRecoveryState(a, api);
+  if (!onEnemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp && !rain?.enemy) {
+`;
 const NEW=`  const P = api.PLAYER, r = tuning;
   // Rain cannot change an ineligible recovery tick. Keep the exact comparisons
   // (including NaN behavior), and query live clouds once recovery is possible.
   if (onEnemy || !(a.lastDamage + 1e-10 >= r.regenDelay) || !(a.hp < P.hp)) return;
-  const rain = stormRecoveryState(a, api);
-  if (!rain.enemy) {`;
+  const clouds=api.G.projectiles?.clouds;
+  const rain=Array.isArray(clouds)&&clouds.length===0?null:stormRecoveryState(a, api);
+  if (!rain?.enemy) {
+`;
 function snapshot(root){const seen=new Map();function walk(v){if(typeof v==='number')return Number.isNaN(v)?'NaN':Object.is(v,-0)?'-0':!Number.isFinite(v)?String(v):v;if(!v||typeof v!=='object')return typeof v==='function'?'[function]':v;if(seen.has(v))return {$ref:seen.get(v)};seen.set(v,seen.size);return Object.fromEntries(Object.keys(v).sort().map(k=>[k,walk(v[k])]));}return walk(root);}
 async function setup(baseline){
  const f=await fixture({productionComposition:true,adaptRuntime:(rel,s)=>rel==='patches/splatoon3/runtime/resources.mjs'&&baseline?s.replace(NEW,OLD):s});

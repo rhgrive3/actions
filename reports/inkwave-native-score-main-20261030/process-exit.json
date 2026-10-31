@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "checkedUTC": "2026-10-30T21:02:09.885141+00:00",
+  "ownedRoots": [
+    "/workspace/actions-score-base",
+    "/workspace/actions-score-main"
+  ],
+  "activeNodePythonEsbuildWorkers": [],
+  "testProcessesAllExited": true,
+  "browserOrPerformanceMeasurementStarted": false
+}

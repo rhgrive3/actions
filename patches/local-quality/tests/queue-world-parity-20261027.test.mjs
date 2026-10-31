@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
+import {Float32Staging} from '../../../inkwave-public/src/world/attribute-staging.js';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 const root=new URL('../../../',import.meta.url);
 const read=rel=>fs.readFileSync(new URL('inkwave-public/'+rel,root),'utf8');
@@ -39,7 +40,7 @@ test('marina affine rejection preserves every contour and avoids actual full tra
  assert(after.count<before.count*.6,`${before.count} -> ${after.count} full transforms`);
  for(const o of owner.scene.children[0].children){o.geometry.dispose();o.material?.dispose?.();}
 });
-function strip(source,G){return method(source,'_buildMarinaFx','_buildFoamField',{THREE,WATER_Y,G,STRIP_VERT:'',STRIP_FRAG:''});}
+function strip(source,G){return method(source,'_buildMarinaFx','_buildFoamField',{THREE,WATER_Y,G,Float32Staging,STRIP_VERT:'',STRIP_FRAG:''});}
 function stripsFixture(){
  const blocks=[],faces=[];
  for(let i=0;i<80;i++){

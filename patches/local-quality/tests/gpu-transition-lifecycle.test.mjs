@@ -77,9 +77,9 @@ test('paused invalidation frees the superseded snapshot before allocating real f
   };
   visit(parse(code,{ecmaVersion:'latest',sourceType:'module'}));
   assert.equal(matches.length,1,'one complete native render guard');
-  const render=new Function('setUp','menuAttractBudget','pausedFrame','sm','document',code.slice(matches[0].start,matches[0].end));
+  const render=new Function('setUp','menuAttractBudget','pausedFrame','sm','document','titleDemo',code.slice(matches[0].start,matches[0].end));
   const events=[],game={R:{releasePausedFrame(){events.push('release');},render(){events.push('render');},capturePausedFrame(){events.push('capture');return true;}},showcase:{render(){}}};
-  render.call(game,false,false,{paused:true,draw:true,commit(){events.push('commit');}},{},{hidden:false});
+  render.call(game,false,false,{paused:true,draw:true,commit(){events.push('commit');}},{},{hidden:false},{active:false,reduced:false,captured:false});
   assert.deepEqual(events,['release','render','capture','commit']);
 });
 

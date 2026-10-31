@@ -3,7 +3,18 @@ import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 export const baseline=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-visual-world-20261031/baseline.json',import.meta.url),'utf8'));
 export const raw=rel=>fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
-export const composed=(rel,before=false)=>adaptBuildSource(rel,raw(rel),{queueVisualWorld20261031:!before});
+// Frozen exact direct-source predecessors. New builds ship optimized owner
+// bytes directly, while this A/B harness keeps the historical source for
+// fully independent geometry and callback-order equivalence checks.
+const directPredecessor = Object.freeze({
+  'src/world/props-core.js':'./fixtures/props-core-direct-before-20261031.js.txt',
+  'src/world/props-marina-vessels.js':'./fixtures/props-marina-vessels-direct-before-20261031.js.txt',
+});
+export const composed=(rel,before=false)=>{
+  const predecessor=before&&directPredecessor[rel];
+  const source=predecessor?fs.readFileSync(new URL(predecessor,import.meta.url),'utf8'):raw(rel);
+  return adaptBuildSource(rel,source,{queueVisualWorld20261031:!before});
+};
 export function declaration(source,klass,key){
  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});let found;
  function walk(n){if(!n||typeof n!=='object'||found)return;

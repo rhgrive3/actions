@@ -1,0 +1,767 @@
+{
+  "requests": [
+    {
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "audioRequestLedger": [
+    {
+      "id": 623,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+      "resourceType": "media",
+      "phase": "startup",
+      "startedAt": 1793412818624,
+      "endedAt": 1793412826516,
+      "terminal": "failed",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "id": 631,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+      "resourceType": "media",
+      "phase": "startup",
+      "startedAt": 1793412824385,
+      "endedAt": 1793412824414,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 632,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Wp_ShooterNormal_Shot_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824397,
+      "endedAt": 1793412824420,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 633,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/HitEf_CriticalHit_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824464,
+      "endedAt": 1793412824465,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 634,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/HitEf_Damage_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824465,
+      "endedAt": 1793412824467,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 635,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/HitEf_InkHit_Focused_Normal_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824469,
+      "endedAt": 1793412824473,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 636,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/HitEf_InkHit_Focused_Strong_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824476,
+      "endedAt": 1793412824483,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 637,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Pl_DeadSplash_00.mp3",
+      "resourceType": "fetch",
+      "phase": "startup",
+      "startedAt": 1793412824483,
+      "endedAt": 1793412824488,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 639,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_Shot_00.mp3",
+      "resourceType": "fetch",
+      "phase": "context-proof",
+      "startedAt": 1793412872348,
+      "endedAt": 1793412872401,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 640,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Stick_00.mp3",
+      "resourceType": "fetch",
+      "phase": "context-proof",
+      "startedAt": 1793412872415,
+      "endedAt": 1793412872427,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 641,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Explosion_00.mp3",
+      "resourceType": "fetch",
+      "phase": "context-proof",
+      "startedAt": 1793412872430,
+      "endedAt": 1793412872434,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 642,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_Explosion_00.mp3",
+      "resourceType": "fetch",
+      "phase": "context-proof",
+      "startedAt": 1793412872443,
+      "endedAt": 1793412872453,
+      "terminal": "finished",
+      "error": null
+    },
+    {
+      "id": 643,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_BulletLoop_00.mp3",
+      "resourceType": "fetch",
+      "phase": "context-proof",
+      "startedAt": 1793412872470,
+      "endedAt": 1793412872484,
+      "terminal": "finished",
+      "error": null
+    }
+  ],
+  "requestDiagnostics": [
+    {
+      "event": "failed",
+      "phase": "startup",
+      "at": "2026-10-31T02:13:46.517Z",
+      "id": 623,
+      "url": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+      "resourceType": "media",
+      "timing": {
+        "startTime": 1793412818617.834,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.166,
+        "responseStart": 6.008,
+        "responseEnd": 7895.528
+      },
+      "timingError": null,
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "mediaTrace": {
+    "available": true,
+    "hooks": {
+      "pause": true,
+      "load": true,
+      "removeAttribute": true,
+      "src": true
+    },
+    "hooksComplete": true,
+    "evidenceComplete": true,
+    "dropped": 0,
+    "ledgerDropped": 0,
+    "diagnosticError": null,
+    "records": [
+      {
+        "event": "src-set-before",
+        "wall": 1793412818527,
+        "mono": 42803.90000000002,
+        "element": 1,
+        "src": "",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 0,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "src-set-after",
+        "wall": 1793412818527,
+        "mono": 42804,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "media-loadstart",
+        "wall": 1793412818618,
+        "mono": 42894.80000000005,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 2,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": true,
+            "preloaded": false,
+            "desiredTrack": "menu"
+          }
+        ],
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "media-canplay",
+        "wall": 1793412818788,
+        "mono": 43064.40000000002,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 2,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": true,
+            "preloaded": false,
+            "desiredTrack": "menu"
+          }
+        ],
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "src-set-before",
+        "wall": 1793412824318,
+        "mono": 48594.5,
+        "element": 4,
+        "src": "",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 0,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "src-set-after",
+        "wall": 1793412824318,
+        "mono": 48594.600000000035,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "load-before",
+        "wall": 1793412824318,
+        "mono": 48594.90000000002,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "stack": "Error\n    at Audio.value [as load] (<anonymous>:42:117)\n    at j.preloadFile (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/music.js:2:35665)\n    at Object.prepareMatch (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/main.js:3:24279)\n    at http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/menus.js:51:47483\n    at nt (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/ui-util.js:1:5673)\n    at oa._startMatch (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/menus.js:51:47445)\n    at accept (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/menus.js:51:43323)\n    at Object.accept (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/menus.js:51:23161)\n    at HTMLButtonElement.<anonymous> (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/ui/menus.js:51:13569)",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "load-after",
+        "wall": 1793412824318,
+        "mono": 48594.90000000002,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "media-emptied",
+        "wall": 1793412824382,
+        "mono": 48658.600000000035,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "",
+        "paused": false,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 5,
+            "engine": 3,
+            "track": "battle",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": false,
+            "preloaded": true,
+            "desiredTrack": "menu"
+          }
+        ],
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "media-loadstart",
+        "wall": 1793412824384,
+        "mono": 48660.600000000035,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 2,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 5,
+            "engine": 3,
+            "track": "battle",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": false,
+            "preloaded": true,
+            "desiredTrack": "menu"
+          }
+        ],
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      },
+      {
+        "event": "media-canplay",
+        "wall": 1793412824403,
+        "mono": 48680,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 5,
+            "engine": 3,
+            "track": "battle",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": false,
+            "preloaded": true,
+            "desiredTrack": "menu"
+          }
+        ],
+        "inflightRequestIDs": [
+          631
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "pause-before",
+        "wall": 1793412826509,
+        "mono": 50785.40000000002,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": false,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": false,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "stack": "Error\n    at Audio.value [as pause] (<anonymous>:42:117)\n    at http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1281",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "pause-after",
+        "wall": 1793412826509,
+        "mono": 50785.600000000035,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": false,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": false,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "pause-before",
+        "wall": 1793412826509,
+        "mono": 50785.70000000001,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "stack": "Error\n    at Audio.value [as pause] (<anonymous>:42:117)\n    at h.dispose (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1662)\n    at T.s.retireStream (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/local-quality/music-idle.mjs:1:2410)\n    at http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1351",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "pause-after",
+        "wall": 1793412826509,
+        "mono": 50785.80000000005,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "removeAttribute-before",
+        "wall": 1793412826509,
+        "mono": 50785.90000000002,
+        "element": 1,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "stack": "Error\n    at Audio.value [as removeAttribute] (<anonymous>:42:117)\n    at h.dispose (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1683)\n    at T.s.retireStream (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/local-quality/music-idle.mjs:1:2410)\n    at http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1351",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "removeAttribute-after",
+        "wall": 1793412826509,
+        "mono": 50785.90000000002,
+        "element": 1,
+        "src": "",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "load-before",
+        "wall": 1793412826509,
+        "mono": 50785.90000000002,
+        "element": 1,
+        "src": "",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "stack": "Error\n    at Audio.value [as load] (<anonymous>:42:117)\n    at h.dispose (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1719)\n    at T.s.retireStream (http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/patches/local-quality/music-idle.mjs:1:2410)\n    at http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/src/audio/streamedTrack.js:1:1351",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "load-after",
+        "wall": 1793412826511,
+        "mono": 50787.600000000035,
+        "element": 1,
+        "src": "",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 2,
+            "engine": 3,
+            "track": "menu",
+            "disposed": true,
+            "failed": false,
+            "stopAt": 7.605578231292517,
+            "pausedAfterFade": true,
+            "current": false,
+            "preloaded": false,
+            "desiredTrack": null
+          }
+        ],
+        "sourceURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "media-abort",
+        "wall": 1793412826511,
+        "mono": 50788.20000000001,
+        "element": 1,
+        "src": "",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "media-emptied",
+        "wall": 1793412826513,
+        "mono": 50789.600000000035,
+        "element": 1,
+        "src": "",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+        "paused": true,
+        "ended": false,
+        "readyState": 0,
+        "networkState": 3,
+        "mediaError": null,
+        "owners": [],
+        "inflightRequestIDs": [
+          623
+        ],
+        "requestCorrelation": "unique-url-time-candidate"
+      },
+      {
+        "event": "media-canplay",
+        "wall": 1793412871530,
+        "mono": 95806.5,
+        "element": 4,
+        "src": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "currentSrc": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/Jet_Arrow.mp3",
+        "paused": false,
+        "ended": false,
+        "readyState": 4,
+        "networkState": 1,
+        "mediaError": null,
+        "owners": [
+          {
+            "owner": 5,
+            "engine": 3,
+            "track": "battle",
+            "disposed": false,
+            "failed": false,
+            "stopAt": null,
+            "pausedAfterFade": false,
+            "current": true,
+            "preloaded": false,
+            "desiredTrack": "battle"
+          }
+        ],
+        "inflightRequestIDs": [],
+        "requestCorrelation": "none"
+      }
+    ]
+  },
+  "audioRequestLedgerDropped": 0,
+  "expectedMenuURL": "http://127.0.0.1:38449/_versions/1dc0477754f41766476da984f4adfaedf986514f00651919c60a4fb7b737464c/assets/audio/menu_the_ika_swing_aoi_kenban.mp3",
+  "provenance": {
+    "sourceSha": "5a1c9a8afd22147c6534c7b26767f74f6666a473",
+    "run": 41158474432,
+    "job": 124410437896,
+    "artifact": 13026242664,
+    "artifactSHA256": "2a0f65fdfcf6d2999df5ddacab326ac72776b8b59dc33643118626e2955f189b",
+    "actualResultOK": false,
+    "scope": "Actual browser telemetry only. Historical failed result is not rewritten."
+  }
+}

@@ -354,7 +354,26 @@ function pushWakePoint(slot, x, y, z, t) {
 
 export class SwimWake {`,
       replaceOnce,
-      'GPU-08b add wake point pooling helpers in SwimWake'
+      'GPU-08b add wake point pooling helpers in SwimWake',
+      // Exact downstream queue-render form: every pooled rewrite advances
+      // the identity checked by the retained-history uniform upload cache.
+      `const compareWakeDistance = (x, y) => x._wakeD2 - y._wakeD2;
+function recycleWakePoints(slot) {
+  const pool = slot.pool || (slot.pool = []);
+  while (slot.pts.length) pool.push(slot.pts.pop());
+}
+function shiftWakePoint(slot) {
+  const pt = slot.pts.shift();
+  if (pt) (slot.pool || (slot.pool = [])).push(pt);
+}
+function pushWakePoint(slot, x, y, z, t) {
+  const pool = slot.pool || (slot.pool = []);
+  const pt = pool.pop() || { x: 0, y: 0, z: 0, t: 0 };
+  pt.x = x; pt.y = y; pt.z = z; pt.t = t; pt.uploadVersion = (pt.uploadVersion || 0) + 1;
+  slot.pts.push(pt);
+}
+
+export class SwimWake {`
     );
     code = applyIdempotent(
       code,
@@ -456,7 +475,17 @@ export class SwimWake {`,
       U.uWakeCount.value = activeWakeSlots;
     }`,
       replaceOnce,
-      'GPU-08b publish activeWakeSlots to U.uWakeCount'
+      'GPU-08b publish activeWakeSlots to U.uWakeCount',
+      // Clearing a tail slot also retires its cached pooled-point identity.
+      `      const previous = upload.counts[si];
+      for (let i = n; i < (previous < 0 ? PTS : previous); i++) { upload.refs[base + i] = null; W[base + i].set(0, 0, 0, BREAK); }
+      upload.counts[si] = n; upload.active[si] = !!s.actor;
+    }
+    if (U.uWakeCount) {
+      let activeWakeSlots = 0;
+      for (let si = 0; si < SLOTS; si++) if (this.slots[si].actor) activeWakeSlots = si + 1;
+      U.uWakeCount.value = activeWakeSlots;
+    }`
     );
   }
 
@@ -720,6 +749,15 @@ export class SwimWake {`,
       'CPU-07a fast-path empty clouds and reuse _rainHits Map in _updateClouds'
     );
 
+    // The reused Map must not retain victims/owners from a retired match.
+    code = applyIdempotent(
+      code,
+      '    this.inkFlight.clear();',
+      '    this._rainHits?.clear();\n    this.inkFlight.clear();',
+      replaceOnce,
+      'CPU-07a release cached rain actor references on world clear'
+    );
+
   }
 
   if (rel === 'src/game/bots.js') {
@@ -783,7 +821,8 @@ export class SwimWake {`,
       if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
     }`,
       replaceOnce,
-      'MOV-09 precompute trigonometric values in _edgeGuardUncached'
+      'MOV-09 precompute trigonometric values in _edgeGuardUncached',
+      '    for (let _egi = 0; _egi < 4; _egi++) {'
     );
   }
 
@@ -1125,6 +1164,32 @@ export class SwimWake {`,
 
     if (rel === 'src/game/bots.js') {
       // MOV-08a: Reuse _paintChoices, _paintChoicePool, _mates, and _triedGoals in BotMind._pickPaintGoal.
+      // queue-bots adds isolated scratch during recursive path queries. Only
+      // its complete prefix plus exact finally cleanup may satisfy this owner.
+      const reentrantPaintScratch = `    const nested = this._paintChoicesBusy === true;
+    const choices = nested ? [] : this._paintChoices || (this._paintChoices = []); choices.length = 0;
+    const choicePool = nested ? [] : this._paintChoicePool || (this._paintChoicePool = []);
+    const tried = nested ? new Set() : this._triedGoals || (this._triedGoals = new Set());
+    let mates;
+    if (!nested) this._paintChoicesBusy = true;
+    try {
+    const enemyPad = G.level.spawnPads[1 - a.team];
+    const ownPad = G.level.spawnPads[a.team];
+    const total = ownPad.distanceTo(enemyPad);
+    mates = nested ? [] : this._mates || (this._mates = []); mates.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o !== a && o.team === a.team && o.bot) mates.push(o); }`;
+      const hasReentrantPaintScratch = code.includes(reentrantPaintScratch);
+      if (hasReentrantPaintScratch) {
+        const cleanup = `    this.goalTimer = 0.6 + Math.random() * 0.4;
+    } finally {
+      choices.length=0;tried.clear();if(mates)mates.length=0;
+      if(!nested)this._paintChoicesBusy=false;
+    }
+  }
+
+  _pickRefill()`;
+        replaceOnce(code, cleanup, cleanup, 'MOV-08a exact downstream reentrant scratch cleanup');
+      }
       code = applyIdempotent(
         code,
         `    const choices = [];
@@ -1140,7 +1205,8 @@ export class SwimWake {`,
     const mates = this._mates || (this._mates = []); mates.length = 0;
     for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o !== a && o.team === a.team && o.bot) mates.push(o); }`,
         replaceOnce,
-        'MOV-08a reuse _paintChoices, _paintChoicePool, and _mates in BotMind._pickPaintGoal'
+        'MOV-08a reuse _paintChoices, _paintChoicePool, and _mates in BotMind._pickPaintGoal',
+        reentrantPaintScratch
       );
       code = applyIdempotent(
         code,
@@ -1162,7 +1228,17 @@ export class SwimWake {`,
     // not trigger sixteen new paint scans on every simulation tick.
     const tried = this._triedGoals || (this._triedGoals = new Set()); tried.clear();`,
         replaceOnce,
-        'MOV-08a pool choice entries and reuse _triedGoals Set in BotMind._pickPaintGoal'
+        'MOV-08a pool choice entries and reuse _triedGoals Set in BotMind._pickPaintGoal',
+        hasReentrantPaintScratch ? `      let entry = choicePool[choices.length];
+      if (!entry) entry = choicePool[choices.length] = { id: 0, score: 0 };
+      entry.id = id; entry.score = score;
+      choices.push(entry);
+    }
+    this.goalTimer = 4 + Math.random() * 3;
+    choices.sort((a, b) => b.score - a.score);
+    // Try at most three distinct goals. A one-way drop or isolated height must
+    // not trigger sixteen new paint scans on every simulation tick.
+    tried.clear();` : null
       );
     }
 

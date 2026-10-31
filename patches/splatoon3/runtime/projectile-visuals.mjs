@@ -731,14 +731,15 @@ export class ProjectileVisualRuntime {
   }
   draw(alpha=1) {
     if(this.disposed)return;
+    const previousRollerRecords=this.renderRecordCount;
     alpha=clamp(finite(alpha,1));this.lastAlpha=alpha;this.bodies=0;this.renderRecordCount=0;this.stats.linkedRollerPairs=0;this.stats.historicalRollerPairs=0;
     this.colorDirtyStart=this.capacity*BODY_VERTICES*3;this.colorDirtyEnd=0;
     if(!this.system.list.length&&!this.trails.length){
-      if(!this._emptyDraw){this.groupOccupied.fill(0);this.geometry.setDrawRange(0,0);this.mesh.visible=false;}
+      if(!this._emptyDraw){if(previousRollerRecords)this.groupOccupied.fill(0);this.geometry.setDrawRange(0,0);this.mesh.visible=false;}
       this.stats.vertexCount=this.stats.triangles=this.stats.drawCalls=0;this._emptyDraw=true;return;
     }
     this._emptyDraw=false;
-    this.groupOccupied.fill(0);
+    if(previousRollerRecords)this.groupOccupied.fill(0);
     for(const p of this.system.list){this.ensureBirth(p);if(this.handles(p))this._drawRound(p,alpha);}
     if(this.renderRecordCount>=2)this._rollerLinks(alpha);
     const now=finite(this.system.inkFlight?.time);

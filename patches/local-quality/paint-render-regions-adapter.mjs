@@ -10,6 +10,8 @@ export function adaptPaintRenderRegions(rel, code, once) {
   // mip owner records which base-level pixels can have changed.
   return "import { installPaintRegionalMips } from '../../patches/local-quality/paint-regional-mips.mjs';\n" +
     "import { installPaintDryRegions } from '../../patches/local-quality/paint-dry-regions.mjs';\n" +
-    "import { installPaintProfileBatch } from '../../patches/local-quality/paint-profile-batch.mjs';\n" + code + '\n' + marker +
-    '\ninstallPaintRegionalMips(PaintSystem);\ninstallPaintDryRegions(PaintSystem);\ninstallPaintProfileBatch(PaintSystem);\n';
+    "import { installPaintProfileBatch } from '../../patches/local-quality/paint-profile-batch.mjs';\n" +
+    "import { installNativePaintTransfer } from '../../patches/local-quality/native-paint-transfer.mjs';\n" +
+    "import { installNativePaintTickBatch } from '../../patches/local-quality/native-paint-tick-batch.mjs';\n" + code + '\n' + marker +
+    '\ninstallPaintRegionalMips(PaintSystem);\ninstallPaintDryRegions(PaintSystem);\ninstallPaintProfileBatch(PaintSystem);\ninstallNativePaintTransfer(PaintSystem);\ninstallNativePaintTickBatch(PaintSystem, G);\n';
 }

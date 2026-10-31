@@ -3,7 +3,7 @@ import {composed,raw,declaration} from './queue-visual-world-20261031.helper.mjs
 
 const rel='src/world/props-marina-vessels.js';
 export const source=composed(rel);
-export const baselineHull=declaration(raw(rel),null,'makeHull').source;
+export const baselineHull=declaration(composed(rel,true),null,'makeHull').source;
 export const candidateHull=declaration(source,null,'makeHull').source;
 const common=[declaration(source,'IWMarinaStaging',null),declaration(source,'MB',null),declaration(source,null,'gridSurface'),declaration(source,null,'polyFan')].map(x=>x.source).join('\n');
 

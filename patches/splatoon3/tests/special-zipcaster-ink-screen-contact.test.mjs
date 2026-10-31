@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+import {nativeSpecialReceiver} from './native-special-receiver-fixture.mjs';
+import {specialNativeProducer} from '../../network-replication/tests/special-native-producer-fixture.mjs';
 
 // PvP 11.3.0, no gear unless selected below. Production Actor/runner/projectile
 // composition with controlled scene/terrain sinks; not a retail measurement.
@@ -103,11 +105,44 @@ test('Screen catches swept crossings and collider contact, excludes allies and o
   }finally{f.G.projectiles.applyHit=apply;}
 });
 
-test('Remote Screen contact changes recipient status without authoring damage',async()=>{
+test('unadmitted remote Screen visual replay cannot change recipient status or author damage',async()=>{
   const f=await world(),ghost=f.make(),victim=f.make();ghost.remote=true;ghost.team=1;victim.team=0;victim.isLocal=true;
   assert.equal(f.replaySpecial(f,{actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,0,0],target:[0,0,1],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9}),true);
   const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');screen.moveSpeed=0;victim.pos.copy(screen.pos);
   let hits=0;f.G.projectiles.applyHit=()=>{hits++;};
   for(let i=0;i<60;i++)advance(f,1/60);
+  assert.equal(hits,0);assert.equal(victim.s3.splattercolorUntil>f.G.time,false);
+});
+
+
+test('accepted native remote Screen contact changes recipient status without authoring damage',async t=>{
+  const x=await specialNativeProducer(t,'splattercolorScreen',{frames:30,targetZ:500,configure:x=>{
+    x.attacker.aimYaw=0;x.attacker.aimPitch=-.5;
+    x.attacker.aimDir.set(0,Math.sin(-.5),Math.cos(-.5));x.attacker.aimPoint.set(0,-3,5);
+    x.f.G.physics.segment=(a,b,h)=>{h.hit=false;if(a.y>=0&&b.y<0){const u=a.y/(a.y-b.y);h.hit=true;h.point.copy(a).lerp(b,u);h.normal.set(0,1,0);h.dist=a.distanceTo(h.point);}return h;};
+  },step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+  for(const packet of x.packets.slice(0,-1))x.deliver(packet);
+  const {f,owner:victim}=x,screen=f.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');
+  assert.ok(screen);assert.equal(screen.phase,'flight','accepted birth still has to land');
+  let hits=0;f.projectiles.applyHit=()=>{hits++;return false;};
+  for(let i=0;i<120&&screen.phase==='flight';i++)advance(f,1/60);
+  assert.equal(screen.phase,'active','receiver-native flight reaches the floor');
+  assert.equal(victim.s3.splattercolorUntil>f.G.time,false,'remote flight does not debuff a distant recipient');
+  victim.pos.copy(screen.pos);advance(f,1/60);
+  assert.equal(hits,0);assert.ok(victim.s3.splattercolorUntil>f.G.time);
+  assert.ok(victim.s3.splattercolorMarkUntil>f.G.time);
+});
+
+test('Remote Screen contact changes recipient status without authoring damage',async t=>{
+  const x=await nativeSpecialReceiver(t,'splattercolorScreen',{frames:30,targetZ:500,
+    configure:x=>{x.attacker.aimYaw=0;x.attacker.aimPitch=-.5;x.attacker.aimDir.set(0,Math.sin(-.5),Math.cos(-.5));x.attacker.aimPoint.set(0,-3,5);
+      x.f.G.physics.segment=(a,b,h)=>{h.hit=false;if(a.y>=0&&b.y<0){h.hit=true;h.point.copy(a).lerp(b,a.y/(a.y-b.y));h.normal.set(0,1,0);h.dist=a.distanceTo(h.point);}return h;};},
+    step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+  const {f,local:victim}=x;let hits=0;f.projectiles.applyHit=()=>{hits++;};
+  for(const packet of x.packets)x.deliver(packet);
+  const screen=f.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');assert.ok(screen);
+  assert.equal(screen.phase,'flight','accepted native birth still needs receiver terrain contact');screen.moveSpeed=0;
+  for(let i=0;i<120&&screen.phase==='flight';i++)x.step();assert.equal(screen.phase,'active');victim.pos.copy(screen.pos);
+  for(let i=0;i<60;i++)x.step();
   assert.equal(hits,0);assert.ok(victim.s3.splattercolorUntil>f.G.time);
 });

@@ -3,6 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
+import {convertSource} from '../runtime/source-convert.mjs';
 const here=new URL('.',import.meta.url),arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 const bytes=value=>arrays.reduce((n,k)=>n+(value?.[k]?.byteLength||0),0);
 const data=(id,n=8)=>({...Object.fromEntries(arrays.map((k,i)=>[k,new Uint8Array(n).fill(i+id)])),manifest:{id}});
@@ -13,7 +15,7 @@ function database(){
   names=Array.isArray(names)?names:[names];const work=new Map(names.map(n=>[n,new Map(db.stores.get(n))]));let pending=0,ended=false;
   const t={error:null,abort(){if(ended)return;ended=true;db.aborts++;queueMicrotask(()=>t.onabort?.());},objectStore(name){assert.ok(names.includes(name));const rows=work.get(name);
    const req=fn=>{const r={};pending++;queueMicrotask(()=>{if(ended)return;try{r.result=fn();r.onsuccess?.();}catch(e){t.error=e;t.abort();}finally{pending--;finish();}});return r;};
-   return {getAll(){return req(()=>{const out=[...rows.values()].sort((a,b)=>cmp(a.key,b.key));db.reads.push({store:name,op:'getAll',rows:out.length,payloadBytes:out.reduce((n,r)=>n+bytes(r.data),0)});return structuredClone(out);});},getAllKeys(){return req(()=>{db.reads.push({store:name,op:'getAllKeys',payloadBytes:0});return structuredClone([...rows.keys()].sort(cmp));});},get(key){return req(()=>structuredClone(rows.get(key)));},put(row){return req(()=>{if(db.failPut?.(name,row))throw Error('injected put failure');rows.set(row.key,structuredClone(row));return row.key;});},delete(key){return req(()=>rows.delete(key));}};
+   return {getAll(){return req(()=>{const out=[...rows.values()].sort((a,b)=>cmp(a.key,b.key));db.reads.push({store:name,op:'getAll',rows:out.length,payloadBytes:out.reduce((n,r)=>n+bytes(r.data),0)});return structuredClone(out);});},getAllKeys(){return req(()=>{db.reads.push({store:name,op:'getAllKeys',payloadBytes:0});return structuredClone([...rows.keys()].sort(cmp));});},get(key){return req(()=>structuredClone(rows.get(key)));},put(row){const snapshot=structuredClone(row);return req(()=>{if(db.failPut?.(name,snapshot))throw Error('injected put failure');rows.set(snapshot.key,snapshot);return snapshot.key;});},delete(key){return req(()=>rows.delete(key));}};
   }};
   function finish(){setImmediate(()=>{if(ended||pending)return;ended=true;if(mode==='readwrite')for(const [n,rows] of work)db.stores.set(n,rows);t.oncomplete?.();});}
   finish();return t;
@@ -37,7 +39,7 @@ async function use(kind,db,fn){const oldDB=globalThis.__cacheTestDB,oldIDB=globa
 async function write(kind,db,key,value,time){const old=Date.now;Date.now=()=>time;try{await use(kind,db,m=>m.writeDerived(key,value));}finally{Date.now=old;}}
 const stages=db=>[...db.stores.get('stages').values()].sort((a,b)=>cmp(a.key,b.key));
 async function pair(ops){const a=database(),b=database();for(const op of ops){await write('baseline',a,...op);await write('candidate',b,...op);}assert.deepEqual(stages(b),stages(a));return {a,b};}
-function consistent(db){const rows=stages(db);assert.deepEqual([...db.stores.get('stage-times').values()].sort((a,b)=>cmp(a.key,b.key)),rows.map(({key,time})=>({key,time})));}
+function consistent(db){const rows=stages(db);assert.deepEqual([...db.stores.get('stage-times').values()].sort((a,b)=>cmp(a.key,b.key)).map(({key,time})=>({key,time})),rows.map(({key,time})=>({key,time})));}
 test('fresh, third-key and same-key updates preserve exact rows and seals',async()=>{const {b}=await pair([['a',data(1),10],['b',data(2),20],['c',data(3),30],['b',data(4),40]]);assert.deepEqual(stages(b).map(r=>r.key),['b','c']);consistent(b);});
 test('equal timestamps retain ascending primary-key tie order',async()=>{const {b}=await pair([['z',data(1),100],['a',data(2),100],['m',data(3),200]]);assert.deepEqual(stages(b).map(r=>r.key),['a','m']);consistent(b);});
 test('missing and nonfinite legacy time values keep the original stable-sort behavior',async()=>{
@@ -67,4 +69,102 @@ test('steady write requests return zero stage payload bytes without changing cac
  const a=database(),b=database(),value=data(1,1048576/10|0);for(const kind of ['baseline','candidate']){const db=kind==='baseline'?a:b;await write(kind,db,'a',value,10);await write(kind,db,'b',value,20);db.reads=[];await write(kind,db,'c',value,30);}
  assert.deepEqual(stages(b),stages(a));const sum=db=>db.reads.reduce((n,r)=>n+r.payloadBytes,0);assert.equal(sum(a),bytes(value)*2);assert.equal(sum(b),0);assert.ok(!b.reads.some(r=>r.store==='stages'&&r.op==='getAll'));consistent(b);
  const report={scope:'Node structured-clone mock at DB-open boundary; not native IDB or RSS',perStagePayloadBytes:bytes(value),baselineReturnedPayloadBytes:sum(a),candidateReturnedPayloadBytes:sum(b),baselineRequests:a.reads,candidateRequests:b.reads};console.log('SOURCE_CACHE_WRITE_MOCK_RECEIPT',JSON.stringify(report));
+});
+
+test('verified derived hits refresh eviction metadata without rewriting or cloning a payload',async()=>{
+ const db=database();await write('candidate',db,'a',data(1),10);await write('candidate',db,'b',data(2),20);
+ const payload=db.stores.get('stages').get('a'),original=Date.now;
+ Date.now=()=>100;try{assert.deepEqual(await use('candidate',db,m=>m.readDerived('a')),data(1));}finally{Date.now=original;}
+ assert.strictEqual(db.stores.get('stages').get('a'),payload,'no payload write in the recency transaction');
+ assert.equal(db.stores.get('stage-times').get('a').time,100);
+ await write('candidate',db,'c',data(3),110);assert.deepEqual(stages(db).map(r=>r.key),['a','c']);
+ const before=structuredClone(db.stores.get('stage-times'));
+ db.stores.get('stages').get('a').data.mask[0]^=1;
+ assert.equal(await use('candidate',db,m=>m.readDerived('a')),null);
+ assert.deepEqual(db.stores.get('stage-times'),before,'a corrupt hit cannot refresh its recency');
+});
+
+// IndexedDB serializes put() synchronously; its durability event is later.
+test('staged derived data can transfer before commit and the stored seal remains valid',async()=>{
+ const db=database(),value=data(7,128),expected=structuredClone(value);
+ await use('candidate',db,async m=>{
+  const staged=await m.beginDerivedWrite('early',value);assert(staged);let committed=false;
+  staged.completion.then(()=>{committed=true;});assert.equal(committed,false);
+  const moved=structuredClone(value,{transfer:arrays.map(k=>value[k].buffer)});
+  assert.equal(value.vertices.byteLength,0);assert.deepEqual(moved,expected);
+  assert.equal(await staged.completion,true);assert.equal(committed,true);
+  assert.deepEqual(await m.readDerived('early'),expected);
+ });
+});
+test('failure after staged publication settles completion without losing previous rows',async()=>{
+ const db=database();await write('candidate',db,'a',data(1),10);const before=structuredClone(db.stores);
+ db.failPut=(store,row)=>store==='stage-times'&&row.key==='early';
+ await use('candidate',db,async m=>{const staged=await m.beginDerivedWrite('early',data(2));assert(staged);assert.equal(await staged.completion,false);});
+ assert.deepEqual(db.stores,before);assert.equal(db.aborts,1);
+});
+
+
+// Integrate the actual worker handler with the actual converter and derived
+// cache implementation. Only authenticated ingress and the DB-opening boundary
+// are controlled; postMessage really clones/transfers every listed buffer.
+async function transferredWorker(cache){
+ const stage={id:'packed-stage',internal:'stage',sourceSha256:'a'.repeat(64),tree:'b'.repeat(40),sourceSemantics:{inactiveObjectPatterns:['^Fld_Inactive'],nonCollidableObjectPatterns:[],nonPaintableObjectPatterns:[]}};
+ const obj=[];let first=1;
+ for(let i=0;i<9;i++){
+  obj.push('o '+(i%3===1?'Fld_Inactive_':'Fld_floor')+i,'usemtl Concrete00');
+  for(const [x,z]of [[0,0],[0,1],[1,0]])obj.push('v '+[i*8+x,0,z].join(' '));
+  for(let k=0;k<3;k++)obj.push('vt 0 0','vn 0 1 0');
+  obj.push('f '+[0,1,2].map(k=>[first+k,first+k,first+k].join('/')).join(' '));first+=3;
+ }
+ const objectBytes=new TextEncoder().encode(obj.join('\n')+'\n'),tree={sha:stage.tree,truncated:false,tree:[{type:'blob',path:'stage.mtl',size:0,sha:'c'.repeat(40)}]};
+ const messages=[],calls={convert:0,read:0,write:0,download:0};
+ const self={navigator:{deviceMemory:8,userAgent:'desktop'},postMessage(message,transfer=[]){
+  const before=message.result?structuredClone(message.result):null;
+  const moved=structuredClone(message,{transfer});
+  if(before){
+   assert.equal(transfer.length,11);assert.equal(new Set(transfer).size,11);
+   assert(transfer.every(b=>b.byteLength===0),'all sender-side columns are detached');
+   assert.equal(message.result.manifest.faces[0].triangles.byteLength,0);
+   assert.deepEqual(moved.result,before);
+  }
+  messages.push(moved);
+ }};
+ const context=vm.createContext({self,TextDecoder,TextEncoder,AbortController,performance,
+  ArrayBuffer,Uint8Array,Uint32Array,Int32Array,Float32Array,Float64Array});
+ const imports={
+  './source-catalog.mjs':{SOURCE_RECIPE:'packed-peer-recipe',SOURCE_STAGES:[stage],sourceURL:(_stage,file)=>file,sourceObjectBytes:()=>objectBytes.byteLength},
+  './source-convert.mjs':{convertSource(...args){calls.convert++;return convertSource(...args);}},
+  './source-cache.mjs':{async sourceBytes(_id,url){calls.download++;return url.endsWith('.obj')?objectBytes.slice().buffer:new ArrayBuffer(0);},async sourceTree(){return structuredClone(tree);},async readDerived(key){calls.read++;return cache.readDerived(key);},async beginDerivedWrite(key,data){calls.write++;return cache.beginDerivedWrite(key,data);}},
+ };
+ const worker=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/source-worker.mjs',here),'utf8'),{context});
+ await worker.link(name=>{const values=imports[name];assert(values,name);return new vm.SyntheticModule(Object.keys(values),function(){for(const [key,value]of Object.entries(values))this.setExport(key,value);},{context});});
+ await worker.evaluate();await self.onmessage({data:{id:stage.id,runtimeSha256:'runtime-peer'}});
+ const result=messages.find(m=>m.result);assert(result,JSON.stringify(messages));assert(!messages.some(m=>m.error));
+ for(const face of result.result.manifest.faces){assert.equal(face.triangles.buffer,result.result.faceTriangles.buffer);assert(face.triangles.length>0);}
+ return {data:result.result,messages,calls,key:'packed-peer-recipe/runtime-peer/'+stage.sourceSha256};
+}
+
+test('actual worker packed transfer preserves views and isolates both renderer and durable cache ownership',async()=>{
+ const db=database();await use('candidate',db,async cache=>{
+  const cold=await transferredWorker(cache);assert.equal(cold.calls.convert,1);assert.equal(cold.calls.write,1);assert.equal(cold.data.sourceMetrics.cached,false);
+  assert.equal(cold.messages.find(m=>m.result).cachePending,true);assert.equal(cold.messages.at(-1).cacheComplete,true);
+  const expected=structuredClone(cold.data);delete expected.sourceMetrics;
+  cold.data.faceTriangles[0]^=1;cold.data.vertices[0]+=100;
+  const warm=await transferredWorker(cache);assert.equal(warm.calls.convert,0);assert.equal(warm.calls.download,0);assert.equal(warm.calls.write,0);assert.equal(warm.data.sourceMetrics.cached,true);
+  assert.equal(warm.messages.find(m=>m.result).cachePending,false);
+  const actual=structuredClone(warm.data);delete actual.sourceMetrics;assert.deepEqual(actual,expected);
+  const stored=await cache.readDerived(warm.key);assert(stored);assert.notEqual(stored.faceTriangles.buffer,warm.data.faceTriangles.buffer);
+  warm.data.faceTriangles.fill(0);warm.data.vertices.fill(0);const again=await cache.readDerived(warm.key);assert.deepEqual(again,stored);
+ });
+});
+
+test('actual worker publication survives optional commit failure and the next load reconverts cleanly',async()=>{
+ const db=database();await use('candidate',db,async cache=>{
+  db.failPut=(store)=>store==='stage-times';
+  const first=await transferredWorker(cache);assert.equal(first.data.sourceMetrics.cached,false);assert.equal(first.messages.at(-1).cacheComplete,true);
+  assert.equal(await cache.readDerived(first.key),null);assert.equal(db.aborts,1);
+  db.failPut=null;const retry=await transferredWorker(cache);assert.equal(retry.calls.convert,1);assert.equal(retry.data.sourceMetrics.cached,false);
+  assert(await cache.readDerived(retry.key));
+  const hit=await transferredWorker(cache);assert.equal(hit.data.sourceMetrics.cached,true);assert.equal(hit.calls.convert,0);
+ });
 });

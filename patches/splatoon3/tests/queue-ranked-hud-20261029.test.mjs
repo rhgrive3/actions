@@ -190,3 +190,28 @@ test('custom HUD one-argument FX callbacks retain dt accumulation without a nati
  const f=environment(t);let tick,result;f.hud._addFx=(_name,fn)=>{tick=fn;};f.hud.judge().then(x=>result=x);
  tick(1);tick(2);await Promise.resolve();assert.equal(result,undefined);tick(.25);await Promise.resolve();assert.deepEqual(result,{winner:1});f.advance(550);assert.equal(f.overlays().length,0);
 });
+
+for(const mode of ['rainmaker','clams'])test(mode+' labels retain independent baseline text through mutable state, rounding and locale changes',()=>{
+ const G={match:{actors:[{nid:'local',name:'A|B',team:0}],local:{nid:'local',team:0}}},api={LANG:'en'},engine={mode,rule:{state:{}}};
+ let seed=515;const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32);
+ for(let i=0;i<20000;i++){
+  if(i%9===0){api.LANG=i%2?'ja':'en';G.match.actors[0].name=i%6?'A|B':`Player ${i}`;G.match.actors[0].team=i%2;G.match.local.team=i%3-1;
+   const state=engine.rule.state,phase=i%7;
+   if(mode==='rainmaker')Object.assign(state,{goalHold:phase===0,respawnRemaining:phase===1?random()*5:0,barrier:{active:phase===2,max:i%11?100:NaN,balance:random()*300-150},carrier:phase===3?'local':phase===4?'unknown':null,holderRemaining:random()*60,charge:{value:random()*1.2-.1},retreatRate:random()*2,lastCarrierTeam:i%3-1});
+   else Object.assign(state,{inventories:i%5?{local:{team:0,small:random()*12,power:i%4===0},other:{team:1,small:random()*7,power:i%9===0}}:{},scoredPoints:[random()*100,i%11?random()*100:NaN],baskets:i%13?[{barrierOpen:phase===2,openTimer:random()*7,cooldown:phase===1?random()*5:0},{barrierOpen:phase===3,openTimer:random()*8,cooldown:random()*2}]:[]});
+  }
+  assert.equal(objectiveText(engine,G,api),oldObjective(engine,G,api),mode+' frame '+i);
+ }
+ const run=fn=>{let count=0;const reads=[],api={get LANG(){reads.push(++count);return count%2?'ja':'en';}};return {text:[fn(engine,G,api),fn(engine,G,api)],reads};};assert.deepEqual(run(objectiveText),run(oldObjective));
+});
+test('ranked objective formatting sleeps at stable display values and clock cache repairs replaced or externally modified DOM',()=>{
+ const source=fs.readFileSync(new URL('../runtime/ranked/ui.mjs',import.meta.url),'utf8');let translations=0;
+ const fast=new Function('rankedText','clamp01','finite','teamName','const rainmakerTextCache=new WeakMap(),clamsTextCache=new WeakMap();'+['displayTextEntry','storeDisplayText','objectiveText'].map(name=>functionText(source,name)).join('\n')+';return objectiveText;')((...args)=>{translations++;return rankedText(...args);},n=>Math.max(0,Math.min(1,Number.isFinite(n)?n:0)),n=>Number.isFinite(n)?n:0,team=>team===0?'ALPHA':team===1?'BRAVO':'NEUTRAL');
+ const engine={mode:'rainmaker',rule:{state:{respawnRemaining:4.8}}};for(let i=0;i<3600;i++)fast(engine,{}, {LANG:'en'});assert.equal(translations,1);engine.rule.state.respawnRemaining=3.9;fast(engine,{}, {LANG:'en'});assert.equal(translations,2);fast(engine,{}, {LANG:'ja'});assert.equal(translations,3);
+ const begin=source.indexOf("  const locale = Object.getOwnPropertyDescriptor(api, 'LANG');"),end=source.indexOf('  writeHudText(refs.objective',begin),block=source.slice(begin,end);assert(begin>0&&end>begin);
+ let formatted=0;const fmt=n=>{formatted++;const s=Math.max(0,Math.ceil(Number.isFinite(n)?n:0));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
+ const tick=new Function('refs','engine','api','fmtClock','finite','writeHudText','rankedText','const t=(text,vars)=>rankedText(api.LANG,text,vars);'+block),refs={clock:{textContent:''}},e={time:61.3,overtime:false},api={LANG:'en'},run=()=>tick(refs,e,api,fmt,n=>Number.isFinite(n)?n:0,(node,text)=>{if(node.textContent!==text)node.textContent=text;},rankedText);
+ for(let i=0;i<3600;i++)run();assert.equal(formatted,1);assert.equal(refs.clock.textContent,'1:02');refs.clock.textContent='external';run();assert.equal(formatted,1);assert.equal(refs.clock.textContent,'1:02');
+ refs.clock={textContent:''};run();assert.equal(formatted,2);e.time=60;run();assert.equal(refs.clock.textContent,'1:00');e.overtime=true;e.overtimeElapsed=2.3;run();assert.equal(refs.clock.textContent,'OT 0:03');api.LANG='ja';run();assert.equal(refs.clock.textContent,rankedText('ja','OT {time}',{time:'0:03'}));
+ for(const value of [NaN,Infinity,-Infinity,-1,-0,0,1.000001]){e.overtimeElapsed=value;run();assert.equal(refs.clock.textContent,rankedText('ja','OT {time}',{time:fmt(value)}));}
+});

@@ -1,0 +1,99 @@
+{
+  "counts": {
+    "smokeWindows": 20,
+    "fullWindows": 88,
+    "fullPairs": 44,
+    "fullMeasuredWindows": 48,
+    "fullWarmups": 40,
+    "fullAAQuartets": 4,
+    "fullABQuartets": 8,
+    "independentBrowserSessions": 2,
+    "rejectedWindowAttempts": 0
+  },
+  "independentSessionStatistics": {
+    "preflight": {
+      "frameMeanMs": {
+        "n": 2,
+        "mean": 1.048237990091044,
+        "sd": 0.040054246673902096,
+        "median": 1.048237990091044,
+        "min": 1.019915360652609,
+        "p05": 1.0227476235964525,
+        "p95": 1.0737283565856353,
+        "max": 1.0765606195294788,
+        "geometricMean": 1.0478552917897608,
+        "changePercent": 4.785529178976078,
+        "logRatioTInterval95": [
+          0.7433037430516065,
+          1.4771898067188558
+        ],
+        "changePercentInterval95": [
+          -25.669625694839347,
+          47.71898067188558
+        ]
+      },
+      "rendererThreadMsPerTick": {
+        "n": 2,
+        "mean": 1.0295053463830293,
+        "sd": 0.03149001342130113,
+        "median": 1.0295053463830293,
+        "min": 1.0072385443531717,
+        "p05": 1.0094652245561575,
+        "p95": 1.0495454682099008,
+        "max": 1.0517721484128866,
+        "geometricMean": 1.0292645178760433,
+        "changePercent": 2.926451787604334,
+        "logRatioTInterval95": [
+          0.7819094601640296,
+          1.3548697153969276
+        ],
+        "changePercentInterval95": [
+          -21.80905398359704,
+          35.48697153969276
+        ]
+      }
+    },
+    "measurements": {
+      "frameMeanMs": {
+        "n": 2,
+        "mean": 1.0001647989950972,
+        "sd": 0.08072078248456699,
+        "median": 1.0001647989950972,
+        "min": 0.9430865863175756,
+        "p05": 0.9487944075853277,
+        "p95": 1.0515351904048666,
+        "max": 1.0572430116726188,
+        "geometricMean": 0.9985347779554014,
+        "changePercent": -0.14652220445986464,
+        "logRatioTInterval95": [
+          0.48317179514718184,
+          2.063596660237005
+        ],
+        "changePercentInterval95": [
+          -51.68282048528181,
+          106.3596660237005
+        ]
+      },
+      "rendererThreadMsPerTick": {
+        "n": 2,
+        "mean": 0.9304658180770824,
+        "sd": 0.0856818773888228,
+        "median": 0.9304658180770824,
+        "min": 0.8698795815506515,
+        "p05": 0.8759382052032946,
+        "p95": 0.9849934309508702,
+        "max": 0.9910520546035133,
+        "geometricMean": 0.9284912205042208,
+        "changePercent": -7.150877949577916,
+        "logRatioTInterval95": [
+          0.40546656737872405,
+          2.1261825657457503
+        ],
+        "changePercentInterval95": [
+          -59.45334326212759,
+          112.61825657457503
+        ]
+      }
+    }
+  }
+}

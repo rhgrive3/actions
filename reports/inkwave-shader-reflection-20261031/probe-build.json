@@ -1,0 +1,19 @@
+{
+  "site": "/workspace/inkwave-pr1983-perf/.ci-scratch/pr1983-perf-site",
+  "out": "/workspace/inkwave-shader-warmup/.ci-scratch/shader-probe",
+  "baseRef": "2f3acacdb5296605cdc675e4feb564dc1a491d51",
+  "files": {
+    "patches/splatoon3/runtime/special-motion.mjs": {
+      "baseline": "56795bb8c5e85a0e6c8f19b9b961452956c3fa6e38c9d6524d87a12bba26d623",
+      "candidate": "28921fa84dc5d6371bf7a91db0581f646d10bdad31b8d7576e7e3a2c38c067ca"
+    },
+    "patches/local-quality/swim-surface.mjs": {
+      "baseline": "2ced301de94a7595abd6fa4042d1b76960edcd61cec5db2e62327d2d72ee466e",
+      "candidate": "954432acf6bbe0dc72ddcc5009d1e9dafbaa7e8d677b0490a4104dc90eab547c"
+    },
+    "patches/local-quality/shader-program-reflection.mjs": {
+      "baseline": null,
+      "candidate": "d419674a72f2d74f2ef4e35c4357144ebc604d09d5f2621de29df60e041c2e82"
+    }
+  }
+}

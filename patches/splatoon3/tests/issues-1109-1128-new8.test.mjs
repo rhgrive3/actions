@@ -82,7 +82,10 @@ test('#1113 Splat/Suction Bomb first-contact lane includes Big Bubbler and stage
   const code = s3('src/game/weapons.js');
   const defense = readPatch('patches/splatoon3/runtime/kit-defense.mjs');
   assert.ok(defense.includes("if (!['bomb', 'suction', 'curling'].includes(subId)) return this.coolerBombCandidate?.(b,start,end) || null;"));
-  assert.ok(defense.includes("consider(this.kitBarrierCandidate?.(probe, start, end), 'bubbler');"));
+  // Native device probes now guard the shield callback while preserving
+  // exact Bubbler-first arbitration and the original candidate inputs.
+  assert.ok(defense.includes('const barrier=()=>this.kitBarrierCandidate?.(probe, start, end);'));
+  assert.ok(defense.includes("consider(hasNativeSubDeviceBirth(b)?withNativeDeviceProbe(probe,barrier):barrier(), 'bubbler');"));
   assert.ok(defense.includes(': kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);'));
   assert.ok(code.includes('const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;'));
   assert.ok(code.includes('s3BombDefense.distance < s3WorldDistance - 1e-10'));

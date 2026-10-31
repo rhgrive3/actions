@@ -10,7 +10,9 @@ export class PaintDryRegions {
     this.top = Math.max(-1, Math.min(1, top));
     this.expiry = new Float64Array(this.axis * this.axis);
     this.rects = new Int16Array(this.axis * this.axis * 4);
-    this.previous = new Int16Array((this.axis + 1) * (this.axis + 1));
+    this.previous = new Int16Array((this.axis + 1) * (this.axis + 1)).fill(-1);
+    this.previousKeys = new Uint16Array(MAX_RECTS);
+    this.previousCount = 0;
     this.credit = 0;
     this.dirty = true;
     this.full = false;
@@ -88,10 +90,13 @@ export class PaintDryRegions {
   rebuild() {
     if(!this.dirty)return false;
     this.dirty=false;this.count=0;this.full=false;
+    // Only keys written by the preceding sparse rebuild need resetting.
+    // Clear them even when this rebuild chooses the dense/full fallback.
+    for(let i=0;i<this.previousCount;i++)this.previous[this.previousKeys[i]]=-1;
+    this.previousCount=0;
     const n=this.axis, rows=Math.min(n,Math.ceil((this.top+1)*.5*n));
     // Dense or fragmented ink uses the unchanged original single quad.
     if(this.live>=n*rows*.65){this.full=true;return true;}
-    this.previous.fill(-1);
     for(let y=0;y<rows;y++) {
       for(let x=0;x<n;) {
         if(!this.expiry[y*n+x]){x++;continue;}
@@ -99,7 +104,9 @@ export class PaintDryRegions {
         const x1=x,key=x0*(n+1)+x1, prev=this.previous[key];
         if(prev>=0&&this.rects[prev*4+3]===y){this.rects[prev*4+3]=y+1;continue;}
         if(this.count>=MAX_RECTS){this.full=true;this.count=0;return true;}
-        const at=this.count++*4;this.previous[key]=at/4;
+        const at=this.count++*4;
+        if(prev<0)this.previousKeys[this.previousCount++]=key;
+        this.previous[key]=at/4;
         this.rects[at]=x0;this.rects[at+1]=y;this.rects[at+2]=x1;this.rects[at+3]=y+1;
       }
     }

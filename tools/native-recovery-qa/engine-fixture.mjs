@@ -76,11 +76,21 @@ export async function createEngineFixture(engine, THREE, options = {}) {
   return{game,G,counts,document,created,linked,walkable,oldLevel,oldPaint,oldWorld,oldMinimap,oldGroup,assets,faults,errors,warnings,resources,listeners,
     async run(current=()=>true){let error;try{await module.namespace.buildNativeWorld(game,{id:PREPARED_STAGE_ID,name:'Prepared recovery'},current);}catch(e){error=e;}return error;}};
 }
-export async function loadEmittedEnvironment(source,THREE){
-  const context=vm.createContext({console}),externals={three:THREE,'three/addons/utils/BufferGeometryUtils.js':{mergeGeometries(){throw Error('unused geometry merge');}},'../config.js':{PLAYER:{waterY:-1.6},effectiveQuality(){throw Error('unused quality lookup');}},'../core/ctx.js':{G:{}},'../../patches/local-quality/idle-resources.mjs':{environmentBudget(){throw Error('unused idle budget');},releaseFarReflection(){throw Error('unused reflection release');},releaseReflection(){throw Error('unused reflection release');}},'../../patches/local-quality/resource-budget.mjs':{reflectionDue(){throw Error('unused reflection budget');}},'./render-bounds.js':{setEnvironmentLifeEnvelopes(){throw Error('unused environment life envelope');}},
+export async function loadEmittedEnvironment(source,THREE,stagingSource){
+  // This dependency is now used by the actual emitted Environment. Execute
+  // its independently manifest-verified bytes, never replace Float32Staging
+  // with a no-op synthetic stand-in that could conceal resource regressions.
+  assert.equal(typeof stagingSource,'string','verified emitted attribute-staging bytes required');
+  const context=vm.createContext({console});
+  const staging=new vm.SourceTextModule(stagingSource,{context});
+  await staging.link(spec=>{throw Error('unknown emitted staging external: '+spec);});
+  await staging.evaluate();
+  assert.deepEqual(Object.keys(staging.namespace),['Float32Staging'],'exact emitted staging export');
+  assert.equal(typeof staging.namespace.Float32Staging,'function');
+  const externals={three:THREE,'three/addons/utils/BufferGeometryUtils.js':{mergeGeometries(){throw Error('unused geometry merge');}},'../config.js':{PLAYER:{waterY:-1.6},effectiveQuality(){throw Error('unused quality lookup');}},'../core/ctx.js':{G:{}},'../../patches/local-quality/idle-resources.mjs':{environmentBudget(){throw Error('unused idle budget');},releaseFarReflection(){throw Error('unused reflection release');},releaseReflection(){throw Error('unused reflection release');}},'../../patches/local-quality/resource-budget.mjs':{reflectionDue(){throw Error('unused reflection budget');}},'./render-bounds.js':{setEnvironmentLifeEnvelopes(){throw Error('unused environment life envelope');}},
     // The Environment module imports these sea helpers even when exercising
     // only _rebuildDock(). Fail closed if the fixture reaches either path.
     './wave-data.js':{makeWaveData(){throw Error('unused wave-data boundary');}},
     './wave-prewarm.js':{prewarmWaveTexture(){throw Error('unused wave-prewarm boundary');}}};
-  const module=new vm.SourceTextModule(source,{context});await module.link(spec=>{assert(Object.hasOwn(externals,spec),'unknown Environment external: '+spec);const values=externals[spec];return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context});});await module.evaluate();assert.equal(typeof module.namespace.Environment,'function','public Environment export');return module.namespace.Environment;
+  const module=new vm.SourceTextModule(source,{context});await module.link(spec=>{if(spec==='./attribute-staging.js')return staging;assert(Object.hasOwn(externals,spec),'unknown Environment external: '+spec);const values=externals[spec];return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context});});await module.evaluate();assert.equal(typeof module.namespace.Environment,'function','public Environment export');return module.namespace.Environment;
 }

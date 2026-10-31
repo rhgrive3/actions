@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {consumeNativeWork,consumeNativeWorkAsync} from './native-work.mjs';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 import { enableNativePaintDetail } from './native-paint-detail.mjs';
 
@@ -52,10 +53,12 @@ export function specializeNativeSourceAmbient(shader,roughSpecular=false,facingC
 // upward includes every incident geometric normal plus a numerical margin.
 // Inverted normals, thin/invalid triangles and unused vertices keep both
 // hemispheres. Source vertices, normals, UVs and triangle order stay intact.
-export function nativeNormalCones(vertices,indices){
+export function nativeNormalCones(vertices,indices){return consumeNativeWork(nativeNormalConeSteps(vertices,indices));}
+function* nativeNormalConeSteps(vertices,indices){
  const count=vertices.length/8;if(!Number.isSafeInteger(count)||indices.length%3)return null;
  const bounds=new Float32Array(count),seen=new Uint8Array(count);
  for(let t=0;t<indices.length;t+=3){
+  if(t&&t%768===0)yield;
   const a=indices[t],b=indices[t+1],c=indices[t+2];if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||!Number.isSafeInteger(c)||a<0||b<0||c<0||a>=count||b>=count||c>=count)return null;
   const ai=a*8,bi=b*8,ci=c*8,ux=vertices[bi]-vertices[ai],uy=vertices[bi+1]-vertices[ai+1],uz=vertices[bi+2]-vertices[ai+2],
    vx=vertices[ci]-vertices[ai],vy=vertices[ci+1]-vertices[ai+1],vz=vertices[ci+2]-vertices[ai+2],x=uy*vz-uz*vy,y=uz*vx-ux*vz,z=ux*vy-uy*vx,cross=x*x+y*y+z*z;
@@ -67,7 +70,7 @@ export function nativeNormalCones(vertices,indices){
    bounds[index]=Math.max(bounds[index],sine);seen[index]=1;
   }
  }
- const bytes=new Uint8Array(count);for(let i=0;i<count;i++)bytes[i]=seen[i]?Math.min(255,Math.ceil((bounds[i]+.008)*255)):255;
+ const bytes=new Uint8Array(count);for(let i=0;i<count;i++){bytes[i]=seen[i]?Math.min(255,Math.ceil((bounds[i]+.008)*255)):255;if(i&&i%1024===0)yield;}
  return new THREE.BufferAttribute(bytes,1,true);
 }
 
@@ -123,7 +126,9 @@ export function nativeInkMaterial(paint, murals, texlib){
  mat.customProgramCacheKey=()=> 'native-ink-overlay-v9'+(detail?'-detail':'');return mat;
 }
 
-export function nativeInkGeometry(level,paint){
+export function nativeInkGeometry(level,paint){return consumeNativeWork(nativeInkGeometrySteps(level,paint));}
+nativeInkGeometry.create=(level,paint,options)=>consumeNativeWorkAsync(nativeInkGeometrySteps(level,paint),options);
+function* nativeInkGeometrySteps(level,paint){
   // The source triangle/paint order is fixed. Allocate final GPU attributes once:
   // temporary JS number arrays used to double peak memory on large OBJ stages.
   const specs=[['position',3],['normal',3],['paintUv',2],['faceUv',2],
@@ -148,22 +153,36 @@ export function nativeInkGeometry(level,paint){
       nativeWall[vertex]=f.wall?1:0;
       faceTan[i3]=f.u.x;faceTan[i3+1]=f.u.y;faceTan[i3+2]=f.u.z;
       vertex++;
+      if(vertex%768===0)yield;
     }
   }
   const g=new THREE.BufferGeometry();
   // BufferAttribute accepts Float32Array without making the second copy that
   // Float32BufferAttribute's constructor would allocate.
   for(const [name,size] of specs)g.setAttribute(name,new THREE.BufferAttribute(arrays[name],size));
-  g.computeBoundingSphere();return g;
+  let completed=false;
+  try{yield* nativeGeometrySphereSteps(g);completed=true;return g;}
+  finally{if(!completed)g.dispose();}
 }
 
-function objectBoundingSphere(g,bounds,prepared){
- if(!Array.isArray(bounds)||bounds.length!==2||!bounds.every(row=>Array.isArray(row)&&row.length===3&&row.every(Number.isFinite))||bounds[0].some((x,i)=>x>bounds[1][i])){g.computeBoundingSphere();return;}
+// Same Float32 positions, Box3 centre and distance arithmetic as Three's
+// BufferGeometry.computeBoundingSphere, split at bounded vertex batches.
+function* nativeGeometrySphereSteps(g){
+ const position=g.getAttribute('position'),box=new THREE.Box3(),point=new THREE.Vector3();
+ for(let i=0;i<position.count;i++){box.expandByPoint(point.fromBufferAttribute(position,i));if(i&&i%1024===0)yield;}
+ const sphere=new THREE.Sphere();box.getCenter(sphere.center);let radiusSq=0;
+ for(let i=0;i<position.count;i++){point.fromBufferAttribute(position,i);radiusSq=Math.max(radiusSq,sphere.center.distanceToSquared(point));if(i&&i%1024===0)yield;}
+ sphere.radius=Math.sqrt(radiusSq);g.boundingSphere=sphere;
+ if(!Number.isFinite(sphere.radius))g.computeBoundingSphere();
+}
+function objectBoundingSphere(g,bounds,prepared){return consumeNativeWork(objectBoundingSphereSteps(g,bounds,prepared));}
+function* objectBoundingSphereSteps(g,bounds,prepared){
+ if(!Array.isArray(bounds)||bounds.length!==2||!bounds.every(row=>Array.isArray(row)&&row.length===3&&row.every(Number.isFinite))||bounds[0].some((x,i)=>x>bounds[1][i])){yield* nativeGeometrySphereSteps(g);return;}
  const box=g.boundingBox=new THREE.Box3(new THREE.Vector3(...bounds[0]),new THREE.Vector3(...bounds[1]));
  const sphere=g.boundingSphere=new THREE.Sphere();box.getCenter(sphere.center);
  if(prepared&&Number.isFinite(prepared.radius)&&prepared.radius>=0&&Array.isArray(prepared.center)&&prepared.center.length===3&&prepared.center.every((value,i)=>value===sphere.center.getComponent(i))){sphere.radius=prepared.radius;return;}
  const position=g.getAttribute('position'),point=new THREE.Vector3();let radiusSq=0;
- for(let i=0;i<position.count;i++){point.fromBufferAttribute(position,i);radiusSq=Math.max(radiusSq,sphere.center.distanceToSquared(point));}
+ for(let i=0;i<position.count;i++){point.fromBufferAttribute(position,i);radiusSq=Math.max(radiusSq,sphere.center.distanceToSquared(point));if(i&&i%1024===0)yield;}
  sphere.radius=Math.sqrt(radiusSq);
  if(!Number.isFinite(sphere.radius))g.computeBoundingSphere();
 }
@@ -174,11 +193,11 @@ function releaseArray(){this.array=null;}
  * still submits one draw in the original index order. No positions, normals,
  * UVs, materials or collision data change. Tile bounds include every corner
  * of boundary-crossing triangles, rather than just their centroid. */
-export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
+export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){return consumeNativeWork(nativeDisplayCullingSteps(mesh,tileSize,minTriangles));}
+function* nativeDisplayCullingSteps(mesh,tileSize=16,minTriangles=512){
  const g=mesh.geometry,p=g.getAttribute('position'),source=g.index?.array;
  if(!source||source.length<minTriangles*3||!Number.isFinite(tileSize)||tileSize<=0)return null;
- // A triangle contributes at most one tile. This bound proves that the
- // first allocation already fits the final 16-bit representation.
+ // A triangle contributes at most one tile. Its count bounds the final 16-bit representation.
  const triangles=source.length/3,TileIds=triangles<=65536?Uint16Array:Uint32Array;
  const tiles=[],byKey=new Map(),ids=new TileIds(triangles);
  // Bypass virtual attribute reads only for ordinary, non-normalized arrays.
@@ -188,6 +207,7 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
   p.getX===proto.getX&&p.getY===proto.getY&&p.getZ===proto.getZ;
  const array=direct?p.array:null,stride=p.isInterleavedBufferAttribute?p.data.stride:p.itemSize,offset=p.isInterleavedBufferAttribute?p.offset:0;
  for(let t=0;t<ids.length;t++){
+  if(t&&t%256===0)yield;
   const at=t*3,a=source[at],b=source[at+1],c=source[at+2],ia=a*stride+offset,ib=b*stride+offset,ic=c*stride+offset;
   const ax=direct?array[ia]:p.getX(a),ay=direct?array[ia+1]:p.getY(a),az=direct?array[ia+2]:p.getZ(a);
   const bx=direct?array[ib]:p.getX(b),by=direct?array[ib+1]:p.getY(b),bz=direct?array[ib+2]:p.getZ(b);
@@ -311,9 +331,13 @@ export function compactNativeIndices(indices){
  return new Uint16Array(indices);
 }
 
-export function nativeDisplay(data,textures,quality){
+export function nativeDisplay(data,textures,quality){return consumeNativeWork(nativeDisplaySteps(data,textures,quality));}
+nativeDisplay.create=(data,textures,quality,options)=>consumeNativeWorkAsync(nativeDisplaySteps(data,textures,quality),options);
+function* nativeDisplaySteps(data,textures,quality){
  let liveTextures=textures;
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cullers=[],cache=new Map();group.name='native-source-display';
+ let completed=false;
+ try{
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
   let mat=cache.get(o.material)?.mat;
@@ -340,8 +364,9 @@ export function nativeDisplay(data,textures,quality){
    mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
-  const cones=nativeNormalCones(vb,ib);if(cones){g.setAttribute('nativeNormalCone',cones);cones.onUpload(releaseArray);}
-  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
+  geometries.push(g);
+  const cones=yield* nativeNormalConeSteps(vb,ib);if(cones){g.setAttribute('nativeNormalCone',cones);cones.onUpload(releaseArray);}
+  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));yield* objectBoundingSphereSteps(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
   inter.onUpload(releaseArray);
@@ -358,7 +383,7 @@ export function nativeDisplay(data,textures,quality){
   const subTexelCaster=!!sphere&&Number.isFinite(sphere.radius)&&sphere.radius<0.025;
   mesh.castShadow=o.collidable&&!glass&&!alpha&&!subTexelCaster;
   mesh.receiveShadow=!glass;
-  const culler=!glass&&!alpha?installNativeDisplayCulling(mesh):null;
+  const culler=!glass&&!alpha?yield* nativeDisplayCullingSteps(mesh):null;
   if(culler)cullers.push(culler);else g.index.onUpload(releaseArray);
   if(glass||alpha){
     // GTAO normal/depth override would turn transparent materials opaque.
@@ -369,8 +394,9 @@ export function nativeDisplay(data,textures,quality){
       else if(g.drawRange.start!==drawStart||g.drawRange.count!==drawCount)g.setDrawRange(drawStart,drawCount);
     };
   }
-  mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
+  mesh.userData.nativeObject=o;group.add(mesh);yield;
  }
+ completed=true;
  return {group,currentTextures(){return liveTextures;},updateTextures(next,quality){
   for(const [name,{mat,channels,syncChannelProgram}] of cache){const src=m.materials[name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
    normal=quality==='high'?(next.get(src.maps?.normal)||null):null,rough=quality==='high'?(next.get(src.maps?.roughness)||null):null,emissive=quality==='high'?(next.get(src.maps?.emissive)||null):null;
@@ -390,4 +416,7 @@ export function nativeDisplay(data,textures,quality){
   }
   next._nativeBorrowed?.clear(); // the new displayed profile now owns all entries
  },dispose(){group.removeFromParent();cullers.forEach(c=>c.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of new Set(liveTextures.values())){t.image?.close?.();t.dispose();}liveTextures.clear();}};
+ }finally{
+  if(!completed){group.removeFromParent();cullers.forEach(c=>c.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
+ }
 }

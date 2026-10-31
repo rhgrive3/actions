@@ -8,6 +8,14 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../combat-provenance.mjs', import.meta.url), 'utf8');
 const tokenImport = "import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';";
 const auditedImports = [tokenImport,
+  "import {captureCatalogueActionReceipts,catalogueActionReceipt} from './catalogue-action-receipt.mjs';",
+  "import {flushNativeDeviceHits,clearNativeDeviceHits,bindNativeDeviceHitTarget} from './device-hit-pending.mjs';",
+  "import { recordDeviceBirth, nativeDeviceContact } from './device-contact-proof.mjs';",
+  "import {recordSpecialDeviceBirth,nativeSpecialDeviceContact,nativeSpecialDeviceSource,retainedSpecialDeviceProof,retainedSpecialDeviceProofKey} from './special-device-contact-proof.mjs';",
+  "import {nativeStormDeviceContactForActor} from './storm-device-contact-proof.mjs';",
+  "import { recordSubDeviceBirth, retainedSubDeviceProof, retainedSubDeviceProofKey, nativeSubDeviceContact, nativeSubDeviceSource } from './sub-device-contact-proof.mjs';",
+  "import { objectDamageRow, validDeviceDamageCause } from '../splatoon3/runtime/sub-resistance.mjs';",
+
   "import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';",
   "import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';",
   "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
@@ -15,6 +23,7 @@ const auditedImports = [tokenImport,
   "import { damageLeafMax } from './damage-leaves.mjs';",
   "import { observeOwnerTick } from './owner-tick-receipt.mjs';",
   "import { crabletProofKey, recordCrabletBirth, sampleCrabletHistory, crabletTrajectoryVisible, forgetCrabletTraces } from './crablet-trajectory.mjs';",
+  "import {consumeRainmakerDeviceContact} from '../splatoon3/runtime/ranked/rainmaker-device-contact.mjs';",
 ];
 let executable = source;
 for (const dependency of auditedImports) {
@@ -38,6 +47,17 @@ function consumeLimitedContact(){throw Error('cap-only boundary: consumeLimitedC
 function registerReceiverSprinkler(){throw Error('cap-only boundary: registerReceiverSprinkler');}
 function consumeReceiverSprinklerContact(){throw Error('cap-only boundary: consumeReceiverSprinklerContact');}
 function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprinklerScope');}
+function consumeRainmakerDeviceContact(){throw Error('cap-only boundary: consumeRainmakerDeviceContact');}
+function recordDeviceBirth(){throw Error('cap-only boundary: recordDeviceBirth');}
+function nativeDeviceContact(){throw Error('cap-only boundary: nativeDeviceContact');}
+function nativeStormDeviceContactForActor(){throw Error('cap-only boundary: nativeStormDeviceContactForActor');}
+function objectDamageRow(){throw Error('cap-only boundary: objectDamageRow');}
+function validDeviceDamageCause(){throw Error('cap-only boundary: validDeviceDamageCause');}
+function nativeStormDeviceContact(){throw Error('cap-only boundary: nativeStormDeviceContact');}
+function nativeSpecialUseReceipt(){throw Error('cap-only boundary: nativeSpecialUseReceipt');}
+function nativeCatalogueSpecialActivation(){throw Error('cap-only boundary: nativeCatalogueSpecialActivation');}
+function withNativeDeviceProbe(){throw Error('cap-only boundary: withNativeDeviceProbe');}
+
 `;
 
 assert.doesNotMatch(executable, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
@@ -64,14 +84,45 @@ assert.doesNotMatch(crabSource,/\b(?:import|require|process|fetch|WebSocket|glob
 const sceneLimit=fs.readFileSync(new URL('../snapshot-guard.mjs',import.meta.url),'utf8').match(/export const NETWORK_BOSS_CRABLET_SCENE_LIMIT\s*=\s*(\d+)\s*;/);
 assert.ok(sceneLimit,'one canonical literal scene limit');
 const crabBoundary=`const {${crabNames}}=(()=>{const NETWORK_BOSS_CRABLET_SCENE_LIMIT=${Number(sceneLimit[1])};${crabSource}\nreturn {${crabNames}};})();\n`;
+// The native proof maps remain private and empty in this metadata-only realm.
+// Load the real receipt, pending and retention logic so expiry cannot acquire
+// a permissive stub. Native birth/geometry/use capabilities throw if reached.
+function scopedDependency(file, names, dependencies = []) {
+  let text = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
+  for (const dependency of dependencies) {
+    assert.equal(text.split(dependency).length, 2, 'one audited native dependency: ' + dependency);
+    text = text.replace(dependency, '');
+  }
+  text = text.replaceAll('export const ', 'const ').replaceAll('export function ', 'function ');
+  assert.doesNotMatch(text, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
+    'native metadata dependency has no external capability: ' + file);
+  return `const {${names}}=(()=>{${text}\nreturn {${names}};})();\n`;
+}
+const nativeMetadataBoundary = [
+  scopedDependency('../catalogue-action-receipt.mjs', 'captureCatalogueActionReceipts,catalogueActionReceipt'),
+  scopedDependency('../device-hit-pending.mjs', 'flushNativeDeviceHits,clearNativeDeviceHits,bindNativeDeviceHitTarget', [
+    "import {catalogueActionReceipt} from './catalogue-action-receipt.mjs';",
+  ]),
+  scopedDependency('../sub-device-contact-proof.mjs', 'recordSubDeviceBirth,retainedSubDeviceProof,retainedSubDeviceProofKey,nativeSubDeviceContact,nativeSubDeviceSource', [
+    "import {flushNativeDeviceHits} from './device-hit-pending.mjs';",
+  ]),
+  scopedDependency('../special-device-contact-proof.mjs', 'recordSpecialDeviceBirth,nativeSpecialDeviceContact,nativeSpecialDeviceSource,retainedSpecialDeviceProof,retainedSpecialDeviceProofKey', [
+    "import {nativeStormDeviceContact} from './storm-device-contact-proof.mjs';",
+    "import {nativeSpecialUseReceipt} from '../splatoon3/runtime/support-replay-admission.mjs';",
+    "import {nativeCatalogueSpecialActivation} from '../splatoon3/runtime/special-replay-admission.mjs';",
+    "import {catalogueActionReceipt} from './catalogue-action-receipt.mjs';",
+    "import {withNativeDeviceProbe} from './native-device-probe.mjs';",
+    "import {flushNativeDeviceHits} from './device-hit-pending.mjs';",
+  ]),
+].join('\n');
 function run(body, direct = false) {
   assert.equal(executable.split('function flush(').length, 2, 'unique audited direct boundary');
   const prefix = direct ? executable.slice(0, executable.indexOf('function flush(')) : executable;
   assert.ok(prefix.length > 0);
-  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + crabBoundary + prefix +
+  const code = 'let clock=100; const performance={now:()=>clock*1000};\n' + contactBoundary + ceilingSources + crabBoundary + nativeMetadataBoundary + prefix +
     '\nfunction bindSubBirthCommit(){} function closeSubBirthCommit(){}\n' +
     '(' + body.toString() + ')()';
-  // Token binding is a metadata stub; every new Sprinkler/Torpedo capability throws if touched.
+  // Token binding is a metadata stub; every Sprinkler/Torpedo/Rainmaker capability throws if touched.
   // No host objects/functions enter this realm.
   const context = vm.createContext(Object.create(null), {codeGeneration:{strings:false, wasm:false}});
   return JSON.parse(JSON.stringify(new vm.Script(code).runInContext(context, {timeout:1000})));
@@ -84,6 +135,23 @@ assert.throws(() => run(() => SPRINKLER.dropletDamage), /cap-only boundary: SPRI
 assert.throws(() => run(() => registerReceiverSprinkler()), /cap-only boundary: registerReceiverSprinkler/);
 assert.throws(() => run(() => consumeReceiverSprinklerContact()), /cap-only boundary: consumeReceiverSprinklerContact/);
 assert.throws(() => run(() => receiverSprinklerScope()), /cap-only boundary: receiverSprinklerScope/);
+assert.throws(() => run(() => consumeRainmakerDeviceContact()), /cap-only boundary: consumeRainmakerDeviceContact/);
+assert.throws(() => run(() => recordDeviceBirth()), /cap-only boundary: recordDeviceBirth/);
+assert.throws(() => run(() => nativeDeviceContact()), /cap-only boundary: nativeDeviceContact/);
+assert.throws(() => run(() => nativeStormDeviceContactForActor()), /cap-only boundary: nativeStormDeviceContactForActor/);
+assert.throws(() => run(() => objectDamageRow()), /cap-only boundary: objectDamageRow/);
+assert.throws(() => run(() => validDeviceDamageCause()), /cap-only boundary: validDeviceDamageCause/);
+assert.throws(() => run(() => nativeStormDeviceContact()), /cap-only boundary: nativeStormDeviceContact/);
+assert.throws(() => run(() => nativeSpecialUseReceipt()), /cap-only boundary: nativeSpecialUseReceipt/);
+assert.throws(() => run(() => nativeCatalogueSpecialActivation()), /cap-only boundary: nativeCatalogueSpecialActivation/);
+assert.throws(() => run(() => withNativeDeviceProbe()), /cap-only boundary: withNativeDeviceProbe/);
+assert.deepEqual(run(() => {
+  const proof = {kind:'sub', actor:1}, nm = {byNid:new Map()};
+  return [retainedSubDeviceProof(proof), retainedSubDeviceProofKey(proof),
+    !!retainedSpecialDeviceProof(nm, proof), retainedSpecialDeviceProofKey(nm, proof),
+    nativeSubDeviceSource(nm, proof), nativeSpecialDeviceSource(nm, proof)];
+}), [false, null, false, null, null, null], 'unregistered metadata cannot gain native birth/use retention');
+
 
 test('PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes', () => {
   const rows = run(directCases, true);

@@ -23,6 +23,23 @@ test('independent wrappers share the same native invocation and copied admitted 
  assert.equal(outer.receipt.actors[0],actor,'ranked actor identity remains unchanged');
  assert.deepEqual(outer.receipt.poses.get(1),[50,2,3]);
 });
+
+test('large owner-event batches preserve exact admission, rejected rows and kit-support actor identities',()=>{
+ for(const size of [3,64,512]){
+  const entries=Array.from({length:8},(_,nid)=>({nid,owner:'p',actor:{nid,owner:'p'},x:nid,y:-0,z:2}));
+  const actors=new Map(entries.map(x=>[x.nid,{...x.actor,pos:{x:x.x,y:x.y,z:x.z}}]));
+  actors.set(8,{nid:8,owner:'p',pos:{x:8,y:0,z:2}});actors.set(9,{nid:9,owner:'p',pos:{x:9,y:0,z:2}});
+  actors.set(10,{nid:10,owner:'foreign',pos:{x:10,y:0,z:2}});
+  const events=Array.from({length:size},(_,i)=>i%3===0?[1,'ks','p',i%12,i]:i%3===1?[1,'ev','weapon:fire',{actor:{n:i%12}}]:[1,'p',i%12]);
+  events.push([1,'p',NaN],[1,'p',undefined]);
+  const packet={ts:1,a:[[9],...entries.map(e=>[e.nid])]},nm={s:{},match:{},cfg:{id:'m'},byNid:actors};
+  const result=observeOwnerTick(nm,'p',packet,()=>commitOwnerTick(nm,'p',packet,events,entries)).receipt;
+  const id=e=>e[1]==='ev'?e[3]?.actor?.n:e[1]==='ks'?e[3]:e[2];
+  assert.deepEqual(result.e,events.filter(e=>entries.some(a=>a.nid===id(e)&&a.owner==='p')));
+  assert.deepEqual(result.nativeEvents,events.filter(e=>id(e)>=0&&id(e)<=8),'explicit rejected row 9 cannot borrow its previous pose; omitted row 8 can');
+  assert.equal(Object.is(result.poses.get(0)[1],-0),true);
+ }
+});
 test('final composed native tick commits only after clock and event admission; wipeout is no longer before tick',()=>{
  const code=adaptBuildSource('src/net/netmatch.js',fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
  const start=code.indexOf('  _tick(from, d) {'),end=code.indexOf('\n  _advance(',start),tick=code.slice(start,end);
@@ -36,7 +53,9 @@ test('actual pending flush preserves all live FIFO claims when prune removes exp
  const prune=source.slice(source.indexOf('function prune('),source.indexOf('\nfunction weaponId('));
  const blocked=source.slice(source.indexOf('function bossBodyBlocked('),source.indexOf('\nfunction take('));
  assert.match(blocked,/^function bossBodyBlocked\(/,'flush must execute its actual production Boss predicate');
- const flush=source.slice(source.indexOf('function flush('),source.indexOf('\nexport function installCombatProvenance'));
+ const flushStart=source.indexOf('function flush('),flushEnd=source.indexOf('\nexport function admitDeviceHit(',flushStart);
+ assert.ok(flushStart>=0&&flushEnd>flushStart,'extract the production FIFO helper before the independent device-admission export');
+ const flush=source.slice(flushStart,flushEnd);
  for(const type of ['pvp','boss'])for(const times of [[98,99.5,99.8],[99.5,98,99.8],[99.5,99.8,98]]){
   const state={proofs:new Map(),pending:new Map(),contacts:new Map()},seen=[],peer={};
   const items=times.map((at,i)=>({at,type,d:{h:i+1,q:i+1,w:'shot',c:-1}}));state.pending.set('p',items);

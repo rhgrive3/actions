@@ -28,7 +28,7 @@ function baseline(rel,raw){
   undo('  for(let j=0;j<this.indices.length;j++){\n   const i=this.indices[j],side=this.footSide[j];','  for(const i of this.indices){\n   const side=i===this.bank.index.foot_L?0:i===this.bank.index.foot_R?1:-1;');
  }
  if(rel==='src/game/motion/body-balance.js'){
-  undo('  if(!this._soleCenter)this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this._soleCenter||this.center;','  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this.center;');
+  undo('  if(!this._soleCenter&&!updateBalanceCenterRotations(this))this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this._soleCenter||this.center;','  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this.center;');
   undo('  this.legIndices=balanceIndices;\n','');
   undo('for(const i of this.legIndices){if(!this.total)','for(const n of [\'leg1_L\',\'leg1_R\']){const i=this.bank.index[n];if(!this.total)');
   undo('for(const i of this.legIndices){const p=this.targets.wp[i]','for(const n of [\'leg1_L\',\'leg1_R\']){const i=this.bank.index[n],p=this.targets.wp[i]');

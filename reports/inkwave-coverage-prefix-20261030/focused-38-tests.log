@@ -1,0 +1,50 @@
+(node:45288) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ published turf changes preserve the exact ordered weighted sum through announced and unannounced writes (86.890946ms)
+✔ clean prefixes avoid repeated weighted additions and unknown publications still scan every eligible cell (7.359587ms)
+✔ public direct indexed scans still observe every grid edit without a version change (2.10369ms)
+✔ sparse native-style zero ownership keeps cell offsets and ordered weights exact (4.781587ms)
+✔ identity changes rebuild the index and retain full fallback (6.154322ms)
+✔ sparse unaligned eligible cells retain their weighted order and overlapping/reordered faces use full fallback (1.306555ms)
+✔ partial words ignore excluded bytes, retain high ownership bytes and fall back at truncated storage (0.245298ms)
+✔ prototype-disguised storage retains intrinsic brands and the original full-scan values (0.580914ms)
+✔ Proxy, custom arrays, SharedArrayBuffer, resizable, unaligned and detached storage keep the original full path (1.051231ms)
+✔ public array/property accessors retain baseline read order, output and callback side effects (0.978914ms)
+✔ exceptional binary64 weights retain the baseline sum after prefix replay (18.937686ms)
+✔ composed body callbacks preserve reentry and silent earlier edits before the known publication (626.484356ms)
+✔ composed paint shader keeps decoration inside the source radius (no far satellites/spatter) (32.948489ms)
+✔ indexed live coverage is bit-identical to the reference scan (6.992097ms)
+✔ HUD ink tank repaint is limited to 30 Hz and carries the elapsed time (0.487072ms)
+✔ ScreenFX warm-up enables the pass imperceptibly for the boot frames only (63.480682ms)
+✔ SFX loop noise is pre-built after the audio context exists (5.068371ms)
+✔ pinned Roller source unit groups contain independent references for propagated ordinals (4.572472ms)
+✔ Blaster births share only immutable specs and observe live source/scale edits and invalidation (3.534404ms)
+✔ a preselected splash slot is reused without changing distance, boundaries or invalid-ordinal behavior (1.315972ms)
+✔ frozen draw caching preserves exact rounding, age animation, mutable rows and per-spec invalidation (3.298333ms)
+✔ catalogue Bucket sharing preserves derivative source units and unclamped glob envelopes (1.195904ms)
+✔ catalogue Bucket sharing still handles dynamic source accessors conservatively (0.894576ms)
+✔ catalogue source changes and ordinary records retain live draw selection and fallback behavior (0.463921ms)
+✔ zone coverage ignores observed wall paint but rescans on unknown mutation, floors and changed indices (0.83651ms)
+✔ projectile Cooler Hit scratch keeps escaping candidates independent and refreshes Tower/expiry facts (25.921406ms)
+✔ Rainmaker wall Set leases preserve duplicate order, detached impact walls, nesting and exception cleanup (0.77783ms)
+✔ Bubbler receiver keeps sender authorization, first owner match and Ink Vac fallback (0.430758ms)
+✔ ranked landing iterator keeps sparse roster order and resolves later remote poses only when consumed (1.899781ms)
+(node:45309) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 30Hz (46.02299ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 60Hz (22.766748ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 120Hz (44.01205ms)
+✔ actual composed body batches affine row bounds but preserves dirty gen, cells, dead masks and score (650.749668ms)
+✔ coverage ignores known wall writes and preserves weighted scan order, while unknown writes and identity changes invalidate (1.720915ms)
+✔ actual composed body wall writes retain the coverage cache; turf body writes replace it (281.576419ms)
+✔ growth team guard follows retained, evicted, completed, reused and unexpected leases without changing eligible order (259.001593ms)
+✔ ShapePool escaped record and typed array cannot be recycled into another live lease (9.071022ms)
+✔ production splat opposing-growth guard preserves forced-completion order against unconditional scan (284.82667ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2633.39049

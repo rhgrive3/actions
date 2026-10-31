@@ -1,3 +1,8 @@
+import {paintFizzyFlight} from './fizzy-flight-paint.mjs';
+import {rainmakerDeviceIdentity} from './ranked/rainmaker-device-contact.mjs';
+import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
+import {observeSubDeviceContact} from '../../network-replication/sub-device-contact-proof.mjs';
+import {isNativeDeviceProbe,withNativeDeviceProbe} from '../../network-replication/native-device-probe.mjs';
 import {observeLimitedContact} from '../../network-replication/torpedo-contact-commit.mjs';
 import { receiverTorpedoObservationState, retireReceiverTorpedoObservation, hasReceiverTorpedoObservation } from './torpedo-receiver-trajectory.mjs';
 import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
@@ -21,6 +26,7 @@ import { forecastSubRelease } from './sub-release-forecast.mjs';
 import { gearCurve } from './gear.mjs';
 import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
+import {deferNativeDeviceHit} from '../../network-replication/device-hit-pending.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
 import { spawnTorpedoSplashes, spawnFizzySplashes, stepTorpedoSplashes, clearTorpedoSplashes, beginTorpedoVisualBatch, endTorpedoVisualBatch } from './torpedo-splashes.mjs';
@@ -32,6 +38,7 @@ import { createThrowPrediction, appendThrowPredictionPoint, noteThrowPredictionI
 import { segmentCapsuleEntry } from './projectile-collision.mjs';
 import { resolveSubForThrow } from './kit-subs.mjs';
 import { drawSubTrajectory, clearSubTrajectory } from './sub-trajectory-preview.mjs';
+import { beakonUseProof, commitBeakonUseProof } from './beakon-use-admission.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
@@ -53,7 +60,39 @@ export function beakonActorKey(actor){
 // A rendered ghost may retire before its owner's delayed marking event.
 // Retain only bounded, accepted birth facts, independently of visual lifetime.
 const markBirths = new WeakMap();
+const nativeMarkObjects = new WeakMap();
 const acceptedSubDeploys = new WeakSet();
+// Independent, receiver-private copies use the very same flight functions.
+// They remain ghosts throughout: paint, actor HP, marks, effects and wire
+// proposals cannot escape. Only this WeakMap owns the read-only result sink.
+const subDeviceProbes=new WeakMap();
+function deviceAreaAmount(system,attack,target,center,radius,damageAt){
+ return system.nativeSubDeviceAreaContact?.(attack,target,center,radius,damageAt)
+  ??system.nativeSpecialDeviceAreaContact?.(attack,target,center,radius,damageAt);
+}
+function probeArea(object,center,radius,damageAt,cause,key){
+ const probe=subDeviceProbes.get(object);if(!probe)return;
+ for(const target of [...probe.system._s3SubObjects||[],...probe.system._s3AllSpecialObjects||[],...(probe.system.nativeSprinklerDeviceTargets?.()||[])]){
+  const damage=deviceAreaAmount(probe.system,object,target,center,radius,damageAt);
+  if(damage>0)probe.contacts.push({target,damage,cause:cause||objectDamageRow(object),projectile:object,
+   contactKey:key,age:probe.age});
+ }
+}
+function observeNativeDeviceArea(system,object,center,radius,damageAt,cause,key,age=object.age){
+ for(const target of [...system._s3SubObjects||[],...system._s3AllSpecialObjects||[],...(system.nativeSprinklerDeviceTargets?.()||[])]){
+  const amount=deviceAreaAmount(system,object,target,center,radius,damageAt);
+  if(amount>0)observeSubDeviceContact(object,target,amount,cause,key,age);
+ }
+}
+function cloneSubDeviceObject(source){
+ const out={};
+ for(const [key,value]of Object.entries(source)){
+  if(value===null||typeof value!=='object'&&typeof value!=='function')out[key]=value;
+  else if(value.isVector3)out[key]=value.clone();
+ }
+ out.owner=source.owner;out.spec=source.spec;out.torpedoTarget=source.torpedoTarget;out.ghost=true;out.mesh=null;out.s3Model=null;out.lineMesh=null;
+ out.seenMarks=new WeakMap();out.lineSegments=[];return out;
+}
 const markBirthKey = o => JSON.stringify([o.sourceLife,o.seq,o.subId]);
 function markBirthState(api,projectiles,owner,create=false) {
   let state=markBirths.get(projectiles);
@@ -471,7 +510,13 @@ function createObject(api, projectiles, owner, id, record = {}) {
     object.fuse = frameSeconds(spec.firstGroundFuseFrames);
   }
   const list = entityList(projectiles);
-  while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
+  while (list.length >= MAX_OBJECTS) {
+    // An incoming replica never spends a local device (or another owner's
+    // replica) to obtain a cosmetic slot. Its own oldest ghost may be retired.
+    const victim=object.ghost?list.find(x=>x.ghost&&x.owner===owner):list[0];
+    if(!victim)return null;
+    removeObject(api,projectiles,victim,true);
+  }
   list.push(object);
   noteMineBirth(projectiles,object);
   if(object.ghost&&['inkMine','angleShooter'].includes(id)){
@@ -484,12 +529,18 @@ function createObject(api, projectiles, owner, id, record = {}) {
         // an Angle Shooter's release-time mark clock. Delayed mark packets
         // must not restart the full duration from their receipt time.
         receivedAt:Number.isFinite(api.G.time)?api.G.time:0,
-        targets:new WeakMap(),
+        targets:new WeakMap(),contacts:new WeakMap(),pending:new Map(),object,nativeState:{detonated:false},
       }));
       // The source itself can retain at most MAX_OBJECTS live catalogue objects.
       // A later same-owner ordered birth beyond this bound proves the oldest
       // can no longer emit a new mark. Other owners cannot evict this history.
-      while(births.entries.size>MAX_OBJECTS)births.entries.delete(births.entries.keys().next().value);
+      while(births.entries.size>MAX_OBJECTS){
+        // Persistent mines survive unrelated expired line births from this
+        // same owner. At most MAX_OBJECTS live records can exist.
+        let key;for(const [k,b]of births.entries)if(b.object.dead){key=k;break;}
+        if(key===undefined)key=births.entries.keys().next().value;
+        births.entries.delete(key);
+      }
     }
   }
   object.mesh = buildVisual(api, object, projectiles);
@@ -522,6 +573,7 @@ function launchVelocity(api, projectiles, actor, spec, charge = 0, scratch = nul
 }
 
 function replaceVisual(api, object) {
+  if(subDeviceProbes.has(object))return;
   const projectiles=api.G.projectiles;
   disposeVisual(api,object,projectiles);
   object.mesh = buildVisual(api,object,projectiles);
@@ -554,7 +606,7 @@ function removeObject(api, projectiles, object, silent = false) {
     }
     object.reservations?.clear();
     const beakons = api.G.s3Beakons;
-    if (Array.isArray(beakons)) { const i = beakons.indexOf(object); if (i >= 0) beakons.splice(i,1); }
+    if (Array.isArray(beakons)) for(let i=beakons.length-1;i>=0;i--)if(beakons[i]===object)beakons.splice(i,1);
     api.emit?.('sub:beakon-expire',{ actor:object.owner, beacon:object, team:object.team, seq:object.seq });
   }
   disposeVisual(api,object,projectiles);
@@ -582,14 +634,19 @@ function deploy(api, projectiles, object, pos, normal = null, blockId = null, vi
     return;
   }
   const cap = spec.maxOwnerObjects || (object.subId === 'splashWall' ? 1 : 1);
-  const siblings = ownerObjects(projectiles,object).sort((a,b) => b.age-a.age);
-  while (object.subId!=='splashWall'&&siblings.length >= cap) {
+  let siblings=null;
+  if(object.subId!=='splashWall'){
+    let count=0;for(const x of entityList(projectiles))if(!x.dead&&x!==object&&x.owner===object.owner&&x.subId===object.subId&&x.phase==='deployed')count++;
+    if(count>=cap)siblings=ownerObjects(projectiles,object).sort((a,b)=>b.age-a.age);
+  }
+  while (siblings&&siblings.length >= cap) {
     const oldest=siblings.shift();
     if(object.subId==='inkMine'){
       // The owner detonates the oldest armed mine when placing a third. Replay
       // ghosts wait for the owner's burst/expire events so they do not simulate
       // a second, locally-authoritative blast.
       if(!object.ghost&&!oldest.ghost)detonateInkMine(api,projectiles,oldest);
+      else if(object.ghost&&nativeMarkBirth(api,object)&&nativeMarkBirth(api,oldest))observeNativeMine(api,projectiles,oldest,true);
       continue;
     }
     removeObject(api,projectiles,oldest);
@@ -617,7 +674,7 @@ function deploy(api, projectiles, object, pos, normal = null, blockId = null, vi
   if (object.subId === 'beakon') {
     object.grounded = true; object.alive = true; object.superJumpState = null;
     api.G.s3Beakons ||= [];
-    api.G.s3Beakons.push(object);
+    if(!api.G.s3Beakons.includes(object))api.G.s3Beakons.push(object);
     api.emit?.('sub:beakon',{ actor:object.owner, beacon:object, team:object.team, pos:object.pos.clone(), seq:object.seq });
   }
   if(visualMode==='reuse'&&object.mesh&&object.s3Model?.id===object.subId&&['inkMine','beakon'].includes(object.subId)){
@@ -687,10 +744,61 @@ function markSeconds(spec, owner, apOverride = null) {
   return gearCurve(ap,raw[0],raw[1],raw[2]) / 60;
 }
 
+function nativeMarkBirth(api,object){
+  const record=nativeMarkObjects.get(object),nm=api.G.netm;
+  if(!record)return null;
+  if(nm!==record.nm||nm._disposed||nm.s!==record.session||nm.match!==record.match||api.G.projectiles!==record.system||
+    nm.byNid?.get(object.owner.nid)!==object.owner||object.owner.owner!==record.owner||object.owner.net!==record.net||
+    object.sourceLife!==record.life||nm.peers?.get(record.owner)!==record.peer||!nm.s?._members?.has(record.owner)){
+    nativeMarkObjects.delete(object);return null;
+  }
+  return markBirthState(api,record.system,object.owner)?.entries.get(markBirthKey(object));
+}
+function consumeNativeMark(api,birth,target,event){
+  const contact=birth.contacts.get(target),life=ownerLife(target);
+  if(!contact||contact.life!==life||birth.targets.get(target)===life||!target.alive)return false;
+  const age=Math.max(0,(api.G.time||0)-contact.at),elapsed=event?.markAgeFrames??contact.ageFrames;
+  const frames=birth.frames-(birth.object.subId==='angleShooter'?Math.max(contact.ageFrames,elapsed):0);
+  const remaining=Math.max(0,subMarkSeconds(target,frames/60,birth.object.subId)-age);
+  if(!(remaining>0))return false;
+  target.s3||={};target.s3.revealedUntil||={};
+  target.s3.revealedUntil[birth.object.team]=Math.max(target.s3.revealedUntil[birth.object.team]||0,(api.G.time||0)+remaining);
+  birth.targets.set(target,life);birth.pending.delete(target);return true;
+}
+function recordNativeMarkContact(api,object,target){
+  const birth=nativeMarkBirth(api,object);if(!birth)return false;
+  const life=ownerLife(target),old=birth.contacts.get(target);
+  if(!old||old.life!==life)birth.contacts.set(target,{life,at:api.G.time||0,ageFrames:Math.max(0,Math.floor(object.age*60+1e-8))});
+  const pending=birth.pending.get(target);
+  if(pending?.targetLife===life||!target.remote)consumeNativeMark(api,birth,target,pending);
+  return true;
+}
+function observeNativeMine(api,projectiles,mine,forced=false){
+  const birth=nativeMarkBirth(api,mine);if(!birth||birth.nativeState.detonated)return false;
+  if(!forced&&((api.G.time||0)<mine.activeAt||mine.phase!=='deployed'))return false;
+  const targets=hostileActors(api,mine.owner);let triggered=forced;
+  try{
+    if(!triggered)for(const target of targets){
+      const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
+      if(dx*dx+dy*dy+dz*dz<=mine.spec.sensorRadius**2&&(!api.G.physics?.los||api.G.physics.los(mine.pos,target.pos))){triggered=true;break;}
+    }
+    if(!triggered)triggered=enemyInkNearMine(api,mine);if(!triggered)return false;
+    // The bounded private birth owns this one native trigger even if visual
+    // retirement and delayed mark rows arrive in a different order.
+    birth.nativeState.detonated=true;
+    const center=mine.pos.clone();center.y+=mine.spec.damageOffsetY||0;
+    observeNativeDeviceArea(projectiles,mine,center,mine.spec.radius||mine.spec.damageOuter,
+      d=>damageAt(d,mine.spec),'Bomb_Trap','mine-trigger',Math.max(0,(api.G.time||0)-birth.receivedAt));
+    for(const target of targets){const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y-(mine.spec.markOffsetY||0),dz=target.pos.z-mine.pos.z;
+      if(dx*dx+dy*dy+dz*dz<=mine.spec.markRadius**2)recordNativeMarkContact(api,mine,target);}
+  }finally{releaseHostileActors(api);}
+  return triggered;
+}
 function markAngleTarget(api,object,target){
   if(object.s3Prediction)return;
   const life=ownerLife(target);
-  if(object.ghost||object.seenMarks.get(target)===life)return;
+  if(object.ghost){recordNativeMarkContact(api,object,target);return;}
+  if(object.seenMarks.get(target)===life)return;
   const frames=Math.round(markSeconds(object.spec,object.owner,object.subPowerAP)*60);
   const markAgeFrames=Math.max(0,Math.floor(object.age*60+1e-8));
   const remaining=Math.max(0,frames-markAgeFrames)/60;
@@ -749,7 +857,7 @@ function finishAngleFlight(api,object){
 }
 function updateAngleLine(api,projectiles,object,dt){
   object.age+=dt;
-  if(!object.ghost){
+  if(!object.ghost||nativeMarkBirth(api,object)){
     const hostiles=hostileActors(api,object.owner);
     let bounds=null,scratch=null,lease=null;
     const reach=api.PLAYER.radius+object.spec.collisionRadius+1e-9;
@@ -759,12 +867,16 @@ function updateAngleLine(api,projectiles,object,dt){
         if(!bounds){
           bounds=object._angleBounds;
           if(!bounds){
-            let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
-            for(const [start,end] of object.lineSegments||[]){minX=Math.min(minX,start.x,end.x);maxX=Math.max(maxX,start.x,end.x);minZ=Math.min(minZ,start.z,end.z);maxZ=Math.max(maxZ,start.z,end.z);}
-            bounds=object._angleBounds={minX,maxX,minZ,maxZ};
+            let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,minY=Infinity,maxY=-Infinity;
+            for(const [start,end] of object.lineSegments||[]){minX=Math.min(minX,start.x,end.x);maxX=Math.max(maxX,start.x,end.x);minZ=Math.min(minZ,start.z,end.z);maxZ=Math.max(maxZ,start.z,end.z);minY=Math.min(minY,start.y,end.y);maxY=Math.max(maxY,start.y,end.y);}
+            bounds=object._angleBounds={minX,maxX,minZ,maxZ,minY,maxY};
           }
         }
         if(target.pos.x<bounds.minX-reach||target.pos.x>bounds.maxX+reach||target.pos.z<bounds.minZ-reach||target.pos.z>bounds.maxZ+reach)continue;
+        const baseY=target.pos.y+(target.smoothY||0),heightY=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
+        const axisLo=baseY+api.PLAYER.radius,axisHi=baseY+Math.max(api.PLAYER.radius,heightY-api.PLAYER.radius);
+        const yPad=32*Number.EPSILON*Math.max(1,Math.abs(axisLo),Math.abs(axisHi),Math.abs(bounds.minY),Math.abs(bounds.maxY),Math.abs(reach));
+        if(Number.isFinite(yPad)&&reach>=0&&(axisLo>bounds.maxY+reach+yPad||axisHi<bounds.minY-reach-yPad))continue;
         if(!scratch){
           lease=object._angleQueries ||= {depth:0,frames:[]};const depth=lease.depth++;
           scratch=lease.frames[depth] ||= {base:new api.THREE.Vector3(),result:{t:0,dist:Infinity}};
@@ -805,14 +917,14 @@ function detonateInkMine(api,projectiles,mine){
   return true;
 }
 
-function damageCustomObject(api,source,target,point,damage,cause=null){
+function damageCustomObject(api,source,target,point,damage,cause=null,attackSource=null){
   const sourceOwner=source?.owner&&typeof source.owner==='object'?source.owner:source;
   const sourceTeam=source?.team??sourceOwner?.team;
   if(!(damage>0)||target===source||target.dead||target.team===sourceTeam||source?.remote||sourceOwner?.remote)return 0;
   const amount=damage*objectDamageScale(source,target.subId,cause);
   if(!(amount>0))return 0;
-  if(target.ghost){if(!source.ghost)emitObjectHit(api,target,source,point,damage,cause);return 0;}
-  if(target.owner?.remote){emitObjectHit(api,target,source,point,damage,cause);return 0;}
+  if(target.ghost){if(!source.ghost)emitObjectHit(api,target,source,point,damage,cause,attackSource);return 0;}
+  if(target.owner?.remote){emitObjectHit(api,target,source,point,damage,cause,attackSource);return 0;}
   target.hp-=amount;
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return amount;
@@ -858,7 +970,7 @@ function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,
     if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
     const same=reusable&&point.distanceTo===distanceMethod&&Object.is(px,point.x)&&Object.is(py,point.y)&&Object.is(pz,point.z)&&
       Object.is(cx,center.x)&&Object.is(cy,center.y)&&Object.is(cz,center.z);
-    damageCustomObject(api,source,target,point,damageAt(same?distance:point.distanceTo(center),target,point),cause);
+    damageCustomObject(api,source,target,point,damageAt(same?distance:point.distanceTo(center),target,point),cause,options.attackSource);
   }
   projectiles.nativeSprinklerAoE?.(source,center,radius,damageAt,cause,options);
   if(includeSpecials)projectiles.s3DamageSpecialObjects?.(source,center,radius,damageAt,cause);
@@ -920,6 +1032,8 @@ function blast(api, object, pos, burstIndex = 0) {
   // the ordinary 35/25 blast bands. Preserve both separately-timed events.
   const spec = object.subId === 'burst' ? { ...sourceSpec, directDamage: undefined } : sourceSpec;
   const damagePos=spec.damageOffsetY?pos.clone().add(new api.THREE.Vector3(0,spec.damageOffsetY,0)):pos;
+  probeArea(object,damagePos,spec.radius||spec.damageOuter||0,d=>damageAt(d,spec),
+    object.subId==='torpedo'?'Bomb_TorpedoBullet':object.subId==='inkMine'?'Bomb_Trap':null,`burst:${burstIndex}`);
   if (!object.ghost) {
     if (Number.isFinite(spec.paintRadius)) {
       const center = pos.clone();
@@ -972,6 +1086,17 @@ function blast(api, object, pos, burstIndex = 0) {
 
 function burstTorpedoSplash(api,drop,pos){
   const spec=drop.source.spec;
+  const probe=subDeviceProbes.get(drop.source);
+  if(probe){
+    if(drop.kind==='chase'){
+      for(const target of [...probe.system._s3SubObjects||[],...probe.system._s3AllSpecialObjects||[],...(probe.system.nativeSprinklerDeviceTargets?.()||[])]){
+        const amount=deviceAreaAmount(probe.system,drop,target,pos,spec.splashRadius,()=>spec.splashDamage);
+        if(amount>0)probe.contacts.push({target,damage:amount,cause:'Bomb_TorpedoSplashBurst',projectile:drop,
+          contactKey:`drop:${drop.kind}:${drop.stage}:${drop.index}`,age:probe.age});
+      }
+    }
+    return;
+  }
   if(drop.kind==='fizzy'){
     if(!drop.ghost&&localOwner(drop.owner))surfacePaint(api,drop.owner,drop.team,pos,drop.paintRadius,drop.seed);
     return;
@@ -1050,7 +1175,7 @@ function captureTorpedo(api,object,target){
 }
 function updateTorpedoTransform(api,object,dt){
   object.age+=dt;object.prev.copy(object.pos);
-  if(object.ghost&&receiverTorpedoObservationState(api,api.G.projectiles,object)!=='active')return;
+  if(object.ghost&&!subDeviceProbes.has(object)&&receiverTorpedoObservationState(api,api.G.projectiles,object)!=='active')return;
   const target=object.torpedoTarget;
   if(target?.alive&&ownerLife(target)===object.torpedoTargetLife){
     object.torpedoAim.copy(target.pos);object.torpedoAim.y+=.7;
@@ -1108,30 +1233,6 @@ function advanceInitialSubFlight(object,dt){
   applyFlightPositionAirResist(object,dt);
 }
 
-function paintFizzyFlight(api,object,start,end){
-  if(object.subId!=='fizzy'||object.ghost)return;
-  const spec=object.spec,index=clamp((object.popLimit||1)-1,0,2),interval=spec.flySplashDistance[index];
-  if(!(interval>0))return;
-  const delta=end.clone().sub(start),distance=delta.length();if(!(distance>1e-8))return;
-  let pending=object.flySplashDistance||0,consumed=0;
-  while(pending+distance-consumed+1e-10>=interval){
-    const advance=interval-pending,t=clamp((consumed+advance)/distance,0,1);
-    const point=start.clone().addScaledVector(delta,t),seed=(object.seed^Math.imul((object.flySplashDrops||0)+1,0x9e3779b1))>>>0;
-    const radius=spec.flySplashPaintRadius[index];
-    // 11.3.0 pins the spacing, drop radius and tiered depth/width tuples. The
-    // public paint API only accepts circular splats, so this path keeps the
-    // sourced centre/radius and leaves the Nintendo elongated footprint as a gap.
-    const paintPoint=point.clone();
-    const hit=api.G.physics?.raycast?.(point,api._allSubDown ||= new api.THREE.Vector3(0,-1,0),10,api._allSubPaintHit ||= new api.Hit());
-    if(hit?.hit)paintPoint.copy(hit.point).addScaledVector(hit.normal,.025);
-    else paintPoint.y=Math.max(0,point.y-1.35);
-    surfacePaint(api,object.owner,object.team,paintPoint,radius,seed);
-    object.flySplashDrops=(object.flySplashDrops||0)+1;
-    emitEvent(api,object,'fizzyFlightPaint',{x:paintPoint.x,y:paintPoint.y,z:paintPoint.z,radius,seed,index});
-    consumed+=advance;pending=0;
-  }
-  object.flySplashDistance=Math.max(0,pending+distance-consumed);
-}
 
 function contactActor(api, object, start, end, size = .25) {
   const length = start.distanceTo(end);
@@ -1149,6 +1250,12 @@ function contactActor(api, object, start, end, size = .25) {
     } finally { releaseHostileActors(api); }
   }
   return best;
+}
+function subDeviceImpactBurst(p,target,point){
+ const id=p.s3Sub?.id||p.subId;
+ if(target?.subId!=='splashWall'||!['burst','autobomb','fizzy','torpedo'].includes(id))return null;
+ const center=point.clone();if(p.vel?.lengthSq()>0)center.addScaledVector(p.vel.clone().normalize(),-.001);
+ return center;
 }
 function customObjectCandidate(api, projectiles, p, start, end) {
   const active=projectiles._s3SubObjects;
@@ -1205,8 +1312,8 @@ function customObjectCandidate(api, projectiles, p, start, end) {
         if(!p.ghost)projectiles._explodeBomb?.(p.s3InkVacBomb);
         return 0;
       }
-      if(object.subId==='splashWall'&&['burst','autobomb','fizzy','torpedo'].includes(subId)){
-        const center=hit.point.clone();if(p.vel?.lengthSq()>0)center.addScaledVector(p.vel.clone().normalize(),-.001);
+      const center=subDeviceImpactBurst(p,object,hit.point);
+      if(center){
         blast(api,p,center);
         removeObject(api,projectiles,p);
         return 0;
@@ -1223,13 +1330,15 @@ function customObjectCandidate(api, projectiles, p, start, end) {
     };
   return candidate;
 }
-function emitObjectHit(api, object, projectile, point, damage, cause=null) {
+function emitObjectHit(api, object, projectile, point, damage, cause=null,attackSource=null) {
   const shooter=projectile?.owner&&typeof projectile.owner==='object'?projectile.owner:projectile;
   if(!localOwner(shooter)||!Number.isInteger(object.owner?.nid)||!Number.isInteger(shooter?.nid))return;
   const event={v:1,phase:'objectHit',subId:projectile?.wid||projectile?.type||projectile?.s3Sub?.id||projectile?.s3AllSpecial||'projectile',
     seq:projectile?.s3SubSeq||0,eventSeq:nextSeq(shooter),targetOwnerId:object.owner.nid,
     life:ownerLife(shooter),targetLife:object.sourceLife,targetOwnerLife:ownerLife(object.owner),targetSeq:object.seq,targetSubId:object.subId,
     damage:clamp(damage,0,2200),cause:objectDamageRow(projectile,cause),objectShredder:objectShredderEquipped(shooter),x:point.x,y:point.y,z:point.z,actor:shooter};
+  if(attackSource?.id==='superChump')Object.assign(event,{sourceSpecial:attackSource.id,sourceActivation:attackSource.activation,sourceObject:attackSource.serial,sourceIndex:attackSource.index,sourceSeed:attackSource.seed});
+  Object.assign(event,rainmakerDeviceIdentity(projectile));
   api.emit?.('all:sub',event);
 }
 function objectHitKey(event) { return `${event.actor?.nid??event.actorId}:${event.life??ownerLife(event.actor)}:${event.eventSeq}`; }
@@ -1240,7 +1349,8 @@ function beaconReservationKey(actor, life, reservationId) { return `${beakonActo
 function emitActorEvent(api, actor, phase, beacon, extra = {}) {
   if(!localOwner(actor)||!Number.isInteger(actor?.nid)||!beacon)return null;
   const event={v:1,phase,subId:'beakon',seq:beacon.seq,eventSeq:nextSeq(actor),life:ownerLife(actor),sourceLife:beacon.sourceLife,
-    targetOwnerId:beacon.owner?.nid,targetLife:beacon.sourceLife,targetOwnerLife:ownerLife(beacon.owner),targetSeq:beacon.seq,actor,...extra};
+    targetOwnerId:beacon.owner?.nid,targetLife:beacon.sourceLife,targetOwnerLife:replayOwnerLife(beacon.owner),targetSeq:beacon.seq,actor,
+    jumpEpoch:actor.s3SubBeaconUse?.jumpEpoch,...extra};
   api.emit?.('all:sub',event);return event;
 }
 function syncBeaconUses(api, object) {
@@ -1250,32 +1360,33 @@ function syncBeaconUses(api, object) {
 function reserveBeacon(object, actor, reservationId) {
   if(!object||object.dead||object.subId!=='beakon'||object.phase!=='deployed'||object.usesLeft<=0)return false;
   object.reservations ||= new Map();
-  const key=beaconReservationKey(actor,ownerLife(actor),reservationId);
+  const actorLife=replayOwnerLife(actor),key=beaconReservationKey(actor,actorLife,reservationId);
   if(object.reservations.has(key))return true;
   // S3 mix Wiki: uses are consumed on LANDING, so all teammates can select
   // the same live Beakon before the earlier arrivals exhaust it. A reservation
   // is an identity/cancellation record, not a prepaid capacity slot.
   for(const [oldKey,reservation] of object.reservations){
     if(reservation.actorKey!==beakonActorKey(actor))continue;
-    if(reservation.actorLife===ownerLife(actor))return false;
+    if(reservation.actorLife===actorLife)return false;
     object.reservations.delete(oldKey);
   }
   const cost=actor.weapon?.sub==='beakon'?object.usesLeft:1;
-  object.reservations.set(key,{actorKey:beakonActorKey(actor),actorId:actor.nid,actorLife:ownerLife(actor),cost});
+  object.reservations.set(key,{actorKey:beakonActorKey(actor),actorId:actor.nid,actorLife,cost});
   return true;
 }
 function releaseBeaconReservation(object, actor, reservationId) {
   if(!object?.reservations)return false;
-  return object.reservations.delete(beaconReservationKey(actor,ownerLife(actor),reservationId));
+  return object.reservations.delete(beaconReservationKey(actor,replayOwnerLife(actor),reservationId));
 }
 function applyBeaconProposal(api,event) {
   const actor=event.actor||api.G.netm?.byNid?.get(event.actorId);
   const owner=api.G.netm?.byNid?.get(event.targetOwnerId);
-  if(!actor?.remote||!owner||owner.remote||owner.nid!==event.targetOwnerId||ownerLife(actor)!==event.life||
+  if(!actor?.remote||!owner||owner.remote||owner.nid!==event.targetOwnerId||replayOwnerLife(actor)!==event.life||
      actor.team!==owner.team||!Number.isSafeInteger(event.targetSeq)||
      !Number.isSafeInteger(event.reservationId)||event.reservationId<1||!['reserve','land','cancel'].includes(event.stage))return false;
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&o.subId==='beakon');
   if(!object||object.ghost||object.phase!=='deployed')return false;
+  const proof=beakonUseProof(api.G.netm,actor,object,event);if(!proof)return false;
   const seenKey=`${owner.nid}:${event.targetLife}:${event.targetSeq}:${actor.nid}:${event.life}:${event.reservationId}:${event.stage}`;
   if(beaconResultSeen.has(seenKey))return true;
   if(event.stage==='reserve'){
@@ -1287,6 +1398,7 @@ function applyBeaconProposal(api,event) {
     syncBeaconUses(api,object);
   }
   beaconResultSeen.add(seenKey);while(beaconResultSeen.size>MAX_REPLAY_EVENTS)beaconResultSeen.delete(beaconResultSeen.values().next().value);
+  commitBeakonUseProof(proof);
   return true;
 }
 function replayBeaconUses(api,event,owner) {
@@ -1319,7 +1431,7 @@ function useSubBeakon(api,actor,beacon,stage='land') {
   let use=pending;
   if(!use||use.beaconSeq!==beacon.seq||use.beaconLife!==beacon.sourceLife||use.beaconOwner!==beacon.owner){
     actor.s3BeakonUseSeq=((actor.s3BeakonUseSeq||0)+1)%1_000_000_000;if(!actor.s3BeakonUseSeq)actor.s3BeakonUseSeq=1;
-    use={beaconOwner:beacon.owner,beaconOwnerId:beacon.owner?.nid,beaconLife:beacon.sourceLife,beaconSeq:beacon.seq,reservationId:actor.s3BeakonUseSeq};
+    use={beaconOwner:beacon.owner,beaconOwnerId:beacon.owner?.nid,beaconLife:beacon.sourceLife,beaconSeq:beacon.seq,reservationId:actor.s3BeakonUseSeq,jumpEpoch:actor.superJumpState?.sjEpoch};
     actor.s3SubBeaconUse=use;
   }
   const remoteOwner=beacon.owner?.remote===true;
@@ -1348,7 +1460,7 @@ function applyRemoteObjectHit(api,event) {
   const shooter=event.actor||api.G.netm?.byNid?.get(event.actorId);
   const owner=api.G.netm?.byNid?.get(event.targetOwnerId);
   if(!shooter?.remote||!owner||owner.remote||owner.nid!==event.targetOwnerId||
-     ownerLife(shooter)!==event.life||shooter.team===owner.team||!finite3({x:event.x,y:event.y,z:event.z})||
+     replayOwnerLife(shooter)!==event.life||shooter.team===owner.team||!finite3({x:event.x,y:event.y,z:event.z})||
      !Number.isFinite(event.damage)||event.damage<=0||event.damage>2200||!Number.isSafeInteger(event.targetSeq)||!Number.isSafeInteger(event.targetLife))return false;
   const key=objectHitKey(event);if(objectHitSeen.has(key))return false;
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&o.subId===event.targetSubId&&o.phase==='deployed');
@@ -1359,12 +1471,14 @@ function applyRemoteObjectHit(api,event) {
   // Match Vector3 constructor defaults, subtraction order and distanceTo square root.
   const dx=hitPos.x-(hitX===undefined?0:hitX), dy=hitPos.y-(hitY===undefined?0:hitY), dz=hitPos.z-(hitZ===undefined?0:hitZ);
   if(Math.sqrt(dx*dx+dy*dy+dz*dz)>reach)return false;
+  const admitted=admitDeviceHit(api.G.netm,shooter,target,event.damage,event.cause,event);
+  if(!admitted){deferNativeDeviceHit(api.G.netm,shooter,event,()=>applyRemoteObjectHit(api,event));return false;}
   // An invalid target, a premature birth or a geometric miss must not poison
   // this attacker's replay window. Reserve only accepted hits, immediately
   // before HP callbacks so synchronous replay cannot apply them twice.
   objectHitSeen.add(key);
   while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);
-  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectDamageScale(shooter,target.subId,event.cause||'Default'));
+  target.hp-=admitted.damage*objectDamageScale(shooter,target.subId,admitted.cause);
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
 }
@@ -1440,6 +1554,7 @@ function updateStatuses(api, dt) {
 }
 
 function updateFlight(api, projectiles, object, dt) {
+  const deviceProbe=subDeviceProbes.has(object);
   const observed=receiverTorpedoObservationState(api,projectiles,object);
   if(observed==='retired'){removeObject(api,projectiles,object,true);return;}
   const spec=object.spec;
@@ -1456,7 +1571,7 @@ function updateFlight(api, projectiles, object, dt) {
     if(floor?.hit&&floor.normal.y>.5){
       object.pos.y=floor.point.y+.03;
       object.fuse-=dt;
-      if(object.fuse<=1e-10){if(object.ghost)object.phase='ghostWait';else burstFizzy(api,projectiles,object);return;}
+      if(object.fuse<=1e-10){if(object.ghost&&!deviceProbe)object.phase='ghostWait';else burstFizzy(api,projectiles,object);return;}
       object.vel.y=0;
       const drag=dt===STEP?.81:Math.pow(.81,dt*60);
       object.vel.x*=drag;object.vel.z*=drag;
@@ -1474,7 +1589,7 @@ function updateFlight(api, projectiles, object, dt) {
   }
   if(object.phase==='burstWait'){
     object.age+=dt;object.prev.copy(object.pos);object.fuse-=dt;
-    if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+    if(object.fuse<=0){if(object.ghost&&!deviceProbe)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
     return;
   }
   if(object.grounded&&object.subId==='autobomb'){
@@ -1502,7 +1617,7 @@ function updateFlight(api, projectiles, object, dt) {
     const floor=api.G.physics?.segment?.(from,to,projectiles._s3TorpedoGroundHit ||= new api.Hit());
     if(floor?.hit&&floor.normal.y>.5){
       object.age+=dt;object.prev.copy(object.pos);object.pos.y=floor.point.y+.03;object.fuse-=dt;
-      if(object.fuse<=1e-10){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+      if(object.fuse<=1e-10){if(object.ghost&&!deviceProbe)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
       const drag=dt===STEP?1-spec.groundPositionAirResist:Math.pow(1-spec.groundPositionAirResist,dt*60);
       object.vel.y=0;object.vel.x*=drag;object.vel.z*=drag;
       const next=(object._groundNext ||= object.pos.clone()).copy(object.pos).addScaledVector(object.vel,dt);
@@ -1519,10 +1634,10 @@ function updateFlight(api, projectiles, object, dt) {
       object.chaseAge=(object.chaseAge||0)+dt;
       if(object.chaseAge+1e-10>=spec.chaseSeconds){
         if(observed==='active'){spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);return;}
-        if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
+        if(object.ghost&&!deviceProbe)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
         return;
       }
-    }else if((!object.ghost||observed==='active')&&!object.torpedoSearchDisabled&&object.age+1e-10>=frameSeconds(spec.findStartFrames)){
+    }else if((!object.ghost||observed==='active'||deviceProbe)&&!object.torpedoSearchDisabled&&object.age+1e-10>=frameSeconds(spec.findStartFrames)){
       const target=findTorpedoTarget(api,object);
       if(target){captureTorpedo(api,object,target);return;}
     }
@@ -1551,6 +1666,15 @@ function updateFlight(api, projectiles, object, dt) {
   const defense=projectiles.kitDefenseCandidate?.(object);
   const defenseDistance=defense?.distance??Infinity, actorDistance=actor?.distance??Infinity;
   const worldDistance=world?.hit?world.dist:Infinity;
+  if(object.subId==='fizzy'&&!object.ghost){
+    // Schedule only the physically traversed prefix, before interception or
+    // terrain response can mutate the endpoint. Falling drops own later paint;
+    // no unsupported fizzyFlightPaint action is emitted or accepted.
+    const length=object.prev.distanceTo(object.pos),distance=Math.min(length,worldDistance,defenseDistance,actorDistance);
+    const end=(object._fizzyFlightEnd ||= object.pos.clone()).copy(object.prev);
+    if(length>0)end.lerp(object.pos,clamp(distance/length,0,1));
+    paintFizzyFlight(api.G,object,object.prev,end);
+  }
   if(object.subId==='angleShooter'){
     const length=object.prev.distanceTo(object.pos),distance=Math.min(length,defenseDistance,actorDistance,worldDistance);
     const end=length>0?(object._angleClippedEndScratch||=new api.THREE.Vector3()).copy(object.prev).lerp(object.pos,clamp(distance/length,0,1)):object.pos;
@@ -1577,7 +1701,8 @@ function updateFlight(api, projectiles, object, dt) {
   if(actor&&actorDistance<worldDistance){
     object.pos.lerpVectors(object.prev,object.pos,actor.t);
     if(object.s3Prediction)noteThrowPredictionImpact(object.s3Prediction,object.pos,null,object.s3Prediction.time,'actor');
-    if(object.ghost){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
+    if(object.ghost&&!deviceProbe){if(object.subId==='angleShooter'&&nativeMarkBirth(api,object)){markAngleTarget(api,object,actor.actor);finishAngleFlight(api,object);}else if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
+    if(deviceProbe&&object.subId==='burst'){object.phase='burstWait';object.fuse=frameSeconds(spec.contactBurstDelayFrames);object.vel.set(0,0,0);return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
       if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
@@ -1610,7 +1735,7 @@ function updateFlight(api, projectiles, object, dt) {
     // but deployments and detonations still wait for the owner's event.
     const visualBounce=object.subId==='angleShooter'||object.subId==='fizzy'||
       object.subId==='torpedo'&&!object.chasedTarget||object.subId==='splashWall'&&world.normal.y<=.5;
-    if(object.ghost&&!visualBounce){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
+    if(object.ghost&&!visualBounce&&!deviceProbe){if(observed==='active'){if(object.chasedTarget)spawnTorpedoSplashes(api,projectiles,object,object.pos);removeObject(api,projectiles,object,true);}else object.phase='ghostWait';return;}
     if(object.subId==='angleShooter'){
       const normal=world.normal,vn=object.vel.dot(normal),speed=object.vel.length(),ground=normal.y>.5;
       const angleRate=ground?spec.reboundGroundAngleRate:spec.reboundWallAngleRate;
@@ -1718,7 +1843,7 @@ function updateDeployed(api,projectiles,object,dt){
   }
   if(object.subId==='inkMine'){
     if((G.time||0)<object.activeAt)return;
-    if(object.ghost)return;
+    if(object.ghost){observeNativeMine(api,projectiles,object);return;}
     const hostiles=hostileActors(api,object.owner);
     let found;
     try {
@@ -1762,8 +1887,8 @@ function updateDeployed(api,projectiles,object,dt){
     }
   }
   if(expired){removeObject(api,projectiles,object);return;}
-  // poseVisual turns each model; deployed walls keep the yaw used by barrier contact.
-  if(object.mesh)object.mesh.position.copy(object.pos);
+  // tickObjects calls poseVisual immediately after this update and owns the
+  // final mesh position copy, including deployed walls and attached platforms.
 }
 
 function tickObjects(api,projectiles,dt){
@@ -1812,6 +1937,12 @@ function replaySpawn(api,event,owner,report){
 function replayDeploy(api,event,owner){
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object||object.burstReplayed||acceptedSubDeploys.has(object)||!finite3({x:event.x,y:event.y,z:event.z}))return false;
+  // A native marking birth already owns its placement/trajectory. Its replay
+  // companion cannot move the receiver contact volume to an arbitrary point.
+  if(nativeMarkBirth(api,object)){
+    if(object.subId!=='inkMine'||object.pos.distanceToSquared(new api.THREE.Vector3(event.x,event.y,event.z))>.04)return false;
+    acceptedSubDeploys.add(object);return true;
+  }
   // The first owner correction remains valid after a locally predicted landing.
   // Later envelopes for this same birth cannot renew clocks, uses or visuals.
   acceptedSubDeploys.add(object);
@@ -1845,17 +1976,18 @@ function replayMark(api,event,owner){
   // different: it marks at detonation and may remain planted indefinitely.
   const birthAge=event.subId==='angleShooter'&&Number.isFinite(birth.receivedAt)
     ?Math.max(0,Math.floor(((api.G.time||0)-birth.receivedAt)*60+1e-8)):0;
-  const remaining=Math.max(0,event.frames-Math.max(elapsed,birthAge))/60;
-  // Birth evidence does not prove contact with this target. Preserve that
-  // unresolved boundary while preventing one accepted claim from renewing.
-  if(birth.targets.get(target)===event.targetLife)return false;
-  const applied=applyMark(api,target,owner.team,remaining,event.subId);
-  if(applied)birth.targets.set(target,event.targetLife);
-  return applied;
+  if(!nativeMarkBirth(api,birth.object)||birth.targets.get(target)===event.targetLife)return false;
+  if(event.subId==='inkMine')observeNativeMine(api,api.G.projectiles,birth.object);
+  if(birth.contacts.get(target)?.life===event.targetLife)return consumeNativeMark(api,birth,target,event);
+  // A valid mark may lead the receiver's fixed-step contact; the event cannot
+  // create that contact. At most the current eight Actor identities are held.
+  if(birth.pending.size<8)birth.pending.set(target,{targetLife:event.targetLife,markAgeFrames:Math.max(elapsed,birthAge)});
+  return false;
 }
 function replayExpire(api,event,owner){
   // Owner retirement is ordered after its marks. Local visual retirement is not.
-  markBirthState(api,api.G.projectiles,owner)?.entries.delete(markBirthKey(event));
+  const markEntry=markBirthState(api,api.G.projectiles,owner)?.entries.get(markBirthKey(event));
+  if(!markEntry||!nativeMarkBirth(api,markEntry.object))markBirthState(api,api.G.projectiles,owner)?.entries.delete(markBirthKey(event));
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object)return false;removeObject(api,api.G.projectiles,object,true);return true;
 }
@@ -1911,6 +2043,7 @@ export function replaySub(api,event,report){
   if(event.phase==='burst'){
     const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
     if(!object||object.burstReplayed||![event.x,event.y,event.z].every(Number.isFinite))return false;
+    if(object.subId==='inkMine'&&nativeMarkBirth(api,object)){if(!observeNativeMine(api,api.G.projectiles,object)&&!nativeMarkBirth(api,object).nativeState.detonated)return false;if(object.pos.distanceToSquared(new api.THREE.Vector3(event.x,event.y,event.z))>.04)return false;}
     if(object.subId!=='fizzy'&&event.burstIndex!==0)return false;
     if(object.subId==='fizzy'){
       const index=object.fizzyBurstReplayed||0;
@@ -1935,16 +2068,16 @@ export function replaySub(api,event,report){
     object.phase='ghostWait';
     return true;
   }
-  if(event.phase==='fizzyHop'||event.phase==='bounce'){
-    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
-    if(!object||object.burstReplayed||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
-    object.pos.set(event.x,event.y,event.z);object.vel.set(event.vx,event.vy,event.vz);
-    if(event.phase==='fizzyHop')object.age=0;
-    object.phase='flight';
-    if(event.phase==='fizzyHop'){
-      if(!Number.isSafeInteger(event.pops)||event.pops<0||event.pops>3||!Number.isFinite(event.fuse)||event.fuse<0||event.fuse>1)return false;
-      object.pops=event.pops;object.fuse=event.fuse;
-    }else object.bounceCount=Number.isSafeInteger(event.bounceCount)?clamp(event.bounceCount,0,3):object.bounceCount+1;
+  if(event.phase==='bounce'){
+    if(event.subId!=='angleShooter'||!Number.isSafeInteger(event.bounceCount)||event.bounceCount<1)return false;
+    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId==='angleShooter'&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+    if(!object||object.phase!=='flight'||object.burstReplayed||event.bounceCount< object.bounceCount||
+      event.bounceCount<=(object.replayedBounceCount||0)||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
+    if(nativeMarkBirth(api,object))return true;
+    // Local prediction may have reached this same bounce already. One owner
+    // correction is legal, but older/duplicate corrections cannot rewind it.
+    object.replayedBounceCount=event.bounceCount;
+    object.pos.set(event.x,event.y,event.z);object.vel.set(event.vx,event.vy,event.vz);object.bounceCount=event.bounceCount;
     if(object.mesh)object.mesh.position.copy(object.pos);
     return true;
   }
@@ -2067,8 +2200,59 @@ export function installAllSubs(api,profile={}){
     damageSubObjectsInRadius(api,this,attack,center,radius,damageAtDistance,cause,false,options);
     return true;
   };
+  Projectiles.prototype.nativeSubDeviceAreaContact=function(attack,target,center,radius,damageAtDistance,options={}){
+    if(!entityList(this).includes(target)||target.dead||target.ghost||target.owner?.remote||
+      !isSubObjectBlastTarget(target)||target.team===attack.team)return undefined;
+    const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
+    if(options.shapeContact?!options.shapeContact(target,point):distance>radius)return 0;
+    if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))return 0;
+    return damageAtDistance(options.shapeContact?point.distanceTo(center):distance,target,point);
+  };
+  Projectiles.prototype.captureSubDeviceProbe=function(object){
+    if(!object?.ghost||!entityList(this).includes(object)||!['burst','fizzy','torpedo','angleShooter','inkMine'].includes(object.subId))return null;
+    return {object:cloneSubDeviceObject(object),children:[],elapsed:0};
+  };
+  Projectiles.prototype.nativeSubDeviceProbeContacts=function(snapshot,target,age){
+    if(!snapshot?.object?.ghost||!Number.isFinite(age)||!(age>snapshot.elapsed)||age>10||snapshot.object.subId==='inkMine')return [];
+    const system=this,object=cloneSubDeviceObject(snapshot.object),contacts=[],state={system,target,contacts,age:snapshot.elapsed};
+    const facade={_s3SubObjects:[object],_s3TorpedoSplashes:snapshot.children.map(d=>({...cloneSubDeviceObject(d),source:object})),_s3SupportCoolers:system._s3SupportCoolers,
+      kitDefenseCandidate(p){
+        const query=()=>system.kitDefenseCandidate?.(p);
+        const c=isNativeDeviceProbe(p)?query():withNativeDeviceProbe(p,query);
+        if(!c)return null;
+        return {...c,onHit(){
+          const center=subDeviceImpactBurst(p,c.object,c.point);
+          if(center){blast(probeApi,p,center);return;}
+          const hitTarget=c.object||c.damageTarget;
+          if(!hitTarget||hitTarget.dead||hitTarget.owner?.remote||!(p.damage>0))return;
+          const key=p===object?'direct':`drop:${p.kind}:${p.stage}:${p.index}`;
+          contacts.push({target:hitTarget,damage:p.damage,cause:objectDamageRow(p),projectile:p,contactKey:key,age:state.age});
+        }};
+      }};
+    const probeApi={THREE:api.THREE,Physics:api.Physics,PLAYER:api.PLAYER,Hit:api.Hit,SUB:api.SUB,
+      G:{...api.G,projectiles:facade,scene:null,renderer:null,fx:null,audio:null,netm:null},emit:null};
+    subDeviceProbes.set(object,state);
+    try{return withNativeDeviceProbe(object,()=>{
+      const limit=Math.min(600,Math.floor((age-snapshot.elapsed)/STEP+1e-8));
+      for(let tick=0;tick<limit;tick++){
+        state.age=snapshot.elapsed+(tick+1)*STEP;probeApi.G.time=state.age;
+        // The native owner advances detached drops before parent flight.
+        stepTorpedoSplashes(probeApi,facade,STEP,(drop,pos)=>burstTorpedoSplash(probeApi,drop,pos));
+        if(!object.dead&&object.phase!=='line'&&object.phase!=='ghostWait')updateFlight(probeApi,facade,object,STEP);
+        if((object.dead||object.phase==='line'||object.phase==='ghostWait')&&!facade._s3TorpedoSplashes.length)break;
+      }
+      Object.defineProperty(contacts,'checkpoint',{value:{object:cloneSubDeviceObject(object),
+        children:facade._s3TorpedoSplashes.map(d=>({...cloneSubDeviceObject(d),source:null})),elapsed:state.age}});
+      return contacts;
+    })||[];}finally{subDeviceProbes.delete(object);}
+  };
   const nativeBombExplode=Projectiles.prototype._explodeBomb;
   if(nativeBombExplode)Projectiles.prototype._explodeBomb=function(bomb,...args){
+    if(bomb?.ghost){
+      const r=bomb.s3GhostResolved,id=r?.spec?.id||'bomb',view={s3Resolved:r};
+      observeNativeDeviceArea(this,bomb,bomb.pos,r?.radius||api.SUB?.bomb?.radius||8,
+        d=>nativeBombDamageAt(view,api,d),id==='suction'?'Bomb_Suction':'Bomb','burst');
+    }
     const result=nativeBombExplode.call(this,bomb,...args);
     damageNativeBombObjects(api,this,bomb);
     return result;
@@ -2080,6 +2264,28 @@ export function installAllSubs(api,profile={}){
   const priorChargeKey=Projectiles.prototype.s3SubPredictionChargeKey;
   Projectiles.prototype.s3SubPredictionChargeKey=function(actor,options={}){
     return catalogueSubPredictionChargeKey(actor,options)??priorChargeKey?.call(this,actor,options)??null;
+  };
+  Projectiles.prototype.commitReceiverMarkBirth=function(nm,object,receipt,event){
+    if(api.G.netm!==nm||!object?.ghost||!['angleShooter','inkMine'].includes(object.subId)||object.owner!==nm.byNid?.get(receipt.nid)||
+      object.owner.weapon?.sub!==object.subId||object.sourceLife!==receipt.life||object.seq!==receipt.serial||
+      !entityList(this).includes(object)||nativeMarkObjects.has(object))return false;
+    const motion=receipt.birthMotion,owner=object.owner,ap=owner.s3?.abilityPoints?.subPower||0;
+    if(!motion||![motion.vx,motion.vy,motion.vz,motion.aimYaw,motion.aimPitch].every(Number.isFinite)||object.subPowerAP!==ap)return false;
+    const lag=Math.max(0,Math.min(1.4,receipt.packetTime-receipt.eventTime)),moving=Math.hypot(motion.vx,motion.vy,motion.vz);
+    const anchor=new api.THREE.Vector3(...receipt.pose);if(object.subId==='angleShooter')anchor.y+=1.35;
+    if(object.pos.distanceTo(anchor)>1.5+moving*lag+.06||api.G.physics?.los&&!api.G.physics.los(anchor,object.pos))return false;
+    if(object.subId==='inkMine'){if(object.vel.length()>.02)return false;}
+    else{
+      const spec=object.spec,speed=spec.throwSpeedTiers?gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high):spec.throwSpeed;
+      const inherited=moving*Math.max(spec.inheritX??SUB_SPECIAL_FIDELITY.bomb.inheritX,spec.inheritZ??SUB_SPECIAL_FIDELITY.bomb.inheritZ,spec.inheritYPlus??SUB_SPECIAL_FIDELITY.bomb.inheritYPlus)+Math.abs(spec.inheritYMax??SUB_SPECIAL_FIDELITY.bomb.inheritYMax);
+      const kick=Math.abs(spec.spawnSpeedY??SUB_SPECIAL_FIDELITY.bomb.spawnSpeedY),magnitude=object.vel.length();
+      if(magnitude<Math.max(0,speed*Math.cos(1.15)-kick-inherited-.03)||magnitude>Math.hypot(speed,kick)+inherited+.03)return false;
+    }
+    nativeMarkObjects.set(object,{nm,system:this,session:nm.s,match:nm.match,owner:owner.owner,net:owner.net,life:receipt.life,peer:nm.peers.get(owner.owner)});
+    if(object.subId==='inkMine'){
+      deploy(api,this,object,object.pos,null,null,'defer');object.activeAt=(api.G.time||0)+Math.max(0,object.spec.armSeconds-lag);
+    }
+    return true;
   };
   const nativeThrow=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...args){

@@ -262,7 +262,7 @@ export function stepAgent3SlosherWallDrop(system, p, dt) {
   if (!state) return null;
   p.age += Math.max(0, dt);
   p.prev.copy(p.pos);
-  for (const track of state.tracks) stepTrack(system, p, track, dt);
+  for (const track of state.tracks) if (!track.done) stepTrack(system, p, track, dt);
   p.pos.copy(state.main.pos);
   if (dt > EPSILON) p.vel.copy(p.pos).sub(p.prev).multiplyScalar(1 / dt);
   else p.vel.set(0, 0, 0);

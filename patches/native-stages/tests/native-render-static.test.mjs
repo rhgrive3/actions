@@ -1,3 +1,4 @@
+import * as nativeWork from '../runtime/native-work.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,7 +11,7 @@ async function fixture(customData=null) {
     for (const [key, value] of Object.entries(values)) this.setExport(key, value);
   }, { context });
   const modules = {
-    three: make(THREE),
+    three: make(THREE), './native-work.mjs': make(nativeWork),
     '../../../src/world/levelMaterial.js': make({ createLevelMaterial() { throw Error('unused'); } }),
     './native-paint-detail.mjs': make({ enableNativePaintDetail() { throw Error('unused'); } }),
   };

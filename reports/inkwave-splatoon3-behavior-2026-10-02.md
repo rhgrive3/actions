@@ -1,5 +1,14 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
+
+比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
+
+既存の有限高さguardを維持し、canonical OBB worldで、雨volumeに接触する全active sphereの全投影がそれぞれ1つの非grate固体に遮られると証明できる場合だけBoss雨を拒否する。最遅entry列の同一block実nearest rayと既存upward LOSを使う。near-parallel軸はbodyTop平面だけでなくsphere全体を含む必要があり、端の実LOSが通る誤免疫の負対照を固定した。形状・モデル・数値reach・owner/Map/batch/flushは変更しない。
+
+正式LOS9＋既finite8はsource/選択的既存emitterで17/17、別の実owner18はsource/emitted・30/60/120Hz・JSON host/guestで18/18（重複合算しない）。合成Boss.rainのclear/屋根/far/旧5引数のMap判定と逆配線負対照を含む。全身の部分露出、unknown、body始点inside、NativePhysics/custom world、複数OBBの未証明unionは従来damageを維持する。全LOS・本家実機一致・full build成功を示すものではなく、#735はOpenを維持する。
+
+
 ## 2026-10-29：追加ブキの着弾塗りと再入
 
 Splatoon 3 Ver. 11.3.0 の既存ブキ参照値は変更せず、公開版のカタログ着弾塗りで同期コールバック中に別の着弾が再入すると、先の塗り位置・方向が上書きされる不具合を修正した。呼出しごとに使用中の位置・方向を保持し、例外時も解放する。塗り形状の計算順、送信項目、乱数の使用を維持する。実際のShooter弾と公開版PaintSystemを使ったCPU再現で、修正前の破壊と修正後の保持を確認した。本家実機の測定や全試合の同等性は未確認。条件・生ログ・範囲は[検証記録](issue-resolution-20261029/catalogue-paint-reentry/README.md)を参照。
@@ -7118,18 +7127,40 @@ PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニ�
 
 追加回帰は context recovery 28、streamed-music diagnostics 47、media admission 3 の計78 pass。先行156と重複しないため、この作業の選択したローカル回帰小計は234 pass / 5 asset-dependent skip / 0 fail。原本メニュー音源を復元した完全ビルド（content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`）で、旧メニューの中断1件と正常な対戦BGM再生を同時に観測し、実 context lost/restored、120 RAF、60 direct frames と CPU/grid 所有者・全grid byteの保存を確認した。音声エラーの一括無視や再試行による通過ではない。[詳細と検証範囲](zero-headroom-review-20261031.md#11-統合-ci-で判明した復旧ゲートの観測不足と修正)を参照。最終 head のホスト CI・main 反映状態は PR の記録で確認する。
 
-### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+### 2026-10-31: 着地時の足姿勢とガチホコ射撃の無効値
 
-基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+基準は PR #1975 の `2a0f50e178286dda1fa2b0998e3c62b24c708ade`。ネイティブの足先補間を経過時間で進める変更に対し、`patches/splatoon3/runtime/walk.mjs` の歩行レイヤーが `_footPose` の時間引数を転送していなかった。歩行対象外のフレームで元の足姿勢処理へ戻ると、未定義の時間から足先の角度と全身 IK が NaN になった。ダイナモローラーの 30Hz・132 フレーム目（4.4 秒、空中から着地）で再現し、ガチホコでも着地後の握り位置が無効になった。ガチホコの実ボットは無効な発射位置を拒否され、チェックポイントへ進む一方で射撃できなくなっていた。両足の呼び出しと元処理への転送に、そのフレームの既存の時間引数を渡すよう修正した。
 
-新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+合成後の実 Actor／Character を使う既存 CPU テストで、修正前はダイナモ 1 件とガチホコのシューター／ローラー／マニューバー 3 件が失敗し、修正後は 4 件とも成功。ダイナモは 30／60／120Hz の握り、折り畳み、回転、発射・インク・タイミングの既存比較を通過した。ガチホコの右手と持ち手の最大距離は 0、左手は最大約 `8.18e-16` world 単位、右手の到達誤差は 0。さらに実ボットによるバリア破壊・取得・満充電射撃・チェックポイント到達の既存テスト 1 件も成功した。検証対象は公開版のネイティブ姿勢を使う CPU fixture であり、ブラウザ描画・読み込み済みソースモーション全状態・Switch 実機比較の代用ではない。Splatoon 3 Ver.11.3.0 の参照条件を継承し、本家との同条件の着地姿勢・射撃挙動は未確認のまま維持する。
 
-### 2026-10-31: Library キューの既存PR照合と追加最適化
+### 2026-10-31: ガチホコのネイティブ設置物命中と通信認証
 
-監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+比較基準は Splatoon 3 Ver.11.3.0、ガチホコのチャージ済み射撃、スプラッシュシールド、対物攻撃力アップなし。既存の INKWAVE 抽出値・ソース行（直撃 60、近距離爆風 180、シールドへの直撃倍率 1・爆風倍率 2）を維持する。今回の差分は通信上の認証経路であり、本家の認証方式や通信遅延を再現したという主張ではない。通常のメイン・サブ・スペシャルの発生証明を要求した結果、別経路であるホストの ranked イベントから発射するガチホコでは、正規のゲスト射撃まで設置物所有者に拒否されていた。
 
-ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+`ranked/rainmaker-device-contact.mjs` は既存のホスト認証を通過した厳密な発射イベントだけを受信者内部で保持し、実際のガチホコ飛行と既存の設置物接触・爆風判定が確認した命中を、正規の所有者 tick に由来する請求へ一度だけ対応づける。射撃 ID や請求ダメージだけでは命中を成立させず、セッション・試合・ホスト・射手とその生存世代・対象を拘束する。発射威力、塗り、対物倍率、通常のアクターダメージ権限は変更しない。
 
-形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain、実 Projectiles 接触をつないだ再現では、接触が先・請求が先の両方でシールド HP が 800 から 380 へ一度だけ減る。偽ホスト、未認証の直接再生、異なる射撃 ID、改変ダメージ、地形遮蔽、同じ命中の新シーケンス再送、期限切れ、ホスト変更は HP を減らさない。既存の ranked integration 全 33 件、追加した期限・ホスト変更を含む専用 5 件、通常設置物の認証・遮蔽・遅延回帰 7 件を確認した。計測は固定の制御時刻と衝突場面によるロジック検査であり、ブラウザでの 30/60/120 Hz 比較、実回線の遅延・ホスト交代、Splatoon 3 実機の同条件比較は未確認のまま残す。
 
-同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
+### 2026-10-31: 命中認証の同期コールバックと証明配列
+
+通信命中の証明を通常上限以下で同じ配列に再利用すると、遮蔽検査の同期コールバックで別の受信処理が発生した際、先行する認証の走査へ後発の射撃証明が混入する反例を再現した。`combat-provenance.mjs` は新しい記録処理が保持する配列を分離し、外側の走査から後発証明を見えなくする。長寿命の正規サブ・スペシャル証明の追加保持枠と通常160件の上限は維持した。既存の差分・負の対照テスト8件で、同じ配列を返す誤実装だけが拒否予定の命中を受理すること、修正後は拒否することを確認。威力や操作条件は変更しておらず、Splatoon 3 Ver.11.3.0の通信実装との比較やブラウザ実回線での再現は未確認。
+
+
+## 2026-10-31 全PR統合時の通信・予測・検証時計の整合
+
+比較対象は公開版 `inkwave-public/`、参照は既存の Splatoon 3 11.3.0 条件を維持する。今回の値は INKWAVE のロジック・通信 fixture と Chromium での検証であり、本家実機や iPad の測定値ではない。既存の未確認項目を解消済みに変更しない。
+
+- **採点**: #1973 の prefix を保持し、#1975 の sparse dirty 通知だけでは観測できなかった「public grid への未通知変更の後に通常 writer が動く」条件を完全走査と照合した。float 加算順序、reentry、clear、face 順序と境界 bit の検査を維持する。全体速度の改善は既存測定報告どおり未確認。
+- **投擲**: Sensor / Cooler は live と forecast の共有 fixed-step 処理を使用する。最初の capsule 接触と、跳ね返り等を経た最終着地・爆発 endpoint を区別する。30/60/120 Hz、実際の支払い、予測の更新上限を検査した。Sensor は最初の接触点と保守的な Y broadphase を両立させる。既存のローカル gravity 24 等を新しい本家確定値とは扱わない。
+- **ナイスダマの設備接触**: 地形着弾後の burst は source が次 fixed tick に生成するため、その 1 tick だけ private terminal に保持する。body / Boss の直撃は同 tick のままとし、先に確定した native body 接触と同じ点へ補間する。補間時の自己 alias と、空中の爆発中心を地面へ再投影する不一致を修正した。地形の最終 source frame、body の全28接触、1 frame 早い/期限後の改変 claim 拒否を実 native producer と受信側で照合した。41..80 frame の既存判定やダメージ値は維持する。
+- **アメフラシと復活**: 受信済み life が表示の `netLife` に先行する3 tickで、新しい正当な claim を落としていた設備 hit guard を既存 `replayOwnerLife` と一致させた。実 packet による固定 fixture では旧 life の tick12..87 の76接触、新 life の tick91..189 の99接触を受理する。旧 life の tick88..90 の3 claim は後続 life で既に失効しており、引き続き拒否する。新 life の描画遅延中91..93も受理することを集合で検査した。private cloud / paid-use / owner tick / target-life / native geometry の認証を緩和していない。この旧 life 退役境界が本家の通信時挙動と同じかは未確認。
+- **検証の時間進行**: `debug.freeze()` は残った simulation debt と S3 clock を同期的に退役する。手動30/60/120 Hzでも1秒あたり60 tickを保持し、過去の遅延 callback が後から進めないことを確認した。これは検証操作の修正であり、実プレイの新たな数値較正ではない。
+
+検証内容・統合対象・残る測定限界は `reports/pr-all-integration-20261031.md` に記録する。ブラウザ起動と CSP 拒否境界は実生成 HTML で確認し、描画にはソフトウェア WebGL を使用した。本家実機との操作一致や全 native match の性能をここから主張しない。
+
+
+### 2026-10-31 — #1983 follow-up: Rainmaker の正常完了 release と QA 配線
+
+- **実装・再現・影響**: `patches/splatoon3/runtime/ranked/{engine,install,network,rainmaker-device-contact}.mjs`。host ranked 更新が正常完了した release だけを送信・host-local 認可の根拠とし、表示側で消費する event map とは独立に completion fact を保持する。実 native release 0 の後で update を throw させた対照では、次 tick 以降も失敗 0 を wire／遠隔 Splash Wall 損傷へ進めず、正常 0 と次の正常 1 を維持する。失敗時の local queue／visual は巻き戻さず、既存 current-host trust／receipt／native contact admission を広げない。E2E 確認対象は Wall に限る。
+- **確認状態**: base `83e682d69110feaa82f274a11988e7bf3114c7bb`＋code 14 paths の同一 partial source root、Node24 source/VM で QA68（streamed51＋roof17）と Rainmaker formal9 を確認。native selected2／host-local 代表2／lexical10 は別 cohort で非合算。旧373 assert 式は維持したが、最終 base の旧 ranked35 再実行や旧 monolithic SIGKILL の合格化はしていない。物理 full collector は partial root の空 test directory guard により未受入であり、logical inventory の所属確認を全件テスト PASS と扱わない。
+- **未確認・対象外**: 今回の本家実機比較の参照 version・ギア・操作 frame 条件は未固定／未計測で、Splatoon 3 挙動一致は未判定。production emitted／full build／browser・GPU／real audio／FPS／最終 head の hosted CI は別受入を要する。Storm staged-birth 5 paths／v2 は除外し proof `04b4e29d…` を維持するため、その新しい合法反例は未解消。#1665 全体・全 device の security 合格や、髪／character model の編集・見た目比較を主張しない。

@@ -393,6 +393,7 @@ function rememberStrapBlocks(poly) {
   }
   historicalStrapBlocks.set(poly, blocks);
 }
+const strapLockAnchors = new WeakMap();
 function strapPaths() {
   if (_strapCache) return _strapCache;
   const out = [];
@@ -792,8 +793,11 @@ function addHarness(B, lv) {
     });
     // ladder-lock adjuster on the front run at chest height + the loose tail hanging below it
     if (lv < 1) continue;
-    let best = null;
-    for (let k = 0; k <= 300; k++) { const t = k / 300; const P = curve.getPointAt(t); if (P.z > 0.03 && (!best || Math.abs(P.y - 0.842) < Math.abs(best.P.y - 0.842))) best = { t, P }; }
+    let best = strapLockAnchors.get(curve);
+    if (!best) {
+      for (let k = 0; k <= 300; k++) { const t = k / 300; const P = curve.getPointAt(t); if (P.z > 0.03 && (!best || Math.abs(P.y - 0.842) < Math.abs(best.P.y - 0.842))) best = { t, P }; }
+      if (best) strapLockAnchors.set(curve, best);
+    }
     const Tg = curve.getTangentAt(best.t).normalize();
     const fr = teeFrameAt(best.P, lvF, micro);
     const o = fr.n.clone().addScaledVector(Tg, -fr.n.dot(Tg)).normalize();
@@ -899,13 +903,21 @@ function resampleQuarters(P, m) {
   }
   return out;
 }
-function shNormal(x, z, y, out) {
+function shNormal(x, z, y, out, sections = null) {
   const h = 2e-4;
-  const S0 = shSec(y), S1 = shSec(y + h), S2 = shSec(y - h);
+  const S0 = sections ? sections[0] : shSec(y), S1 = sections ? sections[1] : shSec(y + h), S2 = sections ? sections[2] : shSec(y - h);
   const gx = shSD(x + h, z, S0) - shSD(x - h, z, S0), gz = shSD(x, z + h, S0) - shSD(x, z - h, S0), gy = shSD(x, z, S1) - shSD(x, z, S2);
   const l = Math.hypot(gx, gy, gz) || 1; return out.set(gx / l, gy / l, gz / l);
 }
 /** Pelvis displacement at base point p (fly, pockets, whiskers, back pockets, yoke, side seams). */
+const SHORTS_SIDES = [1, -1];
+const SHORTS_POCKETS = SHORTS_SIDES.map(sx => {
+  const x0 = sx * 0.064, y0 = 0.754, x1 = sx * 0.116, y1 = 0.668;
+  const bx = x1 - x0, by = y1 - y0, L2 = bx * bx + by * by;
+  return { sx, x0, y0, bx, by, L2 };
+});
+const SHORTS_WHISKERS = [[0.062, 0.598, 0.0022], [0.088, 0.618, 0.0018], [0.042, 0.588, 0.0014]];
+const SHORTS_SEAT_FOLDS = [[0.1, 0.63, 0.002], [0.07, 0.61, 0.0016]];
 function shortsFold(p, lvF) {
   const y = p.y, ax = Math.abs(p.x), zc = SH_Z(y);
   const th = Math.atan2(p.x, p.z - zc), c = Math.cos(th), front = pos(c), back = pos(-c);
@@ -916,9 +928,7 @@ function shortsFold(p, lvF) {
     D += 0.001 * sstep(0.0062, 0.0046, Math.abs(fx)) * sstep(0.626, 0.645, y) * sstep(0.752, 0.742, y);
     D -= 0.0013 * gauss(p.x + 0.0005, 0.0026) * sstep(0.636, 0.66, y);
     // slant pocket openings: groove + a raised lip on the front-panel side
-    for (const sx of [1, -1]) {
-      const x0 = sx * 0.064, y0 = 0.754, x1 = sx * 0.116, y1 = 0.668;
-      const bx = x1 - x0, by = y1 - y0, L2 = bx * bx + by * by;
+    for (const { sx, x0, y0, bx, by, L2 } of SHORTS_POCKETS) {
       const t = clamp(((p.x - x0) * bx + (y - y0) * by) / L2, 0, 1);
       const dx = p.x - (x0 + bx * t), dy = y - (y0 + by * t);
       const sgn = Math.sign(dx * by - dy * bx) * sx;
@@ -927,10 +937,10 @@ function shortsFold(p, lvF) {
       D += 0.0011 * Math.exp(-(((d - 0.0042) / 0.003) ** 2)) * (sgn > 0 ? 1 : 0.3) * sstep(0.0, 0.08, t);
     }
     // crotch whiskers radiating from the fly bottom toward the thigh tops
-    for (const [x1, y1, amp] of [[0.062, 0.598, 0.0022], [0.088, 0.618, 0.0018], [0.042, 0.588, 0.0014]]) D += ridge(ax, y, 0.012, 0.636, x1, y1, 0.0075, amp) * front;
+    for (const [x1, y1, amp] of SHORTS_WHISKERS) D += ridge(ax, y, 0.012, 0.636, x1, y1, 0.0075, amp) * front;
   } else {
     // back patch pockets: raised panel with a folded top edge
-    for (const sx of [1, -1]) {
+    for (const sx of SHORTS_SIDES) {
       const qx = p.x - sx * 0.058, qy = y - 0.668;
       const e = Math.pow(Math.pow(Math.abs(qx) / 0.036, 6) + Math.pow(Math.abs(qy) / 0.041, 6), 1 / 6);
       D += 0.0012 * (1 - sstep(0.94, 1.02, e)) + 0.0006 * gauss(qy - 0.037, 0.0025) * (1 - sstep(0.9, 1.0, Math.abs(qx) / 0.036));
@@ -938,7 +948,7 @@ function shortsFold(p, lvF) {
     D += 0.0008 * gauss(p.x, 0.003) * sstep(0.59, 0.62, y);                     // centre-back seam
     D += 0.0012 * gauss(y - 0.735 + 0.012 * sstep(0.0, 0.06, ax), 0.006) * sstep(0.01, 0.04, ax); // back yoke seam
     // seat drag folds from the crotch toward the hips
-    for (const [x1, y1, amp] of [[0.1, 0.63, 0.002], [0.07, 0.61, 0.0016]]) D += ridge(ax, y, 0.02, 0.585, x1, y1, 0.008, amp) * back;
+    for (const [x1, y1, amp] of SHORTS_SEAT_FOLDS) D += ridge(ax, y, 0.02, 0.585, x1, y1, 0.008, amp) * back;
   }
   D += 0.0006 * Math.exp(-(((Math.abs(th) - Math.PI / 2) / 0.03) ** 2)) * sstep(0.6, 0.63, y);   // side seams
   return D * lvF;
@@ -968,8 +978,8 @@ function addShorts(B, lv) {
   const ys = K.densitySamples(nRows, SHX.yc, SHX.top - 0.004, (y) => 1 + 2.2 * gauss(y - SHX.yc, 0.012) + 0.8 * gauss(y - 0.6, 0.02) + 0.4 * gauss(y - 0.7, 0.04)).reverse();
   const rows = [], rowY = [];
   for (const y of ys) {
-    const ring = shRing(y, nTh);
-    rows.push(ring.map(([x, z]) => { shNormal(x, z, y, nrm); const p = new V3(x, y, z); return p.addScaledVector(nrm, shortsFold(p, lvF)); }));
+    const ring = shRing(y, nTh), sections = [shSec(y), shSec(y + 2e-4), shSec(y - 2e-4)];
+    rows.push(ring.map(([x, z]) => { shNormal(x, z, y, nrm, sections); const p = new V3(x, y, z); return p.addScaledVector(nrm, shortsFold(p, lvF)); }));
     rowY.push(y);
   }
   // crotch closure: front + back centre points of the last ring meet

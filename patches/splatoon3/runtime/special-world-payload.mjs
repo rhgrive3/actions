@@ -25,6 +25,14 @@ export function validSpecialWorldPayload(event){
      !optionalRange(event,'radius',0,limits.radius+.005)||!optionalRange(event,'hp',0,limits.hp)||
      !optionalRange(event,'specialPowerAP',0,57)||!optionalRange(event,'waveFrame',0,216/60))return false;
   if(kind==='screen'&&((event.width!==undefined&&event.width!==15)||(event.height!==undefined&&event.height!==9)))return false;
+  if(kind==='screen'&&event.target!==undefined){
+    const p=event.pos,t=event.target;
+    if(!Array.isArray(p)||!Array.isArray(t)||p.length!==3||t.length!==3)return false;
+    const dx=t[0]-p[0],dz=t[2]-p[2],span=Math.hypot(dx,dz);
+    // A sheet has an oriented horizontal plane. Coincident/vertical targets
+    // do not define one; normalizing zero used to turn every point into a hit.
+    if(!Number.isFinite(span)||span<=1e-8)return false;
+  }
   if(!optionalRange(event,'vx',-500,500)||!optionalRange(event,'vy',-500,500)||!optionalRange(event,'vz',-500,500)||
      !optionalRange(event,'gravity',0,1000)||!optionalRange(event,'airResist',0,1-Number.EPSILON))return false;
   return true;

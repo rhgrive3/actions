@@ -50,3 +50,11 @@ test('default scheduled yield aborts without waiting for a suspended animation f
 test('native empty cells share a frozen sentinel and populated cells remain private',()=>{
  const g=graph(0);g.physics.bodyFits=p=>!(p.x>3&&p.x<5&&p.z>1&&p.z<5);next.buildNativeNav(g);const empty=g.cells.filter(cell=>cell.length===0),occupied=g.cells.filter(cell=>cell.length>0);assert(empty.length>1);assert.equal(new Set(empty).size,1);assert(Object.isFrozen(empty[0]));assert.equal(new Set(occupied).size,occupied.length);assert(occupied.every(cell=>!Object.isFrozen(cell)));assert.throws(()=>empty[0].push(1),TypeError);
 });
+
+test('cheap graph bookkeeping batches clock reads while preserving the complete graph',async()=>{
+ const marker='   // Only cheap graph bookkeeping',begin=source.indexOf(marker),end=source.indexOf('   const elapsed=now()-sliceStart;',begin);assert(begin>=0&&end>begin);
+ const previous=load(source.slice(0,begin)+source.slice(end));const a=graph(15),b=graph(15);let oldReads=0,newReads=0;
+ await previous.buildNativeNavAsync(a,{now:()=>{oldReads++;return 0;},yieldTask:async()=>assert.fail('constant clock')});
+ await next.buildNativeNavAsync(b,{now:()=>{newReads++;return 0;},yieldTask:async()=>assert.fail('constant clock')});
+ assert.equal(output(b),output(a));assert(newReads<oldReads);console.log(JSON.stringify({nativeNavClockReadsBefore:oldReads,after:newReads}));
+});

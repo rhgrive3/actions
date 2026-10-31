@@ -2,6 +2,7 @@
 // complete. Colors and integer indices can use their final precision at once.
 class IWMarinaStaging {
  constructor(){this.p=new Float64Array(192);this.n=new Float64Array(192);this.c=new Float32Array(192);this._i=new Uint32Array(192);this._vc=0;this._ic=0;this._max=-1;}
+ _reserveVertices(required){if(required*3<=this.p.length)return;const cap=required*3,used=this._vc*3;for(const key of ['p','n','c']){const a=new this[key].constructor(cap);a.set(this[key].subarray(0,used));this[key]=a;}}
  _vertex(x,y,z,nx,ny,nz,r,g,b){const o=this._vc*3;if(o+3>this.p.length){const cap=Math.ceil(this.p.length*1.5/3)*3;for(const key of ['p','n','c']){const a=new this[key].constructor(cap);a.set(this[key]);this[key]=a;}}this.p[o]=x;this.p[o+1]=y;this.p[o+2]=z;this.n[o]=nx;this.n[o+1]=ny;this.n[o+2]=nz;this.c[o]=r;this.c[o+1]=g;this.c[o+2]=b;return this._vc++;}
  _triangle(a,b,c){const o=this._ic;if(o+3>this._i.length){const next=new Uint32Array(Math.ceil(this._i.length*1.5/3)*3);next.set(this._i);this._i=next;}this._i[o]=a;this._i[o+1]=b;this._i[o+2]=c;this._ic+=3;this._max=Math.max(this._max,a,b,c);}
  _geometry(THREE){const g=new THREE.BufferGeometry(),n=this._vc*3;g.setAttribute('position',new THREE.Float32BufferAttribute(this.p.subarray(0,n),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n.subarray(0,n),3));g.setAttribute('color',new THREE.BufferAttribute(this.c.slice(0,n),3));const I=this._max>=65535?Uint32Array:Uint16Array;g.setIndex(new THREE.BufferAttribute(new I(this._i.subarray(0,this._ic)),1));return g;}
@@ -93,9 +94,9 @@ export function registerMarinaVessels(D, H) {
   // Grid surface from rows of points (rows[i][j] = [x,y,z]); smooth normals from the grid, oriented away from `ref(i,j)`
   // (a function returning a point inside the solid). Optional per-vertex colour fn(x,y,z,i,j) → THREE.Color.
   function gridSurface(mb, rows, ref, colorFn, closedJ = false) {
-    const ni = rows.length, nj = rows[0].length, ids = [];
+    const ni = rows.length, nj = rows[0].length, base = mb._vc;
+    mb._reserveVertices(base + ni * nj);
     for (let i = 0; i < ni; i++) {
-      const row = [];
       for (let j = 0; j < nj; j++) {
         const p = rows[i][j];
         const pi0 = rows[Math.max(0, i - 1)][j], pi1 = rows[Math.min(ni - 1, i + 1)][j];
@@ -106,13 +107,14 @@ export function registerMarinaVessels(D, H) {
         let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
         const r = ref(i, j);
         if (nx * (p[0] - r[0]) + ny * (p[1] - r[1]) + nz * (p[2] - r[2]) < 0) { nx = -nx; ny = -ny; nz = -nz; }
-        row.push(mb.v(p[0], p[1], p[2], nx, ny, nz, colorFn ? colorFn(p[0], p[1], p[2], i, j) : null));
+        mb.v(p[0], p[1], p[2], nx, ny, nz, colorFn ? colorFn(p[0], p[1], p[2], i, j) : null);
       }
-      ids.push(row);
     }
     const nq = closedJ ? nj : nj - 1;
-    for (let i = 0; i < ni - 1; i++) for (let j = 0; j < nq; j++) mb.quad(ids[i][j], ids[i + 1][j], ids[i + 1][(j + 1) % nj], ids[i][(j + 1) % nj]);
-    return ids;
+    for (let i = 0; i < ni - 1; i++) {
+      const a = base + i * nj, b = a + nj;
+      for (let j = 0; j < nq; j++) { const k = (j + 1) % nj; mb.quad(a + j, b + j, b + k, a + k); }
+    }
   }
 
   // Flat polygon (convex or simple) in a plane: pts [[x,y,z]], normal n.
@@ -755,8 +757,9 @@ export function registerMarinaVessels(D, H) {
       const hy0 = [0, yd + 0.02, 0.92], hy1 = [0, mTop - 0.05, 0.05];
       B.tube(ns(B, 'rubber'), C.white, ropePts(hy0, hy1, 0.04, 8), 0.008, { radial: 4 });
       const pc = [C.teal, C.mustard, C.coral, C.navy];
+      const pennantPoints = ropePts(hy0, hy1, 0.04, 40);
       for (let k = 0; k < 4; k++) {
-        const t = (k + 0.5) / 4.4, p = ropePts(hy0, hy1, 0.04, 40)[Math.round(t * 40)];
+        const t = (k + 0.5) / 4.4, p = pennantPoints[Math.round(t * 40)];
         B.flag(p[0], p[1], p[2], { color: pc[k], s: 1.25, ry: HP });
       }
     },
@@ -998,9 +1001,9 @@ export function registerMarinaVessels(D, H) {
       const y0 = fy(Y0, 0.5), y1 = fy(Y1, 0.5);
       for (let i = 0; i <= NS * 2; i++) {
         const t = Math.min(tmax, i / (NS * 2)), a0 = fy(Y0, t), a1 = fy(Y1, t); if (bot(t) > a0 - 0.001 || top(t) < a1) continue;
-        const row = [];
+        const row = [], s0 = yAt(t, a0), s1 = yAt(t, a1);
         for (const side of [-1, 1]) {
-          const pa = at(t, yAt(t, a0), side), pb = at(t, yAt(t, a1), side);
+          const pa = at(t, s0, side), pb = at(t, s1, side);
           row.push([pa[0] + side * off, pa[1], pa[2]], [pb[0] + side * off, pb[1], pb[2]]);
         }
         rows.push(row);

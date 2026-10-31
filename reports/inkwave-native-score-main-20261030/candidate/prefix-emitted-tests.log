@@ -1,0 +1,23 @@
+INKWAVE built fixture /workspace/actions-score-main/_site contentHash=b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8
+(node:47100) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ published turf changes preserve the exact ordered weighted sum through announced and unannounced writes (73.130033ms)
+✔ clean prefixes avoid repeated weighted additions and unknown publications still scan every eligible cell (9.854752ms)
+✔ public direct indexed scans still observe every grid edit without a version change (1.911311ms)
+✔ sparse native-style zero ownership keeps cell offsets and ordered weights exact (3.63149ms)
+✔ identity changes rebuild the index and retain full fallback (8.228164ms)
+✔ sparse unaligned eligible cells retain their weighted order and overlapping/reordered faces use full fallback (3.397382ms)
+✔ partial words ignore excluded bytes, retain high ownership bytes and fall back at truncated storage (0.395715ms)
+✔ prototype-disguised storage retains intrinsic brands and the original full-scan values (0.94126ms)
+✔ Proxy, custom arrays, SharedArrayBuffer, resizable, unaligned and detached storage keep the original full path (1.064682ms)
+✔ public array/property accessors retain baseline read order, output and callback side effects (1.186219ms)
+✔ exceptional binary64 weights retain the baseline sum after prefix replay (17.008021ms)
+✔ composed body callbacks preserve reentry and silent earlier edits before the known publication (372.247908ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1127.229153

@@ -66,13 +66,14 @@ export function installSquidrollEffects({ FX, G, THREE }, profile) {
         if (camera && camera.position.distanceToSquared(s.pos) > 36 * 36) { state.fresh = false; continue; }
         s.pos.y += .35;
         const vx = roll.vx || 0, vz = roll.vz || 0, speed = Math.hypot(vx, vz) || 1;
+        const nx=vx/speed,nz=vz/speed;
         if (state.fresh) {
           state.fresh = false;
           glow(this, s.pos, s.gold, 1.05, .1, .9, 4);
           const count = Math.max(4, Math.round(10 * (this.q || 1)));
           for (let i = 0; i < count; i++) {
             const phase = i / count, angle = phase * TAU;
-            s.velocity.set(Math.cos(angle) * 2 - vx / speed, .8 + phase * 1.8, Math.sin(angle) * 2 - vz / speed);
+            s.velocity.set(Math.cos(angle) * 2 - nx, .8 + phase * 1.8, Math.sin(angle) * 2 - nz);
             drop(this, s.pos, s.velocity, a.color, phase);
           }
         }
@@ -83,16 +84,17 @@ export function installSquidrollEffects({ FX, G, THREE }, profile) {
         // Partial arcs in the launch/up plane follow the existing action clock.
         // Keep the squid's face readable; do not paint over its body/material.
         const turn = age / cfg.duration * TAU;
-        for (let i = 0; i < 18; i++) {
+        const arcCount=this.glows?Math.min(18,Math.max(0,this.glows.cap-this.glows.n)):0;
+        for (let i = 0; i < arcCount; i++) {
           const angle = turn - i * .06, along = Math.cos(angle) * .53;
-          s.point.set(s.pos.x + vx / speed * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + vz / speed * along);
+          s.point.set(s.pos.x + nx * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + nz * along);
           glow(this, s.point, s.gold, .2 - i * .005, life, strength * (1 - i / 19), 1);
         }
         const step = Math.floor(age * 60 + 1e-6);
         if (step !== state.step) {
           state.step = step;
           const angle = step * 2.3999632297;
-          s.point.set(s.pos.x + Math.cos(angle) * .48, s.pos.y + Math.sin(angle) * .4, s.pos.z - vz / speed * .25);
+          s.point.set(s.pos.x + Math.cos(angle) * .48, s.pos.y + Math.sin(angle) * .4, s.pos.z - nz * .25);
           glow(this, s.point, s.gold, .13, .065, .8, 12, angle);
         }
       }

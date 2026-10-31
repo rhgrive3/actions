@@ -43,9 +43,10 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
   // Rain cannot change an ineligible recovery tick. Keep the exact comparisons
   // (including NaN behavior), and query live clouds once recovery is possible.
   if (onEnemy || !(a.lastDamage + 1e-10 >= r.regenDelay) || !(a.hp < P.hp)) return;
-  const rain = stormRecoveryState(a, api);
-  if (!rain.enemy) {
-    a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
+  const clouds=api.G.projectiles?.clouds;
+  const rain=Array.isArray(clouds)&&clouds.length===0?null:stormRecoveryState(a, api);
+  if (!rain?.enemy) {
+    a.hp = Math.min(P.hp, a.hp + (submerged || rain?.ally ? r.regenRateSwim : r.regenRate) * dt);
   }
 }
 export function updateSpecialHealthRecovery(a, dt) {

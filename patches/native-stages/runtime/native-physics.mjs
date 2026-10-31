@@ -106,7 +106,7 @@ export class NativePhysics extends Physics {
     const t=w.triangle(id),dist=w._capsuleDistance(s0,s1,t);if(dist>=radius-SOURCE_CONTACT_EPSILON)continue;
     dir.subVectors(w._bests,w._bestp);
     if(dist<1e-8){dir.fromArray(w.normals,id*3);w._center.copy(s0).add(s1).multiplyScalar(.5).sub(t.a);if(dir.dot(w._center)<0)dir.negate();}else dir.multiplyScalar(1/dist);
-    const depth=radius-dist+SOURCE_CONTACT_EPSILON,hl=Math.hypot(dir.x,dir.z),block=this.level.blockForTriangle(id);
+    const depth=radius-dist+SOURCE_CONTACT_EPSILON,hl=horizontal?Math.hypot(dir.x,dir.z):0,block=this.level.blockForTriangle(id);
     if(horizontal&&hl>.3&&dir.y>-.6){
      const push=depth/hl<.45?depth/hl:.45;dir.set(dir.x/hl,0,dir.z/hl);
      s0.addScaledVector(dir,push);s1.addScaledVector(dir,push);pos.addScaledVector(dir,push);

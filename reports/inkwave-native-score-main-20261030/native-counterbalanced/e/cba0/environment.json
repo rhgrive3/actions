@@ -1,0 +1,864 @@
+{
+  "node": "v24.19.0",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "logicalCpus": 5,
+  "cpuQuota": "400000 100000",
+  "viewport": [
+    480,
+    300
+  ],
+  "countOnlySceneRenderWrapper": true,
+  "affinity": {
+    "plan": {
+      "gpuCpus": [
+        0,
+        1
+      ],
+      "workerCpus": [
+        2,
+        3
+      ],
+      "originalAllowedCpus": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "capacity": {
+      "assignedCpus": 4,
+      "quotaCores": 4,
+      "withinQuota": true
+    },
+    "harness": {
+      "pid": 51968,
+      "before": [
+        {
+          "tid": 51968,
+          "name": "MainThread",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51969,
+          "name": "DelayedTaskSche",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51970,
+          "name": "V8Worker",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51971,
+          "name": "V8Worker",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51972,
+          "name": "V8Worker",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51973,
+          "name": "V8Worker",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "tid": 51974,
+          "name": "SignalInspector",
+          "allowedCpus": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "assignment": {
+        "pid": 51968,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "51968"
+        ],
+        "output": "pid 51968's current affinity list: 0-4\npid 51968's new affinity list: 2,3\npid 51969's current affinity list: 0-4\npid 51969's new affinity list: 2,3\npid 51970's current affinity list: 0-4\npid 51970's new affinity list: 2,3\npid 51971's current affinity list: 0-4\npid 51971's new affinity list: 2,3\npid 51972's current affinity list: 0-4\npid 51972's new affinity list: 2,3\npid 51973's current affinity list: 0-4\npid 51973's new affinity list: 2,3\npid 51974's current affinity list: 0-4\npid 51974's new affinity list: 2,3"
+      },
+      "after": [
+        {
+          "tid": 51968,
+          "name": "MainThread",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51969,
+          "name": "DelayedTaskSche",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51970,
+          "name": "V8Worker",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51971,
+          "name": "V8Worker",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51972,
+          "name": "V8Worker",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51973,
+          "name": "V8Worker",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 51974,
+          "name": "SignalInspector",
+          "allowedCpus": [
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    "gpuPid": 52098,
+    "assignments": [
+      {
+        "pass": 0,
+        "type": "browser",
+        "pid": 52053,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52053"
+        ],
+        "output": "pid 52053's current affinity list: 2,3\npid 52053's new affinity list: 2,3\npid 52072's current affinity list: 2,3\npid 52072's new affinity list: 2,3\npid 52079's current affinity list: 2,3\npid 52079's new affinity list: 2,3\npid 52080's current affinity list: 2,3\npid 52080's new affinity list: 2,3\npid 52081's current affinity list: 2,3\npid 52081's new affinity list: 2,3\npid 52082's current affinity list: 2,3\npid 52082's new affinity list: 2,3\npid 52083's current affinity list: 2,3\npid 52083's new affinity list: 2,3\npid 52084's current affinity list: 2,3\npid 52084's new affinity list: 2,3\npid 52085's current affinity list: 2,3\npid 52085's new affinity list: 2,3\npid 52086's current affinity list: 2,3\npid 52086's new affinity list: 2,3\npid 52087's current affinity list: 2,3\npid 52087's new affinity list: 2,3\npid 52088's current affinity list: 2,3\npid 52088's new affinity list: 2,3\npid 52089's current affinity list: 2,3\npid 52089's new affinity list: 2,3\npid 52090's current affinity list: 2,3\npid 52090's new affinity list: 2,3\npid 52091's current affinity list: 2,3\npid 52091's new affinity list: 2,3\npid 52092's current affinity list: 2,3\npid 52092's new affinity list: 2,3\npid 52093's current affinity list: 2,3\npid 52093's new affinity list: 2,3\npid 52094's current affinity list: 2,3\npid 52094's new affinity list: 2,3\npid 52095's current affinity list: 2,3\npid 52095's new affinity list: 2,3\npid 52096's current affinity list: 2,3\npid 52096's new affinity list: 2,3\npid 52097's current affinity list: 2,3\npid 52097's new affinity list: 2,3\npid 52124's current affinity list: 2,3\npid 52124's new affinity list: 2,3\npid 52125's current affinity list: 2,3\npid 52125's new affinity list: 2,3\npid 52127's current affinity list: 2,3\npid 52127's new affinity list: 2,3\npid 52128's current affinity list: 2,3\npid 52128's new affinity list: 2,3\npid 52133's current affinity list: 2,3\npid 52133's new affinity list: 2,3\npid 52134's current affinity list: 2,3\npid 52134's new affinity list: 2,3\npid 52135's current affinity list: 2,3\npid 52135's new affinity list: 2,3\npid 52137's current affinity list: 2,3\npid 52137's new affinity list: 2,3\npid 52138's current affinity list: 2,3\npid 52138's new affinity list: 2,3"
+      },
+      {
+        "pass": 0,
+        "type": "GPU",
+        "pid": 52098,
+        "cpus": [
+          0,
+          1
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "0,1",
+          "52098"
+        ],
+        "output": "pid 52098's current affinity list: 2,3\npid 52098's new affinity list: 0,1\npid 52101's current affinity list: 0,1\npid 52101's new affinity list: 0,1\npid 52102's current affinity list: 0,1\npid 52102's new affinity list: 0,1\npid 52103's current affinity list: 0,1\npid 52103's new affinity list: 0,1\npid 52104's current affinity list: 0,1\npid 52104's new affinity list: 0,1\npid 52105's current affinity list: 0,1\npid 52105's new affinity list: 0,1\npid 52106's current affinity list: 2,3\npid 52106's new affinity list: 0,1\npid 52107's current affinity list: 2,3\npid 52107's new affinity list: 0,1\npid 52108's current affinity list: 2,3\npid 52108's new affinity list: 0,1\npid 52109's current affinity list: 2,3\npid 52109's new affinity list: 0,1\npid 52110's current affinity list: 2,3\npid 52110's new affinity list: 0,1\npid 52111's current affinity list: 2,3\npid 52111's new affinity list: 0,1\npid 52112's current affinity list: 2,3\npid 52112's new affinity list: 0,1\npid 52113's current affinity list: 2,3\npid 52113's new affinity list: 0,1"
+      },
+      {
+        "pass": 0,
+        "type": "network.mojom.NetworkService",
+        "pid": 52100,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52100"
+        ],
+        "output": "pid 52100's current affinity list: 2,3\npid 52100's new affinity list: 2,3\npid 52114's current affinity list: 2,3\npid 52114's new affinity list: 2,3\npid 52115's current affinity list: 2,3\npid 52115's new affinity list: 2,3\npid 52116's current affinity list: 2,3\npid 52116's new affinity list: 2,3\npid 52117's current affinity list: 2,3\npid 52117's new affinity list: 2,3\npid 52118's current affinity list: 2,3\npid 52118's new affinity list: 2,3\npid 52119's current affinity list: 2,3\npid 52119's new affinity list: 2,3\npid 52120's current affinity list: 2,3\npid 52120's new affinity list: 2,3\npid 52121's current affinity list: 2,3\npid 52121's new affinity list: 2,3"
+      },
+      {
+        "pass": 0,
+        "type": "storage.mojom.StorageService",
+        "pid": 52122,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52122"
+        ],
+        "output": "pid 52122's current affinity list: 2,3\npid 52122's new affinity list: 2,3\npid 52123's current affinity list: 2,3\npid 52123's new affinity list: 2,3\npid 52126's current affinity list: 2,3\npid 52126's new affinity list: 2,3\npid 52129's current affinity list: 2,3\npid 52129's new affinity list: 2,3\npid 52130's current affinity list: 2,3\npid 52130's new affinity list: 2,3\npid 52131's current affinity list: 2,3\npid 52131's new affinity list: 2,3\npid 52132's current affinity list: 2,3\npid 52132's new affinity list: 2,3\npid 52136's current affinity list: 2,3\npid 52136's new affinity list: 2,3"
+      },
+      {
+        "pass": 1,
+        "type": "browser",
+        "pid": 52053,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52053"
+        ],
+        "output": "pid 52053's current affinity list: 2,3\npid 52053's new affinity list: 2,3\npid 52072's current affinity list: 2,3\npid 52072's new affinity list: 2,3\npid 52079's current affinity list: 2,3\npid 52079's new affinity list: 2,3\npid 52080's current affinity list: 2,3\npid 52080's new affinity list: 2,3\npid 52081's current affinity list: 2,3\npid 52081's new affinity list: 2,3\npid 52082's current affinity list: 2,3\npid 52082's new affinity list: 2,3\npid 52083's current affinity list: 2,3\npid 52083's new affinity list: 2,3\npid 52084's current affinity list: 2,3\npid 52084's new affinity list: 2,3\npid 52085's current affinity list: 2,3\npid 52085's new affinity list: 2,3\npid 52086's current affinity list: 2,3\npid 52086's new affinity list: 2,3\npid 52087's current affinity list: 2,3\npid 52087's new affinity list: 2,3\npid 52088's current affinity list: 2,3\npid 52088's new affinity list: 2,3\npid 52089's current affinity list: 2,3\npid 52089's new affinity list: 2,3\npid 52090's current affinity list: 2,3\npid 52090's new affinity list: 2,3\npid 52091's current affinity list: 2,3\npid 52091's new affinity list: 2,3\npid 52092's current affinity list: 2,3\npid 52092's new affinity list: 2,3\npid 52093's current affinity list: 2,3\npid 52093's new affinity list: 2,3\npid 52094's current affinity list: 2,3\npid 52094's new affinity list: 2,3\npid 52095's current affinity list: 2,3\npid 52095's new affinity list: 2,3\npid 52096's current affinity list: 2,3\npid 52096's new affinity list: 2,3\npid 52097's current affinity list: 2,3\npid 52097's new affinity list: 2,3\npid 52124's current affinity list: 2,3\npid 52124's new affinity list: 2,3\npid 52125's current affinity list: 2,3\npid 52125's new affinity list: 2,3\npid 52127's current affinity list: 2,3\npid 52127's new affinity list: 2,3\npid 52128's current affinity list: 2,3\npid 52128's new affinity list: 2,3\npid 52133's current affinity list: 2,3\npid 52133's new affinity list: 2,3\npid 52134's current affinity list: 2,3\npid 52134's new affinity list: 2,3\npid 52135's current affinity list: 2,3\npid 52135's new affinity list: 2,3\npid 52137's current affinity list: 2,3\npid 52137's new affinity list: 2,3\npid 52138's current affinity list: 2,3\npid 52138's new affinity list: 2,3"
+      },
+      {
+        "pass": 1,
+        "type": "GPU",
+        "pid": 52098,
+        "cpus": [
+          0,
+          1
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "0,1",
+          "52098"
+        ],
+        "output": "pid 52098's current affinity list: 0,1\npid 52098's new affinity list: 0,1\npid 52101's current affinity list: 0,1\npid 52101's new affinity list: 0,1\npid 52102's current affinity list: 0,1\npid 52102's new affinity list: 0,1\npid 52103's current affinity list: 0,1\npid 52103's new affinity list: 0,1\npid 52104's current affinity list: 0,1\npid 52104's new affinity list: 0,1\npid 52105's current affinity list: 0,1\npid 52105's new affinity list: 0,1\npid 52106's current affinity list: 0,1\npid 52106's new affinity list: 0,1\npid 52107's current affinity list: 0,1\npid 52107's new affinity list: 0,1\npid 52108's current affinity list: 0,1\npid 52108's new affinity list: 0,1\npid 52109's current affinity list: 0,1\npid 52109's new affinity list: 0,1\npid 52110's current affinity list: 0,1\npid 52110's new affinity list: 0,1\npid 52111's current affinity list: 0,1\npid 52111's new affinity list: 0,1\npid 52112's current affinity list: 0,1\npid 52112's new affinity list: 0,1\npid 52113's current affinity list: 0,1\npid 52113's new affinity list: 0,1"
+      },
+      {
+        "pass": 1,
+        "type": "network.mojom.NetworkService",
+        "pid": 52100,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52100"
+        ],
+        "output": "pid 52100's current affinity list: 2,3\npid 52100's new affinity list: 2,3\npid 52114's current affinity list: 2,3\npid 52114's new affinity list: 2,3\npid 52115's current affinity list: 2,3\npid 52115's new affinity list: 2,3\npid 52116's current affinity list: 2,3\npid 52116's new affinity list: 2,3\npid 52117's current affinity list: 2,3\npid 52117's new affinity list: 2,3\npid 52118's current affinity list: 2,3\npid 52118's new affinity list: 2,3\npid 52119's current affinity list: 2,3\npid 52119's new affinity list: 2,3\npid 52120's current affinity list: 2,3\npid 52120's new affinity list: 2,3\npid 52121's current affinity list: 2,3\npid 52121's new affinity list: 2,3"
+      },
+      {
+        "pass": 1,
+        "type": "storage.mojom.StorageService",
+        "pid": 52122,
+        "cpus": [
+          2,
+          3
+        ],
+        "command": [
+          "taskset",
+          "--all-tasks",
+          "--pid",
+          "--cpu-list",
+          "2,3",
+          "52122"
+        ],
+        "output": "pid 52122's current affinity list: 2,3\npid 52122's new affinity list: 2,3\npid 52123's current affinity list: 2,3\npid 52123's new affinity list: 2,3\npid 52126's current affinity list: 2,3\npid 52126's new affinity list: 2,3\npid 52129's current affinity list: 2,3\npid 52129's new affinity list: 2,3\npid 52130's current affinity list: 2,3\npid 52130's new affinity list: 2,3\npid 52131's current affinity list: 2,3\npid 52131's new affinity list: 2,3\npid 52132's current affinity list: 2,3\npid 52132's new affinity list: 2,3\npid 52136's current affinity list: 2,3\npid 52136's new affinity list: 2,3"
+      }
+    ],
+    "verification": {
+      "status": "verified",
+      "snapshot": {
+        "observedAt": "2026-10-30T21:53:59.624Z",
+        "processes": [
+          {
+            "pid": 52053,
+            "type": "browser",
+            "cpuTimeSeconds": 0.24,
+            "threads": [
+              {
+                "tid": 52053,
+                "name": "chromium",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52072,
+                "name": "sandbox_ipc_thr",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52079,
+                "name": "chromium",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52080,
+                "name": "HangWatcher",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52081,
+                "name": "PerfettoTrace",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52082,
+                "name": "ThreadPoolServi",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52083,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52084,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52085,
+                "name": "ThreadPoolSingl",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52086,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52087,
+                "name": "inotify_reader",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52088,
+                "name": "Chrome_IOThread",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52089,
+                "name": "MemoryInfra",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52090,
+                "name": "CrShutdownDetec",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52091,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52092,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52093,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52094,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52095,
+                "name": "ThreadPoolSingl",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52096,
+                "name": "CompositorTileW",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52097,
+                "name": "VideoCaptureThr",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52124,
+                "name": "ThreadPoolSingl",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52125,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52127,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52128,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52133,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52134,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52135,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52137,
+                "name": "DevToolsPipeHan",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52138,
+                "name": "DevToolsPipeHan",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              }
+            ]
+          },
+          {
+            "pid": 52098,
+            "type": "GPU",
+            "cpuTimeSeconds": 0.02,
+            "threads": [
+              {
+                "tid": 52098,
+                "name": "chromium",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52101,
+                "name": "Thread<00>",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52102,
+                "name": "Thread<01>",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52103,
+                "name": "Thread<02>",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52104,
+                "name": "Thread<03>",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52105,
+                "name": "Thread<04>",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52106,
+                "name": "chromium",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52107,
+                "name": "ANGLE-GC",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52108,
+                "name": "PerfettoTrace",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52109,
+                "name": "HangWatcher",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52110,
+                "name": "ThreadPoolServi",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52111,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52112,
+                "name": "Chrome_ChildIOT",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "tid": 52113,
+                "name": "VizCompositorTh",
+                "allowedCpus": [
+                  0,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "pid": 52100,
+            "type": "network.mojom.NetworkService",
+            "cpuTimeSeconds": 0.07,
+            "threads": [
+              {
+                "tid": 52100,
+                "name": "chromium",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52114,
+                "name": "HangWatcher",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52115,
+                "name": "PerfettoTrace",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52116,
+                "name": "ThreadPoolServi",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52117,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52118,
+                "name": "Chrome_ChildIOT",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52119,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52120,
+                "name": "inotify_reader",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52121,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              }
+            ]
+          },
+          {
+            "pid": 52122,
+            "type": "storage.mojom.StorageService",
+            "cpuTimeSeconds": 0,
+            "threads": [
+              {
+                "tid": 52122,
+                "name": "chromium",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52123,
+                "name": "PerfettoTrace",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52126,
+                "name": "HangWatcher",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52129,
+                "name": "ThreadPoolServi",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52130,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52131,
+                "name": "Chrome_ChildIOT",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52132,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "tid": 52136,
+                "name": "ThreadPoolForeg",
+                "allowedCpus": [
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "violations": []
+    }
+  },
+  "browser": "154.0.8037.57"
+}

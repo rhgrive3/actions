@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-10-30T20:29:12.320830+00:00",
+  "events": [
+    {
+      "sequence": 1,
+      "event": "First detached launch tool invocation rejected before command execution",
+      "error": "exec-server transport disconnected",
+      "classification": "connector/setup interruption; no measurement window executed",
+      "confirmation": "Subsequent filesystem check confirmed no run.log, detached.json or process.json existed."
+    },
+    {
+      "sequence": 2,
+      "event": "Environment status tool returned configuration-changed error, while exec transport recovered",
+      "error": "The environment configuration changed. Try again."
+    },
+    {
+      "sequence": 3,
+      "event": "Detached launch executed once after verifying the prior command had not started",
+      "startedAt": "2026-10-30T20:15:38.853918+00:00",
+      "wrapperPid": 43258,
+      "nodePid": 43259
+    }
+  ]
+}

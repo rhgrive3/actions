@@ -105,7 +105,7 @@ export async function buildNativeWorld(game,map,current){
   // Constrained devices retain serial construction to avoid competing peaks.
   if(globalThis.navigator&&!game.mobile?.touch&&!(globalThis.navigator.deviceMemory>0&&globalThis.navigator.deviceMemory<=4))
    pendingNavigation=NavGraph.createNative(level,physics,{signal,current}).then(nav=>({nav}),error=>{const failed=!signal.aborted&&current()&&error.name!=='AbortError';controller.abort(error);return {error,failed};});
-  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
+  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay.create?await nativeDisplay.create(data,textures,quality,{signal,current}):nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
   const paintAtlasSize=Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096);
   // Use the same contour sampling budget as ordinary stages. The packer may
@@ -129,8 +129,10 @@ export async function buildNativeWorld(game,map,current){
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
-  inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  inkMesh=new NativeInkMesh(inkGeometry,inkMat,16,{willBindPaint:true}).bindPaint(paint,{knownEmpty:true});
+  inkGeometry=nativeInkGeometry.create?await nativeInkGeometry.create(level,paint,{signal,current}):nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
+  inkMesh=NativeInkMesh.create?await NativeInkMesh.create(inkGeometry,inkMat,16,{willBindPaint:true},{signal,current}):new NativeInkMesh(inkGeometry,inkMat,16,{willBindPaint:true});
+  inkMesh.bindPaint(paint,{knownEmpty:true});
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   // Link the stage's display/ink programs now (parallel compile where
   // available) instead of synchronously on the first battle frames. Any
   // render target selects the composer's key: linear output, no tone map.

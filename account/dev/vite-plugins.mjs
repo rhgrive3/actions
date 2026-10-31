@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { embeddedGameCsp } from '../../scripts/lib/inkwave-client-csp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const TYPES = {
@@ -130,7 +131,15 @@ export function zevantSite({ outDir = 'dist', accountDir }) {
           cwd: ROOT, stdio: 'inherit', env: { ...process.env, INKWAVE_ACCOUNT_BUILD: accountDir },
         });
         if (res.status !== 0) throw new Error(`game build failed (exit ${res.status})`);
-        fs.writeFileSync(path.join(out, '_headers'), WORKERS_HEADERS);
+        // Workers serves the same CSP as the GitHub Pages meta fallback. The
+        // browser must never see a weaker policy because of a hosting switch.
+        const policy = embeddedGameCsp(fs.readFileSync(path.join(out, 'index.html'), 'utf8'));
+        const headers = WORKERS_HEADERS
+          .replace('/\n  Cache-Control: no-cache\n', '/\n  Cache-Control: no-cache\n  Content-Security-Policy: ' + policy + '\n')
+          .replace('/index.html\n  Cache-Control: no-cache\n', '/index.html\n  Cache-Control: no-cache\n  Content-Security-Policy: ' + policy + '\n');
+        if ((headers.match(/Content-Security-Policy:/g) || []).length !== 2)
+          throw new Error('INKWAVE CSP: missing Workers security header');
+        fs.writeFileSync(path.join(out, '_headers'), headers);
         // GitHub Pages marker only; inkwave-build.json stays deployed for source identity checks
         fs.writeFileSync(path.join(out, '.assetsignore'), '.nojekyll\n');
       },

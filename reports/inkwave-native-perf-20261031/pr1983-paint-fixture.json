@@ -1,0 +1,120 @@
+{
+  "status": "passed",
+  "errors": [],
+  "scope": "Synthetic real native-composed PaintSystem WebGL atlas; no native full match or physical FPS claim",
+  "direct": true,
+  "exposure": false,
+  "inline": false,
+  "chromium": "154.0.8037.57",
+  "result": {
+    "hiddenMaterialCompiled": true,
+    "renderer": "WebKit WebGL",
+    "vendor": "WebKit",
+    "cases": [
+      {
+        "name": "one",
+        "count": 1,
+        "differingBytes": 0,
+        "maxDifference": 0,
+        "nonzeroBytes": 90
+      },
+      {
+        "name": "overlap",
+        "count": 24,
+        "differingBytes": 0,
+        "maxDifference": 0,
+        "nonzeroBytes": 23345
+      },
+      {
+        "name": "mixed",
+        "count": 128,
+        "differingBytes": 0,
+        "maxDifference": 0,
+        "nonzeroBytes": 71843
+      },
+      {
+        "name": "capacity",
+        "count": 6000,
+        "differingBytes": 0,
+        "maxDifference": 0,
+        "nonzeroBytes": 22014
+      },
+      {
+        "name": "overflow",
+        "count": 6001,
+        "differingBytes": 0,
+        "maxDifference": 0,
+        "nonzeroBytes": 22016
+      }
+    ],
+    "customFallback": true,
+    "timeline": {
+      "frames": 36,
+      "compared": 36,
+      "differingBytes": 0,
+      "nonzeroFinal": 55607
+    },
+    "samples": [
+      {
+        "side": "base",
+        "ms": 5.300000000745058
+      },
+      {
+        "side": "trial",
+        "ms": 3.900000000372529
+      },
+      {
+        "side": "trial",
+        "ms": 3.099999999627471
+      },
+      {
+        "side": "base",
+        "ms": 3.699999999254942
+      },
+      {
+        "side": "base",
+        "ms": 3.699999999254942
+      },
+      {
+        "side": "trial",
+        "ms": 9.5
+      },
+      {
+        "side": "trial",
+        "ms": 4.400000000372529
+      },
+      {
+        "side": "base",
+        "ms": 2.099999999627471
+      },
+      {
+        "side": "base",
+        "ms": 2.599999999627471
+      },
+      {
+        "side": "trial",
+        "ms": 5.199999999254942
+      },
+      {
+        "side": "trial",
+        "ms": 18.700000001117587
+      },
+      {
+        "side": "base",
+        "ms": 2.5
+      }
+    ],
+    "calls": {
+      "base": {
+        "calls": 5,
+        "bytes": 61440
+      },
+      "trial": {
+        "calls": 1,
+        "bytes": 19200
+      }
+    },
+    "glError": 0,
+    "errors": []
+  }
+}

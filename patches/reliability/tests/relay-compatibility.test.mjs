@@ -2,6 +2,7 @@ import test,{afterEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {NetSession} from './inkwave-public/src/net/session.js'; export {MockNet} from './inkwave-public/src/net/mock.js'; export {Transport,PROTO,COMPAT} from './inkwave-public/src/net/transport.js';"});
+test('device-source wire change has a distinct production epoch',()=>assert.equal(f.COMPAT,'iw-gameplay-20261030-device-source-v2'));
 const sockets=[],sessions=[],timers=new Map();let serial=0,starts=0,launches=0;
 class Socket{
  constructor(url){this.url=url;this.readyState=1;this.bufferedAmount=0;this.sent=[];this.closes=[];sockets.push(this);}

@@ -44,7 +44,7 @@ export function drinkEligible(actor, stand, now, player = null) {
   // overlap with any part of the kid's collider, including a head below a
   // platform. Obstacles do not block pickup. The native runtime supplies its
   // actual capsule dimensions; dimensionless callers remain point queries.
-  if (![dx,dy,dz].every(Number.isFinite)) return false;
+  if (!Number.isFinite(dx)||!Number.isFinite(dy)||!Number.isFinite(dz)) return false;
   const radius=Math.max(0,Number(player?.radius)||0),height=Math.max(radius*2,Number(player?.height)||0);
   const lo=dy+radius,hi=dy+height-radius,base=-TACTICOOLER_SOURCE.serveAreaHeightDown,top=TACTICOOLER_SOURCE.serveAreaHeightUp;
   const verticalGap=Math.max(0,base-hi,lo-top);

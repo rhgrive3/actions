@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-10-30T22:30:18.766591+00:00",
+  "status": "passed-published-counterbalanced-readback",
+  "browserLaunched": false,
+  "liveSitesRead": false,
+  "manifestFilesVerified": 83,
+  "originalFrozenFilesVerified": 63,
+  "planSha256": "933cfcf6d8ee22328435179bb69d357351d00c64388efeb9f90bbc1623f58af6",
+  "raw": {
+    "cbsm0": {
+      "path": "e/cbsm0/result.json.gz",
+      "bytes": 2451250,
+      "sha256": "e58a50821ccf79a82fb283015c28cd9810a8f7e7511b8c00cf28fab619c9ade7",
+      "compressedBytes": 201121,
+      "compressedSha256": "4d8ba42cd7b5613d7563db0712436b9a0539d55aab03e40c60b7e6320dc0edfe"
+    },
+    "cba0": {
+      "path": "e/cba0/result.json.gz",
+      "bytes": 5340383,
+      "sha256": "bafbe42316e28bbc6b8358d17e478b328996ecc2eaec78b89fbb542bffec6193",
+      "compressedBytes": 453018,
+      "compressedSha256": "6085ad827c9992b089190fb2e8c49aa0ddc87f37924ee9473a180230c96ec2aa"
+    },
+    "cbb0": {
+      "path": "e/cbb0/result.json.gz",
+      "bytes": 5315224,
+      "sha256": "13f2d254ec28e664e64e938cfca8b25edb15d6cea37d90e5541e5334fbb1392b",
+      "compressedBytes": 452898,
+      "compressedSha256": "3a29eb37a182b0dc089f41614dcc53e3864ccc7c34233f8948d61a94600434e8"
+    }
+  },
+  "checks": [
+    {
+      "run": "smoke",
+      "directory": "cbsm0",
+      "analysisEqualExceptTimestamps": true,
+      "reportBytesEqual": true
+    },
+    {
+      "run": "ab",
+      "directory": "cba0",
+      "analysisEqualExceptTimestamps": true,
+      "reportBytesEqual": true
+    },
+    {
+      "run": "ba",
+      "directory": "cbb0",
+      "analysisEqualExceptTimestamps": true,
+      "reportBytesEqual": true
+    },
+    {
+      "run": "aggregate",
+      "directory": "cbplan0",
+      "analysisEqualExceptTimestamps": true,
+      "reportBytesEqual": true
+    }
+  ],
+  "temporaryPathAdapters": {
+    "verify.mjs": [
+      [
+        "const dir=run.evidence, raw=",
+        "const dir=path.resolve(planDir,'..',path.basename(run.evidence)), raw="
+      ],
+      [
+        "path.join(plan.cwd,'scripts',file)",
+        "path.resolve(planDir,'../../scripts',file)"
+      ],
+      [
+        "path.join(source.site,'inkwave-build.json')",
+        "path.resolve(planDir,'../../builds',side,'inkwave-build.json')"
+      ],
+      [
+        "fs.statSync(path.join(source.site,file)).size",
+        "JSON.parse(fs.readFileSync(path.resolve(planDir,'../../builds',side,'served-file-sizes.json')))[file]"
+      ]
+    ],
+    "analyze.py": [
+      [
+        "D=pathlib.Path(run['evidence']);",
+        "D=P.parent/pathlib.Path(run['evidence']).name;"
+      ]
+    ],
+    "aggregate.py": [
+      [
+        "d=pathlib.Path(run['evidence'])",
+        "d=P.parent/pathlib.Path(run['evidence']).name"
+      ]
+    ]
+  },
+  "buildSizeInterpretation": "Saved inventories snapshot served-file sizes from the admitted sites at publication. The adapter checks saved HTTP receipts against those sizes and saved build manifest hashes; private payloads are not bundled or rebuilt."
+}

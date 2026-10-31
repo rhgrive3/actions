@@ -134,23 +134,23 @@ function advanceMatchInterval(match, G, aim, span, controller = true) {
   if (!match.paused) G.projectiles.update(span);
   if (!match.paused) match.advanceRanked?.(span);
 }
-export function simulateMatchInterval(match, dt, G, aim = true) {
+export function simulateMatchInterval(match, dt, G, aim = true, controller = true) {
   const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
   if (match.ranked && !match.paused && match.state === 'playing' && !match.ranked.overtime && match.ranked.time <= dt + 1e-10) {
     const legal = Math.max(0, Math.min(dt, match.ranked.time));
-    advanceMatchInterval(match, G, aim, legal);
-    advanceMatchInterval(match, G, aim, Math.max(0, dt - legal), match.state === 'playing');
+    advanceMatchInterval(match, G, aim, legal, controller);
+    advanceMatchInterval(match, G, aim, Math.max(0, dt - legal), controller && match.state === 'playing');
     return;
   }
   const boundary = turf && !match.paused && match.state === 'playing'
     && Number.isFinite(match.time) && match.time <= dt + 1e-10;
-  if (!boundary) { advanceMatchInterval(match, G, aim, dt); return; }
+  if (!boundary) { advanceMatchInterval(match, G, aim, dt, controller); return; }
   const legal = Math.max(0, Math.min(dt, match.time));
   const endTime = G.time;
   // Preserve endpoint timestamps for both fractions of this fixed-clock step.
   G.time = endTime - dt + legal;
   match.s3DeadlineStep = true;
-  try { advanceMatchInterval(match, G, aim, legal); }
+  try { advanceMatchInterval(match, G, aim, legal, controller); }
   finally { match.s3DeadlineStep = false; }
   // Floating-point subtraction can leave a sub-epsilon remainder at 180 s.
   match.time = 0;

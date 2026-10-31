@@ -37,7 +37,14 @@ try {
     page.on('pageerror',error=>errors.push(error.message));
     await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,lang:'en',master:0,music:0,frameRate:60})));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?range&skipTitle',{waitUntil:'domcontentloaded'});
-    await page.waitForFunction(()=>window.__G?.match?.range && __G.match.state === 'playing',null,{timeout:420000});
+    // Playwright 1.51's in-page polling compiles its predicate with eval, which
+    // the production CSP correctly forbids. Poll from Node and evaluate the
+    // explicit function through the automation protocol without weakening CSP.
+    const rangeDeadline = Date.now() + 420000;
+    while (!(await page.evaluate(()=>window.__G?.match?.range && window.__G.match.state === 'playing'))) {
+      if (Date.now() >= rangeDeadline) throw new Error('Timed out waiting for the playing practice range');
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }
     console.log(spec.name + ': range booted');
     const row = await page.evaluate(async () => {
       const G=window.__G,g=G.game;

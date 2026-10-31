@@ -7,6 +7,24 @@ import { rollerFlickDrawRadius, ROLLER_SPAWN_BASE } from './weapons-fidelity.mjs
 
 const EPS = 1e-10, DEG = Math.PI / 180;
 const EMPTY_SUB_GATE_INPUT = Object.freeze({});
+// Keep every call's independent spread snapshot; only the two late-bound
+// accessors may share their identical (runner, source) closure ownership.
+// Weak keys also cover custom/one-shot inputs without retaining a match.
+const chargerSubAccessors=new WeakMap();
+function makeChargerSubAccessors(runner,source){
+  return Object.getOwnPropertyDescriptors({
+    get sub(){return chargerPostShotBlocksSub(runner)?false:source.sub;},
+    get subReleased(){return chargerPostShotBlocksSub(runner)?false:source.subReleased;},
+  });
+}
+function chargerSubDescriptors(runner,source){
+  if(source===null||(typeof source!=='object'&&typeof source!=='function'))return makeChargerSubAccessors(runner,source);
+  let inputs=chargerSubAccessors.get(runner);
+  if(!inputs){inputs=new WeakMap();chargerSubAccessors.set(runner,inputs);}
+  let descriptors=inputs.get(source);
+  if(!descriptors){descriptors=makeChargerSubAccessors(runner,source);inputs.set(source,descriptors);}
+  return descriptors;
+}
 function subGateLocked(runner, kind, dt) {
   const postShot = kind === 'slosher'
     ? Math.max(0, (runner.s3SloshPostShot || 0) - (runner.s3GateInActor ? 0 : dt))
@@ -294,10 +312,9 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   WeaponRunner.prototype.update = function (dt, input) {
     if (this.a.weapon.kind === 'charger' && (input?.sub || input?.subReleased)) {
       const source = input, runner = this;
-      return weaponUpdate.call(this, dt, { ...source,
-        get sub() { return chargerPostShotBlocksSub(runner) ? false : source.sub; },
-        get subReleased() { return chargerPostShotBlocksSub(runner) ? false : source.subReleased; },
-      });
+      const view={...source};
+      Object.defineProperties(view,chargerSubDescriptors(runner,source));
+      return weaponUpdate.call(this, dt, view);
     }
     const kind = this.a.weapon.kind;
     if (kind !== 'dualies' && kind !== 'slosher') return weaponUpdate.call(this, dt, input);

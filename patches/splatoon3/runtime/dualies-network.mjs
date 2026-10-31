@@ -7,6 +7,30 @@ export const DUALIES_TURRET_FLAG = 1 << 27;
 const TURRET = DUALIES_TURRET_FLAG;
 const INTERRUPT = 2 | 2048 | 8192 | 16384 | 32768; // squid, sub aim, special, Super Jump phases
 const INSTALL = Symbol.for('inkwave.splatoon3.dualies-network.v1');
+const tickBroadcasts=new WeakMap();
+function tickBroadcast(owner,transport,broadcast){
+  let transports=tickBroadcasts.get(owner);
+  if(!transports){transports=new WeakMap();tickBroadcasts.set(owner,transports);}
+  let methods=transports.get(transport);
+  if(!methods){methods=new WeakMap();transports.set(transport,methods);}
+  let callback=methods.get(broadcast);
+  if(!callback){
+    callback=(message,...rest)=>{
+      if(message?.k==='t'&&Array.isArray(message.a)){
+        for(const sample of message.a){
+          if(!Array.isArray(sample)||!Number.isInteger(sample[10]))continue;
+          const actor=owner.byNid.get(sample[0]);
+          if(!isDualiesWeapon(actor))continue;
+          sample[10]=(actor.weaponRunner?.s3Turret||catalogDualiesTurret(actor.weaponRunner?.catalogState))
+            ?sample[10]|TURRET:sample[10]&~TURRET;
+        }
+      }
+      return broadcast.call(transport,message,...rest);
+    };
+    methods.set(broadcast,callback);
+  }
+  return callback;
+}
 
 export function installDualiesNetwork({ NetMatch, Actor } = {}) {
   if (!NetMatch?.prototype) throw Error('Dualies network presentation requires NetMatch');
@@ -50,19 +74,10 @@ export function installDualiesNetwork({ NetMatch, Actor } = {}) {
     const wrapped = Object.create(transport);
     Object.defineProperty(wrapped, 'broadcast', {
       configurable: true,
-      value: (message, ...rest) => {
-        if (message?.k === 't' && Array.isArray(message.a)) {
-          for (const sample of message.a) {
-            if (!Array.isArray(sample) || !Number.isInteger(sample[10])) continue;
-            const actor = this.byNid.get(sample[0]);
-            if (!isDualiesWeapon(actor)) continue;
-            sample[10] = (actor.weaponRunner?.s3Turret||catalogDualiesTurret(actor.weaponRunner?.catalogState))
-              ? sample[10] | TURRET
-              : sample[10] & ~TURRET;
-          }
-        }
-        return broadcast.call(transport, message, ...rest);
-      },
+      // Preserve the independently escaping transport view. Its callback may
+      // reuse only an identical owner/transport/method capture; a later method
+      // replacement can never retarget an earlier retained view.
+      value: tickBroadcast(this,transport,broadcast),
     });
     session.tr = wrapped;
     try { return sendTick.apply(this, args); }
