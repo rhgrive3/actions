@@ -48,6 +48,12 @@ try {
     // explicitly bounded second cadence, never replace the actual render path.
     const cadenceFrames=window.devicePixelRatio>1?12:6;
     const snapshots=[],nativePixels=[];
+    // Bounded scalar-only evidence; no DOM/layout read, extra frame or render.
+    const scalarObservation={frames:[],dropped:0,limit:3*cadenceFrames};
+    const scalarState=()=>({wallMs:Date.now(),monoMs:performance.now(),gameTime:G.time,gameFrame:g._frameN??null,hudTime:h._t??null,
+     frozen:g.frozen??null,matchState:G.match?.state??null,matchPaused:G.match?.paused??null,
+     sampledActorNid:a.nid??null,sampledActorLife:a.netLife??null,sampledActorIsCurrent:a===G.local,sampledActorIsMatchLocal:a===G.match?.local,
+     hudStillCurrent:h===G.hud,actorInk:a.ink,currentActorInk:G.local?.ink??null,hudInputInk:h._tank?.prevInk??null,level:h._tank?.level??null});
     for(const ink of [100,0,50]) {
      // Let real input, actor, HUD interpolation/throttle and renderer execute.
      // No tank visibility, dimensions, method or controller replacement.
@@ -55,7 +61,12 @@ try {
      // settle the live interpolation without forcing any tank state.
      // Yield each real render to the browser instead of queuing 72 GPU frames
      // synchronously before asking its compositor for a screenshot.
-     for(let i=0;i<cadenceFrames;i++){a.ink=ink;g._frame(1/30);await new Promise(resolve=>requestAnimationFrame(resolve));}
+     for(let i=0;i<cadenceFrames;i++){
+      a.ink=ink;const observation={requestedInk:ink,requestedDt:1/30,frame:i,before:scalarState()};
+      g._frame(1/30);observation.afterFrame=scalarState();
+      await new Promise(resolve=>requestAnimationFrame(resolve));observation.afterYield=scalarState();
+      if(scalarObservation.frames.length<scalarObservation.limit)scalarObservation.frames.push(observation);else scalarObservation.dropped++;
+     }
      const pixels=h.tankCtx.getImageData(0,0,cv.width,cv.height).data;
      let opaque=0,coloured=0,checksum=0;
      for(let i=0;i<pixels.length;i+=4){if(pixels[i+3])opaque++;if(pixels[i+3]&&Math.max(pixels[i],pixels[i+1],pixels[i+2])-Math.min(pixels[i],pixels[i+1],pixels[i+2])>20)coloured++;for(let j=0;j<4;j++)checksum=(Math.imul(checksum,31)+pixels[i+j])>>>0;}
@@ -92,7 +103,7 @@ try {
     };
     const full=probe(1),empty=probe(0),half=probe(.5),noInk=probe(1,true);
     const inkProbe={roi,fullVsEmpty:distance(full.pixels,empty.pixels,roi),halfVsEmpty:distance(half.pixels,empty.pixels,roi),suppressedFullVsEmpty:distance(noInk.pixels,empty.pixels,roi),suppressedRects:noInk.suppressedRects,images:[{name:'full',png:full.png},{name:'empty',png:empty.png},{name:'half',png:half.png},{name:'suppressed-full',png:noInk.png}]};
-    return {viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,canvas:[cv.clientWidth,cv.clientHeight,cv.width,cv.height],well:{x:c.wx,y:c.wy,width:c.ww,height:c.wh},form:a.form,hudVisible:getComputedStyle(h.el).display!=='none',tankDisplay:style.display,tankVisibility:style.visibility,tankOpacity:style.opacity,canvasDisplay:canvasStyle.display,snapshots,nativeFullVsEmpty:distance(nativePixels[0],nativePixels[1]),inkProbe,cadenceFrames};
+    return {viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,canvas:[cv.clientWidth,cv.clientHeight,cv.width,cv.height],well:{x:c.wx,y:c.wy,width:c.ww,height:c.wh},form:a.form,hudVisible:getComputedStyle(h.el).display!=='none',tankDisplay:style.display,tankVisibility:style.visibility,tankOpacity:style.opacity,canvasDisplay:canvasStyle.display,snapshots,nativeFullVsEmpty:distance(nativePixels[0],nativePixels[1]),inkProbe,cadenceFrames,scalarObservation};
    });
    row.elapsedMs=Date.now()-caseStarted;row.framesPerInkState=row.cadenceFrames;row.frameDt=1/30;
    const prefix=`${width}x${height}-dpr${dpr}-${result.cases.length+1}`;
