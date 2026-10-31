@@ -23,6 +23,8 @@ const squidrollOptimizationDelta=Object.freeze([
    "        for (let i = 0; i < 18; i++) {"],
   ["s.point.set(s.pos.x + nx * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + nz * along);",
    "s.point.set(s.pos.x + vx / speed * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + vz / speed * along);"],
+  ["s.point.set(s.pos.x + Math.cos(angle) * .48, s.pos.y + Math.sin(angle) * .4, s.pos.z - nz * .25);",
+   "s.point.set(s.pos.x + Math.cos(angle) * .48, s.pos.y + Math.sin(angle) * .4, s.pos.z - vz / speed * .25);"],
 ]);
 const hash=source=>createHash('sha256').update(source).digest('hex');
 // a138128328543f9e8236a867408b57467ab527c9: cache only screen-owned

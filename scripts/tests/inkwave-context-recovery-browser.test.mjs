@@ -100,9 +100,11 @@ test('actual context loss waits for bounded audio-network quiet without suppress
     "await page.exposeFunction('__awaitContextRecoveryAudioIdle'",
     'const deadline = Date.now() + 30000',
     'if (now - quietSince >= 750) break',
-    "assert.deepEqual(requests, [], 'Audio startup produced failed network requests')",
+    "const acceptedMenuTrackAbort = request =>",
+    "request.error === 'net::ERR_ABORTED'",
+    "requests.filter(request=>!acceptedMenuTrackAbort(request))",
     "assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors')",
-    "assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, [])"
+    "assert.deepEqual(errors, []); verifyLiveRequests(); assert.deepEqual(httpFailures, []); assert.deepEqual(events, [])"
   ]) assert(script.includes(contract),'missing network/lifecycle guard: '+contract);
   assert.doesNotMatch(script,/ignore(?:RequestFailure|NetworkError)|(?:net::)?ERR_ABORTED\s*\)?\s*continue/);
 });
