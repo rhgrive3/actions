@@ -252,3 +252,21 @@ composition preflight は 119 source files / 75 adapted。migration audit は fa
 修正後の Chromium 151 / SwiftShader では、同じメニュー中断 1 件を残したまま、battle が `readyState = 4`、非停止、エラーなし、再生位置 4.260862 秒であることと実ネットワークの完了を確認できた。未確認の中断、HTTP・ページ・ライフサイクルエラーは 0。実ブラウザが発行した trusted context lost / restored、120 回の RAF、60 回の直接更新を通して、match・paint・grid・counts・overlay の所有者と全 grid byte が保存された。通常 pause / resume と terminal 状態での再開拒否も成功した。
 
 証拠：監査パッケージの `independent-audit/recovery-context/result.json` と `independent-audit/recovery-production-build.log`。この追加確認はローカルの実配信ビルドによるものであり、修正後 head のホスト CI 成功は PR の実行結果で別途確認する。
+
+## 12. 作業中に進んだ main との統合確認
+
+検証中に main が `03a349162165c3496c24011e55bc043656ed93be` へ進み、CPUの武器操作・敵インク対応と、サブ／スペシャルの投射予測が追加された。今回の変更と重なる実装ファイルはなく、共通の挙動レビュー文書の末尾追記だけが競合した。元の本文、main の追記 2,490 bytes、今回の追記 5,958 bytes をそのまま保存する順序で解消した。main の残る35ファイルもすべて元のGit blobと一致する。今回の最適化・復旧ゲートの実装は `ca275b94612c7a6c20d6478f6e109ebfd34b12b6` から変更していない。
+
+双方を含む隔離した作業ツリーで、相互作用のある実行経路を追加確認した。
+
+| 統合後の回帰 | 成功数 | 確認した相互作用 |
+|---|---:|---|
+| `bot-weapon-territory.test.mjs` | 28 | 実Actor／Projectile／PaintSystemを使う筆・チャージ・敵インクの塗り返し |
+| `super-chump-preview-vfx.test.mjs` | 4 | 実DirectorとShapePoolの保持レコード、予告表示のalpha・追従更新 |
+| `throw-prediction-parity.test.mjs` | 145 | 実装を合成した予測と投射の一致、手の姿勢・資源所有・RNG／塗りへの副作用防止 |
+| `special-trajectory.test.mjs` | 18 | スペシャルの予測終端、実衝突、固定時計との一致 |
+| **追加小計** | **195** | **失敗0、skip0** |
+
+これは第11節までの234成功とは異なる、最新mainと組み合わせた追加回帰である。composition preflight、通常ビルド、起動サイズ予算も成功した。統合ビルドの revision は `2955cd162002dc91ea4c15164919718915dc5cdad2bbcba4dc8edaac5fe2512b`、input hash は `a5f1df36254358642c8836be9bc7274ae099ba696f4e563f1026fc69e395a01e`、content hash は `6d6e4c88fcd28931c241aeb9c3fff3c332fa3cfbea1a7b6a9fe0a320fd32dee1`。初期JSは1,861,117 bytes／146 requests、precacheは8,081,767 bytes／606 items、service workerは100,003 bytesだった。第9節・第11節の旧ビルドによる測定値は、その識別子のまま保持する。
+
+修正済み復旧ゲートのホスト実行は `ca275b9` の [terminal recovery](https://github.com/rhgrive3/actions/actions/runs/41163598417) で成功した。この結果と、上記の統合ツリー検証を区別する。main反映と統合後headのホストCIの最終状態は [PR #1977](https://github.com/rhgrive3/actions/pull/1977) で確認する。証拠は監査パッケージの `independent-audit/combined-main/gates.json`、`build-results.json`、`restored-inputs.json` と各ログに保存した。全ステージのprebuilt payloadと実機の未確認範囲は第10節を継承する。

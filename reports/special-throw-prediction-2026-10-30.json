@@ -1,0 +1,1262 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "baselineSha": "5d4c27df4d4acb49676c08ca72cfa4486a3c64c2",
+  "retailReference": "Splatoon 3 11.3.0 PvP",
+  "scope": "19 normal specials. Rainmaker separately inspected but not part of this API.",
+  "api": "Projectiles.prototype.s3PredictSpecialTrajectory(actor, options)",
+  "guideContract": {
+    "points": "Vector3[], no game state writes; optional reusable pool",
+    "complete": "Static modeled terminal is determined; not a claim that future actors/terrain will stay unchanged",
+    "targetDependent": "Current target or defense snapshot only; no guaranteed endpoint ring",
+    "explosions": "Per-location {point,normal,time,complete}; multiple Trizooka/chump/slam outputs",
+    "activeOnly": "Resolve actual active state and return null while no aim action exists",
+    "id": "Explicit direct preview/test override",
+    "time": "Flight until contact. Explosion entries include post-contact startup independently.",
+    "readinessApi": "s3CanPredictSpecialTrajectory(actor): same actual-state gates as activeOnly; cheap enough to query every rendered frame",
+    "presentationOwner": "superChump returns special-vfx; existing target disc and twelve reticles retain sole ownership",
+    "timeOrigin": "Times start at the current release/launch snapshot, excluding future input/windup. Terrain/cooler native blast queue adds one 60 Hz tick; Booyah growth startup adds 40 ticks. First nonzero growth/damage is a later source frame."
+  },
+  "clockEvidence": "New tests feed 30/60/120 render intervals into actual FixedClock; native simulation remains 60 Hz. Directly calling raw Trizooka/InkVac update at arbitrary coarse dt is not the production scheduling contract. No additional integrator carry was retained.",
+  "confirmedChanges": [
+    "Special launch geometry and force/position integrations shared with read-only preview.",
+    "Booyah contact/lifetime damage center no longer ground-snaps to an unrelated lower storey; paint keeps separate surface projection.",
+    "Cooler source stepping and placement use the same side-effect-free flight record and contact function.",
+    "Predictive contact queries use private collider copies and do not consume hit callbacks, damage, paint, ink, gauge, network events, or RNG.",
+    "Inkjet, Booyah and Stamp retain the baseline cloned launch-origin ownership after shared geometry extraction. This avoids retaining the reusable rt.v0 scratch reference; it does not change numeric launch tuning or the calculated origin. The final source18 and all-specials85 gates passed this version."
+  ],
+  "validation": {
+    "newSpecialTrajectory": "Final-source 18 / 18 named cases passed (positive 8+10 split, 768 MiB heap). Both groups used all-specials SHA 0006c33b3f88b11eb646b89fd2c49c24f89d103c1f20ea908a1f59b7287a3231, with source/test hashes recorded before and after and confirmed unchanged. Includes readiness API, VFX owner and deferred explosion timing assertions.",
+    "existingSpecialDeviceFlight": "16 passed",
+    "existingSpecialProjectile": "3 passed",
+    "existingSpecialMultistorey": "12 passed",
+    "existingAllSpecials": "85 / 85 named cases passed: 53 all-specials registrations and 32 imported kraken-dash-occlusion cases. Executed sequentially as 17 positive exact-name groups of 5 with a 768 MiB heap cap. Every group exited 0 with pass 5, fail 0, skipped 0 and exact registered-name coverage. Original test sources unchanged. Earlier monolithic attempts exited 137 / JavaScript heap OOM; split full coverage succeeded.",
+    "commands": [
+      "node --max-old-space-size=768 --experimental-vm-modules --test --test-isolation=none --test-reporter=tap '--test-name-pattern=nineteen|guide and native blast|activeOnly' patches/splatoon3/tests/special-trajectory.test.mjs",
+      "node --max-old-space-size=768 --experimental-vm-modules --test --test-isolation=none --test-reporter=tap '--test-name-pattern=actual placement|booyah wall|target contacts|decoy prediction|production Level|booyah lifetime|enemy Ink Vac' patches/splatoon3/tests/special-trajectory.test.mjs",
+      "node --experimental-vm-modules patches/splatoon3/tests/special-device-flight.test.mjs",
+      "node --experimental-vm-modules patches/splatoon3/tests/special-projectile.test.mjs",
+      "node --experimental-vm-modules patches/splatoon3/tests/special-multistorey-support.test.mjs",
+      "node --max-old-space-size=512 --experimental-vm-modules --test --test-isolation=none --test-name-pattern='Booyah Bomb armor|Zipcaster repeats|Crab Tank fires|Inkjet fires|direct Crab cannon|recycling a special|every catalogue-launched' patches/splatoon3/tests/all-specials.test.mjs"
+    ],
+    "namedCaseTotal": 134,
+    "log": "reports/validation-special-throw-2026-10-30.log",
+    "detailedReporterNote": "The final-source 18-case gate was rerun after the origin.clone ownership restoration. The new source-special-final a/b logs and summary explicitly bind all 18 named cases to the final source SHA. Earlier source18 logs are retained as historical evidence rather than relied on for final-version assurance.",
+    "fullRegressionManifest": "reports/validation-all-specials-split-2026-10-30.json",
+    "fullRegressionLog": "reports/validation-all-specials-split-2026-10-30.log",
+    "countingNote": "18 new + 16 device + 3 projectile + 12 multistorey + 85 all-specials/imported Kraken = 134 distinct named cases. The earlier selected 7 all-specials cases are included in the final 85 and are not counted twice.",
+    "fullRegressionExecution": {
+      "groups": 17,
+      "casesPerGroup": 5,
+      "heapLimitMiB": 768,
+      "elapsedSeconds": 139.278,
+      "testSourcesUnchanged": true,
+      "commands": "All 17 exact command argument arrays are preserved in fullRegressionManifest."
+    },
+    "finalSourceSpecialSummary": "reports/throw-prediction-20261030/evidence/source-special-final-summary.json",
+    "finalSourceSpecialLogs": [
+      "reports/throw-prediction-20261030/evidence/source-special-final-a.txt",
+      "reports/throw-prediction-20261030/evidence/source-special-final-b.txt"
+    ],
+    "finalSourceSpecialSha256": {
+      "patches/splatoon3/runtime/all-specials.mjs": "0006c33b3f88b11eb646b89fd2c49c24f89d103c1f20ea908a1f59b7287a3231",
+      "patches/splatoon3/tests/special-trajectory.test.mjs": "992eadb5404b01b771567b09d6d6996c009edd33364a97ea73451770b86ea551"
+    },
+    "finalSourceSpecialElapsedSeconds": 21.313,
+    "earlierSpecialCommandsHistorical": [
+      "node --max-old-space-size=512 --experimental-vm-modules --test --test-isolation=none --test-name-pattern='nineteen|guide and native blast|activeOnly' patches/splatoon3/tests/special-trajectory.test.mjs",
+      "node --max-old-space-size=512 --experimental-vm-modules --test --test-isolation=none --test-name-pattern='actual placement|booyah wall|target contacts|decoy prediction|production Level|booyah lifetime|enemy Ink Vac' patches/splatoon3/tests/special-trajectory.test.mjs"
+    ]
+  },
+  "limitations": [
+    "No Nintendo Switch capture comparison was performed.",
+    "Extracted tables omit inherited defaults; world scale, orbit speed, collision masks, some launch speed/offset, countershot wait semantics, and actor movement timelines retain documented runtime calibration.",
+    "Moving targets, manual cancellation and action-dependent body landing are represented as incomplete rather than fabricated fixed explosion points."
+  ],
+  "specials": [
+    {
+      "id": "trizooka",
+      "name": "ウルトラショット",
+      "family": "3-lobe projectile",
+      "outcomes": "impact-explosion / airburst",
+      "certainWhen": "3本すべてが静的地形または寿命で終端",
+      "uncertainWhen": "敵身体・防御装置に当たる見込みは条件付き。弾道の遅延4F/軌道角速度は既存較正",
+      "sharedRuntime": "trizookaLaunchGeometry / trizookaApplyProjectile / advanceFidelityProjectile / kitTrizookaWorldSweep",
+      "verification": "6弾系×FixedClock 30/60/120 render Hz、3本の各実着弾と比較",
+      "source": {
+        "actor": "WeaponSpUltraShot",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpUltraShot.game__GameParameterTable.json",
+        "blobSha": "7963d9d7049b623f8a0c1f23296774427e3e64d7",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSimpleMoveParam",
+          "BrakeAirResist": 0.09,
+          "BrakeGravity": 0.09,
+          "BrakeToFreeStateFrame": 10,
+          "BrakeToFreeVelocityXZ": 1.0,
+          "BrakeToFreeVelocityY": -0.1,
+          "FreeAirResist": 0.01985,
+          "FreeGravity": 0.0190565,
+          "GoStraightStateEndMaxSpeed": 1.0,
+          "GoStraightToBrakeStateFrame": 16,
+          "SpawnSpeed": 1.125
+        },
+        "UltraShotMoveParam": {
+          "$type": "spl__BulletSpUltraShotMoveParam",
+          "OrbitalRadiusEnd": 1.0,
+          "OrbitalRadiusTransitionFrame": 10
+        },
+        "CollisionParam": {
+          "$type": "spl__BulletSpUltraShotCollisionParam",
+          "ChangeFrameForField": 20,
+          "ChangeFrameForPlayer": 10,
+          "EndRadiusForField": 0.3,
+          "EndRadiusForPlayer": 0.75,
+          "InitRadiusForField": 0.01,
+          "InitRadiusForPlayer": 0.01
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "bubbler",
+      "name": "グレートバリア",
+      "family": "placement, no thrown blast",
+      "outcomes": "not-applicable",
+      "certainWhen": "投擲軌道/爆破中心の対象外",
+      "uncertainWhen": "設置可能領域は既存設置UIが所有",
+      "sharedRuntime": "existing Big Bubbler placement owner",
+      "verification": "19種分類・RNG/状態不変",
+      "source": {
+        "actor": "WeaponSpGreatBarrier",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpGreatBarrier.game__GameParameterTable.json",
+        "blobSha": "17c238c1cef8687ff484ec2bb180fc9039912268",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "spl__BulletSpGreatBarrierMoveParam": {
+          "$type": "spl__BulletSpGreatBarrierMoveParam",
+          "BarrierParam": {
+            "CanopyKnockBack": 700.0,
+            "DamgeRatio": 0.64,
+            "MaxFieldHP": {
+              "High": 36864.0,
+              "Low": 30720.0,
+              "Mid": 33792.0
+            },
+            "MaxHP": {
+              "High": 18432.0,
+              "Low": 15360.0,
+              "Mid": 16896.0
+            },
+            "MaxRadius": 7.5,
+            "MinRadius": 2.255,
+            "RadiusRatioCurve": {
+              "Data": [
+                0.1940299,
+                0.0,
+                0.0,
+                0.6522388,
+                0.3726415,
+                -0.02766653,
+                0.8723881,
+                0.75,
+                1.1808,
+                1.0,
+                1.0,
+                4.740566
+              ],
+              "MaxX": 1.0,
+              "Type": "Hermit2DSmooth"
+            },
+            "TimeDamage": 921,
+            "TimeDamageOnVLift": 1842
+          },
+          "BaseParam": {
+            "PaintRadius": 4.5,
+            "PaintTexture": "Bomb00Height3pnt4"
+          },
+          "DroneParam": {
+            "AscendCurve": {
+              "Data": [
+                0.0,
+                0.0,
+                0.0,
+                0.25,
+                0.1122642,
+                0.8181818,
+                0.5,
+                0.5,
+                2.926098,
+                0.6830189,
+                0.8556603,
+                1.395833,
+                1.0,
+                1.0,
+                0.0
+              ],
+              "MaxX": 1.0,
+              "Type": "Hermit2DSmooth"
+            },
+            "AscendFrame": 30,
+            "AscendHeight": 8.5,
+            "FieldCollisionRadius": 0.4,
+            "IgnitionFrame": 15,
+            "OverlapFieldDamage": 5,
+            "OverlapFieldDamageInterval": 5
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "zipcaster",
+      "name": "ショクワンダー",
+      "family": "hook surface",
+      "outcomes": "hook-contact / hook-miss",
+      "certainWhen": "35以内の実地形接触。床面は距離3以上",
+      "uncertainWhen": "本体到達時刻/移動中の対人接触はhook終点から確定しない",
+      "sharedRuntime": "zipcasterHookPlan shared with activeStep",
+      "verification": "19種分類・miss、既存all-specials hook回帰",
+      "source": {
+        "actor": "WeaponSpSuperHook",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+        "blobSha": "953eef0bc88b9bf4ad8f73b4fa1d4de1ca5d07e6",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "BulletBombMoveParam": {
+          "$type": "spl__BulletBombMoveParam",
+          "FlyGravity": 0.0,
+          "FlyPositionAirResist": 0.0,
+          "GuideHitCollisionType": "SuperHook",
+          "SpawnSpeedZSpecUp": {
+            "High": 3.36,
+            "Low": 3.36,
+            "Mid": 3.36
+          }
+        },
+        "BulletParam": {
+          "$type": "spl__BulletSpSuperHookParam",
+          "CollisionRadiusForField": 1.6,
+          "CollisionRadiusForPlayer": 1.2,
+          "KnockBackParam": {
+            "Accel": 450.0,
+            "Bias": 0.0,
+            "Degree": 55.0,
+            "DirectionZeroAccelRate": 1.0,
+            "Distance": 10.0
+          },
+          "PaintDepthScale": 1.5,
+          "PaintSpanFrame": 2,
+          "PaintWidthHalf": 1.0
+        },
+        "HookCollisionParam": {
+          "$type": "spl__BulletSimpleCollisionParam",
+          "EndRadiusForField": 0.5,
+          "EndRadiusForPlayer": 0.01,
+          "InitRadiusForField": 0.5,
+          "InitRadiusForPlayer": 0.01
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "tentaMissiles",
+      "name": "マルチミサイル",
+      "family": "moving lock targets",
+      "outcomes": "target-dependent",
+      "certainWhen": "ロックした現在位置のみ",
+      "uncertainWhen": "追尾中の敵移動/散開の未来着弾は非確定",
+      "sharedRuntime": "selectTargets / existing target owner",
+      "verification": "19種分類、既存multistoreyミサイル12ケース内",
+      "source": {
+        "actor": "WeaponSpMultiMissile",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpMultiMissile.game__GameParameterTable.json",
+        "blobSha": "734b7e449431aab5adadd501b878e8389aa9bb5c",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "spl__BulletSpMultiMissileMoveParam": {
+          "$type": "spl__BulletSpMultiMissileMoveParam",
+          "RiseParam": {
+            "RiseBaseSpeedComeUnderRate": 0.9
+          },
+          "TargetParam": {
+            "MultiTargetCircleArray": [
+              {
+                "Num": 0,
+                "RandomOffset": 4.0,
+                "RandomOffsetBias": 0.3
+              }
+            ],
+            "OneTargetCircleArray": [
+              {
+                "Num": 1,
+                "Radius": 0.0,
+                "RandomOffset": 0.0
+              },
+              {
+                "Num": 9,
+                "Radius": 3.0,
+                "RandomOffset": 0.5,
+                "RandomOffsetBias": 0.35
+              },
+              {
+                "Radius": 5.0,
+                "RandomOffset": 0.5,
+                "RandomOffsetBias": 0.35
+              }
+            ]
+          }
+        },
+        "spl__WeaponSpMultiMissileLaunchParam": {
+          "$type": "spl__WeaponSpMultiMissileLaunchParam",
+          "ShotIntervalTargetArray": [
+            4
+          ],
+          "ShotNumOneTargetArray": [
+            10,
+            5,
+            4
+          ]
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "storm",
+      "name": "アメフラシ",
+      "family": "thrown cloud generator",
+      "outcomes": "delegated to sub predictor",
+      "certainWhen": "s3PredictSubTrajectoryの実接触/雲生成規則に従う",
+      "uncertainWhen": "水没/射程外で雲中心を確定しない",
+      "sharedRuntime": "s3PredictSubTrajectory(id:storm)",
+      "verification": "19種分類・hold gating。sub担当の実地形parity参照",
+      "source": {
+        "actor": "WeaponSpInkStorm",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+        "blobSha": "b6e86041ad2a559c6f967055c69ee2aff9769f9e",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpInkStormGeneratorMoveParam",
+          "GuideHitCollisionType": "InkStorm",
+          "SpawnSpeedY": 0.24,
+          "SpawnSpeedYWorldMin": -0.4,
+          "SpawnSpeedZSpecUp": {
+            "High": 1.68,
+            "Low": 1.12,
+            "Mid": 1.4
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "inkjet",
+      "name": "ジェットパック",
+      "family": "launcher projectile",
+      "outcomes": "impact-explosion / airburst",
+      "certainWhen": "静的地形/寿命での実弾爆心",
+      "uncertainWhen": "対人/防御装置は条件付き。速度21/飛距離30の距離以外は既存較正",
+      "sharedRuntime": "specialLaunchGeometry / inkjetLaunchOrigin / configureSpecialProjectile / advanceFidelityProjectile",
+      "verification": "6弾系×FixedClock 30/60/120 render Hz",
+      "source": {
+        "actor": "WeaponSpJetpack",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+        "blobSha": "7af9c818a43fd5a414a2a6a9f7d2cec39f86be4a",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpJetpackLauncherParam",
+          "Distance": 30.0
+        },
+        "LauncherCollisionParam": {
+          "$type": "spl__BulletSimpleCollisionParam",
+          "ChangeFrameForField": 0,
+          "ChangeFrameForPlayer": 0,
+          "EndRadiusForField": 0.3,
+          "EndRadiusForPlayer": 0.3,
+          "FriendThroughFrameForPlayer": 1000,
+          "InitRadiusForField": 0.3,
+          "InitRadiusForPlayer": 0.3
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "slam",
+      "name": "ウルトラチャクチ",
+      "family": "body plus two independent fists",
+      "outcomes": "action-dependent",
+      "certainWhen": "2拳は既存fist centersと地面+0.12/LOS条件。固定支持があれば各拳complete",
+      "uncertainWhen": "本体はActor._resolve着地依存。拳の87F総時間と高さ変化/壁越えは較正",
+      "sharedRuntime": "tripleSlamFistCenters / existing active fist record",
+      "verification": "19種分類、root UIは未確定本体を隠し確定拳のみ表示",
+      "source": {
+        "actor": "WeaponSpPogo",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+        "blobSha": "f8e210da97f8f1bf4fca07dba015b74a5439d5ef",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "BulletParam": {
+          "$type": "spl__BulletSpPogoParam",
+          "HitPoint": 1000,
+          "MoveCollisionHeight": [
+            2.0,
+            1.5,
+            1.0,
+            0.5
+          ],
+          "MoveDistance": 6.54,
+          "MoveFrame": 15,
+          "StartInvincibleFrame": 55,
+          "SuperJumpWaitFrame0": 30,
+          "SuperJumpWaitFrame1": 60,
+          "WaitRiseFrame": 0
+        },
+        "BlastParamNormal": {
+          "$type": "spl__BulletBlastParam",
+          "CrossPaintCheckLength": 6.0,
+          "CrossPaintRadius": 6.0,
+          "CrossPaintTexture": "SprLanding00",
+          "DistanceDamage": [
+            {
+              "Damage": 2200,
+              "Distance": 6.4
+            },
+            {
+              "Damage": 600,
+              "Distance": 9.6
+            }
+          ],
+          "KnockBackParam": {
+            "Accel": 420.0,
+            "Distance": 15.0
+          },
+          "PaintRadius": 9.0,
+          "PaintTexture": "SprLanding00",
+          "PlaneDamage": [
+            {
+              "Damage": 10000,
+              "Distance": -4.5
+            },
+            {
+              "Damage": 10000,
+              "Distance": 6.4
+            }
+          ],
+          "SubSpecialSpecUpList": [
+            {
+              "SpecUpType": "DistanceDamageDistanceRate",
+              "Value": {
+                "High": 1.1,
+                "Low": 1.0,
+                "Mid": 1.05
+              }
+            },
+            {
+              "Value": {
+                "High": 12.0,
+                "Low": 10.0,
+                "Mid": 11.0
+              }
+            }
+          ]
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "booyahBomb",
+      "name": "ナイスダマ",
+      "family": "thrown expanding blast",
+      "outcomes": "impact-explosion / airburst",
+      "certainWhen": "接触点または寿命位置をeffect anchorにする。terrainはnative queue 1F+40Fで成長開始、空中寿命は40F。",
+      "uncertainWhen": "対人/防御装置は条件付き。未抽出の初速Y/実機抵抗解釈は未確認。endpointは投射物/effect anchor。damageRadius側の既存+0.2Y offsetとraw DamageOffsetY=-0.2の座標対応は未確認として保持。",
+      "sharedRuntime": "specialLaunchGeometry / configureSpecialProjectile / stepSpecialProjectileForces / native blast center",
+      "verification": "FixedClock 30/60/120 render Hz、実OBB壁、壁爆心と床塗り分離、空中寿命爆心",
+      "source": {
+        "actor": "WeaponSpNiceBall",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpNiceBall.game__GameParameterTable.json",
+        "blobSha": "154c211ff8e6e1c42fbe26d6e6c732c6a0b22289",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpNiceBallParam",
+          "FlyGravity": 0.021,
+          "FlyPositionAirResist": 0.045,
+          "GuideHitCollisionType": "NiceBall",
+          "SpawnSpeedYWorldMin": -0.4,
+          "SpawnSpeedZSpecUp": {
+            "High": 1.0,
+            "Low": 1.0,
+            "Mid": 1.0
+          }
+        },
+        "BlastParam": {
+          "$type": "spl__BulletSpNiceBallBlastParam",
+          "CrossPaintCheckLength": 1.5,
+          "CrossPaintRadius": 1.5,
+          "DamageOffsetY": -0.2,
+          "DamageRadiusEnd": 12.6,
+          "KnockBackParam": {
+            "Accel": 93.333,
+            "Bias": 0.8,
+            "Distance": 8.0
+          },
+          "PaintOffsetY": 0.3,
+          "PaintRadiusEnd": 13.5,
+          "PaintRotateDegree": 8.5,
+          "PaintSpanFrame": 6
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "ultraStamp",
+      "name": "ウルトラハンコ",
+      "family": "thrown hammer",
+      "outcomes": "impact-explosion / airburst",
+      "certainWhen": "投げ姿勢からの静的地形/寿命終点",
+      "uncertainWhen": "振り攻撃は投擲対象外。敵/防御装置は条件付き",
+      "sharedRuntime": "specialLaunchGeometry / configureSpecialProjectile / stepSpecialProjectileForces",
+      "verification": "FixedClock 30/60/120 render Hz、実OBB天井、aimThrow/commit gating",
+      "source": {
+        "actor": "WeaponSpUltraStamp",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpUltraStamp.game__GameParameterTable.json",
+        "blobSha": "570b74d13f57a4218878b5a98756e5e6fe924871",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "ThrowMoveParam": {
+          "$type": "spl__BulletSpUltraStampThrowParam",
+          "DirectAccel": 200,
+          "DirectDamageValue": 2200,
+          "FlyGravity": 0.013,
+          "FlyPositionAirResist": 0.03,
+          "GuideHitCollisionType": "ThrowUltraStamp",
+          "GuideRadius": 1.1,
+          "SpawnSpeedY": 0.17,
+          "SpawnSpeedYWorldMin": -0.4,
+          "SpawnSpeedZSpecUp": {
+            "High": 0.85,
+            "Low": 0.85,
+            "Mid": 0.85
+          }
+        },
+        "ThrowBlastParam": {
+          "$type": "spl__BulletBlastParam",
+          "CrossPaintCheckLength": 2.5,
+          "CrossPaintRadius": 2.5,
+          "DistanceDamage": [
+            {
+              "Damage": 2200,
+              "Distance": 3.6
+            },
+            {
+              "Damage": 600,
+              "Distance": 8.0
+            }
+          ],
+          "KnockBackParam": {
+            "Accel": 460.0,
+            "Bias": 0.8,
+            "Distance": 8.0
+          },
+          "PaintRadius": 5.0
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "inkVac",
+      "name": "キューインキ",
+      "family": "charge-scaled countershot",
+      "outcomes": "impact-explosion / airburst",
+      "certainWhen": "実chargeの初速/サイズ、接触または50F寿命位置",
+      "uncertainWhen": "Source SpawnBlastWaitFrameのretail意味と移動慣性の適用は未確認。既存native寿命解釈を維持",
+      "sharedRuntime": "inkVacExhaleKinematics / advanceFidelityProjectile",
+      "verification": "FixedClock 30/60/120 render Hz、敵Vac予測時のscratch/charge不変",
+      "source": {
+        "actor": "WeaponSpBlower",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpBlower.game__GameParameterTable.json",
+        "blobSha": "302a975d3593c957ac934c2dcfd69b90849677f1",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "ExhaleParam": {
+          "$type": "spl__BulletSpBlowerExhaleParam",
+          "DirectAccel": 200.0,
+          "DirectDamage": 2200,
+          "FlyGravity": 0.003,
+          "FlyPositionAirResist": 0.01,
+          "GuideHitCollisionType": "BlowerExhale",
+          "GuideRadius": 0.25,
+          "PaintRadiusMaxCharge": 3.2,
+          "PaintRadiusMinCharge": 2.4,
+          "SpawnBlastWaitFrame": 50,
+          "SpawnSpeedY": 0.08,
+          "SpawnSpeedYMaxCharge": 0.08,
+          "SpawnSpeedZMaxCharge": 0.7,
+          "SpawnSpeedZSpecUp": {
+            "High": 0.55,
+            "Low": 0.55,
+            "Mid": 0.55
+          }
+        },
+        "ExhaleCollisionParam": {
+          "$type": "spl__BulletSpBlowerExhaleCollisionParam",
+          "RadiusForPlayerMinCharge": 0.4
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "killerWail",
+      "name": "メガホンレーザー5.1ch",
+      "family": "tracking laser, no ballistic blast",
+      "outcomes": "not-applicable",
+      "certainWhen": "対象外",
+      "uncertainWhen": "追尾線は既存ロック/VFX表示が所有",
+      "sharedRuntime": "existing laser owner",
+      "verification": "19種分類・RNG/状態不変",
+      "source": {
+        "actor": "WeaponSpMicroLaser",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpMicroLaser.game__GameParameterTable.json",
+        "blobSha": "5b0efbe9281eeb00fb0c9cf2eaf0d2beff02ce7a",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "spl__BulletSpMicroLaserBitParam": {
+          "$type": "spl__BulletSpMicroLaserBitParam",
+          "ChargeParam": {
+            "ChargeFrame": 36,
+            "InterpRate": 0.4,
+            "MaxAngularVel": 30.0,
+            "MaxAngularVelChargeStateNoTgt": 1.5
+          },
+          "FollowParam": {
+            "LockonEndFrame": 15
+          },
+          "LaserParam": {
+            "AfterLaserWaitFrame": 20,
+            "FreeMoveRotSpeed": 0.3,
+            "LaserDamage": 35,
+            "LaserDamageIntervalFrame": 5,
+            "LaserFrame": {
+              "High": 240.0,
+              "Low": 180.0,
+              "Mid": 220.0
+            }
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "crabTank",
+      "name": "カニタンク",
+      "family": "cannon or shooter projectile",
+      "outcomes": "impact-explosion / impact / airburst",
+      "certainWhen": "cannonとshooterの別初速/段階/成長衝突半径",
+      "uncertainWhen": "ball中と発射終了フェーズは非表示。敵/防御装置は条件付き。大砲初速18は既存較正",
+      "sharedRuntime": "crabTankShotGeometry / safe muzzle sweep / configureCrabProjectile / stepSpecialProjectileForces",
+      "verification": "FixedClock 30/60/120 render Hz、大砲実着弾、ball gating",
+      "source": {
+        "actor": "WeaponSpChariot",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpChariot.game__GameParameterTable.json",
+        "blobSha": "806e78fb51ae2db60479385b4316c689cce55345",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "CannonParam": {
+          "$type": "spl__BulletSpChariotCannonParam",
+          "BlastParam": {
+            "CrossPaintCheckLength": 0.0,
+            "CrossPaintRadius": 0.0,
+            "DamageOffsetY": 0.2,
+            "DistanceDamage": [
+              {
+                "Damage": 300,
+                "Distance": 4.8
+              }
+            ],
+            "KnockBackParam": {
+              "Accel": 470.0,
+              "Bias": 0.8,
+              "Distance": 5.0
+            },
+            "PaintOffsetY": 0.2,
+            "PaintRadius": 4.5
+          },
+          "CollisionParam": {
+            "ChangeFrameForField": 4,
+            "ChangeFrameForPlayer": 5,
+            "EndRadiusForField": 0.25,
+            "EndRadiusForPlayer": 0.4,
+            "FriendThroughFrameForPlayer": 1000,
+            "InitRadiusForField": 0.1,
+            "InitRadiusForPlayer": 0.04
+          },
+          "DirectDamage": 500,
+          "DrawSize": 0.7,
+          "MoveParam": {
+            "BrakeAirResist": 0.1,
+            "BrakeGravity": 0.04,
+            "BrakeToFreeStateFrame": 1,
+            "BrakeToFreeVelocityXZ": 20.0,
+            "BrakeToFreeVelocityY": 10.0,
+            "FreeAirResist": 0.12,
+            "FreeGravity": 0.05,
+            "GoStraightToBrakeStateFrame": 8
+          },
+          "SplashParam": {
+            "DrawSizeCollisionPaintParam": {
+              "CollisionParam": {
+                "EndRadiusForField": 0.15,
+                "EndRadiusForPlayer": 0.0,
+                "InitRadiusForField": 0.15,
+                "InitRadiusForPlayer": 0.0
+              },
+              "DrawRadius": 0.1,
+              "PaintDepthScale": 2.0,
+              "PaintWidthHalf": 1.12
+            },
+            "SpawnParam": {
+              "SpawnBetweenLength": 3.1,
+              "SpawnNum": 10
+            }
+          }
+        },
+        "ShooterMoveParam": {
+          "$type": "spl__BulletSimpleMoveParam",
+          "FreeGravity": 0.016,
+          "GoStraightStateEndMaxSpeed": 2.232,
+          "GoStraightToBrakeStateFrame": 7,
+          "SpawnSpeed": 3.36
+        },
+        "ShooterCollisionParam": {
+          "$type": "spl__BulletSimpleCollisionParam",
+          "ChangeFrameForField": 0,
+          "EndRadiusForField": 0.2,
+          "EndRadiusForPlayer": 0.2,
+          "FriendThroughFrameForPlayer": 0,
+          "InitRadiusForField": 0.2,
+          "InitRadiusForPlayer": 0.2
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "reefslider",
+      "name": "サメライド",
+      "family": "actor dash and manual stop",
+      "outcomes": "action-dependent",
+      "certainWhen": "現在フェーズを返す",
+      "uncertainWhen": "手動停止・段差解決・38F移動付きpreburstが爆心を変えるため保証リングを出さない",
+      "sharedRuntime": "existing reefslider actor owner kept unchanged",
+      "verification": "19種分類、既存 all-specials の突進・AP回帰を含む分割全85件が通過。本体突進処理は未変更",
+      "source": {
+        "actor": "WeaponSpSkewer",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpSkewer.game__GameParameterTable.json",
+        "blobSha": "cbdace64fc9e8f07ae439bc5fb8f0c797e6e855e",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "WeaponParam": {
+          "$type": "spl__WeaponSpSkewerParam",
+          "ChargeFrame": 0,
+          "Distance_Afterglow": 5.0,
+          "GravityKf": 1.2,
+          "MoveAcc": 0.031,
+          "MoveBrk": 0.031,
+          "MoveCancelableFrame": 15,
+          "MoveFrame": 54,
+          "MoveFrameOmen": 27,
+          "MoveRotDeg": 0.5,
+          "MoveSpeed": 0.405,
+          "MoveSpeed_Aerial": 0.22,
+          "NoDamageFrame_AfterBurst": 28,
+          "NoDamageStartFrame_PreMove": 25,
+          "OffsetLocal_DetectPlayer": {
+            "X": 0.0,
+            "Y": 0.8,
+            "Z": 1.0
+          },
+          "PaintSplashParam": {
+            "DepthMaxDropHeight": 1.0,
+            "DepthMinDropHeight": 1.0,
+            "DepthScaleMax": 1.8,
+            "DepthScaleMin": 1.8,
+            "WidthHalf": 3.0,
+            "WidthHalfNearest": 3.0
+          },
+          "PaintSplashSpanFrame": 3,
+          "PreBurstEmitFrame": 15,
+          "PreBurstFrame": 38,
+          "PreMoveFrame": 38,
+          "Radius_DetectPlayer": 1.0,
+          "RutPaintRadius": 1.2,
+          "UnrelaxFrame": 28
+        },
+        "BulletParam": {
+          "$type": "spl__BulletSpSkewerParam",
+          "CollisionRadiusForPlayer": 0.8,
+          "DamageValue": 2200,
+          "KnockBackLen": 250.0
+        },
+        "BulletBlastParam": {
+          "$type": "spl__BulletBlastParam",
+          "DamageOffsetY": 0.6,
+          "DistanceDamage": [
+            {
+              "Damage": 2200,
+              "Distance": 9.0
+            },
+            {
+              "Damage": 700,
+              "Distance": 14.9
+            }
+          ],
+          "KnockBackParam": {
+            "Accel": 700.0,
+            "Bias": 0.8,
+            "Distance": 12.0
+          },
+          "PaintRadius": 0.0,
+          "PaintTexture": "Bomb00",
+          "SplashAroundParam": {
+            "Num": 15,
+            "OffsetY": 0.3,
+            "PaintRadius": 0.0,
+            "PitchMax": 30.0,
+            "VelocityMax": 0.0,
+            "VelocityMin": 0.0
+          },
+          "SubSpecialSpecUpList": [
+            {
+              "SpecUpType": "DistanceDamageDistanceRate",
+              "Value": {
+                "High": 1.2,
+                "Low": 1.0,
+                "Mid": 1.1
+              }
+            },
+            {
+              "SpecUpType": "PaintRadius",
+              "Value": {
+                "High": 9.012,
+                "Low": 7.51,
+                "Mid": 8.26
+              }
+            },
+            {
+              "SpecUpType": "SplashAroundVelocityMin",
+              "Value": {
+                "High": 0.7,
+                "Low": 0.6,
+                "Mid": 0.65
+              }
+            },
+            {
+              "SpecUpType": "SplashAroundVelocityMax",
+              "Value": {
+                "High": 0.8,
+                "Low": 0.7,
+                "Mid": 0.75
+              }
+            },
+            {
+              "SpecUpType": "SplashAroundPaintRadius",
+              "Value": {
+                "High": 1.2,
+                "Low": 1.0,
+                "Mid": 1.1
+              }
+            }
+          ]
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "tripleInkstrike",
+      "name": "トリプルトルネード",
+      "family": "terrain-attached guide device",
+      "outcomes": "deployment",
+      "certainWhen": "床/壁/天井/grateへの初接触+法線0.08。竜巻は接触後82F",
+      "uncertainWhen": "水没/時間上限は非確定。省略gravity/drag defaultsは未抽出",
+      "sharedRuntime": "specialDeviceFlight / specialDeviceLaunchOrigin / stepSpecialDeviceFlight / settleSpecialDeviceContact",
+      "verification": "FixedClock 30/60/120 render Hz、実OBB天井、既存deviceの壁/天井/grate",
+      "source": {
+        "actor": "WeaponSpTripleTornado",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpTripleTornado.game__GameParameterTable.json",
+        "blobSha": "35864bc6f8e8b4f5e42eb3159a4a4533d61aefd2",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpTripleTornadoGuideDeviceMoveParam",
+          "GuideHitCollisionType": "TripleTornadoGuideDevice",
+          "SpawnSpeedY": 0.276,
+          "SpawnSpeedYWorldMin": -0.4,
+          "SpawnSpeedZSpecUp": {
+            "High": 2.6,
+            "Low": 2.0,
+            "Mid": 2.3
+          }
+        },
+        "MissileParam": {
+          "$type": "spl__BulletSpTripleTornadoMissileParam",
+          "UseDirect": false,
+          "XZBias": 0.8
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "tacticooler",
+      "name": "エナジースタンド",
+      "family": "thrown support device",
+      "outcomes": "deployment",
+      "certainWhen": "壁/天井では既存slide、支持床に置けた位置",
+      "uncertainWhen": "水没/5s失効/将来の足場移動は非確定。retail反射/設置footprint詳細は未確認",
+      "sharedRuntime": "createCoolerFlight / stepCoolerFlight shared by kit-support",
+      "verification": "FixedClock 30/60/120 render Hz、実OBB壁→下階床、既存multistorey 30/60/120 Hz",
+      "source": {
+        "actor": "WeaponSpEnergyStand",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpEnergyStand.game__GameParameterTable.json",
+        "blobSha": "a23921145ecc0289295cce44deb522092a52689a",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpEnergyStandMoveParam",
+          "CanPlaceBoundDegree": 30.0,
+          "CanPlaceBoundVel": 0.09,
+          "CanPlaceCheckLength1": 0.0,
+          "CanPlaceCheckLength2": 0.0,
+          "CanPlaceHeight": 1.0,
+          "FlyGravity": 0.009,
+          "FlyHitDeg50WallReboundMaxRt": 0.4,
+          "FlyHitVerticalWallReboundMaxRt": 0.3,
+          "FlyHitWallPitchToPlane": 5.0,
+          "FlyHitWallReboundResetFrame": 12,
+          "FlyPositionAirResist": 0.001,
+          "GuideHitCollisionType": "EnemyOffFenceOnBlowerOffShieldOff",
+          "GuideRadius": 1.35,
+          "SpawnSpeedY": 0.07,
+          "SpawnSpeedYWorldMin": -0.5,
+          "SpawnSpeedZSpecUp": {
+            "High": 0.4,
+            "Low": 0.4,
+            "Mid": 0.4
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "superChump",
+      "name": "デコイチラシ",
+      "family": "twelve selected landing targets",
+      "outcomes": "landing-pattern",
+      "certainWhen": "有効な既存activation seedと支持床で12点、108F飛行+210F待機",
+      "uncertainWhen": "inactiveでseed未確定/空中/支持無しは非確定。正確な散開分布は較正",
+      "sharedRuntime": "chumpLandingPlan with private state cache / sole visual owner: special-vfx",
+      "verification": "12点をlive decoy targetsと逐点比較・seed不変、setup commit直後の軽量readiness=false/public VFX preview=null",
+      "source": {
+        "actor": "WeaponSpFirework",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpFirework.game__GameParameterTable.json",
+        "blobSha": "424b5078fc685950877da908025fd586ab2de1d6",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "IceParam": {
+          "$type": "spl__BulletSpFireworkIceParam",
+          "BlastParam": {
+            "CrossPaintCheckLength": 2.5,
+            "CrossPaintRadius": 2.5,
+            "DamageOffsetY": 0.1,
+            "DistanceDamage": [
+              {
+                "Damage": 700,
+                "Distance": 3.6
+              },
+              {
+                "Damage": 350,
+                "Distance": 6.0
+              }
+            ],
+            "KnockBackParam": {
+              "Accel": 700.0,
+              "Bias": 0.8,
+              "Distance": 12.0
+            },
+            "PaintHeight": 4.0,
+            "PaintOffsetY": 0.1,
+            "PaintRadius": 3.5,
+            "SplashAroundParam": {
+              "PaintRadius": 1.116,
+              "PitchMax": 45.0,
+              "VelocityMax": 0.64
+            },
+            "SubSpecialSpecUpList": [
+              {
+                "Value": {
+                  "High": 4.1,
+                  "Low": 3.5,
+                  "Mid": 3.8
+                }
+              },
+              {
+                "SpecUpType": "CrossPaintCheckLength",
+                "Value": {
+                  "High": 3.0,
+                  "Low": 2.5,
+                  "Mid": 2.75
+                }
+              },
+              {
+                "SpecUpType": "CrossPaintRadius",
+                "Value": {
+                  "High": 3.0,
+                  "Low": 2.5,
+                  "Mid": 2.75
+                }
+              },
+              {
+                "SpecUpType": "DistanceDamageDistanceRate",
+                "Value": {
+                  "High": 1.2,
+                  "Low": 1.0,
+                  "Mid": 1.1
+                }
+              }
+            ]
+          },
+          "BurstFrame": 210,
+          "CollisionRadius": 0.8,
+          "FlyingFrame": 108,
+          "GroundOffsetY": 0.9,
+          "HitPoint": 600,
+          "InitialScale": 0.1,
+          "PaintRadius": 2.8,
+          "RotateDegRatePerFrame": 0.994,
+          "ScaleResetFrame": 5,
+          "SpawnRotateDegMax": 4.5,
+          "SpawnRotateDegMin": 3.0,
+          "WarningAnimRestFrame": 140,
+          "WarningSERestFrame": 60
+        },
+        "PipeParam": {
+          "$type": "spl__BulletSpFireworkPipeParam",
+          "DepthRadius": 10.0,
+          "MinBetweenDistance": 5.0,
+          "TargetCenterBias": 0.3
+        },
+        "WeaponParam": {
+          "$type": "spl__WeaponSpFireworkParam",
+          "SpecialTotalFrame": 635,
+          "TargetCenterBias": 0.4,
+          "TargetCenterDistanceMax": 35.0,
+          "TargetCenterDistanceMin": 18.0,
+          "TargetCenterRadius": 3.0,
+          "TargetHeightCheckSpanFrame": 1,
+          "UseDistanceMinCameraDownRate": 0.25,
+          "UseDistanceMinCameraUpRate": 0.3
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "krakenRoyale",
+      "name": "テイオウイカ",
+      "family": "actor collision, no thrown blast",
+      "outcomes": "not-applicable",
+      "certainWhen": "対象外",
+      "uncertainWhen": "本体突進/ジャンプは既存移動/攻撃が所有",
+      "sharedRuntime": "existing Kraken owner",
+      "verification": "19種分類、既存 kraken-dash-occlusion 全32件と all-specials のcharge/release回帰が通過。本体突進/ジャンプ処理は未変更",
+      "source": {
+        "actor": "WeaponSpCastle",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpCastle.game__GameParameterTable.json",
+        "blobSha": "e09d54f944b8a5fdac431e0baa209cb0e4746e5d",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "BodyParam": {
+          "$type": "spl__BulletSpCastleBodyParam",
+          "CollisionAttackFrontOffset": 0.5,
+          "CollisionDashFrontOffset": 2.75,
+          "CollisionDashRadiusForPlayer": 1.5,
+          "CollisionJumpRadiusForPlayer": 2.65,
+          "CollisionPaintAttackFrontOffset": 0.5,
+          "CollisionPaintDashFrontOffset": 0.8,
+          "CollisionPaintOffFrontOffset": 0.3,
+          "CollisionRadiusForField": 1.15,
+          "CollisionUpperOffset": 0.0,
+          "DamageJumpValue": 600,
+          "DefiladeUpperOffset": 0.1,
+          "DefiladeYMinusLength": 0.2,
+          "PaintCheckUpperOffset": 0.4,
+          "PaintDepthScale": 1.2,
+          "PaintSpanFrame": 4,
+          "PaintWidthHalf": 1.2
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "splattercolorScreen",
+      "name": "スミナガシート",
+      "family": "thrown screen generator",
+      "outcomes": "deployment",
+      "certainWhen": "静的地形への接触/法線0.08",
+      "uncertainWhen": "敵Vacで吸収/水没/上限時は非確定。省略gravity/drag defaultsは未抽出",
+      "sharedRuntime": "specialDeviceFlight / specialDeviceLaunchOrigin / stepSpecialDeviceFlight / settleSpecialDeviceContact",
+      "verification": "FixedClock 30/60/120 render Hz、既存device吸収/接触回帰",
+      "source": {
+        "actor": "WeaponSpChimney",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpChimney.game__GameParameterTable.json",
+        "blobSha": "76f0c48d22d2ebc780e11ab98493745129f44165",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "MoveParam": {
+          "$type": "spl__BulletSpChimneyGeneratorMoveParam",
+          "DamageValueForDamageTag": 4000,
+          "GuideHitCollisionType": "InkStorm",
+          "SpawnSpeedY": 0.24,
+          "SpawnSpeedYWorldMin": -0.4,
+          "SpawnSpeedZSpecUp": {
+            "High": 1.7,
+            "Low": 1.3,
+            "Mid": 1.5
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    },
+    {
+      "id": "waveBreaker",
+      "name": "ホップソナー",
+      "family": "thrown generator with floor support",
+      "outcomes": "deployment",
+      "certainWhen": "壁/天井接触からslideし上向き支持面で設置",
+      "uncertainWhen": "敵Vacで吸収/水没/上限は非確定。波は設置後90/240/390F",
+      "sharedRuntime": "specialDeviceFlight / specialDeviceLaunchOrigin / stepSpecialDeviceFlight / settleSpecialDeviceContact",
+      "verification": "FixedClock 30/60/120 render Hz、壁/天井slide/下床、既存device16",
+      "source": {
+        "actor": "WeaponSpShockSonar",
+        "url": "https://github.com/Leanny/splat3/blob/main/data/parameter/1130/weapon/WeaponSpShockSonar.game__GameParameterTable.json",
+        "blobSha": "70c8752b94a8ae323c598b1438d349bcccde868d",
+        "version": "11.3.0"
+      },
+      "sourceParameters": {
+        "spl__BulletSpShockSonarParam": {
+          "$type": "spl__BulletSpShockSonarParam",
+          "GeneratorParam": {
+            "HeadColRadius": 0.75,
+            "HitDamage": 300,
+            "HitDamageInterval": 0.5,
+            "HitKnockback": 400,
+            "MarkingFrame": 45,
+            "MarkingGroundFrameRadiusRatio": [
+              {
+                "Frame": 4,
+                "Ratio": 0.19
+              },
+              {
+                "Frame": 10,
+                "Ratio": 0.4
+              },
+              {
+                "Frame": 18,
+                "Ratio": 0.615
+              },
+              {
+                "Frame": 27,
+                "Ratio": 0.615
+              },
+              {
+                "Frame": 37,
+                "Ratio": 0.615
+              },
+              {
+                "Frame": 47,
+                "Ratio": 0.615
+              },
+              {
+                "Frame": 57,
+                "Ratio": 0.615
+              }
+            ],
+            "MaxHP": 4800,
+            "MoveParam": {
+              "FlyGravity": 0.009,
+              "FlyPositionAirResist": 0.001,
+              "GuideHitCollisionType": "Clam",
+              "SpawnSpeedY": 0.07,
+              "SpawnSpeedYWorldMin": -0.5,
+              "SpawnSpeedZSpecUp": {
+                "High": 0.3,
+                "Low": 0.3,
+                "Mid": 0.3
+              }
+            },
+            "PoleColHeight": 2.75,
+            "SphereAnimCurve": {
+              "Data": [
+                0.0,
+                0.0,
+                0.0,
+                0.1454545,
+                0.0,
+                0.0,
+                0.901515,
+                1.0,
+                -0.1383645,
+                1.0,
+                0.0,
+                0.0
+              ],
+              "MaxX": 1.0,
+              "Type": "Hermit2DSmooth"
+            },
+            "SphereAnimRadius": 0.3,
+            "WaveEmitFrameArray": [
+              90,
+              240,
+              390
+            ]
+          },
+          "WaveParam": {
+            "Damage": 450,
+            "DamageYMax": 2.8,
+            "DamageYMin": -5.2,
+            "MaxFrame": {
+              "High": 216.0,
+              "Low": 160.0,
+              "Mid": 192.0
+            },
+            "MaxRadius": {
+              "High": 27.0,
+              "Low": 20.0,
+              "Mid": 24.0
+            }
+          }
+        }
+      },
+      "interpretation": "Raw GameParameter overrides are primary extracted data; omitted values are not zero and exact retail integrator/defaults have not been recovered. Existing INKWAVE world scale retained."
+    }
+  ]
+}
