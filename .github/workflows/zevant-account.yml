@@ -91,9 +91,10 @@ jobs:
           revision="$(ls dist/_versions)"
           test -f "dist/_versions/${revision}/${entry}"
           test -f dist/_headers
-      - name: Validate the Worker configuration (no deploy)
+      - name: Validate Worker configuration and static asset policy (no deploy)
         if: steps.scope.outputs.test_only != 'true'
         working-directory: account
         run: |
           npm ci --no-audit --no-fund
+          npm run test:assets
           npx wrangler deploy --dry-run --outdir ../.wrangler-dry-run
