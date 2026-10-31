@@ -22,6 +22,7 @@ export default defineConfig({
     outDir: ACCOUNT_OUT,
     emptyOutDir: true,
     manifest: true,
+    sourcemap: false,
     target: 'es2022',
     reportCompressedSize: true,
     modulePreload: { polyfill: false },
