@@ -31,6 +31,13 @@ async function fixture({baseline=false}={}){
  const config=new vm.SourceTextModule(read('src/config.js'),{context});await config.link(spec=>configDependency(spec,context));await config.evaluate();
  const values={G,on,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),damp:(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt)),lerp:(a,b,t)=>a+(b-a)*t};
  const synthetic=v=>new vm.SyntheticModule(Object.keys(v),function(){for(const [k,x]of Object.entries(v))this.setExport(k,x);},{context});
+ if(site&&!baseline){
+  // Full emitted composition also uses the native event-vector helper. Keep
+  // the controlled event bus, but read that helper from the actual built ctx.
+  const ctx=new vm.SourceTextModule(fs.readFileSync(path.join(site,'src/core/ctx.js'),'utf8'),{context});
+  await ctx.link(spec=>{assert.equal(spec,'three');return synthetic(THREE);});await ctx.evaluate();
+  values.copyEventVector=ctx.namespace.copyEventVector;
+ }
  const fxCode=source('src/fx/screenfx.js',{baseline}),mod=new vm.SourceTextModule(fxCode,{context});
  await mod.link(spec=>spec==='three'?synthetic(THREE):spec.includes('ShaderPass')?synthetic({ShaderPass:class{constructor(material){this.material=material;}}}):spec.endsWith('ctx.js')?synthetic(values):config);await mod.evaluate();
  const R={renderer:{getDrawingBufferSize:o=>o.set(1280,720)},setExtraPass(pass){this.pass=pass;}},fx=new mod.namespace.ScreenFX(R,G);
@@ -40,6 +47,10 @@ async function fixture({baseline=false}={}){
  const main=source('src/main.js'),ast=parse(main,{ecmaVersion:'latest',sourceType:'module'}),gameClass=klass(ast,'Game');
  const methods=['_beginMatchFlow','pause','quitToMenu'].map(name=>{const n=gameClass.body.body.find(m=>m.key?.name===name);assert(n,name);return main.slice(n.start,n.end);}).join('\n');
  const binding=ast.body.flatMap(n=>n.type==='ImportDeclaration'?n.specifiers:[]).find(n=>n.imported?.name==='G').local.name;context[binding]=G;
+ // The production build can replace repeated strings with pure module-level
+ // functions. Preserve their actual bytes when extracting the Game methods.
+ const literalHelpers=ast.body.filter(n=>n.type==='FunctionDeclaration'&&!n.params.length&&n.body.body.length===1&&n.body.body[0].type==='ReturnStatement'&&n.body.body[0].argument?.type==='Literal'&&typeof n.body.body[0].argument.value==='string');
+ if(literalHelpers.length)vm.runInContext(literalHelpers.map(n=>main.slice(n.start,n.end)).join('\n'),context);
  const Game=vm.runInContext('class Game{'+methods+'};Game',context),game=new Game();
  Object.assign(game,{match:m,_skipRender:true,input:{exitLock(){}},menus:{show(){}},hud:{setVisible(){},hideSplatted(){}},showcase:{hide(){}},_fade:()=>Promise.resolve(),_setPalette(){},_pickPalette(){},_playMusic(){},_startAttract(){this.match.dispose();this.match=G.match={attract:true,state:'playing',local:null,actors:[]};this._matchFlow=null;}});
  fx.update(0,game);

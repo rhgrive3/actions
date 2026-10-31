@@ -10,7 +10,7 @@ const manifest=clips=>({schema:1,usageRights:'Controlled generated unit-test fix
 const clip=(variant,hash=sha)=>({id:'shooter',event:'fire',file:'shared.mp3',variant,sha256:hash});
 for(const concurrency of [1,2,3,4])test('uniform signed source transfers once after SHA-256, including mixed-case declarations: '+concurrency,async()=>{
  const fetched=[],inputs=[];
- const ctx={state:'running',async decodeAudioData(input){inputs.push(input);assert.deepEqual(new Uint8Array(input),new Uint8Array(bytes()));structuredClone(input,{transfer:[input]});return {duration:.1,length:800,numberOfChannels:1,sampleRate:8000};}};
+ const ctx={state:'running',async decodeAudioData(input){inputs.push(input);assert.deepEqual(new Uint8Array(input),new Uint8Array(bytes()));structuredClone(input,{transfer:[input]});return {duration:.1,length:800,numberOfChannels:1,sampleRate:8000,getChannelData:()=>new Float32Array(800)};}};
  const pack=new AuthorizedSamplePack(ctx,{fetcher:async()=>{const b=bytes();fetched.push(b);return{ok:true,headers:{get:()=>null},arrayBuffer:async()=>b};}});
  const result=await pack.load(manifest([clip(0),clip(1,sha.toUpperCase()),clip(2)]),{concurrency});
  assert.equal(result.loaded,3);assert.equal(result.rejected,0);assert.equal(fetched.length,1);assert.equal(inputs.length,1);assert.equal(inputs[0],fetched[0]);assert.equal(fetched[0].byteLength,0);
@@ -18,7 +18,7 @@ for(const concurrency of [1,2,3,4])test('uniform signed source transfers once af
 });
 test('Charger decoder takes exact response ownership and cached callers do not decode again',async()=>{
  const original=Uint8Array.from({length:20000},(_,i)=>i%251).buffer;let calls=0;
- const buffer={duration:2,sampleRate:44100,numberOfChannels:1};
+ const buffer={duration:2,sampleRate:44100,numberOfChannels:1,length:88200,getChannelData:()=>new Float32Array(88200)};
  const ctx={state:'running',async decodeAudioData(input){calls++;assert.equal(input,original);assert.equal(new Uint8Array(input)[19999],19999%251);structuredClone(input,{transfer:[input]});return buffer;}};
  const fetcher=async()=>({ok:true,arrayBuffer:async()=>original});
  assert.equal(await chargerRiseBuffer(ctx,{fetcher}),buffer);assert.equal(original.byteLength,0);assert.equal(await chargerRiseBuffer(ctx,{fetcher}),buffer);assert.equal(calls,1);disposeChargerRise(ctx);
@@ -48,7 +48,7 @@ test('deferred loop snapshots options only before resolution; actual handle rece
  h.stop();h.set(update);assert.equal(audio.loops[0].updates.length,10000);audio.disposeWeaponAudio();
 });
 for(const indexed of [false,true])test('cross-filename verified PCM shares by checksum and exact loop semantics, indexed='+indexed,async()=>{
- let fetches=0,decodes=0;const ctx={state:'running',async decodeAudioData(input){decodes++;return {duration:.1,length:800,numberOfChannels:1,sampleRate:8000};}};
+ let fetches=0,decodes=0;const ctx={state:'running',async decodeAudioData(input){decodes++;return {duration:.1,length:800,numberOfChannels:1,sampleRate:8000,getChannelData:()=>new Float32Array(800)};}};
  const pack=new AuthorizedSamplePack(ctx,{fetcher:async()=>{fetches++;return{ok:true,headers:{get:()=>null},arrayBuffer:async()=>bytes()};}});
  assert.equal((await pack.load(manifest([{...clip(0),file:'heavy.mp3'}]))).loaded,1);
  const original=pack.pick('shooter','fire').buffer;

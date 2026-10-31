@@ -76,7 +76,7 @@ export function attachDepthCacheLifecycle(owner, G) {
     if (sm.render !== owner._depthHook) {
       owner._orig = sm.render;
       owner._depthHook = sm.render = function (lights, scene, camera) {
-        if (!owner.enabled || scene !== G.scene || !lights.length || (sm.autoUpdate === false && sm.needsUpdate === false))
+        if (!owner.enabled || sm.enabled === false || scene !== G.scene || !lights.length || (sm.autoUpdate === false && sm.needsUpdate === false))
           return owner._orig.call(this, lights, scene, camera);
         return owner._render(this, lights, scene, camera);
       };

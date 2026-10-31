@@ -3,7 +3,7 @@
 function once(code,from,to,label){if(!code.includes(from))throw new Error('audio adapter anchor: '+label);return code.replace(from,to);}
 export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/audio.js'){
-    code="import { TEX, texture } from '../../patches/splatoon3/runtime/audio/grain-texture.mjs';\nimport { prewarmGrainTextures, installGrainPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/grain-prewarm.mjs';\nimport { ReverbPrewarm, installReverbPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/reverb-prewarm.mjs';\nimport { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { installAudioSpatialDsp } from '../../patches/splatoon3/runtime/audio/spatial-dsp.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
+    code="import { TEX, texture } from '../../patches/splatoon3/runtime/audio/grain-texture.mjs';\nimport { prewarmGrainTextures, installGrainPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/grain-prewarm.mjs';\nimport { ReverbPrewarm, installReverbPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/reverb-prewarm.mjs';\nimport { connectOutputSafety, installFiniteAudioInputs } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { installAudioSpatialDsp } from '../../patches/splatoon3/runtime/audio/spatial-dsp.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
     const grainStart = code.indexOf('const TEX = {'), grainEnd = code.indexOf('/* ------------------------------------------------------------------------------------------------------------\n * Engine', grainStart);
     if (grainStart < 0 || grainEnd < grainStart) throw new Error('audio adapter anchor: shared grain implementation');
     code = code.slice(0, grainStart) + 'export { texture };\n\n' + code.slice(grainEnd);
@@ -48,6 +48,9 @@ export function adaptWeaponAudio(rel,code){
       'if (p.pitch != null && Number.isFinite(+p.pitch) && ctl.pitch) ctl.pitch(Math.max(d.progressControlled?0:0.05, +p.pitch), now);',
       'recorded charge can truly pause without changing other loop pitch admission');
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallAudioSpatialDsp(AudioEngine,distCut);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
+    // The platform layer wraps loop updates, so validate at the final public
+    // boundary before either its dedupe state or the native mixer can change.
+    code=once(code,'installAudioPlatform(AudioEngine);','installAudioPlatform(AudioEngine);\ninstallFiniteAudioInputs(AudioEngine);','finite inputs outside the platform loop wrapper');
   }
   if(rel==='src/game/weapons.js'){
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
@@ -257,6 +260,12 @@ export function adaptWeaponAudio(rel,code){
         // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
+    code=once(code, '  play(track, opts = {}) {', `  play(track, opts = {}) {
+    // Validate before remapping, retiring a track, or queuing a request.
+    let requestedFade;
+    try { requestedFade = Number(opts.fade ?? 1.0); } catch { return; }
+    if (!Number.isFinite(requestedFade)) return;`, 'finite music fade before state changes');
+    code=once(code, 'const fade = Math.max(0, opts.fade ?? 1.0);', 'const fade = Math.max(0, requestedFade);', 'reuse the validated music fade');
     const noiseStart=code.indexOf('export function noiseBuffer('),noiseEnd=code.indexOf('\n// Stereo reverb impulse:',noiseStart);
     if(noiseStart<0||noiseEnd<noiseStart)throw new Error('audio adapter anchor: noise scratch ownership');
     let noise=code.slice(noiseStart,noiseEnd);

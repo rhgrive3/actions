@@ -4,7 +4,7 @@ import { chargerRiseBuffer, chargerRecordedStatus, disposeChargerRise } from '..
 
 const flush = async () => { for (let i = 0; i < 24; i++) await Promise.resolve(); };
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
-const pcm = () => ({ duration: 2, sampleRate: 44100, numberOfChannels: 2 });
+const pcm = () => ({ duration: 2, sampleRate: 44100, numberOfChannels: 2, length: 88200, getChannelData: () => new Float32Array(88200) });
 const response = () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(36571) });
 
 for (const phase of ['fetch', 'body', 'decode']) {

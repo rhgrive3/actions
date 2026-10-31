@@ -17,6 +17,10 @@ export function safeWeaponId(id, weapons) {
 export function normalizeQueueProfile(profile, weapons) {
   if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return { level: 1, xp: 0, weapon: safeWeaponId(null, weapons) };
   if (weapons) profile.weapon = safeWeaponId(profile.weapon, weapons);
+  // The same saved profile becomes the outgoing lobby identity. Preserve
+  // valid cosmetics and XP-only records, but never publish malformed fields.
+  if (Object.hasOwn(profile, 'name')) profile.name = typeof profile.name === 'string' ? profile.name.slice(0, 16) : 'Player';
+  if (Object.hasOwn(profile, 'style') && !validNetworkAppearance(profile.style)) profile.style = null;
   if (!Number.isSafeInteger(profile.level) || profile.level < 1 || profile.level > PROFILE_LEVEL_LIMIT) profile.level = 1;
   if (!Number.isSafeInteger(profile.xp) || profile.xp < 0 || profile.xp > PROFILE_XP_LIMIT) profile.xp = 0;
   // Boot merges the saved record with defaults; result owners call us again

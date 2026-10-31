@@ -65,7 +65,8 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   const tz = mh > 1e-10 ? moveZ / mh * targetSpeed * mag : 0;
   const dx = tx - vel.x, dz = tz - vel.z, dist = Math.hypot(dx, dz);
   const step = accel * dt;
-  if (!(dist > step) || !(step > 0)) { vel.x = tx; vel.z = tz; return; }
+  if (!(step > 0)) return;
+  if (!(dist > step)) { vel.x = tx; vel.z = tz; return; }
   vel.x += dx / dist * step; vel.z += dz / dist * step;
 }
 

@@ -15,7 +15,7 @@ const load = (code, exports, bindings = {}) => new Function('THREE', 'G', ...Obj
 const current = rel => adaptBuildSource('src/boss/' + rel, read('inkwave-public/src/boss/' + rel));
 const { BossNav } = load(current('bossNav.js'), 'BossNav');
 const { BossHazards, HZ, moveTimes } = load(current('bossHazards.js'), 'BossHazards,HZ,moveTimes', { Hit: class {} });
-const { BossBrain } = load(current('bossBrain.js'), 'BossBrain', { HZ });
+const { BossBrain } = load(current('bossBrain.js'), 'BossBrain', { HZ, angleDiff: (a, b) => b - a });
 const before = load(read('scripts/tests/fixtures/boss-processing-48511150.mjs.txt'),
   'BossNav,LegacyBossBrain,LegacyBossHazards', { HZ });
 
@@ -116,6 +116,32 @@ test('boss move weights retain exact threshold, cooldown, last-move and RNG choi
     assert.equal(next.rnd(), old.rnd(), 'RNG consumption stays exact');
   }
   G.actors = [];
+});
+
+test('boss damage history retains exact decay and attention changes only on target selection', () => {
+  const boss = { bt: 0, yaw: 0, visible: true, dead: true, anim: 0, match: { state: 'playing' },
+    pos: new THREE.Vector3(), vel: new THREE.Vector3(), nav: { floorAt: () => 0, inPad: () => false } };
+  const history = [[0, 120], [1, 5e-5], [2, Number.MIN_VALUE]];
+  const brain = Object.assign(Object.create(BossBrain.prototype), {
+    b: boss, dmgBy: new Map(history), attn: new Map([[0, 1], [1, 0]]),
+    cd: { crablets: 0, frenzy: 0 }, rnd: () => 0.5,
+  });
+  const expected = new Map(history), attention = [...brain.attn];
+  for (const dt of [0, 1 / 120, 1 / 60, 1 / 30, 0.2, 4, 1 / 60]) {
+    for (const [k, value] of expected) expected.set(k, value * Math.exp(-dt / 8));
+    brain.update(dt);
+    assert.deepEqual([...brain.dmgBy], [...expected], 'small histories are not rounded or pruned');
+    assert.deepEqual([...brain.attn], attention, 'frame updates must not decay retarget attention');
+  }
+  brain.dmgBy.clear();
+  G.actors = [{ nid: 0, alive: true, team: 0, pos: { x: 0, z: 0 } },
+    { nid: 1, alive: true, team: 0, pos: { x: 9, z: 0 } }];
+  try {
+    for (let i = 0; i < 480; i++) brain.update(1 / 60);
+    brain._pickTarget();
+    assert.equal(boss.target, 1, 'attention still distributes attacks after eight seconds');
+    assert.deepEqual([...brain.attn], [[0, 0.8], [1, 1]], 'attention decays by 0.8 once per selection');
+  } finally { G.actors = []; }
 });
 
 test('boss hazard clocks and cleanup retain exact endpoints and observe changed records', () => {

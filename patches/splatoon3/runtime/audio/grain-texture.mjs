@@ -1,4 +1,5 @@
 import { mulberry32 } from './reverb-impulse.mjs';
+import { isFinitePCM } from './finite-pcm.mjs';
 // Original per-kind PRNG, Float32 accumulation order and context cache.
 export const TEX = {
   bubbles: { dur: 3, rate: 46, f: [230, 950], d: [0.018, 0.065], amp: [0.25, 1], rise: [1.35, 2.3] },
@@ -55,7 +56,7 @@ export function texture(ctx, kind) {
 
 export function hasTexture(ctx, kind) { return texCache.get(ctx)?.has(kind) || false; }
 export function publishTexturePCM(ctx, kind, pcm) {
-  if (!Object.hasOwn(TEX, kind) || !(pcm instanceof Float32Array) || pcm.length !== Math.floor(TEX[kind].dur * ctx.sampleRate)) return false;
+  if (!Object.hasOwn(TEX, kind) || !(pcm instanceof Float32Array) || pcm.length !== Math.floor(TEX[kind].dur * ctx.sampleRate) || !isFinitePCM(pcm)) return false;
   let map = texCache.get(ctx); if (!map) { map = new Map(); texCache.set(ctx, map); }
   if (map.has(kind)) return true; // An urgent sync render owns its original buffer identity.
   const buffer = ctx.createBuffer(1, pcm.length, ctx.sampleRate); buffer.getChannelData(0).set(pcm);

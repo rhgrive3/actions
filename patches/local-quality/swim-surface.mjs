@@ -213,16 +213,19 @@ class SwimSurface {
     this.slots=[];this.time=0;this.disposed=false;
     this.scene=fx.scene?.isScene?fx.scene:null;this.scene&&preRenderSet(this.scene).add(this);
   }
-  touch(actor,fx){
-    if(!actor||!actor.pos||!actor.vel||this.disposed)return;
-    if(G.camera?.position?.distanceToSquared(actor.pos)>35*35)return;
-    let s=this.slots.find(s=>s.actor===actor);
-    if(!s)s=this.slots.find(s=>!s.actor);
+  slot(fx){
+    let s=this.slots.find(s=>!s.actor);
     if(!s&&this.slots.length<LIMIT){
       const geometry=createSwimFilmGeometry(),mesh=new THREE.Mesh(geometry,material(fx._light,geometry.userData.filmHoles));
       mesh.name='InkSwimFilm';mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;mesh.receiveShadow=false;
       this.root.add(mesh);s={actor:null,mesh,last:0,yaw:0,phase:this.slots.length*1.37,basis:new THREE.Matrix4(),up:new THREE.Vector3(),forward:new THREE.Vector3(),right:new THREE.Vector3()};this.slots.push(s);
     }
+    return s;
+  }
+  touch(actor,fx){
+    if(!actor||!actor.pos||!actor.vel||this.disposed)return;
+    if(G.camera?.position?.distanceToSquared(actor.pos)>35*35)return;
+    let s=this.slots.find(s=>s.actor===actor)||this.slot(fx);
     if(!s&&actor.isLocal)s=this.slots.find(s=>!s.actor?.isLocal);
     if(s){if(s.actor!==actor)s.yaw=Math.atan2(actor.vel.x,actor.vel.z);s.actor=actor;s.last=fx._time;}
   }
@@ -263,8 +266,39 @@ class SwimSurface {
   }
   shape(s){s.pending=false;updateSwimFilmGeometry(s.mesh.geometry,s.shapeTime,s.shapeSpeed,s.shapeTurn);}
   flush(camera){for(const s of this.slots)if(s.pending&&s.mesh.visible&&seenBy(camera,s.mesh))this.shape(s);}
-  clear(){for(const s of this.slots){s.actor=null;s.mesh.visible=false;s.pending=false;}}
-  dispose(){if(this.disposed)return;this.disposed=true;this.scene?.[PRE_RENDER]?.delete(this);this.root.removeFromParent();for(const s of this.slots){s.mesh.geometry.dispose();s.mesh.material.dispose();s.actor=null;}this.slots.length=0;}
+  clear(){this.warmPromise=null;for(const s of this.slots){s.actor=null;s.mesh.visible=false;s.pending=false;}}
+  dispose(){if(this.disposed)return;this.disposed=true;this.scene?.[PRE_RENDER]?.delete(this);this.root.removeFromParent();for(const s of this.slots){s.mesh.geometry.dispose();s.mesh.material.dispose();s.actor=null;}this.slots.length=0;this.warmTarget?.dispose();this.warmTarget=null;this.warmCleanup?.();this.warmCleanup=null;this.warmPromise=null;}
+}
+
+// Compile the actual FX-owned pooled geometry, including filmData and the
+// physical-material hook. The first swimmer reuses this slot and material.
+export function warmSwimSurface(fx,renderer,camera,target){
+  if(!fx?.root||!fx._light||fx._inkVolumeDisposed||!renderer?.compileAsync||!camera||!target)return null;
+  const surface=fx.swimSurface||=(new SwimSurface(fx));
+  if(surface.disposed)return null;
+  // Loading gives each Character a shadow-batch renderer facade. They still
+  // share one GL context and one live film pool, including completed programs.
+  const context=renderer.getContext?.()||renderer;
+  if(surface.warmContext!==context){
+    surface.warmCleanup?.();surface.warmPromise=null;surface.warmContext=context;
+    const canvas=context.canvas||renderer.domElement,invalidate=()=>{surface.warmPromise=null;};
+    for(const event of ['webglcontextlost','webglcontextrestored'])canvas?.addEventListener?.(event,invalidate);
+    surface.warmCleanup=()=>{for(const event of ['webglcontextlost','webglcontextrestored'])canvas?.removeEventListener?.(event,invalidate);};
+  }
+  const slot=surface.slots[0]||surface.slot(fx);
+  const renderTarget=G.post?.composer?.readBuffer||(surface.warmTarget||=(new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType})));
+  if(surface.warmPromise&&surface.warmScene===target&&surface.warmRenderTarget===renderTarget&&surface.warmMaterialVersion===slot.mesh.material.version)return surface.warmPromise;
+  const previous=renderer.getRenderTarget();
+  const face=renderer.getActiveCubeFace?.()||0,mip=renderer.getActiveMipmapLevel?.()||0;
+  surface.warmPromise=null;
+  let work;
+  try{
+    renderer.setRenderTarget(renderTarget);
+    work=renderer.compileAsync(slot.mesh,camera,target);
+  }finally{renderer.setRenderTarget(previous,face,mip);}
+  const pending=Promise.resolve(work).catch(error=>{if(surface.warmPromise===pending)surface.warmPromise=null;throw error;});
+  surface.warmScene=target;surface.warmRenderTarget=renderTarget;surface.warmMaterialVersion=slot.mesh.material.version;surface.warmPromise=pending;
+  return pending;
 }
 
 export function touchSwimSurface(fx,actor){

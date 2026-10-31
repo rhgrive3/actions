@@ -6,6 +6,8 @@ import { forecastSubRelease } from './sub-release-forecast.mjs';
 import { createThrowPrediction, appendThrowPredictionPoint, noteThrowPredictionImpact,
   finishThrowPrediction, throwPredictionLimit, snapshotThrowCollisionSystem,
   THROW_PREDICTION_STEP as PREDICT_STEP } from './throw-prediction-record.mjs';
+import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
+import { drawSubTrajectory, previewWorldContact, colorSubTrajectory } from './sub-trajectory-preview.mjs';
 // Splatoon 3 sub weapons for the published INKWAVE runtime.
 //
 // Authority stays exactly where issue 177 and the parent advisory place it:
@@ -1166,11 +1168,28 @@ export function installKitSubs(api, profile) {
       return updateArc.call(this, actor, false);
     }
     if (!resolved || resolved.throwSpeed == null) return updateArc.call(this, actor, show);
+    if(show&&actor?.alive&&['autobomb','sprinkler'].includes(resolved.spec.id)) {
+      return drawSubTrajectory(api,this,actor,s=>{
+        s.p.copy(actor.pos);s.p.y+=1.35;
+        bombPreviewPosition(actor,bombReleasePosition(actor,s.p));
+        // The native bomb owner damps Robot XZ before gravity. Sprinkler uses
+        // its own flight gravity. Invoke those exact pure flight selectors.
+        kitThrowVelocity(actor,resolved,resolved.throwSpeed,s.vel)
+          || nativeThrowVelocity.call(this,actor,resolved.throwSpeed,s.vel);
+        Object.assign(s.flight,{kind:'bomb',s3Mode:'flight',s3Resolved:resolved,ghost:false,vel:s.vel});
+        s.inkCost=resolved.inkCost;
+        s.advance=(state,dt)=>{kitBombStep(SUB,state.flight,dt);state.vel.y-=kitBombGravity(SUB,state.flight)*dt;state.p.addScaledVector(state.vel,dt);};
+        s.contactAt=state=>previewWorldContact(api,state);
+      });
+    }
     const saved = this.s3PreviewSubSpeed, previous = this.s3KitPreviewResolved;
     this.s3KitPreviewResolved = resolved;
     this.s3PreviewSubSpeed = resolved.throwSpeed;
     let out;
-    try { out = updateArc.call(this, actor, show); }
+    try {
+      out = updateArc.call(this, actor, show);
+      if(show&&actor?.alive)colorSubTrajectory(this,actor,resolved.inkCost);
+    }
     finally { this.s3PreviewSubSpeed = saved; this.s3KitPreviewResolved = previous; }
     return out;
   };

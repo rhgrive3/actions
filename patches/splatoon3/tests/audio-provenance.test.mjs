@@ -6,7 +6,7 @@ import { renderSound, pcmMetrics } from '../runtime/audio/render.mjs';
 import { AuthorizedSamplePack, validateAuthorizedManifest } from '../runtime/audio/authorized-samples.mjs';
 import { WeaponSoundBank } from '../runtime/audio/bank.mjs';
 const id='shooter';const allowed={schema:1,targetVersion:'11.3.0',usageRights:'Original recording, rights granted to this application',clips:[{id,event:'fire',file:'custom/splatter.wav',variant:0, gain:.8}]};
-const sampleCtx={sampleRate:48000,createBuffer(_channels,len,sr){const pcm=new Float32Array(len);return {length:len,duration:len/sr,getChannelData:()=>pcm};},decodeAudioData:async()=>({duration:.23,length:11040,numberOfChannels:1,sampleRate:48000})};
+const sampleCtx={sampleRate:48000,createBuffer(_channels,len,sr){const pcm=new Float32Array(len);return {length:len,duration:len/sr,getChannelData:()=>pcm};},decodeAudioData:async()=>({duration:.23,length:11040,numberOfChannels:1,sampleRate:48000,getChannelData:()=>new Float32Array(11040)})};
 test('reference provenance is explicitly Splatoon 1 era, not S3 11.3.0 certification',()=>{
  assert.match(REFERENCE_SOURCE.gameLineage,/Splatoon 1/);
  assert.equal(Object.keys(REFERENCE_ENTRIES).length,29);

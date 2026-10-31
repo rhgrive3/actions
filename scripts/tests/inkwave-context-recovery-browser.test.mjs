@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath, contextMenuControlForPhase, installAudioRequestTrace } from '../check-inkwave-context-recovery-browser.mjs';
+import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath, contextMenuControlForPhase, installAudioRequestTrace, captureContextRecoveryAudioAdmission, validateContextRecoveryAudioAdmission } from '../check-inkwave-context-recovery-browser.mjs';
 import { audioLoadScope } from '../../patches/splatoon3/runtime/audio/load-deadline.mjs';
 import { readEncodedAudioResponse, EncodedAudioResponseError } from '../../patches/splatoon3/runtime/audio/encoded-response.mjs';
 import { AuthorizedSamplePack } from '../../patches/splatoon3/runtime/audio/authorized-samples.mjs';
@@ -86,7 +86,7 @@ test('shared menu phases retain strict context-recovery control admission and re
   assert.match(script,/page\.waitForFunction\(rangeMenuControlReady, control, \{ timeout: remainingMs\(\) \}\)/);
 });
 
-test('actual context loss waits for bounded audio-network quiet without suppressing failures', () => {
+test('actual context loss waits for bounded audio quiet and proved menu retirement without suppressing failures', () => {
   const script=fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url),'utf8');
   const proof=nativeContextRecoveryProof.toString();
   assert.match(proof,/const audioIdle = globalThis\.__awaitContextRecoveryAudioIdle;/);
@@ -100,11 +100,81 @@ test('actual context loss waits for bounded audio-network quiet without suppress
     "await page.exposeFunction('__awaitContextRecoveryAudioIdle'",
     'const deadline = Date.now() + 30000',
     'if (now - quietSince >= 750) break',
-    "assert.deepEqual(requests, [], 'Audio startup produced failed network requests')",
+    "await streamedMusic.snapshot('native-playing-capture-ready')",
+    "assert.deepEqual(admission.unverified, [], 'Audio startup produced unverified failed network requests')",
+    "assert.deepEqual(requests, admission.requests, 'New or changed failed request after pre-loss audio admission')",
     "assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors')",
-    "assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, [])"
+    'assert.deepEqual(errors, [])', 'assert.deepEqual(events, [])',
+    "observeStreamedMusic({ context, page, ownerGlobal: 'RG'",
+    "'scripts/lib/inkwave-streamed-music-diagnostics.mjs', 'scripts/lib/inkwave-browser-media-admission.mjs'",
+    'preLossAudioAdmission, streamedMusicReceipt'
   ]) assert(script.includes(contract),'missing network/lifecycle guard: '+contract);
+  assert.equal(script.match(/classifyRetiredMenuAudioAbort\(\{/g)?.length,1,'classification is confined to the pre-loss capture');
+  assert.equal(script.match(/validateContextRecoveryAudioAdmission\(preLossAudioAdmission,/g)?.length,2,'both pre-loss and final gates validate the sealed prefix');
+  assert(script.indexOf("observeStreamedMusic({ context, page") < script.indexOf("await page.goto('http"),'observe before any native media request');
+  assert(script.indexOf("await streamedMusic.snapshot('native-playing-capture-ready')") > script.indexOf('if (now - quietSince >= 750) break'),'playback snapshot follows bounded quiet');
   assert.doesNotMatch(script,/ignore(?:RequestFailure|NetworkError)|(?:net::)?ERR_ABORTED\s*\)?\s*continue/);
+});
+
+const mediaRevision='a'.repeat(64), mediaSiteURL='http://127.0.0.1:40000/';
+const menuURL=new URL('_versions/'+mediaRevision+'/assets/audio/menu_the_ika_swing_aoi_kenban.mp3',mediaSiteURL).href;
+const battleURL=new URL('_versions/'+mediaRevision+'/assets/audio/Jet_Arrow.mp3',mediaSiteURL).href;
+const retiredMenu=()=>({url:menuURL,error:'net::ERR_ABORTED'});
+function musicReceipt(){
+  return {enabled:true,assetURL:battleURL,
+    network:[{event:'response',requestId:'battle-42',url:battleURL,status:200},{event:'finished',requestId:'battle-42'}],
+    snapshots:[{reason:'native-playing-capture-ready',state:{ownerGlobal:'RG',ownerPresent:true,musicPresent:true,
+      matchState:'playing',track:'battle',desiredTrack:'battle',current:{id:'battle',disposed:false,failed:false,
+        element:{readyState:4,paused:false,error:null,currentSrc:battleURL}}}}]};
+}
+function captureAudio(requests,receipt=musicReceipt()){
+  return captureContextRecoveryAudioAdmission({requests,siteURL:mediaSiteURL,revision:mediaRevision,receipt});
+}
+const audioEvidence=requests=>({requests,httpFailures:[],errors:[],events:[]});
+test('pre-loss audio admission preserves and seals the one independently proved retired-menu cancellation',()=>{
+  for(const requests of [[],[retiredMenu()]]){
+    const admission=captureAudio(requests);
+    validateContextRecoveryAudioAdmission(admission,audioEvidence(requests));
+    assert.deepEqual(admission.requests,requests);assert.equal(admission.verified.length,requests.length);
+    assert.notEqual(admission.requests,requests);assert(Object.isFrozen(admission.requests));
+    if(requests.length){
+      assert.notEqual(admission.requests[0],requests[0]);assert(Object.isFrozen(admission.requests[0]));
+      assert.throws(()=>{admission.requests[0].error='changed';},TypeError);
+      requests[0].url=battleURL;
+      assert.throws(()=>validateContextRecoveryAudioAdmission(admission,audioEvidence(requests)),/New or changed/);
+    }
+  }
+});
+test('pre-loss cancellation rejects unavailable observation, missing owner, missing network and failed playback evidence',()=>{
+  for(const mutate of [r=>r.enabled=false,r=>r.snapshots=[],r=>r.snapshots[0].error='snapshot failed',
+    r=>r.snapshots[0].state.ownerGlobal='__G',r=>r.snapshots[0].state.ownerPresent=false,r=>r.snapshots[0].state.musicPresent=false,
+    r=>r.network=[],r=>r.network[0].status=404,r=>r.network[1].requestId='unrelated',
+    r=>r.snapshots[0].state.matchState='intro',r=>r.snapshots[0].state.current.failed=true,
+    r=>r.snapshots[0].state.current.element.readyState=2,r=>r.snapshots[0].state.current.element.paused=true,
+    r=>r.snapshots[0].state.current.element.error={code:2},r=>r.snapshots[0].state.current.element.currentSrc=menuURL,
+    r=>r.snapshots.push({reason:'after-loss',state:r.snapshots[0].state})]){
+    const receipt=musicReceipt(),requests=[retiredMenu()];mutate(receipt);
+    assert.throws(()=>validateContextRecoveryAudioAdmission(captureAudio(requests,receipt),audioEvidence(requests)));
+  }
+});
+test('pre-loss admission keeps duplicate and other failures, HTTP errors and lifecycle errors fatal',()=>{
+  for(const requests of [[retiredMenu(),retiredMenu()],[{url:battleURL,error:'net::ERR_ABORTED'}],
+    [{url:menuURL,error:'net::ERR_FAILED'}],[{url:menuURL.replace(mediaRevision,'b'.repeat(64)),error:'net::ERR_ABORTED'}]]){
+    assert.throws(()=>validateContextRecoveryAudioAdmission(captureAudio(requests),audioEvidence(requests)),/unverified/);
+  }
+  const requests=[retiredMenu()],admission=captureAudio(requests);
+  for(const [key,value] of [['httpFailures',[{url:battleURL,status:404}]],['errors',['media decode failed']],['events',['crash']]]){
+    assert.throws(()=>validateContextRecoveryAudioAdmission(admission,{...audioEvidence(requests),[key]:value}));
+  }
+});
+test('post-loss failures can never reuse an earlier successful playback receipt',()=>{
+  for(const initial of [[],[retiredMenu()]]){
+    const admission=captureAudio(initial);
+    for(const added of [retiredMenu(),{url:battleURL,error:'net::ERR_ABORTED'},{url:menuURL,error:'net::ERR_CONNECTION_RESET'}]){
+      assert.throws(()=>validateContextRecoveryAudioAdmission(admission,audioEvidence([...initial,added])),/New or changed/);
+    }
+  }
+  assert.throws(()=>validateContextRecoveryAudioAdmission(null,audioEvidence([])),/Missing pre-loss/);
 });
 
 

@@ -3,6 +3,7 @@ import { readEncodedAudioResponse, EncodedAudioResponseError } from './encoded-r
 import { mainAudioSourceId, WEAPON_AUDIO } from './weapon-recipes.mjs';
 import { PitchPreservingChargeCache, chargerOnsetRatio } from './pitch-preserving-charge.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
+import { hasFiniteAudioBufferPCM } from './finite-pcm.mjs';
 
 // Every Charger now uses the same Splat Charger reference rise. Different charge
 // clocks stretch its ascending phrase in a Worker WITHOUT changing pitch.
@@ -94,7 +95,8 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
        buffer.duration<RECORDED_CHARGER_FIRST.minimumDecodedSeconds||
        buffer.duration>3||
        !Number.isFinite(buffer.sampleRate)||buffer.sampleRate<8000||
-       buffer.numberOfChannels<1||buffer.numberOfChannels>2)
+       buffer.numberOfChannels<1||buffer.numberOfChannels>2||
+       !hasFiniteAudioBufferPCM(buffer))
       throw new ChargerLoadError('recorded Charger audio duration/format mismatch');
     return buffer;
   });
@@ -149,7 +151,10 @@ export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',ch
   const state=ctx?slots.get(ctx):null;
   const original=state?.buffer;
   if(!original||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
-  const level=clamp(Number(volume)||0,0,1);
+  let requested;
+  try{requested=Number(volume);}catch{return null;}
+  if(!Number.isFinite(requested))return null;
+  const level=clamp(requested||0,0,1);
   if(level<=0)return null;
 
   let buffer=original,offset=RECORDED_CHARGER_FIRST.startSeconds;

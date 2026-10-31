@@ -86,13 +86,12 @@ export class NativeLevel extends Level {
   return !!this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,this._supportOptions);
  }
  containsOnFace(face,p,tolerance=.002){
-  const rel=this._relNative||(this._relNative=new THREE.Vector3());rel.copy(p).sub(face.origin);
-  const a=rel.dot(face.u),b=rel.dot(face.v);
+  const rx=p.x-face.origin.x,ry=p.y-face.origin.y,rz=p.z-face.origin.z;
+  const a=rx*face.u.x+ry*face.u.y+rz*face.u.z,b=rx*face.v.x+ry*face.v.y+rz*face.v.z;
   if(a< -tolerance||b< -tolerance||a>face.su+tolerance||b>face.sv+tolerance)return false;
   // Project to the exact source triangle plane, avoiding a rectangular footprint.
-  const projected=this._projNative||(this._projNative=new THREE.Vector3());
-  projected.copy(p).addScaledVector(face.n,-rel.dot(face.n));
-  const px=projected.x,py=projected.y,pz=projected.z,verts=this.triangleWorld.triangles,tris=face.triangles;
+  const scale=-(rx*face.n.x+ry*face.n.y+rz*face.n.z);
+  const px=p.x+face.n.x*scale,py=p.y+face.n.y*scale,pz=p.z+face.n.z*scale,verts=this.triangleWorld.triangles,tris=face.triangles;
   const pxLo=px-1e-6,pxHi=px+1e-6,pzLo=pz-1e-6,pzHi=pz+1e-6,pyLo=py-1e-6,pyHi=py+1e-6;
   for(let i=0;i<tris.length;i++){
    const id=tris[i],o=id*9;
@@ -102,7 +101,15 @@ export class NativeLevel extends Level {
    if((z0>pzHi&&z1>pzHi&&z2>pzHi)||(z0<pzLo&&z1<pzLo&&z2<pzLo))continue;
    const y0=verts[o+1],y1=verts[o+4],y2=verts[o+7];
    if((y0>pyHi&&y1>pyHi&&y2>pyHi)||(y0<pyLo&&y1<pyLo&&y2<pyLo))continue;
-   if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
+   const ax=x2-x0,ay=y2-y0,az=z2-z0,bx=x1-x0,by=y1-y0,bz=z1-z0,cx=px-x0,cy=py-y0,cz=pz-z0;
+   const dot00=ax*ax+ay*ay+az*az,dot01=ax*bx+ay*by+az*bz,dot02=ax*cx+ay*cy+az*cz,
+    dot11=bx*bx+by*by+bz*bz,dot12=bx*cx+by*cy+bz*cz,denom=dot00*dot11-dot01*dot01;
+   if(denom===0)continue;
+   const inv=1/denom,u=(dot11*dot02-dot01*dot12)*inv,v=(dot00*dot12-dot01*dot02)*inv;
+   // Match Three's actual containsPoint expression, including rounding at
+   // shared edges: testing u+v<=1 is mathematically equivalent but not exact.
+   const first=1-u-v;
+   if(first>=0&&v>=0&&first+v<=1)return true;
   }
   return false;
  }

@@ -10,7 +10,7 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 const cues=['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'];
 function fixture(fail=null){
   let active=0,peak=0,imports=0;const requests=[];
-  const ctx={state:'running',sampleRate:8000,async decodeAudioData(){return {duration:.01,length:80,numberOfChannels:1,sampleRate:8000};}};
+  const ctx={state:'running',sampleRate:8000,async decodeAudioData(){return {duration:.01,length:80,numberOfChannels:1,sampleRate:8000,getChannelData:()=>new Float32Array(80)};}};
   const pack=new AuthorizedSamplePack(ctx),bank={ctx,authorized:pack};
   const source={schema:1,usageRights:'Generated unit fixture',clips:cues.map((id,i)=>({id,event:'fire',variant:0,file:'s3-real/fixture'+i+'.mp3'}))};
   const loader=new RealS3SampleLoader(bank,{fetcher:async()=>({ok:true,json:async()=>source}),assetFetcher:async url=>{

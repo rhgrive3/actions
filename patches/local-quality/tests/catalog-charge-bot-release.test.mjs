@@ -30,7 +30,7 @@ function scenario(f, id, { ink = 90, mode = 'paint' } = {}) {
   f.G.actors.length = 0;
   f.G.projectiles.clear();
   const a = f.make(id);
-  a.isBot = true;
+  a.isBot = true; a.isLocal = false; a.remote = false;
   a.form = 'kid';
   a.hp = f.PLAYER.hp;
   a.ink = ink;
