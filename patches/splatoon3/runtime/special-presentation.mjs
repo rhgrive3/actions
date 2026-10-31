@@ -513,7 +513,7 @@ export function installSpecialModels(api) {
 
   // ---- devices on the kid ----------------------------------------------------
   if (!Character?.prototype?.update) return api;
-  const states = new WeakMap();
+  const states = new WeakMap(), coatKeepers = new WeakMap(), retiredCharacters = new WeakSet();
   function releaseWeapon(s) {
     if (!s.weapon) return;
     s.weapon.pivot.visible = s.weaponVisible;
@@ -525,7 +525,10 @@ export function installSpecialModels(api) {
     if (!s) return;
     if (s.wailBatch) retireWailSpeakerBatch(s.wailBatch, disposeModel);
     for (const d of s.devices) disposeModel(d.holder);
-    disposeModel(s.coatGroup); disposeModel(s.line); disposeModel(s.ball?.root?.parent);
+    // Keep the character-owned coat material linked across activations. Its
+    // hidden meshes stay detached while idle, avoiding scene traversal work.
+    if (s.coatGroup) { s.coatGroup.visible = false; s.coatGroup.removeFromParent(); }
+    disposeModel(s.line); disposeModel(s.ball?.root?.parent);
     releaseWeapon(s);
     states.delete(ch);
   }
@@ -576,22 +579,36 @@ export function installSpecialModels(api) {
     states.set(ch, s);
     return s;
   }
+  function coatFor(ch) {
+    let s = coatKeepers.get(ch);
+    const tiers = ch.lodSets;
+    if (s && s.coatPairs.every(([source, twin]) => source.geometry === twin.geometry && source.skeleton === twin.skeleton)
+        && (!tiers || tiers.every((tier, i) => tier === s.tiers[i]))) return s;
+    if (s) disposeModel(s.coatGroup);
+    s = { tiers: tiers?.slice() || [] };
+    // Zipcaster's real skinned twins borrow the native geometry and skeleton.
+    // A generic plane would compile a different program without skinning.
+    s.coatGroup = new THREE.Group(); s.coatGroup.name = 'zipcaster-ink-coat';
+    s.coatGroup.visible = false;
+    s.coatMat = new THREE.MeshStandardMaterial({ color: ch.color || colorOf(ch.actor), roughness: 0.08, metalness: 0.1,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+    s.coatPairs = [];
+    ch.kid.traverse(o => {
+      if (!o.isSkinnedMesh || !/^kid:/.test(o.name || '') || /eye|iris|pupil|tooth|mouth|brow/i.test(o.name)) return;
+      const twin = new THREE.SkinnedMesh(o.geometry, s.coatMat);
+      twin.userData.s3BorrowedGeometry = true;
+      twin.bind(o.skeleton, o.bindMatrix); twin.frustumCulled = false; twin.renderOrder = (o.renderOrder || 0) + 1;
+      s.coatGroup.add(twin); s.coatPairs.push([o, twin]);
+    });
+    coatKeepers.set(ch, s);
+    return s;
+  }
   function inkCoat(ch, s, on) {
-    // Zipcaster: the kid turns glossy team ink (S3 character turntable strip).
-    // Skinned twins of the visible body meshes share the skeleton.
-    if (!s.coatGroup && on) {
-      s.coatGroup = new THREE.Group(); s.coatGroup.name = 'zipcaster-ink-coat';
-      s.coatMat = new THREE.MeshStandardMaterial({ color: ch.color || colorOf(ch.actor), roughness: 0.08, metalness: 0.1,
-        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
-      s.coatPairs = [];
-      ch.kid.traverse(o => {
-        if (!o.isSkinnedMesh || !/^kid:/.test(o.name || '') || /eye|iris|pupil|tooth|mouth|brow/i.test(o.name)) return;
-        const twin = new THREE.SkinnedMesh(o.geometry, s.coatMat);
-        twin.userData.s3BorrowedGeometry = true;
-        twin.bind(o.skeleton, o.bindMatrix); twin.frustumCulled = false; twin.renderOrder = (o.renderOrder || 0) + 1;
-        s.coatGroup.add(twin); s.coatPairs.push([o, twin]);
-      });
-      ch.kid.add(s.coatGroup);
+    if (on) {
+      const coat = coatFor(ch);
+      s.coatGroup = coat.coatGroup; s.coatMat = coat.coatMat; s.coatPairs = coat.coatPairs;
+      s.coatMat.color.set(ch.color || colorOf(ch.actor));
+      if (s.coatGroup.parent !== ch.kid) ch.kid.add(s.coatGroup);
     }
     if (s.coatGroup) {
       s.coatGroup.visible = on;
@@ -748,6 +765,32 @@ export function installSpecialModels(api) {
     if (hideKid) { if (ch.kid) ch.kid.visible = false; if (ch.squidRoot) ch.squidRoot.visible = false; }
   }
   const cp = Character.prototype, chUpdate = cp.update, dispose = cp.dispose, setVisible = cp.setVisible;
+  const warmAll = cp.warmAll;
+  if (typeof warmAll === 'function') {
+    cp.warmAll = async function (renderer = G.renderer, camera = G.camera, target = G.scene, ...rest) {
+      if (retiredCharacters.has(this) || this._sourceMotionDisposed) return false;
+      if (!renderer?.compileAsync || !camera || !target) return warmAll.call(this, renderer, camera, target, ...rest);
+      if (this._sourceMotionLoader) await this._sourceMotionLoader;
+      if (retiredCharacters.has(this) || this._sourceMotionDisposed) return false;
+      for (let tier = 0; tier < 3; tier++) this._tierSet?.(tier);
+      const coat = coatFor(this);
+      if (coat.coatGroup.parent !== this.kid) this.kid.add(coat.coatGroup);
+      try {
+        const done = warmAll.call(this, renderer, camera, target, ...rest);
+        let film;
+        try { film = target === G.scene ? G.fx?.warmSwimSurface?.(renderer, camera, target) : null; }
+        catch (error) { film = Promise.reject(error); }
+        // A failed film compile must not detach the coat while the native
+        // character compile is still waiting for its source motion loader.
+        const results = await Promise.allSettled([done, film]);
+        for (const result of results) if (result.status === 'rejected') throw result.reason;
+        return results[0].value;
+      } finally {
+        if (states.get(this)?.coatGroup !== coat.coatGroup) coat.coatGroup.removeFromParent();
+      }
+    };
+    Object.defineProperty(cp.warmAll, Symbol.for('inkwave.characterWarmParent'), { value: warmAll });
+  }
   // Native dead actors stop calling Character.update. In particular, speakers
   // now live in world space: hiding the body must release its held/unfired
   // models immediately, leaving only the attack-owned fired tails.
@@ -764,7 +807,12 @@ export function installSpecialModels(api) {
     pose(this, s, Number.isFinite(dt) ? Math.max(0, dt) : 0);
     return out;
   };
-  if (dispose) cp.dispose = function (...args) { retire(this); return dispose.apply(this, args); };
+  if (dispose) cp.dispose = function (...args) {
+    retiredCharacters.add(this); retire(this);
+    const coat = coatKeepers.get(this);
+    if (coat) { disposeModel(coat.coatGroup); coatKeepers.delete(this); }
+    return dispose.apply(this, args);
+  };
   // Read-only view of the live device holders, for presentation layers that anchor effects to them.
   if (!cp.s3SpecialDevices) cp.s3SpecialDevices = function () { return states.get(this)?.devices || null; };
   return api;
