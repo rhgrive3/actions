@@ -7,6 +7,7 @@ import {installGameplayObserver} from './lib/inkwave-gameplay-observer.mjs';
 import {gameplayVerdict,validateLifecycleExpectation} from './lib/inkwave-gameplay-verdict.mjs';
 import {sampleChromiumProcessMemory} from './lib/inkwave-chromium-process-memory.mjs';
 import {waitForNativeCombatWindow} from './lib/inkwave-native-combat-window.mjs';
+import {createGameplayCpuProfileCapture} from './lib/inkwave-gameplay-cpu-profile.mjs';
 import {verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,sampleStats,hash} from './lib/inkwave-runtime-evidence.mjs';
 const opt=(k,d)=>{const i=process.argv.indexOf(k);return i<0?d:process.argv[i+1];};
 const root=process.cwd(),site=path.resolve(opt('--site','_site')),out=persistentDirectory(opt('--evidence-dir','.ci-scratch/gameplay/run'));
@@ -15,7 +16,7 @@ const crabLifecycle=process.argv.includes('--crab-lifecycle');
 const expectedLifecycle=validateLifecycleExpectation(opt('--expect-lifecycle','released'),crabLifecycle,process.argv.includes('--expect-lifecycle'));
 const maps=opt('--maps','tidewater,kelpline,halyard').split(',');
 if(!maps.length||maps.some(id=>!id||!/^[-a-z0-9]+$/.test(id)))throw Error('Nonempty comma-separated map IDs required');
-const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs','lib/inkwave-native-combat-window.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
+const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs','lib/inkwave-native-combat-window.mjs','lib/inkwave-gameplay-cpu-profile.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
 const width=Number(opt('--width','480')),height=Number(opt('--height','300')),dpr=Number(opt('--dpr','1'));
 if(!Number.isFinite(dpr)||dpr<=0||!Number.isInteger(width)||width<=0||!Number.isInteger(height)||height<=0)throw Error('Positive viewport dimensions and device scale required');
 const cycles=Number(opt('--cycles','6')),seconds=Number(opt('--seconds','60')),quality=opt('--quality','high'),mobile=process.argv.includes('--mobile');
@@ -24,6 +25,7 @@ for(const key of ['TMPDIR','TMP','TEMP'])process.env[key]=persistentBrowserTemp(
 const report={schema:1,status:'running',sourceSha:sha,contentHash:build.contentHash,harnessHash:hash(JSON.stringify(harnessFiles)),harnessFiles,conditions:{crabLifecycle,expectedLifecycle,maps,processScope:'Linux browser process tree including zygotes',cycles,seconds,quality,mobile,viewport:[width,height],deviceScaleFactor:dpr,seed:20261026,clock:'native RAF; no manual frames, fences, finish, freeze or render suppression',cpu:os.cpus()[0].model},samples:[],windows:[],errors:[]};
 const checkpoint=()=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(report,null,2));
 const requestedPaths=new Set();
+let cpuProfile;
 const mime={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://x'),file=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));if(!file.startsWith(site+'/'))throw Error('path');const body=fs.readFileSync(file);requestedPaths.add(path.relative(site,file));res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(body);}catch{res.statusCode=404;res.end();}});
 let browser,context,page,cdp,system,sampler;let phase='boot',sampling=false;
@@ -72,9 +74,10 @@ try{
       && G.paint?.coverage().some(value=>value>0);
   },mapId,{polling:1000,timeout:180000});
   await capture('warm-'+cycle);phase='combat-'+cycle;
+  cpuProfile=createGameplayCpuProfileCapture({cdp,fileName:'combat-'+cycle+'.cpuprofile',save:profile=>fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile))});
   await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
   const combatWait=await waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000},async receipt=>{
-   const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile));
+   await cpuProfile.stopAndSave();
    await capture('combat-'+cycle,false,receipt.leaseId);
   },diagnostic=>{report.combatWindowTimeout={phase,...diagnostic};checkpoint();});
   const combat=report.windows.at(-1);combat.wait=combatWait;checkpoint();if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
@@ -96,5 +99,5 @@ try{
   if(crabLifecycle){const receipt=report.windows.at(-1).crab.find(r=>r.cycle===cycle);receipt.removedAfterQuit=!receipt.inScene;receipt.disposedAfterQuit=receipt.geometryDisposed>0&&receipt.materialDisposed>0;report.lifecycleStatus=report.windows.filter(w=>w.label.startsWith('released-')).every(w=>{const r=w.crab.find(r=>r.cycle===Number(w.label.slice(9)));return r?.removedAfterQuit&&r?.disposedAfterQuit;})?'released':'leak-observed';checkpoint();}
  }
  phase='final-idle';await page.waitForTimeout(15000);await capture('final',true);report.status=gameplayVerdict({errors:report.errors,crabLifecycle,lifecycleStatus:report.lifecycleStatus,expectedLifecycle});
-}catch(e){report.status='failed';report.errors.push(e.stack);console.error(e);}finally{clearInterval(sampler);if(page&&!page.isClosed())await page.evaluate(()=>globalThis.__stopGameplayObserver?.()).catch(()=>{});report.requestedNativeFiles=[...requestedPaths].filter(p=>p.startsWith('native-prebuilt/')).sort();checkpoint();await browser?.close();await new Promise(r=>server.close(r));}
+}catch(e){report.status='failed';report.errors.push(e.stack);console.error(e);if(cpuProfile){try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}}}finally{clearInterval(sampler);if(page&&!page.isClosed())await page.evaluate(()=>globalThis.__stopGameplayObserver?.()).catch(()=>{});report.requestedNativeFiles=[...requestedPaths].filter(p=>p.startsWith('native-prebuilt/')).sort();checkpoint();await browser?.close();await new Promise(r=>server.close(r));}
 if(report.status!=='passed')process.exitCode=1;

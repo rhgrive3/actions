@@ -236,3 +236,60 @@ test('failure diagnostic budget uses the Node monotonic clock rather than wall-c
  const source=readFileSync(new URL('../lib/inkwave-native-combat-window.mjs',import.meta.url),'utf8');
  assert.match(source,/diagnosticStarted=performance\.now\(\)/);assert.match(source,/2000-\(performance\.now\(\)-diagnosticStarted\)/);assert.doesNotMatch(source,/Date\.now\(\)/);
 });
+
+// Failure-only CPU profiler lifetime; collected by this existing CI entry.
+import fs from 'node:fs';
+import {createGameplayCpuProfileCapture} from '../lib/inkwave-gameplay-cpu-profile.mjs';
+const profile={nodes:[{id:1,callFrame:{functionName:'native game'}}],samples:[1],timeDeltas:[1000]},tick=()=>new Promise(r=>setImmediate(r));
+function rig({stop=()=>({profile}),save=()=>{},disable=()=>({}),budget=50}={}){const calls=[],saved=[];const cdp={send(method){calls.push(method);return method==='Profiler.stop'?stop():disable();}};const capture=createGameplayCpuProfileCapture({cdp,fileName:'combat-0.cpuprofile',failureBudgetMs:budget,save(p){calls.push('save');saved.push(p);return save(p);}});return {calls,saved,capture};}
+test('success retains one stop then the exact acquired profile save, without failure disable',async()=>{const r=rig();await r.capture.stopAndSave();await r.capture.stopAndSave();assert.deepEqual(r.calls,['Profiler.stop','save']);assert.equal(r.saved[0],profile);});
+test('failure before onReady stops, persists the actual profile and disables the profiler',async()=>{const r=rig();const x=await r.capture.cleanupFailure();assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);assert.equal(x.status,'saved');assert.equal(x.saved,true);assert.equal(x.disableStatus,'disabled');assert.equal(r.saved[0],profile);});
+test('cleanup never replaces primary error identity, including falsy thrown values',async()=>{for(const error of [new Error('TimeoutError sentinel'),undefined,null,0,false,'']){const r=rig({stop(){throw new Error('secondary stop');},disable(){throw new Error('secondary disable');}});let caught=false,actual;try{try{throw error;}catch(primary){await r.capture.cleanupFailure();throw primary;}}catch(e){caught=true;actual=e;}assert(caught);assert.equal(actual,error);assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);}});
+test('a profile save failure is diagnostic and still disables; it is never retried',async()=>{const error=new Error('disk write');const r=rig({save(){throw error;}});await assert.rejects(r.capture.stopAndSave(),e=>e===error);const x=await r.capture.cleanupFailure();assert.equal(x.status,'profile-save-failed');assert.equal(x.saved,false);assert.equal(x.profileReceived,true);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
+test('a stop rejection from onReady is reused, not sent again on cleanup',async()=>{const error=new Error('CDP stopped/lost reply');const r=rig({stop:()=>Promise.reject(error)});await assert.rejects(r.capture.stopAndSave(),e=>e===error);const x=await r.capture.cleanupFailure();assert.equal(x.status,'profile-stop-failed');assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);});
+test('a later error after successful capture keeps the existing saved file and only disables',async()=>{const r=rig();await r.capture.stopAndSave();const x=await r.capture.cleanupFailure();assert.equal(x.saved,true);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
+test('concurrent/repeated cleanup owns one stop, save and disable transaction',async()=>{const r=rig();const a=r.capture.cleanupFailure(),b=r.capture.cleanupFailure();assert.equal(a,b);assert.deepEqual(await a,await b);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
+test('a hanging stop has a finite wait and late completion cannot start a file write',async()=>{let resolve;const r=rig({stop:()=>new Promise(r=>{resolve=r;}),budget:15});const began=performance.now(),x=await r.capture.cleanupFailure();assert(performance.now()-began<1000);assert.equal(x.status,'profile-timeout');assert.equal(x.saved,false);assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);resolve({profile});await tick();await tick();assert.equal(r.saved.length,0);});
+test('a hanging asynchronous save shares the same finite wait budget',async()=>{const r=rig({save:()=>new Promise(()=>{}),budget:15});const began=performance.now(),x=await r.capture.cleanupFailure();assert(performance.now()-began<1000);assert.equal(x.status,'profile-timeout');assert.equal(x.profileReceived,true);assert.equal(x.saved,false);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
+test('a hanging disable is bounded and does not erase the successfully saved data',async()=>{const r=rig({disable:()=>new Promise(()=>{}),budget:15});const x=await r.capture.cleanupFailure();assert.equal(x.status,'saved');assert.equal(x.saved,true);assert.equal(x.disableStatus,'budget-exhausted');});
+test('late asynchronous failures are observed, with no unhandled rejection',async()=>{let reject;const unhandled=[];const on=e=>unhandled.push(e);process.on('unhandledRejection',on);try{const r=rig({stop:()=>new Promise((_,j)=>{reject=j;}),budget:15});await r.capture.cleanupFailure();reject(new Error('late stop failure'));await tick();await tick();assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}});
+test('the runner keeps readiness/window thresholds, successful capture path and raw error record unchanged',()=>{const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');assert(source.includes("await cdp.send('Profiler.enable');await cdp.send('Profiler.start');"));assert(source.includes('waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000}'));assert(source.includes("await cpuProfile.stopAndSave();\n   await capture('combat-'+cycle,false,receipt.leaseId);"));assert(source.includes("report.status='failed';report.errors.push(e.stack);console.error(e);"));assert(source.includes('try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}'));assert(source.includes("await browser?.close();"));assert(source.includes("await page.screenshot({path:path.join(out,'combat-'+cycle+'.png'),timeout:120000});"));});
+
+test('the actual runner catch preserves raw timeout error before profile cleanup failure',async()=>{
+ const source=readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
+ const start=source.indexOf("}catch(e){report.status='failed';report.errors.push(e.stack);console.error(e);"),end=source.indexOf('}finally{',start);assert(start>=0&&end>start);
+ const body=source.slice(start+'}catch(e){'.length,end),AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const run=new AsyncFunction('report','cpuProfile','e','console',body),primary=new Error('native combat timeout');primary.name='TimeoutError';
+ for(const cpuProfile of [{async cleanupFailure(){throw new Error('unexpected diagnostic failure');}},rig({stop(){throw Error('lost CDP');}}).capture]){
+  const report={status:'running',errors:[]},logs=[];await run(report,cpuProfile,primary,{error:e=>logs.push(e)});
+  assert.equal(report.status,'failed');assert.deepEqual(report.errors,[primary.stack]);assert.deepEqual(logs,[primary]);
+ }
+});
+
+test('synchronous CDP reentry cannot send stop twice or duplicate persistence/disposal',async()=>{
+ for(const entry of ['cleanup','onReady']){
+  let capture,reentrant,entered=false;const calls=[],saved=[];
+  const cdp={send(method){calls.push(method);if(method==='Profiler.stop'&&!entered){entered=true;reentrant=capture.cleanupFailure();}return method==='Profiler.stop'?{profile}:{};}};
+  capture=createGameplayCpuProfileCapture({cdp,fileName:'combat-0.cpuprofile',save:value=>{calls.push('save');saved.push(value);}});
+  await (entry==='cleanup'?capture.cleanupFailure():capture.stopAndSave());await reentrant;
+  assert.deepEqual(calls,['Profiler.stop','save','Profiler.disable']);assert.equal(saved.length,1);assert.equal(saved[0],profile);
+ }
+});
+
+test('a stop settling beyond the monotonic deadline cannot dispatch save before a delayed timer task',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(performance,'now');let now=0,resolve;
+ Object.defineProperty(performance,'now',{configurable:true,value:()=>now});
+ try{
+  const r=rig({stop:()=>new Promise(ok=>{resolve=ok;}),budget:100});const pending=r.capture.cleanupFailure();await tick();now=110;resolve({profile});
+  const result=await pending;await tick();assert.equal(result.status,'profile-timeout');assert.equal(result.saved,false);assert.equal(r.saved.length,0);assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);
+ }finally{if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
+});
+
+test('a deadline crossed after stop settlement is rechecked immediately before the actual writer call',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(performance,'now'),setTimer=globalThis.setTimeout;let now=0,timers=0;
+ Object.defineProperty(performance,'now',{configurable:true,value:()=>now});
+ globalThis.setTimeout=(fn,ms,...args)=>{if(++timers===2)now=110;return setTimer(fn,ms,...args);};
+ try{
+  const r=rig({stop(){now=90;return {profile};},budget:100});const result=await r.capture.cleanupFailure();assert(timers>=2);assert.equal(result.status,'profile-timeout');assert.equal(result.saved,false);assert.equal(r.saved.length,0);assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);
+ }finally{globalThis.setTimeout=setTimer;if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
+});
