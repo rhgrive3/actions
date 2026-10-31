@@ -934,23 +934,31 @@ export function adaptSource(rel, code) {
       'pwa service worker');
   }
   if (rel === 'src/game/physics.js') {
-    const capsuleStart = code.indexOf('  collideCapsule(');
-    const capsuleEnd = code.indexOf('\n  // Flat-footprint ground probe', capsuleStart);
-    if (capsuleStart < 0 || capsuleEnd < capsuleStart) throw new Error('INKWAVE patch conflict: collideCapsule boundary');
-    let capsule = code.slice(capsuleStart, capsuleEnd);
-    if (!capsule.includes('c.ceilingBlock = -1;')) {
-      const matches = capsule.match(/c\.wallBlock\s*=\s*-1;/g) || [];
-      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact block identity): expected exactly one wall-block reset in collideCapsule.');
-      capsule = capsule.replace(/c\.wallBlock\s*=\s*-1;/, match => match + ' c.ceilingBlock = -1;');
+    // Actor._resolve and climbing use collideBody; legacy callers still use
+    // collideCapsule. Both owners must publish and reset the same identity.
+    for (const [method, boundary] of [
+      ['collideCapsule', '\n  // Flat-footprint ground probe'],
+      ['collideBody', '\n  // Would a body capsule'],
+    ]) {
+      const start = code.indexOf(`  ${method}(`);
+      const end = code.indexOf(boundary, start);
+      if (start < 0 || end < start) throw new Error(`INKWAVE patch conflict: ${method} boundary`);
+      let body = code.slice(start, end);
+      if (!body.includes('c.ceilingBlock = -1;')) {
+        const matches = body.match(/c\.wallBlock\s*=\s*-1;/g) || [];
+        if (matches.length !== 1) throw new Error(`INKWAVE patch conflict (ceiling contact block identity): expected exactly one wall-block reset in ${method}.`);
+        body = body.replace(/c\.wallBlock\s*=\s*-1;/, match => match + ' c.ceilingBlock = -1;');
+      }
+      if (!body.includes('c.ceilingBlock = b.id;')) {
+        const ceilingLine = /else if \(_n\.y < -0\.6\)\s*(?:\{\s*)?c\.ceiling = true;(?:\s*\})?/;
+        const matches = body.match(new RegExp(ceilingLine.source, 'g')) || [];
+        if (matches.length !== 1) throw new Error(`INKWAVE patch conflict (ceiling contact classification): expected exactly one ceiling contact branch in ${method}.`);
+        body = body.replace(ceilingLine, 'else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }');
+      }
+      code = code.slice(0, start) + body + code.slice(end);
     }
-    if (!capsule.includes('c.ceilingBlock = b.id;')) {
-      const ceilingLine = /else if \(_n\.y < -0\.6\)\s*(?:\{\s*)?c\.ceiling = true;(?:\s*\})?/;
-      const matches = capsule.match(new RegExp(ceilingLine.source, 'g')) || [];
-      if (matches.length !== 1) throw new Error('INKWAVE patch conflict (ceiling contact classification): expected exactly one ceiling contact branch in collideCapsule.');
-      capsule = capsule.replace(ceilingLine, 'else if (_n.y < -0.6) { c.ceiling = true; c.ceilingBlock = b.id; }');
-    }
-    code = code.slice(0, capsuleStart) + capsule + code.slice(capsuleEnd);
-    return code;
+    return replaceOnce(code, 'groundBlock: -1, wallBlock: -1 };',
+      'groundBlock: -1, wallBlock: -1, ceilingBlock: -1 };', 'initial ceiling contact identity');
   }
   if (rel === 'src/core/input.js') {
     code = replaceOnce(code, '  pollPad() {', `  _liveTouchContact() {

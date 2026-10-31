@@ -24,7 +24,7 @@ async function world(weapon, ink, { baseline, hz = 60, paintRoller = false }) {
   const f = await fixture({ adapt: baseline ? heldFireControl : composed, extraExports: "export * from './inkwave-public/src/game/bots.js';" });
   // Source fixture creates a neutral Actor; the production BotBrain owner
   // must be identified as a bot before its intent is admitted by Actor.update.
-  const a = f.make(weapon); a.isBot = true; a.ink = ink; a.hp = f.PLAYER.hp; a.lastFire = 99; a.lastDamage = 99;
+  const a = f.make(weapon); a.isBot = true; a.isLocal = false; a.remote = false; a.ink = ink; a.hp = f.PLAYER.hp; a.lastFire = 99; a.lastDamage = 99;
   let puddle = false;                                     // the paint a released shot / stream leaves under the bot
   f.G.paint.sample = () => puddle ? 1 : 0;                // team 0 owns "1" once painted; otherwise bare dry ground
   f.G.paint.regionStats = (_x, _y, _z, _r, _t, out) => Object.assign(out, { own: 0, enemy: 0, empty: 1, n: 1 });

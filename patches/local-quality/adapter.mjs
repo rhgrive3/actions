@@ -1495,6 +1495,10 @@ function clusterTopology(src, cell, sigs) {
 
   if (rel === 'src/core/shadowcache.js') {
     code = replaceOnce(code,
+      'if (!self.enabled || scene !== G.scene || !lights.length || (sm.autoUpdate === false && sm.needsUpdate === false))',
+      'if (!self.enabled || sm.enabled === false || scene !== G.scene || !lights.length || (sm.autoUpdate === false && sm.needsUpdate === false))',
+      'bypass cached shadows when the renderer shadow pass is disabled');
+    code = replaceOnce(code,
       '      if (o.isSkinnedMesh || o.customDepthMaterial || o.morphTargetInfluences) { this.dynamic.add(o); return; }',
       '      if (o.isSkinnedMesh || o.customDepthMaterial || o.morphTargetInfluences || o.name?.startsWith(\'props:spin:\')) { this.dynamic.add(o); return; }',
       'classify spinning prop instanced meshes as dynamic shadow casters on first collect');

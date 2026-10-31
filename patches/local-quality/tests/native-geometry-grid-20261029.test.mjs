@@ -21,15 +21,21 @@ test('native Uint16 display indices preserve exact vertex IDs with 65535 primiti
   const data={indices,vertices,manifest:{materials:{},objects:[{active:true,material:'concrete',vo:1,vc:maximum+1,io:1,ic:3,collidable:true}]}};
   const displays=renderPair.map(k=>k.nativeDisplay(data,new Map(),'high')),a=displays[0].group.children[0],b=displays[1].group.children[0];
   assert.deepEqual(Array.from(b.geometry.index.array),Array.from(a.geometry.index.array));
-  const beforeAttrs=snap(a.geometry),afterAttrs=snap(b.geometry);
-  const {nativeNormalCone,...preservedAttrs}=afterAttrs;
-  assert.deepEqual(preservedAttrs,beforeAttrs,'new conservative cone must not change source attribute bytes');
-  if(nativeNormalCone){
-   assert.equal(nativeNormalCone.length,maximum+1,'one cone byte per source vertex');
-   assert.equal(b.geometry.getAttribute('nativeNormalCone').normalized,true);
-  }else assert.equal(maximum,0,'only the deliberately invalid one-vertex triangle omits its cone');
+  // Later reviewed native rendering adds a conservative normal-cone attribute.
+  // Preserve the complete historical attribute comparison and verify the new
+  // attribute independently, including its invalid-index fallback.
+  const actual=snap(b.geometry),cone=b.geometry.getAttribute('nativeNormalCone');
+  if(maximum===0) assert.equal(cone,undefined,'out-of-range index cannot certify a cone');
+  else {
+   assert.ok(cone);assert.equal(cone.itemSize,1);assert.equal(cone.normalized,true);
+   assert.ok(cone.array instanceof Uint8Array);assert.equal(cone.count,maximum+1);
+   assert.ok(cone.array.every(value=>value===255),'this fixture must retain the conservative two-hemisphere fallback');
+   delete actual.nativeNormalCone;
+  }
+  assert.deepEqual(actual,snap(a.geometry));
   assert.equal(b.geometry.index.array.BYTES_PER_ELEMENT,maximum<65535?2:4);assert.deepEqual(b.geometry.boundingSphere,a.geometry.boundingSphere);
-  b.geometry.index.onUploadCallback();assert.equal(b.geometry.index.array,null);displays.forEach(d=>d.dispose());
+  b.geometry.index.onUploadCallback();assert.equal(b.geometry.index.array,null);
+  if(cone){cone.onUploadCallback();assert.equal(cone.array,null);}displays.forEach(d=>d.dispose());
  }
 });
 test('native mask inversion and fused face traversal preserve grid, emptiness and ordered turf area sums',()=>{

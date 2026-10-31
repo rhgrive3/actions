@@ -1,5 +1,6 @@
 import {audioLoadScope} from './load-deadline.mjs';
 import {readEncodedAudioResponse} from './encoded-response.mjs';
+import { hasFiniteAudioBufferPCM } from './finite-pcm.mjs';
 // Markers belong to the existing Drive audition mixes, not the retail engine.
 // Each premix is bounded at both cues so slow/paused charging cannot play ahead.
 const CLIPS=Object.freeze({
@@ -61,6 +62,7 @@ export function spinnerPreload(engine,id,{fetcher=globalThis.fetch?.bind(globalT
       if(!Number.isFinite(decoded.duration)||decoded.duration<(key==='rise'?.46:meta.full+.05)||
         decoded.duration>5||!Number.isSafeInteger(bytes)||bytes<=0||bytes>SPINNER_CACHE_LIMIT)
         throw Error('Invalid or oversized decoded Spinner recording');
+      if(!hasFiniteAudioBufferPCM(decoded))throw Error('Spinner charge PCM invalid: '+key);
       repairSeams(decoded,meta,key==='rise');
       while(s.size+bytes>SPINNER_CACHE_LIMIT&&s.buffers.size){const [k,row]=s.buffers.entries().next().value;s.buffers.delete(k);s.size-=row.bytes;}
       s.buffers.set(key,{buffer:decoded,bytes});s.size+=bytes;s.last=key;s.retry.delete(key);

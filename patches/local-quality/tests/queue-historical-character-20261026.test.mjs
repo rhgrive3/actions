@@ -188,7 +188,17 @@ test('historical character source retains independently pinned input and both la
     const {before,after,label}=finalCharacterOwner();
     currentTerminal=replayFinalCharacterOwner(terminal);
     assert.notEqual(currentTerminal,terminal,'final scalar transform owner is separate from the unchanged older chain');
-    assert.equal(replaceOnce(next,after,before,'reverse '+label),terminal,'current Character reverses to the complete independently reconstructed older chain');
+    // Wave 3–5 also gates this rim calculation. Pin that distinct shader edit
+    // independently so the complete comparison cannot silently omit it.
+    const rimBefore="        vec3 iwV = normalize(vViewPosition);\n        float iwF = pow(1.0 - clamp(dot(normal, iwV), 0.0, 1.0), uIwRim.w);\n        float iwS = clamp(dot(normal, uIwRimL) * 0.5 + 0.5, 0.0, 1.0);\n        outgoingLight += uIwRim.rgb * (${k.toFixed(3)} * iwF * (0.3 + 0.7 * iwS * iwS));";
+    const rimAfter="        if (dot(uIwRim.rgb, uIwRim.rgb) > 0.0) {\n          vec3 iwV = normalize(vViewPosition);\n          float iwF = pow(1.0 - clamp(dot(normal, iwV), 0.0, 1.0), uIwRim.w);\n          float iwS = clamp(dot(normal, uIwRimL) * 0.5 + 0.5, 0.0, 1.0);\n          outgoingLight += uIwRim.rgb * (${k.toFixed(3)} * iwF * (0.3 + 0.7 * iwS * iwS));\n        }";
+    assert.throws(()=>replaceOnce(currentTerminal.replace(rimBefore,''),rimBefore,rimAfter,'missing rim owner'),/expected exactly one/);
+    assert.throws(()=>replaceOnce(currentTerminal+rimBefore,rimBefore,rimAfter,'duplicate rim owner'),/expected exactly one/);
+    currentTerminal=replaceOnce(currentTerminal,rimBefore,rimAfter,'independent rim owner');
+    const withoutRim=replaceOnce(next,rimAfter,rimBefore,'reverse rim owner');
+    assert.equal(replaceOnce(withoutRim,after,before,'reverse '+label),terminal,'current Character reverses to the complete independently reconstructed older chain');
+    assert.throws(()=>replaceOnce(next.replace(rimAfter,''),rimAfter,rimBefore,'missing reverse rim owner'),/expected exactly one/);
+    assert.throws(()=>replaceOnce(next+rimAfter,rimAfter,rimBefore,'duplicate reverse rim owner'),/expected exactly one/);
     assert.throws(()=>replayFinalCharacterOwner(terminal.replace(before,'')),/expected exactly one/,'missing final owner site is rejected');
     assert.throws(()=>replayFinalCharacterOwner(terminal+before),/expected exactly one/,'duplicate final owner site is rejected');
     assert.throws(()=>replaceOnce(next.replace(after,''),after,before,'missing reverse '+label),/expected exactly one/,'missing current final owner site cannot be reversed');
