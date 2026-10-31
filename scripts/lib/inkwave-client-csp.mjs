@@ -31,9 +31,24 @@ export function clientScriptPolicy(html) {
 
 export function protectGameHtml(html) {
   if (META_CSP.test(html)) throw new Error('INKWAVE CSP: already installed');
-  const policy = clientScriptPolicy(html);
-  const secured = html.replace(/<head(?:\s[^>]*)?>/i,
-    tag => tag + '\n<meta http-equiv="Content-Security-Policy" content="' + policy + '">');
+  // Keep upstream index.html byte-identical to its compatibility lock. This
+  // browser-dependent shortcut deterrent is inserted only into the built HTML.
+  // It is not a security boundary: browser menus can always open DevTools.
+  const shortcutScript = `<script>
+window.addEventListener('keydown',event=>{
+ const key=event.key.toLowerCase();
+ const inspect=event.key==='F12'||
+  ((event.ctrlKey||event.metaKey)&&event.shiftKey&&['i','j','c'].includes(key))||
+  (event.metaKey&&event.altKey&&['i','j','c'].includes(key))||
+  (event.ctrlKey&&!event.shiftKey&&key==='u');
+ if(inspect){event.preventDefault();event.stopImmediatePropagation();}
+},true);
+</script>`;
+  if (!html.includes('</body>')) throw new Error('INKWAVE CSP: missing body end');
+  const guarded = html.replace('</body>', shortcutScript + '\n</body>');
+  const policy = clientScriptPolicy(guarded);
+  const secured = guarded.replace(/<head(?:\\s[^>]*)?>/i,
+    tag => tag + '\\n<meta http-equiv="Content-Security-Policy" content="' + policy + '">');
   if (secured === html) throw new Error('INKWAVE CSP: missing head');
   return { html: secured, policy };
 }
