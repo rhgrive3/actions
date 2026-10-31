@@ -1865,11 +1865,11 @@ export function installWeaponsFidelity(context,profile) {
     this._s3DetachedWallDrops?.splice(0);clearSplashDrops(this);return result;
   };
   Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceSplashDrops(this,dt,context.G,Number.isFinite(context.PLAYER?.waterY)?context.PLAYER.waterY:-Infinity);return updateSystem.call(this,dt);};
-  Projectiles.prototype._new=function(...args){
+  Projectiles.prototype._new=function(){
     // Clear the outgoing kit before native _new erases wid and the generic
     // wrapper erases its descriptor, while authority is still identifiable.
     const recycled=this.pool[this.pool.length-1];if(recycled)kitTrizookaClearPooled(recycled);
-    const p=fresh.apply(this,args);kitTrizookaClearPooled(p);p.s3BlasterFlightPaint=null;p.s3RollerFlightPaint=null;p.s3Weapon=null;p.s3SpecialPowerAP=0;
+    const p=fresh.apply(this,arguments);kitTrizookaClearPooled(p);p.s3BlasterFlightPaint=null;p.s3RollerFlightPaint=null;p.s3Weapon=null;p.s3SpecialPowerAP=0;
     p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
