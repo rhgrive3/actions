@@ -58,6 +58,14 @@ const throwPredictionInputs=Object.fromEntries(Object.entries(THROW_PREDICTION_M
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
  return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
 }));
+test('current throw-prediction workspace and preserved legacy arc reverse to the full historical source',()=>{
+ const source=throwPredictionInputs['patch/runtime/throw-prediction.mjs'].source;
+ assert.equal(hash(source),THROW_PREDICTION_MENU_INPUT_SHA256['patch/runtime/throw-prediction.mjs']);
+ assert.equal(hash(identity.restoreReviewedThrowPredictionInput(source)),identity.PREVIOUS_THROW_PREDICTION_SOURCE_SHA256);
+ for(const mutated of [source+'\\n',source.replace('polylineWorkspaces','mutatedWorkspaces'),
+   source.replace('inkwave.s3.throw-prediction.native-arc.v1','inkwave.s3.throw-prediction.spoofed-arc.v1')])
+  assert.throws(()=>identity.restoreReviewedThrowPredictionInput(mutated),/complete sealed|exactly one reviewed owner site/);
+});
 test('installer preserves the original full pin and independently frozen two-hunk inverse',()=>{
  const pins=JSON.parse(fs.readFileSync(new URL('../inkwave-menu-focus-pins.json',import.meta.url)));
  assert.equal(pins.inputs['patch/runtime/install.mjs'],HISTORICAL_MENU_INSTALLER_SHA256);

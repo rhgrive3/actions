@@ -253,7 +253,33 @@ test('a hanging stop has a finite wait and late completion cannot start a file w
 test('a hanging asynchronous save shares the same finite wait budget',async()=>{const r=rig({save:()=>new Promise(()=>{}),budget:15});const began=performance.now(),x=await r.capture.cleanupFailure();assert(performance.now()-began<1000);assert.equal(x.status,'profile-timeout');assert.equal(x.profileReceived,true);assert.equal(x.saved,false);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
 test('a hanging disable is bounded and does not erase the successfully saved data',async()=>{const r=rig({disable:()=>new Promise(()=>{}),budget:15});const x=await r.capture.cleanupFailure();assert.equal(x.status,'saved');assert.equal(x.saved,true);assert.equal(x.disableStatus,'budget-exhausted');});
 test('late asynchronous failures are observed, with no unhandled rejection',async()=>{let reject;const unhandled=[];const on=e=>unhandled.push(e);process.on('unhandledRejection',on);try{const r=rig({stop:()=>new Promise((_,j)=>{reject=j;}),budget:15});await r.capture.cleanupFailure();reject(new Error('late stop failure'));await tick();await tick();assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}});
-test('the runner keeps readiness/window thresholds, successful capture path and raw error record unchanged',()=>{const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');assert(source.includes("await cdp.send('Profiler.enable');await cdp.send('Profiler.start');"));assert(source.includes('waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000}'));assert(source.includes("await cpuProfile.stopAndSave();\n   await capture('combat-'+cycle,false,receipt.leaseId);"));assert(source.includes("report.status='failed';report.errors.push(e.stack);console.error(e);"));assert(source.includes('try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}'));assert(source.includes("await browser?.close();"));assert(source.includes("await page.screenshot({path:path.join(out,'combat-'+cycle+'.png'),timeout:120000});"));});
+test('the runner keeps readiness/window thresholds, successful capture path and raw error record unchanged',()=>{const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');assert(source.includes("await cdp.send('Profiler.enable');await cdp.send('Profiler.start');"));assert(source.includes('waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000}'));assert(source.includes("await cpuProfile.stopAndSave();\n   await capture('combat-'+cycle,false,receipt.leaseId);"));assert(source.includes("report.status='failed';report.errors.push(e.stack);console.error(e);"));assert(source.includes('try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}'));assert(source.includes("await browser?.close();"));assert(source.includes("await cdp.send('Page.captureScreenshot',"));assert(source.includes("format:'png',captureBeyondViewport:false,fromSurface:false"));assert(source.includes("throw Error('Native combat viewport PNG was missing or incomplete')"));assert(source.includes("fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);"));});
+
+
+// The new source captures a real browser viewport via CDP rather than
+// Playwright's post-frame screenshot synchronization. Exercise its exact
+// binary acceptance block with complete and corrupted PNG headers; this never
+// replaces live RAF, the actual screenshot API, or gameplay-window thresholds.
+test('native combat CDP screenshot rejects empty, truncated and wrong-size PNG payloads',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
+ const first="  const png=Buffer.from(capturePixels.data||'','base64');";
+ const last="  fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);";
+ assert.equal(source.split(first).length,2);
+ assert.equal(source.split(last).length,2);
+ const start=source.indexOf(first),end=source.indexOf(last,start);
+ assert.ok(start>=0&&end>start);
+ const validate=new Function('Buffer','capturePixels','width','height',source.slice(start,end)+'return png.length;');
+ const good=Buffer.alloc(768);
+ Buffer.from([137,80,78,71,13,10,26,10]).copy(good,0);
+ good.writeUInt32BE(480,16);good.writeUInt32BE(300,20);
+ assert.equal(validate(Buffer,{data:good.toString('base64')},480,300),768);
+ const missing=[{data:''},{data:good.subarray(0,20).toString('base64')}];
+ for(const payload of missing)assert.throws(()=>validate(Buffer,payload,480,300),/missing or incomplete/);
+ const wrongSignature=Buffer.from(good);wrongSignature[0]=0;
+ assert.throws(()=>validate(Buffer,{data:wrongSignature.toString('base64')},480,300),/missing or incomplete/);
+ assert.throws(()=>validate(Buffer,{data:good.toString('base64')},481,300),/missing or incomplete/);
+ assert.throws(()=>validate(Buffer,{data:good.toString('base64')},480,301),/missing or incomplete/);
+});
 
 test('the actual runner catch preserves raw timeout error before profile cleanup failure',async()=>{
  const source=readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
