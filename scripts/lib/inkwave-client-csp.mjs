@@ -2,6 +2,7 @@
 // Do not use 'strict-dynamic' here: trusted modules must not bless arbitrary
 // third-party <script> nodes inserted after game startup.
 import { createHash } from 'node:crypto';
+import { inkwaveBrowserGuardScript } from './inkwave-browser-policy.mjs';
 
 const INLINE_SCRIPTS = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
 const META_CSP = /<meta\s+http-equiv=["']Content-Security-Policy["']\s+content="([^"]+)"\s*\/?\s*>/i;
@@ -45,7 +46,11 @@ window.addEventListener('keydown',event=>{
 },true);
 </script>`;
   if (!html.includes('</body>')) throw new Error('INKWAVE CSP: missing body end');
-  const guarded = html.replace('</body>', shortcutScript + '\n</body>');
+  // This executes before the original import map and game entry, and its
+  // exact contents join the CSP hash set below. The edge checks UA too.
+  const guarded = html
+    .replace(/<head(?:\s[^>]*)?>/i, tag => tag + '\n<script>' + inkwaveBrowserGuardScript() + '</script>')
+    .replace('</body>', shortcutScript + '\n</body>');
   const policy = clientScriptPolicy(guarded);
   const secured = guarded.replace(/<head(?:\s[^>]*)?>/i,
     tag => tag + '\n<meta http-equiv="Content-Security-Policy" content="' + policy + '">');
