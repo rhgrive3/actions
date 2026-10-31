@@ -1,3 +1,4 @@
+import { recordRainmakerReleaseCompletion } from './rainmaker-device-contact.mjs';
 import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
 import { ZonesRule } from './zones.mjs';
 import { TowerRule } from './tower.mjs';
@@ -70,6 +71,7 @@ export class RankedEngine {
     const event = { kind, ...data, at: this.elapsed };
     if (kind === 'overtime') { this._lastOvertimeEvent = event; this._lastOvertimeEventRule = this.rule; }
     this.events.push(event);
+    if (kind === 'rainmaker-shot') recordRainmakerReleaseCompletion(this, event, data);
     if (this.events.length > 256) this.events.shift();
   }
   special(team, points) { if (teamOk(team) && points > 0 && Number.isFinite(points)) this.event('special-gain', { team, points }); }

@@ -1,7 +1,7 @@
 import { observeOwnerTick } from '../../../network-replication/owner-tick-receipt.mjs';
 import { OWNER_CLOCK_VERSION } from '../../../network-replication/owner-clock.mjs';
 import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
-import { admitRainmakerHostEvents } from './rainmaker-device-contact.mjs';
+import { admitRainmakerHostEvents, clearRainmakerReleaseCompletion } from './rainmaker-device-contact.mjs';
 import { validRankedSnapshot } from './engine.mjs';
 import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
@@ -236,6 +236,7 @@ export function installRankedNetwork(api) {
     if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) m.ranked.rule.removeActor(actorId(a));
     const r = leave.call(this, id, changed);
     if (m?.ranked && changed) {
+      clearRainmakerReleaseCompletion(this);
       clearTowerPaintSupport(this);
       this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
       resetRankedBarrierAdmission(this);
@@ -249,6 +250,7 @@ export function installRankedNetwork(api) {
   };
   const dispose = P.dispose;
   P.dispose = function () {
+    clearRainmakerReleaseCompletion(this);
     clearTowerPaintSupport(this);
     this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
     resetRankedBarrierAdmission(this);

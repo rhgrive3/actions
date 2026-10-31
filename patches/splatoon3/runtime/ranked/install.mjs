@@ -1,5 +1,5 @@
 import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } from './rainmaker-shot-origin.mjs';
-import { admitRainmakerHostEvents } from './rainmaker-device-contact.mjs';
+import { admitRainmakerHostEvents, withRainmakerReleaseCompletion, completedRainmakerRelease } from './rainmaker-device-contact.mjs';
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
@@ -50,7 +50,7 @@ export function installRanked(context) {
     // Frame is available to local bot planning even when only the host can score.
     const frame = this.ranked.frame = buildFrame(this, api);
     if (!this.follower) {
-      this.ranked.update(dt, frame); this.time = this.ranked.time;
+      withRainmakerReleaseCompletion(nm, this, frame, () => this.ranked.update(dt, frame)); this.time = this.ranked.time;
       if (this.ranked.events.length) {
         if (this.playRankedEvents === playRankedEvents && this.ranked.events.length === 1 && this.ranked.events[0].kind === 'special-gain') {
           const event = this.ranked.events[0];
@@ -63,7 +63,7 @@ export function installRanked(context) {
           if (nm?.isHost) admitRainmakerHostEvents(nm, this, events, nm.myId);
           this.playRankedEvents(events);
           const singleInternal = nm?.isHost && events.length === 1 && (events[0].kind === 'special-gain' || events[0].kind === 'zone-capture');
-          const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
+          const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture' && (e.kind !== 'rainmaker-shot' || completedRainmakerRelease(nm, e))) : null;
           if (wire?.length) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
         }
       }

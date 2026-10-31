@@ -7157,3 +7157,10 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 - **検証の時間進行**: `debug.freeze()` は残った simulation debt と S3 clock を同期的に退役する。手動30/60/120 Hzでも1秒あたり60 tickを保持し、過去の遅延 callback が後から進めないことを確認した。これは検証操作の修正であり、実プレイの新たな数値較正ではない。
 
 検証内容・統合対象・残る測定限界は `reports/pr-all-integration-20261031.md` に記録する。ブラウザ起動と CSP 拒否境界は実生成 HTML で確認し、描画にはソフトウェア WebGL を使用した。本家実機との操作一致や全 native match の性能をここから主張しない。
+
+
+### 2026-10-31 — #1983 follow-up: Rainmaker の正常完了 release と QA 配線
+
+- **実装・再現・影響**: `patches/splatoon3/runtime/ranked/{engine,install,network,rainmaker-device-contact}.mjs`。host ranked 更新が正常完了した release だけを送信・host-local 認可の根拠とし、表示側で消費する event map とは独立に completion fact を保持する。実 native release 0 の後で update を throw させた対照では、次 tick 以降も失敗 0 を wire／遠隔 Splash Wall 損傷へ進めず、正常 0 と次の正常 1 を維持する。失敗時の local queue／visual は巻き戻さず、既存 current-host trust／receipt／native contact admission を広げない。E2E 確認対象は Wall に限る。
+- **確認状態**: base `83e682d69110feaa82f274a11988e7bf3114c7bb`＋code 14 paths の同一 partial source root、Node24 source/VM で QA68（streamed51＋roof17）と Rainmaker formal9 を確認。native selected2／host-local 代表2／lexical10 は別 cohort で非合算。旧373 assert 式は維持したが、最終 base の旧 ranked35 再実行や旧 monolithic SIGKILL の合格化はしていない。物理 full collector は partial root の空 test directory guard により未受入であり、logical inventory の所属確認を全件テスト PASS と扱わない。
+- **未確認・対象外**: 今回の本家実機比較の参照 version・ギア・操作 frame 条件は未固定／未計測で、Splatoon 3 挙動一致は未判定。production emitted／full build／browser・GPU／real audio／FPS／最終 head の hosted CI は別受入を要する。Storm staged-birth 5 paths／v2 は除外し proof `04b4e29d…` を維持するため、その新しい合法反例は未解消。#1665 全体・全 device の security 合格や、髪／character model の編集・見た目比較を主張しない。

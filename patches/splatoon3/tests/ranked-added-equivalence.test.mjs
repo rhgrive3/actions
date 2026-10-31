@@ -9,7 +9,7 @@ import {ClamsRule} from '../runtime/ranked/clams.mjs';
 import {createRankedStage} from '../runtime/ranked/stages.mjs';
 import {RankedWorld} from '../runtime/ranked/world.mjs';
 import * as barrier from '../runtime/ranked/barrier-admission.mjs';
-import {admitRainmakerHostEvents} from '../runtime/ranked/rainmaker-device-contact.mjs';
+import {admitRainmakerHostEvents,withRainmakerReleaseCompletion,completedRainmakerRelease} from '../runtime/ranked/rainmaker-device-contact.mjs';
 import {advanceShooterNearestSlot} from '../runtime/shooter-nearest-paint.mjs';
 const frozenPath=new URL('./fixtures/ranked-added-before-8de71b09.json',import.meta.url);
 const bytes=fs.readFileSync(frozenPath),frozen=JSON.parse(bytes);
@@ -77,7 +77,7 @@ test('single-scan nearest proposal changes invalid-data evaluation order: retain
  assert.throws(()=>proposed(runner,source),TypeError);assert.equal(reads,1);
 });
 
-const advance=source=>(G,buildFrame,api)=>new Function('G','buildFrame','api','admitRainmakerHostEvents','playRankedEvents','return '+source.split('Match.prototype.advanceRanked = ')[1].split('\n  Match.prototype.playRankedEvents = ')[0].trim().replace(/;$/,''))(G,buildFrame,api,admitRainmakerHostEvents,()=>{throw Error('test override unexpectedly selected native event player');});
+const advance=source=>(G,buildFrame,api)=>new Function('G','buildFrame','api','admitRainmakerHostEvents','withRainmakerReleaseCompletion','completedRainmakerRelease','playRankedEvents','return '+source.split('Match.prototype.advanceRanked = ')[1].split('\n  Match.prototype.playRankedEvents = ')[0].trim().replace(/;$/,''))(G,buildFrame,api,admitRainmakerHostEvents,withRainmakerReleaseCompletion,completedRainmakerRelease,()=>{throw Error('test override unexpectedly selected native event player');});
 test('actual event wrapper keeps playback and wire ordering while guests and empty batches skip filter',()=>{
  const old=frozen.files['patches/splatoon3/runtime/ranked/install.mjs'];
  const current=fs.readFileSync(new URL('../runtime/ranked/install.mjs',import.meta.url),'utf8');

@@ -402,7 +402,9 @@ test('a guest-owned follower proposes native object damage but bare owner replay
   f.effects.dispose();
 });
 
-for (const order of ['contact-first','claim-first','terrain-blocked','expired-contact','changed-host']) test('native Rainmaker owner packets require host release and receiver contact: ' + order, async () => {
+// Receiver-side contract: authenticated current-host wire is the controlled input.
+// The separate release-completion loopback tests cover the real native sender.
+for (const order of ['contact-first','claim-first','terrain-blocked','expired-contact','changed-host']) test('current-host Rainmaker wire consumer requires native owner receipt and receiver contact: ' + order, async () => {
   let seconds = 1000;
   const f = await rainmakerWallHarness({ vmPerformance:{ now:() => seconds * 1000 } });
   const m = f.G.match, packets = [];
@@ -410,7 +412,7 @@ for (const order of ['contact-first','claim-first','terrain-blocked','expired-co
   m.rankedWorld = { update() {}, floorAt:() => 0, blocked:() => false };
   m.rankedEffects = f.effects;
   m.playRankedEvents = f.Match.prototype.playRankedEvents;
-  const session = id => ({ myId:id, hostId:'host', isHost:id === 'host', _members:new Set(['host','guest']),
+  const session = id => ({ myId:id, hostId:'authority', isHost:false, _members:new Set(['authority','host','guest']),
     tr:{ broadcast(packet) { packets.push(JSON.parse(JSON.stringify(packet))); return true; }, sendTo() {} } });
   const guest = new f.NetMatch(session('guest'), {id:'rainmaker-device-fixture',map:'tidewater'});
   guest.bind(m); f.wall.ghost = true; f.shooter.grounded = true; f.shooter.vel.set(0,0,0);
@@ -423,7 +425,7 @@ for (const order of ['contact-first','claim-first','terrain-blocked','expired-co
   const hostEvent = {k:'rkevent',match:guest.cfg.id,seq:1,events:[structuredClone(release)]};
   guest.onMessage('foreign',hostEvent); f.effects.update(.1);
   assert.equal(guest.out.some(e => e[1] === 'ac' && e[5]?.phase === 'objectHit'),false,'a foreign peer cannot authorize the release');
-  guest.onMessage('host',hostEvent); guest.onMessage('host',hostEvent);
+  guest.onMessage('authority',hostEvent); guest.onMessage('authority',hostEvent);
   seconds += .05; f.G.time += .05;
   f.effects.update(.1); f.effects.update(.1); f.effects.update(.3);
   guest._sendTick(); const packet = packets.at(-1);
@@ -459,9 +461,10 @@ for (const order of ['contact-first','claim-first','terrain-blocked','expired-co
   if (order === 'terrain-blocked') f.G.physics.segment = (a,_b,h) => {
     h.hit = true; h.point.copy(a); h.normal.set(0,0,-1); h.dist = 0; return h;
   };
-  // The real authoritative drain admits this release before native effects run.
-  Object.assign(m.ranked,{events:[structuredClone(release)],winner:null,time:180,update(){}});
-  f.Match.prototype.advanceRanked.call(m,0);
+  // This receiver contract starts at the authenticated current-host wire
+  // boundary. Actual native host completion is exercised by the separate
+  // three-peer release-completion tests, never by a bare local event drain.
+  host.onMessage('authority',hostEvent);
   assert.equal(f.wall.hp,800,'a release without native contact cannot spend HP');
   m.rankedEffects.update(.1); m.rankedEffects.update(.1); m.rankedEffects.update(.3);
   assert.equal(f.wall.hp,order === 'claim-first' ? 380 : 800,'pending claims settle only at actual receiver contact');

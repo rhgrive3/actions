@@ -1,5 +1,7 @@
 import { validRainmakerShotOrigin, rainmakerShotOwnerMatches } from './rainmaker-shot-origin.mjs';
 import { flushNativeDeviceHits } from '../../../network-replication/device-hit-pending.mjs';
+import { OWNED_RANKED_FRAME, OWNED_RANKED_ACTOR } from './frame-ownership.mjs';
+import { rankedInputFor } from './pose-admission.mjs';
 
 // Rainmaker releases belong to the ranked host, outside the ordinary main/sub/
 // special birth stream. Bind a host-admitted release to contacts computed by
@@ -28,6 +30,72 @@ function current(r) {
     && life(a) === r.life && nm.s?._members?.has(r.owner) && age >= 0 && age <= MAX_AGE;
 }
 
+// Completion belongs to the exact native release transaction, independently of
+// the presentation ticket consumed by beginRainmakerDeviceShot below.
+const completionEpochs = new WeakMap(), completionScopes = new WeakMap(), completedReleases = new WeakMap();
+function completionSignature(value) { try { return JSON.stringify(value); } catch { return null; } }
+function liveCompletion(nm, epoch) {
+  return !!epoch && !nm?._disposed && completionEpochs.get(nm) === epoch
+    && nm.s === epoch.session && nm.match === epoch.match && nm.cfg?.id === epoch.id
+    && nm.s?.hostId === epoch.host && nm.myId === epoch.host && nm.s?.myId === epoch.host
+    && nm.isHost === true && nm.s?._members?.has(epoch.host) && nm._rankedAPI?.G.netm === nm
+    && epoch.match.ranked === epoch.engine && epoch.engine.rule === epoch.rule;
+}
+function completionEpoch(nm, match) {
+  let epoch = completionEpochs.get(nm);
+  if (!liveCompletion(nm, epoch)) {
+    epoch = { session:nm.s, match, id:nm.cfg?.id, host:nm.s.hostId, engine:match.ranked, rule:match.ranked.rule };
+    completionEpochs.set(nm, epoch);
+  }
+  return epoch;
+}
+export function withRainmakerReleaseCompletion(nm, match, frame, run) {
+  if (typeof run !== 'function') return undefined;
+  const owned = frame && frame[OWNED_RANKED_FRAME] === frame.inputs && match?._rankedFrameScratch?.frame === frame;
+  if (!nm?.isHost || nm.s?.myId !== nm.s?.hostId || nm.myId !== nm.s?.hostId || nm.match !== match
+      || nm._rankedAPI?.G.netm !== nm || match?.state !== 'playing' || match.paused || match.follower || !owned) return run();
+  const epoch = completionEpoch(nm, match), engine = match.ranked, previous = completionScopes.get(engine);
+  const scope = { nm, match, frame, epoch, staged:[] }; completionScopes.set(engine, scope);
+  try {
+    const result = run();
+    // Native updates are synchronous. Preserve unexpected return identity,
+    // including a throwing then getter, without publishing deferred authority.
+    let deferred = false;
+    try { deferred = !!result && typeof result.then === 'function'; } catch { deferred = true; }
+    if (!deferred && liveCompletion(nm, epoch)) {
+      if (previous?.nm === nm && previous.epoch === epoch)
+        previous.staged.push(...scope.staged.slice(0, Math.max(0, MAX_SHOTS - previous.staged.length)));
+      else for (const row of scope.staged) if (row.signature === completionSignature(row.event))
+        completedReleases.set(row.event, { nm, epoch, signature:row.signature });
+    }
+    return result;
+  } finally {
+    if (completionScopes.get(engine) === scope) {
+      if (previous) completionScopes.set(engine, previous); else completionScopes.delete(engine);
+    }
+  }
+}
+export function recordRainmakerReleaseCompletion(engine, event, data) {
+  const scope = completionScopes.get(engine), nm = scope?.nm, frame = scope?.frame;
+  if (!scope || !liveCompletion(nm, scope.epoch) || engine !== scope.epoch.engine || engine.frame !== frame
+      || event !== engine.events?.at(-1) || event?.kind !== 'rainmaker-shot'
+      || data !== engine.rule?.state?.charge?.pending || engine.rule.state.carrier !== String(data?.actorId)) return false;
+  const actor = scope.match.actors.find(a => String(a.nid ?? `${a.team}:${a.slot}`) === String(data.actorId));
+  const row = frame.actors?.find(a => a.id === String(data.actorId));
+  if (!actor || nm.byNid?.get(actor.nid) !== actor || !row || row[OWNED_RANKED_ACTOR] !== row.pos
+      || row.alive !== true || row.swimming || row.life !== life(actor) || row.owner !== actor.owner || row.team !== actor.team) return false;
+  if (actor.remote && !rankedInputFor(nm.rankedInputs?.get(String(data.actorId)), actor, scope.match, nm)) return false;
+  const { kind, at, ...copy } = event, signature = completionSignature(event), canonical = completionSignature(data);
+  if (!signature || !canonical || completionSignature(copy) !== canonical
+      || scope.staged.length >= MAX_SHOTS || scope.staged.some(row => row.event === event)) return false;
+  scope.staged.push({ event, signature }); return true;
+}
+export function completedRainmakerRelease(nm, event) {
+  const row = completedReleases.get(event);
+  return !!row && row.nm === nm && liveCompletion(nm, row.epoch) && row.signature === completionSignature(event);
+}
+export function clearRainmakerReleaseCompletion(nm) { completionEpochs.delete(nm); }
+
 // Called only at the existing host event boundaries: local rule draining, or
 // the validated, sequenced rkevent consumer. The exact event object is sealed;
 // a copied or edited JSON event cannot enroll itself at the presentation API.
@@ -37,6 +105,7 @@ export function admitRainmakerHostEvents(nm, match, rows, from) {
   const s = state(nm);
   if (!live(nm, s)) return;
   for (const e of rows) {
+    if (nm.isHost && !completedRainmakerRelease(nm, e)) continue;
     if (e?.kind !== 'rainmaker-shot' || !Number.isSafeInteger(e.id) || e.id < 0 || e.id <= s.lastShot
         || !Number.isFinite(e.at) || !validRainmakerShotOrigin(e.shotOrigin, e)) continue;
     const a = match.actors.find(a => String(a.nid ?? `${a.team}:${a.slot}`) === String(e.actorId ?? e.carrier ?? e.id));
