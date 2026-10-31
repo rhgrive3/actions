@@ -21,6 +21,10 @@ const ua = {
   pwaIpad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
   edge: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
   edgeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1 EdgiOS/132.0',
+  edgeMac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
+  edgeAndroid: 'Mozilla/5.0 (Linux; Android 16; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36 EdgA/132.0.0.0',
+  edgePwaWindows: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
+
   firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0',
   firefoxIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/132.0 Mobile/15E148 Safari/605.1.15',
   opera: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/132.0.0.0 Safari/537.36 OPR/100.0',
@@ -38,6 +42,13 @@ test('allow Safari and Chrome on desktop, iOS, Android, and installed Chrome PWA
   }
 });
 
+test('allow Microsoft Edge on desktop, Android, iOS and installed Edge WebApps', () => {
+  for (const key of ['edge','edgeMac','edgeAndroid','edgeIos','edgePwaWindows']) {
+    assert.equal(classifyInkwaveBrowser(ua[key]), 'edge', key);
+    assert.equal(inkwaveBrowserPermitted(ua[key]), true, key);
+  }
+});
+
 test('iOS home screen PWA is allowed, but ordinary embedded WKWebView is not', () => {
   for (const key of ['pwaIos','pwaIpad']) {
     assert.equal(classifyInkwaveBrowser(ua[key]), 'ios-webapp-candidate', key);
@@ -47,7 +58,7 @@ test('iOS home screen PWA is allowed, but ordinary embedded WKWebView is not', (
 });
 
 test('reject distinct alternative browser brands and malformed or empty UAs', () => {
-  for (const key of ['edge','edgeIos','firefox','firefoxIos','opera','samsung','inApp','androidWebview']) {
+  for (const key of ['firefox','firefoxIos','opera','samsung','inApp','androidWebview']) {
     assert.equal(classifyInkwaveBrowser(ua[key]), 'blocked', key);
     assert.equal(inkwaveBrowserPermitted(ua[key], true), false, key);
   }
@@ -68,16 +79,19 @@ test('edge allowlist blocks static assets before Turnstile and still permits all
   assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.winChrome), env)).status, 200);
   assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.iosSafari), env)).status, 200);
   assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.pwaIos), env)).status, 200);
-  assert.equal(assetFetches, 3);
+  assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.edge), env)).status, 200);
+  assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.edgeAndroid), env)).status, 200);
+  assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.edgeIos), env)).status, 200);
+  assert.equal(assetFetches, 6);
   const forbidden = await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.firefox), env);
   assert.equal(forbidden.status, 403);
   assert.equal(forbidden.headers.get('Cache-Control'), 'no-store');
-  const errorPage = await serveGameWithBotGate(request('/', ua.edge), env);
+  const errorPage = await serveGameWithBotGate(request('/', ua.firefox), env);
   assert.equal(errorPage.status, 403);
-  assert.match(await errorPage.text(), /Safari.*Chrome/);
-  assert.equal(assetFetches, 3);
+  assert.match(await errorPage.text(), /Safari.*Chrome.*Edge/);
+  assert.equal(assetFetches, 6);
   const disabled = { ...env, BROWSER_ALLOWLIST_ENABLED: 'false' };
-  assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.edge), disabled)).status, 200);
+  assert.equal((await serveGameWithBotGate(request('/_versions/rev/src/main.js', ua.firefox), disabled)).status, 200);
 });
 
 test('browser allowlist also filters Turnstile challenge routes before verification', async () => {
@@ -94,6 +108,8 @@ test('browser allowlist also filters Turnstile challenge routes before verificat
   assert.equal((await serveGameWithBotGate(request('/', ua.firefox), env)).status, 403);
   assert.equal((await serveGameWithBotGate(request('/__inkwave-access', ua.firefox), env)).status, 403);
   assert.equal((await serveGameWithBotGate(request('/', ua.winChrome), env)).status, 302);
+  assert.equal((await serveGameWithBotGate(request('/', ua.edge), env)).status, 302);
+  assert.equal((await serveGameWithBotGate(request('/__inkwave-access', ua.edgeIos), env)).status, 200);
   assert.equal((await serveGameWithBotGate(request('/__inkwave-access', ua.iosSafari), env)).status, 200);
 });
 
@@ -122,8 +138,11 @@ test('startup guard runs before import map and blocks non-standalone WKWebViews'
   }
   assert.deepEqual(simulate(ua.macSafari, false), { writes: [], stopped: 0 });
   assert.deepEqual(simulate(ua.winChrome, false), { writes: [], stopped: 0 });
+  assert.deepEqual(simulate(ua.edge, false), { writes: [], stopped: 0 });
+  assert.deepEqual(simulate(ua.edgeAndroid, false), { writes: [], stopped: 0 });
+  assert.deepEqual(simulate(ua.edgeIos, false), { writes: [], stopped: 0 });
   assert.deepEqual(simulate(ua.pwaIos, true), { writes: [], stopped: 0 });
-  for (const key of ['firefox','edge','inApp','pwaIos']) {
+  for (const key of ['firefox','opera','inApp','pwaIos']) {
     const { writes, stopped } = simulate(ua[key], false);
     assert.equal(writes.length, 3, key);
     assert.equal(stopped, 1, key);
