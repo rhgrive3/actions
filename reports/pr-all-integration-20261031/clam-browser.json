@@ -1,0 +1,93 @@
+{
+  "status": "passed",
+  "sourceSha": "72b0ea8922406ab86e432c7a1752fffca4060f97",
+  "buildRevision": "612dfc982f1a9e8a2e94a27bd2f24a1df9f1c27d2e6264cb02d0edb18f988c09",
+  "contentHash": "8d17ed64b1b4fcb635467a33a12599751c872f267f079bdc615d7699e490b45b",
+  "inputHash": "21462361ebdb24f0158b1587107026cd1752aa30422f1e4221d96bf4b91565ba",
+  "browserVersion": "151.0.7922.34",
+  "sourceAndEmittedVerified": true,
+  "comparison": {
+    "pairs": 40,
+    "sameLighting": true,
+    "sameCameras": true
+  },
+  "frames": 80,
+  "contactSheets": 2,
+  "errors": [],
+  "blocked": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+    "[inkwave] shadow chunk layout changed; keeping stock PCF"
+  ],
+  "artifactBytes": 18649104,
+  "resultSha256": "d137d156f90bd4ff7714b4bf734be805225d99087d993b5d976b3d92fecc6f73",
+  "metrics": [
+    {
+      "variant": "before",
+      "eventArmParityRows": 68,
+      "allEventsExactWithoutExtraEvaluation": true,
+      "eventFrameHandJump": 0,
+      "ballTransformChecks": 249,
+      "sourceOwner": {
+        "status": "ready",
+        "active": true
+      },
+      "dualies": {
+        "armOverlayDeferred": true,
+        "leftMuzzleDifference": 0
+      },
+      "load": {
+        "cycles": 200,
+        "cpuMs": 15.399999998509884,
+        "markerCache": 211,
+        "children": 215,
+        "geometryReused": true,
+        "materialReused": true,
+        "barrierGeometryReused": true
+      },
+      "barrierDrawIsolation": {
+        "transparent": true,
+        "side": 0,
+        "forceSinglePass": false,
+        "instances": 1,
+        "hidden": 0,
+        "shown": 1
+      }
+    },
+    {
+      "variant": "after",
+      "eventArmParityRows": 21,
+      "allEventsExactWithoutExtraEvaluation": true,
+      "eventFrameHandJump": 0,
+      "ballTransformChecks": 249,
+      "sourceOwner": {
+        "status": "ready",
+        "active": true
+      },
+      "dualies": {
+        "armOverlayDeferred": true,
+        "leftMuzzleDifference": 0
+      },
+      "load": {
+        "cycles": 200,
+        "cpuMs": 14.800000004470348,
+        "markerCache": 48,
+        "children": 52,
+        "geometryReused": true,
+        "materialReused": true,
+        "barrierGeometryReused": true
+      },
+      "barrierDrawIsolation": {
+        "transparent": true,
+        "side": 2,
+        "forceSinglePass": true,
+        "instances": 8,
+        "hidden": 0,
+        "shown": 1,
+        "twoPassNegative": 2
+      }
+    }
+  ],
+  "visualInspection": "Both saved release contact sheets were viewed. They contain nonblank in-frame renderings with matching ordinary arm pose and retained ball sequence. This does not establish retail Clam grip, dimensions, timing or camera matching; the existing deferred-presentation scope remains unchanged.",
+  "execution": "Unmodified normal tools/object-presentation-qa/run.mjs --suite clam, existing /tmp/inkwave-prall-final-site, existing Chromium1234/Playwright1.62.1; no build/download/code edit."
+}

@@ -84,11 +84,18 @@ test('actual Ink Vac authored emitter reaches the installed native birth hook',(
   const f=fixture(),kit=read('../runtime/kit-ink-vac.mjs');
   const begin=kit.indexOf('    Projectiles.prototype.fireInkVacExhale = function');
   const end=kit.indexOf('\n    };',begin)+7;
-  const context=vm.createContext({ Projectiles:f.system.constructor,THREE:{Vector3:Vec},
+  // The authored emitter now shares its launch snapshot with prediction. Run
+  // that actual helper and its local dependencies in this same fixture realm.
+  const launch=kit.match(/^export function inkVacExhaleKinematics\([\s\S]*?^\}/m)?.[0];
+  const requireApi=kit.match(/^function requireApi\(\).+$/m)?.[0];
+  const clamp01=kit.match(/^const clamp01 =.+$/m)?.[0];
+  assert.ok(launch&&requireApi&&clamp01,'actual Ink Vac launch dependencies are present');
+  const THREE={Vector3:Vec};
+  const context=vm.createContext({ Projectiles:f.system.constructor,THREE,api:{THREE},
     originOf:(_,v)=>v.set(2,3,4),forwardOf:(_,v)=>v.set(0,0,1),exhaleDamage:()=>220,
     exhaleSpeed:()=>30,MIN_PLAYER_RADIUS:.2,SPAWN_SPEED_Y:0,SPAWN_BLAST_WAIT:240,
     INK_VAC_CALIBRATION:{framesPerSecond:60},FLY_GRAVITY:0,FLY_AIR_RESIST:0 });
-  vm.runInContext(kit.slice(begin,end),context);
+  vm.runInContext([clamp01,requireApi,launch.replace(/^export /,''),kit.slice(begin,end)].join('\n'),context);
   const p=f.system.fireInkVacExhale(f.actor,{charge:.5,descriptor:{id:'inkVac',impactRadius:8}});
   assert.equal(f.system.list[0],p);assert.equal(f.flashes.length,1);assert.equal(p.age,0);assert.equal(p.life,4);
 });

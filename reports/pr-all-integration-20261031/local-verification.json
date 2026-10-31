@@ -136,6 +136,18 @@
       "scope": "CI install evidence permissions, unmodified test under unprivileged user",
       "pass": 3,
       "fail": 0
+    },
+    {
+      "scope": "Ink Vac authored emitter fixture uses actual shared launch dependencies",
+      "before": {
+        "pass": 0,
+        "fail": 1,
+        "error": "inkVacExhaleKinematics is not defined"
+      },
+      "pass": 9,
+      "fail": 0,
+      "beforeLogSha256": "d02232f16355f7076ce0f27989fb7e2c8788e185da7d81d27d9a51709846dc98",
+      "afterLogSha256": "e4c60726cdd9bd7446a608b84c36df780f412d164e17e9653e5460a3439f8ec5"
     }
   ],
   "otherGates": {
@@ -148,7 +160,14 @@
   "limitations": [
     "Chromium 151 with software WebGL; no original Nintendo hardware or iPad performance claim.",
     "Local native-stage LFS prebuilt payloads were unavailable; the existing browser-conversion fallback was used.",
-    "The native-RAF full-game timeout and screenshot-comparison workflows need fresh remote evidence.",
+    "The normal native-RAF gate and Clam screenshot comparison subsequently passed on exact source72b0ea89. Final remote CI remains separate evidence.",
     "No undocumented Splatoon 3 11.3.0 frame or speed value has been inferred."
-  ]
+  ],
+  "postPublicationBrowserVerification": {
+    "sourceSha": "72b0ea8922406ab86e432c7a1752fffca4060f97",
+    "productionRuntimeChangedByFollowup": false,
+    "normalNativeRafGate": "passed; two maps/two cycles/high 480x300; original assertions and 125-second timeout",
+    "clamBrowserComparison": "passed; 40 before/after pairs, 80 frames, 2 contact sheets",
+    "reviewAudit": "eight scoped PRs: zero inline threads and zero review submissions"
+  }
 }
