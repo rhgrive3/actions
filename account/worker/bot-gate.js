@@ -105,7 +105,8 @@ export async function serveGameWithBotGate(request, env) {
     if (path === ACCESS_PAGE || path === VERIFY_PATH) return textResponse('Not found', 404);
     return env.ASSETS?.fetch(request) || textResponse('Not found', 404);
   }
-  if (!safeSiteKey(env.TURNSTILE_SITE_KEY) || !env.TURNSTILE_SECRET_KEY || !env.BOT_GATE_HMAC_KEY)
+  if (!safeSiteKey(env.TURNSTILE_SITE_KEY) || !env.TURNSTILE_SECRET_KEY ||
+      typeof env.BOT_GATE_HMAC_KEY !== 'string' || env.BOT_GATE_HMAC_KEY.length < 32)
     return textResponse('INKWAVE access verification is not configured', 503);
 
   if (path === ACCESS_PAGE && request.method === 'GET')
