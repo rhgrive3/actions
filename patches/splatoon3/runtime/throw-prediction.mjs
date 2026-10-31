@@ -221,8 +221,9 @@ export function installThrowPrediction(api) {
   // Keep the exact pre-forecast native preview as a stable compatibility
   // owner. Legacy 30Hz/cache/contact oracles exercise this fallback, while
   // the public updateArc continues to use the shared current forecast.
+  const preservedNativeArc=Projectiles.prototype[Symbol.for('inkwave.s3.arc-preview-performance.wrapper.v1')] || nativeArc;
   Object.defineProperty(Projectiles.prototype,Symbol.for('inkwave.s3.throw-prediction.native-arc.v1'),
-    { value:nativeArc, configurable:false, writable:false });
+    { value:preservedNativeArc, configurable:false, writable:false });
   Projectiles.prototype.s3PredictThrowTrajectory = function(actor, options = {}) {
     if (!actor?.alive || !finite3(actor.pos)) return null;
     if (options.category !== 'sub' && (actor.specialActive || options.category === 'special')) {

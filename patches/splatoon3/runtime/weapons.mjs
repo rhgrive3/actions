@@ -1453,6 +1453,11 @@ export function installArcPreviewPerformance(api) {
     this._arcCache = null;
     return clearArc.apply(this, args);
   };
+  // Preserve the exact native-preview scheduler for independent regression
+  // oracles after later all-subs and throw-forecast overlays supersede the
+  // public updateArc entry. Normal gameplay continues to use that entry.
+  Object.defineProperty(Projectiles.prototype, Symbol.for('inkwave.s3.arc-preview-performance.wrapper.v1'),
+    { value: Projectiles.prototype.updateArc, configurable: false });
   Object.defineProperty(Projectiles.prototype, ARC_PREVIEW_INSTALL, { value: true, configurable: false });
   Object.defineProperty(Projectiles.prototype, Symbol.for('inkwave.s3.arc-preview-performance.originals.v1'), {
     value: Object.freeze({ updateArc: nativeUpdateArc }), configurable: false,
