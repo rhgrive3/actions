@@ -1,0 +1,171 @@
+{
+  "status": "repaired-and-verified-locally",
+  "githubRun": 41181831992,
+  "githubJob": 124480647274,
+  "githubCandidate": "823ed7b09dcdf34ad3d67ba490e3e52762937424",
+  "failure": "Clam immutable3839 bomb-motion overlay lacks forecast exports imported by the current dependency graph; 2 module-link failures before image comparison.",
+  "baselineReproduction": {
+    "baseline": "fdb74165bc1a1668afe6f674db064474655fd05f",
+    "command": [
+      "node",
+      "--loader",
+      "/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/fdb-source-loader.mjs",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-name-pattern",
+      "clam exact historical|Clam comparison",
+      "tools/object-presentation-qa/runtime-overlay.test.mjs"
+    ],
+    "exitCode": 1,
+    "durationSeconds": 2.353,
+    "log": "/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/fdb-baseline-reproduction.log",
+    "logSha256": "420b5049f2cb0f6187da929405eea274ba20040f6580ac73f69664631436d3c4",
+    "relatedFilesDiff": "",
+    "method": "Read-only loader restores baseline production composition and exact source fixture, redirecting its sole changed runtime file to the original VFX bytes. Historical object QA modules and bomb/all-subs inputs have no baseline-to-HEAD changes. No GPU or runtime edits.",
+    "counts": {
+      "tests": 2,
+      "pass": 0,
+      "fail": 2,
+      "skipped": 0
+    }
+  },
+  "before": {
+    "command": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "tools/object-presentation-qa/artifact-budget.test.mjs",
+      "tools/object-presentation-qa/frame-contract.test.mjs",
+      "tools/object-presentation-qa/identity.test.mjs",
+      "tools/object-presentation-qa/harness-contract.test.mjs",
+      "tools/object-presentation-qa/runtime-overlay.test.mjs"
+    ],
+    "exitCode": 1,
+    "durationSeconds": 7.614,
+    "head": "4da2f2466e070352c9365822cb5014f4bcb5a888",
+    "node": "v24.22.1",
+    "log": "/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/before-31-tests.log",
+    "logSha256": "f337a5b2efae45e8e039a6b42197127a04aecbdea22767444a2af09d8ceeac23",
+    "gitStatus": " M reports/visual-quality-2026-10-31/README.md\n?? reports/visual-quality-2026-10-31/receipts/source-quality-final.json\n?? reports/visual-quality-2026-10-31/receipts/source-quality-final.log.gz\n",
+    "counts": {
+      "tests": 31,
+      "pass": 29,
+      "fail": 2,
+      "skipped": 0
+    }
+  },
+  "afterFullCommand": {
+    "command": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "tools/object-presentation-qa/artifact-budget.test.mjs",
+      "tools/object-presentation-qa/frame-contract.test.mjs",
+      "tools/object-presentation-qa/identity.test.mjs",
+      "tools/object-presentation-qa/harness-contract.test.mjs",
+      "tools/object-presentation-qa/runtime-overlay.test.mjs"
+    ],
+    "exitCode": 0,
+    "durationSeconds": 34.329,
+    "head": "4da2f2466e070352c9365822cb5014f4bcb5a888",
+    "node": "v24.22.1",
+    "log": "/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/after-contract-tests.log",
+    "logSha256": "7bc271bdda0a82fc76c2a1e753aa75f2d17b4530b74a0c60e6fa3bb87e2e0fb9",
+    "gitStatus": " M patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs\n M reports/visual-quality-2026-10-31/README.md\n M tools/object-presentation-qa/run.mjs\n M tools/object-presentation-qa/runtime-overlay.test.mjs\n?? reports/visual-quality-2026-10-31/receipts/source-quality-final.json\n?? reports/visual-quality-2026-10-31/receipts/source-quality-final.log.gz\n?? tools/object-presentation-qa/historical-bomb-compat.mjs\n",
+    "counts": {
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "finalCounterContracts": {
+    "command": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-name-pattern",
+      "Clam compatibility|Clam historical carry",
+      "tools/object-presentation-qa/runtime-overlay.test.mjs"
+    ],
+    "exitCode": 0,
+    "durationSeconds": 8.904,
+    "node": "v24.22.1",
+    "log": "/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/final-compatibility-contracts.log",
+    "logSha256": "2157f3e0a9db45a883adacf74cbe37966560688b2f17a15156951a533d419c82",
+    "counts": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "qaOnlyChangedFiles": [
+    {
+      "path": "tools/object-presentation-qa/historical-bomb-compat.mjs",
+      "sha256": "693c345faeb83895163554faf071fef45d8c8c512961ed680c5b7c7736406de8"
+    },
+    {
+      "path": "tools/object-presentation-qa/runtime-overlay.test.mjs",
+      "sha256": "f808572523e9be4f95dbf1d9de63470f616fa3ce8a95398635bf1cecb19696a5"
+    },
+    {
+      "path": "tools/object-presentation-qa/run.mjs",
+      "sha256": "a4d564587c72c86f7956efda30da07c8d1ff83cafaec43741fbb477d732253bf"
+    }
+  ],
+  "historicalBody": {
+    "base": "3839b61a6c6c4d5ac998b82168f37b802bc55099",
+    "file": "patches/splatoon3/runtime/bomb-motion.mjs",
+    "bytes": 14554,
+    "sha256": "ae3fb4d73f970e335a622ad76f17ac0b5b860924d39eb76a485958333861374c",
+    "originalPrefixByteIdentical": true,
+    "baselineDefinitionUnchanged": true
+  },
+  "genuineExports": {
+    "stormThrowPosition": {
+      "sha256": "80b76e9bf23280c1b7924b5c11ff8521e542c2a288ae4662d89e42c659acf094",
+      "dependencies": []
+    },
+    "bombPredictionPosition": {
+      "sha256": "c5b1eef5a8ff1f0fb5ab0a582ace1c35c6728d06f8d5a0d89088592552086ea6",
+      "dependencies": [
+        "stateMap",
+        "sampleRelease"
+      ],
+      "dependencyClosure": "unchanged immutable historical source"
+    }
+  },
+  "runtimeCallVerification": {
+    "historicalSha256": "ae3fb4d73f970e335a622ad76f17ac0b5b860924d39eb76a485958333861374c",
+    "weapons": [
+      "shooter",
+      "dualies"
+    ],
+    "frames": 184,
+    "releases": 2,
+    "comparisonCalls": {
+      "stormThrowPosition": 0,
+      "bombPredictionPosition": 0
+    },
+    "scope": "Native Clam fixed-rig carry and release timeline through actual RankedWorld/RankedEngine/Match; 60 warmup frames + release to .52 s for each of shooter and dualies.",
+    "negativeActualExportCalls": "Both real exported bindings were deliberately called only after comparison; each counter incremented to 1, genuine result matched production, and the zero-call gate rejected both."
+  },
+  "nativeRunner": "Uses the identical bridge, records explicit compatibility metadata and helper source hashes, then requires both actual browser counters to be zero after the full existing comparison. No native GPU capture rerun locally.",
+  "fixedRigScope": "The targeted VM run logs the fixture optional-source-motion dynamic-import warning. The verified 184-frame scenario is the fixed rig; no Player00-loaded or GPU execution is claimed by this check.",
+  "productionRuntimeDiff": "",
+  "productionRuntimeChanged": false,
+  "stageChanged": false,
+  "gpuUsed": false,
+  "node": "v24.22.1",
+  "workflowNodeMajor": 22,
+  "githubLog": "../compare-objects-ci-124480647274.log",
+  "noCommitOrPushByThisAgent": true,
+  "archivedLogs": {
+    "baselineReproduction": "compare-objects-fdb-baseline-reproduction.log",
+    "before": "compare-objects-before-31-tests.log",
+    "afterFullCommand": "compare-objects-after-contract-tests.log",
+    "finalCounterContracts": "compare-objects-final-compatibility-contracts.log"
+  },
+  "archivedGithubLog": "compare-objects-ci-124480647274.log"
+}

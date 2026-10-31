@@ -1,0 +1,17 @@
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ actual composed local and ghost birth flashes follow the fitted nozzle across yaw and elevation (206.405886ms)
+✔ accepted births fall back, never to stale or hidden Ink Vac geometry (2.406003ms)
+✔ accepted remote ghosts also fall back when the replica held model is unavailable (2.233543ms)
+✔ stale character aliases never borrow a foreign live model nozzle (2.044898ms)
+✔ HOLD, cancellation, rejected ghost, and duplicate/reused rounds preserve birth guarantees (9.631966ms)
+✔ real native activation to HOLD to release retains its nozzle during the synchronous token-clear window (2717.03326ms)
+✔ production transform mode covers both changed modules when requested (0.605386ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2978.132924
