@@ -76,12 +76,12 @@ function install(WEAPONS, G, SUB) {
     _snd() {},
     _local: () => h.actor || null,
   });
-  const frame = () => ({ charge: h.actor?.weaponRunner?.charge ?? 0, weapon: 'charger', crosshair: { spread: 0 }, subAim: false, ink: 1, subCost: 0.7 });
+  const frame = () => ({ charge: h.actor?.weaponRunner?.charge ?? 0, weapon: h.weapon || 'charger', crosshair: { spread: h.spread || 0 }, subAim: false, ink: 1, subCost: 0.7 });
   // _buildReticle assigns `iw-ret iw-ret--${kind}` on the real root; mirror that so
   // the shipped stylesheet's compound selector can be checked against this node.
   h.ret.classList.add('iw-ret', 'iw-ret--charger');
   return {
-    h,
+    h, context,
     view: built.chargerReticleView,
     update() { h._updCrosshair(frame(), 1 / 60); },
     gauge() { const off = h._chargeEl.style.strokeDashoffset; return off == null ? null : 1 - Number(off) / 100; },
@@ -90,6 +90,21 @@ function install(WEAPONS, G, SUB) {
     delayOn() { return h.ret.classList.contains('is-charge-delay'); },
   };
 }
+
+test('Blaster reticle scales with the actual viewport and keeps screen-space spread', async () => {
+  const f=await fixture(),ui=install(f.WEAPONS,f.G,f.SUB),h=ui.h;
+  h.weapon='blaster';h.actor=f.make('blaster');h._L.weapon='blaster';h._L.kind='blaster';h.spread=20;
+  for(const [width,height,scale] of [[640,360,.5],[1280,720,1],[2560,1440,2],[320,720,.25]]){
+    ui.context.innerWidth=width;ui.context.innerHeight=height;ui.update();
+    assert.equal(Number(h.xh.style['--iw-reticle-scale']),scale);
+    assert.equal(Number(h.ret.style['--sp']),20/scale);
+  }
+  f.WEAPONS['test-catalog-blaster']={kind:'catalog',behaviorKind:'blaster'};
+  h.weapon='test-catalog-blaster';h._L.weapon=h.weapon;
+  ui.context.innerWidth=2560;ui.context.innerHeight=1440;ui.update();
+  assert.equal(Number(h.xh.style['--iw-reticle-scale']),2,'catalogue Blasters use the same viewport scaling');
+  delete f.WEAPONS['test-catalog-blaster'];
+});
 
 // The shipped stylesheet, read from the patch the build actually links.
 const css = () => fs.readFileSync(path.join(ROOT, 'patches/splatoon3/ui.css'), 'utf8');

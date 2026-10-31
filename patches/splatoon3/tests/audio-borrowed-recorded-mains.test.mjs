@@ -1,3 +1,4 @@
+import {prepareChargeConfirmation} from '../runtime/audio/charge-confirmation.mjs';
 import {chargerRiseBuffer} from '../runtime/audio/charger-charge-rise.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -89,6 +90,8 @@ test('all eleven unsourced mains and variants only emit their already-decoded or
  const decode=ctx.decodeAudioData;
  ctx.decodeAudioData=async()=>ctx.createBuffer(1,Math.round(ctx.sampleRate*1.82857),ctx.sampleRate);
  await chargerRiseBuffer(ctx,{fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(36571)})});
+ ctx.decodeAudioData=async()=>ctx.createBuffer(1,Math.round(ctx.sampleRate*.15),ctx.sampleRate);
+ await prepareChargeConfirmation(audio,{fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(8626)})});
  ctx.decodeAudioData=decode;
  const variants=ALTERNATE_WEAPON_KITS.filter(k=>isBorrowedRecordedMain(k.baseId));
  for(const [target,source] of owners){

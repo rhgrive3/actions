@@ -98,9 +98,9 @@ function fireAndContact(f,{name,hz=60,pitch=0,ink=100,gear=false,unit=0,vertical
   target.vel?.set(0,0,0);
   const at=p.pos.clone().addScaledVector(p.vel,DT/2);
   const dir=p.vel.clone();dir.y=0;assert.ok(dir.lengthSq()>0);
-  target.yaw=Math.atan2(dir.x,dir.z);target.pos.copy(at);target.pos.y-=targetKind==='splashWall'?1:0;
+  target.yaw=Math.atan2(dir.x,dir.z);target.pos.copy(at);target.pos.y-=targetKind==='splashWall'?1:targetKind==='beakon'?.48:0;
   if(miss)target.pos.x+=20;
-  if(edge!==null)target.pos.addScaledVector(new THREE.Vector3(dir.z,0,-dir.x).normalize(),.42+(p.size||0)+edge);
+  if(edge!==null)target.pos.addScaledVector(new THREE.Vector3(dir.z,0,-dir.x).normalize(),(targetKind==='beakon'?.5:.42)+(p.size||0)+edge);
   target.prev?.copy(target.pos);
   assert.equal(!!p.ghost,ghost);
   const hp=()=>targetKind==='sprinkler'?target.s3DeviceHP:target.hp;
