@@ -15,7 +15,12 @@ function bossEnemy(actor, target, brain, world) {
   let pos;
   if (target.crab) {
     // A recycled perception record must not keep a dead/removed crablet alive.
-    if (target.crab.dead || !boss.crabs?.values || !Array.from(boss.crabs.values()).includes(target.crab)) return null;
+    if (target.crab.dead || !boss.crabs?.values) return null;
+    const crabs=boss.crabs, crab=target.crab, id=Object.getOwnPropertyDescriptor(crab,'id');
+    // A native Map hit proves identity membership. A mismatched key or custom
+    // collection still takes the original values path; never trust ID alone.
+    const found=crabs instanceof Map && crabs.get===Map.prototype.get && id && Object.hasOwn(id,'value') && crabs.get(id.value)===crab;
+    if(!found&&!Array.from(crabs.values()).includes(crab))return null;
     pos = { x: target.crab.x, y: target.crab.y + 0.35, z: target.crab.z };
   } else {
     if (!boss.visible || !target.shape?.active || !boss.model?.hitShapes?.includes(target.shape)) return null;

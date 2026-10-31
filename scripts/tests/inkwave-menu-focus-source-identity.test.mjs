@@ -1,3 +1,4 @@
+import {HISTORICAL_THROW_PREDICTION_SOURCE_SHA256,QUEUE_THROW_PREDICTION_SOURCE_SHA256,restoreQueueThrowPredictionSource} from '../lib/inkwave-throw-prediction-source-epoch-20261031.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -52,7 +53,9 @@ const squidrollInputs=Object.fromEntries(Object.entries(SQUIDROLL_MENU_INPUT_SHA
 }));
 const predictionInputs=Object.fromEntries(Object.entries(THROW_PREDICTION_MENU_INPUT_SHA256).map(([key,digest])=>{
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
- return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
+ const source=fs.readFileSync(new URL(file,import.meta.url),'utf8');
+ assert.equal(digest,HISTORICAL_THROW_PREDICTION_SOURCE_SHA256,'historical source pin never relabelled');
+ return [key,{source,manifestDigest:hash(source)}];
 }));
 test('installer preserves the original full pin and independently frozen two-hunk inverse',()=>{
  const pins=JSON.parse(fs.readFileSync(new URL('../inkwave-menu-focus-pins.json',import.meta.url)));
@@ -126,7 +129,7 @@ test('throw prediction is a separately frozen two-hunk successor of the complete
  const verified=verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...iconInputs,...squidrollInputs,...predictionInputs},iconInstaller,squidrollInstaller);
  assert.equal(verified.epoch,'catalogue-kit-icons-squidroll-effects-and-throw-prediction');
  assert.deepEqual(verified.iconInputs,MENU_ICON_INPUT_SHA256);
- assert.deepEqual(verified.effectInputs,{...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256});
+ assert.deepEqual(verified.effectInputs,{...SQUIDROLL_MENU_INPUT_SHA256,'patch/runtime/throw-prediction.mjs':QUEUE_THROW_PREDICTION_SOURCE_SHA256});
 });
 
 test('throw prediction owner sites, complete predecessor and manifest identity reject tampering',()=>{
@@ -151,5 +154,17 @@ test('throw prediction epoch requires every exact icon, effect and prediction so
   assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,missing,iconInstaller,squidrollInstaller),/Required (menu icon|Squid Roll effect|throw prediction) source/);
   assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,source:input.source+'\n'}},iconInstaller,squidrollInstaller),/Reviewed (menu icon|Squid Roll effect|throw prediction) source/);
   for(const manifestDigest of [undefined,'0'.repeat(64)])assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,manifestDigest}},iconInstaller,squidrollInstaller),/Emitted (menu icon|Squid Roll effect|throw prediction) input/);
+ }
+});
+
+test('polyline workspace successor reverses to the complete original prediction source and rejects every changed owner',()=>{
+ const source=predictionInputs['patch/runtime/throw-prediction.mjs'].source;
+ assert.equal(hash(source),QUEUE_THROW_PREDICTION_SOURCE_SHA256);
+ const predecessor=restoreQueueThrowPredictionSource(source);
+ assert.equal(hash(predecessor),THROW_PREDICTION_MENU_INPUT_SHA256['patch/runtime/throw-prediction.mjs']);
+ assert.notEqual(source,predecessor);
+ for(const anchor of ['const polylineWorkspaces = new WeakMap();','work.indices.length=work.segments.length=0; leases.depth--;','addPolylineSegment(points, work, s.first, s.at); addPolylineSegment(points, work, s.at, s.last);']){
+  assert.equal(source.split(anchor).length,2);
+  for(const modified of [source.replace(anchor,''),source.replace(anchor,anchor+anchor),source+'\n'])assert.throws(()=>restoreQueueThrowPredictionSource(modified),/Reviewed throw prediction source/);
  }
 });

@@ -73,6 +73,9 @@ export function installSlosherIntermediatePaint(api, profile) {
   const step = Projectiles.prototype._step;
   const point = new THREE.Vector3();
   const stretch = new THREE.Vector3();
+  // spawnSplashDrop consumes these fields synchronously and copies vector
+  // coordinates. Separate nested leases also cover re-entry through getters.
+  const splashOptions = []; let splashDepth = 0;
   // Runtime source parameters are fixed for a spawned glob. The same projectile
   // can run dozens of fixed ticks; avoid Combination.find, Array construction
   // and Object.freeze on every tick, while respecting pooled projectile reuse.
@@ -91,8 +94,8 @@ export function installSlosherIntermediatePaint(api, profile) {
   // A seed is a random value, not a projectile lifetime identifier. Reset on
   // allocation so a repeated sample cannot inherit a spent slot from the pool.
   const fresh = Projectiles.prototype._new;
-  if (typeof fresh === 'function') Projectiles.prototype._new = function (...args) {
-    const p = fresh.apply(this, args);
+  if (typeof fresh === 'function') Projectiles.prototype._new = function () {
+    const p = fresh.apply(this, arguments);
     p.s3SloshIntermediateSeed = undefined;
     p.s3SloshIntermediateTravel = 0;
     p.s3SloshIntermediateCount = 0;
@@ -127,9 +130,18 @@ export function installSlosherIntermediatePaint(api, profile) {
     stretch.set(p.vel.x, 0, p.vel.z);
     if (stretch.lengthSq() <= EPS) stretch.set(0, 0, 1);
     else stretch.normalize();
-    const drop = spawnSplashDrop(G, { owner: p.owner, team: p.team, seed: p.seed,
-      salt: p.s3SloshIntermediateCount, from: point, direction: stretch,
-      radius: spec.widthHalf, spec: spec.drop, depth: true, kind: 'drop', footprint: mainInkFootprint(p.s3Weapon) });
+    const slot = splashDepth++, options = splashOptions[slot] ||= {};
+    let drop;
+    try {
+      options.owner=p.owner; options.team=p.team; options.seed=p.seed;
+      options.salt=p.s3SloshIntermediateCount; options.from=point; options.direction=stretch;
+      options.radius=spec.widthHalf; options.spec=spec.drop; options.depth=true; options.kind='drop';
+      options.footprint=mainInkFootprint(p.s3Weapon);
+      drop=spawnSplashDrop(G,options);
+    } finally {
+      options.owner=options.from=options.direction=options.spec=options.footprint=null;
+      splashDepth--;
+    }
     if (drop) { drop.drawRadius = spec.drawRadius; drop.sourceActor = p.s3Weapon?.sourceActor ?? p.s3Weapon?.sourceMainActor; }
   };
   const before = new THREE.Vector3();

@@ -17,7 +17,14 @@ export const spinnerClipFull=id=>CLIPS[spinnerClipKey(id)]?.full??0;
 export const spinnerClipMarkers=id=>CLIPS[spinnerClipKey(id)]||null;
 export const SPINNER_CACHE_LIMIT=3*1024*1024;
 const MAX_MP3_BYTES=256*1024,contexts=new WeakMap();
-function state(ctx){let s=contexts.get(ctx);if(!s){s={buffers:new Map(),jobs:new Map(),retry:new Map(),size:0,dead:false};contexts.set(ctx,s);}return s;}
+// The longest bundled recording is 2.691 s. Reserve one stereo 3 s decode at
+// the actual context rate, retaining the normal 3 MiB budget at 44.1/48 kHz.
+// High-rate contexts must not silently replace a legitimate premix with Motor.
+function cacheLimit(ctx){
+  const bytes=Math.ceil(ctx.sampleRate*3)*2*4;
+  return Number.isSafeInteger(bytes)&&bytes>0?Math.max(SPINNER_CACHE_LIMIT,bytes):SPINNER_CACHE_LIMIT;
+}
+function state(ctx){let s=contexts.get(ctx);if(!s){s={buffers:new Map(),jobs:new Map(),retry:new Map(),size:0,limit:cacheLimit(ctx),dead:false};contexts.set(ctx,s);}return s;}
 export function spinnerCached(engine,id){
   const key=spinnerClipKey(id),s=engine?.ctx&&contexts.get(engine.ctx),row=s?.buffers.get(key);
   if(!row)return null;
@@ -60,11 +67,11 @@ export function spinnerPreload(engine,id,{fetcher=globalThis.fetch?.bind(globalT
       if(!current())return null;
       const bytes=decoded.length*decoded.numberOfChannels*4;
       if(!Number.isFinite(decoded.duration)||decoded.duration<(key==='rise'?.46:meta.full+.05)||
-        decoded.duration>5||!Number.isSafeInteger(bytes)||bytes<=0||bytes>SPINNER_CACHE_LIMIT)
+        decoded.duration>5||!Number.isSafeInteger(bytes)||bytes<=0||bytes>s.limit)
         throw Error('Invalid or oversized decoded Spinner recording');
       if(!hasFiniteAudioBufferPCM(decoded))throw Error('Spinner charge PCM invalid: '+key);
       repairSeams(decoded,meta,key==='rise');
-      while(s.size+bytes>SPINNER_CACHE_LIMIT&&s.buffers.size){const [k,row]=s.buffers.entries().next().value;s.buffers.delete(k);s.size-=row.bytes;}
+      while(s.size+bytes>s.limit&&s.buffers.size){const [k,row]=s.buffers.entries().next().value;s.buffers.delete(k);s.size-=row.bytes;}
       s.buffers.set(key,{buffer:decoded,bytes});s.size+=bytes;s.last=key;s.retry.delete(key);
       return decoded;
     }catch(error){if(current()){s.retry.set(key,Date.now()+4000);throw error;}return null;}
@@ -92,4 +99,4 @@ export function spinnerReleaseCache(engine){
   s.dead=true;contexts.delete(ctx);for(const job of s.jobs.values())job.scope.cancel();
   s.jobs.clear();s.buffers.clear();s.retry.clear();s.size=0;
 }
-export function spinnerCacheStats(engine){const s=engine?.ctx&&contexts.get(engine.ctx);return {bytes:s?.size||0,limit:SPINNER_CACHE_LIMIT,entries:s?.buffers.size||0,pending:s?.jobs.size||0};}
+export function spinnerCacheStats(engine){const s=engine?.ctx&&contexts.get(engine.ctx);return {bytes:s?.size||0,limit:s?.limit??(engine?.ctx?cacheLimit(engine.ctx):SPINNER_CACHE_LIMIT),entries:s?.buffers.size||0,pending:s?.jobs.size||0};}

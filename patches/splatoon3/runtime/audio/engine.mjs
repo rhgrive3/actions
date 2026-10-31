@@ -45,6 +45,25 @@ export function installWeaponAudioEngine(Engine){
     this._realS3Loader=new RealS3SampleLoader(this._weaponBank);
   }return this._weaponBank;};
   p.resolveWeaponSound=function(name){if(typeof name!=='string'||!name.startsWith(MAIN_AUDIO_PREFIX))return null;return this.weaponBank()?.resolve(name)||null;};
+  const originalPlay=p.play;
+  if(typeof originalPlay==='function')p.play=function(name,options){
+    if(typeof name==='string'&&name.startsWith(MAIN_AUDIO_PREFIX)){
+      const at=name.lastIndexOf(':'),requested=mainAudioSourceId(name.slice(MAIN_AUDIO_PREFIX.length,at));
+      const id=borrowedRecordedMainId(requested),event=name.slice(at+1),bank=this.weaponBank();
+      if(!bank?.authorized.byEvent.has(`${id}:${event}`)){
+        const loader=this._realS3Loader,declared=loader?.declares(id,event);
+        if(declared!==false)loader?.ensure(id,event);
+        const mainAttack=!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event);
+        const hasBase=mainAttack&&event!=='fire'&&loader?.declares(id,'fire')===true;
+        if(declared!==false||hasBase||id==='shooter'||isBorrowedRecordedMain(requested)||
+           !bank?.audibleShotFallback||options?.actor?.isLocal!==true||!bank.has(id,event)||!mainAttack){
+          this._realAudioSuppressed=(this._realAudioSuppressed||0)+1;
+          return null;
+        }
+      }
+    }
+    return originalPlay.call(this,name,options);
+  };
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
   p.prepareWeapon=function(id,{urgent=true}={}){
     const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);

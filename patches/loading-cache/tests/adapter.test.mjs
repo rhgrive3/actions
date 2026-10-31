@@ -50,16 +50,21 @@ function normalizeStartupEdits(node,lightmap=false){if(!node||typeof node!=='obj
 test('actual source and composed/minified concurrent boot retain exact full AST and resource phase identity',async()=>{
  const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
  const composed=adaptBuildSource('src/main.js',raw);
- for(const [name,code]of [['historical source',raw],['composed',composed],['minified',(await transform(composed,{minify:true,format:'esm',target:'es2022'})).code]]){
+ const previous=adaptBuildSource('src/main.js',raw,{queueVisualWorld20261031:false});
+ for(const [name,code]of [['historical source',raw],['previous concurrent',previous],['composed',composed],['minified',(await transform(composed,{minify:true,format:'esm',target:'es2022'})).code]]){
   const adapted=adaptCompiledMain(code),before=parse(code,{ecmaVersion:'latest',sourceType:'module'});
   const after=uninstrument(parse(adapted.code,{ecmaVersion:'latest',sourceType:'module'}));normalizeStartupEdits(before);normalizeStartupEdits(after);
   const digest=node=>crypto.createHash('sha256').update(JSON.stringify(shape(node))).digest('hex');
   assert.equal(digest(after),digest(before),name+' full AST only receives the explicit profiler/dwell/cache/empty-statement edits');
   const phases=adapted.phases;
   if(name==='historical source'){assert.equal(phases.length,22);assert.equal(phases[17].name,'boot/shader-compile');}
-  else{
+  else if(name==='previous concurrent'){
    assert.equal(phases.length,23);assert.deepEqual(phases.slice(6,11).map(p=>p.name),['boot/texture-library-module','boot/procedural-textures','boot/mural-generation','boot/wave-generation','boot/stage-build']);
    assert.equal(phases[18].name,'boot/shader-compile');assert.match(phases[18].source,/\.compileAsync\(/);
+   assert.equal(phases.at(-1).name,'boot/readiness-dwell');
+  }else{
+   assert.equal(phases.length,22);assert.deepEqual(phases.slice(5,10).map(p=>p.name),['boot/texture-library-module','boot/procedural-textures','boot/mural-generation','boot/wave-generation','boot/stage-build']);
+   assert.equal(phases[17].name,'boot/shader-compile');assert.match(phases[17].source,/\.compileAsync\(/);assert(!phases.some(p=>p.name==='boot/props-module'));
    assert.equal(phases.at(-1).name,'boot/readiness-dwell');
   }
  }
@@ -76,7 +81,17 @@ test('concurrent boot rejects missing, reordered, unrelated or changed resource 
   ['wrong wave owner','envMod.prewarmWaveTexture','charMod.prewarmWaveTexture'],
   ['unowned signal','signal: waveController.signal','signal: unrelatedController.signal'],
   ['wrong texture library import',"import('./world/texlib.js')","import('./world/other.js')"],
-  ['unbound mural factory','const muralReady = createMuralTexture(', 'const muralReady = otherMuralTexture('],
+  ['unbound mural factory',': createMuralTexture(map.layout || map.id)', ': otherMuralTexture(map.layout || map.id)'],
+  ['native gate bypass',"params.has('autostart') && nativeStageEnabled",'true && nativeStageEnabled'],
+  ['native availability bypass',"params.has('autostart') && nativeStageEnabled", "params.has('autostart') && true"],
+  ['wrong native registry','NATIVE_IDS.includes(map.layout || map.id)','OTHER_IDS.includes(map.layout || map.id)'],
+  ['wrong mural map',': createMuralTexture(map.layout || map.id)',': createMuralTexture(map.id)'],
+  ['non-null skipped texture','Promise.resolve({ ok: true, value: null })','Promise.resolve({ ok: true, value: this.texlib })'],
+  ['wrong skipped result','Promise.resolve({ ok: true, value: null })','Promise.resolve({ ok: false, value: null })'],
+  ['missing lazy prop import',"import('./world/prop-packs.js')","import('./world/other-props.js')"],
+  ['missing lazy prop acquisition','await this._prepareLegacyPropRuntime(layoutId, worldCurrent)','await this._otherLegacyPropRuntime(layoutId, worldCurrent)'],
+  ['native branch no longer returns','await buildNativeWorld(this, map, worldCurrent); return;','await buildNativeWorld(this, map, worldCurrent);'],
+  ['missing lazy mural acquisition','await this._prepareLegacyMurals(layoutId, worldCurrent)','await this._otherLegacyMurals(layoutId, worldCurrent)'],
   ['changed compile','G.renderer.compileAsync(','G.renderer.compileUnknown('],
   ['changed dwell','setTimeout(r, 250)','setTimeout(r, 251)'],
  ];

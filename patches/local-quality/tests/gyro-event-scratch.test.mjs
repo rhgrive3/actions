@@ -24,7 +24,7 @@ test('10,000 nested pairs reuse only two internal metadata records and preserve 
  }
  assert.equal(records.size,2);assert.equal(retained.length,20000);
  for(let i=0;i<10000;i++){assert.equal(retained[2*i].timeStamp,1000+i);assert.equal(retained[2*i+1].rotationRate.beta,2);}
- for(const record of records)assert.deepEqual(Object.keys(record).sort(),['kind','time']);
+ for(const record of records)assert.deepEqual(Object.keys(record).sort(),['boundary','kind','time']);
 });
 test('nested exceptions restore original owner and depth and propagate exact exception',()=>{
  const g=harness(),failure=new Error('nested');let owner;

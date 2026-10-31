@@ -3,6 +3,10 @@
 export function adaptMenuCardLayout(rel, code, replaceOnce) {
   if (rel !== 'patches/splatoon3/runtime/menu-layout.mjs') return code;
   code = replaceOnce(code,
+    'export function keepInView(el, host, { smooth = true, center = false } = {}) {\n  if (!el || !host) return 0;\n  const r = el.getBoundingClientRect(), b = host.getBoundingClientRect();',
+    'export function keepInView(el, host, { smooth = true, center = false, r, b } = {}) {\n  if (!el || !host) return 0;\n  r ??= el.getBoundingClientRect();\n  b ??= host.getBoundingClientRect();',
+    'reuse bounds measured in the same synchronous card focus move');
+  code = replaceOnce(code,
     "const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;",
     `const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -70,9 +74,9 @@ function settleCardScroll(menus, next, host, root, center) {
     '      if (host) keepInView(next, host, { smooth: !reduced() });',
     `      if (host) {
         const cardGrid = touchMenu() && host.classList?.contains('s3-wgrid');
-        const r = cardGrid && next.getBoundingClientRect(), b = cardGrid && host.getBoundingClientRect();
+        const r = cardGrid ? next.getBoundingClientRect() : null, b = cardGrid ? host.getBoundingClientRect() : null;
         const center = !!cardGrid && Math.abs((r.top + r.bottom - b.top - b.bottom) / 2) > host.clientHeight;
-        const moved = keepInView(next, host, { smooth: !reduced(), center });
+        const moved = keepInView(next, host, { smooth: !reduced(), center, r, b });
         if (moved) settleCardScroll(this, next, host, root, center);
       }`,
     'settle only a scrolling weapon-card focus move');

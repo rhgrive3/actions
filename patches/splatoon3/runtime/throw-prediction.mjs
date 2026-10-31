@@ -99,11 +99,9 @@ function orientMarker(marker, point, normal, scratch, time) {
 
 // Spend the fixed vertex budget on bends, bounces and the arc apex. Uniform
 // time samples can omit a wall contact and draw a shortcut through the wall.
-function polylineIndices(points, budget) {
-  if (points.length <= budget) return points.map((_, i) => i);
-  if (budget < 2) return [points.length - 1];
-  const indices = [0, points.length - 1], segments = [];
-  function addSegment(first, last) {
+const polylineWorkspaces = new WeakMap();
+function newPolylineWorkspace() { return { indices: [], segments: [], records: [], used: 0 }; }
+function addPolylineSegment(points, work, first, last) {
     if (last - first < 2) return;
     const a = points[first], b = points[last], dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
     const length2 = dx * dx + dy * dy + dz * dz;
@@ -115,24 +113,42 @@ function polylineIndices(points, budget) {
       if (e > error + 1e-12) { error = e; at = i; }
     }
     if (error < 1e-12) at = Math.floor((first + last) / 2);
-    segments.push({ first, last, at, error });
+    const record = work.records[work.used] ||= {};
+    work.used++; record.first=first; record.last=last; record.at=at; record.error=error;
+    work.segments.push(record);
+}
+function polylineIndices(points, budget, work = newPolylineWorkspace()) {
+  const indices=work.indices, segments=work.segments;
+  indices.length=segments.length=0; work.used=0;
+  if (points.length <= budget) {
+    indices.length=points.length;
+    for(let i=0;i<points.length;i++) { if(i in points)indices[i]=i; else delete indices[i]; }
+    return indices;
   }
-  addSegment(0, points.length - 1);
+  if (budget < 2) { indices.push(points.length - 1); return indices; }
+  indices.push(0, points.length - 1);
+  addPolylineSegment(points, work, 0, points.length - 1);
   while (indices.length < budget && segments.length) {
     let best = 0;
     for (let i = 1; i < segments.length; i++) {
       const s = segments[i], b = segments[best];
       if (s.error > b.error + 1e-12 || Math.abs(s.error - b.error) <= 1e-12 && s.last - s.first > b.last - b.first) best = i;
     }
-    const s = segments.splice(best, 1)[0]; indices.push(s.at);
-    addSegment(s.first, s.at); addSegment(s.at, s.last);
+    const s = segments[best];
+    for(let i=best+1;i<segments.length;i++)segments[i-1]=segments[i];
+    segments.length--; indices.push(s.at);
+    addPolylineSegment(points, work, s.first, s.at); addPolylineSegment(points, work, s.at, s.last);
   }
   return indices.sort((a, b) => a - b);
 }
 
 function writePolyline(geometry, points, endpoint) {
   const position = geometry.attributes.position, distance = geometry.attributes.lineDistance;
-  const indices = polylineIndices(points, Math.min(position.count, distance.count));
+  let leases=polylineWorkspaces.get(geometry);
+  if(!leases){leases={depth:0,frames:[]};polylineWorkspaces.set(geometry,leases);}
+  const depth=leases.depth++, work=leases.frames[depth] ||= newPolylineWorkspace();
+  try {
+  const indices = polylineIndices(points, Math.min(position.count, distance.count), work);
   let length = 0;
   for (let i = 0; i < indices.length; i++) {
     const p = i === indices.length - 1 && endpoint ? endpoint : points[indices[i]];
@@ -147,6 +163,10 @@ function writePolyline(geometry, points, endpoint) {
   distance.clearUpdateRanges(); distance.addUpdateRange(0, indices.length); distance.needsUpdate = true;
   geometry.setDrawRange(0, indices.length);
   return indices.length;
+  } finally {
+    // Numeric segment/index records cannot retain prediction actors or vectors.
+    work.indices.length=work.segments.length=0; leases.depth--;
+  }
 }
 
 export function drawThrowPrediction(system, actor, prediction, api, updateGeometry = true) {
