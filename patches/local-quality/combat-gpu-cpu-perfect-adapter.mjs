@@ -821,7 +821,8 @@ export class SwimWake {`
       if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
     }`,
       replaceOnce,
-      'MOV-09 precompute trigonometric values in _edgeGuardUncached'
+      'MOV-09 precompute trigonometric values in _edgeGuardUncached',
+      '    for (let _egi = 0; _egi < 4; _egi++) {'
     );
   }
 
