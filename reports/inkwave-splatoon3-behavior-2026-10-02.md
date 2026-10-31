@@ -7164,3 +7164,10 @@ Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain�
 - **実装・再現・影響**: `patches/splatoon3/runtime/ranked/{engine,install,network,rainmaker-device-contact}.mjs`。host ranked 更新が正常完了した release だけを送信・host-local 認可の根拠とし、表示側で消費する event map とは独立に completion fact を保持する。実 native release 0 の後で update を throw させた対照では、次 tick 以降も失敗 0 を wire／遠隔 Splash Wall 損傷へ進めず、正常 0 と次の正常 1 を維持する。失敗時の local queue／visual は巻き戻さず、既存 current-host trust／receipt／native contact admission を広げない。E2E 確認対象は Wall に限る。
 - **確認状態**: base `83e682d69110feaa82f274a11988e7bf3114c7bb`＋code 14 paths の同一 partial source root、Node24 source/VM で QA68（streamed51＋roof17）と Rainmaker formal9 を確認。native selected2／host-local 代表2／lexical10 は別 cohort で非合算。旧373 assert 式は維持したが、最終 base の旧 ranked35 再実行や旧 monolithic SIGKILL の合格化はしていない。物理 full collector は partial root の空 test directory guard により未受入であり、logical inventory の所属確認を全件テスト PASS と扱わない。
 - **未確認・対象外**: 今回の本家実機比較の参照 version・ギア・操作 frame 条件は未固定／未計測で、Splatoon 3 挙動一致は未判定。production emitted／full build／browser・GPU／real audio／FPS／最終 head の hosted CI は別受入を要する。Storm staged-birth 5 paths／v2 は除外し proof `04b4e29d…` を維持するため、その新しい合法反例は未解消。#1665 全体・全 device の security 合格や、髪／character model の編集・見た目比較を主張しない。
+
+
+### 2026-10-31: queue CI 契約自身の受入レーン登録
+
+- 対象は `scripts/ci/inkwave-test-suites.json` の `runner-contracts`。既存 `scripts/tests/inkwave-queue-ci-20261031.test.mjs` を明示入力へ1件だけ追加した。全13 suite の既存順序・引数・フラグ・他レーン収録は保持した。ゲームの runtime・数値・モデル・見た目は変更していない。
+- 再現は同契約の既存登録テストで未登録件数0（期待1）による失敗。追加後は同テスト1/1 PASS。実 runner の no-spawn plan が公式22ファイル・2 step・対象1回を確認し、独立した構造/逆変換検証3/3と既存 runner 選択5/5が PASS。物理 full-suite 実行・同head hosted CI・ブラウザはこのローカル結果に含まれない。
+- プレイ挙動の変更やスプラトゥーン3との一致を示す修正ではなく、既存CI経路契約の受入漏れを閉じる配線修正。本家参照version・ブキ・ギア・操作frameの新規実機比較は実施していない。旧 menu 候補・Storm 保留変更は含めない。
