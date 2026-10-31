@@ -227,7 +227,7 @@ export function installWalkMotion(context,profile){
     const limit=tuning.twistRate*dt;this.hipTwist=twist+clamp(damp(twist,strafeTwist(this,v),7,dt)-twist,-limit,limit);
   };
   C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt);};
-  C._footPose=function(f){return state(this).active?footPose(this,f):oldPose.call(this,f);};
+  C._footPose=function(f){return state(this).active?footPose(this,f):oldPose.apply(this,arguments);};
   C._gaitTarget=function(f,remaining,out){
     if(!state(this).active)return oldTarget.call(this,f,remaining,out);
     const motion=state(this),v=Math.hypot(motion.vx,motion.vz),yaw=this.yaw+this.hipTwist+clamp(this.yawRate*remaining*.55,-.2,.2),half=clamp(v*this.duty/this.cad*.5,0,tuning.runHalfStride),w=mix(Math.abs(this.stance[f.side>0?0:3]),.078,this.runW)*f.side;

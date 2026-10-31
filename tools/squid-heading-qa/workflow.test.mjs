@@ -11,8 +11,8 @@ function verify(code){
  assert(!code.includes('BASE_SHA:'),'historical main is not this counterfactual');
  assert(code.includes('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"'));
  assert(code.includes('test -z "$(git -C _squid_heading_reference status --porcelain)"'));
- assert(code.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
- assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
+ assert.equal(code.split('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"').length-1,2,'candidate identity before reference and build');
+ assert.equal(code.split('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"').length-1,2,'reference identity before mutation and build');
  assert(code.includes('node tools/squid-heading-qa/reference.mjs _squid_heading_reference "$SOURCE_SHA" .qa-evidence/squid-heading-reference.json'));
  assert(code.includes('--expect baseline --reference-proof ../.qa-evidence/squid-heading-reference.json'));
  assert.equal((code.match(/node scripts\/build-inkwave.mjs/g)||[]).length,2,'only existing two builds');
@@ -23,10 +23,13 @@ function verify(code){
  assert(code.includes('group: squid-heading-native-${{ github.ref }}\n  cancel-in-progress: true')); 
  assert.equal((code.match(/tools\/squid-heading-qa\/three-contract.test.mjs/g)||[]).length,2,'source and emitted export/guide tests');
 }
-test('native heading workflow keeps two shallow exact-head builds and emitted/paired gates',()=>{
+test('native heading workflow keeps a shallow exact-head checkout, same-source worktree and emitted/paired gates',()=>{
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
+  s=>s.replace('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','true'),
+  s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"','true'),
+  s=>s.replace('test -z "$(git -C _squid_heading_reference status --porcelain)"','true'),
   s=>s.replace('node tools/squid-heading-qa/reference.mjs','echo tools/squid-heading-qa/reference.mjs'),
   s=>s.replace('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"','git worktree add --detach _squid_heading_reference main'),
   s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"','true'),

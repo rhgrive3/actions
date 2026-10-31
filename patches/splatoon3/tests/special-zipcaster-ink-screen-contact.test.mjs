@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+import {nativeSpecialReceiver} from './native-special-receiver-fixture.mjs';
 
 // PvP 11.3.0, no gear unless selected below. Production Actor/runner/projectile
 // composition with controlled scene/terrain sinks; not a retail measurement.
@@ -115,4 +116,18 @@ test('unproven remote Screen replay cannot write local status or damage',async()
   assert.equal(hits,0);
   assert.equal(victim.s3?.splattercolorUntil>f.G.time,false,
     'unverified Screen ghosts are purely visual and cannot alter local status');
+});
+
+test('Remote Screen contact changes recipient status without authoring damage',async t=>{
+  const x=await nativeSpecialReceiver(t,'splattercolorScreen',{frames:30,targetZ:500,
+    configure:x=>{x.attacker.aimYaw=0;x.attacker.aimPitch=-.5;x.attacker.aimDir.set(0,Math.sin(-.5),Math.cos(-.5));x.attacker.aimPoint.set(0,-3,5);
+      x.f.G.physics.segment=(a,b,h)=>{h.hit=false;if(a.y>=0&&b.y<0){h.hit=true;h.point.copy(a).lerp(b,a.y/(a.y-b.y));h.normal.set(0,1,0);h.dist=a.distanceTo(h.point);}return h;};},
+    step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+  const {f,local:victim}=x;let hits=0;f.projectiles.applyHit=()=>{hits++;};
+  for(const packet of x.packets)x.deliver(packet);
+  const screen=f.projectiles._s3AllSpecialObjects.find(o=>o.kind==='screen');assert.ok(screen);
+  assert.equal(screen.phase,'flight','accepted native birth still needs receiver terrain contact');screen.moveSpeed=0;
+  for(let i=0;i<120&&screen.phase==='flight';i++)x.step();assert.equal(screen.phase,'active');victim.pos.copy(screen.pos);
+  for(let i=0;i<60;i++)x.step();
+  assert.equal(hits,0);assert.ok(victim.s3.splattercolorUntil>f.G.time);
 });

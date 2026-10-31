@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { TACTICOOLER_SOURCE } from '../runtime/support-cooler.mjs';
+import {nativeSpecialReceiver} from './native-special-receiver-fixture.mjs';
 
 const STEP = 1 / 60;
 const near = (a, b, label) => assert.ok(Math.abs(a - b) < 1e-8, `${label}: ${a} != ${b}`);
@@ -211,4 +212,28 @@ test('Booyah sender credit is gated, locked calls stay consumed, and new calls e
   G.time = a.s3TacticoolerGauge.until;
   f.emit('all:special',locked); near(a.special,0,'replaying a locked cheer after unlock cannot reclaim it');
   f.emit('all:special',cheer(3,3)); near(a.special,2,'a new third call receives its own source credit');
+});
+
+test('authenticated remote stand replay never owns a local gauge lock; a new match cannot retain one', async t => {
+  const x=await nativeSpecialReceiver(t,'tacticooler',{frames:30,targetZ:500,
+    configure:x=>{x.attacker.aimYaw=0;x.attacker.aimPitch=-.5;x.attacker.aimDir.set(0,Math.sin(-.5),Math.cos(-.5));
+      x.f.G.physics.segment=(a,b,h)=>{h.hit=false;if(a.y>=0&&b.y<0){h.hit=true;h.point.copy(a).lerp(b,a.y/(a.y-b.y));h.normal.set(0,1,0);h.dist=a.distanceTo(h.point);}return h;};},
+    step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+  const {f,G,a,local}=x;local.special=23;
+  x.nm._play('peer',[0,'ks','c',17,1,0,0,0,a.netLife||0,1020]);
+  assert.equal(G.projectiles._s3SupportCoolers?.length||0,0,'a bare placement still cannot create a stand');
+  for(const packet of x.packets)x.deliver(packet);
+  assert.equal(G.projectiles._s3SupportCoolerThrows.length,1,'accepted native paid throw, not a placement claim');
+  for(let i=0;i<120&&!G.projectiles._s3SupportCoolers?.length;i++)x.step();
+  assert.equal(G.projectiles._s3SupportCoolers.length, 1,'receiver-owned flight really landed');
+  assert.equal(a.s3TacticoolerGauge, undefined); assert.equal(f.tacticoolerGaugeLocked(local), false);
+  near(local.special, 23, 'peer replay leaves local charge alone');
+  a.remote=false;G.netm=null;G.projectiles.clear();a.aimDir.set(0,-1,0);a.special=a.specialCost();a._startSpecial();
+  a.intent.sub=true;a._updateSpecial(STEP);a.intent.sub=false;a._updateSpecial(STEP);
+  for(let i=0;i<14&&a.specialActive;i++)a._updateSpecial(STEP);
+  for(let i=0;i<120&&!G.projectiles._s3SupportCoolers.length;i++)x.step();
+  assert.equal(G.projectiles._s3SupportCoolers.length,1,'the same actor can deploy normally after ownership changes');
+  assert.equal(f.tacticoolerGaugeLocked(a), true);
+  G.match = { ...x.match }; a.reset();
+  assert.equal(f.tacticoolerGaugeLocked(a), false, 'new match identity rejects the old stand clock');
 });
