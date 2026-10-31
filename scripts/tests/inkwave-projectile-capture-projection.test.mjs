@@ -130,7 +130,12 @@ test('phase exception cannot authorize a changed sealed workflow hash',async()=>
     fs.copyFileSync(new URL('../fixtures/inkwave-projectile-sparse-checkout-epoch-20261031.json',import.meta.url),path.join(fixtures,'inkwave-projectile-sparse-checkout-epoch-20261031.json'));
     const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-slosher-phase-workflow-20261027.json',import.meta.url),'utf8'));fixture.afterSha256='0'.repeat(64);
     fs.writeFileSync(path.join(fixtures,'inkwave-slosher-phase-workflow-20261027.json'),JSON.stringify(fixture));
-    const changed=await import(pathToFileURL(path.join(lib,'inkwave-slosher-phase-workflow.mjs')).href);
-    assert.throws(()=>changed.restoreBeforeSlosherPhaseWorkflow(workflow),'changed seal must fail rather than hiding a route edit');
+    // The validator may reject the corrupted seal during module import, before
+    // its exported normalization function can be invoked. Both are fail-closed.
+    await assert.rejects(async()=>{
+      const changed=await import(pathToFileURL(path.join(lib,'inkwave-slosher-phase-workflow.mjs')).href);
+      changed.restoreBeforeSlosherPhaseWorkflow(workflow);
+    },error=>error?.code==='ERR_ASSERTION'&&[error.actual,error.expected].includes('0'.repeat(64)),
+    'changed seal must fail rather than hiding a route edit');
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
