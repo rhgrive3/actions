@@ -39,4 +39,17 @@
 
 - `#1665` / `#1666`: オンラインのprojectile birthの自己申告を偽造した場合、実発射や実命中がないのにダメージを受理しうるP1の通信信頼境界。今回のPRで解消したと主張しない。
 - 未保存の完全ソースZIP後半9パート、原作全数値との完全一致、物理端末上のFPS保証は対象外。
-- `main`への自動マージ・本番デプロイは行っていない。
+- PRのマージ・本番デプロイ・CIの最終結果は [PR #1980](https://github.com/rhgrive3/actions/pull/1980) とGitHub Actionsを一次記録とする。未完了のCIを成功と表現しない。
+
+## 2026-10-31 最新main再統合
+
+- `main` 統合基準: `4ebe41cc6b31a9e8891beeb51ae061ca62027d51`。PR #1977の29ファイル最適化を含む。
+- 途中までの復旧成果は55ファイル変更として残し、GitHub PR #1980に統合。共有・競合する4ファイルは双方の意味を照合して統合した。
+- `patches/splatoon3/adapter.mjs`: mainのStorm投擲起点・接地処理とレビューの天井ブロックIDを両立。
+- `runtime/all-subs.mjs`: mainの全結果型サブ予測・Fizzy爆発時系列とレビューのfirst-entry接触を併存。
+- `runtime/kit-subs.mjs`: mainの衝突・バウンド・着弾結果予測を維持し、既存弾道プレビュー互換処理と共存。
+- `runtime/kit-support.mjs`: 最新mainの共通60Hz Sensor・Cooler飛行とプレイヤーに表示される予測を優先。旧レビューの移動積分で置き換えない。
+- 音声回帰テストは本番の `adaptBuildSource` 合成経路へ修正。Sensor回帰テストは最新の共有飛行モジュールと旧記録の双方に対応。
+- 旧レビュー独自のfirst-contactのみ表示するテストは、main既存の `throw-prediction-parity.test.mjs` と矛盾しない統合契約テストへ修正。
+- すべてGitオブジェクトのSHAで維持し、統合ツリーを親 `main` + レビュー作業HEADの2親コミットとして保存した。
+- GitHub Actions実行結果は当該HEADのチェックを参照し、成功と未実行・実行待ちを区別する。
