@@ -2,6 +2,12 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/local-quality/character-visual-stability-adapter.mjs',
+  'patches/local-quality/fx-shader-stability-adapter.mjs',
+  'patches/local-quality/ordered-shader-smoothstep.mjs',
+  'patches/local-quality/menu-card-layout-adapter.mjs',
+  'patches/local-quality/title-demo-budget-adapter.mjs',
+  'patches/local-quality/title-presentation-adapter.mjs',
   'patches/network-replication/storm-device-contact-adapter.mjs',
   'patches/network-replication/queue-network-20261030-adapter.mjs',
   'patches/local-quality/queue-bots-20261030-adapter.mjs',

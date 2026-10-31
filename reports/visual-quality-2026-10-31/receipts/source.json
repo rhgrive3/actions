@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "fdb74165bc1a1668afe6f674db064474655fd05f",
+  "driveFolder": "https://drive.google.com/drive/folders/1hLvz1DGhRuYZVPI3l5HTiAVGvxD8f1KS",
+  "driveArchive": "INKWAVE-auto-0582bb1e-to-fdb74165-part-001.zip",
+  "driveArchiveSha256": "55e954b267b2cc9b925bc699230852aa1451dce69ac12149c88c780bfdaa00e8",
+  "driveArchivePayloadFilesVerified": 8,
+  "driveAndGithubMainMatched": true,
+  "scope": "Non-stage presentation only; browser results use Chromium/ANGLE SwiftShader."
+}

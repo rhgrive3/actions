@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-10-31T08:01:55.125596+00:00",
+  "baselineCommit": "fdb74165bc1a1668afe6f674db064474655fd05f",
+  "pr": 1986,
+  "failedPrHead": "823ed7b09dcdf34ad3d67ba490e3e52762937424",
+  "failedJob": 124480646972,
+  "changedTest": "patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs",
+  "preRepairTestSha256": "81542c2ad727fe9e4d377197d2b443ab199a813791964af37479e237a8880fc0",
+  "candidateTestSha256": "1275c5c3023551f2ee243a80f85a206b127c919f0258291bb427b29296b13976",
+  "baselineEvidence": {
+    "originalTestEqualsBaseline": true,
+    "runtimeSourcesEqualBaseline": true,
+    "baselineSpecialVfxSourceOverride": "special-vfx-fdb74165.mjs",
+    "failureLog": "ink-vac-authored-fdb-failure.log",
+    "error": "ReferenceError: inkVacExhaleKinematics is not defined",
+    "qualification": "Baseline-owned test and runtime files are exact; the baseline special-vfx source was loaded with the current composition. The missing symbol is inside the independently extracted unchanged kit emitter."
+  },
+  "protectedRuntimeFiles": [
+    {
+      "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+      "baselineSha256": "16fb0367380c49a95b8461f24faa0b534f284210488a55caeb2285a714a15b6d",
+      "currentSha256": "16fb0367380c49a95b8461f24faa0b534f284210488a55caeb2285a714a15b6d",
+      "unchanged": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-vfx.mjs",
+      "baselineSha256": "427716ba8237bf24a44b13ae87fd2680eb9e7909975326af5663d403fa94f91f",
+      "currentSha256": "427716ba8237bf24a44b13ae87fd2680eb9e7909975326af5663d403fa94f91f",
+      "unchanged": true
+    },
+    {
+      "path": "inkwave-public/src/game/weapons.js",
+      "baselineSha256": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881",
+      "currentSha256": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881",
+      "unchanged": true
+    }
+  ],
+  "unchangedStageScope": {
+    "paths": [
+      "inkwave-public/src/world",
+      "patches/native-stages/runtime",
+      "patches/practice-range/runtime"
+    ],
+    "fileCount": 91
+  },
+  "verification": [
+    {
+      "name": "ink-vac-shot source",
+      "passed": 9,
+      "failed": 0,
+      "log": "ink-vac-shot-source-repair.log"
+    },
+    {
+      "name": "ink-vac-shot production-transform",
+      "passed": 9,
+      "failed": 0,
+      "log": "ink-vac-shot-transformed-repair.log"
+    },
+    {
+      "name": "special-fidelity exact step 9",
+      "passedFiles": 10,
+      "failedFiles": 0,
+      "log": "special-fidelity-step9-repaired.log"
+    },
+    {
+      "name": "ink-vac-model-muzzle source",
+      "passed": 7,
+      "failed": 0,
+      "log": "ink-vac-nozzle-source-repair.log"
+    },
+    {
+      "name": "ink-vac-model-muzzle production-transform",
+      "passed": 7,
+      "failed": 0,
+      "log": "ink-vac-nozzle-transformed-repair.log"
+    },
+    {
+      "name": "kit-ink-vac",
+      "passed": 55,
+      "failed": 0,
+      "log": "ink-vac-kit-repair.log"
+    }
+  ]
+}

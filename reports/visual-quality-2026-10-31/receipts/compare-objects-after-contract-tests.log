@@ -1,0 +1,45 @@
+✔ all PNG, hidden receipt and nested failure diagnostic bytes count with ZIP headroom (10.360131ms)
+✔ receipt replacement counts actual replacement size and rejects escaped paths (1.700109ms)
+✔ pre-upload inventory rejects unbounded failure logs and all workflow uploads require eligibility (3.340406ms)
+✔ actual final-upload script isolates small, oversized and absent suite directories (136.080324ms)
+✔ nested air comparison cannot evade the shared Rainmaker artifact cap (2.616292ms)
+✔ same-condition before/after frames are paired and complete (2.349849ms)
+✔ camera, lighting, omitted output or duplicate frame mismatch fails closed (3.810467ms)
+✔ source-loaded owner and foot pose match exactly while model bounds may differ (2.87917ms)
+✔ source-loaded frame names require both complete finite owner receipts (3.252641ms)
+✔ ordered contact sheets retain original hashes and exact simulation times (1.910746ms)
+(node:264395) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ spawner browser harness statically links against the shared production helper (288.745968ms)
+✔ rainmaker browser harness statically links against the shared production helper (7.533717ms)
+✔ rainmaker-air browser harness statically links against the shared production helper (5.731519ms)
+✔ rainmaker-form browser harness statically links against the shared production helper (4.667958ms)
+✔ rainmaker-origin browser harness statically links against the shared production helper (1.51358ms)
+✔ clam browser harness statically links against the shared production helper (1.539661ms)
+✔ landing comparison isolates8a903662 handoff while the original three baselines stay3839 (0.455357ms)
+✔ form comparison adds only009 handoff baseline and one bounded same-build capture (0.568283ms)
+✔ spawner actual runtime sources affect official build identity, including added modules (8.886357ms)
+✔ rainmaker actual runtime sources affect official build identity, including added modules (8.526038ms)
+✔ rainmaker-air actual runtime sources affect official build identity, including added modules (5.926782ms)
+✔ rainmaker-form actual runtime sources affect official build identity, including added modules (3.4715ms)
+✔ rainmaker-origin actual runtime sources affect official build identity, including added modules (17.285218ms)
+✔ clam actual runtime sources affect official build identity, including added modules (19.692737ms)
+(node:264407) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ spawner exact historical runtime overlay links in the actual production module graph (1389.067891ms)
+✔ rainmaker exact historical runtime overlay links in the actual production module graph (1224.000593ms)
+✔ rainmaker-air exact historical runtime overlay links in the actual production module graph (1196.510756ms)
+✔ rainmaker-form exact historical runtime overlay links in the actual production module graph (1135.286217ms)
+✔ rainmaker-origin exact historical runtime overlay links in the actual production module graph (1212.611446ms)
+✔ clam exact historical runtime overlay links in the actual production module graph (1276.873302ms)
+✔ Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff (16875.393658ms)
+✔ Clam compatibility preserves the complete immutable body and copies only the reviewed genuine forecast definitions (15.11733ms)
+✔ Clam historical carry, real rule events and release timelines never call the forecast compatibility exports (9434.106394ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34280.904443

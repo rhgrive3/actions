@@ -1,0 +1,38 @@
+(node:263840) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/fdb-source-loader.mjs", pathToFileURL("./")); register("/workspace/scratch/8a58d9a6baf6/visual-evidence/aplus-local-final/compare-objects-repair/fdb-source-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:263840) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+✖ clam exact historical runtime overlay links in the actual production module graph (946.711831ms)
+✖ Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff (783.36082ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2311.135609
+
+✖ failing tests:
+
+test at tools/object-presentation-qa/runtime-overlay.test.mjs:25:42
+✖ clam exact historical runtime overlay links in the actual production module graph (946.711831ms)
+  SyntaxError [Error]: The requested module './bomb-motion.mjs' does not provide an export named 'bombPredictionPosition'
+      at SourceTextModule.link (node:internal/vm/module:209:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async fixture (file:///workspace/scratch/8a58d9a6baf6/iw/patches/splatoon3/tests/source-fixture.mjs:113:3)
+      at async make (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:18:13)
+      at async TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:26:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tools/object-presentation-qa/runtime-overlay.test.mjs:29:1
+✖ Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff (783.36082ms)
+  SyntaxError [Error]: The requested module './bomb-motion.mjs' does not provide an export named 'bombPredictionPosition'
+      at SourceTextModule.link (node:internal/vm/module:209:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async fixture (file:///workspace/scratch/8a58d9a6baf6/iw/patches/splatoon3/tests/source-fixture.mjs:113:3)
+      at async make (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:18:13)
+      at async TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:32:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

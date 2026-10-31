@@ -1,0 +1,1256 @@
+{
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "cases": [
+    {
+      "pool": "inkBeams",
+      "style": 0,
+      "view": "seam",
+      "channels": 29341,
+      "maxDelta": 115,
+      "before": {
+        "coveredPixels": 55200,
+        "alphaMass": 13535023,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 55200,
+        "alphaMass": 13535023,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 0,
+      "view": "opposite",
+      "channels": 29330,
+      "maxDelta": 115,
+      "before": {
+        "coveredPixels": 55200,
+        "alphaMass": 13535005,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 55200,
+        "alphaMass": 13535005,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 1,
+      "view": "seam",
+      "channels": 7091,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 28709,
+        "alphaMass": 7176133,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 28320,
+        "alphaMass": 7105168,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 1,
+      "view": "opposite",
+      "channels": 6839,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 28708,
+        "alphaMass": 7175905,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 28319,
+        "alphaMass": 7104866,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 2,
+      "view": "seam",
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 55200,
+        "alphaMass": 10867264,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 55200,
+        "alphaMass": 10867264,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 2,
+      "view": "opposite",
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 55200,
+        "alphaMass": 10866758,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 55200,
+        "alphaMass": 10866758,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 3,
+      "view": "seam",
+      "channels": 28536,
+      "maxDelta": 26,
+      "before": {
+        "coveredPixels": 52285,
+        "alphaMass": 5019385,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 52285,
+        "alphaMass": 5063232,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 3,
+      "view": "opposite",
+      "channels": 28856,
+      "maxDelta": 26,
+      "before": {
+        "coveredPixels": 52172,
+        "alphaMass": 4995589,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 52172,
+        "alphaMass": 5041634,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 4,
+      "view": "seam",
+      "channels": 15882,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 51763,
+        "alphaMass": 12902204,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 50613,
+        "alphaMass": 12671159,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 4,
+      "view": "opposite",
+      "channels": 15476,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 51770,
+        "alphaMass": 12902521,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 50613,
+        "alphaMass": 12671308,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 5,
+      "view": "seam",
+      "channels": 13131,
+      "maxDelta": 205,
+      "before": {
+        "coveredPixels": 26536,
+        "alphaMass": 2201079,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 24484,
+        "alphaMass": 1875827,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBeams",
+      "style": 5,
+      "view": "opposite",
+      "channels": 13138,
+      "maxDelta": 206,
+      "before": {
+        "coveredPixels": 26498,
+        "alphaMass": 2218725,
+        "calls": 1,
+        "triangles": 512
+      },
+      "after": {
+        "coveredPixels": 24445,
+        "alphaMass": 1888658,
+        "calls": 1,
+        "triangles": 512
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 0,
+      "view": "seam",
+      "channels": 14763,
+      "maxDelta": 117,
+      "before": {
+        "coveredPixels": 92378,
+        "alphaMass": 14846736,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 92378,
+        "alphaMass": 14840920,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 0,
+      "view": "opposite",
+      "channels": 14503,
+      "maxDelta": 82,
+      "before": {
+        "coveredPixels": 92382,
+        "alphaMass": 14847087,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 92381,
+        "alphaMass": 14841122,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 1,
+      "view": "seam",
+      "channels": 6116,
+      "maxDelta": 113,
+      "before": {
+        "coveredPixels": 47563,
+        "alphaMass": 11605457,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 47508,
+        "alphaMass": 11602010,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 1,
+      "view": "opposite",
+      "channels": 6747,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 46740,
+        "alphaMass": 11368447,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 46646,
+        "alphaMass": 11381066,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 2,
+      "view": "seam",
+      "channels": 11552,
+      "maxDelta": 152,
+      "before": {
+        "coveredPixels": 60028,
+        "alphaMass": 4137390,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 60599,
+        "alphaMass": 4150578,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 2,
+      "view": "opposite",
+      "channels": 11555,
+      "maxDelta": 152,
+      "before": {
+        "coveredPixels": 61704,
+        "alphaMass": 4140586,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 61909,
+        "alphaMass": 4152682,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 3,
+      "view": "seam",
+      "channels": 13280,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 70971,
+        "alphaMass": 16131187,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 70802,
+        "alphaMass": 16186105,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 3,
+      "view": "opposite",
+      "channels": 13391,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 71056,
+        "alphaMass": 16136221,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 71015,
+        "alphaMass": 16249292,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 4,
+      "view": "seam",
+      "channels": 11909,
+      "maxDelta": 63,
+      "before": {
+        "coveredPixels": 91776,
+        "alphaMass": 20374912,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 91776,
+        "alphaMass": 20374912,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "inkBands",
+      "style": 4,
+      "view": "opposite",
+      "channels": 11885,
+      "maxDelta": 63,
+      "before": {
+        "coveredPixels": 91776,
+        "alphaMass": 20374930,
+        "calls": 1,
+        "triangles": 3072
+      },
+      "after": {
+        "coveredPixels": 91776,
+        "alphaMass": 20374930,
+        "calls": 1,
+        "triangles": 3072
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 0,
+      "age": 0.5,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 23218,
+        "alphaMass": 2923055,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 23218,
+        "alphaMass": 2923055,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 0,
+      "age": 0.98,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 39832,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 39832,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 1,
+      "age": 0.5,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 31684,
+        "alphaMass": 2179799,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 31684,
+        "alphaMass": 2179799,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 1,
+      "age": 0.98,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 38487,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 38487,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 2,
+      "age": 0.5,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 34400,
+        "alphaMass": 8596551,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 34400,
+        "alphaMass": 8596551,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 2,
+      "age": 0.98,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 3722,
+        "alphaMass": 890977,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 3722,
+        "alphaMass": 890977,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 3,
+      "age": 0.5,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 23218,
+        "alphaMass": 2923055,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 23218,
+        "alphaMass": 2923055,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 3,
+      "age": 0.98,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 39832,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 39832,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.5,
+      "retirementSeries": true,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.8,
+      "retirementSeries": true,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.88,
+      "retirementSeries": true,
+      "identical": false,
+      "channels": 13596,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 7426,
+        "alphaMass": 1788882,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 7092,
+        "alphaMass": 1705606,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.92,
+      "retirementSeries": true,
+      "identical": false,
+      "channels": 23621,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 6864,
+        "alphaMass": 1652575,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 2351,
+        "alphaMass": 543878,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.96,
+      "retirementSeries": true,
+      "identical": false,
+      "channels": 25330,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 6346,
+        "alphaMass": 1521161,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 87,
+        "alphaMass": 13767,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.98,
+      "retirementSeries": true,
+      "identical": false,
+      "channels": 24355,
+      "maxDelta": 255,
+      "before": {
+        "coveredPixels": 6087,
+        "alphaMass": 1459026,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.99,
+      "retirementSeries": true,
+      "identical": false,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.0001,
+      "initialAlpha": 1,
+      "fadeIn": 0.01,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.001,
+      "initialAlpha": 1,
+      "fadeIn": 0.01,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 26460,
+        "alphaMass": 6565359,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 26460,
+        "alphaMass": 6565359,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.005,
+      "initialAlpha": 1,
+      "fadeIn": 0.01,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 26354,
+        "alphaMass": 6532860,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 26354,
+        "alphaMass": 6532860,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.1,
+      "initialAlpha": 0.05,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.5,
+      "initialAlpha": 0.05,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.8,
+      "initialAlpha": 0.05,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 0,
+        "alphaMass": 0,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.1,
+      "initialAlpha": 0.1,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.5,
+      "initialAlpha": 0.1,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.8,
+      "initialAlpha": 0.1,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.1,
+      "initialAlpha": 0.15,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 23598,
+        "alphaMass": 5843665,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.5,
+      "initialAlpha": 0.15,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 13953,
+        "alphaMass": 3418882,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "puffs",
+      "style": 4,
+      "age": 0.8,
+      "initialAlpha": 0.15,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 8603,
+        "alphaMass": 2083378,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkShells",
+      "style": 0,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 49008,
+        "alphaMass": 12425628,
+        "calls": 1,
+        "triangles": 2736
+      },
+      "after": {
+        "coveredPixels": 49008,
+        "alphaMass": 12425628,
+        "calls": 1,
+        "triangles": 2736
+      }
+    },
+    {
+      "pool": "inkShells",
+      "style": 1,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 49444,
+        "alphaMass": 6061897,
+        "calls": 1,
+        "triangles": 2736
+      },
+      "after": {
+        "coveredPixels": 49444,
+        "alphaMass": 6061897,
+        "calls": 1,
+        "triangles": 2736
+      }
+    },
+    {
+      "pool": "inkShells",
+      "style": 2,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 49444,
+        "alphaMass": 4190706,
+        "calls": 1,
+        "triangles": 2736
+      },
+      "after": {
+        "coveredPixels": 49444,
+        "alphaMass": 4190706,
+        "calls": 1,
+        "triangles": 2736
+      }
+    },
+    {
+      "pool": "inkShells",
+      "style": 3,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13398,
+        "alphaMass": 760786,
+        "calls": 1,
+        "triangles": 2736
+      },
+      "after": {
+        "coveredPixels": 13398,
+        "alphaMass": 760786,
+        "calls": 1,
+        "triangles": 2736
+      }
+    },
+    {
+      "pool": "inkShells",
+      "style": 4,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 49444,
+        "alphaMass": 9581508,
+        "calls": 1,
+        "triangles": 2736
+      },
+      "after": {
+        "coveredPixels": 49444,
+        "alphaMass": 9581508,
+        "calls": 1,
+        "triangles": 2736
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 0,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 34451,
+        "alphaMass": 8543583,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 34451,
+        "alphaMass": 8543583,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 1,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 14692,
+        "alphaMass": 828224,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 14692,
+        "alphaMass": 828224,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 2,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 47908,
+        "alphaMass": 1911416,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 47908,
+        "alphaMass": 1911416,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 3,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 46524,
+        "alphaMass": 2573027,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 46524,
+        "alphaMass": 2573027,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 4,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 13824,
+        "alphaMass": 1289478,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 13824,
+        "alphaMass": 1289478,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 5,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 64416,
+        "alphaMass": 3716264,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 64416,
+        "alphaMass": 3716264,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 6,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 43629,
+        "alphaMass": 10933347,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 43629,
+        "alphaMass": 10933347,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 7,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 10232,
+        "alphaMass": 1719358,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 10232,
+        "alphaMass": 1719358,
+        "calls": 1,
+        "triangles": 4
+      }
+    },
+    {
+      "pool": "inkDiscs",
+      "style": 8,
+      "identical": true,
+      "channels": 0,
+      "maxDelta": 0,
+      "before": {
+        "coveredPixels": 45636,
+        "alphaMass": 3650541,
+        "calls": 1,
+        "triangles": 4
+      },
+      "after": {
+        "coveredPixels": 45636,
+        "alphaMass": 3650541,
+        "calls": 1,
+        "triangles": 4
+      }
+    }
+  ],
+  "timings": [],
+  "glError": 0,
+  "browser": "151.0.7922.34",
+  "errors": [],
+  "scope": "Production SpecialVfxKit isolated in Chromium WebGL2/SwiftShader; no whole-game or physical iPad performance claim. Stage assets and gameplay are not loaded or edited."
+}

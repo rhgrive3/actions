@@ -5,6 +5,7 @@ import { qualityIdentity, replaceOnce, adaptQualitySource } from '../adapter.mjs
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptWeaponOpponentPreview } from '../../splatoon3/weapon-opponent-preview-adapter.mjs';
 import { adaptStaticMenuArt } from '../static-menu-adapter.mjs';
+import { prepareTitleDemoFrame, holdTitleDemoFrame } from '../title-demo-budget-adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
@@ -57,9 +58,9 @@ function runGate(screen, overrides = {}) {
     input: { pollPad: () => calls.push('pad'), endFrame: () => calls.push('end') },
     _padMenus: () => calls.push('navigation'),
   };
-  const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS',
+  const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'prepareTitleDemoFrame', 'holdTitleDemoFrame',
     'return function(dt) {' + framePrefix(game) + '\nthrow new Error("full-world-frame");\n}')(
-    G, new Set(STATIC_MENU_SCREENS));
+    G, new Set(STATIC_MENU_SCREENS), prepareTitleDemoFrame, holdTitleDemoFrame);
   let full = false;
   try { gate.call(gameState, 1 / 60); } catch (e) {
     if (e.message !== 'full-world-frame') throw e;
@@ -88,9 +89,9 @@ test('only the locker draws its art and live pedestal kid into the canvas', () =
     const G = { mode: 'menu', time: 0, renderer: {} }, calls = [];
     const menus = { current: screen, _scr: { name: screen }, update: () => calls.push('menu') };
     const owner = { menus, showcase: { _pq: [] }, match: { attract: true }, input: { pollPad() {}, endFrame: () => calls.push('end') }, _padMenus() {} };
-    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage',
+    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage', 'prepareTitleDemoFrame', 'holdTitleDemoFrame',
       'return function(dt) {' + framePrefix(game) + '\nthrow new Error("full-world-frame");\n}')(
-      G, new Set(STATIC_MENU_SCREENS), (who, g, dt) => calls.push(['stage', who === owner, g === G, dt]));
+      G, new Set(STATIC_MENU_SCREENS), (who, g, dt) => calls.push(['stage', who === owner, g === G, dt]), prepareTitleDemoFrame, holdTitleDemoFrame);
     gate.call(owner, 1 / 60);
     return calls;
   };
@@ -127,9 +128,9 @@ test('the demo canvas is hidden behind art screens and shown again before any wo
     const G = { mode: 'menu', time: 0, renderer: { domElement: canvas } };
     const self = owner || { showcase: { _pq: [] }, match: { attract: true }, input: { pollPad() {}, endFrame() {} }, _padMenus() {} };
     self.menus = { current: screen, _scr: { name: screen }, update() {} };
-    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage',
+    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage', 'prepareTitleDemoFrame', 'holdTitleDemoFrame',
       'return function(dt) {' + framePrefix(game) + '\nthrow new Error("full-world-frame");\n}')(
-      G, new Set(STATIC_MENU_SCREENS), () => {});
+      G, new Set(STATIC_MENU_SCREENS), () => {}, prepareTitleDemoFrame, holdTitleDemoFrame);
     let full = false;
     try { gate.call(self, 1 / 60); } catch (e) { if (e.message !== 'full-world-frame') throw e; full = true; }
     return { self, canvas, full };

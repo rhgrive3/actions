@@ -1,0 +1,880 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "status": "passed",
+  "baselineSourceCommit": "4423b1ea47a5be387991f3de9a70f900fb4d1b26",
+  "verifiedRemoteCodeCommit": "e2c1a78d8147ee455a51de48c4013f69b3ed21d4",
+  "sourceIdentityNote": "The local HEAD stayed at baseline while the worktree contained changes. All 11 remote code blobs were independently compared with local git hash-object. Documentation added later does not alter the tested runtime files.",
+  "sourceBlobs": {
+    "patches/local-quality/title-demo-budget-adapter.mjs": "7471f597994c816b9a53b96fc5994d368542a0a8",
+    "patches/local-quality/title-presentation-adapter.mjs": "215cd4533d3d31fbb31bd5ed0c271701d317843b",
+    "patches/local-quality/tests/title-demo-budget.test.mjs": "60afbaf734aa8bf5850cec6efb7bd64495971875",
+    "patches/local-quality/tests/title-presentation.test.mjs": "42f6a6a52b72a5d5b0fb82485d47515aa7d678e2",
+    "patches/local-quality/adapter.mjs": "dbb0673c4ef3ced30ab2bad49fafc26498e0ed57",
+    "scripts/inkwave-source-composition.mjs": "b0e5c5b504e824962edfc026f073df33baa1fa5b",
+    "scripts/lib/inkwave-build-only-modules.mjs": "f769b61967a64f5bc0279e5b721c028a2bc60cdd",
+    "scripts/tests/inkwave-build-packaging.test.mjs": "43e032fcd705886b55040c1fc6e0d350f09e2f6d",
+    "scripts/ci/inkwave-test-suites.json": "d0856370ea54e1893baec6b9558b9753e96d5b34",
+    "patches/local-quality/tests/static-menu-art.test.mjs": "db1426d9104be60097c634e59b1c884454b83b0b",
+    "scripts/check-inkwave-title-redesign.mjs": "6f11868ab54e4c2bf3e5ecf1a4284e100b0c8531"
+  },
+  "contentHash": "c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0",
+  "buildRevision": "62de07c3fe84fcec612071ee0d390c0573fd2e056ea8ffa6abf0e9b62afd5dd0",
+  "harnessHash": "5d16a80e655da938f9a1b21456eb96eb70ba5fa6de917099a0933ae581f7144d",
+  "browser": "151.0.7922.34",
+  "conditions": {
+    "quality": "high",
+    "dpr": 1,
+    "rendering": "Chromium software WebGL",
+    "physicalDevice": false,
+    "clock": "native RAF; no manual game frames or debug freeze",
+    "gamepad": "real Menus.nav accept route; no physical gamepad claim",
+    "news": "disabled by shipped news=0 option to isolate title navigation"
+  },
+  "japaneseFont": "Host Noto Sans CJK JP; no page font or CSS injection",
+  "contexts": [
+    {
+      "name": "desktop",
+      "navigation": [
+        {
+          "method": "double-click",
+          "transitions": 1,
+          "events": [
+            {
+              "type": "click",
+              "trusted": true,
+              "tag": "BUTTON"
+            },
+            {
+              "type": "click",
+              "trusted": true,
+              "tag": "BUTTON"
+            }
+          ],
+          "inputBefore": "kbm",
+          "menu": "main",
+          "inputAfter": "kbm",
+          "keyboardAudioInitialized": false,
+          "audioContextState": "running",
+          "musicContextState": "running",
+          "actors": 0,
+          "demoActive": false,
+          "retainedDemoMatch": false,
+          "canvasVisibility": "hidden",
+          "reentry": {
+            "elapsedMs": 1593.2999999970198,
+            "gameTimeAdvanced": 0.5166666666666653,
+            "counts": {
+              "frames": 3,
+              "worldRenders": 2,
+              "matchUpdates": 31,
+              "menuUpdates": 3,
+              "presents": 0
+            },
+            "menu": "title",
+            "mounted": "title",
+            "mode": "menu",
+            "sameMatch": true,
+            "attract": true,
+            "actors": 4,
+            "teams": [
+              2,
+              2
+            ],
+            "titleDemoMatch": true,
+            "demo": {
+              "active": true,
+              "hz": 30,
+              "savedScale": 1,
+              "reduced": false,
+              "captured": false
+            },
+            "dynScale": 0.75,
+            "drawingBuffer": [
+              720,
+              405
+            ],
+            "rendererMemory": {
+              "geometries": 307,
+              "textures": 59
+            },
+            "canvasVisibility": "visible",
+            "reducedMotion": false,
+            "hidden": false,
+            "focused": true,
+            "frozen": false,
+            "skipRender": false,
+            "glError": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "method": "keyboard",
+          "transitions": 1,
+          "events": [
+            {
+              "type": "keydown",
+              "trusted": true,
+              "tag": "BUTTON"
+            }
+          ],
+          "inputBefore": "kbm",
+          "menu": "main",
+          "inputAfter": "kbm",
+          "keyboardAudioInitialized": true,
+          "audioContextState": "running",
+          "musicContextState": "running",
+          "actors": 0,
+          "demoActive": false,
+          "retainedDemoMatch": false,
+          "canvasVisibility": "visible",
+          "reentry": {
+            "elapsedMs": 2126.4000000059605,
+            "gameTimeAdvanced": 0.7499999999999973,
+            "counts": {
+              "frames": 3,
+              "worldRenders": 3,
+              "matchUpdates": 45,
+              "menuUpdates": 3,
+              "presents": 0
+            },
+            "menu": "title",
+            "mounted": "title",
+            "mode": "menu",
+            "sameMatch": true,
+            "attract": true,
+            "actors": 4,
+            "teams": [
+              2,
+              2
+            ],
+            "titleDemoMatch": true,
+            "demo": {
+              "active": true,
+              "hz": 30,
+              "savedScale": 1,
+              "reduced": false,
+              "captured": false
+            },
+            "dynScale": 0.75,
+            "drawingBuffer": [
+              720,
+              405
+            ],
+            "rendererMemory": {
+              "geometries": 328,
+              "textures": 57
+            },
+            "canvasVisibility": "visible",
+            "reducedMotion": false,
+            "hidden": false,
+            "focused": true,
+            "frozen": false,
+            "skipRender": false,
+            "glError": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "method": "gamepad-route",
+          "transitions": 1,
+          "events": [],
+          "inputBefore": "kbm",
+          "menu": "main",
+          "inputAfter": "pad",
+          "keyboardAudioInitialized": true,
+          "audioContextState": "running",
+          "musicContextState": "running",
+          "actors": 0,
+          "demoActive": false,
+          "retainedDemoMatch": false,
+          "canvasVisibility": "visible",
+          "reentry": {
+            "elapsedMs": 5568.5999999940395,
+            "gameTimeAdvanced": 0.7499999999999973,
+            "counts": {
+              "frames": 3,
+              "worldRenders": 3,
+              "matchUpdates": 45,
+              "menuUpdates": 3,
+              "presents": 0
+            },
+            "menu": "title",
+            "mounted": "title",
+            "mode": "menu",
+            "sameMatch": true,
+            "attract": true,
+            "actors": 4,
+            "teams": [
+              2,
+              2
+            ],
+            "titleDemoMatch": true,
+            "demo": {
+              "active": true,
+              "hz": 30,
+              "savedScale": 1,
+              "reduced": false,
+              "captured": false
+            },
+            "dynScale": 0.75,
+            "drawingBuffer": [
+              720,
+              405
+            ],
+            "rendererMemory": {
+              "geometries": 354,
+              "textures": 57
+            },
+            "canvasVisibility": "visible",
+            "reducedMotion": false,
+            "hidden": false,
+            "focused": true,
+            "frozen": false,
+            "skipRender": false,
+            "glError": 0,
+            "contextLost": false
+          }
+        },
+        {
+          "method": "keyboard",
+          "transitions": 1,
+          "events": [
+            {
+              "type": "keydown",
+              "trusted": true,
+              "tag": "BUTTON"
+            }
+          ],
+          "inputBefore": "kbm",
+          "menu": "main",
+          "inputAfter": "kbm",
+          "keyboardAudioInitialized": true,
+          "audioContextState": "running",
+          "musicContextState": "running",
+          "actors": 0,
+          "demoActive": false,
+          "retainedDemoMatch": false,
+          "canvasVisibility": "visible"
+        }
+      ],
+      "normal": {
+        "elapsedMs": 2738.7999999970198,
+        "gameTimeAdvanced": 0.5666666666666678,
+        "counts": {
+          "frames": 3,
+          "worldRenders": 3,
+          "matchUpdates": 34,
+          "menuUpdates": 3,
+          "presents": 0
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 30,
+          "savedScale": 1,
+          "reduced": false,
+          "captured": false
+        },
+        "dynScale": 0.75,
+        "drawingBuffer": [
+          720,
+          405
+        ],
+        "rendererMemory": {
+          "geometries": 288,
+          "textures": 51
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": false,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "reduced": {
+        "elapsedMs": 1610.2999999970198,
+        "gameTimeAdvanced": 0,
+        "counts": {
+          "frames": 97,
+          "worldRenders": 0,
+          "matchUpdates": 0,
+          "menuUpdates": 97,
+          "presents": 97
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 30,
+          "savedScale": 1,
+          "reduced": true,
+          "captured": true
+        },
+        "dynScale": 0.75,
+        "drawingBuffer": [
+          720,
+          405
+        ],
+        "rendererMemory": {
+          "geometries": 290,
+          "textures": 50
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": true,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "resumed": {
+        "elapsedMs": 1582.2000000029802,
+        "gameTimeAdvanced": 0.5333333333333314,
+        "counts": {
+          "frames": 3,
+          "worldRenders": 3,
+          "matchUpdates": 32,
+          "menuUpdates": 3,
+          "presents": 0
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 30,
+          "savedScale": 1,
+          "reduced": false,
+          "captured": false
+        },
+        "dynScale": 0.75,
+        "drawingBuffer": [
+          720,
+          405
+        ],
+        "rendererMemory": {
+          "geometries": 290,
+          "textures": 51
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": false,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "gameplay": {
+        "elapsedMs": 5536.5,
+        "gameTimeAdvanced": 0.7500000000000373,
+        "counts": {
+          "frames": 3,
+          "worldRenders": 3,
+          "matchUpdates": 45,
+          "menuUpdates": 3,
+          "presents": 0
+        },
+        "menu": null,
+        "mode": "match",
+        "sameMatch": true,
+        "attract": false,
+        "actors": 8,
+        "teams": [
+          4,
+          4
+        ],
+        "titleDemoMatch": false,
+        "demo": {
+          "active": false,
+          "hz": 30,
+          "savedScale": null,
+          "reduced": false,
+          "captured": false
+        },
+        "dynScale": 1,
+        "drawingBuffer": [
+          640,
+          360
+        ],
+        "rendererMemory": {
+          "geometries": 389,
+          "textures": 65
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": false,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "screens": [
+        {
+          "name": "desktop",
+          "viewport": [
+            1440,
+            900
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 70.82311248779297,
+              "y": 536.21875,
+              "width": 368.103759765625,
+              "height": 66,
+              "right": 438.92687225341797,
+              "bottom": 602.21875
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": false,
+          "reducedMotion": false
+        },
+        {
+          "name": "desktop-reduced-motion",
+          "viewport": [
+            960,
+            540
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 45.8543586730957,
+              "y": 314.1875,
+              "width": 368.103759765625,
+              "height": 66,
+              "right": 413.9581184387207,
+              "bottom": 380.1875
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": false,
+          "reducedMotion": true
+        }
+      ]
+    },
+    {
+      "name": "touch",
+      "navigation": [
+        {
+          "method": "tap",
+          "transitions": 1,
+          "events": [
+            {
+              "type": "click",
+              "trusted": true,
+              "tag": "BUTTON"
+            }
+          ],
+          "inputBefore": "touch",
+          "menu": "main",
+          "inputAfter": "touch",
+          "keyboardAudioInitialized": false,
+          "audioContextState": "running",
+          "musicContextState": "running",
+          "actors": 0,
+          "demoActive": false,
+          "retainedDemoMatch": false,
+          "canvasVisibility": "hidden",
+          "reentry": {
+            "elapsedMs": 3558.5999999940395,
+            "gameTimeAdvanced": 0.7500000000000373,
+            "counts": {
+              "frames": 3,
+              "worldRenders": 3,
+              "matchUpdates": 45,
+              "menuUpdates": 3,
+              "presents": 0
+            },
+            "menu": "title",
+            "mounted": "title",
+            "mode": "menu",
+            "sameMatch": true,
+            "attract": true,
+            "actors": 4,
+            "teams": [
+              2,
+              2
+            ],
+            "titleDemoMatch": true,
+            "demo": {
+              "active": true,
+              "hz": 20,
+              "savedScale": 1,
+              "reduced": false,
+              "captured": false
+            },
+            "dynScale": 0.6,
+            "drawingBuffer": [
+              506,
+              234
+            ],
+            "rendererMemory": {
+              "geometries": 307,
+              "textures": 34
+            },
+            "canvasVisibility": "visible",
+            "reducedMotion": false,
+            "hidden": false,
+            "focused": true,
+            "frozen": false,
+            "skipRender": false,
+            "glError": 0,
+            "contextLost": false
+          }
+        }
+      ],
+      "normal": {
+        "elapsedMs": 1643.800000011921,
+        "gameTimeAdvanced": 0.7500000000000008,
+        "counts": {
+          "frames": 3,
+          "worldRenders": 3,
+          "matchUpdates": 45,
+          "menuUpdates": 3,
+          "presents": 0
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 20,
+          "savedScale": 1,
+          "reduced": false,
+          "captured": false
+        },
+        "dynScale": 0.6,
+        "drawingBuffer": [
+          506,
+          234
+        ],
+        "rendererMemory": {
+          "geometries": 278,
+          "textures": 34
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": false,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "reduced": {
+        "elapsedMs": 1614.1000000089407,
+        "gameTimeAdvanced": 0,
+        "counts": {
+          "frames": 96,
+          "worldRenders": 0,
+          "matchUpdates": 0,
+          "menuUpdates": 96,
+          "presents": 96
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 20,
+          "savedScale": 1,
+          "reduced": true,
+          "captured": true
+        },
+        "dynScale": 0.6,
+        "drawingBuffer": [
+          506,
+          234
+        ],
+        "rendererMemory": {
+          "geometries": 282,
+          "textures": 33
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": true,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "resumed": {
+        "elapsedMs": 1023.9000000059605,
+        "gameTimeAdvanced": 0.7499999999999973,
+        "counts": {
+          "frames": 3,
+          "worldRenders": 3,
+          "matchUpdates": 45,
+          "menuUpdates": 3,
+          "presents": 0
+        },
+        "menu": "title",
+        "mounted": "title",
+        "mode": "menu",
+        "sameMatch": true,
+        "attract": true,
+        "actors": 4,
+        "teams": [
+          2,
+          2
+        ],
+        "titleDemoMatch": true,
+        "demo": {
+          "active": true,
+          "hz": 20,
+          "savedScale": 1,
+          "reduced": false,
+          "captured": false
+        },
+        "dynScale": 0.6,
+        "drawingBuffer": [
+          506,
+          234
+        ],
+        "rendererMemory": {
+          "geometries": 284,
+          "textures": 34
+        },
+        "canvasVisibility": "visible",
+        "reducedMotion": false,
+        "hidden": false,
+        "focused": true,
+        "frozen": false,
+        "skipRender": false,
+        "glError": 0,
+        "contextLost": false
+      },
+      "screens": [
+        {
+          "name": "ipad-portrait",
+          "viewport": [
+            744,
+            1133
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 36.070892333984375,
+              "y": 921.5,
+              "width": 417.85821533203125,
+              "height": 64,
+              "right": 453.9291076660156,
+              "bottom": 985.5
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": true,
+          "reducedMotion": false
+        },
+        {
+          "name": "ipad-landscape",
+          "viewport": [
+            1133,
+            744
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 54.8543586730957,
+              "y": 433.140625,
+              "width": 368.103759765625,
+              "height": 66,
+              "right": 422.9581184387207,
+              "bottom": 499.140625
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": true,
+          "reducedMotion": false
+        },
+        {
+          "name": "phone-portrait",
+          "viewport": [
+            390,
+            844
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 23.367769241333008,
+              "y": 632.5,
+              "width": 343.26446533203125,
+              "height": 64,
+              "right": 366.63223457336426,
+              "bottom": 696.5
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": true,
+          "reducedMotion": false
+        },
+        {
+          "name": "phone-landscape",
+          "viewport": [
+            844,
+            390
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 39.24066925048828,
+              "y": 233.375,
+              "width": 295.8936767578125,
+              "height": 48,
+              "right": 335.1343460083008,
+              "bottom": 281.375
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": true,
+          "reducedMotion": false
+        },
+        {
+          "name": "touch-reduced-motion",
+          "viewport": [
+            844,
+            390
+          ],
+          "dpr": 1,
+          "button": {
+            "tag": "BUTTON",
+            "type": "button",
+            "label": "はじめる",
+            "rect": {
+              "x": 39.24066925048828,
+              "y": 233.375,
+              "width": 295.8936767578125,
+              "height": 48,
+              "right": 335.1343460083008,
+              "bottom": 281.375
+            },
+            "disabled": false,
+            "tabIndex": 0
+          },
+          "touch": true,
+          "reducedMotion": true
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "artifactFailures": [],
+  "startupBudget": {
+    "status": "passed",
+    "revision": "62de07c3fe84fcec612071ee0d390c0573fd2e056ea8ffa6abf0e9b62afd5dd0",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78620,
+    "initialJSBytes": 1864889,
+    "criticalHTMLBytes": 24056,
+    "precacheCount": 608,
+    "precacheBytes": 8126633,
+    "workerBytes": 100263,
+    "declaredBytes": 23918106,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "deterministicGates": {
+    "titleDemoCases": 6,
+    "titlePresentationCases": 5,
+    "existingStaticMenuCases": 10,
+    "existingTitleOwnershipCases": 3,
+    "qualitySuiteFiles": 19,
+    "directSourceSuiteFiles": 3,
+    "note": "Quality suite ran before final reference-release and click-owner simplifications; focused related cases, production build and native-browser run repeated after those changes."
+  },
+  "emittedCodeChanges": [
+    "src/main.js",
+    "src/game/match.js",
+    "src/ui/menus.js",
+    "styles/ui.css"
+  ],
+  "revisionOnlyInkVolumeManifests": [
+    "hissen-fallback",
+    "roller",
+    "shooter"
+  ],
+  "limits": [
+    "Software WebGL: no physical-device FPS, battery or startup-speed claim.",
+    "Gamepad accept route tested; no physical controller used.",
+    "Local native LFS payloads unavailable: existing browser conversion fallback used.",
+    "Hosted CI, main merge and Pages deployment states are recorded separately by GitHub."
+  ]
+}

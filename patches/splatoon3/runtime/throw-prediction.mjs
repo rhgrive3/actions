@@ -234,12 +234,6 @@ export function installThrowPrediction(api) {
       || (!show && !actor.specialActive)) {
       hide(this); return;
     }
-    // Curling travels as a grounded puck: its native owner draws neither a
-    // parabolic guide nor a predicted explosion marker. Retain the pure
-    // prediction API for callers that need it, but do not render that guide.
-    if (!actor.specialActive && actor.weapon?.sub === 'curling') {
-      hide(this); return;
-    }
     // Read the same readiness owner on every rendered frame. A committed throw
     // or a roll transition must disappear immediately, without retracing flight.
     if (actor.specialActive && this.s3CanPredictSpecialTrajectory?.(actor) === false) {

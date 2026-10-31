@@ -86,8 +86,10 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   // and barycentric implementation, against Three's independent triangle API.
   const checkOpt = (p, tolerance = 0.002) => subject.containsOnFace(face, p, tolerance);
 
+  const samples = [];
   for (let i = 0; i < 2000; i++) {
     const p = new THREE.Vector3(rnd() * 26 - 1, (rnd() - 0.5) * 0.2, rnd() * 26 - 1);
+    samples.push(p);
     assert.equal(checkOpt(p), checkRef(p), `mismatch at sample ${i}`);
   }
   for (const id of face.triangles) {
@@ -96,6 +98,13 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
     for (const p of boundaries) assert.equal(checkOpt(p),checkRef(p),'exact triangle vertex/edge boundary');
   }
   assert.ok(triCallsOpt < triCallsRef * 0.1, `expected >90% reduction in triangle containsPoint calls, got ${triCallsOpt} vs ${triCallsRef}`);
+  // Assert that a broken production acceptance is rejected by the independent Three oracle.
+  const methodSource = NativeLevel.prototype.containsOnFace.toString();
+  assert.equal(methodSource.split('return true;').length, 2, 'one positive production acceptance');
+  const tampered = new Function('return ({' + methodSource.replace('return true;', 'return false;') + '}).containsOnFace;')();
+  assert.throws(() => {
+    for (const p of samples) assert.equal(tampered.call(subject, face, p, 0.002), checkRef(p), 'tampered production triangle acceptance');
+  }, /tampered production triangle acceptance/);
 });
 
 test('NAT-02 TriangleWorld.resolveCapsule returns a stable independently owned normal', () => {

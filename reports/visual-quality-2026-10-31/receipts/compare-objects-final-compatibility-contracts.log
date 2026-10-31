@@ -1,0 +1,23 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/8a58d9a6baf6/iw/inkwave-public/src/game/character.js:595:39)
+    at new FixedCharacter (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:100:64)
+    at new Actor (/workspace/scratch/8a58d9a6baf6/iw/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:101:17)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:264848) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Clam compatibility preserves the complete immutable body and copies only the reviewed genuine forecast definitions (11.591592ms)
+✔ Clam historical carry, real rule events and release timelines never call the forecast compatibility exports (8290.424928ms)
+ℹ {"historicalSha256":"ae3fb4d73f970e335a622ad76f17ac0b5b860924d39eb76a485958333861374c","weapons":["shooter","dualies"],"frames":184,"releases":2,"comparisonCalls":{"stormThrowPosition":0,"bombPredictionPosition":0}}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8852.646772

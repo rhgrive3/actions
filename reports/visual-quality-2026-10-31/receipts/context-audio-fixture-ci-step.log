@@ -1,0 +1,1880 @@
+TAP version 13
+# Subtest: complete production composition preserves fixed-clock and delayed-reset pause owners
+ok 1 - complete production composition preserves fixed-clock and delayed-reset pause owners
+  ---
+  duration_ms: 185.764912
+  type: 'test'
+  ...
+# Subtest: missing or duplicate attract method remains a fail-closed composition error
+ok 2 - missing or duplicate attract method remains a fail-closed composition error
+  ---
+  duration_ms: 63.560151
+  type: 'test'
+  ...
+# Subtest: missing delayed reset cannot silently drop its existing match and flow owner
+ok 3 - missing delayed reset cannot silently drop its existing match and flow owner
+  ---
+  duration_ms: 7.786977
+  type: 'test'
+  ...
+# (node:266824) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: warm stale stops detached work and cleans once
+ok 4 - warm stale stops detached work and cleans once
+  ---
+  duration_ms: 14.504532
+  type: 'test'
+  ...
+# Subtest: warm abort stops detached work and cleans once
+ok 5 - warm abort stops detached work and cleans once
+  ---
+  duration_ms: 4.003098
+  type: 'test'
+  ...
+# Subtest: frame stale stops detached work and cleans once
+ok 6 - frame stale stops detached work and cleans once
+  ---
+  duration_ms: 4.107546
+  type: 'test'
+  ...
+# Subtest: frame abort stops detached work and cleans once
+ok 7 - frame abort stops detached work and cleans once
+  ---
+  duration_ms: 8.519469
+  type: 'test'
+  ...
+# Subtest: successful publish and explicit release retain existing ownership
+ok 8 - successful publish and explicit release retain existing ownership
+  ---
+  duration_ms: 4.444012
+  type: 'test'
+  ...
+# Subtest: new build aborts warm old build without releasing new world
+ok 9 - new build aborts warm old build without releasing new world
+  ---
+  duration_ms: 5.871622
+  type: 'test'
+  ...
+# Subtest: compile rejection preserves primary error and detached cleanup
+ok 10 - compile rejection preserves primary error and detached cleanup
+  ---
+  duration_ms: 3.645179
+  type: 'test'
+  ...
+# Subtest: stage shader warm-up precedes publication and an abort during it cleans the candidate
+ok 11 - stage shader warm-up precedes publication and an abort during it cleans the candidate
+  ---
+  duration_ms: 4.560548
+  type: 'test'
+  ...
+# Subtest: native stage compile rejection releases detached geometry without publication
+ok 12 - native stage compile rejection releases detached geometry without publication
+  ---
+  duration_ms: 3.270464
+  type: 'test'
+  ...
+# Subtest: context loss is recorded during a live detached build but not after cancellation or stale generation
+ok 13 - context loss is recorded during a live detached build but not after cancellation or stale generation
+  ---
+  duration_ms: 10.077895
+  type: 'test'
+  ...
+# RECOVERY_JOINT_RECEIPT {"lane":"source","stageRuntimeSha256":"06a2eb39b732f7b20bf6c36e993a5e6228e3817bfa223ba32241320b45c7c1e5","rows":[{"hz":30,"failedRecovery":false,"originalError":"shadow injected","recoveryMessages":[],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1},"matchTime":178.9999999999992,"gameTime":1.0000000000000013,"paintSteps":60,"paused":false,"menu":null,"ordinaryUnfreezeBypassRejected":false},{"hz":30,"failedRecovery":true,"originalError":"shadow injected","recoveryMessages":["real rollback activation failed"],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1},"matchTime":180,"gameTime":0,"paintSteps":0,"paused":true,"menu":"pause","ordinaryUnfreezeBypassRejected":true},{"hz":60,"failedRecovery":false,"originalError":"shadow injected","recoveryMessages":[],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1},"matchTime":178.9999999999992,"gameTime":1.0000000000000013,"paintSteps":60,"paused":false,"menu":null,"ordinaryUnfreezeBypassRejected":false},{"hz":60,"failedRecovery":true,"originalError":"shadow injected","recoveryMessages":["real rollback activation failed"],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1},"matchTime":180,"gameTime":0,"paintSteps":0,"paused":true,"menu":"pause","ordinaryUnfreezeBypassRejected":true},{"hz":120,"failedRecovery":false,"originalError":"shadow injected","recoveryMessages":[],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1},"matchTime":178.9999999999992,"gameTime":1.0000000000000013,"paintSteps":60,"paused":false,"menu":null,"ordinaryUnfreezeBypassRejected":false},{"hz":120,"failedRecovery":true,"originalError":"shadow injected","recoveryMessages":["real rollback activation failed"],"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1},"matchTime":180,"gameTime":0,"paintSteps":0,"paused":true,"menu":"pause","ordinaryUnfreezeBypassRejected":true}],"scope":"Actual stage rollback feeds real Match/clock; synthetic GPU resources. Emitted Game uses the separate native app lane."}
+# (node:266825) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real stage successful rollback to real clock 30Hz
+ok 14 - real stage successful rollback to real clock 30Hz
+  ---
+  duration_ms: 18.663698
+  type: 'test'
+  ...
+# Subtest: real stage failed rollback to real clock 30Hz
+ok 15 - real stage failed rollback to real clock 30Hz
+  ---
+  duration_ms: 4.525646
+  type: 'test'
+  ...
+# Subtest: real stage successful rollback to real clock 60Hz
+ok 16 - real stage successful rollback to real clock 60Hz
+  ---
+  duration_ms: 5.521256
+  type: 'test'
+  ...
+# Subtest: real stage failed rollback to real clock 60Hz
+ok 17 - real stage failed rollback to real clock 60Hz
+  ---
+  duration_ms: 3.803939
+  type: 'test'
+  ...
+# Subtest: real stage successful rollback to real clock 120Hz
+ok 18 - real stage successful rollback to real clock 120Hz
+  ---
+  duration_ms: 5.506993
+  type: 'test'
+  ...
+# Subtest: real stage failed rollback to real clock 120Hz
+ok 19 - real stage failed rollback to real clock 120Hz
+  ---
+  duration_ms: 3.948917
+  type: 'test'
+  ...
+# Subtest: actual composed startMatch recoverable failure returns to retry menu
+ok 20 - actual composed startMatch recoverable failure returns to retry menu
+  ---
+  duration_ms: 6.418616
+  type: 'test'
+  ...
+# Subtest: actual composed startMatch fatal stops without attract
+ok 21 - actual composed startMatch fatal stops without attract
+  ---
+  duration_ms: 1.584096
+  type: 'test'
+  ...
+# Subtest: actual composed startMatch does not swallow non-native build failure
+ok 22 - actual composed startMatch does not swallow non-native build failure
+  ---
+  duration_ms: 1.941654
+  type: 'test'
+  ...
+# Subtest: actual offline startup intentionally adopts null during world loading
+ok 23 - actual offline startup intentionally adopts null during world loading
+  ---
+  duration_ms: 2.641879
+  type: 'test'
+  ...
+# Subtest: actual offline disposal new-flow-and-match cannot be cleared by old startup
+ok 24 - actual offline disposal new-flow-and-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.507781
+  type: 'test'
+  ...
+# Subtest: actual offline disposal match cannot be cleared by old startup
+ok 25 - actual offline disposal match cannot be cleared by old startup
+  ---
+  duration_ms: 2.098931
+  type: 'test'
+  ...
+# Subtest: actual offline disposal room cannot be cleared by old startup
+ok 26 - actual offline disposal room cannot be cleared by old startup
+  ---
+  duration_ms: 1.235982
+  type: 'test'
+  ...
+# Subtest: actual offline disposal net cannot be cleared by old startup
+ok 27 - actual offline disposal net cannot be cleared by old startup
+  ---
+  duration_ms: 1.406397
+  type: 'test'
+  ...
+# Subtest: actual offline disposal net-match cannot be cleared by old startup
+ok 28 - actual offline disposal net-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.283863
+  type: 'test'
+  ...
+# Subtest: actual offline disposal session-match cannot be cleared by old startup
+ok 29 - actual offline disposal session-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.138936
+  type: 'test'
+  ...
+# Subtest: actual offline fade cancellation leaves the newer owner intact
+ok 30 - actual offline fade cancellation leaves the newer owner intact
+  ---
+  duration_ms: 1.404676
+  type: 'test'
+  ...
+# Subtest: actual online startup intentionally adopts null during world loading
+ok 31 - actual online startup intentionally adopts null during world loading
+  ---
+  duration_ms: 2.032271
+  type: 'test'
+  ...
+# Subtest: actual online disposal new-flow-and-match cannot be cleared by old startup
+ok 32 - actual online disposal new-flow-and-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.06911
+  type: 'test'
+  ...
+# Subtest: actual online disposal match cannot be cleared by old startup
+ok 33 - actual online disposal match cannot be cleared by old startup
+  ---
+  duration_ms: 1.05563
+  type: 'test'
+  ...
+# Subtest: actual online disposal room cannot be cleared by old startup
+ok 34 - actual online disposal room cannot be cleared by old startup
+  ---
+  duration_ms: 1.05561
+  type: 'test'
+  ...
+# Subtest: actual online disposal net cannot be cleared by old startup
+ok 35 - actual online disposal net cannot be cleared by old startup
+  ---
+  duration_ms: 1.216362
+  type: 'test'
+  ...
+# Subtest: actual online disposal net-match cannot be cleared by old startup
+ok 36 - actual online disposal net-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.212696
+  type: 'test'
+  ...
+# Subtest: actual online disposal session-match cannot be cleared by old startup
+ok 37 - actual online disposal session-match cannot be cleared by old startup
+  ---
+  duration_ms: 1.099726
+  type: 'test'
+  ...
+# Subtest: actual online fade cancellation leaves the newer owner intact
+ok 38 - actual online fade cancellation leaves the newer owner intact
+  ---
+  duration_ms: 1.025865
+  type: 'test'
+  ...
+# Subtest: actual Game loop with frozen fatal page never advances or renders before common core patch
+ok 39 - actual Game loop with frozen fatal page never advances or renders before common core patch
+  ---
+  duration_ms: 1.60709
+  type: 'test'
+  ...
+# (node:266832) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: terminal stage dialog is unique, manual reload only, and publishes shared overlay latch
+ok 40 - terminal stage dialog is unique, manual reload only, and publishes shared overlay latch
+  ---
+  duration_ms: 3.754363
+  type: 'test'
+  ...
+# Subtest: existing WebGL recovery dialog is reused without replacement or duplicate reload handlers
+ok 41 - existing WebGL recovery dialog is reused without replacement or duplicate reload handlers
+  ---
+  duration_ms: 1.403944
+  type: 'test'
+  ...
+# Subtest: DOM-free recovery retains terminal latch without requiring renderer or browser
+ok 42 - DOM-free recovery retains terminal latch without requiring renderer or browser
+  ---
+  duration_ms: 1.150202
+  type: 'test'
+  ...
+# RECOVERY_RECEIPT {"runtimeSha256":"06a2eb39b732f7b20bf6c36e993a5e6228e3817bfa223ba32241320b45c7c1e5","lane":"source","rows":[{"name":"recoverable-shadow","error":"shadow injected","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"recoverable-env","error":"env injected","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"recoverable-palette","error":"palette injected","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"recoverable-minimap","error":"minimap injected","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"rollback-minimap","error":"shadow injected","fatal":true,"frozen":true,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1}},{"name":"dock-double-allocation","error":"dock publish failure","fatal":true,"frozen":true,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1},"calls":2,"geometryDisposes":2,"materialDisposes":2,"meshDisposes":2,"deadEnvironmentReferenceRemains":true,"scope":"Terminal freeze, not Environment transaction repair"},{"name":"four-recovery-faults","error":"shadow injected","fatal":true,"frozen":true,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1},"recoveryMessages":["minimap restore failed","env restore failed","shadow injected","palette injected"]},{"name":"candidate-disposal-faults","error":"shadow injected","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"dialog-and-status-faults","error":"shadow injected","fatal":true,"frozen":true,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1}},{"name":"successful-commit-status-close","fatal":false,"frozen":false,"counters":{"old":3,"newPaint":0,"newDisplay":0,"newMesh":0,"oldMinimapActive":0,"newMinimapActive":1,"statusClose":1}},{"name":"publication-cancel","fatal":false,"frozen":false,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":1,"newMinimapActive":0,"newMat":1,"statusClose":1}},{"name":"cancelled-fatal-recovery","fatal":true,"frozen":true,"counters":{"old":0,"newPaint":1,"newDisplay":1,"newMesh":1,"oldMinimapActive":0,"newMinimapActive":0,"newMat":1,"dialog":1,"statusClose":1}}],"scope":"Exact selected production modules with synthetic allocation/rollback failures; no GPU-device validation"}
+# (node:266838) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: touch profile reaches native loader before expensive source conversion
+ok 43 - touch profile reaches native loader before expensive source conversion
+  ---
+  duration_ms: 10.31279
+  type: 'test'
+  ...
+# Subtest: recoverable shadow failure retains old world and retry
+ok 44 - recoverable shadow failure retains old world and retry
+  ---
+  duration_ms: 6.221839
+  type: 'test'
+  ...
+# Subtest: recoverable env failure retains old world and retry
+ok 45 - recoverable env failure retains old world and retry
+  ---
+  duration_ms: 6.303803
+  type: 'test'
+  ...
+# Subtest: recoverable palette failure retains old world and retry
+ok 46 - recoverable palette failure retains old world and retry
+  ---
+  duration_ms: 6.500538
+  type: 'test'
+  ...
+# Subtest: recoverable minimap failure retains old world and retry
+ok 47 - recoverable minimap failure retains old world and retry
+  ---
+  duration_ms: 4.144611
+  type: 'test'
+  ...
+# Subtest: rollback minimap fault preserves original error and independently cleans candidate
+ok 48 - rollback minimap fault preserves original error and independently cleans candidate
+  ---
+  duration_ms: 3.816878
+  type: 'test'
+  ...
+# Subtest: actual nontransactional dock rebuild double failure becomes terminal
+ok 49 - actual nontransactional dock rebuild double failure becomes terminal
+  ---
+  duration_ms: 51.166495
+  type: 'test'
+  ...
+# Subtest: all recovery operations attempted and original error retained
+ok 50 - all recovery operations attempted and original error retained
+  ---
+  duration_ms: 5.467875
+  type: 'test'
+  ...
+# Subtest: candidate disposal failures do not skip siblings or replace original error
+ok 51 - candidate disposal failures do not skip siblings or replace original error
+  ---
+  duration_ms: 3.551148
+  type: 'test'
+  ...
+# Subtest: dialog and loading-status errors cannot replace original publication error
+ok 52 - dialog and loading-status errors cannot replace original publication error
+  ---
+  duration_ms: 5.963631
+  type: 'test'
+  ...
+# Subtest: status close failure after successful commit does not roll back or reject live world
+ok 53 - status close failure after successful commit does not roll back or reject live world
+  ---
+  duration_ms: 3.18739
+  type: 'test'
+  ...
+# Subtest: publication cancellation cleans candidate, preserves old playable world
+ok 54 - publication cancellation cleans candidate, preserves old playable world
+  ---
+  duration_ms: 2.810263
+  type: 'test'
+  ...
+# Subtest: cancelled flow with failed recovery still latches terminal state
+ok 55 - cancelled flow with failed recovery still latches terminal state
+  ---
+  duration_ms: 2.993338
+  type: 'test'
+  ...
+# (node:266844) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: assembly failure retains original exception and releases pending textures
+ok 56 - assembly failure retains original exception and releases pending textures
+  ---
+  duration_ms: 16.889876
+  type: 'test'
+  ...
+# Subtest: superseded level leaves untransferred textures with their caller
+ok 57 - superseded level leaves untransferred textures with their caller
+  ---
+  duration_ms: 7.412303
+  type: 'test'
+  ...
+# Subtest: stale display releases transferred textures once
+ok 58 - stale display releases transferred textures once
+  ---
+  duration_ms: 7.121725
+  type: 'test'
+  ...
+# Subtest: negative proof: raw online startup disposes a newer match after the first fade
+ok 59 - negative proof: raw online startup disposes a newer match after the first fade
+  ---
+  duration_ms: 6.083191
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed match
+ok 60 - offline fade completion stops after changed match
+  ---
+  duration_ms: 3.115302
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed null match
+ok 61 - offline fade completion stops after changed null match
+  ---
+  duration_ms: 1.300528
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed transport
+ok 62 - offline fade completion stops after changed transport
+  ---
+  duration_ms: 1.574652
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed session
+ok 63 - offline fade completion stops after changed session
+  ---
+  duration_ms: 1.435242
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed network match
+ok 64 - offline fade completion stops after changed network match
+  ---
+  duration_ms: 3.187711
+  type: 'test'
+  ...
+# Subtest: offline fade completion stops after changed session match
+ok 65 - offline fade completion stops after changed session match
+  ---
+  duration_ms: 1.157864
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed match
+ok 66 - offline boss completion stops after changed match
+  ---
+  duration_ms: 1.605388
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed null match
+ok 67 - offline boss completion stops after changed null match
+  ---
+  duration_ms: 3.179678
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed transport
+ok 68 - offline boss completion stops after changed transport
+  ---
+  duration_ms: 1.558527
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed session
+ok 69 - offline boss completion stops after changed session
+  ---
+  duration_ms: 1.350193
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed network match
+ok 70 - offline boss completion stops after changed network match
+  ---
+  duration_ms: 1.272336
+  type: 'test'
+  ...
+# Subtest: offline boss completion stops after changed session match
+ok 71 - offline boss completion stops after changed session match
+  ---
+  duration_ms: 2.182807
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed match
+ok 72 - offline world completion stops after changed match
+  ---
+  duration_ms: 1.750365
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed null match
+ok 73 - offline world completion stops after changed null match
+  ---
+  duration_ms: 1.400629
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed transport
+ok 74 - offline world completion stops after changed transport
+  ---
+  duration_ms: 7.913097
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed session
+ok 75 - offline world completion stops after changed session
+  ---
+  duration_ms: 1.293819
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed network match
+ok 76 - offline world completion stops after changed network match
+  ---
+  duration_ms: 1.240268
+  type: 'test'
+  ...
+# Subtest: offline world completion stops after changed session match
+ok 77 - offline world completion stops after changed session match
+  ---
+  duration_ms: 1.247629
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed match
+ok 78 - offline warm completion stops after changed match
+  ---
+  duration_ms: 1.48737
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed null match
+ok 79 - offline warm completion stops after changed null match
+  ---
+  duration_ms: 1.556924
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed transport
+ok 80 - offline warm completion stops after changed transport
+  ---
+  duration_ms: 1.730767
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed session
+ok 81 - offline warm completion stops after changed session
+  ---
+  duration_ms: 1.25489
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed network match
+ok 82 - offline warm completion stops after changed network match
+  ---
+  duration_ms: 1.040897
+  type: 'test'
+  ...
+# Subtest: offline warm completion stops after changed session match
+ok 83 - offline warm completion stops after changed session match
+  ---
+  duration_ms: 1.154539
+  type: 'test'
+  ...
+# Subtest: offline ordinary startup preserves call sequence and delivery
+ok 84 - offline ordinary startup preserves call sequence and delivery
+  ---
+  duration_ms: 3.6525
+  type: 'test'
+  ...
+# Subtest: offline active fade error is propagated
+ok 85 - offline active fade error is propagated
+  ---
+  duration_ms: 1.87921
+  type: 'test'
+  ...
+# Subtest: offline active boss error is propagated
+ok 86 - offline active boss error is propagated
+  ---
+  duration_ms: 1.129451
+  type: 'test'
+  ...
+# Subtest: offline active world error is propagated
+ok 87 - offline active world error is propagated
+  ---
+  duration_ms: 1.238055
+  type: 'test'
+  ...
+# Subtest: offline active warm error is propagated
+ok 88 - offline active warm error is propagated
+  ---
+  duration_ms: 1.535973
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed match
+ok 89 - online fade completion stops after changed match
+  ---
+  duration_ms: 0.984032
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed null match
+ok 90 - online fade completion stops after changed null match
+  ---
+  duration_ms: 0.76963
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed transport
+ok 91 - online fade completion stops after changed transport
+  ---
+  duration_ms: 0.807597
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed session
+ok 92 - online fade completion stops after changed session
+  ---
+  duration_ms: 0.984493
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed network match
+ok 93 - online fade completion stops after changed network match
+  ---
+  duration_ms: 0.683159
+  type: 'test'
+  ...
+# Subtest: online fade completion stops after changed session match
+ok 94 - online fade completion stops after changed session match
+  ---
+  duration_ms: 0.780575
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed match
+ok 95 - online boss completion stops after changed match
+  ---
+  duration_ms: 0.836329
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed null match
+ok 96 - online boss completion stops after changed null match
+  ---
+  duration_ms: 0.721637
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed transport
+ok 97 - online boss completion stops after changed transport
+  ---
+  duration_ms: 0.847426
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed session
+ok 98 - online boss completion stops after changed session
+  ---
+  duration_ms: 0.674466
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed network match
+ok 99 - online boss completion stops after changed network match
+  ---
+  duration_ms: 0.718742
+  type: 'test'
+  ...
+# Subtest: online boss completion stops after changed session match
+ok 100 - online boss completion stops after changed session match
+  ---
+  duration_ms: 0.784201
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed match
+ok 101 - online world completion stops after changed match
+  ---
+  duration_ms: 0.843381
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed null match
+ok 102 - online world completion stops after changed null match
+  ---
+  duration_ms: 0.828398
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed transport
+ok 103 - online world completion stops after changed transport
+  ---
+  duration_ms: 0.742488
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed session
+ok 104 - online world completion stops after changed session
+  ---
+  duration_ms: 0.702288
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed network match
+ok 105 - online world completion stops after changed network match
+  ---
+  duration_ms: 0.784231
+  type: 'test'
+  ...
+# Subtest: online world completion stops after changed session match
+ok 106 - online world completion stops after changed session match
+  ---
+  duration_ms: 0.991613
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed match
+ok 107 - online warm completion stops after changed match
+  ---
+  duration_ms: 0.87588
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed null match
+ok 108 - online warm completion stops after changed null match
+  ---
+  duration_ms: 0.903741
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed transport
+ok 109 - online warm completion stops after changed transport
+  ---
+  duration_ms: 1.066426
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed session
+ok 110 - online warm completion stops after changed session
+  ---
+  duration_ms: 0.916871
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed network match
+ok 111 - online warm completion stops after changed network match
+  ---
+  duration_ms: 1.002219
+  type: 'test'
+  ...
+# Subtest: online warm completion stops after changed session match
+ok 112 - online warm completion stops after changed session match
+  ---
+  duration_ms: 0.861648
+  type: 'test'
+  ...
+# Subtest: online ordinary startup preserves call sequence and delivery
+ok 113 - online ordinary startup preserves call sequence and delivery
+  ---
+  duration_ms: 1.993112
+  type: 'test'
+  ...
+# Subtest: online active fade error is propagated
+ok 114 - online active fade error is propagated
+  ---
+  duration_ms: 1.007147
+  type: 'test'
+  ...
+# Subtest: online active boss error is propagated
+ok 115 - online active boss error is propagated
+  ---
+  duration_ms: 0.835088
+  type: 'test'
+  ...
+# Subtest: online active world error is propagated
+ok 116 - online active world error is propagated
+  ---
+  duration_ms: 0.828568
+  type: 'test'
+  ...
+# Subtest: online active warm error is propagated
+ok 117 - online active warm error is propagated
+  ---
+  duration_ms: 0.818473
+  type: 'test'
+  ...
+# Subtest: offline start loses ownership immediately to newer online
+ok 118 - offline start loses ownership immediately to newer online
+  ---
+  duration_ms: 1.050583
+  type: 'test'
+  ...
+# Subtest: offline start loses ownership immediately to newer offline
+ok 119 - offline start loses ownership immediately to newer offline
+  ---
+  duration_ms: 0.919675
+  type: 'test'
+  ...
+# Subtest: offline start loses ownership immediately to newer quit
+ok 120 - offline start loses ownership immediately to newer quit
+  ---
+  duration_ms: 0.955859
+  type: 'test'
+  ...
+# Subtest: online start loses ownership immediately to newer online
+ok 121 - online start loses ownership immediately to newer online
+  ---
+  duration_ms: 1.240979
+  type: 'test'
+  ...
+# Subtest: online start loses ownership immediately to newer offline
+ok 122 - online start loses ownership immediately to newer offline
+  ---
+  duration_ms: 1.189031
+  type: 'test'
+  ...
+# Subtest: online start loses ownership immediately to newer quit
+ok 123 - online start loses ownership immediately to newer quit
+  ---
+  duration_ms: 0.744922
+  type: 'test'
+  ...
+# Subtest: synchronous audio re-entry cannot finish obsolete startup
+ok 124 - synchronous audio re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.74381
+  type: 'test'
+  ...
+# Subtest: synchronous menu re-entry cannot finish obsolete startup
+ok 125 - synchronous menu re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.953747
+  type: 'test'
+  ...
+# Subtest: synchronous showcase re-entry cannot finish obsolete startup
+ok 126 - synchronous showcase re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.873976
+  type: 'test'
+  ...
+# Subtest: synchronous setup re-entry cannot finish obsolete startup
+ok 127 - synchronous setup re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.985584
+  type: 'test'
+  ...
+# Subtest: synchronous bind re-entry cannot finish obsolete startup
+ok 128 - synchronous bind re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 1.047979
+  type: 'test'
+  ...
+# Subtest: synchronous start re-entry cannot finish obsolete startup
+ok 129 - synchronous start re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.899154
+  type: 'test'
+  ...
+# Subtest: synchronous palette re-entry cannot finish obsolete startup
+ok 130 - synchronous palette re-entry cannot finish obsolete startup
+  ---
+  duration_ms: 0.882349
+  type: 'test'
+  ...
+# Subtest: a stale NetMatch cannot reserve a new startup operation
+ok 131 - a stale NetMatch cannot reserve a new startup operation
+  ---
+  duration_ms: 0.897652
+  type: 'test'
+  ...
+# Subtest: ordinary offline turf start preserves changed layout behavior
+ok 132 - ordinary offline turf start preserves changed layout behavior
+  ---
+  duration_ms: 2.524012
+  type: 'test'
+  ...
+# Subtest: ordinary offline turf start preserves same layout behavior
+ok 133 - ordinary offline turf start preserves same layout behavior
+  ---
+  duration_ms: 1.911088
+  type: 'test'
+  ...
+# Subtest: ordinary online turf start preserves changed layout behavior
+ok 134 - ordinary online turf start preserves changed layout behavior
+  ---
+  duration_ms: 1.606179
+  type: 'test'
+  ...
+# Subtest: ordinary online turf start preserves same layout behavior
+ok 135 - ordinary online turf start preserves same layout behavior
+  ---
+  duration_ms: 11.996196
+  type: 'test'
+  ...
+# Subtest: ordinary quit preserves upstream delivery despite intentional leave ownership changes
+ok 136 - ordinary quit preserves upstream delivery despite intentional leave ownership changes
+  ---
+  duration_ms: 2.819756
+  type: 'test'
+  ...
+# Subtest: rejoining synchronously from room leave invalidates quit instead of adopting the new room
+ok 137 - rejoining synchronously from room leave invalidates quit instead of adopting the new room
+  ---
+  duration_ms: 1.079225
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed match
+ok 138 - quit fade does not replace changed match
+  ---
+  duration_ms: 0.977062
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed null match
+ok 139 - quit fade does not replace changed null match
+  ---
+  duration_ms: 0.795538
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed transport
+ok 140 - quit fade does not replace changed transport
+  ---
+  duration_ms: 0.807406
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed session
+ok 141 - quit fade does not replace changed session
+  ---
+  duration_ms: 0.800535
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed network match
+ok 142 - quit fade does not replace changed network match
+  ---
+  duration_ms: 0.631722
+  type: 'test'
+  ...
+# Subtest: quit fade does not replace changed session match
+ok 143 - quit fade does not replace changed session match
+  ---
+  duration_ms: 0.821788
+  type: 'test'
+  ...
+# Subtest: new startup invalidates quit and room-return fade even before creating its match
+ok 144 - new startup invalidates quit and room-return fade even before creating its match
+  ---
+  duration_ms: 2.314606
+  type: 'test'
+  ...
+# Subtest: ordinary room return preserves results-overlay behavior and rejected fade releases re-entrancy lock
+ok 145 - ordinary room return preserves results-overlay behavior and rejected fade releases re-entrancy lock
+  ---
+  duration_ms: 2.676391
+  type: 'test'
+  ...
+# Subtest: negative proof: raw old world completion overwrites a newer world and leaks its lightmap
+ok 146 - negative proof: raw old world completion overwrites a newer world and leaks its lightmap
+  ---
+  duration_ms: 2.185572
+  type: 'test'
+  ...
+# Subtest: world replacement commits latest only; old staged cleanup cannot dispose newer resources
+ok 147 - world replacement commits latest only; old staged cleanup cannot dispose newer resources
+  ---
+  duration_ms: 1.119046
+  type: 'test'
+  ...
+# Subtest: cancelled world keeps old world intact and cleans rejected detached props
+ok 148 - cancelled world keeps old world intact and cleans rejected detached props
+  ---
+  duration_ms: 0.970622
+  type: 'test'
+  ...
+# Subtest: boot world builds without an operation; newer start invalidates its pending world
+ok 149 - boot world builds without an operation; newer start invalidates its pending world
+  ---
+  duration_ms: 1.846891
+  type: 'test'
+  ...
+# Subtest: direct attract transition invalidates startup and world continuations
+ok 150 - direct attract transition invalidates startup and world continuations
+  ---
+  duration_ms: 1.002901
+  type: 'test'
+  ...
+# Subtest: returning to the already-current layout cancels an older pending replacement
+ok 151 - returning to the already-current layout cancels an older pending replacement
+  ---
+  duration_ms: 1.422352
+  type: 'test'
+  ...
+# Subtest: an already-cancelled flow cannot reserve or cancel a newer world build
+ok 152 - an already-cancelled flow cannot reserve or cancel a newer world build
+  ---
+  duration_ms: 1.190513
+  type: 'test'
+  ...
+# Subtest: selected pack loading preserves the active world on rejection and does not allocate replacement props
+ok 153 - selected pack loading preserves the active world on rejection and does not allocate replacement props
+  ---
+  duration_ms: 1.183152
+  type: 'test'
+  ...
+# Subtest: a superseded selected pack continuation cannot allocate or publish a stale replacement
+ok 154 - a superseded selected pack continuation cannot allocate or publish a stale replacement
+  ---
+  duration_ms: 1.264384
+  type: 'test'
+  ...
+# Subtest: actual upstream PropKit supports null scene and disposes detached geometry/material/texture ownership
+ok 155 - actual upstream PropKit supports null scene and disposes detached geometry/material/texture ownership
+  ---
+  duration_ms: 48.033088
+  type: 'test'
+  ...
+# Subtest: actual delayed boss warming skips disposed/superseded match and preserves active compilation
+ok 156 - actual delayed boss warming skips disposed/superseded match and preserves active compilation
+  ---
+  duration_ms: 4.544755
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old turf results escape during actual quit fade
+ok 157 - negative composition proof: old turf results escape during actual quit fade
+  ---
+  duration_ms: 4.317082
+  type: 'test'
+  ...
+# Subtest: turf result continuation stops during actual quit fade before match replacement
+ok 158 - turf result continuation stops during actual quit fade before match replacement
+  ---
+  duration_ms: 1.290384
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old turf results escape during actual offline start fade
+ok 159 - negative composition proof: old turf results escape during actual offline start fade
+  ---
+  duration_ms: 1.782204
+  type: 'test'
+  ...
+# Subtest: turf result continuation stops during actual offline start fade before match replacement
+ok 160 - turf result continuation stops during actual offline start fade before match replacement
+  ---
+  duration_ms: 1.378116
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old turf results escape during actual online start fade
+ok 161 - negative composition proof: old turf results escape during actual online start fade
+  ---
+  duration_ms: 1.431015
+  type: 'test'
+  ...
+# Subtest: turf result continuation stops during actual online start fade before match replacement
+ok 162 - turf result continuation stops during actual online start fade before match replacement
+  ---
+  duration_ms: 1.235901
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old turf results escape during actual room return fade
+ok 163 - negative composition proof: old turf results escape during actual room return fade
+  ---
+  duration_ms: 1.501402
+  type: 'test'
+  ...
+# Subtest: turf result continuation stops during actual room return fade before match replacement
+ok 164 - turf result continuation stops during actual room return fade before match replacement
+  ---
+  duration_ms: 1.243923
+  type: 'test'
+  ...
+# Subtest: normal turf results preserve scoring/delivery with absent operation generation
+ok 165 - normal turf results preserve scoring/delivery with absent operation generation
+  ---
+  duration_ms: 2.404191
+  type: 'test'
+  ...
+# Subtest: normal turf results preserve scoring/delivery with existing operation generation
+ok 166 - normal turf results preserve scoring/delivery with existing operation generation
+  ---
+  duration_ms: 2.4308
+  type: 'test'
+  ...
+# Subtest: turf delayed callbacks stop during actual quit fade
+ok 167 - turf delayed callbacks stop during actual quit fade
+  ---
+  duration_ms: 1.450684
+  type: 'test'
+  ...
+# Subtest: turf delayed callbacks stop during actual offline start fade
+ok 168 - turf delayed callbacks stop during actual offline start fade
+  ---
+  duration_ms: 1.554531
+  type: 'test'
+  ...
+# Subtest: turf delayed callbacks stop during actual online start fade
+ok 169 - turf delayed callbacks stop during actual online start fade
+  ---
+  duration_ms: 1.505367
+  type: 'test'
+  ...
+# Subtest: turf delayed callbacks stop during actual room return fade
+ok 170 - turf delayed callbacks stop during actual room return fade
+  ---
+  duration_ms: 1.128479
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old boss results escape during actual quit fade
+ok 171 - negative composition proof: old boss results escape during actual quit fade
+  ---
+  duration_ms: 1.484847
+  type: 'test'
+  ...
+# Subtest: boss result continuation stops during actual quit fade before match replacement
+ok 172 - boss result continuation stops during actual quit fade before match replacement
+  ---
+  duration_ms: 1.276242
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old boss results escape during actual offline start fade
+ok 173 - negative composition proof: old boss results escape during actual offline start fade
+  ---
+  duration_ms: 1.077673
+  type: 'test'
+  ...
+# Subtest: boss result continuation stops during actual offline start fade before match replacement
+ok 174 - boss result continuation stops during actual offline start fade before match replacement
+  ---
+  duration_ms: 1.234459
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old boss results escape during actual online start fade
+ok 175 - negative composition proof: old boss results escape during actual online start fade
+  ---
+  duration_ms: 1.51401
+  type: 'test'
+  ...
+# Subtest: boss result continuation stops during actual online start fade before match replacement
+ok 176 - boss result continuation stops during actual online start fade before match replacement
+  ---
+  duration_ms: 1.331886
+  type: 'test'
+  ...
+# Subtest: negative composition proof: old boss results escape during actual room return fade
+ok 177 - negative composition proof: old boss results escape during actual room return fade
+  ---
+  duration_ms: 1.337764
+  type: 'test'
+  ...
+# Subtest: boss result continuation stops during actual room return fade before match replacement
+ok 178 - boss result continuation stops during actual room return fade before match replacement
+  ---
+  duration_ms: 1.689885
+  type: 'test'
+  ...
+# Subtest: normal boss results preserve scoring/delivery with absent operation generation
+ok 179 - normal boss results preserve scoring/delivery with absent operation generation
+  ---
+  duration_ms: 2.691493
+  type: 'test'
+  ...
+# Subtest: normal boss results preserve scoring/delivery with existing operation generation
+ok 180 - normal boss results preserve scoring/delivery with existing operation generation
+  ---
+  duration_ms: 2.803092
+  type: 'test'
+  ...
+# Subtest: boss delayed callbacks stop during actual quit fade
+ok 181 - boss delayed callbacks stop during actual quit fade
+  ---
+  duration_ms: 1.462663
+  type: 'test'
+  ...
+# Subtest: boss delayed callbacks stop during actual offline start fade
+ok 182 - boss delayed callbacks stop during actual offline start fade
+  ---
+  duration_ms: 1.585638
+  type: 'test'
+  ...
+# Subtest: boss delayed callbacks stop during actual online start fade
+ok 183 - boss delayed callbacks stop during actual online start fade
+  ---
+  duration_ms: 1.559699
+  type: 'test'
+  ...
+# Subtest: boss delayed callbacks stop during actual room return fade
+ok 184 - boss delayed callbacks stop during actual room return fade
+  ---
+  duration_ms: 1.477895
+  type: 'test'
+  ...
+# Subtest: normal same-generation turf results still play their music
+ok 185 - normal same-generation turf results still play their music
+  ---
+  duration_ms: 1.405116
+  type: 'test'
+  ...
+# Subtest: actual lightmap loader finishing fetch after world replacement disposes only old texture
+ok 186 - actual lightmap loader finishing fetch after world replacement disposes only old texture
+  ---
+  duration_ms: 1.703977
+  type: 'test'
+  ...
+# Subtest: actual lightmap loader finishing metadata after world replacement disposes only old texture
+ok 187 - actual lightmap loader finishing metadata after world replacement disposes only old texture
+  ---
+  duration_ms: 1.194298
+  type: 'test'
+  ...
+# Subtest: actual lightmap loader finishing PNG after world replacement disposes only old texture
+ok 188 - actual lightmap loader finishing PNG after world replacement disposes only old texture
+  ---
+  duration_ms: 1.234269
+  type: 'test'
+  ...
+# Subtest: start adapter is fail-closed, requires results predecessor and leaves unrelated modules unchanged
+ok 189 - start adapter is fail-closed, requires results predecessor and leaves unrelated modules unchanged
+  ---
+  duration_ms: 39.540778
+  type: 'test'
+  ...
+# Subtest: \#1184 real menu API recovers current audioReady rejection and permits retry
+ok 190 - \#1184 real menu API recovers current audioReady rejection and permits retry
+  ---
+  duration_ms: 6.990017
+  type: 'test'
+  ...
+# Subtest: \#1184 real menu API recovers current boss rejection and permits retry
+ok 191 - \#1184 real menu API recovers current boss rejection and permits retry
+  ---
+  duration_ms: 3.046688
+  type: 'test'
+  ...
+# Subtest: \#1184 real menu API recovers current world rejection and permits retry
+ok 192 - \#1184 real menu API recovers current world rejection and permits retry
+  ---
+  duration_ms: 2.933528
+  type: 'test'
+  ...
+# Subtest: \#1184 real menu API recovers current warm rejection and permits retry
+ok 193 - \#1184 real menu API recovers current warm rejection and permits retry
+  ---
+  duration_ms: 2.711073
+  type: 'test'
+  ...
+# Subtest: \#1184 negative control: the old real menu entry propagates rejection and never uncovers or restores its menu
+ok 194 - \#1184 negative control: the old real menu entry propagates rejection and never uncovers or restores its menu
+  ---
+  duration_ms: 2.162066
+  type: 'test'
+  ...
+# Subtest: \#1184 stale rejection cannot replace a newer retry
+ok 195 - \#1184 stale rejection cannot replace a newer retry
+  ---
+  duration_ms: 2.744393
+  type: 'test'
+  ...
+# Subtest: \#1184 stale rejection cannot replace a newer quit
+ok 196 - \#1184 stale rejection cannot replace a newer quit
+  ---
+  duration_ms: 1.645417
+  type: 'test'
+  ...
+# Subtest: \#1184 synchronous re-entry and throw cannot give old UI recovery ownership of the replacement
+ok 197 - \#1184 synchronous re-entry and throw cannot give old UI recovery ownership of the replacement
+  ---
+  duration_ms: 2.781969
+  type: 'test'
+  ...
+# Subtest: \#1184 repeated current failures each recover once and leave the main menu usable
+ok 198 - \#1184 repeated current failures each recover once and leave the main menu usable
+  ---
+  duration_ms: 5.455106
+  type: 'test'
+  ...
+# Subtest: \#1184 actual Boss loader retries rejected acquisition while coalescing pending/successful loads
+ok 199 - \#1184 actual Boss loader retries rejected acquisition while coalescing pending/successful loads
+  ---
+  duration_ms: 1.895485
+  type: 'test'
+  ...
+# Subtest: \#1184 final loading-cache instrumentation still records the real menu attempt and only successful readiness
+ok 200 - \#1184 final loading-cache instrumentation still records the real menu attempt and only successful readiness
+  ---
+  duration_ms: 103.003554
+  type: 'test'
+  ...
+# Subtest: recorded audio readiness holds the real menu startup before boss loading
+ok 201 - recorded audio readiness holds the real menu startup before boss loading
+  ---
+  duration_ms: 2.259462
+  type: 'test'
+  ...
+# Subtest: negative control: missing recorded-audio contract recovers before boss startup
+ok 202 - negative control: missing recorded-audio contract recovers before boss startup
+  ---
+  duration_ms: 2.050257
+  type: 'test'
+  ...
+# Subtest: negative control: old menu entry propagates recorded-audio rejection without recovery
+ok 203 - negative control: old menu entry propagates recorded-audio rejection without recovery
+  ---
+  duration_ms: 1.946742
+  type: 'test'
+  ...
+# Subtest: result rematch recovers world rejection and permits retry
+ok 204 - result rematch recovers world rejection and permits retry
+  ---
+  duration_ms: 2.752996
+  type: 'test'
+  ...
+# Subtest: result rematch recovers warm rejection and permits retry
+ok 205 - result rematch recovers warm rejection and permits retry
+  ---
+  duration_ms: 1.93913
+  type: 'test'
+  ...
+# Subtest: late failed rematch cannot overwrite newer successful retry
+ok 206 - late failed rematch cannot overwrite newer successful retry
+  ---
+  duration_ms: 2.641127
+  type: 'test'
+  ...
+# Subtest: direct core start still rejects instead of consuming caller error
+ok 207 - direct core start still rejects instead of consuming caller error
+  ---
+  duration_ms: 1.255721
+  type: 'test'
+  ...
+# Subtest: real rematch API preserves exact last options and returned promise
+ok 208 - real rematch API preserves exact last options and returned promise
+  ---
+  duration_ms: 1.907432
+  type: 'test'
+  ...
+# (node:266878) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual fixed Clock 30Hz: live attract still advances and paints
+ok 209 - actual fixed Clock 30Hz: live attract still advances and paints
+  ---
+  duration_ms: 10.460313
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 30Hz: paused attract cannot cross the reset boundary
+ok 210 - actual fixed Clock 30Hz: paused attract cannot cross the reset boundary
+  ---
+  duration_ms: 0.696269
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 30Hz: terminal context blocks even unpaused attract
+ok 211 - actual fixed Clock 30Hz: terminal context blocks even unpaused attract
+  ---
+  duration_ms: 1.164084
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 30Hz: terminal native-world blocks even unpaused attract
+ok 212 - actual fixed Clock 30Hz: terminal native-world blocks even unpaused attract
+  ---
+  duration_ms: 0.201504
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 30Hz: a previously queued attract fade cannot restart after pause
+ok 213 - actual fixed Clock 30Hz: a previously queued attract fade cannot restart after pause
+  ---
+  duration_ms: 0.476548
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 60Hz: live attract still advances and paints
+ok 214 - actual fixed Clock 60Hz: live attract still advances and paints
+  ---
+  duration_ms: 1.2949
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 60Hz: paused attract cannot cross the reset boundary
+ok 215 - actual fixed Clock 60Hz: paused attract cannot cross the reset boundary
+  ---
+  duration_ms: 0.387574
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 60Hz: terminal context blocks even unpaused attract
+ok 216 - actual fixed Clock 60Hz: terminal context blocks even unpaused attract
+  ---
+  duration_ms: 0.176486
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 60Hz: terminal native-world blocks even unpaused attract
+ok 217 - actual fixed Clock 60Hz: terminal native-world blocks even unpaused attract
+  ---
+  duration_ms: 0.278129
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 60Hz: a previously queued attract fade cannot restart after pause
+ok 218 - actual fixed Clock 60Hz: a previously queued attract fade cannot restart after pause
+  ---
+  duration_ms: 0.408115
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 120Hz: live attract still advances and paints
+ok 219 - actual fixed Clock 120Hz: live attract still advances and paints
+  ---
+  duration_ms: 1.212235
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 120Hz: paused attract cannot cross the reset boundary
+ok 220 - actual fixed Clock 120Hz: paused attract cannot cross the reset boundary
+  ---
+  duration_ms: 0.366051
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 120Hz: terminal context blocks even unpaused attract
+ok 221 - actual fixed Clock 120Hz: terminal context blocks even unpaused attract
+  ---
+  duration_ms: 0.160222
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 120Hz: terminal native-world blocks even unpaused attract
+ok 222 - actual fixed Clock 120Hz: terminal native-world blocks even unpaused attract
+  ---
+  duration_ms: 0.15952
+  type: 'test'
+  ...
+# Subtest: actual fixed Clock 120Hz: a previously queued attract fade cannot restart after pause
+ok 223 - actual fixed Clock 120Hz: a previously queued attract fade cannot restart after pause
+  ---
+  duration_ms: 0.498351
+  type: 'test'
+  ...
+# (node:266886) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual Game/Match/clock 30Hz: ordinary pause resume
+ok 224 - actual Game/Match/clock 30Hz: ordinary pause resume
+  ---
+  duration_ms: 28.935467
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 30Hz: context
+ok 225 - actual Game/Match/clock 30Hz: context
+  ---
+  duration_ms: 0.251139
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 30Hz: native-world
+ok 226 - actual Game/Match/clock 30Hz: native-world
+  ---
+  duration_ms: 0.222144
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 60Hz: ordinary pause resume
+ok 227 - actual Game/Match/clock 60Hz: ordinary pause resume
+  ---
+  duration_ms: 4.10378
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 60Hz: context
+ok 228 - actual Game/Match/clock 60Hz: context
+  ---
+  duration_ms: 65.050686
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 60Hz: native-world
+ok 229 - actual Game/Match/clock 60Hz: native-world
+  ---
+  duration_ms: 0.546572
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 120Hz: ordinary pause resume
+ok 230 - actual Game/Match/clock 120Hz: ordinary pause resume
+  ---
+  duration_ms: 1.304301
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 120Hz: context
+ok 231 - actual Game/Match/clock 120Hz: context
+  ---
+  duration_ms: 0.117031
+  type: 'test'
+  ...
+# Subtest: actual Game/Match/clock 120Hz: native-world
+ok 232 - actual Game/Match/clock 120Hz: native-world
+  ---
+  duration_ms: 0.126355
+  type: 'test'
+  ...
+# Subtest: terminal loop and direct-frame gates survive an ordinary unfreeze
+ok 233 - terminal loop and direct-frame gates survive an ordinary unfreeze
+  ---
+  duration_ms: 0.638495
+  type: 'test'
+  ...
+# Subtest: all guarded restart entries preserve normal return identity and reject terminal entry
+ok 234 - all guarded restart entries preserve normal return identity and reject terminal entry
+  ---
+  duration_ms: 0.299442
+  type: 'test'
+  ...
+# Subtest: existing real match-flow token loses publication authority only on terminal loss or prior owner change
+ok 235 - existing real match-flow token loses publication authority only on terminal loss or prior owner change
+  ---
+  duration_ms: 0.221943
+  type: 'test'
+  ...
+# Subtest: late world-build continuation is fenced (flow=false)
+ok 236 - late world-build continuation is fenced (flow=false)
+  ---
+  duration_ms: 0.302236
+  type: 'test'
+  ...
+# Subtest: late world-build continuation is fenced (flow=true)
+ok 237 - late world-build continuation is fenced (flow=true)
+  ---
+  duration_ms: 0.101327
+  type: 'test'
+  ...
+# Subtest: ordinary frozen or paused flags alone are not terminal recovery
+ok 238 - ordinary frozen or paused flags alone are not terminal recovery
+  ---
+  duration_ms: 0.068506
+  type: 'test'
+  ...
+# Subtest: final installed PlatformFrameDriver cannot bypass terminal frame gate (context)
+ok 239 - final installed PlatformFrameDriver cannot bypass terminal frame gate (context)
+  ---
+  duration_ms: 2.880511
+  type: 'test'
+  ...
+# Subtest: final installed PlatformFrameDriver cannot bypass terminal frame gate (native-world)
+ok 240 - final installed PlatformFrameDriver cannot bypass terminal frame gate (native-world)
+  ---
+  duration_ms: 0.474522
+  type: 'test'
+  ...
+# Subtest: actual offline startup normal delivery remains intact
+ok 241 - actual offline startup normal delivery remains intact
+  ---
+  duration_ms: 3.55374
+  type: 'test'
+  ...
+# Subtest: actual offline startup fade await rejects context continuation
+ok 242 - actual offline startup fade await rejects context continuation
+  ---
+  duration_ms: 1.062028
+  type: 'test'
+  ...
+# Subtest: actual offline startup fade await rejects native-world continuation
+ok 243 - actual offline startup fade await rejects native-world continuation
+  ---
+  duration_ms: 0.850361
+  type: 'test'
+  ...
+# Subtest: actual offline startup boss await rejects context continuation
+ok 244 - actual offline startup boss await rejects context continuation
+  ---
+  duration_ms: 0.885495
+  type: 'test'
+  ...
+# Subtest: actual offline startup boss await rejects native-world continuation
+ok 245 - actual offline startup boss await rejects native-world continuation
+  ---
+  duration_ms: 0.84989
+  type: 'test'
+  ...
+# Subtest: actual offline startup world await rejects context continuation
+ok 246 - actual offline startup world await rejects context continuation
+  ---
+  duration_ms: 0.954251
+  type: 'test'
+  ...
+# Subtest: actual offline startup world await rejects native-world continuation
+ok 247 - actual offline startup world await rejects native-world continuation
+  ---
+  duration_ms: 0.92792
+  type: 'test'
+  ...
+# Subtest: actual offline startup warm await rejects context continuation
+ok 248 - actual offline startup warm await rejects context continuation
+  ---
+  duration_ms: 1.36838
+  type: 'test'
+  ...
+# Subtest: actual offline startup warm await rejects native-world continuation
+ok 249 - actual offline startup warm await rejects native-world continuation
+  ---
+  duration_ms: 0.889722
+  type: 'test'
+  ...
+# Subtest: actual online startup normal delivery remains intact
+ok 250 - actual online startup normal delivery remains intact
+  ---
+  duration_ms: 1.399568
+  type: 'test'
+  ...
+# Subtest: actual online startup fade await rejects context continuation
+ok 251 - actual online startup fade await rejects context continuation
+  ---
+  duration_ms: 0.863651
+  type: 'test'
+  ...
+# Subtest: actual online startup fade await rejects native-world continuation
+ok 252 - actual online startup fade await rejects native-world continuation
+  ---
+  duration_ms: 0.806764
+  type: 'test'
+  ...
+# Subtest: actual online startup boss await rejects context continuation
+ok 253 - actual online startup boss await rejects context continuation
+  ---
+  duration_ms: 0.928121
+  type: 'test'
+  ...
+# Subtest: actual online startup boss await rejects native-world continuation
+ok 254 - actual online startup boss await rejects native-world continuation
+  ---
+  duration_ms: 0.995695
+  type: 'test'
+  ...
+# Subtest: actual online startup world await rejects context continuation
+ok 255 - actual online startup world await rejects context continuation
+  ---
+  duration_ms: 0.836299
+  type: 'test'
+  ...
+# Subtest: actual online startup world await rejects native-world continuation
+ok 256 - actual online startup world await rejects native-world continuation
+  ---
+  duration_ms: 0.909562
+  type: 'test'
+  ...
+# Subtest: actual online startup warm await rejects context continuation
+ok 257 - actual online startup warm await rejects context continuation
+  ---
+  duration_ms: 0.929574
+  type: 'test'
+  ...
+# Subtest: actual online startup warm await rejects native-world continuation
+ok 258 - actual online startup warm await rejects native-world continuation
+  ---
+  duration_ms: 1.288046
+  type: 'test'
+  ...
+# Subtest: complete native receipt accepts ordinary progression and terminal stasis
+ok 259 - complete native receipt accepts ordinary progression and terminal stasis
+  ---
+  duration_ms: 2.964815
+  type: 'test'
+  ...
+# Subtest: real RAF proof retains 120 callbacks and allows software renderer scheduling latency
+ok 260 - real RAF proof retains 120 callbacks and allows software renderer scheduling latency
+  ---
+  duration_ms: 0.391579
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in time
+ok 261 - receipt rejects terminal drift in time
+  ---
+  duration_ms: 1.631617
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gameTime
+ok 262 - receipt rejects terminal drift in gameTime
+  ---
+  duration_ms: 0.51146
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in ticks
+ok 263 - receipt rejects terminal drift in ticks
+  ---
+  duration_ms: 0.427284
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in frame
+ok 264 - receipt rejects terminal drift in frame
+  ---
+  duration_ms: 0.269155
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in paintVersion
+ok 265 - receipt rejects terminal drift in paintVersion
+  ---
+  duration_ms: 0.266511
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gridLength
+ok 266 - receipt rejects terminal drift in gridLength
+  ---
+  duration_ms: 0.376367
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gridHash
+ok 267 - receipt rejects terminal drift in gridHash
+  ---
+  duration_ms: 0.381935
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed match
+ok 268 - receipt rejects replaced or changed match
+  ---
+  duration_ms: 5.618762
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed paint
+ok 269 - receipt rejects replaced or changed paint
+  ---
+  duration_ms: 0.683559
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed grid
+ok 270 - receipt rejects replaced or changed grid
+  ---
+  duration_ms: 0.59747
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed counts
+ok 271 - receipt rejects replaced or changed counts
+  ---
+  duration_ms: 0.423098
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed overlay
+ok 272 - receipt rejects replaced or changed overlay
+  ---
+  duration_ms: 0.415967
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed everyGridByte
+ok 273 - receipt rejects replaced or changed everyGridByte
+  ---
+  duration_ms: 0.304809
+  type: 'test'
+  ...
+# Subtest: receipt rejects synthetic event, missing restoration, duplicate UI and frozen-only false pass
+ok 274 - receipt rejects synthetic event, missing restoration, duplicate UI and frozen-only false pass
+  ---
+  duration_ms: 14.905297
+  type: 'test'
+  ...
+# Subtest: source identity namespaces fail closed and keep exact required input mapping
+ok 275 - source identity namespaces fail closed and keep exact required input mapping
+  ---
+  duration_ms: 0.58426
+  type: 'test'
+  ...
+# Subtest: native lane calls actual extension and emitted namespace, without synthesizing events or retrying
+ok 276 - native lane calls actual extension and emitted namespace, without synthesizing events or retrying
+  ---
+  duration_ms: 0.817912
+  type: 'test'
+  ...
+# Subtest: startup requires one trusted native START and actual recorded audio admission
+ok 277 - startup requires one trusted native START and actual recorded audio admission
+  ---
+  duration_ms: 1.486158
+  type: 'test'
+  ...
+# Subtest: startup uses shipped trusted menu helper, not a direct match/audio bypass
+ok 278 - startup uses shipped trusted menu helper, not a direct match/audio bypass
+  ---
+  duration_ms: 0.347483
+  type: 'test'
+  ...
+# Subtest: shared menu phases retain strict context-recovery control admission and reject unknown labels
+ok 279 - shared menu phases retain strict context-recovery control admission and reject unknown labels
+  ---
+  duration_ms: 0.878423
+  type: 'test'
+  ...
+# Subtest: actual context loss waits for bounded audio quiet and proved menu retirement without suppressing failures
+ok 280 - actual context loss waits for bounded audio quiet and proved menu retirement without suppressing failures
+  ---
+  duration_ms: 0.561696
+  type: 'test'
+  ...
+# Subtest: pre-loss audio admission preserves and seals the one independently proved retired-menu cancellation
+ok 281 - pre-loss audio admission preserves and seals the one independently proved retired-menu cancellation
+  ---
+  duration_ms: 1.875384
+  type: 'test'
+  ...
+# Subtest: pre-loss cancellation rejects unavailable observation, missing owner, missing network and failed playback evidence
+ok 282 - pre-loss cancellation rejects unavailable observation, missing owner, missing network and failed playback evidence
+  ---
+  duration_ms: 2.395768
+  type: 'test'
+  ...
+# Subtest: pre-loss admission keeps duplicate and other failures, HTTP errors and lifecycle errors fatal
+ok 283 - pre-loss admission keeps duplicate and other failures, HTTP errors and lifecycle errors fatal
+  ---
+  duration_ms: 0.77629
+  type: 'test'
+  ...
+# Subtest: post-loss failures can never reuse an earlier successful playback receipt
+ok 284 - post-loss failures can never reuse an earlier successful playback receipt
+  ---
+  duration_ms: 3.07435
+  type: 'test'
+  ...
+# Subtest: audio trace preserves fetch/read results while exposing exact owner cancellation and bounded records
+ok 285 - audio trace preserves fetch/read results while exposing exact owner cancellation and bounded records
+  ---
+  duration_ms: 25.311078
+  type: 'test'
+  ...
+# Subtest: audio trace cannot suppress native unhandled fetch or read rejections
+ok 286 - audio trace cannot suppress native unhandled fetch or read rejections
+  ---
+  duration_ms: 144.85813
+  type: 'test'
+  ...
+# Subtest: late shadow failure keeps previous playable world and cleans candidate once
+ok 287 - late shadow failure keeps previous playable world and cleans candidate once
+  ---
+  duration_ms: 7.182186
+  type: 'test'
+  ...
+# Subtest: minimap constructor failure never touches live global handles
+ok 288 - minimap constructor failure never touches live global handles
+  ---
+  duration_ms: 1.363463
+  type: 'test'
+  ...
+# Subtest: environment failure rolls back stage pointers and can retry
+ok 289 - environment failure rolls back stage pointers and can retry
+  ---
+  duration_ms: 1.700631
+  type: 'test'
+  ...
+# Subtest: context loss pauses match and explicitly offers consistent reload
+ok 290 - context loss pauses match and explicitly offers consistent reload
+  ---
+  duration_ms: 4.648411
+  type: 'test'
+  ...
+# Subtest: restoration never resumes empty GPU ink without reload
+ok 291 - restoration never resumes empty GPU ink without reload
+  ---
+  duration_ms: 1.279457
+  type: 'test'
+  ...
+# Subtest: bundled engine resolves only the manifest/index-selected immutable revision
+ok 292 - bundled engine resolves only the manifest/index-selected immutable revision
+  ---
+  duration_ms: 9.374858
+  type: 'test'
+  ...
+# Subtest: missing bundled engine rejects flat and authored alternatives
+ok 293 - missing bundled engine rejects flat and authored alternatives
+  ---
+  duration_ms: 1.950558
+  type: 'test'
+  ...
+# Subtest: wrong-revision engine cannot stand in for the selected module
+ok 294 - wrong-revision engine cannot stand in for the selected module
+  ---
+  duration_ms: 1.171664
+  type: 'test'
+  ...
+# Subtest: changed module bytes fail even when a flat alias is valid
+ok 295 - changed module bytes fail even when a flat alias is valid
+  ---
+  duration_ms: 2.097589
+  type: 'test'
+  ...
+# Subtest: manifest content and input identities reject independent corruption
+ok 296 - manifest content and input identities reject independent corruption
+  ---
+  duration_ms: 3.1801
+  type: 'test'
+  ...
+# Subtest: index revision mismatch and duplicate base both fail closed
+ok 297 - index revision mismatch and duplicate base both fail closed
+  ---
+  duration_ms: 3.858841
+  type: 'test'
+  ...
+# Subtest: unsafe path, supplied namespace and malformed revision are rejected
+ok 298 - unsafe path, supplied namespace and malformed revision are rejected
+  ---
+  duration_ms: 1.404986
+  type: 'test'
+  ...
+# Subtest: manifest and selected index are both mandatory
+ok 299 - manifest and selected index are both mandatory
+  ---
+  duration_ms: 1.40143
+  type: 'test'
+  ...
+# Subtest: prepared scope replaces four external inputs of the exact engine only
+ok 300 - prepared scope replaces four external inputs of the exact engine only
+  ---
+  duration_ms: 3.153649
+  type: 'test'
+  ...
+# Subtest: unmanifested, flat, wrong revision and unknown harness requests are rejected
+ok 301 - unmanifested, flat, wrong revision and unknown harness requests are rejected
+  ---
+  duration_ms: 0.882309
+  type: 'test'
+  ...
+# Subtest: recoverable and fatal receipts accept only their own complete counters
+ok 302 - recoverable and fatal receipts accept only their own complete counters
+  ---
+  duration_ms: 0.547635
+  type: 'test'
+  ...
+# Subtest: missing terminal gate and ordinary recovery blocked are detected
+ok 303 - missing terminal gate and ordinary recovery blocked are detected
+  ---
+  duration_ms: 0.798232
+  type: 'test'
+  ...
+# Subtest: leaked, double-disposed and old disposed resources are detected individually
+ok 304 - leaked, double-disposed and old disposed resources are detected individually
+  ---
+  duration_ms: 1.268801
+  type: 'test'
+  ...
+# Subtest: missing or loosely typed ownership, terminal, cleanup and UI receipts fail closed
+ok 305 - missing or loosely typed ownership, terminal, cleanup and UI receipts fail closed
+  ---
+  duration_ms: 1.564617
+  type: 'test'
+  ...
+# Subtest: both independent native lanes consume one exact-head production build
+ok 306 - both independent native lanes consume one exact-head production build
+  ---
+  duration_ms: 1.339027
+  type: 'test'
+  ...
+# Subtest: emitted fault/UI lane never includes source method-extraction tests
+ok 307 - emitted fault/UI lane never includes source method-extraction tests
+  ---
+  duration_ms: 0.893105
+  type: 'test'
+  ...
+# Subtest: failure evidence is bounded; PR heads supersede and manual provenance remains independent
+ok 308 - failure evidence is bounded; PR heads supersede and manual provenance remains independent
+  ---
+  duration_ms: 1.391516
+  type: 'test'
+  ...
+# Subtest: native recovery pins npm installation to the exact lockfile
+ok 309 - native recovery pins npm installation to the exact lockfile
+  ---
+  duration_ms: 1.982165
+  type: 'test'
+  ...
+1..309
+# tests 309
+# suites 0
+# pass 309
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2579.117394

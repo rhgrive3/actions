@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: complete native receipt accepts ordinary progression and terminal stasis
+ok 1 - complete native receipt accepts ordinary progression and terminal stasis
+  ---
+  duration_ms: 2.000503
+  type: 'test'
+  ...
+# Subtest: real RAF proof retains 120 callbacks and allows software renderer scheduling latency
+ok 2 - real RAF proof retains 120 callbacks and allows software renderer scheduling latency
+  ---
+  duration_ms: 0.224768
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in time
+ok 3 - receipt rejects terminal drift in time
+  ---
+  duration_ms: 1.051062
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gameTime
+ok 4 - receipt rejects terminal drift in gameTime
+  ---
+  duration_ms: 0.301624
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in ticks
+ok 5 - receipt rejects terminal drift in ticks
+  ---
+  duration_ms: 0.274263
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in frame
+ok 6 - receipt rejects terminal drift in frame
+  ---
+  duration_ms: 0.170136
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in paintVersion
+ok 7 - receipt rejects terminal drift in paintVersion
+  ---
+  duration_ms: 0.167783
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gridLength
+ok 8 - receipt rejects terminal drift in gridLength
+  ---
+  duration_ms: 0.228234
+  type: 'test'
+  ...
+# Subtest: receipt rejects terminal drift in gridHash
+ok 9 - receipt rejects terminal drift in gridHash
+  ---
+  duration_ms: 0.272691
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed match
+ok 10 - receipt rejects replaced or changed match
+  ---
+  duration_ms: 3.761014
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed paint
+ok 11 - receipt rejects replaced or changed paint
+  ---
+  duration_ms: 0.417048
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed grid
+ok 12 - receipt rejects replaced or changed grid
+  ---
+  duration_ms: 0.279942
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed counts
+ok 13 - receipt rejects replaced or changed counts
+  ---
+  duration_ms: 0.281654
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed overlay
+ok 14 - receipt rejects replaced or changed overlay
+  ---
+  duration_ms: 0.196275
+  type: 'test'
+  ...
+# Subtest: receipt rejects replaced or changed everyGridByte
+ok 15 - receipt rejects replaced or changed everyGridByte
+  ---
+  duration_ms: 0.15931
+  type: 'test'
+  ...
+# Subtest: receipt rejects synthetic event, missing restoration, duplicate UI and frozen-only false pass
+ok 16 - receipt rejects synthetic event, missing restoration, duplicate UI and frozen-only false pass
+  ---
+  duration_ms: 2.735199
+  type: 'test'
+  ...
+# Subtest: source identity namespaces fail closed and keep exact required input mapping
+ok 17 - source identity namespaces fail closed and keep exact required input mapping
+  ---
+  duration_ms: 0.290087
+  type: 'test'
+  ...
+# Subtest: native lane calls actual extension and emitted namespace, without synthesizing events or retrying
+ok 18 - native lane calls actual extension and emitted namespace, without synthesizing events or retrying
+  ---
+  duration_ms: 0.605321
+  type: 'test'
+  ...
+# Subtest: startup requires one trusted native START and actual recorded audio admission
+ok 19 - startup requires one trusted native START and actual recorded audio admission
+  ---
+  duration_ms: 1.176522
+  type: 'test'
+  ...
+# Subtest: startup uses shipped trusted menu helper, not a direct match/audio bypass
+ok 20 - startup uses shipped trusted menu helper, not a direct match/audio bypass
+  ---
+  duration_ms: 0.232219
+  type: 'test'
+  ...
+# Subtest: shared menu phases retain strict context-recovery control admission and reject unknown labels
+ok 21 - shared menu phases retain strict context-recovery control admission and reject unknown labels
+  ---
+  duration_ms: 0.615837
+  type: 'test'
+  ...
+# Subtest: actual context loss waits for bounded audio quiet and proved menu retirement without suppressing failures
+ok 22 - actual context loss waits for bounded audio quiet and proved menu retirement without suppressing failures
+  ---
+  duration_ms: 0.399552
+  type: 'test'
+  ...
+# Subtest: pre-loss audio admission preserves and seals the one independently proved retired-menu cancellation
+ok 23 - pre-loss audio admission preserves and seals the one independently proved retired-menu cancellation
+  ---
+  duration_ms: 0.918613
+  type: 'test'
+  ...
+# Subtest: pre-loss cancellation rejects unavailable observation, missing owner, missing network and failed playback evidence
+ok 24 - pre-loss cancellation rejects unavailable observation, missing owner, missing network and failed playback evidence
+  ---
+  duration_ms: 1.762814
+  type: 'test'
+  ...
+# Subtest: pre-loss admission keeps duplicate and other failures, HTTP errors and lifecycle errors fatal
+ok 25 - pre-loss admission keeps duplicate and other failures, HTTP errors and lifecycle errors fatal
+  ---
+  duration_ms: 0.702548
+  type: 'test'
+  ...
+# Subtest: post-loss failures can never reuse an earlier successful playback receipt
+ok 26 - post-loss failures can never reuse an earlier successful playback receipt
+  ---
+  duration_ms: 0.556849
+  type: 'test'
+  ...
+# Subtest: audio trace preserves fetch/read results while exposing exact owner cancellation and bounded records
+ok 27 - audio trace preserves fetch/read results while exposing exact owner cancellation and bounded records
+  ---
+  duration_ms: 18.571832
+  type: 'test'
+  ...
+# Subtest: audio trace cannot suppress native unhandled fetch or read rejections
+ok 28 - audio trace cannot suppress native unhandled fetch or read rejections
+  ---
+  duration_ms: 95.431086
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 372.265728
