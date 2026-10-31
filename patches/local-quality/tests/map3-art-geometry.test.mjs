@@ -39,6 +39,9 @@ for (const id of ['tidewater', 'kelpline']) {
       } else if (r.constraint === 'floor-skin') {
         const f = layout.map3.floors.find(f => f.id === r.id); assert.ok(f, r.id);
         inside(r, [f.rect[0], f.bottom, f.rect[2]], [f.rect[1], f.y, f.rect[3]]);
+      } else if (r.constraint === 'architecture-skin') {
+        const wall = layout.map3Architecture.walls.find(wall => wall.id === r.id); assert.ok(wall, r.id);
+        inside(r, [wall.rect[0], wall.y0, wall.rect[2]], [wall.rect[1], wall.y1, wall.rect[3]]);
       } else {
         const c = map3ArtColliders(layout).find(c => c.map3ArtSupport === r.id); assert.ok(c, r.id); inside(r, c.min, c.max);
       }

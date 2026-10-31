@@ -17,8 +17,12 @@ function upperSurfaces(stage) {
 
 function layers(map) {
   if (!map.level.layout?.map3 || map.level.native) return null;
-  return map._map3Layers || (map._map3Layers = { stage: map.level.layout.map3,
-    surfaces: upperSurfaces(map.level.layout.map3), cache: new Map(), flip: map.flip });
+  // The authored MAP3 record stays frozen for objective/art ownership. Added
+  // quays and streets are actual lower floors and must participate in the HUD
+  // projection as well, including directly beneath the existing bridges.
+  const stage = map.level.layout.map3Playable || map.level.layout.map3;
+  return map._map3Layers || (map._map3Layers = { stage,
+    surfaces: upperSurfaces(stage), cache: new Map(), flip: map.flip });
 }
 
 function lowerFloor(stage, x, z, ceiling) {

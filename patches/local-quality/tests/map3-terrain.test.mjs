@@ -75,8 +75,10 @@ test('ordinary public stages preserve every frozen MAP3 coordinate and contain n
     assert.deepEqual(plain(stage), source);
     assert.equal(layout.map3, stage);
     assert.equal(layout.half.length, 0);
-    assert.equal(level.blocks.length, stage.floors.length + stage.ramps.length + stage.obstacles.length + map3ArtColliders(layout).length);
-    assert.equal(new Set(level.blocks.filter(b => b.tag).map(b => b.tag)).size, stage.floors.length + stage.ramps.length + stage.obstacles.length);
+    const architecture = layout.map3Architecture;
+    const extensionCount = architecture.floors.length + architecture.ramps.length + architecture.walls.length;
+    assert.equal(level.blocks.length, stage.floors.length + stage.ramps.length + stage.obstacles.length + extensionCount + map3ArtColliders(layout).length);
+    assert.equal(new Set(level.blocks.filter(b => b.tag).map(b => b.tag)).size, stage.floors.length + stage.ramps.length + stage.obstacles.length + extensionCount);
     assert.deepEqual(plain(level.spawnPads.map(p => p.toArray())), source.spawns.map(s => s.point));
     const heights = new Set(stage.floors.filter(f => f.material !== 'grate').map(f => f.y));
     assert.equal(heights.size, stage.id === 'tidewater' ? 5 : 6);

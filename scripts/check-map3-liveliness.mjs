@@ -18,6 +18,7 @@ const site = path.resolve(value('--site', '_site'));
 const out = path.resolve(value('--evidence-dir', 'docs/stage-redesign/map3/liveliness-evidence'));
 const label = value('--label', 'candidate');
 const onlyView = value('--only-view', null);
+const viewsFile = value('--views', null);
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const manifestBytes = fs.readFileSync(path.join(site, 'inkwave-build.json'));
 const manifest = JSON.parse(manifestBytes);
@@ -27,7 +28,7 @@ fs.mkdirSync(out, { recursive: true });
 
 // These coordinates, titles and the viewport are intentionally shared between
 // baseline and candidate. Only the normal-play shot uses the actual player rig.
-const VIEWS = {
+const VIEWS = viewsFile ? JSON.parse(fs.readFileSync(path.resolve(viewsFile), 'utf8')) : {
   tidewater: [
     { id:'play', title:'Tidewater Plaza — central play view', hud:true, actor:[0, .02, -5], yaw:0, pitch:-.30 },
     { id:'market-stall', title:'Tidewater Plaza — upper market stall', position:[-25, 7.6, -8], look:[-33, 6.4, -14.5] },
@@ -41,6 +42,14 @@ const VIEWS = {
     { id:'gantry-context', title:'Kelpline Terminal — gantry and terminal context', position:[-43, 21, -51], look:[-10, 4, -14] },
   ],
 };
+for (const stage of ['tidewater', 'kelpline']) {
+  assert.ok(Array.isArray(VIEWS[stage]) && VIEWS[stage].length, `${stage}: camera views required`);
+  for (const view of VIEWS[stage]) {
+    assert.match(view.id, /^[a-z0-9-]+$/);
+    const vectors = view.actor ? [view.actor] : [view.position, view.look];
+    assert.ok(vectors.every(v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite)), 'Finite camera vectors required');
+  }
+}
 if (onlyView) assert.ok(Object.values(VIEWS).every(views => views.some(view => view.id === onlyView)), 'Unknown shared --only-view');
 const resultPath = path.join(out, 'liveliness-validation.json');
 const previous = onlyView && fs.existsSync(resultPath) ? JSON.parse(fs.readFileSync(resultPath, 'utf8')) : null;

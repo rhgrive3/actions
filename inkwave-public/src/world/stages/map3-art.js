@@ -438,6 +438,39 @@ function supportArt(b, layout) {
   });
 }
 
+// Narrow architectural joinery belongs to the same real walls as collision and
+// ink. The large faces stay uncovered: these are street facades, not more props
+// on top of empty platforms. Existing material buckets/print atlas are reused.
+function builtSpaceArt(b, layout) {
+  const p = b.palette, tide = b.stage.id === 'tidewater';
+  for (const wall of layout.map3Architecture?.walls || []) {
+    const h = wall.y1 - wall.y0;
+    b.scope(wall.id, 'architecture-skin', () => {
+      band(b, wall, .12, .18, p.dark, 'stone', .04);
+      band(b, wall, h - .09, .14, tide ? p.accent : p.metal, 'metal', .04);
+      const longSides = wall.rect[1] - wall.rect[0] >= wall.rect[3] - wall.rect[2] ? [0, 2] : [1, 3];
+      for (const side of longSides) faceFrame(b, wall, side, f => {
+        if (f.width < 1.2 || h < 1.8) return;
+        // A few full-height piers establish a building's bays. Their flush
+        // projection stays inside MAP3_ART_SKIN_EPSILON and cannot snag actors.
+        for (let x = -f.width / 2 + .16; x <= f.width / 2 - .15; x += Math.max(3.8, (f.width - .32) / Math.ceil(f.width / 5))) {
+          f.panel(tide ? 'stone' : 'metal', tide ? p.warm : p.dark, x, h / 2, .10, h - .32);
+        }
+        if (h < 3 || f.width < 5) return;
+        const end = side < 2 ? -1 : 1, x = end * (f.width / 2 - .80);
+        // Closed service shutter, explicitly on a solid face. No doorway or
+        // recess is represented as traversable without matching physics.
+        f.panel('metal', p.dark, x, 1.05, .78, 1.55);
+        for (let y = .47; y < 1.72; y += .25) f.panel('metal', p.metal, x, y, .63, .025);
+        f.panel('metal', p.warm, x + .25, 1.02, .045, .18);
+        const width = Math.min(2.3, f.width * .23), height = width / 2;
+        const tile = tide ? (/market/.test(wall.id) ? 'market' : 'poster') : (/cargo|warehouse/.test(wall.id) ? 'cargo' : 'service');
+        b.decal(tile, f.at(-end * Math.min(1.7, f.width * .15), h - .55 - height / 2, .026), width, height, [0, f.yaw, 0]);
+      });
+    });
+  }
+}
+
 /** Build original static MAP3 architecture; never mutates level or collision. */
 export function createMap3Art(scene, level, { castShadow = true } = {}) {
   const stage = level?.layout?.map3;
@@ -461,6 +494,7 @@ export function createMap3Art(scene, level, { castShadow = true } = {}) {
     supportArt(b, level.layout);
     assemblyArt(b, level.layout);
     stage.obstacles.forEach((o, i) => stage.id === 'tidewater' ? tidewaterCover(b, o, i) : kelplineCover(b, o, i));
+    builtSpaceArt(b, level.layout);
     if (stage.id === 'tidewater') tidewaterExterior(b); else kelplineExterior(b);
     if (stage.id === 'tidewater') dressTidewaterLife(b, level.layout); else dressKelplineLife(b, level.layout);
     b.finish(group, materials, castShadow); scene.add(group);

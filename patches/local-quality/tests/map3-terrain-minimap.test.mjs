@@ -51,8 +51,13 @@ function pointFace(level, x, y, z) {
     z > level.blocks[f.block].aabbMin.z && z < level.blocks[f.block].aabbMax.z);
 }
 
-for (const [id, x, z, upperY] of [['tidewater', -19, -3, 4.8], ['kelpline', 7, 0, 3.6]]) {
-  test(`${id}: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis`, async t => {
+for (const [id, x, z, upperY] of [
+  ['tidewater', -19, -3, 4.8], ['kelpline', 7, 0, 3.6],
+  // These two lower floors did not exist in the frozen blockout. Reverting the
+  // map3Playable projection would hide their ink and mislabel the real actor.
+  ['tidewater', -32, -10, 4.8], ['kelpline', 6, -16, 3.6],
+]) {
+  test(`${id} at ${x},${z}: real upper/lower ink remains independent and cached map projection follows the actor after hysteresis`, async t => {
     const api = await boot(), { G, THREE } = api, { level, paint, map } = make(api, id);
     const lower = pointFace(level, x, 0, z), upper = pointFace(level, x, upperY, z);
     assert.ok(lower && upper && lower !== upper);

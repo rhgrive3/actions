@@ -4,6 +4,7 @@
 import { B, R, PATTERN } from '../mapkit.js';
 import { MAP3_STAGES, MAP3_SOURCE, getMap3Stage } from './map3-data.js';
 import { MAP3_MINIMAP } from './map3-minimap.js';
+import { getMap3Architecture } from './map3-architecture.js';
 export { getMap3Stage };
 
 const PALETTES = {
@@ -63,6 +64,13 @@ export function createMap3Layout(stageOrId) {
   const stage = typeof stageOrId === 'string' ? getMap3Stage(stageOrId) : stageOrId;
   if (!stage || !PALETTES[stage.id]) throw new Error('Unknown MAP3 stage');
   const p = PALETTES[stage.id];
+  const architecture = getMap3Architecture(stage.id);
+  const playable = Object.freeze({ ...stage,
+    floors: Object.freeze([...stage.floors, ...architecture.floors]),
+    ramps: Object.freeze([...stage.ramps, ...architecture.ramps]),
+    obstacles: Object.freeze([...stage.obstacles, ...architecture.walls]),
+    routes: Object.freeze([...stage.routes, ...architecture.routes]),
+  });
   const single = stage.floors.map(f => B(f.rect[0], f.rect[1], f.bottom, f.y, f.rect[2], f.rect[3], {
     ...floorStyle(stage, f), tag: f.id, bevel: 0,
   }));
@@ -72,6 +80,15 @@ export function createMap3Layout(stageOrId) {
     bevel: stage.id === 'kelpline' ? .16 : /sea_lip/.test(o.id) ? .08 : /spawn/.test(o.id) ? .12 : .22,
     color: o.paint === false ? p.edge : /cargo|stack/.test(o.id) ? p.accent : p.cover,
     pattern: o.paint === false ? PATTERN.metalpanel : /cargo|stack/.test(o.id) ? PATTERN.container : PATTERN.render,
+  })));
+  single.push(...architecture.floors.map(f => B(f.rect[0], f.rect[1], f.bottom, f.y, f.rect[2], f.rect[3], {
+    ...floorStyle(stage, f), tag: f.id, bevel: 0,
+  })));
+  single.push(...architecture.ramps.map(r => rampDefinition(stage, r)));
+  single.push(...architecture.walls.map(w => B(w.rect[0], w.rect[1], w.y0, w.y1, w.rect[2], w.rect[3], {
+    tag: w.id, paint: true, bevel: .04,
+    color: stage.id === 'tidewater' ? '#dcd5bf' : '#c9d2c9',
+    pattern: stage.id === 'tidewater' ? PATTERN.render : PATTERN.concrete,
   })));
   return {
     id: stage.id,
@@ -88,6 +105,8 @@ export function createMap3Layout(stageOrId) {
     // The complete immutable source is available to structural art, rule
     // objectives, navigation diagnostics and browser probes without copying it.
     map3: stage,
+    map3Architecture: architecture,
+    map3Playable: playable,
     map3Source: MAP3_SOURCE,
     minimapProjection: MAP3_MINIMAP,
     decor: { lamps: [], palms: [], flags: [] },
