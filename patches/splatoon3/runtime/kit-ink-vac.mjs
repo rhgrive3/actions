@@ -293,6 +293,18 @@ function forwardOf(a, out) {
 }
 function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATION.breathOriginHeight, a.pos.z); }
 
+// Shared launch snapshot. Reading it does not allocate a real projectile,
+// advance the charge state, consume ink or emit a network record.
+export function inkVacExhaleKinematics(actor,charge=0){
+  const {THREE}=requireApi(),amount=clamp01(charge);
+  const origin=originOf(actor,new THREE.Vector3());
+  const velocity=forwardOf(actor,new THREE.Vector3()).multiplyScalar(exhaleSpeed(amount));
+  velocity.y+=SPAWN_SPEED_Y*60;
+  return {origin,velocity,charge:amount,life:SPAWN_BLAST_WAIT/INK_VAC_CALIBRATION.framesPerSecond,
+    straight:0,grav:FLY_GRAVITY*3600,drag:FLY_AIR_RESIST*60,
+    size:amount<=1e-10?MIN_PLAYER_RADIUS:.2};
+}
+
 // Analytic first entry of segment start->end into the truncated frustum.
 // Inside <=> 0 <= along(t) <= LengthMax AND F(t) <= 0, where
 // F(t) = radial^2(t) - radius(along(t))^2 is a quadratic in t and along(t) is linear.
@@ -375,7 +387,11 @@ function muzzleEntry(state, start, end) {
 // Narrow candidate hook. Returns { distance, onHit } when the projectile enters
 // the held intake, else null. Does not integrate or scan native projectiles.
 export function inkVacAbsorbCandidate(actor, start, end, projectile) {
-  const state = states.get(actor);
+  const liveState=states.get(actor);
+  // Query-only guides must not move the intake owner's scratch pose.
+  const state=projectile?.s3Prediction&&liveState?{...liveState,
+    _fwd:liveState._fwd.clone(),_org:liveState._org.clone(),_q:liveState._q.clone(),
+    _m:liveState._m.clone(),_e:liveState._e.clone()}:liveState;
   if (!state || state.phase !== 'inhale' || !projectile) return null;
   if (projectile.team === actor.team) return null;
   if (projectile.s3InkVacAbsorbed) return null;
@@ -389,7 +405,7 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
   const segmentLength=start.distanceTo(end);
   const q = state._q.copy(start).lerp(end, segmentLength > 0 ? distance / segmentLength : 0);
   if (G.physics?.los && !G.physics.los(originOf(actor, state._org), q)) return null;
-  return { distance, kind: 'ink-vac', onHit: () => absorb(state, projectile) };
+  return { distance, kind: 'ink-vac', onHit: () => projectile.s3Prediction?false:absorb(liveState, projectile) };
 }
 
 // Credit the held local intake by its OWN calibration value. Only the owner may
@@ -1088,9 +1104,8 @@ export function installKitInkVac(context, _profile) {
   if (Projectiles?.prototype && !Projectiles.prototype.fireInkVacExhale) {
     Projectiles.prototype.fireInkVacExhale = function (a, payload) {
       const p = this._new();
-      const o = originOf(a, new THREE.Vector3());
-      const f = forwardOf(a, new THREE.Vector3());
       const charge = payload.charge ?? 0;
+      const flight=inkVacExhaleKinematics(a,charge),o=flight.origin;
       const d = payload.descriptor || inkVacBlastDescriptor(charge);
       Object.assign(p, {
         type: 'blast', owner: a, team: a.team,
@@ -1108,10 +1123,10 @@ export function installKitInkVac(context, _profile) {
         // per-frame air resistance x60. SpawnBlastWaitFrame is the native LIFETIME
         // before detonation; delay stays 0 so the native integrator runs at once and
         // the native step bursts the projectile on the age > life deadline.
-        vel: f.multiplyScalar(exhaleSpeed(charge)).add(new THREE.Vector3(0, SPAWN_SPEED_Y * 60, 0)),
-        life: SPAWN_BLAST_WAIT / INK_VAC_CALIBRATION.framesPerSecond,
+        vel: flight.velocity,
+        life: flight.life,
         delay: 0,
-        straight: 0, grav: FLY_GRAVITY * 3600, drag: FLY_AIR_RESIST * 60,
+        straight: flight.straight, grav: flight.grav, drag: flight.drag,
         trail: 0, trailEvery: 0,
       });
       p.pos.copy(o); p.prev.copy(o); p.start.copy(o);

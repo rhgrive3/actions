@@ -1,5 +1,14 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
+
+比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
+
+既存の有限高さguardを維持し、canonical OBB worldで、雨volumeに接触する全active sphereの全投影がそれぞれ1つの非grate固体に遮られると証明できる場合だけBoss雨を拒否する。最遅entry列の同一block実nearest rayと既存upward LOSを使う。near-parallel軸はbodyTop平面だけでなくsphere全体を含む必要があり、端の実LOSが通る誤免疫の負対照を固定した。形状・モデル・数値reach・owner/Map/batch/flushは変更しない。
+
+正式LOS9＋既finite8はsource/選択的既存emitterで17/17、別の実owner18はsource/emitted・30/60/120Hz・JSON host/guestで18/18（重複合算しない）。合成Boss.rainのclear/屋根/far/旧5引数のMap判定と逆配線負対照を含む。全身の部分露出、unknown、body始点inside、NativePhysics/custom world、複数OBBの未証明unionは従来damageを維持する。全LOS・本家実機一致・full build成功を示すものではなく、#735はOpenを維持する。
+
+
 ## 2026-10-29：追加ブキの着弾塗りと再入
 
 Splatoon 3 Ver. 11.3.0 の既存ブキ参照値は変更せず、公開版のカタログ着弾塗りで同期コールバック中に別の着弾が再入すると、先の塗り位置・方向が上書きされる不具合を修正した。呼出しごとに使用中の位置・方向を保持し、例外時も解放する。塗り形状の計算順、送信項目、乱数の使用を維持する。実際のShooter弾と公開版PaintSystemを使ったCPU再現で、修正前の破壊と修正後の保持を確認した。本家実機の測定や全試合の同等性は未確認。条件・生ログ・範囲は[検証記録](issue-resolution-20261029/catalogue-paint-reentry/README.md)を参照。
@@ -7090,11 +7099,10 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 
 統合した音声修正では、チャージャー・スピナー・ストリンガーの音を実際にインクで充填できた進行量に追従させ、スピナーの満充電音を共通ビープに変更した。参照は旧作系コミュニティ資料と既存の試聴であり、Splatoon 3 Ver.11.3.0実機の音色・音程・タイミングとの一致は未確認。対象ブキ、残量条件、音源、音声回帰と検証の限界は[チャージ音の修正記録](charge-ink-audio-fix-20261031.md)を参照。
 
-## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
+### 2026-10-31: ナワバリCPUの筆・チャージ・敵インク対応
 
-比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
+基準main `df8a4b8f8c29bf68a3480e8be14624c82f6d5190`。コミュニティ[フデ属](https://wikiwiki.jp/splatoon3mix/ブキ/フデ属)の振り／塗り進み、[R-PEN/5H](https://wikiwiki.jp/splatoon3mix/ブキ/R-PEN／5H)の満充填後の5発、[ソイチューバー](https://wikiwiki.jp/splatoon3mix/ブキ/ソイチューバー)と[LACT-450](https://wikiwiki.jp/splatoon3mix/ブキ/LACT-450)の短い塗り射撃を参考に、プレイヤーの入力処理や武器性能ではなくナワバリCPUの入力判断を変更した。Wikiの記述は公式の実機計測ではなく、参照バージョン・ギア・操作条件も本件では統一していない。
 
-既存の有限高さguardを維持し、canonical OBB worldで、雨volumeに接触する全active sphereの全投影がそれぞれ1つの非grate固体に遮られると証明できる場合だけBoss雨を拒否する。最遅entry列の同一block実nearest rayと既存upward LOSを使う。near-parallel軸はbodyTop平面だけでなくsphere全体を含む必要があり、端の実LOSが通る誤免疫の負対照を固定した。形状・モデル・数値reach・owner/Map/batch/flushは変更しない。
+`inkwave-public/src/game/bots.js`で筆の近距離戦は連続振りの押下・解放を生成、R-PENは通常塗りと戦闘で満充填・残弾発射を選ぶ。ソイチューバーとLACTの塗りは短いチャージを使い、他のチャージャー／弓も自インク外では短い射撃を選ぶ。LACTとフルイドは近距離の戦闘で一段階チャージを選ぶ。敵を視認中に照準が外れたとき、溜め途中でただちに発射せず、充填後の待ちは制限する。敵インク上で敵が見えず、残インクに余裕があり特殊動作中でないときは、移動を保ちつつ進行方向を狙い、自インクの道を作ることで足元の塗り返しを試す。敵視認中や逃走中は従来の判断を優先する。試行上限と再試行待ちを置き、足元を塗れない武器・地形でも行動が固定されないようにする。
 
-正式LOS9＋既finite8はsource/選択的既存emitterで17/17、別の実owner18はsource/emitted・30/60/120Hz・JSON host/guestで18/18（重複合算しない）。合成Boss.rainのclear/屋根/far/旧5引数のMap判定と逆配線負対照を含む。全身の部分露出、unknown、body始点inside、NativePhysics/custom world、複数OBBの未証明unionは従来damageを維持する。全LOS・本家実機一致・full build成功を示すものではなく、#735はOpenを維持する。
-
+差分の再現例: (1) ホクサイCPUを近距離の敵と対峙させ、従来の押し続けから複数の振りが出るか確認。(2) R-PEN CPUに未塗りの床を塗らせ、フルチャージ後に複数発が出るか確認。(3) 敵なし・残インク十分で敵インク上にCPUを置き、足元が自インクに変わるか確認。筆・チャージ・床塗りの実行は `patches/local-quality/tests/bot-weapon-territory.test.mjs`、既存の回復とチャージ解放も回帰対象とする。平坦な制御床の実Actor／Projectile／PaintSystemを使うロジック検証と、TidewaterのCPU戦は本家実機の挙動比較とは別。武器・地形・対戦状況の全組合せ、ゲームパッド操作時の本家との同条件比較、Switch実機の挙動は未確認。

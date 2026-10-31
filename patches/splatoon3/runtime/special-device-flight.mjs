@@ -15,14 +15,35 @@ export function specialDeviceFlight(api,actor,id,ap=0){
     gravity:sonar?.009*3600:api.SUB.bomb.gravity,airResist:sonar?.001:0};
 }
 
+export function specialDeviceLaunchOrigin(actor,out){
+  return out.copy(actor.pos).add({x:0,y:1.1,z:0});
+}
+
+// Shared by the live owner and its guide. A Wave Breaker slides down walls
+// until it finds floor support; screen/strike devices attach at first contact.
+// Returning false means that this contact is not a deployment endpoint.
+export function settleSpecialDeviceContact(object,contact){
+  if(!contact?.hit)return false;
+  if((object.kind==='wave'||object.id==='waveBreaker')&&contact.normal.y<=.5){
+    const vn=object.vel.dot(contact.normal);
+    if(vn<0)object.vel.addScaledVector(contact.normal,-vn);
+    object.pos.addScaledVector(contact.normal,.08);
+    return false;
+  }
+  object.pos.addScaledVector(contact.normal,.08);
+  return true;
+}
+
 // Called at the world-device fixed 60 Hz boundary. Sweep solid terrain,
 // including grates for guide devices; opponents and their barriers are not
 // terrain and cannot stick a Triple Inkstrike marker.
 export function stepSpecialDeviceFlight(api,object,dt,hit,previous=null){
+  if(!(dt>0)||!Number.isFinite(dt))return null;
   const from=previous||(object._flightFrom ||= object.pos.clone()).copy(object.pos);
   object.vel.y-=object.gravity*dt;
   if(object.airResist>0)object.vel.multiplyScalar(Math.pow(1-object.airResist,dt*60));
   const to=(object._flightTo ||= from.clone()).copy(from).addScaledVector(object.vel,dt);
+  hit.hit=false;
   let contact=api.G.physics?.segment?.(from,to,hit,false);
   if(!contact?.hit){
     const floor=api.G.level?.groundHeight?.(to.x,to.z,Math.max(from.y,to.y)+.001);
