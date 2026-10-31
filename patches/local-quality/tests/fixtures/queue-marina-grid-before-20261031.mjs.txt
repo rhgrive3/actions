@@ -1,0 +1,23 @@
+function gridSurface(mb, rows, ref, colorFn, closedJ = false) {
+    const ni = rows.length, nj = rows[0].length, ids = [];
+    mb._reserveVertices(mb._vc + ni * nj);
+    for (let i = 0; i < ni; i++) {
+      const row = [];
+      for (let j = 0; j < nj; j++) {
+        const p = rows[i][j];
+        const pi0 = rows[Math.max(0, i - 1)][j], pi1 = rows[Math.min(ni - 1, i + 1)][j];
+        const jm = closedJ ? (j - 1 + nj) % nj : Math.max(0, j - 1), jp = closedJ ? (j + 1) % nj : Math.min(nj - 1, j + 1);
+        const pj0 = rows[i][jm], pj1 = rows[i][jp];
+        const ux = pi1[0] - pi0[0], uy = pi1[1] - pi0[1], uz = pi1[2] - pi0[2];
+        const vx = pj1[0] - pj0[0], vy = pj1[1] - pj0[1], vz = pj1[2] - pj0[2];
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        const r = ref(i, j);
+        if (nx * (p[0] - r[0]) + ny * (p[1] - r[1]) + nz * (p[2] - r[2]) < 0) { nx = -nx; ny = -ny; nz = -nz; }
+        row.push(mb.v(p[0], p[1], p[2], nx, ny, nz, colorFn ? colorFn(p[0], p[1], p[2], i, j) : null));
+      }
+      ids.push(row);
+    }
+    const nq = closedJ ? nj : nj - 1;
+    for (let i = 0; i < ni - 1; i++) for (let j = 0; j < nq; j++) mb.quad(ids[i][j], ids[i + 1][j], ids[i + 1][(j + 1) % nj], ids[i][(j + 1) % nj]);
+    return ids;
+  }
