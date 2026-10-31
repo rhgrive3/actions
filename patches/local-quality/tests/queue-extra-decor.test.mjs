@@ -22,8 +22,9 @@ async function load(source,namespace=THREE,G={actors:[]}) {
   const bus=new vm.SyntheticModule(['G'],function(){this.setExport('G',G);},{context});
   const util=new vm.SourceTextModule(fs.readFileSync(new URL('../../../inkwave-public/vendor/three/jsm/utils/BufferGeometryUtils.js',import.meta.url),'utf8'),{context});
   await util.link(()=>three);await util.evaluate();
+  const stageArt=new vm.SyntheticModule(['createMap3Art'],function(){this.setExport('createMap3Art',()=>{throw Error('Generic Decor fixture must not request MAP3 stage art');});},{context});
   const mod=new vm.SourceTextModule(source,{context});
-  await mod.link(spec=>spec==='three'?three:spec.includes('BufferGeometryUtils')?util:bus);await mod.evaluate();
+  await mod.link(spec=>spec==='three'?three:spec.includes('BufferGeometryUtils')?util:spec.endsWith('/map3-art.js')?stageArt:bus);await mod.evaluate();
   return {Decor:mod.namespace.Decor,G};
 }
 const A=await load(baseline),B=await load(final);
@@ -33,7 +34,9 @@ function snapshot(decor) {
   const rows=[];decor.group.traverse(o=>{if(!o.geometry)return;const g=o.geometry;g.computeBoundingSphere();rows.push({name:o.name,type:o.type,matrix:o.matrixWorld.toArray(),index:g.index&&hash(g.index.array),attributes:Object.fromEntries(Object.entries(g.attributes).map(([k,a])=>[k,{itemSize:a.itemSize,normalized:a.normalized,hash:hash(a.array)}])),sphere:{radius:g.boundingSphere.radius,center:g.boundingSphere.center.toArray()},cast:o.castShadow,receive:o.receiveShadow});});
   return rows;
 }
-function create(C,level) {return new C(new THREE.Scene(),level,{emblem:new THREE.Texture(),flagTex:new THREE.Texture()});}
+// This before/after oracle owns generic pads, lamps, palms and flags. MAP3's new
+// art owner has its own real-geometry tests; do not call it only on the after side.
+function create(C,level) {const generic=Object.create(level);generic.layout={...level.layout,map3:undefined};return new C(new THREE.Scene(),generic,{emblem:new THREE.Texture(),flagTex:new THREE.Texture()});}
 
 test('actual Decor on all five legacy layouts preserves every geometry byte, transform and separate team uniforms',()=>{
   for(const id of ['tidewater','kelpline','halyard','cargo','range']) {
@@ -54,12 +57,13 @@ test('pad animation and enemy proximity remain exact at 30/60/120Hz and each sha
     const level=new api.Level(api.MAP_LAYOUTS.tidewater),a=create(A.Decor,level),b=create(B.Decor,level);
     for(const d of [a,b])d.setTeamColors([new THREE.Color('#f80'),new THREE.Color('#08f')]);
     for(let i=0;i<hz*3;i++) {
-      const actors=[{team:0,alive:true,pos:new THREE.Vector3(0,0,-35+i*.01)},{team:1,alive:i%9!==0,pos:new THREE.Vector3(0,0,-37)}];
+      const actors=[{team:0,alive:true,pos:level.spawnPads[0].clone().add(new THREE.Vector3(0,0,4.2+i*.01))},{team:1,alive:i%9!==0,pos:level.spawnPads[0].clone().add(new THREE.Vector3(0,0,2.2))}];
       A.G.actors=B.G.actors=actors;
       for(const d of [a,b]){if(i%hz===0)d.pulse((i/hz)%2,1.4);d.update(1/hz);}
       const state=d=>d.pads.map(p=>({pulse:p.pulse,t:p.pulseT,pad:Object.fromEntries(Object.entries(p.padMat.uniforms).filter(([k])=>k!=='uEmblem').map(([k,u])=>[k,u.value?.isColor?u.value.toArray():u.value])),bar:Object.fromEntries(Object.entries(p.barMat.uniforms).map(([k,u])=>[k,u.value?.isColor?u.value.toArray():u.value]))}));
       assert.deepEqual(structuredClone(state(b)),structuredClone(state(a)));
     }
+    assert(b.pads[0].barMat.uniforms.uAlpha.value>.12,'the enemy actually approached the current spawn');
     const disposed=new Map();b.group.traverse(o=>{for(const resource of [o.geometry,o.material])if(resource&&!disposed.has(resource)){disposed.set(resource,0);resource.addEventListener('dispose',()=>disposed.set(resource,disposed.get(resource)+1));}});
     b.dispose();b.dispose();assert([...disposed.values()].every(n=>n===1));assert.equal(b._queuePadShapes,null);assert.equal(b._queuePadMaterials,null);assert.equal(b._padBase,null);a.dispose();
   }

@@ -1,0 +1,287 @@
+{
+  "schema": 1,
+  "units": "WU and WU²; no calibrated SI conversion",
+  "method": "Imports unchanged measure_baseline.geometry_metrics: solid collision faces, normal.y >= .68, exact triangle XZ clipping, .25-WU cell-center union and overlap with weighted boundary cells.",
+  "geometryScope": "Actual Level(MAP_LAYOUTS[id], map3ArtColliders(layout)) OBB faces, including low toes, grates, hidden support/roof/rail collider tops and buried/overlapping surfaces. Render-only meshes excluded. Neither common union nor height span establishes traversability or headroom.",
+  "paintScope": "Real PaintSystem._initGrid, cell .25, on the same Level with all extras; paintable/turf face rules and dead mask apply. runtimeTurfArea sums exposed surface-cell area; scoringProjectedPaintCellArea weights by normal.y. Stacked paint faces remain separate, unlike common XZ union.",
+  "headParent": "0582bb1ee6ac03dfb54e292ea839d18463e33fcc",
+  "loadedSourceModuleCount": 21,
+  "loadedSourceDigestSha256": "714bb77ec6ba5dbc14214b054999d8def7a751ebec431ef0815960721aae36dd",
+  "inputSha256": {
+    "docs/stage-redesign/map3/measure_baseline.py": "ea70656ccd80f230441e9d173fe90b51cae7a8e23d71297358e14d3b478340ad",
+    "docs/stage-redesign/map3/measure_current_runtime.py": "37602560efc25662f23d865530ca28778005c6bd499208b0aa2e30799f90d9b7",
+    "docs/stage-redesign/map3/baseline-metrics.json": "423fcf782bddcd7945ae8b7394d54c97e88b43a688674528fdd59191cf6ba676",
+    "docs/stage-redesign/map3/baseline-resolution-check.json": "4a4cd4d741bd85a02f828e9876ed8a47af8c1e9571fd998e879af35fa9ebdef3",
+    "docs/stage-redesign/map3/proposal-common-metrics.json": "76367af516edf19694056988ca57dc6714ccaddd3148e41b8d1637b63a2d6987",
+    "docs/stage-redesign/map3/validation.json": "3f82f0a5ff5dbc5d22baaf9966f547613c16c8e88775498e1376d65bab78f5ea",
+    "docs/stage-redesign/map3/design.json": "878312eeb34be46d5d6859c2142ed55bc3c6b808fd8c20a91ee9e97f9d31358f",
+    "inkwave-public/src/world/level.js": "386ddb93860e8d30bae4ff7effc927e124a837bc8b233580c9ada21a654f2db0",
+    "inkwave-public/src/world/paint.js": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+    "inkwave-public/src/world/maps.js": "13a5f9649819036bd896ca665541aaf7c2615980a707401f99ec1680696d1519",
+    "inkwave-public/src/world/mapkit.js": "be02ec9ae03207db3a632af6de8c29f303e2aa85fea8f1248d12e558679d542d",
+    "inkwave-public/src/world/stages/map3-data.js": "eed97d33e62c547a0189df250a1fa0cdf7a45f9ebc9e6c2edb7c310e35e48251",
+    "inkwave-public/src/world/stages/map3-layout.js": "3f8170dcc8b8faaa92572ca156bdd31a9cf56eadca1e8895d1db7e3284f4862a",
+    "inkwave-public/src/world/stages/map3-art.js": "55f8b8a64b48cda52b62d4cd060c405f2e4cfb779429d27a81361857feec62b9"
+  },
+  "nativeReference": {
+    "sampleStepWU": 0.25,
+    "count": 23,
+    "projectedUnionMedianWU2": 8037.125,
+    "binaryPayloadsRead": 0,
+    "verifiedCurrentHeadLfsPointerReceipts": 117,
+    "trackedNativePathsChanged": [],
+    "untrackedNativePaths": [],
+    "baselineHead": "0582bb1ee6ac03dfb54e292ea839d18463e33fcc",
+    "gitTrees": {
+      "patches/native-stages": "98504882ac20610873ce1bd38a529ea99562bbac",
+      "native-prebuilt": "7151c663336f868f4b8b4c71099a8ee999ed48dd"
+    },
+    "baselineGitTrees": {
+      "patches/native-stages": "98504882ac20610873ce1bd38a529ea99562bbac",
+      "native-prebuilt": "7151c663336f868f4b8b4c71099a8ee999ed48dd"
+    },
+    "limit": "Reuses recorded native-quarter extraction, with matching current LFS hashes/sizes and unchanged native paths. Does not rerun native arrays or establish unchanged behavior of all shared code."
+  },
+  "stages": [
+    {
+      "id": "tidewater",
+      "bounds": {
+        "minX": -42,
+        "maxX": 42,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          4.8,
+          -68
+        ],
+        [
+          0,
+          4.8,
+          68
+        ]
+      ],
+      "blockCount": 301,
+      "authoredBlockCount": 89,
+      "artColliderCount": 212,
+      "cpuPaint": {
+        "cellWU": 0.25,
+        "runtimeTurfAreaWU2": 8462.829471444813,
+        "runtimeTurfCells": 135440,
+        "clippedRuntimeTurfAreaWU2": 8462.829471444813,
+        "clippedRuntimeTurfCells": 135440,
+        "scoringProjectedPaintCellAreaWU2": 8408.053327556263
+      },
+      "widthWU": 84,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12096,
+      "spawnDistance3DWU": 136.0,
+      "spawnDistanceXZWU": 136.0,
+      "currentRuntimeCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -38.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            38.0,
+            9.450000000000001,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 602,
+        "clippedUpwardSurfaceSumWU2": 9047.81332031154,
+        "clippedUpwardProjectedSumWU2": 8990.712449557537,
+        "projectedUnionSampleWU2": 8104.0,
+        "overlapSpanAtLeast1_6SampleWU2": 552.5,
+        "overlapSpanAtLeast2_5SampleWU2": 530.5,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          -0.1687499999999995,
+          9.450000000000003
+        ]
+      },
+      "currentLevelWithoutArtCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -38.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            38.0,
+            7.8,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 178,
+        "clippedUpwardSurfaceSumWU2": 8896.82592031144,
+        "clippedUpwardProjectedSumWU2": 8839.725049557437,
+        "projectedUnionSampleWU2": 8104.0,
+        "overlapSpanAtLeast1_6SampleWU2": 549.0,
+        "overlapSpanAtLeast2_5SampleWU2": 529.0,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          -0.1687499999999995,
+          7.800000000000001
+        ]
+      },
+      "frozenNominalCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -38.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            38.0,
+            7.8,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 178,
+        "clippedUpwardSurfaceSumWU2": 8755.225920311439,
+        "clippedUpwardProjectedSumWU2": 8701.599999999999,
+        "projectedUnionSampleWU2": 8104.0,
+        "overlapSpanAtLeast1_6SampleWU2": 549.0,
+        "overlapSpanAtLeast2_5SampleWU2": 529.0,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          0.0,
+          7.800000000000001
+        ],
+        "ratioToNativeMedianSameStep": 1.0083207614663203
+      },
+      "frozenNominalTerrain": {
+        "grossLayeredProjectedArea": 8464.0,
+        "netLayeredProjectedArea": 8226.399999999998,
+        "netProjectedUnionArea": 7874.4
+      },
+      "runtimeUnionMinusNominalCommonWU2": 0.0,
+      "runtimeUnionRatioToNativeQuarterMedian": 1.0083207614663203
+    },
+    {
+      "id": "kelpline",
+      "bounds": {
+        "minX": -44,
+        "maxX": 44,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          6,
+          -68
+        ],
+        [
+          0,
+          6,
+          68
+        ]
+      ],
+      "blockCount": 176,
+      "authoredBlockCount": 83,
+      "artColliderCount": 93,
+      "cpuPaint": {
+        "cellWU": 0.25,
+        "runtimeTurfAreaWU2": 11351.951891071018,
+        "runtimeTurfCells": 181700,
+        "clippedRuntimeTurfAreaWU2": 11351.951891071018,
+        "clippedRuntimeTurfCells": 181700,
+        "scoringProjectedPaintCellAreaWU2": 11305.991645606118
+      },
+      "widthWU": 88,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12672,
+      "spawnDistance3DWU": 136.0,
+      "spawnDistanceXZWU": 136.0,
+      "currentRuntimeCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -44.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            44.0,
+            13.24,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 352,
+        "clippedUpwardSurfaceSumWU2": 12098.012860727384,
+        "clippedUpwardProjectedSumWU2": 12049.978178978203,
+        "projectedUnionSampleWU2": 9032.0,
+        "overlapSpanAtLeast1_6SampleWU2": 2496.0,
+        "overlapSpanAtLeast2_5SampleWU2": 2449.5,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          -0.16875000000000281,
+          13.240000000000002
+        ]
+      },
+      "currentLevelWithoutArtCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -44.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            44.0,
+            8.6,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 166,
+        "clippedUpwardSurfaceSumWU2": 11894.573674772284,
+        "clippedUpwardProjectedSumWU2": 11846.538993023103,
+        "projectedUnionSampleWU2": 9032.0,
+        "overlapSpanAtLeast1_6SampleWU2": 2496.0,
+        "overlapSpanAtLeast2_5SampleWU2": 2396.0,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          -0.16875000000000281,
+          8.600000000000001
+        ]
+      },
+      "frozenNominalCommon": {
+        "collisionBoundsXYZ": [
+          [
+            -44.0,
+            -4.0,
+            -72.0
+          ],
+          [
+            44.0,
+            8.6,
+            72.0
+          ]
+        ],
+        "upwardTriangleCount": 166,
+        "clippedUpwardSurfaceSumWU2": 11781.773674772281,
+        "clippedUpwardProjectedSumWU2": 11736.800000000003,
+        "projectedUnionSampleWU2": 9032.0,
+        "overlapSpanAtLeast1_6SampleWU2": 2496.0,
+        "overlapSpanAtLeast2_5SampleWU2": 2396.0,
+        "sampleStepWU": 0.25,
+        "sampledSurfaceHeightRangeWU": [
+          0.0,
+          8.600000000000001
+        ],
+        "ratioToNativeMedianSameStep": 1.1237849355335396
+      },
+      "frozenNominalTerrain": {
+        "grossLayeredProjectedArea": 11416.0,
+        "netLayeredProjectedArea": 11095.2,
+        "netProjectedUnionArea": 8887.2
+      },
+      "runtimeUnionMinusNominalCommonWU2": 0.0,
+      "runtimeUnionRatioToNativeQuarterMedian": 1.1237849355335396
+    }
+  ]
+}

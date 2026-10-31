@@ -5,6 +5,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 
 const extraExports = `
   export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+  export { map3ArtColliders } from './inkwave-public/src/world/stages/map3-art.js';
   export { dressingFor } from './inkwave-public/src/world/dressing.js';
   export { PropKit } from './inkwave-public/src/world/props.js';
   export { NavGraph } from './inkwave-public/src/game/nav.js';
@@ -14,7 +15,9 @@ async function world(stage) {
   const f = await fixture({ fullRuntime: true, realProjectiles: true, productionComposition: true, adaptRuntime: adaptBuildSource, extraExports });
   const { G } = f;
   const kit = new f.PropKit(null, { headless: true });
-  const colliders = f.dressingFor(stage).flatMap(p => kit.add(p.type, p).colliders);
+  const colliders = [...f.dressingFor(stage).flatMap(p => kit.add(p.type, p).colliders),
+    ...f.map3ArtColliders(f.MAP_LAYOUTS[stage])];
+  assert(f.map3ArtColliders(f.MAP_LAYOUTS[stage]).length > 0, 'exercise the production structural and cover colliders');
   G.level = new f.Level(f.MAP_LAYOUTS[stage], colliders);
   G.physics = new f.Physics(G.level);
   G.nav = new f.NavGraph(G.level, G.physics);
@@ -24,13 +27,13 @@ async function world(stage) {
   return { f, kit };
 }
 
-// These routes exercise new raised terrain, including the actual transition
-// from the yard through a ramp onto its platform, on both mirrored halves.
+// The previous terrace/dock coordinates belonged to the replaced expanded maps.
+// These independent probes now cross the frozen MAP3 ramp toes and upper exits.
 const ramps = [
-  { stage: 'tidewater', label: 'west terrace', from: [-24.5, 0, -35.5], to: [-24.5, 2.2, -28.5] },
-  { stage: 'tidewater', label: 'east terrace', from: [23.5, 0, -33.3], to: [23.5, 1.8, -25] },
-  { stage: 'kelpline', label: 'rear loading dock', from: [-28.5, 0, -64.5], to: [-28.5, 1.8, -58] },
-  { stage: 'kelpline', label: 'yard shelf', from: [-8.5, 0, -50.5], to: [-8.5, 1.6, -43.5] },
+  { stage: 'tidewater', label: 'market west rise', from: [-32, 2.4, -32], to: [-32, 4.8, -17.2] },
+  { stage: 'tidewater', label: 'belvedere rise', from: [30, 1.2, -30], to: [30, 3.6, -19] },
+  { stage: 'kelpline', label: 'boarding recovery', from: [-40, 0, -16], to: [-26, 3.6, -16] },
+  { stage: 'kelpline', label: 'main concourse ascent', from: [0, 3.6, -40], to: [0, 4.8, -52] },
 ];
 
 for (const stage of ['tidewater', 'kelpline']) test(`${stage}: real actors climb new ramps on both mirrored halves`, async () => {
@@ -61,14 +64,14 @@ test('Kelpline: real Actor stands on the high grate as a kid and falls through a
   try {
     for (const mirror of [1, -1]) {
       const a = f.make('shooter'); a._integrate = f.Actor.prototype._integrate;
-      a.pos.set(27 * mirror, 2.2, -28 * mirror);
+      a.pos.set(-26 * mirror, 3.6, -25 * mirror);
       for (let i = 0; i < 60; i++) { G.time += 1 / 60; a.update(1 / 60); }
-      assert(a.grounded && a.ground.grate && Math.abs(a.pos.y - 2.2) < .1, 'kid stands on the grate');
+      assert(a.grounded && a.ground.grate && Math.abs(a.pos.y - 3.6) < .1, 'kid stands on the grate');
       a.intent.squid = true;
       let fell = false;
       for (let i = 0; i < 120; i++) {
         G.time += 1 / 60; a.update(1 / 60);
-        if (a.pos.y < 1.5) { fell = true; break; }
+        if (a.pos.y < 2.9) { fell = true; break; }
       }
       assert.equal(a.form, 'squid');
       assert(fell, 'squid passes through the grate');
@@ -78,8 +81,8 @@ test('Kelpline: real Actor stands on the high grate as a kid and falls through a
 });
 
 for (const scenario of [
-  { stage: 'tidewater', start: [-19, 0, -25], aim: [-21, 1.05, -25], tag: 'plaza-west-terrace' },
-  { stage: 'kelpline', start: [-23, 0, -58], aim: [-25, 1.05, -58], tag: 'terminal-rear-dock' },
+  { stage: 'tidewater', start: [-2, 0, 0], aim: [-4, 1.05, 0], tag: 'mid_screen' },
+  { stage: 'kelpline', start: [14, 2.4, -38], aim: [12, 3.45, -38], tag: 'boarding_rear' },
 ]) test(`${scenario.stage}: shooter ink reaches the new raised wall`, async () => {
   const { f, kit } = await world(scenario.stage), { G } = f;
   try {
@@ -92,7 +95,7 @@ for (const scenario of [
       const origin = a.pos.clone().add(new f.THREE.Vector3(0, 1.05, .3));
       a.aimDir.copy(aim).sub(origin).normalize(); a.aimPoint.copy(aim);
       const hit = G.physics.raycast(origin, a.aimDir, 3);
-      assert(hit.hit && G.level.blocks[hit.block].tag === scenario.tag, 'shot has an unobstructed horizontal approach to the intended wall');
+      assert(hit.hit && G.level.blocks[hit.block].tag === `${mirror === 1 ? 'A' : 'B'}_${scenario.tag}`, 'shot has an unobstructed horizontal approach to the intended wall');
       assert(G.level.faces[hit.face].paintable, 'wall accepts ink');
       assert.equal(G.paint.sampleWorld(hit.face, hit.point), 0);
       G.projectiles.fireShooter(a, a.weapon, 0);
@@ -104,9 +107,9 @@ for (const scenario of [
 });
 
 const routes = [
-  { stage: 'tidewater', label: 'terrace to overlook', points: [[-24.5, 0, -35.5], [-24.5, 2.2, -29], [-24, 2.2, -20], [-26, 2.2, -18], [-26, 1.4, -9]] },
-  { stage: 'kelpline', label: 'raised loading route', points: [[28.5, 0, -51.5], [27, 2.2, -44], [27, 2.2, -33], [27, 2.2, -28], [27, 2.2, -24]], grate: true },
-  { stage: 'kelpline', label: 'covered lower lane', points: [[27, 0, -44], [27, 0, -38.5], [27, 0, -31.5], [27, 0, -27.5]] },
+  { stage: 'tidewater', label: 'terrace through market to bridge', points: [[-24, 2.4, -34], [-32, 2.4, -34], [-32, 2.4, -30], [-32, 4.8, -18], [-32, 4.8, -17.2], [-28, 4.8, -17.2], [-28, 4.8, -10], [-27, 4.8, -3], [-16, 4.8, -3]], grate: true },
+  { stage: 'kelpline', label: 'raised boarding route to side grate', points: [[0, 3.6, -38], [-6, 3.6, -38], [-6, 3.6, -14], [-20, 3.6, -14], [-26, 3.6, -16], [-26, 3.6, -25]], grate: true },
+  { stage: 'kelpline', label: 'covered lower service lane', points: [[-26, 1.2, -38], [-26, 1.2, -34], [-26, 0, -28], [-26, 0, -26], [-18, 0, -26], [-18, 0, -16], [-8, 0, -12], [-8, 0, -4]] },
 ];
 for (const route of routes) test(`${route.stage}: real Actor traverses ${route.label}`, async () => {
   const { f, kit } = await world(route.stage), { G } = f;
@@ -138,13 +141,13 @@ test('Kelpline: the new overpass grate cannot be inked and a real shot passes th
   try {
     f.setRandom(() => .5);
     for (const mirror of [1, -1]) {
-      const a = f.make('shooter'); a.pos.set(27 * mirror, 3, -28 * mirror);
+      const a = f.make('shooter'); a.pos.set(-26 * mirror, 3.8, -25 * mirror);
       a.character.root.position.copy(a.pos);
       const origin = a.pos.clone().add(new f.THREE.Vector3(0, 1.05, .3));
       a.aimDir.set(0, -1, 0); a.aimPoint.copy(origin).add(new f.THREE.Vector3(0, -5, 0));
       const grate = G.physics.raycast(origin, a.aimDir, 5);
       const floor = G.physics.raycast(origin, a.aimDir, 5, new f.Hit(), true);
-      assert(grate.hit && G.level.blocks[grate.block].tag === 'terminal-overpass-grate');
+      assert(grate.hit && G.level.blocks[grate.block].tag === `${mirror === 1 ? 'A' : 'B'}_boarding_grate`);
       assert(!G.level.faces[grate.face].paintable, 'grate has no paintable face');
       assert(floor.hit && floor.point.y < .1, 'shot collision skips grate and sees the lower floor');
       assert.equal(G.paint.sampleWorld(floor.face, floor.point), 0);
@@ -158,21 +161,22 @@ test('Kelpline: the new overpass grate cannot be inked and a real shot passes th
 });
 
 for (const scenario of [
-  { stage: 'tidewater', faceX: -21, z: -25, top: 2.2 },
-  { stage: 'kelpline', faceX: -25, z: -58, top: 1.8 },
+  { stage: 'tidewater', faceX: -4, z: 0, base: 0, top: 2.4, tag: 'mid_screen' },
+  { stage: 'kelpline', faceX: 12, z: -38, base: 2.4, top: 3.6, tag: 'boarding_rear' },
 ]) test(`${scenario.stage}: squid climbs an inked new wall onto the platform`, async () => {
   const { f, kit } = await world(scenario.stage), { G } = f;
   try {
     for (const mirror of [1, -1]) for (const hz of [30, 60, 120]) {
-      const wall = new f.THREE.Vector3(scenario.faceX * mirror, scenario.top / 2, scenario.z * mirror);
+      const wall = new f.THREE.Vector3(scenario.faceX * mirror, (scenario.base + scenario.top) / 2, scenario.z * mirror);
       const ray = G.physics.raycast(wall.clone().add(new f.THREE.Vector3(1 * mirror, 0, 0)), new f.THREE.Vector3(-mirror, 0, 0), 2);
       assert(ray.hit && G.level.faces[ray.face].paintable);
+      assert.equal(G.level.blocks[ray.block].tag, `${mirror === 1 ? 'A' : 'B'}_${scenario.tag}`, 'ink and climb the intended authored wall');
       G.paint.splat(wall, 2, 0, { face: ray.face, instant: true, seed: .5 });
-      for (const y of [.3, .85, scenario.top - .1]) {
+      for (const y of [scenario.base + .3, scenario.base + .85, scenario.top - .1]) {
         assert.equal(G.paint.sampleWorld(ray.face, new f.THREE.Vector3(wall.x, y, wall.z)), 1, `wall ink at y=${y}`);
       }
       const a = f.make('shooter'); a._integrate = f.Actor.prototype._integrate;
-      a.pos.set((scenario.faceX + .7) * mirror, 0, scenario.z * mirror);
+      a.pos.set((scenario.faceX + .7) * mirror, scenario.base, scenario.z * mirror);
       a.intent.squid = true; a.intent.move.set(-mirror, 0, 0);
       let climbed = false, reached = false;
       for (let i = 0; i < hz * 6; i++) {

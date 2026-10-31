@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { G } from '../core/ctx.js';
+import { createMap3Art } from './stages/map3-art.js';
 
 const TAU = Math.PI * 2;
 const OUT = /* glsl */`
@@ -220,6 +221,7 @@ export class Decor {
       this._buildLamps();
       this._buildPalms();
       this._buildFlags();
+      if (level.layout?.map3) this.stageArt = createMap3Art(this.group, level);
       if (!this.flagMesh) { this.flagTex?.dispose(); this.flagTex = null; }
     } catch (error) { this.dispose(); throw error; }
   }
@@ -507,6 +509,9 @@ export class Decor {
   dispose() {
     if (this._disposed) return;
     this._disposed = true;
+    // MAP3 owns shared texture references; release them before generic traversal.
+    this.stageArt?.dispose();
+    this.stageArt = null;
     const geometries = new Set();
     const materials = new Set();
     const instanced = new Set();

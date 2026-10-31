@@ -1,1 +1,1 @@
-{"id":"tidewater","hash":"7577fc1e","size":2048,"ppm":8,"rays":100,"dist":3.5}
+{"id":"tidewater","hash":"3aec4eb7","size":2048,"ppm":5,"rays":64,"dist":3.5,"colliderHash":"04eebe4c75d06c4fc42c5ccf774fa4a8d64a8a7393311c37c6e8b2bc44700d57","pngSha256":"828119d5e8a4dd1758067b07ba6e3f5e962b29dc4d35b8c88d9bfaaa5d4b5be3","source":"scripts/bake-map3-ao.mjs","structuralColliders":212,"faces":393,"texels":667648}

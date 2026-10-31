@@ -105,18 +105,19 @@ test('#360 installed coverage projects cell area across unequal grids', () => {
 });
 
 test('#360 TIDEWATER 100 ramp cells lose to 95 flat cells on top-down projected area', () => {
-  const length = Math.hypot(7, 2.8);
+  const length = Math.hypot(8, 3.6);
   const level = new Level(TIDEWATER);
-  const ramp = level.faces.find(f => f.turf && Math.abs(f.su - 3.6) < 1e-9 &&
-    Math.abs(f.sv - (length + 0.6)) < 1e-8 && Math.abs(f.n.y - 7 / length) < 1e-8);
-  assert.ok(ramp, 'the current TIDEWATER central ramp top face should be scoreable Turf');
+  const block = level.blocks.find(b => b.tag === 'A_belvedere_descent');
+  const ramp = level.faces.find(f => f.turf && f.block === block.id && Math.abs(f.su - (length + 0.6)) < 1e-8 &&
+    Math.abs(f.sv - 8) < 1e-9 && Math.abs(f.n.y - 8 / length) < 1e-8);
+  assert.ok(ramp, 'the current MAP3 TIDEWATER belvedere ramp top face should be scoreable Turf');
   const flat = makeFace({ su: 1.25, sv: 4.75, ny: 1, origin: [100, 0, 0] });
   const paint = paintRig([ramp, flat], { level });
-  assert.equal(ramp.nu, 14);
-  assert.equal(ramp.nv, 33);
+  assert.equal(ramp.nu, 37);
+  assert.equal(ramp.nv, 32);
   assert.equal(flat.nu * flat.nv, 95);
-  near(ramp.cu * ramp.cv, 0.0634226, 1e-6);
-  near(ramp.cu * ramp.cv * ramp.n.y, 0.0588864, 1e-6);
+  near(ramp.cu * ramp.cv, 0.063328951890436, 1e-6);
+  near(ramp.cu * ramp.cv * ramp.n.y, 0.057751033129088, 1e-6);
 
   const surfaceScores = [100 * ramp.cu * ramp.cv, 95 * flat.cu * flat.cv];
   assert.ok(surfaceScores[0] > surfaceScores[1], `the pre-#360 surface-area scorer selects Team 0: ${surfaceScores}`);

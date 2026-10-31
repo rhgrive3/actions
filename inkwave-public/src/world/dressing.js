@@ -284,6 +284,9 @@ const EXTRA = { halyard: HALYARD_VESSELS };
 
 // Expand the half-list into world placements for both halves.
 export function dressingFor(layoutId) {
+  // MAP3 art follows the new coordinate model. Legacy placements belong to
+  // the superseded layouts and would introduce floating props / wrong solids.
+  if (layoutId === 'tidewater' || layoutId === 'kelpline') return [];
   const src = [...(DRESSING[layoutId] || []), ...(STAGES[layoutId]?.PLACEMENTS || EXTRA[layoutId] || [])];
   const out = [];
   for (const it of src) {

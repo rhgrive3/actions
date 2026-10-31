@@ -1,8 +1,19 @@
-# Tidewater Plaza / Kelpline Terminal — MAP3 立体地形設計
+# Tidewater Plaza / Kelpline Terminal — MAP3 実装と立体地形設計
 
-PR #1985 の前案を再構成した、**ゲーム本体と分離した設計・検証用モデル**です。図・座標・面積・接続・ブロックアウトは同じ座標データから生成します。設計案として通行・接合・上下関係を具体化しましたが、実ゲームへ組み込んだ完成ステージ、対戦バランス検証済みの製品とは扱いません。
+## 最新：通常公開ステージへの実装
 
-対象の読み取り基準は `b208addacc61009fba44ae973d5288b6f315f303`。今回の追加対象はこの `map3/` と資料の入口だけです。`inkwave-public/` の途中拡張、移動・塗り・ルールコード、既存のネイティブ移植ステージは変更していません。PRが以前から含む途中実装と、この新案は別です。
+利用者の追加指示に従い、分離して設計した MAP3 を公開版 `inkwave-public/` の `tidewater` / `kelpline` へ実装しました。実際に渡れる橋、独自の売店・植栽・荷役設備、確定した材質、周辺建築、実衝突、上下の塗り表示、AI、全ランクルールを接続しています。**現在の実装・検証・残課題は [runtime-integration.md](runtime-integration.md) が入口です。** ネイティブの地形・資産は変更対象外です。
+
+- [実ゲームの画面・検証・寸法と面積](runtime-integration.md)
+- [追加造形の同縮尺平面図](runtime-art-plan.svg) / [断面図](runtime-art-sections.svg) / [実装から抽出した全座標](runtime-art-coordinates.json)
+- [素材と造形の決定](art-direction.md) / [本家7画像の追加観察](art-reference-observations.md) / [実描画レビュー](runtime-art-review.md)
+- [移動・カメラ・塗り・AIの詳細](runtime-terrain.md) / [実装の面積再集計](current-runtime-common-metrics.json) / [製品ビルドの実ブラウザ記録](runtime-evidence/browser-validation.json)
+
+## 以下：実装前に完成させた分離設計の記録
+
+以下の本文は読み取り基準 `b208addacc61009fba44ae973d5288b6f315f303` に対して作成した設計時の記録です。当時はゲームを置換せず、`map3/` に設計・計算・分離ブロックアウトを作成しました。本文中の「現行実装」「未検証」「採用前」は**その時点**を表し、現在の実装状態を上書きするものではありません。設計 JSON・同縮尺図・座標・面積の原本を保存し、後続の実装結果と区別します。
+
+図・座標・面積・接続・ブロックアウトは同じ設計データから生成します。分離モデル自体を、実ゲームの動作や対人対戦バランスの証拠にはしません。
 
 ## 開く資料
 
