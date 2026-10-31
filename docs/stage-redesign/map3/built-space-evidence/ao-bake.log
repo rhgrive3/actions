@@ -1,0 +1,18 @@
+tidewater: baking 553 faces; 505/2048 atlas rows; 64 rays/texel
+tidewater: 80 faces, 14.7M rays, 16.7s
+tidewater: 160 faces, 29.3M rays, 33.8s
+tidewater: 240 faces, 37.0M rays, 47.9s
+tidewater: 320 faces, 40.8M rays, 55.8s
+tidewater: 400 faces, 44.5M rays, 60.7s
+tidewater: 480 faces, 51.2M rays, 72.2s
+tidewater: 844374 texels, 54039936 rays, 76.6s, hash 3617b7fd, 157.3 KiB
+kelpline: baking 524 faces; 572/2048 atlas rows; 64 rays/texel
+kelpline: 80 faces, 19.8M rays, 27.1s
+kelpline: 160 faces, 39.2M rays, 52.7s
+kelpline: 240 faces, 50.4M rays, 71.8s
+kelpline: 320 faces, 53.5M rays, 78.4s
+kelpline: 400 faces, 58.7M rays, 86.4s
+kelpline: 480 faces, 62.6M rays, 91.8s
+kelpline: 1002838 texels, 64181632 rays, 93.6s, hash d749d14b, 165.6 KiB
+(node:6) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,138 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:259:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:259:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:259:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:259:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:270:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:270:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:270:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)
+    at new Character (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/character.js:595:39)
+    at new Actor (/workspace/scratch/9293d191f715/inkwave-pr1985/inkwave-public/src/game/actor.js:78:22)
+    at start (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:93:9)
+    at TestContext.<anonymous> (file:///workspace/scratch/9293d191f715/inkwave-pr1985/patches/splatoon3/tests/ranked-autonomy-integration.test.mjs:270:17)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+✔ tidewater: real actors climb new ramps on both mirrored halves (2977.132882ms)
+✔ kelpline: real actors climb new ramps on both mirrored halves (2835.487976ms)
+✔ Kelpline: real Actor stands on the high grate as a kid and falls through as a squid (3628.463589ms)
+✔ tidewater: shooter ink reaches the new raised wall (2595.217104ms)
+✔ kelpline: shooter ink reaches the new raised wall (2341.984271ms)
+✔ tidewater: real Actor traverses terrace through market to bridge (2600.000544ms)
+✔ kelpline: real Actor traverses raised boarding route to side grate (2654.102916ms)
+✔ kelpline: real Actor traverses covered lower service lane (3040.463735ms)
+✔ Kelpline: the new overpass grate cannot be inked and a real shot passes through to the lower floor (2625.330547ms)
+✔ tidewater: squid climbs an inked new wall onto the platform (2773.710249ms)
+✔ kelpline: squid climbs an inked new wall onto the platform (2902.842748ms)
+✔ MAP3 rule targets retain authored storeys and use the opposing home for each attacking team (1717.050682ms)
+✔ actual art and terrain clear the moving tower deck, mast and four rider capsules along both complete routes (656.253966ms)
+ℹ {"samples":1196,"solidProbes":64584,"capsules":4784,"scope":"composed Level/Physics and art colliders; not a human balance test"}
+✔ MAP3 Clam goals tidewater: a screened real route survives the former direct-ray rejection (229.422903ms)
+✔ MAP3 Clam goals kelpline: a screened real route survives the former direct-ray rejection (922.379627ms)
+✔ native ranked bots paint and capture a zone, then count it down (12256.673345ms)
+✔ native projectiles cover and capture an expanded 13 by 11 zone (2642.629172ms)
+✔ native ranked bots jump onto the moving Tower deck and carry its live objective (58980.502226ms)
+ℹ Tower motion receipt: {"initial":62.28715538981245,"final":86.97115538980785,"maxProgress":0.6981221950738701,"centerProgress":0.4999823843979771,"minimum":62.28715538981245,"maximum":86.97115538980785,"origin":[0,0.28,-4.263256414560601e-14],"maxBodyDisplacement":21.04388530897309,"maxPathDisplacement":24.6839999999954,"hits":13,"maxCountDelta":33,"events":[["tower-capture",3],["special-gain",1599],["lead",1]]}
+✔ native Rainmaker combat pops the shield, picks up, and lets nearby escorts fight (14018.961796ms)
+✔ native Rainmaker bots charge, shoot, and reach a checkpoint on a clear lane (4346.62517ms)
+✔ tidewater: native Clam Blitz bots collect clams, form and throw a Power Clam, then score (6010.841827ms)
+✔ kelpline: native Clam Blitz bots collect clams, form and throw a Power Clam, then score (5495.541445ms)
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146386.207864
