@@ -24,6 +24,7 @@ const hostTeamAdapterPresent = fs.existsSync(manifestPath) && !!JSON.parse(fs.re
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
+const titlePresentationInstalled = !baseline && fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.quality?.['title-presentation-adapter.mjs'];
 const audit = process.argv.includes('--audit');
 const section = arg('--section') || 'expansion';
 const selectedCases = (arg('--cases') || arg('--case') || '').split(',').filter(Boolean);
@@ -77,6 +78,7 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const address = `http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`;
 const result = { kind: 'production-menu-dom-with-offline-session', source, section, selectedCases, realDeviceVerified: false, baseline: baseline || null, cases: [], errors: [] };
 result.runtimeInstalled = !!patchStyles;
+result.titlePresentationInstalled = titlePresentationInstalled;
 const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.css', 'src/ui/menus.js', 'src/ui/news.js', 'src/core/device.js', ...(patchStyles ? ['patches/splatoon3/ui.css'] : []), ...runtimeFiles].map((f) => {
   const original = baseline && ['styles/mobile.css', 'src/ui/menus.js', 'src/ui/news.js'].includes(f);
@@ -163,9 +165,9 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation,
+            await checkCoreMenus({ touchCameraReset, titlePresentationInstalled, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation,
               geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
-              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
+              tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testTitleStart: !audit, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
               await show(page, screen);
               assert.equal(await page.locator(selector).evaluate((el) => getComputedStyle(el).position), 'absolute', `${screen}: desktop composition must remain unchanged`);
@@ -190,7 +192,7 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, titlePresentationInstalled, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 // Runs the existing menu actions against the caller's fixture API. It tests
 // layout and UI state; it does not simulate gameplay or attest a real device.
-export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testContinuation = !audit, touchCameraReset = false, onStageComplete = () => {}, onOperation = () => {} }) {
+export async function checkCoreMenus({ page, entry, config, engineName, evidence, show, settle, geometry, tap, audit, testTitleStart = !audit, testContinuation = !audit, touchCameraReset = false, titlePresentationInstalled = false, onStageComplete = () => {}, onOperation = () => {} }) {
   const capture = async (name, selector) => {
     // A finished exit animation can retain its translated panel until the
     // menu's 340ms removal timer. Measure only after that owner is gone.
@@ -20,8 +20,13 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await page.evaluate(() => menus.setLoading(0.65, 'Loading the harbour'));
   await capture('loading');
   await show(page, 'title');
-  await capture('title', '.iw-title__press');
-  if (!audit) { await tap(page, '.iw-title__presstext'); await page.waitForFunction(() => menus.current === 'main'); }
+  const titleControl = titlePresentationInstalled ? '.iw-title.iw-launch button.iw-launch__start[data-title-start="1"]' : '.iw-title__press';
+  if (titlePresentationInstalled) {
+    assert.equal(await page.locator(titleControl).count(), 1, 'published title has exactly one native Start button');
+    assert(await page.locator(titleControl).evaluate(el => el.tagName === 'BUTTON' && el.type === 'button' && !el.disabled), 'published title Start is an enabled native button');
+  }
+  await capture('title', titleControl);
+  if (testTitleStart) { await tap(page, titlePresentationInstalled ? titleControl : '.iw-title__presstext'); await page.waitForFunction(() => menus.current === 'main'); }
   await show(page, 'main');
   await capture('main', '.iw-main__menu button');
   if (!audit) {

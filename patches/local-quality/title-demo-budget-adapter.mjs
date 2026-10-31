@@ -129,7 +129,7 @@ export function adaptTitleDemoBudget(rel, code) {
     '    if (this._nativeStageSwitchPending) {',
     '      G.time += Math.max(0, dt);',
     '      this.input?.pollPad?.();',
-    '      this._padMenus?.();',
+    '      this._padMenus?.(dt);',
     '      G.net?.update?.(dt);',
     '      this.menus?.update?.(dt);',
     '      this.input?.endFrame?.();',

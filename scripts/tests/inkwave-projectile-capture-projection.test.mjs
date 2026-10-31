@@ -128,9 +128,20 @@ test('phase exception cannot authorize a changed sealed workflow hash',async()=>
     // before reaching the deliberately corrupted phase-only fixture. Copy the
     // original metadata byte-for-byte so only the intended seal is under test.
     fs.copyFileSync(new URL('../fixtures/inkwave-projectile-sparse-checkout-epoch-20261031.json',import.meta.url),path.join(fixtures,'inkwave-projectile-sparse-checkout-epoch-20261031.json'));
-    const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-slosher-phase-workflow-20261027.json',import.meta.url),'utf8'));fixture.afterSha256='0'.repeat(64);
+    fs.copyFileSync(new URL('../fixtures/inkwave-slosher-phase-workflow-20261027.json',import.meta.url),path.join(fixtures,'inkwave-slosher-phase-workflow-20261027.json'));
+    const moduleUrl=pathToFileURL(path.join(lib,'inkwave-slosher-phase-workflow.mjs')).href;
+    const control=await import(moduleUrl+'?control');
+    const fixture=JSON.parse(fs.readFileSync(path.join(fixtures,'inkwave-slosher-phase-workflow-20261027.json'),'utf8'));
+    assert.equal(control.restoreBeforeSlosherPhaseWorkflow(workflow),fixture.before,'complete isolated control must admit only the unchanged workflow');
+    const admittedAfterSha=fixture.afterSha256;
+    fixture.afterSha256='0'.repeat(64);
     fs.writeFileSync(path.join(fixtures,'inkwave-slosher-phase-workflow-20261027.json'),JSON.stringify(fixture));
-    const changed=await import(pathToFileURL(path.join(lib,'inkwave-slosher-phase-workflow.mjs')).href);
-    assert.throws(()=>changed.restoreBeforeSlosherPhaseWorkflow(workflow),'changed seal must fail rather than hiding a route edit');
+    // An inconsistent seal fails at import admission, not at a later call.
+    await assert.rejects(import(moduleUrl+'?changed-seal'),error=>{
+      assert.equal(error.code,'ERR_ASSERTION');
+      assert.equal(error.actual,admittedAfterSha);
+      assert.equal(error.expected,'0'.repeat(64));
+      return true;
+    });
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
