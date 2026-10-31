@@ -59,6 +59,79 @@ export function installAudioRequestTrace(){
   if(nativeRelease)rp.releaseLock=function(...args){const row=readers.get(this),stack=row?String(new Error().stack):'';const result=Reflect.apply(nativeRelease,this,args);if(row)note('reader-release',row,{stack,encodedBodyCompleted:stack.includes('encoded-response.mjs')&&!!row.readCalls&&!row.cancelled});return result;};
 }
 
+// QA-only observation. No request failure is reclassified or suppressed.
+export function installContextMediaTrace(){
+  const env=globalThis;if(env.__contextMediaTraceSnapshot)return;
+  const records=[],ids=new WeakMap();let serial=0,dropped=0;
+  const identify=o=>o&&(typeof o==='object'||typeof o==='function')?(ids.get(o)||(ids.set(o,++serial),serial)):null;
+  const read=(o,k)=>{try{return o?.[k]??null;}catch{return null;}};
+  const describe=error=>{try{return {errorName:String(error?.name??''),errorMessage:String(error?.message??error).slice(0,250)};}catch{return {errorName:'unavailable',errorMessage:'unavailable'};}};
+  const isMedia=o=>{try{return typeof env.HTMLMediaElement==='function'&&o instanceof env.HTMLMediaElement;}catch{return false;}};
+  const owners=element=>{
+    try{
+      const music=env.RG?.music;if(!music)return [];
+      const list=[...(Array.isArray(music.players)?music.players:[]),music.current,music._preloadedFile?.player],seen=new Set(),out=[];
+      for(const p of list)if(p&&p.element===element&&!seen.has(p)){
+        seen.add(p);out.push({owner:identify(p),engine:identify(music),track:read(p,'id'),disposed:read(p,'disposed'),failed:read(p,'failed'),
+          stopAt:read(p,'stopAt'),pausedAfterFade:read(p,'_pausedAfterFade'),current:music.current===p,
+          preloaded:music._preloadedFile?.player===p,desiredTrack:read(music,'_desiredTrack')});
+      }return out;
+    }catch{return [];}
+  };
+  const tracked=new WeakSet(),hooks={};
+  const install=(proto,name,descriptor)=>{try{Object.defineProperty(proto,name,descriptor);return true;}catch{return false;}};
+  const note=(event,element,extra={})=>{
+    try{
+      if(records.length>=512){dropped++;return;}
+      records.push({event,wall:Date.now(),mono:env.performance?.now?.()??null,element:identify(element),src:read(element,'src'),
+        currentSrc:read(element,'currentSrc'),paused:read(element,'paused'),ended:read(element,'ended'),readyState:read(element,'readyState'),
+        networkState:read(element,'networkState'),mediaError:read(element,'error')?{code:read(element.error,'code'),message:read(element.error,'message')}:null,
+        owners:owners(element),...extra});
+    }catch{dropped++;}
+  };
+  const watch=element=>{
+    if(!isMedia(element)||tracked.has(element))return;
+    tracked.add(element);
+    for(const event of ['error','abort','emptied','loadstart','canplay','stalled'])element.addEventListener(event,()=>note('media-'+event,element));
+  };
+  const source=element=>read(element,'currentSrc')||read(element,'src');
+  const wrap=(proto,name,accept=isMedia)=>{
+    const descriptor=proto&&Object.getOwnPropertyDescriptor(proto,name),native=descriptor?.value;
+    if(!descriptor?.configurable||typeof native!=='function')return false;
+    return install(proto,name,{...descriptor,value:function(...args){
+      const observe=accept(this,args);let oldSource=null;
+      if(observe){try{watch(this);oldSource=source(this);note(name+'-before',this,{sourceURL:oldSource,stack:String(new Error().stack).slice(0,1800)});}catch{}}
+      let result;
+      try{result=Reflect.apply(native,this,args);}catch(error){if(observe)note(name+'-throw',this,{sourceURL:oldSource,...describe(error)});throw error;}
+      if(observe)note(name+'-after',this,{sourceURL:oldSource});
+      return result;
+    }});
+  };
+  const proto=env.HTMLMediaElement?.prototype;
+  hooks.pause=wrap(proto,'pause');hooks.load=wrap(proto,'load');
+  hooks.removeAttribute=wrap(env.Element?.prototype,'removeAttribute',(element,args)=>isMedia(element)&&args[0]==='src');
+  const src=proto&&Object.getOwnPropertyDescriptor(proto,'src');
+  hooks.src=false;
+  if(src?.configurable&&typeof src.set==='function')hooks.src=install(proto,'src',{...src,set:function(value){
+    try{watch(this);note('src-set-before',this,{sourceURL:source(this)});}catch{}
+    let result;try{result=Reflect.apply(src.set,this,[value]);}catch(error){note('src-set-throw',this,describe(error));throw error;}
+    note('src-set-after',this,{sourceURL:source(this)});return result;
+  }});
+  env.__contextMediaTraceSnapshot=()=>({records:records.slice(),dropped,hooks:{...hooks}});
+}
+
+// IDs are Playwright Request identities. URL/time matches are candidates only;
+// duplicate/range requests stay ambiguous and never authorize failure filtering.
+export function correlateContextMediaRequests(snapshot,ledger,ledgerDropped=0){
+  const available=Array.isArray(snapshot?.records),hooksComplete=['pause','load','removeAttribute','src'].every(k=>snapshot?.hooks?.[k]===true),
+    evidenceComplete=available&&hooksComplete&&!snapshot.dropped&&!ledgerDropped&&!snapshot.diagnosticError;
+  return {available,hooks:snapshot?.hooks??null,hooksComplete,evidenceComplete,dropped:snapshot?.dropped??0,ledgerDropped,diagnosticError:snapshot?.diagnosticError??null,records:(snapshot?.records||[]).map(event=>{
+    const urls=new Set([event.sourceURL,event.src,event.currentSrc].filter(Boolean));
+    const ids=ledger.filter(r=>urls.has(r.url)&&r.startedAt<=event.wall&&(r.endedAt==null||r.endedAt>=event.wall)).map(r=>r.id);
+    return {...event,inflightRequestIDs:ids,requestCorrelation:!evidenceComplete?'incomplete-evidence':ids.length===1?'unique-url-time-candidate':ids.length?'ambiguous':'none'};
+  })};
+}
+
 // Every phase emitted by the shared menu helper has an explicit native control
 // admission. Unknown phases fail closed rather than skipping the input guard.
 export function contextMenuControlForPhase(label) {
@@ -300,16 +373,19 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set(), audioNetwork = [];
   // Preserve strict zero-failure acceptance while classifying request cancellations.
   const requestDiagnostics = [], failedRequestURLs = new Set();
+  const requestIDs = new WeakMap(), audioRequestLedger = []; let requestSerial = 0, audioRequestLedgerDropped = 0;
+  const requestID = r => requestIDs.get(r) || (requestIDs.set(r,++requestSerial),requestSerial);
+  const settleAudioRequest = (r,event) => { const row=audioRequestLedger.find(x=>x.id===requestID(r)); if(row){row.endedAt=Date.now();row.terminal=event;row.error=r.failure()?.errorText??null;} };
   let requestPhase = 'startup';
   const recordRequestDiagnostic = (event, request) => {
     if (requestDiagnostics.length >= 64) return;
     let timing = null, timingError = null;
     try { timing = request.timing(); } catch (error) { timingError = String(error); }
     requestDiagnostics.push({ event, phase: requestPhase, at: new Date().toISOString(),
-      url: request.url(), resourceType: request.resourceType(), timing, timingError,
+      id: requestID(request), url: request.url(), resourceType: request.resourceType(), timing, timingError,
       failure: request.failure()?.errorText ?? null });
   };
-  let preLossAudio = null;
+  let preLossAudio = null, preLossMedia = null;
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -332,8 +408,10 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const pendingAudio = new Set();
     const audioRequest = r => /\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
     page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); });
+    page.on('request', r => { requestID(r); if (audioRequest(r)) { if(audioRequestLedger.length<512)audioRequestLedger.push({id:requestID(r),url:r.url(),resourceType:r.resourceType(),phase:requestPhase,startedAt:Date.now(),endedAt:null}); else audioRequestLedgerDropped++; } });
     page.on('request', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'start',url:r.url(),at:Date.now()}); });
     page.on('requestfinished', r => pendingAudio.delete(r));
+    page.on('requestfinished', r => settleAudioRequest(r,'finished'));
     page.on('requestfinished', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'finished',url:r.url(),at:Date.now(),timing:r.timing()}); });
     await page.exposeFunction('__awaitContextRecoveryAudioIdle', async () => {
       // Wait only for a stable quiet period, never suppress a failed request.
@@ -350,6 +428,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       }
       try { preLossAudio = await page.evaluate(() => globalThis.__contextAudioOwnerSnapshot?.() ?? null); }
       catch (error) { preLossAudio = { diagnosticError:String(error?.message || error) }; }
+      try { preLossMedia=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null); } catch(error){preLossMedia={diagnosticError:String(error?.message||error)};}
       assert.deepEqual(requests, [], 'Audio startup produced failed network requests');
       assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
     });
@@ -357,6 +436,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
     page.on('response', r => { if (audioRequest(r.request()) && audioNetwork.length < 512) audioNetwork.push({event:'headers',url:r.url(),at:Date.now(),status:r.status()}); });
     page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
+    page.on('requestfailed', r => settleAudioRequest(r,'failed'));
     page.on('requestfailed', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'failed',url:r.url(),error:r.failure()?.errorText,at:Date.now(),timing:r.timing()}); });
     page.on('requestfailed', r => {
       if (failedRequestURLs.size < 32) failedRequestURLs.add(r.url());
@@ -381,6 +461,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       };
     });
     await page.addInitScript(installAudioRequestTrace);
+    await page.addInitScript(installContextMediaTrace);
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
     await page.evaluate(async () => {
@@ -443,9 +524,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       result.audioCancellationError = String(diagnosticFailure?.message || diagnosticFailure);
     }
   } finally {
-    let audioTrace = null, audioOwnerFinal = null;
-    if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null}))); } catch {}
-    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    let audioTrace = null, audioOwnerFinal = null, mediaTrace = null;
+    if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal,mediaTrace} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null,mediaTrace:globalThis.__contextMediaTraceSnapshot?.()??null}))); } catch {}
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossMedia, mediaTrace:correlateContextMediaRequests(mediaTrace,audioRequestLedger,audioRequestLedgerDropped), audioRequestLedger, audioRequestLedgerDropped, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }
