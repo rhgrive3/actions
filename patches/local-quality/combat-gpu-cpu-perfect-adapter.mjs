@@ -722,6 +722,15 @@ export class SwimWake {`,
       'CPU-07a fast-path empty clouds and reuse _rainHits Map in _updateClouds'
     );
 
+    // The reused Map must not retain victims/owners from a retired match.
+    code = applyIdempotent(
+      code,
+      '    this.inkFlight.clear();',
+      '    this._rainHits?.clear();\n    this.inkFlight.clear();',
+      replaceOnce,
+      'CPU-07a release cached rain actor references on world clear'
+    );
+
   }
 
   if (rel === 'src/game/bots.js') {
