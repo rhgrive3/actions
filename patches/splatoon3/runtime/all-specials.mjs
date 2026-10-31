@@ -2269,7 +2269,10 @@ function activeStep(rt,actor,dt) {
       paintKrakenMove(rt,actor,state,dt,state.direction,true);
       // Public gameplay reference: an airborne/grate dash becomes the
       // 60-damage spinning attack, rather than retaining its grounded 120.
-      if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();}
+      if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();
+        // The local body spins on this transition, so remote replay needs the
+        // same accepted `jump` mark that a normal squid jump emits.
+        emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,nextSeed(state),{damage:60,index:state.strikes++});}
       else if(state.dashT+1e-8>=KRAKEN_MOVEMENT.dashTime){state.phase='active';state.dashT=0;}
     }else {
       const jumped=moveCombatSquid(rt,actor,dt,state,{speed:krakenMoveSpeed(state.phase,state.chargeT),ignoreEnemy:true});
