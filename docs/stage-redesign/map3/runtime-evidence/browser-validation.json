@@ -1,8 +1,8 @@
 {
   "status": "passed",
-  "buildRevision": "1b75e184d1476e82bf70e77ef7b2300269b11c73e9b3278bd3e22ad5f1202431",
-  "contentHash": "a3be056cf58eb0ed6b827994cc68143f6956e093c549f9c7807cf9aa1017c2b2",
-  "buildManifestSha256": "af956398f0d17ac9dee70803c18a5fa5107913502104ecaf0ee3b202ce121ab7",
+  "buildRevision": "d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24",
+  "contentHash": "b243a420ac7daf666704dbaaa2cd6c54224ec6d5afa7cac33129e29c3a24926d",
+  "buildManifestSha256": "70783254af4afbfb7d0d85d9a33dfd4ab0393ae22df339279b8b4fcff4d47199",
   "scope": "minified production site in Chromium/SwiftShader; setup teleports are controlled test inputs; no physical-device FPS claim",
   "errors": [],
   "warnings": [
@@ -34,7 +34,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 316,
+      "geometries": 317,
       "textures": 58,
       "firing": {
         "setupTeleport": [
@@ -47,7 +47,7 @@
           0
         ],
         "after": [
-          513,
+          503,
           0
         ]
       },
@@ -82,7 +82,7 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 426,
+      "geometries": 438,
       "textures": 53,
       "firing": {
         "setupTeleport": [
@@ -95,7 +95,7 @@
           0
         ],
         "after": [
-          510,
+          513,
           0
         ]
       },
@@ -606,7 +606,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 316,
+      "geometries": 317,
       "textures": 58
     },
     {
@@ -633,7 +633,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 354,
+      "geometries": 358,
       "textures": 58
     },
     {
@@ -660,7 +660,7 @@
       "paintCells": 305225,
       "turfArea": 8470.086330948945,
       "navNodes": 8340,
-      "geometries": 377,
+      "geometries": 382,
       "textures": 58
     },
     {
@@ -687,7 +687,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 403,
+      "geometries": 409,
       "textures": 58
     },
     {
@@ -714,7 +714,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 426,
+      "geometries": 423,
       "textures": 58
     },
     {
@@ -741,7 +741,7 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 426,
+      "geometries": 438,
       "textures": 53
     },
     {
@@ -768,7 +768,7 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 461,
+      "geometries": 483,
       "textures": 58
     },
     {
@@ -795,7 +795,7 @@
       "paintCells": 389121,
       "turfArea": 11359.20875057515,
       "navNodes": 11174,
-      "geometries": 469,
+      "geometries": 502,
       "textures": 58
     },
     {
@@ -822,7 +822,7 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 490,
+      "geometries": 525,
       "textures": 58
     },
     {
@@ -849,7 +849,7 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 511,
+      "geometries": 533,
       "textures": 58
     },
     {
@@ -876,7 +876,7 @@
       "paintCells": 305104,
       "turfArea": 8462.829471444813,
       "navNodes": 8340,
-      "geometries": 500,
+      "geometries": 521,
       "textures": 53
     },
     {
@@ -903,19 +903,19 @@
       "paintCells": 389000,
       "turfArea": 11351.951891071018,
       "navNodes": 11174,
-      "geometries": 528,
+      "geometries": 556,
       "textures": 53
     }
   ],
   "screenshots": [
     {
       "file": "tidewater-play.jpg",
-      "sha256": "b3ea56ead47494a7953ca243f704afd2538ffa8daf1ee916df38925aed84bfa6",
+      "sha256": "ea5ac2bbdf065e1ed02f213176ebe1f70e1d31862adafc3a47715c8d89292aba",
       "hud": true,
       "manualInspectionCamera": false,
-      "calls": 155,
-      "triangles": 781715,
-      "geometries": 331,
+      "calls": 153,
+      "triangles": 782563,
+      "geometries": 332,
       "textures": 58,
       "camera": [
         -0.28000398166079826,
@@ -928,12 +928,12 @@
     },
     {
       "file": "tidewater-overview.jpg",
-      "sha256": "2b93152a424e3db283552431ed8e7720b13a2ef0b891bb4ccb40bc68294e1c0e",
+      "sha256": "e128302a9ea4378cb5ead1cccac95d46624e10350da857f988d7cd5196297630",
       "hud": false,
       "manualInspectionCamera": true,
       "calls": 211,
-      "triangles": 830111,
-      "geometries": 340,
+      "triangles": 828915,
+      "geometries": 344,
       "textures": 58,
       "camera": [
         83,
@@ -946,12 +946,12 @@
     },
     {
       "file": "tidewater-bridge.jpg",
-      "sha256": "67b99193256d4395cbf2c0322dc92e5ac89700e6421ed394199c3ef47cc8ab96",
+      "sha256": "3429d2aa084992e2a5e8aa9ad5b1e2f16ff35bf4094f44b9039fff206c227c69",
       "hud": false,
       "manualInspectionCamera": true,
-      "calls": 155,
-      "triangles": 781715,
-      "geometries": 340,
+      "calls": 153,
+      "triangles": 782563,
+      "geometries": 344,
       "textures": 58,
       "camera": [
         -47,
@@ -964,12 +964,12 @@
     },
     {
       "file": "tidewater-underpass.jpg",
-      "sha256": "16193e9d8c58c118b3badbc35d3cb685ad460ecde36eb5f3490d3e4076690bbf",
+      "sha256": "ef9c8c0b6280bec6f37d38b208f30996f85c00d5eb78bfd8bc54e5fb89f4a814",
       "hud": true,
       "manualInspectionCamera": false,
-      "calls": 155,
-      "triangles": 781649,
-      "geometries": 340,
+      "calls": 153,
+      "triangles": 782519,
+      "geometries": 344,
       "textures": 58,
       "camera": [
         -26.280000415337682,
@@ -982,12 +982,12 @@
     },
     {
       "file": "kelpline-play.jpg",
-      "sha256": "3b47f1f864aa5966d96f73e1dc4f1dc07b94dd726272c83a43108295e3037641",
+      "sha256": "b2a660767a30ab480d73f4b1ab7cc4068253cb4f41be30b70db5f5188a52de80",
       "hud": true,
       "manualInspectionCamera": false,
-      "calls": 150,
-      "triangles": 808763,
-      "geometries": 449,
+      "calls": 162,
+      "triangles": 776473,
+      "geometries": 465,
       "textures": 58,
       "camera": [
         6.719995808491026,
@@ -1000,12 +1000,12 @@
     },
     {
       "file": "kelpline-overview.jpg",
-      "sha256": "2d11fb4fcc4a431494348b83657b0c33f193b8c1d164f26c392313d4f2b095ce",
+      "sha256": "0ec2a50c901e1d7ae1735bb47a505123405b9609f45799c0d9420b1a40d3bcc2",
       "hud": false,
       "manualInspectionCamera": true,
-      "calls": 204,
-      "triangles": 856045,
-      "geometries": 458,
+      "calls": 212,
+      "triangles": 817363,
+      "geometries": 474,
       "textures": 58,
       "camera": [
         88,
@@ -1018,12 +1018,12 @@
     },
     {
       "file": "kelpline-bridge.jpg",
-      "sha256": "9371ff860c0a8e5e7137f5b62053e87725122b6d023af04a4dd2b5f0e638b48b",
+      "sha256": "e4c946848d5ed188dcaa95727e1125d198f95597e42b177e99f81073b8e3908f",
       "hud": false,
       "manualInspectionCamera": true,
-      "calls": 150,
-      "triangles": 808763,
-      "geometries": 458,
+      "calls": 162,
+      "triangles": 776473,
+      "geometries": 474,
       "textures": 58,
       "camera": [
         -43,
@@ -1036,12 +1036,12 @@
     },
     {
       "file": "kelpline-underpass.jpg",
-      "sha256": "3d395b3a03d955a45f723f8a9ad01eb49f4bf76febc373de677f4b928f32c03d",
+      "sha256": "b4375f642f8a3419ee8a985866c0bd8d70aed8e21e55c9bc48199467d1fb013e",
       "hud": true,
       "manualInspectionCamera": false,
-      "calls": 150,
-      "triangles": 808739,
-      "geometries": 458,
+      "calls": 162,
+      "triangles": 776585,
+      "geometries": 474,
       "textures": 58,
       "camera": [
         6.639613417509291,
@@ -1054,12 +1054,12 @@
     },
     {
       "file": "tidewater-dusk.jpg",
-      "sha256": "b38e092b61c4d61c10f6fd0c5601939fba9e8e195167bda77d9a0c4ab51b675c",
+      "sha256": "ee8014ecedfb306f602f6a066399e59674bc2caca3a913a7c8513cfb09e34e20",
       "hud": false,
       "manualInspectionCamera": true,
-      "calls": 187,
-      "triangles": 984507,
-      "geometries": 532,
+      "calls": 182,
+      "triangles": 938205,
+      "geometries": 550,
       "textures": 58,
       "camera": [
         -47,
@@ -1072,12 +1072,12 @@
     },
     {
       "file": "kelpline-dusk.jpg",
-      "sha256": "d4331e39314f2c9f7dd1d6e2f163be0036931a652f65a46f47b33c0b0ceaa1c2",
+      "sha256": "55dce4b0f88dfcbb8797c07ba061b610f7d96da18770cdf93ceaa52b1fa56c2f",
       "hud": false,
       "manualInspectionCamera": true,
-      "calls": 181,
-      "triangles": 946231,
-      "geometries": 550,
+      "calls": 182,
+      "triangles": 947011,
+      "geometries": 580,
       "textures": 58,
       "camera": [
         -43,
@@ -1089,5 +1089,5 @@
       "hudObserved": false
     }
   ],
-  "baseURI": "http://127.0.0.1:44591/_versions/1b75e184d1476e82bf70e77ef7b2300269b11c73e9b3278bd3e22ad5f1202431/"
+  "baseURI": "http://127.0.0.1:36939/_versions/d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24/"
 }

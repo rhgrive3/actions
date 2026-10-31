@@ -201,3 +201,26 @@ Kelplineの上書きされた6枚も再視認した。introの発射装置はな
 | [tidewater-underpass.jpg](runtime-evidence/tidewater-underpass.jpg) | `16193e9d8c58c118b3badbc35d3cb685ad460ecde36eb5f3490d3e4076690bbf` |
 | [kelpline-play.jpg](runtime-evidence/kelpline-play.jpg) | `3b47f1f864aa5966d96f73e1dc4f1dc07b94dd726272c83a43108295e3037641` |
 | [kelpline-underpass.jpg](runtime-evidence/kelpline-underpass.jpg) | `3d395b3a03d955a45f723f8a9ad01eb49f4bf76febc373de677f4b928f32c03d` |
+
+## main統合後の現行build: 通常camera 4枚の再確認
+
+main側の変更を維持して統合したbuildの両stage `play` / `underpass` 計4枚を再視認し、実ファイルのSHA256を記録と照合した。前節の `1b75e184…` buildはcommit `c4f49f5` 時点の履歴であり、現行成果物の識別は本節を優先する。
+
+**通常cameraでの可読性は限定付き合格を維持し、追加の美術修正は要求しない。** 今回は両stageとも自色がlime green。実際の塗りと灰色の床、playerの身体・帽子・hairの輪郭、照準、通路縁、水、遮蔽を区別できる。両underpassでもtimer / team HUD / score / gauge / reticle / ink tank / minimapが画素に存在し、`hudObserved:true` と一致する。HUD export問題の再発は見られない。Tidewaterの下路は出口と水際が読め、Kelplineの低い天井下でもfloor・保守箱・player・UIの区別を保つ。
+
+この確認はmainのhair変更を保持した現buildの撮影結果であり、旧画像の見えを流用していない。暗い保守箱のcontrast、夕景や敵色が混ざる近距離交戦、全palette、物理端末性能、上下層minimapの全塗り投影については前節の未検証範囲を維持する。
+
+追記時のbrowser実行記録は `passed`。runtime errors / HTTP失敗は0。
+
+- buildRevision: `d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24`
+- contentHash: `b243a420ac7daf666704dbaaa2cd6c54224ec6d5afa7cac33129e29c3a24926d`
+- buildManifestSha256: `70783254af4afbfb7d0d85d9a33dfd4ab0393ae22df339279b8b4fcff4d47199`
+
+| 再視認した現行画像 | SHA256 |
+|---|---|
+| [tidewater-play.jpg](runtime-evidence/tidewater-play.jpg) | `ea5ac2bbdf065e1ed02f213176ebe1f70e1d31862adafc3a47715c8d89292aba` |
+| [tidewater-underpass.jpg](runtime-evidence/tidewater-underpass.jpg) | `ef9c8c0b6280bec6f37d38b208f30996f85c00d5eb78bfd8bc54e5fb89f4a814` |
+| [kelpline-play.jpg](runtime-evidence/kelpline-play.jpg) | `b2a660767a30ab480d73f4b1ab7cc4068253cb4f41be30b70db5f5188a52de80` |
+| [kelpline-underpass.jpg](runtime-evidence/kelpline-underpass.jpg) | `b4375f642f8a3419ee8a985866c0bd8d70aed8e21e55c9bc48199467d1fb013e` |
+
+現buildのplay描画記録: Tidewater 153 calls / 782,563 triangles、Kelpline 162 calls / 776,473 triangles。旧buildの数値は履歴として扱う。
