@@ -16,9 +16,12 @@ test('the final UI/audio adapter parses every changed source and rejects duplica
   // that puts its header before the existing UI/audio marker.
   const marker='// INKWAVE queue UI/audio 20261030 applied\n';
   const title='// ZEVANT lightweight title demo: scoped presentation policy.\n';
-  const expected=rel==='src/main.js'&&after.startsWith(title)
-    ?reapplied.replace(marker+title,title+marker):reapplied;
-  assert.equal(expected,after);
+  // Later passes (the title-budget policy, then import hoisting) decide where
+  // the marker sits, so compare the code with the marker position normalized.
+  // Still require exactly one marker, and the title-budget block before it.
+  assert.equal(after.split(marker).length-1,1);
+  if(rel==='src/main.js'&&after.startsWith(title))assert.ok(after.indexOf(marker)>after.indexOf(title));
+  assert.equal(after.replace(marker,''),reapplied.replace(marker,''));
   assert.equal((after.match(/INKWAVE queue UI\/audio 20261030 applied/g)||[]).length,1);assert.throws(()=>adaptQueueUiAudio20261030(rel,after),/already applied/);assert.throws(()=>adaptQueueUiAudio20261030(rel,''),/anchor/);}assert.equal(adaptQueueUiAudio20261030('unrelated','keep'),'keep');
 });
 test('per-tween sweep scratch preserves every emitted path through overlapping left/right wipes',()=>{

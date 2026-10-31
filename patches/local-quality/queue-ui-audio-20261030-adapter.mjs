@@ -218,8 +218,8 @@ export const UI_AUDIO_CHANGES = [
   },
   {
     "rel": "src/game/minimap.js",
-    "before": "    this._built = true;\n  }\n\n  _drawBase() {",
-    "after": "    this._built = true;\n    rememberLegacyProjection(this, this._build === Minimap.prototype._build && this.toCanvas === Minimap.prototype.toCanvas && this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ && this._drawBase === Minimap.prototype._drawBase);\n  }\n\n  _drawBase() {",
+    "before": "    this._built = true;\n    lvl.layout?.minimapProjection?.remember(this);\n  }\n\n  _drawBase() {",
+    "after": "    this._built = true;\n    lvl.layout?.minimapProjection?.remember(this);\n    rememberLegacyProjection(this, this._build === Minimap.prototype._build && this.toCanvas === Minimap.prototype.toCanvas && this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ && this._drawBase === Minimap.prototype._drawBase);\n  }\n\n  _drawBase() {",
     "label": "remember exact geometry and bounded dead-mask proof after full legacy build",
     "count": 1,
     "queue": "legacy-minimap-team-flip-reuse-static-projection"
