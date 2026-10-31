@@ -11,7 +11,7 @@ import { ReverbPrewarm } from '../runtime/audio/reverb-prewarm.mjs';
 import { renderReverbPair } from '../runtime/audio/reverb-impulse.mjs';
 import { PitchPreservingChargeCache, stretchChargerPCM } from '../runtime/audio/pitch-preserving-charge.mjs';
 import { chargerRiseBuffer, chargerRecordedStatus, disposeChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
-import { spinnerPreload, spinnerCached, spinnerReleaseCache } from '../runtime/audio/spinner-charge-clips.mjs';
+import { spinnerPreload, spinnerCached, spinnerReleaseCache, spinnerCacheStats } from '../runtime/audio/spinner-charge-clips.mjs';
 
 const invalid = [NaN, Infinity, -Infinity];
 const bytes = pcm => Buffer.from(pcm.buffer, pcm.byteOffset, pcm.byteLength);
@@ -222,15 +222,58 @@ test('current Spinner clips reject non-finite decodes and preserve valid high-ra
   spinnerReleaseCache(engine);
 });
 
-// The previous positive fixture exceeded the pre-existing strict cache bound.
-// Preserve that exact input as a rejection control instead of raising the cap.
-test('Spinner rejects the original oversized high-rate fixture without publishing it', async () => {
-  const ctx = context(), oversized = ctx.createBuffer(2, 409600, 192000);
+// Main bee246c (#1989), retained by bdf5083, reserves three stereo seconds
+// at the actual context rate with the unchanged 3 MiB minimum. The previous
+// 409600-frame positive fixture is inside that committed 192kHz bound.
+// Preserve its exact input; calculate edge/rejection fixtures independently.
+test('Spinner retains the original high-rate fixture inside the committed rate-scaled bound', async () => {
+  const ctx = context(), original = ctx.createBuffer(2, 409600, 192000);
   ctx.sampleRate = 192000;
-  ctx.decodeAudioData = async () => oversized;
+  ctx.decodeAudioData = async () => original;
   const engine = { ctx };
-  assert.equal(oversized.length * oversized.numberOfChannels * 4, 3276800);
-  await assert.rejects(spinnerPreload(engine, 'splatling', { fetcher: async () => response() }), /oversized decoded Spinner/);
-  assert.equal(spinnerCached(engine, 'splatling'), null);
+  assert.equal(original.length * original.numberOfChannels * 4, 3276800);
+  assert.equal(spinnerCacheStats(engine).limit, Math.max(3 * 1024 * 1024, Math.ceil(ctx.sampleRate * 3) * 2 * Float32Array.BYTES_PER_ELEMENT));
+  assert.equal(await spinnerPreload(engine, 'splatling', { fetcher: async () => response() }), original);
+  assert.equal(spinnerCached(engine, 'splatling'), original);
+  assert.equal(spinnerCacheStats(engine).bytes, 3276800);
   spinnerReleaseCache(engine);
 });
+
+test('Spinner accepts exactly one committed stereo reservation without raising its bound', async () => {
+  const ctx = context(); ctx.sampleRate = 192000;
+  const limit = Math.max(3 * 1024 * 1024, Math.ceil(ctx.sampleRate * 3) * 2 * Float32Array.BYTES_PER_ELEMENT);
+  const decoded = ctx.createBuffer(2, limit / (2 * Float32Array.BYTES_PER_ELEMENT), ctx.sampleRate);
+  ctx.decodeAudioData = async () => decoded;
+  const engine = { ctx };
+  assert.equal(decoded.length * decoded.numberOfChannels * Float32Array.BYTES_PER_ELEMENT, limit);
+  assert.equal(spinnerCacheStats(engine).limit, limit);
+  assert.equal(await spinnerPreload(engine, 'splatling', { fetcher: async () => response() }), decoded);
+  assert.equal(spinnerCached(engine, 'splatling'), decoded);
+  assert.equal(spinnerCacheStats(engine).bytes, limit);
+  spinnerReleaseCache(engine);
+});
+
+for (const kind of ['one-frame-over-bound', 'nonfinite-high-rate-channel', 'inconsistent-channel-length'])
+  test('Spinner rate-scaled publication rejects ' + kind, async () => {
+    const ctx = context(); ctx.sampleRate = 192000;
+    const limit = Math.max(3 * 1024 * 1024, Math.ceil(ctx.sampleRate * 3) * 2 * Float32Array.BYTES_PER_ELEMENT);
+    const length = limit / (2 * Float32Array.BYTES_PER_ELEMENT) + (kind === 'one-frame-over-bound' ? 1 : 0);
+    const decoded = ctx.createBuffer(2, length, ctx.sampleRate);
+    const channel1 = decoded.getChannelData(1);
+    if (kind === 'nonfinite-high-rate-channel') channel1[length - 1] = NaN;
+    if (kind === 'inconsistent-channel-length') {
+      const channels = [decoded.getChannelData(0), channel1.subarray(0, length - 1)];
+      decoded.getChannelData = channel => channels[channel];
+    }
+    ctx.decodeAudioData = async () => decoded;
+    const engine = { ctx };
+    assert.equal(spinnerCacheStats(engine).limit, limit);
+    assert.equal(decoded.length * decoded.numberOfChannels * Float32Array.BYTES_PER_ELEMENT,
+      limit + (kind === 'one-frame-over-bound' ? 2 * Float32Array.BYTES_PER_ELEMENT : 0));
+    await assert.rejects(spinnerPreload(engine, 'splatling', { fetcher: async () => response() }),
+      kind === 'one-frame-over-bound' ? /oversized decoded Spinner/ : /Spinner charge PCM invalid/);
+    assert.equal(spinnerCached(engine, 'splatling'), null);
+    assert.deepEqual(spinnerCacheStats(engine), { bytes: 0, limit, entries: 0, pending: 0 });
+    if (kind === 'nonfinite-high-rate-channel') assert.equal(channel1[length - 1], NaN, 'invalid PCM is not repaired or published');
+    spinnerReleaseCache(engine);
+  });

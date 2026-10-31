@@ -134,3 +134,47 @@ test('hidden Patternz profile restores via an explicit opponent palette even whe
  const result=run(()=>({ok:true}));assert.equal(guardedCalls,2,'preparation and hidden restoration both traverse the real palette contract');
  assert.equal(result.fixture.restored,true);assert.equal(f.sc.weaponOpponentColor,other);assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
 });
+
+const pageProbeVm=await import('node:vm');
+if(typeof pageProbeVm.SyntheticModule!=='function')test('page callable isolated VM cohort runs under the normal verifier command',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const {fileURLToPath}=await import('node:url');
+ const env={...process.env};delete env.NODE_TEST_CONTEXT;
+ const output=execFileSync(process.execPath,['--experimental-vm-modules','--test','--test-reporter=tap','--test-name-pattern=^page callable preserves',fileURLToPath(import.meta.url)],{encoding:'utf8',maxBuffer:1024*1024,env});
+ assert.match(output,/# pass 3\b/);assert.match(output,/# fail 0\b/);
+});
+else for(const fault of [undefined,'no-draw','render-throw'])test('page callable preserves default proof and failures with string compilation disabled: '+(fault??'control'),async()=>{
+ const vm=await import('node:vm');
+ const {f,G}=nativeObservationFixture(fault);
+ const context=vm.createContext({URL,document:{baseURI:'https://example.test/_versions/'+revision+'/'},s3ProbeG:G,localStorage:f.storage},{codeGeneration:{strings:false,wasm:false}});
+ const exportsByPath={
+  'src/core/ctx.js':{G},'src/config.js':{WEAPONS:f.args.WEAPONS},
+  'patches/splatoon3/runtime/weapon-appearance.mjs':f.args.AP,
+  'patches/splatoon3/runtime/weapon-models/registry.mjs':f.args.R,
+  'patches/splatoon3/runtime/alternate-weapon-kits-data.mjs':{ALTERNATE_WEAPON_KITS:f.args.kits}
+ };
+ const modules=new Map();
+ let receipt;
+ const page={async evaluate(fn,arg){
+  context.args=arg;
+  const script=new vm.Script('('+fn.toString()+')(args)',{importModuleDynamically:async url=>{
+   const relative=new URL(url).pathname.slice(('/_versions/'+revision+'/').length);
+   const data=exportsByPath[relative];assert.ok(data,'only exact native imports');
+   if(!modules.has(relative)){
+    const module=new vm.SyntheticModule(Object.keys(data),function(){for(const [key,value]of Object.entries(data))this.setExport(key,value);},{context});
+    await module.link(()=>{throw Error('unexpected nested fixture import');});await module.evaluate();modules.set(relative,module);
+   }
+   return modules.get(relative);
+  }});
+  receipt=await script.runInContext(context);return receipt;
+ }};
+ assert.throws(()=>vm.runInContext('(0,eval)("1")',context),/Code generation from strings disallowed/,'restriction is genuinely active');
+ if(fault){
+  await assert.rejects(checkAcceptedDefaultConsumption({page,manifest}),fault==='no-draw'?/actually rendered/:/render primary/);
+  assert.equal(receipt.ok,false);assert.ok(receipt.failure);assert.ok(receipt.partial);assert.equal(receipt.fixture.restored,true);
+ }else{
+  const out=await checkAcceptedDefaultConsumption({page,manifest});assert.equal(out.rows.length,50);assert.equal(out.observationFixture.restored,true);
+ }
+ assert.equal(f.storage.getItem('preferences'),f.saved);assert.equal(f.sc.mode,null);assert.equal(f.sc.chars.length,0);
+ assert.equal(modules.size,5);
+});

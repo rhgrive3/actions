@@ -134,12 +134,14 @@ export function acceptedDefaultErrorDetails(error,depth=0) {
  }
  return out;
 }
-export async function checkAcceptedDefaultConsumption({page,evidence,manifest}) {
- const revision=manifest?.build?.revision;
- if(!/^[a-f0-9]{64}$/.test(revision??''))throw Error('Default probe revision missing');
- const required=['src/core/ctx.js','src/config.js','src/game/showcase.js','patches/splatoon3/runtime/weapon-appearance.mjs','patches/splatoon3/runtime/weapon-models/registry.mjs','patches/splatoon3/runtime/alternate-weapon-kits-data.mjs'];
- for(const rel of required)if(!/^[a-f0-9]{64}$/.test(manifest.artifacts?.['_versions/'+revision+'/'+rel]??''))throw Error('Default probe artifact missing: '+rel);
- const result=await page.evaluate(async({rows,source,fixtureSource,errorSource,revision})=>{
+// Assemble trusted QA functions in Node, not with eval inside the CSP-protected page.
+// Playwright receives one ordinary callable; production CSP and module imports stay unchanged.
+export function createAcceptedDefaultPageProbe() {
+ return new Function(`return async ({rows,revision})=>{
+  const observeAcceptedDefaults = ${observeAcceptedDefaults.toString()};
+  const withNativeAcceptedDefaultFixture = ${withNativeAcceptedDefaultFixture.toString()};
+  const acceptedDefaultErrorDetails = ${acceptedDefaultErrorDetails.toString()};
+
   if(new URL(document.baseURI).pathname!=='/_versions/'+revision+'/')throw Error('Default probe versioned base mismatch');
   const url=p=>new URL(p,document.baseURI).href;
   const {G}=await import(url('src/core/ctx.js'));if(G!==globalThis.s3ProbeG)throw Error('Default probe public ctx mismatch');
@@ -147,11 +149,18 @@ export async function checkAcceptedDefaultConsumption({page,evidence,manifest}) 
    import(url('patches/splatoon3/runtime/weapon-appearance.mjs')),import(url('patches/splatoon3/runtime/weapon-models/registry.mjs')),
    import(url('patches/splatoon3/runtime/alternate-weapon-kits-data.mjs')),import(url('src/config.js'))]);
   try{
-   const observed=(0,eval)('('+fixtureSource+')')({G,WEAPONS},()=>
-    (0,eval)('('+source+')')({G,AP,R,kits,WEAPONS,storage:localStorage,rows}));
+   const observed=withNativeAcceptedDefaultFixture({G,WEAPONS},()=>
+    observeAcceptedDefaults({G,AP,R,kits,WEAPONS,storage:localStorage,rows}));
    return {ok:true,value:observed.value,fixture:observed.fixture};
-  }catch(error){return {ok:false,error:String(error),failure:(0,eval)('('+errorSource+')')(error),partial:error.defaultPartial??null,fixture:error.defaultFixture??null};}
- },{rows:ACCEPTED_DEFAULT_ROWS,source:observeAcceptedDefaults.toString(),fixtureSource:withNativeAcceptedDefaultFixture.toString(),errorSource:acceptedDefaultErrorDetails.toString(),revision});
+  }catch(error){return {ok:false,error:String(error),failure:acceptedDefaultErrorDetails(error),partial:error.defaultPartial??null,fixture:error.defaultFixture??null};}
+ }`)();
+}
+export async function checkAcceptedDefaultConsumption({page,evidence,manifest}) {
+ const revision=manifest?.build?.revision;
+ if(!/^[a-f0-9]{64}$/.test(revision??''))throw Error('Default probe revision missing');
+ const required=['src/core/ctx.js','src/config.js','src/game/showcase.js','patches/splatoon3/runtime/weapon-appearance.mjs','patches/splatoon3/runtime/weapon-models/registry.mjs','patches/splatoon3/runtime/alternate-weapon-kits-data.mjs'];
+ for(const rel of required)if(!/^[a-f0-9]{64}$/.test(manifest.artifacts?.['_versions/'+revision+'/'+rel]??''))throw Error('Default probe artifact missing: '+rel);
+ const result=await page.evaluate(createAcceptedDefaultPageProbe(),{rows:ACCEPTED_DEFAULT_ROWS,revision});
  if(evidence)fs.writeFileSync(evidence+'/accepted-default-consumption.json',JSON.stringify(result,null,2));
  if(!result.ok)throw Error(result.error);
  return {...result.value,observationFixture:result.fixture};

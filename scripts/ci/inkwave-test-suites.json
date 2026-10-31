@@ -336,6 +336,7 @@
         "args": [
           "--test",
           "scripts/tests/inkwave-test-suites.test.mjs",
+          "scripts/tests/inkwave-queue-ci-20261031.test.mjs",
           "scripts/tests/inkwave-evidence-packaging.test.mjs",
           "scripts/tests/ranked-roller-audio.test.mjs",
           "scripts/tests/ranked-trace-policy.test.mjs",

@@ -309,3 +309,25 @@ test('null composer installation failure remains first when rollback also fails'
   assert.throws(()=>wrapWiperComposerPasses({passes:[a,bad]},()=>{}),e=>e.message.startsWith('null\nComposer installation cleanup:')&&e.message.includes('replaced by unrelated owner'));
   assert.equal(a.render,foreign);
 });
+
+import {parse as parseCaptureInstaller} from '../../patches/loading-cache/vendor/acorn.mjs';
+import {installHissenCaptureObserver} from '../lib/inkwave-hissen-capture-observer.mjs';
+for(const [file,bindings,globals]of [
+ ['check-inkwave-wiper-native-acceptance.mjs',{createWiperNativeShotSchedule,wrapWiperDrawCallback,wrapWiperComposerPasses,assertWiperWebGLError},['__createWiperNativeShotSchedule','__wrapWiperDrawCallback','__wrapWiperComposerPasses','__assertWiperWebGLError']],
+ ['check-inkwave-trislosher-native-matched.mjs',{installHissenCaptureObserver},['installHissenCaptureObserver']]
+])test('native capture installs identical trusted helpers without page-side string compilation: '+file,()=>{
+ const source=fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),ast=parseCaptureInstaller(source,{sourceType:'module',ecmaVersion:'latest'}),installers=[];
+ function walk(node){if(!node||typeof node!=='object')return;if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&node.callee.object.name==='page'){
+  assert.notEqual(node.callee.property.name,'addScriptTag','capture must not inject an inline script blocked by production CSP');
+  if(node.callee.property.name==='evaluate'&&node.arguments[0]?.type==='NewExpression'&&node.arguments[0].callee.name==='Function')installers.push(node.arguments[0]);
+ }for(const value of Object.values(node))if(Array.isArray(value))value.forEach(walk);else if(value&&typeof value==='object')walk(value);}
+ walk(ast);assert.equal(installers.length,1,'exactly one callable installer, compiled in Node');
+ const expression=source.slice(installers[0].start,installers[0].end);
+ const installer=new Function(...Object.keys(bindings),'return '+expression)(...Object.values(bindings));
+ const window={},context=vm.createContext({window},{codeGeneration:{strings:false,wasm:false}});
+ assert.throws(()=>vm.runInContext('(0,eval)("1")',context),/Code generation from strings disallowed/);
+ new vm.Script('('+installer.toString()+')()').runInContext(context);
+ assert.deepEqual(Object.keys(window),globals);
+ Object.values(bindings).forEach((fn,index)=>assert.equal(window[globals[index]].toString(),fn.toString(),'serialized helper bytes and closure-free declaration preserved'));
+ assert.doesNotMatch(installer.toString(),/\beval\s*\(|new\s+Function\s*\(/,'no nested page-side evaluator');
+});

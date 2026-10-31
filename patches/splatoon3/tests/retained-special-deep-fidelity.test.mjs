@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+import {nativeSpecialReceiver} from './native-special-receiver-fixture.mjs';
+import {specialNativeProducer} from '../../network-replication/tests/special-native-producer-fixture.mjs';
 
 const F=1/60;
 const near=(a,b,label)=>assert.ok(Math.abs(a-b)<1e-7,`${label}: ${a} != ${b}`);
@@ -26,12 +28,49 @@ function owner(f,weapon='charger'){
 }
 function startVac(f){const a=owner(f);a.special=a.specialCost();a._startSpecial();a.intent.fire=true;
   for(let i=0;i<90;i++){f.G.time+=F;a.update(F);}return a;}
-function placeCooler(f,pos=[0,0,3],team=1){
-  const b=owner(f,'support');b.nid=9;b.team=team;b.remote=true;b.owner='peer';b.pos.set(...pos);
-  const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[9,b]]);nm.match=f.G.match;f.G.netm=nm;
-  nm._play('peer',[0,'ks','c',9,1,...pos,b.netLife||0,1020]);f.G.netm=null;
-  b.pos.set(30,0,30); // isolate the deployed cover from the caster's actor capsule
-  const stand=f.G.projectiles._s3SupportCoolers.at(-1);assert.ok(stand,'real authenticated stand replay deploys');return stand;
+// Cache only native JSON packets, never a producer realm or receiver state.
+const coolerPackets=new Map();
+async function paidCoolerPackets(pos){
+  const key=JSON.stringify(pos);
+  if(!coolerPackets.has(key))coolerPackets.set(key,(async()=>{
+    const cleanup=[];let initial;
+    try {
+      const sent=await specialNativeProducer({after:fn=>cleanup.push(fn)},'tacticooler',{
+        frames:30,targetZ:500,
+        configure:({f,attacker})=>{attacker.pos.set(...pos);attacker.aimDir.set(0,-1,0);initial=f.nativePackActor(attacker);},
+        step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+      return JSON.parse(JSON.stringify({initial,packets:sent.packets}));
+    } finally { for(const dispose of cleanup)dispose(); }
+  })());
+  return coolerPackets.get(key);
+}
+async function placeCooler(f,pos=[0,0,3],team=1){
+  const sent=await paidCoolerPackets(pos),{G}=f;
+  const b=owner(f,'support');b.nid=17;b.team=team;b.remote=true;b.owner='peer';b.pos.set(...pos);
+  const session={myId:'local',hostId:'local',isHost:true,
+    _members:new Map([['local','Local'],['peer','Peer']]),tr:{broadcast(){},sendTo(){}}};
+  const nm=new f.NetMatch(session,{id:'retained-cooler-cover',map:'map',difficulty:'normal'});
+  const performance=f.context.performance;let clock=1000;
+  f.context.performance={now:()=>clock*1000};
+  try {
+    G.match.actors=G.actors;nm.bind(G.match);G.netm=nm;
+    nm.onMessage('peer',{k:'t',r:2,ts:1000,u:0,a:[JSON.parse(JSON.stringify(sent.initial))],l:{17:b.netLife||0},e:[]});
+    const events=[];
+    for(const packet of sent.packets){
+      const p=JSON.parse(JSON.stringify(packet));clock=p.ts;G.time=p.u/60;nm.onMessage('peer',p);
+      for(const e of nm.peers.get('peer')?.events.splice(0)||[]){events.push(e);nm._play('peer',e);}
+    }
+    assert.ok(events.some(e=>e[1]==='ev'&&e[2]==='special:use'),'cover comes from actual paid native use');
+    assert.equal(G.projectiles._s3SupportCoolerThrows?.length,1,'cover comes from an admitted native throw');
+    assert.equal(G.projectiles._s3SupportCoolers?.length||0,0,'a placement row cannot create cover');
+    for(let i=0;i<120&&!G.projectiles._s3SupportCoolers?.length;i++){G.time+=F;G.projectiles.update(F);}
+    const stand=f.G.projectiles._s3SupportCoolers.at(-1);assert.ok(stand,'real authenticated stand replay deploys');
+    near(stand.pos.distanceTo(new f.THREE.Vector3(...pos)),0,'native cover landed at requested fixture position');
+    b.pos.set(30,0,30); // isolate the deployed cover from the caster's actor capsule
+    return stand;
+  } finally {
+    try { nm.dispose(); } finally { G.netm=null;f.context.performance=performance; }
+  }
 }
 
 test('Vac wind protects a covered teammate from lateral and outgoing attacks, while back/LOS/team remain bounded',async()=>{
@@ -118,28 +157,73 @@ test('Bubbler replay source-frame burn changes displayed health without mutating
   f.tickRemoteBigBubblers(30);assert.equal(d.dead,false,'only owner expire can remove a replica');assert.equal(d.hp,30720);
 });
 
-test('Tacticooler source overlap removes either team stand, unlocks only that clock, and keeps already received drinks',async()=>{
+test('Tacticooler source overlap removes either team stand, unlocks only that clock, and keeps already received drinks',async t=>{
+  // Produce real paid use/throw rows once. Bare placement claims intentionally
+  // cannot create a stand; each boundary gets its own native receiver session.
+  const sent=await nativeSpecialReceiver(t,'tacticooler',{frames:30,targetZ:500,
+    configure:({attacker})=>{attacker.aimDir.set(0,-1,0);},
+    step:(x,i)=>{x.attacker.intent.sub=i===0;}});
+  sent.nm.dispose();
+  const f=sent.f,{G,THREE}=f;
+  class Display {
+    constructor(){this.root=new THREE.Group();}
+    _owner(){return this.actor;}trigger(){}update(){}setVisible(){}setHurt(){}setWeapon(){}
+    getMuzzle(out){return out.copy(this.actor.pos).add(new THREE.Vector3(0,1.05,.3));}
+  }
+  const make=(nid,name,remote,team)=>{
+    const a=new f.Actor({team,name,weapon:'support',CharacterClass:Display});a.character.actor=a;
+    Object.assign(a,{nid,owner:name,remote,netLife:0,isLocal:!remote,grounded:true});
+    a.pos.set(0,0,0);a.aimDir.set(0,-1,0);a._integrate=()=>{};a._horizontal=()=>{};
+    return a;
+  };
   for(const [distance,removed] of [[1.8,true],[1.8001,false]]){
-    const f=await world(),a=owner(f,'support');a.aimDir.set(0,-1,0);
-    a.special=a.specialCost();a._startSpecial();a.specialActive.phase='throw';a.specialActive.t=13*F;a._updateSpecial(F);
-    for(let i=0;i<30&&!f.G.projectiles._s3SupportCoolers?.length;i++){f.G.time+=F;f.G.projectiles.update(F);}
-    const old=f.G.projectiles._s3SupportCoolers[0];assert.ok(old);assert.equal(f.tacticoolerGaugeLocked(a),true);
-    a.s3.drink=true;a.s3.drinkUntil=f.G.time+17;
-    const b=owner(f,'support');b.nid=8;b.team=1;b.remote=true;b.owner='peer';b.pos.copy(old.pos);
-    const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[8,b]]);nm.match=f.G.match;f.G.netm=nm;
-    const event=[0,'ks','c',8,1,old.pos.x+distance,old.pos.y,old.pos.z,b.netLife||0,1020];
-    nm._play('peer',event);
-    assert.equal(f.G.projectiles._s3SupportCoolers.includes(old),!removed);
-    assert.equal(f.tacticoolerGaugeLocked(a),!removed,'only a physically retired stand unlocks');
-    assert.equal(a.s3.drink,true);assert.equal(b.s3TacticoolerGauge,undefined,'remote stand cannot own a gauge');
-    const count=f.G.projectiles._s3SupportCoolers.length;nm._play('peer',event);
-    assert.equal(f.G.projectiles._s3SupportCoolers.length,count,'duplicate wire placement cannot retire its replacement');
+    f.clock.set(1000);G.time=0;G.scene=new THREE.Scene();G.projectiles=new f.Projectiles(G.scene);
+    const a=make(7,'me',false,0),b=make(17,'peer',true,1);
+    G.actors=[a,b];a.pos.x=-distance;
+    const nm=f.makeNetMatch(f.makeSession('me','me',[['me','Me'],['peer','Peer']]),{id:'cooler-overlap-'+distance});
+    const match=f.bind(nm,[a,b]);Object.assign(match,{mode:'turf',playing:()=>match.state==='playing',canRespawn:()=>false});
+    nm.match=null;nm.bind(match);G.match=match;
+    const deliver=packet=>{
+      const p=JSON.parse(JSON.stringify(packet));f.clock.set(p.ts);G.time=p.u/60;nm.onMessage('peer',p);
+      const events=nm.peers.get('peer')?.events.splice(0)||[];
+      for(const e of events)nm._play('peer',e);
+      return events;
+    };
+    try {
+      b.special=b.specialCost();const initial=f.nativePackActor(b);initial[22]=0;
+      nm.onMessage('peer',{k:'t',r:2,ts:1000,u:0,a:[initial],l:{17:0},e:[]});
+      a.special=a.specialCost();a._startSpecial();a.intent.sub=true;a._updateSpecial(F);
+      a.intent.sub=false;a._updateSpecial(F);for(let i=0;i<14&&a.specialActive;i++)a._updateSpecial(F);
+      for(let i=0;i<120&&!G.projectiles._s3SupportCoolers?.length;i++){G.time+=F;G.projectiles.update(F);}
+      const old=f.G.projectiles._s3SupportCoolers[0];assert.ok(old);assert.equal(f.tacticoolerGaugeLocked(a),true);
+      a.s3.drink=true;a.s3.drinkUntil=f.G.time+17;
+      const event=[0,'ks','c',b.nid,1,old.pos.x+distance,old.pos.y,old.pos.z,b.netLife||0,1020];
+      nm._play('peer',event);
+      assert.equal(G.projectiles._s3SupportCoolers.includes(old),true,'a bare placement cannot remove cover');
+      assert.equal(G.projectiles._s3SupportCoolers.length,1,'a bare placement cannot create cover');
+      const events=sent.packets.flatMap(deliver);
+      assert.ok(events.some(e=>e[1]==='ev'&&e[2]==='special:use'),'native paid special-use receipt really replays');
+      assert.equal(G.projectiles._s3SupportCoolerThrows.length,1,'authenticated native throw owns receiver flight');
+      assert.equal(G.projectiles._s3SupportCoolers.includes(old),true,'placement row alone does not move or replace cover');
+      for(let i=0;i<120&&!G.projectiles._s3SupportCoolers.some(s=>s.owner===b);i++){G.time+=F;G.projectiles.update(F);}
+      const stand=G.projectiles._s3SupportCoolers.find(s=>s.owner===b);assert.ok(stand,'actual receiver flight lands');
+      near(old.pos.distanceTo(stand.pos),distance,'same exact overlap boundary after native flight');
+      assert.equal(f.G.projectiles._s3SupportCoolers.includes(old),!removed);
+      assert.equal(f.tacticoolerGaugeLocked(a),!removed,'only a physically retired stand unlocks');
+      assert.equal(a.s3.drink,true);assert.equal(b.s3TacticoolerGauge,undefined,'remote stand cannot own a gauge');
+      const count=f.G.projectiles._s3SupportCoolers.length;nm._play('peer',event);
+      for(const packet of sent.packets)deliver(packet);
+      assert.equal(f.G.projectiles._s3SupportCoolers.length,count,'duplicate wire placement cannot retire its replacement');
+      assert.equal(G.projectiles._s3SupportCoolerThrows.length,0,'duplicate native paid packet cannot create another throw');
+    } finally {
+      nm.dispose();G.projectiles.clear();G.netm=null;
+    }
   }
 });
 
 test('native Shooter and InkFlight Splatling heads stop at either team cooler before a farther victim',async()=>{
   for(const kind of ['shooter','splatling'])for(const team of [0,1]){
-    const f=await world(),a=owner(f,kind),stand=placeCooler(f,[0,0,3],team),target=f.make();
+    const f=await world(),a=owner(f,kind),stand=await placeCooler(f,[0,0,3],team),target=f.make();
     target.team=1;target.hp=1000;target.invuln=0;target.pos.set(0,0,6);
     const system=f.G.projectiles;
     if(kind==='splatling')system.fireSplatling(a,a.weapon,0);else system.fireShooter(a,a.weapon,0);
@@ -151,7 +235,7 @@ test('native Shooter and InkFlight Splatling heads stop at either team cooler be
 });
 
 test('native cooler cover preserves its pedestal gap and a nearer stage wall owns the contact',async()=>{
-  const f=await world(),a=owner(f,'shooter'),stand=placeCooler(f),s=f.G.projectiles;
+  const f=await world(),a=owner(f,'shooter'),stand=await placeCooler(f),s=f.G.projectiles;
   const p=s._new();Object.assign(p,{type:'shot',wid:'gap-control',owner:a,team:0,damage:10,size:.02,fieldRadius:.02,
     radius:.02,life:1,age:0,straight:1,grav:0,drag:0,trailEvery:0,s3SpecialWeapon:{id:'gap-control',kind:'special'}});
   p.pos.set(0,.1,0);p.prev.copy(p.pos);p.start.copy(p.pos);p.vel.set(0,0,600);s._push(p);
@@ -171,7 +255,7 @@ test('native cooler cover preserves its pedestal gap and a nearer stage wall own
 
 test('the native actor controller blocks human bodies, permits squid and active Dualies slides, and creates no roof',async()=>{
   for(const form of ['human','squid','slide']){
-    const f=await world(),a=owner(f,form==='slide'?'dualies':'shooter');placeCooler(f);
+    const f=await world(),a=owner(f,form==='slide'?'dualies':'shooter');await placeCooler(f);
     a._integrate=f.Actor.prototype._integrate;a._probeGround();a.form=form==='squid'?'squid':'kid';
     if(form==='slide')a.weaponRunner.dodge={dur:1,t:0};
     for(let i=0;i<60;i++){a.vel.set(0,0,6);a._integrateMovementStep(F,form==='squid',false);}
@@ -183,7 +267,7 @@ test('the native actor controller blocks human bodies, permits squid and active 
 
 test('native timed bombs bounce off cooler cover without detonation, attachment or an extra fuse',async()=>{
   for(const sub of ['bomb','suction','sprinkler','autobomb']){
-    const f=await world(),a=owner(f);a.weapon={...a.weapon,sub};placeCooler(f);const s=f.G.projectiles;
+    const f=await world(),a=owner(f);a.weapon={...a.weapon,sub};await placeCooler(f);const s=f.G.projectiles;
     s.throwBomb(a);const b=s.bombs.at(-1);assert.ok(b,`${sub} uses the real native bomb array`);
     const fuse=b.fuse;
     b.pos.set(0,.65,0);b.prev?.copy(b.pos);b.vel.set(0,0,300);let explosions=0;s._explodeBomb=()=>{explosions++;};
@@ -196,7 +280,7 @@ test('native timed bombs bounce off cooler cover without detonation, attachment 
 
 test('native Blaster hitting cooler uses one terrain burst, and a ghost never hurts the victim',async()=>{
   for(const ghost of [false,true]){
-    const f=await world(),a=owner(f,'blaster');placeCooler(f);const s=f.G.projectiles;
+    const f=await world(),a=owner(f,'blaster');await placeCooler(f);const s=f.G.projectiles;
     const victim=f.make();victim.team=1;victim.hp=1000;victim.invuln=0;victim.pos.set(0,0,3.4);
     s.fireBlaster(a,a.weapon,0);const p=s.list.at(-1);p.pos.set(0,.65,0);p.prev.copy(p.pos);p.vel.set(0,0,600);p.ghost=ghost;
     let bursts=0,terrain=false;const native=s._blastBurst;
@@ -309,7 +393,7 @@ test('Vac ownership, replica, life and match boundaries cannot consume a replace
 
 test('actual custom Fizzy and untransformed Torpedo rebound from Cooler through their single world-contact owner',async()=>{
   for(const sub of ['fizzy','torpedo'])for(const hz of [30,60,120]){
-    const f=await world(),a=owner(f);a.weapon={...a.weapon,sub};placeCooler(f);
+    const f=await world(),a=owner(f);a.weapon={...a.weapon,sub};await placeCooler(f);
     const s=f.G.projectiles,object=s.throwBomb(a);assert.ok(s._s3SubObjects.includes(object));
     object.pos.set(0,.65,0);object.prev.copy(object.pos);object.vel.set(0,0,600);object.age=0;
     for(let i=0;i<Math.ceil(hz/60);i++){f.G.time+=1/hz;s.update(1/hz);}

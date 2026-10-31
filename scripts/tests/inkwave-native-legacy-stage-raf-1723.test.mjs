@@ -118,3 +118,66 @@ test('#1723 actual frame suppresses disposed paint/decor but retains network and
  assert.deepEqual([network,poll,menu,end,clock,reset],[120,120,240,120,120,0]);
  assert.ok(Math.abs(G.time-12)<1e-8,'clock advances while GPU is fenced');
 });
+
+
+// Compile the complete actual production frame and its actual title helpers.
+// No independent replacement for the stage fence or title lifecycle is used.
+function titleStageFixture({pending=true, retained=false}={}) {
+ const ast=parse(main,{sourceType:'module',ecmaVersion:'latest'});
+ const cls=ast.body.find(n=>n.type==='ClassDeclaration'&&n.id?.name==='Game');
+ const method=cls.body.body.find(n=>n.type==='MethodDefinition'&&n.key?.name==='_frame');
+ const names=['releaseTitleDemoBudget','prepareTitleDemoFrame','holdTitleDemoFrame'];
+ const helpers=names.map(name=>{
+  const node=ast.body.find(n=>n.type==='FunctionDeclaration'&&n.id?.name===name);
+  assert.ok(node,`production title helper ${name}`);
+  return main.slice(node.start,node.end);
+ }).join('\n');
+ const calls={gpu:[],network:0,poll:0,menu:0,end:0,clock:0};
+ const env={document:{hidden:retained||!pending},innerWidth:800,innerHeight:600,devicePixelRatio:1,
+  matchMedia:()=>({matches:retained})};
+ const G={time:10,mode:'menu',net:{update(dt){assert.equal(dt,1/60);calls.network++;}}};
+ for(const key of ['paint','renderer','level','projectiles'])Object.defineProperty(G,key,{get(){throw Error(`disposed world access: ${key}`);}});
+ const game={_nativeStageSwitchPending:pending,match:{attract:true},
+  menus:{current:'title',_scr:{name:'title'},update(){calls.menu++;}},
+  input:{pollPad(){calls.poll++;},endFrame(){calls.end++;},padPressed:new Set()},
+  _padMenus(){calls.menu++;},s3Clock:{reset(){calls.clock++;}},
+  R:{dynScale:1,_contextLost:false,
+   setDynamicScale(scale){calls.gpu.push(['scale',scale]);this.dynScale=scale;},
+   releasePausedFrame(){calls.gpu.push(['release']);},
+   presentPausedFrame(){calls.gpu.push(['present']);return true;}}
+ };
+ if(retained)game._titleDemo={active:true,phase:.01,elapsed:.02,draw:false,delta:0,captured:true,
+  reduced:true,hidden:true,savedScale:1,match:game.match,motionQuery:{matches:true},width:800,height:600,dpr:1,hz:30,hold:true};
+ const frame=new Function('G','globalThis',helpers+'\nreturn ({'+main.slice(method.start,method.end)+'})._frame;')(G,env);
+ return {game,G,env,calls,frame:dt=>frame.call(game,dt)};
+}
+
+test('#1723 pending native stage fences a fresh real title lifecycle before any GPU owner or state allocation',()=>{
+ const h=titleStageFixture();
+ for(let i=0;i<120;i++)h.frame(1/60);
+ assert.deepEqual(h.calls.gpu,[],'pending loading must not resize/present/release outgoing GPU owners');
+ assert.equal(Object.hasOwn(h.game,'_titleDemo'),false,'the title owner must not allocate before the pending fence');
+ assert.deepEqual([h.calls.network,h.calls.poll,h.calls.menu,h.calls.end,h.calls.clock],[120,120,240,120,120]);
+ assert.ok(Math.abs(h.G.time-12)<1e-8,'stage loading clock remains on the existing pending-frame path');
+});
+
+test('#1723 an already captured hidden title cannot return before the actual pending-stage clock and fence',()=>{
+ const h=titleStageFixture({retained:true}),state=h.game._titleDemo;
+ const snapshot={...state};
+ for(let i=0;i<120;i++)h.frame(1/60);
+ assert.deepEqual(h.calls.gpu,[]);
+ assert.equal(h.game._titleDemo,state);
+ assert.deepEqual(state,snapshot,'a fenced frame does not mutate retained title ownership');
+ assert.deepEqual([h.calls.network,h.calls.poll,h.calls.menu,h.calls.end,h.calls.clock],[120,120,240,120,120]);
+ assert.ok(Math.abs(h.G.time-12)<1e-8,'hidden-title hold must not bypass the pending-stage clock');
+});
+
+test('#1723 the real hidden-title owner resumes normally only after the stage fence is released',()=>{
+ const h=titleStageFixture({pending:false});
+ h.frame(1/60);h.frame(1/60);
+ assert.equal(h.game._titleDemo.active,true);
+ assert.equal(h.game._titleDemo.hold,true);
+ assert.deepEqual(h.calls.gpu,[['scale',.75]],'normal title density is still acquired once after publication');
+ assert.deepEqual([h.calls.network,h.calls.poll,h.calls.menu,h.calls.end],[2,2,4,2]);
+ assert.equal(h.G.time,10,'the existing hidden-title path still accumulates no simulation debt');
+});

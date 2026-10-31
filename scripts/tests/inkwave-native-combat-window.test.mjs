@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {parse as parseResourceSource} from '../../patches/loading-cache/vendor/acorn.mjs';
 import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWindow,nativeCombatWindowTimeoutState} from '../lib/inkwave-native-combat-window.mjs';
 
 function fixture(){
@@ -253,7 +254,7 @@ test('a hanging stop has a finite wait and late completion cannot start a file w
 test('a hanging asynchronous save shares the same finite wait budget',async()=>{const r=rig({save:()=>new Promise(()=>{}),budget:15});const began=performance.now(),x=await r.capture.cleanupFailure();assert(performance.now()-began<1000);assert.equal(x.status,'profile-timeout');assert.equal(x.profileReceived,true);assert.equal(x.saved,false);assert.deepEqual(r.calls,['Profiler.stop','save','Profiler.disable']);});
 test('a hanging disable is bounded and does not erase the successfully saved data',async()=>{const r=rig({disable:()=>new Promise(()=>{}),budget:15});const x=await r.capture.cleanupFailure();assert.equal(x.status,'saved');assert.equal(x.saved,true);assert.equal(x.disableStatus,'budget-exhausted');});
 test('late asynchronous failures are observed, with no unhandled rejection',async()=>{let reject;const unhandled=[];const on=e=>unhandled.push(e);process.on('unhandledRejection',on);try{const r=rig({stop:()=>new Promise((_,j)=>{reject=j;}),budget:15});await r.capture.cleanupFailure();reject(new Error('late stop failure'));await tick();await tick();assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}});
-test('the runner keeps readiness/window thresholds, successful capture path and raw error record unchanged',()=>{const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');assert(source.includes("await cdp.send('Profiler.enable');await cdp.send('Profiler.start');"));assert(source.includes('waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000}'));assert(source.includes("await cpuProfile.stopAndSave();\n   await capture('combat-'+cycle,false,receipt.leaseId);"));assert(source.includes("report.status='failed';report.errors.push(e.stack);console.error(e);"));assert(source.includes('try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}'));assert(source.includes("await browser?.close();"));assert(source.includes("await cdp.send('Page.captureScreenshot',"));assert(source.includes("format:'png',captureBeyondViewport:false,fromSurface:false"));assert(source.includes("throw Error('Native combat viewport PNG was missing or incomplete')"));assert(source.includes("fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);"));});
+test('the runner keeps readiness/window thresholds, successful capture path and raw error record unchanged',()=>{const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');assert(source.includes("await cdp.send('Profiler.enable');await cdp.send('Profiler.start');"));assert(source.includes('waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000}'));assert(source.includes("await cpuProfile.stopAndSave();\n   await capture('combat-'+cycle,false,receipt.leaseId);"));assert(source.includes("report.status='failed';report.errors.push(e.stack);console.error(e);"));assert(source.includes('try{report.cpuProfileFailure=await cpuProfile.cleanupFailure();}catch{}'));assert(source.includes("await browser?.close();"));assert(source.includes("await captureGameplayViewportPng({cdp,width,height,timeoutMs:120000,"));assert(source.includes("save:png=>fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png)"));assert(source.includes("import {captureGameplayViewportPng} from './lib/inkwave-gameplay-viewport.mjs';"));});
 
 
 // The new source captures a real browser viewport via CDP rather than
@@ -267,29 +268,36 @@ test('real GPU-less CI uses the explicit WebGL-only software fallback, never syn
  assert.match(source,/['"]--enable-unsafe-swiftshader['"]/);
  assert.doesNotMatch(source,/['"]--disable-gpu['"]/);
  assert.match(source,/waitForNativeCombatWindow\(page,\{mapId,minimumMs:seconds\*1000\}/);
- assert.match(source,/Page\.captureScreenshot/);
+ const ast=parseResourceSource(source,{ecmaVersion:'latest',sourceType:'module'});
+ const walk=(node,visit)=>{if(!node||typeof node!=='object')return;if(typeof node.type==='string')visit(node);for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)walk(child,visit);}else if(value&&typeof value==='object')walk(value,visit);};
+ const properties=node=>{assert.equal(node?.type,'ObjectExpression');assert(node.properties.every(p=>p.type==='Property'&&!p.computed&&p.kind==='init'));return Object.fromEntries(node.properties.map(p=>[p.key.name??p.key.value,p.value]));};
+ const imports=ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value==='./lib/inkwave-gameplay-viewport.mjs');
+ assert.equal(imports.length,1,'a comment or string is not an actual helper import');
+ const bindings=imports[0].specifiers.filter(n=>n.type==='ImportSpecifier'&&n.imported.name==='captureGameplayViewportPng');assert.equal(bindings.length,1);
+ const local=bindings[0].local.name,calls=[];walk(ast,node=>{if(node.type==='AwaitExpression'&&node.argument.type==='CallExpression'&&node.argument.callee.type==='Identifier'&&node.argument.callee.name===local)calls.push(node.argument);});
+ assert.equal(calls.length,1,'one actual awaited helper call, not a commented-out call');assert.equal(calls[0].arguments.length,1);
+ const capture=properties(calls[0].arguments[0]);assert.deepEqual(Object.keys(capture).sort(),['cdp','height','save','timeoutMs','width']);
+ for(const name of ['cdp','width','height']){assert.equal(capture[name].type,'Identifier');assert.equal(capture[name].name,name);}assert.equal(capture.timeoutMs.type,'Literal');assert.equal(capture.timeoutMs.value,120000);
+ const helperAst=parseResourceSource('('+captureNativeViewport.toString()+')',{ecmaVersion:'latest'}),api=[];
+ walk(helperAst,node=>{if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&node.callee.object.type==='Identifier'&&node.callee.object.name==='cdp'&&node.callee.property.name==='send'&&node.arguments[0]?.type==='Literal'&&node.arguments[0].value==='Page.captureScreenshot')api.push(node);});
+ assert.equal(api.length,1,'the imported helper calls the real screenshot API');const options=properties(api[0].arguments[1]);assert.deepEqual(Object.keys(options).sort(),['captureBeyondViewport','format','fromSurface']);
+ for(const [name,value] of Object.entries({format:'png',captureBeyondViewport:false,fromSurface:false})){assert.equal(options[name].type,'Literal');assert.equal(options[name].value,value);}
  assert.match(source,/await page\.evaluate\(\(\)=>__startGameplayObserver\(\)\)/);
 });
 
 test('native combat CDP screenshot rejects empty, truncated and wrong-size PNG payloads',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
- const first="  const png=Buffer.from(capturePixels.data||'','base64');";
- const last="  fs.writeFileSync(path.join(out,'combat-'+cycle+'.png'),png);";
- assert.equal(source.split(first).length,2);
- assert.equal(source.split(last).length,2);
- const start=source.indexOf(first),end=source.indexOf(last,start);
- assert.ok(start>=0&&end>start);
- const validate=new Function('Buffer','capturePixels','width','height',source.slice(start,end)+'return png.length;');
- const good=Buffer.alloc(768);
- Buffer.from([137,80,78,71,13,10,26,10]).copy(good,0);
- good.writeUInt32BE(480,16);good.writeUInt32BE(300,20);
- assert.equal(validate(Buffer,{data:good.toString('base64')},480,300),768);
- const missing=[{data:''},{data:good.subarray(0,20).toString('base64')}];
- for(const payload of missing)assert.throws(()=>validate(Buffer,payload,480,300),/missing or incomplete/);
+ assert(source.includes('await captureGameplayViewportPng({cdp,width,height,timeoutMs:120000,'));
+ // Preserve the current tests' actual viewport sizes and failure controls.
+ // The prior header-only768B positive was not a complete PNG.
+ const good=vpImage({width:480,height:300,blank:true});
+ assert.equal(validateGameplayViewportPng(good,480,300).bytes,good.length);
+ const missing=[Buffer.alloc(0),good.subarray(0,20)];
+ for(const payload of missing)assert.throws(()=>validateGameplayViewportPng(payload,480,300),/missing or incomplete/);
  const wrongSignature=Buffer.from(good);wrongSignature[0]=0;
- assert.throws(()=>validate(Buffer,{data:wrongSignature.toString('base64')},480,300),/missing or incomplete/);
- assert.throws(()=>validate(Buffer,{data:good.toString('base64')},481,300),/missing or incomplete/);
- assert.throws(()=>validate(Buffer,{data:good.toString('base64')},480,301),/missing or incomplete/);
+ assert.throws(()=>validateGameplayViewportPng(wrongSignature,480,300),/missing or incomplete/);
+ assert.throws(()=>validateGameplayViewportPng(good,481,300),/dimensions/);
+ assert.throws(()=>validateGameplayViewportPng(good,480,301),/dimensions/);
 });
 
 test('the actual runner catch preserves raw timeout error before profile cleanup failure',async()=>{
@@ -329,4 +337,71 @@ test('a deadline crossed after stop settlement is rechecked immediately before t
  try{
   const r=rig({stop(){now=90;return {profile};},budget:100});const result=await r.capture.cleanupFailure();assert(timers>=2);assert.equal(result.status,'profile-timeout');assert.equal(result.saved,false);assert.equal(r.saved.length,0);assert.deepEqual(r.calls,['Profiler.stop','Profiler.disable']);
  }finally{globalThis.setTimeout=setTimer;if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
+});
+
+import {captureGameplayViewportPng as captureNativeViewport,validateGameplayViewportPng} from '../lib/inkwave-gameplay-viewport.mjs';
+import {deflateSync as vpDeflate} from 'node:zlib';
+const vpCrc=b=>{let c=0xffffffff;for(const x of b){c^=x;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^0xffffffff)>>>0;};
+function vpChunk(type,data){const b=Buffer.alloc(data.length+12);b.writeUInt32BE(data.length);b.write(type,4,'latin1');data.copy(b,8);b.writeUInt32BE(vpCrc(b.subarray(4,-4)),b.length-4);return b;}
+function vpImage({width=2,height=2,rgba=false,blank=false,filter=0,pad=true}={}){
+ const header=Buffer.alloc(13);header.writeUInt32BE(width);header.writeUInt32BE(height,4);header[8]=8;header[9]=rgba?6:2;const channels=rgba?4:3,row=width*channels+1,raw=Buffer.alloc(row*height);
+ for(let y=0;y<height;y++){raw[y*row]=filter;for(let x=1;x<row;x++)raw[y*row+x]=blank?0:(x*41+y*17)&255;}
+ const chunks=[vpChunk('IHDR',header)];if(pad)chunks.push(vpChunk('tEXt',Buffer.from('fixture\0'+'x'.repeat(512))));chunks.push(vpChunk('IDAT',vpDeflate(raw)),vpChunk('IEND',Buffer.alloc(0)));return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),...chunks]);
+}
+function vpParts(png){const a=[];for(let p=8;p<png.length;){const n=png.readUInt32BE(p),end=p+12+n;a.push({type:png.toString('latin1',p+4,p+8),data:png.subarray(p+8,end-4),bytes:png.subarray(p,end)});p=end;}return a;}
+const vpPack=parts=>Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),...parts.map(x=>x.bytes||vpChunk(x.type,x.data))]);
+function vpRig({send,save,timeoutMs=100}={}){const calls=[],writes=[],png=vpImage();const cdp={send(method,params){calls.push([method,params,this]);return send?send(method,params):{data:png.toString('base64')};},detach(){throw Error('shared CDP must not be detached');}};return {png,cdp,calls,writes,run:()=>captureNativeViewport({cdp,width:2,height:2,timeoutMs,save:b=>{writes.push(b);return save?.(b);}})};}
+test('current CDP route is unchanged, writes the real bytes once, and keeps the shared session owned by the caller',async()=>{
+ const r=vpRig(),out=await r.run();assert.equal(out.complete,true);assert.deepEqual(r.writes,[r.png]);assert.equal(r.calls.length,1);assert.equal(r.calls[0][2],r.cdp);assert.deepEqual(r.calls[0].slice(0,2),['Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:false}]);
+});
+test('complete RGB/RGBA, legal uniform images, and larger DPR viewports retain the current minimum-dimension policy',()=>{
+ for(const rgba of [false,true])for(let filter=0;filter<5;filter++)assert.equal(validateGameplayViewportPng(vpImage({rgba,blank:true,filter}),2,2).complete,true);
+ assert.equal(validateGameplayViewportPng(vpImage({width:4,height:4}),2,2).width,4);assert.throws(()=>validateGameplayViewportPng(vpImage(),3,2),/dimensions/);assert.throws(()=>validateGameplayViewportPng(vpImage({pad:false}),2,2),/missing or incomplete/);
+});
+test('actual legacy 512-byte header-shaped fake PNG is rejected before persistence',async()=>{
+ const b=Buffer.alloc(512);Buffer.from([137,80,78,71,13,10,26,10]).copy(b);b.writeUInt32BE(13,8);b.write('IHDR',12);b.writeUInt32BE(480,16);b.writeUInt32BE(300,20);b[24]=8;b[25]=2;
+ assert.throws(()=>validateGameplayViewportPng(b,480,300));const r=vpRig({send:()=>({data:b.toString('base64')})});await assert.rejects(r.run());assert.equal(r.writes.length,0);
+});
+test('PNG CRC, missing IDAT/IEND, duplicate IHDR, trailing bytes and invalid filters fail closed',()=>{
+ const png=vpImage(),parts=vpParts(png),bad=Buffer.from(png);bad[29]^=1;
+ for(const b of [bad,vpPack(parts.filter(x=>x.type!=='IDAT')),vpPack(parts.filter(x=>x.type!=='IEND')),vpPack([parts[0],...parts]),Buffer.concat([png,Buffer.from([0])]),vpImage({filter:5})])assert.throws(()=>validateGameplayViewportPng(b,2,2));
+});
+test('non-ASCII highbit chunk-type aliases are rejected even with correct recalculated CRCs',()=>{
+ const png=vpImage();let at=8;for(const part of vpParts(png)){for(let letter=0;letter<4;letter++){const b=Buffer.from(png);b[at+4+letter]|=128;b.writeUInt32BE(vpCrc(b.subarray(at+4,at+8+part.data.length)),at+8+part.data.length);assert.throws(()=>validateGameplayViewportPng(b,2,2));}at+=part.bytes.length;}
+});
+test('continuous split IDAT stays valid while non-contiguous IDAT and unused zlib input are rejected',()=>{
+ const parts=vpParts(vpImage()),idx=parts.findIndex(p=>p.type==='IDAT'),data=parts[idx].data,k=Math.floor(data.length/2),a={type:'IDAT',data:data.subarray(0,k)},b={type:'IDAT',data:data.subarray(k)};
+ assert.equal(validateGameplayViewportPng(vpPack([...parts.slice(0,idx),a,b,...parts.slice(idx+1)]),2,2).complete,true);
+ assert.throws(()=>validateGameplayViewportPng(vpPack([...parts.slice(0,idx),a,{type:'tEXt',data:Buffer.from('gap\0x')},b,...parts.slice(idx+1)]),2,2),/IDAT/);
+ for(const extra of [Buffer.from([0]),data])assert.throws(()=>validateGameplayViewportPng(vpPack(parts.map(p=>p.type==='IDAT'?{type:'IDAT',data:Buffer.concat([data,extra])}:p)),2,2),/zlib/);
+});
+test('malformed compression and a valid zlib stream with wrong decoded row length are rejected',()=>{
+ const parts=vpParts(vpImage());for(const data of [Buffer.from('not zlib'),vpDeflate(Buffer.alloc(3))])assert.throws(()=>validateGameplayViewportPng(vpPack(parts.map(p=>p.type==='IDAT'?{type:'IDAT',data}:p)),2,2));
+});
+test('a native CDP error retains exact identity and never triggers another capture or detaches the shared session',async()=>{
+ for(const primary of [new Error('CDP primary'),null,false,0,undefined,'']){const r=vpRig({send(){throw primary;}});let caught=false;try{await r.run();}catch(error){caught=true;assert.equal(error,primary);}assert.equal(caught,true);assert.equal(r.writes.length,0);assert.equal(r.calls.length,1);}
+});
+test('a PNG writer error is primary and is not retried through another screenshot route',async()=>{
+ const primary=new Error('disk primary'),r=vpRig({save(){throw primary;}});await assert.rejects(r.run(),e=>e===primary);assert.equal(r.writes.length,1);assert.equal(r.calls.length,1);
+});
+test('capture deadline is finite, and a late successful response cannot dispatch a file write',async()=>{
+ let resolve;const r=vpRig({send:()=>new Promise(ok=>{resolve=ok;}),timeoutMs:5});await assert.rejects(r.run(),{name:'TimeoutError'});resolve({data:r.png.toString('base64')});await new Promise(setImmediate);assert.equal(r.writes.length,0);assert.equal(r.calls.length,1);
+});
+test('late native rejection is consumed after the deadline rather than replacing the terminal timeout',async()=>{
+ let reject;const r=vpRig({send:()=>new Promise((_,no)=>{reject=no;}),timeoutMs:5});await assert.rejects(r.run(),{name:'TimeoutError'});reject(Error('late native'));await new Promise(setImmediate);assert.equal(r.writes.length,0);
+});
+test('a successful reply after the monotonic deadline fails even before delayed timer callbacks run',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(performance,'now');let now=0;Object.defineProperty(performance,'now',{configurable:true,value:()=>now});
+ try{const r=vpRig({send(){now=130000;return {data:vpImage().toString('base64')};},timeoutMs:120000});await assert.rejects(r.run(),{name:'TimeoutError'});assert.equal(r.writes.length,0);}finally{if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
+});
+test('an early wall timer is rearmed until the actual monotonic deadline, not treated as an early timeout',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(performance,'now'),nativeTimer=globalThis.setTimeout,nativeClear=globalThis.clearTimeout;let now=0,resolve;const timers=[];
+ Object.defineProperty(performance,'now',{configurable:true,value:()=>now});globalThis.setTimeout=(fn,ms)=>{timers.push({fn,ms});return timers.length;};globalThis.clearTimeout=()=>{};
+ try{const r=vpRig({send:()=>new Promise(ok=>{resolve=ok;}),timeoutMs:100}),pending=r.run();await new Promise(setImmediate);now=20;timers[0].fn();assert.equal(timers.length,2);assert.equal(timers[1].ms,80);now=100;timers[1].fn();await assert.rejects(pending,{name:'TimeoutError'});resolve({data:r.png.toString('base64')});await new Promise(setImmediate);assert.equal(r.writes.length,0);}finally{globalThis.setTimeout=nativeTimer;globalThis.clearTimeout=nativeClear;if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
+});
+
+test('a terminal timeout cannot permit a late write even if an injected clock is subsequently moved backwards',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(performance,'now'),nativeTimer=globalThis.setTimeout,nativeClear=globalThis.clearTimeout;let now=0,resolve,expire;
+ Object.defineProperty(performance,'now',{configurable:true,value:()=>now});globalThis.setTimeout=fn=>{expire=fn;return 1;};globalThis.clearTimeout=()=>{};
+ try{const r=vpRig({send:()=>new Promise(ok=>{resolve=ok;}),timeoutMs:100}),pending=r.run();await new Promise(setImmediate);now=100;expire();await assert.rejects(pending,{name:'TimeoutError'});now=95;resolve({data:r.png.toString('base64')});await new Promise(setImmediate);assert.equal(r.writes.length,0);}finally{globalThis.setTimeout=nativeTimer;globalThis.clearTimeout=nativeClear;if(descriptor)Object.defineProperty(performance,'now',descriptor);else delete performance.now;}
 });
