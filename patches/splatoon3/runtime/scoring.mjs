@@ -97,21 +97,23 @@ function coverageReplay(index, grid) {
   const cached = index.replay;
   if (cached === null) return null;
   if (cached && cached.length === length) return cached;
-  const { cells } = index, groups = [], starts = [], wholeWords = Math.floor(length / 4);
-  for (let i = 0; i < cells.length;) {
-    const cell = cells[i];
-    // Non-monotonic/overlapping public faces keep the full original scan.
-    if (cell < 0 || cell >= length || cell >>> 2 >= wholeWords || i && cell <= cells[i - 1]) return (index.replay = null);
-    const word = cell >>> 2, start = i; let mask = 0;
-    do {
-      if (i && cells[i] <= cells[i - 1]) return (index.replay = null);
-      mask |= 1 << (cells[i] & 3); i++;
-    } while (i < cells.length && cells[i] >>> 2 === word);
-    groups.push(word * 16 + mask); starts.push(start);
+  const { cells } = index, wholeWords = Math.floor(length / 4);
+  let groupCount = 0, previousWord = -1;
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i], word = cell >>> 2;
+    if (cell < 0 || cell >= length || word >= wholeWords || i && cell <= cells[i - 1]) return (index.replay = null);
+    if (word !== previousWord) { groupCount++; previousWord = word; }
   }
-  const checkpoints = Math.ceil(groups.length / PREFIX_GROUPS);
+  const groups = new Uint32Array(groupCount), starts = new Int32Array(groupCount);
+  for (let i = 0, g = 0; i < cells.length; g++) {
+    const word = cells[i] >>> 2, start = i; let mask = 0;
+    do { mask |= 1 << (cells[i] & 3); i++; }
+    while (i < cells.length && cells[i] >>> 2 === word);
+    groups[g] = word * 16 + mask; starts[g] = start;
+  }
+  const checkpoints = Math.ceil(groupCount / PREFIX_GROUPS);
   return (index.replay = { length, words: new Uint32Array(buffer, offset, wholeWords),
-    groups: Uint32Array.from(groups), starts: Int32Array.from(starts), ownership: new Uint32Array(groups.length),
+    groups, starts, ownership: new Uint32Array(groupCount),
     prefix0: new Float64Array(checkpoints), prefix1: new Float64Array(checkpoints), valid: false, t0: 0, t1: 0 });
 }
 
