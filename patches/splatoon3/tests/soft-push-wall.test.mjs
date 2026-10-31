@@ -5,10 +5,11 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { LEGACY_KELPLINE_TRENCH } from '../../local-quality/tests/bot-navigation-legacy-layout.fixture.mjs';
 
 // #928: Match's actor soft push wrote the correction straight into pos after collision, so the local actor (which takes
 // 100% of a remote overlap online) could be moved past the midplane of a thin wall and resolved out the far side.
-// The real Match.update, Physics and Kelpline Terminal are used; actors are minimal (the push reads only pos/alive/remote/form).
+// The real Match.update/Physics and explicitly frozen pre-MAP3 Kelpline are used; actors are minimal (the push reads only pos/alive/remote/form).
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 async function load(adapt = adaptSource) {
@@ -34,8 +35,8 @@ async function load(adapt = adaptSource) {
   return { ...root.namespace };
 }
 function world(api) {
-  const { G, THREE, Level, Physics, KELPLINE, Match, PLAYER } = api;
-  G.level = new Level(KELPLINE); G.physics = new Physics(G.level); G.netm = { applyRemote() {} };
+  const { G, THREE, Level, Physics, Match, PLAYER } = api;
+  G.level = new Level(LEGACY_KELPLINE_TRENCH); G.physics = new Physics(G.level); G.netm = { applyRemote() {} };
   const actor = (x, y, z, remote = false) => ({ alive: true, remote, form: 'kid', pos: new THREE.Vector3(x, y, z), update() {} });
   const step = (actors, dt = 1 / 60) => Match.prototype.update.call({ paused: false, stateT: 0, state: 'intro', actors }, dt);
   // body resolution exactly as Actor._resolve calls it (grounded, kid)
@@ -48,7 +49,7 @@ function world(api) {
   return { ...api, actor, step, resolve, open };
 }
 const WALL_FACE = -23.6;
-test('#928 Kelpline: online local tangent to the 0.4 m side-deck wall (and its mirror) is not tunneled by a remote overlap', async () => {
+test('#928 legacy Kelpline: online local tangent to the 0.4 m side-deck wall (and its mirror) is not tunneled by a remote overlap', async () => {
   const w = world(await load()), tangent = WALL_FACE + w.PLAYER.radius;     // -23.22
   for (const [s, z] of [[1, -15], [-1, 15]]) {   // the half layout is point-mirrored: the other wall is x=+23.6..24, z=8.6..22
     const local = w.actor(s * tangent, 2.0, z), remote = w.actor(s * (tangent + 0.01), 2.0, z, true);

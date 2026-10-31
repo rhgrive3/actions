@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {MAP3_LAYOUTS} from '../../inkwave-public/src/world/stages/map3-layout.js';
 import {beginActorMotionTick,coherentMotionStart,actorMotionTick} from '../../patches/splatoon3/runtime/actor-motion.mjs';
 import {adaptSource} from '../../patches/splatoon3/adapter.mjs';
 import {adaptBuildSource} from '../inkwave-source-composition.mjs';
@@ -14,9 +15,9 @@ const actorSource=fs.readFileSync(new URL('../../inkwave-public/src/game/actor.j
 const mapsSource=fs.readFileSync(new URL('../../inkwave-public/src/world/maps.js',import.meta.url),'utf8');
 const method=actorSource.match(/  _spawnBarrier\(\) \{[\s\S]*?\n  \}/g);
 assert.equal(method?.length,1,'unique native barrier method');
-const pads=JSON.parse(mapsSource.match(/export const TIDEWATER = \{[\s\S]*?spawnPads: (\[[^\n]+\]),/)[1]);
-const radius=Number(mapsSource.match(/export const TIDEWATER = \{[\s\S]*?spawnBarrier: ([\d.]+)/)[1]);
-const level={bounds:{minX:-25,maxX:25,minZ:-44,maxZ:44},spawnPads:pads.map(([x,y,z])=>({x,y,z})),spawnBarrier:radius};
+assert.match(mapsSource,/TIDEWATER = MAP3_LAYOUTS.tidewater/);
+const {spawnPads:pads,spawnBarrier:radius,bounds}=MAP3_LAYOUTS.tidewater;
+const level={bounds,spawnPads:pads.map(([x,y,z])=>({x,y,z})),spawnBarrier:radius};
 class V {
  constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z;}
  set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}

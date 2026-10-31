@@ -1,0 +1,13 @@
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ MAP3 rule targets retain authored storeys and use the opposing home for each attacking team (2007.178236ms)
+✔ actual art and terrain clear the moving tower deck, mast and four rider capsules along both complete routes (629.843724ms)
+ℹ {"samples":1196,"solidProbes":64584,"capsules":4784,"scope":"composed Level/Physics and art colliders; not a human balance test"}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2669.66462

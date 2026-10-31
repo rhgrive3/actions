@@ -47,12 +47,12 @@ test('actual composed lamps and fronds retain ordered triangle attributes, windi
  console.log('DECOR_TEMPLATE_METRICS '+JSON.stringify(metrics));
 });
 test('flag reuses the exact emblem Canvas drawing while texture owners remain distinct and disposal is once',()=>{
- const runs=[previous,current].map(s=>{const api=boot(s),o=owner(api,MAP_LAYOUTS.tidewater);o.emblem=new THREE.CanvasTexture(api.emblemCanvas(256,true));o._buildFlags();let emblem=0,flag=0;o.emblem.addEventListener('dispose',()=>emblem++);o.flagTex.addEventListener('dispose',()=>flag++);assert.notEqual(o.flagTex,o.emblem);const output={canvasCount:api.document.canvases.length,emblem:o.emblem.image.ops,flag:o.flagTex.image.ops,geometry:snapshot(o.group)};o.dispose();o.dispose();assert.equal(emblem,1);assert.equal(flag,1);return output;});
+ const runs=[previous,current].map(s=>{const api=boot(s),o=owner(api,MAP_LAYOUTS.halyard);o.emblem=new THREE.CanvasTexture(api.emblemCanvas(256,true));o._buildFlags();let emblem=0,flag=0;o.emblem.addEventListener('dispose',()=>emblem++);o.flagTex.addEventListener('dispose',()=>flag++);assert.notEqual(o.flagTex,o.emblem);const output={canvasCount:api.document.canvases.length,emblem:o.emblem.image.ops,flag:o.flagTex.image.ops,geometry:snapshot(o.group)};o.dispose();o.dispose();assert.equal(emblem,1);assert.equal(flag,1);return output;});
  assert.equal(runs[0].canvasCount,3);assert.equal(runs[1].canvasCount,2);assert.deepEqual(runs[1].emblem,runs[0].emblem);assert.deepEqual(runs[1].flag,runs[0].flag);sameTriangles(runs[1].geometry,runs[0].geometry,'flags');
 });
 
 test('failed lamp template construction retires all previous private templates without publishing a partial mesh',()=>{
- const api=boot(current,{failAt:7}),o=owner(api,MAP_LAYOUTS.tidewater);assert.throws(()=>o._buildLamps(),error=>error===api.failure);assert(api.templates.length>0);assert(api.templates.every(g=>g._testDisposals===1));assert.equal(o.group.children.length,0);o.dispose();assert(api.templates.every(g=>g._testDisposals===1));
+ const api=boot(current,{failAt:7}),o=owner(api,MAP_LAYOUTS.halyard);assert.throws(()=>o._buildLamps(),error=>error===api.failure);assert(api.templates.length>0);assert(api.templates.every(g=>g._testDisposals===1));assert.equal(o.group.children.length,0);o.dispose();assert(api.templates.every(g=>g._testDisposals===1));
 });
 
 test('triangle comparison detects position, winding, normal and mapped/custom UV changes, but permits unused solid UV',()=>{

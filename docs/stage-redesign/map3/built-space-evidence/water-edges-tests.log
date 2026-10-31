@@ -1,0 +1,17 @@
+✔ tidewater: spray uses the real external water boundary, never a filled courtyard or covered ramp (16.138311ms)
+ℹ 236 legacy candidates included 184 dry/covered columns; 306 real bank candidates remain, with no dry columns.
+✔ kelpline: spray uses the real external water boundary, never a filled courtyard or covered ramp (7.145814ms)
+ℹ 200 legacy candidates included 126 dry/covered columns; 332 real bank candidates remain, with no dry columns.
+✔ actual ambient selection emits only at checked water columns and performs no new per-frame terrain queries (25.703899ms)
+ℹ 638 actual ambient seaSpray calls originate in checked open water; no frame-loop ground queries added.
+✔ the MAP3 opt-in leaves ordinary/native footprints and existing ambient edge sampling unchanged (0.41223ms)
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2095.178467

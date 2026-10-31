@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "units": "WU, WU²; no calibrated SI conversion",
+  "method": "Identical measure_baseline.geometry_metrics: upward normal.y >= .68, clip to configured XZ, raw projected and sloped sums, XZ union at cell centers with weighted boundary cells.",
+  "inclusion": "All nominal floors, ramps and obstacle top faces, including grates and buried or overlapping faces. No subtraction for cover footprints, paint flags, inaccessibility, ceiling or route connectivity.",
+  "modelLimit": "Proposal-only geometry. Slabs have vertical sides and nominal vertical thickness. No Level R toe extension or normal-thickness conversion, dressing, rails, runtime paint grid, Actor, camera, nav or ranked execution. Same calculation does not make proposal primitives exact engine geometry.",
+  "nativeReference": "baseline-metrics.json and baseline-resolution-check.json; same clipping, normal threshold and sample step. Native inferred asset classification differs from hand-authored proposal primitives.",
+  "proposals": [
+    {
+      "id": "tidewater",
+      "inputFile": "tidewater_design.py",
+      "inputSha256": "7a6ec671c6090c5413083710e3c279ac1123234a456cf3e2a9b095ae213d0827",
+      "bounds": {
+        "minX": -42,
+        "maxX": 42,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "boundsAreaWU2": 12096,
+      "spawnPads": [
+        [
+          0,
+          4.8,
+          -68
+        ],
+        [
+          0,
+          4.8,
+          68
+        ]
+      ],
+      "spawnDistance3DWU": 136.0,
+      "floorCount": 39,
+      "rampCount": 28,
+      "obstacleCount": 22,
+      "bySampleStepWU": {
+        ".5": {
+          "collisionBoundsXYZ": [
+            [
+              -38.0,
+              -4.0,
+              -72.0
+            ],
+            [
+              38.0,
+              7.8,
+              72.0
+            ]
+          ],
+          "upwardTriangleCount": 178,
+          "clippedUpwardSurfaceSumWU2": 8755.225920311439,
+          "clippedUpwardProjectedSumWU2": 8701.599999999999,
+          "projectedUnionSampleWU2": 8104.0,
+          "overlapSpanAtLeast1_6SampleWU2": 552.0,
+          "overlapSpanAtLeast2_5SampleWU2": 532.0,
+          "sampleStepWU": 0.5,
+          "sampledSurfaceHeightRangeWU": [
+            0.0,
+            7.800000000000001
+          ],
+          "ratioToNativeMedianSameStep": 1.0115904971942242
+        },
+        ".25": {
+          "collisionBoundsXYZ": [
+            [
+              -38.0,
+              -4.0,
+              -72.0
+            ],
+            [
+              38.0,
+              7.8,
+              72.0
+            ]
+          ],
+          "upwardTriangleCount": 178,
+          "clippedUpwardSurfaceSumWU2": 8755.225920311439,
+          "clippedUpwardProjectedSumWU2": 8701.599999999999,
+          "projectedUnionSampleWU2": 8104.0,
+          "overlapSpanAtLeast1_6SampleWU2": 549.0,
+          "overlapSpanAtLeast2_5SampleWU2": 529.0,
+          "sampleStepWU": 0.25,
+          "sampledSurfaceHeightRangeWU": [
+            0.0,
+            7.800000000000001
+          ],
+          "ratioToNativeMedianSameStep": 1.0083207614663203
+        }
+      }
+    },
+    {
+      "id": "kelpline",
+      "inputFile": "kelpline_design.py",
+      "inputSha256": "c614bffa973379a839e406780b04d97ce74cf81663f572a748bde04bc65886f4",
+      "bounds": {
+        "minX": -44,
+        "maxX": 44,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "boundsAreaWU2": 12672,
+      "spawnPads": [
+        [
+          0,
+          6,
+          -68
+        ],
+        [
+          0,
+          6,
+          68
+        ]
+      ],
+      "spawnDistance3DWU": 136.0,
+      "floorCount": 42,
+      "rampCount": 22,
+      "obstacleCount": 19,
+      "bySampleStepWU": {
+        ".5": {
+          "collisionBoundsXYZ": [
+            [
+              -44.0,
+              -4.0,
+              -72.0
+            ],
+            [
+              44.0,
+              8.6,
+              72.0
+            ]
+          ],
+          "upwardTriangleCount": 166,
+          "clippedUpwardSurfaceSumWU2": 11781.773674772281,
+          "clippedUpwardProjectedSumWU2": 11736.800000000003,
+          "projectedUnionSampleWU2": 9032.0,
+          "overlapSpanAtLeast1_6SampleWU2": 2500.0,
+          "overlapSpanAtLeast2_5SampleWU2": 2400.0,
+          "sampleStepWU": 0.5,
+          "sampledSurfaceHeightRangeWU": [
+            0.0,
+            8.6
+          ],
+          "ratioToNativeMedianSameStep": 1.1274290931216973
+        },
+        ".25": {
+          "collisionBoundsXYZ": [
+            [
+              -44.0,
+              -4.0,
+              -72.0
+            ],
+            [
+              44.0,
+              8.6,
+              72.0
+            ]
+          ],
+          "upwardTriangleCount": 166,
+          "clippedUpwardSurfaceSumWU2": 11781.773674772281,
+          "clippedUpwardProjectedSumWU2": 11736.800000000003,
+          "projectedUnionSampleWU2": 9032.0,
+          "overlapSpanAtLeast1_6SampleWU2": 2496.0,
+          "overlapSpanAtLeast2_5SampleWU2": 2396.0,
+          "sampleStepWU": 0.25,
+          "sampledSurfaceHeightRangeWU": [
+            0.0,
+            8.600000000000001
+          ],
+          "ratioToNativeMedianSameStep": 1.1237849355335396
+        }
+      }
+    }
+  ]
+}

@@ -198,7 +198,7 @@ export class NavGraph {
     finally { this._pathMemo = previous; memo.length = 0; if (pool.length < 4) pool.push(memo); }
   }
 
-  path(a, b, team, maxIter = 6000, acceptEdge = null) {
+  path(a, b, team, maxIter = !this.level?.native && this.level?.layout?.map3 ? this.level.layout.navPathMaxIter ?? 6000 : 6000, acceptEdge = null) {
     const memo = this._pathMemo;
     if (!memo || acceptEdge) return this._pathUncached(a, b, team, maxIter, acceptEdge);
     for (const row of memo) if (row.a === a && row.b === b && row.team === team && row.maxIter === maxIter) return row.path ? row.path.slice() : null;

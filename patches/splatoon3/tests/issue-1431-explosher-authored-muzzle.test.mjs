@@ -6,7 +6,7 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 // Real source-loaded pose and published Tidewater geometry; no WebGL or retail
 // parity claim. The former muzzle is a controlled same-geometry source owner.
 const formerMuzzle=JSON.parse(fs.readFileSync(new URL('./fixtures/quad-explosher-main-contracts.json',import.meta.url))).models['s3-slosher-washtub'].muzzle;
-const extraExports="export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';\nexport { MAP_LAYOUTS } from './src/world/maps.js';\nexport { getWeaponDef } from './src/game/character-weapons.js';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';";
+const extraExports="export { FixedClock } from './patches/splatoon3/runtime/clock.mjs';\nexport { MAP_LAYOUTS } from './src/world/maps.js';\nexport { map3ArtColliders } from './src/world/stages/map3-art.js';\nexport { getWeaponDef } from './src/game/character-weapons.js';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';";
 const plain=x=>JSON.parse(JSON.stringify(x));
 async function world(old=false){
   const f=await sourceLoadedActorFixture({random:()=>.5,extraExports});
@@ -17,10 +17,10 @@ async function world(old=false){
 }
 async function run(f,{hz,pitch,wall}){
   const {G,THREE}=f;f.reset();G.time=0;
-  G.level=new f.Level(f.MAP_LAYOUTS.tidewater);G.physics=new f.Physics(G.level);
+  G.level=new f.Level(f.MAP_LAYOUTS.tidewater,f.map3ArtColliders(f.MAP_LAYOUTS.tidewater));G.physics=new f.Physics(G.level);
   G.match={playing:()=>true,canRespawn:()=>false,state:'playing',opts:{range:true}};
   const a=await f.make(),ch=a.character;a.setWeapon('s3-slosher-washtub');ch.onEvent=null;
-  a.pos.set(0,0,wall?-5.72:-20);a.aimYaw=a.yaw=0;a.aimPitch=pitch*Math.PI/180;
+  a.pos.set(wall?-5:0,0,wall?-1.72:0);assert.equal(f.G.level.groundHeight(a.pos.x,a.pos.z,.1),0,'authored source actor starts on the actual MAP3 lower floor');a.aimYaw=a.yaw=0;a.aimPitch=pitch*Math.PI/180;
   a.aimPoint.copy(a.pos).add(new THREE.Vector3(0,1.05,80));
   const rows=[],paint=[],fx=[],created=[],contacts=[],ps=G.projectiles,acquire=ps._new,step=ps._step;
   G.paint={sample:()=>0,splat:(at,radius,team,options)=>{paint.push({at:Array.from(at.toArray()),radius,team,owner:options?.claimOwner===a});return 0;}};
@@ -81,7 +81,7 @@ test('#1431 authored Explosher lip owns actual source pose/socket/FX while camer
           assert.ok(distance(b.start,b.preMouth)>.1,'former native socket measurably misses the same geometry');
           assert.ok(g.fx.some(f=>distance(f.at,g.postMouth)<1e-8),'actual deferred FX request is at the final-pose lip');
         }else{
-          assert.ok(g.guard.los,'the emission world itself recorded the existing central tower guard before fixture cleanup');
+          assert.ok(g.guard.los,'the emission world itself recorded the existing MAP3 central screen guard before fixture cleanup');
         }
       }
       const comparable={rows:got.rows,contacts:got.contacts,paint:got.paint};

@@ -1,0 +1,4879 @@
+{
+  "tidewater": {
+    "metrics": {
+      "bounds": [
+        -42,
+        42,
+        -72,
+        72
+      ],
+      "boundsArea": 12096,
+      "terrainBounds": [
+        -38,
+        38,
+        -72,
+        72
+      ],
+      "terrainBoundsArea": 10944,
+      "spawnDistance3D": 136.0,
+      "spawnDistanceXZ": 136.0,
+      "grossLayeredProjectedArea": 8464.0,
+      "netLayeredProjectedArea": 8226.399999999998,
+      "netProjectedUnionArea": 7874.4,
+      "layeredMinusUnion": 351.9999999999982,
+      "stackedXZArea": 352.0,
+      "solidRoofShadowArea": 280.0,
+      "flatSolidByHeight": {
+        "0.0": 1284.0,
+        "1.2": 1288.0,
+        "2.4": 1288.0,
+        "3.6": 1308.0,
+        "4.8": 818.4
+      },
+      "flatHeightPercent": {
+        "0.0": 21.4486,
+        "1.2": 21.5154,
+        "2.4": 21.5154,
+        "3.6": 21.8495,
+        "4.8": 13.671
+      },
+      "flatSolidArea": 5986.4,
+      "grateProjectedArea": 72.0,
+      "rampProjectedArea": 2168.0,
+      "rampSlopedArea": 2221.6259203114437,
+      "netActualTopArea": 8280.025920311444,
+      "paintableTopCandidateArea": 8208.025920311444,
+      "uncoveredXZInBounds": 4221.6,
+      "projectedUnionFraction": 0.6509920634920635,
+      "minStackedClearance": 4.2,
+      "clearanceFailures": [],
+      "regions": {
+        "rear": {
+          "2.4": 776.0,
+          "3.6": 984.0,
+          "4.8": 310.40000000000003
+        },
+        "approach": {
+          "0.0": 168.0,
+          "1.2": 1288.0,
+          "2.4": 512.0
+        },
+        "center": {
+          "0.0": 1116.0,
+          "3.6": 324.0,
+          "4.8": 508.0
+        }
+      },
+      "perSurfaceArea": {
+        "A_west_terrace": 376.0,
+        "B_east_terrace": 188.0,
+        "B_belvedere": 162.0,
+        "A_market_west_rise": 96.0,
+        "A_market_hall": 129.0,
+        "A_market_edge": 33.0,
+        "B_belvedere_rise": 64.0,
+        "B_east_descent": 96.0,
+        "B_east_civic": 268.0,
+        "A_west_landing": 144.0,
+        "A_west_descent": 96.0,
+        "A_market_grate": 36.0,
+        "C_west_underpass": 168.0,
+        "A_low_entry": 36.0,
+        "A_low_turn": 48.0,
+        "A_low_street": 84.0,
+        "B_east_turn": 64.0,
+        "A_market_bridge": 92.0,
+        "B_belvedere_descent": 64.0,
+        "A_low_street_entry": 48.0,
+        "A_market_return": 84.0,
+        "B_civic_cross": 24.0,
+        "B_east_exit": 72.0,
+        "A_west_exit": 48.0,
+        "A_arrival": 348.0,
+        "A_west_exchange": 16.0,
+        "B_court_cross": 64.0,
+        "B_arrival": 348.0,
+        "C_basin": 492.0,
+        "B_central_arm": 60.0,
+        "A_lower_court": 328.0,
+        "A_spawn": 155.20000000000005,
+        "A_main_descent": 144.0,
+        "B_central_descent": 120.0,
+        "B_lower_court": 328.0,
+        "B_spawn": 155.2,
+        "A_arrival_ramp": 112.0,
+        "B_arrival_ramp": 112.0,
+        "B_main_descent": 144.0,
+        "A_central_descent": 120.0,
+        "B_market_bridge": 92.0,
+        "A_east_exit": 72.0,
+        "A_court_cross": 64.0,
+        "A_central_arm": 60.0,
+        "B_west_exit": 48.0,
+        "B_low_street_entry": 48.0,
+        "B_west_exchange": 16.0,
+        "A_belvedere_descent": 64.0,
+        "C_east_underpass": 168.0,
+        "B_market_return": 84.0,
+        "B_low_turn": 48.0,
+        "A_civic_cross": 24.0,
+        "A_east_terrace": 188.0,
+        "A_east_turn": 64.0,
+        "B_west_terrace": 376.0,
+        "B_west_descent": 96.0,
+        "B_west_landing": 144.0,
+        "A_east_civic": 268.0,
+        "A_east_descent": 96.0,
+        "B_low_street": 84.0,
+        "B_low_entry": 36.0,
+        "A_belvedere": 162.0,
+        "B_market_grate": 36.0,
+        "B_market_hall": 129.0,
+        "A_belvedere_rise": 64.0,
+        "B_market_west_rise": 96.0,
+        "B_market_edge": 33.0
+      },
+      "largestHeightShare": 21.8495
+    },
+    "graph": {
+      "edges": [
+        {
+          "a": "A_spawn",
+          "b": "A_arrival_ramp",
+          "seam": [
+            [
+              -7,
+              -64
+            ],
+            [
+              7,
+              -64
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_spawn",
+          "b": "A_west_exit",
+          "seam": [
+            [
+              -10,
+              -70
+            ],
+            [
+              -10,
+              -64
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_spawn",
+          "b": "A_east_exit",
+          "seam": [
+            [
+              10,
+              -70
+            ],
+            [
+              10,
+              -64
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_arrival",
+          "b": "A_arrival_ramp",
+          "seam": [
+            [
+              -7,
+              -56
+            ],
+            [
+              7,
+              -56
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 14,
+          "effectiveWidth": 12.65
+        },
+        {
+          "a": "A_arrival",
+          "b": "A_civic_cross",
+          "seam": [
+            [
+              18,
+              -54
+            ],
+            [
+              18,
+              -48
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_arrival",
+          "b": "A_main_descent",
+          "seam": [
+            [
+              -10,
+              -46
+            ],
+            [
+              2,
+              -46
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_west_landing",
+          "b": "A_west_exit",
+          "seam": [
+            [
+              -18,
+              -70
+            ],
+            [
+              -18,
+              -64
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_west_landing",
+          "b": "A_west_descent",
+          "seam": [
+            [
+              -30,
+              -58
+            ],
+            [
+              -18,
+              -58
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_west_terrace",
+          "b": "A_west_descent",
+          "seam": [
+            [
+              -30,
+              -50
+            ],
+            [
+              -18,
+              -50
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_west_terrace",
+          "b": "A_west_exchange",
+          "seam": [
+            [
+              -18,
+              -34
+            ],
+            [
+              -18,
+              -30
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_west_terrace",
+          "b": "A_market_west_rise",
+          "seam": [
+            [
+              -36,
+              -30
+            ],
+            [
+              -28,
+              -30
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_east_civic",
+          "b": "A_east_exit",
+          "seam": [
+            [
+              22,
+              -70
+            ],
+            [
+              22,
+              -64
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_east_civic",
+          "b": "A_civic_cross",
+          "seam": [
+            [
+              22,
+              -54
+            ],
+            [
+              22,
+              -48
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_east_civic",
+          "b": "A_east_descent",
+          "seam": [
+            [
+              22,
+              -46
+            ],
+            [
+              34,
+              -46
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_lower_court",
+          "b": "A_court_cross",
+          "seam": [
+            [
+              10,
+              -32
+            ],
+            [
+              10,
+              -24
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_lower_court",
+          "b": "A_main_descent",
+          "seam": [
+            [
+              -10,
+              -34
+            ],
+            [
+              2,
+              -34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_lower_court",
+          "b": "A_west_exchange",
+          "seam": [
+            [
+              -14,
+              -34
+            ],
+            [
+              -14,
+              -30
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_lower_court",
+          "b": "A_central_descent",
+          "seam": [
+            [
+              0,
+              -20
+            ],
+            [
+              10,
+              -20
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        },
+        {
+          "a": "A_lower_court",
+          "b": "A_low_street_entry",
+          "seam": [
+            [
+              -14,
+              -30
+            ],
+            [
+              -14,
+              -24
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_market_hall",
+          "b": "A_market_edge",
+          "seam": [
+            [
+              -36,
+              -6
+            ],
+            [
+              -30,
+              -6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 5.5,
+          "effectiveWidth": 4.15
+        },
+        {
+          "a": "A_market_hall",
+          "b": "A_market_grate",
+          "seam": [
+            [
+              -30,
+              -6
+            ],
+            [
+              -24,
+              -6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_market_hall",
+          "b": "A_market_west_rise",
+          "seam": [
+            [
+              -36,
+              -18
+            ],
+            [
+              -28,
+              -18
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_market_edge",
+          "b": "A_market_grate",
+          "seam": [
+            [
+              -30,
+              -6
+            ],
+            [
+              -30,
+              0
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_market_grate",
+          "b": "A_market_bridge",
+          "seam": [
+            [
+              -24,
+              -6
+            ],
+            [
+              -24,
+              0
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_market_bridge",
+          "b": "A_market_return",
+          "seam": [
+            [
+              -22,
+              -6
+            ],
+            [
+              -16,
+              -6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_low_entry",
+          "b": "A_low_turn",
+          "seam": [
+            [
+              -28,
+              -24
+            ],
+            [
+              -22,
+              -24
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_low_entry",
+          "b": "A_low_street_entry",
+          "seam": [
+            [
+              -22,
+              -30
+            ],
+            [
+              -22,
+              -24
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_low_turn",
+          "b": "A_low_street",
+          "seam": [
+            [
+              -28,
+              -20
+            ],
+            [
+              -22,
+              -20
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_low_turn",
+          "b": "A_market_return",
+          "seam": [
+            [
+              -22,
+              -20
+            ],
+            [
+              -16,
+              -20
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_low_street",
+          "b": "C_west_underpass",
+          "seam": [
+            [
+              -28,
+              -6
+            ],
+            [
+              -22,
+              -6
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_east_terrace",
+          "b": "A_east_turn",
+          "seam": [
+            [
+              18,
+              -28
+            ],
+            [
+              26,
+              -28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_east_terrace",
+          "b": "A_court_cross",
+          "seam": [
+            [
+              18,
+              -32
+            ],
+            [
+              18,
+              -28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_east_terrace",
+          "b": "A_east_descent",
+          "seam": [
+            [
+              22,
+              -38
+            ],
+            [
+              34,
+              -38
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_east_terrace",
+          "b": "A_belvedere_rise",
+          "seam": [
+            [
+              26,
+              -28
+            ],
+            [
+              34,
+              -28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_east_turn",
+          "b": "A_court_cross",
+          "seam": [
+            [
+              18,
+              -28
+            ],
+            [
+              18,
+              -24
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_belvedere",
+          "b": "A_belvedere_rise",
+          "seam": [
+            [
+              26,
+              -20
+            ],
+            [
+              34,
+              -20
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_belvedere",
+          "b": "A_belvedere_descent",
+          "seam": [
+            [
+              24,
+              -18
+            ],
+            [
+              24,
+              -10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_central_arm",
+          "b": "C_basin",
+          "seam": [
+            [
+              10,
+              -8
+            ],
+            [
+              16,
+              -8
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_central_arm",
+          "b": "A_belvedere_descent",
+          "seam": [
+            [
+              16,
+              -18
+            ],
+            [
+              16,
+              -10
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_spawn",
+          "b": "B_arrival_ramp",
+          "seam": [
+            [
+              -7,
+              64
+            ],
+            [
+              7,
+              64
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_spawn",
+          "b": "B_west_exit",
+          "seam": [
+            [
+              10,
+              64
+            ],
+            [
+              10,
+              70
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_spawn",
+          "b": "B_east_exit",
+          "seam": [
+            [
+              -10,
+              64
+            ],
+            [
+              -10,
+              70
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_arrival",
+          "b": "B_arrival_ramp",
+          "seam": [
+            [
+              -7,
+              56
+            ],
+            [
+              7,
+              56
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 14,
+          "effectiveWidth": 12.65
+        },
+        {
+          "a": "B_arrival",
+          "b": "B_civic_cross",
+          "seam": [
+            [
+              -18,
+              48
+            ],
+            [
+              -18,
+              54
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_arrival",
+          "b": "B_main_descent",
+          "seam": [
+            [
+              -2,
+              46
+            ],
+            [
+              10,
+              46
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_west_landing",
+          "b": "B_west_exit",
+          "seam": [
+            [
+              18,
+              64
+            ],
+            [
+              18,
+              70
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_west_landing",
+          "b": "B_west_descent",
+          "seam": [
+            [
+              18,
+              58
+            ],
+            [
+              30,
+              58
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_west_terrace",
+          "b": "B_west_descent",
+          "seam": [
+            [
+              18,
+              50
+            ],
+            [
+              30,
+              50
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_west_terrace",
+          "b": "B_west_exchange",
+          "seam": [
+            [
+              18,
+              30
+            ],
+            [
+              18,
+              34
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_west_terrace",
+          "b": "B_market_west_rise",
+          "seam": [
+            [
+              28,
+              30
+            ],
+            [
+              36,
+              30
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_east_civic",
+          "b": "B_east_exit",
+          "seam": [
+            [
+              -22,
+              64
+            ],
+            [
+              -22,
+              70
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_east_civic",
+          "b": "B_civic_cross",
+          "seam": [
+            [
+              -22,
+              48
+            ],
+            [
+              -22,
+              54
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_east_civic",
+          "b": "B_east_descent",
+          "seam": [
+            [
+              -34,
+              46
+            ],
+            [
+              -22,
+              46
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_lower_court",
+          "b": "B_court_cross",
+          "seam": [
+            [
+              -10,
+              24
+            ],
+            [
+              -10,
+              32
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_lower_court",
+          "b": "B_main_descent",
+          "seam": [
+            [
+              -2,
+              34
+            ],
+            [
+              10,
+              34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_lower_court",
+          "b": "B_west_exchange",
+          "seam": [
+            [
+              14,
+              30
+            ],
+            [
+              14,
+              34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_lower_court",
+          "b": "B_central_descent",
+          "seam": [
+            [
+              -10,
+              20
+            ],
+            [
+              0,
+              20
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        },
+        {
+          "a": "B_lower_court",
+          "b": "B_low_street_entry",
+          "seam": [
+            [
+              14,
+              24
+            ],
+            [
+              14,
+              30
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_market_hall",
+          "b": "B_market_edge",
+          "seam": [
+            [
+              30,
+              6
+            ],
+            [
+              36,
+              6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 5.5,
+          "effectiveWidth": 4.15
+        },
+        {
+          "a": "B_market_hall",
+          "b": "B_market_grate",
+          "seam": [
+            [
+              24,
+              6
+            ],
+            [
+              30,
+              6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_market_hall",
+          "b": "B_market_west_rise",
+          "seam": [
+            [
+              28,
+              18
+            ],
+            [
+              36,
+              18
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_market_edge",
+          "b": "B_market_grate",
+          "seam": [
+            [
+              30,
+              0
+            ],
+            [
+              30,
+              6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_market_grate",
+          "b": "B_market_bridge",
+          "seam": [
+            [
+              24,
+              0
+            ],
+            [
+              24,
+              6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_market_bridge",
+          "b": "B_market_return",
+          "seam": [
+            [
+              16,
+              6
+            ],
+            [
+              22,
+              6
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_low_entry",
+          "b": "B_low_turn",
+          "seam": [
+            [
+              22,
+              24
+            ],
+            [
+              28,
+              24
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_low_entry",
+          "b": "B_low_street_entry",
+          "seam": [
+            [
+              22,
+              24
+            ],
+            [
+              22,
+              30
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_low_turn",
+          "b": "B_low_street",
+          "seam": [
+            [
+              22,
+              20
+            ],
+            [
+              28,
+              20
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_low_turn",
+          "b": "B_market_return",
+          "seam": [
+            [
+              16,
+              20
+            ],
+            [
+              22,
+              20
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_low_street",
+          "b": "C_east_underpass",
+          "seam": [
+            [
+              22,
+              6
+            ],
+            [
+              28,
+              6
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_east_terrace",
+          "b": "B_east_turn",
+          "seam": [
+            [
+              -26,
+              28
+            ],
+            [
+              -18,
+              28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_east_terrace",
+          "b": "B_court_cross",
+          "seam": [
+            [
+              -18,
+              28
+            ],
+            [
+              -18,
+              32
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_east_terrace",
+          "b": "B_east_descent",
+          "seam": [
+            [
+              -34,
+              38
+            ],
+            [
+              -22,
+              38
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_east_terrace",
+          "b": "B_belvedere_rise",
+          "seam": [
+            [
+              -34,
+              28
+            ],
+            [
+              -26,
+              28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_east_turn",
+          "b": "B_court_cross",
+          "seam": [
+            [
+              -18,
+              24
+            ],
+            [
+              -18,
+              28
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_belvedere",
+          "b": "B_belvedere_rise",
+          "seam": [
+            [
+              -34,
+              20
+            ],
+            [
+              -26,
+              20
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_belvedere",
+          "b": "B_belvedere_descent",
+          "seam": [
+            [
+              -24,
+              10
+            ],
+            [
+              -24,
+              18
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_central_arm",
+          "b": "C_basin",
+          "seam": [
+            [
+              -16,
+              8
+            ],
+            [
+              -10,
+              8
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_central_arm",
+          "b": "B_belvedere_descent",
+          "seam": [
+            [
+              -16,
+              10
+            ],
+            [
+              -16,
+              18
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "C_basin",
+          "b": "C_west_underpass",
+          "seam": [
+            [
+              -16,
+              -6
+            ],
+            [
+              -16,
+              6
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "C_basin",
+          "b": "C_east_underpass",
+          "seam": [
+            [
+              16,
+              -6
+            ],
+            [
+              16,
+              6
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "C_basin",
+          "b": "A_central_descent",
+          "seam": [
+            [
+              0,
+              -8
+            ],
+            [
+              10,
+              -8
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        },
+        {
+          "a": "C_basin",
+          "b": "B_central_descent",
+          "seam": [
+            [
+              -10,
+              8
+            ],
+            [
+              0,
+              8
+            ]
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        }
+      ],
+      "components": [
+        [
+          "A_arrival",
+          "A_arrival_ramp",
+          "A_belvedere",
+          "A_belvedere_descent",
+          "A_belvedere_rise",
+          "A_central_arm",
+          "A_central_descent",
+          "A_civic_cross",
+          "A_court_cross",
+          "A_east_civic",
+          "A_east_descent",
+          "A_east_exit",
+          "A_east_terrace",
+          "A_east_turn",
+          "A_low_entry",
+          "A_low_street",
+          "A_low_street_entry",
+          "A_low_turn",
+          "A_lower_court",
+          "A_main_descent",
+          "A_market_bridge",
+          "A_market_edge",
+          "A_market_grate",
+          "A_market_hall",
+          "A_market_return",
+          "A_market_west_rise",
+          "A_spawn",
+          "A_west_descent",
+          "A_west_exchange",
+          "A_west_exit",
+          "A_west_landing",
+          "A_west_terrace",
+          "B_arrival",
+          "B_arrival_ramp",
+          "B_belvedere",
+          "B_belvedere_descent",
+          "B_belvedere_rise",
+          "B_central_arm",
+          "B_central_descent",
+          "B_civic_cross",
+          "B_court_cross",
+          "B_east_civic",
+          "B_east_descent",
+          "B_east_exit",
+          "B_east_terrace",
+          "B_east_turn",
+          "B_low_entry",
+          "B_low_street",
+          "B_low_street_entry",
+          "B_low_turn",
+          "B_lower_court",
+          "B_main_descent",
+          "B_market_bridge",
+          "B_market_edge",
+          "B_market_grate",
+          "B_market_hall",
+          "B_market_return",
+          "B_market_west_rise",
+          "B_spawn",
+          "B_west_descent",
+          "B_west_exchange",
+          "B_west_exit",
+          "B_west_landing",
+          "B_west_terrace",
+          "C_basin",
+          "C_east_underpass",
+          "C_west_underpass"
+        ]
+      ],
+      "adjacency": {
+        "A_spawn": [
+          "A_arrival_ramp",
+          "A_west_exit",
+          "A_east_exit"
+        ],
+        "A_arrival": [
+          "A_arrival_ramp",
+          "A_civic_cross",
+          "A_main_descent"
+        ],
+        "A_west_landing": [
+          "A_west_exit",
+          "A_west_descent"
+        ],
+        "A_west_terrace": [
+          "A_west_descent",
+          "A_west_exchange",
+          "A_market_west_rise"
+        ],
+        "A_east_civic": [
+          "A_east_exit",
+          "A_civic_cross",
+          "A_east_descent"
+        ],
+        "A_lower_court": [
+          "A_court_cross",
+          "A_main_descent",
+          "A_west_exchange",
+          "A_central_descent",
+          "A_low_street_entry"
+        ],
+        "A_market_hall": [
+          "A_market_edge",
+          "A_market_grate",
+          "A_market_west_rise"
+        ],
+        "A_market_edge": [
+          "A_market_hall",
+          "A_market_grate"
+        ],
+        "A_market_grate": [
+          "A_market_hall",
+          "A_market_edge",
+          "A_market_bridge"
+        ],
+        "A_market_bridge": [
+          "A_market_grate",
+          "A_market_return"
+        ],
+        "A_low_entry": [
+          "A_low_turn",
+          "A_low_street_entry"
+        ],
+        "A_low_turn": [
+          "A_low_entry",
+          "A_low_street",
+          "A_market_return"
+        ],
+        "A_low_street": [
+          "A_low_turn",
+          "C_west_underpass"
+        ],
+        "A_east_terrace": [
+          "A_east_turn",
+          "A_court_cross",
+          "A_east_descent",
+          "A_belvedere_rise"
+        ],
+        "A_east_turn": [
+          "A_east_terrace",
+          "A_court_cross"
+        ],
+        "A_court_cross": [
+          "A_lower_court",
+          "A_east_terrace",
+          "A_east_turn"
+        ],
+        "A_belvedere": [
+          "A_belvedere_rise",
+          "A_belvedere_descent"
+        ],
+        "A_central_arm": [
+          "C_basin",
+          "A_belvedere_descent"
+        ],
+        "B_spawn": [
+          "B_arrival_ramp",
+          "B_west_exit",
+          "B_east_exit"
+        ],
+        "B_arrival": [
+          "B_arrival_ramp",
+          "B_civic_cross",
+          "B_main_descent"
+        ],
+        "B_west_landing": [
+          "B_west_exit",
+          "B_west_descent"
+        ],
+        "B_west_terrace": [
+          "B_west_descent",
+          "B_west_exchange",
+          "B_market_west_rise"
+        ],
+        "B_east_civic": [
+          "B_east_exit",
+          "B_civic_cross",
+          "B_east_descent"
+        ],
+        "B_lower_court": [
+          "B_court_cross",
+          "B_main_descent",
+          "B_west_exchange",
+          "B_central_descent",
+          "B_low_street_entry"
+        ],
+        "B_market_hall": [
+          "B_market_edge",
+          "B_market_grate",
+          "B_market_west_rise"
+        ],
+        "B_market_edge": [
+          "B_market_hall",
+          "B_market_grate"
+        ],
+        "B_market_grate": [
+          "B_market_hall",
+          "B_market_edge",
+          "B_market_bridge"
+        ],
+        "B_market_bridge": [
+          "B_market_grate",
+          "B_market_return"
+        ],
+        "B_low_entry": [
+          "B_low_turn",
+          "B_low_street_entry"
+        ],
+        "B_low_turn": [
+          "B_low_entry",
+          "B_low_street",
+          "B_market_return"
+        ],
+        "B_low_street": [
+          "B_low_turn",
+          "C_east_underpass"
+        ],
+        "B_east_terrace": [
+          "B_east_turn",
+          "B_court_cross",
+          "B_east_descent",
+          "B_belvedere_rise"
+        ],
+        "B_east_turn": [
+          "B_east_terrace",
+          "B_court_cross"
+        ],
+        "B_court_cross": [
+          "B_lower_court",
+          "B_east_terrace",
+          "B_east_turn"
+        ],
+        "B_belvedere": [
+          "B_belvedere_rise",
+          "B_belvedere_descent"
+        ],
+        "B_central_arm": [
+          "C_basin",
+          "B_belvedere_descent"
+        ],
+        "C_basin": [
+          "A_central_arm",
+          "B_central_arm",
+          "C_west_underpass",
+          "C_east_underpass",
+          "A_central_descent",
+          "B_central_descent"
+        ],
+        "C_west_underpass": [
+          "A_low_street",
+          "C_basin"
+        ],
+        "C_east_underpass": [
+          "B_low_street",
+          "C_basin"
+        ],
+        "A_arrival_ramp": [
+          "A_spawn",
+          "A_arrival"
+        ],
+        "A_west_exit": [
+          "A_spawn",
+          "A_west_landing"
+        ],
+        "A_west_descent": [
+          "A_west_landing",
+          "A_west_terrace"
+        ],
+        "A_east_exit": [
+          "A_spawn",
+          "A_east_civic"
+        ],
+        "A_civic_cross": [
+          "A_arrival",
+          "A_east_civic"
+        ],
+        "A_main_descent": [
+          "A_arrival",
+          "A_lower_court"
+        ],
+        "A_west_exchange": [
+          "A_west_terrace",
+          "A_lower_court"
+        ],
+        "A_central_descent": [
+          "A_lower_court",
+          "C_basin"
+        ],
+        "A_market_west_rise": [
+          "A_west_terrace",
+          "A_market_hall"
+        ],
+        "A_low_street_entry": [
+          "A_lower_court",
+          "A_low_entry"
+        ],
+        "A_market_return": [
+          "A_market_bridge",
+          "A_low_turn"
+        ],
+        "A_east_descent": [
+          "A_east_civic",
+          "A_east_terrace"
+        ],
+        "A_belvedere_rise": [
+          "A_east_terrace",
+          "A_belvedere"
+        ],
+        "A_belvedere_descent": [
+          "A_belvedere",
+          "A_central_arm"
+        ],
+        "B_arrival_ramp": [
+          "B_spawn",
+          "B_arrival"
+        ],
+        "B_west_exit": [
+          "B_spawn",
+          "B_west_landing"
+        ],
+        "B_west_descent": [
+          "B_west_landing",
+          "B_west_terrace"
+        ],
+        "B_east_exit": [
+          "B_spawn",
+          "B_east_civic"
+        ],
+        "B_civic_cross": [
+          "B_arrival",
+          "B_east_civic"
+        ],
+        "B_main_descent": [
+          "B_arrival",
+          "B_lower_court"
+        ],
+        "B_west_exchange": [
+          "B_west_terrace",
+          "B_lower_court"
+        ],
+        "B_central_descent": [
+          "B_lower_court",
+          "C_basin"
+        ],
+        "B_market_west_rise": [
+          "B_west_terrace",
+          "B_market_hall"
+        ],
+        "B_low_street_entry": [
+          "B_lower_court",
+          "B_low_entry"
+        ],
+        "B_market_return": [
+          "B_market_bridge",
+          "B_low_turn"
+        ],
+        "B_east_descent": [
+          "B_east_civic",
+          "B_east_terrace"
+        ],
+        "B_belvedere_rise": [
+          "B_east_terrace",
+          "B_belvedere"
+        ],
+        "B_belvedere_descent": [
+          "B_belvedere",
+          "B_central_arm"
+        ]
+      }
+    },
+    "routes": {
+      "A_direct": {
+        "length3D": 87.14792268082157,
+        "samples": 362,
+        "failures": []
+      },
+      "A_market": {
+        "length3D": 115.24579293103378,
+        "samples": 480,
+        "failures": []
+      },
+      "A_low": {
+        "length3D": 71.74492626304756,
+        "samples": 298,
+        "failures": []
+      },
+      "A_east": {
+        "length3D": 119.56303456326093,
+        "samples": 499,
+        "failures": []
+      },
+      "A_market_return": {
+        "length3D": 46.04264068711928,
+        "samples": 191,
+        "failures": []
+      },
+      "A_mesh_recovery": {
+        "length3D": 48.04264068711928,
+        "samples": 200,
+        "failures": []
+      },
+      "A_bridge_recovery": {
+        "length3D": 64.24264068711929,
+        "samples": 265,
+        "failures": []
+      },
+      "B_direct": {
+        "length3D": 87.14792268082157,
+        "samples": 362,
+        "failures": []
+      },
+      "B_market": {
+        "length3D": 115.24579293103378,
+        "samples": 480,
+        "failures": []
+      },
+      "B_low": {
+        "length3D": 71.74492626304756,
+        "samples": 298,
+        "failures": []
+      },
+      "B_east": {
+        "length3D": 119.56303456326093,
+        "samples": 499,
+        "failures": []
+      },
+      "B_market_return": {
+        "length3D": 46.04264068711928,
+        "samples": 191,
+        "failures": []
+      },
+      "B_mesh_recovery": {
+        "length3D": 48.04264068711928,
+        "samples": 200,
+        "failures": []
+      },
+      "B_bridge_recovery": {
+        "length3D": 64.24264068711929,
+        "samples": 265,
+        "failures": []
+      }
+    },
+    "tower": {
+      "samples": 516,
+      "failures": [],
+      "liftWarnings": [],
+      "deckHeightRange": [
+        0.4,
+        4.000000000000001
+      ],
+      "method": "Independent all-yaw AABB sweep sampled <=0.25WU; support heights use .15WU disk samples and include cover tops. Deck/pole/rider volumes separate. Nominal proposal slabs, not live ranked route generation."
+    },
+    "ramps": [
+      {
+        "id": "A_arrival_ramp",
+        "run": 8,
+        "width": 14,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "A_west_exit",
+        "run": 8,
+        "width": 6,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "A_west_descent",
+        "run": 8,
+        "width": 12,
+        "grade": 0.15000000000000002,
+        "angleDegrees": 8.530765609948135
+      },
+      {
+        "id": "A_east_exit",
+        "run": 12,
+        "width": 6,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "A_civic_cross",
+        "run": 4,
+        "width": 6,
+        "grade": 0.30000000000000004,
+        "angleDegrees": 16.699244233993625
+      },
+      {
+        "id": "A_main_descent",
+        "run": 12,
+        "width": 12,
+        "grade": 0.20000000000000004,
+        "angleDegrees": 11.309932474020217
+      },
+      {
+        "id": "A_west_exchange",
+        "run": 4,
+        "width": 4,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "A_central_descent",
+        "run": 12,
+        "width": 10,
+        "grade": 0.09999999999999999,
+        "angleDegrees": 5.710593137499642
+      },
+      {
+        "id": "A_market_west_rise",
+        "run": 12,
+        "width": 8,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "A_low_street_entry",
+        "run": 8,
+        "width": 6,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "A_market_return",
+        "run": 14,
+        "width": 6,
+        "grade": 0.34285714285714286,
+        "angleDegrees": 18.924644416051233
+      },
+      {
+        "id": "A_east_descent",
+        "run": 8,
+        "width": 12,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "A_belvedere_rise",
+        "run": 8,
+        "width": 8,
+        "grade": 0.30000000000000004,
+        "angleDegrees": 16.699244233993625
+      },
+      {
+        "id": "A_belvedere_descent",
+        "run": 8,
+        "width": 8,
+        "grade": 0.45,
+        "angleDegrees": 24.22774531795417
+      },
+      {
+        "id": "B_arrival_ramp",
+        "run": 8,
+        "width": 14,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "B_west_exit",
+        "run": 8,
+        "width": 6,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "B_west_descent",
+        "run": 8,
+        "width": 12,
+        "grade": 0.15000000000000002,
+        "angleDegrees": 8.530765609948135
+      },
+      {
+        "id": "B_east_exit",
+        "run": 12,
+        "width": 6,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "B_civic_cross",
+        "run": 4,
+        "width": 6,
+        "grade": 0.30000000000000004,
+        "angleDegrees": 16.699244233993625
+      },
+      {
+        "id": "B_main_descent",
+        "run": 12,
+        "width": 12,
+        "grade": 0.20000000000000004,
+        "angleDegrees": 11.309932474020217
+      },
+      {
+        "id": "B_west_exchange",
+        "run": 4,
+        "width": 4,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "B_central_descent",
+        "run": 12,
+        "width": 10,
+        "grade": 0.09999999999999999,
+        "angleDegrees": 5.710593137499642
+      },
+      {
+        "id": "B_market_west_rise",
+        "run": 12,
+        "width": 8,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "B_low_street_entry",
+        "run": 8,
+        "width": 6,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "B_market_return",
+        "run": 14,
+        "width": 6,
+        "grade": 0.34285714285714286,
+        "angleDegrees": 18.924644416051233
+      },
+      {
+        "id": "B_east_descent",
+        "run": 8,
+        "width": 12,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "B_belvedere_rise",
+        "run": 8,
+        "width": 8,
+        "grade": 0.30000000000000004,
+        "angleDegrees": 16.699244233993625
+      },
+      {
+        "id": "B_belvedere_descent",
+        "run": 8,
+        "width": 8,
+        "grade": 0.45,
+        "angleDegrees": 24.22774531795417
+      }
+    ],
+    "drops": [
+      {
+        "id": "A_mesh_drop",
+        "heightLoss": 4.8,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": false,
+        "returnRoute": "A_mesh_recovery"
+      },
+      {
+        "id": "A_bridge_drop",
+        "heightLoss": 4.8,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": true,
+        "returnRoute": "A_bridge_recovery"
+      },
+      {
+        "id": "B_mesh_drop",
+        "heightLoss": 4.8,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": false,
+        "returnRoute": "B_mesh_recovery"
+      },
+      {
+        "id": "B_bridge_drop",
+        "heightLoss": 4.8,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": true,
+        "returnRoute": "B_bridge_recovery"
+      }
+    ],
+    "symmetryFailures": [],
+    "method": "Static isolated model only. Seam graph is geometry derived; route sampling at <=0.25WU. Conservative circular footprint r=.675 and height1.6. Not game Actor, native collision or human playtest."
+  },
+  "kelpline": {
+    "metrics": {
+      "bounds": [
+        -44,
+        44,
+        -72,
+        72
+      ],
+      "boundsArea": 12672,
+      "terrainBounds": [
+        -44,
+        44,
+        -72,
+        72
+      ],
+      "terrainBoundsArea": 12672,
+      "spawnDistance3D": 136.0,
+      "spawnDistanceXZ": 136.0,
+      "grossLayeredProjectedArea": 11416.0,
+      "netLayeredProjectedArea": 11095.2,
+      "netProjectedUnionArea": 8887.2,
+      "layeredMinusUnion": 2208.0,
+      "stackedXZArea": 2208.0,
+      "solidRoofShadowArea": 2112.0,
+      "flatSolidByHeight": {
+        "0": 2000.0,
+        "1.2": 1280.0,
+        "2.4": 1196.0,
+        "3.6": 2560.0,
+        "4.8": 928.0,
+        "6": 1523.2
+      },
+      "flatHeightPercent": {
+        "0": 21.081,
+        "1.2": 13.4919,
+        "2.4": 12.6065,
+        "3.6": 26.9837,
+        "4.8": 9.7816,
+        "6": 16.0553
+      },
+      "flatSolidArea": 9487.2,
+      "grateProjectedArea": 96.0,
+      "rampProjectedArea": 1512.0,
+      "rampSlopedArea": 1556.9736747722743,
+      "netActualTopArea": 11140.173674772275,
+      "paintableTopCandidateArea": 11044.173674772275,
+      "uncoveredXZInBounds": 3784.7999999999993,
+      "projectedUnionFraction": 0.7013257575757577,
+      "minStackedClearance": 3.0,
+      "clearanceFailures": [],
+      "regions": {
+        "rear": {
+          "1.2": 472.0,
+          "2.4": 240.0,
+          "4.8": 928.0,
+          "6": 1163.2000000000003
+        },
+        "approach": {
+          "0": 640.0,
+          "1.2": 456.0,
+          "2.4": 956.0,
+          "3.6": 1280.0,
+          "6": 360.0
+        },
+        "center": {
+          "0": 1360.0,
+          "1.2": 352.0,
+          "3.6": 1280.0
+        }
+      },
+      "perSurfaceArea": {
+        "A_outer_top": 48.0,
+        "A_outer_descent": 96.0,
+        "A_outer_foot": 48.0,
+        "A_service_turn": 96.0,
+        "A_recovery_foot": 32.0,
+        "B_ferry": 176.0,
+        "B_cargo": 502.0,
+        "A_headhouse": 204.0,
+        "A_high_neck": 64.0,
+        "A_low_quay": 416.0,
+        "A_high_gantry": 308.0,
+        "A_boarding_recovery": 64.0,
+        "B_cargo_to_ferry": 64.0,
+        "A_high_to_concourse": 60.0,
+        "A_quay_to_service": 48.0,
+        "A_boarding_grate": 48.0,
+        "A_service": 524.0,
+        "A_boarding_west": 96.0,
+        "B_ferry_to_center": 24.0,
+        "A_boarding_main": 712.0,
+        "B_rear_concourse": 404.0,
+        "B_rear_wing": 60.0,
+        "A_rear_concourse": 404.0,
+        "A_gantry_to_boarding": 64.0,
+        "B_cargo_to_boarding": 48.0,
+        "B_cargo_inner": 96.0,
+        "B_rear_to_cargo": 64.0,
+        "central_service": 696.0,
+        "A_spawn": 137.60000000000002,
+        "A_boarding_rear": 240.0,
+        "central_west": 152.0,
+        "B_boarding_main": 712.0,
+        "B_boarding_rear": 240.0,
+        "B_spawn_ramp": 96.0,
+        "B_spawn": 137.60000000000002,
+        "A_main_descent": 128.0,
+        "B_main_descent": 128.0,
+        "A_spawn_ramp": 96.0,
+        "central_solid": 160.0,
+        "B_service": 524.0,
+        "central_east": 152.0,
+        "B_headhouse": 204.0,
+        "A_rear_wing": 60.0,
+        "A_rear_to_cargo": 64.0,
+        "A_cargo_inner": 96.0,
+        "A_cargo_to_boarding": 48.0,
+        "B_gantry_to_boarding": 64.0,
+        "A_ferry_to_center": 24.0,
+        "A_cargo": 502.0,
+        "B_high_gantry": 308.0,
+        "B_low_quay": 416.0,
+        "B_high_to_concourse": 60.0,
+        "B_boarding_west": 96.0,
+        "B_boarding_grate": 48.0,
+        "B_quay_to_service": 48.0,
+        "A_ferry": 176.0,
+        "A_cargo_to_ferry": 64.0,
+        "B_boarding_recovery": 64.0,
+        "B_service_turn": 96.0,
+        "B_high_neck": 64.0,
+        "B_recovery_foot": 32.0,
+        "B_outer_foot": 48.0,
+        "B_outer_descent": 96.0,
+        "B_outer_top": 48.0
+      },
+      "largestHeightShare": 26.9837
+    },
+    "graph": {
+      "edges": [
+        {
+          "a": "A_spawn",
+          "b": "A_headhouse",
+          "seam": [
+            [
+              -12,
+              -66
+            ],
+            [
+              -4,
+              -66
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_spawn",
+          "b": "A_spawn_ramp",
+          "seam": [
+            [
+              -4,
+              -66
+            ],
+            [
+              12,
+              -66
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_spawn",
+          "b": "B_headhouse",
+          "seam": [
+            [
+              4,
+              66
+            ],
+            [
+              12,
+              66
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_spawn",
+          "b": "B_spawn_ramp",
+          "seam": [
+            [
+              -12,
+              66
+            ],
+            [
+              4,
+              66
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_headhouse",
+          "b": "A_outer_top",
+          "seam": [
+            [
+              -38,
+              -66
+            ],
+            [
+              -38,
+              -60
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_headhouse",
+          "b": "A_high_neck",
+          "seam": [
+            [
+              -38,
+              -60
+            ],
+            [
+              -30,
+              -60
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_headhouse",
+          "b": "B_outer_top",
+          "seam": [
+            [
+              38,
+              60
+            ],
+            [
+              38,
+              66
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_headhouse",
+          "b": "B_high_neck",
+          "seam": [
+            [
+              30,
+              60
+            ],
+            [
+              38,
+              60
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_outer_top",
+          "b": "A_high_neck",
+          "seam": [
+            [
+              -38,
+              -60
+            ],
+            [
+              -38,
+              -58
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 2,
+          "effectiveWidth": 0.6499999999999999
+        },
+        {
+          "a": "A_outer_top",
+          "b": "A_outer_descent",
+          "seam": [
+            [
+              -44,
+              -58
+            ],
+            [
+              -38,
+              -58
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_outer_top",
+          "b": "B_high_neck",
+          "seam": [
+            [
+              38,
+              58
+            ],
+            [
+              38,
+              60
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 2,
+          "effectiveWidth": 0.6499999999999999
+        },
+        {
+          "a": "B_outer_top",
+          "b": "B_outer_descent",
+          "seam": [
+            [
+              38,
+              58
+            ],
+            [
+              44,
+              58
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_high_neck",
+          "b": "A_high_gantry",
+          "seam": [
+            [
+              -38,
+              -52
+            ],
+            [
+              -30,
+              -52
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_high_neck",
+          "b": "A_high_to_concourse",
+          "seam": [
+            [
+              -30,
+              -60
+            ],
+            [
+              -30,
+              -54
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_high_neck",
+          "b": "B_high_gantry",
+          "seam": [
+            [
+              30,
+              52
+            ],
+            [
+              38,
+              52
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_high_neck",
+          "b": "B_high_to_concourse",
+          "seam": [
+            [
+              30,
+              54
+            ],
+            [
+              30,
+              60
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_high_gantry",
+          "b": "A_gantry_to_boarding",
+          "seam": [
+            [
+              -20,
+              -42
+            ],
+            [
+              -20,
+              -34
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_high_gantry",
+          "b": "B_gantry_to_boarding",
+          "seam": [
+            [
+              20,
+              34
+            ],
+            [
+              20,
+              42
+            ]
+          ],
+          "y": [
+            6,
+            6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_rear_concourse",
+          "b": "A_rear_wing",
+          "seam": [
+            [
+              12,
+              -60
+            ],
+            [
+              22,
+              -60
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        },
+        {
+          "a": "A_rear_concourse",
+          "b": "A_spawn_ramp",
+          "seam": [
+            [
+              -4,
+              -60
+            ],
+            [
+              12,
+              -60
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "A_rear_concourse",
+          "b": "A_high_to_concourse",
+          "seam": [
+            [
+              -20,
+              -60
+            ],
+            [
+              -20,
+              -54
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_rear_concourse",
+          "b": "A_main_descent",
+          "seam": [
+            [
+              -8,
+              -50
+            ],
+            [
+              8,
+              -50
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "A_rear_concourse",
+          "b": "A_rear_to_cargo",
+          "seam": [
+            [
+              12,
+              -50
+            ],
+            [
+              20,
+              -50
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_rear_concourse",
+          "b": "B_rear_wing",
+          "seam": [
+            [
+              -22,
+              60
+            ],
+            [
+              -12,
+              60
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 10,
+          "effectiveWidth": 8.65
+        },
+        {
+          "a": "B_rear_concourse",
+          "b": "B_spawn_ramp",
+          "seam": [
+            [
+              -12,
+              60
+            ],
+            [
+              4,
+              60
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "B_rear_concourse",
+          "b": "B_high_to_concourse",
+          "seam": [
+            [
+              20,
+              54
+            ],
+            [
+              20,
+              60
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_rear_concourse",
+          "b": "B_main_descent",
+          "seam": [
+            [
+              -8,
+              50
+            ],
+            [
+              8,
+              50
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "B_rear_concourse",
+          "b": "B_rear_to_cargo",
+          "seam": [
+            [
+              -20,
+              50
+            ],
+            [
+              -12,
+              50
+            ]
+          ],
+          "y": [
+            4.8,
+            4.8
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_low_quay",
+          "b": "A_outer_foot",
+          "seam": [
+            [
+              -38,
+              -42
+            ],
+            [
+              -38,
+              -34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_low_quay",
+          "b": "A_quay_to_service",
+          "seam": [
+            [
+              -30,
+              -34
+            ],
+            [
+              -22,
+              -34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_low_quay",
+          "b": "B_outer_foot",
+          "seam": [
+            [
+              38,
+              34
+            ],
+            [
+              38,
+              42
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_low_quay",
+          "b": "B_quay_to_service",
+          "seam": [
+            [
+              22,
+              34
+            ],
+            [
+              30,
+              34
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_outer_foot",
+          "b": "A_outer_descent",
+          "seam": [
+            [
+              -44,
+              -42
+            ],
+            [
+              -38,
+              -42
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_outer_foot",
+          "b": "B_outer_descent",
+          "seam": [
+            [
+              38,
+              42
+            ],
+            [
+              44,
+              42
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_boarding_rear",
+          "b": "A_boarding_main",
+          "seam": [
+            [
+              -12,
+              -32
+            ],
+            [
+              12,
+              -32
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 24,
+          "effectiveWidth": 22.65
+        },
+        {
+          "a": "A_boarding_rear",
+          "b": "A_main_descent",
+          "seam": [
+            [
+              -8,
+              -42
+            ],
+            [
+              8,
+              -42
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "A_boarding_rear",
+          "b": "A_gantry_to_boarding",
+          "seam": [
+            [
+              -12,
+              -42
+            ],
+            [
+              -12,
+              -34
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_rear",
+          "b": "B_boarding_main",
+          "seam": [
+            [
+              -12,
+              32
+            ],
+            [
+              12,
+              32
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 24,
+          "effectiveWidth": 22.65
+        },
+        {
+          "a": "B_boarding_rear",
+          "b": "B_main_descent",
+          "seam": [
+            [
+              -8,
+              42
+            ],
+            [
+              8,
+              42
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 16,
+          "effectiveWidth": 14.65
+        },
+        {
+          "a": "B_boarding_rear",
+          "b": "B_gantry_to_boarding",
+          "seam": [
+            [
+              12,
+              34
+            ],
+            [
+              12,
+              42
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "A_boarding_west",
+          "seam": [
+            [
+              -22,
+              -22
+            ],
+            [
+              -22,
+              -10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "A_boarding_grate",
+          "seam": [
+            [
+              -22,
+              -28
+            ],
+            [
+              -22,
+              -22
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "central_west",
+          "seam": [
+            [
+              -12,
+              -10
+            ],
+            [
+              -4,
+              -10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "central_east",
+          "seam": [
+            [
+              4,
+              -10
+            ],
+            [
+              12,
+              -10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "central_solid",
+          "seam": [
+            [
+              -4,
+              -10
+            ],
+            [
+              4,
+              -10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_boarding_main",
+          "b": "A_cargo_to_boarding",
+          "seam": [
+            [
+              12,
+              -30
+            ],
+            [
+              12,
+              -24
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "B_boarding_west",
+          "seam": [
+            [
+              22,
+              10
+            ],
+            [
+              22,
+              22
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "B_boarding_grate",
+          "seam": [
+            [
+              22,
+              22
+            ],
+            [
+              22,
+              28
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "central_west",
+          "seam": [
+            [
+              -12,
+              10
+            ],
+            [
+              -4,
+              10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "central_east",
+          "seam": [
+            [
+              4,
+              10
+            ],
+            [
+              12,
+              10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "central_solid",
+          "seam": [
+            [
+              -4,
+              10
+            ],
+            [
+              4,
+              10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_main",
+          "b": "B_cargo_to_boarding",
+          "seam": [
+            [
+              -12,
+              24
+            ],
+            [
+              -12,
+              30
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_boarding_west",
+          "b": "A_boarding_grate",
+          "seam": [
+            [
+              -30,
+              -22
+            ],
+            [
+              -22,
+              -22
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_boarding_west",
+          "b": "A_boarding_recovery",
+          "seam": [
+            [
+              -30,
+              -20
+            ],
+            [
+              -30,
+              -12
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_west",
+          "b": "B_boarding_grate",
+          "seam": [
+            [
+              22,
+              22
+            ],
+            [
+              30,
+              22
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_boarding_west",
+          "b": "B_boarding_recovery",
+          "seam": [
+            [
+              30,
+              12
+            ],
+            [
+              30,
+              20
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_service",
+          "b": "A_service_turn",
+          "seam": [
+            [
+              -30,
+              -28
+            ],
+            [
+              -30,
+              -20
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_service",
+          "b": "central_service",
+          "seam": [
+            [
+              -18,
+              -10
+            ],
+            [
+              0,
+              -10
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 18,
+          "effectiveWidth": 16.65
+        },
+        {
+          "a": "A_service",
+          "b": "A_quay_to_service",
+          "seam": [
+            [
+              -30,
+              -28
+            ],
+            [
+              -22,
+              -28
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_service",
+          "b": "B_service_turn",
+          "seam": [
+            [
+              30,
+              20
+            ],
+            [
+              30,
+              28
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_service",
+          "b": "central_service",
+          "seam": [
+            [
+              0,
+              10
+            ],
+            [
+              18,
+              10
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 18,
+          "effectiveWidth": 16.65
+        },
+        {
+          "a": "B_service",
+          "b": "B_quay_to_service",
+          "seam": [
+            [
+              22,
+              28
+            ],
+            [
+              30,
+              28
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_service_turn",
+          "b": "A_recovery_foot",
+          "seam": [
+            [
+              -42,
+              -20
+            ],
+            [
+              -38,
+              -20
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_service_turn",
+          "b": "B_recovery_foot",
+          "seam": [
+            [
+              38,
+              20
+            ],
+            [
+              42,
+              20
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "A_recovery_foot",
+          "b": "A_boarding_recovery",
+          "seam": [
+            [
+              -38,
+              -20
+            ],
+            [
+              -38,
+              -12
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_recovery_foot",
+          "b": "B_boarding_recovery",
+          "seam": [
+            [
+              38,
+              12
+            ],
+            [
+              38,
+              20
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_cargo",
+          "b": "A_cargo_inner",
+          "seam": [
+            [
+              20,
+              -42
+            ],
+            [
+              20,
+              -30
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "A_cargo",
+          "b": "A_cargo_to_boarding",
+          "seam": [
+            [
+              20,
+              -30
+            ],
+            [
+              20,
+              -24
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "A_cargo",
+          "b": "A_cargo_to_ferry",
+          "seam": [
+            [
+              28,
+              -24
+            ],
+            [
+              36,
+              -24
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_cargo",
+          "b": "B_cargo_inner",
+          "seam": [
+            [
+              -20,
+              30
+            ],
+            [
+              -20,
+              42
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 12,
+          "effectiveWidth": 10.65
+        },
+        {
+          "a": "B_cargo",
+          "b": "B_cargo_to_boarding",
+          "seam": [
+            [
+              -20,
+              24
+            ],
+            [
+              -20,
+              30
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 6,
+          "effectiveWidth": 4.65
+        },
+        {
+          "a": "B_cargo",
+          "b": "B_cargo_to_ferry",
+          "seam": [
+            [
+              -36,
+              24
+            ],
+            [
+              -28,
+              24
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_cargo_inner",
+          "b": "A_rear_to_cargo",
+          "seam": [
+            [
+              12,
+              -42
+            ],
+            [
+              20,
+              -42
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_cargo_inner",
+          "b": "B_rear_to_cargo",
+          "seam": [
+            [
+              -20,
+              42
+            ],
+            [
+              -12,
+              42
+            ]
+          ],
+          "y": [
+            2.4,
+            2.4
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_ferry",
+          "b": "A_cargo_to_ferry",
+          "seam": [
+            [
+              28,
+              -16
+            ],
+            [
+              36,
+              -16
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "A_ferry",
+          "b": "A_ferry_to_center",
+          "seam": [
+            [
+              24,
+              -10
+            ],
+            [
+              24,
+              -6
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "B_ferry",
+          "b": "B_cargo_to_ferry",
+          "seam": [
+            [
+              -36,
+              16
+            ],
+            [
+              -28,
+              16
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 8,
+          "effectiveWidth": 6.65
+        },
+        {
+          "a": "B_ferry",
+          "b": "B_ferry_to_center",
+          "seam": [
+            [
+              -24,
+              6
+            ],
+            [
+              -24,
+              10
+            ]
+          ],
+          "y": [
+            1.2,
+            1.2
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "central_service",
+          "b": "A_ferry_to_center",
+          "seam": [
+            [
+              18,
+              -10
+            ],
+            [
+              18,
+              -6
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "central_service",
+          "b": "B_ferry_to_center",
+          "seam": [
+            [
+              -18,
+              6
+            ],
+            [
+              -18,
+              10
+            ]
+          ],
+          "y": [
+            0,
+            0
+          ],
+          "width": 4,
+          "effectiveWidth": 2.65
+        },
+        {
+          "a": "central_west",
+          "b": "central_solid",
+          "seam": [
+            [
+              -4,
+              -10
+            ],
+            [
+              -4,
+              10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 20,
+          "effectiveWidth": 18.65
+        },
+        {
+          "a": "central_east",
+          "b": "central_solid",
+          "seam": [
+            [
+              4,
+              -10
+            ],
+            [
+              4,
+              10
+            ]
+          ],
+          "y": [
+            3.6,
+            3.6
+          ],
+          "width": 20,
+          "effectiveWidth": 18.65
+        }
+      ],
+      "components": [
+        [
+          "A_boarding_grate",
+          "A_boarding_main",
+          "A_boarding_rear",
+          "A_boarding_recovery",
+          "A_boarding_west",
+          "A_cargo",
+          "A_cargo_inner",
+          "A_cargo_to_boarding",
+          "A_cargo_to_ferry",
+          "A_ferry",
+          "A_ferry_to_center",
+          "A_gantry_to_boarding",
+          "A_headhouse",
+          "A_high_gantry",
+          "A_high_neck",
+          "A_high_to_concourse",
+          "A_low_quay",
+          "A_main_descent",
+          "A_outer_descent",
+          "A_outer_foot",
+          "A_outer_top",
+          "A_quay_to_service",
+          "A_rear_concourse",
+          "A_rear_to_cargo",
+          "A_rear_wing",
+          "A_recovery_foot",
+          "A_service",
+          "A_service_turn",
+          "A_spawn",
+          "A_spawn_ramp",
+          "B_boarding_grate",
+          "B_boarding_main",
+          "B_boarding_rear",
+          "B_boarding_recovery",
+          "B_boarding_west",
+          "B_cargo",
+          "B_cargo_inner",
+          "B_cargo_to_boarding",
+          "B_cargo_to_ferry",
+          "B_ferry",
+          "B_ferry_to_center",
+          "B_gantry_to_boarding",
+          "B_headhouse",
+          "B_high_gantry",
+          "B_high_neck",
+          "B_high_to_concourse",
+          "B_low_quay",
+          "B_main_descent",
+          "B_outer_descent",
+          "B_outer_foot",
+          "B_outer_top",
+          "B_quay_to_service",
+          "B_rear_concourse",
+          "B_rear_to_cargo",
+          "B_rear_wing",
+          "B_recovery_foot",
+          "B_service",
+          "B_service_turn",
+          "B_spawn",
+          "B_spawn_ramp",
+          "central_east",
+          "central_service",
+          "central_solid",
+          "central_west"
+        ]
+      ],
+      "adjacency": {
+        "A_spawn": [
+          "A_headhouse",
+          "A_spawn_ramp"
+        ],
+        "B_spawn": [
+          "B_headhouse",
+          "B_spawn_ramp"
+        ],
+        "A_headhouse": [
+          "A_spawn",
+          "A_outer_top",
+          "A_high_neck"
+        ],
+        "B_headhouse": [
+          "B_spawn",
+          "B_outer_top",
+          "B_high_neck"
+        ],
+        "A_outer_top": [
+          "A_headhouse",
+          "A_high_neck",
+          "A_outer_descent"
+        ],
+        "B_outer_top": [
+          "B_headhouse",
+          "B_high_neck",
+          "B_outer_descent"
+        ],
+        "A_high_neck": [
+          "A_headhouse",
+          "A_outer_top",
+          "A_high_gantry",
+          "A_high_to_concourse"
+        ],
+        "B_high_neck": [
+          "B_headhouse",
+          "B_outer_top",
+          "B_high_gantry",
+          "B_high_to_concourse"
+        ],
+        "A_high_gantry": [
+          "A_high_neck",
+          "A_gantry_to_boarding"
+        ],
+        "B_high_gantry": [
+          "B_high_neck",
+          "B_gantry_to_boarding"
+        ],
+        "A_rear_concourse": [
+          "A_rear_wing",
+          "A_spawn_ramp",
+          "A_high_to_concourse",
+          "A_main_descent",
+          "A_rear_to_cargo"
+        ],
+        "B_rear_concourse": [
+          "B_rear_wing",
+          "B_spawn_ramp",
+          "B_high_to_concourse",
+          "B_main_descent",
+          "B_rear_to_cargo"
+        ],
+        "A_rear_wing": [
+          "A_rear_concourse"
+        ],
+        "B_rear_wing": [
+          "B_rear_concourse"
+        ],
+        "A_low_quay": [
+          "A_outer_foot",
+          "A_quay_to_service"
+        ],
+        "B_low_quay": [
+          "B_outer_foot",
+          "B_quay_to_service"
+        ],
+        "A_outer_foot": [
+          "A_low_quay",
+          "A_outer_descent"
+        ],
+        "B_outer_foot": [
+          "B_low_quay",
+          "B_outer_descent"
+        ],
+        "A_boarding_rear": [
+          "A_boarding_main",
+          "A_main_descent",
+          "A_gantry_to_boarding"
+        ],
+        "B_boarding_rear": [
+          "B_boarding_main",
+          "B_main_descent",
+          "B_gantry_to_boarding"
+        ],
+        "A_boarding_main": [
+          "A_boarding_rear",
+          "A_boarding_west",
+          "A_boarding_grate",
+          "central_west",
+          "central_east",
+          "central_solid",
+          "A_cargo_to_boarding"
+        ],
+        "B_boarding_main": [
+          "B_boarding_rear",
+          "B_boarding_west",
+          "B_boarding_grate",
+          "central_west",
+          "central_east",
+          "central_solid",
+          "B_cargo_to_boarding"
+        ],
+        "A_boarding_west": [
+          "A_boarding_main",
+          "A_boarding_grate",
+          "A_boarding_recovery"
+        ],
+        "B_boarding_west": [
+          "B_boarding_main",
+          "B_boarding_grate",
+          "B_boarding_recovery"
+        ],
+        "A_boarding_grate": [
+          "A_boarding_main",
+          "A_boarding_west"
+        ],
+        "B_boarding_grate": [
+          "B_boarding_main",
+          "B_boarding_west"
+        ],
+        "A_service": [
+          "A_service_turn",
+          "central_service",
+          "A_quay_to_service"
+        ],
+        "B_service": [
+          "B_service_turn",
+          "central_service",
+          "B_quay_to_service"
+        ],
+        "A_service_turn": [
+          "A_service",
+          "A_recovery_foot"
+        ],
+        "B_service_turn": [
+          "B_service",
+          "B_recovery_foot"
+        ],
+        "A_recovery_foot": [
+          "A_service_turn",
+          "A_boarding_recovery"
+        ],
+        "B_recovery_foot": [
+          "B_service_turn",
+          "B_boarding_recovery"
+        ],
+        "A_cargo": [
+          "A_cargo_inner",
+          "A_cargo_to_boarding",
+          "A_cargo_to_ferry"
+        ],
+        "B_cargo": [
+          "B_cargo_inner",
+          "B_cargo_to_boarding",
+          "B_cargo_to_ferry"
+        ],
+        "A_cargo_inner": [
+          "A_cargo",
+          "A_rear_to_cargo"
+        ],
+        "B_cargo_inner": [
+          "B_cargo",
+          "B_rear_to_cargo"
+        ],
+        "A_ferry": [
+          "A_cargo_to_ferry",
+          "A_ferry_to_center"
+        ],
+        "B_ferry": [
+          "B_cargo_to_ferry",
+          "B_ferry_to_center"
+        ],
+        "central_service": [
+          "A_service",
+          "B_service",
+          "A_ferry_to_center",
+          "B_ferry_to_center"
+        ],
+        "central_west": [
+          "A_boarding_main",
+          "B_boarding_main",
+          "central_solid"
+        ],
+        "central_east": [
+          "A_boarding_main",
+          "B_boarding_main",
+          "central_solid"
+        ],
+        "central_solid": [
+          "A_boarding_main",
+          "B_boarding_main",
+          "central_west",
+          "central_east"
+        ],
+        "A_spawn_ramp": [
+          "A_spawn",
+          "A_rear_concourse"
+        ],
+        "B_spawn_ramp": [
+          "B_spawn",
+          "B_rear_concourse"
+        ],
+        "A_high_to_concourse": [
+          "A_high_neck",
+          "A_rear_concourse"
+        ],
+        "B_high_to_concourse": [
+          "B_high_neck",
+          "B_rear_concourse"
+        ],
+        "A_outer_descent": [
+          "A_outer_top",
+          "A_outer_foot"
+        ],
+        "B_outer_descent": [
+          "B_outer_top",
+          "B_outer_foot"
+        ],
+        "A_main_descent": [
+          "A_rear_concourse",
+          "A_boarding_rear"
+        ],
+        "B_main_descent": [
+          "B_rear_concourse",
+          "B_boarding_rear"
+        ],
+        "A_gantry_to_boarding": [
+          "A_high_gantry",
+          "A_boarding_rear"
+        ],
+        "B_gantry_to_boarding": [
+          "B_high_gantry",
+          "B_boarding_rear"
+        ],
+        "A_quay_to_service": [
+          "A_low_quay",
+          "A_service"
+        ],
+        "B_quay_to_service": [
+          "B_low_quay",
+          "B_service"
+        ],
+        "A_boarding_recovery": [
+          "A_boarding_west",
+          "A_recovery_foot"
+        ],
+        "B_boarding_recovery": [
+          "B_boarding_west",
+          "B_recovery_foot"
+        ],
+        "A_rear_to_cargo": [
+          "A_rear_concourse",
+          "A_cargo_inner"
+        ],
+        "B_rear_to_cargo": [
+          "B_rear_concourse",
+          "B_cargo_inner"
+        ],
+        "A_cargo_to_boarding": [
+          "A_boarding_main",
+          "A_cargo"
+        ],
+        "B_cargo_to_boarding": [
+          "B_boarding_main",
+          "B_cargo"
+        ],
+        "A_cargo_to_ferry": [
+          "A_cargo",
+          "A_ferry"
+        ],
+        "B_cargo_to_ferry": [
+          "B_cargo",
+          "B_ferry"
+        ],
+        "A_ferry_to_center": [
+          "A_ferry",
+          "central_service"
+        ],
+        "B_ferry_to_center": [
+          "B_ferry",
+          "central_service"
+        ]
+      }
+    },
+    "routes": {
+      "A_main": {
+        "length3D": 88.672571979347,
+        "samples": 366,
+        "failures": []
+      },
+      "B_main": {
+        "length3D": 88.672571979347,
+        "samples": 366,
+        "failures": []
+      },
+      "A_high_flank": {
+        "length3D": 130.35224520712845,
+        "samples": 534,
+        "failures": []
+      },
+      "B_high_flank": {
+        "length3D": 130.35224520712845,
+        "samples": 534,
+        "failures": []
+      },
+      "A_low_flank": {
+        "length3D": 135.59364344483723,
+        "samples": 558,
+        "failures": []
+      },
+      "B_low_flank": {
+        "length3D": 135.59364344483723,
+        "samples": 558,
+        "failures": []
+      },
+      "A_cargo_flank": {
+        "length3D": 96.88164372519688,
+        "samples": 405,
+        "failures": []
+      },
+      "B_cargo_flank": {
+        "length3D": 96.88164372519688,
+        "samples": 405,
+        "failures": []
+      },
+      "A_recovery": {
+        "length3D": 28.272684879784524,
+        "samples": 119,
+        "failures": []
+      },
+      "B_recovery": {
+        "length3D": 28.272684879784524,
+        "samples": 119,
+        "failures": []
+      },
+      "A_grate_recovery": {
+        "length3D": 37.77268487978452,
+        "samples": 157,
+        "failures": []
+      },
+      "B_grate_recovery": {
+        "length3D": 37.77268487978452,
+        "samples": 157,
+        "failures": []
+      }
+    },
+    "tower": {
+      "samples": 285,
+      "failures": [],
+      "liftWarnings": [],
+      "deckHeightRange": [
+        4.0,
+        4.000000000000001
+      ],
+      "method": "Independent all-yaw AABB sweep sampled <=0.25WU; support heights use .15WU disk samples and include cover tops. Deck/pole/rider volumes separate. Nominal proposal slabs, not live ranked route generation."
+    },
+    "ramps": [
+      {
+        "id": "A_spawn_ramp",
+        "run": 6,
+        "width": 16,
+        "grade": 0.20000000000000004,
+        "angleDegrees": 11.309932474020217
+      },
+      {
+        "id": "B_spawn_ramp",
+        "run": 6,
+        "width": 16,
+        "grade": 0.20000000000000004,
+        "angleDegrees": 11.309932474020217
+      },
+      {
+        "id": "A_high_to_concourse",
+        "run": 10,
+        "width": 6,
+        "grade": 0.12000000000000002,
+        "angleDegrees": 6.842773412630942
+      },
+      {
+        "id": "B_high_to_concourse",
+        "run": 10,
+        "width": 6,
+        "grade": 0.12000000000000002,
+        "angleDegrees": 6.842773412630942
+      },
+      {
+        "id": "A_outer_descent",
+        "run": 16,
+        "width": 6,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "B_outer_descent",
+        "run": 16,
+        "width": 6,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "A_main_descent",
+        "run": 8,
+        "width": 16,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "B_main_descent",
+        "run": 8,
+        "width": 16,
+        "grade": 0.14999999999999997,
+        "angleDegrees": 8.530765609948132
+      },
+      {
+        "id": "A_gantry_to_boarding",
+        "run": 8,
+        "width": 8,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "B_gantry_to_boarding",
+        "run": 8,
+        "width": 8,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "A_quay_to_service",
+        "run": 6,
+        "width": 8,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "B_quay_to_service",
+        "run": 6,
+        "width": 8,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "A_boarding_recovery",
+        "run": 8,
+        "width": 8,
+        "grade": 0.45,
+        "angleDegrees": 24.22774531795417
+      },
+      {
+        "id": "B_boarding_recovery",
+        "run": 8,
+        "width": 8,
+        "grade": 0.45,
+        "angleDegrees": 24.22774531795417
+      },
+      {
+        "id": "A_rear_to_cargo",
+        "run": 8,
+        "width": 8,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "B_rear_to_cargo",
+        "run": 8,
+        "width": 8,
+        "grade": 0.3,
+        "angleDegrees": 16.69924423399362
+      },
+      {
+        "id": "A_cargo_to_boarding",
+        "run": 8,
+        "width": 6,
+        "grade": 0.15000000000000002,
+        "angleDegrees": 8.530765609948135
+      },
+      {
+        "id": "B_cargo_to_boarding",
+        "run": 8,
+        "width": 6,
+        "grade": 0.15000000000000002,
+        "angleDegrees": 8.530765609948135
+      },
+      {
+        "id": "A_cargo_to_ferry",
+        "run": 8,
+        "width": 8,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "B_cargo_to_ferry",
+        "run": 8,
+        "width": 8,
+        "grade": 0.15,
+        "angleDegrees": 8.530765609948133
+      },
+      {
+        "id": "A_ferry_to_center",
+        "run": 6,
+        "width": 4,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      },
+      {
+        "id": "B_ferry_to_center",
+        "run": 6,
+        "width": 4,
+        "grade": 0.19999999999999998,
+        "angleDegrees": 11.309932474020213
+      }
+    ],
+    "drops": [
+      {
+        "id": "A_boarding_drop",
+        "heightLoss": 3.6,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": true,
+        "returnRoute": "A_recovery"
+      },
+      {
+        "id": "B_boarding_drop",
+        "heightLoss": 3.6,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": true,
+        "returnRoute": "B_recovery"
+      },
+      {
+        "id": "A_grate_drop",
+        "heightLoss": 3.6,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": false,
+        "returnRoute": "A_grate_recovery"
+      },
+      {
+        "id": "B_grate_drop",
+        "heightLoss": 3.6,
+        "landingError": null,
+        "humanSupportAtStart": true,
+        "squidSupportAtStart": false,
+        "returnRoute": "B_grate_recovery"
+      }
+    ],
+    "symmetryFailures": [],
+    "method": "Static isolated model only. Seam graph is geometry derived; route sampling at <=0.25WU. Conservative circular footprint r=.675 and height1.6. Not game Actor, native collision or human playtest."
+  }
+}

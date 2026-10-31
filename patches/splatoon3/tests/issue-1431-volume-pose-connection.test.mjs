@@ -7,7 +7,7 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 
 // Actual bundled shooter pack, real InkVolumes and source-loaded Character.
 // Matrix uploads are inspected on CPU; WebGL acceptance is a separate receipt.
-const extraExports="export { InkVolumes } from './patches/local-quality/ink-volume/runtime.mjs';\nexport { unpackVolumes } from './patches/local-quality/ink-volume/pack.mjs';\nexport { submitInkVolume } from './patches/local-quality/ink-volume/recipes.mjs';\nexport { shotTailFrames } from './patches/splatoon3/runtime/weapons-fidelity.mjs';\nexport { FixedClock } from './patches/splatoon3/runtime/clock.mjs';\nexport { NetMatch } from './src/net/netmatch.js';\nexport { MAP_LAYOUTS } from './src/world/maps.js';\nexport const volumeBytes=Uint8Array;";
+const extraExports="export { InkVolumes } from './patches/local-quality/ink-volume/runtime.mjs';\nexport { unpackVolumes } from './patches/local-quality/ink-volume/pack.mjs';\nexport { submitInkVolume } from './patches/local-quality/ink-volume/recipes.mjs';\nexport { shotTailFrames } from './patches/splatoon3/runtime/weapons-fidelity.mjs';\nexport { FixedClock } from './patches/splatoon3/runtime/clock.mjs';\nexport { NetMatch } from './src/net/netmatch.js';\nexport { MAP_LAYOUTS } from './src/world/maps.js';\nexport { map3ArtColliders } from './src/world/stages/map3-art.js';\nexport const volumeBytes=Uint8Array;";
 const plain=x=>JSON.parse(JSON.stringify(x));
 async function world(){return sourceLoadedActorFixture({random:()=>.5,extraExports});}
 function engine(f){
@@ -32,9 +32,9 @@ test('#1431 actual Quad source-volume back/rod connect to posed birth and detach
  const f=await world(),e=engine(f),negative=engine(f),proof=[];
  try{
   for(const wall of [false,true])for(const hz of [30,60,120]){
-   f.reset();f.G.time=0;f.G.level=new f.Level(f.MAP_LAYOUTS.tidewater);f.G.physics=new f.Physics(f.G.level);
+   f.reset();f.G.time=0;f.G.level=new f.Level(f.MAP_LAYOUTS.tidewater,f.map3ArtColliders(f.MAP_LAYOUTS.tidewater));f.G.physics=new f.Physics(f.G.level);
    f.G.match={playing:()=>true,canRespawn:()=>false,state:'playing',opts:{range:true}};
-   const a=await f.make();a.setWeapon('s3-maneuver-stepper');a.nid=7;a.pos.set(0,0,wall?-5.72:-20);a.aimYaw=a.yaw=0;a.aimPitch=0;
+   const a=await f.make();a.setWeapon('s3-maneuver-stepper');a.nid=7;a.pos.set(wall?-5:0,0,wall?-1.72:0);assert.equal(f.G.level.groundHeight(a.pos.x,a.pos.z,.1),0,'authored source actor starts on the actual MAP3 lower floor');a.aimYaw=a.yaw=0;a.aimPitch=0;
    a.aimPoint.copy(a.pos).add(new f.THREE.Vector3(0,1.05,80));a.character.onEvent=null;
    f.G.netm=new f.NetMatch({myId:7},{});
    const paint=[],fx=[];f.G.paint={sample:()=>0,splat:(at,radius,team,o)=>{paint.push({at:Array.from(at.toArray()),radius,team,owner:o?.claimOwner?.nid});return 0;}};
@@ -69,7 +69,7 @@ test('#1431 actual Quad source-volume back/rod connect to posed birth and detach
     }
     tick++;
    });
-   assert.equal(tick,120);assert.ok(connected>0||wall&&paint.length>0,'real connection or immediate actual tower retirement is observed');assert.ok(unchanged>0||wall&&paint.length>0,'unconnected/detached or actual tower controls were measured');
+   assert.equal(tick,120);assert.ok(connected>0||wall&&paint.length>0,'real connection or immediate actual cover retirement is observed');assert.ok(unchanged>0||wall&&paint.length>0,'unconnected/detached or actual cover controls were measured');
    assert.ok(f.G.netm.out.some(event=>event[1]==='p'),'actual serialized projectile events retained');
    proof.push({hz,wall,connected,unchanged,detached,maxBackError:connected?maxError:null,minOldOwnerGap:connected?minNegativeGap:null,wireBirths:f.G.netm.out.filter(x=>x[1]==='p').length,paintCalls:paint.length,source:{status:a.character.sourceMotion.status,active:a.character.sourceMotion.active}});
   }

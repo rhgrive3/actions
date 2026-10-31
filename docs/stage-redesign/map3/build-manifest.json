@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "inputSha256": {
+    "tidewater_design.py": "7a6ec671c6090c5413083710e3c279ac1123234a456cf3e2a9b095ae213d0827",
+    "kelpline_design.py": "c614bffa973379a839e406780b04d97ce74cf81663f572a748bde04bc65886f4",
+    "geometry.py": "84ad757513c560f1bd828ab6a4a13d843b7b8bf2c6b5881001ca1d5fbd15f0bc",
+    "build.py": "f13236076a5deee4ed7fd74814f7aecf76a19350e5dd908e84070f646b33b1c1",
+    "viewer_template.html": "a751ce15e24d30ea18197f3c80a891fe1152454a1b53ffc274e45aec482a6559"
+  },
+  "sourceHead": "b208addacc61009fba44ae973d5288b6f315f303",
+  "coordinateFile": "design.json",
+  "validationFile": "validation.json",
+  "noGameImports": true
+}

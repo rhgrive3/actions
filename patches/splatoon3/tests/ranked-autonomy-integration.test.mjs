@@ -14,6 +14,7 @@ const RANKED_EXPORTS = `
   export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';
   export { createRankedStage, RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';
   export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+  export { map3ArtColliders } from './inkwave-public/src/world/stages/map3-art.js';
 `;
 
 function seeded(seed) {
@@ -44,6 +45,7 @@ function paintRenderer(THREE) {
 
 const f = await fixture({
   fullRuntime: true,
+  productionComposition: true,
   includeCharacter: true,
   adaptNative: adaptBuildSource,
   adaptRuntime: adaptBuildSource,
@@ -54,15 +56,21 @@ f.context.structuredClone = structuredClone;
 f.installRanked({ ...f.installedRuntime, G: f.G, Match: f.Match, BotBrain: f.BotBrain,
   NetSession: f.NetSession, structuredClone });
 
-const level = new f.Level(f.MAP_LAYOUTS.tidewater);
-const physics = new f.Physics(level);
+let level = new f.Level(f.MAP_LAYOUTS.tidewater, f.map3ArtColliders(f.MAP_LAYOUTS.tidewater));
+let physics = new f.Physics(level);
 Object.assign(f.G, { level, physics, nav: new f.NavGraph(level, physics), scene: new f.THREE.Scene(),
   camera: { position: new f.THREE.Vector3(0, 24, 0) }, time: 0 });
 f.G.projectiles = new f.Projectiles(f.G.scene);
-const stage = f.createRankedStage(f.G);
+let stage = f.createRankedStage(f.G);
 const DT = 1 / 60;
 
-function start(mode, { inactiveTeams = [] } = {}) {
+function start(mode, { inactiveTeams = [], mapId = 'tidewater' } = {}) {
+  if (level.layout.id !== mapId) {
+    level = new f.Level(f.MAP_LAYOUTS[mapId], f.map3ArtColliders(f.MAP_LAYOUTS[mapId]));
+    physics = new f.Physics(level);
+    Object.assign(f.G, { level, physics, nav: new f.NavGraph(level, physics) });
+    stage = f.createRankedStage(f.G);
+  }
   // Each mode owns the same fixed random stream, so outcomes do not depend on
   // which earlier mode test consumed random values in this shared VM.
   f.VM_MATH.random = seeded(0x51a7ed);
@@ -128,7 +136,8 @@ function step(match, frames, metrics, until = null) {
       if (event.kind === 'rainmaker-shot') {
         const carrier = match.actors.find(a => String(a.nid) === String(event.actorId));
         assert.ok(carrier?.character instanceof f.Character);
-        assert.equal(Object.hasOwn(carrier, '_finishFrame'), false);
+        // Trizooka legitimately restores this inherited function as an own property.
+        assert.equal(carrier._finishFrame, f.Actor.prototype._finishFrame, 'carrier retains the actual composed pose function');
         assert.ok(f.validRainmakerShotOrigin(event.shotOrigin, event), 'bot release uses the guarded native grip');
       }
       metrics.events.set(event.kind, (metrics.events.get(event.kind) || 0) + 1);
@@ -176,6 +185,25 @@ function finish(match) {
 const metrics = () => ({ events: new Map(), maxProgress: 0, boarded: false, maxCountDelta: 0,
   clamPickups: 0, clamThrows: 0, clamScoringEvents: 0, escortCombatFrames: 0, rainmakerEvents: [],
   barrierHitCount: 0, barrierDamage: 0 });
+
+for (const mapId of ['tidewater', 'kelpline']) test(`MAP3 Clam goals ${mapId}: a screened real route survives the former direct-ray rejection`, () => {
+  const match = start('clams', { mapId }), actor = match.actors[0];
+  try {
+    actor.pos.fromArray(mapId === 'tidewater' ? [-4, 1.2, -26] : [-26, 0, -25]);
+    match.ranked.rule.state.inventories[String(actor.nid)] = { team: actor.team, small: 0, power: true };
+    const frame = frameFor(match), row = frame.actors.find(r => r.id === String(actor.nid));
+    const target = stage.clams.goals[actor.team];
+    assert.equal(frame.blocked(row.pos, target), true, 'different floors screen the direct ray');
+    assert.equal(match.ranked.rule.botGoal(row, { ...frame, botGoalRoute: undefined }), null,
+      'negative control: the previous policy discards the actual reachable basket');
+    assert.equal(frame.botGoalRoute(row, target), true);
+    const goal = match.ranked.rule.botGoal(row, frame);
+    assert.equal(goal.action, 'throw');
+    assert.deepEqual(Array.from(goal.pos), Array.from(target));
+    assert.equal(frame.botGoalRoute(row, [40, 0, 0]), false, 'no route to unsupported water');
+    assert.equal(frame.botGoalRoute(row, mapId === 'tidewater' ? [-5, 0, 0] : [0, 0, 0]), false, 'no route ending inside the real central screen');
+  } finally { finish(match); }
+});
 
 test('native ranked bots paint and capture a zone, then count it down', () => {
   const match = start('zones'), seen = metrics();
@@ -253,8 +281,8 @@ test('native Rainmaker bots charge, shoot, and reach a checkpoint on a clear lan
   assert.equal(checkpointPassed, true, `the carrier must physically reach the checkpoint: ${JSON.stringify(seen.rainmakerEvents)}`);
 });
 
-test('native Clam Blitz bots collect clams, form and throw a Power Clam, then score', () => {
-  const match = start('clams'), seen = metrics();
+for (const mapId of ['tidewater', 'kelpline']) test(`${mapId}: native Clam Blitz bots collect clams, form and throw a Power Clam, then score`, () => {
+  const match = start('clams', { mapId }), seen = metrics();
   step(match, 60 * 60, seen);
   const scoredPoints = match.ranked.rule.state.scoredPoints.reduce((sum, value) => sum + value, 0);
   const scoreCountsDropped = match.ranked.counts.some(value => value < 100);

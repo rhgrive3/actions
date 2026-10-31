@@ -1,0 +1,2304 @@
+{
+  "schema": 1,
+  "headParent": "0582bb1ee6ac03dfb54e292ea839d18463e33fcc",
+  "mapSourceSha256": "43c97559b93b92975774097d98fb931543d93f3e62ff0f50e42f19445057b617",
+  "units": "WU, WU²; no calibrated SI conversion",
+  "method": {
+    "commonGeometry": "collidable upward triangles normal.y >= 0.68; triangle surfaces clipped to configured XZ bounds; raw sums count buried/overlapping surfaces; union and overlap sampled at cell centers; neither is reachable floor area",
+    "overlap": "max surface height minus min surface height at one XZ sample; does not establish empty headroom, connection or body clearance",
+    "turf": "runtime face masks/grid on each native or ordinary Level, no XZ clipping; upward turf normal.y > 0.7; stacked faces count separately; current ordinary values exclude dressing extras"
+  },
+  "ordinary": [
+    {
+      "id": "tidewater",
+      "bounds": {
+        "minX": -42,
+        "maxX": 42,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          2.2,
+          -67.2
+        ],
+        [
+          0,
+          2.2,
+          67.2
+        ]
+      ],
+      "blockCount": 103,
+      "runtimeTurfArea": 12107.808087942427,
+      "runtimeTurfCells": 193200,
+      "clippedRuntimeTurfAreaWU2": 12107.808087942427,
+      "clippedRuntimeTurfCells": 193200,
+      "turfAreaScope": "Level(layout) only, no set-dressing extra colliders; production PaintSystem._initGrid algorithm; no GPU",
+      "widthWU": 84,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12096,
+      "spawnDistance3DWU": 134.4,
+      "spawnDistanceXZWU": 134.4,
+      "collisionBoundsXYZ": [
+        [
+          -42.0,
+          -2.9615943510705787,
+          -72.0
+        ],
+        [
+          42.0,
+          5.0,
+          72.0
+        ]
+      ],
+      "upwardTriangleCount": 206,
+      "clippedUpwardSurfaceSumWU2": 14225.862710704354,
+      "clippedUpwardProjectedSumWU2": 14201.896565283965,
+      "projectedUnionSampleWU2": 11968.0,
+      "overlapSpanAtLeast1_6SampleWU2": 1330.5,
+      "overlapSpanAtLeast2_5SampleWU2": 358.0,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -0.1396551724137935,
+        5.000000000000001
+      ]
+    },
+    {
+      "id": "kelpline",
+      "bounds": {
+        "minX": -44,
+        "maxX": 44,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          3.2,
+          -68
+        ],
+        [
+          0,
+          3.2,
+          68
+        ]
+      ],
+      "blockCount": 135,
+      "runtimeTurfArea": 13150.456495770984,
+      "runtimeTurfCells": 209891,
+      "clippedRuntimeTurfAreaWU2": 13150.456495770984,
+      "clippedRuntimeTurfCells": 209891,
+      "turfAreaScope": "Level(layout) only, no set-dressing extra colliders; production PaintSystem._initGrid algorithm; no GPU",
+      "widthWU": 88,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12672,
+      "spawnDistance3DWU": 136.0,
+      "spawnDistanceXZWU": 136.0,
+      "collisionBoundsXYZ": [
+        [
+          -44.0,
+          -4.284326450993506,
+          -72.0
+        ],
+        [
+          44.0,
+          5.2,
+          72.0
+        ]
+      ],
+      "upwardTriangleCount": 270,
+      "clippedUpwardSurfaceSumWU2": 15807.947589237547,
+      "clippedUpwardProjectedSumWU2": 15773.287419094539,
+      "projectedUnionSampleWU2": 12672.0,
+      "overlapSpanAtLeast1_6SampleWU2": 2088.75,
+      "overlapSpanAtLeast2_5SampleWU2": 893.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -2.2115384615384617,
+        5.200000000000001
+      ]
+    }
+  ],
+  "native": [
+    {
+      "id": "airport",
+      "name": "カジキ空港",
+      "widthWU": 108.063,
+      "lengthZWU": 150.0004,
+      "boundsAreaWU2": 16209.493225200002,
+      "spawnDistance3DWU": 162.86239590525494,
+      "spawnDistanceXZWU": 162.86239590525494,
+      "spawnPads": [
+        [
+          -44.8,
+          13.5,
+          -68
+        ],
+        [
+          44.8,
+          13.5,
+          68
+        ]
+      ],
+      "bounds": {
+        "minX": -54.0315,
+        "minZ": -75.0002,
+        "maxX": 54.0315,
+        "maxZ": 75.0002
+      },
+      "collisionBoundsXYZ": [
+        [
+          -55.083099365234375,
+          -25.433399200439453,
+          -76.55049896240234
+        ],
+        [
+          55.083099365234375,
+          75.75740051269531,
+          76.55049896240234
+        ]
+      ],
+      "upwardTriangleCount": 29077,
+      "clippedUpwardSurfaceSumWU2": 16147.841819905232,
+      "clippedUpwardProjectedSumWU2": 15986.718897566236,
+      "projectedUnionSampleWU2": 8011.1468252,
+      "overlapSpanAtLeast1_6SampleWU2": 3838.1468252000004,
+      "overlapSpanAtLeast2_5SampleWU2": 3488.8968252000004,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -13.644094996389548,
+        69.29576968819408
+      ],
+      "runtimeTurfArea": 18618.40161348456,
+      "runtimeTurfCells": 347548,
+      "clippedRuntimeTurfAreaWU2": 17731.676267213195,
+      "clippedRuntimeTurfCells": 328936,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "bdaf784c8600e10a166347662dc446df4cafacce550597c7582ecf9b019b4747",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/airport/triangles.0.bin",
+          "sha256": "915fa66f60b1037b2e9b1b566cb5b3c60316b65aea5e5ce94f2118905c3c2327",
+          "bytes": 5682312
+        },
+        {
+          "file": "native-prebuilt/airport/normals.0.bin",
+          "sha256": "db12c16d8cb23ae80f01be34499dd09af84f75718046452612906c4342e74ac2",
+          "bytes": 1894104
+        },
+        {
+          "file": "native-prebuilt/airport/faceF64.0.bin",
+          "sha256": "aa0f935deb1027f3d801120c316426c664318b0dd04d332255407ceed9dcea54",
+          "bytes": 10073448
+        },
+        {
+          "file": "native-prebuilt/airport/faceI32.0.bin",
+          "sha256": "e820c1dd76a0e7598ce9558c63be832efec11387c1470cc72e3fb096d7c2d0ba",
+          "bytes": 875952
+        },
+        {
+          "file": "native-prebuilt/airport/mask.0.bin",
+          "sha256": "1a624dffb085eb87579f056b9018358c90bdc04cbccc70256d0b55ae57ed3d90",
+          "bytes": 2444614
+        }
+      ]
+    },
+    {
+      "id": "barnacle",
+      "name": "タラポートショッピングパーク",
+      "widthWU": 100,
+      "lengthZWU": 160,
+      "boundsAreaWU2": 16000,
+      "spawnDistance3DWU": 153.68799562750502,
+      "spawnDistanceXZWU": 153.68799562750502,
+      "spawnPads": [
+        [
+          -24,
+          7.5,
+          -73
+        ],
+        [
+          24,
+          7.5,
+          73
+        ]
+      ],
+      "bounds": {
+        "minX": -50,
+        "minZ": -80,
+        "maxX": 50,
+        "maxZ": 80
+      },
+      "collisionBoundsXYZ": [
+        [
+          -52.65610122680664,
+          -5.08050012588501,
+          -83.06819915771484
+        ],
+        [
+          52.65610122680664,
+          39.01369857788086,
+          83.06819915771484
+        ]
+      ],
+      "upwardTriangleCount": 38968,
+      "clippedUpwardSurfaceSumWU2": 15013.696963998951,
+      "clippedUpwardProjectedSumWU2": 14805.787880206455,
+      "projectedUnionSampleWU2": 9067.75,
+      "overlapSpanAtLeast1_6SampleWU2": 1778.75,
+      "overlapSpanAtLeast2_5SampleWU2": 1753.25,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -4.8671518750953915,
+        39.008409090196565
+      ],
+      "runtimeTurfArea": 17096.090664460567,
+      "runtimeTurfCells": 319451,
+      "clippedRuntimeTurfAreaWU2": 17071.181354672284,
+      "clippedRuntimeTurfCells": 318915,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "2c7353f42b912bc435c01def5fc21071a99c44192c7797f7640baf7b0ceba2e7",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/barnacle/triangles.0.bin",
+          "sha256": "53137d0cc4b37a3e531c2fd0a37420f049d2aff8c579e8e325dd19ae4db3d769",
+          "bytes": 6393852
+        },
+        {
+          "file": "native-prebuilt/barnacle/normals.0.bin",
+          "sha256": "dc9b2f2de30c355866e016e9550dd967feee09b134f57ae967bc3319c1fa3901",
+          "bytes": 2131284
+        },
+        {
+          "file": "native-prebuilt/barnacle/faceF64.0.bin",
+          "sha256": "b6670f7fca4d3a0883f969acc75494ed29b5d2cdaa71cce871b4d88f77ec5cee",
+          "bytes": 13957688
+        },
+        {
+          "file": "native-prebuilt/barnacle/faceI32.0.bin",
+          "sha256": "acc73c5d5608ed4532edaea15d9eda60e976083347bacd70033ce576fa5f49ed",
+          "bytes": 1213712
+        },
+        {
+          "file": "native-prebuilt/barnacle/mask.0.bin",
+          "sha256": "563e8832244def30486904ae7502de52ba6b2f5e63e6dd6eb59141850487abad",
+          "bytes": 1461683
+        }
+      ]
+    },
+    {
+      "id": "bluefin",
+      "name": "ネギトロ炭鉱",
+      "widthWU": 69.0,
+      "lengthZWU": 150,
+      "boundsAreaWU2": 10350.0,
+      "spawnDistance3DWU": 142.04224723651762,
+      "spawnDistanceXZWU": 142.04224723651762,
+      "spawnPads": [
+        [
+          -12,
+          15,
+          -70
+        ],
+        [
+          12,
+          15,
+          70
+        ]
+      ],
+      "bounds": {
+        "minX": -34.5,
+        "minZ": -75,
+        "maxX": 34.5,
+        "maxZ": 75
+      },
+      "collisionBoundsXYZ": [
+        [
+          -90.53230285644531,
+          -15.366299629211426,
+          -76.0999984741211
+        ],
+        [
+          150.5102996826172,
+          32.214599609375,
+          76.0999984741211
+        ]
+      ],
+      "upwardTriangleCount": 34820,
+      "clippedUpwardSurfaceSumWU2": 18508.490926970095,
+      "clippedUpwardProjectedSumWU2": 18400.26317155169,
+      "projectedUnionSampleWU2": 7758.25,
+      "overlapSpanAtLeast1_6SampleWU2": 3783.75,
+      "overlapSpanAtLeast2_5SampleWU2": 3489.0,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -5.054100036621094,
+        32.093334026091696
+      ],
+      "runtimeTurfArea": 19468.33006544195,
+      "runtimeTurfCells": 353097,
+      "clippedRuntimeTurfAreaWU2": 18349.770645487588,
+      "clippedRuntimeTurfCells": 329962,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "826479a21748050dd7bb3c0d80621cf4b17e1a8e2df881ee83401fa019cb133a",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/bluefin/triangles.0.bin",
+          "sha256": "04b26916c0968cb6c4c9bf9e8ed605c7a4eedd58285f372c7bd6f2e2afdb9cee",
+          "bytes": 6363756
+        },
+        {
+          "file": "native-prebuilt/bluefin/normals.0.bin",
+          "sha256": "a5fd43f7bb8653ef50cdbcc9250056aa9f25f521a105437726dd970544973f82",
+          "bytes": 2121252
+        },
+        {
+          "file": "native-prebuilt/bluefin/faceF64.0.bin",
+          "sha256": "aca02be017a9994b62fbadbbee98d467b59e0af9c5fa57e6024ec79a40e5e152",
+          "bytes": 10027448
+        },
+        {
+          "file": "native-prebuilt/bluefin/faceI32.0.bin",
+          "sha256": "a6775c1fc9eba7c64d492a3256f6baa8b8a0261921a981cee720e0eb135b5435",
+          "bytes": 871952
+        },
+        {
+          "file": "native-prebuilt/bluefin/mask.0.bin",
+          "sha256": "32a2b16a616a9a6364dc2dfeb9248d398fa05c7bffede2e6e29b52a065e07e7d",
+          "bytes": 2414277
+        }
+      ]
+    },
+    {
+      "id": "brinewater",
+      "name": "クサヤ温泉",
+      "widthWU": 95.0,
+      "lengthZWU": 138,
+      "boundsAreaWU2": 13110.0,
+      "spawnDistance3DWU": 121.28455136578607,
+      "spawnDistanceXZWU": 121.28455136578607,
+      "spawnPads": [
+        [
+          -12.5,
+          18.08,
+          -59.34
+        ],
+        [
+          12.5,
+          18.08,
+          59.34
+        ]
+      ],
+      "bounds": {
+        "minX": -47.5,
+        "minZ": -69,
+        "maxX": 47.5,
+        "maxZ": 69
+      },
+      "collisionBoundsXYZ": [
+        [
+          -157.3852996826172,
+          -13.958900451660156,
+          -170.3520965576172
+        ],
+        [
+          94.4530029296875,
+          49.746299743652344,
+          169.48519897460938
+        ]
+      ],
+      "upwardTriangleCount": 40211,
+      "clippedUpwardSurfaceSumWU2": 12343.827563843837,
+      "clippedUpwardProjectedSumWU2": 12119.138545109276,
+      "projectedUnionSampleWU2": 7908.5,
+      "overlapSpanAtLeast1_6SampleWU2": 725.5,
+      "overlapSpanAtLeast2_5SampleWU2": 682.75,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -0.03663639336151083,
+        30.396299362182617
+      ],
+      "runtimeTurfArea": 19886.235218643087,
+      "runtimeTurfCells": 375370,
+      "clippedRuntimeTurfAreaWU2": 14594.500068492265,
+      "clippedRuntimeTurfCells": 281203,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "2b7423014768543280fe00c4b611c4adcc53fb3c1342f6ce9cbf346820d41ab5",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/brinewater/triangles.0.bin",
+          "sha256": "34b6bbe6f9ff9d24c6c60285166c56329b6bef23994cf4b799370f7f2c8c4640",
+          "bytes": 5681736
+        },
+        {
+          "file": "native-prebuilt/brinewater/normals.0.bin",
+          "sha256": "d7833af49ab6cdb97b875187b52129b44225e1289fc46ec664d6ee15d9358614",
+          "bytes": 1893912
+        },
+        {
+          "file": "native-prebuilt/brinewater/faceF64.0.bin",
+          "sha256": "692a5b55e5929d4fdd49a4476044a2d045a4e87a3762966356c030ecf0681076",
+          "bytes": 11447192
+        },
+        {
+          "file": "native-prebuilt/brinewater/faceI32.0.bin",
+          "sha256": "28d8818d04824b73c65d85854d4ee5c97ab6f6227a0aae6501ed284f2d5bc879",
+          "bytes": 995408
+        },
+        {
+          "file": "native-prebuilt/brinewater/mask.0.bin",
+          "sha256": "3813784e1a4311658e20cb05192be54fc716082c5d188c97c4c3ac24b2a17d37",
+          "bytes": 4927794
+        }
+      ]
+    },
+    {
+      "id": "crableg",
+      "name": "タカアシ経済特区",
+      "widthWU": 100,
+      "lengthZWU": 146,
+      "boundsAreaWU2": 14600,
+      "spawnDistance3DWU": 144.99655168313487,
+      "spawnDistanceXZWU": 144.99655168313487,
+      "spawnPads": [
+        [
+          30,
+          15,
+          -66
+        ],
+        [
+          -30,
+          15,
+          66
+        ]
+      ],
+      "bounds": {
+        "minX": -50,
+        "minZ": -73,
+        "maxX": 50,
+        "maxZ": 73
+      },
+      "collisionBoundsXYZ": [
+        [
+          -49.042999267578125,
+          -84.11070251464844,
+          -91.5448989868164
+        ],
+        [
+          49.042999267578125,
+          67.46589660644531,
+          91.5448989868164
+        ]
+      ],
+      "upwardTriangleCount": 33132,
+      "clippedUpwardSurfaceSumWU2": 18385.99870717877,
+      "clippedUpwardProjectedSumWU2": 18100.515520456567,
+      "projectedUnionSampleWU2": 7991.5,
+      "overlapSpanAtLeast1_6SampleWU2": 2201.25,
+      "overlapSpanAtLeast2_5SampleWU2": 2106.75,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -82.04010009765626,
+        67.44698617732823
+      ],
+      "runtimeTurfArea": 20518.035532497935,
+      "runtimeTurfCells": 373681,
+      "clippedRuntimeTurfAreaWU2": 20040.39401434793,
+      "clippedRuntimeTurfCells": 365623,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "6f0c27703e7fbe5a02e442431ee88d811ac794849966a82a27b1f96b2c4578c7",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "79c7577a68f1e3d885640103d6361b30f16ed474a09d097a1d15af9e6b09500b",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/crableg/triangles.0.bin",
+          "sha256": "d0765cf14391da525aa255503054832aa93bbd547fe2395849346064c268d7b5",
+          "bytes": 6766164
+        },
+        {
+          "file": "native-prebuilt/crableg/normals.0.bin",
+          "sha256": "71b1f4fe123b5cbfd1da26ee937969566099e3c37e5ecc498c695a562cb0925e",
+          "bytes": 2255388
+        },
+        {
+          "file": "native-prebuilt/crableg/faceF64.0.bin",
+          "sha256": "d4795ad64ae5d7aefe839dca8b72923201d260b66e8a077f717ac980b281d139",
+          "bytes": 9003856
+        },
+        {
+          "file": "native-prebuilt/crableg/faceI32.0.bin",
+          "sha256": "ade2d6784b266e472bd6d6e4743b8a4a8244b94fbfddb26aed37fa99204284f5",
+          "bytes": 782944
+        },
+        {
+          "file": "native-prebuilt/crableg/mask.0.bin",
+          "sha256": "96e817fafc61513a5861a451defebf11536f306810764e51056c63a1641584cc",
+          "bytes": 3206773
+        }
+      ]
+    },
+    {
+      "id": "eeltail",
+      "name": "ゴンズイ地区",
+      "widthWU": 57.0,
+      "lengthZWU": 196,
+      "boundsAreaWU2": 11172.0,
+      "spawnDistance3DWU": 186.60385848100785,
+      "spawnDistanceXZWU": 186.60385848100785,
+      "spawnPads": [
+        [
+          -7.5,
+          15.08,
+          -93
+        ],
+        [
+          7.5,
+          15.08,
+          93
+        ]
+      ],
+      "bounds": {
+        "minX": -28.5,
+        "minZ": -98,
+        "maxX": 28.5,
+        "maxZ": 98
+      },
+      "collisionBoundsXYZ": [
+        [
+          -52.83660125732422,
+          -20.0,
+          -132.26809692382812
+        ],
+        [
+          99.57669830322266,
+          48.79249954223633,
+          132.58120727539062
+        ]
+      ],
+      "upwardTriangleCount": 45556,
+      "clippedUpwardSurfaceSumWU2": 20194.146142219965,
+      "clippedUpwardProjectedSumWU2": 19950.65942401268,
+      "projectedUnionSampleWU2": 9328.25,
+      "overlapSpanAtLeast1_6SampleWU2": 4513.0,
+      "overlapSpanAtLeast2_5SampleWU2": 4438.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -5.4625000953674325,
+        36.640899658203125
+      ],
+      "runtimeTurfArea": 18429.52824498919,
+      "runtimeTurfCells": 343485,
+      "clippedRuntimeTurfAreaWU2": 17674.781929758035,
+      "clippedRuntimeTurfCells": 324552,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "4c3107f4b1e0868126c51360dfc0dd8833cb9de5ff955ab6f5aac07c4e9ef910",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/eeltail/triangles.0.bin",
+          "sha256": "a28d15c9908405c306e794b6728c91eebdaf6d85ac5bb58ca27834a42217eac2",
+          "bytes": 7632540
+        },
+        {
+          "file": "native-prebuilt/eeltail/normals.0.bin",
+          "sha256": "3e6c72fe0bfe3bb306074b8a4c607f9d963c4c4a4cce0d25d23036560a9217ff",
+          "bytes": 2544180
+        },
+        {
+          "file": "native-prebuilt/eeltail/faceF64.0.bin",
+          "sha256": "715ed30bd2ecfa80e492b6af558362b91e891772ea3207055aa3632ee605b68b",
+          "bytes": 12435272
+        },
+        {
+          "file": "native-prebuilt/eeltail/faceI32.0.bin",
+          "sha256": "09e3d62ebec41864126aa2a7072268447e493f83572cf7ec37a91cebe3c4b5ba",
+          "bytes": 1081328
+        },
+        {
+          "file": "native-prebuilt/eeltail/mask.0.bin",
+          "sha256": "6abdbebb93d6a1e19c4e89e6eb03b7d08db74eaf335c222fae72e19be402b3db",
+          "bytes": 2460682
+        }
+      ]
+    },
+    {
+      "id": "flounder",
+      "name": "ヒラメが丘団地",
+      "widthWU": 88,
+      "lengthZWU": 165.0,
+      "boundsAreaWU2": 14520.0,
+      "spawnDistance3DWU": 141.4213562373095,
+      "spawnDistanceXZWU": 141.4213562373095,
+      "spawnPads": [
+        [
+          10,
+          12.08,
+          -70
+        ],
+        [
+          -10,
+          12.08,
+          70
+        ]
+      ],
+      "bounds": {
+        "minX": -44,
+        "minZ": -82.5,
+        "maxX": 44,
+        "maxZ": 82.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -52.0,
+          -14.04259967803955,
+          -87.7791976928711
+        ],
+        [
+          52.0,
+          32.931800842285156,
+          87.7791976928711
+        ]
+      ],
+      "upwardTriangleCount": 29210,
+      "clippedUpwardSurfaceSumWU2": 13665.212754960492,
+      "clippedUpwardProjectedSumWU2": 13503.343192744382,
+      "projectedUnionSampleWU2": 9179.25,
+      "overlapSpanAtLeast1_6SampleWU2": 1519.75,
+      "overlapSpanAtLeast2_5SampleWU2": 1488.0,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -11.108599662780763,
+        32.91804038916483
+      ],
+      "runtimeTurfArea": 13665.172915976462,
+      "runtimeTurfCells": 245516,
+      "clippedRuntimeTurfAreaWU2": 12930.608830579993,
+      "clippedRuntimeTurfCells": 231043,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "77ac640e183cb61fd00157b27041df56df56f7ceae8ff39c9b5983ff192b4991",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/flounder/triangles.0.bin",
+          "sha256": "5d9d3c0d626428f865bb79e565b654a507d23c404230c897725c6f57a7d7096d",
+          "bytes": 5549760
+        },
+        {
+          "file": "native-prebuilt/flounder/normals.0.bin",
+          "sha256": "2999dc9f897eb80384636d798619e195c4f69e3886a1fcb1d71feb1bc6b6c75c",
+          "bytes": 1849920
+        },
+        {
+          "file": "native-prebuilt/flounder/faceF64.0.bin",
+          "sha256": "99fa77a0d007be180f4c038d2166bda1f6f1bd2ea2bb12ebeed28677cf454488",
+          "bytes": 7753576
+        },
+        {
+          "file": "native-prebuilt/flounder/faceI32.0.bin",
+          "sha256": "3921ffb8dbb88d7af1ca97f55b228adf88f2e2efe939b0f282583c73e0f65204",
+          "bytes": 674224
+        },
+        {
+          "file": "native-prebuilt/flounder/mask.0.bin",
+          "sha256": "e9ba281e75acaf8fd3867e8e2462690a5df5d7edd79fd741dda05e89cea51449",
+          "bytes": 1205511
+        }
+      ]
+    },
+    {
+      "id": "hagglefish",
+      "name": "ヤガラ市場",
+      "widthWU": 105.8714,
+      "lengthZWU": 156,
+      "boundsAreaWU2": 16515.9384,
+      "spawnDistance3DWU": 134.16,
+      "spawnDistanceXZWU": 134.16,
+      "spawnPads": [
+        [
+          0,
+          13.58,
+          -67.08
+        ],
+        [
+          0,
+          13.58,
+          67.08
+        ]
+      ],
+      "bounds": {
+        "minX": -52.9357,
+        "minZ": -78,
+        "maxX": 52.9357,
+        "maxZ": 78
+      },
+      "collisionBoundsXYZ": [
+        [
+          -58.500099182128906,
+          -3.878999948501587,
+          -97.37249755859375
+        ],
+        [
+          102.12249755859375,
+          29.477100372314453,
+          90.63960266113281
+        ]
+      ],
+      "upwardTriangleCount": 32465,
+      "clippedUpwardSurfaceSumWU2": 12352.688226422046,
+      "clippedUpwardProjectedSumWU2": 12131.290593654729,
+      "projectedUnionSampleWU2": 7968.6991,
+      "overlapSpanAtLeast1_6SampleWU2": 1705.9995,
+      "overlapSpanAtLeast2_5SampleWU2": 1638.9995,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -1.3746707623057066,
+        29.438802104420922
+      ],
+      "runtimeTurfArea": 13032.646149426975,
+      "runtimeTurfCells": 249161,
+      "clippedRuntimeTurfAreaWU2": 12195.498369416055,
+      "clippedRuntimeTurfCells": 229367,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "4cf7c6d331ae8e5c47e2431754362f2bb8db21e473aa43f2f6443d75dbbf1661",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/hagglefish/triangles.0.bin",
+          "sha256": "7d546a835feeed1e14be93d1cba589fafafd516058374adfe2c6fa3d0048bb58",
+          "bytes": 5890500
+        },
+        {
+          "file": "native-prebuilt/hagglefish/normals.0.bin",
+          "sha256": "18c3b70045f86e87e1e9453773d0742fc884ae3bc226dbaea1e06ba3728d3cc1",
+          "bytes": 1963500
+        },
+        {
+          "file": "native-prebuilt/hagglefish/faceF64.0.bin",
+          "sha256": "6567552673362f0e7b973b75047a8d4a2ce56b88d3bd179679ed96d655897bcf",
+          "bytes": 12112168
+        },
+        {
+          "file": "native-prebuilt/hagglefish/faceI32.0.bin",
+          "sha256": "7e28f873d6190d14ebbdf2e212fb53a7c546350346bdc26f794b45cc4f725dad",
+          "bytes": 1053232
+        },
+        {
+          "file": "native-prebuilt/hagglefish/mask.0.bin",
+          "sha256": "a67ffad743393644ef8f8e9df25c4e533620d17bc107bdd84a3ac8f2d2209e75",
+          "bytes": 1401174
+        }
+      ]
+    },
+    {
+      "id": "hammerhead",
+      "name": "マサバ海峡大橋",
+      "widthWU": 60,
+      "lengthZWU": 208,
+      "boundsAreaWU2": 12480,
+      "spawnDistance3DWU": 188.0,
+      "spawnDistanceXZWU": 188.0,
+      "spawnPads": [
+        [
+          0,
+          22.08,
+          -94
+        ],
+        [
+          0,
+          22.08,
+          94
+        ]
+      ],
+      "bounds": {
+        "minX": -30,
+        "minZ": -104,
+        "maxX": 30,
+        "maxZ": 104
+      },
+      "collisionBoundsXYZ": [
+        [
+          -35.6693000793457,
+          3.618299961090088,
+          -113.76000213623047
+        ],
+        [
+          35.6693000793457,
+          45.248600006103516,
+          113.76000213623047
+        ]
+      ],
+      "upwardTriangleCount": 14558,
+      "clippedUpwardSurfaceSumWU2": 12406.046454215159,
+      "clippedUpwardProjectedSumWU2": 12284.458395613823,
+      "projectedUnionSampleWU2": 8532.5,
+      "overlapSpanAtLeast1_6SampleWU2": 1781.0,
+      "overlapSpanAtLeast2_5SampleWU2": 1654.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        6.633699893951415,
+        43.10380172729493
+      ],
+      "runtimeTurfArea": 17187.88065456893,
+      "runtimeTurfCells": 305367,
+      "clippedRuntimeTurfAreaWU2": 14419.697534393896,
+      "clippedRuntimeTurfCells": 254355,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "414f65bf24d8dd0baf2a2fd843d6c6c58e7657b92d740721bcf1a827899c49f5",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/hammerhead/triangles.0.bin",
+          "sha256": "93f0a09eefb9b63b393c5cde42848ee6c77ccdc2bd056ae5c2b87cab7a4dc60c",
+          "bytes": 2637792
+        },
+        {
+          "file": "native-prebuilt/hammerhead/normals.0.bin",
+          "sha256": "96a7d85357012b4d14fd76905ee15bd3aacdf41d88031ac654501843978ca010",
+          "bytes": 879264
+        },
+        {
+          "file": "native-prebuilt/hammerhead/faceF64.0.bin",
+          "sha256": "356ca5a82ab861a5417daa3d595eeeae0464aadc01fa56f69d6d4ce1adfc56d7",
+          "bytes": 4760080
+        },
+        {
+          "file": "native-prebuilt/hammerhead/faceI32.0.bin",
+          "sha256": "47774f39c033d68cee2aa98aed0cf4e500ddbc31452ed3f1377350559403f622",
+          "bytes": 413920
+        },
+        {
+          "file": "native-prebuilt/hammerhead/mask.0.bin",
+          "sha256": "2ff96438416d1f883d37601d3b9435c9c123ac13097e508c4cc5677d12f0525e",
+          "bytes": 4582553
+        }
+      ]
+    },
+    {
+      "id": "humpback",
+      "name": "コンブトラック",
+      "widthWU": 78.6,
+      "lengthZWU": 131.8,
+      "boundsAreaWU2": 10359.48,
+      "spawnDistance3DWU": 122.0,
+      "spawnDistanceXZWU": 122.0,
+      "spawnPads": [
+        [
+          0,
+          6.08,
+          -61
+        ],
+        [
+          0,
+          6.08,
+          61
+        ]
+      ],
+      "bounds": {
+        "minX": -39.3,
+        "minZ": -65.9,
+        "maxX": 39.3,
+        "maxZ": 65.9
+      },
+      "collisionBoundsXYZ": [
+        [
+          -64.2761001586914,
+          -23.0,
+          -97.30000305175781
+        ],
+        [
+          64.23390197753906,
+          48.102699279785156,
+          112.70220184326172
+        ]
+      ],
+      "upwardTriangleCount": 28929,
+      "clippedUpwardSurfaceSumWU2": 27379.956108645205,
+      "clippedUpwardProjectedSumWU2": 26912.37024144194,
+      "projectedUnionSampleWU2": 10359.48,
+      "overlapSpanAtLeast1_6SampleWU2": 8143.629999999999,
+      "overlapSpanAtLeast2_5SampleWU2": 8085.879999999999,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -20.000000000000004,
+        45.94064663494075
+      ],
+      "runtimeTurfArea": 35962.221447258875,
+      "runtimeTurfCells": 651270,
+      "clippedRuntimeTurfAreaWU2": 16084.855755664106,
+      "clippedRuntimeTurfCells": 299501,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "d026666474a6a7606cd2291f9da027f1928395d220be8cebd89724e3a22a33a5",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/humpback/triangles.0.bin",
+          "sha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "bytes": 5383404
+        },
+        {
+          "file": "native-prebuilt/humpback/normals.0.bin",
+          "sha256": "2ce62120827f24bab6f368834f1c89227c51934a6f6751385ab1f6bd218c8ad5",
+          "bytes": 1794468
+        },
+        {
+          "file": "native-prebuilt/humpback/faceF64.0.bin",
+          "sha256": "204131e8c5d1494b9728a5ed2ef6bd100b427aa41c59dbe97540ae562c386b7f",
+          "bytes": 7008008
+        },
+        {
+          "file": "native-prebuilt/humpback/faceI32.0.bin",
+          "sha256": "d5df045ec4ada999ec2e135561d8fc67634f9a3556c208778e57e94b68d0a341",
+          "bytes": 609392
+        },
+        {
+          "file": "native-prebuilt/humpback/mask.0.bin",
+          "sha256": "56c1d061e2ca97786cf612c578d5fa30ebd3d039c80715e778c4f96c8ab875ee",
+          "bytes": 8934342
+        }
+      ]
+    },
+    {
+      "id": "inkblot",
+      "name": "海女美術大学",
+      "widthWU": 92,
+      "lengthZWU": 136.3346,
+      "boundsAreaWU2": 12542.7832,
+      "spawnDistance3DWU": 122.36027633598087,
+      "spawnDistanceXZWU": 122.36027633598087,
+      "spawnPads": [
+        [
+          17.5,
+          15.64415,
+          -58.62388
+        ],
+        [
+          -17.5,
+          15.64415,
+          58.62388
+        ]
+      ],
+      "bounds": {
+        "minX": -46,
+        "minZ": -68.1673,
+        "maxX": 46,
+        "maxZ": 68.1673
+      },
+      "collisionBoundsXYZ": [
+        [
+          -106.65470123291016,
+          -4.027200222015381,
+          -194.31500244140625
+        ],
+        [
+          100.59770202636719,
+          52.59939956665039,
+          93.38310241699219
+        ]
+      ],
+      "upwardTriangleCount": 26698,
+      "clippedUpwardSurfaceSumWU2": 25332.295992300693,
+      "clippedUpwardProjectedSumWU2": 24899.91434113159,
+      "projectedUnionSampleWU2": 12533.2832,
+      "overlapSpanAtLeast1_6SampleWU2": 4481.3783,
+      "overlapSpanAtLeast2_5SampleWU2": 4473.8783,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -4.0020999908447275,
+        49.91253309341092
+      ],
+      "runtimeTurfArea": 39314.71347930646,
+      "runtimeTurfCells": 671297,
+      "clippedRuntimeTurfAreaWU2": 20755.088521360994,
+      "clippedRuntimeTurfCells": 363697,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "d1e50ad0501783b94c4080f8e59252260026c01786861c2888e73c78db6ae4fc",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/inkblot/triangles.0.bin",
+          "sha256": "2fc806b3b7f8c2a284ff004a310a4cbcd3802e101ce5474ff1997037f598bb80",
+          "bytes": 4775220
+        },
+        {
+          "file": "native-prebuilt/inkblot/normals.0.bin",
+          "sha256": "dc7fd3439136a3881bf7e05c9df8dc2ed70a048497b331878b804c921bfaa801",
+          "bytes": 1591740
+        },
+        {
+          "file": "native-prebuilt/inkblot/faceF64.0.bin",
+          "sha256": "a231a64a1c08ba64d2e76ecfd23054c5397a5391ee761d63fa884dd44fbe9498",
+          "bytes": 4126936
+        },
+        {
+          "file": "native-prebuilt/inkblot/faceI32.0.bin",
+          "sha256": "8a669c69802e4e88278dfc491de6bc0913e2f14d7d225a5db54dc24c5cb902cb",
+          "bytes": 358864
+        },
+        {
+          "file": "native-prebuilt/inkblot/mask.0.bin",
+          "sha256": "109af27dff00b9a9838a6069e147560d1b5bdfd9c0017435abfbd77ca71fc78e",
+          "bytes": 2058406
+        }
+      ]
+    },
+    {
+      "id": "mako",
+      "name": "ザトウマーケット",
+      "widthWU": 67.0,
+      "lengthZWU": 135.0,
+      "boundsAreaWU2": 9045.0,
+      "spawnDistance3DWU": 117.06498195446834,
+      "spawnDistanceXZWU": 117.06498195446834,
+      "spawnPads": [
+        [
+          -7.5,
+          14.08,
+          -58.05
+        ],
+        [
+          7.5,
+          14.08,
+          58.05
+        ]
+      ],
+      "bounds": {
+        "minX": -33.5,
+        "minZ": -67.5,
+        "maxX": 33.5,
+        "maxZ": 67.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -132.84620666503906,
+          -20.18400001525879,
+          -105.07689666748047
+        ],
+        [
+          132.84620666503906,
+          48.831199645996094,
+          105.07720184326172
+        ]
+      ],
+      "upwardTriangleCount": 27390,
+      "clippedUpwardSurfaceSumWU2": 13901.02169642199,
+      "clippedUpwardProjectedSumWU2": 13755.162314533205,
+      "projectedUnionSampleWU2": 7402.5,
+      "overlapSpanAtLeast1_6SampleWU2": 1585.5,
+      "overlapSpanAtLeast2_5SampleWU2": 1576.25,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        0.25290000438690186,
+        36.8578987121582
+      ],
+      "runtimeTurfArea": 16334.797937867233,
+      "runtimeTurfCells": 316561,
+      "clippedRuntimeTurfAreaWU2": 14326.590573942744,
+      "clippedRuntimeTurfCells": 264052,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "8da1a640f2bb3fe784927c017fce828adb09b1be1d2cf79671ecd6acf053eca4",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/mako/triangles.0.bin",
+          "sha256": "f37d423fc7d61a5a6c382974c2d42db8806b6cae6e1e56e1ea308b21b906bb32",
+          "bytes": 5458320
+        },
+        {
+          "file": "native-prebuilt/mako/normals.0.bin",
+          "sha256": "457913a4a0cb56b827e4f3df304c05662304ddd6395e1458d00752975de595aa",
+          "bytes": 1819440
+        },
+        {
+          "file": "native-prebuilt/mako/faceF64.0.bin",
+          "sha256": "e6525fbd53cd54b3ba3e2ccdbf5c760a6f10136e3d2b56aa3d34dbe5d3630227",
+          "bytes": 9423744
+        },
+        {
+          "file": "native-prebuilt/mako/faceI32.0.bin",
+          "sha256": "565388ba57bb9d49d3e6e201d37cb3599af67bd83da0d9f1484f16ab79535ef6",
+          "bytes": 819456
+        },
+        {
+          "file": "native-prebuilt/mako/mask.0.bin",
+          "sha256": "f225f48bcdf3a751a527aa6a2b224fa5750e62248f15cd389d0b36f9500c9640",
+          "bytes": 3190694
+        }
+      ]
+    },
+    {
+      "id": "manta",
+      "name": "マンタマリア号",
+      "widthWU": 69.0,
+      "lengthZWU": 99.20559692382812,
+      "boundsAreaWU2": 6845.186187744141,
+      "spawnDistance3DWU": 87.36131867136622,
+      "spawnDistanceXZWU": 87.36131867136622,
+      "spawnPads": [
+        [
+          -12,
+          8,
+          -42
+        ],
+        [
+          12,
+          8,
+          42
+        ]
+      ],
+      "bounds": {
+        "minX": -34.5,
+        "minZ": -49.60279846191406,
+        "maxX": 34.5,
+        "maxZ": 49.60279846191406
+      },
+      "collisionBoundsXYZ": [
+        [
+          -70.32779693603516,
+          -31.00040054321289,
+          -184.99290466308594
+        ],
+        [
+          94.93599700927734,
+          156.61180114746094,
+          128.52020263671875
+        ]
+      ],
+      "upwardTriangleCount": 19982,
+      "clippedUpwardSurfaceSumWU2": 11452.52619214511,
+      "clippedUpwardProjectedSumWU2": 11352.92353276009,
+      "projectedUnionSampleWU2": 6292.733016967773,
+      "overlapSpanAtLeast1_6SampleWU2": 3690.097946166992,
+      "overlapSpanAtLeast2_5SampleWU2": 3684.847946166992,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -4.1325428572792,
+        119.13913447066867
+      ],
+      "runtimeTurfArea": 18583.802427221133,
+      "runtimeTurfCells": 335460,
+      "clippedRuntimeTurfAreaWU2": 6564.135701147469,
+      "clippedRuntimeTurfCells": 121765,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "be936c53e2b1773d8e1a351b37e1c653053dd8f476f8bf46bffa5e220f7cb330",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/manta/triangles.0.bin",
+          "sha256": "c24640f5a0e6b6dfe2acca13b679b45800118c11620e7c535a6aafce90a0f0bd",
+          "bytes": 4701780
+        },
+        {
+          "file": "native-prebuilt/manta/normals.0.bin",
+          "sha256": "390ef0c2d771383ad53955b5ff60a63a82882f2a57f44b2c60efc1c4e287bea6",
+          "bytes": 1567260
+        },
+        {
+          "file": "native-prebuilt/manta/faceF64.0.bin",
+          "sha256": "88b62a847e68642f20260511bf057e8443b18de871e21ddca55dd8ba01b40e76",
+          "bytes": 13225368
+        },
+        {
+          "file": "native-prebuilt/manta/faceI32.0.bin",
+          "sha256": "ad2c7259b752b7cd65cfd85f434a73495f12a88b5030bd8bd0da9eb67c77718c",
+          "bytes": 1150032
+        },
+        {
+          "file": "native-prebuilt/manta/mask.0.bin",
+          "sha256": "e75b26753842b24d84ad3664c0375148c59e52e05219434a25e9210d58f1c653",
+          "bytes": 8675817
+        }
+      ]
+    },
+    {
+      "id": "mincemeat",
+      "name": "ナメロウ金属",
+      "widthWU": 62,
+      "lengthZWU": 150,
+      "boundsAreaWU2": 9300,
+      "spawnDistance3DWU": 120.93387527987413,
+      "spawnDistanceXZWU": 120.93386622447825,
+      "spawnPads": [
+        [
+          -7.5,
+          9.08,
+          -60.5
+        ],
+        [
+          7.5,
+          9.033200340270996,
+          59.5
+        ]
+      ],
+      "bounds": {
+        "minX": -31,
+        "minZ": -75,
+        "maxX": 31,
+        "maxZ": 75
+      },
+      "collisionBoundsXYZ": [
+        [
+          -77.44349670410156,
+          -48.25600051879883,
+          -76.25
+        ],
+        [
+          66.4115982055664,
+          87.90799713134766,
+          81.22589874267578
+        ]
+      ],
+      "upwardTriangleCount": 31316,
+      "clippedUpwardSurfaceSumWU2": 33490.4923509556,
+      "clippedUpwardProjectedSumWU2": 33154.518801445214,
+      "projectedUnionSampleWU2": 8392.0,
+      "overlapSpanAtLeast1_6SampleWU2": 6458.5,
+      "overlapSpanAtLeast2_5SampleWU2": 6418.75,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -47.527000427246094,
+        87.86810281390801
+      ],
+      "runtimeTurfArea": 44582.51742169596,
+      "runtimeTurfCells": 785471,
+      "clippedRuntimeTurfAreaWU2": 37958.9604540102,
+      "clippedRuntimeTurfCells": 671467,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "84aea9c388bb2a033e6393572e176cbf7b10e12121b1c44684027a9e50aeb8cd",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/mincemeat/triangles.0.bin",
+          "sha256": "348d7542c7fda8d7a660f5af5e334822df3a4f5050b8ccc0007704f70cb97b19",
+          "bytes": 5288508
+        },
+        {
+          "file": "native-prebuilt/mincemeat/normals.0.bin",
+          "sha256": "5c71991970dba96d14d8f27f562db75e9635f8f3f7bb1effb4ffd857b9cd448b",
+          "bytes": 1762836
+        },
+        {
+          "file": "native-prebuilt/mincemeat/faceF64.0.bin",
+          "sha256": "dbe8e654995183258e1f933307ff0dab32dd8f5b9be67d5689bd1e3f12b1b289",
+          "bytes": 14826352
+        },
+        {
+          "file": "native-prebuilt/mincemeat/faceI32.0.bin",
+          "sha256": "bfbbea7ed88c2c7812c9166f0f6121836be263dd3e5946fb93e8e1c3721ad50b",
+          "bytes": 1289248
+        },
+        {
+          "file": "native-prebuilt/mincemeat/mask.0.bin",
+          "sha256": "089d00894ce0d54a33d40f612ceed250d4ab974be604e963fca3a106446d358f",
+          "bytes": 4844952
+        }
+      ]
+    },
+    {
+      "id": "museum",
+      "name": "キンメダイ美術館",
+      "widthWU": 132,
+      "lengthZWU": 110,
+      "boundsAreaWU2": 14520,
+      "spawnDistance3DWU": 132.13629327327143,
+      "spawnDistanceXZWU": 132.13629327327143,
+      "spawnPads": [
+        [
+          -42,
+          16.5,
+          -51
+        ],
+        [
+          42,
+          16.5,
+          51
+        ]
+      ],
+      "bounds": {
+        "minX": -66,
+        "minZ": -55,
+        "maxX": 66,
+        "maxZ": 55
+      },
+      "collisionBoundsXYZ": [
+        [
+          -126.52639770507812,
+          -4.540299892425537,
+          -75.66220092773438
+        ],
+        [
+          137.9600067138672,
+          42.98109817504883,
+          101.67459869384766
+        ]
+      ],
+      "upwardTriangleCount": 23655,
+      "clippedUpwardSurfaceSumWU2": 30441.992465389914,
+      "clippedUpwardProjectedSumWU2": 30160.480867029175,
+      "projectedUnionSampleWU2": 13404.0,
+      "overlapSpanAtLeast1_6SampleWU2": 6873.5,
+      "overlapSpanAtLeast2_5SampleWU2": 6796.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -3.099999904632569,
+        42.981081131164764
+      ],
+      "runtimeTurfArea": 38459.62356079287,
+      "runtimeTurfCells": 655985,
+      "clippedRuntimeTurfAreaWU2": 27248.210345398606,
+      "clippedRuntimeTurfCells": 466600,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "daccb695d2f8d11399848dd97dcde157c7386430912d3a1e1cde689091320299",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/museum/triangles.0.bin",
+          "sha256": "64743f3147cc2209d64964b0caad4db4abfdffae33f1d439831d11d7a1d09023",
+          "bytes": 4574700
+        },
+        {
+          "file": "native-prebuilt/museum/normals.0.bin",
+          "sha256": "8991726f24e1b8b4cb4c0ec46d31e68262ab400827467bacc2e7ba5818bc8a08",
+          "bytes": 1524900
+        },
+        {
+          "file": "native-prebuilt/museum/faceF64.0.bin",
+          "sha256": "c4eccc7296488663efb407b7a46dd3f20a7267a19b73f5ba3c0ec6118c9a4aee",
+          "bytes": 8818568
+        },
+        {
+          "file": "native-prebuilt/museum/faceI32.0.bin",
+          "sha256": "0b68c9ce63366cc7ea2def3993c54911ceee7d8dd0d4eb8404a751b013365f2f",
+          "bytes": 766832
+        },
+        {
+          "file": "native-prebuilt/museum/mask.0.bin",
+          "sha256": "14504a8e461ae047790a68ba6d4349411d44b89334fa01c6851b2667fe326e9f",
+          "bytes": 3174471
+        }
+      ]
+    },
+    {
+      "id": "robo",
+      "name": "バイガイ亭",
+      "widthWU": 150,
+      "lengthZWU": 78,
+      "boundsAreaWU2": 11700,
+      "spawnDistance3DWU": 127.81236246936366,
+      "spawnDistanceXZWU": 127.81236246936366,
+      "spawnPads": [
+        [
+          -60,
+          7.505000114440918,
+          22
+        ],
+        [
+          60,
+          7.505000114440918,
+          -22
+        ]
+      ],
+      "bounds": {
+        "minX": -75,
+        "minZ": -39,
+        "maxX": 75,
+        "maxZ": 39
+      },
+      "collisionBoundsXYZ": [
+        [
+          -75.08699798583984,
+          -13.199999809265137,
+          -44.279998779296875
+        ],
+        [
+          75.08699798583984,
+          55.148399353027344,
+          44.279998779296875
+        ]
+      ],
+      "upwardTriangleCount": 25486,
+      "clippedUpwardSurfaceSumWU2": 15040.342955826822,
+      "clippedUpwardProjectedSumWU2": 14851.720504486482,
+      "projectedUnionSampleWU2": 6173.5,
+      "overlapSpanAtLeast1_6SampleWU2": 2068.75,
+      "overlapSpanAtLeast2_5SampleWU2": 1961.75,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -12.500000000000002,
+        49.78354079514932
+      ],
+      "runtimeTurfArea": 16117.261235559294,
+      "runtimeTurfCells": 290319,
+      "clippedRuntimeTurfAreaWU2": 16013.389036858185,
+      "clippedRuntimeTurfCells": 288217,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "dcb4c7607f611f0c63fab7f123c01a7d6c64781ca566650c28f36712982dc60d",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/robo/triangles.0.bin",
+          "sha256": "4d61e64d5e79666838a11c153afc34546e33dc03f0f4f8fa95a8e1ee4c85139c",
+          "bytes": 3852720
+        },
+        {
+          "file": "native-prebuilt/robo/normals.0.bin",
+          "sha256": "0bdb422bb975e25ce46bb2b22b708e236242d96cdccb6a4e56329904bd5ef34d",
+          "bytes": 1284240
+        },
+        {
+          "file": "native-prebuilt/robo/faceF64.0.bin",
+          "sha256": "3b945a453a87b9726e7c0dec46eeafaab76b41fad784231eb93f937250d85fb8",
+          "bytes": 4358040
+        },
+        {
+          "file": "native-prebuilt/robo/faceI32.0.bin",
+          "sha256": "5d7c3f9f5f0f3ab95a5bcf43913f74a57fca588b03d1a15165ec70a79415031a",
+          "bytes": 378960
+        },
+        {
+          "file": "native-prebuilt/robo/mask.0.bin",
+          "sha256": "daac3e5b7d82d97778560804fc5c2032482e8574adf9b98973ed10be88205934",
+          "bytes": 1181405
+        }
+      ]
+    },
+    {
+      "id": "scorch",
+      "name": "ユノハナ大渓谷",
+      "widthWU": 72,
+      "lengthZWU": 165.0,
+      "boundsAreaWU2": 11880.0,
+      "spawnDistance3DWU": 142.69060936165351,
+      "spawnDistanceXZWU": 142.69060936165351,
+      "spawnPads": [
+        [
+          7.5,
+          13.5904,
+          -70.95
+        ],
+        [
+          -7.5,
+          13.5904,
+          70.95
+        ]
+      ],
+      "bounds": {
+        "minX": -36,
+        "minZ": -82.5,
+        "maxX": 36,
+        "maxZ": 82.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -57.84000015258789,
+          -14.199999809265137,
+          -82.52539825439453
+        ],
+        [
+          48.22999954223633,
+          31.284700393676758,
+          82.52539825439453
+        ]
+      ],
+      "upwardTriangleCount": 28255,
+      "clippedUpwardSurfaceSumWU2": 9328.871817988384,
+      "clippedUpwardProjectedSumWU2": 9225.84582356289,
+      "projectedUnionSampleWU2": 6862.0,
+      "overlapSpanAtLeast1_6SampleWU2": 664.0,
+      "overlapSpanAtLeast2_5SampleWU2": 644.0,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -8.806920344100432,
+        31.2388578279684
+      ],
+      "runtimeTurfArea": 10564.366982487476,
+      "runtimeTurfCells": 199711,
+      "clippedRuntimeTurfAreaWU2": 9057.99478664012,
+      "clippedRuntimeTurfCells": 169306,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "1d71eca5c1b1ea293f45b12caa34c74b740569bec014433765d8f7da77d765d6",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/scorch/triangles.0.bin",
+          "sha256": "a88b07b136a415da2a686098b6094b8ca79168ce2bd1b38fa47fc4f6a587e45f",
+          "bytes": 4814532
+        },
+        {
+          "file": "native-prebuilt/scorch/normals.0.bin",
+          "sha256": "24c6df661c38edabbcfc4d4b9da1186c55c4bd4d0301767fcd944272c141e605",
+          "bytes": 1604844
+        },
+        {
+          "file": "native-prebuilt/scorch/faceF64.0.bin",
+          "sha256": "c9573c7e616f4fc1c1a2ac33ad81e6bc8801c33277efec7e57055bf2a91c3da1",
+          "bytes": 8311464
+        },
+        {
+          "file": "native-prebuilt/scorch/faceI32.0.bin",
+          "sha256": "61f064e223636390fe72be33d2ce806519acc3fd0b21f1667c4f0def94de56cb",
+          "bytes": 722736
+        },
+        {
+          "file": "native-prebuilt/scorch/mask.0.bin",
+          "sha256": "aaef5f98e15bdfa2290be3f4fe86e2c08676c78142a324135fc7ea3e42e3d390",
+          "bytes": 1469898
+        }
+      ]
+    },
+    {
+      "id": "shipshape",
+      "name": "オヒョウ海運",
+      "widthWU": 64,
+      "lengthZWU": 145.0,
+      "boundsAreaWU2": 9280.0,
+      "spawnDistance3DWU": 132.9661611087573,
+      "spawnDistanceXZWU": 132.9661611087573,
+      "spawnPads": [
+        [
+          -8,
+          6.08,
+          -66
+        ],
+        [
+          8,
+          6.08,
+          66
+        ]
+      ],
+      "bounds": {
+        "minX": -32,
+        "minZ": -72.5,
+        "maxX": 32,
+        "maxZ": 72.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -540.6085815429688,
+          -343.3877868652344,
+          -179.6772003173828
+        ],
+        [
+          84.40499877929688,
+          160.36289978027344,
+          602.9569702148438
+        ]
+      ],
+      "upwardTriangleCount": 57653,
+      "clippedUpwardSurfaceSumWU2": 41133.08867553352,
+      "clippedUpwardProjectedSumWU2": 40663.99234231368,
+      "projectedUnionSampleWU2": 9280.0,
+      "overlapSpanAtLeast1_6SampleWU2": 8735.5,
+      "overlapSpanAtLeast2_5SampleWU2": 8735.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -14.864700317382816,
+        159.44439697265625
+      ],
+      "runtimeTurfArea": 109394.38879893736,
+      "runtimeTurfCells": 1881110,
+      "clippedRuntimeTurfAreaWU2": 44622.42620636146,
+      "clippedRuntimeTurfCells": 777056,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "c918adbd034e428cc959c0e685b5fcd15f2bbcd2f1671373e10c62dd16d2564c",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/shipshape/triangles.0.bin",
+          "sha256": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+          "bytes": 11195136
+        },
+        {
+          "file": "native-prebuilt/shipshape/normals.0.bin",
+          "sha256": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+          "bytes": 3731712
+        },
+        {
+          "file": "native-prebuilt/shipshape/faceF64.0.bin",
+          "sha256": "1aedaf65376b7af9e90c84d13f94d0c908570deb6c45380c29efdf2711db506e",
+          "bytes": 16777216
+        },
+        {
+          "file": "native-prebuilt/shipshape/faceF64.1.bin",
+          "sha256": "bd8fd9cdef8fc10a3f3ba99363367e78a450ebe726585718fe884af208dabf35",
+          "bytes": 9134584
+        },
+        {
+          "file": "native-prebuilt/shipshape/faceI32.0.bin",
+          "sha256": "67add3b4f615a07c0e34a8b53956099a33da7508f2573ab96119aae1efb8d5ac",
+          "bytes": 2253200
+        },
+        {
+          "file": "native-prebuilt/shipshape/mask.0.bin",
+          "sha256": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097",
+          "bytes": 14114614
+        }
+      ]
+    },
+    {
+      "id": "sturgeon",
+      "name": "チョウザメ造船",
+      "widthWU": 60,
+      "lengthZWU": 145.0,
+      "boundsAreaWU2": 8700.0,
+      "spawnDistance3DWU": 129.52219886953742,
+      "spawnDistanceXZWU": 129.52219886953742,
+      "spawnPads": [
+        [
+          -15,
+          11.08,
+          -63
+        ],
+        [
+          15,
+          11.08,
+          63
+        ]
+      ],
+      "bounds": {
+        "minX": -30,
+        "minZ": -72.5,
+        "maxX": 30,
+        "maxZ": 72.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -70.9574966430664,
+          -32.79999923706055,
+          -73.61000061035156
+        ],
+        [
+          73.618896484375,
+          63.43519973754883,
+          73.61000061035156
+        ]
+      ],
+      "upwardTriangleCount": 20997,
+      "clippedUpwardSurfaceSumWU2": 14844.767582266759,
+      "clippedUpwardProjectedSumWU2": 14545.696792422437,
+      "projectedUnionSampleWU2": 7502.5,
+      "overlapSpanAtLeast1_6SampleWU2": 3691.5,
+      "overlapSpanAtLeast2_5SampleWU2": 3594.0,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -30.44939994812012,
+        62.36930084228516
+      ],
+      "runtimeTurfArea": 17579.612524817137,
+      "runtimeTurfCells": 313630,
+      "clippedRuntimeTurfAreaWU2": 15692.52734564733,
+      "clippedRuntimeTurfCells": 279171,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "c891292842229cb8c49962fc30ac5f8f1acc085a93a2cb1b67efc63763f38039",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/sturgeon/triangles.0.bin",
+          "sha256": "b34070b8c2a39e45985da98beea2811959d54b2a31401b87d6bc4945d58504cf",
+          "bytes": 4579560
+        },
+        {
+          "file": "native-prebuilt/sturgeon/normals.0.bin",
+          "sha256": "82b08286cf0dde4c00dc8ed353613d30967241700155f3bf6501c30b3c03b06e",
+          "bytes": 1526520
+        },
+        {
+          "file": "native-prebuilt/sturgeon/faceF64.0.bin",
+          "sha256": "87fb2284c909a64a60c5028141bb7f1c5a659fa2f64196d63121982bde932c87",
+          "bytes": 5446032
+        },
+        {
+          "file": "native-prebuilt/sturgeon/faceI32.0.bin",
+          "sha256": "64626a989e691a637d4adeb317dda2aa33ae8468a40cfdeaccfa8223dad22f6c",
+          "bytes": 473568
+        },
+        {
+          "file": "native-prebuilt/sturgeon/mask.0.bin",
+          "sha256": "786cdecfe50111e1ec9cd18d86e555f5aa8a7e9a1ddd03dff7af0c225e97522e",
+          "bytes": 2259705
+        }
+      ]
+    },
+    {
+      "id": "umami",
+      "name": "ナンプラー遺跡",
+      "widthWU": 93.0,
+      "lengthZWU": 159.0,
+      "boundsAreaWU2": 14787.0,
+      "spawnDistance3DWU": 150.37286989347513,
+      "spawnDistanceXZWU": 150.37286989347513,
+      "spawnPads": [
+        [
+          -18,
+          13.5,
+          -73
+        ],
+        [
+          18,
+          13.5,
+          73
+        ]
+      ],
+      "bounds": {
+        "minX": -46.5,
+        "minZ": -79.5,
+        "maxX": 46.5,
+        "maxZ": 79.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -87.24669647216797,
+          -52.91080093383789,
+          -81.96320343017578
+        ],
+        [
+          71.43299865722656,
+          65.68820190429688,
+          81.96330261230469
+        ]
+      ],
+      "upwardTriangleCount": 49127,
+      "clippedUpwardSurfaceSumWU2": 15838.052569300131,
+      "clippedUpwardProjectedSumWU2": 15554.245729023509,
+      "projectedUnionSampleWU2": 7999.0,
+      "overlapSpanAtLeast1_6SampleWU2": 1771.25,
+      "overlapSpanAtLeast2_5SampleWU2": 1611.25,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -49.34080123901367,
+        65.68425638529669
+      ],
+      "runtimeTurfArea": 21091.220270239297,
+      "runtimeTurfCells": 407656,
+      "clippedRuntimeTurfAreaWU2": 18299.70714712159,
+      "clippedRuntimeTurfCells": 349545,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "42fda729e6d460a2fd5cd80d52d88c783fb7a873d4b9c21da6080238bb4db0cc",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/umami/triangles.0.bin",
+          "sha256": "d6febfb77d32ce12be8961645be1f61d7d40f0b6c84c9e2e5b3151560848cda5",
+          "bytes": 8241084
+        },
+        {
+          "file": "native-prebuilt/umami/normals.0.bin",
+          "sha256": "bd4bd1355b6e4829121e21ae2e64495fa2ef554c61bea51523338eacb2443969",
+          "bytes": 2747028
+        },
+        {
+          "file": "native-prebuilt/umami/faceF64.0.bin",
+          "sha256": "54eee4356910c8a3fd689a9243794ea3cf0c554b339c4d5ca0f4d18b8af7ceaa",
+          "bytes": 16777216
+        },
+        {
+          "file": "native-prebuilt/umami/faceF64.1.bin",
+          "sha256": "152ad565073712a822635ce2d6bcb9b46812025aa8375f58670e3e14e8f9ecbd",
+          "bytes": 4369536
+        },
+        {
+          "file": "native-prebuilt/umami/faceI32.0.bin",
+          "sha256": "64acc0d9aa5e4994652ef4f82c98d6a186f58fdc19bba2077cdcacd322eaf66f",
+          "bytes": 1838848
+        },
+        {
+          "file": "native-prebuilt/umami/mask.0.bin",
+          "sha256": "e15ef5db575c9467dd952f0aa3be02c16e98ff4245faf6082ca5f237b9f7dce6",
+          "bytes": 3682116
+        }
+      ]
+    },
+    {
+      "id": "undertow",
+      "name": "マテガイ放水路",
+      "widthWU": 60,
+      "lengthZWU": 123.0,
+      "boundsAreaWU2": 7380.0,
+      "spawnDistance3DWU": 116.0,
+      "spawnDistanceXZWU": 116.0,
+      "spawnPads": [
+        [
+          0,
+          7.58,
+          -58
+        ],
+        [
+          0,
+          7.58,
+          58
+        ]
+      ],
+      "bounds": {
+        "minX": -30,
+        "minZ": -61.5,
+        "maxX": 30,
+        "maxZ": 61.5
+      },
+      "collisionBoundsXYZ": [
+        [
+          -42.0,
+          -43.5,
+          -70.56089782714844
+        ],
+        [
+          42.0,
+          52.0,
+          70.56089782714844
+        ]
+      ],
+      "upwardTriangleCount": 18146,
+      "clippedUpwardSurfaceSumWU2": 9140.383846557324,
+      "clippedUpwardProjectedSumWU2": 9019.855673245376,
+      "projectedUnionSampleWU2": 6864.5,
+      "overlapSpanAtLeast1_6SampleWU2": 768.0,
+      "overlapSpanAtLeast2_5SampleWU2": 715.5,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        0.0,
+        52.00000000000001
+      ],
+      "runtimeTurfArea": 14348.315953331059,
+      "runtimeTurfCells": 257616,
+      "clippedRuntimeTurfAreaWU2": 10609.354173735528,
+      "clippedRuntimeTurfCells": 186478,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "6f6cb5c184338e5e3f6e12ffc72349548af7ecbef008e18cf3198eaba70d0728",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/undertow/triangles.0.bin",
+          "sha256": "cf66d080d2db90fda19e5098daddd3a7bb5165ada55c8bfcc33b50fc4488d4d0",
+          "bytes": 2531592
+        },
+        {
+          "file": "native-prebuilt/undertow/normals.0.bin",
+          "sha256": "5447e1b187d314a02c0e37d45827dd2f17e86e2cfee7829a176aba10d71ed0b5",
+          "bytes": 843864
+        },
+        {
+          "file": "native-prebuilt/undertow/faceF64.0.bin",
+          "sha256": "037ca773875444ed7e6d9fd475b33c05982db2bdb7c6eec3b942dfe2a1c8a260",
+          "bytes": 3704840
+        },
+        {
+          "file": "native-prebuilt/undertow/faceI32.0.bin",
+          "sha256": "b73dedd0ba9ee3bc9947d96b0249b1848a1f2069aa87db6d042de4f04b5f8277",
+          "bytes": 322160
+        },
+        {
+          "file": "native-prebuilt/undertow/mask.0.bin",
+          "sha256": "24fc61fbe3b8fe5781d8ef1bb10a571879e8c231ff2caab8e310165dc2773216",
+          "bytes": 2601065
+        }
+      ]
+    },
+    {
+      "id": "urchin",
+      "name": "デカライン高架下",
+      "widthWU": 207.0,
+      "lengthZWU": 75.616,
+      "boundsAreaWU2": 15652.512,
+      "spawnDistance3DWU": 184.39088914585776,
+      "spawnDistanceXZWU": 184.39088914585776,
+      "spawnPads": [
+        [
+          90,
+          12,
+          -20
+        ],
+        [
+          -90,
+          12,
+          20
+        ]
+      ],
+      "bounds": {
+        "minX": -103.5,
+        "minZ": -37.808,
+        "maxX": 103.5,
+        "maxZ": 37.808
+      },
+      "collisionBoundsXYZ": [
+        [
+          -105.35299682617188,
+          -3.4554998874664307,
+          -59.6156005859375
+        ],
+        [
+          105.35299682617188,
+          24.775299072265625,
+          69.32779693603516
+        ]
+      ],
+      "upwardTriangleCount": 43388,
+      "clippedUpwardSurfaceSumWU2": 21604.533375737134,
+      "clippedUpwardProjectedSumWU2": 21189.450614889975,
+      "projectedUnionSampleWU2": 11497.122,
+      "overlapSpanAtLeast1_6SampleWU2": 3461.846,
+      "overlapSpanAtLeast2_5SampleWU2": 3335.096,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        -3.2674999237060556,
+        24.703352299004084
+      ],
+      "runtimeTurfArea": 23687.032412845292,
+      "runtimeTurfCells": 430471,
+      "clippedRuntimeTurfAreaWU2": 22931.339414409653,
+      "clippedRuntimeTurfCells": 415592,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "95269078e1dc9990bc057a17ee8e2248a2026984e89e2654b7473f97b8d53ba6",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/urchin/triangles.0.bin",
+          "sha256": "f03ef98d58b5b07de58cfefcdd602df69478f6de4b34253789ef7bafd2727a2c",
+          "bytes": 7083324
+        },
+        {
+          "file": "native-prebuilt/urchin/normals.0.bin",
+          "sha256": "19eadd578ac76a370f521f75ef6152362dda40c329fb41de64b57a56992672bc",
+          "bytes": 2361108
+        },
+        {
+          "file": "native-prebuilt/urchin/faceF64.0.bin",
+          "sha256": "79123ff1067b9eabd5bad35310042d3899b8fd170ccf32441b22fd42b52917bd",
+          "bytes": 10333624
+        },
+        {
+          "file": "native-prebuilt/urchin/faceI32.0.bin",
+          "sha256": "856504a5d4ef90d9507547edeee8ab6aee86749b20ec9cb80ea55e63b3d28d6e",
+          "bytes": 898576
+        },
+        {
+          "file": "native-prebuilt/urchin/mask.0.bin",
+          "sha256": "7f64c14599a45e99a817a2a5a5e57a2ebc44a9a38ef39ef22534ed81cbe5d54b",
+          "bytes": 2573178
+        }
+      ]
+    },
+    {
+      "id": "wahoo",
+      "name": "スメーシーワールド",
+      "widthWU": 239.80140686035156,
+      "lengthZWU": 93.37020111083984,
+      "boundsAreaWU2": 22390.305585213355,
+      "spawnDistance3DWU": 170.0,
+      "spawnDistanceXZWU": 170.0,
+      "spawnPads": [
+        [
+          -85,
+          18,
+          0
+        ],
+        [
+          85,
+          18,
+          0
+        ]
+      ],
+      "bounds": {
+        "minX": -119.90070343017578,
+        "minZ": -46.68510055541992,
+        "maxX": 119.90070343017578,
+        "maxZ": 46.68510055541992
+      },
+      "collisionBoundsXYZ": [
+        [
+          -119.96510314941406,
+          -2.087899923324585,
+          -46.68510055541992
+        ],
+        [
+          120.01329803466797,
+          29.283700942993164,
+          46.68510055541992
+        ]
+      ],
+      "upwardTriangleCount": 24423,
+      "clippedUpwardSurfaceSumWU2": 17638.811141482707,
+      "clippedUpwardProjectedSumWU2": 17253.019704549355,
+      "projectedUnionSampleWU2": 11286.627891540527,
+      "overlapSpanAtLeast1_6SampleWU2": 2875.1612548828125,
+      "overlapSpanAtLeast2_5SampleWU2": 2731.4112548828125,
+      "sampleStepWU": 0.5,
+      "sampledSurfaceHeightRangeWU": [
+        4.467598321693284,
+        27.285200119018555
+      ],
+      "runtimeTurfArea": 20980.69934595426,
+      "runtimeTurfCells": 388893,
+      "clippedRuntimeTurfAreaWU2": 20980.386344431212,
+      "clippedRuntimeTurfCells": 388885,
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+      "nativeStatus": {
+        "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+        "boundsStatus": "R6 inferred interactive extent",
+        "spawnStatus": "R6 inferred supports, not recovered retail placements",
+        "collisionStatus": "inferred display triangles, not native collision",
+        "paintStatus": "inferred planar masks, not native masks",
+        "ruleStatus": "Pnt display only; ranked objectives are local calibration"
+      },
+      "cachedManifestSha256": "d9036d96ea0e355c46c86d67775726d794e24334e98a3b165bc70672ff79360b",
+      "verifiedHeadArrayFiles": [
+        {
+          "file": "native-prebuilt/wahoo/triangles.0.bin",
+          "sha256": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "bytes": 3678984
+        },
+        {
+          "file": "native-prebuilt/wahoo/normals.0.bin",
+          "sha256": "5f5e66c4a3ed28f8bc76ec7d1d196e7e521143d2e1f2936767859f51fdb7914a",
+          "bytes": 1226328
+        },
+        {
+          "file": "native-prebuilt/wahoo/faceF64.0.bin",
+          "sha256": "f1d2b6309cb86748bb75bc80b5fe71ccae77b596ae1fd906bea27dedfdc70c16",
+          "bytes": 8123968
+        },
+        {
+          "file": "native-prebuilt/wahoo/faceI32.0.bin",
+          "sha256": "278e5235c1868a68cbb0bb8f33de315044b271c57b768c0b58c15eb8e05b333b",
+          "bytes": 706432
+        },
+        {
+          "file": "native-prebuilt/wahoo/mask.0.bin",
+          "sha256": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082",
+          "bytes": 1962869
+        }
+      ]
+    }
+  ],
+  "nativeSummary": {
+    "n": 23,
+    "widthWU": {
+      "min": 57.0,
+      "median": 88,
+      "max": 239.80140686035156
+    },
+    "lengthZWU": {
+      "min": 75.616,
+      "median": 145.0,
+      "max": 208
+    },
+    "boundsAreaWU2": {
+      "min": 6845.186187744141,
+      "median": 12480,
+      "max": 22390.305585213355
+    },
+    "spawnDistance3DWU": {
+      "min": 87.36131867136622,
+      "median": 134.16,
+      "max": 188.0
+    },
+    "clippedUpwardSurfaceSumWU2": {
+      "min": 9140.383846557324,
+      "median": 15838.052569300131,
+      "max": 41133.08867553352
+    },
+    "clippedUpwardProjectedSumWU2": {
+      "min": 9019.855673245376,
+      "median": 15554.245729023509,
+      "max": 40663.99234231368
+    },
+    "projectedUnionSampleWU2": {
+      "min": 6173.5,
+      "median": 8011.1468252,
+      "max": 13404.0
+    },
+    "runtimeTurfArea": {
+      "min": 10564.366982487476,
+      "median": 18618.40161348456,
+      "max": 109394.38879893736
+    },
+    "clippedRuntimeTurfAreaWU2": {
+      "min": 6564.135701147469,
+      "median": 17071.181354672284,
+      "max": 44622.42620636146
+    },
+    "overlapSpanAtLeast2_5SampleWU2": {
+      "min": 644.0,
+      "median": 2731.4112548828125,
+      "max": 8735.5
+    }
+  }
+}

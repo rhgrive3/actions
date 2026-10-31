@@ -261,7 +261,7 @@ test('actual roller motion exposes the old reverse-pulse counterexample and adva
   assert(distance>0&&distance<2,'the native forward pulse stays within the unchanged two-metre corridor bound');
  }
 });
-test('ranked native lane queries reject the real Tidewater cover overlap even when ground and roller drum have support',()=>{
+test('ranked native lane queries reject the historical Tidewater center-cover overlap even when ground and roller drum have support',()=>{
  const source=file=>fs.readFileSync(new URL('../../inkwave-public/src/'+file,import.meta.url),'utf8');
  const initializer=(text,name)=>{
   const found=[];const visit=n=>{if(!n||typeof n!=='object')return;if(n.type==='VariableDeclarator'&&n.id.name===name)found.push(n.init);for(const v of Object.values(n))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);};
@@ -270,7 +270,10 @@ test('ranked native lane queries reject the real Tidewater cover overlap even wh
  const moduleBody=text=>text.replace(/^import .*;\r?\n/gm,'').replace(/^export /gm,'');
  const {Physics,GroundHit}=new Function('THREE',moduleBody(source('game/physics.js'))+'\nreturn {Physics,GroundHit};')(THREE);
  const Level=new Function('THREE','PATTERN',moduleBody(source('world/level.js'))+'\nreturn Level;')(THREE,PATTERN);
- const layout=new Function('PATTERN','C','B','R','return ('+initializer(source('world/maps.js'),'TIDEWATER')+');')(PATTERN,C,B,R);
+ // Preserve the original browser counterexample after MAP3 replaced this tower.
+ // These three exact historical boxes exercise the same real Level/Physics query.
+ const layout={bounds:{minX:-25,maxX:25,minZ:-44,maxZ:44},spawnPads:[[0,2.2,-39.2],[0,2.2,39.2]],spawnBarrier:4.2,half:[],single:[
+  B(-21,21,-1.2,0,-44,44),B(-5,5,0,2.8,-5,5),B(-1.6,1.6,2.8,3.8,-.45,.45)]};
  const profile=JSON.parse(fs.readFileSync(new URL('../../patches/splatoon3/profile.json',import.meta.url),'utf8'));
  const PLAYER={...BASE_PLAYER,...profile.player},level=new Level(layout),physics=new Physics(level),G={level,physics};
  const V=THREE.Vector3,scratch={ids:[],start:new V(),delta:new V(),normalY:0,contactPoint:new V(),wallPoint:new V()};

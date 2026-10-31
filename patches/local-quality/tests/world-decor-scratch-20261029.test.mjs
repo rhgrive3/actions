@@ -19,8 +19,9 @@ async function load(source,namespace=THREE,G={actors:[]}) {
   const bus=new vm.SyntheticModule(['G'],function(){this.setExport('G',G);},{context});
   const util=new vm.SourceTextModule(fs.readFileSync(new URL('../../../inkwave-public/vendor/three/jsm/utils/BufferGeometryUtils.js',import.meta.url),'utf8'),{context});
   await util.link(()=>three);await util.evaluate();
+  const stageArt=new vm.SyntheticModule(['createMap3Art'],function(){this.setExport('createMap3Art',()=>{throw Error('Generic Decor fixture must not request MAP3 stage art');});},{context});
   const mod=new vm.SourceTextModule(source,{context});
-  await mod.link(spec=>spec==='three'?three:spec.includes('BufferGeometryUtils')?util:bus);await mod.evaluate();
+  await mod.link(spec=>spec==='three'?three:spec.includes('BufferGeometryUtils')?util:spec.endsWith('/map3-art.js')?stageArt:bus);await mod.evaluate();
   return {Decor:mod.namespace.Decor,G};
 }
 const A=await load(baseline),B=await load(final);
@@ -30,7 +31,9 @@ function snapshot(decor) {
   const rows=[];decor.group.traverse(o=>{if(!o.geometry)return;const g=o.geometry;g.computeBoundingSphere();rows.push({name:o.name,type:o.type,matrix:o.matrixWorld.toArray(),index:g.index&&hash(g.index.array),attributes:Object.fromEntries(Object.entries(g.attributes).map(([k,a])=>[k,{itemSize:a.itemSize,normalized:a.normalized,hash:hash(a.array)}])),sphere:{radius:g.boundingSphere.radius,center:g.boundingSphere.center.toArray()},cast:o.castShadow,receive:o.receiveShadow});});
   return rows;
 }
-function create(C,level) {return new C(new THREE.Scene(),level,{emblem:new THREE.Texture(),flagTex:new THREE.Texture()});}
+// This before/after oracle owns generic pads, lamps, palms and flags. MAP3's new
+// art owner has its own real-geometry tests; do not call it only on the after side.
+function create(C,level) {const generic=Object.create(level);generic.layout={...level.layout,map3:undefined};return new C(new THREE.Scene(),generic,{emblem:new THREE.Texture(),flagTex:new THREE.Texture()});}
 
 test('procedural scratch and leaflet directions preserve all five stage geometry bytes and transforms',()=>{
   for(const id of ['tidewater','kelpline','halyard','cargo','range']) {

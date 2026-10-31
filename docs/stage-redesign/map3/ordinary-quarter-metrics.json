@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "units": "WU, WU²; no calibrated SI conversion",
+  "mapSourceSha256": "43c97559b93b92975774097d98fb931543d93f3e62ff0f50e42f19445057b617",
+  "extractorSha256": "ea70656ccd80f230441e9d173fe90b51cae7a8e23d71297358e14d3b478340ad",
+  "method": "measure_baseline.EXPORT_JS extracts current ordinary Level(layout), then geometry_metrics with sample step0.25. No native payload reread. Excludes dressing colliders. All upward collision faces including cover tops and buried/overlapping faces; clipped to configured XZ.",
+  "ordinary": [
+    {
+      "id": "tidewater",
+      "bounds": {
+        "minX": -42,
+        "maxX": 42,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          2.2,
+          -67.2
+        ],
+        [
+          0,
+          2.2,
+          67.2
+        ]
+      ],
+      "blockCount": 103,
+      "runtimeTurfArea": 12107.808087942427,
+      "runtimeTurfCells": 193200,
+      "clippedRuntimeTurfAreaWU2": 12107.808087942427,
+      "clippedRuntimeTurfCells": 193200,
+      "turfAreaScope": "Level(layout) only, no set-dressing extra colliders; production PaintSystem._initGrid algorithm; no GPU",
+      "widthWU": 84,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12096,
+      "spawnDistance3DWU": 134.4,
+      "spawnDistanceXZWU": 134.4,
+      "collisionBoundsXYZ": [
+        [
+          -42.0,
+          -2.9615943510705787,
+          -72.0
+        ],
+        [
+          42.0,
+          5.0,
+          72.0
+        ]
+      ],
+      "upwardTriangleCount": 206,
+      "clippedUpwardSurfaceSumWU2": 14225.862710704354,
+      "clippedUpwardProjectedSumWU2": 14201.896565283965,
+      "projectedUnionSampleWU2": 11968.0,
+      "overlapSpanAtLeast1_6SampleWU2": 1319.9375,
+      "overlapSpanAtLeast2_5SampleWU2": 358.75,
+      "sampleStepWU": 0.25,
+      "sampledSurfaceHeightRangeWU": [
+        -0.17500000000000016,
+        5.000000000000001
+      ]
+    },
+    {
+      "id": "kelpline",
+      "bounds": {
+        "minX": -44,
+        "maxX": 44,
+        "minZ": -72,
+        "maxZ": 72
+      },
+      "spawnPads": [
+        [
+          0,
+          3.2,
+          -68
+        ],
+        [
+          0,
+          3.2,
+          68
+        ]
+      ],
+      "blockCount": 135,
+      "runtimeTurfArea": 13150.456495770984,
+      "runtimeTurfCells": 209891,
+      "clippedRuntimeTurfAreaWU2": 13150.456495770984,
+      "clippedRuntimeTurfCells": 209891,
+      "turfAreaScope": "Level(layout) only, no set-dressing extra colliders; production PaintSystem._initGrid algorithm; no GPU",
+      "widthWU": 88,
+      "lengthZWU": 144,
+      "boundsAreaWU2": 12672,
+      "spawnDistance3DWU": 136.0,
+      "spawnDistanceXZWU": 136.0,
+      "collisionBoundsXYZ": [
+        [
+          -44.0,
+          -4.284326450993506,
+          -72.0
+        ],
+        [
+          44.0,
+          5.2,
+          72.0
+        ]
+      ],
+      "upwardTriangleCount": 270,
+      "clippedUpwardSurfaceSumWU2": 15807.947589237547,
+      "clippedUpwardProjectedSumWU2": 15773.287419094539,
+      "projectedUnionSampleWU2": 12672.0,
+      "overlapSpanAtLeast1_6SampleWU2": 2087.5,
+      "overlapSpanAtLeast2_5SampleWU2": 890.375,
+      "sampleStepWU": 0.25,
+      "sampledSurfaceHeightRangeWU": [
+        -2.1634615384615388,
+        5.200000000000001
+      ]
+    }
+  ]
+}

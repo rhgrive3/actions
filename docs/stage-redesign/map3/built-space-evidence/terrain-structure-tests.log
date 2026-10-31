@@ -1,0 +1,31 @@
+✔ added ground replaces internal water, keeps real channels, and contains no duplicate coplanar floor (247.261122ms)
+ℹ tidewater: projected land 8104 -> 9512 WU²; internal-water footprint 3992 -> 2584 WU² (not scoring/turf area).
+ℹ kelpline: projected land 9032 -> 9656 WU²; internal-water footprint 3640 -> 3016 WU² (not scoring/turf area).
+✔ new collision is real, bounded, paintable and exactly balanced under a half turn (2.135246ms)
+✔ ordinary public stages preserve every frozen MAP3 coordinate and contain no legacy base floor (149.075095ms)
+✔ real Level ramp OBBs retain exact tops and nominal vertical thickness including the low toe (1.644016ms)
+✔ all 26 nominal routes have real support and body clearance, with independently selected lower/upper layers (154.029415ms)
+ℹ 26 routes / 10770 actual support + human/conservative-squid body samples
+✔ actual underpasses retain headroom and real grates distinguish human support from squid drops (0.642458ms)
+ℹ tidewater: 3 measured underpasses; two grates have human support / distinct solid squid landings.
+ℹ kelpline: 3 measured underpasses; two grates have human support / distinct solid squid landings.
+✔ composed Actor walks, swims and fires along MAP3 routes at 30/60/120 Hz through real Level and Physics (13086.590959ms)
+ℹ 228 composed Actor traversals / 224532 simulation ticks; maximum waypoint height error 0.08099 WU. Rendering/audio/ink sample are fixtures; no browser/Switch claim.
+✔ production NavGraph keeps every MAP3 floor reachable in both directions and resolves all route waypoints on their own layer (1847.251711ms)
+ℹ tidewater: 9704/9784 retained nodes; every floor has directed paths to/from both spawns. Legacy 6,000-budget misses now resolved: [{"floor":"A_west_terrace","team":1,"direction":"out"},{"floor":"A_market_hall","team":1,"direction":"out"},{"floor":"A_market_edge","team":1,"direction":"out"},{"floor":"A_market_grate","team":1,"direction":"out"},{"floor":"A_market_bridge","team":1,"direction":"out"},{"floor":"B_market_hall","team":0,"direction":"out"},{"floor":"B_market_edge","team":0,"direction":"out"},{"floor":"B_market_grate","team":0,"direction":"out"},{"floor":"B_market_bridge","team":0,"direction":"out"},{"floor":"B_belvedere","team":0,"direction":"out"}]
+ℹ kelpline: 11944/12088 retained nodes; every floor has directed paths to/from both spawns. Legacy 6,000-budget misses now resolved: [{"floor":"A_headhouse","team":1,"direction":"out"},{"floor":"A_outer_top","team":1,"direction":"out"},{"floor":"A_high_gantry","team":1,"direction":"out"},{"floor":"A_high_gantry","team":1,"direction":"return"},{"floor":"A_low_quay","team":1,"direction":"out"},{"floor":"A_outer_foot","team":1,"direction":"out"},{"floor":"B_outer_foot","team":0,"direction":"out"},{"floor":"B_recovery_foot","team":0,"direction":"out"},{"floor":"B_cargo","team":0,"direction":"out"},{"floor":"A_ferry","team":1,"direction":"return"},{"floor":"B_ferry","team":0,"direction":"out"},{"floor":"B_ferry","team":0,"direction":"return"}]
+ℹ 848 successful directed A* queries; no claim that BotBrain follows every path without steering errors.
+✔ composed Actor drops through grates to the lower floor and dies over actual open water at 30/60/120 Hz (124.490141ms)
+ℹ 12 real grate landings and 6 actual open-water deaths.
+✔ production CameraRig underpasses keep lens and near plane out of solids during grounded turns, looking and jumps (5682.557372ms)
+ℹ 54 camera scenarios; 0 with geometry intersection. First failures: []
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21326.146533
