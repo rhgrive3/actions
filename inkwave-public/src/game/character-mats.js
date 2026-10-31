@@ -1095,20 +1095,64 @@ export function makeHairMaterial(u) {
             } else if (iwGearCls > 3.5) { // headgear fabrics (uv: around, rim-relative height | bill / brim)
               iwHatShade(iwGearCls, vStrand.zw, vBindPos, diffuseColor.rgb, iwH, iwAO);
             }
+          } else if (vHair.y < -2.5) {
+            // Twin's joined scalp and tail surface shares one material response at the branch.
+            diffuseColor.rgb = mix(tc, core, 0.4);
+            iwGumOn = 1.0; iwGumThin = 0.12; iwGumTrans = tsat;
+            if (vHair.y > -3.5 && vStrand.y > 0.75 && vStrand.x > 0.58 && vStrand.w < -0.15) {
+              float fa = fract(vStrand.z / 0.021 + (vSinA > 0.0 ? 0.5 : 0.0)) - 0.5;
+              float d = length(vec2(fa * 1.2, (abs(vSinA) - 0.42) / 0.24));
+              float w = max(fwidth(d), 1e-3);
+              iwSuck = (1.0 - smoothstep(0.45-w, 0.45+w, d)) * smoothstep(-0.15, -0.5, vStrand.w);
+              diffuseColor.rgb = mix(diffuseColor.rgb, light, iwSuck * 0.65);
+              iwH += 0.00045 * iwSuck;
+            }
           } else if (vGearCol.b >= 1.5) {
             // ---------------- scalp cap: tentacle bundles radiating from the crown (or the style's gather point) ----
             // uv = stereographic coords of the head direction about the groove pole → (az, el) about that pole
             float spr = dot(vStrand.zw, vStrand.zw);
             float az = atan(vStrand.z, vStrand.w), el = asin(clamp((1.0 - spr) / (1.0 + spr), -1.0, 1.0));
             float crown = smoothstep(1.45, 0.9, el);
-            float bundles = sin(az * 9.0 + 0.35 * sin(el * 5.0));
-            float groove = pow(1.0 - abs(bundles), 6.0) * crown;
-            iwH -= 0.0016 * groove;
-            iwAO *= (1.0 - 0.3 * groove) * vHair.z;
+            float bundles = sin(az * 4.0 + 0.2 * sin(el * 5.0));
+            float groove = pow(1.0 - abs(bundles), 4.0) * crown;
+            iwH -= 0.00045 * groove;
+            iwAO *= (1.0 - 0.1 * groove) * vHair.z;
             float edge = smoothstep(0.0, 0.25, vGearCol.g); // g = distance above the hairline (0 at the rolled lip)
             diffuseColor.rgb = mix(mix(core, tc, 0.5), tc, 0.45 + 0.55 * edge);
             diffuseColor.rgb = mix(diffuseColor.rgb, mix(tc, light, 0.3), 0.3 * smoothstep(0.8, 1.5, el) * (1.0 - groove));
-            diffuseColor.rgb *= mix(0.62, 1.0, vHair.z);
+            diffuseColor.rgb *= mix(0.8, 1.0, vHair.z);
+            // Connected-panel undersides use their own continuous UVs. The
+            // negative marker is confined to those faces; ordinary cap and
+            // strand/cup geometry retain their existing material contract.
+            float panelInner = vHair.x < -0.5 ? 0.0 : smoothstep(0.5, 0.9, -vHair.y);
+            if (panelInner > 0.0) {
+              float along = vStrand.z, across = vStrand.w;
+              float row = across > 0.5 ? 0.5 : 0.0;
+              float longitudinal = fract(along / 0.026 + row) - 0.5;
+              float lateral = (abs(across - 0.5) - 0.24) / 0.13;
+              float d = length(vec2(longitudinal * 1.2, lateral));
+              float aa = max(fwidth(d), 0.001);
+              float mask = panelInner * smoothstep(0.06, 0.10, along) * (1.0 - smoothstep(0.45-aa, 0.45+aa, d));
+              float dish = (1.0 - smoothstep(0.15, 0.30, d)) * mask;
+              diffuseColor.rgb = mix(diffuseColor.rgb, mix(tc, vec3(1.0), 0.45), mask * 0.8);
+              diffuseColor.rgb = mix(diffuseColor.rgb, core * 0.6, dish * 0.55);
+              iwSuck = max(iwSuck, mask);
+            }
+            if (vHair.x < -0.5) {
+              // Three broad, recessed mouths on the crest's connected surface.
+              float d = 2.0;
+              if (vHair.y > 0.001) d = min(length(vec2(vBindPos.x, (vHair.y - 0.25) * 0.15)) / 0.021, length(vec2(vBindPos.x, (vHair.y - 0.60) * 0.15)) / 0.017);
+              else if (vHair.y > -0.001 && cos(az) > 0.0) {
+                d = length(vec2(vBindPos.x, (el - 0.98) * 0.17)) / 0.026;
+              }
+              float dish = 1.0 - smoothstep(0.58, 0.83, d);
+              float rim = smoothstep(0.57, 0.80, d) * (1.0 - smoothstep(0.94, 1.20, d));
+              if (vHair.y < 0.001) rim *= 0.75;
+              diffuseColor.rgb = mix(diffuseColor.rgb, core * 0.65, dish * 0.75);
+              diffuseColor.rgb = mix(diffuseColor.rgb, mix(tc, light, 0.55), rim * 0.7);
+              iwH += 0.0006 * rim - 0.001 * dish;
+              iwAO *= 1.0 - 0.25 * dish;
+            }
             iwGumOn = 1.0; iwGumThin = 0.12 * (1.0 - edge) + 0.05; iwGumTrans = tsat * 1.05;
           } else {
             // ---------------- strand / sculpted lock / modelled cup ----------------
@@ -1124,15 +1168,17 @@ export function makeHairMaterial(u) {
             diffuseColor.rgb *= mix(0.8, 1.0, smoothstep(0.0, 0.3, t));
             diffuseColor.rgb = mix(diffuseColor.rgb, mix(base, light, 0.22), 0.4 * iwTipK);
             // defined strand edges: a slightly darker crease where the ribbon turns under
-            float edgeK = smoothstep(0.7, 0.98, abs(vSinA)) * smoothstep(0.02, 0.12, t) * step(iwCup, 0.5);
-            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * mix(vec3(0.8), core / max(tc, vec3(1e-3)), 0.5), edgeK * 0.7);
-            iwAO *= 1.0 - 0.25 * edgeK;
+            float edgeK = smoothstep(0.7, 0.98, abs(vSinA)) * smoothstep(0.02, 0.12, t) * step(iwCup, 0.5) * step(-1.0, vHair.y);
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * mix(vec3(0.8), core / max(tc, vec3(1e-3)), 0.5), edgeK * 0.35);
+            iwAO *= 1.0 - 0.12 * edgeK;
             // soft highlight ridge along the top, a slightly paler sucker side underneath
             float ridge = smoothstep(0.75, 1.0, cs) * (1.0 - smoothstep(0.2, 0.5, abs(vSinA)));
             diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb, light, 0.3), ridge * 0.45);
             diffuseColor.rgb = mix(diffuseColor.rgb, mix(base, light, 0.2), 0.22 * smoothstep(-0.3, -0.85, cs) * step(iwCup, 0.5));
             // faint wet unevenness so the reflections wobble instead of sliding like on a pipe
-            iwH += 0.00009 * (iwNoise(vBindPos * vec3(55.0, 70.0, 55.0)) - 0.5);
+            // Brows share this material and use a dark tint; preserve their existing surface response.
+            float iwRipple = vTint < -0.5 ? 0.00009 : 0.00003;
+            iwH += iwRipple * (iwNoise(vBindPos * vec3(55.0, 70.0, 55.0)) - 0.5);
             iwAO *= vHair.z;
             iwGumOn = 1.0;
             iwGumThin = 1.0 - smoothstep(0.0015, 0.013, thick);
@@ -1167,7 +1213,7 @@ export function makeHairMaterial(u) {
               iwH += 0.0009 * ring - 0.0006 * cup;
             }
             // crevices: the baked occlusion also darkens the direct light a little (shadow maps miss them)
-            diffuseColor.rgb *= mix(0.66, 1.0, vHair.z);
+            diffuseColor.rgb *= mix(0.8, 1.0, vHair.z);
           }
         }
       ` + HURT_FRAG,

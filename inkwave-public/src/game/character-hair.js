@@ -30,25 +30,26 @@ export const HAIR_LOD_NAMES = ['hero', 'game', 'far'];
  *  ringsPerM: spine rings per metre (curvature-adaptive), radial: vertices round the section, tipSteps: rounded-tip rings,
  *  cups: modelled suction cups ({ radial, prof, gap } — gap scales the spacing) or null (the shader prints them),
  *  cap: scalp-cap grid (around × rows), brow: brow stroke rings × radial.
+ *  squidTipSteps and hatAround keep unrelated squid/hat tessellation independent of hair smoothing.
  */
 export function hairDetail(lod = 'hero', quality = hairQuality()) {
   const k = QK[quality] ?? 1;
   // far: a few dozen px tall — sized under the far hair target (~1.8k tris) so it is used as-is (never re-clustered)
-  if (lod === 'far') return { lod, k, ringsPerM: 24, radial: 6, tipSteps: 2, cups: null, locks: false, cap: [24, 5], brow: [4, 4], squid: { around: 24, rows: 16, arm: [8, 6] } };
+  if (lod === 'far') return { lod, k, ringsPerM: 24, radial: 6, tipSteps: 2, squidTipSteps: 2, hatAround: 24, cups: null, locks: false, cap: [24, 5], brow: [4, 4], squid: { around: 24, rows: 16, arm: [8, 6] } };
   if (lod === 'game') {
     // in-match distance (a head is ~60–120 px tall): cups are printed by the shader below ultra (modelled ones would
     // only shimmer at 2–4 px), sections stay round enough for clean silhouettes
     return {
-      lod, k, ringsPerM: Math.round(60 * k), radial: even(10 * k), tipSteps: 3,
-      cups: k > 1 ? { radial: 6, prof: 'lo', gap: 1.5 } : null,
-      cap: [Math.round(56 * k), Math.round(10 * k)], brow: [10, 6],
+      lod, k, ringsPerM: Math.round(78 * k), radial: even(14 * k), tipSteps: 5, squidTipSteps: 3, hatAround: Math.round(56 * k),
+      cups: k > 1 ? { radial: 10, prof: 'lo', gap: 1.5 } : null,
+      cap: [Math.round(72 * k), Math.round(14 * k)], brow: [10, 6],
       squid: { around: Math.round(48 * k), rows: Math.round(34 * k), arm: [Math.round(18 * k), even(9 * k)], cups: k > 1 ? { radial: 6, prof: 'lo', gap: 1.4 } : null },
     };
   }
   return {
-    lod, k, ringsPerM: Math.round(120 * k), radial: even(16 * k), tipSteps: 5,
-    cups: k >= 0.8 ? { radial: Math.max(6, Math.round(7 * k)), prof: 'hi', gap: 1.12 } : { radial: 6, prof: 'lo', gap: 1.3 },
-    cap: [Math.round(96 * k), Math.round(18 * k)], brow: [18, 10],
+    lod, k, ringsPerM: Math.round(132 * k), radial: even(20 * k), tipSteps: 6, squidTipSteps: 5, hatAround: Math.round(96 * k),
+    cups: k >= 0.8 ? { radial: Math.max(10, Math.round(12 * k)), prof: 'hi', gap: 1.12 } : { radial: 8, prof: 'lo', gap: 1.3 },
+    cap: [Math.round(112 * k), Math.round(22 * k)], brow: [18, 10],
     squid: { around: Math.round(72 * k), rows: Math.round(48 * k), arm: [Math.round(28 * k), even(12 * k)], cups: { radial: Math.max(6, Math.round(7 * k)), prof: 'lo', gap: 1.6 } },
   };
 }

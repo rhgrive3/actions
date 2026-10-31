@@ -4229,6 +4229,16 @@ uniform int uRipCount;`,
       replaceOnce,
       'GPU-CHR-03i makeHairMaterial scalp cap groove pow6'
     );
+    // The redesigned scalp uses a broader fourth-power groove. Keep its
+    // exponent while retaining the same multiply-only GPU optimization.
+    code = applyWave345Compatible(
+      code,
+      `            float groove = pow(1.0 - abs(bundles), 4.0) * crown;`,
+      `            float gb0 = 1.0 - abs(bundles), gb2 = gb0 * gb0;
+            float groove = (gb2 * gb2) * crown;`,
+      replaceOnce,
+      'GPU-CHR-03i makeHairMaterial scalp cap groove pow4'
+    );
     code = applyWave345Compatible(
       code,
       `              float dl = length(dv) - L.z * (1.0 + 0.9 * pow(max(0.0, cos(atan(dv.y, dv.x) - tipA)), 5.0));`,
