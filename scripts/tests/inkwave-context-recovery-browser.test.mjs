@@ -332,3 +332,57 @@ test('projectile inconsistent extra ledger failure cannot be hidden by a separat
  const f=await projectileMediaMock();f.controls.ledger.push({...f.controls.ledger[0],id:999,url:'https://example.test/unmatched.mp3'});await f.close();
  assert.ok(f.controls.receipt.classification.unexpected.length>0);assert.equal(f.indices.size,0);assert.equal(f.unexplained().length,1);
 });
+
+// Reuse the existing focused CI entry; no historical assertion is replaced.
+{
+const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/projectile-media-partition-32ee-41160930842.json',import.meta.url)));
+const source=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+function body(){const a=source.indexOf('  const mediaRequestIDs='),b=source.indexOf('  await page.addInitScript(installContextMediaTrace);',a);assert(a>0&&b>a);return source.slice(a,b).replace(/helperSha256:hash\(fs\.readFileSync\(new URL\('\.\/check-inkwave-context-recovery-browser\.mjs',import\.meta\.url\)\)\)/,'helperSha256:"mock-metadata-only"');}
+async function replay(side,index,{shared={errors:[],indices:new Map(),report:{browserDiagnostics:[]}},editManifest=()=>{},editRows=()=>{},beforeObserve=()=>{},pollute=false}={}){
+ const actual=fixture[side],o=structuredClone(actual.mediaRetirementObservations[index]),rows=structuredClone(o.ledger),failed=new Map(o.diagnostics.filter(d=>d.event==='failed').map(d=>[d.id,d]));editRows(rows,failed);
+ const url=o.expectedMenuURL,revision=new URL(url).pathname.split('/')[2],address=new URL(url).origin+'/',manifest={build:{revision},artifacts:{}};
+ // These keys replay only decisions that the historical native listener recorded.
+ for(const d of actual.browserDiagnostics.filter(d=>d.event==='verified-audio-fetch-cancelled')){manifest.artifacts[d.asset]='fixture';manifest.artifacts[`_versions/${revision}/${d.asset}`]='fixture';}
+ editManifest(manifest);
+ const page=new EventEmitter();page.evaluate=async()=>o.mediaTrace;let closes=0;
+ const c=vm.createContext({page,mimeErrors:shared.errors,mediaRetirementErrorIndices:shared.indices,report:shared.report,mobile:o.mobile,URL,address,manifest,streamedMusic:{close(){closes++;return 'native-close';}},classifyContextRequestFailures,correlateContextMediaRequests});
+ c.Date=class extends Date{static now(){return c.clock;}};c.clock=0;
+ vm.runInContext('let closeObservedMedia=streamedMusic.close;'+body()+';globalThis.controls={close:closeObservedMedia,observe:observeMediaRetirements,bindings:mediaErrorBindings,ledger:mediaLedger,diagnostics:mediaDiagnostics,raw:mediaRawFailures,rawIDs:mediaFailureIDs,prior:mediaPriorAcceptances,receipt:mediaReceipt,serial(v){mediaSerial=v;},phase(v){mediaPhase=v;}};',c);
+ if(pollute){const listeners=page.listeners('requestfailed');assert.equal(listeners.length,3);page.removeAllListeners('requestfailed');page.on('requestfailed',listeners[0]);page.on('requestfailed',listeners[1]);page.on('requestfailed',()=>shared.report.browserDiagnostics.push({event:'unrelated'}));page.on('requestfailed',listeners[2]);}
+ const events=rows.flatMap(row=>[{at:row.startedAt,kind:'request',row},...(row.endedAt==null?[]:[{at:row.endedAt,kind:row.terminal==='failed'?'requestfailed':'requestfinished',row}])]).sort((a,b)=>a.at-b.at||(a.kind==='request'?-1:1));
+ const requests=new Map();
+ for(const e of events){const row=e.row;c.clock=e.at;c.controls.phase(e.kind==='request'?row.phase:(failed.get(row.id)?.phase??row.phase));
+  if(e.kind==='request'){const r={url:()=>row.url,resourceType:()=>row.resourceType,failure:()=>({errorText:row.error})};requests.set(row.id,r);c.controls.serial(row.id-1);page.emit(e.kind,r);}else page.emit(e.kind,requests.get(row.id));
+ }
+ await beforeObserve(c.controls,shared,page);const rawBefore=JSON.stringify(c.controls.raw),ledgerBefore=JSON.stringify(c.controls.ledger),idsBefore=JSON.stringify(c.controls.rawIDs);
+ const nativeResult=await c.controls.close();assert.equal(nativeResult,'native-close');assert.equal(closes,1);assert.equal(JSON.stringify(c.controls.raw),rawBefore);assert.equal(JSON.stringify(c.controls.ledger),ledgerBefore);assert.equal(JSON.stringify(c.controls.rawIDs),idsBefore);
+ return {controls:c.controls,shared,o,unexplained:()=>shared.errors.filter((e,i)=>shared.indices.get(i)!==e)};
+}
+test('actual before retains three native errors and classifies only their exact indexes',async()=>{
+ const shared={errors:[],indices:new Map(),report:{browserDiagnostics:[]}};
+ for(let i=0;i<3;i++){const h=await replay('before',i,{shared});assert.equal(h.controls.receipt.classification.expectedRetirements.length,1);assert.equal(h.controls.receipt.classification.unexpected.length,0);assert.equal(h.controls.receipt.partition.acceptedExistingCancellations.length,0);}
+ assert.deepEqual(shared.errors,fixture.before.rawBrowserErrors);assert.equal(shared.indices.size,3);
+});
+test('actual after partitions eight prior native guard decisions, never raw telemetry',async()=>{
+ const shared={errors:[],indices:new Map(),report:{browserDiagnostics:[]}};const results=[];
+ for(let i=0;i<3;i++){const h=await replay('after',i,{shared});results.push(h);assert.equal(h.controls.receipt.classification.expectedRetirements.length,1);assert.equal(h.controls.receipt.classification.unexpected.length,0);assert.equal(h.unexplained().length,0);assert.equal(h.controls.receipt.partition.error,null);}
+ const d=results[1].controls.receipt;assert.equal(d.rawFailures.length,9);assert.equal(d.ledger.length,23);assert.equal(d.diagnostics.length,9);assert.equal(d.priorAudioCancellations.length,8);assert.equal(d.partition.acceptedExistingCancellations.length,8);assert.equal(d.partition.requests.length,1);assert.equal(d.partition.ledger.length,15);assert.equal(d.partition.diagnostics.length,1);
+ assert.deepEqual(JSON.parse(JSON.stringify(d.rawFailures)),fixture.after.mediaRetirementObservations[1].rawFailures);assert.deepEqual(shared.errors,fixture.after.rawBrowserErrors);assert.equal(shared.indices.size,3);assert.equal(shared.report.browserDiagnostics.length,8);
+ assert.equal(fixture.after.status,'failed');assert.equal(fixture.after.comparisonStatus,'not-run');
+});
+for(const mode of ['manifest-rel-missing','manifest-version-missing','other-origin','other-version','RESET','FAILED','non-fetch'])test('prior native decision is not invented for '+mode,async()=>{
+ const h=await replay('after',1,{editManifest(m){if(mode==='manifest-rel-missing')delete m.artifacts['patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Stick_00.mp3'];if(mode==='manifest-version-missing')for(const k of Object.keys(m.artifacts))if(k.startsWith('_versions/')&&k.endsWith('/Wp_BombSuction_Stick_00.mp3'))delete m.artifacts[k];},editRows(rows,diags){const row=rows.find(r=>r.id===638),d=diags.get(638);if(mode==='other-origin')row.url=d.url=row.url.replace('127.0.0.1','localhost');if(mode==='other-version')row.url=d.url=row.url.replace('/_versions/','/_versions/wrong/');if(['RESET','FAILED'].includes(mode))row.error=d.failure='net::ERR_'+(mode==='RESET'?'CONNECTION_RESET':'FAILED');if(mode==='non-fetch')row.resourceType=d.resourceType='media';}});
+ assert(h.controls.receipt.classification.unexpected.length>0);assert(h.unexplained().length>0);assert.equal(h.shared.indices.size,0);
+});
+for(const mode of ['missing-decision','wrong-id','wrong-raw-index','wrong-diagnostic-index','duplicate-decision','foreign-decision','reused-decision','swapped-decisions','wrong-decision-asset','missing-ledger','missing-diagnostic','wrong-raw-id','changed-raw','orphan-ledger'])test('inconsistent partition remains fail-closed: '+mode,async()=>{
+ const h=await replay('after',1,{beforeObserve(c){const r=c.prior[0];if(mode==='missing-decision')c.prior.splice(0,1);if(mode==='wrong-id')r.id=622;if(mode==='wrong-raw-index')r.rawIndex=0;if(mode==='wrong-diagnostic-index')r.diagnosticIndex++;if(mode==='duplicate-decision')c.prior.push({...r});if(mode==='foreign-decision')r.decision={...r.decision};if(mode==='reused-decision'){c.prior[1].diagnosticIndex=r.diagnosticIndex;c.prior[1].decision=r.decision;}if(mode==='swapped-decisions'){const other=c.prior[1],index=r.diagnosticIndex,decision=r.decision;r.diagnosticIndex=other.diagnosticIndex;r.decision=other.decision;other.diagnosticIndex=index;other.decision=decision;}if(mode==='wrong-decision-asset')r.decision.asset='different-recorded-asset.mp3';if(mode==='missing-ledger')c.ledger.splice(c.ledger.findIndex(x=>x.id===r.id),1);if(mode==='missing-diagnostic')c.diagnostics.splice(c.diagnostics.findIndex(x=>x.id===r.id),1);if(mode==='wrong-raw-id')c.rawIDs[r.rawIndex]=622;if(mode==='changed-raw')c.raw[r.rawIndex].error='net::ERR_FAILED';if(mode==='orphan-ledger')c.ledger.push({id:999,url:'https://fixture.invalid/unmatched.mp3',resourceType:'fetch',phase:'capture',startedAt:1,endedAt:2,terminal:'failed',error:'net::ERR_FAILED'});}});
+ assert(h.controls.receipt.classification.unexpected.length>0);assert(h.unexplained().length>0);assert.equal(h.shared.indices.size,0);
+});
+for(const mode of ['raw32','diagnostic64','ledger512'])test('partition never hides an original collection cap: '+mode,async()=>{
+ const h=await replay('after',1,{beforeObserve(c){if(mode==='raw32')while(c.raw.length<32){c.raw.push({url:'https://fixture.invalid/'+c.raw.length,error:'net::ERR_FAILED'});c.rawIDs.push(1000+c.raw.length);}if(mode==='diagnostic64')while(c.diagnostics.length<64)c.diagnostics.push({event:'failed',id:1000+c.diagnostics.length,url:'https://fixture.invalid/'+c.diagnostics.length,failure:'net::ERR_FAILED'});if(mode==='ledger512')while(c.ledger.length<512)c.ledger.push({id:1000+c.ledger.length,url:'https://fixture.invalid/'+c.ledger.length});}});
+ assert.equal(h.controls.receipt.partition.error,'incomplete original failure collection');assert(h.unexplained().length>0);assert.equal(h.shared.indices.size,0);
+});
+test('unrelated diagnostic append cannot counterfeit an adjacent native decision',async()=>{const h=await replay('after',1,{pollute:true});assert.equal(h.controls.prior.length,0);assert(h.controls.receipt.classification.unexpected.length>0);assert(h.unexplained().length>0);});
+test('an independent HTTP/page/console error stays fatal alongside permitted native retirements',async()=>{const h=await replay('after',1,{beforeObserve(c,shared){shared.errors.push('HTTP 503 genuine failure');}});assert.equal(h.controls.receipt.classification.unexpected.length,0);assert.deepEqual(h.unexplained(),['HTTP 503 genuine failure']);assert.equal(h.shared.errors.length,2);});
+test('unknown non-media network failure is not partitioned by the known native s3 receipts',async()=>{const h=await replay('after',1,{editRows(rows,diags){const x={id:777,url:'https://fixture.invalid/runtime.js',resourceType:'script',phase:'capture',startedAt:1793416382000,endedAt:1793416383000,terminal:'failed',error:'net::ERR_ABORTED'};rows.push(x);diags.set(x.id,{event:'failed',id:x.id,url:x.url,phase:x.phase,resourceType:x.resourceType,failure:x.error});}});assert(h.controls.receipt.classification.unexpected.length>0);assert(h.unexplained().some(x=>x.includes('runtime.js')));assert.equal(h.shared.indices.size,0);});
+}

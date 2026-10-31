@@ -216,7 +216,7 @@ async function openGameContext({ mobile = false } = {}) {
     }
   });
 
-  const mediaRequestIDs=new WeakMap(),mediaErrorStarts=new WeakMap(),mediaLedger=[],mediaDiagnostics=[],mediaRawFailures=[],mediaErrorBindings=[],mediaApprovedIndices=new Set();
+  const mediaRequestIDs=new WeakMap(),mediaErrorStarts=new WeakMap(),mediaLedger=[],mediaDiagnostics=[],mediaRawFailures=[],mediaErrorBindings=[],mediaApprovedIndices=new Set(),mediaFailureIDs=[],mediaPriorAcceptances=[];
   let mediaSerial=0,mediaLedgerDropped=0,mediaPhase='startup',mediaErrorReported=false,mediaObservation=0;
   const mediaID=r=>mediaRequestIDs.get(r)||(mediaRequestIDs.set(r,++mediaSerial),mediaSerial);
   const isObservedAudio=r=>/\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
@@ -228,7 +228,7 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
   // Capture the exact append boundary before the unchanged strict listener.
-  page.on('requestfailed',r=>mediaErrorStarts.set(r,mimeErrors.length));
+  page.on('requestfailed',r=>mediaErrorStarts.set(r,{index:mimeErrors.length,diagnostics:report.browserDiagnostics.length}));
   page.on('requestfailed', r => {
     const failure=r.failure()?.errorText || 'unknown', url=new URL(r.url());
     const root=`/_versions/${manifest.build.revision}/`;
@@ -241,6 +241,27 @@ async function openGameContext({ mobile = false } = {}) {
       report.browserDiagnostics.push({event:'verified-audio-fetch-cancelled',asset,mobile,at:new Date().toISOString()});
     } else mimeErrors.push(`request failed ${r.url()}: ${failure}`);
   });
+  // Partition only decisions already made by the unchanged strict listener.
+  // Preserve full raw telemetry and its original caps before deriving inputs.
+  const partitionMediaFailures=()=>{
+    const rawIndices=new Set(),ids=new Set(),decisionIndices=new Set(),decisions=new Set();let error=null;
+    if(mediaRawFailures.length>=32||mediaDiagnostics.length>=64||mediaLedger.length>=512||mediaLedgerDropped||mediaFailureIDs.length!==mediaRawFailures.length)error='incomplete original failure collection';
+    for(const receipt of mediaPriorAcceptances){
+      const {id,url,error:failure,rawIndex,diagnosticIndex,decision}=receipt;
+      const rows=mediaLedger.filter(r=>r.id===id),diags=mediaDiagnostics.filter(d=>d.id===id),raw=mediaRawFailures[rawIndex];
+      if(!Number.isSafeInteger(id)||id<1||!Number.isSafeInteger(rawIndex)||rawIndex<0||rawIndices.has(rawIndex)||ids.has(id)||
+        mediaFailureIDs[rawIndex]!==id||!raw||raw.url!==url||raw.error!==failure||failure!=='net::ERR_ABORTED'||
+        receipt.resourceType!=='fetch'||rows.length!==1||rows[0].terminal!=='failed'||rows[0].url!==url||rows[0].error!==failure||rows[0].resourceType!=='fetch'||
+        diags.length!==1||diags[0].event!=='failed'||diags[0].url!==url||diags[0].failure!==failure||diags[0].resourceType!=='fetch'||diags[0].phase!==rows[0].phase||
+        mediaErrorBindings.some(b=>b.id===id)||!Number.isSafeInteger(diagnosticIndex)||diagnosticIndex<0||report.browserDiagnostics[diagnosticIndex]!==decision||
+        decision?.event!=='verified-audio-fetch-cancelled'||decision.mobile!==mobile||decisionIndices.has(diagnosticIndex)||decisions.has(decision)||
+        url!==new URL(`_versions/${manifest.build.revision}/${decision.asset}`,address).href){error='inconsistent prior strict-listener decision';break;}
+      rawIndices.add(rawIndex);ids.add(id);decisionIndices.add(diagnosticIndex);decisions.add(decision);
+    }
+    return {requests:error?mediaRawFailures:mediaRawFailures.filter((_,index)=>!rawIndices.has(index)),
+      ledger:error?mediaLedger:mediaLedger.filter(row=>!ids.has(row.id)),diagnostics:error?mediaDiagnostics:mediaDiagnostics.filter(row=>!ids.has(row.id)),
+      acceptedExistingCancellations:error?[]:mediaPriorAcceptances,error};
+  };
   const observeMediaRetirements=async label=>{
     const observation=++mediaObservation;
     for(const index of mediaApprovedIndices)mediaRetirementErrorIndices.delete(index);
@@ -248,7 +269,9 @@ async function openGameContext({ mobile = false } = {}) {
     let snapshot=null;try{snapshot=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null);}catch(error){snapshot={diagnosticError:String(error?.message||error)};}
     if(observation!==mediaObservation)return;
     const mediaTrace=correlateContextMediaRequests(snapshot,mediaLedger,mediaLedgerDropped);
-    const classification=classifyContextRequestFailures({requests:mediaRawFailures,ledger:mediaLedger,diagnostics:mediaDiagnostics,mediaTrace,expectedMenuURL});
+    const partition=partitionMediaFailures();
+    const classification=classifyContextRequestFailures({requests:partition.requests,ledger:partition.ledger,diagnostics:partition.diagnostics,
+      mediaTrace:partition.error?{...mediaTrace,evidenceComplete:false,diagnosticError:partition.error}:mediaTrace,expectedMenuURL});
     // Bind the exact original error-array append, not a URL/string-wide waiver.
     for(const receipt of classification.unexpected.length?[]:classification.expectedRetirements){
       const bindings=mediaErrorBindings.filter(b=>b.id===receipt.id&&b.url===receipt.url&&b.error==='net::ERR_ABORTED');
@@ -257,14 +280,20 @@ async function openGameContext({ mobile = false } = {}) {
         {mediaRetirementErrorIndices.set(b.index,message);mediaApprovedIndices.add(b.index);}
     }
     if(!mediaErrorReported&&mediaTrace.records.some(e=>e.event==='media-error'||e.mediaError!=null)){mediaErrorReported=true;mimeErrors.push('native media error observed');}
-    Object.assign(mediaReceipt,{label,rawFailures:mediaRawFailures,ledger:mediaLedger,diagnostics:mediaDiagnostics,ledgerDropped:mediaLedgerDropped,mediaTrace,classification,errorBindings:mediaErrorBindings});
+    Object.assign(mediaReceipt,{label,rawFailures:mediaRawFailures,rawFailureIDs:mediaFailureIDs,ledger:mediaLedger,diagnostics:mediaDiagnostics,ledgerDropped:mediaLedgerDropped,mediaTrace,classification,errorBindings:mediaErrorBindings,priorAudioCancellations:mediaPriorAcceptances,partition});
   };
   closeObservedMedia=async()=>{await observeMediaRetirements('before-context-close');return streamedMusic.close();};
   page.on('request',r=>{mediaID(r);if(isObservedAudio(r)){if(mediaLedger.length<512)mediaLedger.push({id:mediaID(r),url:r.url(),resourceType:r.resourceType(),phase:mediaPhase,startedAt:Date.now(),endedAt:null});else mediaLedgerDropped++;}});
   page.on('requestfinished',r=>settleMedia(r,'finished'));
   page.on('requestfailed',r=>{
-    settleMedia(r,'failed');const failure=r.failure()?.errorText||'unknown',url=r.url(),id=mediaID(r),before=mediaErrorStarts.get(r);
-    if(mediaRawFailures.length<32)mediaRawFailures.push({url,error:failure});
+    settleMedia(r,'failed');const failure=r.failure()?.errorText||'unknown',url=r.url(),id=mediaID(r),start=mediaErrorStarts.get(r),before=start?.index;
+    const rawIndex=mediaRawFailures.length;
+    if(rawIndex<32){mediaRawFailures.push({url,error:failure});mediaFailureIDs.push(id);}
+    // The adjacent native collector, not a second URL whitelist, made this decision.
+    const decision=report.browserDiagnostics[start?.diagnostics];
+    if(rawIndex<32&&Number.isSafeInteger(before)&&mimeErrors.length===before&&report.browserDiagnostics.length===start.diagnostics+1&&
+      decision?.event==='verified-audio-fetch-cancelled'&&decision.mobile===mobile)
+      mediaPriorAcceptances.push({id,url,error:failure,resourceType:r.resourceType(),rawIndex,diagnosticIndex:start.diagnostics,decision});
     if(mediaDiagnostics.length<64)mediaDiagnostics.push({event:'failed',phase:mediaPhase,id,url,resourceType:r.resourceType(),failure});
     if(Number.isSafeInteger(before)&&mimeErrors.length===before+1&&mimeErrors[before]===`request failed ${url}: ${failure}`)
       mediaErrorBindings.push({id,url,error:failure,index:before});
