@@ -5,9 +5,14 @@ export function classifyInkwaveBrowser(userAgent) {
   if (typeof userAgent !== 'string' || userAgent.length < 20 || userAgent.length > 4096)
     return 'blocked';
   // Most Chromium-derived browsers include Chrome/ or Safari/ as compatibility
-  // tokens. Exclude their own identifying tokens before accepting those.
-  if (/(?:\b(?:Edg(?:e|A|iOS)?|OPR|OPiOS|Opera|Firefox|FxiOS|SamsungBrowser|UCBrowser|DuckDuckGo|YaBrowser|Vivaldi|MiuiBrowser|Puffin|GSA|FBAN|FBAV|Instagram|MicroMessenger|Line|Chromium|Silk|Whale|Focus|CriOSWebView)\/|\b(?:FB_IAB|wv)\b)/i.test(userAgent))
+  // tokens. Exclude non-allowed browser brands before accepting their tokens.
+  if (/(?:\b(?:OPR|OPiOS|Opera|Firefox|FxiOS|SamsungBrowser|UCBrowser|DuckDuckGo|YaBrowser|Vivaldi|MiuiBrowser|Puffin|GSA|FBAN|FBAV|Instagram|MicroMessenger|Line|Chromium|Silk|Whale|Focus|CriOSWebView)\/|\b(?:FB_IAB|wv)\b)/i.test(userAgent))
     return 'blocked';
+  // Edge UAs on desktop/Android also advertise Chrome. Classify Edge first.
+  // Edg/ = Chromium desktop, EdgA/ = Android, EdgiOS/ = iOS/iPadOS.
+  // Edge/ covers the older branding (actual engine compatibility is separate).
+  if (/\b(?:Edg|Edge|EdgA|EdgiOS)\/\d+/i.test(userAgent))
+    return 'edge';
   // Chrome PWA carries a Chrome UA; iOS Chrome uses CriOS. Accept HeadlessChrome
   // for automated browser regression suites; bots must be addressed separately.
   if (/\b(?:Chrome|CriOS|HeadlessChrome)\/\d+/i.test(userAgent))
@@ -29,7 +34,7 @@ export function classifyInkwaveBrowser(userAgent) {
 
 export function inkwaveBrowserPermitted(userAgent, standalone = false) {
   const type = classifyInkwaveBrowser(userAgent);
-  return type === 'safari' || type === 'chrome' ||
+  return type === 'safari' || type === 'chrome' || type === 'edge' ||
     (type === 'ios-webapp-candidate' && standalone === true);
 }
 
@@ -41,7 +46,7 @@ export const INKWAVE_UNSUPPORTED_BROWSER_HTML = '<!doctype html><html lang="ja">
   'main{max-width:520px;padding:32px;text-align:center}' +
   'h1{font-size:24px}p{color:#dde2f4}</style></head><body><main>' +
   '<h1>このブラウザでは起動できません</h1>' +
-  '<p>Safari・Google Chrome、またはホーム画面に追加した対応Webアプリから開いてください。</p>' +
+  '<p>Safari・Google Chrome・Microsoft Edge、またはホーム画面に追加した対応Webアプリから開いてください。</p>' +
   '</main></body></html>';
 
 // Inject before the import map and the game entry. Its contents are hashed by
@@ -53,7 +58,7 @@ export function inkwaveBrowserGuardScript() {
     'const mode=classify(navigator.userAgent);' +
     'const standalone=navigator.standalone===true||' +
     '(typeof matchMedia==="function"&&matchMedia("(display-mode: standalone)").matches);' +
-    'if(mode==="safari"||mode==="chrome"||' +
+    'if(mode==="safari"||mode==="chrome"||mode==="edge"||' +
     '(mode==="ios-webapp-candidate"&&standalone))return;' +
     'document.open();document.write(' + JSON.stringify(INKWAVE_UNSUPPORTED_BROWSER_HTML) + ');' +
     'document.close();if(typeof window.stop==="function")window.stop();' +
