@@ -1,0 +1,126 @@
+{
+  "new_distinct_cases_passed": 196,
+  "existing_distinct_cases_passed": 176,
+  "total_distinct_cases_passed": 372,
+  "emitted_repeat_cases_passed": 163,
+  "emitted_contentHash": "e1e98b2599402f2a2955f26d9115d3a5d612ac2e853427c9aa00e832f9682936",
+  "source_suites": [
+    {
+      "category": "new",
+      "suite": "sub trajectory parity",
+      "cases": 145,
+      "passed": 145,
+      "log": "source-sub-tests.txt",
+      "log_sha256": "baa4f1a3f21ba4debbdc41c0be7d15bd7a90296213b8ef2f025fb07fb246d416"
+    },
+    {
+      "category": "new",
+      "suite": "special trajectory a",
+      "cases": 8,
+      "passed": 8,
+      "log": "source-special-final-a.txt",
+      "log_sha256": "8cf8ed70c3b849442226e6f563540fc57ec22efbb965d06fd6222550ec019e85"
+    },
+    {
+      "category": "new",
+      "suite": "special trajectory b",
+      "cases": 10,
+      "passed": 10,
+      "log": "source-special-final-b.txt",
+      "log_sha256": "d012877a9ceb0646f385d2baa50d7ad95e0950f3c4f2f4b79528d2ed7cc4f05f"
+    },
+    {
+      "category": "new",
+      "suite": "throw prediction UI",
+      "cases": 16,
+      "passed": 16,
+      "log": "ui-tests.txt",
+      "log_sha256": "4667707ba078fd4ad3ac7c1438c07f67581b57e2158987f46e4b2a819b8f5ae0"
+    },
+    {
+      "category": "new",
+      "suite": "sensor flight",
+      "cases": 4,
+      "passed": 4,
+      "log": "source-support-sensor-prediction.log",
+      "log_sha256": "7e68a5b56a562fd7289010df44d7b1796d9fa5f878c67f829ca402cd53638cd8"
+    },
+    {
+      "category": "new",
+      "suite": "release forecast",
+      "cases": 3,
+      "passed": 3,
+      "log": "source-sub-release-forecast.log",
+      "log_sha256": "e22db35a9da75c75d6222830128eb2560b83c3638bfe0aae17199a6cbc006a2b"
+    },
+    {
+      "category": "new",
+      "suite": "charge key",
+      "cases": 6,
+      "passed": 6,
+      "log": "source-sub-prediction-charge-key.log",
+      "log_sha256": "5b84f1ddc72db7727c4362dfdf14f3d7a340f92d542c7f2169be0aac42ac8ad3"
+    },
+    {
+      "category": "new",
+      "suite": "decoy VFX",
+      "cases": 4,
+      "passed": 4,
+      "log": "chump-vfx-tests.txt",
+      "log_sha256": "471f4a0142e4d8cf2f6330aa913749f535c7517a6aca7bda2121d5f69031c4ae"
+    },
+    {
+      "category": "existing",
+      "suite": "kit subs",
+      "cases": 38,
+      "passed": 38,
+      "log": "source-kit-subs.log",
+      "log_sha256": "f2466d6a68b1bd0afc92d5e5c8ea98c3283f5e4cec894179a94a41095f31c589"
+    },
+    {
+      "category": "existing",
+      "suite": "all subs",
+      "cases": 22,
+      "passed": 22,
+      "log": "source-all-subs.log",
+      "log_sha256": "565bf1720368c4a9bd51eb9a2d7f8e67e776599e5910393754406d089c76f5a0"
+    },
+    {
+      "category": "existing",
+      "suite": "special device flight",
+      "cases": 16,
+      "passed": 16,
+      "log": "special-device-tests.txt",
+      "log_sha256": "1ae0e36e06880811f9f4d89eea2c691480ec02dd31cfa7f27c67c67d5c8d37a4"
+    },
+    {
+      "category": "existing",
+      "suite": "special projectile forces",
+      "cases": 3,
+      "passed": 3,
+      "log": "special-projectile-tests.txt",
+      "log_sha256": "542b0ba118e094ab6472ef6ef1cce0353fb314f817c82f7ad1d347165e30ca98"
+    },
+    {
+      "category": "existing",
+      "suite": "special multistorey",
+      "cases": 12,
+      "passed": 12,
+      "log": "special-multistorey-tests.txt",
+      "log_sha256": "3fa29d5fcdc99e0e9c2c35b6d4d21f5f7d6c233fb178f9ea8f2c539b917a812e"
+    },
+    {
+      "category": "existing",
+      "suite": "all specials and imported Kraken",
+      "cases": 85,
+      "passed": 85,
+      "results": "../../validation-all-specials-split-2026-10-30.json"
+    }
+  ],
+  "notes": [
+    "Emitted 163 are repeat executions, not additional distinct cases.",
+    "Earlier focused seven special tests are included in the final85 and not counted twice.",
+    "Browser/GPU render and Nintendo Switch executable comparisons are not completed.",
+    "Build was explicitly unminified offline; no minified build claim."
+  ]
+}

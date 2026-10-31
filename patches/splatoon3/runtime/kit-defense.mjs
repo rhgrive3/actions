@@ -50,6 +50,7 @@ export function installKitDefense(api) {
     probe.vel = b.vel; probe.damage = Number.isFinite(directDamage) ? directDamage
       : kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);
     probe.ghost = !!b.ghost; probe.s3InkVacBomb = b; probe.s3InkVacAbsorbed = !!b.s3InkVacAbsorbed;
+    probe.s3Prediction = !!b.s3Prediction;
     probe.s3Sub = b.s3Sub || { id: subId }; probe.s3Resolved = b.s3Resolved || null;
     let best = null;
     const consider = (candidate, kind) => {

@@ -68,8 +68,14 @@ vec3 sxInk(vec3 c, vec3 n, vec3 V, float g){
   env = mix(env, env * (c * 0.8 + 0.2) * 1.6, 0.6);
   vec3 col = mix(base, env, (0.03 + 0.97 * (edge2 * edge2)) * g * 0.3);
   float rl = clamp(dot(R, uSunDirV), 0.0, 1.0);
-  if (rl > 0.0) {
-    col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 24.0) * 0.22) * g;
+  // Below this cutoff the omitted lobe is < 7.2e-6 per unit sun intensity
+  // in linear colour. The painted gloss spot starts at 0.86 and is unchanged.
+  // This is a bounded visual approximation, not bit-identical shader math.
+  if (rl > 0.65) {
+    float rl2 = rl * rl, rl3 = rl2 * rl, rl6 = rl3 * rl3;
+    float rl12 = rl6 * rl6, rl24 = rl12 * rl12, rl48 = rl24 * rl24;
+    float rl150 = rl48 * rl48 * rl48 * rl6;
+    col += uSunCol * (rl150 * 7.0 + rl24 * 0.22) * g;
     col += vec3(1.0) * smoothstep(0.86, 0.9, rl) * 0.85 * g;             // the crisp, painted-looking gloss spot of S3 ink
   }
   return col * mix(0.85, 1.0, g);
@@ -302,12 +308,13 @@ class SpritePool {
     // A burst's adjacent particles share drag. Reuse only this update's last
     // exact factor; keep non-finite time and NaN rates on the original path.
     const finiteTime = Number.isFinite(dt), frame = 1 / 60;
+    const fractionalTime = finiteTime && dt > 0 && dt !== frame;
     let lastDrag = NaN, lastDragFactor = 0, travel = 0, kick = 0, fall = 0;
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
       // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
-      const rate = p[i + 10], fractional = finiteTime && dt > 0 && dt !== frame && rate >= 0 && Number.isFinite(rate);
+      const rate = p[i + 10], fractional = fractionalTime && rate >= 0 && Number.isFinite(rate);
       if (!(finiteTime && rate === lastDrag)) {
         lastDrag = rate; lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt);
         if (fractional) {
@@ -481,21 +488,24 @@ class RibbonPool {
     for (const r of this.list) {
       const p = r.pts, n = p.length; if (n < 2) continue;
       const base = slot * this.M * 2; slot++;
+      const options = r.o, flat = options.flat, life = options.life;
+      const width = options.width, widthDelta = options.widthTail - width;
+      const opacity = options.alpha, color = options.color, style = options.style, seed = options.seed;
       for (let k = 0, active = Math.min(n, this.M); k < active; k++) {
         const j = Math.min(n - 1, k), q = p[n - 1 - j];                 // head first
         const qa = p[Math.max(0, n - 2 - j)], qb = p[Math.min(n - 1, n - j)];
         t.set(qb[0] - qa[0], qb[1] - qa[1], qb[2] - qa[2]); if (t.lengthSq() < 1e-10) t.set(0, 1, 0); t.normalize();
-        if (r.o.flat) c.set(0, 1, 0); else c.set(camPos.x - q[0], camPos.y - q[1], camPos.z - q[2]).normalize();   // flat: lies on the ground
+        if (flat) c.set(0, 1, 0); else c.set(camPos.x - q[0], camPos.y - q[1], camPos.z - q[2]).normalize();   // flat: lies on the ground
         s.crossVectors(t, c); if (s.lengthSq() < 1e-8) s.set(1, 0, 0); s.normalize();
-        const age = Math.min(1, (now - q[3]) / r.o.life), along = n > 1 ? j / (n - 1) : 0;
-        const w = (r.o.width + (r.o.widthTail - r.o.width) * Math.max(age, along)) * 0.5;
-        const alpha = k < n ? r.o.alpha * (1 - age) * (1 - along * 0.3) : 0;
+        const age = Math.min(1, (now - q[3]) / life), along = n > 1 ? j / (n - 1) : 0;
+        const w = (width + widthDelta * Math.max(age, along)) * 0.5;
+        const alpha = k < n ? opacity * (1 - age) * (1 - along * 0.3) : 0;
         for (let side = 0; side < 2; side++) {
           const vi = base + k * 2 + side, sg = side ? 1 : -1;
           P[vi * 3] = q[0] + s.x * w * sg; P[vi * 3 + 1] = q[1] + s.y * w * sg; P[vi * 3 + 2] = q[2] + s.z * w * sg;
-          C[vi * 4] = r.o.color[0]; C[vi * 4 + 1] = r.o.color[1]; C[vi * 4 + 2] = r.o.color[2]; C[vi * 4 + 3] = alpha;
+          C[vi * 4] = color[0]; C[vi * 4 + 1] = color[1]; C[vi * 4 + 2] = color[2]; C[vi * 4 + 3] = alpha;
           const ri=vi*4, r0=R[ri], r1=R[ri+1], r2=R[ri+2], r3=R[ri+3];
-          R[ri] = along; R[ri+1] = sg; R[ri+2] = r.o.style; R[ri+3] = r.o.seed;
+          R[ri] = along; R[ri+1] = sg; R[ri+2] = style; R[ri+3] = seed;
           if (!Object.is(r0,R[ri]) || !Object.is(r1,R[ri+1]) || !Object.is(r2,R[ri+2]) || !Object.is(r3,R[ri+3])) { ribStart=Math.min(ribStart,ri); ribEnd=Math.max(ribEnd,ri+4); }
           SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
         }

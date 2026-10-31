@@ -7089,3 +7089,31 @@ The main91c compact reticle owner changes and original capture-derived calibrati
 ### 2026-10-30: チャージ音とインク残量
 
 統合した音声修正では、チャージャー・スピナー・ストリンガーの音を実際にインクで充填できた進行量に追従させ、スピナーの満充電音を共通ビープに変更した。参照は旧作系コミュニティ資料と既存の試聴であり、Splatoon 3 Ver.11.3.0実機の音色・音程・タイミングとの一致は未確認。対象ブキ、残量条件、音源、音声回帰と検証の限界は[チャージ音の修正記録](charge-ink-audio-fix-20261031.md)を参照。
+
+### 2026-10-31: ナワバリCPUの筆・チャージ・敵インク対応
+
+基準main `df8a4b8f8c29bf68a3480e8be14624c82f6d5190`。コミュニティ[フデ属](https://wikiwiki.jp/splatoon3mix/ブキ/フデ属)の振り／塗り進み、[R-PEN/5H](https://wikiwiki.jp/splatoon3mix/ブキ/R-PEN／5H)の満充填後の5発、[ソイチューバー](https://wikiwiki.jp/splatoon3mix/ブキ/ソイチューバー)と[LACT-450](https://wikiwiki.jp/splatoon3mix/ブキ/LACT-450)の短い塗り射撃を参考に、プレイヤーの入力処理や武器性能ではなくナワバリCPUの入力判断を変更した。Wikiの記述は公式の実機計測ではなく、参照バージョン・ギア・操作条件も本件では統一していない。
+
+`inkwave-public/src/game/bots.js`で筆の近距離戦は連続振りの押下・解放を生成、R-PENは通常塗りと戦闘で満充填・残弾発射を選ぶ。ソイチューバーとLACTの塗りは短いチャージを使い、他のチャージャー／弓も自インク外では短い射撃を選ぶ。LACTとフルイドは近距離の戦闘で一段階チャージを選ぶ。敵を視認中に照準が外れたとき、溜め途中でただちに発射せず、充填後の待ちは制限する。敵インク上で敵が見えず、残インクに余裕があり特殊動作中でないときは、移動を保ちつつ進行方向を狙い、自インクの道を作ることで足元の塗り返しを試す。敵視認中や逃走中は従来の判断を優先する。試行上限と再試行待ちを置き、足元を塗れない武器・地形でも行動が固定されないようにする。
+
+差分の再現例: (1) ホクサイCPUを近距離の敵と対峙させ、従来の押し続けから複数の振りが出るか確認。(2) R-PEN CPUに未塗りの床を塗らせ、フルチャージ後に複数発が出るか確認。(3) 敵なし・残インク十分で敵インク上にCPUを置き、足元が自インクに変わるか確認。筆・チャージ・床塗りの実行は `patches/local-quality/tests/bot-weapon-territory.test.mjs`、既存の回復とチャージ解放も回帰対象とする。平坦な制御床の実Actor／Projectile／PaintSystemを使うロジック検証と、TidewaterのCPU戦は本家実機の挙動比較とは別。武器・地形・対戦状況の全組合せ、ゲームパッド操作時の本家との同条件比較、Switch実機の挙動は未確認。
+
+### 2026-10-31: Zero-headroom 提案の監査と挙動を保つ最適化
+
+比較基準は main `df8a4b8f8c29bf68a3480e8be14624c82f6d5190`、本家の参照版は既存と同じ Splatoon 3 Ver.11.3.0。指定された Drive のアダプターと全挙動レビューを読み、公開版 `inkwave-public/` の実行経路へ照合した。添付の過去のモデル再構成 PDF を 11.3.0 の全数値ダンプとは扱わず、既存の未確認事項を引き継ぐ。特定ブキの威力、射撃間隔、塗り・衝突半径、インク消費、ギア倍率の再校正は行っていない。
+
+native の描画区間、タイル分類、単一タイルの塗装チャート選択、detail 投影再利用、三角形内判定、塗り所有矩形、ボス処理を最適化した。可視インデックスのソース順、未消費の複数カメラ GPU 転送、属性の正規化・half-float・独自 getter、三角形共有辺の浮動小数点順序を維持する。detail 投影配列は 2 MiB / 64 面に制限し、clear/dispose と元データ・基底の置換に対応する。塗り矩形の縦結合は描画用の表現を変えるが、所有セル・turf・被覆を変えない。床・壁 × line/shot/roller の 6 条件を実 PaintSystem/GLSL で比較し、最終 RGBA8 は全条件で差 0 だった。
+
+ボスの damage history は非空のフレームで減衰係数を一度計算するだけとし、微小履歴の削除はしない。attention は従来どおりターゲット選択時に 0.8 倍し、毎フレームの指数減衰へ変えない。提供ヘルパーの時計置換は finalTick・入力・RNG・回復の所有者を落とすため不採用とし、既存の固定 60 Hz と catch-up 方針を維持した。20〜144 Hz の外側更新を含む clock 回帰を確認した。
+
+VFX の鏡面反射だけは、利用者が許可した微小な見た目差として乗算列と弱い裾の省略を採用した。これはビット一致ではない。Chromium 151 / ANGLE SwiftShader の 96 条件、25,165,824 ピクセルを、実際の Three NeutralToneMapping + sRGB で比較したところ、表示チャンネル差は最大 1/255、変化したピクセルは 0.014448% だった。強いハイライトの既存境界、粒子・攻撃の時間進行や塗り判定は維持する。全ゲーム画面や本家実機の画質一致を示す測定ではない。
+
+Flow の instanced/skinned mesh、Zipcaster の skinned coat、泳ぎ film の専用 geometry と Physical material を、実際の所有者の prewarm に接続した。一般的な平面ダミーで代用せず、非使用時の可視性と資源寿命を維持する。最適化した配信物と source-loaded Character を使う実 WebGL 検査では、対象 8 material の制御した初回発動で追加 program variant 0、coat 2 回再利用時の借用 geometry 廃棄 0、film の最初の swimmer に同一 slot 再利用を確認した。FX/scene がステージをまたいで残るため、GL context を共有する renderer facade の重複処理を抑えつつ、FX.clear と context 復旧では prewarm をやり直す。scene のライト追加後に新しい film variant が実際に link することも確認した。
+
+通常ビルド、composition、互換性、source owner、起動サイズ予算のゲートが成功した。検査した配信物の content hash は `9f4f5f403173e82d19570d6b423af6d65e1dd36dfd153189eae0a94432e2b5d5`。Node の局所測定では描画選択 20.6%、partition 初期化 45.8%、detail replay 42.9% の処理時間減少が得られたが、対戦全体や端末 FPS の改善率ではない。5 件の native asset 依存テストは payload 不在で skip、23 stage の prebuilt payload は今回ローカル未検証で browser conversion fallback を使用した。iPad mini 6 / Safari の性能、全ステージ、本家実機との全挙動比較は未確認。main マージと公開更新の状態は別の統合記録で確認する。[採否・境界条件・測定・再実行コマンド・検証の限界](zero-headroom-review-20261031.md)。
+
+### 2026-10-31: Zero-headroom 統合CIの復旧ゲート観測を補完
+
+PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニュー録音の単発 `net::ERR_ABORTED` が報告された。対戦録音の受信完了は確認できたが、実再生の証拠がなかったため初回失敗を成功へ振り替えていない。既存の厳密なメニュー終了判定を復旧ゲートへ接続し、正確な現 revision の URL、対戦録音の HTTP 200 と同一 request ID の完了、実 RG の battle 所有者・非廃棄・非失敗・再生中・readyState・currentSrc を要求した。生の通信失敗は保持し、GPU loss 前の許可済み記録を固定することで、loss 後の追加失敗も必ず棄却する。観測ヘルパーの実ファイルも checkout identity の対象に追加した。
+
+追加回帰は context recovery 28、streamed-music diagnostics 47、media admission 3 の計78 pass。先行156と重複しないため、この作業の選択したローカル回帰小計は234 pass / 5 asset-dependent skip / 0 fail。原本メニュー音源を復元した完全ビルド（content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`）で、旧メニューの中断1件と正常な対戦BGM再生を同時に観測し、実 context lost/restored、120 RAF、60 direct frames と CPU/grid 所有者・全grid byteの保存を確認した。音声エラーの一括無視や再試行による通過ではない。[詳細と検証範囲](zero-headroom-review-20261031.md#11-統合-ci-で判明した復旧ゲートの観測不足と修正)を参照。最終 head のホスト CI・main 反映状態は PR の記録で確認する。
