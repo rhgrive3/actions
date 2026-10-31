@@ -98,7 +98,7 @@ export function installKitAudio(api,{listen,options}){
    let row=active.get(this);
    // A deferred real loop may fail while the special remains active. Retire
    // the failed handle so the next update can retry after loader backoff.
-   if(row&&(row.id!==id||!this.alive||!loopEvent||!row.handle?.playing)){
+   if(row&&(row.id!==id||!this.alive||!loopEvent||(!row.handle?.playing&&!row.handle?._sfxDeferred))){
      row.handle?.stop(.1);active.delete(this);row=null;
    }
    if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]&&(row||G.audio?._realS3Loader?.declares('special:'+id,loopEvent)!==false&&!G.audio?._realS3Loader?.retryPending?.('special:'+id,loopEvent))){

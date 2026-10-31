@@ -48,7 +48,7 @@ function append(s, data) {
   if(s.pending.size>=limits.contacts) throw Error('Native contact backlog exhausted');
   const token=Object.freeze({});
   const record=Object.freeze({...data,epoch:s.epoch,tick:s.tick,time:s.context.time,serial:++s.serial});
-  contacts.set(token,{session:s,record,used:false});s.pending.add(token);
+  contacts.set(token,{session:s,record,used:false});s.pending.add(token);s.pendingBySerial.set(record.serial,token);
 }
 function bindDamage(s, actor) {
   const native=actor.damage;
@@ -127,7 +127,7 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
   if(!commands||['register','prepare','apply','forget'].some(k=>typeof commands[k]!=='function'))throw Error('Native canonical command owner required');
   const token=Object.freeze({}),scene=new api.THREE.Scene(),camera=new api.THREE.PerspectiveCamera();
   camera.position.set(0,10000,0);
-  const s={api,epoch,random:random(seed),tick:0,serial:0,actors:new Map(),actorSet:new Set(),pending:new Set(),launches:[],damageScopes:new Map(),closed:false,error:null,executing:false,commands,offs:[],context:{
+  const s={api,epoch,random:random(seed),tick:0,serial:0,actors:new Map(),actorSet:new Set(),pending:new Set(),pendingBySerial:new Map(),launches:[],damageScopes:new Map(),closed:false,error:null,executing:false,commands,offs:[],context:{
     scene,camera:Object.hasOwn(world,'camera')?world.camera:camera,renderer:null,fx:null,audio:null,input:null,local:null,netm:null,mode:'match',time,actors:[],projectiles:null,
     level:world.level,physics:world.physics,paint:world.paint,match:world.match,boss:null,
   },world};
@@ -198,7 +198,7 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
         s.commands?.forget(a);s.commands?.register(a,{owner:a.owner,life:a.netLife,epoch:s.epoch,firstTick:s.tick+1});
       }}
     });
-  }catch(error){s.error=String(error?.message||error);s.pending.clear();return {ok:false,reason:s.error};}
+  }catch(error){s.error=String(error?.message||error);s.pending.clear();s.pendingBySerial.clear();return {ok:false,reason:s.error};}
   return {ok:true,tick:s.tick,contacts:s.pending.size};
 }
 
@@ -207,15 +207,14 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
 export function peekTrustedNativeContact(token,claim) {
   const s=sessions.get(token);
   if(!live(s)||s.executing||!claim||Object.keys(claim).some(k=>!['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].includes(k)))return null;
-  for(const t of s.pending){const c=contacts.get(t),r=c.record;
-    if(!c.used&&liveContact(s,r)&&['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].every(k=>Object.is(claim[k],r[k])))return t;
-  }
+  const t=s.pendingBySerial.get(claim.serial),c=t&&contacts.get(t),r=c?.record;
+  if(c&&!c.used&&s.pending.has(t)&&liveContact(s,r)&&['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].every(k=>Object.is(claim[k],r[k])))return t;
   return null;
 }
 export function commitTrustedNativeContact(token,receipt) {
   const s=sessions.get(token),c=contacts.get(receipt);
   if(!live(s)||s.executing||!c||c.session!==s||c.used||!s.pending.has(receipt)||!liveContact(s,c.record))return null;
-  c.used=true;s.pending.delete(receipt);return clone(c.record);
+  c.used=true;s.pending.delete(receipt);s.pendingBySerial.delete(c.record.serial);return clone(c.record);
 }
 export function inspectTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s)return null;
@@ -228,7 +227,7 @@ export function inspectTrustedNativeReplay(token) {
 }
 export function disposeTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s||s.closed)return;
-  s.pending.clear();s.closed=true;
+  s.pending.clear();s.pendingBySerial.clear();s.closed=true;
   for(const off of s.offs)off();s.offs.length=0;
   const errors=[];
   const release=fn=>{try{fn();}catch(error){errors.push(error);}};

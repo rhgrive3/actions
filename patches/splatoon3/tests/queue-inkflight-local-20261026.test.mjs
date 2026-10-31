@@ -94,7 +94,7 @@ test('owned no-callback distance segment shares direction while wall/getter/fall
       const p={owner:{remote:false},team:1,seed:.4,pos:new THREE.Vector3(2,0,5),s3Weapon:{kind:'roller'}},game={paint:{},physics:{},...(mode==='fallback'?{}:{projectiles:{}})};
       if(mode==='wall'||mode==='all-wall')state.wallSplash=(_from,index)=>{p.s3Weapon={kind:index%2?'brush':'roller'};state.last.x+=.01;state.direction.x-=.2;return mode==='all-wall'||index%3===0;};
       if(mode==='wall-getter')Object.defineProperty(state,'wallSplash',{get(){gets++;return null;}});
-      const env={EPS:1e-9,ownedDistanceStates,mainInkFootprint,spawnSplashDrop(_g,args){events.push(['drop',...args.from.toArray(),...args.direction.toArray(),args.radius,args.kind,args.footprint]);return mode==='fallback'?null:{};},paintImmediate(_g,_p,s,i,r){events.push(['fallback',i,r]);s.last.z+=.02;s.direction.z=99;}};
+      const env={EPS:1e-9,ownedDistanceStates,distanceSplashOptions:new WeakMap(),mainInkFootprint,spawnSplashDrop(_g,args){events.push(['drop',...args.from.toArray(),...args.direction.toArray(),args.radius,args.kind,args.footprint]);return mode==='fallback'?null:{};},paintImmediate(_g,_p,s,i,r){events.push(['fallback',i,r]);s.last.z+=.02;s.direction.z=99;}};
       const released=evalFn(code,env)(game,p,state,p.pos);return{events,released,index:state.index,distance:state.distance,last:state.last.toArray(),sets,gets};};
     const a=run(before.paintDistanceFlight),b=run(functionSource(splashSource,'paintDistanceFlight'));
     assert.deepEqual({...b,sets:null},{...a,sets:null});assert.equal(b.sets,mode==='owned'?1:a.sets);

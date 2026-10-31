@@ -15,9 +15,10 @@ export function nativeMainBirth(f,nm,actor,weapon,ts,{events=false}={}) {
         f.projectiles.update(1/60);
       }
     } else {
-      const method={shooter:'fireShooter',dualies:'fireDualies',splatling:'fireSplatling'}[weapon.kind];
+      const method={shooter:'fireShooter',dualies:'fireDualies',splatling:'fireSplatling',blaster:'fireBlaster',roller:'fireFlick',slosher:'fireSlosh'}[weapon.kind];
       assert.ok(method,'supported native producer');
       f.projectiles[method](actor,weapon,0,0);
+      for(let i=0;i<30&&!nm.out.some(e=>e[1]==='p');i++){f.G.time+=1/60;f.projectiles.update(1/60);}
     }
     const births=nm.out.filter(e=>e[1]==='p');
     assert.ok(births.length,'real installed producer must publish a native projectile row');

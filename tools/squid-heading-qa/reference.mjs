@@ -13,6 +13,20 @@ const gitBlob = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'
 const git = (root,...args) => execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
 const once = (source,from,to) => { assert.equal(source.split(from).length-1,1,'exact single rollback anchor'); return source.replace(from,to); };
 
+// Git LFS checkouts materialize the binary while HEAD records its immutable
+// pointer blob. Verify the pointer *and* actual bytes, not Git blob equality
+// against a smudged worktree. All other mismatches remain fatal.
+function verifyMaterializedLfs(pointer,expectedBlob,bytesLength,sha256,rel){
+  assert.equal(gitBlob(pointer),expectedBlob,'unchanged tracked source '+rel);
+  const match=/^version https:\/\/git-lfs\.github\.com\/spec\/v1\noid sha256:([0-9a-f]{64})\nsize (0|[1-9][0-9]*)\n$/.exec(pointer.toString('utf8'));
+  assert(match,'unchanged tracked source '+rel+' (not an exact Git LFS pointer)');
+  const size=Number(match[2]);
+  assert(Number.isSafeInteger(size),'safe LFS worktree size '+rel);
+  assert.equal(bytesLength,size,'LFS worktree size '+rel);
+  assert.equal(sha256,match[1],'LFS worktree hash '+rel);
+}
+
+
 export function rollbackHeadingFix(source) {
   assert.equal(hash(source),CURRENT_SHA256,'reviewed current heading input');
   const result=once(source,"  if(rel==='src/game/motion/source-controller.js'){\n   code=replaceOnce(code,'if(nextKid!==this.formKid){','if(nextKid!==this.formKid){if(!nextKid)this.squidTravelYaw=undefined;','reset squid travel heading on a new dive');\n   code=replaceOnce(code,'if(teleport){this.pivotWeight=0;','if(teleport){this.squidTravelYaw=undefined;this.pivotWeight=0;','reset squid travel heading after teleport');\n   return replaceOnce(code,\"  const wantedYaw=this.speed>1e-5?Math.atan2(this.localX,this.localZ):this.squidYaw;this.squidYaw+=(mod(wantedYaw-this.squidYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt));\",`  // The Actor root turns toward input independently of its current velocity.\n  // Smooth squid travel in the scene frame, then convert to the current root\n  // frame. Filtering old local headings while that frame turns double-counts\n  // the turn and can point the mantle past its direction of travel.\n  if(!this.manual){\n   const rootYaw=this.character.root.rotation.y;\n   if(!Number.isFinite(this.squidTravelYaw))this.squidTravelYaw=rootYaw;\n   // Retain the existing source tracker's sub-centimeter noise confidence.\n   const confidence=clamp((this.speed-.06)/.30,0,1);\n   if(confidence>0){\n    const move=s.localMove||{};\n    const wantedYaw=this.treadmill?rootYaw+Math.atan2(-(move.x||0),move.z||0):Math.atan2(this.motionVX,this.motionVZ);\n    this.squidTravelYaw+=(mod(wantedYaw-this.squidTravelYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt*confidence));\n   }\n   this.squidTravelYaw=mod(this.squidTravelYaw+Math.PI,2*Math.PI)-Math.PI;\n   this.squidYaw=mod(this.squidTravelYaw-rootYaw+Math.PI,2*Math.PI)-Math.PI;\n  }else{\n   const wantedYaw=this.speed>1e-5?Math.atan2(this.localX,this.localZ):this.squidYaw;this.squidYaw+=(mod(wantedYaw-this.squidYaw+Math.PI,2*Math.PI)-Math.PI)*(1-Math.exp(-16*dt));\n  }`,'squid travel heading uses one scene frame');\n  }\n",'');
@@ -32,8 +46,11 @@ export function captureSourceIdentity(root,head,expect) {
     assert.equal((stat.mode&0o111)!==0,mode==='100755','tracked executable mode');
     const bytes=fs.readFileSync(file),actualGitBlob=gitBlob(bytes),sha256=hash(bytes);
     if(rel===TARGET){assert.equal(sha256,expect==='baseline'?REFERENCE_SHA256:CURRENT_SHA256,'named target role');if(expect==='candidate')assert.equal(actualGitBlob,expectedGitBlob,'candidate target remains exact');}
-    else assert.equal(actualGitBlob,expectedGitBlob,'unchanged tracked source '+rel);
-    files[rel]={mode,gitBlob:actualGitBlob,sha256};
+    else if(actualGitBlob!==expectedGitBlob){
+      const pointer=execFileSync('git',['cat-file','blob',expectedGitBlob],{cwd:root,maxBuffer:1024*1024});
+      verifyMaterializedLfs(pointer,expectedGitBlob,bytes.length,sha256,rel);
+    }
+    files[rel]={mode,gitBlob:rel===TARGET?actualGitBlob:expectedGitBlob,sha256};
   }
   assert(files[TARGET],'tracked target exists');
   return {schema:1,kind:expect==='baseline'?'counterfactual-heading-rollback':'current-source',sourceSha:head,pristineTree:tree,target:TARGET,currentSha256:CURRENT_SHA256,referenceSha256:REFERENCE_SHA256,files,filesHash:hash(JSON.stringify(files))};

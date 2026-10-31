@@ -482,6 +482,7 @@ class RibbonPool {
   update(now, camPos) {
     if(this.list.length===0&&this._emptyUploaded)return;
     let v = 0, ribStart = Infinity, ribEnd = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
+    let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
@@ -512,6 +513,8 @@ class RibbonPool {
         for (let side = 0; side < 2; side++) {
           const vi = base + k * 2 + side, sg = side ? 1 : -1;
           P[vi * 3] = q[0] + s.x * w * sg; P[vi * 3 + 1] = q[1] + s.y * w * sg; P[vi * 3 + 2] = q[2] + s.z * w * sg;
+          minX=Math.min(minX,P[vi*3]);minY=Math.min(minY,P[vi*3+1]);minZ=Math.min(minZ,P[vi*3+2]);
+          maxX=Math.max(maxX,P[vi*3]);maxY=Math.max(maxY,P[vi*3+1]);maxZ=Math.max(maxZ,P[vi*3+2]);
           C[vi * 4] = color[0]; C[vi * 4 + 1] = color[1]; C[vi * 4 + 2] = color[2]; C[vi * 4 + 3] = alpha;
           const ri=vi*4, r0=R[ri], r1=R[ri+1], r2=R[ri+2], r3=R[ri+3];
           R[ri] = along; R[ri+1] = sg; R[ri+2] = style; R[ri+3] = seed;
@@ -543,11 +546,6 @@ class RibbonPool {
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
     this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=slot===0;this._drawCount=slot;
     const sphere=this.mesh.geometry.boundingSphere;
-    let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
-    for(let i=0,end=slot*this.M*2*3;i<end;i+=3){
-      minX=Math.min(minX,P[i]);minY=Math.min(minY,P[i+1]);minZ=Math.min(minZ,P[i+2]);
-      maxX=Math.max(maxX,P[i]);maxY=Math.max(maxY,P[i+1]);maxZ=Math.max(maxZ,P[i+2]);
-    }
     const radius=Math.hypot(maxX-minX,maxY-minY,maxZ-minZ)*.5;
     this.mesh.frustumCulled=!!this._warmed&&slot>0&&Number.isFinite(radius);
     if(this.mesh.frustumCulled){sphere.center.set((minX+maxX)*.5,(minY+maxY)*.5,(minZ+maxZ)*.5);sphere.radius=radius+1e-6*(1+radius);}
@@ -938,20 +936,28 @@ class ShapePool {
       const r = this.recs[i]; r.t += dt;
       if (r.dead || (r.life > 0 && r.t >= r.life) || (r.follow && r.follow(r, dt) === false)) { this.recs.splice(i, 1); this._retire(r); }
     }
-    const n = this.recs.length;
-    for (let k = 0; k < this.buf.length; k++) {
-      const A = this.buf[k].array;
-      let start = Infinity, end = 0;
-      for (let c = 0; c < 4; c++) { if (!Object.is(A[c], 0)) { start = Math.min(start, c); end = Math.max(end, c + 1); A[c] = 0; } }
-      for (let j = 0; j < n; j++) { const v = this.recs[j].v; const o = (j + 1) * 4, s = k * 4;
-        for (let c = 0; c < 4; c++) { if (!Object.is(A[o+c], v[s+c])) { start = Math.min(start, o+c); end = Math.max(end, o+c+1); A[o+c] = v[s+c]; } }
-      }
-      markAttributeRange(this.buf[k], start, end);
+    const n = this.recs.length, count=this.buf.length;
+    const starts=this._attributeStarts||=(new Array(count)),ends=this._attributeEnds||=(new Array(count));
+    let spatialDirty=n!==this._shapeBoundsCount||this._shapeBoundsKind!==this._shapeKind||this._shapeBoundsObject!==this._shapeBounds||this._shapeBoundsGeometry!==this.mesh.geometry||!this._shapeBoundsValid;
+    for(let k=0;k<count;k++){
+      const A=this.buf[k].array;starts[k]=Infinity;ends[k]=0;
+      for(let c=0;c<4;c++)if(!Object.is(A[c],0)){starts[k]=Math.min(starts[k],c);ends[k]=Math.max(ends[k],c+1);A[c]=0;}
     }
+    for(let j=0;j<n;j++){
+      const v=this.recs[j].v,o=(j+1)*4;
+      for(let k=0;k<count;k++){
+        const A=this.buf[k].array,s=k*4;
+        for(let c=0;c<4;c++)if(!Object.is(A[o+c],v[s+c])){
+          starts[k]=Math.min(starts[k],o+c);ends[k]=Math.max(ends[k],o+c+1);A[o+c]=v[s+c];if(k<2)spatialDirty=true;
+        }
+      }
+    }
+    for(let k=0;k<count;k++)markAttributeRange(this.buf[k],starts[k],ends[k]);
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;
     this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;this._drawCount=n;
-    updateShapePoolBounds(this);
+    if(spatialDirty)updateShapePoolBounds(this);
+    this._shapeBoundsCount=n;this._shapeBoundsKind=this._shapeKind;this._shapeBoundsObject=this._shapeBounds;this._shapeBoundsGeometry=this.mesh.geometry;
   }
   clear() { for (const r of this.recs) this._retire(r); this.recs.length = 0; this._emptyUploaded = false; this._shapeBoundsValid=false; }
 }

@@ -1,0 +1,531 @@
+{
+  "status": "passed",
+  "errors": [],
+  "scope": "Admitted native Scorch source geometry and material metadata; deterministic lights and cast shadows; textures, gameplay, postprocessing and full-game FPS are not covered.",
+  "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+  "converterSha256": "85c9d0a04cb261a9638a846203e286c9dc76d104a6b30fd3eae4b9dc9dfba8c7",
+  "browser": "154.0.8037.57",
+  "result": {
+    "rows": [
+      {
+        "frame": 0,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 186016,
+          "uploads": 25,
+          "bytes": 398196,
+          "milliseconds": 232.69999999925494,
+          "hash": "3cccbd917565e57febf00f5ef174ece5d3dc0fd05988bacb98c927b7eb1c17c1",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 182099,
+          "uploads": 25,
+          "bytes": 375924,
+          "milliseconds": 81.90000000037253,
+          "hash": "3cccbd917565e57febf00f5ef174ece5d3dc0fd05988bacb98c927b7eb1c17c1",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 186016,
+          "uploads": 50,
+          "bytes": 796392,
+          "milliseconds": 17.700000001117587,
+          "hash": "3cccbd917565e57febf00f5ef174ece5d3dc0fd05988bacb98c927b7eb1c17c1",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 182099,
+          "uploads": 50,
+          "bytes": 751848,
+          "milliseconds": 12.099999999627471,
+          "hash": "3cccbd917565e57febf00f5ef174ece5d3dc0fd05988bacb98c927b7eb1c17c1",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 1,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 151547,
+          "uploads": 79,
+          "bytes": 1150920,
+          "milliseconds": 11.400000000372529,
+          "hash": "21e28ca56feb62f0d7198630ba57be9045acbff9d70b19c9730a2b96513ce853",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 149547,
+          "uploads": 80,
+          "bytes": 1141626,
+          "milliseconds": 10.200000001117587,
+          "hash": "21e28ca56feb62f0d7198630ba57be9045acbff9d70b19c9730a2b96513ce853",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 151547,
+          "uploads": 54,
+          "bytes": 714096,
+          "milliseconds": 4.400000000372529,
+          "hash": "21e28ca56feb62f0d7198630ba57be9045acbff9d70b19c9730a2b96513ce853",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 149547,
+          "uploads": 56,
+          "bytes": 740280,
+          "milliseconds": 4.200000001117587,
+          "hash": "21e28ca56feb62f0d7198630ba57be9045acbff9d70b19c9730a2b96513ce853",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 2,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 84247,
+          "uploads": 77,
+          "bytes": 750288,
+          "milliseconds": 7.699999999254942,
+          "hash": "148aad0b683cdf3442c1740e6f93e9beb4df2940eef9c7d17f7fd047047dfa25",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 81564,
+          "uploads": 78,
+          "bytes": 747414,
+          "milliseconds": 4.800000000745058,
+          "hash": "148aad0b683cdf3442c1740e6f93e9beb4df2940eef9c7d17f7fd047047dfa25",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 84247,
+          "uploads": 54,
+          "bytes": 411528,
+          "milliseconds": 7.599999999627471,
+          "hash": "148aad0b683cdf3442c1740e6f93e9beb4df2940eef9c7d17f7fd047047dfa25",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 81564,
+          "uploads": 54,
+          "bytes": 388080,
+          "milliseconds": 11,
+          "hash": "148aad0b683cdf3442c1740e6f93e9beb4df2940eef9c7d17f7fd047047dfa25",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 3,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 73534,
+          "uploads": 62,
+          "bytes": 507190,
+          "milliseconds": 4.199999999254942,
+          "hash": "da42589435a026698f21aa222066e05ec42a68aa460aed01deede6205bf8bb62",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 70784,
+          "uploads": 62,
+          "bytes": 478006,
+          "milliseconds": 6.5,
+          "hash": "da42589435a026698f21aa222066e05ec42a68aa460aed01deede6205bf8bb62",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 73534,
+          "uploads": 50,
+          "bytes": 362412,
+          "milliseconds": 7,
+          "hash": "da42589435a026698f21aa222066e05ec42a68aa460aed01deede6205bf8bb62",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 70784,
+          "uploads": 50,
+          "bytes": 333312,
+          "milliseconds": 4.300000000745058,
+          "hash": "da42589435a026698f21aa222066e05ec42a68aa460aed01deede6205bf8bb62",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 4,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 95084,
+          "uploads": 79,
+          "bytes": 666046,
+          "milliseconds": 28,
+          "hash": "aa4f89f2fd7bfe9fc0f8389c0514c49c29643fe2f17ea4fd1f0ba65eea69b236",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 93236,
+          "uploads": 79,
+          "bytes": 649062,
+          "milliseconds": 5.699999999254942,
+          "hash": "aa4f89f2fd7bfe9fc0f8389c0514c49c29643fe2f17ea4fd1f0ba65eea69b236",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 95084,
+          "uploads": 52,
+          "bytes": 466812,
+          "milliseconds": 7.400000000372529,
+          "hash": "aa4f89f2fd7bfe9fc0f8389c0514c49c29643fe2f17ea4fd1f0ba65eea69b236",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 93236,
+          "uploads": 52,
+          "bytes": 473700,
+          "milliseconds": 8.399999998509884,
+          "hash": "aa4f89f2fd7bfe9fc0f8389c0514c49c29643fe2f17ea4fd1f0ba65eea69b236",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 5,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 101185,
+          "uploads": 86,
+          "bytes": 731668,
+          "milliseconds": 9.099999999627471,
+          "hash": "b72ba4dc11219edfb871fb20b9373962174be54cf13caeb6ac8a7981036f1d7c",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 100724,
+          "uploads": 86,
+          "bytes": 728602,
+          "milliseconds": 6.099999999627471,
+          "hash": "b72ba4dc11219edfb871fb20b9373962174be54cf13caeb6ac8a7981036f1d7c",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 101185,
+          "uploads": 66,
+          "bytes": 533244,
+          "milliseconds": 15.599999999627471,
+          "hash": "b72ba4dc11219edfb871fb20b9373962174be54cf13caeb6ac8a7981036f1d7c",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 100724,
+          "uploads": 66,
+          "bytes": 530808,
+          "milliseconds": 5.800000000745058,
+          "hash": "b72ba4dc11219edfb871fb20b9373962174be54cf13caeb6ac8a7981036f1d7c",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 6,
+        "base": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 91755,
+          "uploads": 80,
+          "bytes": 618150,
+          "milliseconds": 7.399999998509884,
+          "hash": "c99dbb50259b91454f78fd317920bddc9db981830992df47cdbbe475c96bdf59",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 91141,
+          "uploads": 79,
+          "bytes": 611070,
+          "milliseconds": 7.5,
+          "hash": "c99dbb50259b91454f78fd317920bddc9db981830992df47cdbbe475c96bdf59",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 90,
+          "triangles": 91755,
+          "uploads": 62,
+          "bytes": 460272,
+          "milliseconds": 6.299999998882413,
+          "hash": "c99dbb50259b91454f78fd317920bddc9db981830992df47cdbbe475c96bdf59",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 90,
+          "triangles": 91141,
+          "uploads": 62,
+          "bytes": 456732,
+          "milliseconds": 5.800000000745058,
+          "hash": "c99dbb50259b91454f78fd317920bddc9db981830992df47cdbbe475c96bdf59",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 7,
+        "base": {
+          "side": "base",
+          "objects": 89,
+          "triangles": 84762,
+          "uploads": 78,
+          "bytes": 577108,
+          "milliseconds": 8.300000000745058,
+          "hash": "c079731a33eaa99fff73b95c9eb8fdc2a561bc620647c308178909bc95409196",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 89,
+          "triangles": 84263,
+          "uploads": 78,
+          "bytes": 572382,
+          "milliseconds": 9.900000000372529,
+          "hash": "c079731a33eaa99fff73b95c9eb8fdc2a561bc620647c308178909bc95409196",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 89,
+          "triangles": 84762,
+          "uploads": 60,
+          "bytes": 423516,
+          "milliseconds": 3,
+          "hash": "c079731a33eaa99fff73b95c9eb8fdc2a561bc620647c308178909bc95409196",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 89,
+          "triangles": 84263,
+          "uploads": 60,
+          "bytes": 418464,
+          "milliseconds": 7,
+          "hash": "c079731a33eaa99fff73b95c9eb8fdc2a561bc620647c308178909bc95409196",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 8,
+        "base": {
+          "side": "base",
+          "objects": 84,
+          "triangles": 78682,
+          "uploads": 68,
+          "bytes": 480634,
+          "milliseconds": 7.799999998882413,
+          "hash": "90430e1e0d1a026f799c54de675eeda042f1582a6691d1d24d11f9bb065ea755",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 84,
+          "triangles": 77795,
+          "uploads": 67,
+          "bytes": 472902,
+          "milliseconds": 4.200000001117587,
+          "hash": "90430e1e0d1a026f799c54de675eeda042f1582a6691d1d24d11f9bb065ea755",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 84,
+          "triangles": 78682,
+          "uploads": 54,
+          "bytes": 378912,
+          "milliseconds": 3.099999999627471,
+          "hash": "90430e1e0d1a026f799c54de675eeda042f1582a6691d1d24d11f9bb065ea755",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 84,
+          "triangles": 77795,
+          "uploads": 54,
+          "bytes": 376920,
+          "milliseconds": 7.200000001117587,
+          "hash": "90430e1e0d1a026f799c54de675eeda042f1582a6691d1d24d11f9bb065ea755",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 9,
+        "base": {
+          "side": "base",
+          "objects": 78,
+          "triangles": 65800,
+          "uploads": 69,
+          "bytes": 446694,
+          "milliseconds": 4,
+          "hash": "520baadcd2e7a3f56b7204426b154dfe4f089743053a7fff16fcdbda3d8f3b09",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 78,
+          "triangles": 65059,
+          "uploads": 69,
+          "bytes": 440472,
+          "milliseconds": 3.599999999627471,
+          "hash": "520baadcd2e7a3f56b7204426b154dfe4f089743053a7fff16fcdbda3d8f3b09",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 78,
+          "triangles": 65800,
+          "uploads": 48,
+          "bytes": 303300,
+          "milliseconds": 3.799999998882413,
+          "hash": "520baadcd2e7a3f56b7204426b154dfe4f089743053a7fff16fcdbda3d8f3b09",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 78,
+          "triangles": 65059,
+          "uploads": 48,
+          "bytes": 298620,
+          "milliseconds": 3,
+          "hash": "520baadcd2e7a3f56b7204426b154dfe4f089743053a7fff16fcdbda3d8f3b09",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 10,
+        "base": {
+          "side": "base",
+          "objects": 69,
+          "triangles": 39022,
+          "uploads": 61,
+          "bytes": 309288,
+          "milliseconds": 3.299999998882413,
+          "hash": "78ede83f46645b715f15748f4b927ab6a485518d8454b0b2675b189d40425560",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 69,
+          "triangles": 35106,
+          "uploads": 60,
+          "bytes": 301728,
+          "milliseconds": 3.700000001117587,
+          "hash": "78ede83f46645b715f15748f4b927ab6a485518d8454b0b2675b189d40425560",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 69,
+          "triangles": 39022,
+          "uploads": 32,
+          "bytes": 88728,
+          "milliseconds": 4.900000000372529,
+          "hash": "78ede83f46645b715f15748f4b927ab6a485518d8454b0b2675b189d40425560",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 69,
+          "triangles": 35106,
+          "uploads": 28,
+          "bytes": 62208,
+          "milliseconds": 2.400000000372529,
+          "hash": "78ede83f46645b715f15748f4b927ab6a485518d8454b0b2675b189d40425560",
+          "glError": 0
+        }
+      },
+      {
+        "frame": 11,
+        "base": {
+          "side": "base",
+          "objects": 66,
+          "triangles": 25098,
+          "uploads": 39,
+          "bytes": 144126,
+          "milliseconds": 2.900000000372529,
+          "hash": "1429dd4fc511bb70f9e26e8f394162515936f48b6bf2616cea3489349ee30628",
+          "glError": 0
+        },
+        "trial": {
+          "side": "trial",
+          "objects": 66,
+          "triangles": 22911,
+          "uploads": 32,
+          "bytes": 119904,
+          "milliseconds": 2.800000000745058,
+          "hash": "1429dd4fc511bb70f9e26e8f394162515936f48b6bf2616cea3489349ee30628",
+          "glError": 0
+        },
+        "baseRepeat": {
+          "side": "base",
+          "objects": 66,
+          "triangles": 25098,
+          "uploads": 12,
+          "bytes": 18612,
+          "milliseconds": 2.100000001490116,
+          "hash": "1429dd4fc511bb70f9e26e8f394162515936f48b6bf2616cea3489349ee30628",
+          "glError": 0
+        },
+        "trialRepeat": {
+          "side": "trial",
+          "objects": 66,
+          "triangles": 22911,
+          "uploads": 4,
+          "bytes": 1356,
+          "milliseconds": 2.5,
+          "hash": "1429dd4fc511bb70f9e26e8f394162515936f48b6bf2616cea3489349ee30628",
+          "glError": 0
+        }
+      }
+    ],
+    "objects": 100,
+    "shadowMap": true,
+    "renderer": "WebKit WebGL"
+  }
+}

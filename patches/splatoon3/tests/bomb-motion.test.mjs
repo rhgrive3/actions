@@ -438,8 +438,24 @@ test('release and per-frame preview sample native rig without changing any live 
       assert.deepEqual(preservedRig(r, api), before, 'actual native arc path does not mutate Character/runner/Flow');
       assert.deepEqual(calls, beforeCalls);
       if (r.a.weapon.sub === 'curling') {
-        assert.equal(r.projectiles.arcLine.visible, false, 'Curling has no drawn trajectory guide');
-        assert.equal(r.projectiles.arcRing.visible, false, 'Curling has no predicted blast circle');
+        const forecast=r.projectiles._s3ThrowPrediction;
+        assert.equal(forecast?.kind,'curling','the production Curling forecast is owned by the current predictor');
+        // This pose-only VM has no stage collision triangles. Curling must
+        // not fabricate a floor or an explosion when its puck exits this
+        // empty-world physics boundary. Real grounded explosion forecasts are
+        // exercised separately with collision-enabled kit fixtures.
+        assert.equal(api.G.level.blocks.length,0,'pose-only fixture contains no real surface');
+        assert.equal(r.projectiles.arcLine.visible,true,'Curling still shows its observed flight trajectory');
+        if (forecast?.complete) {
+          assert.equal(forecast.outcome,'explosion','a claimed Curling endpoint is a real burst');
+          assert.equal(r.projectiles.arcRing.visible,true,'confirmed blast gets a marker');
+        } else {
+          assert.ok(['out-of-bounds','no-contact'].includes(forecast?.outcome),
+            'no-contact Curling cannot claim a resolved blast: '+forecast?.outcome);
+          assert.equal(r.projectiles.arcRing.visible,false,'unknown blast location must not receive a ring');
+        }
+        assert.ok(new api.THREE.Vector3().fromBufferAttribute(r.projectiles.arcGeo.getAttribute('position'),0).distanceTo(preview)<1e-6,
+          'Curling guide begins at the same actual native release sample');
       } else {
         assert.equal(r.projectiles.arcLine.visible, true, 'other held bombs retain their native trajectory guide');
         const attribute = r.projectiles.arcGeo.getAttribute('position');
@@ -571,6 +587,15 @@ test('pose sampling restores the live rig and sampler after a native limb-solver
   } finally { r.close(); }
 });
 
+// Historical fallback remains installed for legacy/native preview consumers.
+// Modern live aiming and Curling/explosion forecasts are separately asserted
+// by bomb-kit-fidelity against actual release and burst events.
+function nativeArcCompat(projectiles, actor, visible) {
+  const native=Object.getPrototypeOf(projectiles)[Symbol.for('inkwave.s3.throw-prediction.native-arc.v1')];
+  assert.equal(typeof native,'function','historical native arc delegate is retained');
+  return native.call(projectiles,actor,visible);
+}
+
 test('native drawn arc follows actual bomb origin, velocity and gravity at every two 60Hz ticks without advancing live clocks', async () => {
   const api = await production(), r = rig(api), waterY = api.PLAYER.waterY;
   try {
@@ -578,7 +603,7 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
     r.a.yaw = .64; r.a.pitch = -.19;
     for (let i = 0; i < 40; i++) r.step(1 / 60, { sub: true });
     const before = preservedRig(r, api), calls = countCalls(r.ch);
-    r.projectiles.updateArc(r.a, true);
+    nativeArcCompat(r.projectiles, r.a, true);
     assert.deepEqual(preservedRig(r, api), before);
     assert.ok(Object.values(calls).every(count => count === 0));
     const vertices = r.projectiles.arcGeo.getAttribute('position');
@@ -597,7 +622,7 @@ test('native drawn arc follows actual bomb origin, velocity and gravity at every
     const live = preservedRig(r, api), rows = [{ tick: 0, vertex: drawn[0], actual: Array.from(bomb.pos.toArray()) }];
     for (let tick = 1; tick <= 126; tick++) {
       const beforeBomb = fields(bomb), beforeCalls = { ...calls };
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.deepEqual(fields(bomb), beforeBomb, 'preview does not advance existing bomb velocity, age, fuse or origin');
       assert.deepEqual(preservedRig(r, api), live, 'preview preserves Character/runner/root/feet/Flow clocks');
       assert.deepEqual(calls, beforeCalls);
@@ -630,7 +655,7 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
     api.PLAYER.waterY = -10000;
     r.a.yaw = 0.64; r.a.pitch = -0.19;
     for (let i = 0; i < 40; i++) r.step(1 / 60, { sub: true });
-    r.projectiles.updateArc(r.a, true);
+    nativeArcCompat(r.projectiles, r.a, true);
     const attribute = r.projectiles.arcGeo.getAttribute('position');
     const landedBefore = r.projectiles._arcCache.landed;
     let segments = 0;
@@ -643,7 +668,7 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       for (let i = 0; i < 10; i++) {
         r.a.pos.x += drift; r.a.pos.z += drift;
         r.a.aimYaw += drift * 0.01; r.a.aimPitch += drift * 0.005;
-        r.projectiles.updateArc(r.a, true);
+        nativeArcCompat(r.projectiles, r.a, true);
         assert.equal(segments, 0, 'micro drift within one interval must not query Physics');
         assert.equal(r.projectiles.arcLine.visible, true, 'cached guide stays visible every frame');
         assert.equal(r.projectiles.arcRing.visible, landedBefore, 'landing marker follows the cached result');
@@ -652,7 +677,7 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       const ringScaleBefore = r.projectiles.arcRing.scale.x;
       r.a.color.setRGB(0.12, 0.35, 0.7);
       api.G.time += 0.01;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.equal(segments, 0, 'live presentation refresh does not query Physics');
       assert.notDeepEqual(Array.from(r.projectiles.arcLine.material.color.toArray()), colorBefore,
         'cached guide color follows current actor ink/color state');
@@ -661,7 +686,7 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       r.a.pos.x += 5; r.a.aimYaw += 0.5;
       const beforeVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
         (_, i) => [attribute.getX(i), attribute.getY(i), attribute.getZ(i)]);
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.ok(segments > 0, 'large aim/position change recomputes through native Physics');
       assert.ok(segments <= 126, 'one recompute still runs at most one native preview pass');
       const afterVertices = Array.from({ length: r.projectiles.arcGeo.drawRange.count },
@@ -673,19 +698,19 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       r.a.pos.x += 0.2; r.a.aimYaw += 0.02;
       api.G.time += ARC_PREVIEW_MIN_INTERVAL_S + 1 / 60;
       const count = segments;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.equal(segments, count, 'ordinary cadence retains one cached draw after the previous refresh');
       r.a.pos.x += 0.01; r.a.aimYaw += 0.01; api.G.time += 1 / 60;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.ok(segments > count, 'the following bounded tick refreshes the guide through the native path');
       // Aiming off hides the guide through the native guard and resets state.
-      r.projectiles.updateArc(r.a, false);
+      nativeArcCompat(r.projectiles, r.a, false);
       assert.equal(r.projectiles.arcLine.visible, false);
       // Re-show has no wrapper throttle state. Invalidate the underlying exact
       // native cache too, so this proves the show path reaches Physics again.
       r.projectiles._arcCache.physics = null;
       const beforeShow = segments;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.ok(segments > beforeShow, 'show after hide refreshes through native Physics');
 
       // Actor, Physics instance and throw-speed changes retain immediate guards.
@@ -693,7 +718,7 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       try {
         r.projectiles._arcCache.physics = null;
         const beforeActor = segments;
-        r.projectiles.updateArc(other.a, true);
+        nativeArcCompat(r.projectiles, other.a, true);
         assert.ok(segments > beforeActor, 'actor change refreshes through native Physics');
       } finally { other.close(); }
       const previousPhysics = api.G.physics, changedPhysics = new api.Physics(api.G.level);
@@ -701,13 +726,13 @@ test('issue 798: aiming micro-drift reuses the cached arc without new collision 
       changedPhysics.segment = function (...args) { segments++; return changedSegment.apply(this, args); };
       api.G.physics = changedPhysics;
       const beforePhysics = segments;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.ok(segments > beforePhysics, 'Physics instance change refreshes through native Physics');
       api.G.physics = previousPhysics;
       const oldThrowSpeed = api.SUB.bomb.throwSpeed;
       api.SUB.bomb.throwSpeed = oldThrowSpeed + 0.1;
       const beforeThrowSpeed = segments;
-      r.projectiles.updateArc(r.a, true);
+      nativeArcCompat(r.projectiles, r.a, true);
       assert.ok(segments > beforeThrowSpeed, 'throw-speed parameter change above epsilon refreshes');
       api.SUB.bomb.throwSpeed = oldThrowSpeed;
       // Actual bomb creation still uses the live pose, never the cached line.
@@ -752,7 +777,7 @@ test('issue 798: installed native updateArc bounds walking and continuous aim qu
           api.G.time += dt;
           if (mode === 'walking') r.a.pos.x += 4.32 * dt;
           else r.a.aimYaw += 1.2 * dt;
-          r.projectiles.updateArc(r.a, true);
+          nativeArcCompat(r.projectiles, r.a, true);
           const frameQueries = queries - before;
           maximumFrameQueries = Math.max(maximumFrameQueries, frameQueries);
           assert.ok(frameQueries <= 126, `${mode} ${hz}Hz frame ${frame} must stay within one native preview pass`);

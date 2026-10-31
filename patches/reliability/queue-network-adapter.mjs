@@ -206,7 +206,7 @@ export function adaptQueueNetwork(rel, code) {
   }
   if (rel === "src/net/transport.js") {
     code = once(code, "export const COMPAT = 'iw-gameplay-20261023-spawn-exclusion-v1';",
-      "export const COMPAT = 'iw-gameplay-20261024-spawn-start-admission-v1';", rel);
+      "export const COMPAT = 'iw-gameplay-20261030-device-source-v2';", rel);
   }
   if (rel === 'src/game/character-style.js') {
     code = once(code, 'const wrap = (v, n) => ((Math.round(v) % n) + n) % n;',

@@ -10,7 +10,18 @@ const directJson=gunzipSync(Buffer.from(fs.readFileSync(new URL('./fixtures/queu
 if(crypto.createHash('sha256').update(directJson).digest('hex')!=='75b06e7a7fc55c245178ccec3de0eba4d14544e4961341d7ac051288d2a182e8')throw Error('Direct-world baseline fixture hash mismatch');
 export const directWorldBaseline=JSON.parse(directJson);
 export const rawBefore=rel=>directWorldBaseline.modules[rel]?.source??raw(rel);
-export const composed=(rel,before=false)=>adaptBuildSource(rel,before?rawBefore(rel):raw(rel),{queueVisualWorld20261031:!before});
+// Frozen exact direct-source predecessors. New builds ship optimized owner
+// bytes directly, while this A/B harness keeps the historical source for
+// fully independent geometry and callback-order equivalence checks.
+const directPredecessor = Object.freeze({
+  'src/world/props-core.js':'./fixtures/props-core-direct-before-20261031.js.txt',
+  'src/world/props-marina-vessels.js':'./fixtures/props-marina-vessels-direct-before-20261031.js.txt',
+});
+export const composed=(rel,before=false)=>{
+  const predecessor=before&&directPredecessor[rel];
+  const source=predecessor?fs.readFileSync(new URL(predecessor,import.meta.url),'utf8'):raw(rel);
+  return adaptBuildSource(rel,source,{queueVisualWorld20261031:!before});
+};
 export function declaration(source,klass,key){
  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});let found;
  function walk(n){if(!n||typeof n!=='object'||found)return;

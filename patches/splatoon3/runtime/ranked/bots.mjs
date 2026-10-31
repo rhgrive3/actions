@@ -1,6 +1,7 @@
 const escortAction = value => value === 'barrier' || value === 'defend';
 const towerCombatAction = value => value === 'ride' || value === 'defend';
 import { firstThreeFinite } from './coordinates.mjs';
+import { OWNED_RANKED_BLOCKED } from './frame-ownership.mjs';
 const clamArcMemo = new WeakMap();
 // Exact, directly evaluated angles; no trigonometric approximation or reordered arithmetic.
 const CLAM_ARC_SAMPLES = Array.from({ length: 211 }, (_, step) => {
@@ -172,6 +173,7 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
   if (start < 0) return null;
 
   const candidates = [];
+  const lazyBlocked = typeof frame?.blocked === 'function' && frame[OWNED_RANKED_BLOCKED] === frame.blocked;
   for (const id of nav.validIds || []) {
     const node = nav.nodes[id];
     const centerDx=node.x-center.x, centerDz=node.z-center.z;
@@ -185,7 +187,7 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
     // Source-guided shooter rounds are unreliable at steep downward angles;
     // prefer a reachable level firing lane when the stage offers one.
     if (Math.abs(pitch) > 0.55) continue;
-    if (typeof frame?.blocked === 'function') {
+    if (!lazyBlocked && typeof frame?.blocked === 'function') {
       try {
         if (frame.blocked([node.x, node.y + 1.1, node.z], target) === true) continue;
       } catch { continue; }
@@ -201,6 +203,10 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
   while (candidates.length) {
     const { node } = candidates[0], last = candidates.pop();
     if (candidates.length) { candidates[0] = last; siftApproach(candidates, 0); }
+    if (lazyBlocked) {
+      try { if (frame.blocked([node.x,node.y+1.1,node.z],target) === true) continue; }
+      catch { continue; }
+    }
     if (!nav.path(start, node.id, actor.team)) continue;
     return { x: node.x, y: node.y, z: node.z, node: node.id };
   }

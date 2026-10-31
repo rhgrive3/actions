@@ -212,12 +212,25 @@ test('current Spinner clips reject non-finite decodes and preserve valid high-ra
     assert.equal(source.getChannelData(1)[23999], value, 'invalid decoded samples are not rewritten');
     spinnerReleaseCache(engine);
   }
-  const ctx = context(), highRate = ctx.createBuffer(2, 409600, 192000);
+  const ctx = context(), highRate = ctx.createBuffer(2, 384000, 192000);
   ctx.sampleRate = 192000;
   ctx.decodeAudioData = async () => highRate;
   const engine = { ctx };
   assert.equal(await spinnerPreload(engine, 'splatling'), highRate);
   assert.equal(spinnerCached(engine, 'splatling'), highRate,
-    'preserve the existing one-clip LRU allowance: real 192kHz Heavy/Examiner decodes exceed 3MB');
+    'preserve finite 192kHz PCM within the existing strict 3 MiB cache limit');
+  spinnerReleaseCache(engine);
+});
+
+// The previous positive fixture exceeded the pre-existing strict cache bound.
+// Preserve that exact input as a rejection control instead of raising the cap.
+test('Spinner rejects the original oversized high-rate fixture without publishing it', async () => {
+  const ctx = context(), oversized = ctx.createBuffer(2, 409600, 192000);
+  ctx.sampleRate = 192000;
+  ctx.decodeAudioData = async () => oversized;
+  const engine = { ctx };
+  assert.equal(oversized.length * oversized.numberOfChannels * 4, 3276800);
+  await assert.rejects(spinnerPreload(engine, 'splatling', { fetcher: async () => response() }), /oversized decoded Spinner/);
+  assert.equal(spinnerCached(engine, 'splatling'), null);
   spinnerReleaseCache(engine);
 });

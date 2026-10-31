@@ -72,13 +72,17 @@ test('rejected upgrades consume the room join budget before socket allocation an
   const room=new RoomDurableObject({},{});room.compat='test-compat-123';
   const host=new Socket();room.handleSession(host,'host');room.locked=true;
   const request=new Request('https://relay.example/room/BBBBB?v=2&compat=test-compat-123',{headers:{Upgrade:'websocket'}});
+  // Rejected joins now have a separate bounded token lane: forged/locked
+  // admissions cannot drain a legitimate room's remaining join capacity.
   room.joinBudgetAt=Date.now();room.joinsLeft=2;
+  room.rejectedJoinBudgetAt=Date.now();room.rejectedJoinsLeft=2;
   assert.equal((await room.fetch(request)).status,101);
   assert.equal((await room.fetch(request)).status,101);
   assert.equal((await room.fetch(request)).status,429);assert.equal(pairs,2);
+  assert.equal(room.joinsLeft,2,'rejected attempts must preserve legitimate join budget');
   room.locked=false;room.joinsLeft=1;room.joinBudgetAt=Date.now();
   assert.equal((await room.fetch(request)).status,101);assert.equal(room.members.size,2);
-  assert.ok(room.joinsLeft<.1,'one allocation consumes exactly one token');
+  assert.ok(room.joinsLeft<.1,'one successful allocation consumes exactly one legitimate token');
  }finally{if(savedPair===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=savedPair;globalThis.Response=savedResponse;}
 });
 

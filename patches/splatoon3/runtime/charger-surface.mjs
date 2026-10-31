@@ -35,10 +35,10 @@ export function installChargerSurface({Actor,WeaponRunner,Projectiles}) {
   Object.defineProperty(Actor.prototype,tag,{value:true});
   const reset = WeaponRunner.prototype.reset, update = Actor.prototype.update, shot = Projectiles.prototype.fireCharger;
   WeaponRunner.prototype.reset = function(...args) { this.s3ChargerSwimRemaining = 0; return reset.apply(this,args); };
-  Actor.prototype.update = function(dt,...args) {
+  Actor.prototype.update = function(dt) {
     const r = this.weaponRunner;
     r.s3ChargerSwimRemaining = Math.max(0,(r.s3ChargerSwimRemaining || 0) - Math.max(0,dt));
-    return update.call(this,dt,...args);
+    return arguments.length===1?update.call(this,dt):update.apply(this,arguments);
   };
   Projectiles.prototype.fireCharger = function(a,w,...args) {
     const result = shot.call(this,a,w,...args);

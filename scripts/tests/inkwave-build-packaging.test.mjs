@@ -35,6 +35,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/character-visual-stability-adapter.mjs', ['orderedCharacterSmoothsteps']],
   ['patches/local-quality/fx-shader-stability-adapter.mjs', ['fxShaderStabilityTargets']],
   ['patches/local-quality/ordered-shader-smoothstep.mjs', ['orderedShaderSmoothsteps', 'orderedVariableSmoothstep']],
+  ['patches/local-quality/queue-ui-audio-20261030-adapter.mjs', ['UI_AUDIO_CHANGES']],
   ['patches/local-quality/landscape-online-adapter.mjs', ['LANDSCAPE_ONLINE_CSS']],
   ['patches/local-quality/queue-visual-continuation-20261029-adapter.mjs', ['visualContinuationTargets']],
   ['patches/local-quality/queue-remaining-world-20261026-adapter.mjs', ['WORLD_DIRECT_PATHS', 'WORLD_REMAINING_PATHS']],

@@ -102,6 +102,8 @@ const IDENTITY_FILES = [
   'queue-visual-world-20261031-adapter.mjs',
   'queue-ui-audio-20261031-adapter.mjs',
   'queue-weapons-20261031-adapter.mjs',
+  // Every copied runtime and reachable composition input has a source identity.
+  'bot-paint-device-profile.mjs', 'ink-ripple-presentation.mjs', 'intermediate-tick-budget.mjs', 'kid-shadow-proxy.mjs', 'legacy-minimap-projection.mjs', 'nav-heuristic-adapter.mjs', 'platform-match-watch.mjs', 'platform-ranked-handoff.mjs', 'platform-simulation-debt.mjs', 'prop-atlas-adapter.mjs', 'prop-retention-adapter.mjs', 'queue-bots-20261030-adapter.mjs', 'queue-render-20261030-adapter.mjs', 'queue-ui-audio-20261030-adapter.mjs',
   'pause-modal-lifetime-adapter.mjs',
   'online-async-entry-adapter.mjs',
   'landscape-practice-weapons-adapter.mjs',

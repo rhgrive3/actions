@@ -323,8 +323,8 @@ test('pickup interrupts a real main-weapon charge so the carrier can swim and no
 });
 
 
-async function rainmakerWallHarness() {
-  const f = await bootRanked({ realProjectiles: true });
+async function rainmakerWallHarness(options = {}) {
+  const f = await bootRanked({ realProjectiles: true, ...options });
   const shooter = f.make('shooter'), owner = f.make('shooter'), rear = f.make('shooter'), front = f.make('shooter');
   Object.assign(shooter, { nid: 301, owner: 'guest', team: 0, remote: false });
   Object.assign(owner, { nid: 302, owner: 'host', team: 1, remote: false });
@@ -387,21 +387,93 @@ test('a shield destroyed by this Rainmaker blast still blocks the same explosion
   f.effects.dispose();
 });
 
-test('a guest-owned follower proposes native object damage and the wall owner accepts each hit only once', async () => {
+test('a guest-owned follower proposes native object damage but bare owner replay has no contact capability', async () => {
   const f = await rainmakerWallHarness(); f.owner.remote = true; f.wall.ghost = true;
   f.fire(true);
   assert.equal(f.wall.hp, 800, 'a remote wall presentation never spends local HP');
   assert.deepEqual(f.proposals.map(p => p.damage), [60, 180]);
   assert.ok(f.proposals.every(p => p.actor === f.shooter && p.targetOwnerId === f.owner.nid && p.targetSeq === f.wall.seq));
   assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 100, 'a follower still cannot damage actors');
-  // Replay through the installed, life/target-validated native owner handler.
+  // Direct playback lacks both a native owner receipt and the host release.
   f.shooter.remote = true; f.owner.remote = false; f.wall.ghost = false;
   f.G.netm = { byNid: new Map([[f.shooter.nid, f.shooter], [f.owner.nid, f.owner]]) };
-  for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), true);
-  assert.equal(f.wall.hp, 380);
   for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), false);
-  assert.equal(f.wall.hp, 380, 'ordered proposal identities reject replayed hits');
+  assert.equal(f.wall.hp, 800, 'unadmitted proposals cannot spend receiver-owned HP');
   f.effects.dispose();
+});
+
+// Receiver-side contract: authenticated current-host wire is the controlled input.
+// The separate release-completion loopback tests cover the real native sender.
+for (const order of ['contact-first','claim-first','terrain-blocked','expired-contact','changed-host']) test('current-host Rainmaker wire consumer requires native owner receipt and receiver contact: ' + order, async () => {
+  let seconds = 1000;
+  const f = await rainmakerWallHarness({ vmPerformance:{ now:() => seconds * 1000 } });
+  const m = f.G.match, packets = [];
+  m.local = f.shooter; m.rankedGains = [0,0]; m.rankedBarrierHits = [];
+  m.rankedWorld = { update() {}, floorAt:() => 0, blocked:() => false };
+  m.rankedEffects = f.effects;
+  m.playRankedEvents = f.Match.prototype.playRankedEvents;
+  const session = id => ({ myId:id, hostId:'authority', isHost:false, _members:new Set(['authority','host','guest']),
+    tr:{ broadcast(packet) { packets.push(JSON.parse(JSON.stringify(packet))); return true; }, sendTo() {} } });
+  const guest = new f.NetMatch(session('guest'), {id:'rainmaker-device-fixture',map:'tidewater'});
+  guest.bind(m); f.wall.ghost = true; f.shooter.grounded = true; f.shooter.vel.set(0,0,0);
+  guest._sendTick(); const initial = packets.at(-1);
+  const release = {kind:'rainmaker-shot',at:0,id:0,actorId:String(f.shooter.nid),team:0,pos:[0,0,0],aim:[0,0,1],
+    shotOrigin:defenseShotOrigin(f.shooter,[0,0,0]),charge:1,damage:60,blastDamage:180,outerDamage:40,
+    radius:1.4,nearRadius:.92,paintRadius:1,speed:18,launchY:3.36,directRange:4.4,recoil:0};
+  // The normal catalogue listener serializes the actual native proposals.
+  f.installedRuntime.emit = f.emit;
+  const hostEvent = {k:'rkevent',match:guest.cfg.id,seq:1,events:[structuredClone(release)]};
+  guest.onMessage('foreign',hostEvent); f.effects.update(.1);
+  assert.equal(guest.out.some(e => e[1] === 'ac' && e[5]?.phase === 'objectHit'),false,'a foreign peer cannot authorize the release');
+  guest.onMessage('authority',hostEvent); guest.onMessage('authority',hostEvent);
+  seconds += .05; f.G.time += .05;
+  f.effects.update(.1); f.effects.update(.1); f.effects.update(.3);
+  guest._sendTick(); const packet = packets.at(-1);
+  const claims = packet.e.filter(e => e[1] === 'ac' && e[5]?.phase === 'objectHit');
+  assert.equal(claims.length,2,'actual direct and blast contacts produce native owner rows');
+  assert.deepEqual(claims.map(e => e[5].damage),[60,180]);
+  assert.ok(claims.every(e => e[5].sourceRankedShot === 0 && e[5].sourceRankedAt === 0));
+  f.effects.dispose();
+
+  const host = new f.NetMatch(session('host'), {id:'rainmaker-device-fixture',map:'tidewater'});
+  host.bind(m); f.wall.ghost = false; m.local = f.owner;
+  m.rankedEffects = f.createRankedEffects(f.installedRuntime,m);
+  host.onMessage('guest',initial);
+  let wireSequence = 20;
+  const deliver = (source, mutate) => {
+    seconds += .05; f.G.time += .05;
+    // Every attempt carries a freshly generated native adoption snapshot.
+    // Replaying one old packed actor row would be rejected before admission.
+    f.G.netm = guest; f.shooter.remote = false; f.owner.remote = true; m.local = f.shooter;
+    guest._sendTick(); const copy = structuredClone(packets.at(-1));
+    f.G.netm = host; f.shooter.remote = true; f.owner.remote = false; m.local = f.owner;
+    copy.r = source.r;
+    copy.e = structuredClone(source.e.filter(e => e[1] === 'ac' && e[5]?.phase === 'objectHit'));
+    for (const e of copy.e) { e[0] = seconds - .001; e[e.length-2] = copy.u - 1; e[e.length-1] = wireSequence++; mutate?.(e[5]); }
+    host.onMessage('guest',copy);
+    for (const e of host.peers.get('guest')?.events.splice(0) || []) host._play('guest',e);
+  };
+  deliver(packet,p => { p.sourceRankedShot++; }); assert.equal(f.wall.hp,800,'fresh rows cannot borrow another host release');
+  deliver(packet,p => { p.damage++; }); assert.equal(f.wall.hp,800,'claimed damage must equal native contact');
+  if (order === 'claim-first' || order === 'terrain-blocked') {
+    deliver(packet); assert.equal(f.wall.hp,800,'an owner packet alone cannot create host release/contact proof');
+  }
+  if (order === 'terrain-blocked') f.G.physics.segment = (a,_b,h) => {
+    h.hit = true; h.point.copy(a); h.normal.set(0,0,-1); h.dist = 0; return h;
+  };
+  // This receiver contract starts at the authenticated current-host wire
+  // boundary. Actual native host completion is exercised by the separate
+  // three-peer release-completion tests, never by a bare local event drain.
+  host.onMessage('authority',hostEvent);
+  assert.equal(f.wall.hp,800,'a release without native contact cannot spend HP');
+  m.rankedEffects.update(.1); m.rankedEffects.update(.1); m.rankedEffects.update(.3);
+  assert.equal(f.wall.hp,order === 'claim-first' ? 380 : 800,'pending claims settle only at actual receiver contact');
+  if (order === 'expired-contact') seconds += 4.6;
+  if (order === 'changed-host') host.s.hostId = 'replacement';
+  const expected = ['terrain-blocked','expired-contact','changed-host'].includes(order) ? 800 : 380;
+  deliver(packet); assert.equal(f.wall.hp,expected,'direct x1 plus blast x2 need an unobstructed native shot');
+  deliver(packet); assert.equal(f.wall.hp,expected,'fresh owner sequences cannot spend contacts twice');
+  m.rankedEffects.dispose(); host.dispose(); guest.dispose();
 });
 
 test('the ranked host does not double-spend native object HP for a remote-owned carrier', async () => {

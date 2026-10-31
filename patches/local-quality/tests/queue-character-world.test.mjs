@@ -175,17 +175,18 @@ test('far weapon material/color hoist preserves every decimated buffer and corne
 
 test('frame deadlines retain the absolute phase with bounded work after long visible stalls', () => {
   for(const fps of [30,60,120])for(const gap of [0,150,250,251,10000,60000,600000])for(const jitter of [-1,0,1]){
-    const interval=1000/fps,initial=interval,now=gap+jitter+interval*2,limit=now+1;
-    let expected=initial,oldAdds=0;while(expected<=limit){expected+=interval;oldAdds++;}
-    let actual=initial,reads=0,delay;
-    const owner={active:true,env:{performance:{now:()=>now},setTimeout(fn,d){delay=d;return 1;}},subscribe(){return()=>{};}};
+    const interval=1000/fps,initial=interval,now=gap+jitter+interval*2,limit=now;
+    let expected=initial+interval,oldAdds=1;while(expected<=limit){expected+=interval;oldAdds++;}
+    let actual=initial,reads=0,delay=null,rafs=0;
+    const owner={active:true,env:{performance:{now:()=>now},setTimeout(fn,d){delay=d;return 1;},requestAnimationFrame(){rafs++;return 2;},cancelAnimationFrame(){}},subscribe(){return()=>{};}};
     const d=new PlatformFrameDriver(owner,()=>{},()=>{},()=>fps);d.running=true;d.frameInterval=interval;
     Object.defineProperty(d,'nextDeadline',{get(){reads++;return actual;},set(v){actual=v;}});
-    d._scheduleNext(0);
-    assert.ok(actual>limit,'next deadline is strictly after the lead boundary');
-    assert.ok(Object.is(actual,expected),'same deadline including legacy repeated-addition roundoff');
+    d._scheduleNext(now);
+    assert.ok(actual>limit,'next deadline is strictly after the delivered frame');
+    assert.ok(Object.is(actual,expected),'same deadline including repeated-addition roundoff after consuming one target slot');
     if(oldAdds<=8)assert.equal(actual,expected,'ordinary cadence remains bit exact');
-    assert.equal(delay,actual-now-1);assert.ok(reads<160,'deadline work follows exponent boundaries rather than expired slots');d.dispose();
+    if(actual-now-1>0){assert.equal(delay,actual-now-1);assert.equal(rafs,0);}else{assert.equal(delay,null);assert.equal(rafs,1);}
+    assert.ok(reads<160,'deadline work follows exponent boundaries rather than expired slots');d.dispose();
   }
 });
 

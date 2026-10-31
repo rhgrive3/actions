@@ -15,7 +15,7 @@ async function run({verifiedInventory,corruptMTL=false}={}){
  const context=vm.createContext({AbortController,TextDecoder,performance:{now:()=>0},self:{navigator:{},postMessage:value=>messages.push(value)}});
  const values={
   './source-catalog.mjs':{SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'x',internal:'Stage',tree:treePin,sourceSha256:sha(obj)}],sourceURL:(_s,f)=>f,sourceObjectBytes:()=>obj.length},
-  './source-cache.mjs':{readDerived:async()=>null,writeDerived:async()=>{},sourceTree:async()=>{trees++;return tree();},sourceBytes:async(_id,file,pin)=>{pins.push({file,pin});const bytes=file.endsWith('.obj')?obj:corruptMTL?Buffer.from('BAD'):mtl;await verifySourceBytes(bytes,pin);return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length);}},
+  './source-cache.mjs':{readDerived:async()=>null,beginDerivedWrite:async()=>null,sourceTree:async()=>{trees++;return tree();},sourceBytes:async(_id,file,pin)=>{pins.push({file,pin});const bytes=file.endsWith('.obj')?obj:corruptMTL?Buffer.from('BAD'):mtl;await verifySourceBytes(bytes,pin);return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.length);}},
   './source-convert.mjs':{convertSource:()=>{converted++;return {...Object.fromEntries(['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'].map(k=>[k,new Uint8Array(0)])),manifest:{objects:[],faces:[]}};}}
  };
  const module=new vm.SourceTextModule(source,{context});await module.link(p=>new vm.SyntheticModule(Object.keys(values[p]),function(){for(const[k,v]of Object.entries(values[p]))this.setExport(k,v)},{context}));await module.evaluate();

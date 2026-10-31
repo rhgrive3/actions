@@ -34,9 +34,14 @@ const oldRecord=_source=>reviewedSingleRoundPolicy(frozenCombat).replace(fused,'
     for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
     if(recent>=rate)continue;`);
 const oldPrune=source=>source.replace(`  // combatAdmission is take's sole entry and already prunes at this same t.
-  const s=state(nm);`,`  const s=state(nm);prune(s,t);`);
+  const s=state(nm);`,`  const s=state(nm);prune(s,t,nm);`);
+const retainedArrayAnchor='if(store.length<=MAX_PROOFS)return store.slice();';
+function reuseRetainedArray(source) {
+ assert.equal(source.split(retainedArrayAnchor).length,2,'one bounded proof ownership boundary');
+ return source.replace(retainedArrayAnchor,'if(store.length<=MAX_PROOFS)return store;');
+}
 async function load(transform=s=>s){return actualModule('patches/network-replication/combat-provenance.mjs',{
- transform:s=>transform(s).replace('function prune(s,t) {','function prune(s,t) { globalThis.prunes++;'),
+ transform:s=>transform(s).replace(/function prune\(s,t(?:,nm)?\) \{/,'$& globalThis.prunes++;'),
  extra:'export {record,prune,state};',globals:{prunes:0}});}
 function net(){
  const actor={nid:1,owner:'peer',remote:true,alive:true,team:0,pos:{x:0,y:0,z:0},weapon:{id:'shooter',kind:'shooter',range:35,fireInterval:.12,damage:36}};
@@ -159,7 +164,7 @@ test('actual combat admission prunes once with identical boundary maps, includin
 });
 
 test('retention reuse proposal changes a retained outer proof array across a later no-op and append',async()=>{
- const original=await load(),reuse=await load(s=>s.replace('if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;', 'if(store.length)s.proofs.set(from,store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store);return acceptedProof;'));
+ const original=await load(),reuse=await load(reuseRetainedArray);
  const run=module=>{
   const nm=net();module.api.record(nm,'peer',packet([shot(0)]),100);
   const retained=nm._combatProvenance.proofs.get('peer');
@@ -168,11 +173,13 @@ test('retention reuse proposal changes a retained outer proof array across a lat
   return{retained:retained.length,stored:nm._combatProvenance.proofs.get('peer').length};
  };
  assert.deepEqual(run(original),{retained:1,stored:2});assert.deepEqual(run(reuse),{retained:2,stored:2});
- assert(original.source.includes('store.slice(-MAX_PROOFS)'),'the ownership-changing candidate is not installed');
+ assert(original.source.includes(retainedArrayAnchor),'the ownership-changing candidate is not installed');
+ assert.throws(()=>reuseRetainedArray(original.source.replace(retainedArrayAnchor,'')),/one bounded proof ownership boundary/);
+ assert.throws(()=>reuseRetainedArray(original.source+retainedArrayAnchor),/one bounded proof ownership boundary/);
 });
 
 test('retention reuse changes real admission under a synchronous geometry reentry',async()=>{
- const original=await load(),reuse=await load(s=>s.replace('if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;', 'if(store.length)s.proofs.set(from,store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store);return acceptedProof;'));
+ const original=await load(),reuse=await load(reuseRetainedArray);
  const run=module=>{
   const nm=net();module.api.record(nm,'peer',packet([shot(0)]),100);let nested=false;
   class V{set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}}

@@ -1,3 +1,8 @@
+import {recordSpecialDeviceAction} from '../../network-replication/special-device-contact-proof.mjs';
+import {bindCatalogueActionPayload} from '../../network-replication/catalogue-action-receipt.mjs';
+import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
+import { isNativeDeviceProbe,withNativeDeviceProbe } from '../../network-replication/native-device-probe.mjs';
+import {deferNativeDeviceHit} from '../../network-replication/device-hit-pending.mjs';
 import {observeNativeSpecialUse,admitCatalogueSpecial,flushCatalogueSpecials,captureLegacySpecialFrames,withNativeSpecialPlayback,noteNativeSpecialPlayback} from './special-replay-admission.mjs';
 import { syncCatalogueKitIcons, bindCatalogueKitIconFocus } from './ui-kit-icons.mjs';
 import { hasPendingSubBirthCommit, replayWithSubBirthCommit } from '../../network-replication/sub-birth-commit.mjs';
@@ -5,6 +10,7 @@ import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
 import { recordCatalogueSubBirth } from '../../network-replication/kit-paint-admission.mjs';
 import { beakonActorKey } from './all-subs.mjs';
+import { observeBeakonTick, withBeakonUseAdmission, clearBeakonUseAdmission } from './beakon-use-admission.mjs';
 // catalogue-loadout
 // Prototype loadout selection. Choices belong to the actor; shared tuning and
 // other players' equipment remain immutable. Native main IDs stay on the wire.
@@ -126,6 +132,7 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     if(category==='sub'&&payload.phase==='spawn')recordCatalogueSubBirth(nm,event.paintSource,row);
   });
   const replaySpecialPayload=payload=>{
+    recordSpecialDeviceAction(G.netm,payload.actor,payload);
     if(payload.id==='booyahBomb'&&payload.action==='activate')payload.actor.s3CatalogueBooyah={activation:payload.activation};
     if(payload.id==='booyahBomb'&&payload.action==='end')payload.actor.s3CatalogueBooyah=null;
     return payload.id==='tripleSplashdown'?replaySplashdown(api,payload):replaySpecial(api,payload);
@@ -159,11 +166,13 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     seen.add(key);while(seen.size>512)seen.delete(seen.values().next().value);
     play.call(this,from,event);
     payload.actor=actor;
+    bindCatalogueActionPayload(this,event,payload,actor);
     const id=payload.subId||payload.id;
     const objectHit=payload.phase==='objectHit'||payload.action==='objectHit';
     if(event[2]==='sub'&&['spawn','deploy'].includes(payload.phase)&&(!Object.hasOwn(api.SUB,id)||actor.weapon?.sub!==id))return;
     if(!objectHit&&event[2]==='special'&&!Object.hasOwn(api.SPECIALS,id))return;
     if(event[2]==='special'&&!admitCatalogueSpecial(this,from,actor,event,payload,api,replaySpecialPayload))return;
+    if(event[2]==='sub'&&payload.phase==='beakonUseProposal')return withBeakonUseAdmission(this,from,event,payload,()=>replaySub(api,payload));
     if(event[2]==='sub')return hasPendingSubBirthCommit(this,event)
       ? replayWithSubBirthCommit(this,from,event,report=>replaySub(api,payload,report))
       : replaySub(api,payload);
@@ -187,7 +196,7 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
   const tick=NetMatch.prototype._tick;
   NetMatch.prototype._tick=function(from,message){
     const last=this.peers?.get(from)?.lastTs??-Infinity;
-    const result=tick.call(this,from,message);
+    const result=observeBeakonTick(this,from,message,()=>tick.call(this,from,message));
     captureLegacySpecialFrames(this,from,message,last);
     // Sidecars follow the native accepted watermark, including clock rejection.
     if(!Number.isFinite(message?.ts)||message.ts<=last||this.peers?.get(from)?.lastTs!==message.ts||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;
@@ -200,6 +209,8 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     flushCatalogueSpecials(this,api);
     return result;
   };
+  const dispose=NetMatch.prototype.dispose;
+  NetMatch.prototype.dispose=function(...args){clearBeakonUseAdmission(this);return dispose.apply(this,args);};
 }
 
 // catalogue-base-kits
@@ -263,16 +274,20 @@ function spawnFists(api,owner,origin,yaw,activation,ghost=false){
   const p=api.G.projectiles;if(!p)return;
   const targets=tripleSlamFistCenters(origin,yaw);
   for(let index=0;index<2;index++){
-    const target=new api.THREE.Vector3(targets[index].x,targets[index].y,targets[index].z),start=origin.clone();start.y+=1;
-    // At 2m clearance fists pass low cover, but stop at tall walls. Every
-    // endpoint is projected onto the surface under that particular fist.
-    const topStart=start.clone().add(new api.THREE.Vector3(0,1,0)),topEnd=target.clone();topEnd.y=topStart.y;
-    if(api.G.physics?.segment){const h=api.G.physics.segment(topStart,topEnd,new api.Hit());if(h.hit)target.copy(h.point).addScaledVector(h.normal,.2);}
-    const probe=target.clone();probe.y+=8;
-    const floor=api.G.physics?.raycast?.(probe,new api.THREE.Vector3(0,-1,0),20,new api.Hit());if(floor?.hit)target.y=floor.point.y;
+    const target=nativeFistTarget(api,origin,targets[index]),start=origin.clone();start.y+=1;
     const f={owner,activation,index,yaw,sourceLife:life(owner),origin:origin.clone(),start,target,pos:start.clone(),age:0,hp:100,ghost,dead:false};
     f.mesh=visual(api,f.pos,owner);poseFist(f,api.G.time);(p._catalogueFists||=[]).push(f);
   }
+}
+function nativeFistTarget(api,origin,point){
+ const target=new api.THREE.Vector3(point.x,point.y,point.z),start=origin.clone();start.y+=1;
+ // At 2m clearance fists pass low cover, but stop at tall walls. Every
+ // endpoint is projected onto the surface under that particular fist.
+ const topStart=start.clone().add(new api.THREE.Vector3(0,1,0)),topEnd=target.clone();topEnd.y=topStart.y;
+ if(api.G.physics?.segment){const h=api.G.physics.segment(topStart,topEnd,new api.Hit());if(h.hit)target.copy(h.point).addScaledVector(h.normal,.2);}
+ const probe=target.clone();probe.y+=8;
+ const floor=api.G.physics?.raycast?.(probe,new api.THREE.Vector3(0,-1,0),20,new api.Hit());if(floor?.hit)target.y=floor.point.y;
+ return target;
 }
 function burst(api,owner,pos,activation,index=-1){
   const {G,THREE}=api;G.fx?.explosion?.(pos,owner.color,9.6);
@@ -288,7 +303,7 @@ function burst(api,owner,pos,activation,index=-1){
   const spent=new Set();
   for(const v of G.actors||[]){if(!v.alive||v.team===owner.team)continue;const to=v.pos.clone();to.y+=.7;
     const damage=tripleSlamFistDamage(to.distanceTo(pos),scale);if(!damage||G.physics?.los&&!G.physics.los(pos,to))continue;
-    const p={owner,team:owner.team,prev:pos,pos:to,vel:to.clone().sub(pos),damage,type:'blast',ghost:false};
+    const p={owner,team:owner.team,prev:pos,pos:to,vel:to.clone().sub(pos),damage,type:'blast',wid:'tripleSplashdown',s3AllSpecial:'tripleSplashdown',ghost:false};
     const barrier=G.projectiles.kitDefenseCandidate?.(p);if(barrier){const key=barrier.domeId||barrier;if(!spent.has(key)){barrier.onHit();spent.add(key);}continue;}
     G.projectiles.applyHit(owner,v,damage,'tripleSplashdown');
   }
@@ -317,7 +332,10 @@ export function replaySplashdown(api,event){
   const pos=new api.THREE.Vector3(...event.pos),actor=event.actor,list=api.G.projectiles?._catalogueFists||[];
   if(event.action==='objectHit'){
     const target=api.G.netm?.byNid?.get(event.ownerNid);if(!target||target.remote||event.ownerLife!==life(target)||!valid(event.damage)||event.damage<=0||event.damage>2200)return false;
-    const f=list.find(f=>f.owner===target&&f.activation===event.activation&&f.index===event.index);return !!f&&hitFist(api,f,actor,event.damage/(actor.s3?.modifiers?.objectShredder?1.1:1));
+    const f=list.find(f=>f.owner===target&&f.activation===event.activation&&f.index===event.index);if(!f)return false;
+    const admitted=admitDeviceHit(api.G.netm,actor,f,event.damage/(actor.s3?.modifiers?.objectShredder?1.1:1),null,event);
+    if(!admitted){deferNativeDeviceHit(api.G.netm,actor,event,()=>replaySplashdown(api,event));return false;}
+    return !!admitted&&hitFist(api,f,actor,admitted.damage);
   }
   if(event.action==='activate'&&!event.superJump){if(!valid(event.yaw))return false;
     if(list.some(f=>f.owner===actor&&f.activation===event.activation))return false;
@@ -325,9 +343,49 @@ export function replaySplashdown(api,event){
   if(event.action==='fistGone'){const f=list.find(f=>f.owner===actor&&f.activation===event.activation&&f.index===event.index);if(f)f.dead=true;return !!f;}
   if(event.action==='impact'){api.G.fx?.explosion?.(pos,actor.color,9.6);return true;}return false;
 }
+const splashdownDeviceContacts=new WeakMap();
 export function installCatalogueSplashdown(api){
   const {Actor,Projectiles,SPECIALS,G,THREE,PLAYER}=api;if(Actor.prototype[INSTALL])return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});SPECIALS.tripleSplashdown={...SPLASHDOWN};
+  Projectiles.prototype.nativeSpecialSplashdownDeviceContact=function(actor,payload,target,receipt,use,claimTime,options={}){
+    if(payload.id!=='tripleSplashdown'||payload.action!=='impact'||!Number.isInteger(payload.index)||payload.index< -1||payload.index>1)return null;
+    const activation=(options.actions||[]).find(r=>r.payload.id==='tripleSplashdown'&&r.payload.action==='activate'&&r.payload.activation===payload.activation);
+    if(!activation||!Array.isArray(activation.payload.pos)||!activation.payload.pos.every(valid)||!valid(activation.payload.yaw))return null;
+    const a=activation.payload,snap=activation.receipt.snapshot,origin=new THREE.Vector3(...a.pos),lag=Math.max(0,activation.receipt.packetTime-activation.receipt.time);
+    const lift=a.superJump?0:6.5*Math.sin(Math.min(1,lag)*Math.PI/2);
+    if(Math.hypot(origin.x-snap.x,origin.z-snap.z)>.05||!a.superJump&&Math.abs(origin.y+lift-snap.y)>.06)return null;
+    const frame=receipt.tick-activation.receipt.tick,wire=new THREE.Vector3(...payload.pos);let at;
+    if(payload.index>=0){
+      if(a.superJump||Math.abs(frame-Math.round(FIST_FLAT_IMPACT*60))>1)return null;
+      at=nativeFistTarget(api,origin,tripleSlamFistCenters(origin,a.yaw)[payload.index]);
+      if(at.distanceTo(wire)>.025)return null;
+    }else{
+      if(a.superJump?!(use.previousSnapshot?.f&32768):frame<60)return null;
+      at=new THREE.Vector3(receipt.snapshot.x,receipt.snapshot.y,receipt.snapshot.z);
+      if(wire.distanceTo(at)>.035||!a.superJump&&!(receipt.snapshot.f&16)&&frame<=135)return null;
+    }
+    const scale=gearCurve(use.specialPowerAP||0,1,1.05,1.1),key=`special:${use.seq}:pogo:${payload.index}`;
+    if(options.consumedKeys?.has(key))return null;
+    const sealed=splashdownDeviceContacts.get(use)?.get(payload.index);if(sealed)return sealed.get(target)||null;
+    const contacts=new Map();
+    for(const victim of G.actors||[]){
+      if(!victim.alive||victim.team===actor.team)continue;
+      const to=victim.pos.clone();to.y+=.7;
+      const damage=tripleSlamFistDamage(to.distanceTo(at),scale);if(!damage||G.physics?.los&&!G.physics.los(at,to))continue;
+      const p={owner:actor,team:actor.team,prev:at,pos:to,vel:to.clone().sub(at),damage,type:'blast',wid:'tripleSplashdown',s3AllSpecial:'tripleSplashdown',ghost:true};
+      const barrier=withNativeDeviceProbe(p,()=>this.kitDefenseCandidate?.(p));
+      const device=barrier?.object||barrier?.damageTarget;
+      if(device&&!contacts.has(device))contacts.set(device,{damage,projectile:p,cause:'Pogo',contactKey:key});
+    }
+    const contact=contacts.get(target);if(!contact)return null;
+    return {...contact,commit(){
+      let indexes=splashdownDeviceContacts.get(use);if(!indexes){indexes=new Map();splashdownDeviceContacts.set(use,indexes);}
+      // Native remote barriers remain ghosts through this whole burst. The
+      // first accepted claim fixes that instantaneous roster before HP changes.
+      const previous=indexes.get(payload.index);if(previous&&previous!==contacts)return false;
+      indexes.set(payload.index,contacts);return true;
+    }};
+  };
   const nativeStart=Actor.prototype._startSpecial,nativeUpdate=Actor.prototype._updateSpecial;
   function start(actor,superJump=false){if(actor.remote||!actor.alive||!actor.specialReady?.())return false;
     const activation=serial(actor),origin=actor.pos.clone(),yaw=actor.aimYaw;
@@ -356,13 +414,13 @@ export function installCatalogueSplashdown(api){
   const update=Projectiles.prototype.update,clear=Projectiles.prototype.clear,candidate=Projectiles.prototype.kitDefenseCandidate;
   Projectiles.prototype.update=function(dt,...args){const r=update.call(this,dt,...args);if(valid(dt)&&dt>0)fistsStep(api,dt);return r;};
   Projectiles.prototype.clear=function(...args){for(const f of this._catalogueFists||[])remove(f,G);this._catalogueFists=[];return clear.apply(this,args);};
-  Projectiles.prototype.kitDefenseCandidate=function(p){let best=candidate?.call(this,p);if(!p?.owner||p.ghost||!p.prev||!p.pos)return best;
+  Projectiles.prototype.kitDefenseCandidate=function(p){let best=candidate?.call(this,p);if(!p?.owner||p.ghost&&!isNativeDeviceProbe(p)||!p.prev||!p.pos)return best;
     if(!this._catalogueFists?.length)return best;
     const delta=p.pos.clone().sub(p.prev),length=delta.length();if(!length)return best;delta.divideScalar(length);
     for(const f of this._catalogueFists||[]){if(f.dead||f.owner.team===p.team||f.age-.25>=55/60)continue;
       const to=f.pos.clone().sub(p.prev),at=Math.max(0,Math.min(length,to.dot(delta))),point=p.prev.clone().addScaledVector(delta,at);
       if(point.distanceTo(f.pos)>1+(p.size||0)||best&&best.distance<=at)continue;
-      best={distance:at,point,onHit:()=>hitFist(api,f,p.owner,p.damage||0)};
+      best={damageTarget:f,distance:at,point,onHit:()=>hitFist(api,f,p.owner,p.damage||0)};
     }return best;};
 }
 

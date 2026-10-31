@@ -50,9 +50,15 @@ test('delay classifier preserves native stamped lobby/READY and delays only unch
   const request=(create=false)=>({...req('BCEFG',compat,create),url:req('BCEFG',compat,create).url+(stamped?'&relayClock=1':'')});
   await connect(host,request(true));
   await connect(peer,request(),{send:(text,deliver)=>{if(isRelayTickFrame(text))held.push(text);else deliver(text);}});
-  for (const data of [{k:'lobby',l:{players:['host','guest'],label:'a|b'}},{k:'ready',id:'current'},{k:'t',t:100,e:[]}]) host.emit('message','b|'+JSON.stringify(data));
+  // Lobby messages fan out from the host. READY is guest -> current-host
+  // only, while the unchanged native tick envelope is the delayed lane.
+  host.emit('message','b|'+JSON.stringify({k:'lobby',l:{players:['host','guest'],label:'a|b'}}));
+  peer.emit('message','b|'+JSON.stringify({k:'ready',id:'current'}));
+  host.emit('message','b|'+JSON.stringify({k:'t',t:100,e:[]}));
   const forwarded=peer.sent.filter(s=>s.startsWith('m|'));
-  assert.equal(forwarded.length,2);assert(forwarded.every(s=>!isRelayTickFrame(s)));
+  const hostDirected=host.sent.filter(s=>s.startsWith('m|')&&s.includes('"ready"'));
+  assert.equal(forwarded.length,1);assert(forwarded.every(s=>!isRelayTickFrame(s)));
+  assert.equal(hostDirected.length,1,'READY reaches the current host, not other guests');
   assert.equal(held.length,1);assert.equal(isRelayTickFrame(held[0]),true);
   assert.equal(held[0].includes('|@'),stamped);
   const original=held.shift();peer.send(original);assert.equal(peer.sent.at(-1),original,'delay must not strip authenticated relay time');

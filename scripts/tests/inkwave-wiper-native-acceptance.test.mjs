@@ -207,7 +207,7 @@ test('additive catalog workflow retains inherited Hissen/phase52 route and binds
   assert.match(driver,/verifyRuntimeBuild\(site,root,sourceSha\)/);assert.match(driver,/launchSandboxBrowser\(chromium\)/);
   assert.ok(!driver.includes('--no-sandbox'));assert.ok(!driver.includes('new Projectile'));
   assert.match(driver,/p\.descriptor!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
-  assert.match(driver,/finally\s*\{[\s\S]*?\[restorePasses,restoreDraw,\(\)=>r\.setRenderTarget/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
+  assert.match(driver,/finally\s*\{[\s\S]*?\[restorePasses,restoreDraw,\(\)=>r\.setRenderTarget/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError,hadPrimaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
   assertWiperCaptureReceipt(fixture().receipt,{sourceSha,...buildBinding});
 });
 

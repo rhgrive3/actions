@@ -111,7 +111,14 @@ function boot(source, held = []) {
     setTimeout: () => 1, clearTimeout: () => record('clearTimer'),
     t: text => text,   // i18n.t in English mode; main.js imports it at module scope
   };
+  // When composed main injects legacy resource owners immediately before
+  // _buildWorld, exercise those exact source methods as well. Both old raw
+  // epochs lack the methods and retain their original test semantics.
+  const legacyOwnerMethods = source.includes('  async _prepareLegacyPropRuntime(')
+    ? section(source, '  async _prepareLegacyPropRuntime(', '  async _buildWorld(') : '';
+  if (legacyOwnerMethods) assert.match(legacyOwnerMethods, /async _prepareLegacyMurals\(/);
   const methods = [
+    legacyOwnerMethods,
     section(source, '  async _buildWorld(', '\n  // deck slabs over the sea:'),
     section(source, '  _startAttract() {', '\n  _attractShot() {'),
     source.includes('  _beginMatchFlow() {') ? section(source, '  _beginMatchFlow() {', '\n  async startMatch(') : '',
@@ -152,6 +159,16 @@ function boot(source, held = []) {
     snapshot: () => ({ match: game.match, level: G.level, paint: G.paint, physics: G.physics, map: game.mapDef, layout: game.layoutId, mode: G.mode, menu: game.menus.current }),
   };
 }
+
+test('composed production startup uses real legacy preparation owners, not a fixture-only bypass', async () => {
+  const h=boot(PRODUCTION);
+  assert.equal(typeof h.game._prepareLegacyPropRuntime,'function');
+  assert.equal(typeof h.game._prepareLegacyMurals,'function');
+  assert.equal(await h.game._prepareLegacyPropRuntime('a',()=>true),true);
+  assert.equal(await h.game._prepareLegacyMurals('a',()=>true),true);
+  assert.equal(h.game.PropKit,h.context.PropKit);
+  assert.equal(h.game.murals.userData!==undefined,true);
+});
 
 test('negative proof: raw online startup disposes a newer match after the first fade', async () => {
   const h = boot(RAW, ['fade']);

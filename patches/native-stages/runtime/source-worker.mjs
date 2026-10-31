@@ -1,6 +1,6 @@
 import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL,sourceObjectBytes} from './source-catalog.mjs';
 import {convertSource} from './source-convert.mjs';
-import {sourceBytes,sourceTree,readDerived,writeDerived} from './source-cache.mjs';
+import {sourceBytes,sourceTree,readDerived,beginDerivedWrite} from './source-cache.mjs';
 const buffers=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 // Keep the complete object ordinal table used by collision objectIds. Only
 // inactive, never-rendered position/index payloads are omitted from transport.
@@ -21,14 +21,21 @@ function compactInactiveDisplay(data){
 
 // Use the final Float32 display positions, after compaction, with exactly the
 // same arithmetic as Box3.getCenter/Vector3.distanceToSquared in the renderer.
-function prepareDisplayTransport(data){
+function prepareDisplayTransport(data,verifiedCached=false){
  for(const o of data.manifest?.objects||[]){
   const b=o.bounds;
   if(!o.active||!Array.isArray(b)||b.length!==2||!b.every(row=>Array.isArray(row)&&row.length===3&&row.every(Number.isFinite))||b[0].some((x,i)=>x>b[1][i]))continue;
+  const previous=o.boundingSphere;
+  // Only seal-verified records written by this exact bounds recipe can skip
+  // the scan. Older records and malformed metadata retain the original path.
+  if(verifiedCached&&data.manifest.displayBoundsVersion===1&&previous&&
+     Array.isArray(previous.center)&&previous.center.length===3&&previous.center.every(Number.isFinite)&&
+     Number.isFinite(previous.radius)&&previous.radius>=0&&previous.center.every((x,i)=>x===(b[0][i]+b[1][i])*.5))continue;
   const center=b[0].map((x,i)=>(x+b[1][i])*.5);let radiusSq=0;
   for(let i=o.vo*8,end=(o.vo+o.vc)*8;i<end;i+=8){const x=center[0]-data.vertices[i],y=center[1]-data.vertices[i+1],z=center[2]-data.vertices[i+2];radiusSq=Math.max(radiusSq,x*x+y*y+z*z);}
   const radius=Math.sqrt(radiusSq);if(Number.isFinite(radius))o.boundingSphere={center,radius};
  }
+ if(data.manifest)data.manifest.displayBoundsVersion=1;
  const faces=data.manifest?.faces;
  if(Array.isArray(faces)&&!data.faceTriangles){
   let count=0;for(const face of faces)count+=face.triangles?.length||0;
@@ -50,7 +57,7 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false,verifiedInv
   const ipadDesktopUA=/Macintosh/i.test(ua)&&Number(self.navigator?.maxTouchPoints)>1;
   const constrained=constrainedClient===true||(gb>0&&gb<=4)||handheld||ipadDesktopUA;
   // Reading an older derived entry also structured-clones the entire stage.
-  let data=constrained?null:await readDerived(key),cached=!!data;
+  let data=constrained?null:await readDerived(key),cached=!!data,cacheWrite=null;
   if(!data){
    self.postMessage({progress:'download',id});
    const objectPin={sha256:stage.sourceSha256};
@@ -78,16 +85,17 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false,verifiedInv
     ]);
    } catch(error) { abort?.abort(error); throw error; }
    self.postMessage({progress:'download',id,bytes:obj.byteLength,total:obj.byteLength});
-   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}),null,{compactBVHCenters:constrained,compactInactiveDisplay:true});
+   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}),null,{compactBVHCenters:constrained,compactInactiveDisplay:true,packedPaintCharts:true});
    data=prepareDisplayTransport(compactInactiveDisplay(data));
    // Derived IndexedDB writes clone every large typed array before the
    // renderer takes ownership. Avoid that competing peak on small devices.
    // CacheStorage still retains the authenticated downloaded source.
-   if(!constrained)await writeDerived(key,data);
+   if(!constrained)cacheWrite=await beginDerivedWrite(key,data);
   }
   data.sourceMetrics={cached,conversionMilliseconds:performance.now()-start,recipe:SOURCE_RECIPE};
-  if(cached)prepareDisplayTransport(data);
+  if(cached)prepareDisplayTransport(data,true);
   const transfers=buffers.map(k=>data[k].buffer);if(data.faceTriangles)transfers.push(data.faceTriangles.buffer);
-  self.postMessage({result:data},transfers);
+  self.postMessage({result:data,cachePending:!!cacheWrite},transfers);
+  if(cacheWrite){await cacheWrite.completion;self.postMessage({cacheComplete:true});}
  }catch(error){self.postMessage({error:error.message});}
 };

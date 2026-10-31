@@ -84,7 +84,7 @@ test('Wail paired delayed sample retains exact directions, origins, seed and eve
       for(const name of ['findLast','find'])pair.trace[name]=function(...args){searches++;return Array.prototype[name].apply(this,args);};
       const invoke=fn(code,{WAIL_TRACK_DELAY:.5,clamp,nextSeed,hitBeam(_r,_a,_s,origin,dir,length,damage){log.push(['beam',...origin.toArray(),...dir.toArray(),length,damage]);rt.v3.set(99,88,77);return origin.clone().addScaledVector(dir,length);},emitAction(_r,_a,id,serial,action,origin,end,seed,extra){log.push([id,serial,action,...origin.toArray(),...end.toArray(),seed,{...extra}]);rt.v2.set(-99,-88,-77);}});
       invoke(rt,{},state,pair);return{log,tick:pair.tick,seed:state.seed,searches};};
-    const a=run(before.functions.fireWailTick),b=run(current.get('fireWailTick'));assert.deepEqual({...b,searches:null},{...a,searches:null});assert.equal(b.searches,a.searches/2);
+    const a=run(before.functions.fireWailTick),b=run(current.get('fireWailTick'));assert.deepEqual({...b,searches:null},{...a,searches:null});assert.equal(b.searches,0);assert.ok(b.searches<=a.searches);
   }
 });
 

@@ -48,7 +48,6 @@ const contracts = [
     'patches/splatoon3/adapter.mjs', 'scripts/inkwave-range-profile-acceptance.mjs', ownTest,
   ]},
 ];
-
 test('ink-volume source-only diffs match narrow glob routes and every removed owner is detected', () => {
   const parsed = parseValidateWorkflow(read('.github/workflows/inkwave-ink-volumes.yml'));
   const routes = (parsed.on || parsed.true).pull_request.paths;

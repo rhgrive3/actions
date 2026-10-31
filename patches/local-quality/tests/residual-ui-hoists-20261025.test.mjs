@@ -7,14 +7,24 @@ import {parse} from '../../loading-cache/vendor/acorn.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/residual-ui-before.json',import.meta.url)));
 function source(file,name){const s=fs.readFileSync(new URL('../../../'+file,import.meta.url),'utf8'),ast=parse(s,{sourceType:'module',ecmaVersion:'latest'}),n=ast.body.map(x=>x.declaration||x).find(x=>x.type==='FunctionDeclaration'&&x.id.name===name);assert(n,name);return s.slice(n.start,n.end);}
 const currentMove=source('patches/splatoon3/runtime/all-specials.mjs','moveActor'),currentDamp=source('patches/splatoon3/runtime/all-specials.mjs','dampForSpecial'),currentHit=source('patches/splatoon3/runtime/all-subs.mjs','applyRemoteObjectHit');
-// Preserve the frozen Vector3 implementation while applying the separately
-// reviewed anti-poison reservation policy before comparing the scalar path.
+// The sender uses the admitted snapshot life even while render playback still
+// exposes the previous life. Load both actual owners into the isolated scope.
+const hitLifeOwners=vm.runInNewContext(`${source('patches/splatoon3/runtime/all-subs.mjs','ownerLife')}\n${source('patches/splatoon3/runtime/all-subs.mjs','replayOwnerLife')}\n({ownerLife,replayOwnerLife})`);
+// Preserve the frozen Vector3 distance calculation while applying the later
+// reviewed admission and anti-poison reservation policy to both implementations.
 function currentReservationPolicy(body) {
   const early='  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;objectHitSeen.add(key);\n  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);';
-  const late='  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear';
+  const oldDamage="  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectDamageScale(shooter,target.subId,event.cause||'Default'));";
+  const admission='  const admitted=admitDeviceHit(api.G.netm,shooter,target,event.damage,event.cause,event);\n  if(!admitted){deferNativeDeviceHit(api.G.netm,shooter,event,()=>applyRemoteObjectHit(api,event));return false;}';
+  const reservation='  objectHitSeen.add(key);\n  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);';
+  const damage='  target.hp-=admitted.damage*objectDamageScale(shooter,target.subId,admitted.cause);';
+  for(const block of [admission,reservation,damage])assert.equal(currentHit.split(block).length,2,'reviewed admission policy stays exact');
   const replaceOnce=(text,from,to)=>{assert.equal(text.split(from).length,2,'unique replay policy anchor');return text.replace(from,to);};
+  const senderEpoch='replayOwnerLife(shooter)!==event.life';
+  assert.equal(currentHit.split(senderEpoch).length,2,'reviewed sender admission epoch stays exact');
+  body=replaceOnce(body,'ownerLife(shooter)!==event.life',senderEpoch);
   body=replaceOnce(body,early,'  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;');
-  return replaceOnce(body,late,'  objectHitSeen.add(key);\n  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);\n'+late);
+  return replaceOnce(body,oldDamage,admission+'\n'+reservation+'\n'+damage);
 }
 const policyBridgedHit=currentReservationPolicy(before.applyRemoteObjectHit);
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
@@ -52,16 +62,28 @@ test('actual special damp preserves invalid dt, signed zero, gravity and resolve
   }
 });
 
-function hitFixture(body,{subId='beakon',position=[0,0,0],ghost=false,damage=20,coordinates=[0,0,0],getterSecondUndefined=false,onGear=()=>{}}={}) {
-  const log=[],seen=new Set();let constructed=0;
+function hitFixture(body,{subId='beakon',position=[0,0,0],ghost=false,damage=20,coordinates=[0,0,0],getterSecondUndefined=false,onScale=()=>{},admitted=true,nativeDamage=null,nativeCause='Default'}={}) {
+  const log=[],seen=new Set(),pending=[];let constructed=0,proofAccepted=admitted;
   const owner={nid:1,remote:false,team:0,netLife:7},shooter={nid:2,remote:true,team:1,netLife:8};
   const pos=new THREE.Vector3(...position),target={owner,seq:10,sourceLife:7,subId,phase:'deployed',ghost,hp:100,pos};
   const vector=class extends THREE.Vector3{constructor(...a){super(...a);constructed++;}};
   const api={THREE:{Vector3:vector},G:{netm:{byNid:new Map([[1,owner],[2,shooter]])},projectiles:[target]}};
   const event={actor:shooter,targetOwnerId:1,targetSeq:10,targetLife:7,targetSubId:subId,life:8,eventSeq:1,damage,x:coordinates[0],y:coordinates[1],z:coordinates[2]};
   if(getterSecondUndefined)for(const axis of ['x','y','z']){let n=0;Object.defineProperty(event,axis,{get(){log.push(axis);return ++n===1?1:undefined;}});}
-  const hit=vm.runInNewContext(`(${body}\n)`,{ownerLife:a=>a.netLife,finite3:p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z),objectHitKey:e=>String(e.eventSeq),objectHitSeen:seen,MAX_REPLAY_EVENTS:4,entityList:x=>x,targetableTorpedo:o=>o.subId==='torpedo',ALL_SUB_SPECS:{splashWall:{wallWidth:5.3}},clamp,withObjectHitGear:(s,g,fn)=>{log.push('gear');onGear();return fn();},objectDamageScale:()=>1,removeObject:(a,p,t)=>{log.push('remove');t.dead=true;}});
-  return {run:()=>hit(api,event),event,target,log,seen,count:()=>constructed};
+  // Admission is an explicit dependency of this scalar-distance unit test.
+  // Native receipt/contact authentication is exercised by device-native-contact
+  // and device-hit-pending-geometry integration tests, not manufactured here.
+  const admitDeviceHit=(nm,actor,object,amount,cause,payload)=>{
+    assert.equal(nm,api.G.netm);assert.equal(actor,shooter);assert.equal(object,target);
+    assert.equal(payload,event);assert.equal(amount,event.damage);assert.equal(cause,event.cause);
+    log.push('admit');return proofAccepted?{damage:nativeDamage??amount,cause:nativeCause}:null;
+  };
+  const deferNativeDeviceHit=(nm,actor,payload,retry)=>{
+    assert.equal(nm,api.G.netm);assert.equal(actor,shooter);assert.equal(payload,event);
+    log.push('defer');pending.push(retry);return true;
+  };
+  const hit=vm.runInNewContext(`(${body}\n)`,{admitDeviceHit,deferNativeDeviceHit,...hitLifeOwners,finite3:p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z),objectHitKey:e=>String(e.eventSeq),objectHitSeen:seen,MAX_REPLAY_EVENTS:4,entityList:x=>x,targetableTorpedo:o=>o.subId==='torpedo',ALL_SUB_SPECS:{splashWall:{wallWidth:5.3}},clamp,withObjectHitGear:(s,g,fn)=>fn(),objectDamageScale:(actor,id,cause)=>{assert.equal(actor,shooter);assert.equal(id,subId);log.push(['scale',cause]);onScale();return 1;},removeObject:(a,p,t)=>{log.push('remove');t.dead=true;}});
+  return {run:()=>hit(api,event),event,target,log,seen,pending,allowProof:()=>{proofAccepted=true;},count:()=>constructed};
 }
 
 test('actual remote object-hit admission preserves exact Vector3 distance boundaries, replay and resource effects',()=>{
@@ -94,9 +116,21 @@ test('rejected object hits cannot poison a corrected retry; accepted hits reserv
     assert.equal(old.run(),false,'frozen policy demonstrates poisoned retry');assert.equal(old.target.hp,100);
   }
   for(const body of [policyBridgedHit,currentHit]){
-    let nested;let f;f=hitFixture(body,{onGear:()=>{nested=f.run();}});
-    assert.equal(f.run(),true);assert.equal(nested,false,'reservation precedes synchronous gear callback');
+    let nested;let f;f=hitFixture(body,{onScale:()=>{nested=f.run();}});
+    assert.equal(f.run(),true);assert.equal(nested,false,'reservation precedes synchronous damage-scale callback');
     assert.equal(f.target.hp,80);equal([...f.seen],['1']);
+  }
+});
+
+test('remote object hits defer an unadmitted claim without reservation and consume the admitted damage',()=>{
+  for(const body of [policyBridgedHit,currentHit]){
+    const f=hitFixture(body,{admitted:false,damage:20.005,nativeDamage:20,nativeCause:'Shooter'});
+    assert.equal(f.run(),false);assert.equal(f.target.hp,100);assert.equal(f.seen.size,0);
+    equal(f.log,['admit','defer']);assert.equal(f.pending.length,1);
+    f.allowProof();assert.equal(f.pending[0](),true);
+    assert.equal(f.target.hp,80,'canonical native damage replaces the rounded claim');
+    equal(f.log,['admit','defer','admit',['scale','Shooter']]);equal([...f.seen],['1']);
+    assert.equal(f.run(),false);assert.equal(f.target.hp,80);
   }
 });
 

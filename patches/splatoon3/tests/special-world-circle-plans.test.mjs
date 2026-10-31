@@ -71,7 +71,7 @@ async function kernel(before=false,instrument=true){
   const artifact=before?beforeArtifact:afterArtifact;
   if(artifact)return {...await emittedKernel(math,artifact.body,artifact.tree,before),calls:()=>({cos,sin})};
   const code=constants+'\nconst FPS=60,MAX_STAMP_RADIUS=3.74;\n'+helpers+'\n'+
-    (before?'':declaration('specialCirclePoints')+'\nlet inkstrikePaintCircle=null;\n')+
+    (before?'':declaration('specialCirclePoints')+'\n'+declaration('chumpPositionsFromTarget')+'\nlet inkstrikePaintCircle=null;\n')+
     (before?frozen.inkstrikePaint:declaration('inkstrikePaint'))+'\n'+
     (before?frozen.chumpLandingPlan:declaration('chumpLandingPlan'))+'\nreturn {inkstrikePaint,chumpLandingPlan};';
   return {...new Function('Math',code)(math),calls:()=>({cos,sin})};

@@ -3,17 +3,21 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptSource} from '../adapter.mjs';
 import {installMinimapDirty,_emptyInkDirty} from '../runtime/minimap-dirty.mjs';
 import {installScoring,floorCoverage,notePaintMutation} from '../runtime/scoring.mjs';
 import {SpecialVfxKit} from '../runtime/special-vfx-kit.mjs';
 import {fixture} from './source-fixture.mjs';
 const plain=x=>JSON.parse(JSON.stringify(x));
-function wakeClass(raw,G){const source=adaptBuildSource('src/fx/swimWake.js',raw).replace(/^import .*;\n/gm,'').replace('export class','class');return new Function('THREE','G','clamp','damp','swimTrailVisible',source+';return SwimWake;')(T,G,(x,a,b)=>Math.max(a,Math.min(b,x)),(x,y,k,dt)=>T.MathUtils.damp(x,y,k,dt),a=>!a.sneaking);}
+// The archived reference intentionally has no upload cache or pooled points.
+// Apply its gameplay visibility rule, but keep the independent unconditional
+// uploader intact. Current production adapters require the current raw source.
+function wakeClass(raw,G,reference=false){const source=(reference?adaptSource:adaptBuildSource)('src/fx/swimWake.js',raw).replace(/^import .*;\n/gm,'').replace('export class','class');return new Function('THREE','G','clamp','damp','swimTrailVisible',source+';return SwimWake;')(T,G,(x,a,b)=>Math.max(a,Math.min(b,x)),(x,y,k,dt)=>T.MathUtils.damp(x,y,k,dt),a=>!a.sneaking);}
 function uniforms(){return Object.fromEntries([['uWake',48],['uWakeB',4],['uSwimH',4],['uSwimF',4]].map(([k,n])=>[k,{value:Array.from({length:n},()=>new T.Vector4(17,19,23,29))} ]));}
 function snapshot(u){return Object.fromEntries(Object.entries(u).map(([k,v])=>[k,v.value.map(x=>x.toArray())]));}
 for(const hz of [30,60,120])test('composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind '+hz+'Hz',()=>{
  const G={time:0,match:{state:'playing',actors:[]}},raw=fs.readFileSync(new URL('../../../inkwave-public/src/fx/swimWake.js',import.meta.url),'utf8'),old=fs.readFileSync(new URL('./fixtures/swim-wake-before-queue.txt',import.meta.url),'utf8');
- const a=new (wakeClass(raw,G))(),b=new (wakeClass(old,G))();let ua=uniforms(),ub=uniforms(),writes=0;
+ const a=new (wakeClass(raw,G))(),b=new (wakeClass(old,G,true))();let ua=uniforms(),ub=uniforms(),writes=0;
  for(const u of [ua])for(const v of Object.values(u))for(const p of v.value){const set=p.set;p.set=function(...args){writes++;return set.apply(this,args);};}
  const actors=Array.from({length:5},(_,i)=>({alive:true,isLocal:i===0,pos:new T.Vector3(i*2,0,0),vel:new T.Vector3(4,0,1),anim:{form:'swim'}}));
  for(let frame=0;frame<hz*5;frame++){

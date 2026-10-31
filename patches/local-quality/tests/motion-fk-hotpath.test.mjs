@@ -28,7 +28,7 @@ export function baselineMotionSource(rel, raw) {
     code = code.replaceAll('  this._rootWorld();', '  c.root.updateWorldMatrix(true,true);');
   }
   if (rel === 'src/game/motion/body-balance.js') code = replaceOnce(code,
-    '  if(!this._soleCenter)this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);',
+    '  if(!this._soleCenter&&!updateBalanceCenterRotations(this))this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);',
     '  this.center.fk();', 'baseline complete centre FK');
   // The pre-migration bank ignores FK ranges: every sample and fk() call is a
   // complete FK, the hint-free curve search and per-sample rotations return.

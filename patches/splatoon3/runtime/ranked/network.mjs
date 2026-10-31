@@ -1,5 +1,7 @@
 import { observeOwnerTick } from '../../../network-replication/owner-tick-receipt.mjs';
+import { OWNER_CLOCK_VERSION } from '../../../network-replication/owner-clock.mjs';
 import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
+import { admitRainmakerHostEvents, clearRainmakerReleaseCompletion } from './rainmaker-device-contact.mjs';
 import { validRankedSnapshot } from './engine.mjs';
 import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
@@ -112,6 +114,10 @@ export function installRankedNetwork(api) {
   P.onMessage = function (from, d) {
     if (!current(this) || !d || typeof d !== 'object') return incoming.call(this, from, d);
     if (d.k === 't' && Array.isArray(d.a) && (d.a.length > 8 || d.a.length > this.byNid.size)) return;
+    if (d.k === 't' && this.s?.ownerClockVersion === OWNER_CLOCK_VERSION
+        && typeof this.cfg?.id === 'string' && this.cfg.id.length > 0 && this.cfg.id.length <= 128
+        && (d.oc !== undefined && d.oc !== OWNER_CLOCK_VERSION
+          || d.oc === OWNER_CLOCK_VERSION && d.ocm !== this.cfg.id)) return;
     const m = this.match, inputSession = this.s, inputMatchId = this.cfg.id;
     let stagedInput = null;
     if (d.rk && from === this.s.hostId && !this.isHost && (d.k==='st'||d.k==='res'||d.k==='end'||d.k==='rkstate')) {
@@ -147,6 +153,7 @@ export function installRankedNetwork(api) {
       if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedEventSeq || 0)) {
         if (!Array.isArray(d.events) || d.events.length > 128 || !d.events.every(validEvent)) return;
         this.rankedEventSeq = d.seq;
+        admitRainmakerHostEvents(this, m, d.events, from);
         m.playRankedEvents?.(d.events, true);
       }
       return;
@@ -170,18 +177,26 @@ export function installRankedNetwork(api) {
     const stagedPoses = d.k === 't' && this.isHost ? [] : null, session = this.s;
     if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
       this.rankedPose ||= new Map();
-      const accepted = [], poseContext = rankedPoseContext(this, m, api);
+      let accepted = null, rowIndex = 0;
+      const poseContext = rankedPoseContext(this, m, api);
       for (const row of d.a) {
         const actor = this.byNid.get(row?.[0]);
-        if (!actor?.remote || actor.owner !== from) continue;
+        if (!actor?.remote || actor.owner !== from) {
+          if (!accepted) { accepted = []; for (let i = 0; i < rowIndex; i++) accepted.push(d.a[i]); }
+          rowIndex++; continue;
+        }
         const id = actorId(actor), previous = this.rankedPose.get(id);
         const state = previous?.actor === actor && previous.match === m && previous.session === session && previous.owner === from
           ? { ...previous } : {};
-        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld, poseContext)) continue;
+        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld, poseContext)) {
+          if (!accepted) { accepted = []; for (let i = 0; i < rowIndex; i++) accepted.push(d.a[i]); }
+          rowIndex++; continue;
+        }
         stagedPoses.push({ id, actor, row, state, tail: actor.net?.buf?.at(-1) });
-        accepted.push(row);
+        if (accepted) accepted.push(row);
+        rowIndex++;
       }
-      if (accepted.length !== d.a.length) d = { ...d, a: accepted };
+      if (accepted) d = { ...d, a: accepted };
     }
     const observed = d.k === 't' ? observeOwnerTick(this,from,d,()=>incoming.call(this,from,d)) : null;
     const result = observed ? observed.result : incoming.call(this, from, d);
@@ -221,6 +236,7 @@ export function installRankedNetwork(api) {
     if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) m.ranked.rule.removeActor(actorId(a));
     const r = leave.call(this, id, changed);
     if (m?.ranked && changed) {
+      clearRainmakerReleaseCompletion(this);
       clearTowerPaintSupport(this);
       this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
       resetRankedBarrierAdmission(this);
@@ -234,6 +250,7 @@ export function installRankedNetwork(api) {
   };
   const dispose = P.dispose;
   P.dispose = function () {
+    clearRainmakerReleaseCompletion(this);
     clearTowerPaintSupport(this);
     this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
     resetRankedBarrierAdmission(this);

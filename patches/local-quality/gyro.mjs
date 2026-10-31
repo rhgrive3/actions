@@ -34,7 +34,9 @@ function commitRaw(s, x, y, z, dt, time) {
   const speed=Math.hypot(x,y,z),half=speed*dt/2,k=speed>0?Math.sin(half)/speed:0;
   const [qx,qy,qz,qw]=s.boundary.q,X=x*k,Y=y*k,Z=z*k,W=Math.cos(half);
   const a=qw*X+qx*W+qy*Z-qz*Y,b=qw*Y-qx*Z+qy*W+qz*X,c=qw*Z+qx*Y-qy*X+qz*W,d=qw*W-qx*X-qy*Y-qz*Z;
-  const n=Math.hypot(a,b,c,d);s.boundary.q=[a/n,b/n,c/n,d/n];
+  // boundary owns this array: every attitude ingress clones its sensor sample.
+  // Read all components before writing; raw commits do not publish snapshots.
+  const n=Math.hypot(a,b,c,d),q=s.boundary.q;q[0]=a/n;q[1]=b/n;q[2]=c/n;q[3]=d/n;
   s.boundary.time=time;
   const records = s.attitudes;
   let keep = 0;

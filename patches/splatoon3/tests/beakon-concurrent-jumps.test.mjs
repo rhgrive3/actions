@@ -63,7 +63,7 @@ for(const firstCarriesBeacon of [false,true])test(`concurrent real Beakon jumps 
   }
 });
 
-test('Beakon owner accepts concurrent remote identities without duplicate reservations or early consumption',async()=>{
+test('remote identity alone cannot reserve or consume without admitted native jump history',async()=>{
   const {f,owner,beacon,jumpers}=await world();
   owner.owner='owner';
   for(const a of jumpers){a.remote=true;a.owner='jumpers';}
@@ -73,17 +73,10 @@ test('Beakon owner accepts concurrent remote identities without duplicate reserv
     eventSeq:eventSeq++,life:a.netLife,sourceLife:beacon.sourceLife,targetOwnerId:owner.nid,
     targetLife:beacon.sourceLife,targetOwnerLife:owner.netLife,targetSeq:beacon.seq,
     reservationId,stage,actor:a});
-  for(const a of jumpers)assert.equal(f.installedRuntime.replaySub(event(a,1,'reserve')),true);
-  assert.equal(beacon.reservations.size,3);assert.equal(beacon.usesLeft,2);
-  assert.equal(f.installedRuntime.replaySub(event(jumpers[0],1,'reserve')),true);
-  assert.equal(f.installedRuntime.replaySub(event(jumpers[0],2,'reserve')),false,'one actor life cannot flood reservation identities');
-  assert.equal(beacon.reservations.size,3);
-  assert.equal(f.installedRuntime.replaySub(event(jumpers[0],1,'cancel')),true);
-  assert.equal(beacon.usesLeft,2);assert.equal(beacon.reservations.size,2);
-  assert.equal(f.installedRuntime.replaySub(event(jumpers[1],1,'land')),true);
-  assert.equal(beacon.usesLeft,1);
-  assert.equal(f.installedRuntime.replaySub(event(jumpers[1],1,'land')),true);
-  assert.equal(beacon.usesLeft,1,'duplicate landing cannot consume again');
+  for(const a of jumpers)for(const stage of ['reserve','land','cancel'])
+    assert.equal(f.installedRuntime.replaySub(event(a,1,stage)),false);
+  assert.equal(beacon.reservations?.size||0,0);assert.equal(beacon.usesLeft,2);
+  assert.equal(beacon.dead,false);
 });
 
 test('offline owners without nids keep distinct map destinations, reservations and landing consumption at the same seq/life',async()=>{

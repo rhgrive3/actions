@@ -1,0 +1,112 @@
+{
+  "fixedAt": "2026-10-30T21:03:02.803129+00:00",
+  "purpose": "Latest-main native coverage optimization strict smoke; no full timing run authorized",
+  "authorizedScope": "Smoke only. Report guards and browser shutdown to parent; full measurement requires separate parent authorization.",
+  "cwd": "/workspace/actions-battle-benchmark",
+  "environment": {
+    "CHROMIUM_PATH": "/usr/bin/chromium"
+  },
+  "runs": [
+    {
+      "name": "coverage-native-smoke",
+      "evidence": "/workspace/actions-battle-benchmark/e/csm0",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-score-base/_site",
+        "--sha-a",
+        "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "--site-b",
+        "/workspace/actions-score-main/_site",
+        "--sha-b",
+        "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "--frames",
+        "30",
+        "--warmup-runs",
+        "1",
+        "--warmup-frames",
+        "30",
+        "--aa-rounds",
+        "1",
+        "--rounds",
+        "1",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/csm0"
+      ]
+    }
+  ],
+  "conditions": {
+    "stage": "hagglefish",
+    "quality": "low",
+    "viewport": [
+      480,
+      300
+    ],
+    "hz": 60,
+    "weapon": "shooter",
+    "frames": 30,
+    "warmupRunsPerSidePerPhase": 1,
+    "warmupFrames": 30,
+    "warmupSchedulePerPhase": [
+      "a",
+      "b"
+    ],
+    "aaQuartets": 1,
+    "abQuartets": 1,
+    "gpuCpus": "0-1",
+    "workerCpus": "2-3",
+    "sceneRender": false,
+    "allowBvhWorkReduction": false,
+    "profiling": false,
+    "allocations": false,
+    "forcedGc": false
+  },
+  "expected": {
+    "warmupWindows": 4,
+    "preflightMeasuredWindows": 4,
+    "comparisonMeasuredWindows": 4,
+    "totalWindows": 12,
+    "matchedOrdinalPairs": 6
+  },
+  "source": {
+    "a": {
+      "site": "/workspace/actions-score-base/_site",
+      "sha": "17ce3883007b9f402a82dc194285f23deba3afb9"
+    },
+    "b": {
+      "site": "/workspace/actions-score-main/_site",
+      "sha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2"
+    }
+  },
+  "admission": [
+    "Source SHA/build manifest and all private Git LFS oid/size binding before browser launch",
+    "Every served body SHA/size verified",
+    "Native eight actors, seven bots, eight ready source characters",
+    "All numeric results finite; no page errors or context loss",
+    "Exact matched-ordinal state/gameplay/paint/counts/draw/resources/scene/pose/budget/BVH parity",
+    "All observed thread affinity before/after each window; constant GPU PID",
+    "Retain every warmup/window/failure/cgroup snapshot/HTTP receipt"
+  ],
+  "timingPolicy": {
+    "discardOutlierWindows": false,
+    "automaticRetry": false,
+    "purpose": "Admission smoke only; 30-frame/one-quartet timings cannot establish overall speed or FPS."
+  }
+}

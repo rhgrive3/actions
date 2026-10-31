@@ -55,7 +55,7 @@ test('ready_for_review reruns full validation; converting to draft supersedes ol
   assert.match(full, /^  workflow_dispatch:/m);
   assert.match(full, /^  group: validate-inkwave-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/m);
   assert.match(full, /^  cancel-in-progress: /m);
-  assert.match(quick, /^  pull_request:\n    branches: \[main\]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
+  assert.match(quick, /^  pull_request:\n    branches: \[main, fix\/pr-all-integration-20261031\]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
 });
 
 test('fast preflight binds exact PR head without installing browsers or running patch shards', () => {
@@ -80,7 +80,7 @@ test('full gate requires native or offloaded browser evidence and both independe
 });
 
 test('A+ heavy game quality gate skips drafts and remains on ready PRs and main', () => {
-  assert.match(quality, /^  pull_request:\n    branches: \[ main \]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
+  assert.match(quality, /^  pull_request:\n    branches: \[ main, fix\/pr-all-integration-20261031 \]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
   assert(!active(quality, 'verify-aplus-suite', {draft: true}));
   assert(active(quality, 'verify-aplus-suite'));
   assert(active(quality, 'verify-aplus-suite', {event: 'push'}));
@@ -239,4 +239,33 @@ test('runtime ESM sources remain non-executable in Git HEAD', async () => {
   assert.ok(rows.length > 0, 'runtime source tree must not be missing');
   const wrong = rows.filter(row => !row.startsWith('100644 blob '));
   assert.deepEqual(wrong, [], 'runtime .mjs files must retain the regular 100644 Git mode');
+});
+
+// Only the explicitly reviewed aggregation base joins the prior main allowlist.
+const aggregationBase = 'fix/pr-all-integration-20261031';
+function assertReviewedPRBases(source) {
+  const matches = [...source.matchAll(/^  pull_request:\n    branches: \[([^\]\n]+)\]\n/mg)];
+  assert.equal(matches.length, 1, 'one explicit PR base allowlist');
+  const bases = matches[0][1].split(',').map(value => value.trim());
+  assert.deepEqual(bases, ['main', aggregationBase], 'only main and the one reviewed aggregation base');
+  assert.deepEqual(bases.filter(base => base !== aggregationBase), ['main'], 'prior main-only admission is retained exactly');
+}
+test('A+ and fast admit only main plus the exact reviewed aggregation base', () => {
+  for (const source of [quality, quick]) {
+    assertReviewedPRBases(source);
+    const header = /^  pull_request:\n    branches: \[[^\]\n]+\]\n/m;
+    for (const bases of [
+      'main', aggregationBase,
+      'main, feature/other', 'main, '+aggregationBase+', feature/other',
+      'main, *', 'main, **', 'main, fix/pr-all-integration-*',
+      "main, '*'", "main, '**'", "main, 'fix/pr-all-integration-*'",
+      'main, '+aggregationBase+'-extra', 'main, '+aggregationBase+'/nested',
+      'main, '+aggregationBase+', '+aggregationBase,
+      '!main, '+aggregationBase,
+    ]) {
+      const changed = source.replace(header, '  pull_request:\n    branches: ['+bases+']\n');
+      assert.notEqual(changed, source, 'negative must alter the current allowlist');
+      assert.throws(() => assertReviewedPRBases(changed), /only main and the one reviewed aggregation base/);
+    }
+  }
 });

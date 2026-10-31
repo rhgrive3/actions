@@ -96,7 +96,13 @@ function nearestFloor(world, p) {
   let best = null, bestDistance = Infinity;
   for (const [ox,oz] of FLOOR_PROBE_OFFSETS) {
     const y = world.floorAt(p[0] + ox*L.floorProbe, p[2] + oz*L.floorProbe, p[1] + 1.8);
-    if (finite(y)) { const d=Math.abs(p[1]-y); if(best===null || d<bestDistance){best=y;bestDistance=d;} }
+    if (finite(y)) {
+      const d=Math.abs(p[1]-y);
+      // The caller only asks whether any floor lies within its tolerance.
+      // A later nearer floor cannot change this successful support decision.
+      if (d <= L.floorTolerance) return y;
+      if(best===null || d<bestDistance){best=y;bestDistance=d;}
+    }
   }
   return best;
 }
@@ -153,6 +159,8 @@ export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
       !finiteTripleAt(row, 1, finite) || !Number.isSafeInteger(row[10]) ||
       !Number.isSafeInteger(row[16]) || row[16] < 0) return false;
   const next = [row[1],row[2],row[3]], flags = row[10], prev = state.last;
+  const elapsed = prev ? ts - prev.t : null;
+  if (prev && (!finite(elapsed) || elapsed <= 0)) return false;
   const now = finite(ctx?.now) ? ctx.now : null;
   if ((flags & ALIVE) && !insideStage(next, ctx)) return false;
   let grounded = !!(flags & GROUNDED);
@@ -169,8 +177,6 @@ export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
     const spawn = vec(actor?.pos);
     if (!spawn || dist(next, spawn) > L.initialRadius) return false;
   } else {
-    const elapsed = ts - prev.t;
-    if (!finite(elapsed) || elapsed <= 0) return false;
     const hostDt = now !== null && finite(prev.host) ? Math.max(0, now - prev.host) : null;
     // Sender time is credited only as fast as the host clock advances (plus
     // a bounded bank for bunched delivery): a forged ts gains nothing.

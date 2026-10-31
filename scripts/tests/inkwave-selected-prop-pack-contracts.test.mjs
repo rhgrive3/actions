@@ -38,7 +38,11 @@ test('public PropKit facade retains the exact original named exports and both ow
  const exports=code=>parse(code,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='ExportNamedDeclaration').flatMap(n=>n.specifiers.map(s=>s.exported.name).concat(n.declaration?.id?[n.declaration.id.name]:n.declaration?.declarations?.map(d=>d.id.name)||[])).sort();
  const baseline=fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/props-before-selected-packs.js.txt',import.meta.url),'utf8');
  assert.deepEqual(exports(read('src/world/props.js')),exports(baseline));
- for(const rel of ['src/world/props.js','src/world/props-core.js'])assert.equal(adaptBuildSource(rel,read(rel)),read(rel));
+ // Each publicly selected module is now a direct owner of its reviewed
+ // source. Build passes must never silently reintroduce secondary transforms.
+ for(const rel of ['src/world/props.js','src/world/props-core.js','src/world/props-marina-vessels.js'])
+  assert.equal(adaptBuildSource(rel,read(rel)),read(rel),rel+' direct source identity');
+
 });
 
 test('real loading preparation preserves the public facade closure offline without installing unrelated orphans',async()=>{

@@ -1,8 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
+import {consumeNativeWork,consumeNativeWorkAsync} from '../../native-stages/runtime/native-work.mjs';
 const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-world-native-extra-before-20261029.json',import.meta.url)));
 const raw=p=>fs.readFileSync(new URL('../../../'+p,import.meta.url),'utf8');
-const compile=(s,names)=>new Function('THREE','Level',s.replace(/^import .*;$/gm,'').replaceAll('export ','')+'\nreturn {'+names+'};')(THREE,class{});
+const compile=(s,names)=>new Function('THREE','Level','consumeNativeWork','consumeNativeWorkAsync',s.replace(/^import .*;$/gm,'').replaceAll('export ','')+'\nreturn {'+names+'};')(THREE,class{},consumeNativeWork,consumeNativeWorkAsync);
 const render='patches/native-stages/runtime/native-render.mjs',level='patches/native-stages/runtime/native-level.mjs';
 const renderPair=[frozen[render],raw(render)].map(s=>compile(s,'nativeInkGeometry,nativeDisplay'));
 const bytes=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength);

@@ -40,9 +40,10 @@ export function installDeathCamera({ Actor, G }) {
         // HUD/signals remain DOM-visible; opening the map restores the renderer
         // so the existing diorama/map interaction is still available while dead.
         const fade = clamp01((this.spectateT - 0.12) / 0.18);
-        canvas.style.opacity = String(1 - fade);
+        const opacity = String(1 - fade);
+        if (canvas.style.opacity !== opacity) canvas.style.opacity = opacity;
       } else {
-        canvas.style.opacity = '1';
+        if (canvas.style.opacity !== '1') canvas.style.opacity = '1';
       }
     }
     return result;

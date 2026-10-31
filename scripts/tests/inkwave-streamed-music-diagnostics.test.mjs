@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
+import {installContextMediaTrace,correlateContextMediaRequests,classifyContextRequestFailures} from '../check-inkwave-context-recovery-browser.mjs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
@@ -112,6 +114,21 @@ const characterTimelineBytes=fs.readFileSync(new URL('../fixtures/inkwave-projec
 assert.equal(crypto.createHash('sha256').update(characterTimelineBytes).digest('hex'),'9186af6ae24966b5d5d25abaf897fbd8c34deea1d0b63e78b517adc47790b462','sealed Character timeline inverse descriptor');
 const characterTimelineEpoch=JSON.parse(characterTimelineBytes);
 const characterTimelineHash=text=>crypto.createHash('sha256').update(text).digest('hex');
+// The separately sealed retirement/partition QA epoch reverses to the complete
+// official main runner; all older timeline/protocol pins below stay unchanged.
+const mediaEpochBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-media-retirement-epoch-e5f3-20261031.json',import.meta.url));
+assert.equal(characterTimelineHash(mediaEpochBytes),'ef9f167482e2d1159773afb70220aab82ab76e8ce243274935ba0c5ca237ecf9','sealed media retirement inverse descriptor');
+const mediaEpoch=JSON.parse(mediaEpochBytes);
+assert.equal(mediaEpoch.schema,1);assert.equal(mediaEpoch.beforeSHA256,'31fa499c8650b8dbcd2260f088e586f0e7d41312aa3061d40fb755665d97a27f');
+assert.equal(mediaEpoch.currentSHA256,'9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e');
+function restoreReviewedMediaRetirementRunner(source){
+ if(characterTimelineHash(source)===mediaEpoch.beforeSHA256)return source;
+ assert.equal(characterTimelineHash(source),mediaEpoch.currentSHA256,'exact current projectile runner with primitive timeline and reviewed media retirement');
+ assert.equal(mediaEpoch.hunks.length,8,'all reviewed retirement/strict-listener/partition regions');
+ for(const {current,prior,label}of mediaEpoch.hunks){assert.equal(source.split(current).length,2,'exact singular retirement epoch region: '+label);source=source.replace(current,prior);}
+ assert.equal(characterTimelineHash(source),'31fa499c8650b8dbcd2260f088e586f0e7d41312aa3061d40fb755665d97a27f','complete official pre-retirement runner');return source;
+}
+
 function revertCharacterTimelineHunks(source){
  assert.equal(characterTimelineEpoch.hunks.length,3,'all reviewed timeline regions');
  for(const {current,prior,label} of characterTimelineEpoch.hunks){
@@ -122,6 +139,7 @@ function revertCharacterTimelineHunks(source){
  return source;
 }
 function restoreCharacterTimelineRunner(source){
+ source=restoreReviewedMediaRetirementRunner(source);
  assert.equal(characterTimelineHash(source),'31fa499c8650b8dbcd2260f088e586f0e7d41312aa3061d40fb755665d97a27f','exact current projectile runner with primitive timeline');
  return revertCharacterTimelineHunks(source);
 }
@@ -313,7 +331,7 @@ test('phase-observer reversal rejects missing, duplicate, relocated or changed c
 });
 
 test('primitive Character timeline inverse preserves the exact prior runner and rejects altered regions',()=>{
- const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ const current=restoreReviewedMediaRetirementRunner(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'));
  const prior=restoreCharacterTimelineRunner(current);
  assert.equal(characterTimelineHash(prior),'84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4');
  for(const {current:region,prior:before} of characterTimelineEpoch.hunks){
@@ -346,11 +364,13 @@ test('all supported harnesses explicitly resolve their actual game global and re
 const runnerSource=fs.readFileSync(process.env.INKWAVE_MEDIA_RUNNER_TEST_SOURCE || new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
 const functionText=(from,to)=>{
  const start=runnerSource.indexOf(from), end=runnerSource.indexOf(to,start+from.length);
- assert.ok(start>=0&&end>start,'runner function boundaries exist');return runnerSource.slice(start,end).trim();
+ assert.ok(start>=0&&end>start,'runner function boundaries exist');return runnerSource.slice(start,end).trim().replaceAll('import.meta.url',JSON.stringify(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url).href));
 };
 const openText=functionText('async function openGameContext(', 'async function setCamera(');
 const performanceText=functionText('async function runFiringPerformance(', '\ntry {\n  if (capture');
 const summaryText=functionText('function summary(', 'async function runFiringPerformance(');
+const mediaErrorHeader=runnerSource.includes('const mediaRetirementErrorIndices=')?functionText('const mediaRetirementErrorIndices=',"browser.on('disconnected'"):'';
+const emptyMediaSnapshot={records:[],dropped:0,hooks:JSON.parse(fs.readFileSync(new URL('./fixtures/context-media-retirement-5a1c-41158474432.json',import.meta.url),'utf8')).mediaTrace.hooks};
 async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
  const calls=[],events=new Map(), primary=new Error('injected '+failAt), cleanup=new Error('injected close');
  const report={browserDiagnostics:[],provenance:{},performanceWarmups:[],performanceFailures:[]};
@@ -369,6 +389,7 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
   waitForFunction:async()=>{if(failAt==='performance-warmup')throw primary;},evaluate:async(fn,arg)=>{
    if(arg?.ownerGlobal){calls.push('snapshot');return vm.runInNewContext('('+fn.toString()+')(arg)',{window:state,arg});}
    const text=fn.toString();
+   if(text.includes('__contextMediaTraceSnapshot'))return structuredClone(emptyMediaSnapshot);
    if(text.includes('g.R.setDynamicScale')&&failAt==='open-placement')throw primary;
    if(text.includes('const G = window.__G, g = window.__inkwave, perf = window.__inkwavePerf, w = perf.warmup'))return observed;
    if(text.includes('window.__inkwavePerfDone'))return {status:failAt==='performance-window'?'failed':'passed'};
@@ -380,11 +401,12 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
   calls.push('context-close');events.get('Network.loadingFailed')?.({requestId:'jet',errorText:'net::ERR_ABORTED',canceled:true});if(closeFailure)throw cleanup;
  }};
  const realm={browser:{newContext:async()=>context},report,observeStreamedMusic,sourceIdentity:{checkoutSha:'a'.repeat(40),eventSha:null,checkoutIdentityStatus:'verified-git-head'},manifest:{build:{revision:'rev'}},address:'http://127.0.0.1:9999/',
+  fs,hash:characterTimelineHash,installContextMediaTrace,correlateContextMediaRequests,classifyContextRequestFailures,
   URL,Date,setTimeout,clearTimeout,process:{env:{}},quality:'low',BOOT_SEED:1,NATIVE_BOOT_TIMEOUT_MS:50,MIN_PERFORMANCE_FRAMES:3,PERFORMANCE_TIMEOUT_MS:200,durationMs:50,
   installProjectileCaptureUiGate,withProjectileCaptureUi,installProjectileCaptureProjection,installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
   nativeTurfIntroWithUiFunction:()=>()=>{},startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
   requireAtomicIntro:async()=>({intro:{},readiness:{},playingReady:true}),installProjectileCaptureRoster(){}};
- vm.createContext(realm);vm.runInContext(summaryText+'\n'+openText+'\n'+performanceText,realm);
+ vm.createContext(realm);vm.runInContext(mediaErrorHeader+'\n'+summaryText+'\n'+openText+'\n'+performanceText,realm);
  return {realm,report,calls,primary,cleanup,context,page,state};
 }
 const assertClosed=(f)=>{
@@ -431,7 +453,7 @@ async function outerFixture({visualFailure=false,contextFailure=false,browserFai
   openGameContext:async()=>({page:{},characterTrace:[['source-loader','await',123]],close:async()=>{calls.push('context-close');if(contextFailure)throw secondary;}}),
   runVisuals:async()=>{calls.push('visual');if(visualFailure)throw primary;},
   runFiringPerformance:async()=>{calls.push('performance');if(performanceFailure)throw primary;return {};}};
- vm.createContext(realm);const completing=vm.runInContext('(async()=>{'+outerText+'})()',realm);
+ vm.createContext(realm);const completing=vm.runInContext(mediaErrorHeader+'\n'+'(async()=>{'+outerText+'})()',realm);
  if(serverPending){
   for(let i=0;i<12;i++)await Promise.resolve();
   assert.equal(typeof finishServer,'function','server close was initiated');
@@ -512,10 +534,25 @@ const cancellationRevision='a'.repeat(64);
 const cancellationAsset='patches/splatoon3/runtime/audio/s3-real/probe.mp3';
 const cancellationVersioned=`_versions/${cancellationRevision}/${cancellationAsset}`;
 const cancellationURL=new URL(cancellationVersioned,cancellationAddress).href;
+function strictNativeListenerText(openText){
+ const ast=parse(openText,{ecmaVersion:'latest',sourceType:'module'}).body[0];
+ const owners=[];
+ const visit=n=>{if(!n||typeof n!=='object'||['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(n.type))return;
+  if(n.type==='ExpressionStatement'&&n.expression.type==='CallExpression'&&n.expression.callee.type==='MemberExpression'&&n.expression.callee.object.name==='page'&&n.expression.callee.property.name==='on'){owners.push(n);return;}
+  for(const value of Object.values(n))if(Array.isArray(value)){for(const child of value)visit(child);}else if(value&&typeof value==='object')visit(value);
+ };visit(ast.body);
+ const selected=owners.filter(n=>{
+  const [event,callback]=n.expression.arguments,body=openText.slice(callback.start,callback.end);
+  return ['crash','pageerror','console','response'].includes(event.value)&&(event.value==='crash'||body.includes('mimeErrors'))||event.value==='requestfailed'&&callback.body.type==='BlockStatement'&&callback.body.body[0]?.declarations?.[0]?.id?.name==='failure';
+ });
+ assert.equal(selected.length,4,'exact original strict listener owners, no async setup or added telemetry listener');
+ assert.deepEqual(selected.map(n=>n.expression.arguments[0].value),['crash','pageerror','console','requestfailed']);
+ return selected.map(n=>openText.slice(n.start,n.end)).join('\n');
+}
 function cancellationFixture({artifacts={[cancellationAsset]:'verified-root',[cancellationVersioned]:'verified-versioned'}}={}) {
  const callbacks=new Map(),mimeErrors=[],report={browserDiagnostics:[]};
  const page={on(name,fn){const rows=callbacks.get(name)||[];rows.push(fn);callbacks.set(name,rows);}};
- const text=functionText("  page.on('crash',",'  await page.addInitScript(installAudioTimingObserver);');
+ const text=strictNativeListenerText(openText);
  vm.runInNewContext(text,{page,mimeErrors,report,mobile:false,URL,Date,address:cancellationAddress,manifest:{build:{revision:cancellationRevision},artifacts}});
  const emit=(name,value)=>{for(const fn of callbacks.get(name)||[])fn(value);};
  return {mimeErrors,report,emit,request(url=cancellationURL,error='net::ERR_ABORTED'){
@@ -609,4 +646,35 @@ test('actual loopback file handler serves the verified leaf and still returns 40
  const missing=await fetch(url.replace('probe.mp3','missing.mp3'));assert.equal(missing.status,404);assert.equal(await missing.text(),'Not found');
  fs.unlinkSync(path.join(f.site,cancellationVersioned));
  const removed=await fetch(url);assert.equal(removed.status,404);assert.equal(await removed.text(),'Not found');
+});
+
+test('reviewed media epoch preserves complete prior source and every older pin with an exact inverse',()=>{
+ const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'),prior=restoreReviewedMediaRetirementRunner(current);
+ assert.equal(characterTimelineHash(prior),mediaEpoch.beforeSHA256);
+ let projected=prior;
+ for(const {current:after,prior:before}of mediaEpoch.hunks){assert.equal(projected.split(before).length,2);projected=projected.replace(before,after);}
+ assert.equal(projected,current);assert.equal(characterTimelineHash(projected),mediaEpoch.currentSHA256);
+ for(const {current:region}of mediaEpoch.hunks){
+  assert.equal(current.split(region).length,2);
+  for(const changed of [current.replace(region,''),current.replace(region,region+region),current.replace(region,region+'\n// unreviewed change')])
+   assert.throws(()=>restoreReviewedMediaRetirementRunner(changed));
+ }
+ assert.throws(()=>restoreReviewedMediaRetirementRunner(current+'\n'));
+ assert.equal(characterTimelineHash(restoreCharacterTimelineRunner(current)),'84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4');
+});
+test('selected native failure listeners stay byte-identical across the media epoch and exclude async setup',()=>{
+ const prior=restoreReviewedMediaRetirementRunner(runnerSource),start=prior.indexOf('async function openGameContext('),end=prior.indexOf('async function setCamera(',start);
+ assert(start>=0&&end>start);const original=strictNativeListenerText(prior.slice(start,end));
+ const current=strictNativeListenerText(openText);assert.equal(current,original);assert.doesNotMatch(current,/\bawait\b|addInitScript|mediaErrorStarts|mediaRawFailures/);
+ const changed=openText.replace("failure==='net::ERR_ABORTED'","failure==='net::ERR_FAILED'");assert.notEqual(changed,openText);assert.notEqual(strictNativeListenerText(changed),original);
+});
+test('current extracted opener keeps real media dependency and exact module metadata bindings',async()=>{
+ const f=await lifecycleFixture(),opened=await f.realm.openGameContext();
+ assert.equal(f.realm.installContextMediaTrace,installContextMediaTrace);assert.equal(f.realm.correlateContextMediaRequests,correlateContextMediaRequests);assert.equal(f.realm.classifyContextRequestFailures,classifyContextRequestFailures);
+ assert.equal(f.report.mediaRetirementObservations[0].helperSha256,characterTimelineHash(fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url))));
+ await opened.close();assertClosed(f);
+});
+test('missing current media init dependency fails and retains one observed cleanup instead of skipping it',async()=>{
+ const f=await lifecycleFixture();delete f.realm.installContextMediaTrace;
+ await assert.rejects(f.realm.openGameContext(),/installContextMediaTrace is not defined/);assertClosed(f);assert.equal(f.calls.includes('goto'),false);
 });

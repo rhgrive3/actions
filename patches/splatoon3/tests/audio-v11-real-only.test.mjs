@@ -564,3 +564,13 @@ test('unrecorded dualies turret variants never cause post-dodge shooting to go s
    else assert.equal(event,'fire_left','other dualies must retain their verified normal left shot');
  }
 });
+
+test('cold recorded loop owns a decoded-but-muted handle until explicit stop or later unmute',async()=>{
+ const{ctx}=mkctx(),a=new MixerStub(ctx),b=a.weaponBank();let stops=0,sets=0;
+ const parked={playing:false,_sfxDeferred:true,set(){sets++;},stop(){stops++;this._sfxDeferred=false;}};
+ a.loop=()=>parked;a._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest([clip('special:inkjet','spin','jet-spin.mp3')])});b.authorized.fetcher=async()=>res;
+ const handle=a.loopWeapon('special:inkjet','spin');assert.equal(handle.playing,true);await a._realS3Loader.queue;await new Promise(r=>setImmediate(r));
+ assert.equal(handle.playing,true);assert.equal(handle._sfxDeferred,true);for(let i=0;i<100;i++)handle.set({volume:.3});assert.equal(sets,100);assert.equal(stops,0);
+ parked._sfxDeferred=false;parked.playing=true;assert.equal(handle.playing,true);assert.equal(handle._sfxDeferred,false);
+ handle.stop();handle.stop();assert.equal(stops,1);assert.equal(handle.playing,false);a.disposeWeaponAudio();
+});

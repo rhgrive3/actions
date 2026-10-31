@@ -1,0 +1,37 @@
+[
+  {
+    "path": "native/ownership.json.gz",
+    "uncompressedBytes": 6025609,
+    "uncompressedSha256": "1fc1eb9de12645487f304f5a145658eac9ce833a1cd5198e51a5c4a0d0278840",
+    "compressedBytes": 842508,
+    "compressedSha256": "29dc8a0039eb582d7f267e1e4d485939acbc7e41841ba9ab3772052dcab4c8e2"
+  },
+  {
+    "path": "builds/v1-6c5c2738.json.gz",
+    "uncompressedBytes": 634939,
+    "uncompressedSha256": "d979616c738355dab75b02944acfa44cc2b9fdb516e0ecab390286441ce87162",
+    "compressedBytes": 215479,
+    "compressedSha256": "dcd6620a5f07b18086de9792332d912ce47ad08e232d6485b581e7df3abf7407"
+  },
+  {
+    "path": "builds/v2-f466fa1b.json.gz",
+    "uncompressedBytes": 634939,
+    "uncompressedSha256": "418eb4c058ad2d263034ff65afd439a026ec7d3106de414f08c8b3a7eda9518a",
+    "compressedBytes": 215493,
+    "compressedSha256": "76b2c6dec4593ecb1c718aaff23a22e64fe0790aa5225d2b75729047fee87a73"
+  },
+  {
+    "path": "builds/v3-unfixed-9b0dedee.json.gz",
+    "uncompressedBytes": 634939,
+    "uncompressedSha256": "d7fb64c261b0a11184c6694e0f172f6e8c300994887518e89f2dfeed35672b19",
+    "compressedBytes": 215480,
+    "compressedSha256": "6db42b224e62a7de792e80a0f222432482cc17fd485758a00351c460a142b422"
+  },
+  {
+    "path": "builds/v3-fixed-e56320bf.json.gz",
+    "uncompressedBytes": 634939,
+    "uncompressedSha256": "045901cec78a1b3c1f421f3a17860441579ce9959f6febe2c4fa9778b36f3500",
+    "compressedBytes": 215480,
+    "compressedSha256": "7e8fb80262dc44b872876c996833fee81c2090902fe0c987e8661da7c0fc6f83"
+  }
+]

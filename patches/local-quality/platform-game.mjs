@@ -1,9 +1,12 @@
 import { getPlatformLifecycle, PlatformFrameDriver } from './platform-lifecycle.mjs';
 import { watchGuestMatchEnd } from './platform-match-watch.mjs';
 import { resetPlatformInput } from './platform-input.mjs';
+import { releaseHiddenRankedHost } from './platform-ranked-handoff.mjs';
+import { createPlatformSimulationDebt } from './platform-simulation-debt.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.game.v1');
 
 export function rebasePlatformGame(game) {
+  game.platform?.simulation?.reset();
   game.timer?.update?.(); game.s3Clock?.reset?.();
   game._frameCapAcc = game._frameCapElapsed = 0;
   game.fpsAcc = game.fpsN = 0;
@@ -161,7 +164,10 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
   function ensure(game) {
     if (game.platform) return game.platform;
     const r = game.platform = { owner, driver: null, off: null, canvas: null, disposers: [], rendererLost: false };
+    r.simulation = createPlatformSimulationDebt(game, G, env, r);
     r.releaseMatch = match => {
+      r.simulation.releaseMatch(match);
+      if (r.hiddenRankedHandoff?.match === match) r.hiddenRankedHandoff = null;
       if (r.hiddenHostClock?.match === match) r.hiddenHostClock = null;
       if (r.hiddenHostDeadline?.match === match) clearHiddenHostDeadline(r, env);
       if (r.hiddenHostResult?.match === match) clearHiddenHostResult(r, env);
@@ -172,6 +178,7 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
     // NetMatch.onLeave calls this hook AFTER promoting its follower state.
     r.onHostAcquired = () => {
       if (!env.document?.hidden || !ownsPlatformRuntime(game, r)) return false;
+      if (releaseHiddenRankedHost(game, G, env, r, true)) return true;
       const existing = r.hiddenHostClock;
       if (existing && existing.session === G.net && existing.net === G.netm &&
           existing.hostId === G.net?.hostId && existing.match === game.match) return false;
@@ -233,10 +240,10 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
     };
     const clear = (reason) => {
       // A long foreground frame is a timing discontinuity, not a lifecycle
-      // transition. Drop queued simulation time without discarding held/edge
-      // input; only real suspend/resume/blur/screen boundaries clear input.
+      // transition. Preserve queued simulation time and held/edge input. The
+      // owned debt queue advances complete legal ticks in bounded slices.
       if (reason === 'timer-gap') {
-        game.timer?.update?.(); game.s3Clock?.reset?.();
+        game.timer?.update?.();
         game._frameCapAcc = game._frameCapElapsed = 0;
         game.fpsAcc = game.fpsN = 0;
         game._stickT = 0;
@@ -247,12 +254,14 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
     r.off = owner.subscribe({
       suspend() {
         r.guestEndWait = null;
+        releaseHiddenRankedHost(game, G, env, r);
         r.hiddenHostClock = captureHiddenHostClock(game, G, env); clear();
         scheduleHiddenHostDeadline(r.hiddenHostClock, game, G, env, r);
         scheduleHiddenHostResult(captureHiddenHostResult(game, G, env), game, G, env, r);
       },
       visibility() {
         if (env.document?.hidden) {
+          releaseHiddenRankedHost(game, G, env, r);
           // A prior WebGL/freeze/pagehide blocker can own the suspend already.
           // Preserve an existing interval on duplicate visibility delivery.
           if (!r.hiddenHostClock) {
@@ -300,7 +309,7 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
       canvas.addEventListener('webglcontextrestored', restored);
       r.disposers.push(() => { canvas.removeEventListener('webglcontextlost', lost); canvas.removeEventListener('webglcontextrestored', restored); });
     }
-    r.driver = new PlatformFrameDriver(owner, dt => {
+    r.driver = new PlatformFrameDriver(owner, (dt, elapsed, time) => {
       // A terminal offline native-world failure has only a static reload UI.
       // Stop its owned scheduler; temporary freezes and every live/connecting
       // network session still need the existing recovery/guest-timeout path.
@@ -310,22 +319,23 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
       }
       const probe = r.syncProfiler();
       probe?.callback(dt);
-      if (watchGuestMatchEnd(game, G, env, r) || game.frozen) return;
+      if (watchGuestMatchEnd(game, G, env, r) || game.frozen) { r.simulation.reset(); return; }
       const cap = frameRate();
-      let frameDt = dt;
-      if (cap > 0 && dt > 0) {
-        const step = 1 / cap;
-        game._frameCapAcc = (game._frameCapAcc || 0) + dt;
-        game._frameCapElapsed = (game._frameCapElapsed || 0) + dt;
-        if (game._frameCapAcc + 1e-6 < step) { probe?.skipped(); return; }
-        game._frameCapAcc = Math.min(step, Math.max(0, game._frameCapAcc - step));
-        frameDt = game._frameCapElapsed; game._frameCapElapsed = 0;
-      } else game._frameCapAcc = game._frameCapElapsed = 0;
+      // The deadline driver already admits one frame per cap slot. A second
+      // dt gate would reject legitimate early 90/144 Hz slots after adaptive
+      // timer compensation and recreate uneven pacing.
+      const frameDt = dt;
+      game._frameCapAcc = game._frameCapElapsed = 0;
       game.fpsAcc += frameDt; game.fpsN++;
       if (game.fpsAcc > .5) { game.fps = Math.round(game.fpsN / game.fpsAcc); game.fpsAcc = game.fpsN = 0; }
       game._dynRes(frameDt);
       const frameStart = probe ? env.performance.now() : 0;
-      game._frame(frameDt);
+      const simulation = r.simulation.beforeFrame(dt, elapsed, time);
+      // A debt limit can close this session and synchronously replace Match.
+      if (!ownsPlatformRuntime(game, r)) return;
+      game._platformSimulationOptions = simulation;
+      try { game._frame(frameDt); }
+      finally { game._platformSimulationOptions = null; r.simulation.afterFrame(); }
       if (probe) probe.record(frameStart, env.performance.now() - frameStart, {
         frameRateHz: cap || 60,
         refreshHz: 0, // The platform's capped RAF cannot measure raw panel refresh.
@@ -335,7 +345,7 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
         stages: game.perf,
       });
     }, clear, frameRate);
-    r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), rendererLost: r.rendererLost,
+    r.snapshot = () => ({ ...owner.snapshot(), frame: r.driver.snapshot(), simulation: r.simulation.snapshot(), rendererLost: r.rendererLost,
       gyro: game.input?.mobile?.gyro?.platformStatus,
       audio: { state: G.audio?.ctx?.state ?? 'uninitialized', needsGesture: !!G.audio?._platformAudio?.needsGesture,
         owner: !!G.audio?._platformAudio },

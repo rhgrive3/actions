@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "purpose": "Non-timing native coverage correctness, applicability and persistent memory inspection. No elapsed-time measurement.",
+  "sourceSha": "6c5c2738f73a00bc32561080dc90cee77338438a",
+  "contentHash": "b431fc545f77a37669a8f42de21986e347e931cfc4dc7e71c3a15b33ef069f06",
+  "referenceSha256": "ac919d24d6af33eba196c4e3f19d3253c23998586040eb0d4a90b9206b30ad11",
+  "errors": [],
+  "browserClosed": true,
+  "serverClosed": true,
+  "browser": "154.0.8037.57",
+  "native": {
+    "native": true,
+    "sourceMode": "browser-direct",
+    "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+    "actors": 8,
+    "bots": 7,
+    "state": "playing",
+    "gridCells": 1401174,
+    "paintFaces": 65827,
+    "eligibleCells": 249161,
+    "groups": 112271,
+    "fourByteGroups": 45630,
+    "singleCellGroups": 66641,
+    "checkpointCount": 439,
+    "persistentExtraBytes": 906948,
+    "originalIndexBytes": 2989932,
+    "stats": {
+      "calls": 532,
+      "recomputes": 265,
+      "full": 1,
+      "verifiedUnchanged": 0,
+      "partial": 264,
+      "suffixCells": 30421660,
+      "fullCells": 66027665,
+      "cadences": [
+        {
+          "hz": 30,
+          "frames": 120,
+          "comparedCalls": 120
+        },
+        {
+          "hz": 60,
+          "frames": 120,
+          "comparedCalls": 120
+        },
+        {
+          "hz": 120,
+          "frames": 120,
+          "comparedCalls": 120
+        }
+      ]
+    },
+    "coverage": [
+      0.028072819700452382,
+      0.02893914485828063
+    ],
+    "contextLost": false
+  },
+  "status": "passed"
+}

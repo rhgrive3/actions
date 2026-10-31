@@ -47,7 +47,7 @@ export async function managedSourceSlot(id,prefix){
   const cache=await caches.open(name),keys=await cache.keys();
   if(keys.every(r=>r.url===STAMP||r.url===META))await cache.put(META,await envelope({}));
   await cache.put(STAMP,new Response(String(Date.now())));
-  const state=await stateFor(prefix,true);observe(state,await readRow(name));await save(state,true);await trim(state,name);await save(state);
+  const state=await stateFor(prefix,true);if(!Object.hasOwn(state.stages,name))observe(state,await readRow(name));await save(state,true);await trim(state,name);await save(state);
  });
  let cache=await caches.open(name);
  // Admit at most four concurrently verified files (2MiB unless one file is

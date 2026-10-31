@@ -40,6 +40,9 @@ jobs:
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
             !/reports/*
+            /reports/native-stages/
+            !/reports/native-stages/*
+            /reports/native-stages/humpback-verification.json
             /reports/ink-volume/
             !/reports/ink-volume/*
             /reports/ink-volume/source/

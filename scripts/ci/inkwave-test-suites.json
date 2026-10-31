@@ -339,6 +339,8 @@
           "scripts/tests/inkwave-evidence-packaging.test.mjs",
           "scripts/tests/ranked-roller-audio.test.mjs",
           "scripts/tests/ranked-trace-policy.test.mjs",
+          "scripts/tests/ranked-capture-freeze.test.mjs",
+          "scripts/tests/inkwave-wiper-falsy-failure.test.mjs",
           "scripts/tests/inkwave-quality-account-scope.test.mjs",
           "scripts/tests/cxx-openttd-projection.test.mjs",
           "scripts/tests/inkwave-native-combat-window.test.mjs",
@@ -348,8 +350,7 @@
           "scripts/tests/inkwave-runtime-evidence.test.mjs",
           "scripts/tests/inkwave-validate-install-evidence-20261029.test.mjs",
           "scripts/tests/inkwave-menu-focus-source-identity.test.mjs",
-          "scripts/tests/inkwave-public-capture-cache-policy.test.mjs",
-          "scripts/tests/inkwave-queue-ci-20261031.test.mjs"
+          "scripts/tests/inkwave-public-capture-cache-policy.test.mjs"
         ]
       },
       {

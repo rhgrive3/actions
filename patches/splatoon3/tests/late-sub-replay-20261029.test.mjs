@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
+import {peer,launch,advance,send,sendRows,isMark,json} from './sub-mark-fixture.mjs';
 const evidence=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(process.env.INKWAVE_REVIEW_ROOT||fileURLToPath(new URL('../../../',import.meta.url)));
 const stage=process.env.INKWAVE_REVIEW_STAGE||root;
 const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/late-combat-before-20261029.json',import.meta.url),'utf8'));
@@ -31,20 +32,27 @@ for(const sub of ['toxicMist','splashWall','beakon'])test(`${sub}: accepted depl
   const next=w.birth(sub,2);w.play({...next.p,phase:'deploy',activeIn:.1,lifeSeconds:5,usesLeft:2});assert.ok(['deployed','wallPending'].includes(next.o.phase));assert.equal(next.o.expireAt,19,'new birth is independently admitted');
  }finally{w.close();}}
 });
-for(const sub of ['inkMine','angleShooter'])test(`${sub}: fresh-envelope repeats cannot extend one target life; first forged target remains explicitly unresolved`,async t=>{
- for(const before of [true,false]){const w=await setup(before);try{
-  const {p,o}=w.birth(sub);const mark={...p,phase:'mark',frames:300,targetId:2,targetLife:0,markAgeFrames:0,sourceTeam:0};
-  w.play({...mark,frames:299});assert.equal(w.target.s3.revealedUntil,undefined);
-  w.play(mark,'foreign');assert.equal(w.target.s3.revealedUntil,undefined);
-  if(!before){const missing={...mark};delete missing.sourceTeam;w.play(missing);assert.equal(w.target.s3.revealedUntil,undefined,'missing source team rejected');w.play({...mark,sourceTeam:1});assert.equal(w.target.s3.revealedUntil,undefined,'wrong source team rejected');}
-  w.play(mark);const first=w.target.s3.revealedUntil[0];assert.ok(first>w.f.G.time,'diagnostic: first far-target claim remains accepted without contact proof');
-  w.f.G.time=14;for(let i=0;i<10;i++)w.play(mark);
-  assert.equal(w.target.s3.revealedUntil[0],before?first+4:first);
-  const other=w.f.make();Object.assign(other,{nid:3,owner:'c',remote:true,team:1,netLife:0});w.nm.byNid.set(3,other);w.nm._setupActor(other);w.play({...mark,targetId:3});assert.ok(other.s3.revealedUntil[0]>w.f.G.time,'one birth can mark another target');
-  w.target.netLife=1;w.play(mark);assert.equal(w.target.s3.revealedUntil[0],before?first+4:first,'old target life rejected');w.play({...mark,targetLife:1});assert.ok(w.target.s3.revealedUntil[0]>w.f.G.time,'new target life has independent receipt');
-  w.f.G.projectiles.clear();delete other.s3.revealedUntil;w.play({...mark,targetId:3});assert.equal(other.s3.revealedUntil,undefined,'clear retires the whole birth proof');
-  if(!before)t.diagnostic('security_pass=false: first mark target contact proof remains unavailable; duplicate renewal only is fixed');
- }finally{w.close();}}
+for(const sub of ['inkMine','angleShooter'])test(`${sub}: native birth/contact rejects the former first far-target claim and prevents renewal`,async t=>{
+ // Keep the pinned pre-fix negative control: its raw authenticated-looking
+ // payload accepted a distant target without a receiver contact.
+ const old=await setup(true);try{
+  const {p}=old.birth(sub),mark={...p,phase:'mark',frames:300,targetId:2,targetLife:0,markAgeFrames:0,sourceTeam:0};
+  old.play(mark);const first=old.target.s3.revealedUntil[0];assert.ok(first>old.f.G.time);
+  old.f.G.time=14;old.play(mark);assert.equal(old.target.s3.revealedUntil[0],first+4,'pinned prior source reproduces renewal');
+ }finally{old.close();}
+ const a=await peer('a',sub,10),b=await peer('c',sub,10);t.after(()=>{a.close();b.close();});b.v.pos.set(250,0,250);
+ launch(a,[b]);let mark;
+ // Deliberately withhold terminal rows while testing an early mark proposal;
+ // the receiver must still acquire its own native contact before accepting it.
+ for(let i=0;i<180&&!mark;i++){
+  advance([a,b]);send(a,b,{map(p){mark=p.e?.find(isMark);p.e=p.e?.filter(e=>e[1]!=='ac'||!['burst','expire','destroy'].includes(e[5]?.phase));}});
+ }
+ assert.ok(mark,'actual native source marks its near target');assert.equal(b.v.s3.revealedUntil,undefined,'an accepted native birth and source row cannot select a distant receiver target');
+ for(const changes of [{frames:299},{sourceTeam:1},{targetLife:1}]){const fake=json(mark);Object.assign(fake[5],changes);sendRows(a,b,[fake]);assert.equal(b.v.s3.revealedUntil,undefined);}
+ b.v.pos.copy(a.v.pos);for(let i=0;i<60&&!b.v.s3.revealedUntil?.[0];i++)advance([a,b]);assert.ok(b.v.s3.revealedUntil?.[0]>b.f.G.time,'receiver native trajectory/trigger establishes the missing contact');
+ const until=b.v.s3.revealedUntil[0];for(let i=0;i<10;i++)sendRows(a,b,[mark]);assert.equal(b.v.s3.revealedUntil[0],until,'fresh transport envelopes cannot renew one contact');
+ b.v.netLife++;delete b.v.s3.revealedUntil;sendRows(a,b,[mark]);assert.equal(b.v.s3.revealedUntil,undefined,'old target life cannot borrow the stored contact');
+ b.f.G.projectiles.clear();const next=json(mark);next[5].targetLife=b.v.netLife;sendRows(a,b,[next]);assert.equal(b.v.s3.revealedUntil,undefined,'clear retires the native birth/contact capability');
 });
 
 test('first deploy corrects restored landing clocks and cannot undo an earlier Beakon consumption',async()=>{

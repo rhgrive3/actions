@@ -1,10 +1,13 @@
-import {HISTORICAL_THROW_PREDICTION_SOURCE_SHA256,QUEUE_THROW_PREDICTION_SOURCE_SHA256,restoreQueueThrowPredictionSource} from '../lib/inkwave-throw-prediction-source-epoch-20261031.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
-import {CURRENT_MENU_LAYOUT_SHA256,HISTORICAL_MENU_LAYOUT_SHA256,HISTORICAL_MENU_INSTALLER_SHA256,ICON_MENU_INSTALLER_SHA256,SQUIDROLL_MENU_INSTALLER_SHA256,MENU_ICON_INPUT_SHA256,SQUIDROLL_MENU_INPUT_SHA256,projectReviewedMenuInstaller,restoreReviewedMenuInstaller,projectSquidrollMenuInstaller,restoreSquidrollMenuInstaller,verifyMenuInstallerSourceIdentity,restoreReviewedMenuLayout,verifyMenuLayoutSourceIdentity} from '../lib/inkwave-menu-focus-source-identity.mjs';
+import * as identity from '../lib/inkwave-menu-focus-source-identity.mjs';
 import {THROW_PREDICTION_MENU_INSTALLER_SHA256,THROW_PREDICTION_MENU_INPUT_SHA256,projectThrowPredictionMenuInstaller,restoreThrowPredictionMenuInstaller} from '../lib/inkwave-menu-focus-source-identity.mjs';
+import {CURRENT_MENU_LAYOUT_SHA256,HISTORICAL_MENU_LAYOUT_SHA256,HISTORICAL_MENU_INSTALLER_SHA256,ICON_MENU_INSTALLER_SHA256,SQUIDROLL_MENU_INSTALLER_SHA256,MENU_ICON_INPUT_SHA256,SQUIDROLL_MENU_INPUT_SHA256,projectReviewedMenuInstaller,restoreReviewedMenuInstaller,projectSquidrollMenuInstaller,restoreSquidrollMenuInstaller,verifyMenuInstallerSourceIdentity,restoreReviewedMenuLayout,verifyMenuLayoutSourceIdentity} from '../lib/inkwave-menu-focus-source-identity.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const before=fs.readFileSync(new URL('../../patches/splatoon3/tests/fixtures/menu-layout-cache-1915-before.mjs.txt',import.meta.url),'utf8');
 const current=fs.readFileSync(new URL('../../patches/splatoon3/runtime/menu-layout.mjs',import.meta.url),'utf8');
@@ -42,7 +45,7 @@ test('each reviewed menu owner site is exact once; drop, duplicate and semantic 
 const oldInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-icons-1915.mjs.txt',import.meta.url),'utf8');
 const iconInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8');
 const squidrollInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-throw-prediction-20261031.mjs.txt',import.meta.url),'utf8');
-const currentInstaller=fs.readFileSync(new URL('../../patches/splatoon3/runtime/install.mjs',import.meta.url),'utf8');
+const throwPredictionInstaller=fs.readFileSync(new URL('../../patches/splatoon3/runtime/install.mjs',import.meta.url),'utf8');
 const iconInputs=Object.fromEntries(Object.entries(MENU_ICON_INPUT_SHA256).map(([key,digest])=>{
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
  return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
@@ -51,12 +54,18 @@ const squidrollInputs=Object.fromEntries(Object.entries(SQUIDROLL_MENU_INPUT_SHA
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
  return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
 }));
-const predictionInputs=Object.fromEntries(Object.entries(THROW_PREDICTION_MENU_INPUT_SHA256).map(([key,digest])=>{
+const throwPredictionInputs=Object.fromEntries(Object.entries(THROW_PREDICTION_MENU_INPUT_SHA256).map(([key,digest])=>{
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
- const source=fs.readFileSync(new URL(file,import.meta.url),'utf8');
- assert.equal(digest,HISTORICAL_THROW_PREDICTION_SOURCE_SHA256,'historical source pin never relabelled');
- return [key,{source,manifestDigest:hash(source)}];
+ return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
 }));
+test('current throw-prediction workspace and preserved legacy arc reverse to the full historical source',()=>{
+ const source=throwPredictionInputs['patch/runtime/throw-prediction.mjs'].source;
+ assert.equal(hash(source),THROW_PREDICTION_MENU_INPUT_SHA256['patch/runtime/throw-prediction.mjs']);
+ assert.equal(hash(identity.restoreReviewedThrowPredictionInput(source)),identity.PREVIOUS_THROW_PREDICTION_SOURCE_SHA256);
+ for(const mutated of [source+'\\n',source.replace('polylineWorkspaces','mutatedWorkspaces'),
+   source.replace('inkwave.s3.throw-prediction.native-arc.v1','inkwave.s3.throw-prediction.spoofed-arc.v1')])
+  assert.throws(()=>identity.restoreReviewedThrowPredictionInput(mutated),/complete sealed|exactly one reviewed owner site/);
+});
 test('installer preserves the original full pin and independently frozen two-hunk inverse',()=>{
  const pins=JSON.parse(fs.readFileSync(new URL('../inkwave-menu-focus-pins.json',import.meta.url)));
  assert.equal(pins.inputs['patch/runtime/install.mjs'],HISTORICAL_MENU_INSTALLER_SHA256);
@@ -120,51 +129,71 @@ test('Squid Roll epoch requires every icon and exact effect source and manifest 
  }
 });
 
-test('throw prediction is a separately frozen two-hunk successor of the complete Squid Roll epoch',()=>{
+const allInputs={...iconInputs,...squidrollInputs,...throwPredictionInputs};
+const verifyThrow=(source=throwPredictionInstaller,inputs=allInputs,frozenSquidroll=squidrollInstaller)=>verifyMenuInstallerSourceIdentity(source,hash(source),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,inputs,iconInstaller,frozenSquidroll);
+test('throw prediction is an exact reversible successor without relabelling any frozen installer',()=>{
+ assert.equal(hash(throwPredictionInstaller),THROW_PREDICTION_MENU_INSTALLER_SHA256);
  assert.equal(hash(squidrollInstaller),SQUIDROLL_MENU_INSTALLER_SHA256);
- assert.equal(hash(currentInstaller),THROW_PREDICTION_MENU_INSTALLER_SHA256);
- assert.equal(projectThrowPredictionMenuInstaller(squidrollInstaller,squidrollInstaller),currentInstaller);
- assert.equal(restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller),squidrollInstaller);
- assert.equal(restoreReviewedMenuInstaller(restoreSquidrollMenuInstaller(restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller),iconInstaller),oldInstaller),oldInstaller);
- const verified=verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...iconInputs,...squidrollInputs,...predictionInputs},iconInstaller,squidrollInstaller);
+ assert.equal(projectThrowPredictionMenuInstaller(squidrollInstaller,squidrollInstaller),throwPredictionInstaller);
+ assert.equal(restoreThrowPredictionMenuInstaller(throwPredictionInstaller,squidrollInstaller),squidrollInstaller);
+ assert.equal(restoreReviewedMenuInstaller(restoreSquidrollMenuInstaller(restoreThrowPredictionMenuInstaller(throwPredictionInstaller,squidrollInstaller),iconInstaller),oldInstaller),oldInstaller);
+ const verified=verifyThrow();
  assert.equal(verified.epoch,'catalogue-kit-icons-squidroll-effects-and-throw-prediction');
  assert.deepEqual(verified.iconInputs,MENU_ICON_INPUT_SHA256);
- assert.deepEqual(verified.effectInputs,{...SQUIDROLL_MENU_INPUT_SHA256,'patch/runtime/throw-prediction.mjs':QUEUE_THROW_PREDICTION_SOURCE_SHA256});
+ assert.deepEqual(verified.effectInputs,SQUIDROLL_MENU_INPUT_SHA256);
+ assert.deepEqual(verified.predictionInputs,THROW_PREDICTION_MENU_INPUT_SHA256);
+ assert.deepEqual(verifyMenuInstallerSourceIdentity(squidrollInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...iconInputs,...squidrollInputs},iconInstaller).predictionInputs,{});
 });
-
-test('throw prediction owner sites, complete predecessor and manifest identity reject tampering',()=>{
+test('throw prediction import, call order, complete predecessor and manifest cannot be weakened',()=>{
  for(const anchor of ["import { installThrowPrediction } from './throw-prediction.mjs';\n",'  installThrowPrediction(api);\n']){
-  assert.equal(currentInstaller.split(anchor).length,2);
-  for(const changed of [currentInstaller.replace(anchor,''),currentInstaller.replace(anchor,anchor+anchor),currentInstaller.replace(anchor,anchor.replace('installThrowPrediction','installThrowPredictionTampered'))])
+  assert.equal(throwPredictionInstaller.split(anchor).length,2);
+  for(const changed of [throwPredictionInstaller.replace(anchor,''),throwPredictionInstaller.replace(anchor,anchor+anchor),throwPredictionInstaller.replace(anchor,anchor.replace('installThrowPrediction','installThrowPredictionTampered'))])
    assert.throws(()=>restoreThrowPredictionMenuInstaller(changed,squidrollInstaller),/Reviewed throw prediction menu installer epoch/);
  }
+ const moved=throwPredictionInstaller.replace('  installThrowPrediction(api);\n','').replace('  installMainWeaponCatalogRuntime(api, profile);\n','  installThrowPrediction(api);\n  installMainWeaponCatalogRuntime(api, profile);\n');
+ assert.throws(()=>restoreThrowPredictionMenuInstaller(moved,squidrollInstaller),/Reviewed throw prediction menu installer epoch/);
  assert.throws(()=>projectThrowPredictionMenuInstaller(squidrollInstaller+'\n',squidrollInstaller),/Complete Squid Roll menu installer bytes/);
- assert.throws(()=>restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller+'\n'),/Frozen Squid Roll menu installer epoch/);
- const all={...iconInputs,...squidrollInputs,...predictionInputs};
- assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller,squidrollInstaller),/actual repository source bytes/);
- assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller),/Frozen Squid Roll menu installer required/);
- assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,undefined,squidrollInstaller),/Frozen icon menu installer required/);
- assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller+'\n',hash(currentInstaller+'\n'),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller,squidrollInstaller),/Reviewed Squid Roll menu installer epoch/);
+ assert.throws(()=>restoreThrowPredictionMenuInstaller(throwPredictionInstaller,squidrollInstaller+'\n'),/Frozen Squid Roll menu installer epoch/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(throwPredictionInstaller,hash(throwPredictionInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,allInputs,iconInstaller),/Frozen Squid Roll menu installer required/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(throwPredictionInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,allInputs,iconInstaller,squidrollInstaller),/actual repository source bytes/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(throwPredictionInstaller,hash(throwPredictionInstaller),THROW_PREDICTION_MENU_INSTALLER_SHA256,oldInstaller,allInputs,iconInstaller,squidrollInstaller),/Original menu installer pin/);
+ assert.throws(()=>verifyThrow(throwPredictionInstaller+'\n'),/Reviewed Squid Roll menu installer epoch/);
 });
-
-test('throw prediction epoch requires every exact icon, effect and prediction source and manifest input',()=>{
- const all={...iconInputs,...squidrollInputs,...predictionInputs};
- for(const [key,input] of Object.entries(all)){
-  const missing={...all};delete missing[key];
-  assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,missing,iconInstaller,squidrollInstaller),/Required (menu icon|Squid Roll effect|throw prediction) source/);
-  assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,source:input.source+'\n'}},iconInstaller,squidrollInstaller),/Reviewed (menu icon|Squid Roll effect|throw prediction) source/);
-  for(const manifestDigest of [undefined,'0'.repeat(64)])assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,manifestDigest}},iconInstaller,squidrollInstaller),/Emitted (menu icon|Squid Roll effect|throw prediction) input/);
+test('new epoch requires every original and new dependency with exact source and manifest hashes',()=>{
+ for(const [key,input] of Object.entries(allInputs)){
+  const missing={...allInputs};delete missing[key];
+  assert.throws(()=>verifyThrow(throwPredictionInstaller,missing),/Required (menu icon|Squid Roll effect|throw prediction) source/);
+  assert.throws(()=>verifyThrow(throwPredictionInstaller,{...allInputs,[key]:{...input,source:input.source+'\n'}}),/Reviewed (menu icon|Squid Roll effect|throw prediction) source/);
+  for(const manifestDigest of [undefined,'0'.repeat(64)])assert.throws(()=>verifyThrow(throwPredictionInstaller,{...allInputs,[key]:{...input,manifestDigest}}),/Emitted (menu icon|Squid Roll effect|throw prediction) input/);
  }
 });
-
-test('polyline workspace successor reverses to the complete original prediction source and rejects every changed owner',()=>{
- const source=predictionInputs['patch/runtime/throw-prediction.mjs'].source;
- assert.equal(hash(source),QUEUE_THROW_PREDICTION_SOURCE_SHA256);
- const predecessor=restoreQueueThrowPredictionSource(source);
- assert.equal(hash(predecessor),THROW_PREDICTION_MENU_INPUT_SHA256['patch/runtime/throw-prediction.mjs']);
- assert.notEqual(source,predecessor);
- for(const anchor of ['const polylineWorkspaces = new WeakMap();','work.indices.length=work.segments.length=0; leases.depth--;','addPolylineSegment(points, work, s.first, s.at); addPolylineSegment(points, work, s.at, s.last);']){
-  assert.equal(source.split(anchor).length,2);
-  for(const modified of [source.replace(anchor,''),source.replace(anchor,anchor+anchor),source+'\n'])assert.throws(()=>restoreQueueThrowPredictionSource(modified),/Reviewed throw prediction source/);
+test('throw preview dependency pins cover the complete source import closure',()=>{
+ const queue=['patch/runtime/throw-prediction.mjs'],visited=new Set();
+ while(queue.length){
+  const key=queue.pop();if(visited.has(key))continue;visited.add(key);
+  const input=throwPredictionInputs[key];assert(input,'Every imported preview dependency has an independent pin: '+key);
+  for(const [,specifier] of input.source.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)['"]([^'"]+)['"]/g)){
+   assert(specifier.startsWith('./'),'Preview imports remain local reviewed dependencies');
+   queue.push(path.posix.normalize(path.posix.join(path.posix.dirname(key),specifier)));
+  }
+ }
+ assert.deepEqual([...visited].sort(),Object.keys(THROW_PREDICTION_MENU_INPUT_SHA256).sort());
+});
+test('actual browser-checker preflight loads the new predecessor and selects every emitted dependency',()=>{
+ const repo=fileURLToPath(new URL('../../',import.meta.url)),scriptURL=new URL('../check-inkwave-menu-focus.mjs',import.meta.url).href;
+ const checker=fs.readFileSync(new URL(scriptURL),'utf8');
+ const start=checker.indexOf('const menuLayoutEpoch='),end=checker.indexOf('const emitted =',start);
+ assert(start>0&&end>start,'production checker owns the tested identity and artifact selection');
+ const preflight=checker.slice(start,end).replaceAll('import.meta.url','scriptURL')+'\n({menuInstallerEpoch,files});';
+ const pins=JSON.parse(fs.readFileSync(new URL('../inkwave-menu-focus-pins.json',import.meta.url)));
+ const files={...pins.inputs,...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256,
+  'patch/runtime/menu-layout.mjs':CURRENT_MENU_LAYOUT_SHA256,'patch/runtime/install.mjs':THROW_PREDICTION_MENU_INSTALLER_SHA256};
+ const run=files=>vm.runInNewContext(preflight,{...identity,fs,path,hash,pins,manifest:{files},repo,scriptURL,URL,assert});
+ const receipt=run(files);
+ assert.equal(receipt.menuInstallerEpoch.epoch,'catalogue-kit-icons-squidroll-effects-and-throw-prediction');
+ for(const key of Object.keys(allInputs))assert(receipt.files.includes(key.replace(/^patch\//,'patches/splatoon3/')),'real emitted artifact digest is checked: '+key);
+ for(const key of Object.keys(THROW_PREDICTION_MENU_INPUT_SHA256)){
+  const missing={...files};delete missing[key];
+  assert.throws(()=>run(missing),/Emitted throw prediction input/);
  }
 });

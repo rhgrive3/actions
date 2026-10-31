@@ -137,12 +137,18 @@ export function updatePropQuality(game, targetQuality, dressingFn = null, ctx = 
 export function resampleAtlasFaces(renderer, oldRT, oldSize, newRT, newSize, faces, oldAtlasMap, THREE_LIB = THREE) {
   if (!renderer || typeof renderer.setRenderTarget !== 'function' || !oldRT?.texture || !newRT || !THREE_LIB) return;
 
-  const quadList = [];
+  let count = 0;
+  for (const f of faces) if (oldAtlasMap.has(f) && oldAtlasMap.get(f) && f.atlas) count++;
+  if (!count) return;
+  const pos = new Float32Array(count * 4 * 3);
+  const uv = new Float32Array(count * 4 * 2);
+  // WebGL reserves 65535 for fixed primitive restart, so the largest valid
+  // 16-bit quad has index 65531. Larger atlases retain the original width.
+  const idx = count <= 16383 ? new Uint16Array(count * 6) : new Uint32Array(count * 6);
+  let i = 0;
   for (const f of faces) {
-    const oldAtlas = oldAtlasMap.get(f);
-    const newAtlas = f.atlas;
+    const oldAtlas = oldAtlasMap.get(f), newAtlas = f.atlas;
     if (!oldAtlas || !newAtlas) continue;
-
     const su0 = (oldAtlas.x + oldAtlas.pad) / oldSize;
     const sv0 = (oldAtlas.y + oldAtlas.pad) / oldSize;
     const su1 = (oldAtlas.x + oldAtlas.pad + f.su * oldAtlas.ppm) / oldSize;
@@ -153,32 +159,21 @@ export function resampleAtlasFaces(renderer, oldRT, oldSize, newRT, newSize, fac
     const dx1 = ((newAtlas.x + newAtlas.pad + f.su * newAtlas.ppm) / newSize) * 2 - 1;
     const dy1 = ((newAtlas.y + newAtlas.pad + f.sv * newAtlas.ppm) / newSize) * 2 - 1;
 
-    quadList.push({ su0, sv0, su1, sv1, dx0, dy0, dx1, dy1 });
-  }
-
-  if (!quadList.length) return;
-
-  const count = quadList.length;
-  const pos = new Float32Array(count * 4 * 3);
-  const uv = new Float32Array(count * 4 * 2);
-  const idx = new Uint32Array(count * 6);
-
-  for (let i = 0; i < count; i++) {
-    const q = quadList[i];
     const vi = i * 4;
 
-    pos[vi * 3]     = q.dx0; pos[vi * 3 + 1]     = q.dy0; pos[vi * 3 + 2]     = 0;
-    pos[(vi + 1) * 3] = q.dx1; pos[(vi + 1) * 3 + 1] = q.dy0; pos[(vi + 1) * 3 + 2] = 0;
-    pos[(vi + 2) * 3] = q.dx1; pos[(vi + 2) * 3 + 1] = q.dy1; pos[(vi + 2) * 3 + 2] = 0;
-    pos[(vi + 3) * 3] = q.dx0; pos[(vi + 3) * 3 + 1] = q.dy1; pos[(vi + 3) * 3 + 2] = 0;
+    pos[vi * 3]     = dx0; pos[vi * 3 + 1]     = dy0; pos[vi * 3 + 2]     = 0;
+    pos[(vi + 1) * 3] = dx1; pos[(vi + 1) * 3 + 1] = dy0; pos[(vi + 1) * 3 + 2] = 0;
+    pos[(vi + 2) * 3] = dx1; pos[(vi + 2) * 3 + 1] = dy1; pos[(vi + 2) * 3 + 2] = 0;
+    pos[(vi + 3) * 3] = dx0; pos[(vi + 3) * 3 + 1] = dy1; pos[(vi + 3) * 3 + 2] = 0;
 
-    uv[vi * 2]     = q.su0; uv[vi * 2 + 1]     = q.sv0;
-    uv[(vi + 1) * 2] = q.su1; uv[(vi + 1) * 2 + 1] = q.sv0;
-    uv[(vi + 2) * 2] = q.su1; uv[(vi + 2) * 2 + 1] = q.sv1;
-    uv[(vi + 3) * 2] = q.su0; uv[(vi + 3) * 2 + 1] = q.sv1;
+    uv[vi * 2]     = su0; uv[vi * 2 + 1]     = sv0;
+    uv[(vi + 1) * 2] = su1; uv[(vi + 1) * 2 + 1] = sv0;
+    uv[(vi + 2) * 2] = su1; uv[(vi + 2) * 2 + 1] = sv1;
+    uv[(vi + 3) * 2] = su0; uv[(vi + 3) * 2 + 1] = sv1;
 
     idx[i * 6]     = vi;     idx[i * 6 + 1] = vi + 1; idx[i * 6 + 2] = vi + 2;
     idx[i * 6 + 3] = vi;     idx[i * 6 + 4] = vi + 2; idx[i * 6 + 5] = vi + 3;
+    i++;
   }
 
   let geo = null;

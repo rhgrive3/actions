@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "root": "/workspace/actions-score-base",
+  "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+  "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+  "inputHash": "b7a0866d430dc2ecb7b6388b6203f041c17232aba5a681c80f51520f03cf7376",
+  "revision": "f08f01745da3b46e5a9087428ba8986df3861deab92c9145381d58fdc2e4ec89",
+  "sourceInputs": 1588,
+  "artifacts": 2315,
+  "runtimeSourceSha256": "ac919d24d6af33eba196c4e3f19d3253c23998586040eb0d4a90b9206b30ad11",
+  "runtimeEmittedSha256": "7a59e821a1ec61c5ce54cda362832e16829d2b52023d3a3dce4bb2ff2a84ebe2",
+  "runtimeEmittedBytes": 1795,
+  "scoringRecompiledExact": true,
+  "prebuiltFiles": 17,
+  "prebuiltAssetsVerified": true,
+  "stageSha256": "8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa",
+  "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4"
+}

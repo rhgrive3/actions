@@ -87,6 +87,11 @@ const PATCHES=[
 ];
 
 export function adaptWeaponQueue20261024(rel,code,replaceOnce){
-  for(const patch of PATCHES)if(patch.rel===rel)code=replaceOnce(code,patch.before,patch.after,patch.label);
+  for(const patch of PATCHES)if(patch.rel===rel){
+    // Repeated canonical composition must not insert the reviewed successor
+    // again when the old anchor is a substring of it (flick pitch sine).
+    if(code.includes(patch.after))continue;
+    code=replaceOnce(code,patch.before,patch.after,patch.label);
+  }
   return code;
 }

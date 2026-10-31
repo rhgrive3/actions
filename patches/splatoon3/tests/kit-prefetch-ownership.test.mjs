@@ -79,3 +79,32 @@ test('production-composed Actor/WeaponRunner consumption keeps required main and
  const installed=f.installWeaponAudioRuntime(f.installedRuntime),a=f.make('shooter');a.isLocal=true;a.form='kid';a.weapon={...a.weapon,sub:'bomb',special:'inkjet'};
  a.weaponRunner.update(1/60,{fire:false});assert(a.weaponRunner._mainAudioState.kitPrefetch);assert(h.loader.pendingJobs.some(row=>!row.required));a.weaponRunner.reset();assert.equal(a.weaponRunner._mainAudioState,null);assert(h.loader.pendingJobs.every(row=>row.required));await idle(h.loader);assert(h.loader.isEventResident('shooter','fire'));assert(!h.loader.isEventResident('special:inkjet','fire'));installed.dispose();
 });
+
+test('a speculative two-event batch retires every key, while a required or second-owner join retains it',async()=>{
+ for(const join of ['none','required','owner']){
+  const h=harness(),owner={},other={},requests=[{id:'sub:bomb',event:'fire'},{id:'special:inkjet',event:'fire'}];
+  const pending=h.loader.ensureMany(requests,{owner});assert.equal(h.loader.pendingJobs.length,1);assert.equal(h.loader.inFlight.size,2);
+  let retained;if(join==='required')retained=h.loader.ensure('sub:bomb','fire');if(join==='owner')retained=h.loader.ensureMany([{id:'special:inkjet',event:'fire'}],{owner:other});
+  h.loader.cancelOwner(owner);const result=await pending;if(retained)await retained;await idle(h.loader);
+  if(join==='none'){assert(result.results.every(x=>x.cancelled));assert.equal(h.calls.length,0);}else{assert(h.loader.isEventResident('sub:bomb','fire'));assert(h.loader.isEventResident('special:inkjet','fire'));}
+  assert.equal(h.loader.inFlight.size,0);assert.equal(h.loader.pendingJobs.length,0);
+ }
+});
+test('an urgent main request runs between bounded speculative batches, with no more than two decoders',async()=>{
+ const h=harness(),gate=deferred(),started=deferred(),owner={};let active=0,peak=0,decodes=0;
+ h.ctx.decodeAudioData=async()=>{const n=++decodes;active++;peak=Math.max(peak,active);if(n<=2){started.resolve();await gate.promise;}active--;return {duration:.01,length:480,numberOfChannels:1,sampleRate:48000,getChannelData:()=>new Float32Array(480)};};
+ const batches=[],load=h.bank.authorized.load.bind(h.bank.authorized);h.bank.authorized.load=(manifest,options)=>{batches.push(manifest.clips.map(x=>x.id+':'+x.event));return load(manifest,options);};
+ const first=h.loader.ensureMany([{id:'sub:bomb',event:'fire'},{id:'sub:bomb',event:'explosion'}],{owner});await started.promise;
+ const tail=h.loader.ensureMany([{id:'special:inkjet',event:'fire'},{id:'special:inkjet',event:'spin'}],{owner});
+ const main=h.loader.ensure('shooter','fire',{priority:true});gate.resolve();await Promise.all([first,tail,main]);await idle(h.loader);
+ assert.deepEqual(batches.map(x=>x[0]),['sub:bomb:fire','shooter:fire','special:inkjet:fire']);assert.equal(peak,2);assert.equal(decodes,6);
+});
+test('muted local kit prefetch leaves no speculative jobs and returning sound restores the current kit',async()=>{
+ const h=harness();let silent=true;class Actor{setWeapon(){} _startSpecial(){} _updateSpecial(){}}class WeaponRunner{reset(){} update(){}}class Projectiles{throwBomb(){} _push(){} _blastBurst(){}}
+ const G={audio:{ctx:h.ctx,_realS3Loader:h.loader,_sfxSilent:()=>silent,play(){},prepareWeapon(){},loopWeapon(){return {playing:false,_sfxDeferred:true,set(){},stop(){}};}}};
+ const installation=installWeaponAudioRuntime({G,Actor,WeaponRunner,Projectiles,on(){return()=>{};}}),runner=new WeaponRunner();runner.a={alive:true,isLocal:true,form:'kid',weapon:{id:'shooter',sub:'bomb',special:'inkjet'},pos:{x:0,y:0,z:0}};
+ for(let i=0;i<100;i++)runner.update(1/60,{});assert.equal(h.loader.pendingJobs.length,0);assert.equal(h.state.kitPrefetch,undefined);
+ silent=false;runner.update(1/60,{});assert(runner._mainAudioState.kitPrefetch);assert(h.loader.pendingJobs.length>0);
+ silent=true;runner.update(1/60,{});assert.equal(runner._mainAudioState.kitPrefetch,null);assert.equal(h.loader.pendingJobs.length,0);
+ silent=false;runner.update(1/60,{});await idle(h.loader);assert(h.loader.isEventResident('special:inkjet','fire'));installation.dispose();
+});

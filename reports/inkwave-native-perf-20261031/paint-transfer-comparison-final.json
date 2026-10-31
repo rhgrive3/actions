@@ -1,0 +1,59 @@
+{
+  "frames": 120,
+  "inputs": [
+    "/workspace/scratch/paint-product-candidate.json",
+    "/workspace/scratch/paint-transfer-match-repeat.json",
+    "/workspace/scratch/paint-transfer-match-final.json"
+  ],
+  "baselineHashes": [
+    "1ae81247abf5eb1948132c08bad0c70476dc24d2f71f75081ea4389c0868dc10",
+    "182db043742157f13c025644e6419a5a8bde5b21f06f1e294faa69ae078771ac",
+    "182db043742157f13c025644e6419a5a8bde5b21f06f1e294faa69ae078771ac"
+  ],
+  "moduleHashes": [
+    "1ae81247abf5eb1948132c08bad0c70476dc24d2f71f75081ea4389c0868dc10",
+    "1ae81247abf5eb1948132c08bad0c70476dc24d2f71f75081ea4389c0868dc10",
+    "182db043742157f13c025644e6419a5a8bde5b21f06f1e294faa69ae078771ac"
+  ],
+  "baselineComparison": {
+    "roster": true,
+    "ticks": true,
+    "stateAndPoseFrames": true,
+    "grid": true,
+    "order": true,
+    "counts": true,
+    "atlas": true
+  },
+  "trialComparison": {
+    "roster": true,
+    "ticks": true,
+    "stateAndPoseFrames": true,
+    "grid": true,
+    "order": true,
+    "counts": true,
+    "atlas": true
+  },
+  "work": [
+    {
+      "atlasRenders": 200,
+      "uploads": 1000,
+      "bytes": 13908480
+    },
+    {
+      "atlasRenders": 200,
+      "uploads": 1000,
+      "bytes": 13908480
+    },
+    {
+      "atlasRenders": 200,
+      "uploads": 200,
+      "bytes": 4346400
+    }
+  ],
+  "errors": [
+    [],
+    [],
+    []
+  ],
+  "scope": "Native Scorch offline Turf, deterministic 30 Hz presentation and 60 Hz simulation, eight actors; scene display rendering disabled, atlas rendering enabled. Instrumented counts; no timing claim."
+}

@@ -31,7 +31,7 @@ const netRoot = path.join(ROOT, 'patches/network-replication');
 // `productionComposition` uses the shared complete build adapter and S3 installer.
 // Both built selectors read emitted modules without applying adapters twice.
 export async function fixture({ network = true, flow = false, fullRuntime = false,
-  productionComposition = false, built = null, includeSession = false, rankedNetwork = false, includeMatch = false, includePresentation = false, transformSource = null } = {}) {
+  productionComposition = false, built = null, includeSession = false, rankedNetwork = false, includeMatch = false, includePresentation = false, transformSource = null, randomSeed = null } = {}) {
   const builtRoot = built || BUILT ? path.resolve(built || BUILT) : null;
   const UPSTREAM = builtRoot || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
   const PATCH_ROOT = builtRoot ? path.join(builtRoot, 'patches/splatoon3') : path.join(ROOT, 'patches/splatoon3');
@@ -51,6 +51,11 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   const context = vm.createContext({ console, structuredClone, crypto: globalThis.crypto,
     performance: { now: () => seconds * 1000 }, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
+  const setRandomSeed=seed=>{
+    if(!Number.isSafeInteger(seed)||seed<0||seed>0xffffffff)throw new Error('Invalid fixture random seed');
+    vm.runInContext(`{let state=${seed};Math.random=()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/4294967296);}`,context);
+  };
+  if(randomSeed!==null)setRandomSeed(randomSeed);
   const modules = new Map();
 
   const compose = productionComposition ? adaptBuildSource : network
@@ -218,7 +223,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
 
   return {
     ...api, profile, G, THREE, NetMatch, Projectiles, projectiles, WEAPONS, PLAYER,
-    network,
+    network, setRandomSeed,
     parseWire: text => vm.runInContext(`JSON.parse(${JSON.stringify(text)})`, context),
     clock: { now: () => seconds, set: (v) => { seconds = v; }, advance: (dt) => { seconds += dt; } },
     makeSession, makeNetMatch, makeActor, bind, packActor, tick,

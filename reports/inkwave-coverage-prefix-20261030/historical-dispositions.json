@@ -1,0 +1,12 @@
+{
+  "v1-initial": "Rejected: slower; all early tiering/noise values retained.",
+  "v1-v2-common-warmup": "Both rejected: slower than the same-baseline A/A control.",
+  "v3-unfixed-9b0dedee": {
+    "disposition": "Rejected as a production candidate after independent generic-storage counterexamples. Its native Uint8Array capture timings remain historical evidence only.",
+    "counterexamples": [
+      "Uint16Array with Uint8Array.prototype passed the prototype gate and read incorrect raw bytes.",
+      "DataView with Uint8Array.prototype reached the TypedArray length getter and threw."
+    ],
+    "replacementSourceSha": "e56320bfd6c043187744f813c08297a3d2be9758"
+  }
+}

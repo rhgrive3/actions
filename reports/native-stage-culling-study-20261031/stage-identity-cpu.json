@@ -1,0 +1,244 @@
+{
+  "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+  "converter": "85c9d0a04cb261a9638a846203e286c9dc76d104a6b30fd3eae4b9dc9dfba8c7",
+  "scope": "CPU-only source display selection; 120 moving views per window; no rendering, lighting, GPU uploads, full-match time or device FPS",
+  "objects": 65,
+  "frames": 120,
+  "checkedViews": 7475,
+  "eligible": 7475,
+  "checkedIndices": 33413478,
+  "baseline": {
+    "triangles": 11137826,
+    "meshes": 7475
+  },
+  "candidate": {
+    "triangles": 11137826,
+    "meshes": 7475
+  },
+  "samples": [
+    {
+      "cycle": 0,
+      "side": "base",
+      "ms": 562.8786639999998,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 0,
+      "side": "trial",
+      "ms": 639.389819,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 0,
+      "side": "trial",
+      "ms": 661.235052,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 0,
+      "side": "base",
+      "ms": 563.3157019999999,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 1,
+      "side": "trial",
+      "ms": 675.4391809999988,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 1,
+      "side": "base",
+      "ms": 655.6468539999987,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 1,
+      "side": "base",
+      "ms": 555.6265820000008,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 1,
+      "side": "trial",
+      "ms": 625.4835370000001,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 2,
+      "side": "base",
+      "ms": 585.2606780000006,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 2,
+      "side": "trial",
+      "ms": 651.4550149999995,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 2,
+      "side": "trial",
+      "ms": 664.8275259999991,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 2,
+      "side": "base",
+      "ms": 543.5649549999998,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 3,
+      "side": "trial",
+      "ms": 661.7375150000007,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 3,
+      "side": "base",
+      "ms": 569.591445,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 3,
+      "side": "base",
+      "ms": 564.3835690000014,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 3,
+      "side": "trial",
+      "ms": 660.5948440000011,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 4,
+      "side": "base",
+      "ms": 531.9249490000002,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 4,
+      "side": "trial",
+      "ms": 692.242569,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 4,
+      "side": "trial",
+      "ms": 645.7340160000022,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 4,
+      "side": "base",
+      "ms": 854.9102289999973,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 5,
+      "side": "trial",
+      "ms": 680.1007549999995,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 5,
+      "side": "base",
+      "ms": 613.894774999997,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 5,
+      "side": "base",
+      "ms": 558.1352829999996,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 5,
+      "side": "trial",
+      "ms": 670.1367390000014,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 6,
+      "side": "base",
+      "ms": 1059.2551110000022,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 6,
+      "side": "trial",
+      "ms": 1091.25662,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 6,
+      "side": "trial",
+      "ms": 864.3291430000027,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 6,
+      "side": "base",
+      "ms": 592.4977580000013,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 7,
+      "side": "trial",
+      "ms": 701.546666000002,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 7,
+      "side": "base",
+      "ms": 1151.4689040000012,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 7,
+      "side": "base",
+      "ms": 846.3002210000013,
+      "triangles": 11137826,
+      "meshes": 7475
+    },
+    {
+      "cycle": 7,
+      "side": "trial",
+      "ms": 667.2037999999993,
+      "triangles": 11137826,
+      "meshes": 7475
+    }
+  ]
+}

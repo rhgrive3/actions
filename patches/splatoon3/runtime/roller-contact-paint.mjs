@@ -23,9 +23,10 @@ export function rollerPaintHalfWidth(paint, speed, scale = 1, hz = 60) {
 export function installRollerContactPaint(api, emitStroke) {
   context = { Hit: api.Hit };
   const finish = api.Actor.prototype._finishFrame;
-  api.Actor.prototype._finishFrame = function (...args) {
-    const result = finish.apply(this, args),
+  api.Actor.prototype._finishFrame = function (dt) {
+    const result = arguments.length===1?finish.call(this,dt):finish.apply(this,arguments),
       runner = this.weaponRunner;
+    if(!runner?.catalogState?.rollPaint&&!runner?.s3ContactPaint)return result;
     for (let i = 0; i < 2; i++) {
       const stroke =
         i === 0 ? runner?.catalogState?.rollPaint : runner?.s3ContactPaint;

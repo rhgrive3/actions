@@ -1,0 +1,363 @@
+{
+  "schema": 1,
+  "basePrHead": "3085090ec6bc97915a67d043c669a98091d5257b",
+  "originalEvidenceRoot": "/workspace/actions-battle-benchmark/e",
+  "freezeManifestSha256": "6a37e09aec238c54b39d08463e5a286a550c631583078d0e54a715faa8b25597",
+  "raw": {
+    "cbsm0": {
+      "path": "e/cbsm0/result.json.gz",
+      "bytes": 2451250,
+      "sha256": "e58a50821ccf79a82fb283015c28cd9810a8f7e7511b8c00cf28fab619c9ade7",
+      "compressedBytes": 201121,
+      "compressedSha256": "4d8ba42cd7b5613d7563db0712436b9a0539d55aab03e40c60b7e6320dc0edfe"
+    },
+    "cba0": {
+      "path": "e/cba0/result.json.gz",
+      "bytes": 5340383,
+      "sha256": "bafbe42316e28bbc6b8358d17e478b328996ecc2eaec78b89fbb542bffec6193",
+      "compressedBytes": 453018,
+      "compressedSha256": "6085ad827c9992b089190fb2e8c49aa0ddc87f37924ee9473a180230c96ec2aa"
+    },
+    "cbb0": {
+      "path": "e/cbb0/result.json.gz",
+      "bytes": 5315224,
+      "sha256": "13f2d254ec28e664e64e938cfca8b25edb15d6cea37d90e5541e5334fbb1392b",
+      "compressedBytes": 452898,
+      "compressedSha256": "3a29eb37a182b0dc089f41614dcc53e3864ccc7c34233f8948d61a94600434e8"
+    }
+  },
+  "files": {
+    "builds/a/inkwave-build.json.gz": {
+      "bytes": 217786,
+      "sha256": "c05f81c1e981fee167e0bd87066c77b3b45f64eb48190c3d39ce09ee84aa2a2b"
+    },
+    "builds/a/provenance.json": {
+      "bytes": 496,
+      "sha256": "04dca0320593cd3100125f88e8e3bf8fd97d8ac97bfaa91af9ee695b783fd96f"
+    },
+    "builds/a/served-file-sizes.json": {
+      "bytes": 88207,
+      "sha256": "22120be18da63377d252fc8a1285c75162bdefb38672d774112b01384c831d9d"
+    },
+    "builds/b/inkwave-build.json.gz": {
+      "bytes": 217807,
+      "sha256": "7b2b29dc33b92afbffde472a1c5b7283a812cb0de009942a1b26a30fbdb3971c"
+    },
+    "builds/b/provenance.json": {
+      "bytes": 496,
+      "sha256": "c42d5a01af3e93d7dbcdcaf7feaabf726a7b2eabd7e0e5c6d6d60dde0f4d1aaa"
+    },
+    "builds/b/served-file-sizes.json": {
+      "bytes": 88207,
+      "sha256": "bf38582a5c25f34328ec29e7be3b66be8d0bb8b27b8baa20d22e121d069b59cc"
+    },
+    "e/cba0/analysis.json": {
+      "bytes": 415213,
+      "sha256": "cf2169eba68e1f7bf320c2b09d231a7f2f1c6f9814739a58c89a3d69a6348f0b"
+    },
+    "e/cba0/analysis.log": {
+      "bytes": 2737,
+      "sha256": "1de7d989b6a13f686da257d20527d379d2634acb825bd5acba4ecc587ef4b7a4"
+    },
+    "e/cba0/detached.json": {
+      "bytes": 169,
+      "sha256": "60e98797ca25d6ed1328ee159dc9c3f9a480b1eae69aed22118e42abfafaa1aa"
+    },
+    "e/cba0/environment.json": {
+      "bytes": 28550,
+      "sha256": "13b53db01dd4bd1566a7d0f417bbf43750346067d9319766266baaa20f4ff59c"
+    },
+    "e/cba0/exit.json": {
+      "bytes": 1623,
+      "sha256": "bf1e8ad64d9a316e3bdd12b75420e87b5f5fb26214a13697a48a867d045542f6"
+    },
+    "e/cba0/harness/benchmark-inkwave-composed-native-counterbalanced.mjs": {
+      "bytes": 34181,
+      "sha256": "489d3480866c822aea3a61e8c57e290882613f9aac992ad7addb20a10be5c079"
+    },
+    "e/cba0/harness/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "e/cba0/harness/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "e/cba0/harness/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "e/cba0/harness/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "e/cba0/harness/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "e/cba0/harness/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "e/cba0/harness/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "e/cba0/harness/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "e/cba0/process.json": {
+      "bytes": 1623,
+      "sha256": "bf1e8ad64d9a316e3bdd12b75420e87b5f5fb26214a13697a48a867d045542f6"
+    },
+    "e/cba0/report.md": {
+      "bytes": 17639,
+      "sha256": "414c05b7aacb820ed37df1a790d10ded9d15fd2c1c253c334fdc326931a38fcc"
+    },
+    "e/cba0/result.json.gz": {
+      "bytes": 453018,
+      "sha256": "6085ad827c9992b089190fb2e8c49aa0ddc87f37924ee9473a180230c96ec2aa"
+    },
+    "e/cba0/run.log": {
+      "bytes": 7697,
+      "sha256": "79a887426cb62e759bb055aacb56950951b33873ca60c591e39fc679dfbbc516"
+    },
+    "e/cba0/verification.log": {
+      "bytes": 34768,
+      "sha256": "dbce77f3671cab7ca6ae9189a452f625bb49fa93d98beea3033bf444184f47f4"
+    },
+    "e/cbb0/analysis.json": {
+      "bytes": 415229,
+      "sha256": "67f2ffe3525d97f99a0b86da4b0363d60e752aa87bd494f6fe11fd089977e90d"
+    },
+    "e/cbb0/analysis.log": {
+      "bytes": 2737,
+      "sha256": "bdd3d96dc8b5ae1e995d2bc7df299d024ef7d6e6644c5173b451ef04dc1c0e63"
+    },
+    "e/cbb0/detached.json": {
+      "bytes": 169,
+      "sha256": "2676261b78d71a66cc174e6067a35834fdf96d5e648213a52ae65c2cdb40841e"
+    },
+    "e/cbb0/environment.json": {
+      "bytes": 28200,
+      "sha256": "959ad60ff32dee9b17a94afd7ffe3848beeba37be3e8ef5aa15484fa2a1daf91"
+    },
+    "e/cbb0/exit.json": {
+      "bytes": 1623,
+      "sha256": "be15453d0ddb5bfbf1ba7be638af36e571a223ca3ea425c9d5d44830e727f766"
+    },
+    "e/cbb0/harness/benchmark-inkwave-composed-native-counterbalanced.mjs": {
+      "bytes": 34181,
+      "sha256": "489d3480866c822aea3a61e8c57e290882613f9aac992ad7addb20a10be5c079"
+    },
+    "e/cbb0/harness/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "e/cbb0/harness/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "e/cbb0/harness/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "e/cbb0/harness/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "e/cbb0/harness/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "e/cbb0/harness/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "e/cbb0/harness/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "e/cbb0/harness/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "e/cbb0/process.json": {
+      "bytes": 1623,
+      "sha256": "be15453d0ddb5bfbf1ba7be638af36e571a223ca3ea425c9d5d44830e727f766"
+    },
+    "e/cbb0/report.md": {
+      "bytes": 17745,
+      "sha256": "6f117536676472691986cc00948ef7c603e2ac133cf2e66fdbcd5eb9b138c4d3"
+    },
+    "e/cbb0/result.json.gz": {
+      "bytes": 452898,
+      "sha256": "3a29eb37a182b0dc089f41614dcc53e3864ccc7c34233f8948d61a94600434e8"
+    },
+    "e/cbb0/run.log": {
+      "bytes": 7683,
+      "sha256": "8ea2d9a1b552d920492c1d2b51c4dda4eb4f55dab9d1e30c2aa68f9148452c1d"
+    },
+    "e/cbb0/verification.log": {
+      "bytes": 34768,
+      "sha256": "16f858079a0a971bd434364eb4d5596926f1819c168cb376dfca3a99af506981"
+    },
+    "e/cbplan0/aggregate.py": {
+      "bytes": 14211,
+      "sha256": "22ea19887394759c27d8a9fcf522ddf4186d8928dfcc807a533a44872e42874c"
+    },
+    "e/cbplan0/analysis.json": {
+      "bytes": 81459,
+      "sha256": "418405f0f00efbe9a1aefdeb21e7ee8dfd898505991f74a077a8f034ddb4941f"
+    },
+    "e/cbplan0/analysis.log": {
+      "bytes": 2760,
+      "sha256": "73613983a2e6170d6a69c092cf71bceb64f34319b0538bb11c9b26bf555af9dc"
+    },
+    "e/cbplan0/analyze.py": {
+      "bytes": 13957,
+      "sha256": "e89e8f6473f2128ce1434592cbec60fdd6ea068c132f07991ae00672b64c4b83"
+    },
+    "e/cbplan0/final-readback.json": {
+      "bytes": 12016,
+      "sha256": "6a37e09aec238c54b39d08463e5a286a550c631583078d0e54a715faa8b25597"
+    },
+    "e/cbplan0/launcher.py": {
+      "bytes": 3769,
+      "sha256": "493a864aa3baefa571f589b15b91ba0b9cfd56c925d126aabc7fa8997994f780"
+    },
+    "e/cbplan0/plan.json": {
+      "bytes": 9948,
+      "sha256": "933cfcf6d8ee22328435179bb69d357351d00c64388efeb9f90bbc1623f58af6"
+    },
+    "e/cbplan0/report.md": {
+      "bytes": 11632,
+      "sha256": "792e8c1ed5d1f0b21094967e45f9ecb052b0f78f34234928c55c83e83d1cbde9"
+    },
+    "e/cbplan0/statistics_lib.py": {
+      "bytes": 1409,
+      "sha256": "b4793d452803c98dd17e32522a90536f42c652dc21fc729a9dd56e48780df3a6"
+    },
+    "e/cbplan0/verify.mjs": {
+      "bytes": 6777,
+      "sha256": "0dc6d2e0502c3cc9b3206983f2f0caffd88320c0ef7af6c1eb08a787a8039c1e"
+    },
+    "e/cbsm0/analysis.json": {
+      "bytes": 199919,
+      "sha256": "45b5489caba8603749085fbb74eae51d96eeb502d8aa432dcd5d4eda9dd72d7e"
+    },
+    "e/cbsm0/analysis.log": {
+      "bytes": 2745,
+      "sha256": "e7bddbc592ef7d2ad1ac9c93d2d21c4378fdbc5e14f932d7e8b7d49b9c3ea6e5"
+    },
+    "e/cbsm0/detached.json": {
+      "bytes": 172,
+      "sha256": "fac5567bb78cb0c4ae8c299f854bd98519b0c21c28afe63704791f35083bade6"
+    },
+    "e/cbsm0/environment.json": {
+      "bytes": 28903,
+      "sha256": "49a28fbfff6bcbd05a69689657248ab80378eecff2de73b576e720195ef46d7f"
+    },
+    "e/cbsm0/exit.json": {
+      "bytes": 1623,
+      "sha256": "f1a4b692ddaa97d8c190119bb1bb26075861a5c6a060d97e9e8cdf7b524d967e"
+    },
+    "e/cbsm0/harness/benchmark-inkwave-composed-native-counterbalanced.mjs": {
+      "bytes": 34181,
+      "sha256": "489d3480866c822aea3a61e8c57e290882613f9aac992ad7addb20a10be5c079"
+    },
+    "e/cbsm0/harness/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "e/cbsm0/harness/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "e/cbsm0/harness/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "e/cbsm0/harness/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "e/cbsm0/harness/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "e/cbsm0/harness/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "e/cbsm0/harness/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "e/cbsm0/harness/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "e/cbsm0/process.json": {
+      "bytes": 1623,
+      "sha256": "f1a4b692ddaa97d8c190119bb1bb26075861a5c6a060d97e9e8cdf7b524d967e"
+    },
+    "e/cbsm0/report.md": {
+      "bytes": 12068,
+      "sha256": "d801e3c9a99eca704d41e5ca7efd406663844fa575faa588341c84742f36a916"
+    },
+    "e/cbsm0/result.json.gz": {
+      "bytes": 201121,
+      "sha256": "4d8ba42cd7b5613d7563db0712436b9a0539d55aab03e40c60b7e6320dc0edfe"
+    },
+    "e/cbsm0/run.log": {
+      "bytes": 3453,
+      "sha256": "dbf8341ea68ce39e61af8dc60eeb2734851ab952def2b806edc3577eb0b18c1e"
+    },
+    "e/cbsm0/verification.log": {
+      "bytes": 20222,
+      "sha256": "95e01c117f71234a8a0dffe57d3b1ec3e70a91f1e520b2b2f97a811543574fb6"
+    },
+    "scripts/benchmark-inkwave-composed-native-counterbalanced.mjs": {
+      "bytes": 34181,
+      "sha256": "489d3480866c822aea3a61e8c57e290882613f9aac992ad7addb20a10be5c079"
+    },
+    "scripts/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "scripts/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "scripts/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "scripts/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "scripts/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "scripts/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "scripts/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "scripts/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "verify-publication.py": {
+      "bytes": 6321,
+      "sha256": "cc8371673f9e63fd7deeabe58a9c60fd9ed155178ab6a65a6829e6df53b45911"
+    }
+  }
+}

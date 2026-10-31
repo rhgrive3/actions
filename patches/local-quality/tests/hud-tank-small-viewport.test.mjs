@@ -84,3 +84,31 @@ test('degenerate positive canvas sizes and hidden-DOM fallback stay drawable',()
     assert.equal(r.paths.length,2);
   }
 });
+
+// Scalar-only instrumentation contract; no browser, DOM layout or rendering.
+{
+ const browserSource=()=>fs.readFileSync(new URL('../../../scripts/check-inkwave-small-tank.mjs',import.meta.url),'utf8');
+ async function scalarRun(targets=[100,0,50],cadenceFrames=6){
+  const code=browserSource(),a=code.indexOf('    const scalarObservation='),b=code.indexOf('    for(const ink of [100,0,50])',a),c=code.indexOf('     for(let i=0;i<cadenceFrames;i++){',b),d=code.indexOf('     const pixels=',c);
+  assert(a>=0&&b>a&&c>b&&d>c);const declarations=code.slice(a,b),loop=code.slice(c,d);
+  assert(!/getComputedStyle|getBoundingClientRect|clientWidth|clientHeight|toDataURL|getImageData|_drawTank/.test(declarations+loop),'no per-frame layout/draw/capture');
+  const actor={nid:7,netLife:2,ink:100},h={_t:0,_tank:{level:.2811595098606351,prevInk:1}},G={time:0,local:actor,hud:h,match:{state:'playing',paused:false,local:actor}};
+  let frames=0,yields=0,mono=0;const game={frozen:true,_frameN:0,_frame(dt){assert.equal(dt,1/30);frames++;this._frameN++;G.time+=dt;h._t+=dt;h._tank.prevInk=actor.ink/100;}};
+  const run=new Function('G','g','h','a','performance','requestAnimationFrame','targets','cadenceFrames','return(async()=>{'+declarations+'for(const ink of targets){'+loop+'}return scalarObservation;})()');
+  const result=await run(G,game,h,actor,{now:()=>++mono},resolve=>{yields++;actor.ink+=1;resolve();},targets,cadenceFrames);
+  return {result,frames,yields,actor,h,G,game};
+ }
+ test('bounded tank scalar evidence preserves all18 native steps and observes input/clock changes',async()=>{
+  const x=await scalarRun();assert.equal(x.frames,18);assert.equal(x.yields,18);assert.equal(x.result.frames.length,18);assert.equal(x.result.dropped,0);
+  for(const row of x.result.frames){assert.equal(row.requestedDt,1/30);assert.equal(row.before.actorInk,row.requestedInk);assert.equal(row.afterFrame.hudInputInk,row.requestedInk/100);assert.equal(row.afterYield.actorInk,row.requestedInk+1);assert.equal(row.afterFrame.gameFrame,row.before.gameFrame+1);assert(row.afterFrame.hudTime>row.before.hudTime);assert(row.afterYield.monoMs>row.afterFrame.monoMs);assert.equal(row.before.sampledActorIsCurrent,true);assert.equal(row.before.sampledActorIsMatchLocal,true);assert.equal(row.before.hudStillCurrent,true);}
+  assert.equal(x.h._tank.level,.2811595098606351,'observer never settles or overrides displayed level');assert.throws(()=>assert(x.h._tank.level<.1),'known failed scalar remains failed');
+  const dpr2=await scalarRun([100,0,50],12);assert.equal(dpr2.frames,36);assert.equal(dpr2.result.frames.length,36);assert.equal(dpr2.result.limit,36);
+  const overflow=await scalarRun([100,0,50,75]);assert.equal(overflow.result.frames.length,18);assert.equal(overflow.result.dropped,6,'fixed cap remains bounded under a controlled extra-state mutation');
+ });
+ test('tank diagnostics retain native frame count, strict level/pixel gates and existing screenshot calls',()=>{
+  const s=browserSource();assert(s.includes('for(const ink of [100,0,50])'));assert(s.includes('const cadenceFrames=window.devicePixelRatio>1?12:6;'));assert(s.includes('for(let i=0;i<cadenceFrames;i++){'));assert(s.includes('row.framesPerInkState=row.cadenceFrames;row.frameDt=1/30;'));
+  assert(s.includes('assert(row.snapshots[0].level>.9&&row.snapshots[1].level<.1&&row.snapshots[2].level>.4&&row.snapshots[2].level<.6);'));
+  assert(s.includes("requireInk(row.inkProbe.fullVsEmpty);requireInk(row.inkProbe.halfVsEmpty);"));assert(s.includes("assert.throws(()=>requireInk(row.inkProbe.suppressedFullVsEmpty),/native ink fill/"));
+  assert.equal((s.match(/page\.screenshot\(/g)||[]).length,2,'no additional capture');assert(s.includes('inkProbe,cadenceFrames,scalarObservation};'));
+ });
+}

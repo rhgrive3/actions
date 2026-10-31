@@ -1,0 +1,169 @@
+{
+  "schema": 1,
+  "status": "component-and-native-correctness-passed",
+  "sourceSha": "e56320bfd6c043187744f813c08297a3d2be9758",
+  "buildContentHash": "0c3b5eef510208aaf2cc97d39639be75bc028ad43bdd336ddad1f58c1be7c089",
+  "conclusion": "The fixed masked-word prefix candidate is faster in the recorded native ownership-array component and retains the checked scoring behavior. Whole-game, GPU, displayed FPS and retail-device performance are not established by this report.",
+  "motivation": {
+    "profile": "/workspace/actions-newopt-a/e/np0/sample-callpaths.json",
+    "scoringSelfSamples": 223,
+    "gameFrameSamples": 8514,
+    "timeDeltaValidity": "Negative deltas: sample counts locate code only and are not elapsed-time attribution."
+  },
+  "implementation": {
+    "order": "Verify every reused ownership prefix; restart at its preceding prefix checkpoint and add weights in the original eligible-cell order.",
+    "publication": "Known turf publications permit verified prefix replay. Unknown public version and grid/dead/faces identity changes force a complete ownership scan. Known wall publications retain the old cache.",
+    "storage": "Only intrinsic Uint8Array with equal intrinsic byteLength and length, fixed nonshared ArrayBuffer, aligned view and ordered eligible cells can enter the word path. Disguised typed storage, DataView, Proxy and unsupported buffers use the old indexed loop.",
+    "publicIndexedFloorCoverage": "Retains its direct full scan and observes direct grid changes without a version publication."
+  },
+  "validation": {
+    "focusedTests": 38,
+    "productionBuild": "passed",
+    "normalBrowserBitComparisons": 537,
+    "directBrowserCases": 10,
+    "cadences": [
+      {
+        "hz": 30,
+        "frames": 120,
+        "comparedCalls": 120,
+        "actors": 8,
+        "state": "playing",
+        "counts": [
+          3775,
+          4594
+        ],
+        "coverage": [
+          0.01715715741103726,
+          0.020715779292844835
+        ]
+      },
+      {
+        "hz": 60,
+        "frames": 120,
+        "comparedCalls": 120,
+        "actors": 8,
+        "state": "playing",
+        "counts": [
+          4847,
+          5806
+        ],
+        "coverage": [
+          0.021957800252068695,
+          0.026211034228459735
+        ]
+      },
+      {
+        "hz": 120,
+        "frames": 120,
+        "comparedCalls": 120,
+        "actors": 8,
+        "state": "playing",
+        "counts": [
+          6129,
+          6389
+        ],
+        "coverage": [
+          0.028072819700452382,
+          0.02893914485828063
+        ]
+      }
+    ],
+    "actors": 8,
+    "bots": 7,
+    "state": "playing",
+    "liveStateRestored": true,
+    "gridShaBefore": "d29f1545a51945b4cca447d4403e2f1915de375714cdf9cf93e0f0f9008622da",
+    "gridShaAfter": "d29f1545a51945b4cca447d4403e2f1915de375714cdf9cf93e0f0f9008622da",
+    "reference": "Original indexed scan during native frames; original coverage cache semantics for directed mutation cases.",
+    "nodeResultsBitIdentical": true,
+    "nodeValuesPerVariant": 535
+  },
+  "measurement": {
+    "windows": 32,
+    "warmupReplaysPerVariant": 12,
+    "replaysPerWindow": 4,
+    "schedule": "Two rounds of A/V2/V2/A, V2/B/B/V2, A/V3/V3/A, V3/B/B/V3. A and B use the same baseline module.",
+    "countsAndBitChecks": "Outside timed windows; each timed window also checks the deterministic output checksum.",
+    "wallMedianMsPerReplay": {
+      "baseline-a": 99.64506137500007,
+      "candidate-v2": 133.18265362499983,
+      "candidate-v3": 53.46500850000007,
+      "baseline-b": 98.37782587500033
+    },
+    "aaMedianDifferencePercent": 1.288131231533729,
+    "candidateReductionVsMeanAAMedianPercent": 46.00118274964707,
+    "allOutliersRetained": true
+  },
+  "workload": {
+    "path": "/workspace/actions-coverage-opt/.ci-scratch/coverage-capture/ownership.json",
+    "sha256": "1fc1eb9de12645487f304f5a145658eac9ce833a1cd5198e51a5c4a0d0278840",
+    "captureSourceSha": "6c5c2738f73a00bc32561080dc90cee77338438a",
+    "captureContentHash": "b431fc545f77a37669a8f42de21986e347e931cfc4dc7e71c3a15b33ef069f06",
+    "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+    "nativeEvents": 531,
+    "adversarialEvents": 4,
+    "events": 535,
+    "eventSummary": {
+      "read": 235,
+      "wall": 33,
+      "turf": 266,
+      "unknown": 1
+    },
+    "writePairs": 12521,
+    "gridCells": 1401174,
+    "eligibleCells": 249161,
+    "area": 12712.733998793232
+  },
+  "memory": {
+    "baseline-a": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 0,
+      "groups": 0,
+      "checkpoints": 0
+    },
+    "candidate-v2": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 906948,
+      "groups": 112271,
+      "checkpoints": 439
+    },
+    "candidate-v3": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 949340,
+      "groups": 78701,
+      "checkpoints": 308
+    },
+    "baseline-b": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 0,
+      "groups": 0,
+      "checkpoints": 0
+    }
+  },
+  "limits": [
+    "Captured native eligible ownership writes and publication/call classes, not full actor/browser execution or FPS.",
+    "Each timed replay includes sparse writes, version publication and the original output allocation choice. Intermediate replay resets copy the initial grid and force one full initial scan; they are identical for all variants.",
+    "All exact-result checks, workload counts, build verification and warmups are outside timed windows. No forced GC.",
+    "Static cells/weights are shared immutable data among fixtures; ownership grids and incremental snapshots are independent.",
+    "Observed process memory is not peak memory. Typed-buffer byteLength totals exclude JS object and first-build transient array overhead.",
+    "Wall/process CPU values are affected by the shared executor; baseline A/A controls accompany all candidate results.",
+    "One fixed native Hagglefish ownership history from an early active match; broader paint densities and other stage/runtime workloads are separate evaluations.",
+    "The browser is a non-timing correctness check. Actors, time, HP, ink, stats, counts and grid bytes are compared before/after directed tests; scoring version tokens intentionally advance for the mutation/fallback checks."
+  ],
+  "historicalResults": "v1/v2 slower values and the unfixed 9b0dedee measurements are retained. The latter is rejected for prototype-disguised storage counterexamples; see historical-dispositions.json.",
+  "paths": {
+    "timedRaw": "component/v3-fixed-e56320bf/result.json",
+    "browserRaw": "native/v3-fixed-e56320bf/result.json",
+    "compressedInput": "native/ownership.json.gz",
+    "inputIntegrity": "compressed-files.json",
+    "frozenMeasuredHarness": "component/v3-fixed-e56320bf/harness.mjs"
+  }
+}

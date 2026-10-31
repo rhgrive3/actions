@@ -6,6 +6,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {createFrameTimingProbe} from '../range-frame-profiler.mjs';
+import {createPlatformSimulationDebt} from '../platform-simulation-debt.mjs';
 import {decodeSwitchMotionReport,createSwitchHIDReader} from '../../splatoon3/runtime/controller-motion.mjs';
 const read=p=>fs.readFileSync(new URL('../../../'+p,import.meta.url),'utf8');
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-ui-input-20261029-extra-before.json',import.meta.url)));
@@ -68,6 +69,25 @@ test('actual range atlas uses the existing update boundary and disposal retires 
  const dispose=member(source,'dispose'),prefix=dispose.slice(dispose.indexOf('    this.disposed'),dispose.indexOf('    this.group'));new Function(prefix).call(o);assert(Object.values(o._icons).every(i=>i.onload===null));
 });
 test('actual hidden-host release retires only the disposed match deadline and result owners',()=>{
- const source=read('patches/local-quality/platform-game.mjs');const code=slice(source,'    r.releaseMatch = match => {','    // #878:');const clearResult=slice(source,'function clearHiddenHostResult','function scheduleHiddenHostResult'),clearDeadline=slice(source,'function clearHiddenHostDeadline','function scheduleHiddenHostDeadline');
- const current={},retiring={},timers=new Set([1,2]),env={clearTimeout:id=>timers.delete(id)},r={hiddenHostClock:{match:retiring},hiddenHostDeadline:{match:retiring},hiddenHostTimer:1,hiddenHostResult:{match:current},hiddenHostResultTimer:2};new Function('r','env',clearResult+clearDeadline+code)(r,env);r.releaseMatch(retiring);assert.equal(r.hiddenHostClock,null);assert.equal(r.hiddenHostDeadline,null);assert.equal(r.hiddenHostTimer,null);assert.equal(r.hiddenHostResult.match,current);assert.deepEqual([...timers],[2]);r.releaseMatch(retiring);assert.deepEqual([...timers],[2]);r.releaseMatch(current);assert.equal(r.hiddenHostResult,null);assert.equal(timers.size,0);assert(member(comp('src/game/match.js'),'dispose').includes('G.game?.platform?.releaseMatch?.(this)'));
+ const source=read('patches/local-quality/platform-game.mjs');
+ const code=slice(source,'    r.releaseMatch = match => {','    // #878:');
+ const clearResult=slice(source,'function clearHiddenHostResult','function scheduleHiddenHostResult');
+ const clearDeadline=slice(source,'function clearHiddenHostDeadline','function scheduleHiddenHostDeadline');
+ const current={},retiring={},timers=new Set([1,2]);
+ const env={clearTimeout:id=>timers.delete(id),performance:{now:()=>0}};
+ const r={owner:{active:true},hiddenHostClock:{match:retiring},hiddenHostDeadline:{match:retiring},hiddenHostTimer:1,hiddenHostResult:{match:current},hiddenHostResultTimer:2};
+ // The installed runtime owns a real simulation debt controller. Keep its
+ // current-match work queued while the previous hidden match is released.
+ r.simulation=createPlatformSimulationDebt({platform:r,match:current},{mode:'match'},env,r);
+ r.simulation.afterFrame();r.simulation.beforeFrame(0,.5,500);
+ assert.equal(r.simulation.snapshot().pending,1);
+ new Function('r','env',clearResult+clearDeadline+code)(r,env);
+ r.releaseMatch(retiring);
+ assert.equal(r.hiddenHostClock,null);assert.equal(r.hiddenHostDeadline,null);assert.equal(r.hiddenHostTimer,null);
+ assert.equal(r.hiddenHostResult.match,current);assert.deepEqual([...timers],[2]);
+ assert.equal(r.simulation.snapshot().pending,1,'disposing the old match preserves current simulation ownership');
+ r.releaseMatch(retiring);assert.deepEqual([...timers],[2]);assert.equal(r.simulation.snapshot().pending,1);
+ r.releaseMatch(current);assert.equal(r.hiddenHostResult,null);assert.equal(timers.size,0);
+ assert.equal(r.simulation.snapshot().pending,0,'disposing its match retires the simulation queue');
+ assert(member(comp('src/game/match.js'),'dispose').includes('G.game?.platform?.releaseMatch?.(this)'));
 });

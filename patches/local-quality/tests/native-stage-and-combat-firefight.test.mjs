@@ -10,7 +10,6 @@ import { advanceSplashDrops, spawnSplashDrop } from '../../splatoon3/runtime/bla
 import { globGrazePaint } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { installIssue264PaintOwnership } from '../../splatoon3/runtime/paint-ownership.mjs';
 import { fixture as chargerFixture } from '../../splatoon3/tests/source-fixture.mjs';
-import { parse } from '../../loading-cache/vendor/acorn.mjs';
 
 const readRepo = (rel) => fs.readFileSync(new URL('../../../' + rel, import.meta.url), 'utf8');
 const readPublic = (rel) => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
@@ -25,16 +24,8 @@ const TriangleWorld = new Function(
 
 test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches full Triangle.containsPoint across 2000 random points', () => {
   const nativeLevelSrc = readRepo('patches/native-stages/runtime/native-level.mjs');
-  // Execute the current production owner, never a handwritten copy of its
-  // optimization. Formatting and scalar scratch changes cannot substitute a
-  // different implementation or silently stop the unchanged Three oracle.
-  const declarations = parse(nativeLevelSrc, { ecmaVersion: 'latest', sourceType: 'module' }).body.map(n => n.declaration || n);
-  const classes = declarations.filter(n => n.type === 'ClassDeclaration' && n.id.name === 'NativeLevel');
-  assert.equal(classes.length, 1, 'one production NativeLevel class');
-  const methods = classes[0].body.body.filter(n => n.type === 'MethodDefinition' && n.key.name === 'containsOnFace' && !n.static);
-  assert.equal(methods.length, 1, 'one production containsOnFace owner');
-  const methodSource = nativeLevelSrc.slice(methods[0].start, methods[0].end);
-  const actualContainsOnFace = new Function('return ({' + methodSource + '}).containsOnFace;')();
+  const NativeLevel = new Function('THREE', 'Level', nativeLevelSrc
+    .replace(/^import .*;$/gm, '').replace(/^export /gm, '') + '\nreturn NativeLevel;')(THREE, class {});
 
   const count = 64;
   const triangles = new Float32Array(count * 9);
@@ -76,6 +67,9 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   };
 
   let triCallsOpt = 0, triCallsRef = 0;
+  const triangle = tw.triangle.bind(tw);
+  const subject = Object.assign(Object.create(NativeLevel.prototype), { triangleWorld: tw });
+  tw.triangle = id => { triCallsOpt++; return triangle(id); };
   const checkRef = (p, tolerance = 0.002) => {
     const rel = p.clone().sub(face.origin);
     const a = rel.dot(face.u), b = rel.dot(face.v);
@@ -83,16 +77,14 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
     const projected = p.clone().addScaledVector(face.n, -rel.dot(face.n));
     for (const id of face.triangles) {
       triCallsRef++;
-      if (tw.triangle(id).containsPoint(projected)) return true;
+      if (triangle(id).containsPoint(projected)) return true;
     }
     return false;
   };
 
-  const owner = { triangleWorld: {
-    triangles: tw.triangles,
-    triangle(id) { triCallsOpt++; return tw.triangle(id); },
-  } };
-  const checkOpt = (p, tolerance = 0.002) => actualContainsOnFace.call(owner, face, p, tolerance);
+  // Exercise the actual current method, including the later scalar projection
+  // and barycentric implementation, against Three's independent triangle API.
+  const checkOpt = (p, tolerance = 0.002) => subject.containsOnFace(face, p, tolerance);
 
   const samples = [];
   for (let i = 0; i < 2000; i++) {
@@ -100,14 +92,18 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
     samples.push(p);
     assert.equal(checkOpt(p), checkRef(p), `mismatch at sample ${i}`);
   }
+  for (const id of face.triangles) {
+    const t = triangle(id), vertices = [t.a.clone(), t.b.clone(), t.c.clone()];
+    const boundaries = vertices.concat(vertices.map((p,i) => p.clone().lerp(vertices[(i+1)%3],.5)));
+    for (const p of boundaries) assert.equal(checkOpt(p),checkRef(p),'exact triangle vertex/edge boundary');
+  }
   assert.ok(triCallsOpt < triCallsRef * 0.1, `expected >90% reduction in triangle containsPoint calls, got ${triCallsOpt} vs ${triCallsRef}`);
-
-  // A corrupted production acceptance must fail the same independent oracle.
-  // Reuse the exact points above without changing the generator or RNG state.
-  assert.equal(methodSource.split('return true;').length, 2, 'one production positive triangle acceptance');
+  // Assert that a broken production acceptance is rejected by the independent Three oracle.
+  const methodSource = NativeLevel.prototype.containsOnFace.toString();
+  assert.equal(methodSource.split('return true;').length, 2, 'one positive production acceptance');
   const tampered = new Function('return ({' + methodSource.replace('return true;', 'return false;') + '}).containsOnFace;')();
   assert.throws(() => {
-    for (const p of samples) assert.equal(tampered.call(owner, face, p, 0.002), checkRef(p), 'tampered production triangle acceptance');
+    for (const p of samples) assert.equal(tampered.call(subject, face, p, 0.002), checkRef(p), 'tampered production triangle acceptance');
   }, /tampered production triangle acceptance/);
 });
 

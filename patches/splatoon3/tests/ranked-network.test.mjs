@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {RankedEngine} from '../runtime/ranked/engine.mjs';
 import {installRankedNetwork} from '../runtime/ranked/network.mjs';
+import {OWNER_CLOCK_VERSION} from '../../network-replication/owner-clock.mjs';
 const stage={id:'network-stage',zones:[{center:[0,0,0],size:[6,6]}],tower:{path:[[0,0,-10],[0,0,0],[0,0,10]],centerIndex:1,checkpoints:[[],[]],speed:1.2,halfSize:1.4},rainmaker:{center:[0,0,0],goals:[[0,0,10],[0,0,-10]],checkpoints:[[[0,0,5]],[[0,0,-5]]],retreatZ:[-8,8]},clams:{spawns:[[0,0,0]],goals:[[0,0,10],[0,0,-10]]}};
 function setup(mode='zones',host=false){
  const packets=[];
@@ -10,6 +11,23 @@ function setup(mode='zones',host=false){
  const G={time:2,netm:null};installRankedNetwork({NetMatch,G,emit(){}});const nm=G.netm=new NetMatch();return{nm,G,packets};
 }
 function packet(nm,e,k='t'){return{k,rk:{match:nm.cfg.id,host:nm.s.hostId,state:e.snapshot(),gains:[0,0]}};}
+test('wrong clock epoch and match reject before native dispatch or floor probes; accepted rows keep the input packet',()=>{
+ const {nm}=setup('zones',true);let probes=0;
+ const actor={nid:7,owner:'guest',remote:true,alive:true,team:1,pos:[0,0,0],net:{lastLife:0,buf:[]}};
+ nm.match.actors=[actor];nm.byNid=new Map([[7,actor]]);nm.s.ownerClockVersion=OWNER_CLOCK_VERSION;
+ nm.match.rankedWorld={floorAt(){probes++;return 0;}};
+ const row=Array(21).fill(0);row[0]=7;row[10]=17;
+ for(const extra of [{oc:'wrong'},{oc:OWNER_CLOCK_VERSION,ocm:'wrong'}]){
+  nm.native=null;nm.onMessage('guest',{k:'t',ts:1,a:[row],...extra});assert.equal(nm.native,null);assert.equal(probes,0);
+ }
+ const accepted={k:'t',ts:1,a:[row],oc:OWNER_CLOCK_VERSION,ocm:'match-1'};
+ nm.onMessage('guest',accepted);assert.equal(nm.native.d,accepted);assert.equal(probes,1);
+ const foreign=[99,...row.slice(1)],mixed={...accepted,a:[row,foreign]};
+ // Two known actors permit a two-row packet, but the second row belongs to
+ // another peer. Only that rejected row causes a replacement packet/array.
+ nm.byNid.set(99,{nid:99,owner:'other',remote:true});
+ nm.onMessage('guest',mixed);assert.notEqual(nm.native.d,mixed);assert.deepEqual(nm.native.d.a,[row]);assert.equal(mixed.a.length,2);
+});
 test('ranked actor ticks and host-migration state restore; another sender, match, malformed state and stale revisions cannot mutate authority',()=>{
  const {nm}=setup(),host=new RankedEngine('zones',stage);host.setCount(0,60);host.revision=50;
  nm.onMessage('intruder',packet(nm,host));assert.equal(nm.match.ranked.counts[0],100);

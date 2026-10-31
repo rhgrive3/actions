@@ -1,0 +1,76 @@
+{
+  "browser": "151.0.7922.34",
+  "contentHash": "8d17ed64b1b4fcb635467a33a12599751c872f267f079bdc615d7699e490b45b",
+  "revision": "612dfc982f1a9e8a2e94a27bd2f24a1df9f1c27d2e6264cb02d0edb18f988c09",
+  "indexHash": "ec60b9052c766a16aa39583a222fd184ff1b3a3cc697537bc470ef804c01dce6",
+  "scope": "actual production HTML and immutable artifact bytes; existing software WebGL, no native match/device performance claim",
+  "expectedValid": true,
+  "startup": {
+    "charset": "UTF-8",
+    "title": "ZEVANT — ナワバリバトル",
+    "booted": true,
+    "menu": "main",
+    "mode": "menu",
+    "bootError": "",
+    "bootErrorVisible": false,
+    "startupErrors": [],
+    "csp": [],
+    "waitMs": 21026,
+    "pageErrors": [],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  "waitForFunction": {
+    "status": "passed",
+    "playwright": "1.62.1",
+    "elapsedMs": 24,
+    "predicates": [
+      "boolean game debug hook",
+      "argument-bearing main-menu predicate"
+    ]
+  },
+  "shortcut": {
+    "f12": true,
+    "ctrlShiftI": true,
+    "ordinaryKey": true
+  },
+  "boundaries": {
+    "evalBlocked": true,
+    "functionBlocked": true,
+    "wasm": true,
+    "worker": 42,
+    "inlineBlocked": true,
+    "externalBlocked": true,
+    "violations": [
+      {
+        "directive": "script-src",
+        "blocked": "eval",
+        "source": "http://127.0.0.1:37363/__csp-probe.mjs",
+        "line": 3
+      },
+      {
+        "directive": "script-src",
+        "blocked": "eval",
+        "source": "http://127.0.0.1:37363/__csp-probe.mjs",
+        "line": 4
+      },
+      {
+        "directive": "script-src-elem",
+        "blocked": "inline",
+        "source": "",
+        "line": 2
+      },
+      {
+        "directive": "script-src-elem",
+        "blocked": "http://127.0.0.1:35367/untrusted.js",
+        "source": "",
+        "line": 3
+      }
+    ],
+    "externalRequests": 0
+  },
+  "artifactRequests": 641,
+  "serverFailures": [],
+  "unsupportedBrowserBlocked": true,
+  "status": "complete"
+}
