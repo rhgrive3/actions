@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {CURRENT_MENU_LAYOUT_SHA256,HISTORICAL_MENU_LAYOUT_SHA256,HISTORICAL_MENU_INSTALLER_SHA256,ICON_MENU_INSTALLER_SHA256,SQUIDROLL_MENU_INSTALLER_SHA256,MENU_ICON_INPUT_SHA256,SQUIDROLL_MENU_INPUT_SHA256,projectReviewedMenuInstaller,restoreReviewedMenuInstaller,projectSquidrollMenuInstaller,restoreSquidrollMenuInstaller,verifyMenuInstallerSourceIdentity,restoreReviewedMenuLayout,verifyMenuLayoutSourceIdentity} from '../lib/inkwave-menu-focus-source-identity.mjs';
+import {THROW_PREDICTION_MENU_INSTALLER_SHA256,THROW_PREDICTION_MENU_INPUT_SHA256,projectThrowPredictionMenuInstaller,restoreThrowPredictionMenuInstaller} from '../lib/inkwave-menu-focus-source-identity.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const before=fs.readFileSync(new URL('../../patches/splatoon3/tests/fixtures/menu-layout-cache-1915-before.mjs.txt',import.meta.url),'utf8');
 const current=fs.readFileSync(new URL('../../patches/splatoon3/runtime/menu-layout.mjs',import.meta.url),'utf8');
@@ -39,12 +40,17 @@ test('each reviewed menu owner site is exact once; drop, duplicate and semantic 
 
 const oldInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-icons-1915.mjs.txt',import.meta.url),'utf8');
 const iconInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8');
-const squidrollInstaller=fs.readFileSync(new URL('../../patches/splatoon3/runtime/install.mjs',import.meta.url),'utf8');
+const squidrollInstaller=fs.readFileSync(new URL('../fixtures/inkwave-menu-installer-before-throw-prediction-20261031.mjs.txt',import.meta.url),'utf8');
+const currentInstaller=fs.readFileSync(new URL('../../patches/splatoon3/runtime/install.mjs',import.meta.url),'utf8');
 const iconInputs=Object.fromEntries(Object.entries(MENU_ICON_INPUT_SHA256).map(([key,digest])=>{
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
  return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
 }));
 const squidrollInputs=Object.fromEntries(Object.entries(SQUIDROLL_MENU_INPUT_SHA256).map(([key,digest])=>{
+ const file=key.replace(/^patch\//,'../../patches/splatoon3/');
+ return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
+}));
+const predictionInputs=Object.fromEntries(Object.entries(THROW_PREDICTION_MENU_INPUT_SHA256).map(([key,digest])=>{
  const file=key.replace(/^patch\//,'../../patches/splatoon3/');
  return [key,{source:fs.readFileSync(new URL(file,import.meta.url),'utf8'),manifestDigest:digest}];
 }));
@@ -108,5 +114,42 @@ test('Squid Roll epoch requires every icon and exact effect source and manifest 
   assert.throws(()=>verifyMenuInstallerSourceIdentity(squidrollInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,missing,iconInstaller),/Required (menu icon|Squid Roll effect) source/);
   assert.throws(()=>verifyMenuInstallerSourceIdentity(squidrollInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,source:input.source+'\n'}},iconInstaller),/Reviewed (menu icon|Squid Roll effect) source/);
   for(const manifestDigest of [undefined,'0'.repeat(64)])assert.throws(()=>verifyMenuInstallerSourceIdentity(squidrollInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,manifestDigest}},iconInstaller),/Emitted (menu icon|Squid Roll effect) input/);
+ }
+});
+
+test('throw prediction is a separately frozen two-hunk successor of the complete Squid Roll epoch',()=>{
+ assert.equal(hash(squidrollInstaller),SQUIDROLL_MENU_INSTALLER_SHA256);
+ assert.equal(hash(currentInstaller),THROW_PREDICTION_MENU_INSTALLER_SHA256);
+ assert.equal(projectThrowPredictionMenuInstaller(squidrollInstaller,squidrollInstaller),currentInstaller);
+ assert.equal(restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller),squidrollInstaller);
+ assert.equal(restoreReviewedMenuInstaller(restoreSquidrollMenuInstaller(restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller),iconInstaller),oldInstaller),oldInstaller);
+ const verified=verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...iconInputs,...squidrollInputs,...predictionInputs},iconInstaller,squidrollInstaller);
+ assert.equal(verified.epoch,'catalogue-kit-icons-squidroll-effects-and-throw-prediction');
+ assert.deepEqual(verified.iconInputs,MENU_ICON_INPUT_SHA256);
+ assert.deepEqual(verified.effectInputs,{...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256});
+});
+
+test('throw prediction owner sites, complete predecessor and manifest identity reject tampering',()=>{
+ for(const anchor of ["import { installThrowPrediction } from './throw-prediction.mjs';\n",'  installThrowPrediction(api);\n']){
+  assert.equal(currentInstaller.split(anchor).length,2);
+  for(const changed of [currentInstaller.replace(anchor,''),currentInstaller.replace(anchor,anchor+anchor),currentInstaller.replace(anchor,anchor.replace('installThrowPrediction','installThrowPredictionTampered'))])
+   assert.throws(()=>restoreThrowPredictionMenuInstaller(changed,squidrollInstaller),/Reviewed throw prediction menu installer epoch/);
+ }
+ assert.throws(()=>projectThrowPredictionMenuInstaller(squidrollInstaller+'\n',squidrollInstaller),/Complete Squid Roll menu installer bytes/);
+ assert.throws(()=>restoreThrowPredictionMenuInstaller(currentInstaller,squidrollInstaller+'\n'),/Frozen Squid Roll menu installer epoch/);
+ const all={...iconInputs,...squidrollInputs,...predictionInputs};
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(squidrollInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller,squidrollInstaller),/actual repository source bytes/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller),/Frozen Squid Roll menu installer required/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,undefined,squidrollInstaller),/Frozen icon menu installer required/);
+ assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller+'\n',hash(currentInstaller+'\n'),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,all,iconInstaller,squidrollInstaller),/Reviewed Squid Roll menu installer epoch/);
+});
+
+test('throw prediction epoch requires every exact icon, effect and prediction source and manifest input',()=>{
+ const all={...iconInputs,...squidrollInputs,...predictionInputs};
+ for(const [key,input] of Object.entries(all)){
+  const missing={...all};delete missing[key];
+  assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,missing,iconInstaller,squidrollInstaller),/Required (menu icon|Squid Roll effect|throw prediction) source/);
+  assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,source:input.source+'\n'}},iconInstaller,squidrollInstaller),/Reviewed (menu icon|Squid Roll effect|throw prediction) source/);
+  for(const manifestDigest of [undefined,'0'.repeat(64)])assert.throws(()=>verifyMenuInstallerSourceIdentity(currentInstaller,hash(currentInstaller),HISTORICAL_MENU_INSTALLER_SHA256,oldInstaller,{...all,[key]:{...input,manifestDigest}},iconInstaller,squidrollInstaller),/Emitted (menu icon|Squid Roll effect|throw prediction) input/);
  }
 });

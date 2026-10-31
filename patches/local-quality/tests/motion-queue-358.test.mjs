@@ -6,6 +6,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
+import {adoptReviewedHairDetail,restoreReviewedHairDetail} from './reviewed-hair-detail.mjs';
 
 // Frozen production composition at the integrated batch305 base, not raw upstream.
 const old=name=>fs.readFileSync(new URL('./fixtures/'+name+'-7c94a8b-before-358.mjs.txt',import.meta.url),'utf8').trimEnd();
@@ -16,6 +17,28 @@ function geometry(g){return {attributes:Object.fromEntries(Object.entries(g.attr
 function geometryHashes(g){const hash=a=>createHash('sha256').update(bytes(a)).digest('hex');return{attributes:Object.fromEntries(Object.entries(g.attributes).map(([n,a])=>[n,[a.itemSize,a.normalized,hash(a.array)]])),index:g.index&&hash(g.index.array),sphere:g.boundingSphere&&[Array.from(g.boundingSphere.center.toArray()),g.boundingSphere.radius]};}
 const rng=()=>{let seed=358;return()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);};
 const countedMath=()=>{const math=Object.create(Math),calls={sin:0,cos:0};for(const n of ['sin','cos'])math[n]=x=>{calls[n]++;return Math[n](x);};return{math,calls};};
+
+test('reviewed hair detail successor preserves the complete prior raw source and frozen arithmetic kernel',()=>{
+ const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/character-hair.js',import.meta.url),'utf8');
+ const blob=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
+ const prior=restoreReviewedHairDetail(raw);
+ assert.equal(blob(raw),'8b89e9c6b4e54cab5137dbc59b0e4c75a4d20d74','reviewed fdb74165 raw source');
+ assert.equal(blob(prior),'5bcd66cb5c1ba3385e608f173185f89c8c20dc08','complete pre-fdb74165 raw source');
+ assert.equal(adoptReviewedHairDetail(prior),raw);
+ const frozen=old('character-hair'),successor=adoptReviewedHairDetail(frozen);
+ assert.equal(restoreReviewedHairDetail(successor),frozen,'all historical arithmetic outside the detail policy stays frozen');
+ assert.notEqual(successor,frozen);
+});
+
+test('reviewed hair detail successor rejects missing, duplicate, changed anchors and a relabelled descriptor',()=>{
+ const raw=fs.readFileSync(new URL('./fixtures/reviewed-hair-detail-fdb74165.json',import.meta.url));
+ const descriptor=JSON.parse(raw),frozen=old('character-hair'),successor=adoptReviewedHairDetail(frozen);
+ for(const [source,anchor,apply] of [[frozen,descriptor.before,adoptReviewedHairDetail],[successor,descriptor.after,restoreReviewedHairDetail]]){
+  for(const replacement of ['',anchor+anchor,anchor.replace('ringsPerM: 24','ringsPerM: 25')])
+   assert.throws(()=>apply(source.replace(anchor,replacement)),/expected exactly one connection/);
+ }
+ assert.throws(()=>adoptReviewedHairDetail(frozen,Buffer.from(raw.toString().replace('ringsPerM: 24','ringsPerM: 25'))),/sealed fdb74165 hair detail successor/);
+});
 
 test('head center reuse preserves signed-zero/nonfinite surface outputs and all twelve face builds',()=>{
  const G={settings:{quality:'high'}},kernels=[old('character-face'),read('src/game/character-face.js')].map(code=>leaf(code,'headSurfFace,buildFaceSkin',G));
@@ -66,7 +89,7 @@ test('special held fit exits only after both constraints perform no projection',
 
 function baselineModule(rel,code){
  if(rel==='src/game/character-face.js')return old('character-face');
- if(rel==='src/game/character-hair.js')return old('character-hair');
+ if(rel==='src/game/character-hair.js')return adoptReviewedHairDetail(old('character-hair'));
  if(rel==='src/game/motion/retarget.js'){if(!code.includes(' applyAccessories('))code=read(rel);const start=code.indexOf(' applyAccessories('),end=code.indexOf('\n /** Correct terrain',start);return code.slice(0,start)+old('retarget')+code.slice(end);}
  if(rel==='patches/splatoon3/runtime/special-motion.mjs'){if(!code.includes('  function fit('))code=fs.readFileSync(new URL('../../splatoon3/runtime/special-motion.mjs',import.meta.url),'utf8');return replaceOnce(code,fitSource(code),old('special-fit'),'batch358 original special fit');}
  return code;

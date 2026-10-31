@@ -1,0 +1,65 @@
+✔ all PNG, hidden receipt and nested failure diagnostic bytes count with ZIP headroom (4.354544ms)
+✔ receipt replacement counts actual replacement size and rejects escaped paths (0.903049ms)
+✔ pre-upload inventory rejects unbounded failure logs and all workflow uploads require eligibility (1.526638ms)
+✔ actual final-upload script isolates small, oversized and absent suite directories (90.285116ms)
+✔ nested air comparison cannot evade the shared Rainmaker artifact cap (1.736804ms)
+✔ same-condition before/after frames are paired and complete (1.576223ms)
+✔ camera, lighting, omitted output or duplicate frame mismatch fails closed (3.782583ms)
+✔ source-loaded owner and foot pose match exactly while model bounds may differ (2.311969ms)
+✔ source-loaded frame names require both complete finite owner receipts (2.765122ms)
+✔ ordered contact sheets retain original hashes and exact simulation times (1.407649ms)
+(node:263296) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ spawner browser harness statically links against the shared production helper (176.547023ms)
+✔ rainmaker browser harness statically links against the shared production helper (2.070286ms)
+✔ rainmaker-air browser harness statically links against the shared production helper (3.324424ms)
+✔ rainmaker-form browser harness statically links against the shared production helper (3.329396ms)
+✔ rainmaker-origin browser harness statically links against the shared production helper (1.995343ms)
+✔ clam browser harness statically links against the shared production helper (1.70727ms)
+✔ landing comparison isolates8a903662 handoff while the original three baselines stay3839 (0.528305ms)
+✔ form comparison adds only009 handoff baseline and one bounded same-build capture (0.446042ms)
+✔ spawner actual runtime sources affect official build identity, including added modules (4.539974ms)
+✔ rainmaker actual runtime sources affect official build identity, including added modules (4.017917ms)
+✔ rainmaker-air actual runtime sources affect official build identity, including added modules (1.582482ms)
+✔ rainmaker-form actual runtime sources affect official build identity, including added modules (1.524174ms)
+✔ rainmaker-origin actual runtime sources affect official build identity, including added modules (7.538056ms)
+✔ clam actual runtime sources affect official build identity, including added modules (7.450854ms)
+(node:263308) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ spawner exact historical runtime overlay links in the actual production module graph (1212.068811ms)
+✔ rainmaker exact historical runtime overlay links in the actual production module graph (1111.758426ms)
+✔ rainmaker-air exact historical runtime overlay links in the actual production module graph (1077.997006ms)
+✔ rainmaker-form exact historical runtime overlay links in the actual production module graph (1079.612582ms)
+✔ rainmaker-origin exact historical runtime overlay links in the actual production module graph (1067.320074ms)
+✖ clam exact historical runtime overlay links in the actual production module graph (781.36542ms)
+✖ Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff (750.929428ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 29
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7572.442988
+
+✖ failing tests:
+
+test at tools/object-presentation-qa/runtime-overlay.test.mjs:25:42
+✖ clam exact historical runtime overlay links in the actual production module graph (781.36542ms)
+  SyntaxError [Error]: The requested module './bomb-motion.mjs' does not provide an export named 'bombPredictionPosition'
+      at SourceTextModule.link (node:internal/vm/module:209:17)
+      at async fixture (file:///workspace/scratch/8a58d9a6baf6/iw/patches/splatoon3/tests/source-fixture.mjs:113:3)
+      at async make (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:18:13)
+      at async TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:26:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tools/object-presentation-qa/runtime-overlay.test.mjs:29:1
+✖ Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff (750.929428ms)
+  SyntaxError [Error]: The requested module './bomb-motion.mjs' does not provide an export named 'bombPredictionPosition'
+      at SourceTextModule.link (node:internal/vm/module:209:17)
+      at async fixture (file:///workspace/scratch/8a58d9a6baf6/iw/patches/splatoon3/tests/source-fixture.mjs:113:3)
+      at async make (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:18:13)
+      at async TestContext.<anonymous> (file:///workspace/scratch/8a58d9a6baf6/iw/tools/object-presentation-qa/runtime-overlay.test.mjs:32:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

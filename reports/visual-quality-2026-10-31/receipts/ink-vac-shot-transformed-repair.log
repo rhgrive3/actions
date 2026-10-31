@@ -1,0 +1,19 @@
+✔ HOLD, no shot and cancellation never emit a countershot muzzle (178.144748ms)
+✔ actual native _push emits once at authored birth, preserves native recording and return (63.399839ms)
+✔ actual native ghostProjectile bypasses _push but emits once on accepted birth (64.084125ms)
+✔ native _new resets pooled-object dedup for the next actual shot (53.450995ms)
+✔ disabled effects, dead/cancelled rounds and unrelated projectiles produce no flash (53.083143ms)
+✔ native hook ignores another projectile system (81.340459ms)
+✔ rejected births never emit; nested ghost-to-push emits only once (121.066247ms)
+✔ actual Ink Vac authored emitter reaches the installed native birth hook (1299.53357ms)
+✔ clearing presentation neither flashes nor replays an already observed live round (68.793398ms)
+(node:5) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1992.939288

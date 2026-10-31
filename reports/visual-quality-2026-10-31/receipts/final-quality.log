@@ -1,0 +1,182 @@
+[quality] node --experimental-vm-modules --experimental-global-webcrypto --test (17 test files; --dry-run quality lists inputs)
+✔ navigation falls back to complete offline HTML when headers arrive but body stalls (96.466463ms)
+✔ a stalled navigation without a saved snapshot shows the recovery document (53.25488ms)
+✔ oversize navigation HTML is abandoned without replacing the saved snapshot (51.392783ms)
+✔ healthy navigation preserves latest HTML and headers without a cache rewrite (8.594276ms)
+✔ streaming oversize navigation abandons both branches: HTTP 200 (52.974555ms)
+✔ streaming oversize navigation abandons both branches: HTTP 404 (12.637977ms)
+✔ HTTP 404 navigation with stalled body also reaches the offline deadline (39.070042ms)
+✔ HTTP 500 with cached HTML cancels its stalled body before the deadline (18.482671ms)
+✔ HTTP 500 without cached HTML still bounds a stalled body (32.257831ms)
+✔ complete HTTP 404 keeps its status, body, headers and response URL (10.90069ms)
+(node:250141) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ adapter leaves unrelated modules alone and fails closed on source drift or double application (1.795615ms)
+✔ a far touch-card jump has one screen-owned correction and no idle work (4.291885ms)
+✔ rapid navigation retains only the latest target correction (2.804515ms)
+✔ wheel cancels reduced correction without rewinding manual scrolling (2.784535ms)
+✔ touchstart cancels reduced correction without rewinding manual scrolling (2.670743ms)
+✔ pointerdown cancels reduced correction without rewinding manual scrolling (5.627707ms)
+✔ wheel cancels smooth correction without rewinding manual scrolling (2.624414ms)
+✔ touchstart cancels smooth correction without rewinding manual scrolling (2.208297ms)
+✔ pointerdown cancels smooth correction without rewinding manual scrolling (6.392499ms)
+✔ swap removes the owning screen's reduced work and listeners (7.345144ms)
+✔ destroy removes the owning screen's reduced work and listeners (2.376269ms)
+✔ dispose removes the owning screen's reduced work and listeners (10.054155ms)
+✔ swap removes the owning screen's smooth work and listeners (1.675073ms)
+✔ destroy removes the owning screen's smooth work and listeners (3.211007ms)
+✔ dispose removes the owning screen's smooth work and listeners (2.315197ms)
+✔ late destruction of an old screen cannot cancel the new screen correction (2.317782ms)
+✔ smooth scrolling settles once after scrollend, never during the animation (2.30389ms)
+✔ smooth scrolling settles once after the quiet-scroll fallback, never during the animation (2.137891ms)
+✔ a changed screen invalidates the callback before it scrolls (2.168537ms)
+✔ a changed modal invalidates the callback before it scrolls (3.234923ms)
+✔ a changed focus invalidates the callback before it scrolls (1.994935ms)
+✔ a changed detached invalidates the callback before it scrolls (2.054685ms)
+✔ a changed host invalidates the callback before it scrolls (1.879151ms)
+✔ nearby navigation retains its edge margin and other scrollers retain existing behavior (7.757936ms)
+(node:250142) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ motion optimization is guarded, composed and excluded from browser payloads (83.840711ms)
+✔ FK instrumentation preserves the range; the old argument-dropping wrapper is rejected (4.409952ms)
+{"fixture":"held Roller release with awaited source banks; no rendered-motion claim","hz":120,"frames":156,"supportFrames":50,"maxGap":1.871186959898982e-15,"release":{"frame":150,"advance":0.0017297177538820874,"gap":1.0574701291099616e-15},"rangedCalls":[0,552]}
+{"fixture":"real source-loaded Character; exact before/after, not device FPS","compared":1164,"states":["idle","move","air","land","ToSquid"],"clips":28,"fkBefore":19942,"fkAfter":17897,"fkBonesBefore":1285370,"fkBonesAfter":885207,"reduction":0.31132125380240705,"callReduction":0.1025473874235282}
+✔ real source motion preserves every frame at 30/60/120 Hz and irregular/paused ticks (38258.012933ms)
+{"scope":"exact source/emitted A* component; no hardware/FPS claim","queries":600,"nontrivialPaths":108,"before":67603,"after":50792,"reduction":0.24867239619543513,"extraScratchBytes":9224}
+{"graph":"block","nodes":400,"queries":100,"nontrivialPaths":97,"before":10041,"after":7706,"reduction":0.23254655910765865,"extraScratchBytes":3200}
+{"graph":"source-triangle native","nodes":400,"queries":100,"nontrivialPaths":97,"before":8523,"after":6760,"reduction":0.20685204740114982,"extraScratchBytes":3200}
+(node:250148) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ heuristic optimization is owned by readable source, not applied by a build-time patch (2.569521ms)
+✔ 600 layered A* routes preserve paths, costs, ties, iteration limits and edge callback order (523.130151ms)
+✔ actual block and source-triangle native graph builders retain their complete route results (114.078769ms)
+✔ repeated goals, resized graphs and interrupted edge filters never reuse another search heuristic (4.402522ms)
+✔ contact FK refreshes both whole leg branches but skips unneeded hair/weapon/LOD (1.515803ms)
+✔ unexpected contact hierarchy safely falls back to full subtree refresh (0.241384ms)
+✔ eight-actor profiler rebind is stable under reorder, stage exit, and disposal (5.130007ms)
+{"scope":"all original packed motion data, exact Float64 poses","variants":3,"clips":548,"poses":69744,"rangedPoses":13919}
+{"scope":"Player00 WalkHold_Nrml, 360 sampled frames","sinBefore":36360,"sinAfter":26667,"reduction":0.2665841584158416}
+(node:250150) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source bank is directly authored and the pre-migration oracle is frozen (70.876608ms)
+✔ every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses (65131.600765ms)
+✔ rotation keys preserve negative zero, quaternion normalization, mode changes, FK ranges and overwritten outputs (213.20049ms)
+✔ unanimated rotations and coherent playback avoid exact trigonometry and key searches (280.922272ms)
+✔ native CanvasTexture source is constrained for LOW/touch and preserves desktop studio detail (233.46263ms)
+✔ quality and mobile handoff dispose old GPU allocation once, resize retained source, and redraw without compounding scale (76.420794ms)
+✔ atlas scaling preserves native material bindings, logical UVs, geometry and colliders at the same detail tier (74.378932ms)
+✔ actual Halyard final geometry, colliders and live animation match raw, static sources are released (1775.004544ms)
+✔ same-instance rebuild and add-after-build retain exact instance counts, triangles and animation (1635.96845ms)
+✔ clear/rematch rebuild has bounded placement and animation records; headless accounting stays available (845.048157ms)
+✔ pending PR183 Practice dressing remains isolated and banner instances survive repeated build (238.167806ms)
+✔ Halyard triangle comparator narrowly rejects inverse/mapped/custom UV omissions and changed streams (8.662676ms)
+✔ Wave 6/7 retains its original first-pass and exact legacy idempotence (6.190665ms)
+✔ the complete final non-stage FX projection remains byte-identical on a second Wave 6/7 pass (2.305834ms)
+✔ final GLOW, RING and BEAM blocks reject changed ramps, missing complements and changed pow algebra (18.813679ms)
+✔ each accepted normalized block has exactly one owner and partial projections cannot pass (7.78707ms)
+(node:250230) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production composer installs reversal-safe squid/human pose ownership (134.273489ms)
+✔ rapid squid-button changes settle into genuine human and squid idle at 30/60/120 Hz (12488.779105ms)
+✔ live Actor squid-button edges recover ordinary idle after button-mashing (12151.313567ms)
+✔ display culling matches frozen source across changed prefixes, hidden tails and delayed multi-camera uploads (92.263849ms)
+✔ partition preserves exact centroids, public keys, normalized and half-float attribute decoding (10.559666ms)
+✔ uniform and mixed paint charts consume single-tile hints and retain source-order selections (27.350123ms)
+✔ scalar containsOnFace matches vendored Three at random, degenerate and shared-edge points (28.040358ms)
+✔ detail replay preserves attribute bytes and bounds projection-cache retention (40.885216ms)
+✔ detail idle bypass publishes uniforms and active/failed flushes restore exact renderer state (7.684275ms)
+✔ disposing stalled Charger fetch settles immediately and rejects late work (6.812993ms)
+✔ disposing stalled Charger body settles immediately and rejects late work (2.673808ms)
+✔ disposing stalled Charger decode settles immediately and rejects late work (4.02961ms)
+✔ synchronous abort listener can prewarm a replacement without reusing the retired load (1.78596ms)
+✔ all production beam and band triangles interpolate one continuous angular span (67.105728ms)
+✔ boss plans preserve exact routes and expansion order through repeated goals and disconnected searches (302.902363ms)
+✔ boss search demonstrably removes repeated grid-length and heuristic work (23.305534ms)
+ℹ {"hypotCallsBefore":61545,"hypotCallsAfter":10247,"heuristicScratchBytes":12800}
+✔ boss move weights retain exact threshold, cooldown, last-move and RNG choices (45.423352ms)
+✔ boss damage history retains exact decay and attention changes only on target selection (2.000394ms)
+✔ boss hazard clocks and cleanup retain exact endpoints and observe changed records (2.635279ms)
+✔ descending character ramps retain their authored interpolation with ordered GLSL edges (8.368817ms)
+✔ normalizer handles nested ramps, signed/exponent edges and preserves ascending calls (0.483208ms)
+✔ weapon brushing preserves close detail and converges continuously to its mean (3.887837ms)
+✔ adapter is strict, repeatable and cannot touch stages or other visual systems (2.050659ms)
+✔ every changed material program has a distinct cache identity (2.759587ms)
+✔ FX ordering changes shader text only; all event, pool and lifecycle code remains identical (4.56775ms)
+✔ variable ramps preserve the exact nested argument and reject changed anchors (0.487074ms)
+✔ the production composition includes the stable FX shaders (93.250805ms)
+✔ stage, paint, renderer, weapons, movement and networking cannot be transformed (0.329326ms)
+ℹ tests 88
+ℹ suites 0
+ℹ pass 88
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 66340.136637
+[quality] node patches/local-quality/tests/performance-v2-ao.test.mjs
+{"status":"PASS","AOFaceKeyOverflow":"distinct","AOBodyKeyOverflow":"distinct","generatedCode":"compiles"}
+[quality] node patches/local-quality/tests/performance-v2-geometry.test.mjs
+{
+  "status": "PASS",
+  "clusterGeoComparisons": 9,
+  "farGeometryComparisons": 3,
+  "verified": "position, normal, skin attributes, material/color corner split attributes, triangle index order and metadata are bit-identical on synthetic meshes"
+}
+[quality] node patches/local-quality/tests/performance-v2-topology.test.mjs
+{
+  "status": "PASS",
+  "cases": 11,
+  "metrics": {
+    "random cell=0.018": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.034": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.07": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.2": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "attribute overflow and distant points": {
+      "vertices": 6,
+      "clusters": 6,
+      "triangles": 2
+    },
+    "two-sided normal split": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "interleaved attribute fallback": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "normalized attribute fallback": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "oriented triangle preservation": {
+      "vertices": 3,
+      "clusters": 3,
+      "triangles": 2
+    },
+    "oversized geometry safe hash growth": {
+      "vertices": 135000,
+      "clusters": 135000,
+      "triangles": 45000
+    },
+    "ring": "All 5 tested progress states match the original geometry positions within 1e-7 world units"
+  }
+}

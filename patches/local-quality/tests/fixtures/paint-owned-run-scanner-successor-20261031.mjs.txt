@@ -1,0 +1,55 @@
+proto._paintOrderRuns = function issue264PaintOrderRuns(face, orderId, u0, u1, v0, v1) {
+    ensureOwnershipState(this);
+    const padM = (face.atlas.pad - 0.5) / face.atlas.ppm;
+    const i0 = Math.max(0, Math.floor(Math.max(0, u0) / face.cu));
+    const i1 = Math.min(face.nu - 1, Math.floor(Math.min(face.su, u1) / face.cu));
+    const j0 = Math.max(0, Math.floor(Math.max(0, v0) / face.cv));
+    const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
+    let scratch = this._paintOrderRunScratch, runCount = 0;
+    // Only rectangles from the immediately preceding row can extend into
+    // this row. Their x intervals are sorted; merge with a linear cursor.
+    // A reverse scan of all output rectangles is both quadratic and wrong
+    // when a newer, already-ended rectangle hides an older continuing one.
+    const capacity = Math.max(1, Math.ceil((i1 - i0 + 1) / 2));
+    if (!this._paintOrderRunRows || this._paintOrderRunRows[0].length < capacity) {
+      this._paintOrderRunRows = [new Uint32Array(capacity), new Uint32Array(capacity)];
+    }
+    let previous = this._paintOrderRunRows[0], current = this._paintOrderRunRows[1], previousCount = 0;
+    for (let j = j0; j <= j1; j++) {
+      const row = face.grid + j * face.nu, owners = this._paintOwnershipOrder;
+      let i = i0, previousCursor = 0, currentCount = 0;
+      while (i <= i1) {
+        while (i <= i1 && owners[row + i] !== orderId) i++;
+        if (i > i1) break;
+        const start = i++;
+        while (i <= i1 && owners[row + i] === orderId) i++;
+        const end = i - 1;
+        let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
+        let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
+        if (start === 0) x0 = Math.max(u0, -padM);
+        if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
+        if (j === 0) y0 = Math.max(v0, -padM);
+        if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
+        if (x1 > x0 && y1 > y0) {
+          while (previousCursor < previousCount && scratch[previous[previousCursor]] < x0) previousCursor++;
+          const prior = previousCursor < previousCount ? previous[previousCursor] : -1;
+          if (prior >= 0 && scratch[prior] === x0 && scratch[prior + 1] === x1 && scratch[prior + 3] === y0) {
+            scratch[prior + 3] = y1;
+            current[currentCount++] = prior;
+            continue;
+          }
+          const offset = runCount * 4;
+          if (offset + 4 > scratch.length) {
+            const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
+            grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
+          }
+          scratch[offset] = x0; scratch[offset + 1] = x1;
+          scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+          current[currentCount++] = offset;
+          runCount++;
+        }
+      }
+      const swap = previous; previous = current; current = swap; previousCount = currentCount;
+    }
+    return runCount;
+  };

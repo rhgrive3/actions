@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: affected validation jobs install the locked tree and create scratch before npm
+ok 1 - affected validation jobs install the locked tree and create scratch before npm
+  ---
+  duration_ms: 0.922419
+  type: 'test'
+  ...
+# Subtest: early failure packaging does not depend on CI_STORAGE provisioning
+ok 2 - early failure packaging does not depend on CI_STORAGE provisioning
+  ---
+  duration_ms: 1.411925
+  type: 'test'
+  ...
+# Subtest: bounded failure package records no evidence when persistent storage was never writable
+ok 3 - bounded failure package records no evidence when persistent storage was never writable
+  ---
+  duration_ms: 84.839643
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 156.429625

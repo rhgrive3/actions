@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "command": "node scripts/ci/run-inkwave-test-suite.mjs source-quality",
+  "localCommit": "4da2f2466e070352c9365822cb5014f4bcb5a888",
+  "publishedEquivalentCommit": "823ed7b09dcdf34ad3d67ba490e3e52762937424",
+  "tree": "d80fd4f8735d353d3dfe89400cc6e4d3839a698d",
+  "node": "v24.22.1",
+  "exitCode": 0,
+  "seconds": 903.37,
+  "summary": {
+    "tests": 2553,
+    "pass": 2543,
+    "fail": 0,
+    "skipped": 10
+  },
+  "log": "source-quality-final.log.gz",
+  "uncompressedLogSha256": "8f0ec5fba75476601c64b45d4e3726c54419522ceeb174ad82aa50c90ab8278d",
+  "scope": "Local source-quality result, not a GitHub hosted CI completion. Existing environment-conditional skips remain visible."
+}

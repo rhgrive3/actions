@@ -185,11 +185,20 @@ void main(){
     a = (1.0 - smoothstep(0.25, 1.0, r + n * 0.18)) * 0.8;
   } else if (kind == 4) {              // ink petal (S3 footage 83.0s/96.8s): a pointed leaf of glossy ink, team colour at the
     // rim and a white-hot core, tumbling; lit with the droplet terms
-    vec2 q0 = p; float w = 0.3 * (1.0 - 0.15 * vPar.z);
+    // Keep the authored opaque petal through its main lifetime, then neck it
+    // down before retirement. Alpha used to be ignored until the 0.03 cutoff,
+    // so a full-size white fleck disappeared in one frame at the end of a burst.
+    if (vCol.a < 0.03) discard;
+    // The existing full-alpha lifetime curve is 1 - age^1.6. Its 0.20 and
+    // 0.03 alpha crossings are age=0.8^(1/1.6) and 0.97^(1/1.6).
+    // Use age directly: fade-in or an authored low alpha must never shrink a
+    // newly emitted petal. This also avoids another per-fragment pow().
+    float retireScale = 1.0 - smoothstep(0.86982371, 0.98114305, vPar.z);
+    vec2 q0 = p / max(retireScale, 1e-3); float w = 0.3 * (1.0 - 0.15 * vPar.z);
     float half_ = w * pow(max(1.0 - q0.y * q0.y, 0.0), 0.7);
     float sd = abs(q0.x) - half_, fw = max(fwidth(sd), 1e-3);
     a = (1.0 - smoothstep(-fw, fw, sd)) * step(abs(q0.y), 1.0);
-    if (a <= 0.0 || vCol.a < 0.03) discard;
+    if (a <= 0.0) discard;
     float u = q0.x / max(half_, 1e-3);
     float ca2 = cos(vPar.y), sa2 = sin(vPar.y);
     vec2 ax = vec2(-sa2, ca2), bx = vec2(ca2, sa2);
@@ -578,7 +587,10 @@ void main(){
   vec4 mv = viewMatrix * vec4(w, 1.0);
   vec3 n = normalize(mat3(viewMatrix) * radial);
   vFres = abs(dot(n, normalize(-mv.xyz))); vNv = n; vVv = -mv.xyz;
-  vUv = vec2(atan(position.z, position.x) / 6.2831853 + 0.5, k); vCol = iCol; vPar = iPar; vLen = L;
+  // CylinderGeometry duplicates the longitudinal seam. Interpolate its unwrapped
+  // UV instead of atan's jump across +/-pi, then wrap per fragment below.
+  // Otherwise one narrow face interpolates almost a whole turn of the pattern.
+  vUv = vec2(0.75 - uv.x, k); vCol = iCol; vPar = iPar; vLen = L;
   gl_Position = projectionMatrix * mv;
 }`;
 const BEAM_FRAG = `
@@ -588,11 +600,11 @@ uniform float uTime; uniform float uAdd;
 varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying float vLen; varying vec3 vNv; varying vec3 vVv;
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
-  float u = vUv.x, along = vUv.y * vLen; float a = 0.0; vec3 col = vCol.rgb;
+  float u = fract(vUv.x), along = vUv.y * vLen; float a = 0.0; vec3 col = vCol.rgb;
   if (style == 0) {             // laser (S3 77.1s): a thick, opaque team-colour screw — bright ridges and dark grooves
     // winding along it, lit like ink, the grooves racing outward
     float ridge = 0.5 + 0.5 * sin((u * 3.0 - along * 0.9 + uTime * spd * 0.6) * 6.2831853);
-    float groove = smoothstep(0.15, 0.0, ridge), crest = smoothstep(0.75, 1.0, ridge);
+    float groove = 1.0 - smoothstep(0.0, 0.15, ridge), crest = smoothstep(0.75, 1.0, ridge);
     vec3 N = normalize(vNv) * (gl_FrontFacing ? 1.0 : -1.0);
     vec3 lit = uAdd > 0.5 ? col : sxInk(col, N, normalize(vVv), 0.9);
     col = lit * (0.55 + 0.6 * ridge) + col * crest * 0.35;
@@ -710,7 +722,9 @@ void main(){
   vec4 mv = viewMatrix * vec4(w, 1.0);
   vec3 n = normalize(mat3(viewMatrix) * vec3(cos(ang), 0.0, sin(ang)));
   vFres = abs(dot(n, normalize(-mv.xyz))); vNv = n; vVv = -mv.xyz;
-  vUv = vec2(atan(position.z, position.x) / 6.2831853 + 0.5, k); vCol = iCol; vPar = iPar;
+  // Keep the same phase as atan while leaving the cylinder seam unwrapped
+  // during interpolation; wrapping belongs in the fragment shader.
+  vUv = vec2(0.75 - uv.x, k); vCol = iCol; vPar = iPar;
   gl_Position = projectionMatrix * mv;
 }`;
 const BAND_FRAG = `
@@ -720,7 +734,7 @@ uniform float uTime; uniform float uAdd;
 varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying vec3 vNv; varying vec3 vVv;
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
-  float u = vUv.x, v = vUv.y, a = 0.0; vec3 col = vCol.rgb;
+  float u = fract(vUv.x), v = vUv.y, a = 0.0; vec3 col = vCol.rgb;
   if (style == 0) {             // wave wall: a translucent fence of vertical light lines, a bright crest line and a lit base
     // S3 (225.3-229.3s): a fence of bold bright vertical stripes (fewer, wider bars than a fine hatch)
     float stripe = 1.0 - smoothstep(0.0, 0.25, abs(fract(u * 72.0 + seed * 7.0) - 0.5) * 2.0 - 0.45);

@@ -2,12 +2,28 @@
 // Keep source files locked, preserve current main ownership, and reject missing anchors.
 // Candidate exclusions: incorrect ScreenFX light vectors, broad texlib regex,
 // divergent ink clearcoat gating, unsafe pending-range clipping, redundant InkVolume work.
-function applyIdempotent(code, before, after, replaceOnce, label, acceptSupportGate = false) {
+import { orderedShaderSmoothsteps, orderedVariableSmoothstep } from './ordered-shader-smoothstep.mjs';
+
+function applyIdempotent(code, before, after, replaceOnce, label, acceptSupportGate = false, finalFxRamps = null) {
   if (code.includes(after)) return code;
   // The subsequent reviewed Wave 9 gloss/city support gates indent these two
   // audited blocks. Recognize only their exact algebra, keeping unknown or
   // corrupted expressions fail-closed on a second full composition pass.
   if (acceptSupportGate && code.includes(after.split('\n').map(line => '  ' + line).join('\n').replace('vec3 col = mix(base, env, fres * 0.42);', 'col = mix(base, env, fres * 0.42);'))) return code;
+  // The final non-stage FX pass orders descending smoothsteps. Admit only
+  // that exact projection of this entire reviewed output block, at one site;
+  // a marker, partial rewrite, changed ramp or altered pow algebra cannot
+  // bypass the original anchor. Only the three affected FX blocks opt in.
+  if (finalFxRamps !== null) {
+    let finalAfter = orderedShaderSmoothsteps(after);
+    for (const [high, low] of finalFxRamps) finalAfter = orderedVariableSmoothstep(finalAfter, high, low);
+    const site = code.indexOf(finalAfter);
+    if (site >= 0) {
+      if (code.indexOf(finalAfter, site + finalAfter.length) >= 0 || code.includes(before))
+        throw new Error(`Reviewed Wave 6/7 optimization requires one final FX owner (${label})`);
+      return code;
+    }
+  }
   if (!code.includes(before)) throw new Error(`Reviewed Wave 6/7 optimization anchor missing (${label})`);
   return replaceOnce(code, before, after, label);
 }
@@ -160,7 +176,7 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
     col = vCol.rgb * ring + vec3(1.0) * ring * ring * core * 0.3;
   }`,
       replaceOnce,
-      'GPU-FX2b GLOW_FRAG integer pow(x, 2.0 / 3.0) elimination'
+      'GPU-FX2b GLOW_FRAG integer pow(x, 2.0 / 3.0) elimination', false, []
     );
     code = applyIdempotent(
       code,
@@ -192,7 +208,8 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
     float ivT = 1.0 - vT;
     a = smoothstep(0.95 + wob * 0.2, 0.7 + wob * 0.2, r) * (ivT * ivT);`,
       replaceOnce,
-      'GPU-FX3a RING_FRAG integer pow(1.0 - vT, 4.0 / 2.0) elimination'
+      'GPU-FX3a RING_FRAG integer pow(1.0 - vT, 4.0 / 2.0) elimination', false,
+      [['outer', 'outer * 0.3'], ['outer + 0.06', 'outer'], ['0.95 + wob * 0.2', '0.7 + wob * 0.2']]
     );
     code = applyIdempotent(
       code,
@@ -241,7 +258,7 @@ const easeInOut = (t) => { t = clamp(t, 0, 1); if (t < 0.5) return 4 * t * t * t
     col = vCol.rgb * (1.0 + 0.9 * streak) + vec3(3.2) * st5 * (1.0 - vH) * (1.0 - vMisc.x);
   }`,
       replaceOnce,
-      'GPU-FX5a BEAM_FRAG pow(1.5 / 4.0 / 5.0) elimination'
+      'GPU-FX5a BEAM_FRAG pow(1.5 / 4.0 / 5.0) elimination', false, []
     );
     code = applyIdempotent(
       code,

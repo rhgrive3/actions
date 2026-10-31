@@ -1,0 +1,52 @@
+[
+  {
+    "viewport": "desktop",
+    "labels": 161,
+    "clipped_before": 2,
+    "clipped_after": 0,
+    "minimum_font_before": 13.056,
+    "minimum_font_after": 13.056,
+    "max_icon_height_delta_px": 6.103515625e-05,
+    "errors_after": []
+  },
+  {
+    "viewport": "tablet",
+    "labels": 161,
+    "clipped_before": 10,
+    "clipped_after": 0,
+    "minimum_font_before": 14,
+    "minimum_font_after": 14,
+    "max_icon_height_delta_px": 0.0,
+    "errors_after": []
+  },
+  {
+    "viewport": "tablet-landscape",
+    "labels": 161,
+    "clipped_before": 0,
+    "clipped_after": 0,
+    "minimum_font_before": 14,
+    "minimum_font_after": 14,
+    "max_icon_height_delta_px": 0.0,
+    "errors_after": []
+  },
+  {
+    "viewport": "phone",
+    "labels": 161,
+    "clipped_before": 0,
+    "clipped_after": 0,
+    "minimum_font_before": 14,
+    "minimum_font_after": 14,
+    "max_icon_height_delta_px": 0.0,
+    "errors_after": []
+  },
+  {
+    "viewport": "phone-portrait",
+    "labels": 161,
+    "clipped_before": 10,
+    "clipped_after": 0,
+    "minimum_font_before": 14,
+    "minimum_font_after": 14,
+    "max_icon_height_delta_px": 0.0,
+    "errors_after": []
+  }
+]

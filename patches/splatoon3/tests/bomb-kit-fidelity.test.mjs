@@ -158,27 +158,77 @@ test('Curling flight drag and BaseSpeed law are per elapsed time, not per contac
   near(curlingRollSpeed(24, 13.2, CURLING, 1 / 30), curlingRollSpeed(curlingRollSpeed(24, 13.2, CURLING, 1 / 60), 13.2, CURLING, 1 / 60), 1e-12, 'ComeOverRate compounds per step');
 });
 
-test('Curling hides both aim arc and predicted blast ring while real ground roll and wall bounce still resolve', async () => {
+test('Curling integrated guides match the real ground roll and wall bounce, and sub changes retire stale previews', async () => {
+  // The later installThrowPrediction owner supplies a collision-aware Curling
+  // guide. Preserve the real roll/bounce oracle and check its displayed endpoint
+  // instead of the pre-predictor epoch's unconditional hidden-guide expectation.
+  function assertGuide(p, prediction, ringPosition = p.arcRing.position) {
+    assert.ok(prediction, 'the production prediction owner supplies a forecast');
+    assert.equal(prediction.complete, true);
+    assert.equal(prediction.outcome, 'explosion');
+    assert.equal(p.arcLine.visible, true, 'the forecast path is visible');
+    assert.equal(p.arcRing.visible, true, 'the confirmed endpoint is visible');
+    assert.ok(p.arcGeo.drawRange.count > 1);
+    const end = ringPosition.clone().fromBufferAttribute(
+      p.arcGeo.attributes.position, p.arcGeo.drawRange.count - 1);
+    assert.deepEqual(end.toArray(), prediction.endpoint.toArray().map(Math.fround),
+      'displayed line ends at the forecast center in the Float32 buffer');
+    const normal = prediction.normal?.clone() || ringPosition.clone().set(0, 1, 0);
+    normal.normalize();
+    const marker = prediction.endpoint.clone().addScaledVector(normal, 0.015);
+    near(ringPosition.distanceTo(marker), 0, 1e-9, 'endpoint marker uses only the surface clearance');
+  }
   for (const wallZ of [null, 6]) {
     const f = await world({ wallZ });
     const { b, p, preview } = throwSub(f, 'roller', 90, { arc: true });
-    assert.equal(preview.visible, false, 'no predicted explosion marker while aiming Curling');
-    assert.equal(p.arcRing.visible, false, 'no explosion radius circle');
-    assert.equal(p.arcLine.visible, false, 'no meaningless parabolic throw arc');
-    const burst = run(p, b);
+    const prediction = p._s3ThrowPrediction;
+    assert.equal(preview.visible, true, 'the held Curling guide has a confirmed endpoint');
+    assert.equal(prediction?.kind, 'curling');
+    assertGuide(p, prediction, preview.ring);
+    near(b.pos.distanceTo(prediction.origin), 0, 1e-7, 'real release uses the forecast origin');
+    near(b.vel.distanceTo(prediction.velocity), 0, 1e-7, 'real release uses the forecast velocity');
+    let rolled = false, reflected = false;
+    const burst = run(p, b, 60, 6, bb => {
+      if (bb.s3Mode === 'rolling') {
+        rolled = true;
+        near(bb.pos.y, 0.21, 0.01, 'real rolling puck stays on the floor');
+      }
+      if (bb.vel.z < 0) reflected = true;
+    });
     assert.ok(burst && Number.isFinite(burst.pos.z), 'real Curling still detonates');
+    assert.equal(rolled, true, 'real ground rolling is exercised');
+    near(burst.pos.distanceTo(prediction.endpoint), 0, 1e-7, 'forecast reaches the actual explosion center');
+    near(burst.t, prediction.time, 1e-9, 'forecast reaches the actual terminal tick');
+    assert.equal(reflected, wallZ != null, 'only the wall scenario reverses the real forward velocity');
     if (wallZ != null) assert.ok(burst.pos.z < wallZ, 'real roll still reflects off the wall');
+    assert.throws(() => assertGuide(p, { ...prediction, endpoint: prediction.endpoint.clone().addScalar(1) }),
+      /displayed line ends at the forecast center/, 'a displaced forecast cannot pass the display oracle');
   }
-  // A previous sub can leave its guides visible; selecting Curling clears both.
-  const f = await world(), p = f.G.projectiles, actor = f.make('roller');
-  p.arcLine.visible = p.arcRing.visible = true;
-  p.updateArc(actor, true);
+  // A sub change must replace the old guide immediately, inside the refresh
+  // interval, and leaving aim must retire the guide and its cached prediction.
+  const f = await world(), p = f.G.projectiles, actor = f.make('shooter');
+  actor.pos.set(0, 0, 0); actor.vel.set(0, 0, 0); actor.aimYaw = actor.aimPitch = 0;
+  const geometry = p.arcGeo, time = f.G.time;
+  let previous = null;
+  for (const sub of ['suction', 'curling', 'bomb']) {
+    actor.weapon = { ...actor.weapon, sub };
+    actor.weaponRunner.reset();
+    if (previous) p.arcRing.position.set(900, 900, 900);
+    p.updateArc(actor, true);
+    assert.notEqual(p._s3ThrowPrediction, previous, 'sub selection invalidates the preceding forecast');
+    assert.equal(p._s3ThrowPrediction?.kind, sub);
+    assertGuide(p, p._s3ThrowPrediction);
+    assert.equal(f.G.time, time, 'preview refresh does not advance the world');
+    assert.equal(p.bombs.length, 0, 'preview refresh does not emit a bomb');
+    assert.equal(p.arcGeo, geometry, 'sub changes reuse the existing guide buffer');
+    previous = p._s3ThrowPrediction;
+  }
+  p.updateArc(actor, false);
   assert.equal(p.arcLine.visible, false);
   assert.equal(p.arcRing.visible, false);
-  // Suction and regular Splat Bomb still retain their useful projectile preview.
-  const suction = await world();
-  const other = throwSub(suction, 'shooter', 6, { arc: true });
-  assert.equal(other.p.arcLine.visible, true);
+  assert.equal(p._s3ThrowPrediction, null);
+  assert.ok((p._s3ThrowExtraLines || []).every(line => !line.visible));
+  assert.ok((p._s3ThrowExtraMarkers || []).every(marker => !marker.visible));
 });
 
 test('Splat Bomb ground resistance applies while resting between swept hits (bounded slide)', async () => {

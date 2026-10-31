@@ -1,0 +1,29 @@
+(node:252160) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ screen-owned mode cache preserves native focus, responsive grid reads and row edges (10.420979ms)
+✔ lost row or card ownership delegates the real native graph; replacement screens own separate caches (2.79449ms)
+✔ unchanged hidden writes are avoided while actual native loadout focus and lifecycle remain equivalent (11.07887ms)
+(node:252162) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ failed collector lacks constructor-owned spIcon at the very first native Splatling update (1408.915061ms)
+✔ collector owns a private icon before first native update and preserves the live HUD icon (1045.824702ms)
+✔ historical detached row throws while current source delegates, confirming distinct epoch contracts (4.358516ms)
+✔ checker applies the real historical and current ownership expectations without weakening current controls (2.845046ms)
+✔ checker fails closed for an unknown epoch (1.0691ms)
+✔ swapping the admitted epoch cannot make either owner pass the other audit (4.015088ms)
+✔ all independently reviewed minimap source epochs retain their exact pins (5.255447ms)
+✔ every missing or byte-edited minimap source fails closed in either epoch (4.657856ms)
+✔ old runtime/new adapter and new runtime/old adapter cannot form a third epoch (0.263367ms)
+✔ existing sixth epoch stays exact and an unreviewed seventh or replacement fails closed (2.853619ms)
+✔ separate clock fixture seals both complete legacy owners and exact two-hunk inverse (4.777136ms)
+✔ clock admission binds the actual complete producer to its build input; legacy absence stays separate (0.968649ms)
+✔ newborn FX cannot inherit pre-birth compose credit; frozen legacy counterexample still fails (94.011948ms)
+✔ zero-time force never ages FX and slow/hidden updates conserve actual elapsed time (93.221896ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3083.172083

@@ -1,0 +1,3911 @@
+{
+  "head": "fdb74165bc1a1668afe6f674db064474655fd05f",
+  "method": "Frozen original snapshots from fdb74165; compare all 614 complete composed outputs. New final adapters run only in the candidate. Shared quality adapter changes are identity-only; the Wave67 second-pass compatibility change separately proves unchanged first-pass output in wave67-adapter-parity.json.",
+  "compositionHash": "1e95aa65b8bf264acc90e4571caa8e2f2396d2e839bb3a8bccc5fd18b916869b",
+  "sources": 146,
+  "patches": 468,
+  "groups": {
+    "index.html": {
+      "files": 1,
+      "changed": 0
+    },
+    "src/config.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "src/i18n.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "src/main.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "styles/hud.css": {
+      "files": 1,
+      "changed": 0
+    },
+    "styles/mobile.css": {
+      "files": 1,
+      "changed": 0
+    },
+    "styles/ui.css": {
+      "files": 1,
+      "changed": 0
+    },
+    "src/audio": {
+      "files": 4,
+      "changed": 0
+    },
+    "src/boss": {
+      "files": 10,
+      "changed": 0
+    },
+    "src/core": {
+      "files": 10,
+      "changed": 0
+    },
+    "src/dev": {
+      "files": 1,
+      "changed": 0
+    },
+    "src/fx": {
+      "files": 4,
+      "changed": 2
+    },
+    "src/game": {
+      "files": 39,
+      "changed": 1
+    },
+    "src/net": {
+      "files": 4,
+      "changed": 0
+    },
+    "src/ui": {
+      "files": 9,
+      "changed": 0
+    },
+    "src/world": {
+      "files": 34,
+      "changed": 0
+    },
+    "vendor/three/build/three.core.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/build/three.module.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/geometries/RoundedBoxGeometry.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/libs/ktx-parse.module.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/libs/zstddec.module.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/loaders/KTX2Loader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/math/ColorSpaces.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/math/SimplexNoise.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/EffectComposer.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/GTAOPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/MaskPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/OutputPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/Pass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/RenderPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/ShaderPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/postprocessing/UnrealBloomPass.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/shaders/CopyShader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/shaders/GTAOShader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/shaders/LuminosityHighPassShader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/shaders/OutputShader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/shaders/PoissonDenoiseShader.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/utils/BufferGeometryUtils.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/utils/WorkerPool.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "vendor/three/jsm/libs/basis/basis_transcoder.js": {
+      "files": 1,
+      "changed": 0
+    },
+    "patches/splatoon3/runtime": {
+      "files": 412,
+      "changed": 2
+    },
+    "patches/native-stages/runtime": {
+      "files": 50,
+      "changed": 0
+    },
+    "patches/practice-range/stage": {
+      "files": 5,
+      "changed": 0
+    },
+    "patches/splatoon3/ui.css": {
+      "files": 1,
+      "changed": 1
+    }
+  },
+  "changes": [
+    {
+      "file": "src/fx/fx.js",
+      "equal": false,
+      "before": "f5c9db33b358f5e57abb259846c0850ccd404fa753bd95ed0f81df2971d352d8",
+      "after": "f135928ae860907af04df0c46886b7e205b3b4167dea8b99939473615329f374"
+    },
+    {
+      "file": "src/fx/screenfx.js",
+      "equal": false,
+      "before": "5818a823bba5d74dbfeb08ed8ad88a400caf246a0f76c16df13bb668a4cc776d",
+      "after": "8ecacb21fe8fd42701cbb8db77c8a29fb28ee17ba8d43e0705c6fe426427b30b"
+    },
+    {
+      "file": "src/game/character-mats.js",
+      "equal": false,
+      "before": "a66a4d03572c265beee54bda1a31e7240b5d4a36baa3b14cb0a2fef5ec7abdd0",
+      "after": "b0665b973516bb5408d8babfe745aed033d32f9b0dfa87f865ce193db5f8b42c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/menu-layout.mjs",
+      "equal": false,
+      "before": "ff0a0c479e5aca4f88082836c17d8631e2d835caae7fc9c8eddcaa26e76918d9",
+      "after": "10754c11b037659f1c46bddf9154e25aa223522ce2d17d100554bb1c5a965707"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "equal": false,
+      "before": "aa834a0aa3fe4616539a6a95187b1fc8eaab97acd11c7209b4ae648b81f80315",
+      "after": "9d9716c7e64e407e7705916875c8c3645ced58dd26ba7dbb0321c105db01429d"
+    },
+    {
+      "file": "patches/splatoon3/ui.css",
+      "equal": false,
+      "before": "b30638d8cd00061b17bf1e7dd50998fc95f7adfb0dffefe47a6140ec690f9eaa",
+      "after": "34074e3e9686cbdb90cdb4759598bb2276df22a297154c45ff3eabf2ef001d76"
+    }
+  ],
+  "errors": [],
+  "vfxJavaScriptOutsideShaderConstantsIdentical": true,
+  "files": [
+    {
+      "file": "index.html",
+      "equal": true,
+      "before": "9b10805b7f4cc34f2ae97c86a4bbfbff52f583e396ae6a8d621b6303bdb0dc2e",
+      "after": "9b10805b7f4cc34f2ae97c86a4bbfbff52f583e396ae6a8d621b6303bdb0dc2e"
+    },
+    {
+      "file": "src/config.js",
+      "equal": true,
+      "before": "a06722f0ac9125b39e75ff632749f61b949615da9e826c94c593273e6095dffc",
+      "after": "a06722f0ac9125b39e75ff632749f61b949615da9e826c94c593273e6095dffc"
+    },
+    {
+      "file": "src/i18n.js",
+      "equal": true,
+      "before": "7ff1dae11c76d569437065d0288ff07142cd035c4ef86094e514864ab1f2a87f",
+      "after": "7ff1dae11c76d569437065d0288ff07142cd035c4ef86094e514864ab1f2a87f"
+    },
+    {
+      "file": "src/main.js",
+      "equal": true,
+      "before": "87507d798c6242214bf1398304b426f1ec0a3c20fe8f25cb78886a5cb2f1921f",
+      "after": "87507d798c6242214bf1398304b426f1ec0a3c20fe8f25cb78886a5cb2f1921f"
+    },
+    {
+      "file": "styles/hud.css",
+      "equal": true,
+      "before": "139fbc45c93c9474c51b88159c271e0b75758b5ae8405815c77de7533ca89db0",
+      "after": "139fbc45c93c9474c51b88159c271e0b75758b5ae8405815c77de7533ca89db0"
+    },
+    {
+      "file": "styles/mobile.css",
+      "equal": true,
+      "before": "f85e7a644c7f5173ac4bcdc51d831190fd9f5f76ee9415dfab6d6435476eb43d",
+      "after": "f85e7a644c7f5173ac4bcdc51d831190fd9f5f76ee9415dfab6d6435476eb43d"
+    },
+    {
+      "file": "styles/ui.css",
+      "equal": true,
+      "before": "b2c32de2a6c1b529078f19bcae402718a6fa25d164597f56d58967f382b30c48",
+      "after": "b2c32de2a6c1b529078f19bcae402718a6fa25d164597f56d58967f382b30c48"
+    },
+    {
+      "file": "src/audio/audio.js",
+      "equal": true,
+      "before": "b7095ffaaa3100069501e26ae048d9893e0e58ede46014d8aa1cc97948eac7c4",
+      "after": "b7095ffaaa3100069501e26ae048d9893e0e58ede46014d8aa1cc97948eac7c4"
+    },
+    {
+      "file": "src/audio/bossAudio.js",
+      "equal": true,
+      "before": "f520a0f0daac31a645b24244b6cef7f7a102c03cefda8d3aefb93a70ac5e38fe",
+      "after": "f520a0f0daac31a645b24244b6cef7f7a102c03cefda8d3aefb93a70ac5e38fe"
+    },
+    {
+      "file": "src/audio/music.js",
+      "equal": true,
+      "before": "92e7cae33382da37fbe07b95178421976b4c44686905b9764ec3d781e504cfc0",
+      "after": "92e7cae33382da37fbe07b95178421976b4c44686905b9764ec3d781e504cfc0"
+    },
+    {
+      "file": "src/audio/streamedTrack.js",
+      "equal": true,
+      "before": "c29adf65430d3b10246ddff9c5133199561e0e7471855ff2aee391a2031b236a",
+      "after": "c29adf65430d3b10246ddff9c5133199561e0e7471855ff2aee391a2031b236a"
+    },
+    {
+      "file": "src/boss/boss.js",
+      "equal": true,
+      "before": "20fa5d445865bebd31ace2112e7eb181017277cf40cc377b826b4203e48aa9f2",
+      "after": "20fa5d445865bebd31ace2112e7eb181017277cf40cc377b826b4203e48aa9f2"
+    },
+    {
+      "file": "src/boss/bossAnim.js",
+      "equal": true,
+      "before": "86811dca85d18973b6078e5012961c4c45e61d8b755f4291fe04e148c1da732b",
+      "after": "86811dca85d18973b6078e5012961c4c45e61d8b755f4291fe04e148c1da732b"
+    },
+    {
+      "file": "src/boss/bossBrain.js",
+      "equal": true,
+      "before": "8e515e7d76fa5760dcaf9ec74c824605b8e67f3cfb0954dc39edacd22f99055b",
+      "after": "8e515e7d76fa5760dcaf9ec74c824605b8e67f3cfb0954dc39edacd22f99055b"
+    },
+    {
+      "file": "src/boss/bossHazards.js",
+      "equal": true,
+      "before": "9be6d6f3e2b7149ab0b4a4a2f6c9da2af725ff9fe3bf0403219b840e772c96cc",
+      "after": "9be6d6f3e2b7149ab0b4a4a2f6c9da2af725ff9fe3bf0403219b840e772c96cc"
+    },
+    {
+      "file": "src/boss/bossMats.js",
+      "equal": true,
+      "before": "2d3ea14fcf7ce8669a7954cb9b064ebb9d0f8359d3038da092bae2f0647b45df",
+      "after": "2d3ea14fcf7ce8669a7954cb9b064ebb9d0f8359d3038da092bae2f0647b45df"
+    },
+    {
+      "file": "src/boss/bossMode.js",
+      "equal": true,
+      "before": "d5804b8a4c7550f8e8e0cd3f270c7ff6da9d6ff4970d56f081a9a17993ce0878",
+      "after": "d5804b8a4c7550f8e8e0cd3f270c7ff6da9d6ff4970d56f081a9a17993ce0878"
+    },
+    {
+      "file": "src/boss/bossModel.js",
+      "equal": true,
+      "before": "2b6da652e8aaac4ac55b4e061a0392301fb829b3db6c13521e1d15eec1c3c0db",
+      "after": "2b6da652e8aaac4ac55b4e061a0392301fb829b3db6c13521e1d15eec1c3c0db"
+    },
+    {
+      "file": "src/boss/bossModelFx.js",
+      "equal": true,
+      "before": "b1a4e4a2369b552e1d745cfcf0b214ef38aac15ce71d84f13dae209cf04d4dff",
+      "after": "b1a4e4a2369b552e1d745cfcf0b214ef38aac15ce71d84f13dae209cf04d4dff"
+    },
+    {
+      "file": "src/boss/bossModelGeo.js",
+      "equal": true,
+      "before": "f2a8f0ded37a8239f7242ca0a76a747b5d6a9ca444a4d03c25a39de9cba44c4c",
+      "after": "f2a8f0ded37a8239f7242ca0a76a747b5d6a9ca444a4d03c25a39de9cba44c4c"
+    },
+    {
+      "file": "src/boss/bossNav.js",
+      "equal": true,
+      "before": "46616a8de1e919d5b1df1c44575c3774b59984b40be54eed6d447f6611f274d5",
+      "after": "46616a8de1e919d5b1df1c44575c3774b59984b40be54eed6d447f6611f274d5"
+    },
+    {
+      "file": "src/core/buildSlices.js",
+      "equal": true,
+      "before": "a291537f27a60a6c90d56318d33990553dd8407f8a5292477723774fed9d3ca2",
+      "after": "a291537f27a60a6c90d56318d33990553dd8407f8a5292477723774fed9d3ca2"
+    },
+    {
+      "file": "src/core/ctx.js",
+      "equal": true,
+      "before": "a9911b9732e5024c0065d30ab18d5cd48ebfd19d46bfdc7c9578b4e3ce7e67c5",
+      "after": "a9911b9732e5024c0065d30ab18d5cd48ebfd19d46bfdc7c9578b4e3ce7e67c5"
+    },
+    {
+      "file": "src/core/device.js",
+      "equal": true,
+      "before": "b04747e1f331dd5222d54c3f65d708c3bd70fdb81fbe5573041079396ad11464",
+      "after": "b04747e1f331dd5222d54c3f65d708c3bd70fdb81fbe5573041079396ad11464"
+    },
+    {
+      "file": "src/core/font-ready-budget.js",
+      "equal": true,
+      "before": "20fd295304a391797ff635b520ca3b8abe1fa883c49001839a8c40acf815a226",
+      "after": "20fd295304a391797ff635b520ca3b8abe1fa883c49001839a8c40acf815a226"
+    },
+    {
+      "file": "src/core/gyro.js",
+      "equal": true,
+      "before": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168",
+      "after": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+    },
+    {
+      "file": "src/core/input.js",
+      "equal": true,
+      "before": "34e00a0a4d269dfd7b41a3122c92f1e1ff64c9fc0afca6ce11960efcc2283ce6",
+      "after": "34e00a0a4d269dfd7b41a3122c92f1e1ff64c9fc0afca6ce11960efcc2283ce6"
+    },
+    {
+      "file": "src/core/mobile.js",
+      "equal": true,
+      "before": "35ae59014e031118b0a46f8a46815e3ae97aeebc84bd7f12f0076df5fa629d1d",
+      "after": "35ae59014e031118b0a46f8a46815e3ae97aeebc84bd7f12f0076df5fa629d1d"
+    },
+    {
+      "file": "src/core/renderer.js",
+      "equal": true,
+      "before": "91a32fc052480d9a6fc1d71cbf5003ea241faef4667f36637480267acf84ebde",
+      "after": "91a32fc052480d9a6fc1d71cbf5003ea241faef4667f36637480267acf84ebde"
+    },
+    {
+      "file": "src/core/save-validation.mjs",
+      "equal": true,
+      "before": "144d2a0a58dbd4d3bf0f89593899e1092628bfadfc28b30f2fa408c25faf327f",
+      "after": "144d2a0a58dbd4d3bf0f89593899e1092628bfadfc28b30f2fa408c25faf327f"
+    },
+    {
+      "file": "src/core/shadowcache.js",
+      "equal": true,
+      "before": "e8974c6877f7963c038fed56af9cbd0d8eef965b02db86f68a81d0cf9cc7461d",
+      "after": "e8974c6877f7963c038fed56af9cbd0d8eef965b02db86f68a81d0cf9cc7461d"
+    },
+    {
+      "file": "src/dev/stubs.js",
+      "equal": true,
+      "before": "49a19cec874c0c5b1799e4b581b350a4ee584a20bd1e73a30bdee34b05346c2f",
+      "after": "49a19cec874c0c5b1799e4b581b350a4ee584a20bd1e73a30bdee34b05346c2f"
+    },
+    {
+      "file": "src/fx/fx.js",
+      "equal": false,
+      "before": "f5c9db33b358f5e57abb259846c0850ccd404fa753bd95ed0f81df2971d352d8",
+      "after": "f135928ae860907af04df0c46886b7e205b3b4167dea8b99939473615329f374"
+    },
+    {
+      "file": "src/fx/fxHooks.js",
+      "equal": true,
+      "before": "e2e903097a4e6840e3a5fe244ea5ca867fc788fb787447ceddd895bf1726a8d8",
+      "after": "e2e903097a4e6840e3a5fe244ea5ca867fc788fb787447ceddd895bf1726a8d8"
+    },
+    {
+      "file": "src/fx/screenfx.js",
+      "equal": false,
+      "before": "5818a823bba5d74dbfeb08ed8ad88a400caf246a0f76c16df13bb668a4cc776d",
+      "after": "8ecacb21fe8fd42701cbb8db77c8a29fb28ee17ba8d43e0705c6fe426427b30b"
+    },
+    {
+      "file": "src/fx/swimWake.js",
+      "equal": true,
+      "before": "275a8a51968ef1e907fe5c5d1d95504264d6070011dbf900443a71c98c6504bb",
+      "after": "275a8a51968ef1e907fe5c5d1d95504264d6070011dbf900443a71c98c6504bb"
+    },
+    {
+      "file": "src/game/actor.js",
+      "equal": true,
+      "before": "00da8c2a37393740c25a71487a0a98f2dc168598e47702b13e71c4e4dec86eec",
+      "after": "00da8c2a37393740c25a71487a0a98f2dc168598e47702b13e71c4e4dec86eec"
+    },
+    {
+      "file": "src/game/bots.js",
+      "equal": true,
+      "before": "c91fdc18f355af09d15137737009e5c67ed811c75eb855f7c451d7f825472138",
+      "after": "c91fdc18f355af09d15137737009e5c67ed811c75eb855f7c451d7f825472138"
+    },
+    {
+      "file": "src/game/cameraRig.js",
+      "equal": true,
+      "before": "575885b86f2736e86b3b68efc5b2e9fcc7401a8703e4cb50599c06039d26495e",
+      "after": "575885b86f2736e86b3b68efc5b2e9fcc7401a8703e4cb50599c06039d26495e"
+    },
+    {
+      "file": "src/game/character-face.js",
+      "equal": true,
+      "before": "9ba29e0f157b02a17463cd32759f2608d392e1f894611f385213c4b41d76b111",
+      "after": "9ba29e0f157b02a17463cd32759f2608d392e1f894611f385213c4b41d76b111"
+    },
+    {
+      "file": "src/game/character-geo.js",
+      "equal": true,
+      "before": "bb83264d68c6b8c39fede4e71a4f1f96b7198445a92cedeed495459881b9856a",
+      "after": "bb83264d68c6b8c39fede4e71a4f1f96b7198445a92cedeed495459881b9856a"
+    },
+    {
+      "file": "src/game/character-hair.js",
+      "equal": true,
+      "before": "1f15e73352dc6f791b09c71bb9d9fa5aeea17c14cee3134f3ce6091209a60720",
+      "after": "1f15e73352dc6f791b09c71bb9d9fa5aeea17c14cee3134f3ce6091209a60720"
+    },
+    {
+      "file": "src/game/character-lod.js",
+      "equal": true,
+      "before": "f5630cb50ca2e2b9ad3737fa6d621a73e728d1462b8cca667c259687ac6a059f",
+      "after": "f5630cb50ca2e2b9ad3737fa6d621a73e728d1462b8cca667c259687ac6a059f"
+    },
+    {
+      "file": "src/game/character-mats.js",
+      "equal": false,
+      "before": "a66a4d03572c265beee54bda1a31e7240b5d4a36baa3b14cb0a2fef5ec7abdd0",
+      "after": "b0665b973516bb5408d8babfe745aed033d32f9b0dfa87f865ce193db5f8b42c"
+    },
+    {
+      "file": "src/game/character-outfit.js",
+      "equal": true,
+      "before": "577d349c6c838dcd9d4f26f07648ea38d6085cfaeb82ecb127ddbae83555d786",
+      "after": "577d349c6c838dcd9d4f26f07648ea38d6085cfaeb82ecb127ddbae83555d786"
+    },
+    {
+      "file": "src/game/character-style.js",
+      "equal": true,
+      "before": "65e8b4345a2a04afc3bfa7afe5b6f23a4778dd0bf81fe332fe84a4f0b7de593e",
+      "after": "65e8b4345a2a04afc3bfa7afe5b6f23a4778dd0bf81fe332fe84a4f0b7de593e"
+    },
+    {
+      "file": "src/game/character-weapons.js",
+      "equal": true,
+      "before": "4b9f08fbd4b5d70fd4375364b4456b6a557ad523374973f5c2455e9d4941b5c6",
+      "after": "4b9f08fbd4b5d70fd4375364b4456b6a557ad523374973f5c2455e9d4941b5c6"
+    },
+    {
+      "file": "src/game/character.js",
+      "equal": true,
+      "before": "afa6b8d9fa9c805434a46f52622c09ee6a191563612cfac031f03e99e6f171de",
+      "after": "afa6b8d9fa9c805434a46f52622c09ee6a191563612cfac031f03e99e6f171de"
+    },
+    {
+      "file": "src/game/chargerTuning.js",
+      "equal": true,
+      "before": "b86b2d4f41c2bbd70dfa4717b7ea195bd57bb78689da414c416af08dd4da8610",
+      "after": "b86b2d4f41c2bbd70dfa4717b7ea195bd57bb78689da414c416af08dd4da8610"
+    },
+    {
+      "file": "src/game/inkCollision.js",
+      "equal": true,
+      "before": "21f6e79a7af986cf1380963a7b3f023fbf6c749bf6d2fa6cedf197751b0ec731",
+      "after": "21f6e79a7af986cf1380963a7b3f023fbf6c749bf6d2fa6cedf197751b0ec731"
+    },
+    {
+      "file": "src/game/inkFlight.js",
+      "equal": true,
+      "before": "65245332ad0b9191220b68e7d2f73b51071107b278080be027f396f916b5d32e",
+      "after": "65245332ad0b9191220b68e7d2f73b51071107b278080be027f396f916b5d32e"
+    },
+    {
+      "file": "src/game/inkFlightRuntime.js",
+      "equal": true,
+      "before": "bcb4316200d4bb940fab571a6f4439aa663581d63cbf00f236f04e5e1cafa7fa",
+      "after": "bcb4316200d4bb940fab571a6f4439aa663581d63cbf00f236f04e5e1cafa7fa"
+    },
+    {
+      "file": "src/game/lobbySet-geo.js",
+      "equal": true,
+      "before": "649be527098d0bd1757d145dca57e8947d2aed5d9e862ba90d7a3ed96c6f2cc1",
+      "after": "649be527098d0bd1757d145dca57e8947d2aed5d9e862ba90d7a3ed96c6f2cc1"
+    },
+    {
+      "file": "src/game/lobbySet-mats.js",
+      "equal": true,
+      "before": "c642061423a6c0623fc9f91e370a0cfcc9f5745e1bf6b3c73249f1630e045153",
+      "after": "c642061423a6c0623fc9f91e370a0cfcc9f5745e1bf6b3c73249f1630e045153"
+    },
+    {
+      "file": "src/game/lobbySet-tex.js",
+      "equal": true,
+      "before": "2a30cf64a29840f862e7beeae1ef59328b480f4398b54d8e284d103664ac6dba",
+      "after": "2a30cf64a29840f862e7beeae1ef59328b480f4398b54d8e284d103664ac6dba"
+    },
+    {
+      "file": "src/game/lobbySet.js",
+      "equal": true,
+      "before": "5abe96987d11fcaa94ac7f0375341e9bffb1c38a831508d7d255592ebfc8d452",
+      "after": "5abe96987d11fcaa94ac7f0375341e9bffb1c38a831508d7d255592ebfc8d452"
+    },
+    {
+      "file": "src/game/match.js",
+      "equal": true,
+      "before": "a549ce1f4688feba1af9db56f52ba95dac73803d0c404780feb2c1b0ad6d3e74",
+      "after": "a549ce1f4688feba1af9db56f52ba95dac73803d0c404780feb2c1b0ad6d3e74"
+    },
+    {
+      "file": "src/game/minimap.js",
+      "equal": true,
+      "before": "eb032bac71d8354945f62525e966c66e1c320869060d5aadffaa75ef2cf17410",
+      "after": "eb032bac71d8354945f62525e966c66e1c320869060d5aadffaa75ef2cf17410"
+    },
+    {
+      "file": "src/game/nav.js",
+      "equal": true,
+      "before": "1f840278f1fff43b30dccfd0aec5835ba4c94608d88eb05455f85b6656943f56",
+      "after": "1f840278f1fff43b30dccfd0aec5835ba4c94608d88eb05455f85b6656943f56"
+    },
+    {
+      "file": "src/game/physics.js",
+      "equal": true,
+      "before": "132d20deda793830429a6100731c5fbb305abd63deb54403c07b0e3cd05c84c2",
+      "after": "132d20deda793830429a6100731c5fbb305abd63deb54403c07b0e3cd05c84c2"
+    },
+    {
+      "file": "src/game/player.js",
+      "equal": true,
+      "before": "48bc242251a72ca89c4eb290bd2559e04297c0a087d6fc9f5bef0cd03ff52adc",
+      "after": "48bc242251a72ca89c4eb290bd2559e04297c0a087d6fc9f5bef0cd03ff52adc"
+    },
+    {
+      "file": "src/game/showcase.js",
+      "equal": true,
+      "before": "d467f01af0633363d15542a3be9a2ee5b9a37de0a65c576e43b13076833dbea6",
+      "after": "d467f01af0633363d15542a3be9a2ee5b9a37de0a65c576e43b13076833dbea6"
+    },
+    {
+      "file": "src/game/weapons.js",
+      "equal": true,
+      "before": "d1d8736149b852c98e40a1c94023e4dc416a4cb712a85781d8d958cb1263910e",
+      "after": "d1d8736149b852c98e40a1c94023e4dc416a4cb712a85781d8d958cb1263910e"
+    },
+    {
+      "file": "src/net/mock.js",
+      "equal": true,
+      "before": "7d56b6ea20bbfb2316c1884cb71dd2ecf61b756057e1cea0695a2586c1dbbbac",
+      "after": "7d56b6ea20bbfb2316c1884cb71dd2ecf61b756057e1cea0695a2586c1dbbbac"
+    },
+    {
+      "file": "src/net/netmatch.js",
+      "equal": true,
+      "before": "2133433dbb4313a4b7a1f51fb247557b177a0def93d9a9d9e42b1d9bb36b0353",
+      "after": "2133433dbb4313a4b7a1f51fb247557b177a0def93d9a9d9e42b1d9bb36b0353"
+    },
+    {
+      "file": "src/net/session.js",
+      "equal": true,
+      "before": "17e76e5f67eb35f89a089d41de6011c4ab5c7d0a5c1985cc600eccfd39f53179",
+      "after": "17e76e5f67eb35f89a089d41de6011c4ab5c7d0a5c1985cc600eccfd39f53179"
+    },
+    {
+      "file": "src/net/transport.js",
+      "equal": true,
+      "before": "d3bacb917db5f190688d396882cb355d1504825618b732cb86caeb6b86727a24",
+      "after": "d3bacb917db5f190688d396882cb355d1504825618b732cb86caeb6b86727a24"
+    },
+    {
+      "file": "src/ui/boss-art.js",
+      "equal": true,
+      "before": "380609a0fab8f0e6e469173a3037bc831fc42b4ee75c381b8f3dc2cb927da610",
+      "after": "380609a0fab8f0e6e469173a3037bc831fc42b4ee75c381b8f3dc2cb927da610"
+    },
+    {
+      "file": "src/ui/diorama.js",
+      "equal": true,
+      "before": "f0eec4fd3f043c41281fa0e21891ae5ba29365ff63e669fec195fbcd2ed9c446",
+      "after": "f0eec4fd3f043c41281fa0e21891ae5ba29365ff63e669fec195fbcd2ed9c446"
+    },
+    {
+      "file": "src/ui/hud-boss.js",
+      "equal": true,
+      "before": "fc22cced813eb46453a0a707d7465325deb9824e7712b8612371576759c12e4a",
+      "after": "fc22cced813eb46453a0a707d7465325deb9824e7712b8612371576759c12e4a"
+    },
+    {
+      "file": "src/ui/hud.js",
+      "equal": true,
+      "before": "e7bca1b39be5d9472918f67b3156ef16b4db3c7b2c59f5b5a7356ffd193b1d95",
+      "after": "e7bca1b39be5d9472918f67b3156ef16b4db3c7b2c59f5b5a7356ffd193b1d95"
+    },
+    {
+      "file": "src/ui/menu-art.js",
+      "equal": true,
+      "before": "cc403255f85c2d91d533b6545a6ae44808833f92ede340f4daec15a10b9b99e7",
+      "after": "cc403255f85c2d91d533b6545a6ae44808833f92ede340f4daec15a10b9b99e7"
+    },
+    {
+      "file": "src/ui/menus.js",
+      "equal": true,
+      "before": "c789bf37d058b42e3e95ca461d68f43f7708866032d123a72b5a62db265041a1",
+      "after": "c789bf37d058b42e3e95ca461d68f43f7708866032d123a72b5a62db265041a1"
+    },
+    {
+      "file": "src/ui/news.js",
+      "equal": true,
+      "before": "4cd80395fb0276dad46408a3ac7190a1efe0889bad82cbdf995ffc6d32198a18",
+      "after": "4cd80395fb0276dad46408a3ac7190a1efe0889bad82cbdf995ffc6d32198a18"
+    },
+    {
+      "file": "src/ui/ui-icons.js",
+      "equal": true,
+      "before": "396d04d1dbf9dd647e1ba85d6e83f056e0645805127bd712a57a44d5afdaef44",
+      "after": "396d04d1dbf9dd647e1ba85d6e83f056e0645805127bd712a57a44d5afdaef44"
+    },
+    {
+      "file": "src/ui/ui-util.js",
+      "equal": true,
+      "before": "6ac6de3552fac5fcb861bf6dc8aa032752ef4fa3be151fda2e07d44d756b9d27",
+      "after": "6ac6de3552fac5fcb861bf6dc8aa032752ef4fa3be151fda2e07d44d756b9d27"
+    },
+    {
+      "file": "src/world/attribute-staging.js",
+      "equal": true,
+      "before": "52e5664adb41aac7d8aeddc9dae2806569f04cd954cf3c929779cf36517b9c82",
+      "after": "52e5664adb41aac7d8aeddc9dae2806569f04cd954cf3c929779cf36517b9c82"
+    },
+    {
+      "file": "src/world/decor.js",
+      "equal": true,
+      "before": "b5a391d3189f105aed8bde3f7af8534498fdcb8e604f6e3d7242d9ab36545013",
+      "after": "b5a391d3189f105aed8bde3f7af8534498fdcb8e604f6e3d7242d9ab36545013"
+    },
+    {
+      "file": "src/world/dressing.js",
+      "equal": true,
+      "before": "b038a97032e1a165a7cb715eb7c7d35146b58cb4e1ce2df30da1cff443881c42",
+      "after": "b038a97032e1a165a7cb715eb7c7d35146b58cb4e1ce2df30da1cff443881c42"
+    },
+    {
+      "file": "src/world/environment.js",
+      "equal": true,
+      "before": "f8a517b48d20ca81435029ae603a1d86bb4ccf193bf6a128c8e05a28d7fcf0ea",
+      "after": "f8a517b48d20ca81435029ae603a1d86bb4ccf193bf6a128c8e05a28d7fcf0ea"
+    },
+    {
+      "file": "src/world/inkShading.js",
+      "equal": true,
+      "before": "0afce2c60244160670c41034a5f92ebf0532b41d69838dbc9bc2cccd3d8c3ec6",
+      "after": "0afce2c60244160670c41034a5f92ebf0532b41d69838dbc9bc2cccd3d8c3ec6"
+    },
+    {
+      "file": "src/world/level.js",
+      "equal": true,
+      "before": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "after": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17"
+    },
+    {
+      "file": "src/world/levelMaterial.js",
+      "equal": true,
+      "before": "c786ea8ef3e7441ffa2100d9d3b11c7c8788cb9a51d7695d20821239b0f09a73",
+      "after": "c786ea8ef3e7441ffa2100d9d3b11c7c8788cb9a51d7695d20821239b0f09a73"
+    },
+    {
+      "file": "src/world/lightmap-assets.js",
+      "equal": true,
+      "before": "dddc4ee174f9aac8e81ce9f0686a132950d231782121b8508d1609c34b8319a3",
+      "after": "dddc4ee174f9aac8e81ce9f0686a132950d231782121b8508d1609c34b8319a3"
+    },
+    {
+      "file": "src/world/mapThumb.js",
+      "equal": true,
+      "before": "961a28cb726c993361edfb829ee8dacfcb2e5a9c51e606faef4b9a60f489cb5d",
+      "after": "961a28cb726c993361edfb829ee8dacfcb2e5a9c51e606faef4b9a60f489cb5d"
+    },
+    {
+      "file": "src/world/mapkit.js",
+      "equal": true,
+      "before": "be02ec9ae03207db3a632af6de8c29f303e2aa85fea8f1248d12e558679d542d",
+      "after": "be02ec9ae03207db3a632af6de8c29f303e2aa85fea8f1248d12e558679d542d"
+    },
+    {
+      "file": "src/world/maps.js",
+      "equal": true,
+      "before": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "after": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4"
+    },
+    {
+      "file": "src/world/murals.js",
+      "equal": true,
+      "before": "40a9c7be8588da1a22ff82b7d06c4677ab8b57cfa68d5444f4ffa5f334feceb8",
+      "after": "40a9c7be8588da1a22ff82b7d06c4677ab8b57cfa68d5444f4ffa5f334feceb8"
+    },
+    {
+      "file": "src/world/paint.js",
+      "equal": true,
+      "before": "5abc4debfc1fc453f352299e1090147af2d105c10371e78ed1bf1e7361dc4227",
+      "after": "5abc4debfc1fc453f352299e1090147af2d105c10371e78ed1bf1e7361dc4227"
+    },
+    {
+      "file": "src/world/prop-packs.js",
+      "equal": true,
+      "before": "d3cff15b46b43f2d4efe9a38f72138c11df6184b1be13ba33bdfd23f5c9b794a",
+      "after": "d3cff15b46b43f2d4efe9a38f72138c11df6184b1be13ba33bdfd23f5c9b794a"
+    },
+    {
+      "file": "src/world/props-core.js",
+      "equal": true,
+      "before": "c183379553155dc0b4838c2660f04bddbfdf919c601c09a5887f473b06ce9e5f",
+      "after": "c183379553155dc0b4838c2660f04bddbfdf919c601c09a5887f473b06ce9e5f"
+    },
+    {
+      "file": "src/world/props-marina-dock.js",
+      "equal": true,
+      "before": "5162b5fcf026fdcce9d260a2d07de67178c0dbdf163ec555566b5061bc110326",
+      "after": "5162b5fcf026fdcce9d260a2d07de67178c0dbdf163ec555566b5061bc110326"
+    },
+    {
+      "file": "src/world/props-marina-placements.js",
+      "equal": true,
+      "before": "7746e35f37dd20dc903d916ba6a19ebce3983b45df32d863288bbe24f12fcdf8",
+      "after": "7746e35f37dd20dc903d916ba6a19ebce3983b45df32d863288bbe24f12fcdf8"
+    },
+    {
+      "file": "src/world/props-marina-vessels.js",
+      "equal": true,
+      "before": "40772d0b853e647f94e8ad345c006e5285a5e4d2bb0d3e3cd6964aa73707745f",
+      "after": "40772d0b853e647f94e8ad345c006e5285a5e4d2bb0d3e3cd6964aa73707745f"
+    },
+    {
+      "file": "src/world/props.js",
+      "equal": true,
+      "before": "3892caf1a82c952649dc7e31ff47ff86af7abe3753917d861338c7e9d795c48c",
+      "after": "3892caf1a82c952649dc7e31ff47ff86af7abe3753917d861338c7e9d795c48c"
+    },
+    {
+      "file": "src/world/render-bounds.js",
+      "equal": true,
+      "before": "8210a4c186f62d123feccd7aafc44a2eedb06cd7cca01258a1d8e869903a7274",
+      "after": "8210a4c186f62d123feccd7aafc44a2eedb06cd7cca01258a1d8e869903a7274"
+    },
+    {
+      "file": "src/world/texlib.js",
+      "equal": true,
+      "before": "1abcaa3dc76f704021e2baff168673ae67684c82c95e1ff86782e543f0dcc874",
+      "after": "1abcaa3dc76f704021e2baff168673ae67684c82c95e1ff86782e543f0dcc874"
+    },
+    {
+      "file": "src/world/wave-data.js",
+      "equal": true,
+      "before": "5cca2b8bce9d88d817e80be6d76fc5d3d0360a9c88407deab193b893c22f99a1",
+      "after": "5cca2b8bce9d88d817e80be6d76fc5d3d0360a9c88407deab193b893c22f99a1"
+    },
+    {
+      "file": "src/world/wave-prewarm.js",
+      "equal": true,
+      "before": "5a280618f90d977b5604cdcd1f93820a5d89407c6efcd7cf8c93102989f6fbdf",
+      "after": "5a280618f90d977b5604cdcd1f93820a5d89407c6efcd7cf8c93102989f6fbdf"
+    },
+    {
+      "file": "src/world/wave-worker.js",
+      "equal": true,
+      "before": "58de0366abe6c42ec9ea6cba5c4e6af18e60029cac8cf9bb2c5a4c27511724a9",
+      "after": "58de0366abe6c42ec9ea6cba5c4e6af18e60029cac8cf9bb2c5a4c27511724a9"
+    },
+    {
+      "file": "src/game/motion/body-balance.js",
+      "equal": true,
+      "before": "066db2818a36c8aee613b0030e7ce61bcc8b25d0bf1d68a83923081b5a9ddc47",
+      "after": "066db2818a36c8aee613b0030e7ce61bcc8b25d0bf1d68a83923081b5a9ddc47"
+    },
+    {
+      "file": "src/game/motion/cadence-control.js",
+      "equal": true,
+      "before": "d25a9c1a4c7b3163e0f7705e91c56abcb79732e6980b4e937d6f983cbf3460c8",
+      "after": "d25a9c1a4c7b3163e0f7705e91c56abcb79732e6980b4e937d6f983cbf3460c8"
+    },
+    {
+      "file": "src/game/motion/contact-transition.js",
+      "equal": true,
+      "before": "8efc71c0b2615a370d9489fcb690d47eec708d80110d188e594e1f4886eb8f1c",
+      "after": "8efc71c0b2615a370d9489fcb690d47eec708d80110d188e594e1f4886eb8f1c"
+    },
+    {
+      "file": "src/game/motion/gait-targets.js",
+      "equal": true,
+      "before": "a5c488a585c205cb236afaf28d9256a7f3a8370d421743cc1ba85c12abd35ae7",
+      "after": "a5c488a585c205cb236afaf28d9256a7f3a8370d421743cc1ba85c12abd35ae7"
+    },
+    {
+      "file": "src/game/motion/hair-targets.js",
+      "equal": true,
+      "before": "d104a180fc2c4db12ce62bddcf853f1954229977e54eb2efa54d473dcd1f187b",
+      "after": "d104a180fc2c4db12ce62bddcf853f1954229977e54eb2efa54d473dcd1f187b"
+    },
+    {
+      "file": "src/game/motion/locomotion-profile.js",
+      "equal": true,
+      "before": "5f469960df1a24d7fd7ea6ed0fc6c92257d91681f4d877cd494ff28e49dcb390",
+      "after": "5f469960df1a24d7fd7ea6ed0fc6c92257d91681f4d877cd494ff28e49dcb390"
+    },
+    {
+      "file": "src/game/motion/retarget.js",
+      "equal": true,
+      "before": "3fd9ea38eb0a5dc9a141375049d0e29f44487b4f8b371cc2bae21464700df650",
+      "after": "3fd9ea38eb0a5dc9a141375049d0e29f44487b4f8b371cc2bae21464700df650"
+    },
+    {
+      "file": "src/game/motion/root-hair.js",
+      "equal": true,
+      "before": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "after": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a"
+    },
+    {
+      "file": "src/game/motion/run-foot-path.js",
+      "equal": true,
+      "before": "b8a0e372bfa91184d8a7c40e84654da16bff6e90520cdf7410f75af8f4634a7a",
+      "after": "b8a0e372bfa91184d8a7c40e84654da16bff6e90520cdf7410f75af8f4634a7a"
+    },
+    {
+      "file": "src/game/motion/source-bank.js",
+      "equal": true,
+      "before": "bab08f0596228dc4a3848988477caad35e78610f6d6f2f5359ae2e149690e04b",
+      "after": "bab08f0596228dc4a3848988477caad35e78610f6d6f2f5359ae2e149690e04b"
+    },
+    {
+      "file": "src/game/motion/source-controller.js",
+      "equal": true,
+      "before": "da3f2af95685a54c6a21604d8b9bf516cbd0171d10029d335cc8bdbc62796261",
+      "after": "da3f2af95685a54c6a21604d8b9bf516cbd0171d10029d335cc8bdbc62796261"
+    },
+    {
+      "file": "src/game/motion/squid-rig.js",
+      "equal": true,
+      "before": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "after": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110"
+    },
+    {
+      "file": "src/world/stages/data.js",
+      "equal": true,
+      "before": "5f49e7ae3e89e83eb70ac43e444f8433f4f86633b41c500c5fcdd6cc00e9f4e9",
+      "after": "5f49e7ae3e89e83eb70ac43e444f8433f4f86633b41c500c5fcdd6cc00e9f4e9"
+    },
+    {
+      "file": "src/world/stages/index.js",
+      "equal": true,
+      "before": "28db2307f3df512fa28b9b2c13d4b29143c933823437bd7646b23f520e619574",
+      "after": "28db2307f3df512fa28b9b2c13d4b29143c933823437bd7646b23f520e619574"
+    },
+    {
+      "file": "src/world/stages/range-data.js",
+      "equal": true,
+      "before": "659cc654b16f1defa8cc83fe5dd53195e39936f3c8fd99161c829e6206ca0d46",
+      "after": "659cc654b16f1defa8cc83fe5dd53195e39936f3c8fd99161c829e6206ca0d46"
+    },
+    {
+      "file": "src/world/stages/surfaces.js",
+      "equal": true,
+      "before": "e62996527e177450d2060ff00518ee602b7006d918bc68485f7679b4cb2f38fd",
+      "after": "e62996527e177450d2060ff00518ee602b7006d918bc68485f7679b4cb2f38fd"
+    },
+    {
+      "file": "vendor/three/build/three.core.js",
+      "equal": true,
+      "before": "6b4bcd11e1e1a418b55ed05e94bc66c2a63dfa1559f270ac8dff937aa428faa3",
+      "after": "6b4bcd11e1e1a418b55ed05e94bc66c2a63dfa1559f270ac8dff937aa428faa3"
+    },
+    {
+      "file": "vendor/three/build/three.module.js",
+      "equal": true,
+      "before": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "after": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+    },
+    {
+      "file": "src/world/stages/cargo/data.js",
+      "equal": true,
+      "before": "e1c90049659ecec4fd6acf5f7fbcdd01bcf91103991bd798f6bb3e1efbed2ae4",
+      "after": "e1c90049659ecec4fd6acf5f7fbcdd01bcf91103991bd798f6bb3e1efbed2ae4"
+    },
+    {
+      "file": "src/world/stages/cargo/layout.js",
+      "equal": true,
+      "before": "5d60ef0cf1dc540ee7c1f34455e27c6a88301372eceab1362ca141c8cc7cf16e",
+      "after": "5d60ef0cf1dc540ee7c1f34455e27c6a88301372eceab1362ca141c8cc7cf16e"
+    },
+    {
+      "file": "src/world/stages/cargo/murals.js",
+      "equal": true,
+      "before": "a49a42e985984de107dc7c8e3480e07841cb028d8717c5554d28414e09c7029f",
+      "after": "a49a42e985984de107dc7c8e3480e07841cb028d8717c5554d28414e09c7029f"
+    },
+    {
+      "file": "src/world/stages/cargo/placements.js",
+      "equal": true,
+      "before": "378ab125fce68535d800b08f745d1fd2cc405e6e22fcd19baaaedcdf69f9d938",
+      "after": "378ab125fce68535d800b08f745d1fd2cc405e6e22fcd19baaaedcdf69f9d938"
+    },
+    {
+      "file": "src/world/stages/cargo/props.js",
+      "equal": true,
+      "before": "5df6f3c5049526b6a38bcfd468013f3895b5bd24ab6e3cb13add341b2fd02993",
+      "after": "5df6f3c5049526b6a38bcfd468013f3895b5bd24ab6e3cb13add341b2fd02993"
+    },
+    {
+      "file": "src/world/stages/cargo/surfaces.js",
+      "equal": true,
+      "before": "edab58d36d22ec337a3999747e97bf604cc5e8c8397c1145bba55a26f754a2a4",
+      "after": "edab58d36d22ec337a3999747e97bf604cc5e8c8397c1145bba55a26f754a2a4"
+    },
+    {
+      "file": "vendor/three/jsm/geometries/RoundedBoxGeometry.js",
+      "equal": true,
+      "before": "c5feab96123858ed8823c889b238dc8734adab7e760e3cfd21e7f3f2f3e348e3",
+      "after": "c5feab96123858ed8823c889b238dc8734adab7e760e3cfd21e7f3f2f3e348e3"
+    },
+    {
+      "file": "vendor/three/jsm/libs/ktx-parse.module.js",
+      "equal": true,
+      "before": "f40c491f6c44dde511268121f778a0050e73b1a15fd844c1ae2c78c73213eafc",
+      "after": "f40c491f6c44dde511268121f778a0050e73b1a15fd844c1ae2c78c73213eafc"
+    },
+    {
+      "file": "vendor/three/jsm/libs/zstddec.module.js",
+      "equal": true,
+      "before": "5cbf818e842628a4464e748594a6deae18ceddda3c2f541e7b3a0ff5fc7611e2",
+      "after": "5cbf818e842628a4464e748594a6deae18ceddda3c2f541e7b3a0ff5fc7611e2"
+    },
+    {
+      "file": "vendor/three/jsm/loaders/KTX2Loader.js",
+      "equal": true,
+      "before": "3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c",
+      "after": "3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c"
+    },
+    {
+      "file": "vendor/three/jsm/math/ColorSpaces.js",
+      "equal": true,
+      "before": "cc35c01c793cd17ccded7bc8142abffd3ce0d60dd6de8d5d216983bd05aee262",
+      "after": "cc35c01c793cd17ccded7bc8142abffd3ce0d60dd6de8d5d216983bd05aee262"
+    },
+    {
+      "file": "vendor/three/jsm/math/SimplexNoise.js",
+      "equal": true,
+      "before": "4b1455617135e6b477de76244de07547d95570643379b72f4758e50161b06072",
+      "after": "4b1455617135e6b477de76244de07547d95570643379b72f4758e50161b06072"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/EffectComposer.js",
+      "equal": true,
+      "before": "4e079a5886152d7e529a59aef644e968ab4d32c6a33ce016b36bf29b2eac26f7",
+      "after": "4e079a5886152d7e529a59aef644e968ab4d32c6a33ce016b36bf29b2eac26f7"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/GTAOPass.js",
+      "equal": true,
+      "before": "a277f848d1035c751c54d9706e579aeb74689126ced25723e53d52ac3f26f445",
+      "after": "a277f848d1035c751c54d9706e579aeb74689126ced25723e53d52ac3f26f445"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/MaskPass.js",
+      "equal": true,
+      "before": "7cd08eee9d5d6f5578beaddbdcbe9c384f6873810af27f22ab7db3ceeb127aa3",
+      "after": "7cd08eee9d5d6f5578beaddbdcbe9c384f6873810af27f22ab7db3ceeb127aa3"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/OutputPass.js",
+      "equal": true,
+      "before": "02e4a261af34de71338185e9e87f0cbe5cba9115608d984363e1269dec1d2272",
+      "after": "02e4a261af34de71338185e9e87f0cbe5cba9115608d984363e1269dec1d2272"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/Pass.js",
+      "equal": true,
+      "before": "444b409c235ead986893c472e720da1b779a56985c7d10b279c7944b52bd61c5",
+      "after": "444b409c235ead986893c472e720da1b779a56985c7d10b279c7944b52bd61c5"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/RenderPass.js",
+      "equal": true,
+      "before": "817f6c3cdcd0fd41515d112359ea0532568eefb5aabd3b33903957ebca1b8a6a",
+      "after": "817f6c3cdcd0fd41515d112359ea0532568eefb5aabd3b33903957ebca1b8a6a"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/ShaderPass.js",
+      "equal": true,
+      "before": "e2500a5913b26bbf5148ceaae644c6edcff06a18b01494ee37bf856353d2ab9d",
+      "after": "e2500a5913b26bbf5148ceaae644c6edcff06a18b01494ee37bf856353d2ab9d"
+    },
+    {
+      "file": "vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+      "equal": true,
+      "before": "ba8f2fcadfa6588384c9473498f974d81d120f02f0e63a0e59c265202a006b5a",
+      "after": "ba8f2fcadfa6588384c9473498f974d81d120f02f0e63a0e59c265202a006b5a"
+    },
+    {
+      "file": "vendor/three/jsm/shaders/CopyShader.js",
+      "equal": true,
+      "before": "a33057d5ac91c43304c186ac0e8816e62bb2ed471d3a00ff3018dfd5c0389718",
+      "after": "a33057d5ac91c43304c186ac0e8816e62bb2ed471d3a00ff3018dfd5c0389718"
+    },
+    {
+      "file": "vendor/three/jsm/shaders/GTAOShader.js",
+      "equal": true,
+      "before": "cdea7be60452f61105375d2c18e4da2e8ce7b39a89246b1bb8fbf79319d58cfd",
+      "after": "cdea7be60452f61105375d2c18e4da2e8ce7b39a89246b1bb8fbf79319d58cfd"
+    },
+    {
+      "file": "vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+      "equal": true,
+      "before": "5044f780b6e6cf863947f64c36fe1587132f7fbe395ada863cd1e5f0388dcf1e",
+      "after": "5044f780b6e6cf863947f64c36fe1587132f7fbe395ada863cd1e5f0388dcf1e"
+    },
+    {
+      "file": "vendor/three/jsm/shaders/OutputShader.js",
+      "equal": true,
+      "before": "353479f77a8d7e2629d49ccac9fc2f5dbfdda5442e0adf867b00377a2fcb0cb2",
+      "after": "353479f77a8d7e2629d49ccac9fc2f5dbfdda5442e0adf867b00377a2fcb0cb2"
+    },
+    {
+      "file": "vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+      "equal": true,
+      "before": "61da074a9ad8b2139dd164c96b8b62c299f056ce06c216e1f707c5151d997602",
+      "after": "61da074a9ad8b2139dd164c96b8b62c299f056ce06c216e1f707c5151d997602"
+    },
+    {
+      "file": "vendor/three/jsm/utils/BufferGeometryUtils.js",
+      "equal": true,
+      "before": "9fb63427ce6641fa14fd0baff9cc4d1b5f9c3d85fd084bf2e90e803c44ec1797",
+      "after": "9fb63427ce6641fa14fd0baff9cc4d1b5f9c3d85fd084bf2e90e803c44ec1797"
+    },
+    {
+      "file": "vendor/three/jsm/utils/WorkerPool.js",
+      "equal": true,
+      "before": "5ac7095fd566bc9ae48376055fd66edf27cb9ebbf9e1269dc206bfd4933ae9eb",
+      "after": "5ac7095fd566bc9ae48376055fd66edf27cb9ebbf9e1269dc206bfd4933ae9eb"
+    },
+    {
+      "file": "vendor/three/jsm/libs/basis/basis_transcoder.js",
+      "equal": true,
+      "before": "8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1",
+      "after": "8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/action-admission.mjs",
+      "equal": true,
+      "before": "d7a7efab3c0e424a02365378514fa7d565fbb1c97d025fa2acd8a94b4d2fea95",
+      "after": "d7a7efab3c0e424a02365378514fa7d565fbb1c97d025fa2acd8a94b4d2fea95"
+    },
+    {
+      "file": "patches/splatoon3/runtime/active-special-gauge.mjs",
+      "equal": true,
+      "before": "821c6d86fc45b847fe00cc03948454c72c2c673d81f908e3a47a6bbe45231733",
+      "after": "821c6d86fc45b847fe00cc03948454c72c2c673d81f908e3a47a6bbe45231733"
+    },
+    {
+      "file": "patches/splatoon3/runtime/actor-motion.mjs",
+      "equal": true,
+      "before": "239451a8096d23c7bc1581e7680e6e42fb479eb7b0072bf0c07c85f4e536cd75",
+      "after": "239451a8096d23c7bc1581e7680e6e42fb479eb7b0072bf0c07c85f4e536cd75"
+    },
+    {
+      "file": "patches/splatoon3/runtime/added-family-paint.mjs",
+      "equal": true,
+      "before": "489d968c992c09a29469158d5bc5a3c59cec101818c9ac2be585dd4b2e891ffe",
+      "after": "489d968c992c09a29469158d5bc5a3c59cec101818c9ac2be585dd4b2e891ffe"
+    },
+    {
+      "file": "patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+      "equal": true,
+      "before": "1039240357c1906bf2d3f9bfe6487cf1acdea7a3b9f488f11715a3c1a1fa74da",
+      "after": "1039240357c1906bf2d3f9bfe6487cf1acdea7a3b9f488f11715a3c1a1fa74da"
+    },
+    {
+      "file": "patches/splatoon3/runtime/all-specials.mjs",
+      "equal": true,
+      "before": "7005379ef04ecd15cc3063a2b6ddbc594e27ae011ab59dd5abd86b1b4c3a68cf",
+      "after": "7005379ef04ecd15cc3063a2b6ddbc594e27ae011ab59dd5abd86b1b4c3a68cf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/all-subs.mjs",
+      "equal": true,
+      "before": "114834e3feee49ccd44581d0a27cec21455ed040d690dbca166c1f77cb70f5b3",
+      "after": "114834e3feee49ccd44581d0a27cec21455ed040d690dbca166c1f77cb70f5b3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+      "equal": true,
+      "before": "9328187f3f29cb71be194a72aae25a7556c2f3d4e37cede5abf14ab84c9b14c3",
+      "after": "9328187f3f29cb71be194a72aae25a7556c2f3d4e37cede5abf14ab84c9b14c3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/alternate-weapon-kits.mjs",
+      "equal": true,
+      "before": "a206df8cbd0bc0487dfadfc4964da0ade8f704ce985bece24b1618c9eb6d9f76",
+      "after": "a206df8cbd0bc0487dfadfc4964da0ade8f704ce985bece24b1618c9eb6d9f76"
+    },
+    {
+      "file": "patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+      "equal": true,
+      "before": "33a7665957f01ab4daa3e1b3b2871c8511432b11a315fa7bd6e2d77f4ba829df",
+      "after": "33a7665957f01ab4daa3e1b3b2871c8511432b11a315fa7bd6e2d77f4ba829df"
+    },
+    {
+      "file": "patches/splatoon3/runtime/battle-framing.mjs",
+      "equal": true,
+      "before": "3a38e3b195a3d85f17b6a96bb3b7fcd8daeecfc2f32259f90d4bce82ddcc4e7a",
+      "after": "3a38e3b195a3d85f17b6a96bb3b7fcd8daeecfc2f32259f90d4bce82ddcc4e7a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/blast-occlusion.mjs",
+      "equal": true,
+      "before": "e669c285f9c1aadde28e0f9cf910e9852ba95f07cc4fa58f850770840f0ea483",
+      "after": "e669c285f9c1aadde28e0f9cf910e9852ba95f07cc4fa58f850770840f0ea483"
+    },
+    {
+      "file": "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+      "equal": true,
+      "before": "31c5c262ff211490298cdefb9fb20489e7684e061d9c587ddb276cd7f6ec9177",
+      "after": "31c5c262ff211490298cdefb9fb20489e7684e061d9c587ddb276cd7f6ec9177"
+    },
+    {
+      "file": "patches/splatoon3/runtime/blaster-mechanism-model.mjs",
+      "equal": true,
+      "before": "387688ca7321248ea7a6723e7cf8abbd234e54e7f56eaeecf53c43de19545292",
+      "after": "387688ca7321248ea7a6723e7cf8abbd234e54e7f56eaeecf53c43de19545292"
+    },
+    {
+      "file": "patches/splatoon3/runtime/blaster-mechanism.mjs",
+      "equal": true,
+      "before": "eca1cac30ab45a8720562f6b1858e34b9cb556d0012ff2b1bd32c95cfa54ecd2",
+      "after": "eca1cac30ab45a8720562f6b1858e34b9cb556d0012ff2b1bd32c95cfa54ecd2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs",
+      "equal": true,
+      "before": "bd37f5ea80eb019a404344179f7c82f12c075cfb6408927b7471633f7d04ce76",
+      "after": "bd37f5ea80eb019a404344179f7c82f12c075cfb6408927b7471633f7d04ce76"
+    },
+    {
+      "file": "patches/splatoon3/runtime/body-proportion.mjs",
+      "equal": true,
+      "before": "e5058d0603b374b926adcc50bd641591a7ab416829fc4031a94d79f7611b0de5",
+      "after": "e5058d0603b374b926adcc50bd641591a7ab416829fc4031a94d79f7611b0de5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bomb-cues.mjs",
+      "equal": true,
+      "before": "94b4c14ed0a16185b154caeebea06c70bb9d2bf5c5c37d3fcbd905628d8f0547",
+      "after": "94b4c14ed0a16185b154caeebea06c70bb9d2bf5c5c37d3fcbd905628d8f0547"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bomb-models.mjs",
+      "equal": true,
+      "before": "4cb28a5be17a68ad7f58ba589c5c1b5eb18b0bd9b8b79bb2da6ae580aab12325",
+      "after": "4cb28a5be17a68ad7f58ba589c5c1b5eb18b0bd9b8b79bb2da6ae580aab12325"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bomb-motion.mjs",
+      "equal": true,
+      "before": "66a1789fb72419bce483af67bfb9ece2825265902704b97af42ff7f22c877a9e",
+      "after": "66a1789fb72419bce483af67bfb9ece2825265902704b97af42ff7f22c877a9e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/boss-storm-volume.mjs",
+      "equal": true,
+      "before": "20f7ed498a424ea1737f68cd7a6041836f952eded0d19246522835cd76f36e84",
+      "after": "20f7ed498a424ea1737f68cd7a6041836f952eded0d19246522835cd76f36e84"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bot-special-context.mjs",
+      "equal": true,
+      "before": "c4d367d7d43893e9670caa1c07b8689b401378978e955d3aead9b231d4a20f6f",
+      "after": "c4d367d7d43893e9670caa1c07b8689b401378978e955d3aead9b231d4a20f6f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bot-special-melee.mjs",
+      "equal": true,
+      "before": "ce0b23872a9b3f4eae724833b63e47249e9ab6aaebb3fb6e1d4525398243036a",
+      "after": "ce0b23872a9b3f4eae724833b63e47249e9ab6aaebb3fb6e1d4525398243036a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bot-special-ranged.mjs",
+      "equal": true,
+      "before": "a496d0a5019d731766d1f7bd2786be03e336b00e3151c0f43e6f6375fdae64df",
+      "after": "a496d0a5019d731766d1f7bd2786be03e336b00e3151c0f43e6f6375fdae64df"
+    },
+    {
+      "file": "patches/splatoon3/runtime/bot-special-support.mjs",
+      "equal": true,
+      "before": "f8d7f773f61b39e8cd99f1c1fe7384e78dcecfb9bb54cceceeff616aa10c78c6",
+      "after": "f8d7f773f61b39e8cd99f1c1fe7384e78dcecfb9bb54cceceeff616aa10c78c6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brella-aperture.mjs",
+      "equal": true,
+      "before": "78982d168dab9457cbcf26394a5414dbd0a733db6632a03d9883e1528d838083",
+      "after": "78982d168dab9457cbcf26394a5414dbd0a733db6632a03d9883e1528d838083"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brella-canopy-visual.mjs",
+      "equal": true,
+      "before": "f711c10a58f576991713e3e834e2f9628ef1561723d8e9b41e5041de1ff64005",
+      "after": "f711c10a58f576991713e3e834e2f9628ef1561723d8e9b41e5041de1ff64005"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brella-guard-facing.mjs",
+      "equal": true,
+      "before": "b094dcd3768891a8be44ca4fb14607d9ba194eae1b98c52a9ea9993d70f4e707",
+      "after": "b094dcd3768891a8be44ca4fb14607d9ba194eae1b98c52a9ea9993d70f4e707"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brella-network.mjs",
+      "equal": true,
+      "before": "cb3a5e2df49966e5353799a30c2bcc4e6acaf191b9368d318febd414be551262",
+      "after": "cb3a5e2df49966e5353799a30c2bcc4e6acaf191b9368d318febd414be551262"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brella-physics.mjs",
+      "equal": true,
+      "before": "c5043182e6ae3e57a4fae7a9490025a4058a8fc37ef79f2fce2aeef1b4795afa",
+      "after": "c5043182e6ae3e57a4fae7a9490025a4058a8fc37ef79f2fce2aeef1b4795afa"
+    },
+    {
+      "file": "patches/splatoon3/runtime/brush-roll-ink.mjs",
+      "equal": true,
+      "before": "233a3d7e69ac0958f58883295f10d9c01f3f98dd661fdfce79a6d8045e6a8dff",
+      "after": "233a3d7e69ac0958f58883295f10d9c01f3f98dd661fdfce79a6d8045e6a8dff"
+    },
+    {
+      "file": "patches/splatoon3/runtime/camera-aim-controls.mjs",
+      "equal": true,
+      "before": "ee5be38c431bb2a5e3f9e9ce871e337b02a8055c2c38e3652783670b31ad9548",
+      "after": "ee5be38c431bb2a5e3f9e9ce871e337b02a8055c2c38e3652783670b31ad9548"
+    },
+    {
+      "file": "patches/splatoon3/runtime/canonical-kits-data.mjs",
+      "equal": true,
+      "before": "275195599341cf1f7b995dac57df589fea0052bfc1ced135472ada0bd6668104",
+      "after": "275195599341cf1f7b995dac57df589fea0052bfc1ced135472ada0bd6668104"
+    },
+    {
+      "file": "patches/splatoon3/runtime/canonical-kits.mjs",
+      "equal": true,
+      "before": "b9465e86867f3b0208d7adcaafa92d3c102fd4bb017f969d64b06935a25d201a",
+      "after": "b9465e86867f3b0208d7adcaafa92d3c102fd4bb017f969d64b06935a25d201a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/carry-motion.mjs",
+      "equal": true,
+      "before": "e04589a9bcfa6f05be2a5bd21083e5313041eabbd1f0dfe51dfbdbc498fce6fb",
+      "after": "e04589a9bcfa6f05be2a5bd21083e5313041eabbd1f0dfe51dfbdbc498fce6fb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-blaster-paint.mjs",
+      "equal": true,
+      "before": "68093c76fd69da42b5f4b13a54dbebbb0a5393bae30390a58f861cfbbc8638ed",
+      "after": "68093c76fd69da42b5f4b13a54dbebbb0a5393bae30390a58f861cfbbc8638ed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-charge-stages.mjs",
+      "equal": true,
+      "before": "dcd6eec0501ffa45c03a7302b17fb9a04faf152959fd5a52d2f8ac5fb54e644e",
+      "after": "dcd6eec0501ffa45c03a7302b17fb9a04faf152959fd5a52d2f8ac5fb54e644e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-charger-paint.mjs",
+      "equal": true,
+      "before": "9893f5c68aff99873590d384b3876caa1ff6f715488bf7354cafef8db56f0794",
+      "after": "9893f5c68aff99873590d384b3876caa1ff6f715488bf7354cafef8db56f0794"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-depletion.mjs",
+      "equal": true,
+      "before": "520f5a215dcf8c0b82aaacc71e03909aa966229684d0eb5f3b81b5a4e4cb769d",
+      "after": "520f5a215dcf8c0b82aaacc71e03909aa966229684d0eb5f3b81b5a4e4cb769d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-dualies-motion.mjs",
+      "equal": true,
+      "before": "32d9bbc1b327cfc17e9e42f8ab369bcaf52908171e9ba973a658e058a7873935",
+      "after": "32d9bbc1b327cfc17e9e42f8ab369bcaf52908171e9ba973a658e058a7873935"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-flick-damage.mjs",
+      "equal": true,
+      "before": "75573a61e7e4cc1fc9adf420a968da41cd2c179e7af4f53f9dac955e57cd84f4",
+      "after": "75573a61e7e4cc1fc9adf420a968da41cd2c179e7af4f53f9dac955e57cd84f4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-pose-birth.mjs",
+      "equal": true,
+      "before": "af1bea0b41de54958016b50f7d98d4861355f4bb3ae742e74f6f56551b93fa6a",
+      "after": "af1bea0b41de54958016b50f7d98d4861355f4bb3ae742e74f6f56551b93fa6a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-source-launch.mjs",
+      "equal": true,
+      "before": "911744dffb24ad3b8d45744c2b0467df8fa5e99e542782d9b20c4b2a015d95d3",
+      "after": "911744dffb24ad3b8d45744c2b0467df8fa5e99e542782d9b20c4b2a015d95d3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-splash-paint.mjs",
+      "equal": true,
+      "before": "34376264dfccd7098a1c5719f41ae5b3c0c132346a0e1146015f218d9eea3d9b",
+      "after": "34376264dfccd7098a1c5719f41ae5b3c0c132346a0e1146015f218d9eea3d9b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalog-wall-drop-data.mjs",
+      "equal": true,
+      "before": "3ca032d4548483a12e7d7489801ea4163bec672fb5d32943b39f3de3702d25f8",
+      "after": "3ca032d4548483a12e7d7489801ea4163bec672fb5d32943b39f3de3702d25f8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalogue-payload.mjs",
+      "equal": true,
+      "before": "79256c6c98a461b3850ccbe9a31d4b79839ecc3fbd463ce97e561480336bd2b7",
+      "after": "79256c6c98a461b3850ccbe9a31d4b79839ecc3fbd463ce97e561480336bd2b7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/catalogue.mjs",
+      "equal": true,
+      "before": "b75d17222168f21723f348b6378e35266cfcd278bc2ae2bf2e43ea728291d4a3",
+      "after": "b75d17222168f21723f348b6378e35266cfcd278bc2ae2bf2e43ea728291d4a3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/charger-paint-drop.mjs",
+      "equal": true,
+      "before": "d9292b000b3b13ac37029fc2cde2a1f5db1e4a58a31a8b3b299fea588b2c0680",
+      "after": "d9292b000b3b13ac37029fc2cde2a1f5db1e4a58a31a8b3b299fea588b2c0680"
+    },
+    {
+      "file": "patches/splatoon3/runtime/charger-sight-cache.mjs",
+      "equal": true,
+      "before": "2fe859f0d909d9af9c94cdd1ea7b3f138d0eeb7150b2797b49923e47464151a5",
+      "after": "2fe859f0d909d9af9c94cdd1ea7b3f138d0eeb7150b2797b49923e47464151a5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/charger-surface.mjs",
+      "equal": true,
+      "before": "74230f105695bc876043cdf79bacb48e622225bd02a6efb5ccaacfdb3279e04e",
+      "after": "74230f105695bc876043cdf79bacb48e622225bd02a6efb5ccaacfdb3279e04e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/clock.mjs",
+      "equal": true,
+      "before": "bf9deb8b91aadca68a229ede3cfc791b96481ddde440a061ab43b6d03e157f7b",
+      "after": "bf9deb8b91aadca68a229ede3cfc791b96481ddde440a061ab43b6d03e157f7b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/clothing-gear.mjs",
+      "equal": true,
+      "before": "828f84564c14dbc12a0ec05ac04552ba9bfe81cd6e0f24035b3f19ac5a61de48",
+      "after": "828f84564c14dbc12a0ec05ac04552ba9bfe81cd6e0f24035b3f19ac5a61de48"
+    },
+    {
+      "file": "patches/splatoon3/runtime/combat-info.mjs",
+      "equal": true,
+      "before": "56916f613a1444e0c641b06faa2310dd302eb3eacdce31d656d24d66dcf5b185",
+      "after": "56916f613a1444e0c641b06faa2310dd302eb3eacdce31d656d24d66dcf5b185"
+    },
+    {
+      "file": "patches/splatoon3/runtime/conditional-gear-network.mjs",
+      "equal": true,
+      "before": "3e2608664047ace21cb571643e6429fa527fd0fcfb33f48e65e7ee6a1865e523",
+      "after": "3e2608664047ace21cb571643e6429fa527fd0fcfb33f48e65e7ee6a1865e523"
+    },
+    {
+      "file": "patches/splatoon3/runtime/conditional-gear.mjs",
+      "equal": true,
+      "before": "6efe879088448b9462a2d9535b8e6045fad15b643773a8d83ee9d25a2a594190",
+      "after": "6efe879088448b9462a2d9535b8e6045fad15b643773a8d83ee9d25a2a594190"
+    },
+    {
+      "file": "patches/splatoon3/runtime/contact-recovery.mjs",
+      "equal": true,
+      "before": "47ce0aeb5295d5d9e514ab5385fcef9166126c02e4d1d81606649732f5656253",
+      "after": "47ce0aeb5295d5d9e514ab5385fcef9166126c02e4d1d81606649732f5656253"
+    },
+    {
+      "file": "patches/splatoon3/runtime/content-language.mjs",
+      "equal": true,
+      "before": "5f6e23752b71186b50dd3c299f3a1a4656b7db08ad80fb760b6f169d204760a8",
+      "after": "5f6e23752b71186b50dd3c299f3a1a4656b7db08ad80fb760b6f169d204760a8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/controller-motion.mjs",
+      "equal": true,
+      "before": "7af1fd09ce87ea2c4c44cb7457b73d9290fc3c253983c3f3bf0455dd04efce7f",
+      "after": "7af1fd09ce87ea2c4c44cb7457b73d9290fc3c253983c3f3bf0455dd04efce7f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/crab-tank-aim.mjs",
+      "equal": true,
+      "before": "b5ebe8c589edf8e0e59406c271efea825600552c88ff566f1d0d483ed20d8853",
+      "after": "b5ebe8c589edf8e0e59406c271efea825600552c88ff566f1d0d483ed20d8853"
+    },
+    {
+      "file": "patches/splatoon3/runtime/crab-tank-projectile.mjs",
+      "equal": true,
+      "before": "70aab4712c3945133143562517b910616f2549e78c3b355cad31bf9c5effa74f",
+      "after": "70aab4712c3945133143562517b910616f2549e78c3b355cad31bf9c5effa74f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/crab-tank-splash-visual.mjs",
+      "equal": true,
+      "before": "8ad21c1f4d475712c7e2af729df8a14e259af169d982ec5b5373af6dc29c6493",
+      "after": "8ad21c1f4d475712c7e2af729df8a14e259af169d982ec5b5373af6dc29c6493"
+    },
+    {
+      "file": "patches/splatoon3/runtime/damage-timing.mjs",
+      "equal": true,
+      "before": "e47af9d8c60de72283c9a2d2ac50cb93f20ae7c2833b033d2c62421f7b7ce19f",
+      "after": "e47af9d8c60de72283c9a2d2ac50cb93f20ae7c2833b033d2c62421f7b7ce19f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/death-blast.mjs",
+      "equal": true,
+      "before": "5c6f51632e3e52486538bfda0a4c9745d0e415c24f936a7581389daa5f29f9ad",
+      "after": "5c6f51632e3e52486538bfda0a4c9745d0e415c24f936a7581389daa5f29f9ad"
+    },
+    {
+      "file": "patches/splatoon3/runtime/death-camera.mjs",
+      "equal": true,
+      "before": "6f9e1521bd22e3234c7a3e2c1a34fa84f52ba69d72cf8d7a42883057ad0e4df8",
+      "after": "6f9e1521bd22e3234c7a3e2c1a34fa84f52ba69d72cf8d7a42883057ad0e4df8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/death-card.mjs",
+      "equal": true,
+      "before": "29f9809ea26ab46246699cbfc6ef55ba102204480bb1546e03b357f76f5ce300",
+      "after": "29f9809ea26ab46246699cbfc6ef55ba102204480bb1546e03b357f76f5ce300"
+    },
+    {
+      "file": "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+      "equal": true,
+      "before": "5d5a05ccbc34a7d72cc1b4dbe180f2d9c14a2a50e2d7c833efb9e1ce17a4e1a8",
+      "after": "5d5a05ccbc34a7d72cc1b4dbe180f2d9c14a2a50e2d7c833efb9e1ce17a4e1a8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dry-ink.mjs",
+      "equal": true,
+      "before": "311b3677904f6886ad3249e6fc13b798fd98a16d3e2ac08d33fc307912f9bc1d",
+      "after": "311b3677904f6886ad3249e6fc13b798fd98a16d3e2ac08d33fc307912f9bc1d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-accuracy.mjs",
+      "equal": true,
+      "before": "1dd150408563e421732139d179453b7b596a65a121ad74c4c88855d9d37c9bac",
+      "after": "1dd150408563e421732139d179453b7b596a65a121ad74c4c88855d9d37c9bac"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "equal": true,
+      "before": "857bc44e0088d0ce33488bb892fce3c4255ae886397c95be255cc39519ea2746",
+      "after": "857bc44e0088d0ce33488bb892fce3c4255ae886397c95be255cc39519ea2746"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-motion.mjs",
+      "equal": true,
+      "before": "3a14b4d48b6d63c5095d6efb08a069759cab110a18e97b505e2e5cae6d69227b",
+      "after": "3a14b4d48b6d63c5095d6efb08a069759cab110a18e97b505e2e5cae6d69227b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-network.mjs",
+      "equal": true,
+      "before": "a667cc7f4eccc795aa4d837a0d3d37874453d380cca9d5f3f06e61367bd78318",
+      "after": "a667cc7f4eccc795aa4d837a0d3d37874453d380cca9d5f3f06e61367bd78318"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-slide-paint.mjs",
+      "equal": true,
+      "before": "3eb37ccd9fc9073fb8820fedfe8ddfe32c06af75de08b1a02ca8c7217585e1c8",
+      "after": "3eb37ccd9fc9073fb8820fedfe8ddfe32c06af75de08b1a02ca8c7217585e1c8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/emotes-motion.mjs",
+      "equal": true,
+      "before": "3f29a6aae97c4b2ebe590d1882f64c02cc89090fad2a48ca408f2b5ca1b898c5",
+      "after": "3f29a6aae97c4b2ebe590d1882f64c02cc89090fad2a48ca408f2b5ca1b898c5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/face-motion.mjs",
+      "equal": true,
+      "before": "2fca27d009ca1faf51beac14bd4c6464f77bd5339529f766263a12865141c9a4",
+      "after": "2fca27d009ca1faf51beac14bd4c6464f77bd5339529f766263a12865141c9a4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/final-damage.mjs",
+      "equal": true,
+      "before": "d63e9f35ce06c0bb79bb43e3b051ff8905ea3dc3250aea7a7819c54b92fd35db",
+      "after": "d63e9f35ce06c0bb79bb43e3b051ff8905ea3dc3250aea7a7819c54b92fd35db"
+    },
+    {
+      "file": "patches/splatoon3/runtime/flow-effects.mjs",
+      "equal": true,
+      "before": "697febf50cae0d324ae2c6c85a9b7a152de2a297a75e847041b9e11c69e366bf",
+      "after": "697febf50cae0d324ae2c6c85a9b7a152de2a297a75e847041b9e11c69e366bf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/flow-motion.mjs",
+      "equal": true,
+      "before": "d70be1855481ed2cfd142d898e4b31f4278a4e9d56c9c3be81309bab995b234d",
+      "after": "d70be1855481ed2cfd142d898e4b31f4278a4e9d56c9c3be81309bab995b234d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/flow.mjs",
+      "equal": true,
+      "before": "28b99e3aa807e009b3a01a1d0fb9760ff02f481e2906ab361456765ce0a5a0c6",
+      "after": "28b99e3aa807e009b3a01a1d0fb9760ff02f481e2906ab361456765ce0a5a0c6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/form-motion.mjs",
+      "equal": true,
+      "before": "b0a48a478eca17782985f397426320af205cfeb933b6c36c85d93aaa90bb4580",
+      "after": "b0a48a478eca17782985f397426320af205cfeb933b6c36c85d93aaa90bb4580"
+    },
+    {
+      "file": "patches/splatoon3/runtime/form-timing.mjs",
+      "equal": true,
+      "before": "f980df57ae66b628c336212d7aefa9adcb3626807d45e277544159c3df41a386",
+      "after": "f980df57ae66b628c336212d7aefa9adcb3626807d45e277544159c3df41a386"
+    },
+    {
+      "file": "patches/splatoon3/runtime/gear-loadout-network.mjs",
+      "equal": true,
+      "before": "83c08f466314d18168408e170abf1cd093be4ffa599a475046ed873db90b4f74",
+      "after": "83c08f466314d18168408e170abf1cd093be4ffa599a475046ed873db90b4f74"
+    },
+    {
+      "file": "patches/splatoon3/runtime/gear.mjs",
+      "equal": true,
+      "before": "c9abd85bbd6bfe1a964e4e4f1cd6fc572cca6a5b1677467bfdbe00c09a78099e",
+      "after": "c9abd85bbd6bfe1a964e4e4f1cd6fc572cca6a5b1677467bfdbe00c09a78099e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/hair-cache.mjs",
+      "equal": true,
+      "before": "508fe56645d4012e03f1b71b934699c391fdeb1e4d3ca093a61fb23535db895b",
+      "after": "508fe56645d4012e03f1b71b934699c391fdeb1e4d3ca093a61fb23535db895b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/haunt.mjs",
+      "equal": true,
+      "before": "94b34c9449693cbff13addc942858db0411194266d44aa2794b5555e975657cc",
+      "after": "94b34c9449693cbff13addc942858db0411194266d44aa2794b5555e975657cc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/health-bars.mjs",
+      "equal": true,
+      "before": "6a166d5652c256c2f64b2eeaf5e67a121f77a0691c57b423969e45d971983d83",
+      "after": "6a166d5652c256c2f64b2eeaf5e67a121f77a0691c57b423969e45d971983d83"
+    },
+    {
+      "file": "patches/splatoon3/runtime/hit-spawn-motion.mjs",
+      "equal": true,
+      "before": "731af57db52139b53821d5511adc705b7e62ee48b21bcc8d4984f4c9cd98b8d1",
+      "after": "731af57db52139b53821d5511adc705b7e62ee48b21bcc8d4984f4c9cd98b8d1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/idle-motion.mjs",
+      "equal": true,
+      "before": "426e2ebd7a4d420651ca03b93fd3b8ac9c8db1ec1a80e3d13d401bca7a1a5c33",
+      "after": "426e2ebd7a4d420651ca03b93fd3b8ac9c8db1ec1a80e3d13d401bca7a1a5c33"
+    },
+    {
+      "file": "patches/splatoon3/runtime/inkjet-vfx-budget.mjs",
+      "equal": true,
+      "before": "4e978559f706a45da00d9a9be6a97529524b8f960fceab4852978d0ef8c005c9",
+      "after": "4e978559f706a45da00d9a9be6a97529524b8f960fceab4852978d0ef8c005c9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/inkjet-vfx-clock.mjs",
+      "equal": true,
+      "before": "a26925d5ad0607b291c951597e383a9b66827ef84736afd0b9d8ad4f97222fc0",
+      "after": "a26925d5ad0607b291c951597e383a9b66827ef84736afd0b9d8ad4f97222fc0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/install.mjs",
+      "equal": true,
+      "before": "7c76f6c1dde17a1f6ec9fda5e7959d1dbcdc69de4af5ea2f5eb83814e1ec8cb8",
+      "after": "7c76f6c1dde17a1f6ec9fda5e7959d1dbcdc69de4af5ea2f5eb83814e1ec8cb8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/instance-color-upload.mjs",
+      "equal": true,
+      "before": "3f15c5b863341dc31e88ef0b0afe6d84658babda87d720e2464bb176d675ff1e",
+      "after": "3f15c5b863341dc31e88ef0b0afe6d84658babda87d720e2464bb176d675ff1e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/intro-presentation.mjs",
+      "equal": true,
+      "before": "2d3e73704fce7d0d56226cda2bfc0761164f62267c005c26c8f73f21c6c62e59",
+      "after": "2d3e73704fce7d0d56226cda2bfc0761164f62267c005c26c8f73f21c6c62e59"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-415-adapter.mjs",
+      "equal": true,
+      "before": "3885557ad37ebba44d49de690131337f4b9846a75697ee9c8f6b1186e4267613",
+      "after": "3885557ad37ebba44d49de690131337f4b9846a75697ee9c8f6b1186e4267613"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+      "equal": true,
+      "before": "3dee20f91faaf567074c585ad0fe3e639d63c03390510ae59ab7f98ee1b10bc3",
+      "after": "3dee20f91faaf567074c585ad0fe3e639d63c03390510ae59ab7f98ee1b10bc3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-eight-followup.mjs",
+      "equal": true,
+      "before": "6962e3546d37230eef48ebd0fd4e2c2866a577de4578594d1ecac6bf19654b5e",
+      "after": "6962e3546d37230eef48ebd0fd4e2c2866a577de4578594d1ecac6bf19654b5e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-five-hotfix-a.mjs",
+      "equal": true,
+      "before": "949556277a67faff486a57c202e6532f705cfc3abe98830e34f5f91cecb9325a",
+      "after": "949556277a67faff486a57c202e6532f705cfc3abe98830e34f5f91cecb9325a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-five-hotfix-b.mjs",
+      "equal": true,
+      "before": "5f83897d2a50f9d986f46b5770f058bcb75b40e176ff7323f37cabb13f8962e5",
+      "after": "5f83897d2a50f9d986f46b5770f058bcb75b40e176ff7323f37cabb13f8962e5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/issue-five-hotfix-c.mjs",
+      "equal": true,
+      "before": "5c52b3050e814695155b7f677fb1733d33839fd5d8082a8f1581e934ef4ab17c",
+      "after": "5c52b3050e814695155b7f677fb1733d33839fd5d8082a8f1581e934ef4ab17c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/jump-motion.mjs",
+      "equal": true,
+      "before": "16f27a9ed1bd87cfaca2b840eefd34f14a83f479fa276dfae3212b25654464c9",
+      "after": "16f27a9ed1bd87cfaca2b840eefd34f14a83f479fa276dfae3212b25654464c9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-autobomb.mjs",
+      "equal": true,
+      "before": "528d1454157b41cc2ed5bcbf6e654d0709c87d72b781e97c488637cf57997cf9",
+      "after": "528d1454157b41cc2ed5bcbf6e654d0709c87d72b781e97c488637cf57997cf9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+      "equal": true,
+      "before": "7b0274756f7d915ccf530551e415bfb16a89cc47dd0300bdb216c6269e5298c7",
+      "after": "7b0274756f7d915ccf530551e415bfb16a89cc47dd0300bdb216c6269e5298c7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-composition.mjs",
+      "equal": true,
+      "before": "7b043f6d6433802f3f01003915d57541a487430041cf02c37d1aece8064863b1",
+      "after": "7b043f6d6433802f3f01003915d57541a487430041cf02c37d1aece8064863b1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-defense.mjs",
+      "equal": true,
+      "before": "6be05060a939b8a9e956f4a44ff92dd4770aeba407c515dd7af1cbbe9352552a",
+      "after": "6be05060a939b8a9e956f4a44ff92dd4770aeba407c515dd7af1cbbe9352552a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+      "equal": true,
+      "before": "16fb0367380c49a95b8461f24faa0b534f284210488a55caeb2285a714a15b6d",
+      "after": "16fb0367380c49a95b8461f24faa0b534f284210488a55caeb2285a714a15b6d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-network.mjs",
+      "equal": true,
+      "before": "a35a71c3f16cb5b4da0f25fd3ce728f1b1db4f34e18eb598853e786744c4dec7",
+      "after": "a35a71c3f16cb5b4da0f25fd3ce728f1b1db4f34e18eb598853e786744c4dec7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-sprinkler.mjs",
+      "equal": true,
+      "before": "bc382168e9c3a3bb92b26bb6fd7eb8c12b6976903da93a1edf07431abaff7f97",
+      "after": "bc382168e9c3a3bb92b26bb6fd7eb8c12b6976903da93a1edf07431abaff7f97"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-subs.mjs",
+      "equal": true,
+      "before": "e0fe471e02b2b9f527a57cf5c8dc94753b43299b410eb430b7f231d446ae2994",
+      "after": "e0fe471e02b2b9f527a57cf5c8dc94753b43299b410eb430b7f231d446ae2994"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-support.mjs",
+      "equal": true,
+      "before": "609a0af97ffc42344cdfe4dbc71e1d8ad87e87bd069670d257fd172df94a776d",
+      "after": "609a0af97ffc42344cdfe4dbc71e1d8ad87e87bd069670d257fd172df94a776d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-trizooka.mjs",
+      "equal": true,
+      "before": "c32ee2cc2b87cae7a08fbc300d7a1d8689a1755009a9d3d5c946917e1f046430",
+      "after": "c32ee2cc2b87cae7a08fbc300d7a1d8689a1755009a9d3d5c946917e1f046430"
+    },
+    {
+      "file": "patches/splatoon3/runtime/landing-motion.mjs",
+      "equal": true,
+      "before": "3e3ffce3ac105b4eebf685b00645633014fb37251c863abf0def1ac68fb6fed8",
+      "after": "3e3ffce3ac105b4eebf685b00645633014fb37251c863abf0def1ac68fb6fed8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/legacy-walk-curves.mjs",
+      "equal": true,
+      "before": "26d4fec24b51a267eff6544c445263778979b1015cd5630885dd351c321f2492",
+      "after": "26d4fec24b51a267eff6544c445263778979b1015cd5630885dd351c321f2492"
+    },
+    {
+      "file": "patches/splatoon3/runtime/main-ink-footprints.mjs",
+      "equal": true,
+      "before": "d6a08e1552f4d428aba6017e1ed4882a2692b87395d4f4e4ba2006396c132a94",
+      "after": "d6a08e1552f4d428aba6017e1ed4882a2692b87395d4f4e4ba2006396c132a94"
+    },
+    {
+      "file": "patches/splatoon3/runtime/main-knockback.mjs",
+      "equal": true,
+      "before": "b4d87baef1cc47e58e281dc183746a1d9556d035e833b7c025a2ea4590feea28",
+      "after": "b4d87baef1cc47e58e281dc183746a1d9556d035e833b7c025a2ea4590feea28"
+    },
+    {
+      "file": "patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+      "equal": true,
+      "before": "d2f6274e1a65b666ee7172773a3c447900dc6c90917c2228964f9e27237d766c",
+      "after": "d2f6274e1a65b666ee7172773a3c447900dc6c90917c2228964f9e27237d766c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "equal": true,
+      "before": "5d529d241ea2d55089ab030fd3d86d683882827c868e28ae704847b9f37bea3f",
+      "after": "5d529d241ea2d55089ab030fd3d86d683882827c868e28ae704847b9f37bea3f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/map-reveal.mjs",
+      "equal": true,
+      "before": "cfc5cf8c6abf0054585e7fd6668884ffbd99193938a79d6bb7b342fdd2bb7652",
+      "after": "cfc5cf8c6abf0054585e7fd6668884ffbd99193938a79d6bb7b342fdd2bb7652"
+    },
+    {
+      "file": "patches/splatoon3/runtime/menu-layout.mjs",
+      "equal": false,
+      "before": "ff0a0c479e5aca4f88082836c17d8631e2d835caae7fc9c8eddcaa26e76918d9",
+      "after": "10754c11b037659f1c46bddf9154e25aa223522ce2d17d100554bb1c5a965707"
+    },
+    {
+      "file": "patches/splatoon3/runtime/minimap-dirty.mjs",
+      "equal": true,
+      "before": "198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015",
+      "after": "198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015"
+    },
+    {
+      "file": "patches/splatoon3/runtime/movement-motion.mjs",
+      "equal": true,
+      "before": "ec06b7771c74d26c472dbd8be8fdf488a7d55e374c845ff02376da9d083ea7eb",
+      "after": "ec06b7771c74d26c472dbd8be8fdf488a7d55e374c845ff02376da9d083ea7eb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/movement-physics.mjs",
+      "equal": true,
+      "before": "598eff6af595e8270b3b7192693466aa4513da3d66751274bc58fe6e72c0e844",
+      "after": "598eff6af595e8270b3b7192693466aa4513da3d66751274bc58fe6e72c0e844"
+    },
+    {
+      "file": "patches/splatoon3/runtime/movement.mjs",
+      "equal": true,
+      "before": "9b7807f6ca27677ec5e41d6bebb791ec3b5e3f18196965e09cbe42fcfb801c6a",
+      "after": "9b7807f6ca27677ec5e41d6bebb791ec3b5e3f18196965e09cbe42fcfb801c6a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "equal": true,
+      "before": "8f55d69fe5f7bea5ec144a21f9749d218d85df8a8593cf52a3f5bba508402559",
+      "after": "8f55d69fe5f7bea5ec144a21f9749d218d85df8a8593cf52a3f5bba508402559"
+    },
+    {
+      "file": "patches/splatoon3/runtime/native-sprinkler-damage.mjs",
+      "equal": true,
+      "before": "6aff3331d4be2bc512bb6b6bab6494400308f418b407d7c17942b97a929babb0",
+      "after": "6aff3331d4be2bc512bb6b6bab6494400308f418b407d7c17942b97a929babb0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/nonwail-vfx-clock.mjs",
+      "equal": true,
+      "before": "241c893989f1bc7c90f77de7c38ebb953a0e9ab723113ee2510b74634aba21bc",
+      "after": "241c893989f1bc7c90f77de7c38ebb953a0e9ab723113ee2510b74634aba21bc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/normal-jump-hold.mjs",
+      "equal": true,
+      "before": "2a343b39a57ffdcb786c2d4adc458c30a4b4bd73a347cfd05318bd41f1279f16",
+      "after": "2a343b39a57ffdcb786c2d4adc458c30a4b4bd73a347cfd05318bd41f1279f16"
+    },
+    {
+      "file": "patches/splatoon3/runtime/object-gear.mjs",
+      "equal": true,
+      "before": "03c669e429c3b2df0ad5629d0f9b676ae297393fef12601272433fcc9f6b85dd",
+      "after": "03c669e429c3b2df0ad5629d0f9b676ae297393fef12601272433fcc9f6b85dd"
+    },
+    {
+      "file": "patches/splatoon3/runtime/pad-sensitivity.mjs",
+      "equal": true,
+      "before": "d08c2d4c244a1b4b1c4395828712f35f27814c4af76d28a0a9594e49c2cd10cc",
+      "after": "d08c2d4c244a1b4b1c4395828712f35f27814c4af76d28a0a9594e49c2cd10cc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/paint-ownership.mjs",
+      "equal": true,
+      "before": "d715612435ec96b60eba42a68af003168144775b2f96fe1df1d8210b42010626",
+      "after": "d715612435ec96b60eba42a68af003168144775b2f96fe1df1d8210b42010626"
+    },
+    {
+      "file": "patches/splatoon3/runtime/paint-packet-codec.mjs",
+      "equal": true,
+      "before": "db4aac07839f85e4dc972bceffff4c8754a7019bdce2c29e7752227a91b1edb4",
+      "after": "db4aac07839f85e4dc972bceffff4c8754a7019bdce2c29e7752227a91b1edb4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/player-hurtbox.mjs",
+      "equal": true,
+      "before": "e35991a1f66fca862f9c3b848383da4645d8cc6bd722985c6d31d952a4ddfada",
+      "after": "e35991a1f66fca862f9c3b848383da4645d8cc6bd722985c6d31d952a4ddfada"
+    },
+    {
+      "file": "patches/splatoon3/runtime/point-block-minimum.mjs",
+      "equal": true,
+      "before": "67972918ecf59eb49a0563a9b5feb49f44eec32dec08ee6f1f4a23bd35b99519",
+      "after": "67972918ecf59eb49a0563a9b5feb49f44eec32dec08ee6f1f4a23bd35b99519"
+    },
+    {
+      "file": "patches/splatoon3/runtime/private-tracking-render.mjs",
+      "equal": true,
+      "before": "f6239a4c63a697192d79bc0e215ab7fb44ba91e207ec8ba92e0665382c1395a4",
+      "after": "f6239a4c63a697192d79bc0e215ab7fb44ba91e207ec8ba92e0665382c1395a4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/private-tracking.mjs",
+      "equal": true,
+      "before": "427c8e67ba27d5af9de5e519c3525f93a522838ddd992223fc7d08b50c214eb3",
+      "after": "427c8e67ba27d5af9de5e519c3525f93a522838ddd992223fc7d08b50c214eb3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/projectile-collision.mjs",
+      "equal": true,
+      "before": "b3c41a493fb0f1882e710ca46af8d99355896c103e652f1c9d9927328b6467f2",
+      "after": "b3c41a493fb0f1882e710ca46af8d99355896c103e652f1c9d9927328b6467f2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "equal": true,
+      "before": "60ecb959322cba4b488e258859410bec5e3ed4fb26d35c4a8c7b4325f6f75dd6",
+      "after": "60ecb959322cba4b488e258859410bec5e3ed4fb26d35c4a8c7b4325f6f75dd6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/projectile-visual-source-data.mjs",
+      "equal": true,
+      "before": "293a58d1f1a483c87f34bc4bb5eb2114c47103fa5e6dd5aeb908a6cf07b0fe81",
+      "after": "293a58d1f1a483c87f34bc4bb5eb2114c47103fa5e6dd5aeb908a6cf07b0fe81"
+    },
+    {
+      "file": "patches/splatoon3/runtime/projectile-visuals.mjs",
+      "equal": true,
+      "before": "55c0cae35cbb3cea386108722bd33fe015c5cacbda02dadf29ca9abb309f376d",
+      "after": "55c0cae35cbb3cea386108722bd33fe015c5cacbda02dadf29ca9abb309f376d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked-gear.mjs",
+      "equal": true,
+      "before": "ea7fa291d77576474e996064095c5f928a6181c56380109953e5e4ad6730958f",
+      "after": "ea7fa291d77576474e996064095c5f928a6181c56380109953e5e4ad6730958f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/recovery-gate.mjs",
+      "equal": true,
+      "before": "81624d09a9859824d6ef4d84e51d3f3a44a65542416bea821c88ae336620ba7a",
+      "after": "81624d09a9859824d6ef4d84e51d3f3a44a65542416bea821c88ae336620ba7a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/remote-dodge-clock.mjs",
+      "equal": true,
+      "before": "4103398514e69ff18282ee86836fda2c99daa56858752b54b66353a8568de459",
+      "after": "4103398514e69ff18282ee86836fda2c99daa56858752b54b66353a8568de459"
+    },
+    {
+      "file": "patches/splatoon3/runtime/render.mjs",
+      "equal": true,
+      "before": "cc2041fefe44b53013da802418ba85d7bd314114c1a72a5c82388956fdc887f5",
+      "after": "cc2041fefe44b53013da802418ba85d7bd314114c1a72a5c82388956fdc887f5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/replica-retirement.mjs",
+      "equal": true,
+      "before": "8e6ba288b4c5f23d93b776de19599afffe62dd80b6c3083ef7fc81783667de9c",
+      "after": "8e6ba288b4c5f23d93b776de19599afffe62dd80b6c3083ef7fc81783667de9c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/resources.mjs",
+      "equal": true,
+      "before": "e10ca7043ffaa39c242fc169fea16438fb3f1f0f9ddbe4df72ca57d65d9979f2",
+      "after": "e10ca7043ffaa39c242fc169fea16438fb3f1f0f9ddbe4df72ca57d65d9979f2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "equal": true,
+      "before": "7e9f4e7b2e0b0d3330edcc923033750554035b68ad84a17e48fcf0163dc89406",
+      "after": "7e9f4e7b2e0b0d3330edcc923033750554035b68ad84a17e48fcf0163dc89406"
+    },
+    {
+      "file": "patches/splatoon3/runtime/results-scoring.mjs",
+      "equal": true,
+      "before": "9cd7b48f73019e963e84acba7e1655ab7471f4658e52d5431c172a1492e73712",
+      "after": "9cd7b48f73019e963e84acba7e1655ab7471f4658e52d5431c172a1492e73712"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-body-knockback.mjs",
+      "equal": true,
+      "before": "c21e7b12d989194c3556b62080e99fbe82a8bafda663aa207f04077a3382a5e6",
+      "after": "c21e7b12d989194c3556b62080e99fbe82a8bafda663aa207f04077a3382a5e6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-contact-paint.mjs",
+      "equal": true,
+      "before": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3",
+      "after": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "equal": true,
+      "before": "8d4b1e480fb22db2372c01264c9bc85d9e73340bb515141dfc7bf61de3c096e7",
+      "after": "8d4b1e480fb22db2372c01264c9bc85d9e73340bb515141dfc7bf61de3c096e7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-fold.mjs",
+      "equal": true,
+      "before": "8198820fec93e69b0c0babef81cb49c752958e27164a9b56e73f334c4decf15a",
+      "after": "8198820fec93e69b0c0babef81cb49c752958e27164a9b56e73f334c4decf15a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-freefall.mjs",
+      "equal": true,
+      "before": "9b1db51381f7216552b9c958f074b1fabfd1820666e8e3181218e8cea1cff0d3",
+      "after": "9b1db51381f7216552b9c958f074b1fabfd1820666e8e3181218e8cea1cff0d3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-heavy-swing.mjs",
+      "equal": true,
+      "before": "dba8cdd73df328387ee714c40abb3661abb977d14d0a506a56087631bda9b73d",
+      "after": "dba8cdd73df328387ee714c40abb3661abb977d14d0a506a56087631bda9b73d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-impact-paint.mjs",
+      "equal": true,
+      "before": "6e7c30492ab6200f5f3c13922c7cc6e7fcc80fc9fb6fafb6869d6e0fccf7f4a9",
+      "after": "6e7c30492ab6200f5f3c13922c7cc6e7fcc80fc9fb6fafb6869d6e0fccf7f4a9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-max-paint.mjs",
+      "equal": true,
+      "before": "12e4ef6fde6b77faa13fa65589ec0f8d33bcd96ef8a37b9ef057068c4d753d93",
+      "after": "12e4ef6fde6b77faa13fa65589ec0f8d33bcd96ef8a37b9ef057068c4d753d93"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-model.mjs",
+      "equal": true,
+      "before": "6d4cdce5d572500e718744a63783b7deaac4502a93a524b49e87b6d24c92046b",
+      "after": "6d4cdce5d572500e718744a63783b7deaac4502a93a524b49e87b6d24c92046b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-paint-calibration.mjs",
+      "equal": true,
+      "before": "985251fb445fea57e73e8964c7940fa2c9ca8dd490d94194443b3d58ec65fda0",
+      "after": "985251fb445fea57e73e8964c7940fa2c9ca8dd490d94194443b3d58ec65fda0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-source-scale.mjs",
+      "equal": true,
+      "before": "35e1c14346d94a6952551f0c271dbaf1ae821ba54d3259c2e79b802cbd82b46e",
+      "after": "35e1c14346d94a6952551f0c271dbaf1ae821ba54d3259c2e79b802cbd82b46e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-vertical-paint.mjs",
+      "equal": true,
+      "before": "fe76af234a2a62b7fa1eb75ecfddadfe03e65cb6495a008f95ad905fb2420b0c",
+      "after": "fe76af234a2a62b7fa1eb75ecfddadfe03e65cb6495a008f95ad905fb2420b0c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller-vertical-shaft-return.mjs",
+      "equal": true,
+      "before": "b8af8bf02405cb132532142afbf0e5e2bf0f081e0cd23966856ccd289a72d87e",
+      "after": "b8af8bf02405cb132532142afbf0e5e2bf0f081e0cd23966856ccd289a72d87e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/roller.mjs",
+      "equal": true,
+      "before": "4d37cee2d13c9517f197af4d473a664fcc624d85208f25a18123786ef71b7bde",
+      "after": "4d37cee2d13c9517f197af4d473a664fcc624d85208f25a18123786ef71b7bde"
+    },
+    {
+      "file": "patches/splatoon3/runtime/rolling-floor.mjs",
+      "equal": true,
+      "before": "4c00c36c23580517d561689dc1ed7d83921caf2930e7cd40cb68614772ddc0e1",
+      "after": "4c00c36c23580517d561689dc1ed7d83921caf2930e7cd40cb68614772ddc0e1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+      "equal": true,
+      "before": "7065a55f96d1cfe8b636b1c7f467238bc9dc28f41875d22ea6a39880beacf9db",
+      "after": "7065a55f96d1cfe8b636b1c7f467238bc9dc28f41875d22ea6a39880beacf9db"
+    },
+    {
+      "file": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+      "equal": true,
+      "before": "3fe0ae82235b73a539892d89c4b3d7714fba74b8bc7535ae52da57e25165b2bd",
+      "after": "3fe0ae82235b73a539892d89c4b3d7714fba74b8bc7535ae52da57e25165b2bd"
+    },
+    {
+      "file": "patches/splatoon3/runtime/s3-sweps-assets.mjs",
+      "equal": true,
+      "before": "e09cbd3737dfde1e905f34059d581a59202cc2b33c549059dd638135cb521c82",
+      "after": "e09cbd3737dfde1e905f34059d581a59202cc2b33c549059dd638135cb521c82"
+    },
+    {
+      "file": "patches/splatoon3/runtime/saber-melee.mjs",
+      "equal": true,
+      "before": "7517ddd29f1da67e5b3e0f2e25f43cfb59080f95937d884a6bdbdbbee079ddf9",
+      "after": "7517ddd29f1da67e5b3e0f2e25f43cfb59080f95937d884a6bdbdbbee079ddf9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/saber-presentation.mjs",
+      "equal": true,
+      "before": "ea95bbb5905b8197bf1c2b9ec656383367cc6dd6c745f967a91ae318841d3767",
+      "after": "ea95bbb5905b8197bf1c2b9ec656383367cc6dd6c745f967a91ae318841d3767"
+    },
+    {
+      "file": "patches/splatoon3/runtime/saber-step.mjs",
+      "equal": true,
+      "before": "c898d68ffb6e3be742740bb3834080b82553ad0d635b3b1a16ee0db1a56aac8f",
+      "after": "c898d68ffb6e3be742740bb3834080b82553ad0d635b3b1a16ee0db1a56aac8f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/scoring.mjs",
+      "equal": true,
+      "before": "ac919d24d6af33eba196c4e3f19d3253c23998586040eb0d4a90b9206b30ad11",
+      "after": "ac919d24d6af33eba196c4e3f19d3253c23998586040eb0d4a90b9206b30ad11"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shape-pool-bounds.mjs",
+      "equal": true,
+      "before": "6a6a91b3606f17896820d4802dddd73fd2cb1f7aa7d8e497a47f77f7a9d1c603",
+      "after": "6a6a91b3606f17896820d4802dddd73fd2cb1f7aa7d8e497a47f77f7a9d1c603"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shooter-accuracy.mjs",
+      "equal": true,
+      "before": "86acdf03c40a214d70b0b55b944821c8801a45acccbbb68aeaea9875e04074b6",
+      "after": "86acdf03c40a214d70b0b55b944821c8801a45acccbbb68aeaea9875e04074b6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shooter-impact-paint.mjs",
+      "equal": true,
+      "before": "fd5ceaaf528cab978ba6bf32962758604ada9505fafb71aef6f220f536ab254c",
+      "after": "fd5ceaaf528cab978ba6bf32962758604ada9505fafb71aef6f220f536ab254c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shooter-movement.mjs",
+      "equal": true,
+      "before": "b81bfffa1709d38f44131d91cf5bce96bd955fedfbcaa5b4bca1da0514ed93f9",
+      "after": "b81bfffa1709d38f44131d91cf5bce96bd955fedfbcaa5b4bca1da0514ed93f9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "equal": true,
+      "before": "b6cd616c438f90fd66c93d6c31b4059d062aa384df063f41283b235751b9b5d0",
+      "after": "b6cd616c438f90fd66c93d6c31b4059d062aa384df063f41283b235751b9b5d0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+      "equal": true,
+      "before": "9579f0968071cbe634752fb9120aec554c6e3d713c6dcf772160b945912cee1b",
+      "after": "9579f0968071cbe634752fb9120aec554c6e3d713c6dcf772160b945912cee1b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+      "equal": true,
+      "before": "7addea90bab75193d84461fd214a622f88b997dd6f20ea7bf95f4b05656567f8",
+      "after": "7addea90bab75193d84461fd214a622f88b997dd6f20ea7bf95f4b05656567f8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+      "equal": true,
+      "before": "87c08dcd94ead3e09d55b80b5776ec571da47f17b82fddef8ee912040d631b2d",
+      "after": "87c08dcd94ead3e09d55b80b5776ec571da47f17b82fddef8ee912040d631b2d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/snapshot-pool.mjs",
+      "equal": true,
+      "before": "35afdd0396fd2c7d503ffdfb3475391d2f95cc7990167f6b15ec268f9ab8762f",
+      "after": "35afdd0396fd2c7d503ffdfb3475391d2f95cc7990167f6b15ec268f9ab8762f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/source-distance.mjs",
+      "equal": true,
+      "before": "5a449c93c053dc17086368137cf7b3bade26bf7db89c9e39c0dd7737bac8588c",
+      "after": "5a449c93c053dc17086368137cf7b3bade26bf7db89c9e39c0dd7737bac8588c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/source-form-transition.mjs",
+      "equal": true,
+      "before": "f0339152eab37cf3b5a26e6f5659887ce332552dff8e5ea7dedb12a3e12a838c",
+      "after": "f0339152eab37cf3b5a26e6f5659887ce332552dff8e5ea7dedb12a3e12a838c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/source-posture.mjs",
+      "equal": true,
+      "before": "de5c3a005b2ef0aa46be6de2dc7ec04d1d0afd86d107c1dced0de32aa3db1210",
+      "after": "de5c3a005b2ef0aa46be6de2dc7ec04d1d0afd86d107c1dced0de32aa3db1210"
+    },
+    {
+      "file": "patches/splatoon3/runtime/source-shot-footprint.mjs",
+      "equal": true,
+      "before": "99baf1ea08788141ed8ad03b3684ac94678734f36a0ca98ee14546099b29ea82",
+      "after": "99baf1ea08788141ed8ad03b3684ac94678734f36a0ca98ee14546099b29ea82"
+    },
+    {
+      "file": "patches/splatoon3/runtime/source-weapon-owner.mjs",
+      "equal": true,
+      "before": "d9827e4d4455263756acf201875e6d2f841339a3f611503a03e66bc845fc2bbb",
+      "after": "d9827e4d4455263756acf201875e6d2f841339a3f611503a03e66bc845fc2bbb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "equal": true,
+      "before": "ddaa29053f35f5ef3480134089479afd858cb6685d3454dd3dfcc9c0e581d983",
+      "after": "ddaa29053f35f5ef3480134089479afd858cb6685d3454dd3dfcc9c0e581d983"
+    },
+    {
+      "file": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "equal": true,
+      "before": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde",
+      "after": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-device-flight.mjs",
+      "equal": true,
+      "before": "4eba2a535f22cb7cc674c9f14c10d2f857efaeb3ec7f40f67a67d70da291f957",
+      "after": "4eba2a535f22cb7cc674c9f14c10d2f857efaeb3ec7f40f67a67d70da291f957"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-models.mjs",
+      "equal": true,
+      "before": "0aed9ae331dd1f6f7bd931572afb810caf3df788dfb4781b0b22b514a387d3ff",
+      "after": "0aed9ae331dd1f6f7bd931572afb810caf3df788dfb4781b0b22b514a387d3ff"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-motion.mjs",
+      "equal": true,
+      "before": "a4336340325fb796b0dfa6f21382915a37ef22531078f2857ebebc5b26b13ff2",
+      "after": "a4336340325fb796b0dfa6f21382915a37ef22531078f2857ebebc5b26b13ff2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-presentation-owner.mjs",
+      "equal": true,
+      "before": "4f3eec51b3925029989bb9ee9fc85151083af3fee0e216738b67d0bb0d95be20",
+      "after": "4f3eec51b3925029989bb9ee9fc85151083af3fee0e216738b67d0bb0d95be20"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-presentation.mjs",
+      "equal": true,
+      "before": "9dc6ac9724e7f9a24547ead587483c3d7ef94d8846bd6f64401050201fa05d3c",
+      "after": "9dc6ac9724e7f9a24547ead587483c3d7ef94d8846bd6f64401050201fa05d3c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-projectile-flight.mjs",
+      "equal": true,
+      "before": "1321b8431261884566a98956847f576910148d70e18baacdeefef96201ee72fb",
+      "after": "1321b8431261884566a98956847f576910148d70e18baacdeefef96201ee72fb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-replay-admission.mjs",
+      "equal": true,
+      "before": "2413498062936a63c3da5e14fa66b91ae32331b604f52175f38eb7f2974c275f",
+      "after": "2413498062936a63c3da5e14fa66b91ae32331b604f52175f38eb7f2974c275f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-trajectory.mjs",
+      "equal": true,
+      "before": "6ca46389cf207170d2cc0af96ddbd2855d7dd4ec6843c9731eb9f5f10b7376d3",
+      "after": "6ca46389cf207170d2cc0af96ddbd2855d7dd4ec6843c9731eb9f5f10b7376d3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "equal": false,
+      "before": "aa834a0aa3fe4616539a6a95187b1fc8eaab97acd11c7209b4ae648b81f80315",
+      "after": "9d9716c7e64e407e7705916875c8c3645ced58dd26ba7dbb0321c105db01429d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-vfx.mjs",
+      "equal": true,
+      "before": "427716ba8237bf24a44b13ae87fd2680eb9e7909975326af5663d403fa94f91f",
+      "after": "427716ba8237bf24a44b13ae87fd2680eb9e7909975326af5663d403fa94f91f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/special-world-payload.mjs",
+      "equal": true,
+      "before": "3ea7935240cef48ded524beca30b349de40f8f8bee5566c78c754da29a40557e",
+      "after": "3ea7935240cef48ded524beca30b349de40f8f8bee5566c78c754da29a40557e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splashdown-network.mjs",
+      "equal": true,
+      "before": "415ab18fadc3d00c100222497abe73255aaf618ab4efde9d32a6ae984e4b9361",
+      "after": "415ab18fadc3d00c100222497abe73255aaf618ab4efde9d32a6ae984e4b9361"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+      "equal": true,
+      "before": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7",
+      "after": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splatling-jump-spread.mjs",
+      "equal": true,
+      "before": "599c0b43ab0ef1e1f00de8407cc22c923f1ba467e194c1e991ce27561e200981",
+      "after": "599c0b43ab0ef1e1f00de8407cc22c923f1ba467e194c1e991ce27561e200981"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splatling-radius-charge.mjs",
+      "equal": true,
+      "before": "0a66380b87e039fe4db5c1ee1610ba14cd71a335c448f7cbc89510f9223f748f",
+      "after": "0a66380b87e039fe4db5c1ee1610ba14cd71a335c448f7cbc89510f9223f748f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splatling-startup-compat.mjs",
+      "equal": true,
+      "before": "99ba1c6df4408be3875e0904c083fe2280abd184a93861c8b8880a0bd421a775",
+      "after": "99ba1c6df4408be3875e0904c083fe2280abd184a93861c8b8880a0bd421a775"
+    },
+    {
+      "file": "patches/splatoon3/runtime/splatling.mjs",
+      "equal": true,
+      "before": "2800d9c350e9b583d21ae182070414220e9052967b464893ed7976b042dda6ec",
+      "after": "2800d9c350e9b583d21ae182070414220e9052967b464893ed7976b042dda6ec"
+    },
+    {
+      "file": "patches/splatoon3/runtime/squid-spawn-presentation.mjs",
+      "equal": true,
+      "before": "761c648e5a823bc615834a139e89154162d24c436f4c18f8d519005f341ca0b2",
+      "after": "761c648e5a823bc615834a139e89154162d24c436f4c18f8d519005f341ca0b2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/squidroll-effects.mjs",
+      "equal": true,
+      "before": "bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453",
+      "after": "bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453"
+    },
+    {
+      "file": "patches/splatoon3/runtime/squidroll-motion.mjs",
+      "equal": true,
+      "before": "b2791c7548abe6195f4a583011c7870dc427b75b6d0ccf2607cf5bc531514add",
+      "after": "b2791c7548abe6195f4a583011c7870dc427b75b6d0ccf2607cf5bc531514add"
+    },
+    {
+      "file": "patches/splatoon3/runtime/storm-effects.mjs",
+      "equal": true,
+      "before": "13971dad1c5ae664af2e38bc4ea29ebf65a33383d208cc3f7ab4bf4a2a5bd17c",
+      "after": "13971dad1c5ae664af2e38bc4ea29ebf65a33383d208cc3f7ab4bf4a2a5bd17c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/storm-power.mjs",
+      "equal": true,
+      "before": "317c2d2f73fe79428b83df01d5fa539ec89732d543c0522cdd0271ad3a05ad02",
+      "after": "317c2d2f73fe79428b83df01d5fa539ec89732d543c0522cdd0271ad3a05ad02"
+    },
+    {
+      "file": "patches/splatoon3/runtime/stringer-charge-hud.mjs",
+      "equal": true,
+      "before": "dd79a756af81c5c2fa58d988b1d99021cc593228be5b23710bf5459cc60eed3d",
+      "after": "dd79a756af81c5c2fa58d988b1d99021cc593228be5b23710bf5459cc60eed3d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-mark-resistance.mjs",
+      "equal": true,
+      "before": "bfe07f20555923683df6bcd287ee6ba5831ab491da08e4516a555c0cad6e9ecb",
+      "after": "bfe07f20555923683df6bcd287ee6ba5831ab491da08e4516a555c0cad6e9ecb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-models.mjs",
+      "equal": true,
+      "before": "965539db8802473a25d00abe886778d6ec695fc50f643a095652960e6408e7d6",
+      "after": "965539db8802473a25d00abe886778d6ec695fc50f643a095652960e6408e7d6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-ready.mjs",
+      "equal": true,
+      "before": "19f8aba3f8bebb0726694c595ab855b86550aa981cbb2a2966b32a0c04c5c386",
+      "after": "19f8aba3f8bebb0726694c595ab855b86550aa981cbb2a2966b32a0c04c5c386"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-release-forecast.mjs",
+      "equal": true,
+      "before": "bb02684890ad2033df6a7d4e24b2e2249586cba7cc7c651c452eab6af645faad",
+      "after": "bb02684890ad2033df6a7d4e24b2e2249586cba7cc7c651c452eab6af645faad"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-resistance.mjs",
+      "equal": true,
+      "before": "6ade1c45368ef660ece720aef331987bca4a22f2375331f1d7108c19861c682d",
+      "after": "6ade1c45368ef660ece720aef331987bca4a22f2375331f1d7108c19861c682d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-special-fidelity.mjs",
+      "equal": true,
+      "before": "6edc88c3b1949b153da328dfef712a36e564245c40cbac807cd9970551670c02",
+      "after": "6edc88c3b1949b153da328dfef712a36e564245c40cbac807cd9970551670c02"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-surface-attachment.mjs",
+      "equal": true,
+      "before": "cd1800660a82887f1b08d23a31289c54ead4578fbd396766624da3c3d2c52c31",
+      "after": "cd1800660a82887f1b08d23a31289c54ead4578fbd396766624da3c3d2c52c31"
+    },
+    {
+      "file": "patches/splatoon3/runtime/sub-trajectory-preview.mjs",
+      "equal": true,
+      "before": "3d597827e3de9bd1e881dcf87075a7169f2f569072da4b4e955631d3ce66902f",
+      "after": "3d597827e3de9bd1e881dcf87075a7169f2f569072da4b4e955631d3ce66902f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/superjump-destination.mjs",
+      "equal": true,
+      "before": "19ad2a41fcd73b331d71a77ac417562c2e9b752c17d26491bcc96795402c3a9f",
+      "after": "19ad2a41fcd73b331d71a77ac417562c2e9b752c17d26491bcc96795402c3a9f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/superjump-motion.mjs",
+      "equal": true,
+      "before": "bd4050a2d2f3c7a88451ac1ea02249bf40a33ddbd3859dcdee61a75779dea3c1",
+      "after": "bd4050a2d2f3c7a88451ac1ea02249bf40a33ddbd3859dcdee61a75779dea3c1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/superjump-target-notification.mjs",
+      "equal": true,
+      "before": "75c78346fbf23e553d33f6a112bb97c34b2e499f99d0b2e0b36f2e87f65b043f",
+      "after": "75c78346fbf23e553d33f6a112bb97c34b2e499f99d0b2e0b36f2e87f65b043f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/superjump.mjs",
+      "equal": true,
+      "before": "1025e613715b454dd3cdce1a698ca2274dc2d12f7e256112d5c3041a4ccc6f65",
+      "after": "1025e613715b454dd3cdce1a698ca2274dc2d12f7e256112d5c3041a4ccc6f65"
+    },
+    {
+      "file": "patches/splatoon3/runtime/support-cooler-collision.mjs",
+      "equal": true,
+      "before": "6eef3666d2eeae5821c41f2440d0965da9562976a26a44dabac8f108a65cc855",
+      "after": "6eef3666d2eeae5821c41f2440d0965da9562976a26a44dabac8f108a65cc855"
+    },
+    {
+      "file": "patches/splatoon3/runtime/support-cooler-flight.mjs",
+      "equal": true,
+      "before": "7075f0a6b6c543384b9b414e3bbf57553558731980a97b825bfe1e9d280642bf",
+      "after": "7075f0a6b6c543384b9b414e3bbf57553558731980a97b825bfe1e9d280642bf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/support-cooler.mjs",
+      "equal": true,
+      "before": "9472f78124d67347fdc5e7f46abad791d5f67379223008bdf37cdd41775a94c4",
+      "after": "9472f78124d67347fdc5e7f46abad791d5f67379223008bdf37cdd41775a94c4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/support-recon.mjs",
+      "equal": true,
+      "before": "853a77d92e4c28d61bae563a14821d7acb22dde194a4b38c1f2af49635e06b3b",
+      "after": "853a77d92e4c28d61bae563a14821d7acb22dde194a4b38c1f2af49635e06b3b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/support-sensor-flight.mjs",
+      "equal": true,
+      "before": "a7848a642046468e45074639ebb08f812aa72ef361c93e5fcce12cffb2889391",
+      "after": "a7848a642046468e45074639ebb08f812aa72ef361c93e5fcce12cffb2889391"
+    },
+    {
+      "file": "patches/splatoon3/runtime/swim-motion.mjs",
+      "equal": true,
+      "before": "1a82a040a09f9a99ed74ce5baffa23bb2f64a22cd902aee8ec8c64c8aeec3b26",
+      "after": "1a82a040a09f9a99ed74ce5baffa23bb2f64a22cd902aee8ec8c64c8aeec3b26"
+    },
+    {
+      "file": "patches/splatoon3/runtime/swim-stealth.mjs",
+      "equal": true,
+      "before": "1375d722c18238ab62f8f4d6a512a4f77896e16150db7659d1ff575372d4c643",
+      "after": "1375d722c18238ab62f8f4d6a512a4f77896e16150db7659d1ff575372d4c643"
+    },
+    {
+      "file": "patches/splatoon3/runtime/tacticooler-gauge.mjs",
+      "equal": true,
+      "before": "cd966ae45e4f8e72516fbf3ed878a714f2fc662528ef42fc3892d90f92c46d62",
+      "after": "cd966ae45e4f8e72516fbf3ed878a714f2fc662528ef42fc3892d90f92c46d62"
+    },
+    {
+      "file": "patches/splatoon3/runtime/tenacity.mjs",
+      "equal": true,
+      "before": "60f0d57332d07f545973eb6dbdc44935cbf52f0ae0537e896fa83c76cb7cf185",
+      "after": "60f0d57332d07f545973eb6dbdc44935cbf52f0ae0537e896fa83c76cb7cf185"
+    },
+    {
+      "file": "patches/splatoon3/runtime/throw-prediction-record.mjs",
+      "equal": true,
+      "before": "2bbc3dc6ba4681e2ac5950bf10deeb062c2aa98859e9f0c1d78b3b7a553c17cc",
+      "after": "2bbc3dc6ba4681e2ac5950bf10deeb062c2aa98859e9f0c1d78b3b7a553c17cc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/throw-prediction.mjs",
+      "equal": true,
+      "before": "5906dd38cdc58cc3cba60a1f46267f42d022b4d7a14a0cefc4f01f2035f9378e",
+      "after": "5906dd38cdc58cc3cba60a1f46267f42d022b4d7a14a0cefc4f01f2035f9378e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+      "equal": true,
+      "before": "32a55c5eaeed4f8b48d4b229cf4a143774145d2ef93058b1f4121e6e45688e3f",
+      "after": "32a55c5eaeed4f8b48d4b229cf4a143774145d2ef93058b1f4121e6e45688e3f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs",
+      "equal": true,
+      "before": "47416d7b202140d755992623121b2ff8f6d7a528b5e1797c861927844b75b20b",
+      "after": "47416d7b202140d755992623121b2ff8f6d7a528b5e1797c861927844b75b20b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/torpedo-splashes.mjs",
+      "equal": true,
+      "before": "5933b749f3ad352e5e0eeb9616bf1aa162bb6eca5597b7ddbefcb6c4440dfff6",
+      "after": "5933b749f3ad352e5e0eeb9616bf1aa162bb6eca5597b7ddbefcb6c4440dfff6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/toxic-mist.mjs",
+      "equal": true,
+      "before": "17a3cbace11040cfdf49e7cb7e90e440c308ad3130a793b4c15d75d9cfe5167b",
+      "after": "17a3cbace11040cfdf49e7cb7e90e440c308ad3130a793b4c15d75d9cfe5167b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/transient-gear-network.mjs",
+      "equal": true,
+      "before": "a308e586e967aad7d05f6c590fc4587f7ae0bf8a34927664339191ec5ef04a72",
+      "after": "a308e586e967aad7d05f6c590fc4587f7ae0bf8a34927664339191ec5ef04a72"
+    },
+    {
+      "file": "patches/splatoon3/runtime/triple-slam-fists.mjs",
+      "equal": true,
+      "before": "63ccef57a62d8b707855e56df65df25baefe32d4763dcdd3e6bc0808caa6b90f",
+      "after": "63ccef57a62d8b707855e56df65df25baefe32d4763dcdd3e6bc0808caa6b90f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/trizooka-collision.mjs",
+      "equal": true,
+      "before": "87dd73719373e38286961ea354c78bc014c764a7db77454acc61f4dc21d7f73d",
+      "after": "87dd73719373e38286961ea354c78bc014c764a7db77454acc61f4dc21d7f73d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/turf-combat.mjs",
+      "equal": true,
+      "before": "a2e5460da6af6311674e84d657194e33cda2a791e1a357479ce1a421c36d669e",
+      "after": "a2e5460da6af6311674e84d657194e33cda2a791e1a357479ce1a421c36d669e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/turf-finish.mjs",
+      "equal": true,
+      "before": "b7147929b9130604662bf43040540e301c8a73c232354bb983e598676e11b2b2",
+      "after": "b7147929b9130604662bf43040540e301c8a73c232354bb983e598676e11b2b2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/turf-intro-camera.mjs",
+      "equal": true,
+      "before": "b9e3d0012f9dbea3e29a9e59dc9660b167f00a13db14a0d4f586df4d78dfe84a",
+      "after": "b9e3d0012f9dbea3e29a9e59dc9660b167f00a13db14a0d4f586df4d78dfe84a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ui-kit-icons.mjs",
+      "equal": true,
+      "before": "d4196644a1867263f6ba22814d7d0174426ec838031c5b3df51e6360d47e2e08",
+      "after": "d4196644a1867263f6ba22814d7d0174426ec838031c5b3df51e6360d47e2e08"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ui-special-icons.mjs",
+      "equal": true,
+      "before": "4b0ea14d27aae5129e2e98568e6cceb30a9bc1dfc688c000d01efba9e29851dc",
+      "after": "4b0ea14d27aae5129e2e98568e6cceb30a9bc1dfc688c000d01efba9e29851dc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ui-strings.mjs",
+      "equal": true,
+      "before": "03b29a21babb57ab4acaa03bb49e65b9ed22cc91461255aca2a4b6f54da66af9",
+      "after": "03b29a21babb57ab4acaa03bb49e65b9ed22cc91461255aca2a4b6f54da66af9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ui-sub-icons.mjs",
+      "equal": true,
+      "before": "0fe024784718d29fcc552a9f981b4eb78e359cfd4eb6a49e273da4a212978e2d",
+      "after": "0fe024784718d29fcc552a9f981b4eb78e359cfd4eb6a49e273da4a212978e2d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ui.mjs",
+      "equal": true,
+      "before": "ff8835fd6ec61f39ce32d4684a7192e11b44ade68201e13acb5812d264e3647f",
+      "after": "ff8835fd6ec61f39ce32d4684a7192e11b44ade68201e13acb5812d264e3647f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/wail-speaker-batch.mjs",
+      "equal": true,
+      "before": "9304718179cc79d4043912383f7124534c666bc49576a425c9b6705fe8a0341a",
+      "after": "9304718179cc79d4043912383f7124534c666bc49576a425c9b6705fe8a0341a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/wail-speakers.mjs",
+      "equal": true,
+      "before": "b0c05e708d98231384700eca09a6cc7ebd653c3693d843e22f1791621015d908",
+      "after": "b0c05e708d98231384700eca09a6cc7ebd653c3693d843e22f1791621015d908"
+    },
+    {
+      "file": "patches/splatoon3/runtime/walk-foot-clearance.mjs",
+      "equal": true,
+      "before": "619560ba02f677e2c51ffbbb6463fb26d0d466c38f0abd5e2e2dce975cc60e00",
+      "after": "619560ba02f677e2c51ffbbb6463fb26d0d466c38f0abd5e2e2dce975cc60e00"
+    },
+    {
+      "file": "patches/splatoon3/runtime/walk.mjs",
+      "equal": true,
+      "before": "9c05c33ad043ed5329e7803098bf6a89af9bb92f076186239e16daa3d405e1a1",
+      "after": "9c05c33ad043ed5329e7803098bf6a89af9bb92f076186239e16daa3d405e1a1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/wall-motion.mjs",
+      "equal": true,
+      "before": "043046e4bf2ff102d014594c20d34484a8ef50e2701604343638efaa42261e7a",
+      "after": "043046e4bf2ff102d014594c20d34484a8ef50e2701604343638efaa42261e7a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-accuracy.mjs",
+      "equal": true,
+      "before": "d9b3ec3b80d72575d3d09075b08a91d419cb7ed95061ef135a75fc369c4311b2",
+      "after": "d9b3ec3b80d72575d3d09075b08a91d419cb7ed95061ef135a75fc369c4311b2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-appearance.mjs",
+      "equal": true,
+      "before": "4fef8568c3735a8e26d375a0d0c184cfdd22fcbf42937704c5dc4a2417b18bfc",
+      "after": "4fef8568c3735a8e26d375a0d0c184cfdd22fcbf42937704c5dc4a2417b18bfc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-detail-motion.mjs",
+      "equal": true,
+      "before": "f0309782fb70902d2c24315e445f5260b83982d5f13bd3d0e9461cc6c7087fa6",
+      "after": "f0309782fb70902d2c24315e445f5260b83982d5f13bd3d0e9461cc6c7087fa6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-edgecases.mjs",
+      "equal": true,
+      "before": "fa2a9655bf5bf24b4af28732ae90107a89497796be670f13118804078d7cd17f",
+      "after": "fa2a9655bf5bf24b4af28732ae90107a89497796be670f13118804078d7cd17f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-family-motion.mjs",
+      "equal": true,
+      "before": "f4496587f8fd588c25db6a23bec4127b2c88e65ebd4e6d11d1315b086e4018c0",
+      "after": "f4496587f8fd588c25db6a23bec4127b2c88e65ebd4e6d11d1315b086e4018c0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-gates.mjs",
+      "equal": true,
+      "before": "e40959671ba7d8f3a2d205e2b7a0986c1d13a89894cc51fbe7e91e690c713a85",
+      "after": "e40959671ba7d8f3a2d205e2b7a0986c1d13a89894cc51fbe7e91e690c713a85"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "equal": true,
+      "before": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916",
+      "after": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-hit-reaction.mjs",
+      "equal": true,
+      "before": "0b35e380584d55c8f2f3e37b4571c3eaef072c580af6284e1d1041e7dbe626b0",
+      "after": "0b35e380584d55c8f2f3e37b4571c3eaef072c580af6284e1d1041e7dbe626b0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-motion.mjs",
+      "equal": true,
+      "before": "1cf70256f32e27dbd4666ea46fd3432656819e0fcf848ce27a858036820b4e18",
+      "after": "1cf70256f32e27dbd4666ea46fd3432656819e0fcf848ce27a858036820b4e18"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-opponent-palette.mjs",
+      "equal": true,
+      "before": "10d1565e9dcfbb61fa9bd3bed06bc7e29793922921a4eed56c5a425fff9fc16a",
+      "after": "10d1565e9dcfbb61fa9bd3bed06bc7e29793922921a4eed56c5a425fff9fc16a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-paint-inertia.mjs",
+      "equal": true,
+      "before": "295ec9ad793c854274084013b7689ecd8402c693f1474635ed76432e3cc4bc8e",
+      "after": "295ec9ad793c854274084013b7689ecd8402c693f1474635ed76432e3cc4bc8e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-reference-models.mjs",
+      "equal": true,
+      "before": "191bcd07e551fdd90d06a3560d410b09957129c982885bc9d5f03fb0ad0dc768",
+      "after": "191bcd07e551fdd90d06a3560d410b09957129c982885bc9d5f03fb0ad0dc768"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-weight-data.mjs",
+      "equal": true,
+      "before": "13f7446b36ed6ecfea42b83a9620a0dc40c7dee397ac2da291e21591ad251738",
+      "after": "13f7446b36ed6ecfea42b83a9620a0dc40c7dee397ac2da291e21591ad251738"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-weight.mjs",
+      "equal": true,
+      "before": "a8b2d9cdaf25458cecaea2df0e1608e046ab2d79056d743d09f944b030c03b31",
+      "after": "a8b2d9cdaf25458cecaea2df0e1608e046ab2d79056d743d09f944b030c03b31"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+      "equal": true,
+      "before": "dae8085cf862ebc73797276480b834d6d366be43f2b957c8b898a6219dc3491f",
+      "after": "dae8085cf862ebc73797276480b834d6d366be43f2b957c8b898a6219dc3491f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons-collision.mjs",
+      "equal": true,
+      "before": "70fe951a65fab72a257fd917d7daf60b0552cc7c8088e5dd76ba82dd4f275b0b",
+      "after": "70fe951a65fab72a257fd917d7daf60b0552cc7c8088e5dd76ba82dd4f275b0b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "equal": true,
+      "before": "7f64fd20e5af7ee19664802049946b79320b0c5125145a4fcfb4dab0602f3c26",
+      "after": "7f64fd20e5af7ee19664802049946b79320b0c5125145a4fcfb4dab0602f3c26"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons.mjs",
+      "equal": true,
+      "before": "b169b5b03515ffdc00fc9ad883f1f36560c7327ea98eab3a25ab13f9c425cbc3",
+      "after": "b169b5b03515ffdc00fc9ad883f1f36560c7327ea98eab3a25ab13f9c425cbc3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/zipcaster-armor.mjs",
+      "equal": true,
+      "before": "7a822971c2903e599d57d5043c3fab36921289a02ecc2d06ab93746427fdb4c4",
+      "after": "7a822971c2903e599d57d5043c3fab36921289a02ecc2d06ab93746427fdb4c4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+      "equal": true,
+      "before": "ede264ec32fa4d3b0998772e17c606b3d19e1cd1dff304a4214a2324f41984f7",
+      "after": "ede264ec32fa4d3b0998772e17c606b3d19e1cd1dff304a4214a2324f41984f7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/bank.mjs",
+      "equal": true,
+      "before": "68f98b78543ad39ef9758240ab3a18a38e0c693ce44d54c4bee9cc82618b2360",
+      "after": "68f98b78543ad39ef9758240ab3a18a38e0c693ce44d54c4bee9cc82618b2360"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/blaster-hit.mjs",
+      "equal": true,
+      "before": "71ca5c976d264117ee8ecc96e2cfa88e5c9ae12ca7912c6bf0052352b0e686a0",
+      "after": "71ca5c976d264117ee8ecc96e2cfa88e5c9ae12ca7912c6bf0052352b0e686a0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/borrowed-recorded-mains.mjs",
+      "equal": true,
+      "before": "4e63b8fed48595e9927e193fb2a21386ae52a27aabee5f161da41b702555c98f",
+      "after": "4e63b8fed48595e9927e193fb2a21386ae52a27aabee5f161da41b702555c98f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/charge-audio-lifecycle.mjs",
+      "equal": true,
+      "before": "80d7aa86158d875e44be5c8fc0b1c499a4ca4bb5f21a9a79f6b5fba45f2b1528",
+      "after": "80d7aa86158d875e44be5c8fc0b1c499a4ca4bb5f21a9a79f6b5fba45f2b1528"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/charge-audio-state.mjs",
+      "equal": true,
+      "before": "882ea0a7d51f81c3461ad54a4ae601d304e5485713810373d3c3d66148c11891",
+      "after": "882ea0a7d51f81c3461ad54a4ae601d304e5485713810373d3c3d66148c11891"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/charge-confirmation.mjs",
+      "equal": true,
+      "before": "116e4a1a9a20f86dc6187ce28913c236b4222d55a0e5348cd52949b111aeb80f",
+      "after": "116e4a1a9a20f86dc6187ce28913c236b4222d55a0e5348cd52949b111aeb80f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/charge-hit-cue.mjs",
+      "equal": true,
+      "before": "119a9fa2c5910cb9378111116fa28de945eaeed988e832065fc3ff9e9ba322cf",
+      "after": "119a9fa2c5910cb9378111116fa28de945eaeed988e832065fc3ff9e9ba322cf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+      "equal": true,
+      "before": "b472adca2af3733e5fb0f49b8ada4a3142d65f87a13e3f447c6c652835194e05",
+      "after": "b472adca2af3733e5fb0f49b8ada4a3142d65f87a13e3f447c6c652835194e05"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+      "equal": true,
+      "before": "45bca073311c5b6ed19e70cbeca4ca2887bb268c597a31a5e592e54690773350",
+      "after": "45bca073311c5b6ed19e70cbeca4ca2887bb268c597a31a5e592e54690773350"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/combat-recipes.mjs",
+      "equal": true,
+      "before": "31b3c410d135e8a903421b1aadfe442a3acd221abfb7a17af8ec3d67071ecf17",
+      "after": "31b3c410d135e8a903421b1aadfe442a3acd221abfb7a17af8ec3d67071ecf17"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/encoded-response.mjs",
+      "equal": true,
+      "before": "87fbc1b28887efd37cfe06db05b60e3a7c14afa84324d9296f19b5a14a62c259",
+      "after": "87fbc1b28887efd37cfe06db05b60e3a7c14afa84324d9296f19b5a14a62c259"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/engine.mjs",
+      "equal": true,
+      "before": "cdedd4969af2a817e826318f2f3691c3aa868a5745531305c464ec75daf37811",
+      "after": "cdedd4969af2a817e826318f2f3691c3aa868a5745531305c464ec75daf37811"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+      "equal": true,
+      "before": "e6e1a1ef43961823808336ddcfc8b3a074060214fc9ec9a1c90d5cb33b3373b8",
+      "after": "e6e1a1ef43961823808336ddcfc8b3a074060214fc9ec9a1c90d5cb33b3373b8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/finite-pcm.mjs",
+      "equal": true,
+      "before": "8991d1d17549854bee309e1760ee1aae2dbf50e86c9ec8d5dab82ae44dac13c4",
+      "after": "8991d1d17549854bee309e1760ee1aae2dbf50e86c9ec8d5dab82ae44dac13c4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+      "equal": true,
+      "before": "895afe0064802ad3aaba8f21bf9c71c6fbb40389bcce94a753124206ff39913b",
+      "after": "895afe0064802ad3aaba8f21bf9c71c6fbb40389bcce94a753124206ff39913b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/grain-texture.mjs",
+      "equal": true,
+      "before": "8c5d15b6e65b6388d5d8158ca0168e9e2bb071db67a1dc0fa9d976b1bc65bc9a",
+      "after": "8c5d15b6e65b6388d5d8158ca0168e9e2bb071db67a1dc0fa9d976b1bc65bc9a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/grain-worker.mjs",
+      "equal": true,
+      "before": "893494920997d0b04dd2e63c82727d3fb818cd3766fda15624a9efaf8fb8c4f4",
+      "after": "893494920997d0b04dd2e63c82727d3fb818cd3766fda15624a9efaf8fb8c4f4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/kit-prefetch.mjs",
+      "equal": true,
+      "before": "df1b4629b14e20c0bd06da963b018abca01dae419037eb20a5fda26c738f0c5c",
+      "after": "df1b4629b14e20c0bd06da963b018abca01dae419037eb20a5fda26c738f0c5c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/kit-recipes.mjs",
+      "equal": true,
+      "before": "5d4532e05da3146a6a6ee8753cbafb21e6c6031a5805d02e5a3164e7082ea77a",
+      "after": "5d4532e05da3146a6a6ee8753cbafb21e6c6031a5805d02e5a3164e7082ea77a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/kit-runtime.mjs",
+      "equal": true,
+      "before": "ec0274802be9bf307d679ab208b0df5980751a35825614d0de5adf7a6033ac20",
+      "after": "ec0274802be9bf307d679ab208b0df5980751a35825614d0de5adf7a6033ac20"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/load-deadline.mjs",
+      "equal": true,
+      "before": "a4b601b3342847a40728fbaba059d8f08d8e4ef7fd0125d93bc6d9354c5833b0",
+      "after": "a4b601b3342847a40728fbaba059d8f08d8e4ef7fd0125d93bc6d9354c5833b0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/music-preload-owner.mjs",
+      "equal": true,
+      "before": "4972415da8c1a84767efcba7717c9e23b0872eacc3b495efaadb4a8f576a1b38",
+      "after": "4972415da8c1a84767efcba7717c9e23b0872eacc3b495efaadb4a8f576a1b38"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/music-score.mjs",
+      "equal": true,
+      "before": "ddbc32367521e5a29518566d33710a4e04bc3aad027fc261a722dcd475db2d52",
+      "after": "ddbc32367521e5a29518566d33710a4e04bc3aad027fc261a722dcd475db2d52"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+      "equal": true,
+      "before": "d45efcd855d10a9dc4a13c6d306a40bc2ceb516df69ca1ec631a02890b3b26dd",
+      "after": "d45efcd855d10a9dc4a13c6d306a40bc2ceb516df69ca1ec631a02890b3b26dd"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/output-safety.mjs",
+      "equal": true,
+      "before": "a34aca885da5c4bd46c2348613740a84fdea7cbfdf8a8c09e03e2b14c755c094",
+      "after": "a34aca885da5c4bd46c2348613740a84fdea7cbfdf8a8c09e03e2b14c755c094"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+      "equal": true,
+      "before": "307f8552d37a2e38415496cf537c69c52054ffa2c06b7d58dbd8dfcdc80c4e00",
+      "after": "307f8552d37a2e38415496cf537c69c52054ffa2c06b7d58dbd8dfcdc80c4e00"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs",
+      "equal": true,
+      "before": "d53255a0c5f280505ca970f5dd48b5b6c17aba863974d72387d72ff8e353a9fe",
+      "after": "d53255a0c5f280505ca970f5dd48b5b6c17aba863974d72387d72ff8e353a9fe"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/priority-signatures.mjs",
+      "equal": true,
+      "before": "1e282dbb2d127c43abfc506588252223390f3d48d9092f32667f21118588bf20",
+      "after": "1e282dbb2d127c43abfc506588252223390f3d48d9092f32667f21118588bf20"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/progress-charge-playback.mjs",
+      "equal": true,
+      "before": "0c87178f253a9809298ae46ec54637700c02bed86bddbe7d1fe22c46ba5849f4",
+      "after": "0c87178f253a9809298ae46ec54637700c02bed86bddbe7d1fe22c46ba5849f4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/real-s3-installed.json",
+      "equal": true,
+      "before": "2114665d279ca9491f94b6788c526efb3d883fceadaa84d3175b0cf1c3acdbae",
+      "after": "2114665d279ca9491f94b6788c526efb3d883fceadaa84d3175b0cf1c3acdbae"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+      "equal": true,
+      "before": "04bb0fee46013353b5554d4c8a1659e16a22c9c44fc0e723fb34d20fab7129b0",
+      "after": "04bb0fee46013353b5554d4c8a1659e16a22c9c44fc0e723fb34d20fab7129b0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/real-s3-samples.json",
+      "equal": true,
+      "before": "4d3aba7034a2148022e1d2728058e52e92df2b771ed447b97bc16d521100ee24",
+      "after": "4d3aba7034a2148022e1d2728058e52e92df2b771ed447b97bc16d521100ee24"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/reference-profiles.mjs",
+      "equal": true,
+      "before": "edeec2f4dc5e4a38ebb8de897a9864ea31ceaf02933bdd8205df84ece089d148",
+      "after": "edeec2f4dc5e4a38ebb8de897a9864ea31ceaf02933bdd8205df84ece089d148"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/render-worker.js",
+      "equal": true,
+      "before": "3a3626dffc923e832d9209dbf9fbf4075f51bef3ba9e52d72f6493a3dd916f09",
+      "after": "3a3626dffc923e832d9209dbf9fbf4075f51bef3ba9e52d72f6493a3dd916f09"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/render-worker.mjs",
+      "equal": true,
+      "before": "1c418658c2c37653e98ce5a8361f3021009a701f6a84ba83e1324cce4fbc3b18",
+      "after": "1c418658c2c37653e98ce5a8361f3021009a701f6a84ba83e1324cce4fbc3b18"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/render.mjs",
+      "equal": true,
+      "before": "200cf2f8baed9b99cbf382c15a793a3b1c5d18607cef0f072fd8da0d28234ff6",
+      "after": "200cf2f8baed9b99cbf382c15a793a3b1c5d18607cef0f072fd8da0d28234ff6"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+      "equal": true,
+      "before": "82d195c291326cbacafea7cbac160709507060516572c77737087efa2e732f63",
+      "after": "82d195c291326cbacafea7cbac160709507060516572c77737087efa2e732f63"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+      "equal": true,
+      "before": "9aa8e830ecfdd00c8dc8abd15d56f03d89bec4f23ff9ed22fe780452c4196df0",
+      "after": "9aa8e830ecfdd00c8dc8abd15d56f03d89bec4f23ff9ed22fe780452c4196df0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/reverb-worker.mjs",
+      "equal": true,
+      "before": "9ad7c7d22ab462839d57116e9d572563a9dc03a25109b6bc8ebdf67a5e848324",
+      "after": "9ad7c7d22ab462839d57116e9d572563a9dc03a25109b6bc8ebdf67a5e848324"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/runtime.mjs",
+      "equal": true,
+      "before": "7e8eb84f89e19ae97a3802874af68659fb07bd7169077d76054f7ff5821bd0bb",
+      "after": "7e8eb84f89e19ae97a3802874af68659fb07bd7169077d76054f7ff5821bd0bb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/s3-articulation.mjs",
+      "equal": true,
+      "before": "b378499209c7a490104a35ce6ee0b4658b73de253bddbf208345487b81e7393e",
+      "after": "b378499209c7a490104a35ce6ee0b4658b73de253bddbf208345487b81e7393e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+      "equal": true,
+      "before": "052518341750d7caf2c50ce43a9f2cee5754f60d151a1e7e0a0c6504acad59b4",
+      "after": "052518341750d7caf2c50ce43a9f2cee5754f60d151a1e7e0a0c6504acad59b4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/source-guided-render.mjs",
+      "equal": true,
+      "before": "99b17ea42241fc7806de9f79f4c521edfc4cfde2f10ce92fca24091d036df090",
+      "after": "99b17ea42241fc7806de9f79f4c521edfc4cfde2f10ce92fca24091d036df090"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/spatial-dsp.mjs",
+      "equal": true,
+      "before": "c20e28d80a7d51d3c01763aa2249659985c9f8a1dc3435c20e5ea860dd417c34",
+      "after": "c20e28d80a7d51d3c01763aa2249659985c9f8a1dc3435c20e5ea860dd417c34"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/spinner-charge-clips.mjs",
+      "equal": true,
+      "before": "163b199d2de7de4362ffcb205b9b4d152d54b42bacf60b1737abde9d2ab983a4",
+      "after": "163b199d2de7de4362ffcb205b9b4d152d54b42bacf60b1737abde9d2ab983a4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/spinner-charge-control.mjs",
+      "equal": true,
+      "before": "bb8a6d425bcce7bff9ca116c42476b3708945acb9ed8045e139d8578e2201ff5",
+      "after": "bb8a6d425bcce7bff9ca116c42476b3708945acb9ed8045e139d8578e2201ff5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/spinner-charge-layer.mjs",
+      "equal": true,
+      "before": "ee3da7918b14b0a56917399ea07ffcbe6dece29c5f192354c7fbd8f139b892ee",
+      "after": "ee3da7918b14b0a56917399ea07ffcbe6dece29c5f192354c7fbd8f139b892ee"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/stringer-charge-control.mjs",
+      "equal": true,
+      "before": "2ea8bbd7c82b2b20f6a188930a19ad439035e0870db231567760406bfa0b9714",
+      "after": "2ea8bbd7c82b2b20f6a188930a19ad439035e0870db231567760406bfa0b9714"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+      "equal": true,
+      "before": "d1d4dbf16621ab83bafb9b3152cb26612b02a2e5597dc33de2667e264310481a",
+      "after": "d1d4dbf16621ab83bafb9b3152cb26612b02a2e5597dc33de2667e264310481a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/audio/worker-deadline.mjs",
+      "equal": true,
+      "before": "e040282a53dc9e1b5df1c244ba82befee4aefd4330c232a7da818ddf4ccb88a2",
+      "after": "e040282a53dc9e1b5df1c244ba82befee4aefd4330c232a7da818ddf4ccb88a2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/barrier-admission.mjs",
+      "equal": true,
+      "before": "b71b8907ac5311e2ea3ba0c422a056761adf6c65c26fb9141d4ccb54262f8430",
+      "after": "b71b8907ac5311e2ea3ba0c422a056761adf6c65c26fb9141d4ccb54262f8430"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/bots.mjs",
+      "equal": true,
+      "before": "e83aba3b301ad4dcfa3d34eb3d2ae0bf4ad2c503a8a281f99beaee0c02804f04",
+      "after": "e83aba3b301ad4dcfa3d34eb3d2ae0bf4ad2c503a8a281f99beaee0c02804f04"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/clam-presentation.mjs",
+      "equal": true,
+      "before": "2e1a7ded560292f8b330250cf153e27b596a7e5ab8678699dc1b2cf81aa28701",
+      "after": "2e1a7ded560292f8b330250cf153e27b596a7e5ab8678699dc1b2cf81aa28701"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/clams.mjs",
+      "equal": true,
+      "before": "213a254a56ffb84cc6df2c22c1735f8c740fb0bbb26c2dc9b36d1ccc8801335d",
+      "after": "213a254a56ffb84cc6df2c22c1735f8c740fb0bbb26c2dc9b36d1ccc8801335d"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/combat.mjs",
+      "equal": true,
+      "before": "b318b689a025e9a17e988ec021810edd390e67d53d1d5fb840f7bb2a299f3de2",
+      "after": "b318b689a025e9a17e988ec021810edd390e67d53d1d5fb840f7bb2a299f3de2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/coordinates.mjs",
+      "equal": true,
+      "before": "6717328ac110af7a656305ff01df711c14002d053416d205be1f35ffec937b7b",
+      "after": "6717328ac110af7a656305ff01df711c14002d053416d205be1f35ffec937b7b"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/engine.mjs",
+      "equal": true,
+      "before": "27f4156ad6bba2aef3b85f7136882c0a0d4b76c67d9a103da6f3e1d96838522e",
+      "after": "27f4156ad6bba2aef3b85f7136882c0a0d4b76c67d9a103da6f3e1d96838522e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/install.mjs",
+      "equal": true,
+      "before": "f10831d70fa681071e569763d6a511f2588820a061d035f2a15cc472289ce9d4",
+      "after": "f10831d70fa681071e569763d6a511f2588820a061d035f2a15cc472289ce9d4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/minimap-cache.mjs",
+      "equal": true,
+      "before": "bd6fc935db6ff7767023f054b0ff018129c9411bac11d3710d0c4b0a06e22e62",
+      "after": "bd6fc935db6ff7767023f054b0ff018129c9411bac11d3710d0c4b0a06e22e62"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/network.mjs",
+      "equal": true,
+      "before": "fb5359f074616a871275facda4aa2cd3dc7458e5b0813f494c7947d67eeecc41",
+      "after": "fb5359f074616a871275facda4aa2cd3dc7458e5b0813f494c7947d67eeecc41"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/pose-admission.mjs",
+      "equal": true,
+      "before": "eff549635876d792c0fc591b5e9ccc5e59825ab883d9719f3051a6a590194f44",
+      "after": "eff549635876d792c0fc591b5e9ccc5e59825ab883d9719f3051a6a590194f44"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/power-clam-model.mjs",
+      "equal": true,
+      "before": "1b80b60f030253c5f51c835e6ae9676be2d2519b1eadc49b6f037317c44aa360",
+      "after": "1b80b60f030253c5f51c835e6ae9676be2d2519b1eadc49b6f037317c44aa360"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-carrier-marker.mjs",
+      "equal": true,
+      "before": "0e7acd5c4daa644b31de4f937acb7fffb7e95e724e1dd606d58d3681dab925a9",
+      "after": "0e7acd5c4daa644b31de4f937acb7fffb7e95e724e1dd606d58d3681dab925a9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-defense.mjs",
+      "equal": true,
+      "before": "9a0c80639da0cee6490bf441463c2059d28fe97b31049777ae95b97b6a94c799",
+      "after": "9a0c80639da0cee6490bf441463c2059d28fe97b31049777ae95b97b6a94c799"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-model.mjs",
+      "equal": true,
+      "before": "8e3050a02862b9fd1b98415bb537370bbc99dc14a2a81cd76bb25267fba56b96",
+      "after": "8e3050a02862b9fd1b98415bb537370bbc99dc14a2a81cd76bb25267fba56b96"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-motion.mjs",
+      "equal": true,
+      "before": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb",
+      "after": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs",
+      "equal": true,
+      "before": "2bd767f494cb9492072e242a6cffc1743bc0eb8781c751311fae60df4c369851",
+      "after": "2bd767f494cb9492072e242a6cffc1743bc0eb8781c751311fae60df4c369851"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker-visuals.mjs",
+      "equal": true,
+      "before": "33fa4484982f422eadd5059a155c65a53721c4e93048be1c93532c36ee2f9872",
+      "after": "33fa4484982f422eadd5059a155c65a53721c4e93048be1c93532c36ee2f9872"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+      "equal": true,
+      "before": "521ad56088230c893a73b3b062b08ce411ee94cb511ab845be2d5ecab416e6f1",
+      "after": "521ad56088230c893a73b3b062b08ce411ee94cb511ab845be2d5ecab416e6f1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/small-clam-model.mjs",
+      "equal": true,
+      "before": "80373cb84a73ad54cebbd73e70919037d3a4f45111bef892e0998d23ae7ee737",
+      "after": "80373cb84a73ad54cebbd73e70919037d3a4f45111bef892e0998d23ae7ee737"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/stages.mjs",
+      "equal": true,
+      "before": "1982e6d727c595b8546a2a7520dd0e30fc4387d5c529b11ef8bbf88c4bab485c",
+      "after": "1982e6d727c595b8546a2a7520dd0e30fc4387d5c529b11ef8bbf88c4bab485c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/strings.mjs",
+      "equal": true,
+      "before": "a95868959bb9c7f7f0298a82d773fb4b04b1a11a4e5f79bcbf977deb9e2a4a29",
+      "after": "a95868959bb9c7f7f0298a82d773fb4b04b1a11a4e5f79bcbf977deb9e2a4a29"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/tower-model.mjs",
+      "equal": true,
+      "before": "f8dcb326c837d319fcdded3e2155949f0ab79857c4cb8d850446ec5b37f08c65",
+      "after": "f8dcb326c837d319fcdded3e2155949f0ab79857c4cb8d850446ec5b37f08c65"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/tower.mjs",
+      "equal": true,
+      "before": "2de3b7214faa308c25a9fca4c4bda2bf64745631acdb2dc038b33b090cca8a17",
+      "after": "2de3b7214faa308c25a9fca4c4bda2bf64745631acdb2dc038b33b090cca8a17"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/ui.mjs",
+      "equal": true,
+      "before": "c3540c454bd3e0714ba1d76f74e4b5e27bc958b0d0d91665411b527bc1d923e1",
+      "after": "c3540c454bd3e0714ba1d76f74e4b5e27bc958b0d0d91665411b527bc1d923e1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/world.mjs",
+      "equal": true,
+      "before": "5167602f1d75e8cd1fbb7fbdedc3adb144b0904bb44d721765cf773501ddff54",
+      "after": "5167602f1d75e8cd1fbb7fbdedc3adb144b0904bb44d721765cf773501ddff54"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/zone-coverage-samples.mjs",
+      "equal": true,
+      "before": "6b338762d198288f625984fb7ed71133795ef0fe4c6d44c654732ced4317baaf",
+      "after": "6b338762d198288f625984fb7ed71133795ef0fe4c6d44c654732ced4317baaf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/zones.mjs",
+      "equal": true,
+      "before": "e819e5a54c8f0524e4863bcfe35e5360f539a4895a917586228754c73ef743ee",
+      "after": "e819e5a54c8f0524e4863bcfe35e5360f539a4895a917586228754c73ef743ee"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/blasters.mjs",
+      "equal": true,
+      "before": "1c31caa303d86f702c794cd8b7a99c9fe55389987619b16e0f46a0ffb50d4994",
+      "after": "1c31caa303d86f702c794cd8b7a99c9fe55389987619b16e0f46a0ffb50d4994"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/brellas.mjs",
+      "equal": true,
+      "before": "bc9321f03f14e70447a985477f28664bfc6d260ce58ecb19b01b8d25e1760a03",
+      "after": "bc9321f03f14e70447a985477f28664bfc6d260ce58ecb19b01b8d25e1760a03"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/brushes.mjs",
+      "equal": true,
+      "before": "7f2bf35bbb73a4f9c7d80c65715fda860e0e00b310198de8cf22786b39ab29a0",
+      "after": "7f2bf35bbb73a4f9c7d80c65715fda860e0e00b310198de8cf22786b39ab29a0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/chargers.mjs",
+      "equal": true,
+      "before": "63d0e0af4a723a6b30432d1f338bfeed0b0626d3e27e30eead05b948b279bf66",
+      "after": "63d0e0af4a723a6b30432d1f338bfeed0b0626d3e27e30eead05b948b279bf66"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/custom-explosher-finish.mjs",
+      "equal": true,
+      "before": "edc81f35f62f66c0943a782298b08704fbda2879c0f0c9f4d7481e10eb79200a",
+      "after": "edc81f35f62f66c0943a782298b08704fbda2879c0f0c9f4d7481e10eb79200a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/dualies.mjs",
+      "equal": true,
+      "before": "a8c515ef607bfa749a2cf3903bbdc4174561713da527bbcd06e08e683f0fad36",
+      "after": "a8c515ef607bfa749a2cf3903bbdc4174561713da527bbcd06e08e683f0fad36"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+      "equal": true,
+      "before": "1c607ea9e205bc0c5a41e99080aa5d3ed8ccf28ad08a0fa5bb065ccfe66a1ca4",
+      "after": "1c607ea9e205bc0c5a41e99080aa5d3ed8ccf28ad08a0fa5bb065ccfe66a1ca4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "equal": true,
+      "before": "34b8ef1a0850b419b9eadc299281c321831a41466cf2c1dbe95bc0cbbc7f0317",
+      "after": "34b8ef1a0850b419b9eadc299281c321831a41466cf2c1dbe95bc0cbbc7f0317"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "equal": true,
+      "before": "ab10320acfb1abcbf0a1a24485c46d45e2b52a53503909c5abc04e485b0bc456",
+      "after": "ab10320acfb1abcbf0a1a24485c46d45e2b52a53503909c5abc04e485b0bc456"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/rollers.mjs",
+      "equal": true,
+      "before": "baaa5632b730ba9cb53be7abf48bf0fae5fda28573794b0773d1eeda76eadf41",
+      "after": "baaa5632b730ba9cb53be7abf48bf0fae5fda28573794b0773d1eeda76eadf41"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/shooter-blaster-variants.mjs",
+      "equal": true,
+      "before": "c7d6af895ea4158d08b6b76ac6e9d19d210c20bc98d150b75b3d451a6a007dea",
+      "after": "c7d6af895ea4158d08b6b76ac6e9d19d210c20bc98d150b75b3d451a6a007dea"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/shooters-b.mjs",
+      "equal": true,
+      "before": "217ce3248e0370019fe9c6d33a7c15d56276f452877cffde94cbc3be460e5ed3",
+      "after": "217ce3248e0370019fe9c6d33a7c15d56276f452877cffde94cbc3be460e5ed3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/shooters.mjs",
+      "equal": true,
+      "before": "0e22228e8bfad38050f8acbc3b4f81ab927e2c73e549ad21d7a5f0f885a2e2ae",
+      "after": "0e22228e8bfad38050f8acbc3b4f81ab927e2c73e549ad21d7a5f0f885a2e2ae"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/sloshers.mjs",
+      "equal": true,
+      "before": "a99931478acc74e0b95b1ead3b1968f3a0279250c9dc3c3dbf11169527e4d8e4",
+      "after": "a99931478acc74e0b95b1ead3b1968f3a0279250c9dc3c3dbf11169527e4d8e4"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/splatanas.mjs",
+      "equal": true,
+      "before": "d82d068ec54c8d29135b6211caf79660a0befc0857cc4ddc03b39ae815e2f944",
+      "after": "d82d068ec54c8d29135b6211caf79660a0befc0857cc4ddc03b39ae815e2f944"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/splatlings.mjs",
+      "equal": true,
+      "before": "7e6729f221c11e92d51b4b4c2deba43471e3effbcab5263ca36fe52665b79c70",
+      "after": "7e6729f221c11e92d51b4b4c2deba43471e3effbcab5263ca36fe52665b79c70"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/stringers.mjs",
+      "equal": true,
+      "before": "2874189b88a3e7e749c3b7c5c9e2f81eddcaf512579bcf983b22b5d5747308e9",
+      "after": "2874189b88a3e7e749c3b7c5c9e2f81eddcaf512579bcf983b22b5d5747308e9"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variant-shooter-surfaces.mjs",
+      "equal": true,
+      "before": "d99aa97fdde59002507f808d555a49f77891ba608b35ef18c96f72841df2d276",
+      "after": "d99aa97fdde59002507f808d555a49f77891ba608b35ef18c96f72841df2d276"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-a4-followup.mjs",
+      "equal": true,
+      "before": "f85737e685c8b4f3aca1a317ef93b1d0916c998dfe6ca7d3a8feea18c527ae9c",
+      "after": "f85737e685c8b4f3aca1a317ef93b1d0916c998dfe6ca7d3a8feea18c527ae9c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-basic-shooters-followup.mjs",
+      "equal": true,
+      "before": "7522388f500a249c9ae92ae99846ab67063caa060174d1544350cc408ff2db4f",
+      "after": "7522388f500a249c9ae92ae99846ab67063caa060174d1544350cc408ff2db4f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-blaster-next-followup.mjs",
+      "equal": true,
+      "before": "ef972d385d05d2d434f92b05f97944ffd32bad3cc1fd695bf651737f66f64bbe",
+      "after": "ef972d385d05d2d434f92b05f97944ffd32bad3cc1fd695bf651737f66f64bbe"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-brush-mini-followup.mjs",
+      "equal": true,
+      "before": "9c4c009cddf22ac20e61c2c92036c0daee48c00aba2b3b83b73b1f4cc59211c8",
+      "after": "9c4c009cddf22ac20e61c2c92036c0daee48c00aba2b3b83b73b1f4cc59211c8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-brush-slosher-followup.mjs",
+      "equal": true,
+      "before": "d28a922d54444c5e894a113b5e024e92bc42ba3cb556c033bfa007076612459c",
+      "after": "d28a922d54444c5e894a113b5e024e92bc42ba3cb556c033bfa007076612459c"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-brush-two-followup.mjs",
+      "equal": true,
+      "before": "3f08b48acb5e0a5155a28d099cf91690c94ebe0ddf2e50e0a8e61ecdc8e51209",
+      "after": "3f08b48acb5e0a5155a28d099cf91690c94ebe0ddf2e50e0a8e61ecdc8e51209"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-carbon-followup.mjs",
+      "equal": true,
+      "before": "4f231eeac095cc8d8275689f8aadb1b57879201bb2572534869344935fd133b2",
+      "after": "4f231eeac095cc8d8275689f8aadb1b57879201bb2572534869344935fd133b2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-colorz-three-followup.mjs",
+      "equal": true,
+      "before": "d9828ad451d5ef1a49c8cb266411a2eac6f6adc40e6b40f2ad8a6be486022465",
+      "after": "d9828ad451d5ef1a49c8cb266411a2eac6f6adc40e6b40f2ad8a6be486022465"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-gal-followup.mjs",
+      "equal": true,
+      "before": "31c0e02992685122d2ca9456ad18908b6d7e3de0f92c1b982c1789bb8f8c7cb1",
+      "after": "31c0e02992685122d2ca9456ad18908b6d7e3de0f92c1b982c1789bb8f8c7cb1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-heavy02-followup.mjs",
+      "equal": true,
+      "before": "d1aa853fcfbda73f2d768148db2f1408486b9d03ae7ba2e8fa74af3066fd7314",
+      "after": "d1aa853fcfbda73f2d768148db2f1408486b9d03ae7ba2e8fa74af3066fd7314"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-lightlong-followup.mjs",
+      "equal": true,
+      "before": "68bafb27f6af664494cc5001d9beee498ff503b764d7fac9824b5110f6f932e3",
+      "after": "68bafb27f6af664494cc5001d9beee498ff503b764d7fac9824b5110f6f932e3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-luna-followup.mjs",
+      "equal": true,
+      "before": "79f35203f5955b19bef8928b450b403fb10fcd5978fb6a9923b1fced977a32c5",
+      "after": "79f35203f5955b19bef8928b450b403fb10fcd5978fb6a9923b1fced977a32c5"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-manual-three-followup.mjs",
+      "equal": true,
+      "before": "c8478691ba2e968e0841e7e555e472476866ed98686a4387d823624ee27469ba",
+      "after": "c8478691ba2e968e0841e7e555e472476866ed98686a4387d823624ee27469ba"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-ranged-followup.mjs",
+      "equal": true,
+      "before": "baac0b0ceedaf2f87942d830b9d26c2aa3e769e84594fe3d5e40c38a6e5d08f3",
+      "after": "baac0b0ceedaf2f87942d830b9d26c2aa3e769e84594fe3d5e40c38a6e5d08f3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-roller-three-followup.mjs",
+      "equal": true,
+      "before": "7c1a56dff110f1698d00c3eb4ecdd498b95ee446fb8a322667cc46f1baded430",
+      "after": "7c1a56dff110f1698d00c3eb4ecdd498b95ee446fb8a322667cc46f1baded430"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-saber-lite-followup.mjs",
+      "equal": true,
+      "before": "9d9c9d6b292367ccc8c6f5be45994b6df723dd861eb04a944010a6cef35b0714",
+      "after": "9d9c9d6b292367ccc8c6f5be45994b6df723dd861eb04a944010a6cef35b0714"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-shooter-followup.mjs",
+      "equal": true,
+      "before": "9b69ca6f251d907e3de4a95477e44bd3741d553e19024ab704d99920756825c3",
+      "after": "9b69ca6f251d907e3de4a95477e44bd3741d553e19024ab704d99920756825c3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-spinner-followup.mjs",
+      "equal": true,
+      "before": "582e711de662b849af7fa570fd26f57b1cf358ac1b965f25c5d7c7966ec83a17",
+      "after": "582e711de662b849af7fa570fd26f57b1cf358ac1b965f25c5d7c7966ec83a17"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-accepted-starz-hornz-followup.mjs",
+      "equal": true,
+      "before": "7d230deb4a9f66c61aca387db5771e1107b01510049bcbd2f6c464ed94bdadfe",
+      "after": "7d230deb4a9f66c61aca387db5771e1107b01510049bcbd2f6c464ed94bdadfe"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-blaster-deco-finish.mjs",
+      "equal": true,
+      "before": "0a5db570b875193b8a80b76fa3d837b40f643fc31311a073b817d76f0a466ac8",
+      "after": "0a5db570b875193b8a80b76fa3d837b40f643fc31311a073b817d76f0a466ac8"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-blaster-fixed-finish.mjs",
+      "equal": true,
+      "before": "60ad5518b1248cecfb6595c155162ba0a9b9ac341bd721613aa8c5bc044fdd3a",
+      "after": "60ad5518b1248cecfb6595c155162ba0a9b9ac341bd721613aa8c5bc044fdd3a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-brella-palette-followup.mjs",
+      "equal": true,
+      "before": "2eb2746d00d1bdf5a054c70d67483043235670cccac0b153f5053919d3195533",
+      "after": "2eb2746d00d1bdf5a054c70d67483043235670cccac0b153f5053919d3195533"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-bulbz-followup.mjs",
+      "equal": true,
+      "before": "95f0f7d3f9a10de6309097e66e3e45d7515b6c36ef425fb6d1ea7f6d24df9d23",
+      "after": "95f0f7d3f9a10de6309097e66e3e45d7515b6c36ef425fb6d1ea7f6d24df9d23"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-c-next-followup.mjs",
+      "equal": true,
+      "before": "67c5bd2ef54f284d7c13625422d1af2fd014697557a98426fae310540f0e3488",
+      "after": "67c5bd2ef54f284d7c13625422d1af2fd014697557a98426fae310540f0e3488"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-c-palette-followup.mjs",
+      "equal": true,
+      "before": "69252100def613acfb537428cb0dc0be89d40c54605ee0d0e41df67dd200f7db",
+      "after": "69252100def613acfb537428cb0dc0be89d40c54605ee0d0e41df67dd200f7db"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-c-third-followup.mjs",
+      "equal": true,
+      "before": "0b69f5384e9b0d8143c3ce9a4a5466106add11b4c11342414109e939946eede7",
+      "after": "0b69f5384e9b0d8143c3ce9a4a5466106add11b4c11342414109e939946eede7"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-charcoal-followup.mjs",
+      "equal": true,
+      "before": "c8611c76170155de12d8b53986ec66a707322b0c45b9c802c27cea055eee06dc",
+      "after": "c8611c76170155de12d8b53986ec66a707322b0c45b9c802c27cea055eee06dc"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-charger-followups.mjs",
+      "equal": true,
+      "before": "0f013e23d884a84d647436182e1d52c3123cb52d300680dff4036543ae57d941",
+      "after": "0f013e23d884a84d647436182e1d52c3123cb52d300680dff4036543ae57d941"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-custom-wellstring-followup.mjs",
+      "equal": true,
+      "before": "67c7308e8bd58043512e5bccfabf25a744df093b0be5750b0c4428d4376d1e08",
+      "after": "67c7308e8bd58043512e5bccfabf25a744df093b0be5750b0c4428d4376d1e08"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs",
+      "equal": true,
+      "before": "bb2250160f3970b032f074ccca8b4fcbec4e60384bd825c9a240776cf20844ed",
+      "after": "bb2250160f3970b032f074ccca8b4fcbec4e60384bd825c9a240776cf20844ed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-dualie-fixed-finish.mjs",
+      "equal": true,
+      "before": "a97898b237a2391a3994dbb1f57abfc44bc24bbeab294670fbadc7afd18acd16",
+      "after": "a97898b237a2391a3994dbb1f57abfc44bc24bbeab294670fbadc7afd18acd16"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-dualie-light-finish.mjs",
+      "equal": true,
+      "before": "f6d46ecd5cc5a585cc4b3075929bce34dc0bd44cc95b47bf66dc6d6bc04fb420",
+      "after": "f6d46ecd5cc5a585cc4b3075929bce34dc0bd44cc95b47bf66dc6d6bc04fb420"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-fixed-shooter-finish.mjs",
+      "equal": true,
+      "before": "99c4b850cce0f071d7999d045732d4dcb524cace48f989b84e03550bf017c9ff",
+      "after": "99c4b850cce0f071d7999d045732d4dcb524cace48f989b84e03550bf017c9ff"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-inkline-followup.mjs",
+      "equal": true,
+      "before": "2ac22653c80b62741a8cca770adeed18b59425faf828df2b3c9a10462986c9e1",
+      "after": "2ac22653c80b62741a8cca770adeed18b59425faf828df2b3c9a10462986c9e1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-melee.mjs",
+      "equal": true,
+      "before": "f609899c2bbc753ae688be089c79b57c81eb6ea5e77acdbafd4dd4aceb0ff28a",
+      "after": "f609899c2bbc753ae688be089c79b57c81eb6ea5e77acdbafd4dd4aceb0ff28a"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs",
+      "equal": true,
+      "before": "37ac0f9ddc36949b9ad8e243c917e7fdffc27ffa85365e02a307b5953967c3bb",
+      "after": "37ac0f9ddc36949b9ad8e243c917e7fdffc27ffa85365e02a307b5953967c3bb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-mini-followup.mjs",
+      "equal": true,
+      "before": "c9bd00e97a8eab32a029cde973dff4e45f2525eb10608a43b3254e9b55ab898f",
+      "after": "c9bd00e97a8eab32a029cde973dff4e45f2525eb10608a43b3254e9b55ab898f"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-neo-marker-finish.mjs",
+      "equal": true,
+      "before": "ad44c9f0c92486d901ad15f91e145e647fe9e2633a421359d70c4ed7329322ea",
+      "after": "ad44c9f0c92486d901ad15f91e145e647fe9e2633a421359d70c4ed7329322ea"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-nozzlenose-d-finish.mjs",
+      "equal": true,
+      "before": "9d3f7fe95dcd5e194572f2e8959080182e87b3379ad01969e59601df998dd3d1",
+      "after": "9d3f7fe95dcd5e194572f2e8959080182e87b3379ad01969e59601df998dd3d1"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-patternz-followup.mjs",
+      "equal": true,
+      "before": "44aaeed9f53acac9cb1b11a554b1b3ca3e6e4a570b7e4b3962953c15aed35dc3",
+      "after": "44aaeed9f53acac9cb1b11a554b1b3ca3e6e4a570b7e4b3962953c15aed35dc3"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-ranged-defense.mjs",
+      "equal": true,
+      "before": "885f643e6f052f455726aeba5aa381db6ce36c14547fe8d23ffd0d15a5156dcf",
+      "after": "885f643e6f052f455726aeba5aa381db6ce36c14547fe8d23ffd0d15a5156dcf"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-reef-deco-followup.mjs",
+      "equal": true,
+      "before": "ae08cd9bdeeb08febbbbf58a0e9e9bc38ef11630ba6e864aad40cee30abb2ffa",
+      "after": "ae08cd9bdeeb08febbbbf58a0e9e9bc38ef11630ba6e864aad40cee30abb2ffa"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-sorella-followup.mjs",
+      "equal": true,
+      "before": "7eea1bc9aa543c873248491a6a0450fa64669fbbb804f565518b75bb756d6fcb",
+      "after": "7eea1bc9aa543c873248491a6a0450fa64669fbbb804f565518b75bb756d6fcb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-squiffer-v4-followup.mjs",
+      "equal": true,
+      "before": "288505b0dbe7991f487239edf73804af1c264322c1bdf6d9614d100ac278c9ff",
+      "after": "288505b0dbe7991f487239edf73804af1c264322c1bdf6d9614d100ac278c9ff"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-stamper-nouveau-followup.mjs",
+      "equal": true,
+      "before": "b914ebc0b8a8613ef10624dab751c9d7b72818cc2973b2f0787ea2d9dc5215c2",
+      "after": "b914ebc0b8a8613ef10624dab751c9d7b72818cc2973b2f0787ea2d9dc5215c2"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-stickerz-followup.mjs",
+      "equal": true,
+      "before": "6d191b36997e7ad943e64391083e5e63273dc9fdc54bef2071117f40fc6e7dd0",
+      "after": "6d191b36997e7ad943e64391083e5e63273dc9fdc54bef2071117f40fc6e7dd0"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapon-models/variants-wiper-rust-followup.mjs",
+      "equal": true,
+      "before": "ce0024f410af2c598f6212543117ae2a55ab765c373e359a8ecae2c28c1a127d",
+      "after": "ce0024f410af2c598f6212543117ae2a55ab765c373e359a8ecae2c28c1a127d"
+    },
+    {
+      "file": "patches/native-stages/runtime/build-config.mjs",
+      "equal": true,
+      "before": "6cc51ad76feea14824e1eb318e34f91a00d5835aaa2c985e020be345c03988e8",
+      "after": "6cc51ad76feea14824e1eb318e34f91a00d5835aaa2c985e020be345c03988e8"
+    },
+    {
+      "file": "patches/native-stages/runtime/engine.mjs",
+      "equal": true,
+      "before": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26",
+      "after": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-approach.mjs",
+      "equal": true,
+      "before": "df6325c6e01f752ba3e6025b073f09ceb079dd1e457d01e512acc9d35e7476da",
+      "after": "df6325c6e01f752ba3e6025b073f09ceb079dd1e457d01e512acc9d35e7476da"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bot-form.mjs",
+      "equal": true,
+      "before": "38e6e650c794cc3e9a7a04ff83ce216a4b093a9a1ae9d5a1e24391c33468a7ff",
+      "after": "38e6e650c794cc3e9a7a04ff83ce216a4b093a9a1ae9d5a1e24391c33468a7ff"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bot-support.mjs",
+      "equal": true,
+      "before": "a67ff36962e5ddea77bf5d02811feba7a344d1b434226ecb738d8885292b3668",
+      "after": "a67ff36962e5ddea77bf5d02811feba7a344d1b434226ecb738d8885292b3668"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bots.mjs",
+      "equal": true,
+      "before": "1789f4593d35ec8c6cc39759bd0d8c26360167ceddd4bd7589b57cbe97eed56a",
+      "after": "1789f4593d35ec8c6cc39759bd0d8c26360167ceddd4bd7589b57cbe97eed56a"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-climb.mjs",
+      "equal": true,
+      "before": "f561d4575fd37daa1303c3a87b418afef1d5f345de1697c9f28cdd2c2c8cef8b",
+      "after": "f561d4575fd37daa1303c3a87b418afef1d5f345de1697c9f28cdd2c2c8cef8b"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-combat-support.mjs",
+      "equal": true,
+      "before": "b11bd810f4b7c2beb70fe4f647cd56dedc4798eba0eb362a8cf5eed809a21825",
+      "after": "b11bd810f4b7c2beb70fe4f647cd56dedc4798eba0eb362a8cf5eed809a21825"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-drop.mjs",
+      "equal": true,
+      "before": "4c6740e8c720d814acf71a4344a5f85d3d298236677cb87a6d297e6b6451719b",
+      "after": "4c6740e8c720d814acf71a4344a5f85d3d298236677cb87a6d297e6b6451719b"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-gpu-budget.mjs",
+      "equal": true,
+      "before": "90e7d1f3ccc5707fc7127377e43d4b8d90b4aba364fb17b6b0c193d20b482961",
+      "after": "90e7d1f3ccc5707fc7127377e43d4b8d90b4aba364fb17b6b0c193d20b482961"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ink-chunks.mjs",
+      "equal": true,
+      "before": "af5fd0fcff4eb83cc4a16458b06d19649b274719e7db9a93773bddf4a902395e",
+      "after": "af5fd0fcff4eb83cc4a16458b06d19649b274719e7db9a93773bddf4a902395e"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-jump-attach.mjs",
+      "equal": true,
+      "before": "40e45dfeb919f9731cf13931f4261780a21e1585b0fe62f5163e6803cd737cc6",
+      "after": "40e45dfeb919f9731cf13931f4261780a21e1585b0fe62f5163e6803cd737cc6"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-jump-input.mjs",
+      "equal": true,
+      "before": "5e30667e48b27d75464a247088a9014d4616a5d00f239f494d6c7a400d0aeeef",
+      "after": "5e30667e48b27d75464a247088a9014d4616a5d00f239f494d6c7a400d0aeeef"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-level.mjs",
+      "equal": true,
+      "before": "388cd981e78eb3508a711e8c15e80bca68e19fa00c2a50b953d995632e2071d5",
+      "after": "388cd981e78eb3508a711e8c15e80bca68e19fa00c2a50b953d995632e2071d5"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-load.mjs",
+      "equal": true,
+      "before": "3b708d3bddf2178d2abe448da718c96e3d9fb146d9a9be8d1020ef7326ee53fb",
+      "after": "3b708d3bddf2178d2abe448da718c96e3d9fb146d9a9be8d1020ef7326ee53fb"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-minimap.mjs",
+      "equal": true,
+      "before": "f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5",
+      "after": "f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-nav.mjs",
+      "equal": true,
+      "before": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03",
+      "after": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-paint-detail.mjs",
+      "equal": true,
+      "before": "cdc2ea9d2dbc88354f20e9fb5fb67478e6bb97bd573956a9a7aabcc1e751faea",
+      "after": "cdc2ea9d2dbc88354f20e9fb5fb67478e6bb97bd573956a9a7aabcc1e751faea"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-paint.mjs",
+      "equal": true,
+      "before": "25119e25dc02318d1e1e0dbf838cc6a4155fa37481530e661447d7b67c96e3fd",
+      "after": "25119e25dc02318d1e1e0dbf838cc6a4155fa37481530e661447d7b67c96e3fd"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-physics.mjs",
+      "equal": true,
+      "before": "14760eeac476cb9b3c4dad095bfe5bfcbe8617b92fc22a6c01a23e79b1a36c0a",
+      "after": "14760eeac476cb9b3c4dad095bfe5bfcbe8617b92fc22a6c01a23e79b1a36c0a"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-projectile-sweep.mjs",
+      "equal": true,
+      "before": "2bc47e25eab33d24875bf7bb2d790126d88e18fea16706d5fcdb5284bf06fb1b",
+      "after": "2bc47e25eab33d24875bf7bb2d790126d88e18fea16706d5fcdb5284bf06fb1b"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-quality.mjs",
+      "equal": true,
+      "before": "519947ca7981d89b9d7ba8daed985784cffb39b330ab43c3b5265ea23de93f80",
+      "after": "519947ca7981d89b9d7ba8daed985784cffb39b330ab43c3b5265ea23de93f80"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked-boarding.mjs",
+      "equal": true,
+      "before": "fc54e07b993bbd1c9970aeab890f169da387397c2b6ef3686c70fe981494384e",
+      "after": "fc54e07b993bbd1c9970aeab890f169da387397c2b6ef3686c70fe981494384e"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked-goals.mjs",
+      "equal": true,
+      "before": "b81819563e19b06379d5d786bb685ca74ebce701e9fefc244d0a815b6dbb49ad",
+      "after": "b81819563e19b06379d5d786bb685ca74ebce701e9fefc244d0a815b6dbb49ad"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked.mjs",
+      "equal": true,
+      "before": "be1a7a4e6dd949002cdcd40f94bc40c55ac6603c7d4bd73260a59f10ab15b9d9",
+      "after": "be1a7a4e6dd949002cdcd40f94bc40c55ac6603c7d4bd73260a59f10ab15b9d9"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-render.mjs",
+      "equal": true,
+      "before": "0318fe531ce0afc41bb7f2e96d12a1b00a5b283fc65aa738cbb11c967aef5091",
+      "after": "0318fe531ce0afc41bb7f2e96d12a1b00a5b283fc65aa738cbb11c967aef5091"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-spawn.mjs",
+      "equal": true,
+      "before": "17804b0e5b0a287b5baa607f8d370ca5894422dd76cba6d67245fcdbd9b09cd9",
+      "after": "17804b0e5b0a287b5baa607f8d370ca5894422dd76cba6d67245fcdbd9b09cd9"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-surge.mjs",
+      "equal": true,
+      "before": "34c7fb6bc69d4b522bc0408f1c2c3dc1269cf46fb0e1c348ecf7bdab84764f3c",
+      "after": "34c7fb6bc69d4b522bc0408f1c2c3dc1269cf46fb0e1c348ecf7bdab84764f3c"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-texture-budget.mjs",
+      "equal": true,
+      "before": "020ed7b068f20378ca18bce4cb1101e8e230880c1376213a2595aa4a8ce135fe",
+      "after": "020ed7b068f20378ca18bce4cb1101e8e230880c1376213a2595aa4a8ce135fe"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-boarding.mjs",
+      "equal": true,
+      "before": "13a97f055d1f0af6309b974c6c70bd4152aab084e5c8d739767eec93a1e1d1ae",
+      "after": "13a97f055d1f0af6309b974c6c70bd4152aab084e5c8d739767eec93a1e1d1ae"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-calibration.mjs",
+      "equal": true,
+      "before": "0080669e79789ef0ca35a58aaa643c8ce34914252a7d4dc7f1599e1171dcbfb7",
+      "after": "0080669e79789ef0ca35a58aaa643c8ce34914252a7d4dc7f1599e1171dcbfb7"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-clearance.mjs",
+      "equal": true,
+      "before": "4c8bdb558acd3bc366bfbe3b0a3753a06df8b8359c661e99738d6bf11947f9ee",
+      "after": "4c8bdb558acd3bc366bfbe3b0a3753a06df8b8359c661e99738d6bf11947f9ee"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-world.mjs",
+      "equal": true,
+      "before": "06a2eb39b732f7b20bf6c36e993a5e6228e3817bfa223ba32241320b45c7c1e5",
+      "after": "06a2eb39b732f7b20bf6c36e993a5e6228e3817bfa223ba32241320b45c7c1e5"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-zone.mjs",
+      "equal": true,
+      "before": "c9bcf9420abce875cfa7094ef3bcd94dd8902ebf8520eaea79b1f89bddde8cc7",
+      "after": "c9bcf9420abce875cfa7094ef3bcd94dd8902ebf8520eaea79b1f89bddde8cc7"
+    },
+    {
+      "file": "patches/native-stages/runtime/prebuilt-format.mjs",
+      "equal": true,
+      "before": "4833343a756db1b95b4c643587817bf276eaa83d43629f4dd84aa2be35b79f94",
+      "after": "4833343a756db1b95b4c643587817bf276eaa83d43629f4dd84aa2be35b79f94"
+    },
+    {
+      "file": "patches/native-stages/runtime/prebuilt-load.mjs",
+      "equal": true,
+      "before": "0fcc7aa0828964f413be947fa9460002a21b91ce1bdc7a9959c7e1a0f3d1a99e",
+      "after": "0fcc7aa0828964f413be947fa9460002a21b91ce1bdc7a9959c7e1a0f3d1a99e"
+    },
+    {
+      "file": "patches/native-stages/runtime/registry.mjs",
+      "equal": true,
+      "before": "5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1",
+      "after": "5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1"
+    },
+    {
+      "file": "patches/native-stages/runtime/rule-availability.mjs",
+      "equal": true,
+      "before": "f43844b71837193f95ecf8f5b1a9eb753f0175e5ecd58258e92523134e6c07cd",
+      "after": "f43844b71837193f95ecf8f5b1a9eb753f0175e5ecd58258e92523134e6c07cd"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-cache.mjs",
+      "equal": true,
+      "before": "1d4e40866868378272dc319eee76a951796daa593ece758d0cb2de6f13f641fc",
+      "after": "1d4e40866868378272dc319eee76a951796daa593ece758d0cb2de6f13f641fc"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-catalog.mjs",
+      "equal": true,
+      "before": "958f3290a8d6dc4afccd0bb3b2401863149c1b08164249acb52630c0d4d5ace4",
+      "after": "958f3290a8d6dc4afccd0bb3b2401863149c1b08164249acb52630c0d4d5ace4"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-convert.mjs",
+      "equal": true,
+      "before": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c",
+      "after": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-data.mjs",
+      "equal": true,
+      "before": "83711840352bfd063fce3f373a587f60f983b65017b30c9f2b34759d7d73b753",
+      "after": "83711840352bfd063fce3f373a587f60f983b65017b30c9f2b34759d7d73b753"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-inventory.mjs",
+      "equal": true,
+      "before": "3394885dd5684b563a9275f4186fec7888f45c811134668a5686baeb48e79c83",
+      "after": "3394885dd5684b563a9275f4186fec7888f45c811134668a5686baeb48e79c83"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-menu.mjs",
+      "equal": true,
+      "before": "a3e3e9747222db055b92ca02deb680c8c6207812cda9a87bfe705e812abdb88e",
+      "after": "a3e3e9747222db055b92ca02deb680c8c6207812cda9a87bfe705e812abdb88e"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-placement.mjs",
+      "equal": true,
+      "before": "09817787950a47c74f451b58d14cae96161dac40ea213d6975b5313274bb7613",
+      "after": "09817787950a47c74f451b58d14cae96161dac40ea213d6975b5313274bb7613"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-retention.mjs",
+      "equal": true,
+      "before": "7c7abd804c71ead03f0f714bd0675018048c38ceb9d7aa791a2aad1eaaef59f1",
+      "after": "7c7abd804c71ead03f0f714bd0675018048c38ceb9d7aa791a2aad1eaaef59f1"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-terrain-contract.mjs",
+      "equal": true,
+      "before": "6a6a933c53b579b510b4d5adf5d33e671ec30383b5fdad26a93ffbe830f7add7",
+      "after": "6a6a933c53b579b510b4d5adf5d33e671ec30383b5fdad26a93ffbe830f7add7"
+    },
+    {
+      "file": "patches/native-stages/runtime/source-worker.mjs",
+      "equal": true,
+      "before": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb",
+      "after": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb"
+    },
+    {
+      "file": "patches/native-stages/runtime/sphere-triangle-entry.mjs",
+      "equal": true,
+      "before": "0de40cfd7b790a849606cca97931732f7559b256976defb53723e5650af3aab6",
+      "after": "0de40cfd7b790a849606cca97931732f7559b256976defb53723e5650af3aab6"
+    },
+    {
+      "file": "patches/native-stages/runtime/triangle-world.mjs",
+      "equal": true,
+      "before": "526a3671bf7b448b63784a22445e3d9aac85d065460d7de633c8c7455cf28107",
+      "after": "526a3671bf7b448b63784a22445e3d9aac85d065460d7de633c8c7455cf28107"
+    },
+    {
+      "file": "patches/practice-range/stage/layout.mjs",
+      "equal": true,
+      "before": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb",
+      "after": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
+    },
+    {
+      "file": "patches/practice-range/stage/murals.mjs",
+      "equal": true,
+      "before": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2",
+      "after": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2"
+    },
+    {
+      "file": "patches/practice-range/stage/props.mjs",
+      "equal": true,
+      "before": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4",
+      "after": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4"
+    },
+    {
+      "file": "patches/practice-range/stage/surfaces.mjs",
+      "equal": true,
+      "before": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5",
+      "after": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5"
+    },
+    {
+      "file": "patches/practice-range/stage/zones.mjs",
+      "equal": true,
+      "before": "43a127b6db4f526bb881a7e99005907224b26d3d3c23dad5582f78c0e5cb4979",
+      "after": "43a127b6db4f526bb881a7e99005907224b26d3d3c23dad5582f78c0e5cb4979"
+    },
+    {
+      "file": "patches/splatoon3/ui.css",
+      "equal": false,
+      "before": "b30638d8cd00061b17bf1e7dd50998fc95f7adfb0dffefe47a6140ec690f9eaa",
+      "after": "34074e3e9686cbdb90cdb4759598bb2276df22a297154c45ff3eabf2ef001d76"
+    }
+  ]
+}
