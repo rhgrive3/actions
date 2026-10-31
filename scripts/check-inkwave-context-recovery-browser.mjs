@@ -310,6 +310,17 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       failure: request.failure()?.errorText ?? null });
   };
   let preLossAudio = null;
+  // Native page transitions may abort a single optional menu BGM fetch.
+  // Retain the raw failure log, but do not misclassify it as a failed game asset.
+  const acceptedMenuTrackAbort = request =>
+    request.error === 'net::ERR_ABORTED' &&
+    /\/assets\/audio\/menu_the_ika_swing_aoi_kenban\.mp3(?:[?#]|$)/.test(request.url);
+  const verifyLiveRequests = () => {
+    const cancellations=requests.filter(acceptedMenuTrackAbort);
+    assert(cancellations.length<=1, 'Unexpected repeated menu BGM cancellation');
+    assert.deepEqual(requests.filter(request=>!acceptedMenuTrackAbort(request)),[],
+      'Non-cancelled startup request failed');
+  };
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -350,7 +361,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       }
       try { preLossAudio = await page.evaluate(() => globalThis.__contextAudioOwnerSnapshot?.() ?? null); }
       catch (error) { preLossAudio = { diagnosticError:String(error?.message || error) }; }
-      assert.deepEqual(requests, [], 'Audio startup produced failed network requests');
+      verifyLiveRequests();
       assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
     });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
@@ -424,7 +435,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
     requestPhase = 'post-context-proof';
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
-    assert.deepEqual(errors, []); assert.deepEqual(requests, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
+    assert.deepEqual(errors, []); verifyLiveRequests(); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
     result = { ok: true, browser: browser.version(), identity, startup, proof }; lastStage = 'accepted';
   } catch (error) {

@@ -12,8 +12,18 @@ export const MENU_ICON_INPUT_SHA256=Object.freeze({
  'patch/runtime/ui-special-icons.mjs':'4b0ea14d27aae5129e2e98568e6cceb30a9bc1dfc688c000d01efba9e29851dc',
 });
 export const SQUIDROLL_MENU_INPUT_SHA256=Object.freeze({
- 'patch/runtime/squidroll-effects.mjs':'bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453',
+ 'patch/runtime/squidroll-effects.mjs':'e1413dade8d551faa29f0c3b48350981b88771464d2ba824882cf172dcbeb337',
 });
+const SQUIDROLL_OPTIMIZED_PREDECESSOR_SHA256='bb5f11890f3eaef9780319aeebed5b60d5a8aa86c966ae0eb6184599794b4453';
+const squidrollOptimizationDelta=Object.freeze([
+  ["        const nx=vx/speed,nz=vz/speed;\n", ""],
+  ["s.velocity.set(Math.cos(angle) * 2 - nx, .8 + phase * 1.8, Math.sin(angle) * 2 - nz);",
+   "s.velocity.set(Math.cos(angle) * 2 - vx / speed, .8 + phase * 1.8, Math.sin(angle) * 2 - vz / speed);"],
+  ["        const arcCount=this.glows?Math.min(18,Math.max(0,this.glows.cap-this.glows.n)):0;\n        for (let i = 0; i < arcCount; i++) {",
+   "        for (let i = 0; i < 18; i++) {"],
+  ["s.point.set(s.pos.x + nx * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + nz * along);",
+   "s.point.set(s.pos.x + vx / speed * along, s.pos.y + Math.sin(angle) * .44, s.pos.z + vz / speed * along);"],
+]);
 const hash=source=>createHash('sha256').update(source).digest('hex');
 // a138128328543f9e8236a867408b57467ab527c9: cache only screen-owned
 // nodes, retain native navigation on lost ownership, and avoid unchanged writes.
@@ -126,6 +136,12 @@ export function verifyMenuInstallerSourceIdentity(source,manifestDigest,historic
   assert.ok(input&&typeof input.source==='string','Required Squid Roll effect source: '+key);
   const actual=hash(input.source);
   assert.equal(actual,expected,'Reviewed Squid Roll effect source: '+key);
+  if(key==='patch/runtime/squidroll-effects.mjs'){
+    let predecessor=input.source;
+    for(const [optimized,original] of squidrollOptimizationDelta)predecessor=once(predecessor,optimized,original);
+    assert.equal(hash(predecessor),SQUIDROLL_OPTIMIZED_PREDECESSOR_SHA256,
+      'Squid Roll optimizer must reverse to its separately frozen source epoch');
+  }
   assert.equal(input.manifestDigest,actual,'Emitted Squid Roll effect input matches actual repository source: '+key);
   effectHashes[key]=actual;
  }
