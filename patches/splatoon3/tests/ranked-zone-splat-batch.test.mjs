@@ -36,3 +36,13 @@ test('direct-face owner keeps custom query and repeated within-block face semant
  const block=level.blocks[face.block];block.faces[(block.faces.indexOf(face.id)+1)%6]=face.id;calls=0;const owner=paint._cpuSplat;paint._cpuSplat=function(...args){calls++;return owner.apply(this,args)};paint.splat(center,.2,0,opts);assert.equal(calls,2,'the source face loop retains duplicate processing within its owning block');
  world.dispose();paint.dispose();
 });
+test('production face-owner capture keeps a sloped height band isolated',()=>{
+ const {paint,world}=setup('tidewater',true);
+ world.stage.zones=[{center:world.stage.zones[0].center,size:[13,11]}];world._buildZoneIndex();
+ const outside=world._zoneCells[0].filter(e=>Math.abs(e.center.y-world.stage.zones[0].center[1])>.75).map(e=>e.cell);
+ assert(outside.length>0,'the projected zone includes elevated cells');
+ world.stage.zones[0].heightTolerance=.75;world._buildZoneIndex();world.captureZone(0,0);
+ assert(world.zoneCoverage()[0][0]>=.99,'the calibrated floor is captured');
+ assert(outside.every(id=>paint.grid[id]===0),'no excluded cell is painted by the body or ancillary drops');
+ world.dispose();paint.dispose();
+});

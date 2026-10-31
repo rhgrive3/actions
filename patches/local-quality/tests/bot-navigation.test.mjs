@@ -38,7 +38,7 @@ async function world(layout = 'kelpline') {
 for (const hz of [30, 60, 120]) test(`Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at ${hz}Hz`, async () => {
   const f = await world(), a = f.bot(); a.pos.set(0, -2, 0);
   assert.equal(a.bot._wet(0, 0, -2), false);
-  assert.equal(a.bot._wet(30, 0, -2), true, 'open sea is still unsafe');
+  assert.equal(a.bot._wet(f.G.level.bounds.maxX + 2, 0, -2), true, 'open sea is still unsafe');
   let left = false, upper = false;
   for (let i = 0; i < hz * 30; i++) {
     f.step([a], hz);
@@ -120,15 +120,18 @@ test('goal shortlist tries a reachable alternative and never repeats the same fa
 test('Kelpline grate bridge is crossed in human form using actual ground/collision', async () => {
   const f = await world(), a = f.bot(); a.pos.set(14, 0, -5);
   assert(a.bot._pathTo(new f.THREE.Vector3(14, 0, 5)));
-  a.bot.mode = 'refill'; a.bot.repath = 100; a.ink = 2;
-  let crossed = false;
+  // Keep the requested route: reset() leaves refillUntil at zero, which
+  // otherwise immediately switches back to paint and chooses a random goal.
+  a.bot.mode = 'refill'; a.bot.refillUntil = 1.1; a.bot.repath = 100; a.ink = 2;
+  let crossed = false, sawGrate = false;
   for (let i = 0; i < 600; i++) {
     f.step([a]);
     if (a.pos.z > -3 && a.pos.z < 3) assert(a.pos.y > -.2, 'does not swim through the bridge');
-    if (a.ground.grate) assert.equal(a.intent.squid, false);
+    if (a.ground.grate) { sawGrate = true; assert.equal(a.intent.squid, false); }
     if (a.pos.z > 3.2) { crossed = true; break; }
   }
   assert(crossed, 'walks over the real grate support');
+  assert(sawGrate, 'actually contacts the grate');
 });
 
 const wallLayout = paint => ({ bounds: { minX: -5, maxX: 5, minZ: -5, maxZ: 5 }, spawnPads: [[-3, 0, -3], [3, 0, 3]], spawnBarrier: 0, half: [], single: [

@@ -179,7 +179,9 @@ const metrics = () => ({ events: new Map(), maxProgress: 0, boarded: false, maxC
 
 test('native ranked bots paint and capture a zone, then count it down', () => {
   const match = start('zones'), seen = metrics();
-  step(match, 60 * 60, seen);
+  // With seed 0x51a7ed the former Tidewater geometry counts within 60s;
+  // the expanded layout first counts at 60.85s as teams contest both zones.
+  step(match, 90 * 60, seen, state => state.maxCountDelta > 0);
   finish(match);
   assert.ok(seen.events.get('zone-capture') > 0, `native projectiles must paint enough live zone cells to capture: ${JSON.stringify([...seen.events])}`);
   assert.ok(seen.maxCountDelta > 0, `captured zones must change the ranked count: ${JSON.stringify([...seen.events])}`);

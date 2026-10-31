@@ -7117,3 +7117,19 @@ Flow の instanced/skinned mesh、Zipcaster の skinned coat、泳ぎ film の�
 PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニュー録音の単発 `net::ERR_ABORTED` が報告された。対戦録音の受信完了は確認できたが、実再生の証拠がなかったため初回失敗を成功へ振り替えていない。既存の厳密なメニュー終了判定を復旧ゲートへ接続し、正確な現 revision の URL、対戦録音の HTTP 200 と同一 request ID の完了、実 RG の battle 所有者・非廃棄・非失敗・再生中・readyState・currentSrc を要求した。生の通信失敗は保持し、GPU loss 前の許可済み記録を固定することで、loss 後の追加失敗も必ず棄却する。観測ヘルパーの実ファイルも checkout identity の対象に追加した。
 
 追加回帰は context recovery 28、streamed-music diagnostics 47、media admission 3 の計78 pass。先行156と重複しないため、この作業の選択したローカル回帰小計は234 pass / 5 asset-dependent skip / 0 fail。原本メニュー音源を復元した完全ビルド（content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`）で、旧メニューの中断1件と正常な対戦BGM再生を同時に観測し、実 context lost/restored、120 RAF、60 direct frames と CPU/grid 所有者・全grid byteの保存を確認した。音声エラーの一括無視や再試行による通過ではない。[詳細と検証範囲](zero-headroom-review-20261031.md#11-統合-ci-で判明した復旧ゲートの観測不足と修正)を参照。最終 head のホスト CI・main 反映状態は PR の記録で確認する。
+
+### 2026-10-31: オリジナル2ステージの幅と動線
+
+参照は任天堂の [Splatoon 3 Ver.8.0.0 更新記録](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/) にある、中央への経路と戦略的な位置の選択肢を増やす地形変更、および[公式のステージ紹介](https://www.nintendo.com/en-gb/News/2021/September/Fresh-Splatoon-3-deets-revealed-in-latest-Nintendo-Direct--2045101.html)にある立体的な歩道橋。これらは設計上の参考であり、今回のオリジナルステージの地形や寸法の再現根拠ではない。比較する特定の本家ステージ、ブキ、ギア、操作条件は未設定で、本家の距離単位との換算も未確定。
+
+`inkwave-public/src/world/maps.js` の Tidewater は範囲 84×144、Kelpline は 88×144 world 単位へ拡張し、開始地点間をそれぞれ 134.4、136 単位とした。両チーム対称の後方・外周に通路と遮蔽物を増やした。Tidewater は水路の切れ目を残し、中央高台への側面スロープを追加。Kelpline はトレンチを横切る両外周の金網と、側道から中央高台へ向かう接続坂を追加した。再現操作は各陣営から外周に進み、中央の新しい坂を通ること。中央への選択肢と塗れる面積は変化するため、射線、奪還、長射程への影響や各ルールでのバランスはプレイテストが必要。
+
+`patches/local-quality/tests/stage-route-layout.test.mjs` は実地形と小物衝突を含むナビゲーショングラフで、両陣営の新経路の足場・連結を検査する。地形描画と衝突の整合性は legacy-terrain-integrity テストで検査する。これらはロジック検査であり、本家実機との比較や人間同士の対戦検証の代わりにはならない。Switch 実機での寸法・操作感・ギア／ブキ別比較、塗りや泳ぎの実操作、CPUと各ルールの対戦バランスは未確認。
+
+### 2026-10-31: 立体的な2ステージの再設計
+
+方針の資料は [任天堂の更新記録](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/)（Ver.8.0.0で中央への複数経路と戦略位置の選択肢を増やした説明、および一部ステージで遠距離射撃の影響を抑える地形変更）と、公開コミュニティ資料の [海女美術大学](https://splatoonwiki.org/wiki/Inkblot_Art_Academy)、[マンタマリア号](https://splatoonwiki.org/wiki/Manta_Maria)、[ヒラメが丘団地](https://splatoonwiki.org/wiki/Flounder_Heights)、[金網](https://splatoonwiki.org/wiki/Grate)。資料から、平坦な広さだけでなく、見通しと遮蔽、地上と上段、登る経路と降下先をセットで考える設計を参考にした。ステージ形状の再現や、元ゲームでの有利不利の実測ではない。
+
+Tidewater の各陣営側は、2.2 mの西テラス・1.4 mの中継台・1.6 mの中央脇を連続する上段とし、後方／海側／中央脇から坂を使える。テラスの塗れる壁と上段の遮蔽、自由に降りられる縁を設け、逆側は1.8 mの独立テラスと地上路で別の選択肢とする。Kelpline は後方荷役台から前方テラスへ続く2.2 mの上層と、その下に身長1.45 mの地上路を確保。上層の短い金網はヒトで立てるがイカや弾が通り、下段に降りられる。各配置は180度回転対称。再現は両陣営から各坂を登り、上段と下段、塗れる壁、金網での落下を試す。両マップのスロープは既存ルールの中央目標およびヤグラ経路と干渉しないよう配置した。
+
+`patches/local-quality/tests/expanded-stage-movement.test.mjs` は production composition、実Actor/Physics/Projectile/PaintSystem、実dressingの衝突を使い、両陣営の坂と金網、壁射撃を検査する。30/60/120 Hz の外側フレームを含むが、ロジック単独の検証であり本家の同条件プレイではない。本家 Ver.11.3.0 との特定ブキ・ギア・状態・カメラ条件を揃えた歩行、泳ぎ、壁登り、射程・対戦バランスの比較や、人同士の試合に基づく検証は未実施。ネイティブの矩形サイズに近いことは、本家の実際の塗り面積や攻防の再現を証明しない。

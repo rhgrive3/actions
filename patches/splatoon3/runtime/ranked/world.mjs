@@ -945,6 +945,8 @@ export class RankedWorld {
 
   captureZone(index, team) {
     if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
+    const zone = this.stage?.zones?.[index];
+    const band = finite(zone?.heightTolerance) ? Math.max(0, zone.heightTolerance) + EPSILON : Infinity;
     let claimed = 0, lastFace = null, radius = 0;
     for (const entry of this._zoneCells[index] || []) {
       const { face, cell, i, j } = entry;
@@ -956,7 +958,36 @@ export class RankedWorld {
         radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
         lastFace = face;
       }
-      claimed += this.paint.splat(center, radius, team, {
+      let stampRadius = radius;
+      if (band !== Infinity && (face.u.y || face.v.y)) {
+        // A single sloped face can cross the height band. A face-restricted
+        // splat can still reach adjacent cells on that face, so constrain only
+        // stamps near an excluded cell. Blast splats include ancillary drops
+        // out to 2.7 times the radius, beyond the main blob. Leave room for
+        // the network's centimetre rounding of the
+        // position and radius as well as floating point error.
+        const reach = radius * 2.7 + 0.03;
+        const diMax = Math.ceil(reach / face.cu + 0.5), djMax = Math.ceil(reach / face.cv + 0.5);
+        let nearest = Infinity;
+        for (let dj = Math.max(-djMax, -j); dj <= Math.min(djMax, face.nv - 1 - j); dj++) {
+          for (let di = Math.max(-diMax, -i); di <= Math.min(diMax, face.nu - 1 - i); di++) {
+            if (!di && !dj) continue;
+            const du = di * face.cu, dv = dj * face.cv;
+            // Ancillary droplets can claim a cell by touching its interior,
+            // even when its centre is outside the splat.
+            const distance = Math.hypot(Math.max(0, Math.abs(du) - face.cu / 2), Math.max(0, Math.abs(dv) - face.cv / 2));
+            if (distance >= nearest || distance > reach) continue;
+            if (Math.abs(center.y + du * face.u.y + dv * face.v.y - zone.center[1]) > band) nearest = distance;
+          }
+        }
+        if (nearest < Infinity) {
+          stampRadius = Math.min(radius, Math.max(0, (nearest - 0.03) / 2.7));
+          // Keep a small stamp effective on the actual plane instead of losing
+          // most of its radius to the normal offset used for indexing.
+          center.addScaledVector(face.n, -0.06);
+        }
+      }
+      claimed += this.paint.splat(center, stampRadius, team, {
         seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
         kind: 'blast', instant: true, face: face.id,
       }) || 0;

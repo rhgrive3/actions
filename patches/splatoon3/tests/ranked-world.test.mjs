@@ -170,6 +170,41 @@ test('a calibrated floor band excludes box tops and other storeys from zone scor
   band.dispose(); paint.dispose?.();
 });
 
+test('sloped band boundaries remain isolated when capture stamps are rounded for a peer', () => {
+  const round2 = n => Math.round(n * 100) / 100;
+  for (const cellSize of [0.25, 0.5]) for (const side of [0, 1]) {
+    const { level, stage } = makeMap('tidewater');
+    stage.zones = [{ center: stage.zones[side].center, size: [13, 11] }];
+    const paint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, cell: cellSize });
+    f.G.paint = paint;
+    const api = { G: f.G, THREE: f.THREE, Hit: f.Hit };
+    const projected = new f.RankedWorld(api, { mode: 'zones', actors: [] }, stage);
+    const outside = projected._zoneCells[0].filter(entry => Math.abs(entry.center.y - stage.zones[0].center[1]) > 0.75)
+      .map(entry => entry.cell);
+    assert.ok(outside.length > 0, 'the unbounded zone includes a different floor');
+    projected.dispose();
+    stage.zones[0].heightTolerance = 0.75;
+    const host = new f.RankedWorld(api, { mode: 'zones', actors: [] }, stage);
+    const stamps = [], splat = paint.splat;
+    paint.splat = function (center, radius, team, opts) {
+      stamps.push({ pos: center.toArray().map(round2), radius: round2(radius), team, opts: { ...opts } });
+      return splat.call(this, center, radius, team, opts);
+    };
+    host.captureZone(0, 0);
+    assert.ok(host.zoneCoverage()[0][0] >= 0.99, `host ${side}/${cellSize} captures the floor`);
+    assert.ok(outside.every(id => paint.grid[id] === 0), `host ${side}/${cellSize} keeps other floors clean`);
+    host.dispose(); paint.dispose();
+
+    const peerPaint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, cell: cellSize });
+    f.G.paint = peerPaint;
+    const peer = new f.RankedWorld(api, { mode: 'zones', actors: [] }, stage);
+    for (const stamp of stamps) peerPaint.splat(new f.THREE.Vector3(...stamp.pos), stamp.radius, stamp.team, stamp.opts);
+    assert.ok(peer.zoneCoverage()[0][0] >= 0.99, `peer ${side}/${cellSize} captures the floor`);
+    assert.ok(outside.every(id => peerPaint.grid[id] === 0), `peer ${side}/${cellSize} keeps other floors clean`);
+    peer.dispose(); peerPaint.dispose();
+  }
+});
+
 test('moving tower paint face fits every map atlas and follows a Physics support face', () => {
   for (const id of MAP_IDS) {
     const { level, physics, stage } = makeMap(id);
