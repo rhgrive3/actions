@@ -9,9 +9,15 @@ import {parseValidateWorkflow} from '../ci/inkwave-validate-contract.mjs';
 const root = new URL('../../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
 const ownTest = 'scripts/tests/inkwave-queue-ci-20261031.test.mjs';
+const inkVolumeInputs = [
+  'inkwave-public/src/fx/fx.js',
+  'inkwave-public/src/main.js',
+  'inkwave-public/src/game/weapons.js',
+];
 // These are directly executed inputs identified from the browser/test import
 // graphs. Exact paths keep unrelated changes out of the expensive QA lanes.
 const contracts = [
+  {workflow:'inkwave-ink-volumes.yml', events:['pull_request'], inputs:inkVolumeInputs},
   {workflow:'inkwave-composed-cpu.yml', events:['pull_request'], inputs:[
     'scripts/lib/inkwave-sandbox-browser.mjs', 'inkwave-public/src/main.js',
     'inkwave-public/src/game/actor.js', 'inkwave-public/src/game/physics.js',
@@ -42,6 +48,69 @@ const contracts = [
     'patches/splatoon3/adapter.mjs', 'scripts/inkwave-range-profile-acceptance.mjs', ownTest,
   ]},
 ];
+test('ink-volume source-only diffs match narrow glob routes and every removed owner is detected', () => {
+  const parsed = parseValidateWorkflow(read('.github/workflows/inkwave-ink-volumes.yml'));
+  const routes = (parsed.on || parsed.true).pull_request.paths;
+  // Use the native glob engine for the exact paths and *, ** syntax present
+  // in this workflow, then apply ordered positive/negative path-list rules.
+  // This is a local route contract, not a claim that a hosted run was started.
+  const admits = (files, patterns = routes) => files.some(file => {
+    let matched = false;
+    for (const pattern of patterns) {
+      const negative = pattern.startsWith('!');
+      if (path.matchesGlob(file, negative ? pattern.slice(1) : pattern)) matched = !negative;
+    }
+    return matched;
+  });
+  for (const file of inkVolumeInputs) {
+    assert.equal(admits([file]), true, `source-only change: ${file}`);
+    assert.equal(admits([file], routes.filter(pattern => pattern !== file)), false,
+      `a missing owner route must not be hidden by a broad pattern: ${file}`);
+  }
+  for (const file of [
+    'patches/local-quality/ink-volume-adapter.mjs',
+    'scripts/build-inkwave.mjs',
+    '.github/workflows/inkwave-ink-volumes.yml',
+    'scripts/check-inkwave-volumes.mjs',
+    'patches/local-quality/ink-volume/pack.mjs',
+  ]) assert.equal(admits([file]), true, `existing positive: ${file}`);
+  for (const file of [
+    'docs/unrelated-guide.md', 'README.md', 'inkwave-public/src/ui/hud.js',
+    'inkwave-public/src/fx/unrelated.js', 'inkwave-public/src/main.js.map',
+  ]) assert.equal(admits([file]), false, `unrelated source: ${file}`);
+  assert.equal(admits(['docs/unrelated-guide.md', inkVolumeInputs[0]]), true);
+  assert.equal(admits(['docs/unrelated-guide.md', 'inkwave-public/src/ui/hud.js']), false);
+  assert.equal(parsed.jobs.volume['timeout-minutes'], 30);
+  assert.equal(parsed.permissions.contents, 'read');
+});
+
+test('ink-volume actual sparse checkout retains all three production adapter entrypoints', () => {
+  const parsed = parseValidateWorkflow(read('.github/workflows/inkwave-ink-volumes.yml'));
+  const checkout = parsed.jobs.volume.steps.find(step => step.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with.ref, '${{ github.event.pull_request.head.sha || github.sha }}');
+  assert.equal(checkout.with['sparse-checkout-cone-mode'], false);
+  const kept = [...inkVolumeInputs, 'patches/local-quality/ink-volume-adapter.mjs',
+    'reports/ink-volume/source/rollerink1.vtf'];
+  const removed = ['tools/inkwave-modeler/blender/large.blend', 'tools/inkwave-modeler/docs/reference.png'];
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'iw-volume-inputs-'));
+  const git = args => execFileSync('git', args, {cwd:temporary, stdio:['pipe','pipe','pipe']});
+  try {
+    git(['init', '-b', 'fixture']);
+    for (const file of [...kept, ...removed]) {
+      fs.mkdirSync(path.dirname(path.join(temporary, file)), {recursive:true});
+      fs.writeFileSync(path.join(temporary, file), file);
+    }
+    git(['add', '.']);
+    git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'ink-volume inputs']);
+    execFileSync('git', ['sparse-checkout', 'set', '--no-cone', '--stdin'], {
+      cwd:temporary, input:checkout.with['sparse-checkout'], stdio:['pipe','pipe','pipe'],
+    });
+    for (const file of kept) assert.ok(fs.existsSync(path.join(temporary, file)), `required input: ${file}`);
+    for (const file of removed) assert.equal(fs.existsSync(path.join(temporary, file)), false, `existing exclusion: ${file}`);
+  } finally {
+    fs.rmSync(temporary, {recursive:true, force:true});
+  }
+});
 function validateRoutes(workflow, contract) {
   const events = workflow.on || workflow.true;
   for (const event of contract.events) {
