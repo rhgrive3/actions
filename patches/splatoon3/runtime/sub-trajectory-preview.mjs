@@ -11,7 +11,7 @@ export function colorSubTrajectory(system, actor, inkCost) {
   system.arcRing.material.color.copy(color).multiplyScalar(1.4);
 }
 
-export function drawSubTrajectory(api, system, actor, prepare) {
+export function drawSubTrajectory(api, system, actor, prepare, deferTrace = false) {
   const leases=system._s3SubArcScratch ||= {depth:0,frames:[]},depth=leases.depth++;
   const s=leases.frames[depth] ||= {
     p:new api.THREE.Vector3(),vel:new api.THREE.Vector3(),prev:new api.THREE.Vector3(),
@@ -36,10 +36,14 @@ export function drawSubTrajectory(api, system, actor, prepare) {
     const jumped=ready&&(Math.hypot(s.start.x-cached.lastPX,s.start.y-cached.lastPY,s.start.z-cached.lastPZ)>.5
       ||Math.hypot(s.initial.x-cached.lastVX,s.initial.y-cached.lastVY,s.initial.z-cached.lastVZ)>4*speedScale);
     if(ready&&!jumped&&now>=cached.time&&now-cached.time<PREVIEW_INTERVAL-1e-9) {
-      Object.assign(cached,{lastPX:s.start.x,lastPY:s.start.y,lastPZ:s.start.z,lastVX:s.initial.x,lastVY:s.initial.y,lastVZ:s.initial.z});
+      cached.lastPX=s.start.x;cached.lastPY=s.start.y;cached.lastPZ=s.start.z;
+      cached.lastVX=s.initial.x;cached.lastVY=s.initial.y;cached.lastVZ=s.initial.z;
       colorSubTrajectory(system,actor,s.inkCost);system.arcRing.visible=cached.landed;
       system.arcRing.scale.setScalar(1+Math.sin(now*8)*.06);return;
     }
+    // Opt-in native callers prepare their contact callbacks only for an actual
+    // trace. Launch samples and readiness are still refreshed on every call.
+    if(deferTrace)prepare(s,true);
     const position=system.arcGeo.attributes.position;
     const maxFrames=Math.min((system.arcN-1)*2,Math.max(0,Math.ceil(s.frames-1e-9)));
     let count=1,landed=false;

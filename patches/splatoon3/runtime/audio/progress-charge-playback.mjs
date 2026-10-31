@@ -12,6 +12,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
   const body=length/1.215,tail=length-body;
   let stopped=false,ended=false,src=null,sourceGain=null,untrack=()=>{};
   let previous=q,last=ctx.currentTime,rate=1,level=clamp(Number(volume)||0,0,1),position=pos;
+  let appliedRate=1,gainTarget=0,gainSettlesAt=0;
   const panner=finitePos(pos)&&typeof audio._panner==='function'?audio._panner(pos,3):null;
   if(panner)panner.connect(target);
   const valid=()=>!stopped&&!ended&&audio.ctx===ctx&&ctx.state!=='closed';
@@ -28,9 +29,11 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
     const s=ctx.createBufferSource(),g=ctx.createGain();src=s;sourceGain=g;
     s.buffer=buffer;s.connect(g);g.connect(panner||target);
     s.playbackRate.value=full?1:rate;
+    appliedRate=full?1:rate;
     const end=offset+Math.max(step*2,body*q);
     s.loop=!full;s.loopStart=Math.max(offset,end-.035);s.loopEnd=end;
     g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(q>0?level:0,now+.006);
+    gainTarget=q>0?level:0;gainSettlesAt=now+.006;
     s.onended=()=>{disconnect(s,g);if(src===s){ended=true;untrack();try{panner?.disconnect?.();}catch{}}};
     if(full){
       g.gain.setValueAtTime(level,now+Math.max(.006,tail-.02));
@@ -59,12 +62,20 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
       if(dt>=1/240){
         rate=dp>0?clamp(dp*Math.max(.05,chargeTime)/dt,.02,4):0;
         // Exact zero, not the general mixer 0.05 minimum: no hidden crawl.
-        src.playbackRate.cancelScheduledValues?.(now);
-        if(src.playbackRate.setValueAtTime)src.playbackRate.setValueAtTime(rate,now);
-        else src.playbackRate.value=rate;
-        sourceGain.gain.cancelScheduledValues(now);
-        sourceGain.gain.setValueAtTime(sourceGain.gain.value,now);
-        sourceGain.gain.linearRampToValueAtTime(rate>0&&q>0?level:0,now+.006);
+        if(rate!==appliedRate){
+          src.playbackRate.cancelScheduledValues?.(now);
+          if(src.playbackRate.setValueAtTime)src.playbackRate.setValueAtTime(rate,now);
+          else src.playbackRate.value=rate;
+          appliedRate=rate;
+        }
+        const target=rate>0&&q>0?level:0;
+        // Preserve every in-flight ramp, but do not reschedule a settled target.
+        if(target!==gainTarget || now<gainSettlesAt){
+          sourceGain.gain.cancelScheduledValues(now);
+          sourceGain.gain.setValueAtTime(sourceGain.gain.value,now);
+          sourceGain.gain.linearRampToValueAtTime(target,now+.006);
+          gainTarget=target;gainSettlesAt=now+.006;
+        }
         previous=q;last=now;
       }
     },

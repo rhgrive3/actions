@@ -93,8 +93,8 @@ export function handleOwnerClockMessage(nm, from, d, at) {
     if (!p) return true;
     if (d.k === 'ocq') {
       if (at - p.answeredAt < 0.25) return true;
-      p.answeredAt = at;
-      send(nm, from, { k: 'oca', v: OWNER_CLOCK_VERSION, m: nm.cfg.id, n: d.n, ts: Math.round(at * 1000) / 1000 });
+      if (send(nm, from, { k: 'oca', v: OWNER_CLOCK_VERSION, m: nm.cfg.id, n: d.n, ts: Math.round(at * 1000) / 1000 }))
+        p.answeredAt = at;
       return true;
     }
     const q = p.pending;

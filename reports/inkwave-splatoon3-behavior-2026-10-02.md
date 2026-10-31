@@ -7117,3 +7117,17 @@ Flow の instanced/skinned mesh、Zipcaster の skinned coat、泳ぎ film の�
 PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニュー録音の単発 `net::ERR_ABORTED` が報告された。対戦録音の受信完了は確認できたが、実再生の証拠がなかったため初回失敗を成功へ振り替えていない。既存の厳密なメニュー終了判定を復旧ゲートへ接続し、正確な現 revision の URL、対戦録音の HTTP 200 と同一 request ID の完了、実 RG の battle 所有者・非廃棄・非失敗・再生中・readyState・currentSrc を要求した。生の通信失敗は保持し、GPU loss 前の許可済み記録を固定することで、loss 後の追加失敗も必ず棄却する。観測ヘルパーの実ファイルも checkout identity の対象に追加した。
 
 追加回帰は context recovery 28、streamed-music diagnostics 47、media admission 3 の計78 pass。先行156と重複しないため、この作業の選択したローカル回帰小計は234 pass / 5 asset-dependent skip / 0 fail。原本メニュー音源を復元した完全ビルド（content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`）で、旧メニューの中断1件と正常な対戦BGM再生を同時に観測し、実 context lost/restored、120 RAF、60 direct frames と CPU/grid 所有者・全grid byteの保存を確認した。音声エラーの一括無視や再試行による通過ではない。[詳細と検証範囲](zero-headroom-review-20261031.md#11-統合-ci-で判明した復旧ゲートの観測不足と修正)を参照。最終 head のホスト CI・main 反映状態は PR の記録で確認する。
+
+### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+
+基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+
+新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+
+### 2026-10-31: Library キューの既存PR照合と追加最適化
+
+監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+
+ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+
+形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。

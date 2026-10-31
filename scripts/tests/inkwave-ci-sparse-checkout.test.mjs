@@ -7,13 +7,15 @@ const command=(cwd,args,options={})=>execFileSync('git',args,{cwd,stdio:['pipe',
 const excludedAuthoringFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
 const examples=[...excludedAuthoringFixturePaths,'tools/native-recovery-qa/workflow.test.mjs','tools/audio/collect-public-reference-recordings.py','.github/workflows/inkwave-audio-reference-fetch.yml','scripts/build-inkwave.mjs','patches/local-quality/adapter.mjs','inkwave-public/src/main.js','inkwave-public/assets/source-motion/Player00.f32.gz','reports/source/evidence.json'];
 for(const workflow of ['validate-inkwave-ranked.yml','inkwave-runtime-frame-parity.yml','inkwave-audio-reference-fetch.yml','inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml','inkwave-object-presentation-qa.yml'])test(workflow+' materializes exactly its intended sparse inputs',()=>{
- const source=read('.github/workflows/'+workflow);assert.match(source,/sparse-checkout-cone-mode: false/);if(workflow==='inkwave-object-presentation-qa.yml')assert.match(source,/filter: blob:none/);else assert.doesNotMatch(source,/\n\s+filter:/);
+ const source=read('.github/workflows/'+workflow);assert.match(source,/sparse-checkout-cone-mode: false/);if(['inkwave-object-presentation-qa.yml','inkwave-runtime-frame-parity.yml','inkwave-small-tank.yml'].includes(workflow))assert.match(source,/filter: blob:none/);else assert.doesNotMatch(source,/\n\s+filter:/);
  const patterns=source.match(/          sparse-checkout: \|\n((?:            [^\n]+\n)+)/)?.[1].trim().split('\n').map(s=>s.trim());assert(patterns?.length);
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-sparse-'));try{
   command(root,['init','-b','fixture']);for(const file of examples){fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),file);}
   command(root,['add','.']);command(root,['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','fixture']);command(root,['sparse-checkout','set','--no-cone','--stdin'],{input:patterns.join('\n')+'\n'});
+  const prunedReports=['inkwave-runtime-frame-parity.yml','inkwave-small-tank.yml'].includes(workflow);
   const materialized=examples.filter(file=>fs.existsSync(path.join(root,file)));
-  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):examples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));
+  const sourceExamples=examples.filter(file=>!(prunedReports&&file.startsWith('reports/')));
+  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):sourceExamples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml','inkwave-runtime-frame-parity.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 test('test-only jobs keep original entries without installing unused packages',()=>{
@@ -30,7 +32,10 @@ test('touch test-only dependency removal restores the exact reviewed prior workf
  const source=read('.github/workflows/inkwave-touch-frame-pacing.yml');
  const boundary="      - name: Verify touch cadence, profiler and final composed main loop\n";
  assert.equal(source.split(boundary).length,2);
- const restored=source.replace(boundary,"      - name: Install pinned build dependency\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\n"+boundary);
+ const triggerAdditions=['inkwave-public/src/main.js','scripts/inkwave-source-composition.mjs','patches/splatoon3/adapter.mjs','scripts/inkwave-range-profile-acceptance.mjs','scripts/tests/inkwave-queue-ci-20261031.test.mjs'];
+ let predecessor=source;
+ for(const file of triggerAdditions){const line="      - '"+file+"'\n";assert.equal(predecessor.split(line).length,2,'exact reviewed trigger addition '+file);predecessor=predecessor.replace(line,'');}
+ const restored=predecessor.replace(boundary,"      - name: Install pinned build dependency\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\n"+boundary);
  assert.equal(createHash('sha256').update(restored).digest('hex'),"3894070c7ca5bdd936c5eecec84f5ffe5b9c6a20e6d347941e0651a672cf9371");
 });
 

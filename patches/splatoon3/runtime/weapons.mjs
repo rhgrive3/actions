@@ -415,8 +415,8 @@ export function installWeapons(context, profile) {
     clearSplatlingSubInterrupt(this);
   };
   const newProjectile = Projectiles.prototype._new, pushProjectile = Projectiles.prototype._push;
-  Projectiles.prototype._new = function (...args) {
-    const p = newProjectile.apply(this, args); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
+  Projectiles.prototype._new = function () {
+    const p = newProjectile.apply(this, arguments); p.s3DamageGroup = null; p.s3DamageGroupId = null; p.s3Weapon = null; p.s3SpecialWeapon = null; p.s3Vertical = false; return p;
   };
   Projectiles.prototype._push = function (p) {
     p.s3Weapon = p.s3SpecialWeapon || (p.owner ? p.owner.weapon : null);
@@ -927,6 +927,17 @@ export function installWeapons(context, profile) {
     }
     return charger.call(this, dt, inp, w);
   };
+  const releaseNativeSlosh = (runner, a, w, inp) => {
+    // Keep both fractional boundaries and the entry-time Actor reference.
+    const carry = Math.max(0, runner.slosh - w.windup);
+    runner.slosh = -1; G.projectiles.fireSlosh(a, w);
+    runner.s3SloshTurnDelta = 0; runner.s3SloshPrevYaw = null;
+    runner.s3SloshPostShot = w.postShotLock ?? 0;
+    a.lastFire = 0;
+    runner.s3PostShotRemaining = w.postShotDelay;
+    runner.cooldown = w.fireInterval - w.windup - carry;
+    runner.s3SloshRecovery = !!inp.fire;
+  };
   WeaponRunner.prototype._slosher = function (dt, inp, w) {
     const a = this.a, epsilon = 1e-10;
     // #258: sample consecutive fixed-simulation aim headings during the
@@ -938,7 +949,7 @@ export function installWeapons(context, profile) {
       if (yaw !== null) {
         const prior = this.s3SloshPrevYaw;
         const delta = Number.isFinite(prior)
-          ? Math.atan2(Math.sin(yaw - prior), Math.cos(yaw - prior)) : 0;
+          ? yaw === prior ? yaw - prior : Math.atan2(Math.sin(yaw - prior), Math.cos(yaw - prior)) : 0;
         // Current S3 verification: a maximum ten degrees of sweep per 60 Hz step.
         this.s3SloshTurnDelta = Math.max(-Math.PI / 18, Math.min(Math.PI / 18, delta));
       } else this.s3SloshTurnDelta = 0;
@@ -947,22 +958,10 @@ export function installWeapons(context, profile) {
       this.s3SloshPrevYaw = null;
       this.s3SloshTurnDelta = 0;
     }
-    const release = () => {
-      // Preserve fractional seconds at both boundaries. Without the epsilon,
-      // 12 * (1/60) misses .2 and the 17F recovery also gains an extra tick.
-      const carry = Math.max(0, this.slosh - w.windup);
-      this.slosh = -1; G.projectiles.fireSlosh(a, w);
-      this.s3SloshTurnDelta = 0; this.s3SloshPrevYaw = null;
-      this.s3SloshPostShot = w.postShotLock ?? 0;
-      a.lastFire = 0;
-      this.s3PostShotRemaining = w.postShotDelay;
-      this.cooldown = w.fireInterval - w.windup - carry;
-      this.s3SloshRecovery = !!inp.fire;
-    };
     if (!inp.fire) this.s3SloshRecovery = false;
     if (this.slosh >= 0) {
       this.slosh += dt; a.fireFacing = .5; this.firingT = .35;
-      if (this.slosh + epsilon >= w.windup) release();
+      if (this.slosh + epsilon >= w.windup) releaseNativeSlosh(this, a, w, inp);
       return;
     }
     if (!inp.fire || this.cooldown > epsilon) return;
@@ -977,7 +976,7 @@ export function installWeapons(context, profile) {
     if (a.isLocal || a._nearCamera()) G.audio?.play('slosh_throw', {
       pos: a.isLocal ? undefined : a.pos, volume: a.isLocal ? .75 : .55,
     });
-    if (this.slosh + epsilon >= w.windup) release();
+    if (this.slosh + epsilon >= w.windup) releaseNativeSlosh(this, a, w, inp);
   };
   installRollerLogic(api, profile);
   for (const method of ['fireFlick', 'fireSlosh']) {
@@ -1052,7 +1051,7 @@ export function installWeapons(context, profile) {
     // #1020: an empty click cannot preserve post-roll turret accuracy/cadence.
     // Exactly enough ink remains legal; the state drops only when the next
     // requested shot is unaffordable.
-    if (this.s3Turret && (!inp.fire || Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 && this.lockT <= 0 || this.a.form === 'squid' || inp.sub || this.a.ink + 1e-10 < w.inkPerShot)) this.s3Turret = false;
+    if (this.s3Turret && (!inp.fire || this.lockT <= 0 && Math.hypot(this.a.intent.move.x, this.a.intent.move.z) > .01 || this.a.form === 'squid' || inp.sub || this.a.ink + 1e-10 < w.inkPerShot)) this.s3Turret = false;
     if (this.s3DodgeShotPending > 1e-10) {
       this.s3DodgeShotPending = Math.max(0, this.s3DodgeShotPending - dt);
       if (this.s3DodgeShotPending > 1e-10) {

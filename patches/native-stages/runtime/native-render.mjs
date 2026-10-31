@@ -177,7 +177,10 @@ function releaseArray(){this.array=null;}
 export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  const g=mesh.geometry,p=g.getAttribute('position'),source=g.index?.array;
  if(!source||source.length<minTriangles*3||!Number.isFinite(tileSize)||tileSize<=0)return null;
- const tiles=[],byKey=new Map(),ids=new Uint32Array(source.length/3);
+ // A triangle contributes at most one tile. This bound proves that the
+ // first allocation already fits the final 16-bit representation.
+ const triangles=source.length/3,TileIds=triangles<=65536?Uint16Array:Uint32Array;
+ const tiles=[],byKey=new Map(),ids=new TileIds(triangles);
  // Bypass virtual attribute reads only for ordinary, non-normalized arrays.
  // Half-float, normalized integer and custom accessors retain Three's decoding.
  const proto=p.isInterleavedBufferAttribute?THREE.InterleavedBufferAttribute.prototype:THREE.BufferAttribute.prototype;
@@ -204,7 +207,7 @@ export function installNativeDisplayCulling(mesh,tileSize=16,minTriangles=512){
  // Small/local objects already have the renderer's per-object culling.
  if(tiles.length<2)return null;
  for(const tile of tiles){tile.sphere=tile.box.getBoundingSphere(new THREE.Sphere());tile.sphere.radius+=Math.max(1,tile.sphere.radius)*1e-7;}
- const tileOf=tiles.length<=65536?new Uint16Array(ids):ids;
+ const tileOf=ids.BYTES_PER_ELEMENT===2||tiles.length>65536?ids:new Uint16Array(ids);
  // Source exporters usually keep neighbouring triangles together. Store
  // their tile runs once so a camera switch can copy contiguous source spans
  // instead of comparing and assigning every index individually. Highly

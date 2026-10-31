@@ -1,4 +1,5 @@
 import {buildPointBlocks,pointBlockMinimum} from './point-block-minimum.mjs';
+import { createKrakenJumpObserver, advanceKrakenJumpMotion } from './kraken-jump-motion.mjs';
 import { createWailSpeakerBatch, updateWailSpeakerBatch, retireWailSpeakerBatch } from './wail-speaker-batch.mjs';
 // Presentation for the thirteen all-specials actions (special-models.mjs):
 // the device each kid carries or rides while the special is active, the
@@ -244,12 +245,22 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     else if (phase === 'dash') { len = 1.28; sx = 0.88; up = 0.86; }
     else if (phase === 'finish') { const k = smooth((age - (state?.duration ?? age)) / 0.8); sx = up = 1 - 0.55 * k; len = 1 - 0.6 * k; }
     else { const b = bodyWave * 0.04; up += b; len -= b * 0.5; }
-    const land = kick(t - (marks.jump ?? -99), 10); up -= 0.28 * land; sx += 0.16 * land; len += 0.1 * land;
-    s.krakenPitch = (s.krakenPitch ?? 0) + (clamp01((vy + 6) / 14) * 0.8 - 0.25 - (s.krakenPitch ?? 0)) * Math.min(1, dt * 10) * (air ? 1 : 0)
-      + (air ? 0 : -(s.krakenPitch ?? 0) * Math.min(1, dt * 12));
+    // The gameplay jump (including a jump while charging), not the jump
+    // button or optional particle director, owns the body turn. Landing is a
+    // separate contact transition; the old 'land' pulse ran at takeoff only.
+    advanceKrakenJumpMotion(s, a, state, phase, dt, t, d.krakenJumpMark);
+    const squash = 0.28 * s.krakenTakeoff + 0.16 * s.krakenLanding;
+    up -= squash; sx += squash * (4 / 7); len += squash * (5 / 14);
+    const pitchTarget = air ? clamp01((vy + 6) / 14) * 0.8 - 0.25 : 0;
+    s.krakenPitch = (s.krakenPitch ?? 0) + (pitchTarget - (s.krakenPitch ?? 0)) * response60(air ? 10 : 12, Math.max(0, dt));
     const roll = Math.sin(t * 3.1) * 0.05 + (phase === 'dash' ? Math.sin(t * 22) * 0.06 : 0);
     const rx = -Math.PI / 2 + (s.krakenPitch || 0);
     d.holder.rotation.set(rx, Math.PI, roll, 'YXZ');
+    // The authored mantle is +Y. Rotate around that LOCAL longitudinal axis
+    // after laying it down, not world yaw or the sideways Euler-Z wobble.
+    // Its air lift below intentionally ignores roll: rotating fins must not
+    // pump the whole body up/down as if they were walking on an invisible floor.
+    if (s.krakenSpin) d.holder.rotateY(s.krakenSpin);
     d.holder.scale.setScalar(spec.scale * e);
     d.model.root.scale.set(sx, len, up);
     // Rest the belly on the floor: the lowest model point under this frame's rotation and squash sits at the
@@ -305,6 +316,8 @@ export function installSpecialModels(api) {
   };
   api.on?.('all:special', e => { if (!e?.actor?.remote) crabEmission(e); });
   api.crabTankPresentationEvent = crabEmission;
+  const krakenJumps = createKrakenJumpObserver(G);
+  api.on?.('all:special', e => { if (!e?.actor?.remote) krakenJumps.observe(e); });
   const colorOf = (owner, team) => owner?.color || G.teamColors?.[owner?.team ?? team] || 0xffcc33;
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
@@ -329,7 +342,7 @@ export function installSpecialModels(api) {
   api.on?.('all:special', e => { if (!e?.actor?.remote) observeSpeaker(e); });
   // Called only after the network replay owner accepts the event, including
   // when optional FX are absent or disabled.
-  api.specialModelsReplay = observeSpeaker;
+  api.specialModelsReplay = e => { observeSpeaker(e); krakenJumps.observe(e); };
   function syncTailSpeakers(system) {
     const seen = speakerSeen;seen.clear();
     const draw = (actor, activation, index, origin, target) => {
@@ -507,6 +520,7 @@ export function installSpecialModels(api) {
     for (const slots of tailSpeakers.values()) for (const r of slots.values()) disposeModel(r.holder);
     tailSpeakers.clear();
     speakerMarks = new WeakMap(); speakerCandidates.clear(); speakerClockCeiling = -Infinity;
+    krakenJumps.clear();
     for (const map of [this[OBJECTS], this[ROUNDS]]) if (map) { for (const r of map.values()) disposeModel(r.group); map.clear(); }
     return clear.apply(this, args);
   };
@@ -530,6 +544,7 @@ export function installSpecialModels(api) {
     if (s.coatGroup) { s.coatGroup.visible = false; s.coatGroup.removeFromParent(); }
     disposeModel(s.line); disposeModel(s.ball?.root?.parent);
     releaseWeapon(s);
+    if (s.id === 'krakenRoyale') krakenJumps.forget(ch.actor, s.activation);
     states.delete(ch);
   }
   function hostOf(ch, host) {
@@ -701,6 +716,7 @@ export function installSpecialModels(api) {
         d.holder.scale.setScalar(spec.scale * (0.15 + 0.85 * clamp01(k)) * (1 + recoil * 1.2));
         const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? (speakerGlow ??= 0.5 + 0.4 * Math.sin(t * 30)) : 0.08 + 0.5 * kick(age, 4);
       }
+      if (s.id === 'krakenRoyale') d.krakenJumpMark = krakenJumps.get(a);
       animateDevice(a, s, d, spec, state, t, dt);
       if (spec.crab) {
         const ball = a.specialActive?.pose === 'ball' || state?.ballMode;
@@ -800,10 +816,15 @@ export function installSpecialModels(api) {
   };
   cp.update = function (dt, ...args) {
     const out = chUpdate.call(this, dt, ...args), a = this.actor;
-    const id = a?.alive && this.root?.visible !== false && !a.superJumpState ? specialPresentationToken(a)?.id : null;
+    const token = a?.alive && this.root?.visible !== false && !a.superJumpState ? specialPresentationToken(a) : null;
+    const id = token?.id;
     let s = states.get(this);
     if (!id || !SPECIAL_DEVICES[id]) { if (s) retire(this); return out; }
-    if (!s || s.id !== id) s = begin(this, id);
+    // A new Kraken activation must not inherit a previous landing, emergence
+    // clock or half-turn when no untransformed frame was drawn between lives.
+    if (!s || s.id !== id || (id === 'krakenRoyale' && s.activation !== token)) {
+      s = begin(this, id); s.activation = token;
+    }
     pose(this, s, Number.isFinite(dt) ? Math.max(0, dt) : 0);
     return out;
   };

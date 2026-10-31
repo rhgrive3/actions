@@ -362,6 +362,7 @@ function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
 // Shared distance scheduler, not a second projectile integrator. The collision
 // owner supplies a clipped endpoint; splash state cannot alter motion/damage.
 // Returns the number of splashes released this call.
+const distanceSplashOptions = new WeakMap();
 export function paintDistanceFlight(game, projectile, state, end = projectile?.pos) {
   if (!state || (projectile.s3SpecialWeapon && !(projectile.s3AllSpecial === 'crabTank' && state === projectile.s3CrabFlightPaint)) || projectile.ghost ||
       projectile.owner?.remote || !game?.paint || !game?.physics ||
@@ -388,9 +389,20 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     // SplashWallHitParam: a splash released with a paintable wall inside its
     // sourced reach sticks to that wall instead of falling to the floor.
     if (typeof state.wallSplash === 'function' && state.wallSplash(state.sample, index)) continue;
-    const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,
-      salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind,
-      footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r) });
+    let leases=distanceSplashOptions.get(state);
+    if(!leases){leases={depth:0,frames:[]};distanceSplashOptions.set(state,leases);}
+    const slot=leases.depth++,options=leases.frames[slot] ||= {};
+    let drop;
+    try {
+      options.owner=projectile.owner;options.team=projectile.team;options.seed=projectile.seed;
+      options.salt=index;options.from=state.sample;options.direction=state.direction;
+      options.radius=radius;options.spec=spec;options.depth=true;options.kind=kind;
+      options.footprint=mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r);
+      drop=spawnSplashDrop(game,options);
+    } finally {
+      options.owner=options.from=options.direction=options.spec=options.footprint=null;
+      leases.depth--;
+    }
     if (!drop) {
       // Immediate diagnostics can call user physics/paint hooks. Do not carry
       // a segment invariant across that observable callback boundary.

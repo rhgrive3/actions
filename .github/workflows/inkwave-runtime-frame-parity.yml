@@ -63,11 +63,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           # All build/test inputs remain; the offline modeler is not consumed.
           sparse-checkout: |
             /*
             !/tools/inkwave-modeler/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
           sparse-checkout-cone-mode: false
       - name: Verify exact checkout head
         shell: bash

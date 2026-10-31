@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {restoreQueueThrowPredictionSource} from './inkwave-throw-prediction-source-epoch-20261031.mjs';
 
 export const HISTORICAL_MENU_LAYOUT_SHA256='f694cc7e2cecfc612c054faad7a60e2656bdac18c743977c17c35f5ec40bb55d';
 export const CURRENT_MENU_LAYOUT_SHA256='ff0a0c479e5aca4f88082836c17d8631e2d835caae7fc9c8eddcaa26e76918d9';
@@ -162,7 +163,9 @@ export function verifyMenuInstallerSourceIdentity(source,manifestDigest,historic
   const input=iconInputs[key];
   assert.ok(input&&typeof input.source==='string','Required '+label+' source: '+key);
   const actual=hash(input.source);
-  assert.equal(actual,expected,'Reviewed '+label+' source: '+key);
+  if(key==='patch/runtime/throw-prediction.mjs'&&actual!==expected) {
+   assert.equal(hash(restoreQueueThrowPredictionSource(input.source)),expected,'Reviewed throw prediction source predecessor');
+  } else assert.equal(actual,expected,'Reviewed '+label+' source: '+key);
   assert.equal(input.manifestDigest,actual,'Emitted '+label+' input matches actual repository source: '+key);
   effectHashes[key]=actual;
  }

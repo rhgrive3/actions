@@ -99,6 +99,9 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'queue-visual-world-20261031-adapter.mjs',
+  'queue-ui-audio-20261031-adapter.mjs',
+  'queue-weapons-20261031-adapter.mjs',
   'pause-modal-lifetime-adapter.mjs',
   'online-async-entry-adapter.mjs',
   'landscape-practice-weapons-adapter.mjs',
@@ -107,6 +110,8 @@ const IDENTITY_FILES = [
   'fx-shader-stability-adapter.mjs',
   'ordered-shader-smoothstep.mjs',
   'menu-card-layout-adapter.mjs',
+  'title-demo-budget-adapter.mjs',
+  'title-presentation-adapter.mjs',
   'landscape-weapon-drawer-adapter.mjs',
   'landscape-home-adapter.mjs',
   'landscape-weapons-adapter.mjs',

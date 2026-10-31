@@ -46,6 +46,8 @@
           "scripts/tests/inkwave-character-visual-stability.test.mjs",
           "scripts/tests/inkwave-fx-shader-stability.test.mjs",
           "patches/local-quality/tests/menu-card-layout.test.mjs",
+          "patches/local-quality/tests/title-demo-budget.test.mjs",
+          "patches/local-quality/tests/title-presentation.test.mjs",
           "patches/local-quality/tests/reviewed-wave67-fx-stability-compatibility.test.mjs",
           "patches/splatoon3/tests/special-vfx-cylinder-seam.test.mjs",
           "scripts/tests/inkwave-boss-processing.test.mjs",
@@ -78,6 +80,85 @@
         "program": "node",
         "args": [
           "patches/local-quality/tests/performance-v2-topology.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-ui-audio-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.character.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.startup.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/queue-weapons-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/queue-weapons-20261031-rejections.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/native-stages/tests/queue-native-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/local-quality/tests/queue-visual-world-20261031.residual.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "patches/local-quality/tests/queue-swim-film-20261031.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/reliability/tests/queue-boss-fixed-copy-20261031.test.mjs"
         ]
       }
     ]
@@ -251,7 +332,8 @@
           "scripts/tests/inkwave-runtime-evidence.test.mjs",
           "scripts/tests/inkwave-validate-install-evidence-20261029.test.mjs",
           "scripts/tests/inkwave-menu-focus-source-identity.test.mjs",
-          "scripts/tests/inkwave-public-capture-cache-policy.test.mjs"
+          "scripts/tests/inkwave-public-capture-cache-policy.test.mjs",
+          "scripts/tests/inkwave-queue-ci-20261031.test.mjs"
         ]
       },
       {

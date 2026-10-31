@@ -44,10 +44,10 @@ export const REVERB_RECIPES = Object.freeze([
   Object.freeze({ seconds: 1.5, decay: 3.4, opt: Object.freeze({ pre: .012, seed: 3 }) }),
   Object.freeze({ seconds: 2.2, decay: 2.4, opt: Object.freeze({ seed: 5, bright: .7, dark: .08 }) }),
 ]);
-export function renderReverbPair(sampleRate) {
+export function renderReverbPair(sampleRate, includeMusic = true) {
   const ctx = { sampleRate, createBuffer(channels, length) {
     const data = Array.from({ length: channels }, () => new Float32Array(length));
     return { data, getChannelData: i => data[i] };
   } };
-  return REVERB_RECIPES.map(r => buildImpulse(ctx, r.seconds, r.decay, r.opt).data);
+  return (includeMusic ? REVERB_RECIPES : REVERB_RECIPES.slice(0, 1)).map(r => buildImpulse(ctx, r.seconds, r.decay, r.opt).data);
 }

@@ -325,6 +325,9 @@ class Director {
     this.roundImpacts = new WeakSet();
     if(this._frameRounds)this._frameRounds.length=0;
     this._frameRoundsValid=false;this._frameRoundSource=null;
+    // These sets are frame workspaces, not history. A menu can stop updates
+    // immediately after clear, so release the final frame's actor/device refs.
+    for (const key of ['seenRounds','seenObjects','_kitSeen','_kitSeenC','_kitSeenF','_kitSeenS']) this[key]?.clear();
     this.kit.clear();this._speakerCache=new WeakMap();
   }
   updateWailLasers(dt) {
@@ -665,6 +668,12 @@ const ROUND_FX = {
 // =================================================================================================
 // Deployed objects (world records of all-specials; local and replayed)
 // =================================================================================================
+// Only native spawners borrow frozen recipes; extension callbacks keep the
+// former fresh writable records. Native spawners copy scalar fields at once.
+const STRIKE_NATIVE_DROP = Director.prototype.drop, STRIKE_NATIVE_PUFF = Director.prototype.puff;
+const STRIKE_DROP_OPTIONS = Object.freeze({ grav: 12, drag: 0.6 });
+const STRIKE_CHUNK_OPTIONS = Object.freeze({ grav: 16, drag: 0.6 });
+const STRIKE_MIST_OPTIONS = Object.freeze({ drag: 2, buoy: 1 });
 const OBJECT_FX = {
   marker: { // Triple Inkstrike beacon in flight → landing marker, then the twister drops
     start(r, o) {
@@ -719,9 +728,9 @@ const OBJECT_FX = {
         const th = rnd(TAU), rr = R * rnd(1, 0.6), cs = Math.cos(th), sn = Math.sin(th);
         this.v[0].set(p.x + cs * rr, p.y + rnd(1.2, 0.1), p.z + sn * rr);
         // spray thrown off tangentially at the base
-        this.drop(this.v[0], -sn * 9, rnd(5, 1), cs * 9, 0.5, 0.1, c, { grav: 12, drag: 0.6 });
-        this.puff(PUFF.CHUNK, this.v[0], -sn * 6, rnd(8, 3), cs * 6, 0.6, 0.16, 0.05, c, 1, { grav: 16, drag: 0.6 });
-        this.puff(PUFF.MIST, this.v[0], -sn * 3, rnd(3, 1), cs * 3, 0.7, 0.7, 1.6, this.hdr(c, 0.95), 0.4, { drag: 2, buoy: 1 });
+        this.drop(this.v[0], -sn * 9, rnd(5, 1), cs * 9, 0.5, 0.1, c, this.drop === STRIKE_NATIVE_DROP ? STRIKE_DROP_OPTIONS : { grav: 12, drag: 0.6 });
+        this.puff(PUFF.CHUNK, this.v[0], -sn * 6, rnd(8, 3), cs * 6, 0.6, 0.16, 0.05, c, 1, this.puff === STRIKE_NATIVE_PUFF ? STRIKE_CHUNK_OPTIONS : { grav: 16, drag: 0.6 });
+        this.puff(PUFF.MIST, this.v[0], -sn * 3, rnd(3, 1), cs * 3, 0.7, 0.7, 1.6, this.hdr(c, 0.95), 0.4, this.puff === STRIKE_NATIVE_PUFF ? STRIKE_MIST_OPTIONS : { drag: 2, buoy: 1 });
       }
     },
     end(r, o) { const p = o.pos; this.smoke(this.v[0].copy(p).setY(p.y + 2), 6, this.hdr(r.color, 0.95), { kind: PUFF.MIST, size: 1.4, speed: 2, rise: 3, life: 1.1, alpha: 0.45 }); },

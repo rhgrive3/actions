@@ -5,6 +5,11 @@ import { adaptLandscapeGearNativeKeys } from '../patches/local-quality/landscape
 import { adaptCharacterVisualStability } from '../patches/local-quality/character-visual-stability-adapter.mjs';
 import { adaptFxShaderStability } from '../patches/local-quality/fx-shader-stability-adapter.mjs';
 import { adaptMenuCardLayout } from '../patches/local-quality/menu-card-layout-adapter.mjs';
+import { adaptQueueVisualWorld20261031 } from '../patches/local-quality/queue-visual-world-20261031-adapter.mjs';
+import { adaptQueueUiAudio20261031 } from '../patches/local-quality/queue-ui-audio-20261031-adapter.mjs';
+import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
+import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
+import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
@@ -173,6 +178,13 @@ export function adaptBuildSource(rel, code, options = {}) {
   if (options.characterVisualStability !== false) code = adaptCharacterVisualStability(rel, code);
   code = adaptFxShaderStability(rel, code);
   code = adaptMenuCardLayout(rel, code, replaceOnce);
+  if (options.queueVisualWorld20261031 !== false) code = adaptQueueVisualWorld20261031(rel, code);
+  if (options.queueUiAudio20261031 !== false) code = adaptQueueUiAudio20261031(rel, code);
+  if (options.queueWeapons20261031 !== false) code = adaptQueueWeapons20261031(rel, code);
+  // The title owns its decorative demo budget and presentation after all
+  // shared menu/gameplay passes, without changing playable match settings.
+  code = adaptTitleDemoBudget(rel, code);
+  code = adaptTitlePresentation(rel, code, replaceOnce);
   return code;
 }
 

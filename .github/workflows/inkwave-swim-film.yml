@@ -2,6 +2,11 @@ name: INKWAVE swim film regression
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/adapter.mjs'
+      - 'inkwave-public/src/game/actor.js'
+      - 'inkwave-public/src/game/character.js'
+      - 'patches/splatoon3/runtime/swim-stealth.mjs'
+      - 'scripts/tests/inkwave-queue-ci-20261031.test.mjs'
       - 'patches/splatoon3/tests/fixture-cache.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
       - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'

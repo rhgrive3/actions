@@ -4,10 +4,15 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { adaptMenuCardLayout } from '../menu-card-layout-adapter.mjs';
 import { replaceOnce } from '../adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const rel = 'patches/splatoon3/runtime/menu-layout.mjs';
 const source = fs.readFileSync(new URL('../../splatoon3/runtime/menu-layout.mjs', import.meta.url), 'utf8');
-const adapted = adaptMenuCardLayout(rel, source, replaceOnce);
+const adapted = adaptBuildSource(rel, source);
+const originalKeepInView = vm.runInNewContext('(' + source.slice(
+  source.indexOf('export function keepInView') + 'export '.length,
+  source.indexOf('\nconst reduced ='),
+).trim() + ')');
 
 async function fixture({ touch = true, grid = true, reduced = true } = {}) {
   let nextFrame = 0, nextTimer = 0;
@@ -58,7 +63,7 @@ async function fixture({ touch = true, grid = true, reduced = true } = {}) {
   assert.equal(mod.namespace.installMenuLayout({ Menus }), true);
   assert.equal(mod.namespace.installMenuLayout({ Menus }), false);
   const menus = new Menus(); menus._scr = menus._scr_loadout();
-  return { menus, frames, timers, scrolls, screens,
+  return { menus, frames, timers, scrolls, screens, keepInView: mod.namespace.keepInView,
     flush() { const jobs = [...frames]; frames.clear(); for (const [, fn] of jobs) fn(); },
     flushTimers() { const jobs = [...timers]; timers.clear(); for (const [, fn] of jobs) fn(); },
   };
@@ -167,5 +172,93 @@ test('nearby navigation retains its edge margin and other scrollers retain exist
   for (const options of [{ touch: false }, { grid: false }]) {
     const f = await fixture(options); f.menus._moveFocus(f.menus._scr.card());
     assert.equal(f.scrolls.length, 1); assert.equal(f.frames.size, 0); assert.equal(f.menus._scr.listeners.size, 0);
+  }
+});
+
+test('composed touch focus reads each rectangle once and the later correction measures fresh bounds', async () => {
+  for (const reduced of [true, false]) {
+    const f = await fixture({ reduced }), scr = f.menus._scr, target = scr.card();
+    const events = [], cardBounds = target.getBoundingClientRect, hostBounds = scr.host.getBoundingClientRect;
+    const scrollTo = scr.host.scrollTo;
+    target.getBoundingClientRect = function () { events.push('card'); return cardBounds.call(this); };
+    scr.host.getBoundingClientRect = function () { events.push('host'); return hostBounds.call(this); };
+    scr.host.scrollTo = function (args) { events.push('scroll'); return scrollTo.call(this, args); };
+    f.menus._moveFocus(target);
+    assert.deepEqual(events, ['card', 'host', 'scroll']);
+    target.top += 70;
+    if (!reduced) f.flushTimers();
+    f.flush();
+    assert.deepEqual(events, ['card', 'host', 'scroll', 'card', 'host', 'scroll']);
+    assert.equal(cardBounds.call(target).top, 320, 'the delayed correction must not reuse the original bounds');
+  }
+});
+
+test('non-grid focus still measures both rectangles and creates no delayed correction', async () => {
+  for (const options of [{ touch: false }, { grid: false }]) {
+    const f = await fixture(options), scr = f.menus._scr, target = scr.card();
+    const events = [], cardBounds = target.getBoundingClientRect, hostBounds = scr.host.getBoundingClientRect;
+    target.getBoundingClientRect = function () { events.push('card'); return cardBounds.call(this); };
+    scr.host.getBoundingClientRect = function () { events.push('host'); return hostBounds.call(this); };
+    f.menus._moveFocus(target);
+    assert.deepEqual(events, ['card', 'host']);
+    assert.equal(f.frames.size, 0); assert.equal(f.timers.size, 0);
+  }
+});
+
+function keepTrace(fn, { cardTop, cardHeight, hostTop, hostHeight, center, smooth, scrollTo, supplied = '' }) {
+  const trace = [], scrolls = [];
+  let scrollTop = 31.25;
+  const rect = (name, top, height) => Object.defineProperties({}, {
+    top: { get() { trace.push(name + '.top'); return top; } },
+    bottom: { get() { trace.push(name + '.bottom'); return top + height; } },
+    height: { get() { trace.push(name + '.height'); return height; } },
+  });
+  const r = rect('r', cardTop, cardHeight), b = rect('b', hostTop, hostHeight);
+  const el = { getBoundingClientRect() { trace.push('card.bounds'); return r; } };
+  const host = {
+    getBoundingClientRect() { trace.push('host.bounds'); return b; },
+    get scrollTop() { trace.push('scrollTop.get'); return scrollTop; },
+    set scrollTop(value) { trace.push('scrollTop.set'); scrollTop = value; },
+    get scrollTo() {
+      trace.push('scrollTo.get');
+      return scrollTo ? options => {
+        trace.push('scrollTo.call'); scrolls.push([options.top, options.behavior]); scrollTop = options.top;
+      } : undefined;
+    },
+  };
+  const options = {
+    get center() { trace.push('option.center'); return center; },
+    get smooth() { trace.push('option.smooth'); return smooth; },
+  };
+  if (supplied.includes('r')) options.r = r;
+  if (supplied.includes('b')) options.b = b;
+  const distance = fn(el, host, options);
+  return { distance, scrollTop, scrolls, trace };
+}
+
+test('optional focus bounds retain original geometry getter and scrolling order', async () => {
+  const { keepInView } = await fixture();
+  for (const cardTop of [-270.5, 100, 340.25, 660, 1800.75])
+    for (const center of [false, true]) for (const smooth of [false, true])
+      for (const scrollTo of [false, true]) for (const supplied of ['', 'r', 'b', 'rb']) {
+        const options = { cardTop, cardHeight: 160.25, hostTop: 100.5, hostHeight: 599.75, center, smooth, scrollTo };
+        const expected = keepTrace(originalKeepInView, options);
+        const actual = keepTrace(keepInView, { ...options, supplied });
+        const removed = new Set([...(supplied.includes('r') ? ['card.bounds'] : []), ...(supplied.includes('b') ? ['host.bounds'] : [])]);
+        expected.trace = expected.trace.filter(event => !removed.has(event));
+        assert.deepEqual(actual, expected);
+      }
+});
+
+test('omitted bounds keep null-element and throwing geometry behavior without a scroll write', async () => {
+  const { keepInView } = await fixture();
+  const failure = new Error('geometry failure');
+  for (const fn of [originalKeepInView, keepInView]) {
+    const trace = [];
+    const host = { getBoundingClientRect() { trace.push('host'); throw failure; }, scrollTo() { assert.fail('must not scroll after a failed read'); } };
+    const el = { getBoundingClientRect() { trace.push('card'); return {}; } };
+    assert.equal(fn(null, host), 0); assert.deepEqual(trace, []);
+    assert.throws(() => fn(el, host), error => error === failure);
+    assert.deepEqual(trace, ['card', 'host']);
   }
 });
