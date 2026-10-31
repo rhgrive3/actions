@@ -82,6 +82,25 @@ test('enabled gate denies direct JS downloads and serves isolated Turnstile chal
   assert.equal((await serveGameWithBotGate(new Request(origin + '/'), incomplete)).status, 503);
 });
 
+test('Turnstile form body is bounded and duplicate tokens cannot pass', async () => {
+  const settings = env();
+  const base = origin + '/__inkwave-access/verify';
+  const headers = { Origin: origin, 'Content-Type': 'application/x-www-form-urlencoded' };
+  const oversized = await serveGameWithBotGate(new Request(base, {
+    method: 'POST', headers, body: 'cf-turnstile-response=' + 'x'.repeat(5000),
+  }), settings);
+  assert.equal(oversized.status, 413);
+  const duplicated = await serveGameWithBotGate(new Request(base, {
+    method: 'POST', headers, body: 'cf-turnstile-response=x&cf-turnstile-response=y',
+  }), settings);
+  assert.equal(duplicated.status, 403);
+  const crossOrigin = await serveGameWithBotGate(new Request(base, {
+    method: 'POST', headers: { ...headers, Origin: 'https://other.example' },
+    body: 'cf-turnstile-response=test-token',
+  }), settings);
+  assert.equal(crossOrigin.status, 403);
+});
+
 test('server-side Turnstile proof issues a signed session and unlocks assets', async () => {
   const settings = env();
   const originalFetch = globalThis.fetch;
