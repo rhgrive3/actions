@@ -49,5 +49,22 @@
     "consoleErrors": [],
     "unverifiedRequestFailures": [],
     "canonicalKitSelections": 65
+  },
+  "characterGeometryFixture": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "hairAndHatCases": 72,
+    "hairAndHatVertices": 265378,
+    "squidCases": 27,
+    "maxChildRssKiB": 570768,
+    "oomEventsAdded": 0,
+    "runtimeChanges": 0
+  },
+  "independentThrowPrediction": {
+    "passed": 145,
+    "failed": 0,
+    "skipped": 0,
+    "runtimeChanges": 0
   }
 }
