@@ -148,7 +148,9 @@ export function headSurf(az, el, off, out, nOut) {
 /** Hair-cap thickness above the skin at (az, el) (full volume; the rolled lip is added by the cap builder). */
 export function capOffset(az, el) {
   const back = Math.max(0, -Math.cos(az));
-  return 0.0075 + 0.003 * sstep(0.45, 1.0, el) + 0.0135 * back * sstep(-0.7, 0.4, el) + 0.0025 * sstep(0.8, 1.4, el);
+  // Azimuth is undefined at the crown: fade the back-only volume out before
+  // the pole so all meridians meet smoothly rather than forming a ridge.
+  return 0.0075 + 0.003 * sstep(0.45, 1.0, el) + 0.0135 * back * sstep(-0.7, 0.4, el) * (1 - sstep(1.1, Math.PI / 2, el)) + 0.0025 * sstep(0.8, 1.4, el);
 }
 
 if (BONE_INDEX.head !== FACE_BONES.head || BONE_INDEX.eyeL !== FACE_BONES.eyeL || BONE_INDEX.eyeR !== FACE_BONES.eyeR) console.error('character-face FACE_BONES out of sync with BONE_INDEX');
@@ -242,6 +244,8 @@ export function sweep(points, opts = {}) {
   const radius = opts.radius ?? (() => 0.03);
   const flatFn = typeof opts.flat === 'function' ? opts.flat : (() => opts.flat ?? 1);
   const capSteps = opts.capSteps ?? 3;
+  const endCapLength = opts.endCapLength ?? 1.05;
+  const endCapTilt = opts.endCapTilt ?? 0;
   const section = opts.section || null;
   const curve = new THREE.CatmullRomCurve3(points.map((p) => (p.isVector3 ? p.clone() : new V3(...p))), false, opts.curveType || 'centripetal');
   const frames = curve.computeFrenetFrames(seg, false);
@@ -300,8 +304,16 @@ export function sweep(points, opts = {}) {
   for (let i = 0; i <= seg; i++) { const t = frameAt(i); ring(P, radius(t), t); rings++; }
   const r1 = radius(1);
   if (hasEnd) {
-    for (let j = 1; j < capSteps; j++) { const a = (j / capSteps) * Math.PI * 0.5; ring(P.clone().addScaledVector(T, r1 * 1.05 * Math.sin(a)), r1 * Math.cos(a), 1); rings++; }
-    tmp.copy(P).addScaledVector(T, r1 * 1.05); pos.push(tmp.x, tmp.y, tmp.z); tt.push(1); cs.push(1); sn.push(0);
+    for (let j = 1; j < capSteps; j++) {
+      const a = (j / capSteps) * Math.PI * 0.5, sa = Math.sin(a);
+      const center = P.clone().addScaledVector(T, r1 * endCapLength * sa);
+      // Fade in the cap's sideways lean without a kink where it meets the stroke.
+      if (endCapTilt) center.addScaledVector(b, r1 * endCapTilt * sa * sa);
+      ring(center, r1 * Math.cos(a), 1); rings++;
+    }
+    tmp.copy(P).addScaledVector(T, r1 * endCapLength);
+    if (endCapTilt) tmp.addScaledVector(b, r1 * endCapTilt);
+    pos.push(tmp.x, tmp.y, tmp.z); tt.push(1); cs.push(1); sn.push(0);
   }
   const ringBase = (r) => (hasStart ? 1 : 0) + r * radial;
   for (let r = 0; r < rings - 1; r++) {
@@ -664,170 +676,122 @@ function knotCoil(C, Rb, p0, axis = [0, 1, 0]) {
   return { pts, r0: Rb * 0.75, r1: Rb * 0.6, taper: 1.5, flat: 1.25, K: 3.0, G: 0.12, suck: false, curl: 0, twist: 0, noClub: true };
 }
 
-// sculpted fringe locks shared by the Pony style and its under-hat variant (see strandSpec → locks)
-const PONY_LOCKS = [{ d: 0.03, h: -0.003, r: 0.66, len: 0.7, curl: 1.0 }, { d: -0.033, h: 0.006, r: 0.7, len: 0.88, curl: 0.4 }];
 const STYLES = [
-  { // 0 — "Tide": long swept-back tentacles + face-framing locks + a swept bang
+  { // 0 — "Tide": long back tentacles and a low swept fringe
     name: 'Tide',
     strands: (() => {
-      const backL = { pts: [IN(2.55, 0.9), S(2.65, 0.45), S(2.78, -0.1), [0.05, -0.17, -0.212], [0.06, -0.218, -0.222], [0.074, -0.24, -0.238]], r0: 0.058, r1: 0.018, flat: 0.5, K: 1, G: 1, suck: true, curl: 0.9 };
-      const outL = { pts: [IN(2.0, 0.8), S(2.08, 0.35), S(2.18, -0.15), [0.158, -0.13, -0.11], [0.185, -0.175, -0.112], [0.2, -0.192, -0.128]], r0: 0.052, r1: 0.016, flat: 0.5, K: 1.2, G: 0.9, suck: true, curl: 1.0 };
-      const lockL = { pts: [IN(1.15, 0.85), S(1.25, 0.42), S(1.34, 0.08), [0.18, -0.07, 0.03], [0.176, -0.118, 0.055], [0.165, -0.14, 0.075]], r0: 0.042, r1: 0.015, flat: 0.5, K: 1.5, G: 0.8, suck: false, curl: 0.7 };
+      // The roots start inside the cap; successive scalp points follow the same
+      // meridian so the visible shoulders do not cross over the crown.
+      const backL = { pts: [IN(2.72, 0.85), S(2.72, 0.48, 0.004), S(2.72, -0.02, 0.002), [0.073, -0.14, -0.205], [0.085, -0.21, -0.225], [0.097, -0.26, -0.245]], r0: 0.059, r1: 0.031, taper: 1.2, flat: 0.54, K: 1, G: 1, suck: true, curl: 0.16 };
+      const outL = { pts: [IN(2.12, 0.85), S(2.12, 0.43, 0.004), S(2.12, -0.05, 0.002), [0.16, -0.13, -0.13], [0.18, -0.19, -0.142], [0.195, -0.232, -0.16]], r0: 0.055, r1: 0.028, taper: 1.15, flat: 0.54, K: 1.2, G: 0.9, suck: true, curl: 0.18 };
+      const lockL = { pts: [IN(1.18, 0.9), S(1.22, 0.46), S(1.25, 0.08), [0.185, -0.065, 0.03], [0.187, -0.13, 0.04], [0.18, -0.19, 0.055]], r0: 0.045, r1: 0.024, taper: 1.15, flat: 0.53, K: 1.5, G: 0.8, suck: false, curl: 0.1 };
+      // A low, flattened sweep follows the scalp toward the left temple.
+      const fringe = { pts: [IN(0.7, 1.2), O(0.46, 1.0, 0.004), O(0.06, 0.84, 0.005), O(-0.3, 0.70, 0.006), O(-0.65, 0.53, 0.007), O(-0.9, 0.38, 0.004)], r0: 0.065, r1: 0.024, taper: 1.15, flat: 0.25, K: 2.5, G: 0.35, suck: false, curl: 0, noHat: true };
       return [
-        backL, { ...backL, pts: mirror(backL.pts).map((p, i) => (i === 5 ? [-0.07, -0.232, -0.236] : p)) },
+        backL, { ...backL, pts: mirror(backL.pts) },
         outL, { ...outL, pts: mirror(outL.pts) },
         lockL, { ...lockL, pts: mirror(lockL.pts) },
-        { pts: [IN(0.95, 1.12), S(0.45, 0.94, 0.002), S(-0.1, 0.77, 0.003), S(-0.6, 0.63, 0.004), S(-1.0, 0.47, 0.004), [-0.192, 0.05, 0.068]], r0: 0.048, r1: 0.017, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.5,
-          rMain: 0.78, locks: [{ d: -0.032, h: -0.003, r: 0.66, len: 0.7, curl: 1.0 }, { d: 0.034, h: 0.006, r: 0.7, len: 0.88, curl: 0.4 }] },
+        fringe,
       ];
     })(),
     gear: 'wristbands',
   },
-  { // 1 — "Spike": short upswept spikes + a front quiff
+  { // 1 — "Spike": compact swept-back tentacles with a short front quiff
     name: 'Spike',
-    strands: (() => {
-      const sideL = { pts: [IN(0.85, 0.95), [0.095, 0.205, 0.0], [0.155, 0.215, -0.07], [0.195, 0.185, -0.13], [0.215, 0.14, -0.16]], r0: 0.052, r1: 0.017, flat: 0.52, K: 2.2, G: 0.3, suck: true, curl: 0.8 };
-      const backL = { pts: [IN(2.25, 0.75), S(2.38, 0.42), [0.14, 0.03, -0.205], [0.155, -0.035, -0.235], [0.175, -0.06, -0.265]], r0: 0.05, r1: 0.017, flat: 0.52, K: 1.8, G: 0.6, suck: true, curl: 1.0 };
-      return [
-        { pts: [IN(0.15, 1.05), [0.0, 0.212, -0.02], [0.0, 0.245, -0.1], [0.0, 0.225, -0.18], [0.0, 0.18, -0.222]], r0: 0.056, r1: 0.018, flat: 0.52, K: 2.2, G: 0.3, suck: true, curl: 1.0 },
-        sideL, { ...sideL, pts: mirror(sideL.pts) },
-        backL, { ...backL, pts: mirror(backL.pts) },
-        { pts: [IN(3.14, 0.55), S(3.14, 0.05), [0.0, -0.11, -0.205], [0.0, -0.155, -0.215], [0.0, -0.175, -0.245]], r0: 0.05, r1: 0.018, flat: 0.52, K: 1.6, G: 0.7, suck: true, curl: 0.9 },
-        { pts: [IN(0.3, 1.0), [0.02, 0.2, 0.12], [-0.04, 0.218, 0.172], [-0.1, 0.19, 0.198], [-0.135, 0.152, 0.2]], r0: 0.048, r1: 0.017, flat: 0.48, K: 2.8, G: 0.2, suck: false, curl: 0.8,
-          rMain: 0.82, locks: [{ d: -0.03, h: -0.006, r: 0.68, len: 0.7, curl: 1.0 }, { d: 0.03, h: -0.002, r: 0.66, len: 0.8, curl: 0.7 }] },
-      ];
-    })(),
-    // under a hat the spikes are squashed flat: short flicks kick out below the rim at the back instead
+    // Crown lobes are part of one cap mesh and use three gently weighted spring bones.
+    strands: [],
+    // Under a hat, the short back tentacles emerge below the rim.
     underHat: {
       strands: (() => {
-        const flick = { pts: [IN(2.3, 0.62), S(2.4, 0.16), [0.134, -0.046, -0.2], [0.148, -0.09, -0.228], [0.16, -0.112, -0.25]], r0: 0.046, r1: 0.017, flat: 0.52, K: 1.8, G: 0.6, suck: true, curl: 0.7 };
+        const flick = { pts: [IN(2.3, 0.62), S(2.4, 0.16), S(2.5, -0.09, 0.004), S(2.58, -0.29, 0.008), S(2.62, -0.4, 0.01)], r0: 0.044, r1: 0.019, taper: 1.15, flat: 0.48, K: 1.8, G: 0.6, suck: true, curl: 0.08, noClub: true };
         return [flick, { ...flick, pts: mirror(flick.pts) },
-          { pts: [IN(3.14, 0.55), S(3.14, 0.05), [0.0, -0.11, -0.205], [0.0, -0.155, -0.215], [0.0, -0.175, -0.245]], r0: 0.05, r1: 0.018, flat: 0.52, K: 1.6, G: 0.7, suck: true, curl: 0.9 }];
+          { pts: [IN(3.14, 0.55), S(3.14, 0.05), S(3.14, -0.2, 0.004), S(3.14, -0.4, 0.008), S(3.14, -0.5, 0.01)], r0: 0.044, r1: 0.019, taper: 1.15, flat: 0.48, K: 1.6, G: 0.7, suck: true, curl: 0.08, noClub: true }];
       })(),
     },
     gear: 'headphones',
   },
-  { // 2 — "Twin": two long tied tails + split bangs
+  { // 2 — "Twin": two long, softly tapered tentacles gathered behind the ears
     name: 'Twin',
     strands: (() => {
-      const tailL = { pts: [IN(1.95, 0.55), S(2.0, 0.35), [0.2, 0.04, -0.105], [0.235, -0.07, -0.112], [0.242, -0.2, -0.096], [0.228, -0.305, -0.07], [0.245, -0.345, -0.035]], r0: 0.056, r1: 0.024, flat: 0.55, K: 0.85, G: 1.1, suck: true, curl: 1.1 };
-      const bangL = { pts: [IN(0.55, 1.15), S(0.38, 0.9, 0.002), S(0.58, 0.72, 0.003), S(0.9, 0.56, 0.004), [0.184, 0.06, 0.078]], r0: 0.045, r1: 0.017, flat: 0.4, K: 2.6, G: 0.3, suck: false, curl: 0.6,
-          rMain: 0.8, locks: [{ d: 0.03, h: -0.003, r: 0.66, len: 0.66, curl: 0.95 }, { d: -0.03, h: 0.005, r: 0.68, len: 0.9, curl: 0.4 }] };
-      return [
-        tailL, { ...tailL, pts: mirror(tailL.pts) },
-        { pts: [IN(3.14, 0.9), S(3.14, 0.3), S(3.14, -0.25), [0.0, -0.14, -0.205], [0.0, -0.18, -0.232]], r0: 0.05, r1: 0.02, flat: 0.52, K: 1.4, G: 0.8, suck: true, curl: 0.9 },
-        bangL, { ...bangL, pts: mirror(bangL.pts) },
-      ];
+      // The broad roots converge at the ties, then each tail flows away from the ear.
+      // A gentle S-curve and a round, restrained end keep the two masses legible from behind.
+      const tail = { pts: [O(1.95, 0.35, -0.045), [0.161, 0.010, -0.098], [0.202, -0.047, -0.112], [0.218, -0.105, -0.121], [0.226, -0.180, -0.119], [0.226, -0.250, -0.105], [0.219, -0.310, -0.090], [0.210, -0.355, -0.077]], r0: 0.046, r1: 0.043, taper: 1.35, tipScale: 0.90, flat: 0.72, K: 0.9, G: 1.0, suck: true, cupFrom: 0.58, curl: 0, noClub: true, twist: 0, pinRoot: true };
+      const cheek = { pts: [O(1.12, 0.70, -0.040), O(1.16, 0.42, -0.018), [0.164, 0.024, 0.050], [0.169, -0.035, 0.058], [0.164, -0.081, 0.067]], r0: 0.031, r1: 0.023, taper: 1.2, tipScale: 0.9, flat: 0.60, K: 1.8, G: 0.55, suck: false, curl: 0, noClub: true, twist: 0, pinRoot: true };
+      return [tail, { ...tail, pts: mirror(tail.pts) }, cheek, { ...cheek, pts: mirror(cheek.pts) }];
     })(),
-    ties: [[0.2, 0.04, -0.105, 1], [-0.2, 0.04, -0.105, -1]],
-    // under a hat the tails are tied lower, just below the rim, so they hang from under it
+    ties: [[0.207, -0.063, -0.115, 1], [-0.207, -0.063, -0.115, -1]],
+    noClip: true,
     underHat: {
       strands: (() => {
-        const tailL = { pts: [IN(1.95, 0.42), S(2.0, 0.08), [0.19, -0.03, -0.118], [0.226, -0.13, -0.116], [0.234, -0.235, -0.097], [0.222, -0.318, -0.07], [0.238, -0.35, -0.038]], r0: 0.054, r1: 0.023, flat: 0.55, K: 0.85, G: 1.1, suck: true, curl: 1.1 };
-        const bangL = { pts: [IN(0.55, 1.15), S(0.38, 0.9, 0.002), S(0.58, 0.72, 0.003), S(0.9, 0.56, 0.004), [0.184, 0.06, 0.078]], r0: 0.045, r1: 0.017, flat: 0.4, K: 2.6, G: 0.3, suck: false, curl: 0.6,
-          rMain: 0.8, locks: [{ d: 0.03, h: -0.003, r: 0.66, len: 0.66, curl: 0.95 }, { d: -0.03, h: 0.005, r: 0.68, len: 0.9, curl: 0.4 }] };
-        return [tailL, { ...tailL, pts: mirror(tailL.pts) },
-          { pts: [IN(3.14, 0.9), S(3.14, 0.3), S(3.14, -0.25), [0.0, -0.14, -0.205], [0.0, -0.18, -0.232]], r0: 0.05, r1: 0.02, flat: 0.52, K: 1.4, G: 0.8, suck: true, curl: 0.9 },
-          bangL, { ...bangL, pts: mirror(bangL.pts) }];
+        const tail = { pts: [O(1.95, 0.24, -0.045), [0.158, -0.025, -0.100], [0.195, -0.090, -0.120], [0.212, -0.140, -0.125], [0.220, -0.200, -0.115], [0.218, -0.265, -0.100], [0.210, -0.325, -0.082], [0.206, -0.355, -0.074]], r0: 0.045, r1: 0.042, taper: 1.35, tipScale: 0.90, flat: 0.72, K: 0.9, G: 1.0, suck: true, cupFrom: 0.58, curl: 0, noClub: true, twist: 0, pinRoot: true };
+        const cheek = { pts: [O(1.12, 0.55, -0.040), O(1.16, 0.35, -0.018), [0.164, 0.024, 0.050], [0.169, -0.035, 0.058], [0.164, -0.081, 0.067]], r0: 0.030, r1: 0.022, taper: 1.2, tipScale: 0.9, flat: 0.60, K: 1.8, G: 0.55, suck: false, curl: 0, noClub: true, twist: 0, pinRoot: true };
+        return [tail, { ...tail, pts: mirror(tail.pts) }, cheek, { ...cheek, pts: mirror(cheek.pts) }];
       })(),
-      ties: [[0.19, -0.03, -0.118, 1], [-0.19, -0.03, -0.118, -1]],
+      ties: [[0.200, -0.105, -0.120, 1], [-0.200, -0.105, -0.120, -1]],
     },
     gear: 'twin',
   },
-  { // 3 — "Bob": rounded bob that curls in at the jaw + side-swept bang
-    name: 'Bob',
-    strands: (() => {
-      const mk = (az, len, r0, suck) => ({ pts: [IN(az, 0.95), S(az * 1.03, 0.45), S(az * 1.05, 0.0), O(az * 1.06, -0.32 * len, 0.05), O(az * 1.02, -0.52 * len, 0.028)], r0, r1: 0.024, flat: 0.52, K: 1.4, G: 0.85, suck, curl: -0.9 });
-      const a = mk(1.3, 1.0, 0.05, false), b = mk(2.0, 1.05, 0.054, true), c = mk(2.7, 1.1, 0.056, true);
-      return [a, { ...a, pts: mirror(a.pts) }, b, { ...b, pts: mirror(b.pts) }, c, { ...c, pts: mirror(c.pts) },
-        { pts: [IN(-0.75, 1.15), S(-0.2, 0.9, 0.002), S(0.3, 0.75, 0.003), S(0.78, 0.6, 0.004), S(1.1, 0.44, 0.004), [0.196, 0.005, 0.058]], r0: 0.047, r1: 0.02, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.5,
-          rMain: 0.78, locks: [{ d: 0.032, h: -0.003, r: 0.66, len: 0.68, curl: 1.0 }, { d: -0.034, h: 0.006, r: 0.7, len: 0.86, curl: 0.4 }] }];
-    })(),
-    gear: 'bob',
+  { // 3 — "Bob": one smooth scalp with broad, short cheek panels
+    name: 'Bob', strands: [], underHat: { strands: [] }, cap: { bob: true }, gear: 'bob',
   },
-  { // 4 — "Pony": high fountain ponytail — a thick three-tentacle bundle gathered at the back of the crown, swept fringe
+  { // 4 — "Pony": gathered, fanned tentacle ponytail
     name: 'Pony',
     strands: (() => {
-      const tail = { pts: [[0, 0.12, -0.085], [0, 0.172, -0.13], [0, 0.235, -0.175], [0, 0.262, -0.235], [0, 0.235, -0.3], [0, 0.165, -0.345], [0, 0.07, -0.36], [0, -0.03, -0.345], [0, -0.11, -0.31]], r0: 0.066, r1: 0.03, taper: 1.7, flat: 1.25, K: 0.95, G: 1.05, suck: true, curl: 0.85 };
-      const flank = { pts: [[0.012, 0.12, -0.085], [0.02, 0.17, -0.13], [0.04, 0.226, -0.172], [0.054, 0.246, -0.23], [0.062, 0.212, -0.29], [0.068, 0.138, -0.326], [0.074, 0.05, -0.332], [0.084, -0.03, -0.31]], r0: 0.048, r1: 0.022, taper: 1.4, flat: 1.1, K: 1.05, G: 1.0, suck: true, curl: 1.0 };
-      const lock = { pts: [IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]], r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 };
-      return [
-        tail, flank, { ...flank, pts: mirror(flank.pts) }, lock, { ...lock, pts: mirror(lock.pts) },
-        { pts: [IN(-0.9, 1.12), S(-0.5, 0.95, 0.002), S(-0.05, 0.8, 0.003), S(0.42, 0.66, 0.004), S(0.8, 0.52, 0.004), [0.18, 0.058, 0.096]], r0: 0.046, r1: 0.018, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.55, rMain: 0.8, locks: PONY_LOCKS },
-      ];
+      // Two leaf-like lobes share a narrow gathered base and fan apart toward their rounded ends.
+      const main = { pts: [[0, 0.10, -0.075], [0, 0.15, -0.11], [-0.012, 0.205, -0.14], [-0.032, 0.258, -0.17], [-0.055, 0.30, -0.2], [-0.078, 0.32, -0.226]], r0: 0.034, r1: 0.048, taper: 1.0, tipScale: 0.9, flat: 0.72, K: 1.25, G: 0.8, suck: false, curl: 0, noClub: true, twist: 0 };
+      const back = { pts: [[0, 0.10, -0.075], [0, 0.15, -0.11], [0.013, 0.195, -0.155], [0.032, 0.225, -0.2], [0.06, 0.235, -0.245], [0.09, 0.232, -0.278]], r0: 0.029, r1: 0.040, taper: 1.0, tipScale: 0.9, flat: 0.72, K: 1.3, G: 0.8, suck: false, curl: 0, noClub: true, twist: 0 };
+      const side = { pts: [[0, 0.10, -0.075], [0, 0.15, -0.11], [-0.016, 0.18, -0.155], [-0.038, 0.193, -0.195], [-0.055, 0.196, -0.235]], r0: 0.026, r1: 0.035, taper: 1.0, tipScale: 0.88, flat: 0.7, K: 1.3, G: 0.8, suck: false, curl: 0, noClub: true, twist: 0 };
+      const lock = { pts: [IN(1.08, 0.85), S(1.17, 0.40, -0.009), S(1.24, 0.08, -0.008), [0.173, -0.018, 0.048], [0.169, -0.046, 0.057]], r0: 0.032, r1: 0.016, flat: 0.45, K: 1.8, G: 0.7, suck: false, curl: 0.08, twist: 0, noClub: true };
+      return [main, back, side, lock, { ...lock, pts: mirror(lock.pts) }];
     })(),
     cap: { pole: [0, 0.8, -0.6] },
-    tie: { at: [0, 0.172, -0.13] },
-    // under a hat: a low ponytail tied at the nape, below the rim
+    tie: { at: [0, 0.15, -0.11] },
     underHat: {
-      strands: [
-        { pts: [IN(3.14, 0.3), S(3.14, -0.06), [0, -0.05, -0.2], [0, -0.1, -0.236], [0, -0.148, -0.254], [0, -0.172, -0.262]], r0: 0.06, r1: 0.028, taper: 1.6, flat: 1.2, K: 1.0, G: 1.0, suck: true, curl: 0.8 },
-        { pts: [IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]], r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 },
-        { pts: mirror([IN(1.06, 0.82), S(1.17, 0.42), S(1.25, 0.08), [0.183, -0.072, 0.05], [0.177, -0.122, 0.064]]), r0: 0.036, r1: 0.014, flat: 0.5, K: 1.8, G: 0.7, suck: false, curl: 0.6 },
-        { pts: [IN(-0.9, 1.12), S(-0.5, 0.95, 0.002), S(-0.05, 0.8, 0.003), S(0.42, 0.66, 0.004), S(0.8, 0.52, 0.004), [0.18, 0.058, 0.096]], r0: 0.046, r1: 0.018, flat: 0.4, K: 2.4, G: 0.4, suck: false, curl: 0.55, rMain: 0.8, locks: PONY_LOCKS },
-      ],
+      strands: (() => {
+        const tail = { pts: [IN(3.14, 0.3), S(3.14, -0.06), [0, -0.05, -0.2], [0, -0.095, -0.23], [0, -0.13, -0.25], [0, -0.145, -0.26]], r0: 0.052, r1: 0.048, taper: 1.2, tipScale: 0.85, flat: 0.8, K: 1.0, G: 0.8, suck: false, curl: 0, noClub: true, twist: 0 };
+        const lock = { pts: [IN(1.08, 0.85), S(1.17, 0.40, -0.009), S(1.24, 0.08, -0.008), [0.173, -0.018, 0.048], [0.169, -0.046, 0.057]], r0: 0.032, r1: 0.016, flat: 0.45, K: 1.8, G: 0.7, suck: false, curl: 0.08, twist: 0, noClub: true };
+        return [tail, lock, { ...lock, pts: mirror(lock.pts) }];
+      })(),
       tie: { at: [0, -0.05, -0.2] },
     },
     gear: 'pony',
   },
-  { // 5 — "Crest": a tall mohawk of overlapping tentacle flames along the midline, clean sides
+  { // 5 — "Crest": a broad central tentacle folded forward over the forehead
     name: 'Crest',
-    strands: (() => {
-      const fin = (root, pts, r0, K = 2.4, curl = 0.9) => ({ pts: [root, ...pts], r0, r1: 0.019, taper: 1.15, flat: 1.25, K, G: 0.32, suck: false, curl, out: 'x', twist: 0 });
-      return [
-        fin(IN(0, 1.0), [[0, 0.212, 0.084], [0, 0.262, 0.046], [0, 0.285, -0.014], [0, 0.272, -0.07]], 0.056),
-        fin(IN(0, 1.4), [[0, 0.226, 0.014], [0, 0.262, -0.036], [0, 0.265, -0.096], [0, 0.24, -0.14]], 0.058),
-        fin(IN(3.14, 1.18), [[0, 0.206, -0.07], [0, 0.236, -0.12], [0, 0.226, -0.175], [0, 0.19, -0.21]], 0.056),
-        fin(IN(3.14, 0.85), [[0, 0.16, -0.126], [0, 0.18, -0.18], [0, 0.156, -0.23], [0, 0.11, -0.256]], 0.052, 2.0),
-        fin(IN(3.14, 0.5), [[0, 0.1, -0.172], [0, 0.104, -0.226], [0, 0.062, -0.256], [0, 0.0, -0.262]], 0.047, 1.6, 0.8),
-      ];
-    })(),
+    // A broad, continuous forelock rises from the crown and folds forward over the forehead.
+    // Its inward face carries the same tentacle cup treatment as the other hair styles.
+    strands: [
+      { pts: [O(3.14, 1.05, -0.03), [0, 0.16, -0.105], [0, 0.19, -0.075], [0, 0.213, -0.02], [0, 0.222, 0.055], [0, 0.206, 0.12], [0, 0.16, 0.165], [0, 0.085, 0.177]], r0: 0.095, r1: 0.043, taper: 1.6, flat: 1.15, K: 2.2, G: 0.35, suck: true, curl: 0.12, twist: 0, noClub: true },
+    ],
     // under a hat the crest is pressed flat: only its tail shows, kicking out below the rim at the nape
     underHat: {
       strands: [
-        { pts: [IN(3.14, 0.4), S(3.14, -0.08), [0, -0.1, -0.205], [0, -0.13, -0.236], [0, -0.14, -0.262]], r0: 0.05, r1: 0.019, taper: 1.15, flat: 1.25, K: 1.6, G: 0.6, suck: false, curl: 0.9, out: 'x', twist: 0 },
+        { pts: [IN(3.14, 0.55), S(3.14, -0.10, -0.023), [0, -0.065, -0.187], [0, -0.088, -0.198], [0, -0.11, -0.201]], r0: 0.037, r1: 0.028, taper: 1.15, tipScale: 0.8, flat: 0.75, K: 1.8, G: 0.5, suck: false, curl: 0, noClub: true, out: 'x', twist: 0 },
       ],
     },
     gear: 'crest',
   },
-  { // 6 — "Knot": coiled top-knot bun with two sprouting tentacle ends, long face-framing side tentacles
+  { // 6 — "Knot": the gathered crown shares the scalp surface
     name: 'Knot',
     strands: (() => {
-      const C = [0, 0.214, -0.036], Rb = 0.04;
-      const sprout = { pts: [[0.004, 0.238, -0.036], [0.012, 0.276, -0.04], [0.034, 0.306, -0.068], [0.068, 0.302, -0.108], [0.09, 0.272, -0.134]], r0: 0.036, r1: 0.017, flat: 0.7, K: 2.0, G: 0.45, suck: true, curl: 0.9 };
-      const side = { pts: [IN(1.02, 0.86), S(1.16, 0.44), S(1.26, 0.08), [0.186, -0.075, 0.046], [0.182, -0.132, 0.058], [0.172, -0.16, 0.072]], r0: 0.042, r1: 0.017, flat: 0.52, K: 1.5, G: 0.8, suck: true, curl: 0.75 };
-      return [
-        knotCoil(C, Rb, 0.3), knotCoil(C, Rb, 0.3 + Math.PI),
-        sprout, { ...sprout, pts: mirror(sprout.pts).map((p, i) => (i === 4 ? [-0.094, 0.262, -0.128] : p)) },
-        side, { ...side, pts: mirror(side.pts) },
-        { pts: [IN(3.14, 0.45), S(3.14, 0.02), [0, -0.118, -0.196], [0, -0.156, -0.212]], r0: 0.04, r1: 0.017, flat: 0.55, K: 1.6, G: 0.7, suck: true, curl: 0.8 },
-      ];
+      const bun = { pts: [[0, 0.16, -0.035], [0, 0.195, -0.035], [0, 0.24, -0.035], [0, 0.275, -0.035]], r0: 0.04, r1: 0.04, flat: 1, K: 3, G: 0.12, suck: false, curl: 0, noClub: true, bunEmbedded: true };
+      const side = { pts: [IN(1.15, 0.35), S(1.20, 0.13, -0.017), [0.174, -0.025, 0.045], [0.171, -0.058, 0.056], [0.164, -0.075, 0.067]], r0: 0.026, r1: 0.017, taper: 1.3, flat: 0.45, K: 1.5, G: 0.8, suck: false, curl: 0.08, noClub: true, twist: 0, integrated: true };
+      return [bun, side, { ...side, pts: mirror(side.pts) }];
     })(),
-    knot: { at: [0, 0.214, -0.036], r: 0.04 },
-    // under a hat: a low bun on the nape (axis pointing back and down), face-framing tentacles kept
-    underHat: {
-      strands: (() => {
-        const C = [0, -0.075, -0.212], ax = [0, -0.34, -0.94];
-        const side = { pts: [IN(1.02, 0.86), S(1.16, 0.44), S(1.26, 0.08), [0.186, -0.075, 0.046], [0.182, -0.132, 0.058], [0.172, -0.16, 0.072]], r0: 0.042, r1: 0.017, flat: 0.52, K: 1.5, G: 0.8, suck: true, curl: 0.75 };
-        return [knotCoil(C, 0.034, 0.3, ax), knotCoil(C, 0.034, 0.3 + Math.PI, ax), side, { ...side, pts: mirror(side.pts) }];
-      })(),
-      knot: { at: [0, -0.075, -0.212], r: 0.034, axis: [0, -0.34, -0.94] },
-    },
-    gear: 'knot',
+    gear: 'knotEmbedded',
+    underHat: { gear: null, strands: (() => {
+      const side = { pts: [IN(1.15, 0.35), S(1.20, 0.13, -0.017), [0.174, -0.025, 0.045], [0.171, -0.058, 0.056], [0.164, -0.075, 0.067]], r0: 0.026, r1: 0.017, taper: 1.3, flat: 0.45, K: 1.5, G: 0.8, suck: false, curl: 0.08, noClub: true, twist: 0, integrated: true };
+      return [side, { ...side, pts: mirror(side.pts) }];
+    })() },
   },
-  { // 7 — "Swoop": asymmetric side part — a heavy swoop across the brow and down the right side, short tucked left
+  { // 7 — "Swoop": an asymmetric fringe flowing into a broad side panel
     name: 'Swoop',
-    strands: (() => [
-      { pts: [IN(0.78, 1.08), S(0.42, 0.95, 0.004), S(-0.02, 0.8, 0.006), S(-0.46, 0.66, 0.006), S(-0.86, 0.5, 0.004), O(-1.1, 0.14, 0.048), O(-1.14, -0.2, 0.05), [-0.168, -0.2, 0.068]], r0: 0.058, r1: 0.022, flat: 0.44, K: 1.5, G: 0.7, suck: false, curl: 0.7,
-        rMain: 0.8, locks: [{ d: -0.032, h: -0.003, r: 0.64, len: 0.5, curl: 1.0 }, { d: 0.034, h: 0.006, r: 0.7, len: 0.78, curl: 0.5 }] },
-      { pts: [IN(0.95, 1.3), S(0.35, 1.2), S(-0.35, 1.0), S(-0.95, 0.72), S(-1.25, 0.36), O(-1.34, 0.0, 0.052), [-0.18, -0.17, 0.012], [-0.17, -0.225, 0.02]], r0: 0.056, r1: 0.022, flat: 0.5, K: 1.2, G: 0.9, suck: true, curl: 0.8 },
-      { pts: [IN(1.5, 1.35), S(-1.8, 1.2), S(-2.05, 0.7), S(-2.12, 0.2), [-0.15, -0.1, -0.13], [-0.148, -0.19, -0.14]], r0: 0.052, r1: 0.02, flat: 0.52, K: 1.2, G: 0.9, suck: true, curl: 0.8 },
-      { pts: [IN(-2.5, 0.95), S(-2.66, 0.44), S(-2.8, -0.06), [-0.062, -0.16, -0.2], [-0.07, -0.236, -0.214]], r0: 0.05, r1: 0.019, flat: 0.52, K: 1.3, G: 0.9, suck: true, curl: 0.85 },
-      { pts: [IN(1.35, 0.95), S(1.62, 0.52), S(1.9, 0.2), [0.172, -0.02, -0.108], [0.15, -0.055, -0.14]], r0: 0.04, r1: 0.016, flat: 0.52, K: 2.0, G: 0.5, suck: true, curl: 1.0 },
-      { pts: [IN(2.62, 0.85), S(2.76, 0.4), S(2.86, -0.02), [0.05, -0.1, -0.2]], r0: 0.044, r1: 0.017, flat: 0.52, K: 1.8, G: 0.6, suck: true, curl: 1.0 },
-    ])(),
-    cap: { pole: [0.52, 0.8, 0.3] },
-    gear: 'swoop',
+    // The cap itself forms the sweeping panel; this buried spine drives the
+    // free end so it can move while its broad root remains joined to the scalp.
+    strands: [{ pts: [O(-1.24, 0.24, -0.005), O(-1.25, 0.03, 0.002), O(-1.26, -0.22, 0.005), O(-1.26, -0.48, 0.01), O(-1.26, -0.7, 0.01)], r0: 0.04, r1: 0.025, flat: 0.5, K: 1.5, G: 0.7, suck: false, curl: 0, noClub: true, capOnly: true }],
+    cap: { pole: [0.52, 0.8, 0.3], swoop: true },
+
+    gear: null,
   },
 ];
 export const HAIR_STYLE_NAMES = STYLES.map((s) => s.name);
@@ -924,7 +888,7 @@ function addGear(B, style, strandInfo, hatCtx = null, D = null) {
     // star clip on the left bang
     const info = strandInfo[3];
     const smp = info && info.sample(0.45);
-    if (smp && !hidden(smp.P)) {
+    if (!style.noClip && smp && !hidden(smp.P)) {
       const sh = new THREE.Shape();
       for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + (k / 10) * TAU; const r = k % 2 ? 0.0068 : 0.0155; const px = Math.cos(a) * r, py = Math.sin(a) * r; if (k === 0) sh.moveTo(px, py); else sh.lineTo(px, py); }
       const st = finalize(new THREE.ExtrudeGeometry(sh, { depth: 0.0026, bevelEnabled: true, bevelThickness: 0.0012, bevelSize: 0.0012, bevelSegments: 2 }));
@@ -962,13 +926,17 @@ function addGear(B, style, strandInfo, hatCtx = null, D = null) {
     if (info && at && !hidden(at)) {
       const t = closestT(info.sw.curve, at);
       const smp = info.sw.sample(t);
+      // Fit the ring to the flattened tentacle rather than leaving a circular hoop around it.
+      const sec = info.section(t);
       const R0 = smp.r * 0.98 + 0.004;
-      const g = ruffledRing(R0, 0.0135, 13, 0.0032, 10, 44);
+      const Ro = hatCtx ? smp.r * sec.flat + 0.004 : R0;
+      const g = ruffledRing(R0, hatCtx ? 0.009 : 0.0135, 13, hatCtx ? 0.0018 : 0.0032, 10, 44);
+      g.scale(Ro / R0, 1, 1);
       placeBasis(g, smp.o, smp.T, smp.P);
       B.add(g, { ex: GEAR.fabric, color: gcol(-2, 1.0), bone: hb(0, 0) });
       // a small team-ink bead knotted on the scrunchie
       const bead = superEllipsoid(0.0118, 0.0118, 0.0118, 1, 1, 12, 8);
-      const bp = smp.P.clone().addScaledVector(smp.o, R0 + 0.012).addScaledVector(smp.b, 0.006);
+      const bp = smp.P.clone().addScaledVector(smp.o, Ro + (hatCtx ? 0.009 : 0.012)).addScaledVector(smp.b, 0.006);
       bead.translate(bp.x, bp.y, bp.z);
       B.add(bead, { ex: GEAR.plastic, color: gcol(-1, 1.18), bone: hb(0, 0) });
     }
@@ -986,6 +954,9 @@ function addGear(B, style, strandInfo, hatCtx = null, D = null) {
       placeBasis(ring, W, F, e);
       B.add(ring, { ex: GEAR.metal, color: _c.setRGB(0.86, 0.87, 0.9), bone: 'earL' });
     }
+  } else if (kind === 'knotEmbedded') {
+    const band=torus(0.048,0.0045,8,40); band.rotateX(Math.PI/2); band.scale(1,1,0.95); band.translate(HEAD_C.x,HEAD_C.y+0.194,HEAD_C.z-0.026);
+    B.add(band,{ex:GEAR.fabric,color:_c.setRGB(0.4,0.27,0.12),bone:'head'});
   } else if (kind === 'knot') {
     // wrapped band at the base of the bun + a lacquered hairpin through it (both ride on the first coil's root)
     const K0 = new V3(...style.knot.at).add(HEAD_C), Rb = style.knot.r;
@@ -1043,43 +1014,77 @@ function cgY(g, i, c, n) { const P = g.attributes.position; return (P.getX(i) - 
 function radial(g, i, c, n) { const P = g.attributes.position; const v = new V3(P.getX(i) - c.x, P.getY(i) - c.y, P.getZ(i) - c.z); const h = v.dot(n); return v.addScaledVector(n, -h).length(); }
 
 /** Hairline-aligned scalp cap with a thick rolled lip. */
-function buildCap(pole = null, hat = null, D = null) {
-  const nA = D ? D.cap[0] : 48, K = D ? D.cap[1] : 10;
+function buildBobCap(pole = null, hat = null, D = null, bob = true) {
+  // Bob fringe: a low, almost level edge, gently lifted at the part and temples.
+  const line = bob ? (az) => { const a = Math.abs(az); return lerp(0.52 + 0.045 * Math.exp(-(((az + 0.18) / 0.13) ** 2)), -0.55 - 0.28 * Math.exp(-(((a - 1.00) / 0.34) ** 2)) + 0.38 * Math.exp(-(((a - 1.56) / 0.26) ** 2)) - 0.27 * Math.exp(-(((a - 2.38) / 0.32) ** 2)) - 0.13 * Math.exp(-(((a - 3.14) / 0.30) ** 2)), sstep(0.60, 0.82, a)); } : hairline;
+  const nA = D ? (bob && D.lod !== 'far' ? Math.max(80, D.cap[0]) : D.cap[0]) : 48, K = D ? (bob && D.lod !== 'far' ? Math.max(16, D.cap[1]) : D.cap[1]) : 10;
   const rowsSpec = [[-0.012, 'in'], [-0.006, 'lip0'], [0.0, 'lip1'], [0.016, 'lip2'], [0.042, 'full']];
   const azs = []; for (let i = 0; i < nA; i++) azs.push(-Math.PI + (i / nA) * TAU);
-  const rows = [], meta = [];
-  const pushRow = (fn) => { const r = [], m = []; for (const az of azs) { const [p, el, g] = fn(az); r.push(p); m.push([az, el, g]); } rows.push(r); meta.push(m); };
-  const scal = (az) => 0.5 + 0.5 * Math.cos(az * 11 + 0.4);
+  const bobRows = [], bobMeta = [];
+  const pushRow = (fn) => { const r = [], m = []; for (const az of azs) { const [p, el, g] = fn(az); r.push(p); m.push([az, el, g]); } bobRows.push(r); bobMeta.push(m); };
+  const scal = (az) => bob ? 1 : 0.5 + 0.5 * Math.cos(az * 11 + 0.4);
+  const point = (az, el, off, edge = 1) => {
+    const a0 = Math.abs(az);
+    const hang = bob ? sstep(0.55, 0.85, a0) * sstep(-0.08, -0.25, el) : 0;
+    const sourceEl = lerp(el, Math.max(el, -0.18), hang);
+    const p = headSurf(az, sourceEl, off, new V3());
+    p.y -= (sourceEl - el) * 0.14;
+    if (bob) {
+      const a = Math.abs(az);
+      const lobe = sstep(0.58, 0.88, a) * (1 - sstep(1.30, 1.85, a));
+      const roll = (1 - edge) * sstep(0.65, 1.0, a);
+      const swell = lobe * sstep(0.30, -0.55, el) * 0.043 * (1 - 0.4 * roll);
+      p.y += roll * 0.006;
+      p.x -= Math.sign(az) * 0.010 * lobe * sstep(0.05, -0.35, el);
+      // Rise gently toward the sides of each end, giving the hanging panel
+      // a rounded, convex silhouette rather than a flat cut across its tip.
+      const tip = lobe * sstep(-0.28, -0.65, el);
+      const across = clamp((Math.abs(p.x - HEAD_C.x) - 0.165) / 0.045, -1, 1);
+      p.y += 0.014 * across * across * tip;
+      p.x += Math.sin(az) * swell;
+      p.z += Math.cos(az) * swell;
+      // Rounded rear panel relief, blended into the crown.
+      const lower = sstep(0.36, -0.35, el);
+      const rear = (0.010 * sstep(1.4, 2.0, a) + 0.022 * Math.exp(-(((a - 2.38) / 0.32) ** 2))) * lower * (1 - 0.4 * roll);
+      // A wide, shallow valley separates the cheek lobe from the back panel.
+      // It fades into the crown and avoids an intersecting seam.
+      const side = 0.018 * Math.exp(-(((a - 1.54) / 0.40) ** 2)) * lower * (1 - 0.4 * roll);
+      const valley = 0.018 * Math.exp(-(((a - 1.54) / 0.24) ** 2)) * lower * (1 - 0.4 * roll);
+      p.x += Math.sin(az) * (rear + side - valley); p.z += Math.cos(az) * (rear + side - valley);
+    }
+    return p;
+  };
   // sculpted bundle grooves (the same field the shader bumps, about the style's groove pole), modelled where the grid
   // resolves them: rounded tentacle bundles break the crown's silhouette instead of a painted-on smooth shell
   const qp = new THREE.Quaternion().setFromUnitVectors(new V3(...(pole || [0, 1, 0])).normalize(), new V3(0, 1, 0));
-  const gd = 0.0019 * sstep(50, 90, nA), dd = new V3();
+  const gd = 0.00045 * sstep(50, 90, nA), dd = new V3();
   const groove = (az, el) => {
     if (gd <= 0) return 0;
     dirAE(az, el, dd).applyQuaternion(qp);
     const a = Math.atan2(dd.x, dd.z), e = Math.asin(clamp(dd.y, -1, 1));
-    return gd * Math.pow(1 - Math.abs(Math.sin(a * 9 + 0.35 * Math.sin(e * 5))), 4) * sstep(1.45, 0.9, e) * sstep(hairline(az) + 0.03, hairline(az) + 0.14, el);
+    return gd * Math.pow(1 - Math.abs(Math.sin(a * 4 + 0.2 * Math.sin(e * 5))), 4) * sstep(1.45, 0.9, e) * sstep(line(az) + 0.03, line(az) + 0.14, el);
   };
   for (const [del, kind] of rowsSpec) {
     pushRow((az) => {
       const k = scal(az);
-      const h = hairline(az) + 0.016 * (1 - k) * (kind === 'full' ? 0.4 : 1), el = h + del, T = capOffset(az, el);
+      const h = line(az) + 0.016 * (1 - k) * (kind === 'full' ? 0.4 : 1), el = h + del, T = capOffset(az, el);
       const lip = 0.72 + 0.28 * k;
       const off = kind === 'in' ? -0.0048 : kind === 'lip0' ? -0.0006 : kind === 'lip1' ? T * 0.5 * lip : kind === 'lip2' ? T * 0.88 * lip : T * (0.9 + 0.1 * k) - groove(az, el);
-      return [headSurf(az, el, off, new V3()), el, 0];
+      const edge = !bob ? 1 : kind === 'in' ? 0 : kind === 'lip0' ? 0.22 : kind === 'lip1' ? 0.55 : kind === 'lip2' ? 0.84 : 1;
+      return [point(az, el, off, edge), el, 0];
     });
   }
   for (let k = 1; k <= K; k++) {
     pushRow((az) => {
-      const h = hairline(az), e0 = h + 0.042;
+      const h = line(az), e0 = h + 0.042;
       const el = lerp(e0, 1.5, Math.pow(k / K, 1.15));
-      return [headSurf(az, el, capOffset(az, el) - groove(az, el), new V3()), el, clamp((el - h) / 0.25, 0, 1)];
+      return [point(az, el, capOffset(az, el) - groove(az, el)), el, clamp((el - h) / 0.25, 0, 1)];
     });
   }
   const top = headSurf(0, Math.PI / 2, capOffset(0, Math.PI / 2), new V3());
   // under a dome hat the cap is never seen: drop every quad well inside the rim (and the pole fan)
-  const under = hat && hat.rim ? (i, j) => { for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const m = meta[Math.min(rows.length - 1, j + dj)][(i + di) % nA]; if (m[1] < hat.rim(m[0]) + 0.09) return false; } return true; } : null;
-  const g = gridGeo(rows, { wrapU: true, poles: under ? {} : { end: top }, skip: under, outward: HEAD_C, uv: (i, j) => [meta[j][i % nA][0], meta[j][i % nA][1]], poleUv: { end: [0, Math.PI / 2] } });
+  const under = hat && hat.rim ? (i, j) => { for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const m = bobMeta[Math.min(bobRows.length - 1, j + dj)][(i + di) % nA]; if (m[1] < hat.rim(m[0]) + 0.09) return false; } return true; } : null;
+  const g = gridGeo(bobRows, { wrapU: true, poles: under ? {} : { end: top }, skip: under, outward: HEAD_C, uv: (i, j) => [bobMeta[j][i % nA][0], bobMeta[j][i % nA][1]], poleUv: { end: [0, Math.PI / 2] } });
   // uv = stereographic coordinates of the head direction about the style's groove pole (the crown by default; the
   // ponytail tie or the side part for styles that gather their hair elsewhere). The shader rebuilds (az, el) about that
   // pole per fragment, so the bundle grooves radiate from it with no interpolation seam.
@@ -1093,9 +1098,215 @@ function buildCap(pole = null, hat = null, D = null) {
   }
   const col = new Float32Array(g.attributes.position.count * 3);
   const nc = nA + 1;
-  for (let j = 0; j < rows.length; j++) for (let i = 0; i < nc; i++) { const k = j * nc + i; col[k * 3] = 0; col[k * 3 + 1] = meta[j][i % nA][2]; col[k * 3 + 2] = 2.0; }
+  for (let j = 0; j < bobRows.length; j++) for (let i = 0; i < nc; i++) { const k = j * nc + i; col[k * 3] = 0; col[k * 3 + 1] = bobMeta[j][i % nA][2]; col[k * 3 + 2] = 2.0; }
   if (!under) { const last = g.attributes.position.count - 1; col[last * 3 + 1] = 1; col[last * 3 + 2] = 2.0; }
   return { geo: g, col };
+}
+
+
+/** Hairline-aligned scalp cap with a thick rolled lip. */
+function buildCap(pole = null, hat = null, D = null, spike = false, swoop = false, gathered = false, knotSides = false, crest = false) {
+  const line = swoop ? (az) => hairline(az) - 0.22 * Math.exp(-(((az + 0.48) / 0.7) ** 2)) - 0.97 * Math.exp(-(((az + 1.27) / 0.5) ** 2)) : hairline;
+  const nA = crest ? (D.lod === 'hero' ? 144 : D.lod === 'game' ? 80 : 48) : D ? D.cap[0] : 48, K = crest ? (D.lod === 'hero' ? 32 : D.lod === 'game' ? 20 : 10) : D ? D.cap[1] : 10;
+  const rowsSpec = [[-0.012, 'in'], [-0.006, 'lip0'], [0.0, 'lip1'], [0.016, 'lip2'], [0.042, 'full']];
+  const azs = knotSides ? densitySamples(nA,-Math.PI,Math.PI,a => 1+2.5*gauss(Math.abs(a)-1.14,0.26)).slice(0,-1) : Array.from({length:nA},(_,i)=>-Math.PI+(i/nA)*TAU);
+  const crestProfile = p => {
+    const z = p.z - HEAD_C.z, x = p.x;
+    // A rounded envelope for the crown-facing portion of the forelock.
+    const zs = [-0.14, -0.09, -0.045, 0.0, 0.05, 0.095, 0.14, 0.18];
+    const ys = [0.07, 0.105, 0.145, 0.164, 0.17, 0.155, 0.12, 0.075];
+    const ws = [0.04, 0.07, 0.075, 0.073, 0.065, 0.057, 0.048, 0.04];
+    const hs = [0.02, 0.035, 0.048, 0.05, 0.048, 0.042, 0.032, 0.02];
+    const w = interpTable(zs, ws, z), r = Math.abs(x)/w;
+    const target = HEAD_C.y + interpTable(zs,ys,z) + interpTable(zs,hs,z)*Math.pow(Math.max(0,1-r*r),1.5);
+    const mask = sstep(-0.14,-0.09,z)*(1-sstep(0.14,0.18,z))*sstep(1,0.80,r)*sstep(0.045,0.095,p.y-HEAD_C.y);
+    const k = 0.012, d = Math.max(k - Math.abs(target-p.y),0)/k;
+    p.y = lerp(p.y, Math.max(p.y,target)+0.25*k*d*d,mask);
+  };
+  const rows = [], meta = [];
+  const pushRow = (fn) => { const r = [], m = []; for (const az of azs) { const [p, el, g] = fn(az); if (crest) {
+      crestProfile(p);
+      if (Math.abs(az) < Math.PI/2) {
+        let d=1.4;
+        for (const [center,radius] of [[0.98,0.026]]) d=Math.min(d,Math.hypot(p.x,(el-center)*0.17)/radius);
+        const depth=0.0004*Math.exp(-(((d-0.88)/0.16)**2))-0.0015*(1-sstep(0.34,0.8,d));
+        p.y += Math.sin(el)*depth; p.z += Math.cos(el)*depth;
+      }
+    } r.push(p); m.push([az, el, g]); } rows.push(r); meta.push(m); };
+  const scal = (az) => 0.5 + 0.5 * Math.cos(az * 11 + 0.4);
+  // Spike's short sweeps are raised directly from the crown. Three broad,
+  // soft ridges run from the forehead toward the rear and merge into the cap.
+  // Cartesian coordinates remain well defined at the pole and avoid a cusp.
+  const spikeDir = new V3(), spikePoint = new V3();
+  const spikeLobes = [
+    [-0.063, 0.132, 0.070, 0.054, 0.052, 0.067],
+    [0, 0.142, 0.070, 0.059, 0.055, 0.070],
+    [0.063, 0.132, 0.070, 0.054, 0.052, 0.067],
+    [-0.075, 0.005, -0.130, 0.050, 0.100, 0.050],
+    [0.075, 0.005, -0.130, 0.050, 0.100, 0.050],
+  ];
+  const spikeLift = (az, el) => {
+    const d = dirAE(az, el, spikeDir);
+    const base = headSurf(az, el, capOffset(az, el), spikePoint).sub(HEAD_C).length();
+    const blend = 0.012;
+    let lo=base, hi=base+0.13;
+    // Twelve bisections resolve the surface within 0.032 mm, far below a pixel
+    // at game distance, without per-vertex lobe objects or closures.
+    for (let i=0;i<12;i++) {
+      const r=(lo+hi)*0.5;
+      let f=r-base;
+      for (const l of spikeLobes) {
+        const g=(Math.hypot((d.x*r-l[0])/l[3], (d.y*r-l[1])/l[4], (d.z*r-l[2])/l[5])-1)*Math.min(l[3],l[4],l[5]);
+        const h=Math.max(blend-Math.abs(f-g),0)/blend;
+        f=Math.min(f,g)-h*h*blend*0.25;
+      }
+      if(f<0) lo=r; else hi=r;
+    }
+    return (lo-base) * sstep(hairline(az) + 0.02, hairline(az) + 0.15, el);
+  };
+  // sculpted bundle grooves (the same field the shader bumps, about the style's groove pole), modelled where the grid
+  // resolves them: rounded tentacle bundles break the crown's silhouette instead of a painted-on smooth shell
+  const qp = new THREE.Quaternion().setFromUnitVectors(new V3(...(pole || [0, 1, 0])).normalize(), new V3(0, 1, 0));
+  const gd = 0.00045 * sstep(50, 90, nA), dd = new V3();
+  const groove = (az, el) => {
+    if (gd <= 0) return 0;
+    dirAE(az, el, dd).applyQuaternion(qp);
+    const a = Math.atan2(dd.x, dd.z), e = Math.asin(clamp(dd.y, -1, 1));
+    return gd * Math.pow(1 - Math.abs(Math.sin(a * 4 + 0.2 * Math.sin(e * 5))), 4) * sstep(1.45, 0.9, e) * sstep(line(az) + 0.03, line(az) + 0.14, el);
+  };
+  const surface=(az,el,off) => {
+    const back=Math.atan2(Math.sin(az-Math.PI),Math.cos(az-Math.PI));
+    const nape=knotSides&&!gathered ? 0.018*gauss(back,0.42)*gauss(el+0.32,0.23) : 0;
+    return headSurf(az,el,off+nape,new V3());
+  };
+  const sideFall=(az) => { const v=Math.max(0,1-(Math.abs(Math.abs(az)-1.14)/0.28)**2); return Math.pow(v,0.75)*sstep(0,0.16,v); };
+  for (const [del, kind] of rowsSpec) {
+    pushRow((az) => {
+      const k = scal(az);
+      const h = line(az) + 0.016 * (1 - k) * (kind === 'full' ? 0.4 : 1), el = h + del, T = capOffset(az, el);
+      const lip = 0.72 + 0.28 * k;
+      const off = kind === 'in' ? -0.0048 : kind === 'lip0' ? -0.0006 : kind === 'lip1' ? T * 0.5 * lip : kind === 'lip2' ? T * 0.88 * lip : T * (0.9 + 0.1 * k) - groove(az, el);
+      const p=surface(az,el,off + (spike && kind !== 'in' && kind !== 'lip0' ? spikeLift(az, el) * (kind === 'lip1' ? 0.15 : kind === 'lip2' ? 0.6 : 1) : 0));
+      if(knotSides) {
+        const t=kind==='in'?1:kind==='lip0'?0.82:kind==='lip1'?0.54:kind==='lip2'?0.22:0;
+        const k=sideFall(az)*t;
+        p.y-=0.085*k;
+        p.x+=Math.sign(az)*0.030*k;
+        p.z+=0.006*k;
+      }
+      return [p,el,0];
+    });
+  }
+  for (let k = 1; k <= K; k++) {
+    pushRow((az) => {
+      const h = line(az), e0 = h + 0.042;
+      const el = lerp(e0, gathered ? 1.15 : 1.5, Math.pow(k / K, 1.15));
+      return [surface(az, el, capOffset(az, el) - groove(az, el) + (spike ? spikeLift(az, el) : 0)), el, clamp((el - h) / 0.25, 0, 1)];
+    });
+  }
+  if (gathered) {
+    // The first ring follows the scalp; successive rings gather into a neck
+    // and swell into a folded bun. They share cap vertices and normals.
+    const profile=[[0.176,0.060,0.005],[0.184,0.051,0.014],[0.194,0.047,0.026],[0.204,0.049,0.035],
+      [0.214,0.057,0.035],[0.226,0.064,0.035],[0.238,0.068,0.035],[0.250,0.066,0.035],
+      [0.261,0.059,0.035],[0.271,0.046,0.035],[0.278,0.029,0.035]];
+    for(const [y,r,z] of (D?.lod==='far' ? profile.filter((_,i)=>i%2===0) : profile)) pushRow((az)=>{
+      const x=Math.sin(az)*r-0.010*sstep(0.202,0.25,y), zz=Math.cos(az)*r*0.88;
+      const fold=0.009*gauss(x+0.32*zz+0.012,0.011)*sstep(0.215,0.24,y);
+      return [new V3(HEAD_C.x+x,HEAD_C.y+y-fold,HEAD_C.z+zz-z),1.15,1];
+    });
+  }
+  const top = headSurf(0, Math.PI / 2, capOffset(0, Math.PI / 2) + (spike ? spikeLift(0, Math.PI / 2) : 0), new V3());
+  if (crest) crestProfile(top);
+  if (gathered) top.set(HEAD_C.x-0.010,HEAD_C.y+0.283,HEAD_C.z-0.035);
+  // under a dome hat the cap is never seen: drop every quad well inside the rim (and the pole fan)
+  const under = hat && hat.rim ? (i, j) => { for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const m = meta[Math.min(rows.length - 1, j + dj)][(i + di) % nA]; if (m[1] < hat.rim(m[0]) + 0.09) return false; } return true; } : crest ? (i,j) => j < 4 && Math.abs(-Math.PI + (i+0.5)*TAU/nA) < 0.35 : null;
+  const g = gridGeo(rows, { wrapU: true, poles: hat && hat.rim ? {} : { end: top }, skip: under, outward: HEAD_C, uv: (i, j) => [meta[j][i % nA][0], meta[j][i % nA][1]], poleUv: { end: [0, Math.PI / 2] } });
+  // uv = stereographic coordinates of the head direction about the style's groove pole (the crown by default; the
+  // ponytail tie or the side part for styles that gather their hair elsewhere). The shader rebuilds (az, el) about that
+  // pole per fragment, so the bundle grooves radiate from it with no interpolation seam.
+  {
+    const q = new THREE.Quaternion().setFromUnitVectors(new V3(...(pole || [0, 1, 0])).normalize(), new V3(0, 1, 0));
+    const UV = g.attributes.uv, d = new V3();
+    for (let i = 0; i < UV.count; i++) {
+      dirAE(UV.getX(i), UV.getY(i), d).applyQuaternion(q);
+      UV.setXY(i, d.x / (1 + d.y), d.z / (1 + d.y));
+    }
+  }
+  const col = new Float32Array(g.attributes.position.count * 3);
+  const nc = nA + 1;
+  for (let j = 0; j < rows.length; j++) for (let i = 0; i < nc; i++) { const k = j * nc + i; col[k * 3] = knotSides && j < 5 ? sideFall(meta[j][i % nA][0]) * [1,0.82,0.54,0.22,0][j] : 0; col[k * 3 + 1] = meta[j][i % nA][2]; col[k * 3 + 2] = 2.0; }
+  if (!(hat && hat.rim)) { const last = g.attributes.position.count - 1; col[last * 3 + 1] = 1; col[last * 3 + 2] = 2.0; }
+  if (!crest) return { geo: g, col };
+  // Extend the missing front hairline sector from its actual crown vertices.
+  // Both faces share those indices, so there is no intersecting tube at the root.
+  const oldP = g.attributes.position, oldUV = g.attributes.uv, nc2 = nA + 1;
+  const pos = Array.from(oldP.array), uv = Array.from(oldUV.array), idx = Array.from(g.index.array), colors = Array.from(col), flap = new Array(oldP.count).fill(0);
+  const a = Math.ceil((Math.PI - 0.35)*nA/TAU - 0.5), b = Math.floor((Math.PI + 0.35)*nA/TAU + 0.5);
+  const count = b-a, root = []; for (let i=a; i<=b; i++) root.push(4*nc2+i);
+  const mid = new V3().fromBufferAttribute(oldP, root[Math.floor(count/2)]);
+  let outer = root, inner = root;
+  const steps = D.lod === 'far' ? 8 : 24;
+  for (let j=1; j<=steps; j++) {
+    const u = j/steps, v = clamp(u/0.82,0,1), theta = Math.PI*0.5*clamp((u-0.82)/0.18,0,1), o=[], ins=[], width = (1-0.30*sstep(0,1,v))*Math.cos(theta);
+    for (let k=0; k<=count; k++) {
+      const q = new V3().fromBufferAttribute(oldP,root[k]), start = q.clone(), f=k/count;
+      const prev = new V3().fromBufferAttribute(oldP, 5*nc2+a+k);
+      const tangent = start.clone().sub(prev).normalize();
+      // A cubic leaves the crown along its own tangent and turns gradually
+      // down toward the brow; its rounded cap continues the terminal tangent.
+      const p1 = start.clone().addScaledVector(tangent, 0.048);
+      const p3 = new V3(start.x, mid.y - 0.115, mid.z + 0.052);
+      const p2 = p3.clone().add(new V3(0, 0.055, 0.014));
+      const w = 1-v;
+      q.copy(start).multiplyScalar(w*w*w).addScaledVector(p1,3*w*w*v)
+        .addScaledVector(p2,3*w*v*v).addScaledVector(p3,v*v*v);
+      q.x = mid.x+(q.x-mid.x)*width;
+      q.y -= 0.020*Math.sin(theta); q.z -= 0.005*Math.sin(theta);
+      q.y -= 0.018 * Math.sin(Math.PI*f) * sstep(0.4,0.8,v) * width;
+      const thick=0.020*(0.4+0.6*Math.sin(Math.PI*f))*sstep(0,0.22,u)*width;
+      q.z += thick;
+      const push = (v, outerFace) => { const n=pos.length/3; pos.push(v.x,v.y,v.z);uv.push(oldUV.getX(root[k]),oldUV.getY(root[k]));colors.push(0,0.6*sstep(0,0.4,u),2);flap.push(outerFace ? u : -u);return n; };
+      const d = Math.min(Math.hypot(q.x, (u-0.25)*0.15)/0.021, Math.hypot(q.x, (u-0.60)*0.15)/0.017);
+      const depth=0.0007*Math.exp(-(((d-0.88)/0.16)**2))-0.0035*(1-sstep(0.34,0.8,d));
+      const under=q.clone(); under.z -= 2*thick;
+      q.z += depth; o.push(push(q,true)); ins.push(push(under,false));
+    }
+    for (let k=0;k<count;k++) {
+      idx.push(outer[k+1],outer[k],o[k], outer[k+1],o[k],o[k+1]);
+      if (j > 4) idx.push(inner[k],inner[k+1],ins[k+1],inner[k],ins[k+1],ins[k]);
+    }
+    if (j > 4) {
+      idx.push(outer[0],ins[0],o[0],outer[0],inner[0],ins[0]);
+      idx.push(outer[count],o[count],ins[count],outer[count],ins[count],inner[count]);
+    }
+    outer=o;inner=ins;
+  }
+  const ng=new THREE.BufferGeometry();ng.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));ng.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));ng.setIndex(idx);ng.computeVertexNormals();
+  // A narrow normal relaxation removes sampling ripples from the curved join.
+  // It changes no positions or topology and fades out over the surrounding cap.
+  const N=ng.attributes.normal, countV=N.count, fade=new Float32Array(countV);
+  for (let i=0;i<countV;i++) {
+    const x=pos[3*i],y=pos[3*i+1]-HEAD_C.y,z=pos[3*i+2]-HEAD_C.z;
+    fade[i]=0.42*(1-sstep(0.055,0.10,Math.abs(x)))*sstep(0.10,0.15,y)*sstep(-0.08,-0.02,z);
+  }
+  for (let pass=0;pass<2;pass++) {
+    const sums=new Float32Array(countV*3), counts=new Uint16Array(countV), normals=N.array;
+    for (let t=0;t<idx.length;t+=3) for (let j=0;j<3;j++) {
+      const a=idx[t+j]; if (!fade[a]) continue;
+      const b=idx[t+(j+1)%3], c=idx[t+(j+2)%3];
+      sums[3*a]+=normals[3*b]+normals[3*c]; sums[3*a+1]+=normals[3*b+1]+normals[3*c+1]; sums[3*a+2]+=normals[3*b+2]+normals[3*c+2]; counts[a]+=2;
+    }
+    const next=new Float32Array(normals), n=new V3(), original=new V3();
+    for (let i=0;i<countV;i++) {
+      if (!counts[i] || !fade[i]) continue;
+      n.set(sums[3*i],sums[3*i+1],sums[3*i+2]).normalize();
+      n.lerp(original.set(normals[3*i],normals[3*i+1],normals[3*i+2]),1-fade[i]).normalize();
+      next[3*i]=n.x;next[3*i+1]=n.y;next[3*i+2]=n.z;
+    }
+    normals.set(next);
+  }
+  return { geo: ng, col: new Float32Array(colors), flap };
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1211,7 +1422,7 @@ function analyseHat(hat, specs) {
 
 /** Build the hat mesh (dome + its trims) into the hair builder. */
 function buildHat(B, hat, ctx, D = null) {
-  const nA = D ? (D.lod === 'far' ? 28 : Math.max(48, D.cap[0])) : 48, T = hat.thick, offIn = ctx.offIn;
+  const nA = D ? (D.lod === 'far' ? 28 : Math.max(48, D.hatAround)) : 48, T = hat.thick, offIn = ctx.offIn;
   const azs = []; for (let i = 0; i < nA; i++) azs.push(-Math.PI + (i / nA) * TAU);
   const at = (az, el, off, out = new V3(), nOut = undefined) => headSurf(az, el, off, out, nOut);
   const outer = (az, e) => { const el = hat.rim(az) + e; return offIn(az, el) + T + hat.shape(az, e); };
@@ -1305,7 +1516,7 @@ function strandSpec(sd, si, capCenter) {
   const profile = (t) => {
     let r = lerp(sd.r0, sd.r1 * 0.92, Math.pow(sstep(0.0, 0.88, t), sd.taper ?? 0.78)); // firm taper (taper > 1 stays full longer)
     if (!sd.noClub) r *= 1 + 0.2 * Math.exp(-(((t - 0.8) / 0.07) ** 2));               // tentacle club before the tip
-    return r * lerp(1, 0.5, sstep(0.9, 1, t));                                           // tapering, rounded tip
+    return r * lerp(1, sd.tipScale ?? 0.5, sstep(0.9, 1, t));                             // taper into the rounded tip
   };
   const rk = sd.rMain ?? 1;
   const radius = (t) => rk * profile(t);
@@ -1442,9 +1653,217 @@ function addTube(B, tube, o) {
     ex: o.tint ?? 0,
     color: (q, i) => _c.setRGB(o.tm(tA[i]), o.suck, sA[i] * 0.5 + 0.5),
     uv: (i) => [o.tm(tA[i]) * o.len, cA[i]],
-    v3: (q, i) => [hA[i], 0, ao[i]],
+    v3: (q, i) => o.unified ? [hA[i], -3, 1] : [hA[i], o.softEdge ? -2 : 0, ao[i]],
     weights: (q, i) => o.weights(o.tm(tA[i])),
   });
+}
+
+/** Tide's crown and six ribbons share the same boundary vertices, so the roots
+ * are part of the crown rather than tubes intersecting a separate cap. */
+function buildTideCurtain(B, hat, D, rest, meta) {
+  // Multiples of 96 keep the six sector boundaries and the front hairline exact.
+  const nA = D.lod === 'far' ? 36 : 96, nC = D.cap[1], bodySteps = D.lod === 'far' ? 5 : 16, tipSteps = D.lod === 'far' ? 2 : 6, nL = bodySteps + tipSteps;
+  const innerStart = D.lod === 'far' ? 2 : 4;
+  const pos = [], uv = [], idx = [], vMeta = [];
+  const azAt = i => -Math.PI + TAU * i / nA;
+  // The rear is covered by hanging hair: use a level attachment edge rather
+  // than the bare scalp hairline, which dips to a sharp V at the nape.
+  const attachment = az => lerp(hairline(az), -0.10 + 0.035*Math.cos(6*az), sstep(1.4, 2.8, Math.abs(az)));
+  const sectors = [[0,nA/9],[nA/9,2*nA/9],[2*nA/9,nA/3],[2*nA/3,7*nA/9],[7*nA/9,8*nA/9],[8*nA/9,nA]];
+  for (const sec of sectors) {sec[0]=Math.round(sec[0]);sec[1]=Math.round(sec[1]);}
+  // Carry each panel's soft ridge up into the scalp, fading before the
+  // crown. The same field is sampled by both surfaces at their shared edge.
+  const scalpRidge = (az, el) => {
+    const i=(az+Math.PI)/TAU*nA;
+    const sec=sectors.find(([a,b])=>i>=a-1e-6&&i<=b+1e-6);
+    if(!sec)return 0;
+    const across=clamp((i-sec[0])/(sec[1]-sec[0]),0,1);
+    return 0.012*Math.sin(Math.PI*across)**2*(1-sstep(0.03,0.60,el-attachment(az)));
+  };
+  // The front sweep is a raised part of the crown, with a smooth fade at
+  // its root and edges. A separate tube here grazes the crown and z-fights.
+  const fringe = (az, el) => {
+    if (hat?.rim) return 0;
+    const along = sstep(-1.08, -0.77, az) * (1 - sstep(0.35, 0.75, az));
+    const cross = (el - (0.78 + 0.46 * az)) / 0.24;
+    return along * Math.exp(-cross * cross * 1.5);
+  };
+  const vertex = (p, az, el, si = -1, u = 0, inner = false, across = 0, raised = false) => {
+    const d = dirAE(az, el, new V3()), f = raised ? fringe(az, el) : 0;
+    if (f) p.addScaledVector(d, 0.026 * f);
+    pos.push(p.x,p.y,p.z); if(inner) uv.push(u*0.28,across); else uv.push(d.x/(1+d.y),d.z/(1+d.y));
+    vMeta.push({si,u,inner,across,fringe:f}); return vMeta.length-1;
+  };
+  const tri = (a,b,c) => idx.push(a,b,c);
+  const quad = (a,b,c,d) => {tri(a,b,c);tri(a,c,d);};
+  const capRows = [], capEls = [];
+  const profile = [[-0.012,'in'],[-0.006,'lip0'],[0,'lip1'],[0.016,'lip2'],[0.042,'full']];
+  for (const [del, kind] of profile) {
+    const row = [], els = [];
+    for (let i=0;i<nA;i++) {
+      const az=azAt(i), el=attachment(az)+del, T=capOffset(az,el)+scalpRidge(az,el);
+      const off=kind==='in' ? -0.0048 : kind==='lip0' ? -0.0006 : kind==='lip1' ? T*0.5 : kind==='lip2' ? T*0.88 : T;
+      row.push(vertex(headSurf(az,el,off,new V3()),az,el,-1,0,false,0,kind!=='in')); els.push(el);
+    }
+    capRows.push(row); capEls.push(els);
+  }
+  for (let j=1;j<=nC;j++) {
+    const row=[], els=[];
+    for(let i=0;i<nA;i++) { const az=azAt(i),el=lerp(attachment(az)+0.042,1.5,Math.pow(j/nC,1.15));row.push(vertex(headSurf(az,el,capOffset(az,el)+scalpRidge(az,el),new V3()),az,el,-1,0,false,0,true));els.push(el); }
+    capRows.push(row);capEls.push(els);
+  }
+  const isPanel = i => sectors.some(([a,b])=>i>=a&&i<b);
+  for(let j=0;j<capRows.length-1;j++) for(let i=0;i<nA;i++) {
+    const i1=(i+1)%nA;
+    if(j<4&&isPanel(i)) continue; // panel roots replace this section of the rolled lip
+    if(hat?.rim && capEls[j][i]>hat.rim(azAt(i))+0.09 && capEls[j+1][i1]>hat.rim(azAt(i1))+0.09) continue;
+    quad(capRows[j][i],capRows[j][i1],capRows[j+1][i1],capRows[j+1][i]);
+  }
+  if(!hat?.rim) {const top=vertex(headSurf(0,Math.PI/2,capOffset(0,Math.PI/2),new V3()),0,Math.PI/2); const last=capRows.at(-1);for(let i=0;i<nA;i++)tri(last[i],last[(i+1)%nA],top);}
+  const roots = capRows[4];
+  for(let si=0;si<sectors.length;si++) {
+    const [a,b]=sectors[si], count=b-a, center=(a+b)/2, az=azAt(center), el=attachment(az)+0.042;
+    const mid=headSurf(az,el,capOffset(az,el)+scalpRidge(az,el),new V3());
+    const bottomY=a=>HEAD_C.y-0.255+0.012*Math.cos(3*a)+0.005*Math.cos(5*a);
+    const botY=bottomY(az);
+    const curvePoint = (u) => new V3(mid.x,lerp(mid.y,botY,u),mid.z);
+    for(let k=0;k<HAIR_SEGS;k++)rest[`hair${si}_${k}`]=curvePoint([0.04,0.36,0.68][k]);
+    rest[`hairTip${si}`]=curvePoint(0.9);
+    const dir=curvePoint(1).sub(curvePoint(0));meta.push({dir:dir.clone().normalize(),len:dir.length(),K:1.4,G:0.85});
+    let prevO=[],prevI=[];
+    for(let k=0;k<=count;k++) prevO.push(roots[(a+k)%nA]),prevI.push(roots[(a+k)%nA]);
+    for(let j=1;j<=nL;j++) {
+      const u=j<=bodySteps ? 0.88*j/bodySteps : 0.88+0.12*(j-bodySteps)/tipSteps;
+      const theta=(Math.PI/2)*clamp((j-bodySteps)/tipSteps,0,1), cap=Math.cos(theta);
+      const out=[], ins=[]; let tip = -1;
+      for(let k=0;k<=count;k++) {
+        const f=k/count, azk=azAt(a+k), elk=attachment(azk)+0.042;
+        const radial=new V3(mid.x-HEAD_C.x,0,mid.z-HEAD_C.z).normalize();
+        // Leave the crown along its downward meridian, then turn away from
+        // the head into a free hanging panel. Continuing round the skull
+        // pinches the nape into a folded V.
+        const path=(a,e) => {
+          const p0=headSurf(a,e,capOffset(a,e)+scalpRidge(a,e),new V3());
+          const down=headSurf(a,e-0.01,capOffset(a,e-0.01)+scalpRidge(a,e-0.01),new V3()).sub(p0).normalize();
+          const p1=p0.clone().addScaledVector(down,0.040);
+          const pathRadial=new V3(Math.sin(a),0,Math.cos(a));
+          const side=new V3(pathRadial.z,0,-pathRadial.x).multiplyScalar(si<3?-1:1);
+          const lane=clamp(((a+Math.PI)/TAU*nA-sectors[si][0])/(sectors[si][1]-sectors[si][0]),0,1);
+          const bend=Math.sin(Math.PI*lane)**2;
+          const p2=p0.clone().addScaledVector(pathRadial,0.038).addScaledVector(side,0.025*bend); p2.y=bottomY(a)+0.075;
+          const p3=p0.clone().addScaledVector(pathRadial,0.018).addScaledVector(side,0.007*bend); p3.y=bottomY(a);
+          const v=clamp(u/0.88,0,1), w=1-v;
+          return p0.multiplyScalar(w*w*w).addScaledVector(p1,3*w*w*v).addScaledVector(p2,3*w*v*v).addScaledVector(p3,v*v*v);
+        };
+        const shell=path(azk,elk), centerShell=path(az,el);
+        const part=sstep(0.60,0.94,u);
+        const width=lerp(1,0.62,part)*cap;
+        const bulge=0.027*Math.sin(Math.PI*f)*sstep(0.17,0.58,u)*cap;
+        const p=shell.clone();
+        p.x=centerShell.x+(shell.x-centerShell.x)*width+radial.x*bulge;
+        p.z=centerShell.z+(shell.z-centerShell.z)*width+radial.z*bulge;
+        p.y=lerp(centerShell.y,shell.y,cap)-([0.026,0.034,0.022,0.022,0.034,0.026][si])*Math.sin(theta);
+        const inner=p.clone().addScaledVector(radial,-0.018*Math.sin(Math.PI*f)*sstep(0.05,0.35,u)*cap);
+        if(j===nL) { tip=vertex(p,az,el,si,u,false,0.5); break; }
+        out.push(vertex(p,azk,elk,si,u,false,f)); ins.push(vertex(inner,azk,elk,si,u,true,f));
+      }
+      if(tip>=0) {
+        for(let k=0;k<count;k++) {tri(prevO[k+1],prevO[k],tip);tri(prevI[k],prevI[k+1],tip);}
+        continue;
+      }
+      for(let k=0;k<count;k++){quad(prevO[k+1],prevO[k],out[k],out[k+1]);if(j>innerStart) quad(prevI[k],prevI[k+1],ins[k+1],ins[k]);}
+      prevO=out;prevI=ins;
+    }
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  // Reverse winding if the crown faces inwards. This also reverses the panel skins consistently.
+  const P=g.attributes.position,N=g.attributes.normal;let facing=0;for(let i=0;i<Math.min(nA,P.count);i++){const p=new V3().fromBufferAttribute(P,i).sub(HEAD_C),n=new V3().fromBufferAttribute(N,i);facing+=p.dot(n);}
+  if(facing<0){const ix=g.index;for(let i=0;i<ix.count;i+=3){const v=ix.getX(i+1);ix.setX(i+1,ix.getX(i+2));ix.setX(i+2,v);}g.computeVertexNormals();}
+  const weights = (m) => {
+    if(m.si<0) { const w=0.35*m.fringe; return [['head',1-w],['hair6_0',w]]; }
+    const edge=1-sstep(0,0.14,Math.min(m.across,1-m.across));
+    const fade=sstep(0.25,0.55,m.u)*(1-edge*(1-sstep(0.60,0.90,m.u)));
+    const x=clamp(m.u*3-0.5,0,2),k=Math.min(1,Math.floor(x)),f=sstep(0,1,x-k);
+    return [['head',1-fade],[`hair${m.si}_${k}`,fade*(1-f)],[`hair${m.si}_${k+1}`,fade*f]];
+  };
+  B.add(g,{ex:-0.08,uv:true,color:_c.setRGB(0,1,2),v3:(p,i)=>[0.012,vMeta[i].inner?-1:0,1],weights:(p,i)=>weights(vMeta[i])});
+  return sectors.length;
+}
+
+
+/** Twin-only: cut two openings in the scalp grid and grow the tied tails from their shared boundary vertices. */
+function buildTwinJoinedCap(B, style, D, specs, hat, hatCtx) {
+  const { geo: cap, col } = buildCap(style.cap?.pole, hat, D);
+  const nA = D.cap[0], rows = 5 + D.cap[1], stride = nA + 1;
+  const P = cap.attributes.position, UV = cap.attributes.uv;
+  const positions = Array.from(P.array), uvs = Array.from(UV.array), meta = [];
+  for (let i = 0; i < P.count; i++) meta.push({ cap: true, c: [col[i * 3], col[i * 3 + 1], col[i * 3 + 2]] });
+  const holes = [], vec = new V3();
+  for (let si = 0; si < 2; si++) {
+    const edge = D.lod === 'game' ? 6 : 8, half = edge / 2;
+    const target = specs[si].surf.curve.getPointAt(0.17); let best = Infinity, ii = 0, jj = 0;
+    for (let j = half + 3; j < rows - half - 1; j++) for (let i = half; i < nA - half; i++) {
+      const d = vec.fromBufferAttribute(P, j * stride + i).distanceToSquared(target);
+      if (d < best) { best = d; ii = i; jj = j; }
+    }
+    holes.push({ si, edge, i0: ii - half, j0: Math.max(1, Math.min(rows - edge - 1, jj - half)) });
+  }
+  const original = cap.index.array, idx = [];
+  for (let k = 0; k < original.length; k += 3) {
+    const a=original[k], b=original[k+1], c=original[k+2], vs=[a,b,c];
+    const rs=vs.map(v=>Math.floor(v/stride)), cs=vs.map(v=>v%stride);
+    const r=Math.min(...rs), q=Math.min(...cs);
+    if (!holes.some(h=>r>=h.j0 && r<h.j0+h.edge && q>=h.i0 && q<h.i0+h.edge)) idx.push(a,b,c);
+  }
+  for (const h of holes) {
+    const boundary = [], id = (i, j) => j * stride + i, { i0, j0, si, edge } = h, radial = edge * 4;
+    for (let k = 0; k < edge; k++) boundary.push(id(i0 + k, j0));
+    for (let k = 0; k < edge; k++) boundary.push(id(i0 + edge, j0 + k));
+    for (let k = 0; k < edge; k++) boundary.push(id(i0 + edge - k, j0 + edge));
+    for (let k = 0; k < edge; k++) boundary.push(id(i0, j0 + edge - k));
+    const S = specs[si].surf, start = hatCtx ? Math.max(0.32, (hatCtx.cut[si]?.tExit || 0) + 0.02) : 0.32;
+    const tube = tentacleTube(S, { radial, rings: Math.max(8, Math.round(D.ringsPerM * S.len * (1 - start))), tipSteps: D.tipSteps, t0: start, capStart: false });
+    const TP = tube.geo.attributes.position;
+    let best = Infinity, shift = 0, sign = 1;
+    for (const s of [1, -1]) for (let off = 0; off < radial; off++) {
+      let cost = 0;
+      for (let k = 0; k < radial; k++) { const t = (off + s * k + radial * 2) % radial, bi = boundary[k] * 3; const dx=positions[bi]-TP.getX(t),dy=positions[bi+1]-TP.getY(t),dz=positions[bi+2]-TP.getZ(t);cost += dx*dx+dy*dy+dz*dz; }
+      if (cost < best) { best = cost; shift = off; sign = s; }
+    }
+    let forward = false;
+    for (let k = 0; k < idx.length; k += 3) for (let e = 0; e < 3; e++) if (idx[k+e] === boundary[0] && idx[k+(e+1)%3] === boundary[1]) forward = true;
+    const tubeBase = positions.length / 3;
+    for (let i = 0; i < TP.count; i++) { positions.push(TP.getX(i), TP.getY(i), TP.getZ(i)); uvs.push(tube.t[i] * S.len, tube.cs[i]); meta.push({cap:false,si,t:tube.t[i],cs:tube.cs[i],sn:tube.sn[i],th:tube.thick[i]}); }
+    const tubeIdx = tube.geo.index.array;
+    const flipTube = (sign === 1) === forward;
+    for (let k = 0; k < tubeIdx.length; k += 3) { idx.push(tubeBase + tubeIdx[k], tubeBase + tubeIdx[k + (flipTube ? 2 : 1)], tubeBase + tubeIdx[k + (flipTube ? 1 : 2)]); }
+    let prev = boundary;
+    for (let j = 1; j <= 5; j++) {
+      const ring = [], a = j / 6, smooth = a*a*(3-2*a);
+      for (let k = 0; k < radial; k++) {
+        const ti = (shift + sign*k + radial*2) % radial, b = boundary[k]*3;
+        ring.push(positions.length/3);
+        const n = new V3().fromBufferAttribute(cap.attributes.normal, boundary[k]);
+        const origin = new V3(positions[b], positions[b+1], positions[b+2]);
+        const target = new V3(TP.getX(ti), TP.getY(ti), TP.getZ(ti));
+        const delta = target.clone().sub(origin), tangent = delta.clone().addScaledVector(n, -delta.dot(n));
+        const next = new V3(TP.getX(radial+ti), TP.getY(radial+ti), TP.getZ(radial+ti));
+        const end = next.sub(target).multiplyScalar(3);
+        const h00=2*a*a*a-3*a*a+1, h10=a*a*a-2*a*a+a, h01=-2*a*a*a+3*a*a, h11=a*a*a-a*a;
+        const q=origin.multiplyScalar(h00).addScaledVector(tangent,h10).addScaledVector(target,h01).addScaledVector(end,h11);
+        positions.push(q.x,q.y,q.z);
+        if (j < 4) { uvs.push(UV.getX(boundary[k]), UV.getY(boundary[k])); meta.push({cap:true,c:[0,1,2],si,t:start*a}); }
+        else { uvs.push(start * a * S.len, tube.cs[ti]); meta.push({cap:false,si,t:start*a,cs:tube.cs[ti],sn:tube.sn[ti],th:tube.thick[ti]}); }
+      }
+      for (let k=0;k<radial;k++) { const n=(k+1)%radial, a0=prev[k],a1=prev[n],b0=ring[k],b1=ring[n]; if(forward) idx.push(a1,a0,b0,a1,b0,b1); else idx.push(a0,a1,b1,a0,b1,b0); }
+      prev=ring;
+    }
+    for(let k=0;k<radial;k++){const n=(k+1)%radial,a0=prev[k],a1=prev[n],b0=tubeBase+(shift+sign*k+radial*2)%radial,b1=tubeBase+(shift+sign*n+radial*2)%radial;if(forward)idx.push(a1,a0,b0,a1,b0,b1);else idx.push(a0,a1,b1,a0,b1,b0);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));g.setIndex(idx);g.computeVertexNormals();
+  { const N=g.attributes.normal; for(let j=0;j<rows;j++){const a=j*stride,b=a+nA,n=new V3().fromBufferAttribute(N,a).add(new V3().fromBufferAttribute(N,b)).normalize();N.setXYZ(a,n.x,n.y,n.z);N.setXYZ(b,n.x,n.y,n.z);} }
+  const weights = (m) => { if(m.cap && m.si === undefined)return [['head',1]];const t=m.t, fade=sstep(0.04,0.45,t),x=t*HAIR_SEGS-0.5,w=[]; for(let k=0;k<HAIR_SEGS;k++)w.push([`hair${m.si}_${k}`,1-sstep(0,1,Math.abs(x-k))]);if(x<0)w[0][1]=1;if(x>HAIR_SEGS-1)w[HAIR_SEGS-1][1]=1;const wt=sstep(0.84,0.95,t);if(wt>0){for(const e of w)e[1]*=1-wt;w.push([`hairTip${m.si}`,wt]);}for(const e of w)e[1]*=fade;w.push(['head',1-fade]);return w; };
+  B.add(g,{ ex:(p,i)=>meta[i].cap?-0.08:0, uv:true, color:(p,i)=>{const m=meta[i];return m.cap?_c.setRGB(...m.c):_c.setRGB(m.t,m.si < 2 ? (D.cups ? 0.5 : 1) : 0,m.sn*0.5+0.5);}, v3:(p,i)=>{const m=meta[i];return m.cap?[0.012,-4,1]:[m.th,-3,1];}, weights:(p,i)=>weights(meta[i]) });
 }
 
 /**
@@ -1452,7 +1871,7 @@ function addTube(B, tube, o) {
  * re-roots it under a hat: the part before tExit is hidden under the hat (only a short stub is built), the bones start
  * where it leaves the rim, and every profile keeps the untrimmed strand's parametrisation so it looks the same.
  */
-function buildStrand(B, sp, si, tExit, rest, meta, hatCtx = null, D = hairDetail(), occ = null) {
+function buildStrand(B, sp, si, tExit, rest, meta, hatCtx = null, D = hairDetail(), occ = null, softEdge = false, skipTube = false, unified = false) {
   const { sd, surf: S } = sp;
   const t0 = tExit > 0 ? Math.max(0, tExit - 0.045) : 0;
   const len = S.len;
@@ -1472,19 +1891,22 @@ function buildStrand(B, sp, si, tExit, rest, meta, hatCtx = null, D = hairDetail
     const wt = sstep(0.84, 0.95, u);
     if (wt > 0) { for (const e of w) e[1] *= 1 - wt; w.push([`hairTip${si}`, wt]); }
     if (tExit > 0) { const kh = 1 - sstep(tExit - 0.016, tExit, tm); if (kh > 0) { for (const e of w) e[1] *= 1 - kh; w.push(['head', kh]); } }
+    else if (sd.pinRoot) { const kh = 1 - sstep(0.02, 0.22, tm); if (kh > 0) { for (const e of w) e[1] *= 1 - kh; w.push(['head', kh]); } }
     return w;
   };
   const suck = sd.suck ? (D.cups ? 0.5 : 1) : 0;
   // ---- tube
-  const tube = tentacleTube(S, { rings: Math.max(8, Math.round(D.ringsPerM * len * (1 - t0))), radial: D.radial, tipSteps: D.tipSteps, t0 });
-  if (hatCtx) tuckUnderHat(tube.geo, hatCtx);
-  addTube(B, tube, { tm: (t) => t, len, suck, weights, occ, self: sp.occId });
+  if (!sd.capOnly && !skipTube && !sd.bunEmbedded && !sd.integrated) {
+      const tube = tentacleTube(S, { rings: Math.max(8, Math.round(D.ringsPerM * len * (1 - t0))), radial: D.radial, tipSteps: D.tipSteps, t0 });
+    if (hatCtx) tuckUnderHat(tube.geo, hatCtx);
+    addTube(B, tube, { tm: (t) => t, len, suck, weights, occ, self: sp.occId, softEdge, unified });
+  }
   // ---- modelled suction cups: two staggered rows along the underside edges, shrinking toward the tip
   if (sd.suck && D.cups && !sp.fin) {
     const from = Math.max(sd.cupFrom ?? 0.3, tExit + 0.07);
     const cups = suctionCups(S, {
       rows: [{ th: Math.PI - 0.78, phase: 0 }, { th: Math.PI + 0.78, phase: 0.5 }], from, to: 0.95,
-      size: (t) => Math.max(0.0018, 0.2 * sp.radius(t)), gap: D.cups.gap, radial: D.cups.radial, prof: D.cups.prof,
+      size: (t) => Math.max(0.0018, 0.2 * sp.radius(t)), height: 0.22, gap: D.cups.gap, radial: D.cups.radial, prof: D.cups.prof,
       skip: (C, t, R) => (hatCtx && (hatCtx.hidden(C) || hatCtx.nearRim(C))) || (occ && occ.buried(C, R, sp.occId)),
     });
     if (cups.list.length) {
@@ -1529,42 +1951,131 @@ export const BROW_KINDS = [
 function buildHair(styleIdx, hatIdx = 0, browIdx = 0, lod = 'hero') {
   const style = STYLES[styleIdx % STYLES.length];
   const hat = HAT_KINDS[hatIdx] || HAT_KINDS[0];
-  const D = hairDetail(lod);
+  const baseD = hairDetail(lod);
+  const D = styleIdx === 1 && !hat.rim && lod !== 'far' ? { ...baseD, cap: [Math.max(96, baseD.cap[0]), Math.max(22, baseD.cap[1])] } : baseD;
   const B = new Builder();
   const rest = {}; const meta = [];
   // ---- strands: specs first, so a hat can analyse (and re-root / drop) them before anything is built
   const capCenter = HEAD_C.clone().add(new V3(0, -0.02, -0.005));
   const vs = hat.rim && style.underHat ? { ...style, ...style.underHat } : style; // hat-compatible variant (low tail / bun)
   // under a hat the bang locks hang straighter (a curled tip would roll up into the brim / cuff)
-  const hatLocks = (sd) => (hat.rim && sd.locks ? { ...sd, curl: (sd.curl || 0) * 0.35, locks: sd.locks.map((L) => ({ ...L, curl: (L.curl ?? 0.6) * 0.3 })) } : sd);
-  const specs = vs.strands.map((sd, si) => strandSpec(hatLocks(sd), si, capCenter));
+  const hatLocks = (sd) => {
+    if (!hat.rim || !sd.locks) return sd;
+    // The broad, low fringes need slimmer paths under a brim to avoid poking through it.
+    let fringe = sd;
+    if (styleIdx === 0) fringe = { ...sd,
+      pts: [IN(0.95, 1.12), S(0.45, 0.94, 0.002), S(-0.1, 0.77, 0.003), S(-0.6, 0.63, 0.004), S(-1.0, 0.47, 0.004), [-0.18, 0.055, 0.074]],
+      r0: 0.048, r1: 0.017, flat: 0.4, rMain: 0.78,
+    };
+    if (styleIdx === 3) fringe = { ...sd,
+      pts: [IN(-0.75, 1.15), S(-0.2, 0.9, 0.002), S(0.3, 0.75, 0.003), S(0.78, 0.6, 0.004), S(1.1, 0.44, 0.004), [0.196, 0.005, 0.058]],
+      r0: 0.047, r1: 0.02, flat: 0.4, rMain: 0.95,
+      locks: [{ d: 0.032, h: 0.002, r: 0.76, len: 0.78, curl: 0.2 }],
+    };
+    if (styleIdx === 7) fringe = { ...sd,
+      pts: [IN(0.78, 1.08), S(0.42, 0.95, 0.004), S(-0.02, 0.8, 0.006), S(-0.46, 0.66, 0.006), S(-0.86, 0.5, 0.004), O(-1.1, 0.14, 0.048), O(-1.14, -0.2, 0.05), [-0.168, -0.2, 0.068]],
+      r0: 0.058, r1: 0.022, flat: 0.44,
+    };
+    return { ...fringe, curl: (fringe.curl || 0) * 0.35, locks: fringe.locks.map((L) => ({ ...L, curl: (L.curl ?? 0.6) * 0.3 })) };
+  };
+  const specs = vs.strands.filter((sd) => !hat.rim || !sd.noHat).map((sd, si) => strandSpec(hatLocks(sd), si, capCenter));
   // sculpted locks join the hat analysis too (clearance field + drop test), riding their strand's keep/drop
   const lockSpecs = [];
   for (const sp of specs) sp.locks.forEach((lk, j) => { lk.hatSi = 1000 + sp.si * 8 + j; const q = (t) => lk.surf.section(t); lockSpecs.push({ si: lk.hatSi, curve: lk.surf.curve, top: (t) => 1.2 * q(t).flat * q(t).r, radius: (t) => q(t).r }); });
-  const hatCtx = hat.rim ? analyseHat(hat, specs.concat(lockSpecs)) : null;
+  const hatCtx = hat.rim ? analyseHat(hat, specs.filter((sp) => !sp.sd.capOnly).concat(lockSpecs)) : null;
+  if (hatCtx) for (const sp of specs) if (sp.sd.capOnly) hatCtx.cut[sp.si] = { keep: true, tExit: 0 };
   if (hatCtx) for (const sp of specs) sp.locks = sp.locks.filter((lk) => hatCtx.cut[lk.hatSi].keep);
-  const occ = hairOccluders(specs.filter((sp) => !hatCtx || hatCtx.cut[sp.si].keep));
+  const occ = hairOccluders(specs.filter((sp) => !sp.sd.capOnly && (!hatCtx || hatCtx.cut[sp.si].keep)));
   // ---- scalp cap (baked contact occlusion round every tentacle root)
-  {
-    const { geo, col } = buildCap(style.cap?.pole, hat, D);
+  if (styleIdx === 0) {
+    buildTideCurtain(B, hat, D, rest, meta);
+  } else if (styleIdx === 2 && D.lod !== 'far') {
+    buildTwinJoinedCap(B, style, D, specs, hat, hatCtx);
+  } else {
+    const { geo, col, flap } = style.cap?.bob ? buildBobCap(style.cap?.pole, hat, D) : buildCap(style.cap?.pole, hat, D, styleIdx === 1 && !hat.rim, !!style.cap?.swoop, styleIdx === 6 && !hat.rim, styleIdx === 6, styleIdx === 5 && !hat.rim);
+    if (style.cap?.swoop) {
+      const pos = geo.attributes.position, q = new V3(), dir = new V3();
+      for (let i = 0; i < pos.count; i++) {
+        q.fromBufferAttribute(pos, i); dir.subVectors(q, HEAD_C).normalize();
+        const el = Math.asin(clamp(dir.y, -1, 1)), az = Math.atan2(dir.x, dir.z);
+        q.x -= 0.016 * sstep(-0.05, -0.62, el) * gauss(az + 1.27, 0.5);
+        pos.setXYZ(i, q.x, q.y, q.z);
+      }
+      geo.computeVertexNormals();
+      if (hatCtx) tuckUnderHat(geo, hatCtx);
+    }
     const P = geo.attributes.position, N = geo.attributes.normal; const p = new V3(), n = new V3();
-    B.add(geo, { bone: 'head', ex: -0.08, uv: true, color: (q, i) => _c.setRGB(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]), v3: (q, i) => [0.012, 0, occ.ao(p.fromBufferAttribute(P, i), n.fromBufferAttribute(N, i))] });
+    const panelWeights = (q) => {
+      const d = q.clone().sub(HEAD_C).normalize();
+      const el = Math.asin(clamp(d.y, -1, 1)), az = Math.atan2(d.x, d.z);
+      const w = sstep(0.12, -0.62, el) * Math.exp(-(((az + 1.27) / 0.5) ** 4));
+      const t = sstep(0.0, -0.72, el);
+      const w1 = sstep(0.25, 0.62, t), w2 = sstep(0.62, 0.95, t);
+      return [['head', 1 - w], ['hair0_0', w * (1 - w1)], ['hair0_1', w * w1 * (1 - w2)], ['hair0_2', w * w1 * w2]];
+    };
+    const weights = style.cap?.bob ? (q) => {
+      const local = q.clone().sub(HEAD_C), a = Math.abs(Math.atan2(local.x, local.z));
+      const side = sstep(0.55, 0.82, a) * (1 - sstep(1.25, 1.65, a));
+      const t = sstep(0.035, -0.10, local.y), w = side * t * 0.72, si = local.x >= 0 ? 0 : 1;
+      return [['head', 1 - w], [`hair${si}_1`, w * (1 - t * 0.5)], [`hair${si}_2`, w * t * 0.5]];
+    } : style.cap?.swoop ? panelWeights : styleIdx === 1 && !hat.rim ? (q) => {
+      // Three broad overlapping influences keep the connected cap continuous;
+      // the root and lower scalp stay pinned to the head.
+      const y = q.y - HEAD_C.y, z = q.z - HEAD_C.z;
+      const fade = 0.18 * sstep(0.10, 0.18, y) * sstep(-0.04, 0.06, z);
+      const w = [-0.063, 0, 0.063].map((x) => Math.exp(-(((q.x - x) / 0.060) ** 2)));
+      const sum = w[0] + w[1] + w[2];
+      return [['head', 1-fade], ['hair0_0', fade*w[0]/sum], ['hair1_0', fade*w[1]/sum], ['hair2_0', fade*w[2]/sum]];
+    } : null;
+    const knotWeights = styleIdx === 6 ? (q,i) => { const side=col[i*3], w=hat.rim ? 0 : 0.8*sstep(HEAD_C.y+0.215,HEAD_C.y+0.27,q.y); if(side>0.001) { const k=0.75*sstep(0.05,0.75,side), si=(q.x>=HEAD_C.x?0:1)+(hat.rim?0:1); return [['head',1-k],[`hair${si}_0`,k]]; } return [['head',1-w],['hair0_0',w]]; } : weights;
+    const crestWeights = flap ? (q,i) => {
+      const u=Math.abs(flap[i]), h=1-sstep(0.08,0.45,u), x=u*HAIR_SEGS-0.5, w=[['head',h]];
+      for (let k=0;k<HAIR_SEGS;k++) w.push([`hair0_${k}`,(1-h)*(1-sstep(0,1,Math.abs(x-k)))]);
+      const tip=sstep(0.86,0.98,u); if (tip>0) { for (let k=1;k<w.length;k++) w[k][1]*=1-tip; w.push(['hairTip0',(1-h)*tip]); }
+      return w;
+    } : knotWeights;
+    B.add(geo, { bone: 'head', weights: crestWeights, ex: -0.08, uv: true, color: (q, i) => _c.setRGB(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]), v3: (q,i) => flap ? [-1,flap[i],1] : [0.012,0,styleIdx === 6 ? 1 : occ.ao(p.fromBufferAttribute(P,i),n.fromBufferAttribute(N,i))] });
   }
   // ---- brows: tapered ink strokes on the brow bones (shape per style.brows)
   const bk = BROW_KINDS[browIdx] || BROW_KINDS[0];
   for (const [s, sx] of [['L', 1], ['R', -1]]) {
     const pts = []; const q = new V3();
-    for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(headSurf(sx * lerp(BROW.az0, bk.az1, t), bk.el(t), 0.0035, q).clone()); }
-    const st = sweep(pts, { seg: D.brow[0], radial: D.brow[1], capSteps: 3, radius: bk.r, flat: 0.5, outward: (P, o) => o.copy(P).sub(HEAD_C).normalize() });
-    B.add(st.geo, { bone: 'brow' + s, ex: -0.62, color: _c.setRGB(0, 0, 0), v3: [0.004, 0, 1] });
+    const browEnd = bk.az1 + (bk.az1 - BROW.az0) * 0.14;
+    // A tapered wedge: a fine inner point swells gradually toward a softly rounded outer end.
+    const browScale = [1, 1.16, 0.8, 0.94][browIdx] ?? 1;
+    const browRadius = (t) => browScale * (0.0015 + 0.0105 * Math.pow(t, 0.68)) * (1 - 0.08 * sstep(0.86, 1.0, t));
+    for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(headSurf(sx * lerp(BROW.az0, browEnd, t), bk.el(t) - (browIdx === 0 ? 0.02 * t * t : 0), 0.0035 - (styleIdx === 7 && sx < 0 ? 0.012 * sstep(0.2, 0.8, t) : 0), q).clone()); }
+    const st = sweep(pts, { seg: D.brow[0], radial: D.brow[1], capSteps: 5, endCapLength: 0.85, endCapTilt: 0.24 * sx, radius: browRadius, flat: 0.32, outward: (P, o) => o.copy(P).sub(HEAD_C).normalize() });
+    B.add(st.geo, { bone: 'brow' + s, ex: -0.25, color: _c.setRGB(0, 0, 0), v3: [0.004, 0, 1] });
   }
-  const strandInfo = []; let bi = 0; // strandInfo is indexed by the style's strand index (null = dropped under the hat)
+  const strandInfo = []; let bi = styleIdx === 0 ? 6 : 0; // strandInfo is indexed by the style's strand index (null = dropped under the hat)
+  if (style.cap?.bob) {
+    // Two short animated panel chains; the upper crown remains anchored.
+    for (const [si, sign] of [[0, 1], [1, -1]]) {
+      const points = [[0.14, 0.055, 0.105], [0.15, 0.005, 0.105], [0.155, -0.055, 0.105], [0.155, -0.10, 0.105]];
+      for (let k = 0; k < 3; k++) rest[`hair${si}_${k}`] = HEAD_C.clone().add(new V3(sign * points[k][0], points[k][1], points[k][2]));
+      rest[`hairTip${si}`] = HEAD_C.clone().add(new V3(sign * points[3][0], points[3][1], points[3][2]));
+      meta.push({ dir: new V3(sign * 0.015, -0.155, 0).normalize(), len: 0.155, K: 2.4, G: 0.4 });
+    }
+    bi = 2;
+  }
   for (const sp of specs) {
+    if (styleIdx === 0 && sp.si < 6) { strandInfo.push(null); continue; }
     const cut = hatCtx ? hatCtx.cut[sp.si] : { keep: true, tExit: 0 };
     if (!cut.keep) { strandInfo.push(null); continue; }
     const si = bi++;
-    const info = buildStrand(B, sp, si, cut.tExit, rest, meta, hatCtx, D, occ);
-    strandInfo.push(info);
+    const joinedTwin = styleIdx === 2 && D.lod !== 'far';
+    const info = styleIdx === 5 && !hat.rim ? null : buildStrand(B, sp, si, cut.tExit, rest, meta, hatCtx, D, styleIdx === 0 && !hat.rim ? null : occ, styleIdx === 0 && !hat.rim, (joinedTwin && si < 2) || (styleIdx === 0 && !hat.rim), joinedTwin && si >= 2);
+    if (!info) { const root=headSurf(0,hairline(0)+0.042,capOffset(0,hairline(0)+0.042),new V3()); for (let k=0;k<HAIR_SEGS;k++) { const u=[0,0.34,0.67][k]; rest[`hair${si}_${k}`]=root.clone().add(new V3(0,-0.15*u,0.05*sstep(0,0.5,u))); } rest[`hairTip${si}`]=root.clone().add(new V3(0,-0.138,0.035)); meta.push({ dir: new V3(0,-1,0), len: 0.15, K: 2.5, G: 0.25 }); }
+    strandInfo.push(info || (styleIdx === 5 && !hat.rim ? {} : null));
+  }
+  if (styleIdx === 1 && !hat.rim) {
+    for (const x of [-0.063, 0, 0.063]) {
+      const si = bi++;
+      for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = HEAD_C.clone().add(new V3(x, 0.10 + k*0.02, 0.05));
+      rest[`hairTip${si}`] = HEAD_C.clone().add(new V3(x, 0.16, 0.05));
+      meta.push({ dir: new V3(0, 1, 0), len: 0.06, K: 3, G: 0.15 });
+    }
   }
   for (let si = bi; si < HAIR_MAX; si++) { for (let k = 0; k < HAIR_SEGS; k++) rest[`hair${si}_${k}`] = HEAD_C.clone(); rest[`hairTip${si}`] = HEAD_C.clone(); }
   addGear(B, vs, strandInfo, hatCtx, D);
@@ -1613,7 +2124,7 @@ const _squid = new Map();
  * contact occlusion). The eye patches keep the eye material's polar uv (aEx = side).
  */
 function buildSquid(lod = 'hero') {
-  const D = hairDetail(lod), SD = D.squid, key = lod + '|' + D.k;
+  const detail = hairDetail(lod), D = { ...detail, tipSteps: detail.squidTipSteps }, SD = D.squid, key = lod + '|' + D.k;
   if (_squid.has(key)) return _squid.get(key);
   const body = new Builder(), dark = new Builder(), eyes = new Builder();
   // ---- mantle + fins (dense through the fin root, the eye band and the collar)
