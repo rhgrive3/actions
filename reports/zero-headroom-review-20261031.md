@@ -148,8 +148,9 @@ CPU の理想的な `pow` 値と GPU の実際の `pow` は同一ではない。
 | native 既存回帰 | 32 | 5 | display/detail 10、chart 等 19、遅延 index transfer 3。5 件は stage payload がないため skip。 |
 | native 新規回帰 | 6 | 0 | prefix/dirty suffix、属性復号、single-tile hint、barycentric、bounded cache、FBO 状態復旧 |
 | 既存 owned-run scan 回帰 | 2 | 0 | 旧矩形列一致条件を、領域保存と矩形数非増加へ更新した 1,200 + 160 grid ケース |
+| CI で判明した復旧ゲートの観測修正 | 78 | 0 | context recovery 28、streamed-music diagnostics 47、既存 media admission 3。正常な旧メニュー中断の証拠、欠落した証拠・重複中断・復旧後の追加失敗の棄却を確認。 |
 
-この表の重複除外済み小計は **156 pass、5 skip、0 fail**。独立担当の初期集計「54 pass」は native 32 と boss/clock 22 から成るため、上表の 48 に含まれる boss/clock を再加算していない。glint の確認再実行も 1 テストのまま数える。skip は成功に振り替えない。
+この表の重複除外済み小計は **234 pass、5 skip、0 fail**（最適化本体等の初期 156 と、その後の復旧ゲート関連 78）。独立担当の初期集計「54 pass」は native 32 と boss/clock 22 から成るため、上表の 48 に含まれる boss/clock を再加算していない。glint の確認再実行も 1 テストのまま数える。skip は成功に振り替えない。
 
 新規 native 回帰は `scripts/ci/inkwave-test-suites.json` の `quality` に一度登録し、main push の品質ゲートと既存 native stage PR 検出経路で実行される。Splatoon の新規 3 ファイルは既存の必須 source shard にそれぞれ一度割り当てられることを契約テストで確認した。別の実行スイートに重複追加していない。
 
@@ -181,6 +182,9 @@ node --experimental-vm-modules patches/splatoon3/tests/special-program-keepers.t
 node scripts/tests/inkwave-test-suites.test.mjs
 node scripts/tests/inkwave-test-shards.test.mjs
 node scripts/measure-owned-run-scan.mjs --verify-only
+node scripts/tests/inkwave-context-recovery-browser.test.mjs
+node scripts/tests/inkwave-streamed-music-diagnostics.test.mjs
+node scripts/tests/inkwave-browser-media-admission.test.mjs
 ```
 
 VM fixture の source-motion fallback 警告を、実際の asset 読込成功とは数えていない。source-loaded Character を使う配信物側の確認は前節の独立した WebGL probe で行った。
@@ -232,3 +236,19 @@ composition preflight は 119 source files / 75 adapted。migration audit は fa
 | Nintendo 実機との全挙動・全フレームの比較 | 未確認。既存報告の未確認事項を継承 |
 
 今回の局所短縮と小さい表示差から、「今後の最適化余地がない」「全端末でフリーズしない」「完全再現」とは結論しない。採用した最適化の具体的な結果、意図的に維持した挙動、未測定の境界を上記のとおり残す。
+
+## 11. 統合 CI で判明した復旧ゲートの観測不足と修正
+
+[PR #1977](https://github.com/rhgrive3/actions/pull/1977) の最初の候補 `52fcb0a500b0789d2f2dda87014ed6bdc4a8a747` で、[terminal recovery の初回実行](https://github.com/rhgrive3/actions/actions/runs/41162027773) が失敗した。失敗位置は実際の WebGL context loss より前の音声ネットワーク確認で、旧メニュー録音 `menu_the_ika_swing_aoi_kenban.mp3` の `net::ERR_ABORTED` が 1 件あった。HTTP エラーやページエラーはなく、battle 録音 `Jet_Arrow.mp3` の受信完了後に起きていた。
+
+初回 artifact は battle 録音の受信を証明するが、実再生の状態は記録していない。そのため初回の失敗を事後的に成功扱いにはしていない。既存の一般ブラウザゲートが持つ厳密な旧メニュー中断の判定を、復旧ゲートにも接続した。変更は [`check-inkwave-context-recovery-browser.mjs`](../scripts/check-inkwave-context-recovery-browser.mjs)、[`inkwave-streamed-music-diagnostics.mjs`](../scripts/lib/inkwave-streamed-music-diagnostics.mjs) と関連する 2 テストである。
+
+判定には、現在の revision の正確なメニュー URL、単発の `ERR_ABORTED`、battle 録音の HTTP 200 と同じ request ID の完了、実 `RG` の `battle` 所有者・非廃棄・非失敗・`readyState >= 3`・再生中・エラーなし・正確な `currentSrc` が必要となる。欠落した証拠、別の通信中断、重複、HTTP・ページ・ライフサイクル異常は棄却する。元の失敗記録はすべて残す。context loss 前に許可した記録を変更不能なコピーで固定し、復旧後の新しい失敗が古い再生証拠で受け入れられることも防いだ。観測ヘルパー自体も checkout のハッシュ照合対象に含めた。
+
+関連する 78 個の名前付きテストが成功した。元からある子プロセスの未処理 rejection テストは、制限付き実行時に stdout が空になったため、同じ直接実行コマンドを子プロセス実行可能な環境でも確認した。アサーションは変更せず、28 / 47 / 3 の全件が成功している。
+
+実ブラウザの再検証に必要な旧メニュー音源は、固定 main の Git blob `35a7e223071cb551db12f0b0327d6a38a8cc1df3`、7,016,626 bytes と一致する原本を復元した。これを含む検証ビルドは content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`。後者は初回 CI artifact と同じ revision である。第9節の先行ビルドを使った測定記録も、その識別子のまま保持する。
+
+修正後の Chromium 151 / SwiftShader では、同じメニュー中断 1 件を残したまま、battle が `readyState = 4`、非停止、エラーなし、再生位置 4.260862 秒であることと実ネットワークの完了を確認できた。未確認の中断、HTTP・ページ・ライフサイクルエラーは 0。実ブラウザが発行した trusted context lost / restored、120 回の RAF、60 回の直接更新を通して、match・paint・grid・counts・overlay の所有者と全 grid byte が保存された。通常 pause / resume と terminal 状態での再開拒否も成功した。
+
+証拠：監査パッケージの `independent-audit/recovery-context/result.json` と `independent-audit/recovery-production-build.log`。この追加確認はローカルの実配信ビルドによるものであり、修正後 head のホスト CI 成功は PR の実行結果で別途確認する。
