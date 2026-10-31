@@ -32,19 +32,6 @@
 <div id="fade"></div>
 <div id="boot-error"></div>
 <script>
-  // Cosmetic shortcut deterrent only. Browsers can open DevTools through menus
-  // and script can still be inspected. Real script-injection protection is CSP.
-  window.addEventListener('keydown', event => {
-    const key = event.key.toLowerCase();
-    const inspectShortcut = event.key === 'F12' ||
-      ((event.ctrlKey || event.metaKey) && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
-      (event.metaKey && event.altKey && ['i', 'j', 'c'].includes(key)) ||
-      (event.ctrlKey && !event.shiftKey && key === 'u');
-    if (inspectShortcut) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
-  }, true);
   // fade in once the loading screen is mounted
   window.addEventListener('DOMContentLoaded', () => setTimeout(() => { const f = document.getElementById('fade'); if (f) { f.style.opacity = '0'; f.style.pointerEvents = 'none'; } }, 60));
 </script>
