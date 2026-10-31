@@ -77,12 +77,15 @@ test('Ribbon chronological dirty view preserves all geometry bytes through coale
  }
 });
 test('non-Sprinkler current envelopes omit Set work while Sprinkler and unknown formats preserve birth identity',()=>{
- const s=runtime('native-sprinkler-damage'),start=s.indexOf('NetMatch.prototype._play=function')+'NetMatch.prototype._play='.length,end=s.indexOf('\n const candidate=',start),after=s.slice(start,end).trim().replace(/;$/,'');
+ const s=runtime('native-sprinkler-damage'),anchor='NetMatch.prototype._play=';
+ const start=s.indexOf(anchor),end=s.indexOf('\n };',start);
+ assert.ok(start>=0&&end>start,'native sprinkler replay wrapper present');
+ const after=s.slice(start+anchor.length,end+4).trim().replace(/;$/,'');
  for(const shape of ['current-other','current-sprinkler','legacy','not-bomb']){
   function run(old){let sets=0,reads=0;const b0={owner:null},bombs=[b0],born=[],actor={remote:true,owner:'peer'};b0.owner=actor;const G={projectiles:{get bombs(){reads++;return bombs;}}};
    const event=Array(shape==='legacy'?14:16).fill(null);Object.assign(event,{1:shape==='not-bomb'?'p':'b',2:3,3:'bomb',11:shape==='current-sprinkler'||shape==='legacy'?'sprinkler':'suction',_netSeq:7});
    const nm={byNid:new Map([[3,actor]])};const added={owner:actor,ghost:true,id:event[11]};
-   const fn=compile(old?before.functions.nativeSprinklerPlay:after,{G,play(){bombs.shift();bombs.push(added);return 42;},birth:(b,_n,seq)=>born.push([b.id,seq]),sprinkler:b=>b.id==='sprinkler',Set:class extends Set{constructor(v){super(v);sets++;}}});
+   const fn=compile(old?before.functions.nativeSprinklerPlay:after,{G,play(){bombs.shift();bombs.push(added);return 42;},birth:(b,_n,seq)=>born.push([b.id,seq]),sprinkler:b=>b.id==='sprinkler',snapshotLeases:new WeakMap(),Set:class extends Set{constructor(v){super(v);sets++;}}});
    const result=fn.call(nm,'peer',event);return{result,born,ids:bombs.map(x=>x.id),sets,reads};
   }
   const a=run(true),b=run(false);assert.deepEqual({result:b.result,born:b.born,ids:b.ids},{result:a.result,born:a.born,ids:a.ids});if(shape==='current-other'){assert.equal(b.sets,0);assert.equal(b.reads,0);assert.equal(a.sets,1);}else assert.equal(b.sets,a.sets);

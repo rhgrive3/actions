@@ -24,8 +24,8 @@ const adaptProductionSource = adaptBuildSource;
 // Keep the prior scratch epoch checked against its immutable fixture below.
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
-const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "577593bdc59ebb155e022b9ce4f57328ad82c05130ee67105d86aa635cf7d4fe",
+const QUEUE_20261030_ROLLER_INVERSE = Object.freeze([["// A vertical mode is already a private ordinary data record. Later overlays\n// can define its data fields directly instead of copying the whole weapon a\n// second/third time. DefineProperty keeps spread's own-property semantics even\n// when Object.prototype has a setter; no source config or getter is cached.\nconst MODE_FIELD={value:null,writable:true,enumerable:true,configurable:true};\nfunction setModeField(mode,key,value){\n  MODE_FIELD.value=value;\n  try{Object.defineProperty(mode,key,MODE_FIELD);}finally{MODE_FIELD.value=null;}\n}\n","","queue-optimization-0"],["    if (state) {\n      if(mode===w)mode={...mode,flickWindup:state.windup,flickInterval:state.interval};\n      else {setModeField(mode,'flickWindup',state.windup);setModeField(mode,'flickInterval',state.interval);}\n    }\n","    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };\n","queue-optimization-1"],["      if (drops !== null) {\n        setModeField(mode,'s3Depletion',true);setModeField(mode,'s3DepletionDrops',drops);setModeField(mode,'flickDrops',drops);\n      }\n","      if (drops !== null) mode = { ...mode, s3Depletion: true, s3DepletionDrops: drops, flickDrops: drops };\n","queue-optimization-2"]]);\nconst COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
+  "patches/splatoon3/runtime/roller.mjs": "9f672b542dfd9cf1b2820ac29009afdaebfea3f98d3591342a1dc449b7c37ce3",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -85,6 +85,10 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
       assert.equal(createHash('sha256').update(followThroughBytes).digest('hex'),
         '359dc78dfdf663069f20e6a2ea5d35a1d7e68661e78763737c94a82a77d2ab25');
       const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=raw;
+      for(const [after,before,name] of QUEUE_20261030_ROLLER_INVERSE)
+        beforeFollowThrough=exactFault(beforeFollowThrough,after,before,name);
+      assert.equal(createHash('sha256').update(beforeFollowThrough).digest('hex'),
+        '577593bdc59ebb155e022b9ce4f57328ad82c05130ee67105d86aa635cf7d4fe','reviewed queue 20261030 roller baseline');
       for(const [index,change]of followThrough.changes.entries())
         beforeFollowThrough=exactFault(beforeFollowThrough,change.after,change.before,'follow-through-'+index);
       assert.equal(createHash('sha256').update(beforeFollowThrough).digest('hex'),

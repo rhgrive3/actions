@@ -127,7 +127,7 @@ test('Torpedo/Fizzy share exact geometry while individual birth colors, cap evic
 test('Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact',()=>{
  const globals={aliveInMatch:()=>false,vec3:p=>p?.isVector3,POINT_SENSOR:{maxFlightSeconds:3,areaSeconds:2.5},poseSensorVisual(){},retireDrink(){}};
  const old=compile(oracle.kernels.sensor,['stepSupport'],globals).stepSupport;
- const now=compile(cut(runtime('kit-support.mjs'),'const SUPPORT_EMPTY_ROSTER','export function installSupportGameplay'),['stepSupport'],globals).stepSupport;
+ const now=compile(cut(runtime('kit-support.mjs'),'function advancePointSensorFlight','export function installSupportGameplay'),['stepSupport'],globals).stepSupport;
  for(let i=0;i<90;i++){
   const traces=[];
   for(const step of [old,now]){
@@ -183,7 +183,7 @@ test('catalog splash direction is created only for an admitted release, preservi
   ['canShareSourceFootprint'],{SOURCE_FOOTPRINT_RECORDS:new WeakSet(MAIN_WEAPON_CATALOG.records)}).canShareSourceFootprint;
  // The release kernel consumes these real per-step bindings from its caller.
  // Keep the production horizontal-distance calculation, not len aliases/stubs.
- const distance=cut(source,'      const splashBefore=','      this.projectileVisuals?.recordPhysicsPoint');
+ const distance=cut(source,'      const splashBefore=','      if(!deviceProbe)this.projectileVisuals?.recordPhysicsPoint');
  assert.match(distance,/const splashBefore=/);assert.match(distance,/const splashLength=/);
  const current=distance+cut(source,'      if(!p.ghost&&d.splashCount>0','      if(!p.ghost&&s.rollerFlight');
  const run=(kernel,config)=>{
