@@ -1,0 +1,153 @@
+{
+  "schema": 1,
+  "originalEvidenceDirectory": "/workspace/actions-battle-benchmark/e/cf0",
+  "basePrHead": "805e7213d6c29d6274cbfbaeabe544e5a9207a2f",
+  "raw": {
+    "path": "e/cf0/result.json.gz",
+    "sha256": "d1ee8c7ec754ec9edd287182402a7b304d200bb3e99ba64e19e3a9dd924f3662",
+    "bytes": 6886757,
+    "compressedSha256": "bc5f93a8c2272dac80f115e158d5b7f2cc3d22e5831da6509af12530bcc2eef5",
+    "compressedBytes": 698432
+  },
+  "files": {
+    "e/cf0/analysis-basic.log": {
+      "bytes": 9245,
+      "sha256": "622c09e638ff4ccf20a20a8a43346472474f6950716428a11e8a9ed06f39f243"
+    },
+    "e/cf0/analysis-statistics.log": {
+      "bytes": 2690,
+      "sha256": "774e5e63fec6596d4c801beac4cea7f9ca173d3273a9d2468dffa518459dd0fe"
+    },
+    "e/cf0/analysis.json": {
+      "bytes": 576082,
+      "sha256": "111413575c84740102fcfdc4c99726858cc1dde4d5ee7377bae304b106124eea"
+    },
+    "e/cf0/analyze-statistics.py": {
+      "bytes": 18429,
+      "sha256": "48583cd0afeaaa7b5cce0b8705c5ea788e3ecf95457073b0c8f84ae8cf2e81c5"
+    },
+    "e/cf0/analyze.mjs": {
+      "bytes": 6439,
+      "sha256": "7df2e95c1b0ea96884778c7f414d888d41955c592bf0361396e8b61055417331"
+    },
+    "e/cf0/detached.json": {
+      "bytes": 166,
+      "sha256": "5d969e34f9ffbca9fe3672a102e881db312c22113191d2a391ce436b040aabdc"
+    },
+    "e/cf0/exit.json": {
+      "bytes": 1462,
+      "sha256": "c76ca8a3bff5489f5a14fa5851f4a0d82c9100180e4398290b51e9d3b5bddd84"
+    },
+    "e/cf0/full-plan.json": {
+      "bytes": 5856,
+      "sha256": "792cfb9d83c5e50592bf9c6c833ffa53b283abbbb73dd8e62871665d4328c6a7"
+    },
+    "e/cf0/harness/benchmark-inkwave-composed-native-gpu-pool.mjs": {
+      "bytes": 25231,
+      "sha256": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a"
+    },
+    "e/cf0/harness/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "e/cf0/harness/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "e/cf0/harness/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "e/cf0/harness/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "e/cf0/harness/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "e/cf0/harness/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "e/cf0/harness/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    },
+    "e/cf0/launcher.py": {
+      "bytes": 1816,
+      "sha256": "db907ad2a5d28f7e5d2a0dc8432294918f0ea8cffa8157817a1add76cc64db94"
+    },
+    "e/cf0/process.json": {
+      "bytes": 1462,
+      "sha256": "c76ca8a3bff5489f5a14fa5851f4a0d82c9100180e4398290b51e9d3b5bddd84"
+    },
+    "e/cf0/report.md": {
+      "bytes": 13517,
+      "sha256": "29c09f2892493b0ca30c91ef5b5cd1c06b4d08185513aaba9c5da7eb63ea2137"
+    },
+    "e/cf0/result.json.gz": {
+      "bytes": 698432,
+      "sha256": "bc5f93a8c2272dac80f115e158d5b7f2cc3d22e5831da6509af12530bcc2eef5"
+    },
+    "e/cf0/run.log": {
+      "bytes": 7317,
+      "sha256": "fdaa5f58e8587b16fdce68a1e11d6cd71458a63b423b6c71e4ad2f82b6b45065"
+    },
+    "environment.json": {
+      "bytes": 27153,
+      "sha256": "ebf214fdc42760045425aa734f46e22bfdea2375ddec2a59e283eecef56c3c9e"
+    },
+    "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs": {
+      "bytes": 25231,
+      "sha256": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a"
+    },
+    "scripts/lib/inkwave-composed-cpu-replay.mjs": {
+      "bytes": 7489,
+      "sha256": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11"
+    },
+    "scripts/lib/inkwave-cpu-affinity-pool.mjs": {
+      "bytes": 7066,
+      "sha256": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56"
+    },
+    "scripts/lib/inkwave-cpu-counters.mjs": {
+      "bytes": 1579,
+      "sha256": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672"
+    },
+    "scripts/lib/inkwave-cpu-gameplay-digest.mjs": {
+      "bytes": 1158,
+      "sha256": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f"
+    },
+    "scripts/lib/inkwave-native-pool-admission.mjs": {
+      "bytes": 4333,
+      "sha256": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb"
+    },
+    "scripts/lib/inkwave-network-source-coverage.mjs": {
+      "bytes": 1002,
+      "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba"
+    },
+    "scripts/lib/inkwave-runtime-evidence.mjs": {
+      "bytes": 8959,
+      "sha256": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af"
+    },
+    "scripts/lib/inkwave-sandbox-browser.mjs": {
+      "bytes": 1196,
+      "sha256": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+    }
+  },
+  "harness": {
+    "benchmark-inkwave-composed-native-gpu-pool.mjs": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a",
+    "lib/inkwave-native-pool-admission.mjs": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb",
+    "lib/inkwave-cpu-affinity-pool.mjs": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56",
+    "lib/inkwave-composed-cpu-replay.mjs": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11",
+    "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+    "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+    "lib/inkwave-runtime-evidence.mjs": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af",
+    "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+  },
+  "unhashedRuntimeDependency": {
+    "path": "scripts/lib/inkwave-network-source-coverage.mjs",
+    "sha256": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba",
+    "provenance": "Matches current execution source and previously published native-smoke dependency at basePrHead; absent from the eight-file recorded harness hash list."
+  }
+}

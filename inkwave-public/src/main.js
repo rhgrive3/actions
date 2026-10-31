@@ -205,7 +205,13 @@ class Game {
       endMatch: (t = 0.5) => { if (this.match && !this.match.attract) this.match.time = t; },
       paintRandom: (n = 400) => { const v = new THREE.Vector3(); for (let i = 0; i < n; i++) { v.set((Math.random() - 0.5) * 48, 0.4, (Math.random() - 0.5) * 86); G.paint.splat(v, 0.8 + Math.random() * 1.4, Math.random() < 0.5 ? 0 : 1); } },
       // deterministic stepping for audits: freeze(), then step(ms) advances the sim at a fixed 60 Hz and renders once
-      freeze: () => { this.frozen = true; },
+      freeze: () => {
+        this.frozen = true;
+        // A manual audit step starts at the last completed fixed tick. Retire
+        // foreground catch-up and its callback before accepting explicit dt.
+        this.platform?.simulation?.reset();
+        this.s3Clock?.reset();
+      },
       unfreeze: () => { this.frozen = false; this.timer.update(); },
       step: (ms = 16.7) => {
         const n = Math.max(1, Math.round(ms / (1000 / 60)));

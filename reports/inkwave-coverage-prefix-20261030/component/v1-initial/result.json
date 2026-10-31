@@ -1,0 +1,590 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "component": "Emitted coverage cache publication and ownership-array replay in Node",
+  "input": {
+    "path": "/workspace/actions-coverage-opt/.ci-scratch/coverage-capture/ownership.json",
+    "sha256": "1fc1eb9de12645487f304f5a145658eac9ce833a1cd5198e51a5c4a0d0278840",
+    "captureSourceSha": "6c5c2738f73a00bc32561080dc90cee77338438a",
+    "captureContentHash": "b431fc545f77a37669a8f42de21986e347e931cfc4dc7e71c3a15b33ef069f06",
+    "nativeSourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+    "nativeEvents": 531,
+    "adversarialEvents": 4,
+    "events": 535,
+    "eventSummary": {
+      "read": 235,
+      "wall": 33,
+      "turf": 266,
+      "unknown": 1
+    },
+    "writePairs": 12521,
+    "gridCells": 1401174,
+    "eligibleCells": 249161,
+    "area": 12712.733998793232
+  },
+  "source": {
+    "baseline": "5637c8038e00466a8022c4d2b705ec9e5dc1c8d2",
+    "candidate": "6c5c2738f73a00bc32561080dc90cee77338438a",
+    "baselineContentHash": "e3c3937b58cf2259cb76d724d83c38cd172704e84f63e1b4bd518f1534e7f7af",
+    "candidateContentHash": "b431fc545f77a37669a8f42de21986e347e931cfc4dc7e71c3a15b33ef069f06",
+    "baselineEmittedSha256": "7a59e821a1ec61c5ce54cda362832e16829d2b52023d3a3dce4bb2ff2a84ebe2",
+    "candidateEmittedSha256": "a2c814a4aad72bbf1bf9210f2b528d965f475dfd5f1be85edb032792b820da63",
+    "harnessSha256": "5d33ba2bd9c0fcdbf70416064a461910401a059fe14c18108c8b305c4d29f307"
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logicalCpus": 5,
+    "cpuQuota": "400000 100000"
+  },
+  "allValuesBitIdentical": true,
+  "counts": {
+    "baseline-a": {
+      "coverageCalls": 535,
+      "fullScans": 267,
+      "partialScans": 0,
+      "unchangedVerified": 0,
+      "prefixGroupsCompared": 0,
+      "suffixEligibleCells": 66525987,
+      "weightedAdditions": 1993967
+    },
+    "candidate": {
+      "coverageCalls": 535,
+      "fullScans": 1,
+      "partialScans": 265,
+      "unchangedVerified": 1,
+      "prefixGroupsCompared": 17316917,
+      "suffixEligibleCells": 30670821,
+      "weightedAdditions": 1246650
+    },
+    "baseline-b": {
+      "coverageCalls": 535,
+      "fullScans": 267,
+      "partialScans": 0,
+      "unchangedVerified": 0,
+      "prefixGroupsCompared": 0,
+      "suffixEligibleCells": 66525987,
+      "weightedAdditions": 1993967
+    }
+  },
+  "loops": 4,
+  "rounds": 2,
+  "memory": {
+    "baseline-a": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 0,
+      "groups": 0,
+      "checkpoints": 0
+    },
+    "candidate": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 906948,
+      "groups": 112271,
+      "checkpoints": 439
+    },
+    "baseline-b": {
+      "gridBytes": 1401174,
+      "deadBytes": 1401174,
+      "sharedIndexBytes": 2989932,
+      "additionalTypedBytes": 0,
+      "groups": 0,
+      "checkpoints": 0
+    }
+  },
+  "runs": [
+    {
+      "round": 0,
+      "label": "baseline-a",
+      "replays": 4,
+      "wallMs": 1106.1809210000001,
+      "msPerReplay": 276.54523025000003,
+      "cpuUserMs": 981.98,
+      "cpuSystemMs": 124.888,
+      "cpuMsPerReplay": 276.717,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122699776,
+          "heapTotal": 32595968,
+          "heapUsed": 16369688,
+          "external": 23751333,
+          "arrayBuffers": 21372612
+        },
+        "after": {
+          "rss": 122699776,
+          "heapTotal": 32595968,
+          "heapUsed": 16533304,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 1798.6800839999996,
+      "msPerReplay": 449.6700209999999,
+      "cpuUserMs": 1679.998,
+      "cpuSystemMs": 113.221,
+      "cpuMsPerReplay": 448.30475,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 16575904,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 17226176,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 1510.5075219999999,
+      "msPerReplay": 377.62688049999997,
+      "cpuUserMs": 1456.969,
+      "cpuSystemMs": 53.085,
+      "cpuMsPerReplay": 377.5135,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 17243552,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 17888152,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "baseline-a",
+      "replays": 4,
+      "wallMs": 1298.9938660000007,
+      "msPerReplay": 324.7484665000002,
+      "cpuUserMs": 1216.134,
+      "cpuSystemMs": 82.503,
+      "cpuMsPerReplay": 324.65925,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 17903440,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18059584,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 914.2019600000003,
+      "msPerReplay": 228.55049000000008,
+      "cpuUserMs": 912.722,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 228.1805,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18076536,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18723272,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "baseline-b",
+      "replays": 4,
+      "wallMs": 485.0008319999997,
+      "msPerReplay": 121.25020799999993,
+      "cpuUserMs": 485.108,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 121.277,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18741152,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18897584,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "baseline-b",
+      "replays": 4,
+      "wallMs": 403.59737099999984,
+      "msPerReplay": 100.89934274999996,
+      "cpuUserMs": 409.177,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 102.29425,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 18916864,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19083544,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 0,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 835.0423600000013,
+      "msPerReplay": 208.76059000000032,
+      "cpuUserMs": 835.338,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 208.8345,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19104624,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19749224,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "baseline-a",
+      "replays": 4,
+      "wallMs": 697.5693179999998,
+      "msPerReplay": 174.39232949999996,
+      "cpuUserMs": 699.042,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 174.7605,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19771480,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19929752,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 739.0973880000001,
+      "msPerReplay": 184.77434700000003,
+      "cpuUserMs": 827.088,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 206.772,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 19970872,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 20624992,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 572.0717789999981,
+      "msPerReplay": 143.01794474999951,
+      "cpuUserMs": 579.497,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 144.87425,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 20650744,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21281080,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "baseline-a",
+      "replays": 4,
+      "wallMs": 396.88876900000105,
+      "msPerReplay": 99.22219225000026,
+      "cpuUserMs": 396.906,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 99.2265,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21307344,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21377552,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 577.0613569999987,
+      "msPerReplay": 144.26533924999967,
+      "cpuUserMs": 576.823,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 144.20575,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21405496,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21964128,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "baseline-b",
+      "replays": 4,
+      "wallMs": 392.6761880000013,
+      "msPerReplay": 98.16904700000032,
+      "cpuUserMs": 392.684,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 98.171,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 21993048,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 22063256,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "baseline-b",
+      "replays": 4,
+      "wallMs": 398.8446690000019,
+      "msPerReplay": 99.71116725000047,
+      "cpuUserMs": 401.544,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 100.386,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 22093520,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 22166616,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    },
+    {
+      "round": 1,
+      "label": "candidate",
+      "replays": 4,
+      "wallMs": 577.3691279999985,
+      "msPerReplay": 144.3422819999996,
+      "cpuUserMs": 578.221,
+      "cpuSystemMs": 0,
+      "cpuMsPerReplay": 144.55525,
+      "checksum": 60.016232448170264,
+      "memory": {
+        "before": {
+          "rss": 122830848,
+          "heapTotal": 32595968,
+          "heapUsed": 22198656,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        },
+        "after": {
+          "rss": 122830848,
+          "heapTotal": 16867328,
+          "heapUsed": 14501152,
+          "external": 23751389,
+          "arrayBuffers": 21372628
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Captured native eligible ownership writes and publication/call classes, not full actor/browser execution or FPS.",
+    "Each timed replay includes sparse writes, version publication and the original output allocation choice. Intermediate replay resets copy the initial grid and force one full initial scan; they are identical for all variants.",
+    "All exact-result checks, workload counts, build verification and warmups are outside timed windows. No forced GC.",
+    "Static cells/weights are shared immutable data among fixtures; ownership grids and incremental snapshots are independent.",
+    "Observed process memory is not peak memory. Typed-buffer byteLength totals exclude JS object and first-build transient array overhead.",
+    "Wall/process CPU values are affected by the shared executor; baseline A/A controls accompany all candidate results."
+  ],
+  "statistics": {
+    "baseline-a": {
+      "wallMsPerReplay": {
+        "n": 4,
+        "mean": 218.7270546250001,
+        "median": 225.468779875,
+        "p95": 324.7484665000002,
+        "max": 324.7484665000002
+      },
+      "processCpuMsPerReplay": {
+        "n": 4,
+        "mean": 218.84081249999997,
+        "median": 225.73874999999998,
+        "p95": 324.65925,
+        "max": 324.65925
+      }
+    },
+    "candidate": {
+      "wallMsPerReplay": {
+        "n": 8,
+        "mean": 235.1259868124999,
+        "median": 196.76746850000018,
+        "p95": 449.6700209999999,
+        "max": 449.6700209999999
+      },
+      "processCpuMsPerReplay": {
+        "n": 8,
+        "mean": 237.90506249999999,
+        "median": 207.80325,
+        "p95": 448.30475,
+        "max": 448.30475
+      }
+    },
+    "baseline-b": {
+      "wallMsPerReplay": {
+        "n": 4,
+        "mean": 105.00744125000017,
+        "median": 100.30525500000022,
+        "p95": 121.25020799999993,
+        "max": 121.25020799999993
+      },
+      "processCpuMsPerReplay": {
+        "n": 4,
+        "mean": 105.53206250000001,
+        "median": 101.340125,
+        "p95": 121.277,
+        "max": 121.277
+      }
+    }
+  }
+}

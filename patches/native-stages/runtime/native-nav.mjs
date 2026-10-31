@@ -152,10 +152,15 @@ export async function buildNativeNavAsync(graph,{signal,current=()=>true,budgetM
  const check=()=>{if(signal?.aborted||!current())throw new DOMException('Aborted','AbortError');};
  const budget=Number.isFinite(budgetMilliseconds)&&budgetMilliseconds>0?budgetMilliseconds:4;
  const started=now(),steps=buildNativeNavSteps(graph);
- let sliceStart=started,maxSliceMilliseconds=0,yieldCount=0;
+ let sliceStart=started,maxSliceMilliseconds=0,yieldCount=0,cheapChecks=0;
  check();
  try{
   for(let next=steps.next();;next=steps.next()){
+   // Only cheap graph bookkeeping may share a clock read. Geometry sampling,
+   // edges, spawn qualification and simulated transitions retain each check.
+   // Cancellation/generation is still observed within every cheap step.
+   if(!next.done&&budget>=1&&(next.value==='prune'||next.value==='departures')&&++cheapChecks<8){check();continue;}
+   cheapChecks=0;
    const elapsed=now()-sliceStart;
    if(next.done){maxSliceMilliseconds=Math.max(maxSliceMilliseconds,elapsed);break;}
    if(elapsed>=budget){

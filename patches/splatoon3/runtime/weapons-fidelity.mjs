@@ -654,7 +654,7 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace
   const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
   const lastFrames = seededFrames(p.seed, move.FallPeriodLastFrameMin, move.FallPeriodLastFrameMax, salt ^ 0x22);
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
-  if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
+  if (!(Number.isFinite(firstSpeed)&&firstSpeed>=0&&Number.isFinite(secondSpeed)&&secondSpeed>=0)) throw new RangeError('Invalid detached wall-drop speed');
   const state = {
     tag, paintFace, footprint: tag === 'burst' ? mainInkBurstFootprint(p.s3Weapon || p.catalog?.r) : mainInkFootprint(p.s3Weapon || p.catalog?.r), owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost, noSpecial:!!p.s3PaintNoSpecial,
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
@@ -832,7 +832,7 @@ export function beginFidelityWallDrop(system, p, hit) {
   const lastFrames = seededFrames(p.seed, move.FallPeriodLastFrameMin, move.FallPeriodLastFrameMax, 0x597);
   const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
-  if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid wall-drop target speed');
+  if (!(Number.isFinite(firstSpeed)&&firstSpeed>=0&&Number.isFinite(secondSpeed)&&secondSpeed>=0)) throw new RangeError('Invalid wall-drop target speed');
   const state = p.fidelityWallDrop = {
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames, done: false,
     firstSpeed, secondSpeed,
@@ -1720,7 +1720,7 @@ export function fidelityRollerMaximumPaint(r,w,fx,fz) {
 // weapon supplies ZRate=2 and YMinusRate=1, with no XRate/YPlusRate override.
 // Apply only those sourced axes at spawn. GuideYMinusZero means the HUD guide
 // intentionally omits the falling-player term while live projectiles retain it.
-export function applySlosherSpawnVelocity(p,{guide=false}={}) {
+export function applySlosherSpawnVelocity(p,{guide=false}={},volley=null) {
   if(!p||p.ghost||p.s3SlosherMotionApplied||p.type!=='slosh')return;
   const a=p.owner,w=p.s3Weapon||a?.weapon,raw=rawWeapon(w);
   if(!a||a.remote||w?.kind!=='slosher'||!raw)return;
@@ -1728,7 +1728,18 @@ export function applySlosherSpawnVelocity(p,{guide=false}={}) {
   if(!spec||!Number.isFinite(a.yaw))return;
   const vx=a.vel?.x,vz=a.vel?.z,vy=a.vel?.y;
   if(Number.isFinite(spec.ZRate)&&Number.isFinite(vx)&&Number.isFinite(vz)){
-    const x=Math.sin(a.yaw),z=Math.cos(a.yaw);
+    // Read each live angle at its original point, even for an accessor. The
+    // cache stores only each trig result, never the actor's motion or a guessed
+    // volley-wide yaw; signed zero and mid-volley changes retain exact meaning.
+    const cache=volley&&!guide?volley:null,sinAt=a.yaw;let x,z;
+    if(cache&&cache.motionActor===a&&cache.motionSinReady&&Object.is(cache.motionSinAt,sinAt))x=cache.motionSin;
+    else {
+      x=Math.sin(sinAt);
+      if(cache){if(cache.motionActor!==a)cache.motionCosReady=false;cache.motionActor=a;cache.motionSinAt=sinAt;cache.motionSin=x;cache.motionSinReady=true;}
+    }
+    const cosAt=a.yaw;
+    if(cache&&cache.motionActor===a&&cache.motionCosReady&&Object.is(cache.motionCosAt,cosAt))z=cache.motionCos;
+    else {z=Math.cos(cosAt);if(cache){cache.motionCosAt=cosAt;cache.motionCos=z;cache.motionCosReady=true;}}
     const amount=(vx*x+vz*z)*spec.ZRate;
     p.vel.x+=x*amount;p.vel.z+=z*amount;
   }
@@ -1946,9 +1957,48 @@ export function installWeaponsFidelity(context,profile) {
   }
   // Read-only receiver probes use the same native main-flight initialization
   // as ghostProjectile, without allocating a cosmetic ghost or drawing RNG.
-  Projectiles.prototype.restoreCrabletFidelityProbe=function(p,actor){
+  Projectiles.prototype.restoreCrabletFidelityProbe=function(p,actor,event){
+    const packet=event&&prepareFidelityProjectilePacket(event),shape=packet&&projectilePacketShape(packet);
+    if(packet){
+      p.s3DepletionRound=packet[NORMALIZED_PROJECTILE_PACKET].depleted;
+      const offset=shape?.birthOffset??0;
+      if(!shape?.legacy&&packet[30+offset]>=0){
+        p.fidelitySloshPacketIndex=packet[30+offset];p.fidelityRollerUnitIndex=packet[30+offset];
+        p.fidelityMode=packet[27+offset]===1?'vertical':'horizontal';
+      }
+    }
     initialize(p,WEAPONS[p.wid]||actor.weapon);
+    const w=p.s3Weapon;
+    // Native defense callbacks read the projectile's source birth damage;
+    // player-only falloff helpers must not silently change device damage.
+    if(w?.kind==='blaster')p.damage=w.directDamage;
+    else if(w?.kind==='roller')p.damage=w.flickDamageNear;
+    else if(w?.kind==='slosher'&&p.fidelitySloshUnit)p.damage=p.fidelitySloshUnit.DamageParam.ValueMax/10;
     return p;
+  };
+  Projectiles.prototype.nativeFidelityDeviceSweep=function(p){
+    // A private collision scope avoids borrowing the live stepper's world/
+    // body scratch across a synchronous physics callback or nested receipt.
+    const scope={kitDefenseCandidate:q=>this.kitDefenseCandidate?.(q)};
+    const targets=fidelityProjectileTargets(scope,p),world=fidelityWorldHit(scope,p),boss=fidelityBossHit(scope,p);
+    return {world,body:targets.length?p.fidelityImpactT*p.prev.distanceTo(p.pos):Infinity,boss};
+  };
+  Projectiles.prototype.nativeFidelityDeviceBurstContacts=function(p,at){
+    // The legacy _blastBurst all-specials wrapper owns both device lists and
+    // linearly interpolates these exact native object bands, independently of
+    // the compressed player-only contact burst. Do not invoke its FX, paint,
+    // callbacks or damage owner while validating an incoming proposal.
+    const w=p.s3Weapon,bands=w?.splashBands||w?.damageBands;
+    if(p.catalog||p.s3SpecialWeapon||w?.kind!=='blaster'||p.type!=='blast'||!bands?.length)return [];
+    const radius=w.splashRadius||w.burstRadius||bands.at(-1)?.[0]||0;
+    if(!(radius>0))return [];
+    const contacts=[],damageAt=d=>distanceDamage(bands,d);
+    for(const target of [...this._s3SubObjects||[],...this._s3AllSpecialObjects||[],...(this.nativeSprinklerDeviceTargets?.()||[])]){
+      const damage=this.nativeSubDeviceAreaContact?.(p,target,at,radius,damageAt)
+        ??this.nativeSpecialDeviceAreaContact?.(p,target,at,radius,damageAt);
+      if(Number.isFinite(damage)&&damage>0)contacts.push({target,damage,projectile:p});
+    }
+    return contacts;
   };
   Projectiles.prototype._push=function(p){
     const w=p.s3Weapon||WEAPONS[p.wid]||p.owner?.weapon,active=this._fidelitySloshContext;
@@ -1982,7 +2032,7 @@ export function installWeaponsFidelity(context,profile) {
     initialize(p,w);
     applyShooterSpawnVelocity(p);
     applyBlasterSpawnVelocity(p);
-    applySlosherSpawnVelocity(p);
+    applySlosherSpawnVelocity(p,undefined,active);
     if(w?.kind==='blaster' && !p.s3SpecialWeapon && !p.ghost){
       const flight=configureBlasterFlightPaint(p,rawWeapon(w),completion.worldUnitsPerSourceUnit);
       const system=this;flight.wallSplash=(from,index)=>blasterFlightWallSplash(system,p,from,index);
@@ -2513,7 +2563,8 @@ export function installWeaponsFidelity(context,profile) {
   Projectiles.prototype._bossImpact=function(p,hit){
     if(p.ghost||!kitVolleyHitAuthority(p))return;
     const w=p.s3Weapon||p.owner.weapon;
-    if(!['roller','slosher','shooter','dualies','splatling'].includes(w.kind))return bossImpact.call(this,p,hit);
+    const family=w.kind;
+    if(family!=='roller'&&family!=='slosher'&&family!=='shooter'&&family!=='dualies'&&family!=='splatling')return bossImpact.call(this,p,hit);
     const boss=context.G.boss;
     const victim=hit.target?.hp!==undefined&&hit.target?.id!==undefined?hit.target:boss;
     const raw=fidelityDamage(p,hit.point);
@@ -2749,15 +2800,19 @@ export function updateShotGuide(controller) {
 
 // World point -> screen pixels for the HUD only. Behind-camera and off-viewport
 // results are clamped to the viewport edge so the guide stays reachable.
-export function projectShotGuide(state, camera, width, height) {
+export function projectShotGuide(state, camera, width, height, out) {
   if (!guideApi || !state || !camera || !(width > 0) || !(height > 0)) return null;
   const s = guideScratch();
   s.projected.set(state.x, state.y, state.z).project(camera);
   if (!Number.isFinite(s.projected.x) || !Number.isFinite(s.projected.y)) return null;
   let x = (s.projected.x * 0.5 + 0.5) * width, y = (-s.projected.y * 0.5 + 0.5) * height;
   if (s.projected.z > 1) { x = width - x; y = height - y; }
-  const clamp = (v, limit) => Math.min(limit - GUIDE_EDGE_MARGIN, Math.max(GUIDE_EDGE_MARGIN, v));
-  return { x: clamp(x, width), y: clamp(y, height), frames: state.frames };
+  // Public callers still receive a fresh snapshot unless they explicitly own out.
+  const result = out || { x: 0, y: 0, frames: 0 };
+  result.x = Math.min(width - GUIDE_EDGE_MARGIN, Math.max(GUIDE_EDGE_MARGIN, x));
+  result.y = Math.min(height - GUIDE_EDGE_MARGIN, Math.max(GUIDE_EDGE_MARGIN, y));
+  result.frames = state.frames;
+  return result;
 }
 
 // HUD reticle placement, relative to the screen-centre anchor the reticle already

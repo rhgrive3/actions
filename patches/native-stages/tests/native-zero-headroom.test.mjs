@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
+import { consumeNativeWork, consumeNativeWorkAsync } from '../runtime/native-work.mjs';
 
 const read = rel => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
 const clean = source => source.replace(/^import .*;\n/gm, '').replaceAll('export function ', 'function ').replaceAll('export class ', 'class ').replaceAll('export const ', 'const ');
 const renderSource = clean(read('../runtime/native-render.mjs'));
-const cull = new Function('THREE', renderSource + '\nreturn installNativeDisplayCulling;')(THREE);
+const cull = new Function('THREE', 'consumeNativeWork', 'consumeNativeWorkAsync', renderSource + '\nreturn installNativeDisplayCulling;')(THREE, consumeNativeWork, consumeNativeWorkAsync);
 const beforeCull = new Function('THREE', clean(read('./fixtures/native-display-culling-before-20261030.mjs.txt')) + '\nreturn installNativeDisplayCulling;')(THREE);
-const { NativeInkMesh, partitionNativeInk } = new Function('THREE', clean(read('../runtime/native-ink-chunks.mjs')) + '\nreturn {NativeInkMesh,partitionNativeInk};')(THREE);
+const { NativeInkMesh, partitionNativeInk } = new Function('THREE', 'consumeNativeWork', 'consumeNativeWorkAsync', clean(read('../runtime/native-ink-chunks.mjs')) + '\nreturn {NativeInkMesh,partitionNativeInk};')(THREE, consumeNativeWork, consumeNativeWorkAsync);
 const NativeLevel = new Function('THREE', 'Level', clean(read('../runtime/native-level.mjs')) + '\nreturn NativeLevel;')(THREE, class {});
 const seedWord = seed => Math.floor((Math.fround(seed) - Math.floor(Math.fround(seed))) * 65536);
 const NativePaintDetail = new Function('THREE', 'G', 'paintShapeSeed', clean(read('../runtime/native-paint-detail.mjs')) + '\nreturn NativePaintDetail;')(THREE, {}, seedWord);

@@ -1,0 +1,9 @@
+{
+  "sealedAt": "2026-10-30T19:46:39.423Z",
+  "files": {
+    "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs": "064937b5465d539fe6cd8ca28653d3c54b779da99c567ba21588ce8b607eb80a",
+    "scripts/lib/inkwave-native-pool-admission.mjs": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb",
+    "full-plan.json": "73b6986ae6174c1179e5d86336e225f6c6758df2fe55f186619813dd99201078"
+  },
+  "harnessUnchangedFromLatestSmoke": true
+}

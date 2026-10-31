@@ -1,5 +1,6 @@
 import test from 'node:test';
 import {reverseReviewedMotionEpoch} from './reviewed-motion-epoch.mjs';
+import {reverseReviewedRenderQueueOwner} from './reviewed-render-queue-owner.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -158,8 +159,9 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const rawCurrent=fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8');
  const currentGitBlob=createHash('sha1').update('blob '+Buffer.byteLength(rawCurrent)+'\0').update(rawCurrent).digest('hex');
  assert.equal(currentGitBlob,'111747a0ab4141af1cb3c58258e6ca24b88716f2','the separately reviewed current raw controller remains exact');
- const current=reverseReviewedMotionEpoch(adaptBuildSource(REL,rawCurrent),'motion');
+ const current=reverseReviewedRenderQueueOwner(adaptBuildSource(REL,rawCurrent),REL);
  const beforeCurrentForm=reverseCurrentFormOwner(current);
+ assert.equal(beforeCurrentForm,reverseReviewedMotionEpoch(current,'motion'),'independent form pairs and sealed motion epoch reverse the same complete boundary once');
  assert.notEqual(beforeCurrentForm,current,'the subsequent form owner is exercised');
  assert.equal(adoptCurrentFormOwner(beforeCurrentForm),current,'independent form owner reverses the full current composition');
  for(const [from,to] of formOwnerPairs){

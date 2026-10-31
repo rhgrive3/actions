@@ -61,6 +61,156 @@ export function installAudioRequestTrace(){
   if(nativeRelease)rp.releaseLock=function(...args){const row=readers.get(this),stack=row?String(new Error().stack):'';const result=Reflect.apply(nativeRelease,this,args);if(row)note('reader-release',row,{stack,encodedBodyCompleted:stack.includes('encoded-response.mjs')&&!!row.readCalls&&!row.cancelled});return result;};
 }
 
+// QA-only observation. No request failure is reclassified or suppressed.
+export function installContextMediaTrace(){
+  const env=globalThis;if(env.__contextMediaTraceSnapshot)return;
+  const records=[],ids=new WeakMap();let serial=0,dropped=0;
+  const identify=o=>o&&(typeof o==='object'||typeof o==='function')?(ids.get(o)||(ids.set(o,++serial),serial)):null;
+  const read=(o,k)=>{try{return o?.[k]??null;}catch{return null;}};
+  const describe=error=>{try{return {errorName:String(error?.name??''),errorMessage:String(error?.message??error).slice(0,250)};}catch{return {errorName:'unavailable',errorMessage:'unavailable'};}};
+  const isMedia=o=>{try{return typeof env.HTMLMediaElement==='function'&&o instanceof env.HTMLMediaElement;}catch{return false;}};
+  const owners=element=>{
+    try{
+      const music=(env.RG??env.__G)?.music;if(!music)return [];
+      const list=[...(Array.isArray(music.players)?music.players:[]),music.current,music._preloadedFile?.player],seen=new Set(),out=[];
+      for(const p of list)if(p&&p.element===element&&!seen.has(p)){
+        seen.add(p);out.push({owner:identify(p),engine:identify(music),track:read(p,'id'),disposed:read(p,'disposed'),failed:read(p,'failed'),
+          stopAt:read(p,'stopAt'),pausedAfterFade:read(p,'_pausedAfterFade'),current:music.current===p,
+          preloaded:music._preloadedFile?.player===p,desiredTrack:read(music,'_desiredTrack')});
+      }return out;
+    }catch{return [];}
+  };
+  const tracked=new WeakSet(),hooks={};
+  const install=(proto,name,descriptor)=>{try{Object.defineProperty(proto,name,descriptor);return true;}catch{return false;}};
+  const note=(event,element,extra={})=>{
+    try{
+      if(records.length>=512){dropped++;return;}
+      records.push({event,wall:Date.now(),mono:env.performance?.now?.()??null,element:identify(element),src:read(element,'src'),
+        currentSrc:read(element,'currentSrc'),paused:read(element,'paused'),ended:read(element,'ended'),readyState:read(element,'readyState'),
+        networkState:read(element,'networkState'),mediaError:read(element,'error')?{code:read(element.error,'code'),message:read(element.error,'message')}:null,
+        owners:owners(element),...extra});
+    }catch{dropped++;}
+  };
+  const watch=element=>{
+    if(!isMedia(element)||tracked.has(element))return;
+    tracked.add(element);
+    for(const event of ['error','abort','emptied','loadstart','canplay','stalled'])element.addEventListener(event,()=>note('media-'+event,element));
+  };
+  const source=element=>read(element,'currentSrc')||read(element,'src');
+  const wrap=(proto,name,accept=isMedia)=>{
+    const descriptor=proto&&Object.getOwnPropertyDescriptor(proto,name),native=descriptor?.value;
+    if(!descriptor?.configurable||typeof native!=='function')return false;
+    return install(proto,name,{...descriptor,value:function(...args){
+      const observe=accept(this,args);let oldSource=null;
+      if(observe){try{watch(this);oldSource=source(this);note(name+'-before',this,{sourceURL:oldSource,stack:String(new Error().stack).slice(0,1800)});}catch{}}
+      let result;
+      try{result=Reflect.apply(native,this,args);}catch(error){if(observe)note(name+'-throw',this,{sourceURL:oldSource,...describe(error)});throw error;}
+      if(observe)note(name+'-after',this,{sourceURL:oldSource});
+      return result;
+    }});
+  };
+  const proto=env.HTMLMediaElement?.prototype;
+  hooks.pause=wrap(proto,'pause');hooks.load=wrap(proto,'load');
+  hooks.removeAttribute=wrap(env.Element?.prototype,'removeAttribute',(element,args)=>isMedia(element)&&args[0]==='src');
+  const src=proto&&Object.getOwnPropertyDescriptor(proto,'src');
+  hooks.src=false;
+  if(src?.configurable&&typeof src.set==='function')hooks.src=install(proto,'src',{...src,set:function(value){
+    try{watch(this);note('src-set-before',this,{sourceURL:source(this)});}catch{}
+    let result;try{result=Reflect.apply(src.set,this,[value]);}catch(error){note('src-set-throw',this,describe(error));throw error;}
+    note('src-set-after',this,{sourceURL:source(this)});return result;
+  }});
+  env.__contextMediaTraceSnapshot=()=>({records:records.slice(),dropped,hooks:{...hooks}});
+}
+
+// IDs are Playwright Request identities. URL/time matches are candidates only;
+// duplicate/range requests stay ambiguous and never authorize failure filtering.
+export function correlateContextMediaRequests(snapshot,ledger,ledgerDropped=0){
+  const available=Array.isArray(snapshot?.records),hooksComplete=['pause','load','removeAttribute','src'].every(k=>snapshot?.hooks?.[k]===true),
+    evidenceComplete=available&&hooksComplete&&!snapshot.dropped&&!ledgerDropped&&!snapshot.diagnosticError;
+  return {available,hooks:snapshot?.hooks??null,hooksComplete,evidenceComplete,dropped:snapshot?.dropped??0,ledgerDropped,diagnosticError:snapshot?.diagnosticError??null,records:(snapshot?.records||[]).map(event=>{
+    const urls=new Set([event.sourceURL,event.src,event.currentSrc].filter(Boolean));
+    const ids=ledger.filter(r=>urls.has(r.url)&&r.startedAt<=event.wall&&(r.endedAt==null||r.endedAt>=event.wall)).map(r=>r.id);
+    return {...event,inflightRequestIDs:ids,requestCorrelation:!evidenceComplete?'incomplete-evidence':ids.length===1?'unique-url-time-candidate':ids.length?'ambiguous':'none'};
+  })};
+}
+
+// Keep every raw failure. Only a fully observed, already-faded menu owner's
+// exact media request can be labelled expected; uncertainty stays unexpected.
+export function classifyContextRequestFailures({requests,ledger,diagnostics,mediaTrace,expectedMenuURL}={}){
+  const result={unexpected:[],expectedRetirements:[],rejections:[]};
+  if(!Array.isArray(requests))return {...result,unexpected:[{diagnosticError:'missing raw request failures'}]};
+  const reject=(failure,reason)=>{result.unexpected.push(failure);result.rejections.push({url:failure?.url??null,error:failure?.error??null,reason});};
+  const finite=Number.isFinite,safe=Number.isSafeInteger;
+  const complete=requests.length<32&&Array.isArray(diagnostics)&&diagnostics.length<64&&Array.isArray(ledger)&&ledger.length<512&&
+    Array.isArray(mediaTrace?.records)&&mediaTrace.records.length<512&&mediaTrace?.available===true&&mediaTrace.hooksComplete===true&&mediaTrace.evidenceComplete===true&&
+    !mediaTrace.diagnosticError&&mediaTrace.dropped===0&&mediaTrace.ledgerDropped===0&&['pause','load','removeAttribute','src'].every(k=>mediaTrace.hooks?.[k]===true);
+  const recordedFailures=Array.isArray(ledger)?ledger.filter(r=>r?.terminal==='failed'):[];
+  const orphan=recordedFailures.find(r=>requests.filter(f=>f?.url===r.url&&f?.error===r.error).length!==1);
+  const orphanDiagnostic=Array.isArray(diagnostics)&&diagnostics.find(d=>d?.event==='failed'&&requests.filter(f=>f?.url===d.url&&f?.error===d.failure).length!==1);
+  if(orphan||orphanDiagnostic){result.unexpected.push({diagnosticError:'unmatched recorded request failure'});}
+  if(Array.isArray(mediaTrace?.records)&&mediaTrace.records.some(e=>e?.event==='media-error'||e?.mediaError!=null))result.unexpected.push({diagnosticError:'native media error observed'});
+  let approvedURL=false;try{const url=new URL(expectedMenuURL);approvedURL=url.href===expectedMenuURL&&url.pathname.endsWith('/assets/audio/menu_the_ika_swing_aoi_kenban.mp3')&&!url.search&&!url.hash;}catch{}
+  for(const failure of requests){
+    if(!complete||!Array.isArray(mediaTrace.records)||!Array.isArray(ledger)||!Array.isArray(diagnostics)){reject(failure,'incomplete observation');continue;}
+    if(!approvedURL||failure?.url!==expectedMenuURL||failure?.error!=='net::ERR_ABORTED'){reject(failure,'not the observed menu cancellation');continue;}
+    const failed=ledger.filter(r=>r?.url===failure.url&&r.terminal==='failed');
+    if(requests.filter(r=>r?.url===failure.url).length!==1||failed.length!==1){reject(failure,'ambiguous raw failure or request');continue;}
+    const request=failed[0],id=request.id;
+    if(!safe(id)||id<1||ledger.filter(r=>r?.id===id).length!==1||request.resourceType!=='media'||request.phase!=='startup'||request.error!==failure.error||
+      !finite(request.startedAt)||!finite(request.endedAt)||request.endedAt<request.startedAt){reject(failure,'invalid media request identity');continue;}
+    const diagnostic=diagnostics.filter(d=>d?.event==='failed'&&d.id===id);
+    if(diagnostic.length!==1||diagnostic[0].url!==failure.url||diagnostic[0].resourceType!=='media'||diagnostic[0].phase!=='startup'||diagnostic[0].failure!==failure.error){reject(failure,'missing exact failed-request diagnostic');continue;}
+    const records=mediaTrace.records;
+    const sourceElements=new Set(records.filter(e=>e&&[e.sourceURL,e.src,e.currentSrc].includes(failure.url)).map(e=>e.element));
+    if(sourceElements.size!==1||![...sourceElements].every(e=>safe(e)&&e>0)){reject(failure,'ambiguous source element');continue;}
+    const element=[...sourceElements][0],events=records.filter(e=>e?.element===element);
+    const owners=events.flatMap(e=>Array.isArray(e.owners)?e.owners:[]),ownerIDs=new Set(owners.map(o=>o?.owner)),engines=new Set(owners.map(o=>o?.engine));
+    if(ownerIDs.size!==1||engines.size!==1||!owners.length||owners.some(o=>!safe(o?.owner)||o.owner<1||!safe(o.engine)||o.engine<1||o.track!=='menu'||o.failed!==false)){
+      reject(failure,'ambiguous or failed owner');continue;
+    }
+    const owner=[...ownerIDs][0],engine=[...engines][0];
+    if(events.some(e=>e.event==='media-error'||e.mediaError!=null)){reject(failure,'media error observed');continue;}
+    let lastWall=-Infinity,lastMono=-Infinity;
+    if(events.some(e=>{const invalid=!finite(e.wall)||!finite(e.mono)||e.wall<lastWall||e.mono<lastMono;lastWall=e.wall;lastMono=e.mono;return invalid;})){reject(failure,'nonmonotonic media trace');continue;}
+    const exact=e=>e?.requestCorrelation==='unique-url-time-candidate'&&Array.isArray(e.inflightRequestIDs)&&e.inflightRequestIDs.length===1&&e.inflightRequestIDs[0]===id;
+    const hasOwner=(e,disposed,pausedAfterFade)=>Array.isArray(e?.owners)&&e.owners.length===1&&e.owners[0].owner===owner&&e.owners[0].engine===engine&&
+      e.owners[0].track==='menu'&&e.owners[0].failed===false&&e.owners[0].disposed===disposed&&e.owners[0].pausedAfterFade===pausedAfterFade&&
+      e.owners[0].current===false&&e.owners[0].preloaded===false&&e.owners[0].desiredTrack===null&&finite(e.owners[0].stopAt)&&e.owners[0].stopAt>0;
+    const retirementStack=e=>typeof e?.stack==='string'&&e.stack.includes('/src/audio/streamedTrack.js')&&e.stack.includes('/patches/local-quality/music-idle.mjs')&&e.stack.includes('retireStream')&&e.stack.includes('.dispose');
+    const sequence=['media-canplay','pause-before','pause-after','pause-before','pause-after','removeAttribute-before','removeAttribute-after','load-before','load-after','media-abort','media-emptied'];
+    // Only repeated healthy readiness before the first fade pause is harmless.
+    // Reloads, source writes, extra aborts and all post-pause events remain exact.
+    let readyEnd=3;while(events[readyEnd]?.event==='media-canplay')readyEnd++;
+    const ready=events.slice(3,readyEnd),tail=events.slice(readyEnd),startup=['src-set-before','src-set-after','media-loadstart'];
+    if(!ready.length||tail.length!==sequence.length-1||events.some(e=>!Array.isArray(e.owners))||
+      startup.some((name,i)=>events[i]?.event!==name)||tail.some((event,i)=>event.event!==sequence[i+1])){reject(failure,'extra or missing menu lifecycle event');continue;}
+    if(events[0].src!==''||events[1].src!==failure.url||events[2].src!==failure.url||events[2].currentSrc!==failure.url){reject(failure,'initial media source not proved');continue;}
+    const matched=[ready[0],...tail];
+    const [canplay,fadePause,fadePaused,disposePause,disposedPaused,remove,removed,load,loaded,abort,emptied]=matched;
+    if(!ready.every(e=>exact(e)&&e.paused===false&&e.src===failure.url&&e.currentSrc===failure.url&&e.owners.length===1&&
+      e.owners[0].owner===owner&&e.owners[0].engine===engine&&e.owners[0].disposed===false&&e.owners[0].failed===false&&e.owners[0].preloaded===false&&
+      ((e.owners[0].current===true&&e.owners[0].desiredTrack==='menu')||
+       (e.owners[0].current===false&&e.owners[0].desiredTrack===null&&e.owners[0].stopAt===fadePause.owners?.[0]?.stopAt)))||
+      !matched.every(exact)||canplay.paused!==false||canplay.owners?.length!==1||canplay.owners[0].owner!==owner||canplay.owners[0].disposed!==false||canplay.owners[0].current!==true||canplay.owners[0].desiredTrack!=='menu'||
+      !hasOwner(fadePause,false,false)||fadePause.paused!==false||typeof fadePause.stack!=='string'||!fadePause.stack.includes('/src/audio/streamedTrack.js')||fadePause.stack.includes('.dispose')||fadePause.stack.includes('retireStream')||
+      !hasOwner(fadePaused,false,false)||fadePaused.paused!==true||fadePaused.owners[0].stopAt!==fadePause.owners[0].stopAt||
+      ![disposePause,disposedPaused,remove,removed,load,loaded].every(e=>hasOwner(e,true,true)&&e.paused===true&&e.owners[0].stopAt===fadePause.owners?.[0]?.stopAt)||
+      ![disposePause,remove,load].every(retirementStack)){
+      reject(failure,'not a normal completed menu fade');continue;
+    }
+    if(remove.sourceURL!==failure.url||removed.sourceURL!==failure.url||load.sourceURL!==failure.url||loaded.sourceURL!==failure.url||
+      remove.src!==failure.url||removed.src!==''||load.src!==''||loaded.src!==''||abort.src!==''||emptied.src!==''||
+      !matched.every(e=>e.currentSrc===failure.url)||events.some(e=>e.wall>=remove.wall&&e.event==='src-set-after')||
+      events.filter(e=>e.event==='load-before').length!==1||events.filter(e=>e.event==='removeAttribute-before').length!==1||
+      request.startedAt>canplay.wall||request.endedAt<emptied.wall||events.some(e=>e.wall>request.endedAt&&e.event==='media-canplay')){
+      reject(failure,'source changed or request/unload order unproved');continue;
+    }
+    result.expectedRetirements.push({id,url:failure.url,element,owner,engine,retiredAt:remove.wall,failedAt:request.endedAt,
+      reason:'fully observed normal faded menu retirement'});
+  }
+  return result;
+}
+
 // Every phase emitted by the shared menu helper has an explicit native control
 // admission. Unknown phases fail closed rather than skipping the input guard.
 export function contextMenuControlForPhase(label) {
@@ -329,17 +479,22 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set(), audioNetwork = [];
   // Preserve every raw failure; only proved pre-loss menu retirement is admitted.
   const requestDiagnostics = [], failedRequestURLs = new Set();
+  const requestIDs = new WeakMap(), audioRequestLedger = []; let requestSerial = 0, audioRequestLedgerDropped = 0;
+  const requestID = r => requestIDs.get(r) || (requestIDs.set(r,++requestSerial),requestSerial);
+  const settleAudioRequest = (r,event) => { const row=audioRequestLedger.find(x=>x.id===requestID(r)); if(row){row.endedAt=Date.now();row.terminal=event;row.error=r.failure()?.errorText??null;} };
   let requestPhase = 'startup';
   const recordRequestDiagnostic = (event, request) => {
     if (requestDiagnostics.length >= 64) return;
     let timing = null, timingError = null;
     try { timing = request.timing(); } catch (error) { timingError = String(error); }
     requestDiagnostics.push({ event, phase: requestPhase, at: new Date().toISOString(),
-      url: request.url(), resourceType: request.resourceType(), timing, timingError,
+      id: requestID(request), url: request.url(), resourceType: request.resourceType(), timing, timingError,
       failure: request.failure()?.errorText ?? null });
   };
-  let preLossAudio = null, preLossAudioAdmission = null;
+  let preLossAudio = null, preLossAudioAdmission = null, preLossMedia = null, requestClassification = null, expectedMenuURL = null;
   const streamedMusicReceipt = { sourceSha, revision: build.build.revision, contentHash: build.contentHash };
+  const classifyObservedRequests = snapshot => classifyContextRequestFailures({requests,ledger:audioRequestLedger,diagnostics:requestDiagnostics,
+    mediaTrace:correlateContextMediaRequests(snapshot,audioRequestLedger,audioRequestLedgerDropped),expectedMenuURL});
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -366,8 +521,10 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const pendingAudio = new Set();
     const audioRequest = r => /\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
     page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); });
+    page.on('request', r => { requestID(r); if (audioRequest(r)) { if(audioRequestLedger.length<512)audioRequestLedger.push({id:requestID(r),url:r.url(),resourceType:r.resourceType(),phase:requestPhase,startedAt:Date.now(),endedAt:null}); else audioRequestLedgerDropped++; } });
     page.on('request', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'start',url:r.url(),at:Date.now()}); });
     page.on('requestfinished', r => pendingAudio.delete(r));
+    page.on('requestfinished', r => settleAudioRequest(r,'finished'));
     page.on('requestfinished', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'finished',url:r.url(),at:Date.now(),timing:r.timing()}); });
     await page.exposeFunction('__awaitContextRecoveryAudioIdle', async () => {
       // Observe stable quiet and live battle playback without altering either.
@@ -388,11 +545,16 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       preLossAudioAdmission = captureContextRecoveryAudioAdmission({ requests, siteURL,
         revision: build.build.revision, receipt: streamedMusicReceipt });
       validateContextRecoveryAudioAdmission(preLossAudioAdmission, { requests, httpFailures, errors, events });
+      try { preLossMedia=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null); } catch(error){preLossMedia={diagnosticError:String(error?.message||error)};}
+      requestClassification=classifyObservedRequests(preLossMedia);
+      assert.deepEqual(requestClassification.unexpected, [], 'Audio startup produced unexplained failed network requests');
+      assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
     });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
     page.on('response', r => { if (audioRequest(r.request()) && audioNetwork.length < 512) audioNetwork.push({event:'headers',url:r.url(),at:Date.now(),status:r.status()}); });
     page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
+    page.on('requestfailed', r => settleAudioRequest(r,'failed'));
     page.on('requestfailed', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'failed',url:r.url(),error:r.failure()?.errorText,at:Date.now(),timing:r.timing()}); });
     page.on('requestfailed', r => {
       if (failedRequestURLs.size < 32) failedRequestURLs.add(r.url());
@@ -417,6 +579,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       };
     });
     await page.addInitScript(installAudioRequestTrace);
+    await page.addInitScript(installContextMediaTrace);
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
     await page.evaluate(async () => {
@@ -435,7 +598,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     await page.waitForFunction(() => (globalThis.RG?.game?.menus && RG.s3?.installed && RG.mode !== 'boot') || !!document.querySelector('#boot-error')?.textContent, null, { timeout: remainingMs() });
     const bootError = await page.evaluate(() => document.querySelector('#boot-error')?.textContent || ''); assert(!bootError, bootError);
     const identity = await page.evaluate(() => ({ baseURI: document.baseURI, revision: new URL(document.baseURI).pathname.split('/').filter(Boolean).at(-1) }));
-    assert.equal(identity.revision, build.build.revision); lastStage = 'booted';
+    assert.equal(identity.revision, build.build.revision); expectedMenuURL=new URL('assets/audio/menu_the_ika_swing_aoi_kenban.mp3',identity.baseURI).href; lastStage = 'booted';
     const { startProjectileThroughMenu } = await import('./lib/inkwave-projectile-menu-start.mjs');
     const { rangeMenuControlReady } = await import('./lib/inkwave-range-menu-entry.mjs');
     startup = { route: 'native-menu-start', events: [] };
@@ -462,6 +625,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
     // Do not reclassify post-loss failures against stale pre-loss playback.
     validateContextRecoveryAudioAdmission(preLossAudioAdmission, { requests, httpFailures, errors, events });
+    const finalMedia=await page.evaluate(()=>globalThis.__contextMediaTraceSnapshot?.()??null);
+    requestClassification=classifyObservedRequests(finalMedia);
+    assert.deepEqual(errors, []); assert.deepEqual(requestClassification.unexpected, []); assert.deepEqual(httpFailures, []); assert.deepEqual(events, []);
     for (const file of required) assert(served.has(file) || served.has('_versions/' + build.build.revision + '/' + file), 'Required emitted module was not served: ' + file);
     result = { ok: true, browser: browser.version(), identity, startup, proof }; lastStage = 'accepted';
   } catch (error) {
@@ -480,9 +646,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       result.audioCancellationError = String(diagnosticFailure?.message || diagnosticFailure);
     }
   } finally {
-    let audioTrace = null, audioOwnerFinal = null;
-    if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null}))); } catch {}
-    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossAudioAdmission, streamedMusicReceipt, startup, lastStage, harnessBlobs: Object.fromEntries(harnessInputs.map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    let audioTrace = null, audioOwnerFinal = null, mediaTrace = null;
+    if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal,mediaTrace} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null,mediaTrace:globalThis.__contextMediaTraceSnapshot?.()??null}))); } catch {}
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, preLossAudioAdmission, streamedMusicReceipt, preLossMedia, mediaTrace:correlateContextMediaRequests(mediaTrace,audioRequestLedger,audioRequestLedgerDropped), audioRequestLedger, audioRequestLedgerDropped, requestClassification, startup, lastStage, harnessBlobs: Object.fromEntries(harnessInputs.map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, requestDiagnostics, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }

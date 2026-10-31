@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
+import { CLAM_PREDICTION_COMPAT, historicalRuntimeOverlay } from './historical-overlay.mjs';
 import { fixture } from '../../patches/splatoon3/tests/source-fixture.mjs';
 import { BASE, SUITES, suiteBase } from './config.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
@@ -14,7 +16,10 @@ const baseline = (file, base) => {
   return local ? fs.readFileSync(path.join(local, file), 'utf8') : execFileSync('git', ['show', base + ':' + file], { cwd: ROOT, encoding: 'utf8' });
 };
 const make = async (suite, before) => {
-  const consumed = new Set(), overlay = new Map(before ? SUITES[suite].before.map(file => [file, baseline(file, suiteBase(suite))]) : []);
+  const consumed = new Set(), overlay = new Map(before ? SUITES[suite].before.map(file => {
+    const historical = baseline(file, suiteBase(suite)), current = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    return [file, historicalRuntimeOverlay(file, historical, suiteBase(suite), current).source];
+  }) : []);
   const f = await fixture({ fullRuntime: true, productionComposition: true, includeCharacter: true, vmMathRandom: () => .5,
     adaptRuntime: (file, source) => { if (overlay.has(file)) { consumed.add(file); source = overlay.get(file); } return adaptBuildSource(file, source); },
     extraExports: "export {installRanked} from './patches/splatoon3/runtime/ranked/install.mjs';" });
@@ -49,4 +54,30 @@ test('Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves
     a.character.dispose(); G.actors = []; G.local = null;
   }
   assert.deepEqual(poses[1], poses[0], 'Shared handoff change preserves ordinary Clams pose, hand matrices, visibility and gameplay');
+});
+
+
+test('Clam historical compatibility preserves the pinned source and only exact later forecast exports', () => {
+  const pin = CLAM_PREDICTION_COMPAT, old = baseline(pin.file, BASE), current = fs.readFileSync(path.join(ROOT, pin.file), 'utf8');
+  assert.equal(BASE, pin.beforeBase, 'The original comparison baseline remains unchanged');
+  const composed = historicalRuntimeOverlay(pin.file, old, BASE, current);
+  assert.equal(composed.source.slice(0, old.length), old, 'Every historical source byte remains unchanged');
+  assert.equal(composed.compatibility, pin);
+  assert.deepEqual(pin.exports, ['stormThrowPosition', 'bombPredictionPosition']);
+  // Read this exact owner commit, independently of optional AIR baseline paths.
+  const donor = execFileSync('git', ['show', pin.ownerCommit + ':' + pin.file], { cwd: ROOT, encoding: 'utf8' });
+  assert.equal(createHash('sha256').update(donor).digest('hex'), pin.ownerSha256, 'Exact donor owner source');
+  assert.equal(historicalRuntimeOverlay(pin.file, old, BASE, donor).source, composed.source, 'Pinned donor and current owner expose the same exact bridge');
+  const duplicate = current.match(/export function stormThrowPosition\(a, out\) \{\n.*?\n\}/s)[0];
+  assert.throws(() => historicalRuntimeOverlay(pin.file, old, BASE, current + '\n' + duplicate), /Current forecast owner retains exact stormThrowPosition/);
+  assert.throws(() => historicalRuntimeOverlay(pin.file, old + '\n', BASE, current), /Exact Clam historical/);
+  for (const name of pin.exports) {
+    assert.throws(() => historicalRuntimeOverlay(pin.file, old, BASE, current.replace('export function ' + name, 'export function changed_' + name)), /Current forecast owner retains exact/);
+  }
+  assert.deepEqual(historicalRuntimeOverlay('unrelated.mjs', old, BASE, current), { source: old, compatibility: null });
+  assert.deepEqual(historicalRuntimeOverlay(pin.file, current, 'later-owner', current), { source: current, compatibility: null });
+  const runner = fs.readFileSync(new URL('./run.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /historicalRuntimeOverlay\(file,content\.toString\('utf8'\),beforeBase/);
+  assert.match(runner, /compatibility:historical\.compatibility/, 'Native browser receipts declare the appended compatibility owner');
+  assert.match(runner, /'tools\/object-presentation-qa\/historical-overlay\.mjs'/, 'The compatibility helper is pinned in browser harness receipts');
 });

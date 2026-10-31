@@ -1,4 +1,5 @@
 import { validRainmakerShotOrigin, rainmakerShotOwnerMatches } from './rainmaker-shot-origin.mjs';
+import { beginRainmakerDeviceShot, bindRainmakerDeviceSource, recordRainmakerDeviceContact, recordRainmakerDeviceBurst } from './rainmaker-device-contact.mjs';
 import { actorId } from './network.mjs';
 import { toxicMistScale } from '../toxic-mist.mjs';
 import { rainmakerWallBlast, rainmakerWallsBlockBlast, rainmakerDomeBlast } from './rainmaker-defense.mjs';
@@ -174,7 +175,8 @@ export function createRankedEffects(api, match) {
       if (Math.sqrt(body.distanceToSquared(p)) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
-    const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall) : [];
+    const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall, shot.deviceShot) : [];
+    if (shot?.deviceShot) recordRainmakerDeviceBurst(shot.deviceShot, G.projectiles, { owner:attacker, team }, p, radius, nearRadius, amount, outerDamage);
     if (shot) rainmakerDomeBlast(api, p, blastFrom, attacker, team, radius, nearRadius, amount, outerDamage, walls);
     if (visualOnly) return;
     G.paint?.splat?.(p, paintRadius, team, { seed: match.ranked.revision % 65536, claimOwner: attacker, ...(noSpecial ? { claimMode: 'no-special' } : {}) });
@@ -194,9 +196,10 @@ export function createRankedEffects(api, match) {
       const a = match.actors.find(a => actorId(a) === String(e.actorId ?? e.carrier ?? e.id));
       if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
       if (!attackVisuals()) return;
+      const deviceShot = beginRainmakerDeviceShot(G.netm, match, e);
       const mesh = visuals.shot(G.teamColors[e.team], e.charge, e.shotOrigin.muzzle);
       shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 90), age: 0, team: e.team,
-        actor: a, mesh, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 22, trailRadius: e.trailRadius ?? 2.4, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 5, nearRadius: e.nearRadius ?? 4.6, radius: e.radius ?? 7, visualOnly });
+        actor: a, mesh, deviceShot, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 22, trailRadius: e.trailRadius ?? 2.4, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 5, nearRadius: e.nearRadius ?? 4.6, radius: e.radius ?? 7, visualOnly });
       shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 16.8 : 8.4);
       visuals.updateShot(mesh, shots.at(-1).vel, 0);
       if (!a.remote && a.vel) {
@@ -242,6 +245,7 @@ export function createRankedEffects(api, match) {
     const worldPoint = wall.hit ? wall.point.clone() : null;
     const probe = { owner: s.actor, team: s.team, prev: s.previous, pos: s.pos,
       vel: s.vel, damage: s.directDamage, type: 'rainmaker', wid: 'rainmaker', subId: 'Gachihoko_Bullet', s3BubblerRow: 'Gachihoko_Bullet', size: .16, ghost: !ownsDefense(s) };
+    if (s.deviceShot) bindRainmakerDeviceSource(s.deviceShot, probe);
     const defense = G.projectiles?.kitDefenseCandidate?.(probe);
     let blocked = defense && defense.distance <= nearest * sweepLength ? defense : null;
     if (blocked) nearest = blocked.distance / Math.max(1e-9, sweepLength);
@@ -264,6 +268,7 @@ export function createRankedEffects(api, match) {
     if (blocked?.dome) s.impactDome = { center: blocked.dome.pos.clone(), radius: blocked.dome.radius,
       ignited: blocked.dome.ignited, emitterY: blocked.dome.emitterY };
     if (terminal && s.damage > 0) s.blastStart = s.pos.clone().addScaledVector(s.previous.clone().sub(s.pos).normalize(), .01);
+    if (blocked && s.deviceShot) recordRainmakerDeviceContact(s.deviceShot, blocked.object || blocked.damageTarget, s.directDamage, 'Gachihoko_Bullet');
     if (blocked && ownsDefense(s)) blocked.onHit(probe);
     if (target && !s.visualOnly) damage(target, s.actor, s.directDamage);
     if (!s.visualOnly && (!release || terminal)) {
@@ -292,7 +297,7 @@ export function createRankedEffects(api, match) {
     }
     // Defensive surfaces and Crab Tank skip the ground-impact fuse.
     if (blocked || target?.specialActive?.id === 'crabTank') {
-      explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, dome: s.impactDome });
+      explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, dome: s.impactDome, deviceShot:s.deviceShot });
       retire(s); return true;
     } else { s.landed = true; s.wait = .2; }
     return false;
@@ -315,7 +320,7 @@ export function createRankedEffects(api, match) {
           }
           s.wait -= dt;
           if (s.wait > 1e-9) { visuals.updateShot(s.mesh, s.vel, s.age, true, s.wait); continue; }
-          explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall });
+          explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, deviceShot:s.deviceShot });
           retire(s); shots.splice(i, 1); continue;
         }
         if (s.releaseStart) {

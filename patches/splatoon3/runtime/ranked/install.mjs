@@ -1,8 +1,9 @@
 import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } from './rainmaker-shot-origin.mjs';
+import { admitRainmakerHostEvents } from './rainmaker-device-contact.mjs';
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
-import { RankedEngine, isRankedMode, OWNED_RANKED_FRAME } from './engine.mjs';
+import { RankedEngine, isRankedMode, OWNED_RANKED_FRAME, OWNED_RANKED_ACTOR, OWNED_RANKED_BLOCKED } from './engine.mjs';
 import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
 import { installRankedBots } from './bots.mjs';
@@ -59,6 +60,7 @@ export function installRanked(context) {
           playRankedEvent.call(this, event, false);
         } else {
           const events = this.ranked.events.splice(0);
+          if (nm?.isHost) admitRainmakerHostEvents(nm, this, events, nm.myId);
           this.playRankedEvents(events);
           const singleInternal = nm?.isHost && events.length === 1 && (events[0].kind === 'special-gain' || events[0].kind === 'zone-capture');
           const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
@@ -192,6 +194,7 @@ export function buildFrame(match, api) {
       floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
       blocked: (a, b) => match.rankedWorld.blocked(a, b) };
     Object.defineProperty(frame, OWNED_RANKED_FRAME, { value: frame.inputs });
+    Object.defineProperty(frame, OWNED_RANKED_BLOCKED, { value: null, writable: true });
     scratch = match._rankedFrameScratch = { frame, rows: new WeakMap(), inputIds: [] };
   }
   const frame = scratch.frame, inputs = frame.inputs, actors = frame.actors, nm = api.G.netm;
@@ -200,7 +203,11 @@ export function buildFrame(match, api) {
   for (let index = 0; index < match.actors.length; index++) {
     const a = match.actors[index];
     let owned = scratch.rows.get(a);
-    if (!owned) { owned = { row: { pos: [0, 0, 0] }, input: { fire: false, throw: false, aim: null } }; scratch.rows.set(a, owned); }
+    if (!owned) {
+      owned = { row: { pos: [0, 0, 0] }, input: { fire: false, throw: false, aim: null } };
+      Object.defineProperty(owned.row, OWNED_RANKED_ACTOR, { value: owned.row.pos });
+      scratch.rows.set(a, owned);
+    }
     const id = actorId(a), received = a.remote && nm?.isHost ? rankedInputFor(nm.rankedInputs?.get(id),a,match,nm) : a._rankedInput;
     const age = a.remote && received ? api.G.time - received.at : 0;
     const cmd = !a.remote || Number.isFinite(age) && age >= 0 && age < .75 ? received : null;
@@ -232,6 +239,7 @@ export function buildFrame(match, api) {
     actors[index] = row;
   }
   const world = match.rankedWorld;
+  frame[OWNED_RANKED_BLOCKED] = world instanceof RankedWorld && world.blocked === RankedWorld.prototype.blocked ? frame.blocked : null;
   frame.zoneCoverage = match.mode === 'zones' ? world.zoneCoverage()
     : (world._emptyZoneCoverage ??= Object.freeze((world.stage?.zones || []).map(() => Object.freeze([0, 0]))));
   frame.barrierHits = match.rankedBarrierHits.length ? match.rankedBarrierHits.splice(0)

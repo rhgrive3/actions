@@ -134,21 +134,25 @@ function parseKtxTexture(loader,bytes,signal,finished=()=>{}){
  });
 }
 async function prebuiltCompressedTexture(variant,packs,renderer,signal,limit){
- const bytes=await packs.slice(variant,signal);
+ const entry=ktx2Loader(renderer);entry.pending++;
+ const finished=()=>{entry.pending--;releaseKtx2(entry);};
+ let loader;
+ try{
+  if(signal?.aborted)throw new DOMException('Aborted','AbortError');
+  if(entry.failed)throw entry.failed;
+  loader=await entry.loader;await loader.init?.();
+ }catch(error){
+  if(error?.name!=='AbortError'){entry.failed=error;entry.retryAt=Date.now()+30000;entry.retired=true;}
+  finished();throw error;
+ }
+ // A known loader failure must not fetch/copy another verified texture pack.
+ let bytes;
+ try{bytes=await packs.slice(variant,signal);}catch(error){finished();throw error;}
  // KTX2Loader transfers its input buffer. Keep a retry copy only for a
  // universal Basis texture whose advertised capped base could need RGBA32.
  let width=variant.width,height=variant.height;
  while(Number.isFinite(limit)&&Math.max(width,height)>limit&&(width>1||height>1)){width=Math.max(1,Math.floor(width/2));height=Math.max(1,Math.floor(height/2));}
  const retry=(!blockDimension(width)||!blockDimension(height))&&bytes.byteLength>=48&&new DataView(bytes).getUint32(12,true)===0?bytes.slice(0):null;
- const entry=ktx2Loader(renderer);entry.pending++;
- const finished=()=>{entry.pending--;releaseKtx2(entry);};
- let loader;
- try{
-  if(entry.failed)throw entry.failed;
-  loader=await entry.loader;await loader.init?.();
- }catch(error){
-  entry.failed=error;entry.retryAt=Date.now()+30000;entry.retired=true;finished();throw error;
- }
  // Aborting settles the caller before KTX2's worker finishes. Its callback
  // still owns the loader until parseKtxTexture reports actual completion.
  let texture=await parseKtxTexture(loader,bytes,signal,finished);

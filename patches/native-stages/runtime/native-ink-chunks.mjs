@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {consumeNativeWork,consumeNativeWorkAsync} from './native-work.mjs';
 
 // Reconstruct source-order runs directly into the existing GPU index array.
 function writeIdentityRange(target, out, start, end) {
@@ -25,7 +26,8 @@ function publishIndexRange(attribute, dirty, count) {
  * source attributes and no clipped, simplified or regenerated positions. A
  * triangle crossing a tile boundary stays whole; its actual bounds control
  * culling. The tile size has no relation to retail collision or paint cells. */
-export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,boundsOnly=false){
+export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,boundsOnly=false){return consumeNativeWork(partitionNativeInkSteps(geometry,tileSize,triangleTile,boundsOnly));}
+function* partitionNativeInkSteps(geometry,tileSize=16,triangleTile=null,boundsOnly=false){
  if(!Number.isFinite(tileSize)||tileSize<=0)throw new RangeError('Invalid native ink tile size');
  const p=geometry.getAttribute('position'),groups=new Map();
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
@@ -37,6 +39,7 @@ export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,bounds
   p.getX===proto.getX&&p.getY===proto.getY&&p.getZ===proto.getZ;
  const array=raw?p.array:null,stride=p.isInterleavedBufferAttribute?p.data.stride:p.itemSize,offset=p.isInterleavedBufferAttribute?p.offset:0;
  for(let i=0;i<p.count;i+=3){
+  if(i&&i%768===0)yield;
   const ia=i*stride+offset,ib=ia+stride,ic=ib+stride;
   const ax=raw?array[ia]:p.getX(i),ay=raw?array[ia+1]:p.getY(i),az=raw?array[ia+2]:p.getZ(i);
   const bx=raw?array[ib]:p.getX(i+1),by=raw?array[ib+1]:p.getY(i+1),bz=raw?array[ib+2]:p.getZ(i+1);
@@ -73,7 +76,12 @@ export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,bounds
  * original Mesh. Attributes, full bounds, transparent sort position and material
  * stay intact, including where source triangles overlap across tile boundaries. */
 export class NativeInkMesh extends THREE.Mesh {
-  constructor(geometry, material, tileSize = 16, {willBindPaint=false} = {}) {
+  static async create(geometry,material,tileSize=16,options={},work={}){
+    const triangleTile=new Uint32Array(geometry.getAttribute('position').count/3);
+    const chunks=await consumeNativeWorkAsync(partitionNativeInkSteps(geometry,tileSize,triangleTile,true),work);
+    return new NativeInkMesh(geometry,material,tileSize,{...options,preparedPartition:{geometry,triangleTile,chunks}});
+  }
+  constructor(geometry, material, tileSize = 16, {willBindPaint=false,preparedPartition=null} = {}) {
     super(geometry, material);
     this.name = 'native-game-ink';
     this.tileSize = tileSize;
@@ -83,6 +91,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._faceCulling = true;
     this._ready = true;
     this._deferRunTables=willBindPaint;
+    this._preparedPartition=preparedPartition;
     this.geometry = geometry;
     this.onBeforeRender = (_renderer, scene, camera) => {
       // GTAO normal/depth override must not render transparent paint as opaque.
@@ -133,8 +142,9 @@ export class NativeInkMesh extends THREE.Mesh {
   set geometry(next) {
     if (!this._ready) { this._geometry = next; return; }
     const triCount = next.getAttribute('position').count / 3;
-    const triangleTile = new Uint32Array(triCount);
-    const chunks = partitionNativeInk(next, this.tileSize,triangleTile,true);
+    const prepared=this._preparedPartition;this._preparedPartition=null;
+    const triangleTile = prepared?.geometry===next?prepared.triangleTile:new Uint32Array(triCount);
+    const chunks = prepared?.geometry===next?prepared.chunks:partitionNativeInk(next, this.tileSize,triangleTile,true);
     this._detachPaint();
     this._disposeChunks();
     this._geometry = next;

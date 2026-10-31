@@ -9,6 +9,8 @@ const WIRE_MAJOR = '2';
 const START_ADMISSION_COMPATS = new Set([
   'iw-gameplay-20261023-start-admission-v1',
   'iw-gameplay-20261024-spawn-start-admission-v1',
+  'iw-gameplay-20261030-support-contact-v1',
+  'iw-gameplay-20261030-device-source-v2',
 ]);
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 const COMPAT_TOKEN = /^[a-zA-Z0-9_-]{8,80}$/;
@@ -18,6 +20,9 @@ const FRAME_RATE = 80, FRAME_BURST = 160;
 const BYTE_RATE = 256 * 1024, BYTE_BURST = 512 * 1024;
 const MAX_BACKLOG_BYTES = 512 * 1024;
 const JOIN_RATE = 4, JOIN_BURST = 16;
+const hostDirectedControl = kind => kind === 'me' || kind === 'ready' || kind === 'bhit';
+const hostOnlyControl = kind => kind === 'lobby' || kind === 'go' || kind === 'st'
+  || kind === 'res' || kind === 'end' || kind === 'own';
 import { validNetworkAppearance } from '../../patches/reliability/session-admission.mjs';
 import { utf8ByteLength } from '../../patches/network-replication/utf8-length.mjs';
 const decoder = new TextDecoder();
@@ -97,6 +102,8 @@ export class RoomDurableObject {
     this.compat = null;
     this.joinBudgetAt = Date.now();
     this.joinsLeft = JOIN_BURST;
+    this.rejectedJoinBudgetAt = Date.now();
+    this.rejectedJoinsLeft = JOIN_BURST;
     this.roomBudgetAt = Date.now();
     this.roomFramesLeft = FRAME_BURST * MAX_ROOM_MEMBERS;
     this.roomBytesLeft = BYTE_BURST * MAX_ROOM_MEMBERS;
@@ -137,6 +144,13 @@ export class RoomDurableObject {
         this._restoredRoomBudgetAt = this.roomBudgetAt = att.roomBudgetAt;
         this.roomFramesLeft = same ? Math.min(this.roomFramesLeft, att.roomFramesLeft) : att.roomFramesLeft;
         this.roomBytesLeft = same ? Math.min(this.roomBytesLeft, att.roomBytesLeft) : att.roomBytesLeft;
+      }
+      if (Number.isFinite(att.rejectedJoinBudgetAt) && Number.isFinite(att.rejectedJoinsLeft)
+          && att.rejectedJoinsLeft >= 0 && att.rejectedJoinsLeft <= JOIN_BURST
+          && (this._restoredRejectedJoinBudgetAt === undefined || att.rejectedJoinBudgetAt > this._restoredRejectedJoinBudgetAt
+            || (att.rejectedJoinBudgetAt === this._restoredRejectedJoinBudgetAt && att.rejectedJoinsLeft < this.rejectedJoinsLeft))) {
+        this._restoredRejectedJoinBudgetAt = this.rejectedJoinBudgetAt = att.rejectedJoinBudgetAt;
+        this.rejectedJoinsLeft = att.rejectedJoinsLeft;
       }
       if (att.compat && (!this.compat || att.isHost)) this.compat = att.compat;
       if (typeof att.locked === 'boolean' && (att.isHost || !this.hostId)) this.locked = att.locked;
@@ -183,6 +197,7 @@ export class RoomDurableObject {
         relayClock: m.relayClock === true,
         emoteAt: m.emoteAt ?? null,
         ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft,
+          rejectedJoinBudgetAt: this.rejectedJoinBudgetAt, rejectedJoinsLeft: this.rejectedJoinsLeft,
           roomBudgetAt: this.roomBudgetAt, roomFramesLeft: this.roomFramesLeft, roomBytesLeft: this.roomBytesLeft } : {}),
       };
       const previous = m.attachmentSnapshot;
@@ -199,6 +214,10 @@ export class RoomDurableObject {
   }
 
   _memberBySocket(ws) {
+    if (this.members.size >= 5) {
+      const member = this.socketBudgets.get(ws);
+      if (member?.ws === ws && this.members.get(member.id) === member) return member;
+    }
     for (const m of this.members.values()) {
       if (m.ws === ws) return m;
     }
@@ -232,8 +251,12 @@ export class RoomDurableObject {
     if (!isCreate && this.members.size > 0 && compat !== this.compat)
       return new Response('Incompatible game version: refresh this tab', { status: 409 });
 
-    // Room-wide admission limits cover JOIN/LEAVE fanout, before socket allocation.
-    if (!this._admitJoin()) return new Response('Room reconnect limit; try again shortly', { status: 429 });
+    // Known rejections cannot spend the legitimate JOIN/fanout budget. They
+    // have the same bounded burst/rate in an independent, hibernation-safe lane.
+    const rejected = isCreate ? this.members.size > 0
+      : this.members.size === 0 || this.locked || this.members.size >= MAX_ROOM_MEMBERS;
+    if (!(rejected ? this._admitRejectedJoin() : this._admitJoin()))
+      return new Response('Room reconnect limit; try again shortly', { status: 429 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -283,6 +306,16 @@ export class RoomDurableObject {
       this.joinsLeft--;
       this._syncMemberAttachment(this.members.get(this.hostId));
     }
+    return true;
+  }
+
+  _admitRejectedJoin() {
+    const at = Date.now(), elapsed = Math.max(0, (at - this.rejectedJoinBudgetAt) / 1000);
+    this.rejectedJoinsLeft = Math.min(JOIN_BURST, this.rejectedJoinsLeft + elapsed * JOIN_RATE);
+    this.rejectedJoinBudgetAt = at;
+    if (this.rejectedJoinsLeft < 1) return false;
+    this.rejectedJoinsLeft--;
+    this._syncMemberAttachment(this.members.get(this.hostId));
     return true;
   }
 
@@ -471,8 +504,9 @@ export class RoomDurableObject {
       }
       let forward, stamped;
       const stampTime = Date.now();
+      const onlyHost = hostDirectedControl(data.k), hostTarget = this.hostId;
       for (const [targetId, member] of this.members) {
-        if (targetId !== id) {
+        if (targetId !== id && (!onlyHost || targetId === hostTarget)) {
           if (!relaySend(member.ws, member.relayClock
             ? (stamped ??= `m|${id}|@${stampTime}|${payload}`)
             : (forward ??= `m|${id}|${payload}`))) {
@@ -490,10 +524,12 @@ export class RoomDurableObject {
     if (s.startsWith('s|')) {
       const firstPipe = s.indexOf('|', 2);
       if (firstPipe !== -1) {
+        if (firstPipe - 2 > 40) return;
         const targetId = s.slice(2, firstPipe);
         const payload = s.slice(firstPipe + 1);
         const data = validRelayPayload(payload);
-        if (!data || data.k === 'start' || targetId.length > 40 || !this._admitSemantic(m, data)) return;
+        if (!data || data.k === 'start' || !this._admitSemantic(m, data)) return;
+        if (hostDirectedControl(data.k) && targetId !== this.hostId) return;
         const target = this.members.get(targetId);
         let delivered = false;
         if (target) {
@@ -525,6 +561,7 @@ export class RoomDurableObject {
   }
 
   _admitSemantic(member, data) {
+    if (hostOnlyControl(data.k) && member.id !== this.hostId) return false;
     if (data.k === 'me' && !validNetworkAppearance(data.style)) return false;
     if (data.k !== 'emote') return true;
     if (this.locked || !['booyah', 'wave', 'dance', 'flex'].includes(data.n)) return false;

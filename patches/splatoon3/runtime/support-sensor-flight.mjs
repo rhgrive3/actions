@@ -1,3 +1,4 @@
+import { segmentCapsuleEntry } from './projectile-collision.mjs';
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 import { bombReleasePosition, bombPreviewPosition, bombPredictionPosition } from './bomb-motion.mjs';
 import { gearCurve } from './gear.mjs';
@@ -43,14 +44,18 @@ export function stepPointSensorFlight(sensor, api, dt) {
     const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
     let body=null,best=hit?.hit?sensor.prev.distanceTo(hit.point):Infinity;
     const reach=PLAYER.radius+.2,minX=Math.min(sensor.prev.x,sensor.pos.x)-reach,maxX=Math.max(sensor.prev.x,sensor.pos.x)+reach,
-      minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach,maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach;
+      minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach,maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach,
+      lowY=Math.min(sensor.prev.y,sensor.pos.y),highY=Math.max(sensor.prev.y,sensor.pos.y);
     for(const actor of G.actors||[]){
-      if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
+      if(!actor.alive||actor.team===sensor.team)continue;
       if(actor.pos.x<minX||actor.pos.x>maxX||actor.pos.z<minZ||actor.pos.z>maxZ)continue;
+      const baseY=actor.pos.y+(actor.smoothY||0),height=actor.form==='squid'?PLAYER.squidHeight:PLAYER.height;
+      const axisLo=baseY+PLAYER.radius,axisHi=baseY+Math.max(PLAYER.radius,height-PLAYER.radius);
+      const yPad=32*Number.EPSILON*Math.max(1,Math.abs(lowY),Math.abs(highY),Math.abs(axisLo),Math.abs(axisHi),Math.abs(reach));
+      if(Number.isFinite(yPad)&&reach>=0&&(highY<axisLo-reach-yPad||lowY>axisHi+reach+yPad))continue;
       const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
-      const result=scratch.result;result.t=0;result.dist=Infinity;
-      Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);
-      if(result.dist<=reach&&length*result.t<best){body=scratch.point.copy(sensor.prev).addScaledVector(delta,result.t);best=length*result.t;}
+      const t=segmentCapsuleEntry(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,reach);
+      if(Number.isFinite(t)&&length*t<best){body=scratch.point.copy(sensor.prev).addScaledVector(delta,t);best=length*t;}
     }
     if(body){sensor.pos.copy(body);return {kind:'actor',outcome:'contact',point:body,normal:null};}
     if(hit?.hit){sensor.pos.copy(hit.point).addScaledVector(hit.normal,.03);return {kind:'world',outcome:'contact',point:hit.point,normal:hit.normal};}

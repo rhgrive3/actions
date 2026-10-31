@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "description": "Exact later render queue owner; older reviewed motion and historical fixture bytes remain unchanged.",
+  "owners": {
+    "src/game/character.js": {
+      "currentSha256": "5322bea455b457f554f9d78bc0d241838fb68e80bf05ebdbbb4a06ff226ffaf8",
+      "priorSha256": "afa6b8d9fa9c805434a46f52622c09ee6a191563612cfac031f03e99e6f171de",
+      "hunks": [
+        {
+          "label": "native foot damping advances elapsed time only",
+          "current": "f.pitch = damp(f.pitch, 0, 12, dt);",
+          "prior": "f.pitch = damp(f.pitch, 0, 12, 1 / 60);",
+          "count": 1
+        },
+        {
+          "label": "accept native foot render delta",
+          "current": "  _footPose(f, dt) {",
+          "prior": "  _footPose(f) {",
+          "count": 1
+        },
+        {
+          "label": "native idle foot pose uses caller delta",
+          "current": "this._footPose(F[0], dt); this._footPose(F[1], dt);",
+          "prior": "this._footPose(F[0]); this._footPose(F[1]);",
+          "count": 2
+        },
+        {
+          "label": "share step offset damping exponential",
+          "current": "    const stepAlpha = 1 - Math.exp(-2.2 * dt);\n    this.stepOfsX = lerp(this.stepOfsX, 0, stepAlpha); this.stepOfsZ = lerp(this.stepOfsZ, 0, stepAlpha);",
+          "prior": "    this.stepOfsX = damp(this.stepOfsX, 0, 2.2, dt); this.stepOfsZ = damp(this.stepOfsZ, 0, 2.2, dt);",
+          "count": 1
+        },
+        {
+          "label": "reuse enemy ink damping exponential",
+          "current": "    this.wGoo = lerp(this.wGoo, s.inEnemyInk && this.grounded && kid ? 1 : 0, alpha6);",
+          "prior": "    this.wGoo = damp(this.wGoo, s.inEnemyInk && this.grounded && kid ? 1 : 0, 6, dt);",
+          "count": 1
+        },
+        {
+          "label": "share low ink damping exponential",
+          "current": "    const alpha6 = 1 - Math.exp(-6 * dt), alpha8 = 1 - Math.exp(-8 * dt);\n    this.wGlow = lerp(this.wGlow, (s.special ?? 0) >= 0.999 ? 1 : 0, alpha6);\n    this.wLow = lerp(this.wLow, s.lowInk ? 1 : 0, alpha8);\n    this.inkS = lerp(this.inkS, clamp(s.ink ?? 1, 0, 1), alpha8);",
+          "prior": "    this.wGlow = damp(this.wGlow, (s.special ?? 0) >= 0.999 ? 1 : 0, 6, dt);\n    this.wLow = damp(this.wLow, s.lowInk ? 1 : 0, 8, dt);\n    this.inkS = damp(this.inkS, clamp(s.ink ?? 1, 0, 1), 8, dt);",
+          "count": 1
+        },
+        {
+          "label": "share direction damping exponential",
+          "current": "      const directionAlpha = 1 - Math.exp(-10 * dt);\n      this.mdx = lerp(this.mdx, this.kgx * il, directionAlpha); this.mdz = lerp(this.mdz, this.kgz * il, directionAlpha);",
+          "prior": "      this.mdx = damp(this.mdx, this.kgx * il, 10, dt); this.mdz = damp(this.mdz, this.kgz * il, 10, dt);",
+          "count": 1
+        },
+        {
+          "label": "hair gravity conservative hypot guard",
+          "current": "      // Preserve hypot's scaling/rounding for boundary and non-finite inputs.\n      const gravityLength2 = tx * tx + ty * ty + tz * tz;\n      if (!(Number.isFinite(gravityLength2) && gravityLength2 < 0.62 * 0.62 - 1e-10)) {\n        const tl = Math.hypot(tx, ty, tz); if (tl > 0.62) { tx *= 0.62 / tl; ty *= 0.62 / tl; tz *= 0.62 / tl; }\n      }",
+          "prior": "      const tl = Math.hypot(tx, ty, tz); if (tl > 0.62) { tx *= 0.62 / tl; ty *= 0.62 / tl; tz *= 0.62 / tl; }",
+          "count": 1
+        }
+      ]
+    },
+    "src/game/character-face.js": {
+      "currentSha256": "1405699e8eea1a65c5f47274799ff832bb1fe79b27510c2627ea9d1395076417",
+      "priorSha256": "9ba29e0f157b02a17463cd32759f2608d392e1f894611f385213c4b41d76b111",
+      "hunks": [
+        {
+          "label": "reuse eye occluder coordinates without changing point order or thinning",
+          "current": "  for (const F of EYE_FRAMES) for (const point of eyeAOProxyPoints(F)) pts.push(point);",
+          "prior": "  const s = new V3();\n  for (const F of EYE_FRAMES) for (let i = 0; i < 260; i++) {\n    const z = 1 - (i + 0.5) / 260 * 1.2, r = Math.sqrt(Math.max(0, 1 - z * z)), ph = i * 2.39996;\n    if (z < -0.2) continue; s.set(r * Math.cos(ph), r * Math.sin(ph), z); pts.push(fromEye(F, s, new V3()));\n  }",
+          "count": 1
+        },
+        {
+          "label": "cache eye occluders with exported frame mutation invalidation",
+          "current": "const eyeAOProxies = new WeakMap();\nfunction eyeAOProxyPoints(F) {\n  let cached = eyeAOProxies.get(F);\n  const matrix = F.M.elements, center = F.C;\n  let same = cached && Object.is(cached.x, center.x) && Object.is(cached.y, center.y) && Object.is(cached.z, center.z);\n  if (same) for (let i = 0; i < 9; i++) if (!Object.is(cached.matrix[i], matrix[i])) { same = false; break; }\n  if (same) return cached.points;\n  const points = [], s = new V3();\n  for (let i = 0; i < 260; i++) {\n    const z = 1 - (i + 0.5) / 260 * 1.2, r = Math.sqrt(Math.max(0, 1 - z * z)), ph = i * 2.39996;\n    if (z < -0.2) continue; s.set(r * Math.cos(ph), r * Math.sin(ph), z); points.push(fromEye(F, s, new V3()));\n  }\n  eyeAOProxies.set(F, { x: center.x, y: center.y, z: center.z, matrix: matrix.slice(), points });\n  return points;\n}\nfunction bakeAO(acc, N) {",
+          "prior": "function bakeAO(acc, N) {",
+          "count": 1
+        }
+      ]
+    },
+    "src/game/character-geo.js": {
+      "currentSha256": "1362446219107d57da2bcb81b42634c78f42f0d75f63c9245c9a69ac661e502e",
+      "priorSha256": "d07bdae8f7d0f57661791362664b1fda802694001c385baf05ae91bf1f403028",
+      "hunks": [
+        {
+          "label": "revolve preserves angular evaluation order and shares rows",
+          "current": "function revolve(profile, seg) {\n  // TAU multiplication differs in rounding from sweep's left-associated PI*2.\n  const sine = [], cosine = [];\n  for (let i = 0; i < seg; i++) { const th = (i / seg) * TAU; sine.push(Math.sin(th)); cosine.push(Math.cos(th)); }\n  const rows = profile.map(([r, y]) => { const row = []; for (let i = 0; i < seg; i++) { row.push(new V3(r * sine[i], y, r * cosine[i])); } return row; });",
+          "prior": "function revolve(profile, seg) {\n  const rows = profile.map(([r, y]) => { const row = []; for (let i = 0; i < seg; i++) { const th = (i / seg) * TAU; row.push(new V3(r * Math.sin(th), y, r * Math.cos(th))); } return row; });",
+          "count": 1
+        },
+        {
+          "label": "polar rings use cached trigonometry",
+          "current": "const u = (angularBasis ? angularBasis[s * 2] : Math.cos(th)) * rr, v = (angularBasis ? angularBasis[s * 2 + 1] : Math.sin(th)) * rr; fn(u, v, rr, p);",
+          "prior": "const u = Math.cos(th) * rr, v = Math.sin(th) * rr; fn(u, v, rr, p);",
+          "count": 1
+        },
+        {
+          "label": "reuse exact polar angular basis",
+          "current": "function polarPatch(rings, segs, fn) {\n  const angularBasis = Number.isInteger(segs) && segs > 0 && segs <= 128 ? iwSweepBasis(segs) : null;",
+          "prior": "function polarPatch(rings, segs, fn) {",
+          "count": 1
+        }
+      ]
+    },
+    "src/game/motion/source-controller.js": {
+      "currentSha256": "ea97a90856543325e0c529dcb55a4d3b250f4d3e98ac85b9fad698be42e52676",
+      "priorSha256": "da3f2af95685a54c6a21604d8b9bf516cbd0171d10029d335cc8bdbc62796261",
+      "hunks": [
+        {
+          "label": "reuse cached upper-body template with private copy",
+          "current": "   this.upperMask=upperMaskFor(bank);",
+          "prior": "   this.upperMask=bank.bones.map((b,i)=>{for(let p=i;p>=0;p=bank.bones[p].parent)if(bank.bones[p].name==='spine1')return true;return false;});",
+          "count": 1
+        },
+        {
+          "label": "cache upper-body traversal by motion bank",
+          "current": "const SIDES=['','Back','Left','Right'];\nconst SOURCE_UPPER_MASKS=new WeakMap();\nfunction upperMaskFor(bank){\n let mask=SOURCE_UPPER_MASKS.get(bank);\n if(!mask){mask=bank.bones.map((b,i)=>{for(let p=i;p>=0;p=bank.bones[p].parent)if(bank.bones[p].name==='spine1')return true;return false;});SOURCE_UPPER_MASKS.set(bank,mask);}\n // Keep controller-owned mutation semantics for tools/debug callers.\n return mask.slice();\n}",
+          "prior": "const SIDES=['','Back','Left','Right'];",
+          "count": 1
+        },
+        {
+          "label": "reuse the exact squid blend predicate",
+          "current": "   else if(blendClip){",
+          "prior": "   else if(this.squidBlendTime<HOST_MOTION.transitionSeconds&&!name.startsWith('Sqd_To')){",
+          "count": 1
+        },
+        {
+          "label": "skip sampled squid FK only before guaranteed replacement FK",
+          "current": "   const blendForm=(name==='Sqd_ToHuman'||name==='Sqd_ToSquid'&&this.returnInterrupted)&&this.formTime<this.formDuration;\n   const blendClip=this.squidBlendTime<HOST_MOTION.transitionSeconds&&!name.startsWith('Sqd_To');\n   // Both blend paths overwrite world transforms, then run the required final FK.\n   this.squidBank.sample(name,frame,this.squidPose,undefined,!(blendForm||blendClip));\n   if(blendForm){",
+          "prior": "   this.squidBank.sample(name,frame,this.squidPose);\n   if((name==='Sqd_ToHuman'||name==='Sqd_ToSquid'&&this.returnInterrupted)&&this.formTime<this.formDuration){",
+          "count": 1
+        },
+        {
+          "label": "source teleport conservative squared guard",
+          "current": "  let teleport=!this.rootSet;\n  if(!teleport){\n   const limit=HOST_MOTION.teleportDistance,d2=dx*dx+dy*dy+dz*dz,limit2=limit*limit;\n   teleport=Number.isFinite(d2)&&Math.abs(d2-limit2)>1e-10?d2>limit2:Math.hypot(dx,dy,dz)>limit;\n  }",
+          "prior": "  const teleport=!this.rootSet||Math.hypot(dx,dy,dz)>HOST_MOTION.teleportDistance;",
+          "count": 1
+        }
+      ]
+    }
+  }
+}

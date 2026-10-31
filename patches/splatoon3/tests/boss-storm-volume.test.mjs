@@ -25,11 +25,11 @@ test('horizontal, visibility, dead, remote and adopted-cloud ownership contracts
  for(const change of [f=>f.G.boss.pos.x=12.401,f=>f.G.boss.dead=true,f=>f.G.boss.visible=false]){const f=fixture({bossY:90});change(f);f.p._updateClouds(1/60);assert.equal(f.bossTotal(),0);}
  const remote=fixture({bossY:90,remoteOwner:true}),ghost=fixture({bossY:90,ghost:true,remoteOwner:true}),adopted=fixture({bossY:90,ghost:true,remoteOwner:false});for(const f of [remote,ghost,adopted])f.p._updateClouds(1/60);assert.equal(remote.bossTotal(),0);assert.equal(ghost.bossTotal(),0);assert.equal(adopted.bossTotal(),.4);
 });
-test('legacy five-argument calls and existing batch/flush body are preserved; no cover/S3 parity is asserted',()=>{
+test('legacy five-argument calls and batch/flush are preserved; custom-world cover fails open, no S3 parity is asserted',()=>{
  const f=fixture({bossY:-1000});f.G.boss.rain(f.owner,0,0,10,.4);assert.equal(f.bossTotal(),.4);
  const before=rawBoss,after=bossCode;const a=before.indexOf('  _flushRain(dt)'),b=after.indexOf('  _flushRain(dt)');const endA=before.indexOf('\n  }',a)+4,endB=after.indexOf('\n  }',b)+4;assert.equal(after.slice(b,endB),before.slice(a,endA));
  const start=after.indexOf('  _flushRain(dt)'),end=after.indexOf('\n  }',start)+4;const Flush=vm.runInNewContext('class Flush{'+after.slice(start,end)+'};Flush');const calls=[];const obj={_rain:new Map([[f.owner,.8]]),_rainT:0,hit:(...args)=>calls.push(args)};Flush.prototype._flushRain.call(obj,1/60);assert.equal(calls.length,1);assert.equal(calls[0][0],f.owner);assert.equal(calls[0][1],.8);assert.equal(obj._rain.size,0);
- const covered=fixture({bossY:90,cover:true});covered.p._updateClouds(1/60);assert.equal(covered.total(),0);assert.equal(covered.bossTotal(),.4,'Boss cover remains intentionally outside this partial guard');
+ const covered=fixture({bossY:90,cover:true});covered.p._updateClouds(1/60);assert.equal(covered.total(),0);assert.equal(covered.bossTotal(),.4,'Custom physics is uncertified; real canonical cover is exercised in boss-storm-cover.test.mjs');
 });
 
 test('registered production owners are not silently reapplied and unrelated source is unchanged',()=>{assert.throws(()=>adaptBossStormVolume('src/game/weapons.js',weapons),/expected one/);assert.throws(()=>adaptBossStormVolume('src/boss/boss.js',bossCode),/expected one/);assert.equal(adaptBossStormVolume('styles/ui.css','UNCHANGED'),'UNCHANGED');});

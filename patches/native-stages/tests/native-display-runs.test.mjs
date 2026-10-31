@@ -11,6 +11,7 @@ async function load(url) {
   '../../../src/world/levelMaterial.js':new vm.SyntheticModule(['createLevelMaterial'],function(){this.setExport('createLevelMaterial',()=>{throw Error('unused');});},{context}),
   './native-paint-detail.mjs':new vm.SyntheticModule(['enableNativePaintDetail'],function(){this.setExport('enableNativePaintDetail',()=>{throw Error('unused');});},{context}),
  };
+ external['./native-work.mjs']=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-work.mjs',import.meta.url),'utf8'),{context});
  const module=new vm.SourceTextModule(fs.readFileSync(url,'utf8'),{context});
  await module.link(name=>external[name]);await module.evaluate();
  return module.namespace.installNativeDisplayCulling;

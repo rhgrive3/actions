@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-30T21:11:23.339229+00:00",
+  "activeNodeChromium": [],
+  "nodeChromiumZombieEntries": 138,
+  "originalPidStates": {
+    "47574": "State:\tZ (zombie)",
+    "47575": "absent",
+    "47708": "absent",
+    "47664": "absent"
+  },
+  "exitCode": 0,
+  "rawSha256": "4c0e88091f4f3680f0bf9ab67377d48bffc327745205169a8a8fdd42721809c8",
+  "throttle": {
+    "warmups": {
+      "windows": 4,
+      "throttledWindows": 0,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    },
+    "aa": {
+      "windows": 4,
+      "throttledWindows": 0,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    },
+    "ab": {
+      "windows": 4,
+      "throttledWindows": 0,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    },
+    "all": {
+      "windows": 12,
+      "throttledWindows": 0,
+      "nr_throttled": 0,
+      "throttled_usec": 0
+    }
+  },
+  "fullMeasurementStarted": false
+}

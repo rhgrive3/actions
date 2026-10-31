@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { supportNativeProducer } from '../../network-replication/tests/support-native-producer-fixture.mjs';
 
 const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
 function world() {
@@ -23,13 +24,6 @@ function armed(owner, hz) {
   const s = f.G.projectiles.throwBomb(owner);
   for (let i = 0; i < hz * 2 && s.activeAt === null; i++) tick(hz);
   assert.notEqual(s.activeAt, null); return s;
-}
-function network(owner, target) {
-  const s = { myId: 'me', hostId: 'B', isHost: false, _members: new Set(['me', 'A', 'B']),
-    tr: { broadcast() { return true; }, sendTo() { return true; } } };
-  const n = new f.NetMatch(s, { id: 'sensor-epoch', mode: 'turf', map: 'tidewater' });
-  n.match = f.G.match; n.byNid = new Map([[7, owner], [2, target]]); f.G.netm = n;
-  owner.remote = true; n._setupActor(owner); return n;
 }
 
 for (const hz of [30, 60, 120]) test(`an active sensor can mark a genuinely new life of the same Actor, ${hz}Hz`, () => {
@@ -54,64 +48,90 @@ for (const hz of [30, 60, 120]) test(`sensor contact at/after area expiry cannot
   assert.equal(f.G.projectiles._s3SupportSensors.length, 0);
 });
 
-test('support packets use the native-admitted remote life rather than the stale local counter', () => {
-  const { owner, target } = world(), n = network(owner, target);
-  try {
-    owner.netLife = 0; owner.net.lastLife = 2;
-    n._play('A', [1, 'ks', 'p', 7, 1, 0, .7, 0, 0, 0, 1, 2]);
-    assert.equal(f.G.projectiles._s3SupportSensors.length, 1);
-    assert.equal(f.G.projectiles._s3SupportSensors[0].sourceLife, 2);
-    n._play('A', [1, 'ks', 'c', 7, 2, 0, 0, 1.6, 2]);
-    assert.equal(f.G.projectiles._s3SupportCoolers.length, 1);
-    const before = f.G.projectiles._s3SupportSensors.length;
-    n._play('A', [1, 'ks', 'p', 7, 3, 0, .7, 0, 0, 0, 1, 1]);
-    assert.equal(f.G.projectiles._s3SupportSensors.length, before, 'old life remains rejected');
-  } finally { n.dispose(); f.G.netm = null; }
+
+// A separate actual projectile collection produces the wire rows. Retiring it
+// leaves previously received fields intact, including simultaneous owner eras.
+function produce(x,run){
+  const {f}=x,receiver=f.G.projectiles,source=new f.Projectiles(new f.THREE.Scene());
+  f.G.projectiles=source;
+  try{return x.produce(run);}finally{source.clear();f.G.projectiles=receiver;}
+}
+function paidSensor(x,{life=x.owner.netLife||0}={}){
+  const {owner,nm,f}=x;owner.ink=100;x.deliver([],100,owner.special,0,{life});owner.weaponRunner.reset();
+  const rows=produce(x,()=>{
+    owner.weaponRunner.update(1/60,{sub:true,subReleased:false});
+    for(let i=0;i<30&&!nm.out.some(e=>e[1]==='ks'&&e[2]==='p');i++)
+      owner.weaponRunner.update(1/60,{sub:false,subReleased:i===0});
+  });
+  const birth=rows.find(e=>e[1]==='ks'&&e[2]==='p');assert.ok(birth,'native paid release records a Sensor birth');
+  const before=new Set(f.projectiles._s3SupportSensors||[]);
+  x.deliver(rows,owner.ink,owner.special,0,{life});
+  const sensor=f.projectiles._s3SupportSensors.find(s=>!before.has(s));
+  assert.ok(sensor?.ghost,'authenticated tick admits the receiver-owned flight');
+  for(let i=0;i<120&&sensor.activeAt===null;i++)x.step();
+  assert.notEqual(sensor.activeAt,null,'receiver collision must activate the field');
+  return {sensor,birth};
+}
+function remoteHandoff(x,next){
+  const {nm,owner}=x,previous=owner.owner;
+  nm.s._members.set(next,next);nm.s.hostId=next;nm.s.isHost=false;
+  nm.onLeave(previous,false);assert.equal(owner.owner,next);assert.equal(owner.remote,true);
+  owner.s3SupportSerial=0;
+}
+
+test('support packets use the native-admitted remote life rather than the stale local counter',async t=>{
+  const x=await supportNativeProducer(t),{f,owner,victim,nm}=x;victim.pos.set(100,0,100);
+  owner.netLife=0;x.deliver([],100,0,0,{life:2});assert.equal(owner.net.lastLife,2);assert.equal(owner.netLife,0);
+  nm._play('peer',[1,'ks','p',7,1,0,.7,0,0,0,1,2]);
+  assert.equal(f.projectiles._s3SupportSensors?.length||0,0,'bare replay cannot create a field even with the current life');
+  const {sensor,birth}=paidSensor(x,{life:2});assert.equal(sensor.sourceLife,2);
+  owner.special=owner.specialCost();x.deliver([],100,owner.special,0,{life:2});
+  const rows=produce(x,()=>{
+    owner._startSpecial();owner.intent.sub=true;owner._updateSpecial(1/60);owner.intent.sub=false;owner._updateSpecial(1/60);
+    for(let i=0;i<14&&owner.specialActive;i++)owner._updateSpecial(1/60);
+  });
+  assert.ok(rows.some(e=>e[1]==='ev'&&e[2]==='special:use'));assert.ok(rows.some(e=>e[1]==='ks'&&e[2]==='t'));
+  x.deliver(rows,100,owner.special,0,{life:2});
+  assert.equal(f.projectiles._s3SupportCoolerThrows.length,1,'native charged throw reaches the receiver');
+  for(let i=0;i<120&&!f.projectiles._s3SupportCoolers?.length;i++)x.step();
+  assert.equal(f.projectiles._s3SupportCoolers.length,1);assert.equal(f.projectiles._s3SupportCoolers[0].sourceLife,2);
+  const stale=structuredClone(birth);stale[4]+=100;stale[11]=1;
+  x.deliver([],100,0,0,{life:2});x.deliver([stale],55,0,0,{life:2});
+  assert.equal(f.projectiles._s3SupportSensors.length,1,'old-life birth is rejected despite a fresh resource debit');
 });
 
-test('replayed sensor contacts distinguish successive target lives and reject old-life claims', () => {
-  const { owner, target } = world(), n = network(owner, target);
-  try {
-    target.pos.set(0, 0, 0);
-    n._play('A', [1, 'ks', 'p', 7, 1, 0, .7, 0, 0, 0, 1, 0]);
-    n._play('A', [1, 'ks', 'm', 7, 1, 2, 0, 480, 0, 'l']);
-    assert.ok(target.s3.revealedUntil[0] > 0);
-    target.spawnAt(new f.THREE.Vector3(), 0);
-    n._play('A', [1, 'ks', 'm', 7, 1, 2, 0, 480, 0, 'l']);
-    assert.equal(target.s3.revealedUntil, undefined);
-    n._play('A', [1, 'ks', 'm', 7, 1, 2, target.netLife, 480, 0, 'l']);
-    assert.ok(target.s3.revealedUntil?.[0] > 0);
-  } finally { n.dispose(); f.G.netm = null; }
+test('authenticated sensor contacts distinguish successive target lives and reject old-life claims',async t=>{
+  const x=await supportNativeProducer(t),{f,owner,victim,nm}=x;victim.pos.set(100,0,100);
+  const {sensor}=paidSensor(x);victim.pos.copy(sensor.pos);victim.pos.y-=.7;x.step();
+  assert.ok(victim.s3.revealedUntil[0]>f.G.time);
+  const previous=victim.netLife||0,position=victim.pos.clone();
+  f.G.physics.groundProbe=()=>({hit:false});victim.character.color=victim.color;
+  victim.spawnAt(position,0);
+  assert.equal(victim.netLife,previous+1);assert.equal(victim.s3.revealedUntil,undefined);
+  const stale=[1000,'ks','m',7,sensor.seq,8,previous,480,sensor.sourceLife,'l',60000,1];
+  nm._play('peer',stale);assert.equal(victim.s3.revealedUntil,undefined,'bare replay has no admission');
+  x.deliver([stale],owner.ink,0);assert.equal(victim.s3.revealedUntil,undefined,'authenticated old-target-life claim remains rejected');
+  x.step();assert.ok(victim.s3.revealedUntil?.[0]>f.G.time,'receiver contact marks the new native life');
+  const until=victim.s3.revealedUntil[0];x.step();assert.equal(victim.s3.revealedUntil[0],until,'same-life contact does not extend the mark');
 });
 
-test('a sensor mark arriving at expiry cannot extend the ended field before the next cleanup tick', () => {
-  const { owner, target } = world(), n = network(owner, target);
-  try {
-    n._play('A', [1, 'ks', 'p', 7, 1, 0, .7, 0, 0, -1, 0, 0]);
-    const sensor = f.G.projectiles._s3SupportSensors[0];
-    for (let i = 0; i < 120 && sensor.activeAt === null; i++) tick(60);
-    assert.notEqual(sensor.activeAt, null);
-    target.pos.copy(sensor.pos); target.pos.y -= .7;
-    f.G.time = sensor.expires;
-    assert.equal(f.G.projectiles._s3SupportSensors.length, 1, 'expiry has not yet reached the collection cleanup');
-    n._play('A', [1, 'ks', 'm', 7, 1, 2, 0, 480, 0, 'l']);
-    assert.equal(target.s3.revealedUntil, undefined);
-  } finally { n.dispose(); f.G.netm = null; }
+test('a sensor mark arriving at expiry cannot extend the ended field before the next cleanup tick',async t=>{
+  const x=await supportNativeProducer(t),{f,owner,victim}=x;victim.pos.set(100,0,100);
+  const {sensor}=paidSensor(x);victim.pos.copy(sensor.pos);victim.pos.y-=.7;
+  f.G.time=sensor.expires-.05;
+  assert.equal(f.projectiles._s3SupportSensors.length,1,'expiry has not reached the collection cleanup');
+  x.deliver([[1000,'ks','m',7,sensor.seq,8,victim.netLife||0,480,sensor.sourceLife,'l',60000,1]],owner.ink,0);
+  assert.ok(f.G.time>=sensor.expires-1e-9);assert.equal(victim.s3.revealedUntil,undefined);
+  x.step();assert.equal(f.projectiles._s3SupportSensors.length,0);assert.equal(victim.s3.revealedUntil,undefined);
 });
 
-test('native peer departure retires the old support serial admission before a new owner starts', () => {
-  const { owner, target } = world(), n = network(owner, target);
-  try {
-    n._play('A', [1, 'ks', 'c', 7, 8, 0, 0, 1.6, 0]);
-    n._play('A', [1, 'ks', 'p', 7, 9, 0, .7, 0, 0, 0, 1, 0]);
-    n.onLeave('A', false);
-    assert.equal(owner.owner, 'B');
-    n._play('B', [1, 'ks', 'p', 7, 1, 0, .7, 0, 0, 0, 1, 0]);
-    assert.ok(f.G.projectiles._s3SupportSensors.some(s => s.seq === 1));
-    n._play('B', [1, 'ks', 'c', 7, 1, 0, 0, 1.6, 0]);
-    assert.equal(f.G.projectiles._s3SupportCoolers[0].seq, 1);
-    const count = f.G.projectiles._s3SupportSensors.length;
-    n._play('A', [1, 'ks', 'p', 7, 10, 0, .7, 0, 0, 0, 1, 0]);
-    assert.equal(f.G.projectiles._s3SupportSensors.length, count, 'former owner cannot keep authoring');
-  } finally { n.dispose(); f.G.netm = null; }
+test('native peer departure retires the old support serial admission before a new owner starts',async t=>{
+  const x=await supportNativeProducer(t),{f,owner,victim}=x;victim.pos.set(100,0,100);owner.s3SupportSerial=8;
+  const old=paidSensor(x);assert.equal(old.sensor.seq,9);
+  remoteHandoff(x,'host');owner.pos.x=30;
+  const current=paidSensor(x);assert.equal(current.sensor.seq,1);assert.notEqual(current.sensor.admission,old.sensor.admission);
+  victim.pos.copy(current.sensor.pos);victim.pos.y-=.7;x.step();assert.ok(victim.s3.revealedUntil?.[0]>f.G.time);
+  const count=f.projectiles._s3SupportSensors.length;
+  x.deliver([old.birth],55,0,0,{from:'peer'});
+  assert.equal(f.projectiles._s3SupportSensors.length,count,'former owner cannot keep authoring');
 });

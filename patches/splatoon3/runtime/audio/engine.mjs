@@ -13,7 +13,6 @@ import { usesStringerCharge, stringerChargeAudioLoop } from './stringer-charge-c
 import { installChargeAudioLifecycle, prewarmChargeCue } from './charge-audio-lifecycle.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
-const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
 const RECORDED_COMBAT_CUES=Object.freeze(['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']);
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
@@ -86,10 +85,18 @@ export function installWeaponAudioEngine(Engine){
       // LRU eviction or a failed first load must not leave a permanent "warm"
       // marker. Resident/in-flight/backoff/absent cues create no new requests.
       this._warmCombatCueBank=bank;
+      const combat=[];
       for(const cue of RECORDED_COMBAT_CUES){
-        if(bank.authorized.byEvent.has(cue+':fire') || loader?.inFlight?.has(cue+':fire') ||
+        if((loader?.isEventResident?.(cue,'fire') ?? bank.authorized.byEvent.has(cue+':fire')) || loader?.inFlight?.has(cue+':fire') ||
            loader?.retryPending?.(cue,'fire') || loader?.declares(cue,'fire')===false)continue;
-        loader?.ensure(cue,'fire')?.catch(()=>{});
+        combat.push({id:cue,event:'fire'});
+      }
+      // Shared cues remain required and owner-independent. Two-event batches
+      // overlap at most two decoders and leave the main priority request first.
+      for(let i=0;i<combat.length;i+=2){
+        const batch=combat.slice(i,i+2);
+        if(loader?.ensureMany)loader.ensureMany(batch)?.catch(()=>{});
+        else for(const cue of batch)loader?.ensure(cue.id,cue.event)?.catch(()=>{});
       }
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
@@ -170,14 +177,16 @@ export function installWeaponAudioEngine(Engine){
     // first playable hit for every weapon. Lightweight audio is decoded once
     // into the shared bounded bank. Tests/operator packs that do not declare
     // these independent cues may still use their own isolated sound fixtures.
-    // Keep a distinct source decode receipt per cue. Bundled loading can
-    // leave individual combat events unresident after a partial decode error;
-    // never admit a hit unless that exact recorded event is authorized.
-    for(const cue of RECORDED_COMBAT_CUES){
-      if(loader.declares(cue,'fire')!==true)continue;
-      const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
-      if(!bank.authorized.byEvent.has(cue+':fire')){
-        const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
+    // Batch only two shared events at a time, retaining an explicit residency
+    // receipt for every cue even when the transaction partially succeeds.
+    const combat=RECORDED_COMBAT_CUES.filter(cue=>loader.declares(cue,'fire')===true);
+    for(let i=0;i<combat.length;i+=2){
+      const batch=combat.slice(i,i+2);
+      const row=await audioLoadDeadline(loader.ensureMany
+        ?loader.ensureMany(batch.map(id=>({id,event:'fire'})),{priority:true})
+        :Promise.all(batch.map(id=>loader.ensure(id,'fire',{priority:true}))).then(results=>({errors:results.flatMap(r=>r?.errors||[])})),12000);
+      for(const cue of batch)if(!(loader.isEventResident?.(cue,'fire') ?? bank.authorized.byEvent.has(cue+':fire'))){
+        const why=row?.errors?.find(error=>error.id===cue)?.error||row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
       }
     }
@@ -221,7 +230,6 @@ export function installWeaponAudioEngine(Engine){
       // regular shot over a non-existent specialized synthesized sample.
       if(mainAttack&&event!=='fire'&&bank.has(id,'fire')){
         if(bank.authorized.byEvent.has(`${id}:fire`)){
-          options[RESOLVE_OCCLUSION]?.(options);
           return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});}
         if(loader?.declares(id,'fire')===true)loader?.ensure(id,'fire');
       }
@@ -245,7 +253,6 @@ export function installWeaponAudioEngine(Engine){
       }
       this._realAudioFallbackShots=(this._realAudioFallbackShots||0)+1;
     }
-    options[RESOLVE_OCCLUSION]?.(options);
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){
@@ -264,7 +271,8 @@ export function installWeaponAudioEngine(Engine){
     const handle={
       // A pending loop counts as active to avoid duplicate registration. A
       // failed fetch does not: active gameplay may retry after loader backoff.
-      get playing(){return !stopped&&!failed&&(actual?actual.playing!==false:true);},
+      get playing(){return !stopped&&!failed&&(actual?actual.playing!==false||!!actual._sfxDeferred:true);},
+      get _sfxDeferred(){return !stopped&&!failed&&!!actual?._sfxDeferred;},
       set(update={}){if(stopped)return;if(!actual)currentOptions={...currentOptions,...update};actual?.set?.(update);},
       stop(fade=.15){if(stopped)return;stopped=true;loader?.cancelOwner?.(requestOwner);actual?.stop?.(fade);actual=null;},
     };
@@ -275,7 +283,7 @@ export function installWeaponAudioEngine(Engine){
          !bank.authorized.byEvent.has(`${id}:${event}`)){failed=true;return;}
       try{
         actual=engine.loop(name,currentOptions);
-        if(!actual||actual.playing===false){actual=null;failed=true;}
+        if(!actual||actual.playing===false&&!actual._sfxDeferred){actual?.stop?.(.04);actual=null;failed=true;}
       }catch{failed=true;actual=null;}
     }).catch(()=>{failed=true;/* Missing/unavailable remains silent. */});
     return handle;

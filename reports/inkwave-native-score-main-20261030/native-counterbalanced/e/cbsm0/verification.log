@@ -1,0 +1,700 @@
+{
+  "verifiedAt": "2026-10-30T21:53:42.293Z",
+  "status": "verified-after-saved-file-readback",
+  "run": "smoke",
+  "resultSha256": "e58a50821ccf79a82fb283015c28cd9810a8f7e7511b8c00cf28fab619c9ade7",
+  "resultBytes": 2451250,
+  "planSha256": "933cfcf6d8ee22328435179bb69d357351d00c64388efeb9f90bbc1623f58af6",
+  "startedAt": "2026-10-30T21:45:06.862Z",
+  "completedAt": "2026-10-30T21:53:20.133Z",
+  "counts": {
+    "warmups": 4,
+    "preflight": 8,
+    "measurements": 8,
+    "totalWindows": 20,
+    "parityPairs": 10,
+    "rejectedWindowAttempts": 0
+  },
+  "config": {
+    "stage": "hagglefish",
+    "quality": "low",
+    "weapon": "shooter",
+    "frames": 30,
+    "hz": 60,
+    "rounds": 2,
+    "aaRounds": 2,
+    "warmupRuns": 1,
+    "width": 480,
+    "height": 300,
+    "warmupFrames": 30,
+    "render": false,
+    "preflightOnly": false,
+    "affinityCheckOnly": false,
+    "requireOobBudget": false,
+    "pageOrder": "ab",
+    "quartetStart": "a",
+    "seeds": {
+      "boot": 987654321,
+      "matchSetup": 11223,
+      "fixtureAndFirstStep": 24680,
+      "audio": 456,
+      "stepMultiplier": 2654435761
+    },
+    "allowBvhWorkReduction": false,
+    "gpuCpus": "0-1",
+    "workerCpus": "2-3",
+    "pageCreationOrder": [
+      "a",
+      "b"
+    ],
+    "warmupSchedule": [
+      "a",
+      "b"
+    ],
+    "quartetSchedules": {
+      "preflight": [
+        {
+          "round": 0,
+          "slot": 0,
+          "side": "a",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 1,
+          "side": "b",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 2,
+          "side": "b",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 3,
+          "side": "a",
+          "order": "ABBA"
+        },
+        {
+          "round": 1,
+          "slot": 0,
+          "side": "b",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 1,
+          "side": "a",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 2,
+          "side": "a",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 3,
+          "side": "b",
+          "order": "BAAB"
+        }
+      ],
+      "measurements": [
+        {
+          "round": 0,
+          "slot": 0,
+          "side": "a",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 1,
+          "side": "b",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 2,
+          "side": "b",
+          "order": "ABBA"
+        },
+        {
+          "round": 0,
+          "slot": 3,
+          "side": "a",
+          "order": "ABBA"
+        },
+        {
+          "round": 1,
+          "slot": 0,
+          "side": "b",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 1,
+          "side": "a",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 2,
+          "side": "a",
+          "order": "BAAB"
+        },
+        {
+          "round": 1,
+          "slot": 3,
+          "side": "b",
+          "order": "BAAB"
+        }
+      ]
+    }
+  },
+  "sourceAndReceipts": {
+    "a": {
+      "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+      "privateFiles": 17,
+      "publicFiles": 2315,
+      "servedUniqueFiles": 690,
+      "totalRequests": 2115,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ]
+    },
+    "b": {
+      "sourceSha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+      "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8",
+      "privateFiles": 17,
+      "publicFiles": 2315,
+      "servedUniqueFiles": 690,
+      "totalRequests": 706,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ]
+    }
+  },
+  "validation": {
+    "gpuPid": 51179,
+    "observedThreadEntries": 6437,
+    "scoreSnapshot": "all windows current/unchanged and all matched pairs exact including binary64 HUD coverage",
+    "sceneRenderCalls": 0,
+    "paintDrawsActive": true,
+    "pageErrors": 0,
+    "contextLoss": 0,
+    "rejectedWindowAttempts": 0,
+    "exitCode": 0
+  },
+  "pairInventory": [
+    {
+      "key": "preflight/warmup/1",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 3196058739,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 781,
+        "paintVersion": 588,
+        "turfVersion": 301,
+        "coverageVersion": 301,
+        "observedPaintVersion": 588,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "measurements/warmup/1",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 3196058739,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 781,
+        "paintVersion": 588,
+        "turfVersion": 301,
+        "coverageVersion": 301,
+        "observedPaintVersion": 588,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "preflight/measurement/2",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 1889454195,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 1559,
+        "paintVersion": 1176,
+        "turfVersion": 602,
+        "coverageVersion": 602,
+        "observedPaintVersion": 1176,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "preflight/measurement/3",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 2689908851,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 2337,
+        "paintVersion": 1764,
+        "turfVersion": 903,
+        "coverageVersion": 903,
+        "observedPaintVersion": 1764,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "preflight/measurement/4",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 3934774899,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 3115,
+        "paintVersion": 2352,
+        "turfVersion": 1204,
+        "coverageVersion": 1204,
+        "observedPaintVersion": 2352,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8770,
+        "triangleTests": 148401
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "preflight/measurement/5",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 43972211,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 3893,
+        "paintVersion": 2940,
+        "turfVersion": 1505,
+        "coverageVersion": 1505,
+        "observedPaintVersion": 2940,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 9058,
+        "triangleTests": 152981
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "measurements/measurement/2",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 1889454195,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 1559,
+        "paintVersion": 1176,
+        "turfVersion": 602,
+        "coverageVersion": 602,
+        "observedPaintVersion": 1176,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "measurements/measurement/3",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 2689908851,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 2337,
+        "paintVersion": 1764,
+        "turfVersion": 903,
+        "coverageVersion": 903,
+        "observedPaintVersion": 1764,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "measurements/measurement/4",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 3934774899,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 3115,
+        "paintVersion": 2352,
+        "turfVersion": 1204,
+        "coverageVersion": 1204,
+        "observedPaintVersion": 2352,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 8770,
+        "triangleTests": 148401
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    },
+    {
+      "key": "measurements/measurement/5",
+      "status": "exact-recorded-parity-including-existing-score-hud-cache",
+      "digest": 43972211,
+      "coverageBits": "3f80c43519e25d093f7b276e2a71fd9d",
+      "coverage": [
+        0.00818673596613319,
+        0.006629400572932734
+      ],
+      "stamp": {
+        "ticks": 3893,
+        "paintVersion": 2940,
+        "turfVersion": 1505,
+        "coverageVersion": 1505,
+        "observedPaintVersion": 2940,
+        "state": "playing",
+        "matchTime": 176.666666666664,
+        "gameMode": "match",
+        "mode": "turf",
+        "attract": false,
+        "paused": false,
+        "frozen": true
+      },
+      "hudFlags": [
+        {
+          "leading": false,
+          "danger": false
+        },
+        {
+          "leading": false,
+          "danger": false
+        }
+      ],
+      "counts": [
+        1901,
+        1473
+      ],
+      "bvh": {
+        "queries": 9058,
+        "triangleTests": 152981
+      },
+      "draw": {
+        "frame": 216,
+        "calls": 10,
+        "triangles": 535,
+        "points": 0,
+        "lines": 0
+      }
+    }
+  ],
+  "limits": [
+    "Fixed-step eight-actor native emitted runtime; native geometry, paint and all source characters are required before timing. No presented/device FPS evidence.",
+    "Private assets match the exact source commit Git LFS oid and size. Public and private response bodies are checked against admitted SHA and byte length on every HTTP request; successful response receipts are retained.",
+    "All numeric window results must be finite before JSON serialization. A non-finite value fails the run and is retained as an explicit tagged rejection, never silently serialized as null.",
+    "Before game page creation, all harness/browser non-GPU threads are assigned to worker CPUs, and all GPU process threads to a disjoint dedicated CPU pool whose combined capacity with the worker pool fits the cgroup quota. Two startup assignment passes are fixed in advance. No assignment occurs after game page creation. Every window checks all observed browser process/thread affinities before and after timing; a changed GPU PID or an unexpected CPU fails the run. CPU quota and game quality are unchanged. GPU CPU restrictions change this host experiment and may increase wall time; no device FPS or natural scheduler claim.",
+    "One Chromium process; independent contexts/pages may use separate renderer processes. Only one page is active; all other benchmark pages are lifecycle-frozen. No profiling, timing wrappers, sampling or forced GC. One count-only wrapper records actual scene render calls.",
+    "Every window reconstructs a real match on its retained page. This preserves JIT state and exercises real teardown/startup before the window; it is not the natural heap history of one continuous match. Ordinary rematch retains cumulative clock ticks, paint versions and module-private presentation RNG. Only corresponding rematch ordinals are compared: in both ABBA and BAAB, slots 0/1 share ordinal n and slots 2/3 share n+1. Both versions execute both histories; cross-ordinal outputs are not claimed identical.",
+    "Preparation and GPU finish are outside timing. Per-frame wall excludes observer work; renderer thread CPU includes gameplay digest, counters and CDP evaluation work. After each window the active GL queue is drained outside timing before another page runs. No GPU finish is added to the measured workload.",
+    "Scene submission is excluded unless --render is set. Paint atlas draws remain active. SwiftShader rendering is a separate software workload, not hardware GPU performance.",
+    "Parity covers recorded gameplay/state, visible bone world matrices and workload counters within each matched-ordinal pair, not all pixels, audio samples, every private field or external-device behavior. CPU-only windows may observe no drawn bones and are not visible-pose evidence. Audio raw voice/play/drop counters are recorded without invoking the mutating stats method; real-time voice/minGap outcomes are not required equal.",
+    "A/A passed means recorded-state parity only; timing-noise acceptance remains a separate analysis. Renderer ThreadTime includes observers and is not game-only CPU time.",
+    "Both pages boot before warmup in the configured page creation order. The warmup order is an initial AB pair for an odd count, followed by ABBA blocks; every side label is reversed when quartetStart is b. Each side executes the same number of full warmup replays, with every corresponding ordinal compared.",
+    "Measured quartets alternate ABBA and BAAB from the configured quartetStart. Each quartet reports the mean of its actual A observations and actual B observations, always as B/A. Slot balancing addresses order effects only under stable conditions; it does not remove persistent page/renderer effects. Independent sessions with reversed pageOrder and quartetStart must be assessed separately. A/A parity does not certify timing equivalence.",
+    "After both timing measurements and GPU drain, the observer copies existing current score/HUD caches through own data descriptors. It does not call coverage, teamSummary, getters, simulation or state transitions. Missing, stale, non-finite or mismatched caches reject the window. Binary64 encodings preserve signed zero in saved parity evidence. This observes only the endpoint live-HUD transport, not every intermediate frame, DOM/pixels, deadline finish coverage or judge/winner behavior. Tiny observer allocations can still affect later heap history.",
+    "All warmup and measured windows are retained. Warmup quantity, seeds, frames and order are fixed before execution; a failed or divergent window fails the whole run."
+  ]
+}

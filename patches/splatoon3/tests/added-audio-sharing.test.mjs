@@ -52,24 +52,25 @@ test('full actual noise functions preserve PCM and cache identity at seven rates
 });
 test('idempotent init resumes audio without replaying historical preparation; a new owner prepares the active local intent',async()=>{
  class Engine{constructor(){this.ctx=null;this.byName=new Map();}init(){if(!this.ctx)this.ctx=context();this.ctx.resume();return this;}_def(){return null;}stats(){return{};}stopAll(){}}
- installWeaponAudioEngine(Engine);const ensure=RealS3SampleLoader.prototype.ensure,declares=RealS3SampleLoader.prototype.declares;const calls=[];RealS3SampleLoader.prototype.ensure=function(...args){calls.push({owner:this,args});return Promise.resolve({});};RealS3SampleLoader.prototype.declares=function(){return true;};
+ installWeaponAudioEngine(Engine);const ensure=RealS3SampleLoader.prototype.ensure,ensureMany=RealS3SampleLoader.prototype.ensureMany,declares=RealS3SampleLoader.prototype.declares;const calls=[];RealS3SampleLoader.prototype.ensure=function(...args){calls.push({owner:this,args});return Promise.resolve({});};RealS3SampleLoader.prototype.declares=function(){return true;};RealS3SampleLoader.prototype.ensureMany=function(requests,opts){return Promise.all(requests.map(r=>this.ensure(r.id,r.event,opts)));};
  try{const e=new Engine();e.init();const ids=Object.values(WEAPON_AUDIO).filter(r=>!['charger','splatling'].includes(r.family)).slice(0,8).map(r=>r.id);for(const id of ids)e.prepareWeapon(id);
  const mains=()=>calls.filter(c=>!c.args[0].startsWith('combat:')).map(c=>c.args[0]);
  assert.deepEqual(mains(),ids,'each selection prepares its recorded main');const firstCalls=calls.length,bank=e._weaponBank;
  for(let i=0;i<10;i++)assert.equal(e.init(),e);assert.equal(calls.length,firstCalls,'repeated init never requeues MP3 sources');assert.equal(e.ctx.resumes,11);
  e.ctx=context(44100);e.init();assert.notEqual(e._weaponBank,bank);assert.deepEqual([...e._warmWeapons],[ids.at(-1)],'only the active local weapon is retained for a new context');assert.deepEqual(mains(),[...ids,ids.at(-1)],'context replacement reloads the active weapon, not seven inactive selections');e.disposeWeaponAudio();assert.equal(e._warmPreparedBank,null);assert.equal(e._warmPreparedContext,null);
  const pending=new Engine();pending.prepareWeapon('shooter');const beforeUnlock=calls.length;pending.init();assert.equal(mains().at(-1),'shooter');assert.deepEqual(mains(),[...ids,ids.at(-1),'shooter'],'one queued selected source warms on unlock without unrelated weapon reloads');assert.ok(calls.length>beforeUnlock);assert.equal(mains().length,ids.length+2,'one queued selected source warms without remote history');pending.disposeWeaponAudio();
- }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.declares=declares;}
+ }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.ensureMany=ensureMany;RealS3SampleLoader.prototype.declares=declares;}
 });
 
 test('selected audio ownership survives context replacement without reviving obsolete or remote intents',()=>{
  class Engine{constructor(){this.ctx=null;this.byName=new Map();}init(){this.ctx||=context();return this;}_def(){}stats(){return{};}stopAll(){}}
  installWeaponAudioEngine(Engine);
- const ensure=RealS3SampleLoader.prototype.ensure,cancel=RealS3SampleLoader.prototype.cancelOwner,declares=RealS3SampleLoader.prototype.declares;
+ const ensure=RealS3SampleLoader.prototype.ensure,ensureMany=RealS3SampleLoader.prototype.ensureMany,cancel=RealS3SampleLoader.prototype.cancelOwner,declares=RealS3SampleLoader.prototype.declares;
  const calls=[],cancels=[];
  RealS3SampleLoader.prototype.ensure=function(id,event,opts){calls.push({loader:this,id,event,owner:opts?.owner});return Promise.resolve({});};
  RealS3SampleLoader.prototype.cancelOwner=function(owner){cancels.push({loader:this,owner});};
  RealS3SampleLoader.prototype.declares=()=>true;
+ RealS3SampleLoader.prototype.ensureMany=function(requests,opts){return Promise.all(requests.map(r=>this.ensure(r.id,r.event,opts)));};
  try{
   const e=new Engine();e.init();e.prepareWeapon('s3-shooter-short');const firstOwner=e._prewarmOwner,oldLoader=e._realS3Loader;
   e.prepareWeapon('shooter');assert.equal(cancels.at(-1).owner,firstOwner);assert.equal(cancels.at(-1).loader,oldLoader);
@@ -82,5 +83,5 @@ test('selected audio ownership survives context replacement without reviving obs
   const m=calls.length;e.init();assert.equal(calls.length,m);e.disposeWeaponAudio();
   const p=new Engine();p.prepareWeapon('s3-shooter-short');p.prepareWeapon('shooter');p.prepareWeapon('s3-shooter-first',{urgent:false});const before=calls.length;p.init();
   assert.deepEqual(calls.slice(before).filter(x=>!x.id.startsWith('combat:')).map(x=>x.id),['shooter']);p.disposeWeaponAudio();
- }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.cancelOwner=cancel;RealS3SampleLoader.prototype.declares=declares;}
+ }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.ensureMany=ensureMany;RealS3SampleLoader.prototype.cancelOwner=cancel;RealS3SampleLoader.prototype.declares=declares;}
 });

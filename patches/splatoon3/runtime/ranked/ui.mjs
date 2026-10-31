@@ -59,6 +59,25 @@ function addStyle() {
 
 const zonesTextCache = new WeakMap();
 const towerTextCache = new WeakMap();
+const rainmakerTextCache = new WeakMap(), clamsTextCache = new WeakMap();
+// Cache only normalized display scalars. Mutable rule objects are sampled on
+// every call; translated strings are rebuilt at their displayed boundaries.
+function displayTextEntry(cacheMap, owner, api, kind, a, b, c, d, e, f) {
+  const language = Object.getOwnPropertyDescriptor(api, 'LANG');
+  if (language ? !Object.hasOwn(language, 'value') : 'LANG' in api) return null;
+  const lang = language?.value;
+  if (lang != null && typeof lang !== 'string') return null;
+  if (c != null && typeof c === 'object' || typeof c === 'function') return null;
+  let cache = cacheMap.get(owner);
+  if (!cache) { cache = {}; cacheMap.set(owner, cache); }
+  const same = cache.text !== undefined && cache.kind === kind && cache.lang === lang
+    && Object.is(cache.a, a) && Object.is(cache.b, b) && Object.is(cache.c, c)
+    && Object.is(cache.d, d) && Object.is(cache.e, e) && Object.is(cache.f, f);
+  if (!same) { cache.text = undefined; cache.kind = kind; cache.lang = lang;
+    cache.a = a; cache.b = b; cache.c = c; cache.d = d; cache.e = e; cache.f = f; }
+  return cache;
+}
+function storeDisplayText(cache, text) { if (cache) cache.text = text; return text; }
 function zoneTextEntry(engine, coverage, captured, names, lang) {
   // Only the frozen production samples are eligible. Mutable/custom arrays
   // keep the original formatter, including sparse/accessor semantics.
@@ -131,22 +150,35 @@ export function objectiveText(engine, G, api = {}) {
     return text;
   }
   if (engine.mode === 'rainmaker') {
-    if (state.goalHold) return t('DUNKING · PROTECT THE CARRIER!');
-    if (state.respawnRemaining > 0) return t('REFORMING SHIELD · {n}s', { n: Math.ceil(state.respawnRemaining) });
+    if (state.goalHold) {
+      const cache = displayTextEntry(rainmakerTextCache, engine, api, 'goal');
+      return cache?.text ?? storeDisplayText(cache, t('DUNKING · PROTECT THE CARRIER!'));
+    }
+    if (state.respawnRemaining > 0) {
+      const seconds = Math.ceil(state.respawnRemaining);
+      const cache = displayTextEntry(rainmakerTextCache, engine, api, 'respawn', seconds);
+      return cache?.text ?? storeDisplayText(cache, t('REFORMING SHIELD · {n}s', { n: seconds }));
+    }
     const barrier = state.barrier;
     if (barrier?.active) {
       const max = Math.max(0, finite(barrier.max));
       const pressure = Math.min(max, Math.abs(finite(barrier.balance)));
-      return t('SHIELD {pressure} / {max}', { pressure: Math.ceil(pressure), max: Math.ceil(max) });
+      const roundedPressure = Math.ceil(pressure), roundedMax = Math.ceil(max);
+      const cache = displayTextEntry(rainmakerTextCache, engine, api, 'barrier', roundedPressure, roundedMax);
+      return cache?.text ?? storeDisplayText(cache, t('SHIELD {pressure} / {max}', { pressure: roundedPressure, max: roundedMax }));
     }
     if (state.carrier != null) {
       const actor = (G.match?.actors || []).find(a => String(a.nid ?? `${a.team}:${a.slot}`) === String(state.carrier));
       const held = Math.ceil(Math.max(0, finite(state.holderRemaining)));
       const charge = Math.round(clamp01(state.charge?.value) * 100);
-      return t('CARRY {held}s · {name} · CHARGE {charge}%', { held, name: actor?.name || t(teamName(actor?.team)), charge }) + (state.retreatRate > 1 ? ' · ' + t('RETREAT!') : '');
+      const name = actor?.name, team = name ? undefined : actor?.team, retreat = state.retreatRate > 1;
+      const cache = displayTextEntry(rainmakerTextCache, engine, api, 'carrier', held, charge, name, team, retreat);
+      if (cache?.text !== undefined) return cache.text;
+      return storeDisplayText(cache, t('CARRY {held}s · {name} · CHARGE {charge}%', { held, name: name || t(teamName(team)), charge }) + (retreat ? ' · ' + t('RETREAT!') : ''));
     }
-    const owner = state.lastCarrierTeam;
-    return owner === 0 || owner === 1 ? t('RAINMAKER DROPPED · PICK IT UP') : t('SHIELD POPPED · PICK UP THE RAINMAKER');
+    const owner = state.lastCarrierTeam, dropped = owner === 0 || owner === 1;
+    const cache = displayTextEntry(rainmakerTextCache, engine, api, dropped ? 'dropped' : 'popped');
+    return cache?.text ?? storeDisplayText(cache, dropped ? t('RAINMAKER DROPPED · PICK IT UP') : t('SHIELD POPPED · PICK UP THE RAINMAKER'));
   }
   if (engine.mode === 'clams') {
     const local = G.match?.local;
@@ -160,13 +192,18 @@ export function objectiveText(engine, G, api = {}) {
       if (item?.team === team) carried = carried + finite(item?.small) + finite(item?.power ? 8 : 0);
     }
     const basket = team >= 0 ? state.baskets?.[team] : null;
-    const count = own ? (own.power ? t('POWER CLAM') : t('{n}/8 CLAMS', { n: Math.ceil(finite(own.small)) }))
-      : team >= 0 ? t('{n} CLAMS ON TEAM', { n: Math.ceil(carried) }) : t('COLLECT CLAMS');
+    const countKind = own ? (own.power ? 'power' : 'own') : team >= 0 ? 'team' : 'collect';
+    const countNumber = countKind === 'own' ? Math.ceil(finite(own.small)) : countKind === 'team' ? Math.ceil(carried) : 0;
     const scored = team >= 0 ? Math.ceil(finite(state.scoredPoints?.[team])) : 0;
-    const basketLabel = basket?.barrierOpen
-      ? t('BASKET OPEN · {n}s', { n: Math.ceil(Math.max(0, finite(basket.openTimer))) })
-      : basket ? t('BASKET CLOSED') + (finite(basket.cooldown) > 0 ? ' · ' + t('{n}s', { n: Math.ceil(basket.cooldown) }) : '') : '';
-    return `${count} · ${t('{n} SCORED', { n: scored })}${basketLabel ? ` · ${basketLabel}` : ''}`;
+    const basketKind = basket?.barrierOpen ? 'open' : basket ? (finite(basket.cooldown) > 0 ? 'cooldown' : 'closed') : '';
+    const basketSeconds = basketKind === 'open' ? Math.ceil(Math.max(0, finite(basket.openTimer))) : basketKind === 'cooldown' ? Math.ceil(basket.cooldown) : 0;
+    const cache = displayTextEntry(clamsTextCache, engine, api, countKind, countNumber, scored, basketKind, basketSeconds);
+    if (cache?.text !== undefined) return cache.text;
+    const count = countKind === 'power' ? t('POWER CLAM') : countKind === 'own' ? t('{n}/8 CLAMS', { n: countNumber })
+      : countKind === 'team' ? t('{n} CLAMS ON TEAM', { n: countNumber }) : t('COLLECT CLAMS');
+    const basketLabel = basketKind === 'open' ? t('BASKET OPEN · {n}s', { n: basketSeconds })
+      : basketKind ? t('BASKET CLOSED') + (basketKind === 'cooldown' ? ' · ' + t('{n}s', { n: basketSeconds }) : '') : '';
+    return storeDisplayText(cache, `${count} · ${t('{n} SCORED', { n: scored })}${basketLabel ? ` · ${basketLabel}` : ''}`);
   }
   return '';
 }
@@ -223,8 +260,21 @@ function updateHud(hud, G, api) {
     const team = Number(node.dataset.penalty), penalty = Math.ceil(finite(engine.penalties?.[team]));
     writeRankedLabel(node, api.LANG, penalty > 0 ? 'PEN {n}' : '', penalty);
   });
-  const clock = engine.overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time);
-  writeHudText(refs.clock, clock);
+  const locale = Object.getOwnPropertyDescriptor(api, 'LANG');
+  const cacheClock = locale ? Object.hasOwn(locale, 'value') && (locale.value == null || typeof locale.value === 'string') : !('LANG' in api);
+  if (!cacheClock) {
+    writeHudText(refs.clock, engine.overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time));
+    refs.clock._rankedClock = null;
+  } else {
+    const overtime = !!engine.overtime, seconds = Math.max(0, Math.ceil(finite(overtime ? engine.overtimeElapsed : engine.time)));
+    const lang = locale?.value;
+    let savedClock = refs.clock._rankedClock;
+    if (!savedClock || savedClock.overtime !== overtime || savedClock.seconds !== seconds || savedClock.lang !== lang) {
+      const text = overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time);
+      savedClock = refs.clock._rankedClock = {overtime, seconds, lang, text};
+    }
+    writeHudText(refs.clock, savedClock.text);
+  }
   writeHudText(refs.objective, objectiveText(engine, G, api));
   const hint = refs.hint;
   if (hint.hidden !== (engine.mode !== 'clams')) hint.hidden = engine.mode !== 'clams';
@@ -448,12 +498,15 @@ export function installRankedUi(api = {}) {
     Object.defineProperty(proto, '_rankedUiWrapped', { value: true });
     const update = proto.update;
     if (typeof update === 'function') proto.update = function (dt, force) {
-      if (objectiveOverlayChanged(this, rankedOf(G), G)) this._composeDirty = true;
+      if (!this._composeDirty && objectiveOverlayChanged(this, rankedOf(G), G)) this._composeDirty = true;
       return update.call(this, dt, force);
     };
     proto._compose = function (dt) {
       const result = compose.call(this, dt);
       drawObjectives(this, rankedOf(G), G);
+      // Capture the state actually drawn. Intermediate dirty frames need no
+      // snapshot; native update still owns cadence, hidden state and force.
+      objectiveOverlayChanged(this, rankedOf(G), G);
       return result;
     };
   }

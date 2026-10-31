@@ -39,13 +39,16 @@ const buildProfile=profile.flatMap(p=>p==='/reports/'?[p,'!/reports/*','/reports
 const auditJavaScriptProfile=['*.js','*.mjs','*.cjs'];
 const buildAuditProfile=[...buildProfile,'# The global metadata AST guard reads every tracked JavaScript file.',...auditJavaScriptProfile];
 const coreAuditProfile=[...coreProfile,'# Include audit code while keeping excluded authoring binaries absent.',...auditJavaScriptProfile];
+// Main-weapon jobs also consume the exact tracked JavaScript closure, while
+// retaining only ink-volume source under reports (no historical evidence).
+const weaponProfile=[...profile,'!/reports/*','/reports/ink-volume/','!/reports/ink-volume/*','/reports/ink-volume/source/',...auditJavaScriptProfile];
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
 const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/','/package-lock.json'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
  if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
- for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='build_site'?buildAuditProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreAuditProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='build_site'?buildAuditProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreAuditProfile:name==='inkwave-main-weapons.yml'?weaponProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
 }
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
  for(const[name,count]of[['validate-inkwave-update.yml',11],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);

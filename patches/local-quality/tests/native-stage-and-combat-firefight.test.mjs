@@ -24,7 +24,8 @@ const TriangleWorld = new Function(
 
 test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches full Triangle.containsPoint across 2000 random points', () => {
   const nativeLevelSrc = readRepo('patches/native-stages/runtime/native-level.mjs');
-  assert.match(nativeLevelSrc, /const px=projected\.x,py=projected\.y,pz=projected\.z,verts=this\.triangleWorld\.triangles,tris=face\.triangles;/);
+  const NativeLevel = new Function('THREE', 'Level', nativeLevelSrc
+    .replace(/^import .*;$/gm, '').replace(/^export /gm, '') + '\nreturn NativeLevel;')(THREE, class {});
 
   const count = 64;
   const triangles = new Float32Array(count * 9);
@@ -66,6 +67,9 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   };
 
   let triCallsOpt = 0, triCallsRef = 0;
+  const triangle = tw.triangle.bind(tw);
+  const subject = Object.assign(Object.create(NativeLevel.prototype), { triangleWorld: tw });
+  tw.triangle = id => { triCallsOpt++; return triangle(id); };
   const checkRef = (p, tolerance = 0.002) => {
     const rel = p.clone().sub(face.origin);
     const a = rel.dot(face.u), b = rel.dot(face.v);
@@ -73,35 +77,23 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
     const projected = p.clone().addScaledVector(face.n, -rel.dot(face.n));
     for (const id of face.triangles) {
       triCallsRef++;
-      if (tw.triangle(id).containsPoint(projected)) return true;
+      if (triangle(id).containsPoint(projected)) return true;
     }
     return false;
   };
 
-  const relScratch = new THREE.Vector3(), projScratch = new THREE.Vector3();
-  const checkOpt = (p, tolerance = 0.002) => {
-    const rel = relScratch.copy(p).sub(face.origin);
-    const a = rel.dot(face.u), b = rel.dot(face.v);
-    if (a < -tolerance || b < -tolerance || a > face.su + tolerance || b > face.sv + tolerance) return false;
-    const projected = projScratch.copy(p).addScaledVector(face.n, -rel.dot(face.n));
-    const px = projected.x, py = projected.y, pz = projected.z, verts = tw.triangles, tris = face.triangles;
-    for (let i = 0; i < tris.length; i++) {
-      const id = tris[i], o = id * 9;
-      const x0 = verts[o], x1 = verts[o + 3], x2 = verts[o + 6];
-      if (px < Math.min(x0, x1, x2) - 1e-6 || px > Math.max(x0, x1, x2) + 1e-6) continue;
-      const z0 = verts[o + 2], z1 = verts[o + 5], z2 = verts[o + 8];
-      if (pz < Math.min(z0, z1, z2) - 1e-6 || pz > Math.max(z0, z1, z2) + 1e-6) continue;
-      const y0 = verts[o + 1], y1 = verts[o + 4], y2 = verts[o + 7];
-      if (py < Math.min(y0, y1, y2) - 1e-6 || py > Math.max(y0, y1, y2) + 1e-6) continue;
-      triCallsOpt++;
-      if (tw.triangle(id).containsPoint(projected)) return true;
-    }
-    return false;
-  };
+  // Exercise the actual current method, including the later scalar projection
+  // and barycentric implementation, against Three's independent triangle API.
+  const checkOpt = (p, tolerance = 0.002) => subject.containsOnFace(face, p, tolerance);
 
   for (let i = 0; i < 2000; i++) {
     const p = new THREE.Vector3(rnd() * 26 - 1, (rnd() - 0.5) * 0.2, rnd() * 26 - 1);
     assert.equal(checkOpt(p), checkRef(p), `mismatch at sample ${i}`);
+  }
+  for (const id of face.triangles) {
+    const t = triangle(id), vertices = [t.a.clone(), t.b.clone(), t.c.clone()];
+    const boundaries = vertices.concat(vertices.map((p,i) => p.clone().lerp(vertices[(i+1)%3],.5)));
+    for (const p of boundaries) assert.equal(checkOpt(p),checkRef(p),'exact triangle vertex/edge boundary');
   }
   assert.ok(triCallsOpt < triCallsRef * 0.1, `expected >90% reduction in triangle containsPoint calls, got ${triCallsOpt} vs ${triCallsRef}`);
 });

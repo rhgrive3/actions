@@ -2,6 +2,11 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/network-replication/storm-device-contact-adapter.mjs',
+  'patches/network-replication/queue-network-20261030-adapter.mjs',
+  'patches/local-quality/queue-bots-20261030-adapter.mjs',
+  'patches/local-quality/queue-ui-audio-20261030-adapter.mjs',
+  'patches/local-quality/queue-render-20261030-adapter.mjs',
   'patches/local-quality/pause-modal-lifetime-adapter.mjs',
   'patches/local-quality/online-async-entry-adapter.mjs',
   'patches/local-quality/landscape-practice-weapons-adapter.mjs',
@@ -13,6 +18,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/landscape-settings-adapter.mjs',
   'patches/splatoon3/turf-intro-camera-adapter.mjs',
   'patches/splatoon3/boss-storm-volume-adapter.mjs',
+  'patches/splatoon3/boss-storm-cover-adapter.mjs',
   'patches/splatoon3/stringer-charge-hud-adapter.mjs',
 
   'patches/local-quality/walk-presentation-adapter.mjs',

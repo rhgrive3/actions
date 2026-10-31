@@ -182,9 +182,7 @@ test('reviewed Wave 9–11 raw and production epochs resolve every GPU site and 
     for (const snip of expectedSnippets) {
       assert.ok(pass1.includes(snip), `Missing expected snippet in ${rel}: ${snip}`);
     }
-    const production = adaptBuildSource(rel, raw, {
-      onGpuSite: site => { productionResolvedSites++; assert.ok(site.status, site.id); },
-    });
+    const production = adaptBuildSource(rel, raw);
     // Current main's audited algebra has equivalent expressions with different
     // names. Require those exact expressions instead of rewriting their owner.
     const reviewed67 = new Map([
@@ -211,8 +209,14 @@ test('reviewed Wave 9–11 raw and production epochs resolve every GPU site and 
       assert.ok(production.includes('float d2 = dot(D, D);'));
       assert.ok(!production.includes('uRipCount'), 'do not publish a redundant count alongside the packed owner');
     }
+    // The build API has no audit callback. Resolve every site against its
+    // actual final output, after all later owners, without reapplying a change.
     assert.equal(adaptCombatWave345(rel, production, replaceOnce, {
-      onGpuSite: site => assert.notEqual(site.status, 'applied', `${rel}: ${site.id} must not reapply`),
+      onGpuSite: site => {
+        productionResolvedSites++;
+        assert.ok(site.status, site.id);
+        assert.notEqual(site.status, 'applied', `${rel}: ${site.id} must not reapply`);
+      },
     }), production, `${rel}: the final composed epoch must also be idempotent`);
     if (rel === 'src/fx/fx.js') {
       assert.ok(!pass1.includes('gl_Position = vec4(2.0, 2.0, 2.0, 1.0)'), 'per-vertex alpha cannot prove the whole triangle invisible');
@@ -364,12 +368,17 @@ test('spatial support gates preserve freckle derivatives, pad gradients, and the
   }
   const rel = 'src/world/inkShading.js';
   const raw = fs.readFileSync(path.join(repoRoot, 'inkwave-public', rel), 'utf8');
-  for (const source of [raw, adaptCombatWave345(rel, raw, replaceOnce), adaptBuildSource(rel, raw)]) {
+  for (const [epoch, source] of [['raw', raw], ['wave', adaptCombatWave345(rel, raw, replaceOnce)], ['production', adaptBuildSource(rel, raw)]]) {
     const gel = source.slice(source.indexOf('export const INK_GEL'), source.indexOf('export const INK_SLOPE'));
     const slope = source.slice(source.indexOf('export const INK_SLOPE'), source.indexOf('export const INK_EMISSIVE'));
-    for (const [chunk, derivatives] of [[gel, ['dFdx(gp)', 'dFdy(gp)', 'fwidth(vWPos)']], [slope, ['fwidth(vWPos)']]]) {
-      const gate = chunk.indexOf('if (gInk > 0.01)');
-      assert.ok(gate >= 0, 'the original ink coverage gate still bounds sampling and ripple work');
+    for (const [name, chunk, derivatives] of [['gel', gel, ['dFdx(gp)', 'dFdy(gp)', 'fwidth(vWPos)']], ['slope', slope, ['fwidth(vWPos)']]]) {
+      // The reviewed render-queue owner adds only the zero-distance-fade
+      // exclusion. Both epochs still evaluate the footprint before coverage.
+      const gateText = name === 'slope' && epoch === 'production'
+        ? 'if (gInk > 0.01 && rFar > 0.0)' : 'if (gInk > 0.01)';
+      const gate = chunk.indexOf(gateText);
+      assert.ok(gate >= 0, `${epoch} ${name}: the exact reviewed ink coverage gate bounds sampling and ripple work`);
+      assert.equal(chunk.indexOf(gateText, gate + gateText.length), -1, `${epoch} ${name}: the coverage gate is unique`);
       for (const derivative of derivatives) {
         const at = chunk.indexOf(derivative);
         assert.ok(at >= 0 && at < gate, `${derivative} must precede the outer ink coverage branch`);

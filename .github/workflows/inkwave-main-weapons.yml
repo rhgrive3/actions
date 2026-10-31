@@ -153,7 +153,15 @@ jobs:
             /tools/
             !/tools/inkwave-modeler/
             /reports/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
             /docs/
+            *.js
+            *.mjs
+            *.cjs
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -199,12 +207,20 @@ jobs:
             /tools/
             !/tools/inkwave-modeler/
             /reports/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
             /docs/
+            *.js
+            *.mjs
+            *.cjs
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps --only-shell chromium
       - name: Build production gameplay composition
         run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Verify emitted Roller holding and physical grip
@@ -258,7 +274,15 @@ jobs:
             /tools/
             !/tools/inkwave-modeler/
             /reports/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
             /docs/
+            *.js
+            *.mjs
+            *.cjs
+
       - name: Select Roller and shared pose changes
         id: changes
         shell: bash

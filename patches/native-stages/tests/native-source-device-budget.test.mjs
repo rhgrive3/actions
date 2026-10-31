@@ -39,7 +39,7 @@ if (!vm.SourceTextModule) {
         async sourceBytes(){return new Uint8Array([118,32,48,10]);},
         async sourceTree(){return {tree:[{type:'blob',path:'Vss_Test.mtl',size:4,sha:'a'.repeat(40)}]};},
         async readDerived(){derivedReads++;return null;},
-        async writeDerived(){derivedWrites++;}
+        async beginDerivedWrite(){derivedWrites++;return null;}
       })
     };
     const source=fs.readFileSync(new URL('../runtime/source-worker.mjs',import.meta.url),'utf8');

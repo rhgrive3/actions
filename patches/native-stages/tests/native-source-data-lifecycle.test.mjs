@@ -16,7 +16,7 @@ async function harness({prebuilt=true,load=async()=>({manifest:{id:'stage'},sour
   postMessage(message){if(postFailure)throw postFailure;this.message=structuredClone(message);if(reply)queueMicrotask(()=>this.onmessage?.({data:reply}));}
   terminate(){this.terminated++;}
  }
- const context=vm.createContext({URL,Worker,DOMException,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},
+ const context=vm.createContext({URL,Worker,DOMException,setTimeout,clearTimeout,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},
   console:{warn:message=>warnings.push(message)},dispatchEvent:event=>events.push(event),
  });
  const synthetic=values=>new vm.SyntheticModule(Object.keys(values),function(){for(const [name,value]of Object.entries(values))this.setExport(name,value);},{context});
@@ -119,6 +119,28 @@ test('worker deserialization failure rejects once and releases the pending sourc
  w.onmessageerror({});await assert.rejects(pending,/could not be decoded/);
  late({data:{result:{untrusted:true}}});assert.equal(w.terminated,1);assert.equal(w.onmessage,null);
  assert.deepEqual(h.events.map(e=>e.detail.phase),['failed']);
+});
+
+test('stage publishes before optional derived commit; completion or abort retires its worker once',async()=>{
+ for(const abortAfterResult of [false,true]){
+  const controller=new AbortController(),result={manifest:{id:'stage'}};
+  const h=await harness({prebuilt:false,reply:{result,cachePending:true}});
+  assert.deepEqual(await h.run('stage',controller.signal),result);
+  const w=h.workers[0],late=w.onmessage;
+  assert.equal(w.terminated,0,'renderer gets the stage while IDB commit is pending');
+  if(abortAfterResult)controller.abort();else w.onmessage({data:{cacheComplete:true}});
+  assert.equal(w.terminated,1);late({data:{cacheComplete:true}});assert.equal(w.terminated,1);
+  assert.deepEqual(h.events.map(e=>e.detail.phase),['ready']);
+ }
+});
+
+test('constrained clients do not retain verified source trees across conversion workers',async()=>{
+ const h=await harness({prebuilt:false,reply:null}),run=()=>h.run('stage',undefined,{constrained:true});
+ const first=run(),w=h.workers[0];
+ w.onmessage({data:{sourceInventory:{id:'stage',runtimeSha256:'runtime-pin',recipe:'recipe',tree:'1'.padStart(40,'0'),inventory:{sha:'1'.padStart(40,'0'),truncated:false,tree:[]}}}});
+ w.onmessage({data:{result:{ok:true}}});await first;
+ const second=run(),next=h.workers[1];assert.equal(next.message.verifiedInventory,undefined);
+ next.onmessage({data:{result:{ok:true}}});await second;
 });
 test('runtime, stage tree and stage identity invalidate inventory reuse; retention is bounded to 24 entries',async()=>{
  const h=await harness({prebuilt:false,reply:null});

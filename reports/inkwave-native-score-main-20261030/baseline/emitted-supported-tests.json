@@ -1,0 +1,37 @@
+{
+  "root": "/workspace/actions-score-base",
+  "mode": "emitted-supported",
+  "startedUTC": "2026-10-30T21:01:11.583736+00:00",
+  "endedUTC": "2026-10-30T21:01:25.261393+00:00",
+  "command": [
+    "node",
+    "--experimental-vm-modules",
+    "--test",
+    "--test-reporter=spec",
+    "--test-concurrency=2",
+    "patches/splatoon3/tests/perf-presentation.test.mjs",
+    "patches/splatoon3/tests/queue-followup-paint-wake.test.mjs",
+    "patches/splatoon3/tests/ranked-zone-coverage-version.test.mjs",
+    "patches/splatoon3/tests/ranked-scoring-delivery.test.mjs",
+    "patches/splatoon3/tests/paint-raw-area-credit.test.mjs",
+    "patches/splatoon3/tests/issue-264-paint-score-boundaries.test.mjs",
+    "patches/native-stages/tests/native-prebuilt.test.mjs",
+    "patches/native-stages/tests/native-paint-detail.test.mjs",
+    "patches/native-stages/tests/paint-cache.test.mjs",
+    "patches/native-stages/tests/native-ground-mask.test.mjs",
+    "patches/native-stages/tests/native-paint-goal-bounds.test.mjs"
+  ],
+  "nodePid": 47121,
+  "exit": 0,
+  "counts": {
+    "tests": 62,
+    "suites": 0,
+    "pass": 62,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "log": "/workspace/actions-score-base/.ci-scratch/score-main-verify/emitted-supported-tests.log",
+  "processExited": true
+}

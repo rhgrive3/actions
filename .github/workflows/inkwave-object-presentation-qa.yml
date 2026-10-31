@@ -84,9 +84,9 @@ jobs:
             /*
             !/tools/inkwave-modeler/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Fetch only suite-declared immutable baseline objects
+      - name: Fetch only declared immutable baseline and compatibility owner objects
         run: |
-          baselines="$(node --input-type=module -e "import {BASE,SUITES} from './tools/object-presentation-qa/config.mjs'; console.log([...new Set([BASE,...Object.values(SUITES).map(s=>s.beforeBase).filter(Boolean)])].join(' '))")"
+          baselines="$(node --input-type=module -e "import {BASE,SUITES} from './tools/object-presentation-qa/config.mjs'; import {CLAM_PREDICTION_COMPAT} from './tools/object-presentation-qa/historical-overlay.mjs'; console.log([...new Set([BASE,...Object.values(SUITES).map(s=>s.beforeBase).filter(Boolean),CLAM_PREDICTION_COMPAT.ownerCommit])].join(' '))")"
           for baseline in $baselines; do
             [[ "$baseline" =~ ^[0-9a-f]{40}$ ]]
             git fetch --no-tags --depth=1 --filter=blob:none origin "$baseline"

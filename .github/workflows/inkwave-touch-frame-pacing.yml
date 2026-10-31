@@ -24,12 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /*
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+
       - name: Verify exact checkout head
         shell: bash
         env:

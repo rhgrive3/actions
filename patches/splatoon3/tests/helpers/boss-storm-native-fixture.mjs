@@ -1,3 +1,5 @@
+import {coverHarness} from './boss-storm-cover-fixture.mjs';
+const {covered:bossRainFullyCovered}=await coverHarness();
 import fs from 'node:fs';import vm from 'node:vm';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import * as THREE from '../../../../inkwave-public/vendor/three/build/three.module.js';
 import {adaptBuildSource} from '../../../../scripts/inkwave-source-composition.mjs';
@@ -17,7 +19,7 @@ export function fixture({y=90,x=0,z=0,cover=false,removeGate=false,bossY=null,re
  const G={actors:[],time:0,teamColors:[],fx:{rain(){}},physics:{los:()=>!cover},boss:null};
  const gate='point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH';
  const code=runtime.replace(/^import .*;\n?/gm,'').replace(/^export /gm,'');
- const context=vm.createContext({G,bossRainVerticalOverlap,SPECIALS:{storm:{dps:24,radius:10,driftSpeed:0}},SIM_DT:1/60,clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),emit(){},_v:new THREE.Vector3(),_v2:new THREE.Vector3(),DOWN:new THREE.Vector3(0,-1,0),_hit:{}});
+ const context=vm.createContext({G,bossRainVerticalOverlap,bossRainFullyCovered,SPECIALS:{storm:{dps:24,radius:10,driftSpeed:0}},SIM_DT:1/60,clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),emit(){},_v:new THREE.Vector3(),_v2:new THREE.Vector3(),DOWN:new THREE.Vector3(0,-1,0),_hit:{}});
  vm.runInContext(removeGate?code.replaceAll(gate,'false'):code,context);
  const api=vm.runInContext('({stormRainContains,stormRainObjectContains,STORM_RAIN_REACH})',context);
  const Owner=vm.runInContext('class Owner{'+clouds+'};Owner',context),p=new Owner();

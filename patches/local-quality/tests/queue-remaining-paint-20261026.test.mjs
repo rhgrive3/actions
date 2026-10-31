@@ -44,6 +44,23 @@ function replayNativeContact(source, reverse=false){
 for (const row of Object.values(baseline)) if (row?.source) assert.equal(sha(row.source), row.sha256);
 assert.equal(sha(baseline.ownership.composedSource), baseline.ownership.composedSha256);
 const candidate = adaptRemainingPaint20261026('src/world/paint.js', baseline.paint.source);
+// This intermediate changes growth records from seven to eight entries. Later
+// production ownership merges adjacent GPU rectangles, so its vertex topology
+// cannot be used as the byte oracle for this earlier transform. Retain the
+// sealed owner here with only its required stride migration; final production
+// coverage/coalescing is exercised by paint-owned-run-scan and paint-envelope.
+const strideOwners = [
+  ['  const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);\n  const pieces = byEntry[n / 7] || (byEntry[n / 7] = []);',
+   '  const entryStride = g.entryStride === 8 ? 8 : 7, slot = n / entryStride;\n  const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);\n  const pieces = byEntry[slot] || (byEntry[slot] = []);'],
+  ['  for (let n = 0; n < E.length; n += 7) {',
+   '  const entryStride = g.entryStride === 8 ? 8 : 7;\n  for (let n = 0; n < E.length; n += entryStride) {'],
+  ['nativeSettledAncillarySlot(g, n / 7)', 'nativeSettledAncillarySlot(g, n / entryStride)'],
+];
+function strideAwareOwnership(source=baseline.ownership.composedSource) {
+  for(const [before,after] of strideOwners)source=replaceOnce(source,before,after,'remaining paint ownership stride');
+  return source;
+}
+const intermediateOwnership = strideAwareOwnership();
 const names = [['aPos', 2], ['aLocal', 3], ['aSplat', 4], ['aStretch', 3], ['aGrow', 4]];
 const plain = x => structuredClone(x);
 
@@ -65,7 +82,7 @@ async function loadPaint(changed) {
     if (modules.has(file)) return modules.get(file);
     const rel = path.relative(SRC, file), raw = fs.readFileSync(file, 'utf8');
     let source = rel === 'src/world/paint.js' ? (changed ? candidate : baseline.paint.source)
-      : file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs') ? (changed ? adaptBuildSource('patches/splatoon3/runtime/paint-ownership.mjs', raw) : baseline.ownership.composedSource)
+      : file.endsWith('/patches/splatoon3/runtime/paint-ownership.mjs') ? (changed ? intermediateOwnership : baseline.ownership.composedSource)
       : rel.startsWith('..') ? raw : adaptBuildSource(rel, raw);
     const mod = new vm.SourceTextModule(source, { context, identifier: file, initializeImportMeta(m) { m.url = pathToFileURL(file).href; } });
     modules.set(file, mod); return mod;
@@ -75,6 +92,18 @@ async function loadPaint(changed) {
   return { ...entry.namespace, counts, document };
 }
 const runtimes = Promise.all([loadPaint(false), loadPaint(true)]);
+
+test('historical ownership stride bridge is exact and present in the production owner',()=>{
+  const current=adaptBuildSource('patches/splatoon3/runtime/paint-ownership.mjs',fs.readFileSync(path.join(ROOT,'patches/splatoon3/runtime/paint-ownership.mjs'),'utf8'));
+  let restored=intermediateOwnership;
+  for(const [before,after] of [...strideOwners].reverse()) {
+    assert.equal(current.split(after).length,2,'production retains the exact stride owner');
+    restored=replaceOnce(restored,after,before,'reverse remaining paint ownership stride');
+    assert.throws(()=>strideAwareOwnership(baseline.ownership.composedSource.replace(before,'')),/expected exactly one/);
+    assert.throws(()=>strideAwareOwnership(baseline.ownership.composedSource+before),/expected exactly one/);
+  }
+  assert.equal(restored,baseline.ownership.composedSource,'all independently pinned historical owner bytes survive');
+});
 
 function makePaint(runtime, native = false) {
   const { THREE, PaintSystem } = runtime, V3 = THREE.Vector3, faces = [0, 1, 2].map(id => ({

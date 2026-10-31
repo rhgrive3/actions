@@ -23,6 +23,9 @@ export function integrateLookAxis(state, axis, target, dt, rate = 60) {
   target = Math.max(-1, Math.min(1, finite(target)));
   const old = finite(state[axis]);
   if (!(Number.isFinite(rate) && rate > 0)) { state[axis] = target; return target * dt; }
+  // Exact neutral integration has zero state and displacement for every positive
+  // finite dt/rate. Keep nonzero decay and invalid-rate behavior untouched.
+  if (old === 0 && target === 0) { state[axis] = 0; return 0; }
   const k = -Math.expm1(-rate * dt);
   state[axis] = old + (target - old) * k;
   return target * dt + (old - target) * k / rate;

@@ -218,7 +218,7 @@ export function adaptNet(rel, code) {
         this.match.cfg?.id !== this._startCfg.id || !this.match.match ||
         this.match.match !== G.match || this.match.match !== G.game?.match) return;
     if (this.isHost) this._markReady(this.myId);
-    else this.tr.sendTo(this.hostId, { k:'ready', id:this._startCfg.id });
+    else if (!sendCriticalControl(this, 'READY', () => this.tr?.sendTo(this.hostId, { k:'ready', id:this._startCfg.id }), G)) return;
   }
 
   _markReady(id) {`, rel);

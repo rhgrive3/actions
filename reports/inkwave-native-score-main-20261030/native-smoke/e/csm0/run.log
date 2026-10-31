@@ -1,0 +1,16 @@
+{"phase":"preflight","side":"a","step":"boot"}
+{"phase":"preflight","side":"b","step":"boot"}
+{"phase":"preflight","kind":"warmup","slot":0,"side":"a","replayOrdinal":1,"frameMeanMs":17.996666666741174,"threadMsPerTick":18.41966666666668,"digest":3196058739,"budgetTicks":112}
+{"phase":"preflight","kind":"warmup","slot":1,"side":"b","replayOrdinal":1,"frameMeanMs":18.283333333209157,"threadMsPerTick":21.357233333333348,"digest":3196058739,"budgetTicks":112}
+{"phase":"preflight","round":0,"slot":0,"side":"a","frameMeanMs":12.993333333233993,"threadMsPerTick":15.055333333333348,"digest":1889454195}
+{"phase":"preflight","round":0,"slot":1,"side":"b","frameMeanMs":12.98333333308498,"threadMsPerTick":16.071633333333324,"digest":1889454195}
+{"phase":"preflight","round":0,"slot":2,"side":"b","frameMeanMs":12.003333333134652,"threadMsPerTick":13.692933333333338,"digest":2689908851}
+{"phase":"preflight","round":0,"slot":3,"side":"a","frameMeanMs":12.26666666654249,"threadMsPerTick":13.773533333333296,"digest":2689908851}
+{"phase":"measurements","side":"a","step":"boot"}
+{"phase":"measurements","side":"b","step":"boot"}
+{"phase":"measurements","kind":"warmup","slot":0,"side":"a","replayOrdinal":1,"frameMeanMs":21.293333333233992,"threadMsPerTick":18.67316666666667,"digest":3196058739,"budgetTicks":112}
+{"phase":"measurements","kind":"warmup","slot":1,"side":"b","replayOrdinal":1,"frameMeanMs":20.190000000099342,"threadMsPerTick":20.76316666666666,"digest":3196058739,"budgetTicks":112}
+{"phase":"measurements","round":0,"slot":0,"side":"a","frameMeanMs":13.063333333283662,"threadMsPerTick":14.475033333333325,"digest":1889454195}
+{"phase":"measurements","round":0,"slot":1,"side":"b","frameMeanMs":15.110000000273187,"threadMsPerTick":14.32670000000004,"digest":1889454195}
+{"phase":"measurements","round":0,"slot":2,"side":"b","frameMeanMs":11.41666666654249,"threadMsPerTick":13.553666666666686,"digest":2689908851}
+{"phase":"measurements","round":0,"slot":3,"side":"a","frameMeanMs":11.036666666716338,"threadMsPerTick":13.853566666666714,"digest":2689908851}

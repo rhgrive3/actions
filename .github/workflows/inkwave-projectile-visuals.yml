@@ -208,6 +208,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
       - name: Verify immutable candidate and dispatch pair
@@ -234,6 +247,19 @@ jobs:
         if: ${{ matrix.side == 'before' || matrix.side == 'phase-control' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
         uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
           path: .ci-baseline
           persist-credentials: false
@@ -496,6 +522,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Verify immutable comparison checkout
         shell: bash

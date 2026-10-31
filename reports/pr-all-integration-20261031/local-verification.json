@@ -1,0 +1,154 @@
+{
+  "scope": "Local production composition and focused remediation of the initial full source sweeps. Remote integration checks have not yet run at this record.",
+  "baseMain": "0582bb1ee6ac03dfb54e292ea839d18463e33fcc",
+  "productionBuild": {
+    "contentHash": "8d17ed64b1b4fcb635467a33a12599751c872f267f079bdc615d7699e490b45b",
+    "inputHash": "21462361ebdb24f0158b1587107026cd1752aa30422f1e4221d96bf4b91565ba",
+    "revision": "612dfc982f1a9e8a2e94a27bd2f24a1df9f1c27d2e6264cb02d0edb18f988c09",
+    "esbuild": "0.28.2"
+  },
+  "initialSweepsAndRootReruns": {
+    "source-quality-final": {
+      "tests": 2560,
+      "pass": 2521,
+      "fail": 29,
+      "cancelled": 0,
+      "skipped": 10,
+      "todo": 0,
+      "sha256": "0b61e7cdfc862942a0ddaf69fcaec0832c0a6ebadcd46039a768b7575d7941a2"
+    },
+    "source-network-final": {
+      "tests": 1252,
+      "pass": 1243,
+      "fail": 9,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "8b42cedda947fbaf907431ffd2dc9569456ef42154b59b768000c3e741c8c800"
+    },
+    "quality-remediations-final": {
+      "tests": 110,
+      "pass": 110,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "baf1f7fbb8252dd535a9370300f0c40a5c6eacdfdfb074450fae2057b6432cac"
+    },
+    "network-remediations-final": {
+      "tests": 56,
+      "pass": 56,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "f70a42a5dc9e9e5ba70f9bf5474e33441237dce0c7e7c553a52b480b06662e9a"
+    },
+    "direct-source-final": {
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "06a0c8a3a40466731191b65dfb90c32eaa004b23e04fb31d945c8a8baa2e0a89"
+    },
+    "prefix-final": {
+      "tests": 16,
+      "pass": 16,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "77a53167ec180bbc895152f2e4e0c591da1d0d697691324c9e92f0153d526e01"
+    },
+    "latest-main-fixtures-final": {
+      "tests": 24,
+      "pass": 24,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "sha256": "bfdb58466e7cbbbb4ed477b71722dabd2edc5a25762629d93bb97fba1e612303"
+    }
+  },
+  "additionalFocusedResults": [
+    {
+      "scope": "GPU Wave 9–11 final production owner",
+      "pass": 11,
+      "fail": 0,
+      "rawAndFinalSites": 111
+    },
+    {
+      "scope": "Scenery aggregate sphere bounds",
+      "pass": 1,
+      "fail": 0
+    },
+    {
+      "scope": "Residual object-hit accepted sender-life dependency",
+      "pass": 7,
+      "fail": 0
+    },
+    {
+      "scope": "Final special device native contact including Booyah body and terrain",
+      "pass": 16,
+      "fail": 0,
+      "bodyContacts": 28,
+      "terrainContacts": 25
+    },
+    {
+      "scope": "Storm native peer contact and owner-life epoch",
+      "pass": 11,
+      "fail": 0,
+      "newLifeAccepted": 99,
+      "newLifeExpected": 99,
+      "oldLifeRetiredTicks": [
+        88,
+        89,
+        90
+      ]
+    },
+    {
+      "scope": "Single-round native contact, six family files",
+      "pass": 85,
+      "fail": 0,
+      "skipped": 0,
+      "heapLimitIncreased": false
+    },
+    {
+      "scope": "Shared throw prediction and special trajectories",
+      "pass": 163,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "Clam historical overlay source links and pose",
+      "pass": 8,
+      "fail": 0,
+      "donorPinFollowupPass": 1
+    },
+    {
+      "scope": "Current menu identity epoch",
+      "pass": 14,
+      "fail": 0
+    },
+    {
+      "scope": "CI install evidence permissions, unmodified test under unprivileged user",
+      "pass": 3,
+      "fail": 0
+    }
+  ],
+  "otherGates": {
+    "productionBuild": "passed",
+    "startupBudget": "passed",
+    "migrationAuditFailures": [],
+    "upstreamCompatibilityReference": "11.3.0"
+  },
+  "interpretation": "Initial sweeps were not green. Every reported failure group was repaired and verified by focused reruns; overlapping focused counts must not be added to invent a new full-suite total. The final remote CI remains separate evidence.",
+  "limitations": [
+    "Chromium 151 with software WebGL; no original Nintendo hardware or iPad performance claim.",
+    "Local native-stage LFS prebuilt payloads were unavailable; the existing browser-conversion fallback was used.",
+    "The native-RAF full-game timeout and screenshot-comparison workflows need fresh remote evidence.",
+    "No undocumented Splatoon 3 11.3.0 frame or speed value has been inferred."
+  ]
+}

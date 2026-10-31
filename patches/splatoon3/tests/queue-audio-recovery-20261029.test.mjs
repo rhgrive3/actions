@@ -28,6 +28,8 @@ function fixture({fail=false,manifestFail=false}={}){
   };
   const ensure=loader.ensure.bind(loader);
   loader.ensure=(...args)=>{ensures.push(args[0]);return ensure(...args);};
+  const ensureMany=loader.ensureMany.bind(loader);
+  loader.ensureMany=(requests,options)=>{ensures.push(...requests.map(row=>row.id));return ensureMany(requests,options);};
   const settle=async()=>{while(loader.inFlight.size){await Promise.all([...loader.inFlight.values()]);await flush();}};
   return {engine,bank,loader,manifest,requests,ensures,settle};
 }
@@ -171,3 +173,15 @@ test('response watchdog pauses when hidden, resumes with a full bound and remove
   audioWorkerDeadline(()=>owned,()=>timedOut++,{timeoutMs:100,document});clock.tick(100);assert.equal(timedOut,1);assert.equal(listeners.size,0);
   audioWorkerDeadline(()=>owned,()=>timedOut++,{timeoutMs:100,document});owned=false;clock.tick(100);assert.equal(timedOut,1);assert.equal(listeners.size,0);
 }));
+
+for(let resident=0;resident<=5;resident++)test('shared combat prewarm imports only missing events in 2+2+1 batches with '+resident+' resident',async()=>{
+ const f=fixture();try{await f.loader.getManifest();if(resident)await f.bank.authorized.load({...f.manifest,clips:f.manifest.clips.filter(row=>cues.slice(0,resident).includes(row.id))},{replace:false});
+  const batches=[],load=f.bank.authorized.load.bind(f.bank.authorized);f.bank.authorized.load=(manifest,options)=>{batches.push({ids:manifest.clips.map(x=>x.id),concurrency:options.concurrency});return load(manifest,options);};
+  f.engine.prepareWeapon('shooter');await f.settle();const shared=batches.filter(x=>x.ids[0]?.startsWith('combat:'));assert.deepEqual(shared.map(x=>x.ids),Array.from({length:Math.ceil((5-resident)/2)},(_,i)=>cues.slice(resident+i*2,resident+i*2+2)));assert(shared.every(x=>x.concurrency===2));assert(cues.every(id=>f.loader.isEventResident(id,'fire')));
+ }finally{f.engine.disposeWeaponAudio();}
+});
+test('START rejects a partially decoded combat event even if one variant is already published',async()=>{
+ const f=fixture();try{f.manifest.clips.push({id:cues[0],event:'fire',variant:1,file:'s3-real/fail-variant.mp3'});const fetcher=f.bank.authorized.fetcher;f.bank.authorized.fetcher=url=>String(url).includes('fail-variant')?Promise.resolve({ok:false,status:404}):fetcher(url);
+  await assert.rejects(f.engine.requireRecordedMainShot('shooter'),/combat:critical/);assert(f.bank.authorized.byEvent.has(cues[0]+':fire'));assert.equal(f.loader.isEventResident(cues[0],'fire'),false);
+ }finally{f.engine.disposeWeaponAudio();}
+});

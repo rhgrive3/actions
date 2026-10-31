@@ -31,9 +31,9 @@ const PINNED_SOURCE_TREES=Object.freeze({
 // END GENERATED PINNED SOURCE INVENTORIES
 let activeSlot=null;
 async function slots(id){
- const now=Date.now();if(activeSlot?.id===id&&now-activeSlot.time<5000)return activeSlot.promise;
- const entry={id,time:now,promise:null};activeSlot=entry;
- entry.promise=openSlots(id).catch(error=>{if(activeSlot===entry)activeSlot=null;throw error;});
+ const now=Date.now();if(activeSlot?.id===id&&(activeSlot.pending||now-activeSlot.time<5000))return activeSlot.promise;
+ const entry={id,time:now,pending:true,promise:null};activeSlot=entry;
+ entry.promise=openSlots(id).then(value=>{entry.pending=false;entry.time=Date.now();return value;}).catch(error=>{if(activeSlot===entry)activeSlot=null;throw error;});
  return entry.promise;
 }
 async function openSlots(id){
@@ -153,16 +153,43 @@ async function seal(data){
  hashes.push(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(manifest)));return hashes.map(hex).join('/');
 }
 export async function readDerived(key){
- let db;try{db=await openDB();const row=await transact(db,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done(r.result);});if(!row||await seal(row.data)!==row.seal)return null;return row.data;}catch{return null;}finally{db?.close();}
+ let db;try{db=await openDB();const row=await transact(db,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done(r.result);});if(!row||await seal(row.data)!==row.seal)return null;
+  // Refresh only the small eviction row after successful verification. A
+  // concurrent replacement must not acquire this older read's timestamp.
+  try{await new Promise((resolve,reject)=>{
+   const t=db.transaction('stage-times','readwrite'),s=t.objectStore('stage-times'),r=s.get(key);
+   r.onsuccess=()=>{const current=r.result;if(current&&(current.seal===row.seal||(!current.seal&&Object.is(current.time,row.time))))s.put({key,time:Date.now(),seal:row.seal});};
+   t.oncomplete=resolve;t.onerror=t.onabort=()=>reject(t.error);
+  });}catch{}
+  return row.data;}catch{return null;}finally{db?.close();}
 }
-export async function writeDerived(key,data){
- let db;try{const signature=await seal(data);db=await openDB();await transact(db,'readwrite',(s,_done,t)=>{
-  const times=t.objectStore('stage-times'),r=times.getAll(),keys=s.getAllKeys();let rows,stageKeys;
+// Resolve once IDB has synchronously serialized put(data), before its disk
+// commit. The owner may then transfer the original buffers, but must keep the
+// worker alive until completion settles. No extra application-level clone.
+export async function beginDerivedWrite(key,data){
+ let db;
+ try{
+  const signature=await seal(data);db=await openDB();
+  let publish,complete,settled=false,published=false;
+  const staged=new Promise(resolve=>{publish=resolve;}),completion=new Promise(resolve=>{complete=resolve;});
+  const t=db.transaction(['stages','stage-times'],'readwrite'),s=t.objectStore('stages'),times=t.objectStore('stage-times');
+  const finish=ok=>{if(settled)return;settled=true;if(!published)publish(null);complete(ok);db.close();};
+  t.oncomplete=()=>finish(true);t.onerror=t.onabort=()=>finish(false);
+  const r=times.getAll(),keys=s.getAllKeys();let rows,stageKeys;
   const update=()=>{
    if(!rows||!stageKeys)return;
-   if(rows.length!==stageKeys.length||rows.some((row,i)=>indexedDB.cmp(row.key,stageKeys[i])!==0)){t.abort();return;}
-   const other=rows.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);for(const row of other.slice(1)){s.delete(row.key);times.delete(row.key);}const time=Date.now();s.put({key,time,seal:signature,data});times.put({key,time});
+   try{
+    if(rows.length!==stageKeys.length||rows.some((row,i)=>indexedDB.cmp(row.key,stageKeys[i])!==0)){t.abort();return;}
+    const other=rows.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);
+    for(const row of other.slice(1)){s.delete(row.key);times.delete(row.key);}
+    const time=Date.now();s.put({key,time,seal:signature,data});times.put({key,time,seal:signature});
+    published=true;publish({completion});
+   }catch{try{t.abort();}catch{finish(false);}}
   };
   r.onsuccess=()=>{rows=r.result;update();};keys.onsuccess=()=>{stageKeys=keys.result;update();};
- });}catch{}finally{db?.close();}
+  return await staged;
+ }catch{db?.close();return null;}
+}
+export async function writeDerived(key,data){
+ const pending=await beginDerivedWrite(key,data);if(pending)await pending.completion;
 }

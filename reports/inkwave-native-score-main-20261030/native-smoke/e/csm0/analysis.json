@@ -1,0 +1,927 @@
+{
+  "analyzedAt": "2026-10-30T21:11:01.345Z",
+  "resultSha256": "4c0e88091f4f3680f0bf9ab67377d48bffc327745205169a8a8fdd42721809c8",
+  "resultBytes": 1635934,
+  "status": "verified-after-saved-file-readback",
+  "startedAt": "2026-10-30T21:03:06.453Z",
+  "completedAt": "2026-10-30T21:10:09.859Z",
+  "counts": {
+    "warmups": 4,
+    "preflight": 4,
+    "measurements": 4,
+    "exactPairs": 6,
+    "rejected": 0
+  },
+  "sourceAndReceipts": {
+    "a": {
+      "sourceSha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d",
+      "admittedPrivateFiles": 17,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ],
+      "servedUniqueFiles": 690,
+      "totalRequests": 2108
+    },
+    "b": {
+      "sourceSha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+      "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8",
+      "admittedPrivateFiles": 17,
+      "unrequestedPrivateFiles": [
+        "native-prebuilt/packs/17bb58c376d433629f030474dc50e198.bin"
+      ],
+      "servedUniqueFiles": 690,
+      "totalRequests": 704
+    }
+  },
+  "phases": {
+    "preflight": {
+      "quartetSummary": {
+        "quartets": [
+          {
+            "round": 0,
+            "replayOrdinals": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 12.629999999888241,
+                "b": 12.493333333109817,
+                "ratio": 0.9891792029469807,
+                "changePercent": -1.0820797053019304
+              },
+              "rendererThreadMsPerTick": {
+                "a": 14.41443333333332,
+                "b": 14.88228333333333,
+                "ratio": 1.032457051150121,
+                "changePercent": 3.2457051150120986
+              }
+            }
+          }
+        ],
+        "frameRatio": {
+          "n": 1,
+          "mean": 0.9891792029469807,
+          "median": 0.9891792029469807,
+          "p95": 0.9891792029469807,
+          "max": 0.9891792029469807,
+          "logRatioTInterval95": null
+        },
+        "threadRatio": {
+          "n": 1,
+          "mean": 1.032457051150121,
+          "median": 1.032457051150121,
+          "p95": 1.032457051150121,
+          "max": 1.032457051150121,
+          "logRatioTInterval95": null
+        }
+      },
+      "windows": [
+        {
+          "phase": "preflight",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 0,
+          "side": "a",
+          "buildSide": "a",
+          "replayOrdinal": 2,
+          "startedAt": "2026-10-30T21:06:17.129Z",
+          "completedAt": "2026-10-30T21:06:17.658Z",
+          "frameMeanMs": 12.993333333233993,
+          "rendererThreadMsPerTick": 15.055333333333348,
+          "frameP95Ms": 22.199999999254942,
+          "frameMaxMs": 25.5,
+          "cgroupDelta": {
+            "usage_usec": 1439731,
+            "user_usec": 1331697,
+            "system_usec": 108035,
+            "nice_usec": 0,
+            "nr_periods": 5,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 165631804,
+          "heapBytesAfter": 174786032,
+          "bvh": {
+            "queries": 8875,
+            "triangleTests": 152442
+          },
+          "digest": 1889454195,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "preflight",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 1,
+          "side": "b",
+          "buildSide": "a",
+          "replayOrdinal": 2,
+          "startedAt": "2026-10-30T21:06:28.089Z",
+          "completedAt": "2026-10-30T21:06:28.630Z",
+          "frameMeanMs": 12.98333333308498,
+          "rendererThreadMsPerTick": 16.071633333333324,
+          "frameP95Ms": 23.900000002235174,
+          "frameMaxMs": 24.5,
+          "cgroupDelta": {
+            "usage_usec": 1644883,
+            "user_usec": 1424728,
+            "system_usec": 220155,
+            "nice_usec": 0,
+            "nr_periods": 5,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 253197956,
+          "heapBytesAfter": 227846684,
+          "bvh": {
+            "queries": 8875,
+            "triangleTests": 152442
+          },
+          "digest": 1889454195,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "preflight",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 2,
+          "side": "b",
+          "buildSide": "a",
+          "replayOrdinal": 3,
+          "startedAt": "2026-10-30T21:06:37.493Z",
+          "completedAt": "2026-10-30T21:06:37.988Z",
+          "frameMeanMs": 12.003333333134652,
+          "rendererThreadMsPerTick": 13.692933333333338,
+          "frameP95Ms": 18.800000000745058,
+          "frameMaxMs": 22.300000000745058,
+          "cgroupDelta": {
+            "usage_usec": 1322371,
+            "user_usec": 1207220,
+            "system_usec": 115152,
+            "nice_usec": 0,
+            "nr_periods": 5,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 273694236,
+          "heapBytesAfter": 244164804,
+          "bvh": {
+            "queries": 8895,
+            "triangleTests": 152962
+          },
+          "digest": 2689908851,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "preflight",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 3,
+          "side": "a",
+          "buildSide": "a",
+          "replayOrdinal": 3,
+          "startedAt": "2026-10-30T21:06:48.120Z",
+          "completedAt": "2026-10-30T21:06:48.611Z",
+          "frameMeanMs": 12.26666666654249,
+          "rendererThreadMsPerTick": 13.773533333333296,
+          "frameP95Ms": 19.5,
+          "frameMaxMs": 23.099999997764826,
+          "cgroupDelta": {
+            "usage_usec": 1323412,
+            "user_usec": 1202413,
+            "system_usec": 121000,
+            "nice_usec": 0,
+            "nr_periods": 5,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 175770936,
+          "heapBytesAfter": 181223548,
+          "bvh": {
+            "queries": 8895,
+            "triangleTests": 152962
+          },
+          "digest": 2689908851,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        }
+      ],
+      "throttledWindows": 0,
+      "throttledPeriods": 0,
+      "throttledUsec": 0,
+      "sideMeans": {
+        "a": {
+          "frameMeanMs": {
+            "min": 12.26666666654249,
+            "max": 12.993333333233993,
+            "mean": 12.629999999888241
+          },
+          "rendererThreadMsPerTick": {
+            "min": 13.773533333333296,
+            "max": 15.055333333333348,
+            "mean": 14.41443333333332
+          }
+        },
+        "b": {
+          "frameMeanMs": {
+            "min": 12.003333333134652,
+            "max": 12.98333333308498,
+            "mean": 12.493333333109817
+          },
+          "rendererThreadMsPerTick": {
+            "min": 13.692933333333338,
+            "max": 16.071633333333324,
+            "mean": 14.88228333333333
+          }
+        }
+      }
+    },
+    "measurements": {
+      "quartetSummary": {
+        "quartets": [
+          {
+            "round": 0,
+            "replayOrdinals": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "ratios": {
+              "frameMeanMs": {
+                "a": 12.05,
+                "b": 13.26333333340784,
+                "ratio": 1.1006915629384098,
+                "changePercent": 10.069156293840976
+              },
+              "rendererThreadMsPerTick": {
+                "a": 14.164300000000019,
+                "b": 13.940183333333362,
+                "ratio": 0.9841773566878239,
+                "changePercent": -1.5822643312176088
+              }
+            }
+          }
+        ],
+        "frameRatio": {
+          "n": 1,
+          "mean": 1.1006915629384098,
+          "median": 1.1006915629384098,
+          "p95": 1.1006915629384098,
+          "max": 1.1006915629384098,
+          "logRatioTInterval95": null
+        },
+        "threadRatio": {
+          "n": 1,
+          "mean": 0.9841773566878239,
+          "median": 0.9841773566878239,
+          "p95": 0.9841773566878239,
+          "max": 0.9841773566878239,
+          "logRatioTInterval95": null
+        }
+      },
+      "windows": [
+        {
+          "phase": "measurements",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 0,
+          "side": "a",
+          "buildSide": "a",
+          "replayOrdinal": 2,
+          "startedAt": "2026-10-30T21:09:38.611Z",
+          "completedAt": "2026-10-30T21:09:39.132Z",
+          "frameMeanMs": 13.063333333283662,
+          "rendererThreadMsPerTick": 14.475033333333325,
+          "frameP95Ms": 20.5,
+          "frameMaxMs": 20.699999999254942,
+          "cgroupDelta": {
+            "usage_usec": 1396814,
+            "user_usec": 1261373,
+            "system_usec": 135441,
+            "nice_usec": 0,
+            "nr_periods": 5,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 203275336,
+          "heapBytesAfter": 211612040,
+          "bvh": {
+            "queries": 8875,
+            "triangleTests": 152442
+          },
+          "digest": 1889454195,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "measurements",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 1,
+          "side": "b",
+          "buildSide": "b",
+          "replayOrdinal": 2,
+          "startedAt": "2026-10-30T21:09:49.745Z",
+          "completedAt": "2026-10-30T21:09:50.362Z",
+          "frameMeanMs": 15.110000000273187,
+          "rendererThreadMsPerTick": 14.32670000000004,
+          "frameP95Ms": 22.800000000745058,
+          "frameMaxMs": 29.100000001490116,
+          "cgroupDelta": {
+            "usage_usec": 1690334,
+            "user_usec": 1566013,
+            "system_usec": 124321,
+            "nice_usec": 0,
+            "nr_periods": 6,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 188237592,
+          "heapBytesAfter": 190895420,
+          "bvh": {
+            "queries": 8875,
+            "triangleTests": 152442
+          },
+          "digest": 1889454195,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "measurements",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 2,
+          "side": "b",
+          "buildSide": "b",
+          "replayOrdinal": 3,
+          "startedAt": "2026-10-30T21:09:59.238Z",
+          "completedAt": "2026-10-30T21:09:59.708Z",
+          "frameMeanMs": 11.41666666654249,
+          "rendererThreadMsPerTick": 13.553666666666686,
+          "frameP95Ms": 18.600000001490116,
+          "frameMaxMs": 19,
+          "cgroupDelta": {
+            "usage_usec": 1296794,
+            "user_usec": 1189273,
+            "system_usec": 107520,
+            "nice_usec": 0,
+            "nr_periods": 4,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 206030616,
+          "heapBytesAfter": 205008952,
+          "bvh": {
+            "queries": 8895,
+            "triangleTests": 152962
+          },
+          "digest": 2689908851,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        },
+        {
+          "phase": "measurements",
+          "kind": "measurement",
+          "round": 0,
+          "slot": 3,
+          "side": "a",
+          "buildSide": "a",
+          "replayOrdinal": 3,
+          "startedAt": "2026-10-30T21:10:09.231Z",
+          "completedAt": "2026-10-30T21:10:09.686Z",
+          "frameMeanMs": 11.036666666716338,
+          "rendererThreadMsPerTick": 13.853566666666714,
+          "frameP95Ms": 15.600000001490116,
+          "frameMaxMs": 20.800000000745058,
+          "cgroupDelta": {
+            "usage_usec": 1285846,
+            "user_usec": 1192160,
+            "system_usec": 93685,
+            "nice_usec": 0,
+            "nr_periods": 4,
+            "nr_throttled": 0,
+            "throttled_usec": 0,
+            "nr_bursts": 0,
+            "burst_usec": 0
+          },
+          "heapBytesBefore": 191499668,
+          "heapBytesAfter": 196989368,
+          "bvh": {
+            "queries": 8895,
+            "triangleTests": 152962
+          },
+          "digest": 2689908851,
+          "poseDigest": 2166136261,
+          "sceneRenderCalls": 0,
+          "budgetTicks": 112
+        }
+      ],
+      "throttledWindows": 0,
+      "throttledPeriods": 0,
+      "throttledUsec": 0,
+      "sideMeans": {
+        "a": {
+          "frameMeanMs": {
+            "min": 11.036666666716338,
+            "max": 13.063333333283662,
+            "mean": 12.05
+          },
+          "rendererThreadMsPerTick": {
+            "min": 13.853566666666714,
+            "max": 14.475033333333325,
+            "mean": 14.164300000000019
+          }
+        },
+        "b": {
+          "frameMeanMs": {
+            "min": 11.41666666654249,
+            "max": 15.110000000273187,
+            "mean": 13.26333333340784
+          },
+          "rendererThreadMsPerTick": {
+            "min": 13.553666666666686,
+            "max": 14.32670000000004,
+            "mean": 13.940183333333362
+          }
+        }
+      }
+    }
+  },
+  "allWindows": [
+    {
+      "phase": "preflight",
+      "kind": "warmup",
+      "round": 0,
+      "slot": 0,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 1,
+      "startedAt": "2026-10-30T21:05:36.567Z",
+      "completedAt": "2026-10-30T21:05:37.251Z",
+      "frameMeanMs": 17.996666666741174,
+      "rendererThreadMsPerTick": 18.41966666666668,
+      "frameP95Ms": 33.600000001490116,
+      "frameMaxMs": 37.100000001490116,
+      "cgroupDelta": {
+        "usage_usec": 1778953,
+        "user_usec": 1570592,
+        "system_usec": 208360,
+        "nice_usec": 0,
+        "nr_periods": 7,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 209808344,
+      "heapBytesAfter": 231337292,
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "digest": 3196058739,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "preflight",
+      "kind": "warmup",
+      "round": 0,
+      "slot": 1,
+      "side": "b",
+      "buildSide": "a",
+      "replayOrdinal": 1,
+      "startedAt": "2026-10-30T21:06:05.038Z",
+      "completedAt": "2026-10-30T21:06:05.773Z",
+      "frameMeanMs": 18.283333333209157,
+      "rendererThreadMsPerTick": 21.357233333333348,
+      "frameP95Ms": 30.5,
+      "frameMaxMs": 42.69999999925494,
+      "cgroupDelta": {
+        "usage_usec": 2591362,
+        "user_usec": 2363639,
+        "system_usec": 227722,
+        "nice_usec": 0,
+        "nr_periods": 7,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 221230508,
+      "heapBytesAfter": 207011976,
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "digest": 3196058739,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "warmup",
+      "round": 0,
+      "slot": 0,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 1,
+      "startedAt": "2026-10-30T21:09:02.894Z",
+      "completedAt": "2026-10-30T21:09:03.719Z",
+      "frameMeanMs": 21.293333333233992,
+      "rendererThreadMsPerTick": 18.67316666666667,
+      "frameP95Ms": 34.30000000074506,
+      "frameMaxMs": 42.19999999925494,
+      "cgroupDelta": {
+        "usage_usec": 2643317,
+        "user_usec": 2440335,
+        "system_usec": 202982,
+        "nice_usec": 0,
+        "nr_periods": 8,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 224447696,
+      "heapBytesAfter": 209403424,
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "digest": 3196058739,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "warmup",
+      "round": 0,
+      "slot": 1,
+      "side": "b",
+      "buildSide": "b",
+      "replayOrdinal": 1,
+      "startedAt": "2026-10-30T21:09:26.629Z",
+      "completedAt": "2026-10-30T21:09:27.399Z",
+      "frameMeanMs": 20.190000000099342,
+      "rendererThreadMsPerTick": 20.76316666666666,
+      "frameP95Ms": 44,
+      "frameMaxMs": 47.30000000074506,
+      "cgroupDelta": {
+        "usage_usec": 2735401,
+        "user_usec": 2524130,
+        "system_usec": 211271,
+        "nice_usec": 0,
+        "nr_periods": 7,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 188928068,
+      "heapBytesAfter": 174379948,
+      "bvh": {
+        "queries": 9059,
+        "triangleTests": 150655
+      },
+      "digest": 3196058739,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 0,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 2,
+      "startedAt": "2026-10-30T21:06:17.129Z",
+      "completedAt": "2026-10-30T21:06:17.658Z",
+      "frameMeanMs": 12.993333333233993,
+      "rendererThreadMsPerTick": 15.055333333333348,
+      "frameP95Ms": 22.199999999254942,
+      "frameMaxMs": 25.5,
+      "cgroupDelta": {
+        "usage_usec": 1439731,
+        "user_usec": 1331697,
+        "system_usec": 108035,
+        "nice_usec": 0,
+        "nr_periods": 5,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 165631804,
+      "heapBytesAfter": 174786032,
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "digest": 1889454195,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 1,
+      "side": "b",
+      "buildSide": "a",
+      "replayOrdinal": 2,
+      "startedAt": "2026-10-30T21:06:28.089Z",
+      "completedAt": "2026-10-30T21:06:28.630Z",
+      "frameMeanMs": 12.98333333308498,
+      "rendererThreadMsPerTick": 16.071633333333324,
+      "frameP95Ms": 23.900000002235174,
+      "frameMaxMs": 24.5,
+      "cgroupDelta": {
+        "usage_usec": 1644883,
+        "user_usec": 1424728,
+        "system_usec": 220155,
+        "nice_usec": 0,
+        "nr_periods": 5,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 253197956,
+      "heapBytesAfter": 227846684,
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "digest": 1889454195,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 2,
+      "side": "b",
+      "buildSide": "a",
+      "replayOrdinal": 3,
+      "startedAt": "2026-10-30T21:06:37.493Z",
+      "completedAt": "2026-10-30T21:06:37.988Z",
+      "frameMeanMs": 12.003333333134652,
+      "rendererThreadMsPerTick": 13.692933333333338,
+      "frameP95Ms": 18.800000000745058,
+      "frameMaxMs": 22.300000000745058,
+      "cgroupDelta": {
+        "usage_usec": 1322371,
+        "user_usec": 1207220,
+        "system_usec": 115152,
+        "nice_usec": 0,
+        "nr_periods": 5,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 273694236,
+      "heapBytesAfter": 244164804,
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "digest": 2689908851,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "preflight",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 3,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 3,
+      "startedAt": "2026-10-30T21:06:48.120Z",
+      "completedAt": "2026-10-30T21:06:48.611Z",
+      "frameMeanMs": 12.26666666654249,
+      "rendererThreadMsPerTick": 13.773533333333296,
+      "frameP95Ms": 19.5,
+      "frameMaxMs": 23.099999997764826,
+      "cgroupDelta": {
+        "usage_usec": 1323412,
+        "user_usec": 1202413,
+        "system_usec": 121000,
+        "nice_usec": 0,
+        "nr_periods": 5,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 175770936,
+      "heapBytesAfter": 181223548,
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "digest": 2689908851,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 0,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 2,
+      "startedAt": "2026-10-30T21:09:38.611Z",
+      "completedAt": "2026-10-30T21:09:39.132Z",
+      "frameMeanMs": 13.063333333283662,
+      "rendererThreadMsPerTick": 14.475033333333325,
+      "frameP95Ms": 20.5,
+      "frameMaxMs": 20.699999999254942,
+      "cgroupDelta": {
+        "usage_usec": 1396814,
+        "user_usec": 1261373,
+        "system_usec": 135441,
+        "nice_usec": 0,
+        "nr_periods": 5,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 203275336,
+      "heapBytesAfter": 211612040,
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "digest": 1889454195,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 1,
+      "side": "b",
+      "buildSide": "b",
+      "replayOrdinal": 2,
+      "startedAt": "2026-10-30T21:09:49.745Z",
+      "completedAt": "2026-10-30T21:09:50.362Z",
+      "frameMeanMs": 15.110000000273187,
+      "rendererThreadMsPerTick": 14.32670000000004,
+      "frameP95Ms": 22.800000000745058,
+      "frameMaxMs": 29.100000001490116,
+      "cgroupDelta": {
+        "usage_usec": 1690334,
+        "user_usec": 1566013,
+        "system_usec": 124321,
+        "nice_usec": 0,
+        "nr_periods": 6,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 188237592,
+      "heapBytesAfter": 190895420,
+      "bvh": {
+        "queries": 8875,
+        "triangleTests": 152442
+      },
+      "digest": 1889454195,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 2,
+      "side": "b",
+      "buildSide": "b",
+      "replayOrdinal": 3,
+      "startedAt": "2026-10-30T21:09:59.238Z",
+      "completedAt": "2026-10-30T21:09:59.708Z",
+      "frameMeanMs": 11.41666666654249,
+      "rendererThreadMsPerTick": 13.553666666666686,
+      "frameP95Ms": 18.600000001490116,
+      "frameMaxMs": 19,
+      "cgroupDelta": {
+        "usage_usec": 1296794,
+        "user_usec": 1189273,
+        "system_usec": 107520,
+        "nice_usec": 0,
+        "nr_periods": 4,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 206030616,
+      "heapBytesAfter": 205008952,
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "digest": 2689908851,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    },
+    {
+      "phase": "measurements",
+      "kind": "measurement",
+      "round": 0,
+      "slot": 3,
+      "side": "a",
+      "buildSide": "a",
+      "replayOrdinal": 3,
+      "startedAt": "2026-10-30T21:10:09.231Z",
+      "completedAt": "2026-10-30T21:10:09.686Z",
+      "frameMeanMs": 11.036666666716338,
+      "rendererThreadMsPerTick": 13.853566666666714,
+      "frameP95Ms": 15.600000001490116,
+      "frameMaxMs": 20.800000000745058,
+      "cgroupDelta": {
+        "usage_usec": 1285846,
+        "user_usec": 1192160,
+        "system_usec": 93685,
+        "nice_usec": 0,
+        "nr_periods": 4,
+        "nr_throttled": 0,
+        "throttled_usec": 0,
+        "nr_bursts": 0,
+        "burst_usec": 0
+      },
+      "heapBytesBefore": 191499668,
+      "heapBytesAfter": 196989368,
+      "bvh": {
+        "queries": 8895,
+        "triangleTests": 152962
+      },
+      "digest": 2689908851,
+      "poseDigest": 2166136261,
+      "sceneRenderCalls": 0,
+      "budgetTicks": 112
+    }
+  ],
+  "interpretationLimits": [
+    "Fixed-step eight-actor native emitted runtime; native geometry, paint and all source characters are required before timing. No presented/device FPS evidence.",
+    "Private assets match the exact source commit Git LFS oid and size. Public and private response bodies are checked against admitted SHA and byte length on every HTTP request; successful response receipts are retained.",
+    "All numeric window results must be finite before JSON serialization. A non-finite value fails the run and is retained as an explicit tagged rejection, never silently serialized as null.",
+    "Before game page creation, all harness/browser non-GPU threads are assigned to worker CPUs, and all GPU process threads to a disjoint dedicated CPU pool whose combined capacity with the worker pool fits the cgroup quota. Two startup assignment passes are fixed in advance. No assignment occurs after game page creation. Every window checks all observed browser process/thread affinities before and after timing; a changed GPU PID or an unexpected CPU fails the run. CPU quota and game quality are unchanged. GPU CPU restrictions change this host experiment and may increase wall time; no device FPS or natural scheduler claim.",
+    "One Chromium process; independent contexts/pages may use separate renderer processes. Only one page is active; all other benchmark pages are lifecycle-frozen. No profiling, timing wrappers, sampling or forced GC. One count-only wrapper records actual scene render calls.",
+    "Every window reconstructs a real match on its retained page. This preserves JIT state and exercises real teardown/startup before the window; it is not the natural heap history of one continuous match. Ordinary rematch retains cumulative clock ticks, paint versions and module-private presentation RNG. Only corresponding rematch ordinals are compared: ABBA slots 0/1 share ordinal n and slots 2/3 share n+1. Both versions execute both histories; cross-ordinal outputs are not claimed identical.",
+    "Preparation and GPU finish are outside timing. Per-frame wall excludes observer work; renderer thread CPU includes gameplay digest, counters and CDP evaluation work. After each window the active GL queue is drained outside timing before another page runs. No GPU finish is added to the measured workload.",
+    "Scene submission is excluded unless --render is set. Paint atlas draws remain active. SwiftShader rendering is a separate software workload, not hardware GPU performance.",
+    "Parity covers recorded gameplay/state, visible bone world matrices and workload counters within each matched-ordinal pair, not all pixels, audio samples, every private field or external-device behavior. CPU-only windows may observe no drawn bones and are not visible-pose evidence. Audio raw voice/play/drop counters are recorded without invoking the mutating stats method; real-time voice/minGap outcomes are not required equal.",
+    "A/A passed means recorded-state parity only; timing-noise acceptance remains a separate analysis. Renderer ThreadTime includes observers and is not game-only CPU time.",
+    "Both pages boot before warmup. The preset warmup side order is an initial AB pair for an odd count, followed by ABBA blocks. Each side executes the same number of full warmup replays, with every corresponding ordinal compared. This avoids training one page and leaving it frozen while the other page boots and completes all warmup.",
+    "All warmup and measured windows are retained. Warmup quantity, seeds, frames and order are fixed before execution; a failed or divergent window fails the whole run."
+  ]
+}

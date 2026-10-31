@@ -1,11 +1,12 @@
+import * as nativeWork from '../runtime/native-work.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 
 const source=fs.readFileSync(new URL('../runtime/native-ink-chunks.mjs',import.meta.url),'utf8')
-  .replace("import * as THREE from 'three';",'').replaceAll('export function ','function ').replace('export class ','class ');
-const NativeInkMesh=new Function('THREE',source+'\nreturn NativeInkMesh;')(THREE);
+  .replace(/^import .*;$/gm,'').replaceAll('export function ','function ').replace('export class ','class ');
+const NativeInkMesh=new Function('THREE','consumeNativeWork','consumeNativeWorkAsync',source+'\nreturn NativeInkMesh;')(THREE,nativeWork.consumeNativeWork,nativeWork.consumeNativeWorkAsync);
 const oldSelect=new Function(fs.readFileSync(new URL('./fixtures/native-ink-selection-before.mjs.txt',import.meta.url),'utf8'))();
 function make({triangles=2400,faces=24,baseline=false,fragmented=false}={}){
   const pos=new Float32Array(triangles*9);

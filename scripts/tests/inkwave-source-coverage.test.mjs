@@ -34,6 +34,11 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/roller-paint-world-update.test.mjs',
   'patches/network-replication/tests/combat-native-birth-timing.test.mjs',
   'patches/network-replication/tests/combat-single-round-targets.test.mjs',
+  'patches/network-replication/tests/combat-single-round-targets-catalogue-shooter.test.mjs',
+  'patches/network-replication/tests/combat-single-round-targets-legacy-dualies.test.mjs',
+  'patches/network-replication/tests/combat-single-round-targets-catalogue-dualies.test.mjs',
+  'patches/network-replication/tests/combat-single-round-targets-legacy-splatling.test.mjs',
+  'patches/network-replication/tests/combat-single-round-targets-catalogue-splatling.test.mjs',
   'patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs',
   'patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs',
   'patches/splatoon3/tests/special-legacy-native-receiver.test.mjs',
@@ -65,7 +70,7 @@ function assertRemainingEmittedCoverage(source) {
 }
 
 test('new remaining regressions execute once against the immutable emitted site in mandatory core', () => {
-  assert.equal(remainingEmittedFiles.length,34,'all31 prior emitted regressions plus three Wave runtime parity files');
+  assert.equal(remainingEmittedFiles.length,39,'all 34 prior emitted files plus five process-isolated single-round family files');
   for(const file of remainingEmittedFiles)
     assert.ok(fs.statSync(new URL('../../'+file,import.meta.url)).isFile(),'mandatory file exists: '+file);
   assertRemainingEmittedCoverage(workflow);

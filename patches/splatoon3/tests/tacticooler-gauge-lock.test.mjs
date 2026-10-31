@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { TACTICOOLER_SOURCE } from '../runtime/support-cooler.mjs';
+import { tacticoolerGaugeLocked } from '../runtime/tacticooler-gauge.mjs';
+import { supportNativeProducer } from '../../network-replication/tests/support-native-producer-fixture.mjs';
 
 const STEP = 1 / 60;
 const near = (a, b, label) => assert.ok(Math.abs(a - b) < 1e-8, `${label}: ${a} != ${b}`);
@@ -148,20 +150,43 @@ test('replacement and match clear retire only the matching cooler lock without c
   a.stormGaugeLock = 0; a.addTurf(10); near(a.special, 10, 'clear removes the cooler gate');
 });
 
-test('authenticated remote stand replay never owns a local gauge lock; a new match cannot retain one', async () => {
+test('unadmitted remote deploy cannot create a stand or local lock; a new match cannot retain one', async () => {
   const w = await world(), { f, G, a } = w;
   const local = f.make('support'); local.special = 23;
   a.remote = true; a.owner = 'peer';
   const nm = Object.create(f.NetMatch.prototype);
   nm.byNid = new Map([[7, a]]); nm.match = G.match; G.netm = nm;
   nm._play('peer', [0, 'ks', 'c', 7, 1, 0, 0, 0, a.netLife || 0, 1020]);
-  assert.equal(G.projectiles._s3SupportCoolers.length, 1);
+  assert.equal(G.projectiles._s3SupportCoolers?.length || 0, 0, 'a bare deploy row has no native use/throw capability');
   assert.equal(a.s3TacticoolerGauge, undefined); assert.equal(f.tacticoolerGaugeLocked(local), false);
   near(local.special, 23, 'peer replay leaves local charge alone');
   a.remote = false; G.netm = null; G.projectiles.clear(); w.activate(); w.throwDevice(); w.land();
   assert.equal(f.tacticoolerGaugeLocked(a), true);
   G.match = { ...w.m }; a.reset();
   assert.equal(f.tacticoolerGaugeLocked(a), false, 'new match identity rejects the old stand clock');
+});
+
+test('authenticated native remote use, throw and landing never own a local gauge lock', async t => {
+  const x = await supportNativeProducer(t), { f, owner, victim } = x;
+  victim.special = 23; victim.pos.set(100, 0, 100);
+  owner.special = owner.specialCost(); x.deliver([], 100, owner.special);
+  const rows = x.produce(() => {
+    owner._startSpecial(); owner.intent.sub = true; owner._updateSpecial(STEP);
+    owner.intent.sub = false; owner._updateSpecial(STEP);
+    for (let i = 0; i < 14 && owner.specialActive; i++) owner._updateSpecial(STEP);
+  });
+  assert.ok(rows.some(e => e[1] === 'ev' && e[2] === 'special:use'), 'native charged use is published');
+  assert.ok(rows.some(e => e[1] === 'ks' && e[2] === 't'), 'native throw is published');
+  f.projectiles.clear(); x.deliver(rows, 100, 0);
+  assert.equal(f.projectiles._s3SupportCoolerThrows.length, 1, 'receiver admits the paid native flight');
+  assert.equal(f.projectiles._s3SupportCoolerThrows[0].ghost, true);
+  for (let i = 0; i < 120 && !f.projectiles._s3SupportCoolers.length; i++) x.step();
+  const stand = f.projectiles._s3SupportCoolers[0];
+  assert.ok(stand, 'receiver integration lands a real remote stand');
+  assert.equal(stand.owner, owner);
+  assert.equal(owner.s3TacticoolerGauge ?? null, null, 'remote stand has no local gauge clock');
+  assert.equal(tacticoolerGaugeLocked(victim), false);
+  near(victim.special, 23, 'accepted peer replay leaves local charge alone');
 });
 
 test('all four ranked modes gate host and follower objective gain without banking locked points', async () => {

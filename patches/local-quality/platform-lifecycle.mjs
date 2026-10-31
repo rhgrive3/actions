@@ -120,6 +120,7 @@ export class PlatformFrameDriver {
     this.frameRate = frameRate;
     this.raf = null; this.timer = null; this.running = false; this.disposed = false;
     this.generation = 0; this.frameInterval = 0; this.nextDeadline = null;
+    this.timerOvershoot = 0; this.timerExpectedAt = null;
     this.last = null; this.lastWall = null;
     this.metrics = { frames: 0, gaps: 0, maxDelta: 0, schedules: 0, cancels: 0, timerSchedules: 0, timerCancels: 0, timerWakes: 0 };
     this._callback = (now, generation) => {
@@ -129,6 +130,7 @@ export class PlatformFrameDriver {
       const time = Number.isFinite(now) ? now : this._now();
       const wall = this.env.Date?.now?.() ?? Date.now();
       let dt = this.last === null ? 0 : (time - this.last) / 1000;
+      let elapsed = Number.isFinite(dt) && dt >= 0 ? dt : 0;
       const wallGap = this.lastWall === null ? 0 : (wall - this.lastWall) / 1000;
       const gap = !Number.isFinite(dt) || dt < 0 || dt > MAX_PLATFORM_GAP || wallGap > MAX_PLATFORM_GAP;
       this.last = time; this.lastWall = wall;
@@ -142,9 +144,10 @@ export class PlatformFrameDriver {
         // low-FPS devices cannot starve fixed simulation. Real hide/suspend
         // transitions stop/reset the driver separately and still resume at zero.
         dt = foregroundStall ? Math.min(dt, MAX_PLATFORM_GAP) : 0;
+        if (!foregroundStall) elapsed = 0;
       }
       this.metrics.frames++; this.metrics.maxDelta = Math.max(this.metrics.maxDelta, dt);
-      try { this.frame(dt); }
+      try { this.frame(dt, elapsed, time); }
       finally { if (generation === this.generation) this._scheduleNext(time); }
     };
     this.unsubscribe = owner.subscribe({
@@ -176,10 +179,14 @@ export class PlatformFrameDriver {
       this._timerCallback = () => {
         if (generation !== this.generation) return;
         this.timer = null; this.metrics.timerWakes++;
+        const late = this._now() - this.timerExpectedAt;
+        if (Number.isFinite(late) && late >= 0) this.timerOvershoot = Math.max(late, this.timerOvershoot * .995);
+        this.timerExpectedAt = null;
         if (this.running && this.owner.active && !this.disposed) this._queueRAF();
       };
     }
-    this.timer = this.env.setTimeout(this._timerCallback, Math.max(0, delay));
+    const wait = Math.max(0, delay); this.timerExpectedAt = this._now() + wait;
+    this.timer = this.env.setTimeout(this._timerCallback, wait);
     this.metrics.timerSchedules++;
   }
   _scheduleNext(frameTime) {
@@ -194,11 +201,12 @@ export class PlatformFrameDriver {
     if (this.frameInterval !== interval || this.nextDeadline === null) {
       this.frameInterval = interval;
       this.nextDeadline = frameTime + interval;
-    }
-    // Queue RAF just before the target so timer rounding does not miss a vsync
-    // by a fraction of a millisecond. Keep the absolute grid when work runs late.
-    const lead = 1;
-    const limit = now + lead;
+    } else this.nextDeadline += interval; // one delivered callback consumes one target slot
+    // Learn actual timeout overshoot. Advancing the absolute target must depend
+    // on the presented frame, never the early wake lead: a larger lead may put
+    // RAF on the preceding 90/144 Hz slot without consuming another deadline.
+    const lead = Math.min(8, interval * .5, 1 + this.timerOvershoot);
+    const limit = frameTime;
     while (this.nextDeadline <= limit) {
       const current = this.nextDeadline, next = current + interval;
       if (next > limit) { this.nextDeadline = next; break; }
@@ -217,14 +225,17 @@ export class PlatformFrameDriver {
       }
       this.nextDeadline = next;
     }
-    this._queueTimer(this.nextDeadline - now - lead);
+    const wait = this.nextDeadline - now - lead;
+    // Long frame work has already used the sleep budget. Queue RAF directly;
+    // a zero-delay timer would only add another opportunity to miss VSync.
+    if (wait <= 0) this._queueRAF(); else this._queueTimer(wait);
   }
   reset(reason) {
     this.generation++;
     if (this.timer !== null) { this.env.clearTimeout?.(this.timer); this.timer = null; this.metrics.timerCancels++; }
     if (this.raf !== null) { this.env.cancelAnimationFrame(this.raf); this.metrics.cancels++; }
     this.raf = null; this.last = this.lastWall = null;
-    this.frameInterval = 0; this.nextDeadline = null;
+    this.frameInterval = 0; this.nextDeadline = null; this.timerExpectedAt = null; this.timerOvershoot = 0;
     this.rebase(reason);
   }
   schedule() {

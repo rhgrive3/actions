@@ -31,6 +31,9 @@ export function networkIdentity() {
   return Object.fromEntries(['adapter.mjs', 'roller-contact-adapter.mjs', 'roller-contact.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
     'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'utf8-length.mjs', 'rolling-quantile.mjs', 'ghost-live-index.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
     .concat(['crablet-trajectory.mjs', 'owner-tick-receipt.mjs', 'queue-network-20261027-adapter.mjs', 'canonical-weapon-actions.mjs', 'trusted-native-replay.mjs', 'trusted-native-replay-worker.mjs', 'native-command-wire.mjs'])
+    .concat(['catalogue-action-receipt.mjs','device-contact-proof.mjs','device-hit-pending.mjs','native-device-probe.mjs',
+      'queue-network-20261030-adapter.mjs','special-device-contact-proof.mjs','sub-device-contact-proof.mjs','main-melee-device-contact.mjs',
+      'storm-device-contact-proof.mjs','storm-device-contact-adapter.mjs'])
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -625,6 +628,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (d.r === 2 && ownerSimulationTickAccepted) {
           stageAcceptedSubBirth(this, from, e, d.ts, d.u);
           stageAcceptedSprinklerBirth(this, from, e, d.ts, d.u);
+          stageAcceptedNativeBombBirth(this, from, e, d.ts, d.u);
         }
       }
     }`, 'receive event identity');
@@ -896,7 +900,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     // (which also carries event sequence/tick and optional paint metadata).
     const bombKitIndex = code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12])') ? 11
       : code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11])') ? 10 : -1;
-    code = "import { stageAcceptedSubBirth, stageAcceptedSprinklerBirth, commitCreatedSprinklerBirth } from '../../patches/network-replication/sub-birth-commit.mjs';\n" + code;
+    code = "import { stageAcceptedSubBirth, stageAcceptedSprinklerBirth, commitCreatedSprinklerBirth, stageAcceptedNativeBombBirth, commitCreatedNativeBombBirth } from '../../patches/network-replication/sub-birth-commit.mjs';\n" + code;
     code = "import { retireReplacedGhostSprinklers } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n" + code;
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 's') e._netPeer = from;
@@ -975,6 +979,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
           commitCreatedSprinklerBirth(this, from, e, b);
+          commitCreatedNativeBombBirth(this, from, e, b);
         }
         break;
       }`, 'bomb timeline birth with optional metadata and kit identity');

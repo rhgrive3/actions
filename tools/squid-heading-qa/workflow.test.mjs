@@ -2,12 +2,15 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {sourceLoadedActorFixture} from '../../patches/splatoon3/tests/source-loaded-actor-fixture.mjs';
 const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-squid-heading-qa.yml',import.meta.url),'utf8');
 function verify(code){
- assert(!/fetch-depth:\s*0\b|git worktree/.test(code),'no repository history checkout');
- assert.equal((code.match(/uses: actions\/checkout@v4/g)||[]).length,2);
- assert.equal((code.match(/fetch-depth: 1\b/g)||[]).length,2);
+ assert(!/fetch-depth:\s*0\b|git (?:fetch|clone)\b/.test(code),'no repository history checkout');
+ assert.equal((code.match(/uses: actions\/checkout@v4/g)||[]).length,1);
+ assert.equal((code.match(/fetch-depth: 1\b/g)||[]).length,1);
  assert(code.includes('ref: ${{ github.event.pull_request.head.sha || github.sha }}'));
  assert(!code.includes('BASE_SHA:'),'historical main is not this counterfactual');
- assert(code.includes('ref: ${{ env.SOURCE_SHA }}\n          fetch-depth: 1\n          path: _squid_heading_reference'));
+ assert.equal((code.match(/git worktree add/g)||[]).length,1);
+ assert(code.includes('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"\n          test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
+ assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"'));
+ assert(code.includes('test -z "$(git -C _squid_heading_reference status --porcelain)"'));
  assert(code.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
  assert(code.includes('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"'));
  assert(code.includes('node tools/squid-heading-qa/reference.mjs _squid_heading_reference "$SOURCE_SHA" .qa-evidence/squid-heading-reference.json'));
@@ -20,12 +23,14 @@ function verify(code){
  assert(code.includes('group: squid-heading-native-${{ github.ref }}\n  cancel-in-progress: true')); 
  assert.equal((code.match(/tools\/squid-heading-qa\/three-contract.test.mjs/g)||[]).length,2,'source and emitted export/guide tests');
 }
-test('native heading workflow keeps two shallow exact-head builds and emitted/paired gates',()=>{
+test('native heading workflow keeps one shallow checkout, exact local counterfactual and emitted/paired gates',()=>{
  verify(workflow);
  for(const mutate of [
   s=>s.replace('fetch-depth: 1','fetch-depth: 0'),
   s=>s.replace('node tools/squid-heading-qa/reference.mjs','echo tools/squid-heading-qa/reference.mjs'),
-  s=>s.replace('ref: ${{ env.SOURCE_SHA }}','ref: main'),
+  s=>s.replace('git worktree add --detach _squid_heading_reference "$SOURCE_SHA"','git worktree add --detach _squid_heading_reference main'),
+  s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD^{tree})" = "$(git rev-parse HEAD^{tree})"','true'),
+  s=>s.replace('test -z "$(git -C _squid_heading_reference status --porcelain)"','true'),
   s=>s.replace('test "$(git -C _squid_heading_reference rev-parse HEAD)" = "$SOURCE_SHA"','true'),
   s=>s.replace('--reference-proof ../.qa-evidence/squid-heading-reference.json',''),
   s=>s.replace('tools/squid-heading-qa/bank-contract.test.mjs',''),
