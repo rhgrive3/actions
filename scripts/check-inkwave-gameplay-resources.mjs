@@ -61,9 +61,22 @@ try{
  for(const id of maps)if(!availableMaps.includes(id))throw Error('Unknown map: '+id);
  for(let cycle=0;cycle<cycles;cycle++){
   const mapId=maps[cycle%maps.length];phase='start-'+cycle+'-'+mapId;checkpoint();
+  // START must be driven through a trusted browser input. AudioEngine deliberately
+  // requires the selected recorded weapon sound to be decoded before gameplay;
+  // calling the internal startMatch API from page.evaluate bypasses Chromium's
+  // user-activation gate and leaves AudioContext suspended in headless CI.
+  // A real keyboard gesture first unlocks audio, then the native menus and START
+  // button run their unchanged production handlers.
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(()=>__inkwave?.menus?.current==='mode',null,{timeout:30000});
   if(crabLifecycle)await page.evaluate(()=>{const g=__inkwave,id=Object.keys(g.api.weapons).find(id=>g.api.weapons[id].special==='crabTank');if(!id)throw Error('No real Crab Tank kit');g.profile.weapon=id;});
-  // Flow APIs resolve to a Match instance; never serialize its scene/rig graph.
-  await page.evaluate(async({mapId})=>{await __inkwave.startMatch({mapId,difficulty:'normal',duration:180});},{mapId});
+  await page.locator('.iw-mode--turf').click();
+  await page.waitForFunction(()=>__inkwave?.menus?.current==='setup',null,{timeout:30000});
+  const ticketIndex=await page.evaluate(expected=>[...document.querySelectorAll('.iw-ticket')].findIndex(el=>el._mid===expected),mapId);
+  if(ticketIndex<0)throw Error('Native setup menu has no stage ticket for '+mapId);
+  await page.locator('.iw-ticket').nth(ticketIndex).click();
+  await page.waitForFunction(expected=>__inkwave?.menus?._setup?.mapId===expected,mapId,{timeout:30000});
+  await page.locator('.iw-btn--start').click();
   await page.waitForFunction(()=>__G.match?.state==='playing',null,{timeout:180000});
   await page.waitForTimeout(5000);
   // On software WebGL a newly loaded second map may have simulated under one
