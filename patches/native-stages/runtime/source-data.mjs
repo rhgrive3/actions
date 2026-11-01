@@ -10,7 +10,14 @@ export async function loadBrowserSource(id,signal,options={}){
   try{const {loadPrebuiltSource}=await import('./prebuilt-load.mjs');if(signal?.aborted)throw new DOMException('Aborted','AbortError');return await loadPrebuiltSource(id,signal);}
   catch(error){if(error?.name==='AbortError'||signal?.aborted)throw error;console.warn('[native] prebuilt stage unavailable, converting source: '+error.message);}
  }
- return convertBrowserSource(id,signal,options);
+ const data=await convertBrowserSource(id,signal,options);
+ // A stale geometry record can still supply GPU-compressed colour textures.
+ // Any failure keeps the ordinary per-image PNG path.
+ if(nativeStageBuild?.prebuilt?.textures?.[id]&&data?.manifest&&!data.manifest.prebuiltTextures){
+  try{const {attachPrebuiltTextures}=await import('./prebuilt-load.mjs');await attachPrebuiltTextures(id,data,signal);}
+  catch(error){if(error?.name==='AbortError'||signal?.aborted)throw error;console.warn('[native] prebuilt textures unavailable, decoding source PNG: '+error.message);}
+ }
+ return data;
 }
 function convertBrowserSource(id,signal,{constrained=false}={}){
  // On touch/low-memory clients the authenticated inventory remains in the

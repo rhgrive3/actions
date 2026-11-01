@@ -92,6 +92,11 @@ export async function buildNativeWorld(game,map,current){
   // Touch devices start one texture step lower unless the stage ships KTX2
   // and this GPU receives it compressed (about a quarter of the memory).
   const gpuTier=nativeGpuTier();
+  // A texture-only table helps only when this GPU takes a compressed format;
+  // otherwise KTX2 would be transcoded to RGBA32 in software. Keep the PNG path.
+  if(data.manifest.prebuiltTexturesOnly&&!nativeCompressedTextureSupport(G.renderer)){
+   delete data.manifest.prebuiltTextures;delete data.manifest.prebuiltTexturePacks;delete data.manifest.prebuiltTexturesOnly;
+  }
   const {quality,caps:textureCaps}=nativeTextureProfile({settingsQuality:game.settings.quality,tier:gpuTier,touch:!!game.mobile?.touch,
     compressed:!!data.manifest.prebuiltTextures&&nativeCompressedTextureSupport(G.renderer),
     stageCaps:q=>nativeStageTextureCaps(data.manifest,q,{
