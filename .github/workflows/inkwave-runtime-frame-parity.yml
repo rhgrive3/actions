@@ -63,8 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          filter: blob:none
           # All build/test inputs remain; the offline modeler is not consumed.
           sparse-checkout: |
             /*
