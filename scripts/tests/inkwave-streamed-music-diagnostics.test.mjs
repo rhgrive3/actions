@@ -121,7 +121,7 @@ const washtubHarnessBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectil
 const washtubHarnessEpoch=JSON.parse(washtubHarnessBytes);
 assert.equal(washtubHarnessEpoch.schema,1);
 assert.equal(washtubHarnessEpoch.beforeSHA256,'9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e');
-assert.equal(washtubHarnessEpoch.currentSHA256,'54eb5800b9073b69ad3ddda13d03f99ea1e10ebe762396c98a26390d4088d170');
+assert.equal(washtubHarnessEpoch.currentSHA256,'2726e49d01755f8f5b9435820fdb9436c999b7c0b4318f6cf7f1e487e2af429d');
 function restoreWashtubCaptureHarness(source){
  const digest=characterTimelineHash(source);
  if(digest===washtubHarnessEpoch.beforeSHA256)return source;
