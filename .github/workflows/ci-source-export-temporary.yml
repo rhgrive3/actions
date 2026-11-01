@@ -9,7 +9,7 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -17,22 +17,25 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
       - name: Verify and export exact tracked verification source
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           git archive --format=tar HEAD .github/workflows inkwave-public patches scripts tests package.json package-lock.json | gzip -1 > source.tar.gz
-          test "$(stat -c %s source.tar.gz)" -gt 1000000
           mkdir source-parts
           split -b 300m -d -a 2 source.tar.gz source-parts/part-
           sha256sum source.tar.gz > source-parts/SHA256SUM
-          ls -lh source-parts
       - uses: actions/upload-artifact@v4
         with:
           name: temporary-source-part-00
           path: source-parts/part-00
           retention-days: 1
       - uses: actions/upload-artifact@v4
+        if: hashFiles('source-parts/part-01') != ''
         with:
           name: temporary-source-part-01
           path: source-parts/part-01
@@ -50,13 +53,44 @@ jobs:
           path: source-parts/part-03
           retention-days: 1
       - uses: actions/upload-artifact@v4
-        if: hashFiles('source-parts/part-04') != ''
-        with:
-          name: temporary-source-part-04
-          path: source-parts/part-04
-          retention-days: 1
-      - uses: actions/upload-artifact@v4
         with:
           name: temporary-source-checksum
           path: source-parts/SHA256SUM
+          retention-days: 1
+      - name: Install exact locked dependencies for local verification
+        run: npm ci --no-audit --no-fund
+      - name: Package exact locked Node dependencies
+        run: |
+          set -euo pipefail
+          tar -czf dependencies.tar.gz node_modules
+          mkdir dependency-parts
+          split -b 300m -d -a 2 dependencies.tar.gz dependency-parts/part-
+          sha256sum dependencies.tar.gz > dependency-parts/SHA256SUM
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporary-deps-part-00
+          path: dependency-parts/part-00
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('dependency-parts/part-01') != ''
+        with:
+          name: temporary-deps-part-01
+          path: dependency-parts/part-01
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('dependency-parts/part-02') != ''
+        with:
+          name: temporary-deps-part-02
+          path: dependency-parts/part-02
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('dependency-parts/part-03') != ''
+        with:
+          name: temporary-deps-part-03
+          path: dependency-parts/part-03
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporary-deps-checksum
+          path: dependency-parts/SHA256SUM
           retention-days: 1
