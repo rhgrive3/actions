@@ -10,6 +10,7 @@ import {installGameplayObserver} from './lib/inkwave-gameplay-observer.mjs';
 import {gameplayVerdict,validateLifecycleExpectation} from './lib/inkwave-gameplay-verdict.mjs';
 import {sampleChromiumProcessMemory} from './lib/inkwave-chromium-process-memory.mjs';
 import {waitForNativeCombatWindow} from './lib/inkwave-native-combat-window.mjs';
+import {startProjectileThroughMenu} from './lib/inkwave-projectile-menu-start.mjs';
 import {createGameplayCpuProfileCapture} from './lib/inkwave-gameplay-cpu-profile.mjs';
 import {captureGameplayViewportPng} from './lib/inkwave-gameplay-viewport.mjs';
 import {verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,sampleStats,hash} from './lib/inkwave-runtime-evidence.mjs';
@@ -61,24 +62,31 @@ try{
  for(const id of maps)if(!availableMaps.includes(id))throw Error('Unknown map: '+id);
  for(let cycle=0;cycle<cycles;cycle++){
   const mapId=maps[cycle%maps.length];phase='start-'+cycle+'-'+mapId;checkpoint();
-  // START must be driven through a trusted browser input. AudioEngine deliberately
-  // requires the selected recorded weapon sound to be decoded before gameplay;
-  // calling the internal startMatch API from page.evaluate bypasses Chromium's
-  // user-activation gate and leaves AudioContext suspended in headless CI.
-  // A real keyboard gesture first unlocks audio, then the native menus and START
-  // button run their unchanged production handlers.
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(()=>__inkwave?.menus?.current==='mode',null,{timeout:30000});
-  if(crabLifecycle)await page.evaluate(()=>{const g=__inkwave,id=Object.keys(g.api.weapons).find(id=>g.api.weapons[id].special==='crabTank');if(!id)throw Error('No real Crab Tank kit');g.profile.weapon=id;});
-  await page.locator('.iw-mode--turf').click();
-  await page.waitForFunction(()=>__inkwave?.menus?.current==='setup',null,{timeout:30000});
-  const ticketIndex=await page.evaluate(expected=>[...document.querySelectorAll('.iw-ticket')].findIndex(el=>el._mid===expected),mapId);
-  if(ticketIndex<0)throw Error('Native setup menu has no stage ticket for '+mapId);
-  await page.locator('.iw-ticket').nth(ticketIndex).click();
-  await page.waitForFunction(expected=>__inkwave?.menus?._setup?.mapId===expected,mapId,{timeout:30000});
-  await page.locator('.iw-btn--start').click();
-  await page.waitForFunction(()=>__G.match?.state==='playing',null,{timeout:180000});
-  await page.waitForTimeout(5000);
+  // Drive the complete production menu with trusted native pointer/keyboard
+  // input. Do not synthesize menu state or call Match.start from page.evaluate.
+  const selectedWeapon=await page.evaluate(()=>__inkwave.profile?.weapon||'shooter');
+  const menuDeadline=Date.now()+180000,menuReceipts=[];
+  await startProjectileThroughMenu(page,{
+    waitForPhase:async(predicate,label)=>page.waitForFunction(predicate,null,{
+      timeout:Math.max(1,menuDeadline-Date.now()),polling:100,
+    }),
+    remainingMs:()=>menuDeadline-Date.now(),
+    receipt:menuReceipts,
+    config:{mode:'turf',mapId,difficulty:'normal',duration:180,weapon:selectedWeapon,time:'day'},
+  });
+  report.startupMenuReceipts??=[];report.startupMenuReceipts.push({cycle,mapId,selectedWeapon,events:menuReceipts});checkpoint();
+  await page.waitForFunction(expectedMap=>{
+    const G=globalThis.__G,game=globalThis.__inkwave,m=game?.match;
+    return game?.mapDef?.id===expectedMap && G?.mode==='match' && m===G.match
+      && m?.state==='playing' && !m.attract && G.actors?.length===8
+      && G.paint?.coverage().some(value=>value>0);
+  },mapId,{polling:1000,timeout:180000});
+  report.startupReadyReceipts??=[];report.startupReadyReceipts.push(await page.evaluate(()=>({
+    mode:__G.mode,state:__G.match?.state,attract:!!__G.match?.attract,map:__inkwave.mapDef?.id,
+    actors:__G.actors?.length,coverage:__G.paint?.coverage?.()??[],
+    menus:__inkwave.menus?.current??null,setup:__inkwave.menus?._setup?{mode:__inkwave.menus._setup.mode,mapId:__inkwave.menus._setup.mapId}:null,
+  })));checkpoint();
+
   // On software WebGL a newly loaded second map may have simulated under one
   // match-second after five wall seconds. Do not report "no live paint" before
   // the unmodified bots actually get their first native paint frame.
