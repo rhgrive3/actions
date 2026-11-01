@@ -34,6 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           sparse-checkout: |
             /*
             !/tools/inkwave-modeler/blender/
@@ -47,7 +48,6 @@ jobs:
             *.cjs
           sparse-checkout-cone-mode: false
           filter: blob:none
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Verify exact checkout head
         shell: bash
         env:
