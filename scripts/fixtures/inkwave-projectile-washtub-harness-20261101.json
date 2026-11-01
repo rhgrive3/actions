@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "beforeSHA256": "9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e",
-  "currentSHA256": "54eb5800b9073b69ad3ddda13d03f99ea1e10ebe762396c98a26390d4088d170",
+  "beforeSHA256": "29a732166a72dd6b00a362687fd8b5ba01a9cc612fcb90696c0d8b00367e3da5",
+  "currentSHA256": "99e2aa0f205fa8ebc6da6c1b8384bb39bbd974a9a324a57395cfad640a75c365",
   "hunks": [
     {
       "current": "  let flightLane = null;\n  if (name === 'floor-washtub') {\n    // The stage-redesign fixture adds native walls around the original spawn\n    // deck. Keep the real Explosher/Actor.update/Projectiles flight test, but\n    // select an unobstructed heading from the actual muzzle instead of assuming\n    // +Z is open forever. A short native ray probe chooses a path with enough\n    // initial clearance for the required F5/F15 airborne captures; the later\n    // production projectile must still retire on a real paintable floor face.\n    const lanes = [];\n    for (let index = 0; index < 32; index++) {\n      const yaw = index * Math.PI * 2 / 32;\n      // Rotate the real character first so the probe starts at that heading's\n      // actual hand/muzzle transform, not the default +Z muzzle offset.\n      a.yaw = yaw; a.aimYaw = yaw;\n      a.character.root.rotation.y = yaw; a.character.root.updateMatrixWorld(true);\n      G.scene.updateMatrixWorld(true);\n      const muzzle = G.projectiles._muzzle(a, new V());\n      const direction = new V(Math.sin(yaw), 0, Math.cos(yaw));\n      const hit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1, u: 0, v: 0 };\n      const result = G.physics.raycast(muzzle, direction, 10, hit, true);\n      const clearance = result?.hit === true ? result.dist : 10;\n      lanes.push({ yaw, muzzle: muzzle.toArray(), direction: direction.toArray(), clearance,\n        obstruction: result?.hit === true ? { block: result.block, face: result.face, point: result.point.toArray() } : null });\n    }\n    lanes.sort((left, right) => right.clearance - left.clearance || left.yaw - right.yaw);\n    flightLane = lanes[0] ?? null;\n    if (!flightLane || flightLane.clearance < 8) {\n      throw new Error('No native Explosher flight lane has the required 8m initial clearance: ' + JSON.stringify(lanes));\n    }\n    a.yaw = flightLane.yaw; a.aimYaw = flightLane.yaw; a.aimPitch = 0;\n    a.aimDir.set(...flightLane.direction);\n    a.aimPoint.copy(a.pos).add(new V(flightLane.direction[0] * 24, 1.05, flightLane.direction[2] * 24));\n    a.character.root.rotation.y = flightLane.yaw; a.character.root.updateMatrixWorld(true);\n    G.scene.updateMatrixWorld(true);\n  }",
@@ -14,14 +14,24 @@
       "label": "capture harness revision 2"
     },
     {
+      "current": "        const P = G.projectiles;\n        if(!P.__iwLifecycleTraceWashtub){\n          const trace=window.__iwProjectileLifecycleTrace=[];\n          const watch=p=>p?.wid==='s3-slosher-washtub'||p?.catalog?.r?.sourceActor==='WeaponSlosherBathtub';\n          const state=p=>p?{seed:p.seed,wid:p.wid,age:p.age,life:p.life,delay:p.delay,pos:p.pos?.toArray?.(),vel:p.vel?.toArray?.(),catalog:!!p.catalog,travel:p.catalog?.travel,range:p.catalog?.range,descriptorLife:p.catalog?.descriptor?.life}:null;\n          const originalStep=P._step;\n          P._step=function(p,stepDt){\n            const active=watch(p);if(active)trace.push({event:'step-enter',state:state(p),dt:stepDt});\n            const result=originalStep.call(this,p,stepDt);\n            if(active)trace.push({event:'step-exit',state:state(p),result});\n            return result;\n          };\n          const originalUpdate=P.update;\n          P.update=function(updateDt,...args){\n            const before=this.list.filter(watch).map(state);trace.push({event:'update-enter',dt:updateDt,before});\n            const result=originalUpdate.call(this,updateDt,...args);\n            const after=this.list.filter(watch).map(state);trace.push({event:'update-exit',after});\n            return result;\n          };\n          const list=P.list,originalPop=list.pop;\n          list.pop=function(...args){\n            const item=this[this.length-1];if(watch(item))trace.push({event:'list-pop',state:state(item),stack:new Error('Washtub list pop').stack});\n            return originalPop.apply(this,args);\n          };\n          if(typeof P._recycle==='function'){\n            const originalRecycle=P._recycle;\n            P._recycle=function(p,...args){if(watch(p))trace.push({event:'recycle',state:state(p),stack:new Error('Washtub recycle').stack});return originalRecycle.call(this,p,...args);};\n          }\n          P.__iwLifecycleTraceWashtub=true;\n        }\n        const lifecycleTraceStart=window.__iwProjectileLifecycleTrace.length;",
+      "prior": "",
+      "label": "capture harness revision 3"
+    },
+    {
+      "current": "          lifecycleTrace: window.__iwProjectileLifecycleTrace.slice(lifecycleTraceStart),",
+      "prior": "",
+      "label": "capture harness revision 4"
+    },
+    {
       "current": "",
       "prior": "      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {\n        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');\n        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);\n      }",
-      "label": "capture harness revision 3"
+      "label": "capture harness revision 5"
     },
     {
       "current": "      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {\n        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view; diagnostics ' +\n          JSON.stringify({ setup, births: born, frame, row, flightHistory }));\n        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);\n      }",
       "prior": "",
-      "label": "capture harness revision 4"
+      "label": "capture harness revision 6"
     }
   ]
 }
