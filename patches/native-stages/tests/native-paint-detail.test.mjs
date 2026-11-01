@@ -95,3 +95,55 @@ test('native detail follows the game camera when PaintSystem.setView is unused',
   assert.ok(first.slot>=0&&first.ready,'a distant bot stamp must not move the local detail view');
   t.paint.dispose();t.material.dispose();t.f.G.camera=null;
 });
+
+test('native detail hysteresis holds resident pages while the camera oscillates across the sixteen-page boundary',async()=>{
+  const t=await setup(),{THREE}=t.f,d=t.detail;
+  for(let tile=0;tile<24;tile++)t.stamp(tile*16+4,tile/25);
+  const view=x=>new THREE.Vector3(x,0,4),setKey=()=>d.slots.filter(Boolean).map(p=>p.key).sort().join('|');
+  // Selection is re-evaluated once per 2 m cell, at the first camera position
+  // that enters the cell. Find the first resident-set change between two such
+  // entry points, then oscillate across exactly that pair.
+  let before=null,after=null,last=null,cell=null,entry=null;
+  for(let x=0;x<=384&&after===null;x+=.5){
+    const c=Math.floor(x/2);if(c===cell)continue;
+    t.paint.setView(view(x));t.paint.flush(0);const key=setKey();
+    if(last!==null&&key!==last){before=entry;after=x;}
+    last=key;cell=c;entry=x;
+  }
+  assert.ok(after!==null,'a sixteen-page selection boundary exists in the stage');
+  let changes=0,previous=setKey();
+  for(let i=0;i<40;i++){
+    const x=i%2?after:before;t.paint.setView(view(x));t.paint.flush(0);
+    const key=setKey();if(key!==previous)changes++;previous=key;
+    // The page whose centre is nearest the camera always keeps a slot.
+    let nearest=null,best=Infinity;for(const page of d.pages.values()){const s=page.center.distanceToSquared(view(x));if(s<best){best=s;nearest=page;}}
+    assert.ok(nearest.slot>=0&&nearest.ready,'the camera page stays resident');
+  }
+  assert.ok(changes<=2,`an oscillation across the boundary must not swap pages each step (${changes} changes)`);
+  t.paint.dispose();t.material.dispose();
+});
+
+test('native detail publishes no partial page after re-entry until the whole replay has landed',async()=>{
+  const t=await setup(),{THREE}=t.f,d=t.detail;
+  // More records than one frame may replay. Re-entry must fall back to the
+  // coarse atlas; a slot holding half a replay would show missing ink.
+  // Other painted floors make the sixteen-slot eviction observable.
+  for(let tile=1;tile<24;tile++)t.stamp(tile*16+4,tile/25);
+  for(let n=0;n<200;n++)t.stamp(4,(n+.5)/201);
+  // Guard bands can place a stage-edge chart's page on the z=-8 row.
+  const page=[...d.pages.values()].find(p=>p.x===0&&p.records.size>=200);
+  assert.ok(page);
+  t.paint.setView(new THREE.Vector3(372,0,4));for(let k=0;k<3;k++)t.paint.flush(0);
+  assert.equal(page.slot,-1);
+  t.paint.setView(new THREE.Vector3(4,0,4));t.paint.flush(0);
+  assert.ok(page.slot>=0,'page re-enters the selection');
+  assert.ok(page.pending.size>0,'one frame cannot replay all 200 records');
+  assert.ok(!page.ready);
+  const slotValue=d.uniforms.uNativeDetailPages.value[page.slot];
+  assert.ok(slotValue.toArray().every(v=>v===0),'a not-yet-replayed slot publishes no detail, so the coarse atlas is used');
+  for(let k=0;k<4&&page.pending.size;k++)t.paint.flush(0);
+  assert.equal(page.pending.size,0);
+  assert.ok(page.ready);
+  assert.ok(d.uniforms.uNativeDetailPages.value[page.slot].toArray().some(v=>v!==0),'a replayed slot publishes its plane');
+  t.paint.dispose();t.material.dispose();
+});

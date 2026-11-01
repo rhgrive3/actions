@@ -9,6 +9,9 @@ export const NATIVE_DETAIL_SIZE = 1024;
 export const NATIVE_DETAIL_TILE = 256;
 export const NATIVE_DETAIL_PPM = 30;
 const SIDE = 8, PAD = 8, SLOTS = 16, RECORD_BUDGET = 128, VERTEX_LIMIT = 32766;
+// Metres of selection hysteresis for resident pages: half a page, so motion
+// inside one page's width cannot change which pages hold the 16 slots.
+const RESIDENT_HOLD = SIDE / 2;
 const GUARD = PAD / NATIVE_DETAIL_PPM;
 const floorSurface = f => f?.triangles && f.turf;
 
@@ -154,9 +157,13 @@ export class NativePaintDetail {
     const p=this.paint.viewPos || G.camera?.position || this.focus, key=Math.floor(p.x/2)+','+Math.floor(p.y/2)+','+Math.floor(p.z/2);
     if(!this.dirtySelection && key===this.selectionKey)return;
     this.dirtySelection=false;this.selectionKey=key;
-    const pages=[...this.pages.values()];
-    const distance=page=>page.center.distanceToSquared(p);
-    pages.sort((a,b)=>distance(a)-distance(b));
+    const pages=[...this.pages.values()],score=new Map();
+    // A resident page keeps a fixed head start. Without it, a camera moving
+    // across the nearest-SLOTS boundary swaps the same two pages every step;
+    // each swap clears and replays a whole page, and the entering page shows
+    // the coarse atlas until its replay completes.
+    for(const page of pages){const d=Math.sqrt(page.center.distanceToSquared(p));score.set(page,page.slot>=0?d-RESIDENT_HOLD:d);}
+    pages.sort((a,b)=>score.get(a)-score.get(b));
     const selected=new Set(pages.slice(0,SLOTS));
     for(let i=0;i<SLOTS;i++)if(this.slots[i]&&!selected.has(this.slots[i])){
       const old=this.slots[i];old.slot=-1;old.ready=false;old.pending.clear();this.slots[i]=null;
