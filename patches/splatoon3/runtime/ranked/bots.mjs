@@ -1,5 +1,8 @@
 const escortAction = value => value === 'barrier' || value === 'defend';
 const towerCombatAction = value => value === 'ride' || value === 'defend';
+// Clam collectors, carriers and basket defenders fight visible nearby enemies.
+// A scoring throw keeps its rule-owned aim and release timing.
+const clamCombatAction = value => value === 'collect' || value === 'carry' || value === 'defend';
 import { firstThreeFinite } from './coordinates.mjs';
 import { OWNED_RANKED_BLOCKED } from './frame-ownership.mjs';
 const clamArcMemo = new WeakMap();
@@ -333,7 +336,12 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
 
   const originalSpecial = !!it.special;
   const originalJump = !!it.jump;
-  it.fire = (action === 'paint' || action === 'defend' || action === 'barrier' || action === 'carry') && finite(a.ink, 0) > 2;
+  // A clam collector lays an ink path while walking in. Far swims on its own
+  // ink keep the squid route below, matching the carry-style swim exception.
+  const clamCollectFire = engine.mode === 'clams' && action === 'collect'
+    && (a.groundTeam !== 1 || horizontal <= 3);
+  it.fire = (action === 'paint' || action === 'defend' || action === 'barrier' || action === 'carry' || clamCollectFire)
+    && finite(a.ink, 0) > 2;
   it.sub = false;
   it.special = originalSpecial;
   it.squid = a.groundTeam === 1 && horizontal > 3 && (!it.fire || action === 'carry');
@@ -474,11 +482,12 @@ export function installRankedBots(api = {}) {
       && escortAction(goal?.action)
       && engine.rule?.state?.carrier !== actorId(actor);
     const towerCombat = engine.mode === 'tower' && towerCombatAction(goal.action);
+    const clamCombat = engine.mode === 'clams' && clamCombatAction(goal.action);
     const carrier = engine.mode === 'rainmaker' && engine.rule?.state?.carrier === actorId(actor);
     // Refill owns its swim/paint cycle until the native controller releases it.
     // Replacing it with an objective fire input strands an empty tank on land.
     const refill = !carrier && this.mode === 'refill';
-    const duel = (rankedEscort || towerCombat) && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
+    const duel = (rankedEscort || towerCombat || clamCombat) && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
       && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16;
     if ((refill || duel) && nativeTail
       && typeof oldTail === 'function') {
