@@ -21,6 +21,8 @@ const CLAMS_PER_POWER = 8;
 const FIELD_CAP = 40;
 const QUICK_SPAWN_THRESHOLD = 18;
 const NORMAL_SPAWN_SECONDS = 12;
+// Bot goal line-of-sight answers are reused this long / until the bot moves this far.
+const BOT_REACH_SECONDS = 0.2, BOT_REACH_MOVE = 0.5;
 const QUICK_SPAWN_SECONDS = 4;
 const CLAM_LIFETIME = 10;
 const BASKET_OPEN_SECONDS = 10;
@@ -913,6 +915,7 @@ export class ClamsRule {
 
   _update(dt, frame = {}) {
     dt = validDt(dt);
+    this._goalClock = (this._goalClock || 0) + dt;
     if (this.engine?.winner != null) return;
     const previousFrame = this._tickActorFrame, previousActors = this._tickActors;
     this._tickActors = this._actorList(frame); this._tickActorFrame = frame;
@@ -962,13 +965,39 @@ export class ClamsRule {
     return returnSnapshot ? this.snapshot() : this.state;
   }
 
+  _botReachCache(actor, position, frame) {
+    if (typeof frame?.blocked !== 'function') return null;
+    const caches = this._botReach || (this._botReach = new Map());
+    const clock = this._goalClock || 0;
+    let entry = caches.get(actor.id);
+    if (!entry || entry.blocked !== frame.blocked || clock - entry.clock >= BOT_REACH_SECONDS || clock < entry.clock
+      || this._distanceSq(position, entry.pos) > BOT_REACH_MOVE * BOT_REACH_MOVE) {
+      caches.set(actor.id, entry = { pos: [...position], clock, blocked: frame.blocked, results: new Map() });
+    }
+    return entry;
+  }
+
   botGoal(actor, frame = {}) {
     if (!actor || actor.alive === false || !validTeam(actor.team) || !Array.isArray(actor.pos)) return null;
     const position = vec(actor.pos);
     const inv = this.state.inventories[actor.id] ?? freshInventory(actor.team);
     const target = this._goal(actor.team);
     const aimAt = point => vec(point);
-    const reachable = (point, from = position) => typeof frame?.blocked !== 'function' || frame.blocked(from, point) !== true
+    const reach = this._botReachCache(actor, position, frame);
+    // Line-of-sight from this bot to a goal point. Every bot re-asks for the
+    // same clams/baskets every frame and, when the nearest clam is hidden,
+    // walks every candidate; each ask is a full source-mesh segment cast.
+    // Reuse a bot's answers for BOT_REACH_SECONDS or until it moves
+    // BOT_REACH_MOVE metres (goal choice lags by at most a few frames).
+    const blockedFrom = point => {
+      if (!reach) return frame.blocked(position, point) === true;
+      const key = point[0] + ',' + point[1] + ',' + point[2];
+      let value = reach.results.get(key);
+      if (value === undefined) reach.results.set(key, value = frame.blocked(position, point) === true);
+      return value;
+    };
+    const reachable = (point, from = position) => typeof frame?.blocked !== 'function'
+      || (from === position ? !blockedFrom(point) : frame.blocked(from, point) !== true)
       || (from === position && typeof frame.botGoalRoute === 'function' && frame.botGoalRoute(actor,point) === true);
     const ownDefense = this._goal(1 - actor.team);
     const enemyOpen = this.state.baskets[actor.team].barrierOpen && !this.state.baskets[actor.team].tucked;
