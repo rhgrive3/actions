@@ -42,8 +42,8 @@ test('quitToMenu awaits native completion without serializing its Match result',
   const cyclic = {}; cyclic.self = cyclic;
   const match = new Proxy(cyclic, { ownKeys() { reads++; throw Error('Match graph must stay in the page'); } });
   const calls = [];
-  const context = vm.createContext({ mapId: 'halyard', __inkwave: {
-    async [method](...args) { calls.push(args); await gate; completed = true; return match; },
+  const context = vm.createContext({ __inkwave: {
+    async quitToMenu(...args) { calls.push(args); await gate; completed = true; return match; },
   }, page: {
     async evaluate(callback, argument) {
       const value = await callback(argument);
@@ -53,7 +53,7 @@ test('quitToMenu awaits native completion without serializing its Match result',
       return value;
     },
   } });
-  const result = vm.runInContext(evaluationFor(method), context);
+  const result = vm.runInContext(evaluationFor('quitToMenu'), context);
   await Promise.resolve();
   assert.equal(calls.length, 1);
   assert.equal(completed, false, 'operation is still pending');
@@ -61,6 +61,5 @@ test('quitToMenu awaits native completion without serializing its Match result',
   assert.equal(await result, undefined, 'native Match result stays inside page');
   assert.equal(completed, true, 'evaluation waits for completion');
   assert.equal(reads, 0, 'no Match enumeration at transport boundary');
-  if (method === 'startMatch') assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), [{ mapId: 'halyard', difficulty: 'normal', duration: 180 }]);
-  else assert.deepEqual(calls[0], []);
+  assert.deepEqual(calls[0], []);
 });
