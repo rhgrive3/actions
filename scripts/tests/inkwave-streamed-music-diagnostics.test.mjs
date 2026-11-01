@@ -114,6 +114,26 @@ const characterTimelineBytes=fs.readFileSync(new URL('../fixtures/inkwave-projec
 assert.equal(crypto.createHash('sha256').update(characterTimelineBytes).digest('hex'),'9186af6ae24966b5d5d25abaf897fbd8c34deea1d0b63e78b517adc47790b462','sealed Character timeline inverse descriptor');
 const characterTimelineEpoch=JSON.parse(characterTimelineBytes);
 const characterTimelineHash=text=>crypto.createHash('sha256').update(text).digest('hex');
+// This later capture-only QA epoch added the native Washtub early-retirement
+// probe and real contact/flight evidence. Reverse it first, then preserve every
+// pre-existing reviewed media, Character timeline and protocol pin below.
+const washtubHarnessBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-washtub-harness-20261101.json',import.meta.url));
+const washtubHarnessEpoch=JSON.parse(washtubHarnessBytes);
+assert.equal(washtubHarnessEpoch.schema,1);
+assert.equal(washtubHarnessEpoch.beforeSHA256,'9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e');
+assert.equal(washtubHarnessEpoch.currentSHA256,'54eb5800b9073b69ad3ddda13d03f99ea1e10ebe762396c98a26390d4088d170');
+function restoreWashtubCaptureHarness(source){
+ const digest=characterTimelineHash(source);
+ if(digest===washtubHarnessEpoch.beforeSHA256)return source;
+ assert.equal(digest,washtubHarnessEpoch.currentSHA256,'exact reviewed Washtub capture harness');
+ assert.equal(washtubHarnessEpoch.hunks.length,4,'all reviewed Washtub capture changes');
+ for(const {current,prior,label}of washtubHarnessEpoch.hunks){
+  assert.equal(source.split(current).length,2,'exact singular Washtub capture region: '+label);
+  source=source.replace(current,prior);
+ }
+ assert.equal(characterTimelineHash(source),washtubHarnessEpoch.beforeSHA256,'complete pre-Washtub capture runner');
+ return source;
+}
 // The separately sealed retirement/partition QA epoch reverses to the complete
 // official main runner; all older timeline/protocol pins below stay unchanged.
 const mediaEpochBytes=fs.readFileSync(new URL('../fixtures/inkwave-projectile-media-retirement-epoch-e5f3-20261031.json',import.meta.url));
@@ -122,6 +142,7 @@ const mediaEpoch=JSON.parse(mediaEpochBytes);
 assert.equal(mediaEpoch.schema,1);assert.equal(mediaEpoch.beforeSHA256,'31fa499c8650b8dbcd2260f088e586f0e7d41312aa3061d40fb755665d97a27f');
 assert.equal(mediaEpoch.currentSHA256,'9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e');
 function restoreReviewedMediaRetirementRunner(source){
+ source=restoreWashtubCaptureHarness(source);
  if(characterTimelineHash(source)===mediaEpoch.beforeSHA256)return source;
  assert.equal(characterTimelineHash(source),mediaEpoch.currentSHA256,'exact current projectile runner with primitive timeline and reviewed media retirement');
  assert.equal(mediaEpoch.hunks.length,8,'all reviewed retirement/strict-listener/partition regions');
@@ -648,6 +669,22 @@ test('actual loopback file handler serves the verified leaf and still returns 40
  const removed=await fetch(url);assert.equal(removed.status,404);assert.equal(await removed.text(),'Not found');
 });
 
+test('reviewed Washtub capture harness reverses exactly before every older source pin',()=>{
+ const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ const prior=restoreWashtubCaptureHarness(current);
+ assert.equal(characterTimelineHash(prior),washtubHarnessEpoch.beforeSHA256);
+ let projected=prior;
+ for(const {current:after,prior:before} of washtubHarnessEpoch.hunks){
+  assert.equal(projected.split(before).length,2,'reviewed Washtub inverse region');
+  projected=projected.replace(before,after);
+ }
+ assert.equal(projected,current);
+ for(const {current:region} of washtubHarnessEpoch.hunks){
+  for(const changed of [current.replace(region,''),current.replace(region,region+region),current.replace(region,region+'\n// unreviewed')])
+   assert.throws(()=>restoreWashtubCaptureHarness(changed));
+ }
+ assert.throws(()=>restoreWashtubCaptureHarness(current+'\n'));
+});
 test('reviewed media epoch preserves complete prior source and every older pin with an exact inverse',()=>{
  const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'),prior=restoreReviewedMediaRetirementRunner(current);
  assert.equal(characterTimelineHash(prior),mediaEpoch.beforeSHA256);
