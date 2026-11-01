@@ -200,3 +200,15 @@ test('context restoration invalidates paused backdrop even with no RAF during lo
  canvas.events.get('webglcontextrestored')();assert.equal(pausedWorldFrame(game,G).draw,true);
  G.renderer.domElement=mk();pausedWorldFrame(game,G);assert.equal(canvas.events.size,0);assert.equal(G.renderer.domElement.events.size,2);
 });
+
+test('the first paused draw after a live frame reuses its shadow map; later invalidations refresh shadows',()=>{
+  const G={level:{},env:{theme:'day'},renderer:{getContext:()=>({isContextLost:()=>false})}};
+  const game={match:{paused:false,attract:false},settings:{quality:'high'},showcase:{fullFrame:false}};
+  const view={innerWidth:800,innerHeight:600,devicePixelRatio:1};
+  assert.equal(pausedWorldFrame(game,G,view).paused,false);
+  game.match.paused=true;
+  let f=pausedWorldFrame(game,G,view);assert.equal(f.draw,true);assert.equal(f.freshShadows,true);f.commit();
+  view.innerWidth++;f=pausedWorldFrame(game,G,view);assert.equal(f.draw,true);assert.equal(f.freshShadows,false);
+  // An uncommitted (failed) first capture retries with a forced shadow pass.
+  f=pausedWorldFrame(game,G,view);assert.equal(f.draw,true);assert.equal(f.freshShadows,false);
+});

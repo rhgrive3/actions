@@ -85,7 +85,13 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     game._pausedWorld = null;
   }
   const paused = !!(game.match?.paused && !game.match.attract && !G.netm && !game.showcase?.fullFrame);
-  if (!paused) { game._pausedWorld = null; return LIVE_WORLD; }
+  if (!paused) { game._pausedWorld = null; game._pausedWorldAfterLive = true; return LIVE_WORLD; }
+  // The first paused draw directly follows a live frame whose shadow map is
+  // still current: the world is frozen, so a forced shadow pass only adds GPU
+  // work to the very frame that also allocates the pause snapshot (iPad mini 6
+  // lost its context here under heavy native stages).
+  const afterLive = !!game._pausedWorldAfterLive;
+  game._pausedWorldAfterLive = false;
   const gl = G.renderer?.getContext?.();
   if (gl?.isContextLost?.()) { game._pausedWorld = null; return PAUSED_UNCHANGED; }
   const width = viewport.innerWidth, height = viewport.innerHeight, pixelRatio = viewport.devicePixelRatio;
@@ -124,7 +130,7 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     previous.reflectionScale !== env?.reflScale || previous.marina !== env?._marina || previous.farTarget !== far ||
     previous.farWidth !== far?.width || previous.farHeight !== far?.height;
   if (!draw) return PAUSED_UNCHANGED;
-  return { paused: true, draw: true,
+  return { paused: true, draw: true, freshShadows: afterLive && !previous,
     commit() {
       game._pausedWorld = { match: game.match, level: G.level, width, height, pixelRatio, settings,
         quality: settings.quality, shadowsSetting: settings.shadows, bloomSetting: settings.bloom,
