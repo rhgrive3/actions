@@ -1478,14 +1478,15 @@ async function runContactScenarios(page) {
           catalogSteps: window.__iwProjectileCatalogSteps.slice(catalogStepStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       },frame);
-      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {
-        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');
-        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);
-      }
       captureFrame = frame;
       flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts,
         headImpacts: row.headImpacts, surfaceHits: row.surfaceHits });
       if (flightHistory.length > 12) flightHistory.shift();
+      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {
+        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view; diagnostics ' +
+          JSON.stringify({ setup, births: born, frame, row, flightHistory }));
+        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);
+      }
       const expectedContact = scenario.impact === 'wall'
         ? row.surfaceHits.find(hit => hit.route === 'InkFlightRuntime.world' &&
           hit.wallDropTransition?.valid === true && hit.nativeStageContact === true &&
