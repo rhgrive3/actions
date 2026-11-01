@@ -85,7 +85,7 @@ async function pair(id = 'roller') {
     const prior=proxy.net.buf.length;drain(transform);
     assert.ok(proxy.net.buf.some(s=>s.t===packet.ts),'real _tick admits serialized actor snapshot');
     assert.equal(packet.a[0].length,26,'no new wire columns');
-    assert.equal(f.PROTO,2);assert.equal(f.COMPAT,'iw-gameplay-20261024-spawn-start-admission-v1');
+    assert.equal(f.PROTO,2);assert.equal(f.COMPAT,'iw-gameplay-20261030-device-source-v2');
     return packet;
   }
   function sample(t,apply=true) {
