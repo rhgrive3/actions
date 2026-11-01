@@ -40,6 +40,29 @@ function sameProjectionFrame(frame,f,plane) {
     frame[9]===plane.u.x&&frame[10]===plane.u.y&&frame[11]===plane.u.z&&frame[12]===plane.v.x&&frame[13]===plane.v.y&&frame[14]===plane.v.z;
 }
 
+// Clip one projected detail triangle (3 x [x,z,u,v] at base) to an axis box in
+// face (u,v) space. Writes the convex polygon to out as [x,z,u,v] vertices and
+// returns its vertex count (0 when empty, at most 7).
+const CLIP_SCRATCH=new Float64Array(28);
+function clipDetailTriangle(points,base,u0,u1,v0,v1,out){
+  let src=out,dst=CLIP_SCRATCH,n=3;
+  for(let k=0;k<12;k++)src[k]=points[base+k];
+  for(let edge=0;edge<4;edge++){
+    const axis=edge<2?2:3,limit=edge===0?u0:edge===1?u1:edge===2?v0:v1,keepAbove=edge===0||edge===2;
+    let m=0;
+    for(let i=0;i<n;i++){
+      const a=i*4,b=((i+1)%n)*4;
+      const da=keepAbove?src[a+axis]-limit:limit-src[a+axis],db=keepAbove?src[b+axis]-limit:limit-src[b+axis];
+      if(da>=0){for(let c=0;c<4;c++)dst[m*4+c]=src[a+c];m++;}
+      if((da>=0)!==(db>=0)){const t=da/(da-db);for(let c=0;c<4;c++)dst[m*4+c]=src[a+c]+(src[b+c]-src[a+c])*t;m++;}
+    }
+    n=m;const swap=src;src=dst;dst=swap;
+    if(n<3)return 0;
+  }
+  if(src!==out)for(let k=0;k<n*4;k++)out[k]=src[k];
+  return n;
+}
+
 export function enableNativePaintDetail(paint) {
   if (paint.nativeDetail) return paint.nativeDetail;
   if (!paint.level?.native || !paint.mat || !paint.renderer?.getContext || !paint._emitGrowth) return null;
@@ -98,6 +121,7 @@ export class NativePaintDetail {
     this.scene = new THREE.Scene(); this.scene.add(this.mesh); this.camera = new THREE.Camera();
     this.vertexCount = 0;
     this.triangle = new Float64Array(20);
+    this.clip = new Float64Array(28);
     this.clear();
   }
 
@@ -253,9 +277,21 @@ export class NativePaintDetail {
       if(!cached)projectDetailTriangle(points,0,f.triangles[tri],f,page.plane,T);
       if(points[base+13]<u0||points[base+12]>u1||points[base+15]<v0||points[base+14]>v1||
         points[base+17]<loX||points[base+16]>hiX||points[base+19]<loZ||points[base+18]>hiZ)continue;
-      if(this.vertexCount+3>VERTEX_LIMIT)this.draw();
-      for(let q=base;q<base+12;q+=4){
-        const x=points[q],z=points[q+1],u=points[q+2],v=points[q+3];
+      // The base atlas draws only the splat's [u0,u1]x[v0,v1] quad, so nothing
+      // outside it can carry ink. A source floor triangle is often metres wide:
+      // drawing it whole shaded up to a full 256 px page per splat. Clip it to
+      // the splat box first (all attributes are affine on the plane, so the
+      // clipped fragments interpolate exactly as before).
+      const inside=points[base+12]>=u0&&points[base+13]<=u1&&points[base+14]>=v0&&points[base+15]<=v1;
+      const poly=inside?null:clipDetailTriangle(points,base,u0,u1,v0,v1,this.clip);
+      const n=inside?3:poly;
+      if(n<3)continue;
+      if(this.vertexCount+(n-2)*3>VERTEX_LIMIT)this.draw();
+      const src=inside?points:this.clip,start=inside?base:0;
+      // Fan triangulation of the (convex) clipped polygon; a whole triangle is n=3.
+      for(let j=0,count=(n-2)*3;j<count;j++){
+        const r=j%3,k=r===0?0:Math.floor(j/3)+r;
+        const q=start+k*4,x=src[q],z=src[q+1],u=src[q+2],v=src[q+3];
         const i=this.vertexCount++,a=this.arrays;
         a.aPos[i*2]=((ox+(x-page.x)*NATIVE_DETAIL_PPM)/NATIVE_DETAIL_SIZE)*2-1;
         a.aPos[i*2+1]=((oy+(z-page.z)*NATIVE_DETAIL_PPM)/NATIVE_DETAIL_SIZE)*2-1;
