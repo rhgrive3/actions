@@ -154,3 +154,21 @@ test('composed Renderer retains a finished WebGL pause frame and releases it aft
   owner.releasePausedFrame();
   owner.composer.dispose();
 });
+
+test('offline pause never samples or rescales dynamic resolution; online pause keeps the live controller', () => {
+  const start = gameSource.indexOf('  _dynRes(dt) {');
+  const end = gameSource.indexOf('\n  }\n', start);
+  assert.ok(start > 0 && end > start);
+  const body = gameSource.slice(start + '  _dynRes(dt) {'.length, end);
+  assert.match(body, /if \(this\.match\?\.paused && !this\.match\.attract && !G\.netm\) \{ this\._nativeSlowFrames = null; return; \}/);
+  const run = new Function('G', 'document', 'dt', body);
+  const make = () => ({ match: { paused: true, attract: false, state: 'playing' }, settings: { quality: 'high' }, mobile: {},
+    R: { dynScale: 1, setDynamicScale() { throw Error('rescale during pause'); } }, _nativeSlowFrames: { count: 2 } });
+  const offline = make(), offlineG = { netm: null };
+  run.call(offline, offlineG, { hidden: false }, 1 / 60);
+  assert.equal(offline._dyn, undefined, 'offline paused frames are not dynamic-resolution samples');
+  assert.equal(offline._nativeSlowFrames, null);
+  const online = make(), onlineG = { netm: {} };
+  run.call(online, onlineG, { hidden: false }, 1 / 60);
+  assert.ok(online._dyn, 'online pause keeps sampling the live controller (the world is still simulated and rendered)');
+});

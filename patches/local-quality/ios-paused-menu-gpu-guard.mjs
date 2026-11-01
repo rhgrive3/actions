@@ -1,35 +1,41 @@
-// Build-only guard for iOS Safari paused-world menu composition.
+// Build-only GPU guard for paused in-battle menus, on every platform.
 // Native Practice Range: Pause -> Settings stacks a WebGL framebuffer snapshot,
 // two fullscreen DOM screens, backdrop blur layers and a 1.5-DPR Canvas2D wipe.
-// These cosmetic intermediates are unnecessary while gameplay is already frozen.
+// Offline pause keeps only the retained frame; online pause keeps the live match
+// rendering underneath. Neither needs compositor blur or a decorative fullscreen
+// wipe while the battle is paused. Integrated GPUs on Android/Windows/Mac stack
+// the same layers, so the guard is not limited to iOS WebKit.
+// Scope is the in-battle pause stack only (.iw-ui.is-ingame / stack[0] === 'pause');
+// menus outside battle keep their blur and wipes.
 // Capture the outgoing pause owner before show() replaces its navigation stack.
 // Otherwise quit/resume lose the guard precisely while the old GPU layers are live.
-// Scope changes to paused iOS menus; other platforms and gameplay are identical.
-export const IOS_PAUSED_MENU_CSS = "/* iPadOS/iOS WebKit: bound paused WebGL + overlaid menu compositor surfaces. */\nhtml.iw-ios .iw-ui.is-ingame .iw-dimbg,\nhtml.iw-ios .iw-ui.is-ingame .iw-pause__dim,\nhtml.iw-ios .iw-ui.is-ingame .iw-scrim-full,\nhtml.iw-ios .iw-ui.is-ingame .iw-modal,\nhtml.iw-ios .iw-ui.is-ingame .iw-panel,\nhtml.iw-ios .iw-ui.is-ingame .iw-prompts {\n  -webkit-backdrop-filter: none !important;\n  backdrop-filter: none !important;\n}\n";
+// The file keeps its historical name and export names; the guard is not iOS-only.
+const MARKER = '/* Paused in-battle menus: bound paused WebGL + overlaid menu compositor surfaces. */';
+export const IOS_PAUSED_MENU_CSS = MARKER + "\n.iw-ui.is-ingame .iw-dimbg,\n.iw-ui.is-ingame .iw-pause__dim,\n.iw-ui.is-ingame .iw-scrim-full,\n.iw-ui.is-ingame .iw-modal,\n.iw-ui.is-ingame .iw-panel,\n.iw-ui.is-ingame .iw-prompts {\n  -webkit-backdrop-filter: none !important;\n  backdrop-filter: none !important;\n}\n";
 export function adaptIosPausedMenuGpuGuard(rel, code, once) {
   if (rel === 'styles/ui.css') {
-    if (code.includes('/* iPadOS/iOS WebKit: bound paused WebGL'))
-      throw new Error('iOS pause GPU guard already applied');
+    if (code.includes(MARKER))
+      throw new Error('paused in-battle GPU guard already applied');
     return code + '\n' + IOS_PAUSED_MENU_CSS;
   }
   if (rel !== 'src/ui/menus.js') return code;
-  const patch = (before,after,why) => { code = once(code,before,after,'iOS pause GPU: '+why); };
+  const patch = (before,after,why) => { code = once(code,before,after,'paused battle GPU: '+why); };
   patch("    const prev = this.current;", `    const prev = this.current;
-    const iosPausedMenu = (this._stack[0] === 'pause' || name === 'pause') &&
-      document.documentElement.classList.contains('iw-ios');
-    if (iosPausedMenu) opts = { ...opts, instantLeave: true };`,
+    const battlePauseMenu = this._stack[0] === 'pause' || name === 'pause';
+    if (battlePauseMenu) opts = { ...opts, instantLeave: true, pausedBattle: true };`,
     'retain incoming and outgoing pause ownership before stack mutation');
   patch('    const token = ++this._swapToken;', `    const token = ++this._swapToken;
     // Retire an already-running menu wipe too. Increment the swap token first:
     // cancel() completes its pending onMid, which must not revive the old page.
-    if (iosPausedMenu) this.wipe.cancel();`,
+    if (battlePauseMenu) this.wipe.cancel();`,
     'cancel an earlier transition only after revoking its screen-swap callback');
   patch("    const wipe = opts.wipe ?? WIPES.has(`${prev}>${name}`);",
-    "    const wipe = iosPausedMenu ? false : (opts.wipe ?? WIPES.has(`${prev}>${name}`));",
-    'avoid full-viewport Canvas2D wipe while overlaying paused iOS WebGL');
-  patch("&& !this.wipe.busy && !prefersReducedMotion()) {","&& !this.wipe.busy && !prefersReducedMotion() && !iosPausedMenu) {",
-    'suppress decorative light wipe during nested iOS pause navigation');
-  patch("      setTimeout(() => oe.remove(), opts.instantLeave ? 0 : 340);","      if ((opts.instantLeave || this._stack[0] === 'pause') &&\n          document.documentElement.classList.contains('iw-ios')) oe.remove();\n      else setTimeout(() => oe.remove(), opts.instantLeave ? 0 : 340);",
-    'release old fullscreen paused menu immediately on iOS');
+    "    const wipe = battlePauseMenu ? false : (opts.wipe ?? WIPES.has(`${prev}>${name}`));",
+    'avoid full-viewport Canvas2D wipe while overlaying paused battle WebGL');
+  patch("&& !this.wipe.busy && !prefersReducedMotion()) {","&& !this.wipe.busy && !prefersReducedMotion() && !battlePauseMenu) {",
+    'suppress decorative light wipe during nested paused-battle navigation');
+  // Only the in-battle pause owner releases its DOM synchronously; other instantLeave callers keep their timer.
+  patch("      setTimeout(() => oe.remove(), opts.instantLeave ? 0 : 340);","      if (opts.pausedBattle) oe.remove();\n      else setTimeout(() => oe.remove(), opts.instantLeave ? 0 : 340);",
+    'release old fullscreen paused-battle menu immediately');
   return code;
 }
