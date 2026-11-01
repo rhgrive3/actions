@@ -276,6 +276,11 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   assert(movement.distance<=4,'native movement pulse stayed inside verified 4m support corridor');
   phase('supported-real-audio',{remote:supported,movement});
   await place(host,lane.edge,lane.yaw);
+  // The native drum-suspension gate requires active stick input. Holding ZR
+  // at an unsupported edge with a neutral stick only proves stationary pose,
+  // not a real roll transition. Apply the same bounded native KeyW pulse used
+  // by the supported-floor control, then require the unchanged suspension gate.
+  await setInput(host,true,['KeyW']);
   await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&RG.match.local.weaponRunner.s3RollerSuspendedHold===true,null,timeout);
   const suspended=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.ready&&s.remote&&s.alive&&s.grounded&&s.held&&s.suspended&&s.near&&s.audioState==='running'&&!!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing)?s:false;},identities[0].nid,timeout));
   const wire=await host.evaluate(()=>__rankedReplication.wire.at(-1));
