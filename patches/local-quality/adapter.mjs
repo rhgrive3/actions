@@ -111,6 +111,7 @@ const IDENTITY_FILES = [
   'character-visual-stability-adapter.mjs',
   'fx-shader-stability-adapter.mjs',
   'ordered-shader-smoothstep.mjs',
+  'shader-program-reflection.mjs',
   'menu-card-layout-adapter.mjs',
   'title-demo-budget-adapter.mjs',
   'title-presentation-adapter.mjs',

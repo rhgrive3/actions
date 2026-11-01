@@ -68,11 +68,9 @@ test('pinned historical frame replay is manual, with both immutable refs preserv
  for(const sha of ['b9c46f57f8a5427eaa71dd740688622490b61bb8','429cc1352d9b13ffe83c579ed714b84acf6139ed'])assert.ok(source.includes('ref: '+sha));
  assert.ok(source.includes('--replay-diagnostic'));
 });
-test('Dynamo keeps one final always-run full evidence upload',()=>{
- const source=read('inkwave-dynamo-handle');assert.equal((source.match(/uses: actions\/upload-artifact@v4/g)||[]).length,1);
- assert.match(source,/uses: actions\/upload-artifact@v4\n        if: always\(\)/);
- assert.match(source,/path: \.dynamo-evidence\//);assert.match(source,/retention-days: 14/);
-});
+// The Dynamo-only PR workflow was retired in bb72a90d5 together with the other
+// narrow single-model checks, so no evidence-upload contract remains.
+
 
 test('squid baseline remains an explicit second immutable shallow tree',()=>{
  const source=read('inkwave-squid-visual-qa');

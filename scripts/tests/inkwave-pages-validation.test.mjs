@@ -5,11 +5,11 @@ import {assertValidationProof,awaitPagesValidation} from '../ci/inkwave-pages-va
 const sha='a'.repeat(40),other='b'.repeat(40);
 function fixture(){
  const run={id:9,run_attempt:2,head_sha:sha,head_branch:'main',event:'push',repository:{full_name:'rhgrive3/actions'},head_repository:{full_name:'rhgrive3/actions'},path:'.github/workflows/validate-inkwave-update.yml',status:'completed',conclusion:'success'};
- const names=['admission_preflight','build_site','validate_core','seven_claims','resource_paint_continuation','validate',...Array.from({length:8},(_,i)=>'patch_tests ('+i+')'),...['active','catalog','ui','responsive','network','range','startup'].map(x=>'browser ('+x+', chromium webkit)')];
+ const names=['admission_preflight','build_site','validate_core','seven_claims','resource_paint_continuation','validate',...Array.from({length:9},(_,i)=>'patch_tests ('+i+')'),...['active','catalog','ui','responsive','network','range','startup'].map(x=>'browser ('+x+', chromium webkit)')];
  return{sha,mainSha:sha,run,jobsAttempt:2,jobs:names.map(name=>({name,run_id:9,run_attempt:2,head_sha:sha,status:'completed',conclusion:'success'}))};
 }
 test('Pages requires exact trusted main SHA, successful latest attempt, every shard and browser lane',()=>{
- assert.equal(assertValidationProof(fixture()).requiredJobs,21);
+ assert.equal(assertValidationProof(fixture()).requiredJobs,22);
  const documented=fixture();for(const j of documented.jobs)delete j.run_attempt;assert.equal(assertValidationProof(documented).runAttempt,2,'attempt-specific endpoint binds jobs even when the optional response field is absent');
  for(const mutate of [x=>x.mainSha=other,x=>x.run.head_sha=other,x=>x.run.head_branch='topic',x=>x.run.event='pull_request',x=>x.run.event='workflow_dispatch',x=>x.run.head_repository.full_name='fork/actions',x=>x.run.repository.full_name='fork/actions',x=>x.run.path='.github/workflows/other.yml',x=>x.jobs.pop(),x=>x.jobs.push({...x.jobs[0]}),x=>x.jobs[0].head_sha=other,x=>x.jobs[0].run_attempt=1,x=>x.jobsAttempt=1,x=>x.jobs[0].run_id=8]){const f=fixture();mutate(f);assert.throws(()=>assertValidationProof(f),/Pages validation barrier/);}
  for(const status of ['queued','in_progress','waiting','cancelled']){const f=fixture();f.run.status=status;assert.throws(()=>assertValidationProof(f));}
