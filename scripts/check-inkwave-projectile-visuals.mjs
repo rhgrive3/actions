@@ -1177,15 +1177,20 @@ async function resetCaptureCharacter(actor) {
     // +Z is open forever. A short native ray probe chooses a path with enough
     // initial clearance for the required F5/F15 airborne captures; the later
     // production projectile must still retire on a real paintable floor face.
-    const muzzle = G.projectiles._muzzle(a, new V());
     const lanes = [];
     for (let index = 0; index < 32; index++) {
       const yaw = index * Math.PI * 2 / 32;
+      // Rotate the real character first so the probe starts at that heading's
+      // actual hand/muzzle transform, not the default +Z muzzle offset.
+      a.yaw = yaw; a.aimYaw = yaw;
+      a.character.root.rotation.y = yaw; a.character.root.updateMatrixWorld(true);
+      G.scene.updateMatrixWorld(true);
+      const muzzle = G.projectiles._muzzle(a, new V());
       const direction = new V(Math.sin(yaw), 0, Math.cos(yaw));
       const hit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1, u: 0, v: 0 };
       const result = G.physics.raycast(muzzle, direction, 10, hit, true);
       const clearance = result?.hit === true ? result.dist : 10;
-      lanes.push({ yaw, direction: direction.toArray(), clearance,
+      lanes.push({ yaw, muzzle: muzzle.toArray(), direction: direction.toArray(), clearance,
         obstruction: result?.hit === true ? { block: result.block, face: result.face, point: result.point.toArray() } : null });
     }
     lanes.sort((left, right) => right.clearance - left.clearance || left.yaw - right.yaw);
