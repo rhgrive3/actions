@@ -24,11 +24,11 @@ const menuLayoutEpoch=verifyMenuLayoutSourceIdentity(fs.readFileSync(path.join(r
 const installerSource=fs.readFileSync(path.join(repo,'patches/splatoon3/runtime/install.mjs'),'utf8');
 const frozenInstaller=fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-icons-1915.mjs.txt',import.meta.url),'utf8');
 const installerHash=hash(installerSource),iconInputs={};
-const includesPrediction=installerHash===THROW_PREDICTION_MENU_INSTALLER_SHA256;
-const includesSquidroll=includesPrediction||installerHash===SQUIDROLL_MENU_INSTALLER_SHA256;
-const frozenIconInstaller=includesSquidroll?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8'):undefined;
-const frozenSquidrollInstaller=includesPrediction?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-throw-prediction-20261031.mjs.txt',import.meta.url),'utf8'):undefined;
-const requiredInputs=includesPrediction?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256}:includesSquidroll?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256}:installerHash===ICON_MENU_INSTALLER_SHA256?MENU_ICON_INPUT_SHA256:{};
+const hasThrowPrediction=installerHash===THROW_PREDICTION_MENU_INSTALLER_SHA256;
+const hasSquidroll=hasThrowPrediction||installerHash===SQUIDROLL_MENU_INSTALLER_SHA256;
+const frozenIconInstaller=hasSquidroll?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8'):undefined;
+const frozenSquidrollInstaller=hasThrowPrediction?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-throw-prediction-20261031.mjs.txt',import.meta.url),'utf8'):undefined;
+const requiredInputs=hasThrowPrediction?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256,...THROW_PREDICTION_MENU_INPUT_SHA256}:hasSquidroll?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256}:installerHash===ICON_MENU_INSTALLER_SHA256?MENU_ICON_INPUT_SHA256:{};
 for(const key of Object.keys(requiredInputs)){
  const file=key.replace(/^patch\//,'patches/splatoon3/');
  iconInputs[key]={source:fs.readFileSync(path.join(repo,file),'utf8'),manifestDigest:manifest.files[key]};
@@ -36,7 +36,7 @@ for(const key of Object.keys(requiredInputs)){
 const menuInstallerEpoch=verifyMenuInstallerSourceIdentity(installerSource,manifest.files['patch/runtime/install.mjs'],pins.inputs['patch/runtime/install.mjs'],frozenInstaller,iconInputs,frozenIconInstaller,frozenSquidrollInstaller);
 for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key],key==='patch/runtime/menu-layout.mjs'?menuLayoutEpoch.sourceSha256:key==='patch/runtime/install.mjs'?menuInstallerEpoch.sourceSha256:digest, `Pinned composed UI input: ${key}`);
 const files = ['src/ui/menus.js', 'patches/splatoon3/runtime/menu-layout.mjs', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/profile.json'];
-for(const key of [...Object.keys(menuInstallerEpoch.iconInputs),...Object.keys(menuInstallerEpoch.effectInputs)])files.push(key.replace(/^patch\//,'patches/splatoon3/'));
+for(const key of [...Object.keys(menuInstallerEpoch.iconInputs),...Object.keys(menuInstallerEpoch.effectInputs),...Object.keys(menuInstallerEpoch.predictionInputs)])files.push(key.replace(/^patch\//,'patches/splatoon3/'));
 const emitted = Object.fromEntries(files.map(file => {
   const digest = hash(fs.readFileSync(path.join(source, file)));
   assert.equal(manifest.artifacts[file], digest, `Emitted artifact: ${file}`);

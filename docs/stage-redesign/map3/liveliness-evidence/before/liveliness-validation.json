@@ -1,0 +1,617 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "label": "before",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "buildRevision": "d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24",
+  "contentHash": "b243a420ac7daf666704dbaaa2cd6c54224ec6d5afa7cac33129e29c3a24926d",
+  "buildManifestSha256": "70783254af4afbfb7d0d85d9a33dfd4ab0393ae22df339279b8b4fcff4d47199",
+  "scope": "Matched day-time views of the minified production site in Chromium/SwiftShader. Controlled actor setup and manual detail cameras are recorded. No physical-device FPS or gameplay-equivalence claim.",
+  "errors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "badResponses": [],
+  "stages": [
+    {
+      "stage": "tidewater",
+      "state": "playing",
+      "mode": "turf",
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "artRecords": 303,
+      "levelBlocks": 301,
+      "paintCells": 305104,
+      "turfArea": 8462.829471444813,
+      "opening": {
+        "phase": null,
+        "grounded": true,
+        "supported": true
+      }
+    },
+    {
+      "stage": "kelpline",
+      "state": "playing",
+      "mode": "turf",
+      "art": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "artRecords": 175,
+      "levelBlocks": 176,
+      "paintCells": 389000,
+      "turfArea": 11351.951891071018,
+      "opening": {
+        "phase": null,
+        "grounded": true,
+        "supported": true
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "stage": "tidewater",
+      "id": "market-stall",
+      "title": "Tidewater Plaza — upper market stall",
+      "file": "tidewater-market-stall.jpg",
+      "sha256": "d52c8a77e5841a86a3ef9c7506669457e1e178bafdd60ee7d4917be4478369dd",
+      "setup": {
+        "id": "market-stall",
+        "title": "Tidewater Plaza — upper market stall",
+        "position": [
+          -25,
+          7.6,
+          -8
+        ],
+        "look": [
+          -33,
+          6.4,
+          -14.5
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "camera": [
+        -25,
+        7.6,
+        -8
+      ],
+      "cameraQuaternion": [
+        -0.05229388120500098,
+        0.42905029794705457,
+        0.02489034520272457,
+        0.9014220224377427
+      ],
+      "calls": 67,
+      "triangles": 521831,
+      "geometries": 336,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "artGeometryBytes": 8887712,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "tidewater",
+      "id": "market-waterfront",
+      "title": "Tidewater Plaza — waterfront market",
+      "file": "tidewater-market-waterfront.jpg",
+      "sha256": "79eea64f4d84e547606e73f8fed7040efe5074eb2e83218b775f1c5428232eff",
+      "setup": {
+        "id": "market-waterfront",
+        "title": "Tidewater Plaza — waterfront market",
+        "position": [
+          -39,
+          7.5,
+          -1
+        ],
+        "look": [
+          -49,
+          4.3,
+          -11
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "camera": [
+        -39,
+        7.5,
+        -1
+      ],
+      "cameraQuaternion": [
+        -0.10258205745908111,
+        0.3803171499811815,
+        0.04249087945568752,
+        0.9181668214876507
+      ],
+      "calls": 65,
+      "triangles": 521807,
+      "geometries": 336,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "artGeometryBytes": 8887712,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "tidewater",
+      "id": "bridge-context",
+      "title": "Tidewater Plaza — bridge and market context",
+      "file": "tidewater-bridge-context.jpg",
+      "sha256": "5a22e3b9b8dbd3da162ae5021013f0192e4256e432298bc06a983d9314324fc9",
+      "setup": {
+        "id": "bridge-context",
+        "title": "Tidewater Plaza — bridge and market context",
+        "position": [
+          -47,
+          19,
+          -30
+        ],
+        "look": [
+          -18,
+          3,
+          -6
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.5587890436997773,
+        3.60195259153035,
+        -56.013017276869
+      ],
+      "camera": [
+        -47,
+        19,
+        -30
+      ],
+      "cameraQuaternion": [
+        0.08497068310420705,
+        0.8866576876902681,
+        0.18061561913871124,
+        -0.4171284286591978
+      ],
+      "calls": 175,
+      "triangles": 604411,
+      "geometries": 336,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "artGeometryBytes": 8887712,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "kelpline",
+      "id": "boarding-kiosk",
+      "title": "Kelpline Terminal — boarding kiosk",
+      "file": "kelpline-boarding-kiosk.jpg",
+      "sha256": "dd82610df9119c14b644c2f9d3d2dc11eb292110b18546c6d1d7c6bce48552af",
+      "setup": {
+        "id": "boarding-kiosk",
+        "title": "Kelpline Terminal — boarding kiosk",
+        "position": [
+          -3,
+          7.2,
+          -13
+        ],
+        "look": [
+          -13,
+          5.3,
+          -21
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "camera": [
+        -3,
+        7.2,
+        -13
+      ],
+      "cameraQuaternion": [
+        -0.06631676999796073,
+        0.4320145333429629,
+        0.0318734874660718,
+        0.8988601725486839
+      ],
+      "calls": 68,
+      "triangles": 520979,
+      "geometries": 369,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "artGeometryBytes": 9883120,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "kelpline",
+      "id": "terminal-waterfront",
+      "title": "Kelpline Terminal — waterfront waiting area",
+      "file": "kelpline-terminal-waterfront.jpg",
+      "sha256": "2a8c602b99d308ec0b4c64e7a9040c39c36f0a18a498772b0e0cba3210cf0488",
+      "setup": {
+        "id": "terminal-waterfront",
+        "title": "Kelpline Terminal — waterfront waiting area",
+        "position": [
+          -39,
+          6,
+          22
+        ],
+        "look": [
+          -49,
+          4.8,
+          22
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "camera": [
+        -39,
+        6,
+        22
+      ],
+      "cameraQuaternion": [
+        -0.04219941206070872,
+        0.7058464490395417,
+        0.042199412060708714,
+        0.7058464490395419
+      ],
+      "calls": 66,
+      "triangles": 520947,
+      "geometries": 369,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "artGeometryBytes": 9883120,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "kelpline",
+      "id": "gantry-context",
+      "title": "Kelpline Terminal — gantry and terminal context",
+      "file": "kelpline-gantry-context.jpg",
+      "sha256": "d33f6d2eb7dde823668ee3a73ce7840c94a496e0a371c08469f2ff890bf680d6",
+      "setup": {
+        "id": "gantry-context",
+        "title": "Kelpline Terminal — gantry and terminal context",
+        "position": [
+          -43,
+          21,
+          -51
+        ],
+        "look": [
+          -10,
+          4,
+          -14
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0.540391236189053,
+        4.8,
+        -56.012173787051715
+      ],
+      "camera": [
+        -43,
+        21,
+        -51
+      ],
+      "cameraQuaternion": [
+        0.05855843966566251,
+        0.9217074648899043,
+        0.15363289491668602,
+        -0.35131637011341715
+      ],
+      "calls": 176,
+      "triangles": 600237,
+      "geometries": 369,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "artGeometryBytes": 9883120,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "tidewater",
+      "id": "play",
+      "title": "Tidewater Plaza — central play view",
+      "file": "tidewater-play.jpg",
+      "sha256": "a4970c08e7126321f8b867205101de9d93e48ffc546f09c34207643fe87f9a3b",
+      "setup": {
+        "id": "play",
+        "title": "Tidewater Plaza — central play view",
+        "hud": true,
+        "actor": [
+          0,
+          0.02,
+          -5
+        ],
+        "yaw": 0,
+        "pitch": -0.3
+      },
+      "manualInspectionCamera": false,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0,
+        1.1102230246251565e-16,
+        -5
+      ],
+      "camera": [
+        -0.28028233363568406,
+        3.328672407872023,
+        -9.29523666474756
+      ],
+      "cameraQuaternion": [
+        0,
+        0.9887710779360422,
+        0.1494381324735992,
+        0
+      ],
+      "calls": 155,
+      "triangles": 777737,
+      "geometries": 336,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113656,
+        "parts": 5086
+      },
+      "artGeometryBytes": 8887712,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": true
+    },
+    {
+      "stage": "kelpline",
+      "id": "play",
+      "title": "Kelpline Terminal — central play view",
+      "file": "kelpline-play.jpg",
+      "sha256": "0d1b53ef9ebbcdd30de7297479aef81bd48f3e334bcb8d9e9a650f6d44795542",
+      "setup": {
+        "id": "play",
+        "title": "Kelpline Terminal — central play view",
+        "hud": true,
+        "actor": [
+          7,
+          3.62,
+          -7
+        ],
+        "yaw": 0,
+        "pitch": -0.3
+      },
+      "manualInspectionCamera": false,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        7,
+        3.5999999999999996,
+        -7
+      ],
+      "camera": [
+        6.719702786318042,
+        6.928672407872023,
+        -11.29523666474756
+      ],
+      "cameraQuaternion": [
+        0,
+        0.9887710779360422,
+        0.14943813247359924,
+        0
+      ],
+      "calls": 152,
+      "triangles": 798991,
+      "geometries": 367,
+      "textures": 58,
+      "art": {
+        "draws": 6,
+        "triangles": 113452,
+        "parts": 5683
+      },
+      "artGeometryBytes": 9883120,
+      "artMaterials": 6,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "hudObserved": true
+    }
+  ],
+  "baseURI": "http://127.0.0.1:46349/_versions/d9cf386e6bae56dc14479a8daf7a23a71a60b9cfa76b68df78ff04dc85319b24/",
+  "capturePasses": [
+    {
+      "viewFilter": "play",
+      "waitForInitialLanding": true
+    }
+  ]
+}

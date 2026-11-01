@@ -1,0 +1,80 @@
+{
+  "repo_head": "2e32c3a3ba4c814f4cdbb390930e16fa2d0c0b51",
+  "files": [
+    {
+      "path": "tools/object-presentation-qa/historical-overlay.mjs",
+      "before_sha256": null,
+      "after_sha256": "46ce2bd80b2eaf941d9c15fddaada9763b0243dff187f59cbfc1cfd76663d861",
+      "new_file": true
+    },
+    {
+      "path": "tools/object-presentation-qa/runtime-overlay.test.mjs",
+      "before_sha256": "215bd391837a38115724936f789098270c34b26920610cbf4a13a022ebdce1d4",
+      "after_sha256": "3dc017658127b552f9684c4c3733b6d1ab04dc3441bc6365c76deed9e0090633",
+      "new_file": false
+    },
+    {
+      "path": "tools/object-presentation-qa/run.mjs",
+      "before_sha256": "4ec7dc2113255c83d241415ad3c85a2ab02063928958b1bd0bb4897c86df4fa7",
+      "after_sha256": "4ff4560580bdb0003791dff35b2f04a901ff5d38d0dd9033b28094f368b63edd",
+      "new_file": false
+    },
+    {
+      "path": ".github/workflows/inkwave-object-presentation-qa.yml",
+      "before_sha256": "a46ef7221e72ae7a5432e4b5e8a784108a7649927773a67a262d4b8a78ead215",
+      "after_sha256": "0ab068a665a0c4491ee42b2f22ed5e9288bb87867738e89ac27ff84a3324ab8c",
+      "new_file": false
+    }
+  ],
+  "historical_compatibility": {
+    "file": "patches/splatoon3/runtime/bomb-motion.mjs",
+    "beforeBase": "3839b61a6c6c4d5ac998b82168f37b802bc55099",
+    "beforeSha256": "ae3fb4d73f970e335a622ad76f17ac0b5b860924d39eb76a485958333861374c",
+    "ownerCommit": "03a349162165c3496c24011e55bc043656ed93be",
+    "ownerSha256": "66a1789fb72419bce483af67bfb9ece2825265902704b97af42ff7f22c877a9e",
+    "bridgeSha256": "80ad08c3688137b4b8ac290aa40fc6d4145a4bee7c9107e05d37dbfce8132e20",
+    "exports": [
+      "stormThrowPosition",
+      "bombPredictionPosition"
+    ]
+  },
+  "diagnosis": "The exact 3839 Clam overlay restores old bomb-motion but retains current all-subs, kit-subs and support-sensor-flight importers. Those later import bombPredictionPosition and stormThrowPosition, absent in the old module. The old Clam comparison source is correct; its later importer closure was incomplete.",
+  "scope": "QA-only composition adds exactly the two pinned exports to the unchanged historical module, so their helper calls resolve to the old stateMap/sampleRelease. No production runtime, BASE or other suite pin changes. Both source fixture and native browser runner use the same helper; beforeFiles receipts distinguish original hash, served hash and compatibility metadata; the helper is included in browser harness identity.",
+  "donor_proof": "The strengthened pin test git-shows exactly 03a349162165c3496c24011e55bc043656ed93be, verifies the entire donor SHA256, checks its bridge equals the bridge using current owner source, and rejects duplicate and changed export bodies. CI fetches this declared immutable donor alongside existing baseline objects.",
+  "verification": {
+    "before": {
+      "tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "cause": "missing bombPredictionPosition export",
+      "log": "clam-before.log"
+    },
+    "runtime_overlay": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "log": "runtime-overlay-final.log"
+    },
+    "added_donor_assertions": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "log": "donor-pin-final.log",
+      "note": "Reran only the strengthened pin test after adding donor identity and duplicate-export assertions; previously passed link and pose paths were unchanged."
+    },
+    "shared_flight_current_root": {
+      "tests": 163,
+      "passed": 163,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "patches/splatoon3/tests/throw-prediction-parity.test.mjs",
+        "patches/splatoon3/tests/special-trajectory.test.mjs"
+      ],
+      "log": "shared-flight-root.log"
+    },
+    "runner_syntax": "node --check candidate/tools/object-presentation-qa/run.mjs passed"
+  },
+  "limitations": "Native browser screenshot comparisons were not repeated here. Source-level production graph links and ordinary Clam pose/gameplay equivalence passed. Original-game console fidelity remains unverified."
+}

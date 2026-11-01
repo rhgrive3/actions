@@ -8,10 +8,14 @@ import {getPlatformLifecycle} from '../platform-lifecycle.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/presentation-clock-before-e67c636b.json',import.meta.url),'utf8')).files;
 const current={};for(const[rel,entry]of Object.entries(before)){
  const source=adaptBuildSource(rel,fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8'));
- const cls=parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.map(x=>x.declaration||x).find(x=>x.type==='ClassDeclaration'&&x.id.name===entry.name);
- current[rel]={methods:Object.fromEntries(cls.body.body.filter(x=>Object.hasOwn(entry.methods,x.key.name)).map(x=>[x.key.name,source.slice(x.start,x.end)]))};
+ const body=parse(source,{ecmaVersion:'latest',sourceType:'module'}).body;
+ const cls=body.map(x=>x.declaration||x).find(x=>x.type==='ClassDeclaration'&&x.id.name===entry.name);
+ // The selected methods call these module-owned helpers after composition.
+ // Compile their real declarations so transform writes retain the same guards.
+ const locals=body.filter(x=>x.type==='FunctionDeclaration'&&x.id.name==='writeQueueTransform'||x.type==='VariableDeclaration'&&x.declarations.some(d=>d.id.name==='QUEUE_TRANSFORMS')).map(x=>source.slice(x.start,x.end)).join('\n');
+ current[rel]={locals,methods:Object.fromEntries(cls.body.body.filter(x=>Object.hasOwn(entry.methods,x.key.name)).map(x=>[x.key.name,source.slice(x.start,x.end)]))};
 }
-const compile=(data,rel,deps)=>new Function(...Object.keys(deps),'return ({'+Object.values(data[rel].methods).join(',\n')+'})')(...Object.values(deps));
+const compile=(data,rel,deps)=>new Function(...Object.keys(deps),(data[rel].locals||'')+'\nreturn ({'+Object.values(data[rel].methods).join(',\n')+'})')(...Object.values(deps));
 function env(){let time=0,serial=0;const rafs=new Map(),timers=new Map();
  const target=()=>{const events=new Map();return {addEventListener(k,fn){if(!events.has(k))events.set(k,new Set());events.get(k).add(fn);},removeEventListener(k,fn){events.get(k)?.delete(fn);},emit(k){for(const fn of [...events.get(k)||[]])fn({});}};};
  const e={...target(),document:{...target(),hidden:false},performance:{now:()=>time},console};

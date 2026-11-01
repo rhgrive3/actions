@@ -1,14 +1,18 @@
+import {adaptStormDeviceContact} from './storm-device-contact-adapter.mjs';
 // Final build-only installation, after all ranked/network/reliability overlays.
 // Derive the pre-queue predicate from the FINAL native payload guards, including
 // Blaster's bounded knockback refinement. Never copy an intermediate policy or
 // replace native guard anchors consumed by preceding composition adapters.
 export function adaptCombatProvenance(rel,code){
+  code=adaptStormDeviceContact(rel,code);
   if(rel==='src/game/weapons.js'){
     // Pure native birth decoding and motion for the receiver's crablet gate.
     // The live ghost list, Actor state, RNG, FX, paint and damage stay untouched.
-    return "import { advanceInkFrame as iwCrabletInkStep, INK_LENGTH_SCALE as iwCrabletInkScale } from './inkFlight.js';\n"
-      +"import { fidelityWorldCollisionRadius as iwCrabletFieldRadius } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"
-      +"import { sweptWorldHit as iwCrabletWorldSweep } from '../../patches/splatoon3/runtime/weapons-collision.mjs';\n"
+    return "import { advanceInkFrame as iwCrabletInkStep, damageAt as iwDeviceInkDamage, INK_LENGTH_SCALE as iwCrabletInkScale } from './inkFlight.js';\n"
+      +"import { fidelityWorldCollisionRadius as iwCrabletFieldRadius, fidelityDamage as iwDeviceFidelityDamage } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"
+      +"import { sweptWorldHit as iwCrabletWorldSweep, capsuleEntry as iwDeviceCatalogCapsule } from '../../patches/splatoon3/runtime/weapons-collision.mjs';\n"
+      +"import { capsuleEntry as iwDeviceInkCapsule } from './inkCollision.js';\n"
+      +"import { hurtboxRadius as iwDeviceBodyRadius, hurtboxHeight as iwDeviceBodyHeight } from '../../patches/splatoon3/runtime/player-hurtbox.mjs';\n"
       +code+`
 Projectiles.prototype.crabletCombatBirthId=function(event){
   const e=this.prepareFidelityProjectilePacket?.(event);if(!e)return undefined;
@@ -25,11 +29,16 @@ Projectiles.prototype.makeCrabletCombatProbe=function(actor,event){
     fidelityFieldCollision:null,catalog:null,inkProfile:null,
     pos:new THREE.Vector3(e[5],e[6],e[7]),prev:new THREE.Vector3(e[5],e[6],e[7]),
     start:new THREE.Vector3(e[5],e[6],e[7]),vel:new THREE.Vector3(e[8],e[9],e[10])};
+  if(e[4]===actor.weapon?.special)return this.restoreNativeSpecialDeviceProbe?.(p,actor,e)||null;
   this.inkFlight.restore(p,e[27]);
-  this.restoreCrabletFidelityProbe(p,actor);
+  this.restoreCrabletFidelityProbe(p,actor,e);
   return this.restoreCrabletCatalogProbe(p,actor,event);
 };
 Projectiles.prototype.stepCrabletCombatProbe=function(p){
+  if(p.s3SpecialWeapon)return this.stepNativeSpecialDeviceProbe(p,(round,dt)=>{
+    const field0=iwCrabletFieldRadius(round);advanceFidelityProjectile(round,dt);
+    return {field0,field1:iwCrabletFieldRadius(round),pad:round.size*.6,done:round.pos.y<PLAYER.waterY-1.8};
+  });
   if(p.catalog)return this.stepCrabletCatalogProbe(p);
   if(p.inkProfile){
     p.prev.copy(p.pos);iwCrabletInkStep(p,p.inkProfile);
@@ -40,6 +49,29 @@ Projectiles.prototype.stepCrabletCombatProbe=function(p){
   advanceFidelityProjectile(p,1/60);
   return {field0,field1:iwCrabletFieldRadius(p),pad:p.size*.6,done:p.pos.y<PLAYER.waterY-1.8};
 };
+Projectiles.prototype.deviceCombatProbeBlockDistance=function(p,radii){
+  const length=p.prev.distanceTo(p.pos),scratch=this._deviceProbeBase||(this._deviceProbeBase=new THREE.Vector3());
+  let nearest=Infinity;
+  const piercing=p.legacyDeviceCharger&&p.full||p.catalog?.r.family==='charger'&&p.catalog.descriptor.charge>=1&&p.catalog.descriptor.m.ThroughFullCharge!==false;
+  if(!piercing)for(const actor of G.actors||[]){
+    if(!actor.alive||actor===p.owner)continue;
+    const friendly=actor.team===p.team;
+    if(friendly&&!p.legacyDeviceCharger&&(!p.catalog||actor.submerged||p.catalog.descriptor.c.FriendThroughFrameForPlayer==null))continue;
+    scratch.copy(actor.pos);scratch.y+=actor.smoothY||0;
+    const t=p.inkProfile?iwDeviceInkCapsule(p.prev,p.pos,scratch,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,p.inkPlayerRadius)
+      :iwDeviceCatalogCapsule(p.prev,p.pos,scratch,iwDeviceBodyRadius(actor,PLAYER),iwDeviceBodyHeight(actor,PLAYER),radii.pad);
+    if(t!==null&&Number.isFinite(t)&&t>=0&&t<=1)nearest=Math.min(nearest,t*length);
+  }
+  const boss=G.boss?.segHit?.(p.prev,p.pos,radii.pad);if(boss?.point)nearest=Math.min(nearest,p.prev.distanceTo(boss.point));
+  return nearest;
+};
+Projectiles.prototype.deviceCombatProbeDamage=function(p,target,fraction){
+  if(p.legacyDeviceCharger||p.s3SpecialWeapon)return p.damage;
+  if(p.catalog)return this.catalogDeviceProbeDamage?.(p,target,fraction);
+  if(p.inkProfile)return iwDeviceInkDamage(p.inkProfile,Math.max(0,p.age-1/60)+fraction/60);
+  if(['blaster','roller','slosher'].includes(p.s3Weapon?.kind))return p.damage;
+  return iwDeviceFidelityDamage(p,p.pos,fraction);
+};
 Projectiles.prototype.worldCrabletCombatProbe=function(from,to,r0,r1){
   const hit=this._crabletWorldProbe||(this._crabletWorldProbe=new Hit());
   return iwCrabletWorldSweep(G.physics,from,to,r0,r1,hit,true);
@@ -47,6 +79,9 @@ Projectiles.prototype.worldCrabletCombatProbe=function(from,to,r0,r1){
 `;
   }
   if(rel!=='src/net/netmatch.js')return code;
+  const specialPower='{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0 }';
+  if(code.split(specialPower).length!==2)throw Error('special projectile metadata owner anchor mismatch');
+  code=code.replace(specialPower,'{ s3SpecialPowerAP: p.s3SpecialWeapon.specialPowerAP ?? 0, ...(p.s3TentaWire ? {s3Tenta:p.s3TentaWire} : {}) }');
   if(code.includes('installCombatProvenance(NetMatch'))throw Error('combat provenance installed twice');
   const start="    const blastKnockback = d.w === 'blaster' && validBlasterKnockback(d.kb);";
   const end="    if (Object.hasOwn(IW_CATALOGUE_SUB_HIT_MAX,d.w) && d.d > IW_CATALOGUE_SUB_HIT_MAX[d.w]) return;";

@@ -1,0 +1,152 @@
+{
+  "fixedAt": "2026-10-30T20:15:27.031239+00:00",
+  "purpose": "Latest-main native whole-battle A/A and A/B full measurement",
+  "authorizedByParent": true,
+  "cwd": "/workspace/actions-battle-benchmark",
+  "environment": {
+    "CHROMIUM_PATH": "/usr/bin/chromium"
+  },
+  "runs": [
+    {
+      "name": "latest-main-native-full",
+      "evidence": "/workspace/actions-battle-benchmark/e/rnfull1",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-gpu-pool.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-main-native/_site",
+        "--sha-a",
+        "db2134a71ffe3360626fdadba78916d9b702d31b",
+        "--site-b",
+        "/workspace/actions-ray-main/_site",
+        "--sha-b",
+        "df2491c6096c173efc14504dc5d00ea5b8458df5",
+        "--frames",
+        "900",
+        "--warmup-runs",
+        "5",
+        "--warmup-frames",
+        "900",
+        "--aa-rounds",
+        "2",
+        "--rounds",
+        "4",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/rnfull1"
+      ]
+    }
+  ],
+  "conditions": {
+    "stage": "hagglefish",
+    "quality": "low",
+    "viewport": [
+      480,
+      300
+    ],
+    "hz": 60,
+    "weapon": "shooter",
+    "frames": 900,
+    "warmupRunsPerSidePerPhase": 5,
+    "warmupFrames": 900,
+    "warmupSchedulePerPhase": [
+      "a",
+      "b",
+      "a",
+      "b",
+      "b",
+      "a",
+      "a",
+      "b",
+      "b",
+      "a"
+    ],
+    "aaQuartets": 2,
+    "abQuartets": 4,
+    "gpuCpus": "0-1",
+    "workerCpus": "2-3",
+    "sceneRender": false,
+    "allowBvhWorkReduction": false,
+    "profiling": false,
+    "allocations": false,
+    "forcedGc": false
+  },
+  "expected": {
+    "warmupWindows": 20,
+    "preflightMeasuredWindows": 8,
+    "comparisonMeasuredWindows": 16,
+    "totalWindows": 44,
+    "matchedOrdinalPairs": 22
+  },
+  "source": {
+    "a": {
+      "site": "/workspace/actions-main-native/_site",
+      "sha": "db2134a71ffe3360626fdadba78916d9b702d31b"
+    },
+    "b": {
+      "site": "/workspace/actions-ray-main/_site",
+      "sha": "df2491c6096c173efc14504dc5d00ea5b8458df5"
+    }
+  },
+  "oldCohortDifferences": {
+    "oldBaselineSha": "5637c8038e00466a8022c4d2b705ec9e5dc1c8d2",
+    "oldCandidateSha": "88349c4c6b5d2d229967248d94147df2567a3992",
+    "latestMainSourceDifferent": true,
+    "oldNativePpm": 3.2,
+    "latestNativePpmObservedInAll12SmokeWindows": 3.774873600000001,
+    "oldWarmupDigest": 1123289959,
+    "latestWarmupDigest": 3196058739,
+    "oldWarmupBudgetTicks": 12,
+    "latestWarmupBudgetTicks": 112,
+    "geometryAssetIdentity": "Same Hagglefish stage LFS record 8b994f56e2c5f3d1ca1795bbc13cd748358ffbaa00d36a0fe7d5027d95180ffa; both latest builds bind all 17 source LFS payloads.",
+    "interpretation": "Only matched latest-main ordinals are compared. Do not compare full-run timings directly to earlier-cohort smokes, profile, or 960x640 runs."
+  },
+  "admission": [
+    "native=true / eight actors / seven bots / eight ready source characters before every timed window",
+    "source SHA and private Git LFS oid/size binding before browser launch; every served body SHA/size checked",
+    "all numeric window results finite; gameplay and visible-pose digest finite checks retained",
+    "exact matched-ordinal initial/gameplay/digest/paint/counts/state/draw/resources/scene/pose/budget/BVH parity",
+    "before/after affinity checks for all observed browser threads and constant GPU PID",
+    "all warmups, measured windows, failures, cgroup snapshots and HTTP receipts retained"
+  ],
+  "timingPolicy": {
+    "discardOutlierWindows": false,
+    "automaticRetry": false,
+    "cgroupThrottling": "Record every delta; do not silently remove throttled windows. Timing-noise acceptance separate from recorded-state parity.",
+    "replicationUnit": "ABBA quartet; not individual frames",
+    "parentCoordination": "Parent stated no heavy parallel work during full run."
+  },
+  "observerCaveats": [
+    "Fixed GPU0-1 / worker2-3 host affinity under four-core cgroup quota changes the experiment; not natural scheduler/device FPS.",
+    "Scene rendering disabled; paint atlas draws remain active. SwiftShader is software work.",
+    "Per-frame wall excludes subsequent observers; renderer ThreadTime includes digests, counters and CDP work.",
+    "Preparation and GL drain excluded from timing; no forced GC or CPU/allocation profiling.",
+    "Each window reconstructs a real match; only matching rematch ordinals are compared.",
+    "Exact recorded state does not prove all pixels, audio samples, every private field or external-device behavior.",
+    "Previous 30frame smoke had one A/A outlier with 8 throttled periods/359013us; preserved and not used to infer speed."
+  ],
+  "reexecution": {
+    "originalPlan": "../rnfull0/full-plan.json",
+    "originalPlanSha256": "73b6986ae6174c1179e5d86336e225f6c6758df2fe55f186619813dd99201078",
+    "interruptedEvidence": "../rnfull0",
+    "interruptionMetadata": "../rnfull0/interruption.json",
+    "reason": "Environment reconnection interrupted the previous run; same conditions restarted from the beginning.",
+    "conditionChanges": [],
+    "onlyInvocationChange": "--evidence-dir value"
+  }
+}

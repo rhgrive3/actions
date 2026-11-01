@@ -8,7 +8,7 @@ const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
 export const ADDED_PAINT_MODEL = Object.freeze({ gravity: .016, stringerCount: 5, brellaCount: 6, brellaSpacing: 3 });
 
 export function addedFamilySplash(source, family, ordinal) {
-  if (!['stringer','splatana'].includes(family)) return null;
+  if (family!=='stringer'&&family!=='splatana') return null;
   const spawn=source.SplashSpawnParam, paint=source.SplashPaintParam;
   if (!spawn || !(paint?.WidthHalf>0)) return null;
   const spacing=finite(spawn.DropInterval,3), nearest=finite(spawn.NearestLen,1);

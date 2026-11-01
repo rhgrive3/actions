@@ -1,0 +1,20 @@
+
+> inkwave-workspace@1.0.0 build
+> node scripts/build-inkwave.mjs inkwave-public _site
+
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+lightmap cargo.png: 220594 -> 168115 bytes (same pixels)
+lightmap halyard.png: 63401 -> 54085 bytes (same pixels)
+lightmap kelpline.png: 153108 -> 121155 bytes (same pixels)
+lightmap range.png: 161986 -> 112128 bytes (same pixels)
+lightmap tidewater.png: 149335 -> 119063 bytes (same pixels)
+three.js: 191 of 444 exports kept · 2071 KB → 605 KB (gzip diagnostics disabled)
+reviewed audio helper: omitted (reviewed current orphan; no literal reference)
+startup runtime: 11489 -> 6062 bytes
+native prebuilt: 1 stages, 17 files, 64.9 MiB outside the revision
+patch: splatoon3+quality+range · build b533be802784
+JS transforms (excludes replaced Three inputs): 4967 KB → 2984 KB  (gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)
+CSS: 489 KB → 411 KB
+repeated module strings: saved 30970 bytes total, 30663 in the offline precache
+modulepreload: 145 modules (430 deferred, all precached)
+lossless lightmaps: 173878 bytes saved with identical decoded pixels

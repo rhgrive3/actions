@@ -3,6 +3,7 @@
 import { handleAccount } from './account.js';
 import { ApiError, json, errorResponse, corsHeaders } from './http.js';
 import { purgeExpired } from './store.js';
+import { serveGameWithBotGate } from './bot-gate.js';
 
 const withHeaders = (response, headers) => {
   if (!Object.keys(headers).length) return response;
@@ -15,8 +16,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) {
-      if (env.ASSETS) return env.ASSETS.fetch(request);
-      return new Response('Not found', { status: 404 });
+      return serveGameWithBotGate(request, env);
     }
     const cors = corsHeaders(request, env, url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'Cache-Control': 'no-store' } });

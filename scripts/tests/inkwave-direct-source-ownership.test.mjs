@@ -104,16 +104,21 @@ test('ZEVANT stage and lobby lettering is directly owned by authored game module
 test('level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches', () => {
   const level = fs.readFileSync(new URL('../../inkwave-public/src/world/level.js', import.meta.url), 'utf8');
   const maps = fs.readFileSync(new URL('../../inkwave-public/src/world/maps.js', import.meta.url), 'utf8');
+  const map3Layout = fs.readFileSync(new URL('../../inkwave-public/src/world/stages/map3-layout.js', import.meta.url), 'utf8');
+  const map3Data = fs.readFileSync(new URL('../../inkwave-public/src/world/stages/map3-data.js', import.meta.url), 'utf8');
   const cargo = fs.readFileSync(new URL('../../inkwave-public/src/world/stages/cargo/layout.js', import.meta.url), 'utf8');
   const s3 = fs.readFileSync(new URL('../../patches/splatoon3/adapter.mjs', import.meta.url), 'utf8');
   assert.match(level, /squidReturner: !!d\.squidReturner/);
   assert.match(level, /this\.homeSuperJumpPoints = \(layout\.homeSuperJumpPoints \|\| layout\.spawnPads\)/);
-  assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -33\.5\], \[0, 0, 33\.5\]\]/);
-  assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -38\.5\], \[0, 0, 38\.5\]\]/);
+  // MAP3 spawns now live in dedicated data/layout modules, with super-jump
+  // targets derived directly from those authored stage spawn records.
+  assert.match(map3Layout, /homeSuperJumpPoints: stage\.spawns\.map\(s => \[\.\.\.s\.point\]\)/);
+  assert.match(map3Data, /\"spawns\": \[\s*\{\"id\":\"A\",\"point\":\[0,4\.8,-68\][\s\S]*?\{\"id\":\"B\",\"point\":\[0,4\.8,68\]/);
+  assert.match(map3Data, /\"spawns\": \[\s*\{\"id\":\"A\",\"point\":\[0,6,-68\][\s\S]*?\{\"id\":\"B\",\"point\":\[0,6,68\]/);
   assert.match(maps, /homeSuperJumpPoints: \[\[0, 0, -31\.5\], \[0, 0, 31\.5\]\]/);
   assert.match(cargo, /const home = W\(0, 0, -36\.5\)/);
   assert.match(cargo, /homeSuperJumpPoints: \[home, \[-home\[0\], home\[1\], -home\[2\]\]\]/);
-  for (const path of ['src/world/level.js', 'src/world/maps.js', 'src/world/stages/cargo/layout.js']) {
+  for (const path of ['src/world/level.js', 'src/world/maps.js', 'src/world/stages/map3-layout.js', 'src/world/stages/map3-data.js', 'src/world/stages/cargo/layout.js']) {
     assert(!s3.includes("if (rel === '" + path + "') {"), path + ' must not have the old Splatoon3 world-source rewrite');
   }
 });

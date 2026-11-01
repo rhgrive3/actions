@@ -48,11 +48,11 @@ function runTickWithGameplayRandom(tick, step) {
 
 export class FixedClock {
   constructor() { this.accumulator = 0; this.ticks = 0; this.advancing = false; this.finalTick = true; }
-  advance(elapsed, tick, budget = 240) {
+  advance(elapsed, tick, budget = 240, canAdvance = null) {
     if (!Number.isFinite(elapsed) || elapsed < 0) throw new RangeError('Invalid frame interval');
     this.accumulator += elapsed;
     let count = 0;
-    while (this.accumulator + 1e-10 >= STEP && count < budget) {
+    while (this.accumulator + 1e-10 >= STEP && count < budget && (!canAdvance || canAdvance())) {
       // Whether the frame drawn after this advance shows this tick's state (no
       // further tick follows). Presentation-only work may defer earlier ticks.
       this.finalTick = !(Math.max(0, this.accumulator - STEP) + 1e-10 >= STEP && count + 1 < budget);
@@ -63,16 +63,21 @@ export class FixedClock {
     }
     return count; // Unprocessed time remains queued, never silently discarded.
   }
-  reset() { this.accumulator = 0; this._pendingPadEdges?.clear(); }
+  reset() { this.accumulator = 0; this._pendingPadEdges?.clear(); this._committedDebtCommand = null; }
 }
 let context;
 let hiddenGuestListenerInstalled = false;
 export function installClock(api) { context = api; }
-export function runSimulation(game, dt) {
+export function runSimulation(game, dt, options = game._platformSimulationOptions) {
+  if (options?.presentationOnly) return;
   if (terminalRecoveryRequired(game)) { game.s3Clock?.reset(); return; }
   if (!context) throw new Error('INKWAVE patches were not installed');
   const { G } = context;
   const clock = game.s3Clock || (game.s3Clock = new FixedClock());
+  clock.runSimulation ||= runSimulation;
+  const frozenInput = options?.freezeInput === true;
+  const elapsed = options?.elapsed ?? dt;
+  if (!options?.continuation) {
   // #1111: no gamepad edge => no allocation. Reuse a per-clock snapshot on
   // active edges so 0-tick render frames preserve them across destructive pollPad.
   const edges = game.input.padPressed;
@@ -91,8 +96,19 @@ export function runSimulation(game, dt) {
     pending.clear();
   }
   game._padMenus(dt);
-  G.net?.update?.(dt);
+  if (!options?.skipNetwork) G.net?.update?.(dt);
+  }
   const m = game.match, covered = !!game.showcase?.fullFrame;
+  if (options?.sampleOnly) {
+    // This sample belongs to the completed present boundary, never the older
+    // debt just drained. Preserve its one-shot intent until one physical tick.
+    m?.updateController?.(dt); m?.controller?.computeAim?.(true);
+    clock._committedDebtCommand = m && { match:m, actor:m.local };
+    game.input.endFrame();
+    if (game.input.mobile) game.input.mobile.lookDX = game.input.mobile.lookDY = 0;
+    game.input.padPressed.clear();
+    return;
+  }
   advanceIntroPresentation(game);
   const menuAttractBudget = idleAttractMenuBudget(game, G);
   const menuRenderElapsed = menuAttractBudget ? (game._menuAttractRenderElapsed || 0) + dt : 0;
@@ -100,7 +116,9 @@ export function runSimulation(game, dt) {
   game._menuAttractFrameDelta = 0;
   if (!menuAttractBudget) game._menuAttractPresentationElapsed = 0;
   G.paint?.useFixedPaintClock?.();
-  game._s3Ticked = clock.advance(dt, step => {
+  game._s3Ticked = clock.advance(elapsed, step => {
+    const committed = clock._committedDebtCommand?.match === m && clock._committedDebtCommand.actor === m?.local;
+    const frozenTickInput = frozenInput || committed;
     // Offline pause must freeze the same gameplay clock as actors/projectiles (#707).
     const gameplayPaused = !!(m && m.paused && !m.attract);
     const offlinePaused = gameplayPaused && !G.netm;
@@ -130,7 +148,13 @@ export function runSimulation(game, dt) {
         if (results && G.netm) {
           if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
         } else if (!results) {
-          simulateMatchInterval(m, simDt, G, !offlinePaused);
+          // A foreground debt interval precedes newly observed input. Keep the
+          // last committed held command, with one-shot edges already consumed.
+          if (frozenTickInput && !committed && m.local?.intent) {
+            m.local.intent.jumpPressed = false;
+            m.local.intent.throw = false;
+          }
+          simulateMatchInterval(m, simDt, G, !offlinePaused, !frozenTickInput);
         }
         if (m.attract && !m.paused) game._updateAttract(simDt);
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);
@@ -140,11 +164,14 @@ export function runSimulation(game, dt) {
     // Consume paused clock ticks without accumulating paint debt for resume.
     if (!gameplayPaused && !(covered && m?.attract)) G.paint?.advanceSimulation?.(step);
     advanceIntroPresentation(game);
+    clock._committedDebtCommand = null;
+    if (!frozenTickInput) {
     game.input.endFrame();
     // Mouse and touch deltas are displacements, not velocities: consume once.
     if (game.input.mobile) game.input.mobile.lookDX = game.input.mobile.lookDY = 0;
     game.input.padPressed.clear();
-  });
+    }
+  }, options?.budget ?? 240, options?.canAdvance);
   if (menuAttractBudget && game._menuAttractFrame) {
     game._menuAttractFrameDelta = menuRenderElapsed;
     game._menuAttractRenderElapsed = 0;

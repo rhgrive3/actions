@@ -45,6 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
+            *.js
+            *.mjs
+            *.cjs
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4

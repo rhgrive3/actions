@@ -13,17 +13,19 @@ export function turfIntroAiming(match) {
 const clamp = x => Math.max(0, Math.min(1, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 
-export function turfIntroShot(seconds, localTeam = 0) {
+export function turfIntroShot(seconds, localTeam = 0, out = {}) {
   const frame = Math.max(0, seconds * 60 + 1e-8);
-  if (frame < TURF_INTRO_FRAMES.opponent) return { name: 'friendly', team: localTeam, progress: frame / TURF_INTRO_FRAMES.opponent };
-  if (frame < TURF_INTRO_FRAMES.spawn) return { name: 'opponent', team: 1 - localTeam,
-    progress: (frame - TURF_INTRO_FRAMES.opponent) / (TURF_INTRO_FRAMES.spawn - TURF_INTRO_FRAMES.opponent) };
-  return { name: 'spawn', team: localTeam, progress: clamp((frame - TURF_INTRO_FRAMES.spawn) / (TURF_INTRO_FRAMES.settle - TURF_INTRO_FRAMES.spawn)) };
+  if (frame < TURF_INTRO_FRAMES.opponent) { out.name = 'friendly'; out.team = localTeam; out.progress = frame / TURF_INTRO_FRAMES.opponent; }
+  else if (frame < TURF_INTRO_FRAMES.spawn) { out.name = 'opponent'; out.team = 1 - localTeam;
+    out.progress = (frame - TURF_INTRO_FRAMES.opponent) / (TURF_INTRO_FRAMES.spawn - TURF_INTRO_FRAMES.opponent); }
+  else { out.name = 'spawn'; out.team = localTeam; out.progress = clamp((frame - TURF_INTRO_FRAMES.spawn) / (TURF_INTRO_FRAMES.settle - TURF_INTRO_FRAMES.spawn)); }
+  return out;
 }
 
 export function beginTurfIntro(game, G, THREE) {
   const match = game.match, rig = game.rig, team = match.local?.team === 1 ? 1 : 0;
   rig._turfIntro = { game, match, flow: game._matchFlow, team, shown: false, ready: false,
+    shot: {}, axis: {}, own: {}, actors: [],
     center: new THREE.Vector3(), look: new THREE.Vector3(), start: new THREE.Vector3(), finish: new THREE.Vector3() };
   beginIntroPresentation(game, match, [[TURF_INTRO_FRAMES.spawn / 60, 'show'], [TURF_INTRO_FRAMES.ready / 60, 'ready']]);
   rig._s3AimFrame = null;
@@ -38,14 +40,18 @@ export function beginTurfIntro(game, G, THREE) {
   updateTurfIntroCamera(rig, G, THREE);
 }
 
-function forward(level, team) {
+function forward(level, team, out = {}) {
   const a = level.spawnPads[team], b = level.spawnPads[1 - team];
   const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
-  return length > 1e-6 ? { x: dx / length, z: dz / length } : { x: 0, z: team ? -1 : 1 };
+  out.x = length > 1e-6 ? dx / length : 0;
+  out.z = length > 1e-6 ? dz / length : team ? -1 : 1;
+  return out;
 }
 
 function publish(rig, fov, battle) {
-  for (const camera of [rig.camera, rig.gameCam]) {
+  const primary = rig.camera, secondary = rig.gameCam;
+  for (let i = 0; i < 2; i++) {
+    const camera = i === 0 ? primary : secondary;
     if (!camera) continue;
     if (camera !== rig.camera) {
       camera.position.copy(rig.camera.position); camera.quaternion.copy(rig.camera.quaternion);
@@ -77,17 +83,25 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
   advanceIntroPresentation(game);
   // The cinematic is sampled from Match.stateT, never integrated with render dt.
   // Pausing, repeated frames and 30/60/120-Hz rendering therefore share one pose.
-  const shot = openingAim ? { name: 'spawn', team, progress: 1 } : turfIntroShot(match.stateT, team);
+  const shot = r.shot;
+  if (openingAim) { shot.name = 'spawn'; shot.team = team; shot.progress = 1; }
+  else turfIntroShot(match.stateT, team, shot);
   const aim = openingAim || turfIntroAiming(match);
   const tags = game.hud?._turfIntroLineup;
   if (tags?.match === match) {
     if (shot.name === 'spawn') { tags.el.remove(); game.hud._turfIntroLineup = null; }
     else tags.el.dataset.team = String(shot.team);
   }
-  const cam = rig.camera, axis = forward(G.level, shot.team), right = { x: -axis.z, z: axis.x };
+  const cam = rig.camera, axis = forward(G.level, shot.team, r.axis), rightX = -axis.z, rightZ = axis.x;
   cam.up.set(0, 1, 0);
   if (shot.name !== 'spawn') {
-    const actors = match.actors.filter(a => a.team === shot.team && a.alive !== false);
+    const actors = r.actors, source = match.actors;
+    actors.length = 0;
+    // Match Array.filter's original length snapshot, sparse-slot handling,
+    // live membership and order; do not retain a stale team roster.
+    for (let i = 0, n = source.length; i < n; i++) if (i in source) {
+      const a = source[i]; if (a.team === shot.team && a.alive !== false) actors.push(a);
+    }
     r.center.set(0, 0, 0);
     for (const actor of actors) r.center.add(actor.pos);
     if (actors.length) r.center.multiplyScalar(1 / actors.length);
@@ -99,11 +113,12 @@ export function updateTurfIntroCamera(rig, G, THREE, recordAimPose) {
     // Front three-quarter team portrait, gently dollying in. Each team gets a
     // separate hard cut; there is no traversal across the stage between them.
     r.look.copy(r.center); r.look.y += 1.0;
-    cam.position.set(r.center.x + axis.x * distance + right.x * (distance * 0.24 + pan),
-      r.center.y + 0.55, r.center.z + axis.z * distance + right.z * (distance * 0.24 + pan));
+    cam.position.set(r.center.x + axis.x * distance + rightX * (distance * 0.24 + pan),
+      r.center.y + 0.55, r.center.z + axis.z * distance + rightZ * (distance * 0.24 + pan));
     cam.lookAt(r.look); publish(rig, 35, false);
+    actors.length = 0;
   } else {
-    const p = local?.pos || G.level.spawnPads[team], own = forward(G.level, team), e = smooth(shot.progress);
+    const p = local?.pos || G.level.spawnPads[team], own = forward(G.level, team, r.own), e = smooth(shot.progress);
     // Move in front of the whole pod group, as in the reference's POV reveal;
     // leaving the lens behind the local pod keeps heads across the aim view.
     r.finish.set(p.x + own.x * 2.5, p.y + 2.2, p.z + own.z * 2.5);

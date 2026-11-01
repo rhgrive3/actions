@@ -34,7 +34,7 @@ export function stageAcceptedSubBirth(nm,from,event,packetTime,ownerTick) {
     !finite(packetTime)||!finite(event[0])||event[0]>packetTime||
     snap?.t!==packetTime||snap.life!==event[4]||![snap.x,snap.y,snap.z].every(finite))return false;
   const sig=signature(event);if(sig===null)return false;
-  s.events.set(event,{actor,actorNet:actor.net,peer,sig,receipt:Object.freeze({from,nid:actor.nid,life:event[4],serial:p.seq,subId:p.subId,eventTime:event[0],packetTime,ownerTick,eventTick:event[6],transportSequence:event[7],...(p.subId==='torpedo'?captureTorpedoMotion(actor,snap):{}),pose:Object.freeze([snap.x,snap.y,snap.z])})});
+  s.events.set(event,{actor,actorNet:actor.net,peer,sig,receipt:Object.freeze({from,nid:actor.nid,life:event[4],serial:p.seq,subId:p.subId,eventTime:event[0],packetTime,ownerTick,eventTick:event[6],transportSequence:event[7],...(p.subId==='torpedo'?captureTorpedoMotion(actor,snap):{}),...(['angleShooter','inkMine'].includes(p.subId)?{birthMotion:Object.freeze({vx:snap.vx,vy:snap.vy,vz:snap.vz,aimYaw:snap.aimYaw,aimPitch:snap.aimPitch,flags:snap.f})}:{}),pose:Object.freeze([snap.x,snap.y,snap.z])})});
   return true;
 }
 function valid(nm,s,t,from,event) {
@@ -90,4 +90,34 @@ export function commitCreatedSprinklerBirth(nm,from,event,bomb) {
   // Duplicate calls for the same event are refused by consumed WeakMap entry.
   s.commit.call(nm,t.receipt,event,bomb);
   return true;
+}
+
+// Ordinary native bombs use the same completed FIFO/create boundary. The two
+// kit paint producers carry epoch metadata; Splat/Autobomb retain their native
+// shorter envelope and derive life from the admitted same-packet actor row.
+export function stageAcceptedNativeBombBirth(nm,from,event,packetTime,ownerTick){
+ const s=states.get(nm);
+ if(!live(nm,s)||!Array.isArray(event)||![15,16].includes(event.length)||event[1]!=='b'||event[3]!=='bomb')return false;
+ const actor=nm.byNid?.get(event[2]),peer=nm.peers?.get(from),snap=actor?.net?.buf?.at(-1),id=actor?.weapon?.sub;
+ if(!['bomb','suction','curling','autobomb'].includes(id)||!peer||!nm.s?._members?.has(from)||!actor?.remote||actor.owner!==from||
+  event[11]!==id&&!(id==='bomb'&&event[11]==='')||event[10]!==null||!finite(event[12])||event[12]<0||event[12]>1)return false;
+ for(let i=4;i<10;i++)if(!finite(event[i]))return false;
+ const tagged=event.length===16,tick=tagged?14:13,seq=tick+1,meta=event[13];
+ if(event.length!==seq+1||tagged&&(!Array.isArray(meta)||meta.length!==3||meta[0]!=='inkwave-kit-birth-v1'||meta[1]!==nm.cfg?.id||meta[2]!==snap?.life)||
+  !safe(snap?.life)||snap.life!==Math.max(actor.netLife||0,actor.net?.lastLife||0)||
+  event._netPeer!==from||!safe(event._netSeq)||event._netSeq<1||event._netSeq!==event[seq]||
+  !safe(event._netTick)||event._netTick<0||event._netTick!==event[tick]||!safe(ownerTick)||event._netTick>ownerTick||
+  !finite(packetTime)||!finite(event[0])||event[0]>packetTime||snap.t!==packetTime||![snap.x,snap.y,snap.z].every(finite))return false;
+ const sig=signature(event);if(sig===null)return false;
+ s.events.set(event,{actor,actorNet:actor.net,peer,sig,receipt:Object.freeze({sourceKind:'native-bomb',from,nid:actor.nid,life:snap.life,
+  serial:event[seq],subId:id,eventTime:event[0],packetTime,ownerTick,eventTick:event[tick],transportSequence:event[seq],pose:Object.freeze([snap.x,snap.y,snap.z])})});
+ return true;
+}
+export function commitCreatedNativeBombBirth(nm,from,event,bomb){
+ const s=states.get(nm),t=s?.events.get(event);if(!t||t.receipt.sourceKind!=='native-bomb')return false;
+ s.events.delete(event);
+ const id=bomb?.s3GhostResolved?.spec?.id||'bomb';
+ if(!valid(nm,s,t,from,event)||!bomb||bomb.owner!==t.actor||bomb.ghost!==true||bomb.kind!=='bomb'||id!==t.receipt.subId||
+  bomb._netBorn!==event[0]||bomb._netBornTick!==event._netTick||bomb._netPeer!==t.peer)return false;
+ s.commit.call(nm,t.receipt,event,bomb);return true;
 }

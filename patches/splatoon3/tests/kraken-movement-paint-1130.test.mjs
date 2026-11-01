@@ -39,3 +39,17 @@ test('Kraken paints grounded normal travel at four-frame cadence, with no specia
  a.grounded=true;f.G.physics.raycast=(_a,_b,_c,out)=>Object.assign(out,{hit:false});
  for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.equal(paints.length,15,'missing contact does not paint distant floor');
 });
+test('Kraken dash that leaves the surface emits one accepted jump mark for remote replay',async()=>{
+ const {f,a}=await setup(),jumps=[];
+ f.on('all:special',e=>{if(e.id==='krakenRoyale'&&e.action==='jump')jumps.push(e);});
+ const st=a._s3AllSpecialState;st.phase='dash';st.dashT=0;st.direction.set(0,0,1);
+ a.grounded=true;a._integrate=dt=>a.pos.addScaledVector(a.vel,dt);
+ a._updateSpecial(1/60);
+ assert.equal(st.phase,'dash');assert.equal(st.jumpAttack,undefined,'a surface dash is not a jump');
+ assert.equal(jumps.length,0);
+ a._integrate=dt=>{a.pos.addScaledVector(a.vel,dt);a.grounded=false;};
+ a._updateSpecial(1/60);
+ assert.equal(st.phase,'active');assert.equal(st.jumpAttack,true);
+ assert.equal(jumps.length,1,'dash-to-air must provide the mark the remote spin requires');
+ assert.equal(jumps[0].activation,st.serial);assert.equal(jumps[0].damage,60);assert.equal(jumps[0].index,0);
+});

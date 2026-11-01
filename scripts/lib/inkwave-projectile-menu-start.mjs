@@ -1,6 +1,8 @@
 // Browser-test navigation only. Production menu handlers own preparation,
 // screen wipe, recorded-audio admission, match construction and recovery.
-export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,receipt}){
+export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,receipt,config={}}){
+  const expected={mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180,weapon:'shooter',time:'day',...config};
+  if(!/^[-a-z0-9]+$/.test(expected.mapId))throw Error('Invalid native menu stage id');
   const note=(event,data={})=>receipt.push({event,at:new Date().toISOString(),...data});
   const budget=()=>{const left=remainingMs();if(!Number.isFinite(left)||left<=0)throw Error('Native menu navigation deadline exceeded');return left;};
   const bounded=async(action,label)=>{const left=budget();let timer;try{return await Promise.race([
@@ -96,10 +98,10 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
     await click(turfSelector);
   }
   await bounded(()=>waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu'),'setup readiness');
-  await click('.iw-setup [data-id="map-tidewater"]');
-  const config=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
-  if(config.mode!=='turf'||config.map!=='tidewater'||config.difficulty!=='normal'||config.duration!==180||config.weapon!=='shooter'||config.time!=='day')throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(config));
-  note('native-setup-verified',{config});
+  await click('.iw-setup [data-id="map-'+expected.mapId+'"]');
+  const setupConfig=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
+  if(setupConfig.mode!==expected.mode||setupConfig.map!==expected.mapId||setupConfig.difficulty!==expected.difficulty||setupConfig.duration!==expected.duration||setupConfig.weapon!==expected.weapon||setupConfig.time!==expected.time)throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(setupConfig));
+  note('native-setup-verified',{config:setupConfig});
   // The real handler invokes prepareMatch during this gesture, then the wipe,
   // then startMatch. Never call audio readiness or startMatch from this helper.
   await click('.iw-setup [data-id="start"].iw-btn--start');

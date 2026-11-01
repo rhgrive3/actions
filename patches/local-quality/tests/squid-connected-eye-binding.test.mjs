@@ -22,7 +22,15 @@ test('connected squid eye follows mantle across center and every LOD/rate withou
   for(const state of ['wait','swim','jump']){
    a.submerged=state==='swim';a.grounded=a.ground.hit=state!=='jump';a.vel.set(0,state==='jump'?4:0,state==='swim'?6:0);
    for(let frame=0;frame<hz/5;frame++){
-    tick();assert.equal(r.eyeData,data);assert.equal(data.headSegments,segments);assert.equal(data.headWeights,weights);
+    const eyeVersion=r.eyeGeometry.attributes.position.version;
+    tick();
+    if(state==='swim'){
+     assert.equal(r.eyeGeometry.attributes.position.version,eyeVersion,'hidden grounded squid eyes skip the production CPU update');
+     // The interpolation oracle tests the rig directly even while the native
+     // caller rightly skips invisible eyes. A visible return catches up once.
+     r.deformEyes();
+    }
+    assert.equal(r.eyeData,data);assert.equal(data.headSegments,segments);assert.equal(data.headWeights,weights);
     const p=r.eyeGeometry.attributes.position,n=r.eyeGeometry.attributes.normal;
     for(let i=0;i<p.count;i++){
      const j=i*3,k=segments[i],t=weights[i];

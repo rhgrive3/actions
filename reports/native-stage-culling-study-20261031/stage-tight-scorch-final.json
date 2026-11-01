@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "baselineSha256": "537899c06d8e3b6dc5e4e0bacddd78414fe1032a83d6698665ed22403de2f4b3",
+  "candidateSha256": "36f54ef556ed50bb3cfa11cfa070509b01b15b61bdc58b456c317753766b72bc",
+  "scope": "Native Scorch production world; 8 actors in game, character meshes hidden during fixed-camera image comparison; normal atlas/scene WebGL rendering; geometry counters are instrumented; no FPS measurement.",
+  "runs": []
+}

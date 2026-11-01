@@ -1,0 +1,37 @@
+✔ critical 503 fails before unresolved boot; preserves first cause (3.178462ms)
+✔ critical 404 fails before unresolved boot; preserves first cause (0.309458ms)
+✔ optional audio/image and external failures do not reject successful boot (1.285513ms)
+✔ explicit loader failure cannot become ready (0.367275ms)
+✔ JS exception and critical request abort fail without retry (0.461778ms)
+✔ readiness keeps original predicate and loader error takes priority (0.516039ms)
+✔ scope does not treat neighboring path or media as critical script (0.182485ms)
+✔ harness retains strict identity, failure result before image and final trace; no reload (0.353554ms)
+✔ early failure does not enqueue readiness after delayed start resolves (6.422173ms)
+✔ existing readiness rejection after context closes stays handled (1.046611ms)
+✔ boot receipts retain exact build identity even for document failure (0.377129ms)
+✔ dedicated ranked CI runs diagnostics and tracks diagnostic and native-clock paths (0.210739ms)
+✔ ranked browser readiness uses fixed timer polling rather than animation frames (0.306624ms)
+✔ browser crashes and premature closes fail fast and release event observers (0.454847ms)
+✔ public boot rejects source drift even when published artifact bytes are unchanged (56.381004ms)
+✔ public deployment identity rejects changed inputs, artifact hashes and escaping paths (0.55636ms)
+✔ public boot verifies fetched module bytes and separates neighboring deployment paths (0.337771ms)
+✔ critical HTTP failures retain immutable expected hash, safe edge headers and request timing (0.406634ms)
+✔ ranked recovery waits for native and real remote loop admission before its bounded movement pulse (2.790165ms)
+✔ ranked movement pulse starts at the next actual native frame and retains the 250ms timer and exact frame ownership (51.472407ms)
+✔ explicit frozen ranked owner primes the same native input without a wall-clock race (15.330352ms)
+✔ ranked pending native input fails closed on timeout, cancellation or a native frame exception (29.805512ms)
+✔ ranked Dodge witness requires the exact armed actor, runner, live state and fresh native token; cleanup preserves other listeners (13.698817ms)
+✔ actual FixedClock can finish the calibrated 16-tick Dodge transient before a render poll while its synchronous witness remains (11.669531ms)
+✔ ranked positive-control placement faces the corridor and clears only its initial linear/angular motion (7.665311ms)
+✔ actual roller motion exposes the old reverse-pulse counterexample and advances inside the forward corridor at 30/60/120 Hz (0.353754ms)
+✔ ranked native lane queries reject the historical Tidewater center-cover overlap even when ground and roller drum have support (18.328081ms)
+✔ ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse (2.722844ms)
+✔ ranked recovery failure captures observed actor, remote loop and wire state before restoration without passing (0.788711ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 590.246442

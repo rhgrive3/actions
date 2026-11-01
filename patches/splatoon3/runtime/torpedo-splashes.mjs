@@ -1,4 +1,5 @@
 import {registerLimitedDrop,retireLimitedDrop} from '../../network-replication/torpedo-contact-commit.mjs';
+import {isNativeDeviceProbe} from '../../network-replication/native-device-probe.mjs';
 // S3 11.3.0 WeaponBombTorpedo BlastParamChase.SplashAroundParam supplies
 // Num8, Pitch65deg and Velocity0.42..0.48 DU/frame. Each detached drop explodes
 // on terrain, not together with the parent. Their separate gravity is a
@@ -120,7 +121,8 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
   requestVisualSync(projectiles);
 }
 export function stepTorpedoSplashes(api,projectiles,dt,burst){
-  const list=projectiles._s3TorpedoSplashes||[];
+  const list=projectiles._s3TorpedoSplashes;
+  if(!list?.length)return;
   for(let i=list.length-1;i>=0;i--){
     const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=(d.gravity??d.source.spec.gravity)*dt;d.pos.addScaledVector(d.vel,dt);
     const world=api.G.physics?.segment?.(d.prev,d.pos,projectiles._s3TorpedoSplashHit ||= new api.Hit());
@@ -137,10 +139,11 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
     if(defense&&defense.distance<=(contact?distance:Infinity)){
       // The shared defense lane owns absorption/object damage. A replica may
       // stop visually but cannot author another damage proposal.
-      if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d,i);continue;
+      if(!d.ghost&&!d.owner.remote||isNativeDeviceProbe(d.source))defense.onHit?.();remove(projectiles,d,i);continue;
     }
     if(contact){
-      const at=new api.THREE.Vector3(px,py,pz).addScaledVector(new api.THREE.Vector3(nx,ny,nz),.035);
+      const at=new api.THREE.Vector3(px,py,pz);
+      at.x+=nx*.035;at.y+=ny*.035;at.z+=nz*.035;
       burst(d,at);remove(projectiles,d,i);continue;
     }
     // Resource cleanup below the playable world is not an airborne detonation.
@@ -150,7 +153,16 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
   requestVisualSync(projectiles);
 }
 export function clearTorpedoSplashes(projectiles){
-  for(const drop of [...projectiles._s3TorpedoSplashes||[]])remove(projectiles,drop);
+  const list=projectiles._s3TorpedoSplashes;
+  // Full teardown has no collision/burst callback. Retire the same identities
+  // in the same order, then empty the original roster before resource events.
+  // Live-step removal retains its immediate splice/membership contract.
+  for(const drop of list||[]){
+    retireLimitedDrop(drop);
+    const pool=drop.visual;
+    if(pool){drop.visual=null;pool.dirty=true;if(--pool.users===0){pool.mesh.count=0;pool.mesh.visible=false;}}
+  }
+  if(list)list.length=0;
   projectiles._s3TorpedoSplashes=[];
   for(const pool of projectiles._s3TorpedoVisuals?.values()||[])disposePool(projectiles,pool);
   projectiles._s3TorpedoVisualPending=false;

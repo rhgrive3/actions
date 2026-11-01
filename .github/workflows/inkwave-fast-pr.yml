@@ -2,7 +2,7 @@ name: INKWAVE fast PR preflight
 # Quick exact-head signal for draft and ready PRs. Ready PRs also run full Validate.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/pr-all-integration-20261031]
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
 
 permissions:

@@ -49,7 +49,15 @@ function verifyNativeChildren(root, original, viewCount = 0) {
     assert.deepEqual(child.instanceMatrix?.array, before.instanceMatrix?.array);
     assert.deepEqual(child.instanceColor?.array, before.instanceColor?.array);
     assert.equal(child.material, root.material, 'native child retains its parent material owner');
-    assert.equal(child.frustumCulled, before.frustumCulled);
+    if (child.name === 'FarScenery:containers') {
+      // The later reviewed static-container owner enables culling with an
+      // aggregate sphere. Preserve the original buffers and instances above,
+      // and verify every transformed vertex against that actual sphere.
+      assert.equal(child.isInstancedMesh, true);
+      assert.equal(before.frustumCulled, false);
+      assert.equal(child.frustumCulled, true);
+      assertVerticesEnclosed(child, 0);
+    } else assert.equal(child.frustumCulled, before.frustumCulled);
     assert.equal(child.children.length, before.children.length);
   }
 }

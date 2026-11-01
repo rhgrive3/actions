@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-30T20:50:43.928578+00:00",
+  "command": "node e/rnfull1/analyze.mjs (publication copy)",
+  "exitCode": 0,
+  "browserStarted": false,
+  "windowCounts": {
+    "warmups": 20,
+    "preflight": 8,
+    "measurements": 16,
+    "exactPairs": 22,
+    "rejected": 0
+  },
+  "allOriginalAnalysisFieldsExceptTimestampIdentical": true,
+  "rawSourcesUnchanged": true,
+  "gzipDecompressionByteEquality": true,
+  "recordedHarnessHashesVerified": 8,
+  "supplementalImportDependencies": 1
+}

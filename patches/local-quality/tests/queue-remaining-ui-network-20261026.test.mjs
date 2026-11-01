@@ -70,7 +70,12 @@ test('composed bomb sender snapshots local admission metadata once without chang
 
 test('actual combat proof owner preserves sparse pose fallback, proof caps/expiry and mixed paint envelopes',async()=>{
   const path='patches/network-replication/combat-provenance.mjs',extra='export {record};';
-  const a=await actualModule(path,{extra,transform:s=>s.replace(between(s,'function record(','// Pair a fire event'),before.record)});
+  // The later private native-proof retention policy needs the receiver owner.
+  // Keep the historical recorder unchanged apart from passing that dependency.
+  const prune='const s=state(nm);prune(s,t);';
+  assert.equal(before.record.split(prune).length,2,'one frozen prune call');
+  const reference=before.record.replace(prune,'const s=state(nm);prune(s,t,nm);');
+  const a=await actualModule(path,{extra,transform:s=>s.replace(between(s,'function record(','// Pair a fire event'),reference)});
   const b=await actualModule(path,{extra});
   const make=()=>({byNid:new Map([[1,{nid:1,owner:'peer',remote:true,alive:true,pos:{x:0,y:0,z:0},weapon:{id:'shot',kind:'shooter',range:30,fireInterval:.1}}]])});
   const left=make(),right=make();

@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-30T21:45:16.500511+00:00",
+  "status": "passed-saved-publication-readback",
+  "browserLaunched": false,
+  "manifestFilesVerified": 31,
+  "rawSha256": "d1ee8c7ec754ec9edd287182402a7b304d200bb3e99ba64e19e3a9dd924f3662",
+  "rawBytes": 6886757,
+  "compressedSha256": "bc5f93a8c2272dac80f115e158d5b7f2cc3d22e5831da6509af12530bcc2eef5",
+  "harnessFilesVerified": 8,
+  "priorSmokeSha256": "4c0e88091f4f3680f0bf9ab67377d48bffc327745205169a8a8fdd42721809c8",
+  "counts": {
+    "warmups": 20,
+    "preflight": 8,
+    "measurements": 16,
+    "exactPairs": 22,
+    "rejected": 0
+  },
+  "analysisEqualExceptAnalyzedAt": true,
+  "reportBytesEqual": true,
+  "environmentEqual": true,
+  "validation": {
+    "exactPairs": 22,
+    "windows": 44,
+    "recordedThreadSnapshots": 13129,
+    "sameGpuPid": 48308,
+    "sourceLfsReceipts": "verified by saved-file analyze.mjs readback",
+    "sceneRenderCalls": 0,
+    "paintAtlasDrawsActive": true,
+    "errors": 0,
+    "contextLoss": 0,
+    "rejectedWindowAttempts": 0,
+    "exitCode": 0
+  },
+  "timing": {
+    "frameMeanMs": {
+      "n": 4,
+      "mean": 0.9631486263382861,
+      "sd": 0.02943958433335872,
+      "median": 0.9636168461332235,
+      "min": 0.9273170660280482,
+      "p05": 0.9317117183414042,
+      "p95": 0.9939300266222557,
+      "max": 0.9980437470586493,
+      "geometricMean": 0.9628107187169331,
+      "logRatioTInterval95": [
+        0.9170499909569223,
+        1.0108549034594152
+      ],
+      "changePercent": -3.7189281283066866,
+      "changePercentInterval95": [
+        -8.29500090430777,
+        1.08549034594152
+      ]
+    },
+    "rendererThreadMsPerTick": {
+      "n": 4,
+      "mean": 0.9700099627651657,
+      "sd": 0.024233384480255308,
+      "median": 0.9649639919867634,
+      "min": 0.9466583523717766,
+      "p05": 0.9486764412493849,
+      "p95": 0.9984078433707098,
+      "max": 1.0034535147153594,
+      "geometricMean": 0.969784953317563,
+      "logRatioTInterval95": [
+        0.9322336544113015,
+        1.0088488558965998
+      ],
+      "changePercent": -3.021504668243702,
+      "changePercentInterval95": [
+        -6.776634558869854,
+        0.8848855896599783
+      ]
+    }
+  },
+  "nodeAnalyzerExitCode": 0,
+  "independentAnalyzerExitCode": 0
+}

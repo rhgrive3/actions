@@ -46,6 +46,29 @@ test('missing anchors fail closed across target modules', () => {
   assert.throws(() => adaptBuildSource('src/game/match.js', rawMatch.replace('// soft push between actors', '// missing anchor')));
 });
 
+test('downstream wake versions and reentrant bot scratch are exact accepted forms; damaged guards fail closed', () => {
+  const cases = [
+    ['src/fx/swimWake.js', [
+      ['pt.uploadVersion = (pt.uploadVersion || 0) + 1;', 'pt.uploadVersion = 1;'],
+      ['{ upload.refs[base + i] = null; W[base + i].set(0, 0, 0, BREAK); }', '{ W[base + i].set(0, 0, 0, BREAK); }'],
+    ]],
+    ['src/game/bots.js', [
+      ['const choices = nested ? [] :', 'const choices = nested ? this._paintChoices :'],
+      ['const tried = nested ? new Set() :', 'const tried = nested ? this._triedGoals :'],
+      ['choices.length=0;tried.clear();if(mates)mates.length=0;', 'choices.length=0;'],
+      ['if(!nested)this._paintChoicesBusy=false;', 'this._paintChoicesBusy=false;'],
+    ]],
+  ];
+  for (const [rel, mutations] of cases) {
+    const built = adaptBuildSource(rel, read(rel));
+    assert.equal(adaptCombatGpuCpuPerfect(rel, built, replaceOnce), built);
+    for (const [before, after] of mutations) {
+      assert.equal(built.split(before).length, 2, 'one real downstream owner');
+      assert.throws(() => adaptCombatGpuCpuPerfect(rel, built.replace(before, after), replaceOnce), /quality patch conflict/);
+    }
+  }
+});
+
 test('CPU-04 unit and non-unit scale world quaternion in _updateHair is exact against matrixWorld.decompose', () => {
   const v3 = new THREE.Vector3(), q3 = new THREE.Quaternion(), v4 = new THREE.Vector3(), qRef = new THREE.Quaternion();
   const root = new THREE.Group(), model = new THREE.Group(), kid = new THREE.Group();

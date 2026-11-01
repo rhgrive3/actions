@@ -1,0 +1,87 @@
+{
+  "scope": "Isolated offline design viewer only; not INKWAVE runtime, no mobile hardware claim",
+  "sourceSha256": "3b327bd775ec62adf9e93d154363520855ed09c10dbd038188ac3cbee442382a",
+  "tests": [
+    {
+      "name": "desktop initialization",
+      "result": {
+        "title": "INKWAVE — 立体地形ブロックアウト",
+        "webgl": true,
+        "stages": 2,
+        "floorLayers": 5,
+        "routeOptions": 14,
+        "vertices": 4830,
+        "canvas": [
+          1140,
+          929
+        ]
+      }
+    },
+    {
+      "name": "route playback advances in XYZ",
+      "result": {
+        "distance": 6.400799999999997,
+        "avatar": [
+          -6.369034047096095,
+          4.8,
+          -67.36309659529039
+        ],
+        "playing": true
+      }
+    },
+    {
+      "name": "Kelpline lower cut",
+      "result": {
+        "stage": "kelpline",
+        "visible": [
+          0,
+          1.2
+        ],
+        "route": "A_main",
+        "ramps": false,
+        "objects": 20
+      }
+    },
+    {
+      "name": "object coordinate inspection",
+      "result": {
+        "text": "A_high_gantry\ntransfer gantry above service quay\n上面 Y=6 / 下面 Y=5.4 · 実床\nX -38..-20 / Z -52..-34",
+        "focus": [
+          -29,
+          6,
+          -43
+        ]
+      }
+    },
+    {
+      "name": "390px mobile layout",
+      "result": {
+        "viewport": 390,
+        "scrollWidth": 390,
+        "canvas": {
+          "x": 0,
+          "y": 67,
+          "width": 390,
+          "height": 439.40625,
+          "top": 67,
+          "right": 390,
+          "bottom": 506.40625,
+          "left": 0
+        },
+        "panel": {
+          "x": 0,
+          "y": 506.40625,
+          "width": 390,
+          "height": 337.59375,
+          "top": 506.40625,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "pass": true
+}

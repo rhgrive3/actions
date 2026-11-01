@@ -221,64 +221,32 @@ test('#835 drink is a maximum AP, not stackable points; RP remains a penalty',()
   assert.equal(retireDrink(actor,25),false);
   assert.equal(retireDrink(actor,27),true);
 });
-test('#710/#835 reject foreign, stale, malformed and wrong-weapon online event packets',async()=>{
-  const {f,actor,enemy}=await setup();
-  actor.remote=true;actor.owner='clientA';actor.nid=7;
-  const net=Object.create(f.NetMatch.prototype);
-  net.byNid=new Map([[7,actor],[2,enemy]]);
-  net.match=f.G.match;
-  f.G.netm=net;
-  const packet=[1,'ks','p',7,1,0,1.35,0,0,0,1,0];
-  net._play('intruder',packet);
-  assert.equal(f.G.projectiles._s3SupportSensors?.length||0,0);
-  net._play('clientA',[...packet.slice(0,11),99]);
-  assert.equal(f.G.projectiles._s3SupportSensors?.length||0,0);
-  net._play('clientA',packet);
-  assert.equal(f.G.projectiles._s3SupportSensors.length,1);
-  net._play('clientA',packet);
-  assert.equal(f.G.projectiles._s3SupportSensors.length,1,'duplicate throw rejected');
-  net._play('clientA',[2,'ks','m',7,1,2,0]);
-  assert.equal(enemy.s3?.revealedUntil?.[0] > f.G.time,true);
-  const initial=enemy.s3.revealedUntil[0];
-  net._play('clientA',[2,'ks','m',7,1,2,0]);
-  assert.equal(enemy.s3.revealedUntil[0],initial,'duplicate hit never extends mark');
-  net._play('clientA',[3,'ks','c',7,2,0,0,1.6,0]);
-  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
-  net._play('clientA',[3,'ks','c',7,2,0,0,1.6,0]);
-  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
+test('#710/#835 direct and foreign events require native paid-launch receipts',async()=>{
+ const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
+ const nm=Object.create(f.NetMatch.prototype);
+ nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
+ const birth=[1,'ks','p',7,1,0,1.35,0,0,0,1,0];
+ for(const [peer,row] of [['intruder',birth],['clientA',[...birth.slice(0,11),99]],['clientA',birth],['clientA',birth],
+  ['clientA',[2,'ks','m',7,1,2,0,480,0,'l']],['clientA',[3,'ks','c',7,2,0,0,1.6,0,1500]]])
+  nm._play(peer,row);
+ assert.equal(f.G.projectiles._s3SupportSensors?.length||0,0);
+ assert.equal(f.G.projectiles._s3SupportCoolers?.length||0,0);
+ assert.ok(!(enemy.s3?.revealedUntil?.[0]>0),'unproven sensor cannot mark a victim');
 });
 
-
-test('#710/#835 production r2 transport tick/sequence trailers survive sender-authenticated replay',async()=>{
-  const {f,actor,enemy}=await setup();
-  actor.remote=true;actor.owner='clientA';actor.nid=7;
-  const nm=Object.create(f.NetMatch.prototype);
-  nm.byNid=new Map([[7,actor],[2,enemy]]);
-  nm.match=f.G.match;f.G.netm=nm;
-  // In the actual network-replication adapter, _rec appends [fixedTick,wireSeq].
-  const birth=[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,12];
-  birth._netSeq=12;birth._netTick=60;
-  nm._play('clientA',birth);
-  assert.equal(f.G.projectiles._s3SupportSensors.length,1);
-  const mark=[1.05,'ks','m',7,1,2,0,61,13];
-  mark._netSeq=13;mark._netTick=61;
-  nm._play('clientA',mark);
-  assert.ok(enemy.s3?.revealedUntil?.[0]>f.G.time,'real r2 mark is accepted');
-  const before=enemy.s3.revealedUntil[0];
-  nm._play('clientA',mark);
-  assert.equal(enemy.s3.revealedUntil[0],before,'duplicate transport cannot prolong mark');
-  const stand=[1.1,'ks','c',7,2,0,0,1.6,0,62,14];
-  stand._netSeq=14;stand._netTick=62;
-  nm._play('clientA',stand);
-  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
-  const malformed=[1.2,'ks','p',7,3,0,1.35,0,0,0,1,0,60,15];
-  malformed._netSeq=999;
-  nm._play('clientA',malformed);
-  assert.equal(f.G.projectiles._s3SupportSensors.length,1,'metadata mismatch fails closed');
-  nm._play('intruder',[1.1,'ks','c',7,3,0,0,1.6,0,62,16]);
-  assert.equal(f.G.projectiles._s3SupportCoolers.length,1,'other peer may not deploy');
+test('#710/#835 r2 trailer metadata alone cannot mint launch credit',async()=>{
+ const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
+ const nm=Object.create(f.NetMatch.prototype);
+ nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
+ const rows=[[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,12],
+  [1.05,'ks','m',7,1,2,0,480,0,'l',61,13],
+  [1.1,'ks','c',7,2,0,0,1.6,0,1500,62,14]];
+ for(const row of rows){row._netTick=row.at(-2);row._netSeq=row.at(-1);nm._play('clientA',row);}
+ const malformed=[...rows[0]];malformed._netTick=60;malformed._netSeq=999;nm._play('clientA',malformed);
+ assert.equal(f.G.projectiles._s3SupportSensors?.length||0,0);
+ assert.equal(f.G.projectiles._s3SupportCoolers?.length||0,0);
+ assert.ok(!(enemy.s3?.revealedUntil?.[0]>0),'transport metadata is not a native launch receipt');
 });
-
 
 test('#710/#835 exact pinned 1130 Point Sensor and Tacticooler duration/launch fields', () => {
   assert.deepEqual(POINT_SENSOR_SOURCE.markingFrames, [480,720,960]);
@@ -313,41 +281,32 @@ test('#835 pinned Tacticooler serving cylinder rejects through-floor pickups',()
   actor.pos.y=0;actor.pos.x=7;assert.equal(drinkEligible(actor,s,0),true);
   actor.pos.x=7.01;assert.equal(drinkEligible(actor,s,0),false);
 });
-test('#710/#835 authenticated extended source-frame packets survive r2 trailer and reject out of bounds',async()=>{
-  const {f,actor,enemy}=await setup();
-  actor.remote=true;actor.owner='clientA';actor.nid=7;
-  const nm=Object.create(f.NetMatch.prototype);
-  nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
-  const sensor=[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,21];
-  sensor._netTick=60;sensor._netSeq=21;
-  nm._play('clientA',sensor);
-  assert.equal(f.G.projectiles._s3SupportSensors.length,1);
-  const mark=[1.1,'ks','m',7,1,2,0,960,61,22];
-  mark._netTick=61;mark._netSeq=22;
-  nm._play('clientA',mark);
-  assert.equal(enemy.s3.revealedUntil[0],16,'source 960F max marking duration');
-  const before=enemy.s3.revealedUntil[0];
-  nm._play('clientA',[1.2,'ks','m',7,1,2,0,10000,62,23]);
-  assert.equal(enemy.s3.revealedUntil[0],before);
-  const stand=[2,'ks','c',7,2,0,0,1.6,0,1500,63,24];
-  stand._netTick=63;stand._netSeq=24;
-  nm._play('clientA',stand);
-  assert.equal(f.G.projectiles._s3SupportCoolers[0].drinkSeconds,25);
-  const invalid=[2.1,'ks','c',7,3,0,0,1.6,0,1501,64,25];
-  nm._play('clientA',invalid);
-  assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
+test('#710/#835 source-frame AP57 duration claims are not launch authorizations',async()=>{
+ const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
+ const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[7,actor],[2,enemy]]);
+ nm.match=f.G.match;f.G.netm=nm;
+ const rows=[[1,'ks','p',7,1,0,1.35,0,0,0,1,0,60,21],
+  [1.1,'ks','m',7,1,2,0,960,0,'l',61,22],
+  [1.2,'ks','m',7,1,2,0,10000,0,'l',62,23],
+  [2,'ks','c',7,2,0,0,1.6,0,1500,63,24],
+  [2.1,'ks','c',7,3,0,0,1.6,0,1501,64,25]];
+ for(const row of rows){row._netTick=row.at(-2);row._netSeq=row.at(-1);nm._play('clientA',row);}
+ assert.equal(f.G.projectiles._s3SupportSensors?.length||0,0);
+ assert.equal(f.G.projectiles._s3SupportCoolers?.length||0,0);
+ assert.ok(!(enemy.s3?.revealedUntil?.[0]>0),'extended source-frame fields cannot bypass proof');
 });
 
-test('Point Sensor mark source life follows the thrown field across owner respawn',async()=>{
-  const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
-  const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[7,actor],[2,enemy]]);nm.match=f.G.match;f.G.netm=nm;
-  nm._play('clientA',[1,'ks','p',7,1,0,1.35,0,0,0,1,0]);
-  actor.netLife=1;
-  nm._play('clientA',[1.1,'ks','m',7,1,2,0,480,1,'l']);
-  assert.ok(!(enemy.s3.revealedUntil?.[0]>0),'current owner life cannot impersonate the prior thrown field');
-  const mark=[1.1,'ks','m',7,1,2,0,480,0,'l',61,22];mark._netTick=61;mark._netSeq=22;
-  nm._play('clientA',mark);
-  assert.equal(enemy.s3.revealedUntil[0],8,'the field source life remains valid after owner respawn');
+test('Point Sensor source-life claims require authenticated earlier fields after respawn',async()=>{
+ const {f,actor,enemy}=await setup();actor.remote=true;actor.owner='clientA';actor.nid=7;
+ const nm=Object.create(f.NetMatch.prototype);nm.byNid=new Map([[7,actor],[2,enemy]]);
+ nm.match=f.G.match;f.G.netm=nm;
+ nm._play('clientA',[1,'ks','p',7,1,0,1.35,0,0,0,1,0]);
+ actor.netLife=1;
+ nm._play('clientA',[1.1,'ks','m',7,1,2,0,480,1,'l']);
+ const historical=[1.1,'ks','m',7,1,2,0,480,0,'l',61,22];
+ historical._netTick=61;historical._netSeq=22;nm._play('clientA',historical);
+ assert.ok(!(enemy.s3?.revealedUntil?.[0]>0),
+   'old field source life cannot authenticate a field never observed by the receiver');
 });
 
 test('Tacticooler source cylinder accepts partial native kid capsule across height and radial boundaries',async()=>{

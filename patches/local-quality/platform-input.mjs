@@ -104,7 +104,8 @@ export function installInputPlatform(Input, env = globalThis) {
     }
     // `padValue` drives FIRE/SQUID directly and bypasses padPrev/menu edge masking.
     // Keep a pre-resume trigger inert until its canonical analog value is neutral.
-    for (const i of this._platformPadHeldTriggers || []) {
+    const heldTriggers = this._platformPadHeldTriggers;
+    if (heldTriggers) for (const i of heldTriggers) {
       if (!(this.pad?.buttons?.[i]?.value > 0.3)) this._platformPadHeldTriggers.delete(i);
     }
     if (this._platformPadAxes && (!this.pad || this.pad.axes.every((value, i) => i >= 4 || Math.abs(value || 0) <= .14))) this._platformPadAxes = false;

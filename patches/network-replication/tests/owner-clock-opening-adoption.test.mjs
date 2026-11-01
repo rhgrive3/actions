@@ -52,7 +52,7 @@ test('actual completed opening row advances native receiver after modeled delaye
 
 test('real Session rejects previous gameplay COMPAT before building or sending readiness', async () => {
   const f=await fixture({productionComposition:true,includeSession:true});
-  for(const previousCompat of ['iw-gameplay-20261022-owner-clock-v1','iw-gameplay-20261023-start-admission-v1','iw-gameplay-20261023-spawn-exclusion-v1']) {
+  for(const previousCompat of ['iw-gameplay-20261022-owner-clock-v1','iw-gameplay-20261023-start-admission-v1','iw-gameplay-20261023-spawn-exclusion-v1','iw-gameplay-20261024-spawn-start-admission-v1','iw-gameplay-20261030-support-contact-v1']) {
   const session=new f.NetSession();let starts=0,sends=0;
   f.G.net=session;
   f.G.game={settings:{},startNetMatch(){starts++;}};
@@ -65,6 +65,6 @@ test('real Session rejects previous gameplay COMPAT before building or sending r
     ]});
   assert.equal(starts,0);assert.equal(sends,0);assert.equal(session.match,null);
   assert.equal(session.state,'error');
-  assert.equal(f.COMPAT,'iw-gameplay-20261024-spawn-start-admission-v1');
+  assert.equal(f.COMPAT,'iw-gameplay-20261030-device-source-v2');
   }
 });

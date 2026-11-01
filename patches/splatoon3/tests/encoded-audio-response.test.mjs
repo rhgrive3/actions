@@ -50,3 +50,11 @@ test('Charger encoded size policy rejects before decode, retains its valid sourc
  let requests=0;assert.equal(await chargerRiseBuffer(c.ctx,{retry:true,now:()=>Date.now()+100000,fetcher:async()=>{requests++;return stream([new Uint8Array(20000)]).response;}}),null);assert.equal(requests,0);disposeChargerRise(c.ctx);
  const good=context(),s=stream([new Uint8Array(512*1024)]);const actual=await chargerRiseBuffer(good.ctx,{fetcher:async()=>s.response});assert(actual);assert.equal(good.decodes(),1);assert.equal(await chargerRiseBuffer(good.ctx),actual);disposeChargerRise(good.ctx);
 });
+
+test('exact uncompressed length uses one owned result and malformed or compressed hints retain byte-exact fallback',async()=>{
+ const input=Uint8Array.from({length:70003},(_,i)=>i%251);
+ for(const [length,encoding]of [[input.length,null],[input.length,'identity'],[11,null],[90000,null],[input.length,'gzip'],['not-a-number',null],[-1,null]]){
+  const f=stream([input.subarray(0,31),input.subarray(31,65539),input.subarray(65539)]);f.response.headers.get=name=>name==='content-length'?String(length):encoding;
+  const out=await readEncodedAudioResponse(f.response,100000);assert.deepEqual(new Uint8Array(out),input);assert.equal(f.body.locked,false);
+ }
+});

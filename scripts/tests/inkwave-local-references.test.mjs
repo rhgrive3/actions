@@ -189,7 +189,7 @@ test('reviewed native recovery engine exact epoch rejects old and tampered targe
 // Admit only that reviewed owner epoch, never the prior synchronous source proof.
 test('sliced navigation owner rejects its previous pin and unreviewed source bytes', () => fixture(root => {
  const row=SOURCE_SITE_REFERENCES.find(r=>r.source==='inkwave-public/src/game/nav.js');
- const reviewed='1f840278f1fff43b30dccfd0aec5835ba4c94608d88eb05455f85b6656943f56';
+ const reviewed='d6fc1bd855d59dc4a459387c8b1e4b7dabb30443c89b47ac0d5f9b1ac8bdb97b';
  const previous=['c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc','c2a2920e677fd69c6c11848881ffafda90bdd9ff2ba8662579713e5944fceb6a','4b38ce452c58b1ec60660cb90660603a4a156e2ce58a9d76f013135fa3ebe151'];
  assert.equal(row.sourceSha256,reviewed);
  const current=fs.readFileSync(path.join(repo,row.source));assert.equal(sha(current),reviewed);

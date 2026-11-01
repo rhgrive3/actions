@@ -1,5 +1,9 @@
 import { SPRINKLER } from './kit-sprinkler.mjs';
-import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import {rainmakerDeviceIdentity} from './ranked/rainmaker-device-contact.mjs';
+import { objectShredderEquipped } from './object-gear.mjs';
+import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
+import { catalogueActionReceipt } from '../../network-replication/catalogue-action-receipt.mjs';
+import { bindNativeDeviceHitTarget, deferNativeDeviceHit } from '../../network-replication/device-hit-pending.mjs';
 import { objectDamageRow, objectDamageScale } from './sub-resistance.mjs';
 const installed=Symbol.for('inkwave.native-sprinkler-damage.v1');
 const safe=n=>Number.isSafeInteger(n)&&n>=0;
@@ -7,7 +11,7 @@ const life=a=>Math.max(safe(a?.netLife)?a.netLife:0,safe(a?.net?.lastLife)?a.net
 const epoch=nm=>typeof nm?.cfg?.id==='string'?nm.cfg.id:'';
 const spec=b=>b?.s3Resolved?.spec||b?.s3GhostResolved?.spec;
 const sprinkler=b=>spec(b)?.id==='sprinkler';
-const counters=new WeakMap(),seen=new WeakMap(),views=new WeakMap();
+const counters=new WeakMap(),seen=new WeakMap(),views=new WeakMap(),viewObjects=new WeakMap();
 const next=nm=>{const n=Math.max(counters.get(nm)||0,nm._eventSeq||0,nm.s?._inkwaveEventSeq||0)+1;counters.set(nm,n);return n;};
 function initialize(b){if(!Number.isFinite(b.s3DeviceHP))b.s3DeviceHP=SPRINKLER.hp;return b.s3DeviceHP;}
 function sourceActor(source){return source?.owner&&typeof source.owner==='object'?source.owner:source;}
@@ -16,8 +20,10 @@ function sprinklerView(b){
  let view=views.get(b);if(view)return view;
  view=Object.create(null);
  Object.defineProperties(view,{id:{value:'sprinkler'},subId:{value:'sprinkler'},kind:{value:'sprinkler'},collisionRadius:{value:.72},
-  owner:{get:()=>b.owner},team:{get:()=>b.team},pos:{get:()=>b.pos},hp:{get:()=>initialize(b)},maxHp:{value:SPRINKLER.hp},dead:{get:()=>b.s3Destroyed===true}});
- views.set(b,view);return view;
+  owner:{get:()=>b.owner},team:{get:()=>b.team},pos:{get:()=>b.pos},hp:{get:()=>initialize(b)},maxHp:{value:SPRINKLER.hp},
+  phase:{get:()=>b.s3Mode},seq:{get:()=>b.s3DeviceBirth?.seq},sourceLife:{get:()=>b.s3DeviceBirth?.life},
+  ghost:{get:()=>!!b.ghost},dead:{get:()=>b.dead===true||b.s3Destroyed===true}});
+ views.set(b,view);viewObjects.set(view,b);return view;
 }
 function birth(b,nm,seq){
  if(!sprinkler(b)||!safe(seq)||seq<1||!safe(b.owner?.nid)||!epoch(nm))return;
@@ -30,31 +36,55 @@ function emitState(api,b){
  api.emit?.('all:sub',{v:1,phase:'nativeObjectState',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
   match:p.match,targetOwnerId:p.nid,targetLife:p.life,targetSeq:p.seq,hp:b.s3DeviceHP,destroyed:b.s3Destroyed===true});
 }
-function damage(api,b,amount,attacker,cause='Default',identity){
+function damage(api,b,amount,attacker,cause='Default'){
  if(!sprinkler(b)||b.ghost||b.owner?.remote||b.s3Destroyed||!Number.isFinite(amount)||amount<=0||amount>2200)return false;
- const rate=identity===undefined?objectDamageScale(attacker,'sprinkler',cause):withObjectHitGear(attacker,identity,()=>objectDamageScale(attacker,'sprinkler',cause));
+ const rate=objectDamageScale(attacker,'sprinkler',cause);
  b.s3DeviceHP=Math.max(0,initialize(b)-amount*rate);if(b.s3DeviceHP===0)b.s3Destroyed=true;emitState(api,b);return true;
 }
-function proposal(api,b,source,point,amount,cause='Default'){
+function proposal(api,b,source,point,amount,cause='Default',attackSource=null){
  const a=sourceActor(source),nm=api.G.netm,proof=b.s3DeviceBirth;
  if(!proof||!a||a.remote||source?.ghost||a.owner!==nm?.myId||proof.match!==epoch(nm)||!safe(a.nid))return false;
- api.emit?.('all:sub',{v:1,phase:'nativeObjectHit',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
+ const event={v:1,phase:'nativeObjectHit',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
   match:proof.match,targetOwnerId:proof.nid,targetLife:proof.life,targetSeq:proof.seq,
-  damage:amount,cause:objectDamageRow(source,cause),objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z});return true;
+  damage:amount,cause:objectDamageRow(source,cause),objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z};
+ if(attackSource?.id==='superChump')Object.assign(event,{sourceSpecial:attackSource.id,sourceActivation:attackSource.activation,sourceObject:attackSource.serial,sourceIndex:attackSource.index,sourceSeed:attackSource.seed});
+ Object.assign(event,rainmakerDeviceIdentity(source));
+ api.emit?.('all:sub',event);return true;
+}
+function canAdmitOnce(nm,actor,event){
+ if(!safe(event.eventSeq)||event.eventSeq<1||event.match!==epoch(nm))return false;
+ const state=seen.get(nm);if(!state||state.match!==event.match)return true;
+ const previous=state.actors.get(JSON.stringify([actor.owner,actor.nid]));
+ return previous?event.life>previous.life||event.life===previous.life&&event.eventSeq>previous.seq:state.actors.size<4096;
 }
 function admitOnce(nm,actor,event){
- if(!safe(event.eventSeq)||event.eventSeq<1||event.match!==epoch(nm))return false;
+ if(!canAdmitOnce(nm,actor,event))return false;
+ return rememberOnce(nm,actor,event);
+}
+function rememberOnce(nm,actor,event){
  let state=seen.get(nm);if(!state||state.match!==event.match){state={match:event.match,actors:new Map()};seen.set(nm,state);}
  const key=JSON.stringify([actor.owner,actor.nid]),previous=state.actors.get(key);
- if(previous&&(event.life<previous.life||event.life===previous.life&&event.eventSeq<=previous.seq))return false;
+ if(previous&&event.life<previous.life)return false;
  if(!previous&&state.actors.size>=4096)return false; // fail closed; never evict replay protection
  // The transport is ordered. Retain a high-water mark rather than evicting
- // old ids: a new envelope must never revive an already-applied hit payload.
- state.actors.set(key,{life:event.life,seq:event.eventSeq});return true;
+ // old ids. Settling an earlier private pending receipt cannot lower it.
+ state.actors.set(key,{life:event.life,seq:previous?.life===event.life?Math.max(previous.seq,event.eventSeq):event.eventSeq});return true;
+}
+const hitIdentity=e=>JSON.stringify([e.life,e.eventSeq,e.match,e.subId,e.targetOwnerId,e.targetLife,e.targetSeq,e.damage,e.cause,e.x,e.y,e.z,
+ e.sourceSpecial,e.sourceActivation,e.sourceObject,e.sourceIndex,e.sourceSeed]);
+function canSettlePending(nm,actor,b,event,token){
+ if(!token||token.used||token.nm!==nm||token.actor!==actor||token.b!==b||token.event!==event||
+   token.identity!==hitIdentity(event)||token.receipt!==catalogueActionReceipt(nm,event,actor))return false;
+ const state=seen.get(nm);if(!state||state.match!==event.match)return true;
+ const previous=state.actors.get(JSON.stringify([actor.owner,actor.nid]));
+ return previous?event.life>=previous.life:state.actors.size<4096;
 }
 // Called only after catalogue transport resolves the accepted sender Actor and
 // checks its owner and life. Target authority and native birth are checked again.
 export function replayNativeSprinklerDamage(api,event){
+ return replaySprinklerDamage(api,event,null);
+}
+function replaySprinklerDamage(api,event,pending){
  const nm=api.G.netm,a=event.actor;
  if(!nm||!a?.remote||nm.byNid?.get(a.nid)!==a||life(a)!==event.life||event.subId!=='sprinkler'||!safe(event.targetSeq)||event.targetSeq<1)return false;
  const b=(api.G.projectiles?.bombs||[]).find(b=>sprinkler(b)&&sameBirth(b,event,nm));if(!b)return false;
@@ -62,7 +92,24 @@ export function replayNativeSprinklerDamage(api,event){
   const cause=event.cause===undefined?'Default':event.cause;
   if(b.owner.remote||b.ghost||b.owner.owner!==nm.myId||a.team===b.team||!Number.isFinite(event.damage)||event.damage<=0||event.damage>2200
     ||typeof cause!=='string'||cause.length>80||![event.x,event.y,event.z].every(Number.isFinite)||Math.hypot(event.x-b.pos.x,event.y-b.pos.y,event.z-b.pos.z)>1.5)return false;
-  if(!admitOnce(nm,a,event))return false;return damage(api,b,event.damage,a,cause,event.objectShredder===true);
+  if(b.dead||b.s3Destroyed||b.s3Mode!=='sprinkling'||!(pending?canSettlePending(nm,a,b,event,pending):canAdmitOnce(nm,a,event)))return false;
+  const view=sprinklerView(b),admitted=admitDeviceHit(nm,a,view,event.damage,cause,event);
+  if(!admitted){
+   // Only this closure owns the exception for an earlier, unspent claim. A
+   // new low-sequence envelope never gets it, and the common retry still
+   // checks the original receipt, actor, target birth, phase and geometry.
+   const receipt=catalogueActionReceipt(nm,event,a);
+   if(!pending&&receipt&&bindNativeDeviceHitTarget(nm,a,view,event)){
+    const token={nm,actor:a,b,event,receipt,identity:hitIdentity(event),used:false};
+    deferNativeDeviceHit(nm,a,event,()=>replaySprinklerDamage(api,event,token));
+   }
+   return false;
+  }
+  // Neither a forged equipment flag nor a failed proposal can select a
+  // multiplier or consume the native replay high-water mark.
+  if(pending){if(!canSettlePending(nm,a,b,event,pending)||!rememberOnce(nm,a,event))return false;pending.used=true;}
+  else if(!admitOnce(nm,a,event))return false;
+  return damage(api,b,admitted.damage,a,admitted.cause);
  }
  if(event.phase==='nativeObjectState'){
   if(!b.ghost||b.owner!==a||!Number.isFinite(event.hp)||event.hp<0||event.hp>SPRINKLER.hp||event.destroyed!==(event.hp===0))return false;
@@ -81,7 +128,7 @@ export function installNativeSprinklerDamage(api){
   const rec=this._rec;this._rec=function(payload){const e=rec.call(this,payload);if(payload?.[0]==='b'&&payload[1]===b.owner.nid)birth(b,this,e?._netSeq);return e;};
   try{return record.call(this,b,...args);}finally{this._rec=rec;}
  };
- const play=NetMatch.prototype._play;
+ const play=NetMatch.prototype._play,snapshotLeases=new WeakMap();
  NetMatch.prototype._play=function(from,event){
   if(event?.[1]!=='b')return play.call(this,from,event);
   // Current native envelopes carry their identity verbatim through kit replay.
@@ -91,9 +138,32 @@ export function installNativeSprinklerDamage(api){
   if(!a?.remote||a.owner!==from)return play.call(this,from,event);
   // Composed bomb wrappers may evict/replace existing entries: retain identity
   // membership for admitted owners rather than assuming an append-only list.
-  const before=new Set(G.projectiles?.bombs||[]),result=play.call(this,from,event);
-  if(a?.remote&&a.owner===from)for(const b of G.projectiles?.bombs||[])if(!before.has(b)&&b.owner===a&&b.ghost&&sprinkler(b))birth(b,this,event._netSeq);
-  return result;
+  let lease=snapshotLeases.get(this);if(!lease)snapshotLeases.set(this,lease={depth:0,frames:[]});
+  const depth=lease.depth++,before=lease.frames[depth]||new Set();
+  if(depth<8)lease.frames[depth]=before;
+  try{
+   for(const bomb of G.projectiles?.bombs||[])before.add(bomb);
+   const result=play.call(this,from,event);
+   if(a?.remote&&a.owner===from)for(const b of G.projectiles?.bombs||[])if(!before.has(b)&&b.owner===a&&b.ghost&&sprinkler(b))birth(b,this,event._netSeq);
+   return result;
+  }finally{before.clear();lease.depth=depth;}
+ };
+ // Views are stable receiver-private identities. A caller-created object
+ // with matching fields cannot enroll a native target or its geometry.
+ const liveDevice=(system,view)=>{const b=viewObjects.get(view);return b&&system.bombs?.includes(b)&&sprinkler(b)&&b.s3Mode==='sprinkling'&&!b.dead&&!b.s3Destroyed?b:null;};
+ Projectiles.prototype.isNativeSprinklerDeviceTarget=function(view){return !!liveDevice(this,view);};
+ Projectiles.prototype.nativeSprinklerDeviceTargets=function(){
+  const out=[];for(const b of this.bombs||[])if(sprinkler(b)&&b.s3Mode==='sprinkling'&&!b.dead&&!b.s3Destroyed)out.push(sprinklerView(b));return out;
+ };
+ const area=Projectiles.prototype.nativeSubDeviceAreaContact;
+ Projectiles.prototype.nativeSubDeviceAreaContact=function(attack,target,center,radius,damageAt,options={}){
+  const b=liveDevice(this,target);
+  if(!b)return area?.call(this,attack,target,center,radius,damageAt,options);
+  if(b.ghost||b.owner?.remote||b.team===(attack?.team??sourceActor(attack)?.team))return undefined;
+  const point=b.pos.clone().add(new api.THREE.Vector3(0,.45,0)),distance=point.distanceTo(center);
+  if(options.shapeContact?!options.shapeContact(target,point):distance>radius)return 0;
+  if(!options.pierceLOS&&G.physics?.los&&!G.physics.los(center,point))return 0;
+  return damageAt(point.distanceTo(center),target,point);
  };
  const candidate=Projectiles.prototype.kitBarrierCandidate;
  Projectiles.prototype.kitBarrierCandidate=function(p,start,end){
@@ -113,7 +183,7 @@ export function installNativeSprinklerDamage(api){
    if(c>0&&disc<0)continue;const t=c<=0?0:(-dot-Math.sqrt(disc))/(length*length);
    if(t<0||t>1||best&&best.distance<=t*length)continue;const point=start.clone();
    point.x+=dx*t;point.y+=dy*t;point.z+=dz*t;
-   let settled=false;best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',onHit:(actualDamage)=>{
+   let settled=false;const view=sprinklerView(b);best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',object:view,damageTarget:view,onHit:(actualDamage)=>{
     const amount=Number.isFinite(actualDamage)?actualDamage:p.damage;
     const attacker=sourceActor(p),cause=objectDamageRow(p);
     if(settled||!localSource(api,p)||!attacker||!Number.isFinite(amount)||amount<=0||amount>2200)return false;settled=true;
@@ -135,7 +205,7 @@ export function installNativeSprinklerDamage(api){
    const amount=damageAt(point.distanceTo(center),view,point);
    if(!Number.isFinite(amount)||amount<=0||amount>2200)continue;
    const row=objectDamageRow(source,cause),accepted=b.ghost||b.owner?.remote
-    ?proposal(api,b,source,point,amount,row):damage(api,b,amount,attacker,row);
+    ?proposal(api,b,source,point,amount,row,options.attackSource):damage(api,b,amount,attacker,row);
    applied=accepted||applied;
   }
   return applied;

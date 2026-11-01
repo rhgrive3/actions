@@ -66,7 +66,7 @@ export class RealS3SampleLoader {
   declares(id,event){return this.status==='ready'&&this.declaredEvents?this.declaredEvents.has(`${id}:${event}`):null;}
   // Several required cues share one bounded import transaction. Independent
   // AuthorizedSamplePack.load calls cannot overlap: each owns a generation.
-  ensureMany(requests,{priority=false}={}){
+  ensureMany(requests,{priority=false,owner=null}={}){
     if(!this._current())return Promise.resolve({loaded:0,cancelled:true,results:[]});
     if(this.status==='unavailable'){
       if(Date.now()<this.manifestRetryAt)return Promise.resolve({loaded:0,unavailable:true,results:[]});
@@ -78,7 +78,7 @@ export class RealS3SampleLoader {
       const key=id+':'+(event||'*');if(seen.has(key))continue;seen.add(key);
       if(this.inFlight.has(key)){
         const queued=this.pendingJobs.find(row=>row.key===key||row.keys?.includes(key));
-        if(queued)queued.required=true;
+        if(queued){if(owner!==null)queued.owners.add(owner);else queued.required=true;}
         if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key||row.keys?.includes(key));if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
         waits.push(this.inFlight.get(key));continue;
       }
@@ -112,7 +112,7 @@ export class RealS3SampleLoader {
           for(const clip of missing)unique.set(this.bank.authorized.key(clip.id,clip.event,clip.variant),clip);
         }
         if(!unique.size)return results;
-        const imported=await this.bank.authorized.load({...data,clips:[...unique.values()]},{baseURL:'./',replace:false,concurrency:2});
+        const imported=await this.bank.authorized.load({...data,clips:[...unique.values()]},{baseURL:'./',replace:false,concurrency:2,publishEvents:2});
         for(const plan of plans){
           const errors=(imported.errors||[]).filter(e=>e.id===plan.id&&(!plan.event||e.event===plan.event));
           if(errors.length){
@@ -127,7 +127,7 @@ export class RealS3SampleLoader {
         }
         return results;
       };
-      const job=this._schedule(work,entries[0].key,priority,entries.map(e=>e.key));
+      const job=this._schedule(work,entries[0].key,priority,entries.map(e=>e.key),owner);
       for(const entry of entries){
         const tracked=job.then(results=>results.get(entry.key)).finally(()=>{if(this.inFlight.get(entry.key)===tracked)this.inFlight.delete(entry.key);});
         this.inFlight.set(entry.key,tracked);waits.push(tracked);
@@ -184,7 +184,7 @@ export class RealS3SampleLoader {
       // The source bank's transactional generation means loads must be serialized;
       // load ONLY the missing clips to avoid fetching intact LRU entries again.
       const result=await this.bank.authorized.load({...data,clips:missing},
-        {baseURL:'./',replace:false,concurrency:2});
+        {baseURL:'./',replace:false,concurrency:2,publishEvents:2});
       if(!this._current())return {...result,loaded:0,cancelled:true};
       if(result?.errors?.length){for(const error of result.errors)this._error(id+': '+error.error);
         // Only permanent missing-file responses deserve the longer bounded retry.
@@ -209,7 +209,15 @@ export class RealS3SampleLoader {
     if(owner==null)return;
     for(let i=this.pendingJobs.length-1;i>=0;i--){const row=this.pendingJobs[i];
       row.owners.delete(owner);
-      if(!row.required&&row.owners.size===0){this.pendingJobs.splice(i,1);this.inFlight.delete(row.key);row.resolve({loaded:0,cancelled:true});}
+      if(!row.required&&row.owners.size===0){
+        this.pendingJobs.splice(i,1);
+        const cancelled={loaded:0,cancelled:true};
+        if(row.keys){
+          const results=new Map();
+          for(const key of row.keys){this.inFlight.delete(key);results.set(key,cancelled);}
+          row.resolve(results);
+        }else{this.inFlight.delete(row.key);row.resolve(cancelled);}
+      }
     }
   }
   retryPending(id,event){

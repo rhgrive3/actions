@@ -13,7 +13,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/native-stages/runtime/engine.mjs",
     "inputKey": "native-stages/runtime/engine.mjs",
     "sourceInputKey": "upstream/src/game/nav.js",
-    "sourceSha256": "1f840278f1fff43b30dccfd0aec5835ba4c94608d88eb05455f85b6656943f56",
+    "sourceSha256": "d6fc1bd855d59dc4a459387c8b1e4b7dabb30443c89b47ac0d5f9b1ac8bdb97b",
     "targetSha256": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26"
   },
   {
@@ -22,7 +22,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/practice-range/stage/layout.mjs",
     "inputKey": "practice-range/stage/layout.mjs",
     "sourceInputKey": "upstream/src/world/maps.js",
-    "sourceSha256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+    "sourceSha256": "13a5f9649819036bd896ca665541aaf7c2615980a707401f99ec1680696d1519",
     "targetSha256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
   },
   {
@@ -31,7 +31,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/native-stages/runtime/registry.mjs",
     "inputKey": "native-stages/runtime/registry.mjs",
     "sourceInputKey": "upstream/src/world/maps.js",
-    "sourceSha256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+    "sourceSha256": "13a5f9649819036bd896ca665541aaf7c2615980a707401f99ec1680696d1519",
     "targetSha256": "5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1"
   },
   {
@@ -40,7 +40,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/splatoon3/stage/scorch-layout.mjs",
     "inputKey": "patch/stage/scorch-layout.mjs",
     "sourceInputKey": "upstream/src/world/maps.js",
-    "sourceSha256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+    "sourceSha256": "13a5f9649819036bd896ca665541aaf7c2615980a707401f99ec1680696d1519",
     "targetSha256": "898f0f021e4c2c38dd060598f1d27f3cafc45430788b6f0db560d6f502a1d9c0"
   },
   {
@@ -59,7 +59,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "inputKey": "practice-range/stage/props.mjs",
     "sourceInputKey": "upstream/src/world/stages/index.js",
     "sourceSha256": "28db2307f3df512fa28b9b2c13d4b29143c933823437bd7646b23f520e619574",
-    "targetSha256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4"
+    "targetSha256": "3e25e26649a3360fae11c5a3992e335c4bf47b759d56907f864c7ed58565ed85"
   },
   {
     "source": "inkwave-public/src/world/stages/index.js",
@@ -104,7 +104,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "inputKey": "practice-range/stage/props.mjs",
     "sourceInputKey": "upstream/src/world/stages/range-data.js",
     "sourceSha256": "659cc654b16f1defa8cc83fe5dd53195e39936f3c8fd99161c829e6206ca0d46",
-    "targetSha256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4"
+    "targetSha256": "3e25e26649a3360fae11c5a3992e335c4bf47b759d56907f864c7ed58565ed85"
   },
   {
     "source": "inkwave-public/src/world/stages/range-data.js",

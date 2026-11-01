@@ -1,0 +1,229 @@
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46807) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ source fixture executes the real sealed native catalog and qualified rule guards (512.942517ms)
+ℹ Error: Test "source fixture executes the real sealed native catalog and qualified rule guards" at patches/native-stages/tests/native-build-fixture.test.mjs:7:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "source fixture executes the real sealed native catalog and qualified rule guards" at patches/native-stages/tests/native-build-fixture.test.mjs:7:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "source fixture executes the real sealed native catalog and qualified rule guards" at patches/native-stages/tests/native-build-fixture.test.mjs:7:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "source fixture executes the real sealed native catalog and qualified rule guards" at patches/native-stages/tests/native-build-fixture.test.mjs:7:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "source fixture executes the real sealed native catalog and qualified rule guards" at patches/native-stages/tests/native-build-fixture.test.mjs:7:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46808) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sparse ground masks preserve scalar hits, counters and the 30-ray boundary (85.428212ms)
+✔ sparse ground masks retain early-hit scalar fallback and recover after an exception (2.452908ms)
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46821) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native detail retains immutable coverage after pooled growth records are reused (765.364943ms)
+✔ native detail has sixteen resident pages and replays an evicted floor on revisit (21.142747ms)
+✔ native detail clearing and disposal release history and restore the paint owner (13.577726ms)
+✔ native detail follows an inclined source floor in its own plane (26.190864ms)
+✔ native detail follows the game camera when PaintSystem.setView is unused (13.185668ms)
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46828) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ near and wide directed grids retain goals, enemy-zone barriers, nonpaintable nodes and visited order (42.699342ms)
+✔ circle and square boundaries, signed zeros and nonfinite inputs match the frozen predicate exactly (5.908996ms)
+✔ cache identity, start/team changes, graph replacement, resize and stamp wrap keep their contracts (3.151709ms)
+✔ wide queries skip only exterior hypot calls and still evaluate the exact boundary (45.737241ms)
+(node:46835) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ paint faces round-trip exactly, including key order (3.901846ms)
+✔ admission takes only current, complete records (6.488425ms)
+✔ site copy holds admitted stages and only their texture packs (2.008346ms)
+✔ runtime loader reassembles verified chunks into the worker data shape (17.046622ms)
+✔ streamed ranges preserve byte boundaries and reject truncated or oversized bodies (38.036491ms)
+✔ runtime loader rejects tampered chunks, stage records and incomplete faces (12.205127ms)
+✔ KTX2 textures skip PNG decoding and start their mip chain within the cap (7.637397ms)
+✔ one failed KTX2 pack is fetched once per load session and later sessions can retry (6.637294ms)
+✔ failed transcoder initialization backs off and a later loader recovers; idle release is idempotent (8.320572ms)
+✔ a failed KTX2 texture falls back to its pinned PNG; an abort does not (10.920856ms)
+✔ a renderer replacement waits for pending KTX2 parses before disposing the old loader (9.644048ms)
+✔ stage worker release waits for active parse callbacks and the next load gets a fresh owner (6.701179ms)
+✔ compressed touch loads retire only an idle decoder and retain every mip buffer (8.306839ms)
+✔ an abort during a KTX2 transcode settles the load; the late texture is disposed (6.459018ms)
+✔ aborted transcodes retain a replaced loader until every actual callback finishes (9.379485ms)
+✔ relieved touch budgets fall back to the uncompressed budget for PNG and RGBA32 output (13.589703ms)
+✔ images a partial prebuilt table does not cover keep the uncompressed fallback budget (10.298259ms)
+✔ committed prebuilt data stays a few hundred files (8.045861ms)
+✔ builder input identity hashes every scripts/lib helper it runs (3.413818ms)
+✔ cooperative face unpack preserves exact values and aborts between batches (9.625829ms)
+✔ shared native plane masks preserve every live CPU ink claim and causal order (1241.832881ms)
+native prebuilt: payload absent or unverified for scorch, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+Traceback (most recent call last):
+  File "<string>", line 5, in <module>
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/workspace/actions-score-base/patches/native-stages/tools/build-native.py", line 10, in <module>
+    from numba import njit
+ModuleNotFoundError: No module named 'numba'
+(node:46854) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source cell coverage preserves thin triangle interiors and rejects empty or edge-only cells (1.61449ms)
+✖ owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives (502.110033ms)
+✖ Python and worker masks agree for partial polygons and thin strips (407.741814ms)
+ℹ Error: Test "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives" at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives" at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives" at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives" at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives" at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46866) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native wall sourced paint keeps physical ownership bounded without inventing spatter credit (605.180582ms)
+✔ native occluded-floor sourced paint keeps physical ownership bounded without inventing spatter credit (486.042337ms)
+✔ real native Slosher flight credits its source body once at finer supported paint-grid resolution (503.265801ms)
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46873) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native composed Actor and PaintSystem credit owned raw world area, exactly once (641.448446ms)
+✔ no-special owner still scores raw area without recharging special (497.807217ms)
+✔ unchanged main Turf credit respects active Storm and Tidal Slam gauge locks (416.253215ms)
+✔ native projectile and installed Slam callers credit initial body area exactly once (840.381116ms)
+✔ missing or double initial body credit cannot satisfy the final owned-area ledger (607.362711ms)
+✔ composed paint shader keeps decoration inside the source radius (no far satellites/spatter) (34.254843ms)
+✔ indexed live coverage is bit-identical to the reference scan (6.559263ms)
+✔ HUD ink tank repaint is limited to 30 Hz and carries the elapsed time (0.419845ms)
+✔ ScreenFX warm-up enables the pass imperceptibly for the boot frames only (60.380917ms)
+✔ SFX loop noise is pre-built after the audio context exists (6.608057ms)
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46887) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 30Hz (44.702567ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 60Hz (22.564914ms)
+✔ composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 120Hz (41.233121ms)
+✔ actual composed body batches affine row bounds but preserves dirty gen, cells, dead masks and score (413.629674ms)
+✔ coverage ignores known wall writes and preserves weighted scan order, while unknown writes and identity changes invalidate (1.906833ms)
+✔ actual composed body wall writes retain the coverage cache; turf body writes replace it (233.177207ms)
+✔ growth team guard follows retained, evicted, completed, reused and unexpected leases without changing eligible order (264.983065ms)
+✔ ShapePool escaped record and typed array cannot be recycled into another live lease (9.691874ms)
+✔ production splat opposing-growth guard preserves forced-completion order against unconditional scan (261.449905ms)
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+INKWAVE built fixture /workspace/actions-score-base/_site contentHash=3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d
+(node:46894) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a grounded Rainmaker carrier can advance below a bridge without a false fall/drop (588.986621ms)
+✔ Halyard Marina gangway footprint support retains the Rainmaker and advances the count (644.794339ms)
+✔ a Rainmaker carrier can jump across a gap and resume scoring on the next floor (389.534714ms)
+✔ a physical fall death still resets an own-side Rainmaker instead of becoming an ordinary splat drop (399.77236ms)
+✔ a Power Clam reaches the basket across a bridge through actual throw/segment/floor rules (383.76507ms)
+✔ a Power Clam reaches the basket across a gap through actual throw/segment/floor rules (401.460086ms)
+✔ the throw uses the new aim on the same tick as turning toward the basket (402.67377ms)
+✔ zone coverage reuses only matching paint revisions, grids and zone indices (2.36371ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 63
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10718.190534
+
+✖ failing tests:
+
+test at patches/native-stages/tests/native-build-fixture.test.mjs:7:1
+✖ source fixture executes the real sealed native catalog and qualified rule guards (512.942517ms)
+  Error: ENOENT: no such file or directory, open '/workspace/actions-score-base/_site/patches/native-stages/runtime/rule-availability.mjs'
+      at Object.readFileSync (node:fs:484:20)
+      at load (file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:68:20)
+      at file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions-score-base/patches/native-stages/tests/fixture.mjs:38:9)
+      at TestContext.<anonymous> (file:///workspace/actions-score-base/patches/native-stages/tests/native-build-fixture.test.mjs:8:96)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/workspace/actions-score-base/_site/patches/native-stages/runtime/rule-availability.mjs'
+  }
+
+test at patches/native-stages/tests/source-paint-coverage.test.mjs:23:1
+✖ owned partial cells accept only exact source polygon points and retain NoPaint and dead-hole negatives (502.110033ms)
+  Error: ENOENT: no such file or directory, open '/workspace/actions-score-base/_site/patches/native-stages/runtime/rule-availability.mjs'
+      at Object.readFileSync (node:fs:484:20)
+      at load (file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:68:20)
+      at file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions-score-base/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions-score-base/patches/native-stages/tests/fixture.mjs:38:9)
+      at TestContext.<anonymous> (file:///workspace/actions-score-base/patches/native-stages/tests/source-paint-coverage.test.mjs:24:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/workspace/actions-score-base/_site/patches/native-stages/runtime/rule-availability.mjs'
+  }
+
+test at patches/native-stages/tests/source-paint-coverage.test.mjs:48:1
+✖ Python and worker masks agree for partial polygons and thin strips (407.741814ms)
+  Error: Command failed: python3 -c import sys,json,importlib,pathlib,tempfile,os,numpy as np
+  sys.path.insert(0,str(pathlib.Path(sys.argv[1]).parent))
+  with tempfile.TemporaryDirectory(prefix='inkwave-paint-parity-') as cache:
+   os.environ['NUMBA_CACHE_DIR']=cache
+   module=importlib.import_module(pathlib.Path(sys.argv[1]).stem)
+   p=json.load(sys.stdin);print(json.dumps(module.raster_mask(np.array(p['triangles'],dtype=np.float64),p['nu'],p['nv'],p['cu'],p['cv']).tolist()))
+   /workspace/actions-score-base/patches/native-stages/tools/build-native.py
+  Traceback (most recent call last):
+    File "<string>", line 5, in <module>
+    File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py", line 90, in import_module
+      return _bootstrap._gcd_import(name[level:], package, level)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+    File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+    File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+    File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+    File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+    File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+    File "/workspace/actions-score-base/patches/native-stages/tools/build-native.py", line 10, in <module>
+      from numba import njit
+  ModuleNotFoundError: No module named 'numba'
+
+      at genericNodeError (node:internal/errors:985:15)
+      at wrappedFn (node:internal/errors:539:14)
+      at checkExecSyncError (node:child_process:942:11)
+      at execFileSync (node:child_process:978:15)
+      at TestContext.<anonymous> (file:///workspace/actions-score-base/patches/native-stages/tests/source-paint-coverage.test.mjs:61:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12) {
+    status: 1,
+    signal: null,
+    output: [ null, '', `Traceback (most recent call last):\n  File "<string>", line 5, in <module>\n  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py", line 90, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import\n  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load\n  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked\n  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked\n  File "<frozen importlib._bootstrap_external>", line 999, in exec_module\n  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed\n  File "/workspace/actions-score-base/patches/native-stages/tools/build-native.py", line 10, in <module>\n    from numba import njit\nModuleNotFoundError: No module named 'numba'\n` ],
+    pid: 46861,
+    stdout: '',
+    stderr: `Traceback (most recent call last):\n  File "<string>", line 5, in <module>\n  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/importlib/__init__.py", line 90, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import\n  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load\n  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked\n  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked\n  File "<frozen importlib._bootstrap_external>", line 999, in exec_module\n  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed\n  File "/workspace/actions-score-base/patches/native-stages/tools/build-native.py", line 10, in <module>\n    from numba import njit\nModuleNotFoundError: No module named 'numba'\n`
+  }

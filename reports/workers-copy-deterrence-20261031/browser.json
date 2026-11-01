@@ -1,0 +1,26 @@
+{
+  "browser": "154.0.8037.57",
+  "sameOrigin": "PASS: image + script",
+  "offline": "PASS: service-worker cached document + image + script",
+  "crossOrigin": "PASS: image + classic script blocked by CORP",
+  "iframe": "PASS: refused by frame-ancestors",
+  "failures": [
+    {
+      "url": "http://127.0.0.1:35903/probe.svg",
+      "error": "net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin"
+    },
+    {
+      "url": "http://127.0.0.1:35903/probe.js",
+      "error": "net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin"
+    },
+    {
+      "url": "http://127.0.0.1:35903/",
+      "error": "net::ERR_BLOCKED_BY_RESPONSE"
+    }
+  ],
+  "messages": [
+    "Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin",
+    "Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin",
+    "Framing 'http://127.0.0.1:35903/' violates the following Content Security Policy directive: \"frame-ancestors 'self'\". The request has been blocked.\n"
+  ]
+}

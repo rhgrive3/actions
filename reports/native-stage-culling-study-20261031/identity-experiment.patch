@@ -1,0 +1,21 @@
+--- a/patches/native-stages/runtime/native-render.mjs
++++ b/patches/native-stages/runtime/native-render.mjs
+@@ -190,0 +191,15 @@
++const nativeIdentityMul=THREE.Matrix4.prototype.multiply,nativeIdentityMulMatrices=THREE.Matrix4.prototype.multiplyMatrices;
++const nativeIdentityFnToString=Function.prototype.toString,nativeIdentityDescriptor=Object.getOwnPropertyDescriptor;
++const nativeIdentityNormalize=f=>nativeIdentityFnToString.call(f).replace(/\/\*[\s\S]*?\*\/|\/\/[^\n\r]*/g,'').replace(/\s+/g,'');
++const nativeIdentityBodies=[["multiply(m){returnthis.multiplyMatrices(this,m);}","multiplyMatrices(a,b){constae=a.elements;constbe=b.elements;constte=this.elements;consta11=ae[0],a12=ae[4],a13=ae[8],a14=ae[12];consta21=ae[1],a22=ae[5],a23=ae[9],a24=ae[13];consta31=ae[2],a32=ae[6],a33=ae[10],a34=ae[14];consta41=ae[3],a42=ae[7],a43=ae[11],a44=ae[15];constb11=be[0],b12=be[4],b13=be[8],b14=be[12];constb21=be[1],b22=be[5],b23=be[9],b24=be[13];constb31=be[2],b32=be[6],b33=be[10],b34=be[14];constb41=be[3],b42=be[7],b43=be[11],b44=be[15];te[0]=a11*b11+a12*b21+a13*b31+a14*b41;te[4]=a11*b12+a12*b22+a13*b32+a14*b42;te[8]=a11*b13+a12*b23+a13*b33+a14*b43;te[12]=a11*b14+a12*b24+a13*b34+a14*b44;te[1]=a21*b11+a22*b21+a23*b31+a24*b41;te[5]=a21*b12+a22*b22+a23*b32+a24*b42;te[9]=a21*b13+a22*b23+a23*b33+a24*b43;te[13]=a21*b14+a22*b24+a23*b34+a24*b44;te[2]=a31*b11+a32*b21+a33*b31+a34*b41;te[6]=a31*b12+a32*b22+a33*b32+a34*b42;te[10]=a31*b13+a32*b23+a33*b33+a34*b43;te[14]=a31*b14+a32*b24+a33*b34+a34*b44;te[3]=a41*b11+a42*b21+a43*b31+a44*b41;te[7]=a41*b12+a42*b22+a43*b32+a44*b42;te[11]=a41*b13+a42*b23+a43*b33+a44*b43;te[15]=a41*b14+a42*b24+a43*b34+a44*b44;returnthis;}"],["multiply(t){returnthis.multiplyMatrices(this,t)}","multiplyMatrices(t,e){letn=t.elements,s=e.elements,r=this.elements,a=n[0],o=n[4],l=n[8],c=n[12],h=n[1],f=n[5],u=n[9],d=n[13],g=n[2],S=n[6],m=n[10],p=n[14],M=n[3],A=n[7],v=n[11],T=n[15],b=s[0],R=s[4],x=s[8],E=s[12],C=s[1],L=s[5],F=s[9],z=s[13],D=s[2],B=s[6],X=s[10],W=s[14],it=s[3],q=s[7],Q=s[11],et=s[15];returnr[0]=a*b+o*C+l*D+c*it,r[4]=a*R+o*L+l*B+c*q,r[8]=a*x+o*F+l*X+c*Q,r[12]=a*E+o*z+l*W+c*et,r[1]=h*b+f*C+u*D+d*it,r[5]=h*R+f*L+u*B+d*q,r[9]=h*x+f*F+u*X+d*Q,r[13]=h*E+f*z+u*W+d*et,r[2]=g*b+S*C+m*D+p*it,r[6]=g*R+S*L+m*B+p*q,r[10]=g*x+S*F+m*X+p*Q,r[14]=g*E+S*z+m*W+p*et,r[3]=M*b+A*C+v*D+T*it,r[7]=M*R+A*L+v*B+T*q,r[11]=M*x+A*F+v*X+T*Q,r[15]=M*E+A*z+v*W+T*et,this}"]];
++const nativeIdentityKnown=(function(){try{return nativeIdentityBodies.some(pair=>pair[0]===nativeIdentityNormalize(nativeIdentityMul)&&pair[1]===nativeIdentityNormalize(nativeIdentityMulMatrices))&&/\{\s*\[native code\]\s*\}/.test(nativeIdentityFnToString.call(nativeIdentityDescriptor));}catch{return false;}})();
++function nativeSkipIdentity(view,world){
++ if(!nativeIdentityKnown||Object.getOwnPropertyDescriptor!==nativeIdentityDescriptor||THREE.Matrix4.prototype.multiply!==nativeIdentityMul||THREE.Matrix4.prototype.multiplyMatrices!==nativeIdentityMulMatrices||view.multiply!==nativeIdentityMul||view.multiplyMatrices!==nativeIdentityMulMatrices||Object.getPrototypeOf(world)!==THREE.Matrix4.prototype)return false;
++ const descriptor=nativeIdentityDescriptor(world,'elements');if(!descriptor||!Array.isArray(descriptor.value))return false;
++ const e=descriptor.value;
++ for(let i=0;i<16;i++){const v=e[i];if(i%5===0){if(v!==1)return false;}else if(v!==0||1/v!==Infinity)return false;}
++ const v=view.elements;
++ for(let i=0;i<16;i++){const n=v[i];if(typeof n!=='number'||n!==n||n===Infinity||n===-Infinity||(n===0&&1/n===-Infinity))return false;}
++ return true;
++}
++
+@@ -251 +266 @@
+-  view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse).multiply(mesh.matrixWorld);
++  view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);const nativeWorldMatrix=mesh.matrixWorld;if(!nativeSkipIdentity(view,nativeWorldMatrix))view.multiply(nativeWorldMatrix);

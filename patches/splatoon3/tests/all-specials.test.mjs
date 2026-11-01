@@ -251,13 +251,13 @@ test('Splattercolor Screen does not stop a native enemy shot from reaching a pla
  assert.ok(victim.hp<before,'the native projectile passes through the Screen and damages the player behind it');
 });
 
-test('remote screen replay creates presentation and recipient status without authoring hits or paint',async()=>{
+test('raw screen replay creates presentation without a native contact capability',async()=>{
  const f=await setup(),ghost=f.make(),victim=f.make();ghost.remote=true;ghost.team=1;ghost.nid=44;victim.team=0;victim.isLocal=true;victim.pos.set(0,0,3.2);f.G.actors=[ghost,victim];
  let hits=0,paint=0;f.G.projectiles.applyHit=()=>{hits++;};f.G.paint.splat=()=>{paint++;return 1;};
  const event={actor:ghost,id:'splattercolorScreen',activation:1,action:'deploy',pos:[0,.08,2.5],target:[0,.08,3.5],seed:9,object:1,index:0,hp:0,radius:15,duration:680/60,kind:'screen',width:15,height:9};
  assert.equal(f.replayAllSpecials(f,event),true);tickWorld(f,90);
- assert.ok(victim.s3.splattercolorUntil>f.G.time);assert.ok(victim.s3.splattercolorMarkUntil>f.G.time);
- assert.ok(Math.abs(victim.s3.splattercolorUntil-victim.s3.splattercolorMarkUntil-4)<1e-9);assert.equal(hits,0);assert.equal(paint,0);
+ assert.equal(victim.s3.splattercolorUntil>f.G.time,false);assert.equal(victim.s3.splattercolorMarkUntil>f.G.time,false);
+ assert.equal(hits,0);assert.equal(paint,0);
 });
 
 test('Zipcaster repeats hooks, fires the equipped main from its special ink tank, and returns through native Super Jump',async()=>{
@@ -564,17 +564,17 @@ test('Booyah cheer accepts distinct calls up to the source cap and rejects dupli
  f.emit('all:special',bridged);assert.equal(ally.special,gaugeBeforeRemoteCast+6,'the local gauge bridge is idempotent by cheer call');
 });
 
-test('remote destructible hit proposal validates the owner life using the network last-life fallback',async()=>{
+test('raw destructible hit proposals require native contact even with matching owner life',async()=>{
  const f=await setup(),owner=f.make(),shooter=f.make();equip(owner,'waveBreaker');owner.nid=11;owner.netLife=0;owner.net={lastLife:4};shooter.nid=22;shooter.remote=true;shooter.team=1;shooter.netLife=2;f.G.actors=[owner,shooter];
  ready(owner);deployInput(owner,f);
  const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);const hp=device.hp;
  const event={actor:shooter,id:'waveBreaker',activation:device.activation,action:'objectHit',pos:[0,0,0],target:[0,0,0],seed:device.seed>>>0,object:device.serial,index:device.index||0,ownerNid:11,ownerLife:4,attackerLife:2,damage:25,tick:1};
- assert.equal(f.replayAllSpecials(f,event),true);assert.equal(device.hp,hp-25);
+ assert.equal(f.replayAllSpecials(f,event),false);assert.equal(device.hp,hp);
  const after=device.hp;
  assert.equal(f.replayAllSpecials(f,{...event,attackerLife:undefined,tick:2}),false,'missing attacker life is rejected while owner life remains current');
  assert.equal(device.hp,after,'missing attacker life cannot alter device health');
- assert.equal(f.replayAllSpecials(f,{...event,tick:2}),true,'invalid identity does not poison the corrected same-tick proposal');
- assert.equal(device.hp,after-25,'corrected proposal applies once');
+ assert.equal(f.replayAllSpecials(f,{...event,tick:2}),false,'corrected identity still needs native contact');
+ assert.equal(device.hp,after,'identity alone cannot authorize damage');
  owner.net.lastLife=5;
  const staleHp=device.hp;
  assert.equal(f.replayAllSpecials(f,{...event,tick:3}),false,'stale device owner life is rejected');

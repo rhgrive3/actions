@@ -62,6 +62,18 @@ export const REVIEWED_MINIMAP_SOURCE_EPOCHS = Object.freeze([
   'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
   'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b',
   'patches/native-stages/runtime/native-minimap.mjs':'f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5'
+ })}),
+ // Main commit 1a17d7b4 applies the independently reviewed 358-ticket minimap
+ // optimization to the source inherited at 7e027ac2: retain the -1 sea
+ // sentinel in Int16 only when all block IDs fit, and derive non-native
+ // hillshade normals from static block axes rather than allocating a full
+ // Float32 normal raster. Native maps retain their independently sourced
+ // normal arrays. This is a separate complete source epoch, not a mixed pin.
+ Object.freeze({name:'main-queue-reviewed-minimap-16bit-owner-1a17d7b4',pins:Object.freeze({...COMMON_MINIMAP_PINS,
+  'inkwave-public/src/game/minimap.js':'01f6856605b2347182d7e732b9c3487dff667134389721bee2be4fcab63cee30',
+  'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
+  'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b',
+  'patches/native-stages/runtime/native-minimap.mjs':'f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5'
  })})
 ]);
 export function assertReviewedMinimapSources(sourceHashes) {

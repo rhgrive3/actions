@@ -12,7 +12,7 @@ import {validSpecialWorldPayload,admitsRemoteWorldBirth,REMOTE_WORLD_OBJECTS_PER
 import {cataloguePayload} from '../runtime/catalogue-payload.mjs';
 import {buildSubModel} from '../runtime/sub-models.mjs';
 import '../runtime/special-models.mjs';
-import {perpendicularBasis,TRIZOOKA,VOLLEY_CONFIG} from '../runtime/kit-trizooka.mjs';
+import {perpendicularBasis,TRIZOOKA,VOLLEY_CONFIG,trizookaLaunchGeometry} from '../runtime/kit-trizooka.mjs';
 import {fixture} from './source-fixture.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 const before=JSON.parse(read('./fixtures/queue-weapons-before-20261024.json'));
@@ -128,7 +128,7 @@ test('Kraken point-block pruning is bit-identical on the actual model and finite
 
 test('Trizooka zero-spread fast path retains signed-zero and non-finite native expression boundaries',()=>{
  const next=declarations(read('../runtime/kit-trizooka.mjs'),['throwVolley']).throwVolley;
- const bindings={VOLLEY_CONFIG,TRIZOOKA,perpendicularBasis,trizookaBirthLife:()=>0};
+ const bindings={VOLLEY_CONFIG,TRIZOOKA,perpendicularBasis,trizookaLaunchGeometry,trizookaBirthLife:()=>0};
  const old=compile(before.throwVolley,'throwVolley',bindings),fresh=compile(next,'throwVolley',bindings);
  function fire(f,aim){const system={_new:()=>({pos:new T.Vector3(),prev:new T.Vector3(),start:new T.Vector3(),vel:new T.Vector3()}),_muzzle:(_a,out)=>out.set(1,2,3),_aimFrom:(_a,_m,out)=>out.copy(aim),_push:()=>{}};return f(system,{team:0},{}).map(p=>p.vel.toArray());}
  for(const x of [-1,-0,0,1])for(const y of [-1,-0,0,1])for(const z of [-1,-0,0,1]){const aim=new T.Vector3(x,y,z).normalize();assert.deepEqual(fire(fresh,aim),fire(old,aim));}

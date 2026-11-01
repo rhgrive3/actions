@@ -1,5 +1,14 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
+
+比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
+
+既存の有限高さguardを維持し、canonical OBB worldで、雨volumeに接触する全active sphereの全投影がそれぞれ1つの非grate固体に遮られると証明できる場合だけBoss雨を拒否する。最遅entry列の同一block実nearest rayと既存upward LOSを使う。near-parallel軸はbodyTop平面だけでなくsphere全体を含む必要があり、端の実LOSが通る誤免疫の負対照を固定した。形状・モデル・数値reach・owner/Map/batch/flushは変更しない。
+
+正式LOS9＋既finite8はsource/選択的既存emitterで17/17、別の実owner18はsource/emitted・30/60/120Hz・JSON host/guestで18/18（重複合算しない）。合成Boss.rainのclear/屋根/far/旧5引数のMap判定と逆配線負対照を含む。全身の部分露出、unknown、body始点inside、NativePhysics/custom world、複数OBBの未証明unionは従来damageを維持する。全LOS・本家実機一致・full build成功を示すものではなく、#735はOpenを維持する。
+
+
 ## 2026-10-29：追加ブキの着弾塗りと再入
 
 Splatoon 3 Ver. 11.3.0 の既存ブキ参照値は変更せず、公開版のカタログ着弾塗りで同期コールバック中に別の着弾が再入すると、先の塗り位置・方向が上書きされる不具合を修正した。呼出しごとに使用中の位置・方向を保持し、例外時も解放する。塗り形状の計算順、送信項目、乱数の使用を維持する。実際のShooter弾と公開版PaintSystemを使ったCPU再現で、修正前の破壊と修正後の保持を確認した。本家実機の測定や全試合の同等性は未確認。条件・生ログ・範囲は[検証記録](issue-resolution-20261029/catalogue-paint-reentry/README.md)を参照。
@@ -7118,19 +7127,19 @@ PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニ�
 
 追加回帰は context recovery 28、streamed-music diagnostics 47、media admission 3 の計78 pass。先行156と重複しないため、この作業の選択したローカル回帰小計は234 pass / 5 asset-dependent skip / 0 fail。原本メニュー音源を復元した完全ビルド（content hash `0137de77cfb0b4b151918438c82fbf1017e79697983aad6e1c4c85a8355c8efb`、revision `c804280a7b0ecc30e4105cb66bc4520633731e03f22222af645e0aceda3d5cca`）で、旧メニューの中断1件と正常な対戦BGM再生を同時に観測し、実 context lost/restored、120 RAF、60 direct frames と CPU/grid 所有者・全grid byteの保存を確認した。音声エラーの一括無視や再試行による通過ではない。[詳細と検証範囲](zero-headroom-review-20261031.md#11-統合-ci-で判明した復旧ゲートの観測不足と修正)を参照。最終 head のホスト CI・main 反映状態は PR の記録で確認する。
 
-### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+### 2026-10-31: 着地時の足姿勢とガチホコ射撃の無効値
 
-基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+基準は PR #1975 の `2a0f50e178286dda1fa2b0998e3c62b24c708ade`。ネイティブの足先補間を経過時間で進める変更に対し、`patches/splatoon3/runtime/walk.mjs` の歩行レイヤーが `_footPose` の時間引数を転送していなかった。歩行対象外のフレームで元の足姿勢処理へ戻ると、未定義の時間から足先の角度と全身 IK が NaN になった。ダイナモローラーの 30Hz・132 フレーム目（4.4 秒、空中から着地）で再現し、ガチホコでも着地後の握り位置が無効になった。ガチホコの実ボットは無効な発射位置を拒否され、チェックポイントへ進む一方で射撃できなくなっていた。両足の呼び出しと元処理への転送に、そのフレームの既存の時間引数を渡すよう修正した。
 
-新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+合成後の実 Actor／Character を使う既存 CPU テストで、修正前はダイナモ 1 件とガチホコのシューター／ローラー／マニューバー 3 件が失敗し、修正後は 4 件とも成功。ダイナモは 30／60／120Hz の握り、折り畳み、回転、発射・インク・タイミングの既存比較を通過した。ガチホコの右手と持ち手の最大距離は 0、左手は最大約 `8.18e-16` world 単位、右手の到達誤差は 0。さらに実ボットによるバリア破壊・取得・満充電射撃・チェックポイント到達の既存テスト 1 件も成功した。検証対象は公開版のネイティブ姿勢を使う CPU fixture であり、ブラウザ描画・読み込み済みソースモーション全状態・Switch 実機比較の代用ではない。Splatoon 3 Ver.11.3.0 の参照条件を継承し、本家との同条件の着地姿勢・射撃挙動は未確認のまま維持する。
 
-### 2026-10-31: Library キューの既存PR照合と追加最適化
+### 2026-10-31: ガチホコのネイティブ設置物命中と通信認証
 
-監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+比較基準は Splatoon 3 Ver.11.3.0、ガチホコのチャージ済み射撃、スプラッシュシールド、対物攻撃力アップなし。既存の INKWAVE 抽出値・ソース行（直撃 60、近距離爆風 180、シールドへの直撃倍率 1・爆風倍率 2）を維持する。今回の差分は通信上の認証経路であり、本家の認証方式や通信遅延を再現したという主張ではない。通常のメイン・サブ・スペシャルの発生証明を要求した結果、別経路であるホストの ranked イベントから発射するガチホコでは、正規のゲスト射撃まで設置物所有者に拒否されていた。
 
-ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+`ranked/rainmaker-device-contact.mjs` は既存のホスト認証を通過した厳密な発射イベントだけを受信者内部で保持し、実際のガチホコ飛行と既存の設置物接触・爆風判定が確認した命中を、正規の所有者 tick に由来する請求へ一度だけ対応づける。射撃 ID や請求ダメージだけでは命中を成立させず、セッション・試合・ホスト・射手とその生存世代・対象を拘束する。発射威力、塗り、対物倍率、通常のアクターダメージ権限は変更しない。
 
-形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+Node の実 NetMatch パッカー、受信側 FIFO、ホストの ranked drain、実 Projectiles 接触をつないだ再現では、接触が先・請求が先の両方でシールド HP が 800 から 380 へ一度だけ減る。偽ホスト、未認証の直接再生、異なる射撃 ID、改変ダメージ、地形遮蔽、同じ命中の新シーケンス再送、期限切れ、ホスト変更は HP を減らさない。既存の ranked integration 全 33 件、追加した期限・ホスト変更を含む専用 5 件、通常設置物の認証・遮蔽・遅延回帰 7 件を確認した。計測は固定の制御時刻と衝突場面によるロジック検査であり、ブラウザでの 30/60/120 Hz 比較、実回線の遅延・ホスト交代、Splatoon 3 実機の同条件比較は未確認のまま残す。
 
 同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
 
@@ -7148,3 +7157,133 @@ PR #1977 の初回 terminal recovery では、GPU context loss 前に旧メニ�
 最終配信物・実ブラウザの条件と結果、本家との未確認範囲は[統合検証記録](aim-visibility-20261031/README.md)を参照する。main反映時のソース所有権検査で既存のworld 2モジュールが再変換されていたため、既存合成結果と全バイト一致する内容を所有元ソースへ移した。旧ソースはSHA固定fixtureとして保持し、形状の既存比較を自己比較へ置き換えていない。この移行でステージ形状や物理を再校正していない。
 
 通常minified配信物 `fed7a536151ed56fa30ea1cabed832a8f673feee7472d027818beac768fe35c4` をChromium／SwiftShaderで確認した。1280×720、1920×1080、844×390・DPR2・touchで各16ブキを切替え、実装内の灰丸／着弾円とguide投影の差は最大0.001 CSS px未満。自然な地形guideと頭輪郭の重なりで不透明度0.1（約90％透過）、解消時は1へ復帰し、他11体・共有素材への透過波及は0だった。desktopの実GTAO除外／復帰、touchの既存AO非適用と高画質時の透過／復帰も確認。初回連続実行のChromium停止と、touchにdesktop用AOを要求した検証側の失敗は元記録を保持し、独立processとnative policyに沿う検証で再確認した。初回停止の原因は断定していない。この座標誤差は本家とのピクセル差ではなく、実GPU・Safari・Switch実機・全俯角の本家寸法や敵capsule命中との同等性は未確認である。
+
+### 2026-10-31: 命中認証の同期コールバックと証明配列
+
+通信命中の証明を通常上限以下で同じ配列に再利用すると、遮蔽検査の同期コールバックで別の受信処理が発生した際、先行する認証の走査へ後発の射撃証明が混入する反例を再現した。`combat-provenance.mjs` は新しい記録処理が保持する配列を分離し、外側の走査から後発証明を見えなくする。長寿命の正規サブ・スペシャル証明の追加保持枠と通常160件の上限は維持した。既存の差分・負の対照テスト8件で、同じ配列を返す誤実装だけが拒否予定の命中を受理すること、修正後は拒否することを確認。威力や操作条件は変更しておらず、Splatoon 3 Ver.11.3.0の通信実装との比較やブラウザ実回線での再現は未確認。
+
+
+## 2026-10-31 全PR統合時の通信・予測・検証時計の整合
+
+比較対象は公開版 `inkwave-public/`、参照は既存の Splatoon 3 11.3.0 条件を維持する。今回の値は INKWAVE のロジック・通信 fixture と Chromium での検証であり、本家実機や iPad の測定値ではない。既存の未確認項目を解消済みに変更しない。
+
+- **採点**: #1973 の prefix を保持し、#1975 の sparse dirty 通知だけでは観測できなかった「public grid への未通知変更の後に通常 writer が動く」条件を完全走査と照合した。float 加算順序、reentry、clear、face 順序と境界 bit の検査を維持する。全体速度の改善は既存測定報告どおり未確認。
+- **投擲**: Sensor / Cooler は live と forecast の共有 fixed-step 処理を使用する。最初の capsule 接触と、跳ね返り等を経た最終着地・爆発 endpoint を区別する。30/60/120 Hz、実際の支払い、予測の更新上限を検査した。Sensor は最初の接触点と保守的な Y broadphase を両立させる。既存のローカル gravity 24 等を新しい本家確定値とは扱わない。
+- **ナイスダマの設備接触**: 地形着弾後の burst は source が次 fixed tick に生成するため、その 1 tick だけ private terminal に保持する。body / Boss の直撃は同 tick のままとし、先に確定した native body 接触と同じ点へ補間する。補間時の自己 alias と、空中の爆発中心を地面へ再投影する不一致を修正した。地形の最終 source frame、body の全28接触、1 frame 早い/期限後の改変 claim 拒否を実 native producer と受信側で照合した。41..80 frame の既存判定やダメージ値は維持する。
+- **アメフラシと復活**: 受信済み life が表示の `netLife` に先行する3 tickで、新しい正当な claim を落としていた設備 hit guard を既存 `replayOwnerLife` と一致させた。実 packet による固定 fixture では旧 life の tick12..87 の76接触、新 life の tick91..189 の99接触を受理する。旧 life の tick88..90 の3 claim は後続 life で既に失効しており、引き続き拒否する。新 life の描画遅延中91..93も受理することを集合で検査した。private cloud / paid-use / owner tick / target-life / native geometry の認証を緩和していない。この旧 life 退役境界が本家の通信時挙動と同じかは未確認。
+- **検証の時間進行**: `debug.freeze()` は残った simulation debt と S3 clock を同期的に退役する。手動30/60/120 Hzでも1秒あたり60 tickを保持し、過去の遅延 callback が後から進めないことを確認した。これは検証操作の修正であり、実プレイの新たな数値較正ではない。
+
+検証内容・統合対象・残る測定限界は `reports/pr-all-integration-20261031.md` に記録する。ブラウザ起動と CSP 拒否境界は実生成 HTML で確認し、描画にはソフトウェア WebGL を使用した。本家実機との操作一致や全 native match の性能をここから主張しない。
+
+
+### 2026-10-31 — #1983 follow-up: Rainmaker の正常完了 release と QA 配線
+
+- **実装・再現・影響**: `patches/splatoon3/runtime/ranked/{engine,install,network,rainmaker-device-contact}.mjs`。host ranked 更新が正常完了した release だけを送信・host-local 認可の根拠とし、表示側で消費する event map とは独立に completion fact を保持する。実 native release 0 の後で update を throw させた対照では、次 tick 以降も失敗 0 を wire／遠隔 Splash Wall 損傷へ進めず、正常 0 と次の正常 1 を維持する。失敗時の local queue／visual は巻き戻さず、既存 current-host trust／receipt／native contact admission を広げない。E2E 確認対象は Wall に限る。
+- **確認状態**: base `83e682d69110feaa82f274a11988e7bf3114c7bb`＋code 14 paths の同一 partial source root、Node24 source/VM で QA68（streamed51＋roof17）と Rainmaker formal9 を確認。native selected2／host-local 代表2／lexical10 は別 cohort で非合算。旧373 assert 式は維持したが、最終 base の旧 ranked35 再実行や旧 monolithic SIGKILL の合格化はしていない。物理 full collector は partial root の空 test directory guard により未受入であり、logical inventory の所属確認を全件テスト PASS と扱わない。
+- **未確認・対象外**: 今回の本家実機比較の参照 version・ギア・操作 frame 条件は未固定／未計測で、Splatoon 3 挙動一致は未判定。production emitted／full build／browser・GPU／real audio／FPS／最終 head の hosted CI は別受入を要する。Storm staged-birth 5 paths／v2 は除外し proof `04b4e29d…` を維持するため、その新しい合法反例は未解消。#1665 全体・全 device の security 合格や、髪／character model の編集・見た目比較を主張しない。
+
+
+### 2026-10-31: queue CI 契約自身の受入レーン登録
+
+- 対象は `scripts/ci/inkwave-test-suites.json` の `runner-contracts`。既存 `scripts/tests/inkwave-queue-ci-20261031.test.mjs` を明示入力へ1件だけ追加した。全13 suite の既存順序・引数・フラグ・他レーン収録は保持した。ゲームの runtime・数値・モデル・見た目は変更していない。
+- 再現は同契約の既存登録テストで未登録件数0（期待1）による失敗。追加後は同テスト1/1 PASS。実 runner の no-spawn plan が公式22ファイル・2 step・対象1回を確認し、独立した構造/逆変換検証3/3と既存 runner 選択5/5が PASS。物理 full-suite 実行・同head hosted CI・ブラウザはこのローカル結果に含まれない。
+- プレイ挙動の変更やスプラトゥーン3との一致を示す修正ではなく、既存CI経路契約の受入漏れを閉じる配線修正。本家参照version・ブキ・ギア・操作frameの新規実機比較は実施していない。旧 menu 候補・Storm 保留変更は含めない。
+
+
+### 2026-10-31: 現行 source epoch の Character QA と gameplay capture 入力検証
+
+- Character は既存の現行 shape/hair を変えず、歴史テキスト検証だけに sealed epoch 逆写像と公式3 pass の順次 replay を加えた。実 geometry/pose は既定 production composer のまま。旧 assertion 式82件と数値/geometry/pose 7 callback 本文を全保持し、独立 source 全9/9（288 pose、RNG 0/0）および別 text 契約3/3が PASS。旧2 text 失敗と旧 pose SIGKILL は過去の未受入として保持し、今回の成功へ読み替えない。
+- gameplay resource の既存共有 CDP screenshot 経路は120000msの単一 monotonic deadline と完全PNG検証を経て既存PNG書込みへ進む。追加 fallback/session/detach はなく、早期timerを再armし、timeout後の遅延完了は保存しない。既存共有session所有権・出力名・ゲームguardは保持。現行43件、候補57件、独立15件は別 cohort で PASS（合算しない）。実 browser の timeout 原因解消・GPU/FPS改善・最終head CI成功は未確認。
+- 変更は QA/test/harness と記録のみで、モデルの形状/外観・武器数値・ゲームruntimeを変更しない。本家参照version/ブキ/ギア/操作frameの新規実機比較は未実施で、スプラトゥーン3との挙動一致を判定する根拠にはしない。旧 menu 候補および保留 Storm は対象外。
+
+
+### 2026-10-31: relay host attachment の現行7 field保持と一時object削減
+
+- `server/src/index.js::_syncMemberAttachment` のhost予算組立だけを、既存mainの条件付き代入方式へ戻す。現行 `rejectedJoinBudgetAt/rejectedJoinsLeft` を含む7 field・値・順序を全保持し、他のadmission/host権限/hibernation処理は変更しない。新たなゲーム不具合の修正ではなく、mainに存在したsource-level冗長処理の復活漏れを閉じる。
+- 実moduleの対照でhost/guest・7 getter順序と各例外・非有限値/符号付き0・host交替・再入serialization・既存20,000反復のwire/snapshotが一致。新6件と既存11件は別にPASS、独立peerも実17件＋別4境界を確認。既存relay globが新testを1回収録するno-spawn planを確認した。観測用AST wrapperでは100同期呼出の条件budget-object評価が100→0。V8の実heap allocation/GC/FPS/ネットワーク性能の改善量は未計測で、最終head CI/Cloudflare実配備の受入ではない。
+- ゲーム数値/モデル形状/見た目を変更せず、本家参照version・ブキ・ギア・実機frame比較の新規測定は行っていない。
+
+
+### 2026-10-31: Kit 予測の未使用距離
+
+- `patches/splatoon3/runtime/kit-subs.mjs::predictKitSub` は defense が falsy の場合だけ、未使用の `previous.distanceTo` を省く。`world.hit` の読取り、truthy defense の距離、全query/horizon/RNG/接触結果は保持。新3件（28scenario）と既存145件、独立追加getter/throw4件は別cohortでPASS。実12秒void対照のnative queryは720→720、未使用distance評価だけ720→0で、query削減/FPS改善は主張しない。専用記録は `reports/kit-prediction-unused-distance-20261031.md`。実機参照version/ブキ/ギア/frameの新規比較、full site/emitted/browser/GPUは未確認。
+
+### 2026-10-31: ZEVANT起動タイトルの刷新と装飾デモの軽量化
+
+基準main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。起動タイトルを大きいZEVANTロゴ、暗い背景、シアンとライム色の操作UIへ刷新した。装飾デモだけを2対2、背景描画をPC最大30Hz・タッチまたは低画質設定で最大20Hz、背景の解像度倍率を上限0.75／0.60とする。物理更新は既存60Hzを保持し、通常対戦の人数・描画設定を維持する。動きを減らす設定では1枚を保持して対戦更新を停止し、入力とメニュー更新は続ける。タイトル終了時に元の倍率へ戻し、保持画像とデモ参照を解放する。
+
+新規回帰11件、既存の静的メニュー・入力所有権回帰、qualityと通常ビルド・起動予算を確認。最終配信物 `c9bf67fbd892348c581641b77b4bd4c31dcfa86cd1e4ad71e3bbe82beb5501e0` の実ブラウザで、5画面サイズ、動きを減らす設定、クリック・Enter・タップ・ゲームパッドの確定経路、タイトル再入場、通常8人対戦への遷移と音声初期化を確認した。これはZEVANTの独自タイトルの予算であり、Splatoon 3 Ver.11.3.0の実機タイトル挙動の抽出値ではない。ソフトウェアWebGLでの機能検証と実端末の性能は区別し、Safari・実GPUでの改善率は未計測。[実装・検証条件・配信物識別子](title-redesign-20261031/README.md)。
+
+### 2026-10-31: Library キューの既存PR照合と追加最適化
+
+監査基準は main `4423b1ea47a5be387991f3de9a70f900fb4d1b26`。統合時に入った #1988 のタイトル変更も保持した。Library の486件と作業中の追加3件を照合し、81件を今回実装、106件をmain対応済みと確認、197件を既存PR #1983の担当として集約、103件を具体的な互換性または採用条件の理由で不採用、2件を過去事象・対象失効として整理した。既存PR担当分をmain反映済みとは数えない。
+
+ワールドの形状組立、キャラクター・ブキ・音声の所有者内ワーク、NativeタイルID、泳ぎfilmの列内計算、同期メニューフォーカスの矩形再利用、snapshot固定コピー、CI入力を修正した。Native/autostartだけで未使用の壁画を遅延し、後のLegacy要求・中断・再試行・解放を維持する。Texlibのwet ink入力や、描画前に読む骨格行列は必要なので省略しない。LoadingCacheと投擲ソースの厳密な同一性検証も新しい構成を検証して受け入れる。
+
+形状・スキニング・乱数・浮動小数点の順序、音声PCM、メニューのgetter/scroll順序、snapshot例外時の部分状態を対応する回帰で比較した。武器性能・固定tick・塗り所有権の再校正は行わない。既存の Splatoon 3 Ver.11.3.0 の参照条件を維持し、本家実機・iPad/AndroidのFPS・全ステージ試合通しの検証を実施したとは主張しない。[採否の内訳・変更点・反例・検証範囲](library-queue-resolution-20261031.md)。
+
+同日追補: 最終一覧でさらに3件が増えたため、main `bee246c53af447a096bcfa650ce03e420ebc2ec6` を基準に追加対応し、全492件・今回の採用84件となった。Ink-volume CIの起動条件に3つの本番入口を追加した。Marina船体帯の左右共通の二分探索を一度にし、private gridSurfaceの未使用ID行列を連続頂点IDへ置き換えた。帯の396条件、gridの108条件×2回のappend・96実配置・Halyard全配置で、頂点/索引/公開属性、例外時状態、cache/資源解放を比較した。形状・塗り・当たり・航路の校正は行わず、局所CPU/生成数を実機FPSへ換算しない。新規CI15・帯3・grid6の計24テストが通過した。[追加の根拠と検証範囲](library-queue-resolution-20261031.md#最終一覧で増えた3件への追補)。
+
+
+### 2026-10-31: native guide/Clam/Spinner QA と paint upload の限定差分
+
+- `throw-prediction-native-guide.test.mjs` は実native forecastのpublic guideと接触・cadenceを追加受入するQA2件。独立source2件、f98 kit更新との再照合2件は別cohortで、旧whole fidelity SIGKILLを合格に読み替えない。`bomb-motion.test.mjs` は既存200assert/18callbackを保持し、移動中roller/Flowの同じreleaseと実床の正規positiveを補う（19件PASS）。新しいゲーム挙動の修正やbare/private capabilityの捏造ではない。
+- Spinner QAはmain bee246cの既存3秒stereo/実sampleRate予約を参照し、旧192kHz・409600frame入力3276800Bを境界内positiveとして保持。独立計算した4608000Bのexact edgeと+1 stereo frame、NaN/不一致channelの拒否を確認し全15件PASS、容量/runtime/音質を変更しない。旧contextのchannel0追加4行は丸適用せず、既finite PCMの実境界とwrong-channel反証が検出済みであることを確認した。
+- paintはbit-identicalなsource-owned Float32有効prefixだけの重複range/version markを省く。WeakMap寿命、異なる属性/配列/offset/外部version・range変更、signed zero/NaN bits、可変ArrayBuffer等の安全fallbackを保持する。記録GLの15tick/14stampではbufferSubDataが65→17、draw/dry/payload/CPU ownerは同じ。formal34PASS/元WebGL1SKIP、独立source10/emitted10は別cohortで、full site/実GPUや125秒combat timeout解消を証明しない。
+- targetのdirect-source promotionは旧props原本2件全bytesをimmutable fixtureへ保存し、旧正式adapter/default出力と新direct/defaultが完全一致。A+同auditは公式123入力・DIRECT18件・failure0、既ownership unit14件PASS。モデル外観/形状を再設計した成果ではなく、既存reviewed出力のsource所有位置を保つもの。本家参照version・ブキ・ギア・実機frame測定は新規未実施。
+- 直前のmain由来4011Bは出典の元bytesをそのまま保全復元した歴史記録で、今回headのCI/本家一致/whole-suite合格を追加で宣言するものではない。最終headでの全必須CI・fresh build/browser受入は別に必要であり、未受入版や保留Storm変更は含めない。
+
+### 2026-10-31 — 非同期stage待機とQA受入経路の限定修復
+
+- `patches/local-quality/title-demo-budget-adapter.mjs`：最新targetのnativeFence分岐/standalone fallbackを保持し、既ownerの `_padMenus?.(dt)` と一致するanchor1行だけを補正。stage publication pending中は既fenceがtitleのGPU密度変更・保持snapshotより先に走り、clock/network/menu入力だけを進める。fresh titleのresize先行と、hidden titleがpending-clockを迂回する条件を実composed frameで再現し、publication後の通常title動作と既30/60/90/120/144Hz回帰を保持した。guard要求・ゲーム数値・外観は変更しない。
+- CSPのQA修復は `inkwave-accepted-default-probe` とWiper/Hissen capture callerに限定。既観測関数を通常のcallableとして渡し、CSP設定/bypass/unsafe-eval/unsafe-inline追加を行わず、元の描画・出生相対phase・復元/エラー条件を保持する。projection QAは最新metadataを残したまま、正常隔離importのcontrolと変更sealの厳密import拒否を比較する。responsive QAは正規buildのtitle品質markerがある時だけ実native buttonをクリック/タップし、raw baseline経路・geometry・main遷移の要求を保持する。これらはゲームのsecurity guardを緩める修正ではない。
+- 最新targetの外部修復は履歴/原bytesごと保持し、失効した旧stage/title/Marina候補をwholefile上書きしない。旧967のA+/resource成功は旧head自身の結果であり、追加headのbrowser/CI証明には流用しない。本家Splatoon 3の参照版・ブキ・ギア・操作frame条件の新規実機比較は未測定で、本家挙動一致・FPS改善・残る全CI解消を主張しない。別GPU診断、Trizooka等の後続修復、保留Storm payloadは本便と分離する。
+- Tacticoolerの既fidelity QAは裸placementを正規生成と見なさず、実paid producer→accepted tick→JSON wire→receiver-owned native flightを使う。既1.8/1.8001・gauge/drink/duplicate・geometry/damage要求は保持し、時計差し替えはreceiver VM内だけでfinally復元する。製品runtimeのadmission変更ではない。局所122PASSと、同入力を成功peerと同じheap512条件に固定した別21PASSは別cohortであり、143一括成功とはしない。既default heap条件のSIGKILL2件を保護し、原因をOOMと断定しない。
+
+### 2026-10-31: オリジナル2ステージの幅と動線
+
+参照は任天堂の [Splatoon 3 Ver.8.0.0 更新記録](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/) にある、中央への経路と戦略的な位置の選択肢を増やす地形変更、および[公式のステージ紹介](https://www.nintendo.com/en-gb/News/2021/September/Fresh-Splatoon-3-deets-revealed-in-latest-Nintendo-Direct--2045101.html)にある立体的な歩道橋。これらは設計上の参考であり、今回のオリジナルステージの地形や寸法の再現根拠ではない。比較する特定の本家ステージ、ブキ、ギア、操作条件は未設定で、本家の距離単位との換算も未確定。
+
+`inkwave-public/src/world/maps.js` の Tidewater は範囲 84×144、Kelpline は 88×144 world 単位へ拡張し、開始地点間をそれぞれ 134.4、136 単位とした。両チーム対称の後方・外周に通路と遮蔽物を増やした。Tidewater は水路の切れ目を残し、中央高台への側面スロープを追加。Kelpline はトレンチを横切る両外周の金網と、側道から中央高台へ向かう接続坂を追加した。再現操作は各陣営から外周に進み、中央の新しい坂を通ること。中央への選択肢と塗れる面積は変化するため、射線、奪還、長射程への影響や各ルールでのバランスはプレイテストが必要。
+
+`patches/local-quality/tests/stage-route-layout.test.mjs` は実地形と小物衝突を含むナビゲーショングラフで、両陣営の新経路の足場・連結を検査する。地形描画と衝突の整合性は legacy-terrain-integrity テストで検査する。これらはロジック検査であり、本家実機との比較や人間同士の対戦検証の代わりにはならない。Switch 実機での寸法・操作感・ギア／ブキ別比較、塗りや泳ぎの実操作、CPUと各ルールの対戦バランスは未確認。
+
+### 2026-10-31: 立体的な2ステージの再設計
+
+方針の資料は [任天堂の更新記録](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/)（Ver.8.0.0で中央への複数経路と戦略位置の選択肢を増やした説明、および一部ステージで遠距離射撃の影響を抑える地形変更）と、公開コミュニティ資料の [海女美術大学](https://splatoonwiki.org/wiki/Inkblot_Art_Academy)、[マンタマリア号](https://splatoonwiki.org/wiki/Manta_Maria)、[ヒラメが丘団地](https://splatoonwiki.org/wiki/Flounder_Heights)、[金網](https://splatoonwiki.org/wiki/Grate)。資料から、平坦な広さだけでなく、見通しと遮蔽、地上と上段、登る経路と降下先をセットで考える設計を参考にした。ステージ形状の再現や、元ゲームでの有利不利の実測ではない。
+
+Tidewater の各陣営側は、2.2 mの西テラス・1.4 mの中継台・1.6 mの中央脇を連続する上段とし、後方／海側／中央脇から坂を使える。テラスの塗れる壁と上段の遮蔽、自由に降りられる縁を設け、逆側は1.8 mの独立テラスと地上路で別の選択肢とする。Kelpline は後方荷役台から前方テラスへ続く2.2 mの上層と、その下に身長1.45 mの地上路を確保。上層の短い金網はヒトで立てるがイカや弾が通り、下段に降りられる。各配置は180度回転対称。再現は両陣営から各坂を登り、上段と下段、塗れる壁、金網での落下を試す。両マップのスロープは既存ルールの中央目標およびヤグラ経路と干渉しないよう配置した。
+
+`patches/local-quality/tests/expanded-stage-movement.test.mjs` は production composition、実Actor/Physics/Projectile/PaintSystem、実dressingの衝突を使い、両陣営の坂と金網、壁射撃を検査する。30/60/120 Hz の外側フレームを含むが、ロジック単独の検証であり本家の同条件プレイではない。本家 Ver.11.3.0 との特定ブキ・ギア・状態・カメラ条件を揃えた歩行、泳ぎ、壁登り、射程・対戦バランスの比較や、人同士の試合に基づく検証は未実施。ネイティブの矩形サイズに近いことは、本家の実際の塗り面積や攻防の再現を証明しない。
+
+### 2026-10-31: PR #1985 MAP3 を通常公開ステージへ実装
+
+前段の分離設計が完成した後、利用者の追加指示に従い、Tidewater Plaza / Kelpline Terminal を公開版 `inkwave-public/` の実ステージへ接続した。設計時の基準 `b208addacc61009fba44ae973d5288b6f315f303` と今回のPR親 `b86f972e02a73b40d3e274455048015ee15d11e5` を区別し、元の設計JSON・層別図・分離ブロックアウトを保存する。直前2節の平坦な拡張案・2.2等の高度・m表記は旧案の記録であり、今回のMAP3やSI換算根拠ではない。
+
+原典は前回の4ステージ8俯瞰・画像と、今回実際に視認した Crableg Capital / Hammerhead Bridge / Shipshape Cargo Co. / Hagglefish Market / Manta Maria / Flounder Heights / MakoMart の7静止画像。任天堂 [Ver.8.0.0](https://support.nintendo.com/jp/switch/software_support/av5ja/800.html)で地形変更の版境界を確認した。発売前宣伝画像とユーザー画像の来歴・画角・ルール不明・ブキ/ギア/操作条件不明を[追加観察記録](../docs/stage-redesign/map3/art-reference-observations.md)へ記録し、動画全編・本家実機の視聴/操作計測を行ったとは扱わない。構造を説明する梁や縁、静かな塗り床と垂直面の細部、用途に沿った材質を学び、原作アセット・輪郭・寸法は複製していない。
+
+Tidewaterは5高度の段丘市場、y=4.8の短い実橋、y=0の低街路、東の展望面。Kelplineは6高度の岸壁・荷役面・乗換デッキ、中央y=3.6と下層y=0を持つ。Tidewaterには青緑の細いアーチ、曲面庇の売店、植栽の腰掛け、筋交い積み荷、Kelplineには高い斜め鋼製門、待合小屋、換気設備、荷役小物を実装。アートと同じ定義から212 / 93個の追加衝突を生成し、実床の幅や下層を塞がないことと180度対称性を検査する。AOを全追加衝突込みで再生成した。nativeの地形・資産パスは変更しない。
+
+移動/塗りへの差分: 通常Rの厚みが下層へ侵入するためthin坂へ変換し、法線厚を補正して垂直厚.6 WUを維持。既存低端.6延長は残し、名目設計との差を集計する。新しい水域で実落水、金網でヒト支持/イカ落下/弾通過を扱う。再現は両軍の正面・市場/貨物・外周経路を歩く/泳ぐ/射撃しながら移動し、金網で変身し、橋下から指定坂で復帰する。実Actor/Physics/Projectiles/PaintSystem、production composition、30/60/120Hzの228通行で検査。瞬間の身体通過10,770点、CameraRig54条件のlens/near-plane侵入0。これは画像による高さ推定や本家実機との操作一致ではない。
+
+AI/ルールへの差分: 到達できる経路が旧6,000探索上限で14件失敗したためMAP3だけ12,000へ。848有向探索を確認。アサリbotは見通しのないかごを経路があっても拒否したため、MAP3だけ実支持・身体空間・A*の経路hookを使う。両ステージ60秒内の拾得→Power化→実投擲→得点を確認し、native既存hookを維持した。ヤグラは装飾梁/他階を最高支持面と誤認しないよう設計経路高度と床/坂だけを参照。全経路1,196点、64,584固体照会、4,784乗員カプセルで干渉と不正な高所への持上げを検査した。エリアの高さ帯±.35と攻撃先goalの配列方向も新地形に合わせる。下層へ入ったときのミニマップ塗り背景を別層にし、上下の実paint cell独立性と切替を確認。全アイコンの在階表現は未実装。
+
+共通のnormal.y≥.68、境界clip、.25 WU格子で実Level+全アート衝突を抽出し、XZ和集合8,104 / 9,032 WU²、native23中央値8,037.125と比較した。スポーン間136 WU。実turfArea8,462.83 / 11,351.95 WU²は別の面別セル集計で、名目床和集合7,874.4 / 8,887.2や上下床の重なり352 / 2,208 WU²と混同しない。水平床の最多yへの集中21.85% / 26.98%を再確認し、装飾の屋根を新しい床高度に数えない。WUとmの較正は未確認。
+
+最終の実配信物をChromium/SwiftShaderで起動し、両ステージのナワバリと4ランクルール、通常の発射による塗り増加、通常カメラの橋下、下層ミニマップ選択、夕方、ステージ切替時のアート所有者解放を検査する。任意カメラの俯瞰と通常カメラを別記し、検査用の位置設定・bot停止、画像/buildのhash、生の失敗も記録する。静的モデルやCPU検査だけをブラウザ描画の代用にしない。初回の任意ミニマップ無効設定とHUD撮影時のCSS再開始は検査手順の不備として修正・記録した。最終の正確な成功結果は[実装報告・実データ](../docs/stage-redesign/map3/runtime-integration.md)を参照。
+
+残る比較: Splatoon 3 Ver.11.3.0の同条件実機での微入力・加速/停止・旋回・ジャンプ・壁登り・坂・敵インク・照準/カメラ、全ブキ/スペシャル、全配色での混戦、人間4対4の攻防・公平性、物理モバイル/Safariの性能は今回未検証。既存移動profileを使ったことや180度対称性を、本家再現や商用品質の全面保証にはしない。
+
+### 2026-10-31: PR #1985 main統合追記
+
+初回MAP3反映c4f49f5の後、main fdb74165の髪・character関連7ファイルをそのままPRへ取り込み、共有upstream-lockの競合を解消した。main側のcharacter-geo checksumとMAP3のmain.js checksumを両方保持し、既存レビュー記録を重複なく併記する。native地形・MAP3地形・造形の変更ではない。wave9 GPU12件、実source pose1件、Explosherの実銃口/射撃1件が30/60/120Hz条件を含め成功。製品ビルドとブラウザを再実行し、両ステージ全5ルール・10画像が成功、ページ例外/HTTP失敗0を確認した。詳細結果と新しいbuild識別子は実装報告に記録した。最初のc4f49f5の検証結果を異なる配信物へ流用せず、本家実機・人間対戦・実端末の未確認事項は保持する。
+
+### 2026-10-31: PR #1985 壁・街路・岸壁の追加
+
+対象は公開版Tidewater Plaza / Kelpline Terminal。任天堂公式のヤガラ市場・ゴンズイ地区・マサバ海峡大橋の紹介画像とVer.8.0.0の地形変更記録を参照し、プレイ通路に接する壁、上下路、中央へ再合流する経路を比較した。画像の撮影版・ブキ・ギアは不明であり、本家との同条件操作計測ではない。公式資料と変更前後画像は[詳細報告](../docs/stage-redesign/map3/built-space-review.md)に記録した。
+
+元PRでは内部の水の隙間が多く、長い射線を切る壁と街路が不足していた。map3-architecture.js / map3-layout.jsで地面38区画、坂10本、塗れる実壁36枚、既存路へ戻る12経路を追加し、map3-minimap.jsを新しい下層へ接続した。再現は新しい市場裏・低街路・倉庫側壁・乗り場を歩く/泳ぐ/射撃しながら移動し、実射撃で壁を塗って登り、橋下と上層を往復する。移動検査は既定shooter Actor、自インク、ギア指定なし、30/60/120Hz。壁が遮る8射線、実弾4着弾、壁登り12件、既存228＋追加108＝336通行、1,000有向経路探索、カメラ90条件を確認した。高台へ戻る選択肢と遮蔽が増えるが、対人戦の公平性を証明する測定ではない。
+
+海しぶきはmap3-water-edges.jsとfxHooks.jsで対象2ステージの陸地外周から候補を作り、実Levelの床・坂に覆われた点を構築時に除外する。638候補の実ambientを確認し、乾いた床下からの発生0、毎フレームの追加地形照会0。native等の既存経路は維持した。境界内の床/坂XZ和集合で覆われない領域はTidewater3,992→2,584、Kelpline3,640→3,016 WU²。画面の海ピクセル率や通行面積・塗り得点とは別指標。
+
+関連58テスト成功。最終製品build 87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c、content dfb970c90250495aa016af0168091445a9cd56a358fb92af92024d771e87ec8cをChromium/SwiftShaderで起動し、2ステージ×5ルールがplaying、実発射の塗り増加、下層表示、ステージアート切替を確認。ページ例外/HTTP失敗0、shader拡張未対応警告1。これは各ルールの完走、本家実機との操作一致、物理iPad/Safari FPS、人間4対4のバランス確認ではない。既存の未確認事項は保持する。生ログと計測定義は[検証集計](../docs/stage-redesign/map3/built-space-evidence/verification-summary.json)を参照。

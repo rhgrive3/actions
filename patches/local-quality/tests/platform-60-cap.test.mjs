@@ -150,13 +150,14 @@ test('mobile 60 cap aligns production driver wakeups to an absolute 60 Hz deadli
     const result = runCase(hz, { touch: true, frameRate: 'auto' });
     const gaps = result.frameTimes.slice(1).map((time, index) => time - result.frameTimes[index]);
     assert.equal(result.hostTicks, hz);
-    assert.equal(result.driverFrames, 60, `${hz} Hz controlled vsync queue: driver callback cadence`);
-    assert.equal(result.frameCalls, 60, `${hz} Hz: full composed Game._frame admissions`);
-    assert.equal(result.dynResCalls, 60, `${hz} Hz: _dynRes remains paired with each game frame`);
-    assert.equal(result.networkCalls, 60, `${hz} Hz: network cadence stays on admitted game frames`);
-    assert.equal(result.pollPadCalls, 60, `${hz} Hz: input polling stays on admitted game frames`);
-    assert.equal(result.matchUpdateCalls, 59, `${hz} Hz: installed fixed clock keeps its startup-inclusive 59 updates`);
-    assert.equal(result.endFrameCalls, 59, `${hz} Hz: input edge finalization retains fixed-clock cadence`);
+    assert.ok(Math.abs(result.driverFrames - 60) <= 1, `${hz} Hz controlled vsync queue: 60 target slots, allowing one leading boundary frame`);
+    assert.equal(result.frameCalls, result.driverFrames, `${hz} Hz: full composed Game._frame admissions`);
+    assert.equal(result.dynResCalls, result.driverFrames, `${hz} Hz: _dynRes remains paired with each game frame`);
+    assert.equal(result.networkCalls, result.driverFrames, `${hz} Hz: network cadence stays on admitted game frames`);
+    assert.equal(result.pollPadCalls, result.driverFrames, `${hz} Hz: input polling stays on admitted game frames`);
+    const elapsedTicks = Math.floor((result.frameDtSum + 1e-10) * 60);
+    assert.equal(result.matchUpdateCalls, elapsedTicks, `${hz} Hz: the fixed clock consumes exactly the admitted elapsed time`);
+    assert.equal(result.endFrameCalls, elapsedTicks, `${hz} Hz: input edge finalization retains fixed-clock cadence`);
     assert.ok(Math.abs(result.frameDtSum - result.frameTimes.at(-1) / 1000) < 1e-8, `${hz} Hz: full elapsed time between admitted frames is preserved`);
     assert.ok(result.frameDtSum > 0.95, `${hz} Hz: the deadline scheduler does not lose elapsed simulation time`);
     assert.ok(Math.min(...gaps) >= 1000 / hz - 1e-8, `${hz} Hz: no callback occurs faster than the host vsync queue`);
@@ -164,7 +165,7 @@ test('mobile 60 cap aligns production driver wakeups to an absolute 60 Hz deadli
     assert.ok(Math.abs(result.frameTimes.at(-1) / (gaps.length * 1000) - 1 / 60) < 0.001, `${hz} Hz: mean callback cadence stays near 60 Hz`);
     assert.equal(result.pendingRAF, 0, `${hz} Hz: waiting on a deadline does not keep RAF active`);
     assert.equal(result.pendingTimer, 1, `${hz} Hz: one next deadline remains pending`);
-    assert.equal(result.rafSchedules, 60);
+    assert.equal(result.rafSchedules, result.driverFrames);
     assert.equal(result.timerSchedules - result.timerWakes, 1);
     t.diagnostic(JSON.stringify({ hz, driverFrames: result.driverFrames, frameCalls: result.frameCalls,
       networkCalls: result.networkCalls, pollPadCalls: result.pollPadCalls,

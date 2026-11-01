@@ -9,8 +9,8 @@ const crc32 = zlib.crc32 || fallbackCrc32;
 
 const known = Object.freeze({
   'cargo.png': '56de109b4c842372020605b718ef84bfbcb605fff2509ab8caf26fd3c1c0b874',
-  'kelpline.png': '075078a8060ec375f046056c60eb31c84d11752fe9c8581df37d1cb9b5dfca80',
-  'tidewater.png': '5e8df3f7fe18339d786f5d72bd91071bfdf03c4d3a676d5b71d792369a202ad2',
+  'kelpline.png': 'cba5b77bb0d6466a5e07d79ab4d17841e0caa7ec2e2d3c7cac603cba36869ec9',
+  'tidewater.png': 'f83ea843d477b03706e978e42771a5f33d9e1000f6d566402e26be62030780d9',
   'halyard.png': '5452532be3a23c4dd0383f2ad3ff54cf1554cc348c5cf378ca5633433ecb11ef',
 });
 

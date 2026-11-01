@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {blasterReticleMarkup,bindBlasterReticle} from '../runtime/blaster-reticle-presentation.mjs';
 
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const SOURCE=process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT,'inkwave-public');
@@ -16,7 +17,7 @@ function reticle(kind) {
   const start=hud.indexOf('  _buildReticle(kind) {');
   const end=hud.indexOf('\n  _updCrosshair(f, dt) {',start);
   assert.ok(start>=0 && end>start,'installed reticle method');
-  const Hud=Function('return class { '+hud.slice(start,end)+' }')();
+  const Hud=Function('blasterReticleMarkup','bindBlasterReticle','return class { '+hud.slice(start,end)+' }')(blasterReticleMarkup,bindBlasterReticle);
   const h=new Hud();
   h.ret={className:'',innerHTML:'',classList:{toggle(){}},style:{setProperty(){}},querySelector(){return {remove(){},insertAdjacentHTML(_where,html){h.ret.innerHTML+=html;}};}};
   h._L={};

@@ -18,3 +18,29 @@ test('tracked source proof permits one named rollback and rejects all other edit
   fs.writeFileSync(file,actual);assert.throws(()=>captureSourceIdentity(root,head,'baseline'),/named target role/);assert.deepEqual(captureSourceIdentity(root,head,'candidate'),current);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('smudged Git LFS payload is admitted only with exact tracked pointer size and SHA-256',()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'heading-lfs-reference-contract-'));
+ const file=path.join(root,TARGET),rel='native-prebuilt/airport/faceF64.0.bin',binary=path.join(root,rel),receipt=path.join(root,'reference.json');
+ const payload=Buffer.from('audited binary payload for LFS identity check\n');
+ try{
+  fs.mkdirSync(path.dirname(file),{recursive:true});fs.mkdirSync(path.dirname(binary),{recursive:true});
+  fs.writeFileSync(file,actual);
+  fs.writeFileSync(binary,`version https://git-lfs.github.com/spec/v1\noid sha256:${hash(payload)}\nsize ${payload.length}\n`);
+  git(root,'init','--quiet');git(root,'add','.');git(root,'-c','user.name=fixture','-c','user.email=fixture@example.invalid','commit','--quiet','-m','LFS pointer identity fixture');
+  const head=git(root,'rev-parse','HEAD'),expectedPointerBlob=git(root,'rev-parse','HEAD:'+rel);
+  fs.writeFileSync(binary,payload);
+  const current=captureSourceIdentity(root,head,'candidate');
+  assert.equal(current.files[rel].gitBlob,expectedPointerBlob);
+  assert.equal(current.files[rel].sha256,hash(payload));
+  const reference=prepareReference(root,head,receipt);
+  assert(verifyIdentityPair(reference,current,head));
+  assert.deepEqual(reference.files[rel],current.files[rel]);
+  fs.writeFileSync(binary,Buffer.from('changed byte payload'));
+  assert.throws(()=>captureSourceIdentity(root,head,'baseline'),/LFS worktree (size|hash)/);
+  fs.writeFileSync(binary,Buffer.from(payload).fill(0,0,1));
+  assert.throws(()=>captureSourceIdentity(root,head,'baseline'),/LFS worktree hash/);
+  fs.writeFileSync(binary,payload);
+  assert(verifyIdentityPair(captureSourceIdentity(root,head,'baseline'),current,head));
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

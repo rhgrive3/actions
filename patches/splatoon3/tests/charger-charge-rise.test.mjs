@@ -159,3 +159,11 @@ test('disposed and closed contexts never admit outstanding decode results',async
  assert.equal(await pending,null);assert.equal(chargerRecordedStatus(a.ctx).ready,false);
  a.ctx.state='closed';assert.equal(await chargerRiseBuffer(a.ctx,{fetcher:a.fetcher}),null);
 });
+
+test('muted Charger presses keep the charge lifecycle but create no source graph or implicit preparation',async()=>{
+ const a=mock();let silent=true;const audio={ctx:a.ctx,sfxIn:{},_sfxSilent:()=>silent};
+ assert.equal(playChargerRise(audio),null);assert.equal(a.fetches.length,0);assert.equal(a.sources.length,0);
+ await chargerRiseBuffer(a.ctx,{fetcher:a.fetcher});assert.equal(a.fetches.length,1);
+ for(let i=0;i<200;i++)assert.equal(playChargerRise(audio),null);assert.equal(a.sources.length,0);assert.equal(a.connections.length,0);
+ silent=false;assert(playChargerRise(audio));assert.equal(a.sources.length,1);assert.deepEqual(a.sources[0].started,{when:2,offset:.4591,span:1.215});
+});

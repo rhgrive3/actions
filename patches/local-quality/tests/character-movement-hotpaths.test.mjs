@@ -98,8 +98,11 @@ test('MOV-03..05 and MOV-08a compose while paused MOV-08b leaves _updateSquid un
   assert.match(builtActor, /if \(intent\.jumpPressed !== undefined\) intent\.jumpPressed = false;/);
 
   const builtBots = adaptBuildSource('src/game/bots.js', read('src/game/bots.js'));
-  assert.match(builtBots, /const choices = this\._paintChoices \|\| \(this\._paintChoices = \[\]\);/);
-  assert.match(builtBots, /const tried = this\._triedGoals \|\| \(this\._triedGoals = new Set\(\)\); tried\.clear\(\);/);
+  assert.match(builtBots, /const nested = this\._paintChoicesBusy === true;/);
+  assert.match(builtBots, /const choices = nested \? \[\] : this\._paintChoices \|\| \(this\._paintChoices = \[\]\); choices\.length = 0;/);
+  assert.match(builtBots, /const tried = nested \? new Set\(\) : this\._triedGoals \|\| \(this\._triedGoals = new Set\(\)\);/);
+  assert.match(builtBots, /tried\.clear\(\);\s*for \(const choice of choices\)/);
+  assert.match(builtBots, /finally \{\s*choices\.length=0;tried\.clear\(\);if\(mates\)mates\.length=0;\s*if\(!nested\)this\._paintChoicesBusy=false;/);
 
   const builtChar = adaptBuildSource('src/game/character.js', read('src/game/character.js'));
   assert.match(builtChar, /this\.model\.matrixWorld\.decompose\(_v3, _q3, _v4\);\s*q\.copy\(_q3\)\.invert\(\)\.multiply\(_q2\);\s*_v5\.copy\(this\.root\.getWorldPosition\(_v5\)\)/, 'stopped _updateSquid climb path remains native');

@@ -28,8 +28,19 @@ function collectorInitialization(code){
 // native special-icon/reticle policies execute unchanged; this does not test
 // browser SVG visibility, which remains in the full strict browser harness.
 function element(){
- const labels={i:{innerHTML:''},b:{textContent:''}};
- return {innerHTML:'',style:{setProperty(){}},classList:{toggle(){}},querySelector:s=>labels[s],cloneNode:()=>element(),contains:()=>true};
+ const child=()=>({
+  innerHTML:'',textContent:'',dataset:{},style:{setProperty(){}},
+  classList:{add(){},remove(){},contains(){return false;},toggle(){}},
+  querySelector:()=>child(),querySelectorAll:()=>[],setAttribute(){},removeAttribute(){},insertAdjacentHTML(){},remove(){},
+  appendChild(){},contains:()=>true
+ });
+ const labels={i:child(),b:child()};
+ return {
+  innerHTML:'',textContent:'',dataset:{},style:{setProperty(){}},
+  classList:{add(){},remove(){},contains(){return false;},toggle(){}},
+  firstChild:child(),querySelector:s=>labels[s]??child(),querySelectorAll:()=>[],
+  cloneNode:()=>element(),contains:()=>true,appendChild(){},setAttribute(){},removeAttribute(){},insertAdjacentHTML(){},remove(){}
+ };
 }
 function holder(f,code){
  const h={spIcon:element(),scopeMask:element(),subChip:element()};h.spIcon.innerHTML='LIVE_NATIVE_ICON';

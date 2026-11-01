@@ -1,3 +1,4 @@
+import {consumeSupportEvent} from './support-replay-admission.mjs';
 // Receiver-owned correlation of native special-use receipts with catalogue FX.
 // A native source event is still owner-authored; this is presentation admission,
 // not server verification of the remote player's gauge or damage authority.
@@ -13,10 +14,10 @@ const actions={
  booyahBomb:'activate throw deploy active pulse impact destroy expire end',
  ultraStamp:'activate swing jumpSwing swingEnd throw block impact end',
  killerWail:'activate target laser end',zipcaster:'activate zip hookImpact return end',
- crabTank:'activate shot cannon impact end',reefslider:'activate impact end',
+ crabTank:'activate shot cannon roll impact end',reefslider:'activate impact end',
  tripleInkstrike:'activate marker deploy active pulse impact destroy expire end',
- superChump:'activate balloon deploy active impact destroy expire end',
- krakenRoyale:'activate jump end',splattercolorScreen:'activate deploy screen land move cross expire end',
+ superChump:'activate target balloon deploy active impact destroy expire end',
+ krakenRoyale:'activate jump jumpEnd end',splattercolorScreen:'activate deploy screen land move cross expire end',
  waveBreaker:'activate deploy device land pulse destroy expire end',
  tripleSplashdown:'activate fistGone impact',
 };
@@ -24,12 +25,12 @@ for(const id of Object.keys(actions))actions[id]=new Set(actions[id].split(' '))
 for(const id of ['booyahBomb','tripleInkstrike','superChump','splattercolorScreen','waveBreaker'])actions[id].add('hit');
 function state(nm){let s=states.get(nm);if(!s||s.match!==nm.match||s.session!==nm.s){s={match:nm.match,session:nm.s,actors:new WeakMap(),pending:[],order:0};states.set(nm,s);}return s;}
 function actorState(nm,actor){const s=state(nm),peer=nm.peers?.get(actor.owner);let a=s.actors.get(actor);if(!a||a.owner!==actor.owner||a.net!==actor.net||a.peer!==peer){a={owner:actor.owner,net:actor.net,peer,tickets:[],activations:new Map(),legacyUseTime:-Infinity};s.actors.set(actor,a);}return a;}
-function prune(a,t){a.tickets=a.tickets.filter(r=>t-r.at<TTL);}
+function prune(a,t){if(a.tickets.length)a.tickets=a.tickets.filter(r=>t-r.at<TTL);}
 export function captureLegacySpecialFrames(nm,from,packet,previousTimestamp){
  const peer=nm.peers?.get(from);
  if(packet?.r===2||!Number.isFinite(packet?.ts)||packet.ts<=previousTimestamp||peer?.lastTs!==packet.ts||!Array.isArray(packet.e))return;
  for(const event of packet.e){
-  if(!Array.isArray(event)||!peer.events.includes(event))continue;
+  if(!Array.isArray(event)||!((event[1]==='ev'&&event[2]==='special:use')||(event[1]==='ac'&&event[2]==='special'))||!peer.events.includes(event))continue;
   const nid=event[1]==='ev'&&event[2]==='special:use'?event[3]?.actor?.n
    :event[1]==='ac'&&event[2]==='special'?event[3]:null;
   const actor=nm.byNid?.get(nid),sample=actor?.net?.buf?.findLast(s=>s.t===packet.ts);
@@ -60,11 +61,13 @@ export function observeNativeSpecialUse(nm,from,event,previousSequence){
   if(!played?.accepted||played.event!==event||played.from!==from||!Number.isFinite(event[0]))return false;
  }else if(!Number.isSafeInteger(event._netSeq)||event._netSeq<=previousSequence
    ||nm.peers?.get(from)?._lastEventSeq!==event._netSeq)return false;
+ const native=consumeSupportEvent(nm,from,event,actor);
+ if(id==='splattercolorScreen'&&!native)return false;
  const a=actorState(nm,actor),t=clock();prune(a,t);
  if(legacy&&event[0]<=a.legacyUseTime)return false;
  if(legacy){a.legacyUseTime=event[0];legacy.order=++state(nm).order;}
  a.tickets.push({id,life:life(actor),at:t,ts:event[0],seq:event._netSeq,tick:event._netTick,
-  legacy:!!legacy,order:legacy?.order,authorized:actor.weapon?.special===id,used:false});
+  legacy:!!legacy,order:legacy?.order,authorized:actor.weapon?.special===id,used:false,native});
  if(a.tickets.length>8)a.tickets.shift();return true;
 }
 function admission(nm,actor,event,payload,api,t){
@@ -90,12 +93,12 @@ function admission(nm,actor,event,payload,api,t){
    &&(r.authorized||actor.weapon?.special===r.id));
  if(!receipt)return null;
  receipt.used=true;receipt.authorized=true;
- activation={life:life(actor),at:receipt.at,activated:payload.action==='activate'};a.activations.set(key,activation);
+ activation={life:life(actor),at:receipt.at,activated:payload.action==='activate',native:receipt.native};a.activations.set(key,activation);
  while(a.activations.size>MAX_ACTIVATIONS)a.activations.delete(a.activations.keys().next().value);
  return true;
 }
 export function admitCatalogueSpecial(nm,from,actor,event,payload,api,replay){
- const s=state(nm),t=clock();s.pending=s.pending.filter(p=>t-p.at<WAIT&&p.actor.owner===p.from&&p.actor.remote&&life(p.actor)===p.life);
+ const s=state(nm),t=clock();if(s.pending.length)s.pending=s.pending.filter(p=>t-p.at<WAIT&&p.actor.owner===p.from&&p.actor.remote&&life(p.actor)===p.life);
  const result=admission(nm,actor,event,payload,api,t);
  if(result===true)return true;
  if(result===null&&s.pending.length<MAX_PENDING&&(Number.isSafeInteger(event._netSeq??event[7])||legacyFrame(nm,actor,event)))
@@ -103,11 +106,18 @@ export function admitCatalogueSpecial(nm,from,actor,event,payload,api,replay){
  return false;
 }
 export function flushCatalogueSpecials(nm,api){
- const s=state(nm),pending=s.pending;s.pending=[];const t=clock();
+ const s=state(nm);if(!s.pending.length)return;
+ const pending=s.pending;s.pending=[];const t=clock();
  for(const p of pending){
   if(t-p.at>=WAIT||p.actor.owner!==p.from||!p.actor.remote||life(p.actor)!==p.life)continue;
   const admitted=admission(nm,p.actor,p.event,p.payload,api,t);
   if(admitted===true)p.replay(p.payload);
   else if(admitted===null&&s.pending.length<MAX_PENDING)s.pending.push(p);
  }
+}
+export function nativeCatalogueSpecialActivation(nm,actor,payload){
+ const s=states.get(nm),a=s?.actors.get(actor);
+ if(!s||s.session!==nm.s||s.match!==nm.match||!a||a.owner!==actor.owner||a.net!==actor.net||a.peer!==nm.peers?.get(actor.owner)||nm._disposed)return null;
+ const r=a.activations.get(payload.id+':'+payload.activation);
+ return r&&r.life===life(actor)?r.native||null:null;
 }

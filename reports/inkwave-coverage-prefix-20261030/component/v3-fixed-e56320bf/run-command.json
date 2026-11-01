@@ -1,0 +1,22 @@
+{
+  "cwd": "/workspace/actions-coverage-opt",
+  "args": [
+    "node",
+    ".ci-scratch/benchmark-coverage-v3.mjs",
+    "--source-sha",
+    "e56320bfd6c043187744f813c08297a3d2be9758",
+    "--loops",
+    "4",
+    "--rounds",
+    "2",
+    "--warmup-rounds",
+    "6",
+    "--out",
+    ".ci-scratch/coverage-component-v3-fixed"
+  ],
+  "harnessSha256": "eac7b207a5dfa9b9be38696aabef3634b00b4a1cac98dde7ce84f0f2ebe6698c",
+  "nativeInputSha256": "1fc1eb9de12645487f304f5a145658eac9ce833a1cd5198e51a5c4a0d0278840",
+  "warmupReplaysPerVariant": 12,
+  "windows": 32,
+  "measurement": "Node emitted scoring component using fixed native ownership-array history; no browser/GPU/FPS claim"
+}

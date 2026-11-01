@@ -1,4 +1,5 @@
 import { ALL_SUB_SPECS, applySubObjectHit } from '../all-subs.mjs';
+import { bindRainmakerDeviceSource } from './rainmaker-device-contact.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes, kitBarrierCandidate } from '../kit-big-bubbler.mjs';
 
 export function rainmakerDomeBlast(api, at, from, owner, team, radius, nearRadius, nearDamage, farDamage, walls) {
@@ -33,7 +34,7 @@ export function rainmakerDomeBlast(api, at, from, owner, team, radius, nearRadiu
 // paint authority remains the ranked host; only its owning client proposes
 // native object HP, including the guest's visual-only projectile replay.
 const wallBlastSetPool = [];
-export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nearDamage, farDamage, impactWall = null) {
+export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nearDamage, farDamage, impactWall = null, deviceShot = null) {
   const { G, THREE } = api, walls = [], wallHits = [];
   const objects = wallBlastSetPool.pop() || new Set();
   try {
@@ -60,6 +61,7 @@ export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nea
   }
   if (owner && owner.remote !== true) {
     const source = { owner, team, pos: at, wid: 'rainmaker', type: 'rainmaker-blast', ghost: false };
+    if (deviceShot) bindRainmakerDeviceSource(deviceShot, source);
     const damageAt = distance => distance <= nearRadius ? nearDamage : farDamage;
     // Share native device geometry, source rates and ownership with ordinary
     // blasts, including native Sprinkler and deployed special devices.

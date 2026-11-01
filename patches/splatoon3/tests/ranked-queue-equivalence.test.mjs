@@ -5,6 +5,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import { RankedEngine } from '../runtime/ranked/engine.mjs';
 import { ClamsRule } from '../runtime/ranked/clams.mjs';
 import { firstThreeFinite } from '../runtime/ranked/coordinates.mjs';
+import { OWNED_RANKED_BLOCKED } from '../runtime/ranked/frame-ownership.mjs';
 import { sphereEntry, sphereEntryComponents } from '../runtime/ranked/combat.mjs';
 import { nativePaintGoalIds } from '../../native-stages/runtime/native-bots.mjs';
 const frozen = JSON.parse(fs.readFileSync(new URL('./fixtures/ranked-queue-baseline-c0938a3f.json', import.meta.url)));
@@ -233,7 +234,7 @@ test('settled Tower count memo invalidates progress edits, engine overrides and 
  rule._updateCounts(rule.metrics);rule._updateCounts(rule.metrics);assert.equal(calls,2,'custom setter side effects keep their original call cadence');
  engine.setCount=setCount;const snapshot=rule.snapshot();rule.restore(snapshot);assert.equal(rule._countMemo,null);
 });
-const loadRankedPlanning = source => new Function('firstThreeFinite',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {rainmakerBarrierApproach,towerApproachPath,clamThrowAim};')(firstThreeFinite);
+const loadRankedPlanning = source => new Function('firstThreeFinite','OWNED_RANKED_BLOCKED',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {rainmakerBarrierApproach,towerApproachPath,clamThrowAim};')(firstThreeFinite,OWNED_RANKED_BLOCKED);
 const planning=[loadRankedPlanning(old('patches/splatoon3/runtime/ranked/bots.mjs')),loadRankedPlanning(current('patches/splatoon3/runtime/ranked/bots.mjs'))];
 test('stable approach heap preserves selected shield node and exact attempted A* order', () => {
  const r=random(491);

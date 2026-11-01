@@ -1,0 +1,89 @@
+  _buildZoneIndex() {
+    const faces = this.paint?.paintFaces;
+    const zones = this.stage?.zones || [];
+    this._zoneCells = zones.map(() => []);
+    if (!Array.isArray(faces) || !this.paint?.grid) return;
+    const p = new this.THREE.Vector3();
+    let zoneBounds;
+    for (const face of faces) {
+      // PaintSystem includes walls and overhangs in its atlas. Turf ratios use
+      // only exposed, upward paint cells, excluding cells hidden by geometry.
+      if (!face?.turf || face.n?.y <= 0.7 || !Number.isInteger(face.grid) || face.grid < 0) continue;
+      for (let j = 0; j < face.nv; j++) for (let i = 0; i < face.nu; i++) {
+        const cell = face.grid + j * face.nu + i;
+        if (this.paint.dead?.[cell]) continue;
+        floorCellCenter(face, i, j, p);
+        zoneBounds ||= zones.map(zone => {
+          const [cx, cy, cz] = zone.center, [width, depth] = zone.size;
+          return { minX: cx - width / 2 - EPSILON, maxX: cx + width / 2 + EPSILON,
+            minZ: cz - depth / 2 - EPSILON, maxZ: cz + depth / 2 + EPSILON, cy,
+            height: finite(zone.heightTolerance) ? Math.max(0, zone.heightTolerance) + EPSILON : Infinity };
+        });
+        for (let index = 0; index < zones.length; index++) {
+          const bounds = zoneBounds[index];
+          // Source-calibrated zones mark a floor band. Do not count a box top
+          // or another storey merely because it overlaps that floor in X/Z.
+          if (Math.abs(p.y - bounds.cy) > bounds.height) continue;
+          if (p.x < bounds.minX || p.x > bounds.maxX || p.z < bounds.minZ || p.z > bounds.maxZ) continue;
+          this._zoneCells[index].push(Object.freeze(new RankedZoneCell(face, cell, face.cu * face.cv, i, j)));
+        }
+      }
+    }
+    // These published lists/areas cannot change in place. A custom or replaced
+    // index has no private total and takes the original ordered sum below.
+    for (const cells of this._zoneCells) {
+      let total = 0; for (const entry of cells) total += entry.area;
+      Object.freeze(cells); zoneAreaTotals.set(cells, total);
+    }
+  }
+
+  zoneCoverage() {
+    const zones = this.stage?.zones || [], paint = this.paint, grid = paint?.grid;
+    const turfVersion = paint?._s3ObservedPaintVersion === paint?.version && finite(paint?._s3TurfVersion);
+    const version = turfVersion ? paint._s3TurfVersion : paint?.version;
+    const cached = this._zoneCoverageCache;
+    if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
+      && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
+    const value = zones.map((_, index) => {
+      const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
+      let totalArea=total === undefined ? 0 : total, teamOneArea=0, teamTwoArea=0;
+      for (const entry of cells || []) {
+        if (total === undefined) totalArea += entry.area;
+        const team = this.paint.grid[entry.cell];
+        if (team === 1) teamOneArea += entry.area;
+        else if (team === 2) teamTwoArea += entry.area;
+      }
+      const a = totalArea <= 0 ? 0 : teamOneArea / totalArea;
+      const b = totalArea <= 0 ? 0 : teamTwoArea / totalArea;
+      return grid && finite(version) ? createZoneCoveragePair(a, b) : [a, b];
+    });
+    if (grid && finite(version)) {
+      // Production clear, stamped paint and owner replay all advance version.
+      // A replaced grid/index invalidates even if its numeric version repeats.
+      for (const pair of value) Object.freeze(pair); Object.freeze(value);
+      this._zoneCoverageCache = { paint, grid, version, turfVersion, cells: this._zoneCells, zones, value };
+    }
+    return value;
+  }
+
+  captureZone(index, team) {
+    if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
+    let claimed = 0, lastFace = null, radius = 0;
+    for (const entry of this._zoneCells[index] || []) {
+      const { face, cell, i, j } = entry;
+      const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
+      // Use the native splat path (CPU grid, ink atlas, and online splat
+      // recording) restricted to each live turf face. Each exposed cell gets a
+      // centered stamp, so capture never reaches walls or a hidden floor.
+      if (face !== lastFace) {
+        radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
+        lastFace = face;
+      }
+      claimed += this.paint.splat(center, radius, team, {
+        seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
+        kind: 'blast', instant: true, face: face.id,
+      }) || 0;
+    }
+    return claimed;
+  }
+

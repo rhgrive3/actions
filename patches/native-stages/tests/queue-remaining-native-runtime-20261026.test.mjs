@@ -1,3 +1,4 @@
+import * as nativeWork from '../runtime/native-work.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {webcrypto,createHash} from 'node:crypto';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 const source=fs.readFileSync(new URL('../runtime/native-load.mjs',import.meta.url),'utf8');
@@ -45,7 +46,7 @@ test('prepared binary failure stops admission and preserves the first error whil
 });
 
 test('ink tile membership narrows at exactly 65536 tiles and keeps draw offsets Uint32',()=>{
- const text=fs.readFileSync(new URL('../runtime/native-ink-chunks.mjs',import.meta.url),'utf8'),{NativeInkMesh,partitionNativeInk}=new Function('THREE',text.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {NativeInkMesh,partitionNativeInk};')(THREE);
+ const text=fs.readFileSync(new URL('../runtime/native-ink-chunks.mjs',import.meta.url),'utf8'),{NativeInkMesh,partitionNativeInk}=new Function('THREE','consumeNativeWork','consumeNativeWorkAsync',text.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {NativeInkMesh,partitionNativeInk};')(THREE,nativeWork.consumeNativeWork,nativeWork.consumeNativeWorkAsync);
  for(const count of [3,65536,65537]){
   const p=new Float32Array(count*9);for(let i=0;i<count;i++)p.set([i*32,0,0,i*32+1,0,0,i*32,0,1],i*9);const geometry=new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(p,3)),mesh=new NativeInkMesh(geometry,new THREE.MeshBasicMaterial());
   assert.equal(mesh.chunks.length,count);assert.equal(mesh._triangleTile.constructor.name,count<=65536?'Uint16Array':'Uint32Array');assert.equal(mesh._runTiles.constructor,mesh._triangleTile.constructor);assert.equal(mesh._triangleTile[count-1],count-1);assert.ok(mesh._runStarts instanceof Uint32Array);assert.ok(mesh._runEnds instanceof Uint32Array);assert.equal(mesh._runEnds[count-1],count*3);

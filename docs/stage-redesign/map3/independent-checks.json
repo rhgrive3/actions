@@ -1,0 +1,2830 @@
+{
+  "method": "Independent code, only isolated design builders loaded. No geometry.py/public runtime import. Rectangle clipping is exact for line/box and line/linear-ramp. Standing support uses 97 radial samples; objectives are point markers with reviewer assumed r=.675/h=1.6 body, not full game objects.",
+  "designs": {
+    "tidewater": {
+      "modelSha256": "7a6ec671c6090c5413083710e3c279ac1123234a456cf3e2a9b095ae213d0827",
+      "objectives": {
+        "points": [
+          {
+            "id": "A_spawn",
+            "point": [
+              0,
+              4.8,
+              -68
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "B_spawn",
+            "point": [
+              0,
+              4.8,
+              68
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "rainmaker_center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "checkpoint_0",
+            "point": [
+              7,
+              1.2,
+              -25
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "checkpoint_1",
+            "point": [
+              -7,
+              1.2,
+              25
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "goal_0",
+            "point": [
+              8,
+              3.6,
+              -50
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "goal_1",
+            "point": [
+              -8,
+              3.6,
+              50
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "basket_0",
+            "point": [
+              -12,
+              3.6,
+              -49
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "basket_1",
+            "point": [
+              12,
+              3.6,
+              49
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_0",
+            "point": [
+              -24,
+              2.4,
+              -36
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_1",
+            "point": [
+              24,
+              2.4,
+              36
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_2",
+            "point": [
+              22,
+              1.2,
+              -30
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_3",
+            "point": [
+              -22,
+              1.2,
+              30
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_4",
+            "point": [
+              -25,
+              0,
+              -22
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_5",
+            "point": [
+              25,
+              0,
+              22
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_6",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "standingFootprintFailures": []
+          }
+        ],
+        "zones": [
+          {
+            "index": 0,
+            "rect": [
+              -4,
+              4,
+              -4,
+              4
+            ],
+            "y": 0.0,
+            "area": 64,
+            "unsupportedArea": 0.0,
+            "obstacleFootprintArea": 0.0,
+            "additionalSolidLayerArea": 0.0,
+            "additionalLayers": []
+          }
+        ]
+      },
+      "overlaps": {
+        "pairs": [
+          {
+            "lower": "A_low_street",
+            "upper": "A_market_hall",
+            "rect": [
+              -28,
+              -24,
+              -18,
+              -6
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_west_underpass",
+            "upper": "A_market_grate",
+            "rect": [
+              -30,
+              -24,
+              -6,
+              0
+            ],
+            "area": 36,
+            "minClearance": 4.2,
+            "upperMaterial": "grate",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_basin",
+            "upper": "A_market_bridge",
+            "rect": [
+              -16,
+              -8,
+              -6,
+              0
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_west_underpass",
+            "upper": "A_market_bridge",
+            "rect": [
+              -24,
+              -16,
+              -6,
+              0
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "B_low_street",
+            "upper": "B_market_hall",
+            "rect": [
+              24,
+              28,
+              6,
+              18
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_east_underpass",
+            "upper": "B_market_grate",
+            "rect": [
+              24,
+              30,
+              0,
+              6
+            ],
+            "area": 36,
+            "minClearance": 4.2,
+            "upperMaterial": "grate",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_basin",
+            "upper": "B_market_bridge",
+            "rect": [
+              8,
+              16,
+              0,
+              6
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "C_east_underpass",
+            "upper": "B_market_bridge",
+            "rect": [
+              16,
+              24,
+              0,
+              6
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          }
+        ],
+        "coplanarOrCrossingOverlaps": [],
+        "bodyHeight1_6Failures": [],
+        "staticPivotPlusProbeFailures": []
+      },
+      "routeEndpointAudit": [
+        {
+          "id": "A_direct",
+          "start": [
+            0,
+            4.8,
+            -68
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 87.14792268082155,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "A_market",
+          "start": [
+            0,
+            4.8,
+            -68
+          ],
+          "end": [
+            -10,
+            4.8,
+            -3
+          ],
+          "length3D": 115.24579293103376,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_low",
+          "start": [
+            -4,
+            1.2,
+            -26
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 71.74492626304755,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "A_east",
+          "start": [
+            0,
+            4.8,
+            -68
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 119.56303456326093,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "A_market_return",
+          "start": [
+            -25,
+            0,
+            -3
+          ],
+          "end": [
+            -16,
+            4.8,
+            -3
+          ],
+          "length3D": 46.04264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_mesh_recovery",
+          "start": [
+            -27,
+            0,
+            -3
+          ],
+          "end": [
+            -16,
+            4.8,
+            -3
+          ],
+          "length3D": 48.04264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_bridge_recovery",
+          "start": [
+            -6.8,
+            0,
+            -3
+          ],
+          "end": [
+            -16,
+            4.8,
+            -3
+          ],
+          "length3D": 64.24264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_direct",
+          "start": [
+            0,
+            4.8,
+            68
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 87.14792268082155,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "B_market",
+          "start": [
+            0,
+            4.8,
+            68
+          ],
+          "end": [
+            10,
+            4.8,
+            3
+          ],
+          "length3D": 115.24579293103376,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_low",
+          "start": [
+            4,
+            1.2,
+            26
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 71.74492626304755,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "B_east",
+          "start": [
+            0,
+            4.8,
+            68
+          ],
+          "end": [
+            0,
+            0,
+            0
+          ],
+          "length3D": 119.56303456326093,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "B_market_return",
+          "start": [
+            25,
+            0,
+            3
+          ],
+          "end": [
+            16,
+            4.8,
+            3
+          ],
+          "length3D": 46.04264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_mesh_recovery",
+          "start": [
+            27,
+            0,
+            3
+          ],
+          "end": [
+            16,
+            4.8,
+            3
+          ],
+          "length3D": 48.04264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_bridge_recovery",
+          "start": [
+            6.8,
+            0,
+            3
+          ],
+          "end": [
+            16,
+            4.8,
+            3
+          ],
+          "length3D": 64.24264068711929,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        }
+      ],
+      "geometricSightlines": {
+        "pointOffset": 1.4,
+        "lines": [
+          {
+            "view": "A_market_hall",
+            "target": "A_spawn",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              -68
+            ],
+            "clear": false,
+            "distance": 64.40496875241847,
+            "blocker": "A_spawn_front_screen"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "B_spawn",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              68
+            ],
+            "clear": false,
+            "distance": 82.87339742040264,
+            "blocker": "B_spawn_front_screen"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "center",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              0,
+              1.4,
+              0
+            ],
+            "clear": false,
+            "distance": 30.117104774529707,
+            "blocker": "A_market_return"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "A_main_entry",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              4,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 32.41974706872341,
+            "blocker": null
+          },
+          {
+            "view": "A_market_hall",
+            "target": "B_main_entry",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              -4,
+              1.4,
+              8
+            ],
+            "clear": false,
+            "distance": 30.38157336281319,
+            "blocker": "A_market_bridge"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "A_low_exit",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              -25,
+              1.4,
+              -3
+            ],
+            "clear": false,
+            "distance": 9.002221947941518,
+            "blocker": "A_market_hall"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "B_low_exit",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              25,
+              1.4,
+              3
+            ],
+            "clear": false,
+            "distance": 54.78174878552162,
+            "blocker": "A_market_bridge"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "A_east_low",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              13,
+              1.4,
+              -10
+            ],
+            "clear": true,
+            "distance": 41.28001937984041,
+            "blocker": null
+          },
+          {
+            "view": "A_market_hall",
+            "target": "B_east_low",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              -13,
+              1.4,
+              10
+            ],
+            "clear": false,
+            "distance": 25.456629784792803,
+            "blocker": "A_market_bridge"
+          },
+          {
+            "view": "A_market_hall",
+            "target": "B_bridge_tip",
+            "start": [
+              -28,
+              6.199999999999999,
+              -10
+            ],
+            "end": [
+              10,
+              6.199999999999999,
+              3
+            ],
+            "clear": true,
+            "distance": 40.162171256046406,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "A_spawn",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              -68
+            ],
+            "clear": false,
+            "distance": 65.76473218982953,
+            "blocker": "A_spawn_front_screen"
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "B_spawn",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              68
+            ],
+            "clear": false,
+            "distance": 71.7007670809734,
+            "blocker": "B_spawn_front_screen"
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "center",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              0,
+              1.4,
+              0
+            ],
+            "clear": true,
+            "distance": 11.49086593777858,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "A_main_entry",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              4,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 15.621779668142807,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "B_main_entry",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              -4,
+              1.4,
+              8
+            ],
+            "clear": true,
+            "distance": 13.417898494175606,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "A_low_exit",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              -25,
+              1.4,
+              -3
+            ],
+            "clear": false,
+            "distance": 15.749285698088025,
+            "blocker": "A_market_bridge"
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "B_low_exit",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              25,
+              1.4,
+              3
+            ],
+            "clear": true,
+            "distance": 35.83350387556316,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "A_east_low",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              13,
+              1.4,
+              -10
+            ],
+            "clear": true,
+            "distance": 24.5161171477051,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "B_east_low",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              -13,
+              1.4,
+              10
+            ],
+            "clear": true,
+            "distance": 14.178857499812882,
+            "blocker": null
+          },
+          {
+            "view": "A_bridge_tip",
+            "target": "B_bridge_tip",
+            "start": [
+              -10,
+              6.199999999999999,
+              -3
+            ],
+            "end": [
+              10,
+              6.199999999999999,
+              3
+            ],
+            "clear": true,
+            "distance": 20.8806130178211,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "A_spawn",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              -68
+            ],
+            "clear": false,
+            "distance": 61.785435176908805,
+            "blocker": "A_spawn_front_screen"
+          },
+          {
+            "view": "A_belvedere",
+            "target": "B_spawn",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              68
+            ],
+            "clear": false,
+            "distance": 87.32376537919102,
+            "blocker": "B_spawn_front_screen"
+          },
+          {
+            "view": "A_belvedere",
+            "target": "center",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              0,
+              1.4,
+              0
+            ],
+            "clear": false,
+            "distance": 33.301051034464365,
+            "blocker": "B_mid_screen"
+          },
+          {
+            "view": "A_belvedere",
+            "target": "A_main_entry",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              4,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 26.92508124407427,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "B_main_entry",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              -4,
+              1.4,
+              8
+            ],
+            "clear": true,
+            "distance": 40.65661077856835,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "A_low_exit",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              -25,
+              1.4,
+              -3
+            ],
+            "clear": true,
+            "distance": 56.204626144117356,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "B_low_exit",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              25,
+              1.4,
+              3
+            ],
+            "clear": true,
+            "distance": 18.08203528367313,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "A_east_low",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              13,
+              1.4,
+              -10
+            ],
+            "clear": true,
+            "distance": 17.83143292054792,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "B_east_low",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              -13,
+              1.4,
+              10
+            ],
+            "clear": true,
+            "distance": 49.37570252664766,
+            "blocker": null
+          },
+          {
+            "view": "A_belvedere",
+            "target": "B_bridge_tip",
+            "start": [
+              30,
+              5.0,
+              -14
+            ],
+            "end": [
+              10,
+              6.199999999999999,
+              3
+            ],
+            "clear": true,
+            "distance": 26.276224995230955,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "A_spawn",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              -68
+            ],
+            "clear": false,
+            "distance": 61.51455112410396,
+            "blocker": "A_spawn_front_screen"
+          },
+          {
+            "view": "A_low_street",
+            "target": "B_spawn",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              68
+            ],
+            "clear": false,
+            "distance": 83.95260567725101,
+            "blocker": "B_spawn_front_screen"
+          },
+          {
+            "view": "A_low_street",
+            "target": "center",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              0,
+              1.4,
+              0
+            ],
+            "clear": true,
+            "distance": 27.730849247724095,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "A_main_entry",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              4,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 29.274562336608895,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "B_main_entry",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              -4,
+              1.4,
+              8
+            ],
+            "clear": true,
+            "distance": 29.0,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "A_low_exit",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              -25,
+              1.4,
+              -3
+            ],
+            "clear": true,
+            "distance": 9.0,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "B_low_exit",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              25,
+              1.4,
+              3
+            ],
+            "clear": false,
+            "distance": 52.20153254455275,
+            "blocker": "B_mid_screen"
+          },
+          {
+            "view": "A_low_street",
+            "target": "A_east_low",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              13,
+              1.4,
+              -10
+            ],
+            "clear": true,
+            "distance": 38.05259518088089,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "B_east_low",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              -13,
+              1.4,
+              10
+            ],
+            "clear": true,
+            "distance": 25.059928172283335,
+            "blocker": null
+          },
+          {
+            "view": "A_low_street",
+            "target": "B_bridge_tip",
+            "start": [
+              -25,
+              1.4,
+              -12
+            ],
+            "end": [
+              10,
+              6.199999999999999,
+              3
+            ],
+            "clear": true,
+            "distance": 38.380203230311324,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "A_spawn",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              -68
+            ],
+            "clear": false,
+            "distance": 42.15400336860071,
+            "blocker": "A_spawn_front_screen"
+          },
+          {
+            "view": "A_lower_court",
+            "target": "B_spawn",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              0,
+              6.199999999999999,
+              68
+            ],
+            "clear": false,
+            "distance": 94.0689109110975,
+            "blocker": "B_spawn_front_screen"
+          },
+          {
+            "view": "A_lower_court",
+            "target": "center",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              0,
+              1.4,
+              0
+            ],
+            "clear": true,
+            "distance": 26.027677575995902,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "A_main_entry",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              4,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 18.478095139921756,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "B_main_entry",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              -4,
+              1.4,
+              8
+            ],
+            "clear": true,
+            "distance": 34.25551050561063,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "A_low_exit",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              -25,
+              1.4,
+              -3
+            ],
+            "clear": true,
+            "distance": 33.99176370828675,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "B_low_exit",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              25,
+              1.4,
+              3
+            ],
+            "clear": true,
+            "distance": 38.30717948374691,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "A_east_low",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              13,
+              1.4,
+              -10
+            ],
+            "clear": true,
+            "distance": 20.650423724466286,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "B_east_low",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              -13,
+              1.4,
+              10
+            ],
+            "clear": true,
+            "distance": 38.29412487575607,
+            "blocker": null
+          },
+          {
+            "view": "A_lower_court",
+            "target": "B_bridge_tip",
+            "start": [
+              0,
+              2.5999999999999996,
+              -26
+            ],
+            "end": [
+              10,
+              6.199999999999999,
+              3
+            ],
+            "clear": true,
+            "distance": 30.88624289226516,
+            "blocker": null
+          }
+        ],
+        "note": "Sparse review witnesses only. Straight zero-width rays, solid floor/ramp/cover volumes. Grates ignored. No weapon range, gravity, spread, ink, animation, camera boom, posture, reaction or team simulation. Clear does not mean hittable or dominant."
+      }
+    },
+    "kelpline": {
+      "modelSha256": "c614bffa973379a839e406780b04d97ce74cf81663f572a748bde04bc65886f4",
+      "objectives": {
+        "points": [
+          {
+            "id": "A_spawn",
+            "point": [
+              0,
+              6,
+              -68
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "B_spawn",
+            "point": [
+              0,
+              6,
+              68
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "rainmaker_center",
+            "point": [
+              0,
+              3.6,
+              0
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "checkpoint_0",
+            "point": [
+              0,
+              3.6,
+              -35
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "checkpoint_1",
+            "point": [
+              0,
+              3.6,
+              35
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "goal_0",
+            "point": [
+              0,
+              4.8,
+              -54
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "goal_1",
+            "point": [
+              0,
+              4.8,
+              54
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "basket_0",
+            "point": [
+              0,
+              4.8,
+              -54
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "basket_1",
+            "point": [
+              0,
+              4.8,
+              54
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_0",
+            "point": [
+              -18,
+              0,
+              -16
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_1",
+            "point": [
+              18,
+              0,
+              16
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_2",
+            "point": [
+              24,
+              2.4,
+              -32
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_3",
+            "point": [
+              -24,
+              2.4,
+              32
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_4",
+            "point": [
+              -26,
+              6,
+              -48
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_5",
+            "point": [
+              26,
+              6,
+              48
+            ],
+            "standingFootprintFailures": []
+          },
+          {
+            "id": "clam_6",
+            "point": [
+              0,
+              3.6,
+              0
+            ],
+            "standingFootprintFailures": []
+          }
+        ],
+        "zones": [
+          {
+            "index": 0,
+            "rect": [
+              -18,
+              -12,
+              -6,
+              2
+            ],
+            "y": 0,
+            "area": 48,
+            "unsupportedArea": 0.0,
+            "obstacleFootprintArea": 0.0,
+            "additionalSolidLayerArea": 0.0,
+            "additionalLayers": []
+          },
+          {
+            "index": 1,
+            "rect": [
+              12,
+              18,
+              -2,
+              6
+            ],
+            "y": 0,
+            "area": 48,
+            "unsupportedArea": 0.0,
+            "obstacleFootprintArea": 0.0,
+            "additionalSolidLayerArea": 0.0,
+            "additionalLayers": []
+          }
+        ]
+      },
+      "overlaps": {
+        "pairs": [
+          {
+            "lower": "A_low_quay",
+            "upper": "A_high_neck",
+            "rect": [
+              -38,
+              -30,
+              -58,
+              -52
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "B_low_quay",
+            "upper": "B_high_neck",
+            "rect": [
+              30,
+              38,
+              52,
+              58
+            ],
+            "area": 48,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "A_low_quay",
+            "upper": "A_high_gantry",
+            "rect": [
+              -38,
+              -20,
+              -52,
+              -34
+            ],
+            "area": 324,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "B_low_quay",
+            "upper": "B_high_gantry",
+            "rect": [
+              20,
+              38,
+              34,
+              52
+            ],
+            "area": 324,
+            "minClearance": 4.2,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 2.35,
+            "pivotPlusProbeMargin": 1.73
+          },
+          {
+            "lower": "A_low_quay",
+            "upper": "A_high_to_concourse",
+            "rect": [
+              -30,
+              -20,
+              -58,
+              -54
+            ],
+            "area": 40,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "B_low_quay",
+            "upper": "B_high_to_concourse",
+            "rect": [
+              20,
+              30,
+              54,
+              58
+            ],
+            "area": 40,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "A_service",
+            "upper": "A_boarding_main",
+            "rect": [
+              -22,
+              0,
+              -28,
+              -10
+            ],
+            "area": 396,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "B_service",
+            "upper": "B_boarding_main",
+            "rect": [
+              0,
+              22,
+              10,
+              28
+            ],
+            "area": 396,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "A_service",
+            "upper": "A_boarding_west",
+            "rect": [
+              -30,
+              -22,
+              -22,
+              -10
+            ],
+            "area": 96,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "B_service",
+            "upper": "B_boarding_west",
+            "rect": [
+              22,
+              30,
+              10,
+              22
+            ],
+            "area": 96,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "A_service",
+            "upper": "A_boarding_grate",
+            "rect": [
+              -30,
+              -22,
+              -28,
+              -22
+            ],
+            "area": 48,
+            "minClearance": 3.45,
+            "upperMaterial": "grate",
+            "standingPivotNominalMargin": 1.6,
+            "pivotPlusProbeMargin": 0.9800000000000001
+          },
+          {
+            "lower": "B_service",
+            "upper": "B_boarding_grate",
+            "rect": [
+              22,
+              30,
+              22,
+              28
+            ],
+            "area": 48,
+            "minClearance": 3.45,
+            "upperMaterial": "grate",
+            "standingPivotNominalMargin": 1.6,
+            "pivotPlusProbeMargin": 0.9800000000000001
+          },
+          {
+            "lower": "central_service",
+            "upper": "central_west",
+            "rect": [
+              -12,
+              -4,
+              -10,
+              10
+            ],
+            "area": 160,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "central_service",
+            "upper": "central_east",
+            "rect": [
+              4,
+              12,
+              -10,
+              10
+            ],
+            "area": 160,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          },
+          {
+            "lower": "central_service",
+            "upper": "central_solid",
+            "rect": [
+              -4,
+              4,
+              -10,
+              10
+            ],
+            "area": 160,
+            "minClearance": 3.0,
+            "upperMaterial": "solid",
+            "standingPivotNominalMargin": 1.15,
+            "pivotPlusProbeMargin": 0.5299999999999999
+          }
+        ],
+        "coplanarOrCrossingOverlaps": [],
+        "bodyHeight1_6Failures": [],
+        "staticPivotPlusProbeFailures": []
+      },
+      "routeEndpointAudit": [
+        {
+          "id": "A_main",
+          "start": [
+            0,
+            6,
+            -68
+          ],
+          "end": [
+            0,
+            3.6,
+            0
+          ],
+          "length3D": 88.672571979347,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "B_main",
+          "start": [
+            0,
+            6,
+            68
+          ],
+          "end": [
+            0,
+            3.6,
+            0
+          ],
+          "length3D": 88.672571979347,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": true
+        },
+        {
+          "id": "A_high_flank",
+          "start": [
+            0,
+            6,
+            -68
+          ],
+          "end": [
+            -6,
+            3.6,
+            0
+          ],
+          "length3D": 130.35224520712845,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_high_flank",
+          "start": [
+            0,
+            6,
+            68
+          ],
+          "end": [
+            6,
+            3.6,
+            0
+          ],
+          "length3D": 130.35224520712845,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_low_flank",
+          "start": [
+            0,
+            6,
+            -68
+          ],
+          "end": [
+            -8,
+            0,
+            -4
+          ],
+          "length3D": 135.59364344483723,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_low_flank",
+          "start": [
+            0,
+            6,
+            68
+          ],
+          "end": [
+            8,
+            0,
+            4
+          ],
+          "length3D": 135.59364344483723,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_cargo_flank",
+          "start": [
+            0,
+            6,
+            -68
+          ],
+          "end": [
+            15,
+            0,
+            -4
+          ],
+          "length3D": 96.88164372519688,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_cargo_flank",
+          "start": [
+            0,
+            6,
+            68
+          ],
+          "end": [
+            -15,
+            0,
+            4
+          ],
+          "length3D": 96.88164372519688,
+          "startsAtSpawn": true,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_recovery",
+          "start": [
+            -31.5,
+            0,
+            -21
+          ],
+          "end": [
+            -26,
+            3.6,
+            -16
+          ],
+          "length3D": 28.272684879784524,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_recovery",
+          "start": [
+            31.5,
+            0,
+            21
+          ],
+          "end": [
+            26,
+            3.6,
+            16
+          ],
+          "length3D": 28.272684879784524,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "A_grate_recovery",
+          "start": [
+            -26,
+            0,
+            -25
+          ],
+          "end": [
+            -26,
+            3.6,
+            -16
+          ],
+          "length3D": 37.77268487978452,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        },
+        {
+          "id": "B_grate_recovery",
+          "start": [
+            26,
+            0,
+            25
+          ],
+          "end": [
+            26,
+            3.6,
+            16
+          ],
+          "length3D": 37.77268487978452,
+          "startsAtSpawn": false,
+          "endsAtRuleCenter": false
+        }
+      ],
+      "geometricSightlines": {
+        "pointOffset": 1.4,
+        "lines": [
+          {
+            "view": "A_high_gantry",
+            "target": "A_spawn",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              0,
+              7.4,
+              -68
+            ],
+            "clear": false,
+            "distance": 39.698866482558415,
+            "blocker": "A_spawn_screen"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "B_spawn",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              0,
+              7.4,
+              68
+            ],
+            "clear": false,
+            "distance": 109.14210919713803,
+            "blocker": "B_spawn_screen"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "high_objective",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              0,
+              5.0,
+              0
+            ],
+            "clear": true,
+            "distance": 46.10596490694019,
+            "blocker": null
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "west_zone",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              -15,
+              1.4,
+              -2
+            ],
+            "clear": false,
+            "distance": 38.118237105091836,
+            "blocker": "A_boarding_main"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "east_zone",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              15,
+              1.4,
+              2
+            ],
+            "clear": false,
+            "distance": 57.59340239992772,
+            "blocker": "A_boarding_kiosk"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "A_low_entry",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              -8,
+              1.4,
+              -8
+            ],
+            "clear": false,
+            "distance": 35.4964786985977,
+            "blocker": "A_boarding_kiosk"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "B_low_entry",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              8,
+              1.4,
+              8
+            ],
+            "clear": false,
+            "distance": 57.51521537819362,
+            "blocker": "A_boarding_kiosk"
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "A_ferry",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "clear": true,
+            "distance": 61.959987088442816,
+            "blocker": null
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "B_ferry",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              -28,
+              2.5999999999999996,
+              8
+            ],
+            "clear": true,
+            "distance": 46.29298002937379,
+            "blocker": null
+          },
+          {
+            "view": "A_high_gantry",
+            "target": "B_boarding",
+            "start": [
+              -26,
+              7.4,
+              -38
+            ],
+            "end": [
+              -7,
+              5.0,
+              16
+            ],
+            "clear": true,
+            "distance": 57.29537503149796,
+            "blocker": null
+          },
+          {
+            "view": "A_boarding",
+            "target": "A_spawn",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              0,
+              7.4,
+              -68
+            ],
+            "clear": false,
+            "distance": 52.52389932211812,
+            "blocker": "A_spawn_screen"
+          },
+          {
+            "view": "A_boarding",
+            "target": "B_spawn",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              0,
+              7.4,
+              68
+            ],
+            "clear": false,
+            "distance": 84.32532241266559,
+            "blocker": "B_spawn_screen"
+          },
+          {
+            "view": "A_boarding",
+            "target": "high_objective",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              0,
+              5.0,
+              0
+            ],
+            "clear": true,
+            "distance": 17.46424919657298,
+            "blocker": null
+          },
+          {
+            "view": "A_boarding",
+            "target": "west_zone",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              -15,
+              1.4,
+              -2
+            ],
+            "clear": false,
+            "distance": 26.324133414036634,
+            "blocker": "A_boarding_main"
+          },
+          {
+            "view": "A_boarding",
+            "target": "east_zone",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              15,
+              1.4,
+              2
+            ],
+            "clear": false,
+            "distance": 20.023985617254123,
+            "blocker": "central_east"
+          },
+          {
+            "view": "A_boarding",
+            "target": "A_low_entry",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              -8,
+              1.4,
+              -8
+            ],
+            "clear": false,
+            "distance": 17.376996288196647,
+            "blocker": "A_boarding_main"
+          },
+          {
+            "view": "A_boarding",
+            "target": "B_low_entry",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              8,
+              1.4,
+              8
+            ],
+            "clear": false,
+            "distance": 24.289092202056462,
+            "blocker": "central_east"
+          },
+          {
+            "view": "A_boarding",
+            "target": "A_ferry",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "clear": true,
+            "distance": 22.6,
+            "blocker": null
+          },
+          {
+            "view": "A_boarding",
+            "target": "B_ferry",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              -28,
+              2.5999999999999996,
+              8
+            ],
+            "clear": true,
+            "distance": 42.50599957653037,
+            "blocker": null
+          },
+          {
+            "view": "A_boarding",
+            "target": "B_boarding",
+            "start": [
+              7,
+              5.0,
+              -16
+            ],
+            "end": [
+              -7,
+              5.0,
+              16
+            ],
+            "clear": true,
+            "distance": 34.92849839314596,
+            "blocker": null
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "A_spawn",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              0,
+              7.4,
+              -68
+            ],
+            "clear": false,
+            "distance": 68.40146197268008,
+            "blocker": "A_spawn_screen"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "B_spawn",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              0,
+              7.4,
+              68
+            ],
+            "clear": false,
+            "distance": 68.40146197268008,
+            "blocker": "B_spawn_screen"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "high_objective",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              0,
+              5.0,
+              0
+            ],
+            "clear": true,
+            "distance": 7.0,
+            "blocker": null
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "west_zone",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              -15,
+              1.4,
+              -2
+            ],
+            "clear": false,
+            "distance": 8.997777503361593,
+            "blocker": "central_west"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "east_zone",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              15,
+              1.4,
+              2
+            ],
+            "clear": false,
+            "distance": 22.38213573366045,
+            "blocker": "central_solid"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "A_low_entry",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              -8,
+              1.4,
+              -8
+            ],
+            "clear": false,
+            "distance": 8.829496021857647,
+            "blocker": "central_west"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "B_low_entry",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              8,
+              1.4,
+              8
+            ],
+            "clear": false,
+            "distance": 17.376996288196647,
+            "blocker": "central_solid"
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "A_ferry",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "clear": true,
+            "distance": 35.982773656292814,
+            "blocker": null
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "B_ferry",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              -28,
+              2.5999999999999996,
+              8
+            ],
+            "clear": true,
+            "distance": 22.6,
+            "blocker": null
+          },
+          {
+            "view": "A_center_bridge",
+            "target": "B_boarding",
+            "start": [
+              -7,
+              5.0,
+              0
+            ],
+            "end": [
+              -7,
+              5.0,
+              16
+            ],
+            "clear": true,
+            "distance": 16.0,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "A_spawn",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              0,
+              7.4,
+              -68
+            ],
+            "clear": false,
+            "distance": 55.35341001239219,
+            "blocker": "A_boarding_main"
+          },
+          {
+            "view": "A_service",
+            "target": "B_spawn",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              0,
+              7.4,
+              68
+            ],
+            "clear": false,
+            "distance": 86.11620056644394,
+            "blocker": "B_boarding_main"
+          },
+          {
+            "view": "A_service",
+            "target": "high_objective",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              0,
+              5.0,
+              0
+            ],
+            "clear": false,
+            "distance": 24.350770008359078,
+            "blocker": "central_west"
+          },
+          {
+            "view": "A_service",
+            "target": "west_zone",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              -15,
+              1.4,
+              -2
+            ],
+            "clear": true,
+            "distance": 14.317821063276353,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "east_zone",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              15,
+              1.4,
+              2
+            ],
+            "clear": true,
+            "distance": 37.589892258425,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "A_low_entry",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              -8,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 12.806248474865697,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "B_low_entry",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              8,
+              1.4,
+              8
+            ],
+            "clear": false,
+            "distance": 35.38361202590826,
+            "blocker": "central_service_cover"
+          },
+          {
+            "view": "A_service",
+            "target": "A_ferry",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "clear": true,
+            "distance": 46.70588827974477,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "B_ferry",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              -28,
+              2.5999999999999996,
+              8
+            ],
+            "clear": true,
+            "distance": 26.027677575995902,
+            "blocker": null
+          },
+          {
+            "view": "A_service",
+            "target": "B_boarding",
+            "start": [
+              -18,
+              1.4,
+              -16
+            ],
+            "end": [
+              -7,
+              5.0,
+              16
+            ],
+            "clear": false,
+            "distance": 34.028811322172274,
+            "blocker": "central_west"
+          },
+          {
+            "view": "A_ferry",
+            "target": "A_spawn",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              0,
+              7.4,
+              -68
+            ],
+            "clear": false,
+            "distance": 66.38554059431918,
+            "blocker": "A_spawn_screen"
+          },
+          {
+            "view": "A_ferry",
+            "target": "B_spawn",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              0,
+              7.4,
+              68
+            ],
+            "clear": false,
+            "distance": 81.13593531845184,
+            "blocker": "B_spawn_screen"
+          },
+          {
+            "view": "A_ferry",
+            "target": "high_objective",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              0,
+              5.0,
+              0
+            ],
+            "clear": true,
+            "distance": 29.21917178839948,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "west_zone",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              -15,
+              1.4,
+              -2
+            ],
+            "clear": true,
+            "distance": 43.43316705007822,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "east_zone",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              15,
+              1.4,
+              2
+            ],
+            "clear": true,
+            "distance": 16.44506004853737,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "A_low_entry",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              -8,
+              1.4,
+              -8
+            ],
+            "clear": true,
+            "distance": 36.019994447528724,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "B_low_entry",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              8,
+              1.4,
+              8
+            ],
+            "clear": true,
+            "distance": 25.640592816859755,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "B_ferry",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              -28,
+              2.5999999999999996,
+              8
+            ],
+            "clear": true,
+            "distance": 58.240879114244144,
+            "blocker": null
+          },
+          {
+            "view": "A_ferry",
+            "target": "B_boarding",
+            "start": [
+              28,
+              2.5999999999999996,
+              -8
+            ],
+            "end": [
+              -7,
+              5.0,
+              16
+            ],
+            "clear": true,
+            "distance": 42.50599957653037,
+            "blocker": null
+          }
+        ],
+        "note": "Sparse review witnesses only. Straight zero-width rays, solid floor/ramp/cover volumes. Grates ignored. No weapon range, gravity, spread, ink, animation, camera boom, posture, reaction or team simulation. Clear does not mean hittable or dominant."
+      }
+    }
+  }
+}

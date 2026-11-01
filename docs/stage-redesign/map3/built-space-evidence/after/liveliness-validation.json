@@ -1,0 +1,514 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "label": "after",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "buildRevision": "87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c",
+  "contentHash": "dfb970c90250495aa016af0168091445a9cd56a358fb92af92024d771e87ec8c",
+  "buildManifestSha256": "e194fbafd8625e55897981695b67582efb0d2bea92c78ebc97e04624a0250cde",
+  "scope": "Matched day-time views of the minified production site in Chromium/SwiftShader. Controlled actor setup and manual detail cameras are recorded. No physical-device FPS or gameplay-equivalence claim.",
+  "errors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "badResponses": [],
+  "stages": [
+    {
+      "stage": "tidewater",
+      "state": "playing",
+      "mode": "turf",
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "artRecords": 345,
+      "levelBlocks": 345,
+      "paintCells": 390480,
+      "turfArea": 9982.007987713368,
+      "builtSpace": true,
+      "seaSprayCandidates": 306,
+      "coveredSeaSprayCandidates": 0,
+      "opening": {
+        "phase": null,
+        "grounded": true,
+        "supported": true
+      }
+    },
+    {
+      "stage": "kelpline",
+      "state": "playing",
+      "mode": "turf",
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "artRecords": 222,
+      "levelBlocks": 216,
+      "paintCells": 457488,
+      "turfArea": 12381.626101053043,
+      "builtSpace": true,
+      "seaSprayCandidates": 332,
+      "coveredSeaSprayCandidates": 0,
+      "opening": {
+        "phase": null,
+        "grounded": true,
+        "supported": true
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "stage": "tidewater",
+      "id": "play",
+      "title": "Tidewater — normal central play camera",
+      "file": "tidewater-play.jpg",
+      "sha256": "e9c3c9391229e1c2c061c12e5734a4186155fe468162ea9d1d54c120f29d1375",
+      "setup": {
+        "id": "play",
+        "title": "Tidewater — normal central play camera",
+        "hud": true,
+        "actor": [
+          0,
+          0.02,
+          -5
+        ],
+        "yaw": 0,
+        "pitch": -0.3
+      },
+      "manualInspectionCamera": false,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0,
+        1.1102230246251565e-16,
+        -5
+      ],
+      "camera": [
+        -0.28028233363568406,
+        3.328672407872023,
+        -9.29523666474756
+      ],
+      "cameraQuaternion": [
+        0,
+        0.9887710779360422,
+        0.1494381324735992,
+        0
+      ],
+      "calls": 159,
+      "triangles": 830233,
+      "geometries": 334,
+      "textures": 59,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "artGeometryBytes": 10772688,
+      "artMaterials": 7,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": true
+    },
+    {
+      "stage": "tidewater",
+      "id": "street",
+      "title": "Tidewater — market walls and connected lower street",
+      "file": "tidewater-street.jpg",
+      "sha256": "1c3169727fa1dbbe06abbd2f0d8d121c91bfaf795aa0b58a91a269a339ccc84c",
+      "setup": {
+        "id": "street",
+        "title": "Tidewater — market walls and connected lower street",
+        "position": [
+          -6,
+          6.6,
+          -30
+        ],
+        "look": [
+          -24,
+          1.6,
+          -8
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0,
+        1.1102230246251565e-16,
+        -5
+      ],
+      "camera": [
+        -6,
+        6.6,
+        -30
+      ],
+      "cameraQuaternion": [
+        -0.02923113363129565,
+        0.9382286243757486,
+        0.0818883264186709,
+        0.3349132592552418
+      ],
+      "calls": 103,
+      "triangles": 602035,
+      "geometries": 334,
+      "textures": 59,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "artGeometryBytes": 10772688,
+      "artMaterials": 7,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "tidewater",
+      "id": "overview",
+      "title": "Tidewater — built play area and water gaps",
+      "file": "tidewater-overview.jpg",
+      "sha256": "ee60f63be6fc06fd9ffa5cf7708c9be40e0c383c4d33215e58db6735c19c4178",
+      "setup": {
+        "id": "overview",
+        "title": "Tidewater — built play area and water gaps",
+        "position": [
+          60,
+          66,
+          -79
+        ],
+        "look": [
+          0,
+          1,
+          -7
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        0,
+        1.1102230246251565e-16,
+        -5
+      ],
+      "camera": [
+        60,
+        66,
+        -79
+      ],
+      "cameraQuaternion": [
+        -0.10163827664890515,
+        0.8973858197367127,
+        0.2807299954300506,
+        0.32489847786832227
+      ],
+      "calls": 213,
+      "triangles": 874579,
+      "geometries": 344,
+      "textures": 59,
+      "art": {
+        "draws": 7,
+        "triangles": 135836,
+        "parts": 6340
+      },
+      "artGeometryBytes": 10772688,
+      "artMaterials": 7,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "kelpline",
+      "id": "play",
+      "title": "Kelpline — normal central play camera",
+      "file": "kelpline-play.jpg",
+      "sha256": "e16ae5adf812ff5388b097335ee1ceb5eab1a08f078bedeedc6d4b0eff2446ca",
+      "setup": {
+        "id": "play",
+        "title": "Kelpline — normal central play camera",
+        "hud": true,
+        "actor": [
+          7,
+          3.62,
+          -7
+        ],
+        "yaw": 0,
+        "pitch": -0.3
+      },
+      "manualInspectionCamera": false,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        7,
+        3.5999999999999996,
+        -7
+      ],
+      "camera": [
+        6.719702786318042,
+        6.928672407872023,
+        -11.29523666474756
+      ],
+      "cameraQuaternion": [
+        0,
+        0.9887710779360422,
+        0.14943813247359924,
+        0
+      ],
+      "calls": 156,
+      "triangles": 842529,
+      "geometries": 365,
+      "textures": 59,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "artGeometryBytes": 11762924,
+      "artMaterials": 8,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": true
+    },
+    {
+      "stage": "kelpline",
+      "id": "street",
+      "title": "Kelpline — warehouse wall and connected freight quay",
+      "file": "kelpline-street.jpg",
+      "sha256": "bf4efcd15228169949ddfd7f5e62049b0260684bbd5fbec9153e18ad962d6930",
+      "setup": {
+        "id": "street",
+        "title": "Kelpline — warehouse wall and connected freight quay",
+        "position": [
+          10,
+          6.7,
+          -16
+        ],
+        "look": [
+          30,
+          4,
+          -34
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        7,
+        3.5999999999999996,
+        -7
+      ],
+      "camera": [
+        10,
+        6.7,
+        -16
+      ],
+      "cameraQuaternion": [
+        -0.045660507625407035,
+        -0.40633004160075775,
+        -0.02033547347621053,
+        0.9123581993135235
+      ],
+      "calls": 72,
+      "triangles": 565197,
+      "geometries": 365,
+      "textures": 59,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "artGeometryBytes": 11762924,
+      "artMaterials": 8,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": false
+    },
+    {
+      "stage": "kelpline",
+      "id": "overview",
+      "title": "Kelpline — built play area and water gaps",
+      "file": "kelpline-overview.jpg",
+      "sha256": "b56cbcf41da84728573cc49b12da787d9422304f21da18700514feb9b5b933aa",
+      "setup": {
+        "id": "overview",
+        "title": "Kelpline — built play area and water gaps",
+        "position": [
+          64,
+          70,
+          -83
+        ],
+        "look": [
+          0,
+          2,
+          -7
+        ]
+      },
+      "manualInspectionCamera": true,
+      "state": "playing",
+      "alive": true,
+      "actor": [
+        7,
+        3.5999999999999996,
+        -7
+      ],
+      "camera": [
+        64,
+        70,
+        -83
+      ],
+      "cameraQuaternion": [
+        -0.10134707369324329,
+        0.8974102352835834,
+        0.2776877178896985,
+        0.32752583347774394
+      ],
+      "calls": 210,
+      "triangles": 886841,
+      "geometries": 375,
+      "textures": 59,
+      "art": {
+        "draws": 8,
+        "triangles": 133342,
+        "parts": 6616
+      },
+      "artGeometryBytes": 11762924,
+      "artMaterials": 8,
+      "artTextures": [
+        {
+          "name": "map3-metal-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-stone-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-wood-micrograin",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "name": "map3-shared-print-atlas",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "hudObserved": false
+    }
+  ],
+  "capturePasses": [
+    {
+      "viewFilter": null,
+      "waitForInitialLanding": true
+    }
+  ],
+  "baseURI": "http://127.0.0.1:43071/_versions/87563b318e4dd290914e3db5a248bfcd919526f4520f66e4cafcebea9293ba2c/"
+}

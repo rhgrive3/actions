@@ -1,3 +1,4 @@
+import * as nativeWork from '../runtime/native-work.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -79,7 +80,7 @@ test('full source conversion retains geometry, material inference, chart masks a
 
 const workerSource=read('source-worker.mjs');
 const transport=new Function(workerSource.slice(workerSource.indexOf('function compactInactiveDisplay'),workerSource.indexOf('self.onmessage'))+'\nreturn {compactInactiveDisplay,prepareDisplayTransport};')();
-function sphereFunction(source){return new Function('THREE',source.slice(source.indexOf('function objectBoundingSphere'),source.indexOf('function releaseArray'))+'\nreturn objectBoundingSphere;')(THREE);}
+function sphereFunction(source){return new Function('THREE','consumeNativeWork',source.slice(source.includes('function* nativeGeometrySphereSteps')?source.indexOf('function* nativeGeometrySphereSteps'):source.indexOf('function objectBoundingSphere'),source.indexOf('function releaseArray'))+'\nreturn objectBoundingSphere;')(THREE,nativeWork.consumeNativeWork);}
 const oldSphere=sphereFunction(fixture.files['patches/native-stages/runtime/native-render.mjs'].source),newSphere=sphereFunction(read('native-render.mjs'));
 function geometry(data,o){const g=new THREE.BufferGeometry(),vb=new Float32Array(data.vertices.buffer,data.vertices.byteOffset+o.vo*32,o.vc*8);g.setAttribute('position',new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(vb,8),3,0));return g;}
 test('worker spheres equal the actual Three.js renderer and avoid the main-thread vertex scan',()=>{
@@ -102,4 +103,20 @@ test('packed chart memberships survive actual structured-clone transfer with sha
  assert.deepEqual(clone.manifest.faces.map(f=>Array.from(f.triangles)),original);
  for(const face of clone.manifest.faces)assert.equal(face.triangles.buffer,clone.faceTriangles.buffer);
  const again=transport.prepareDisplayTransport(clone);assert.equal(again,clone);assert.equal(again.faceTriangles,clone.faceTriangles);
+});
+
+test('packed paint charts write the final buffer directly without changing any chart value or ID order',()=>{
+ for(const count of [1,3,32,240,1200])for(const compactInactiveDisplay of [false,true]){
+  const stage={id:'packed-parity',sourceSha256:'a'.repeat(64),tree:'b'.repeat(40),sourceSemantics:semantics},obj=Buffer.from(sourceOBJ(count));
+  const options={compactInactiveDisplay,compactBVHCenters:true};
+  const old=candidate.convertSource(stage,obj,'',{},()=>{},null,options);
+  const next=candidate.convertSource(stage,obj,'',{},()=>{},null,{...options,packedPaintCharts:true});
+  assert(next.faceTriangles instanceof Uint32Array);
+  assert.equal(next.faceTriangles.length,old.manifest.faces.reduce((n,f)=>n+f.triangles.length,0));
+  for(const face of next.manifest.faces){assert.equal(face.triangles.buffer,next.faceTriangles.buffer);assert(face.triangles instanceof Uint32Array);}
+  const flat={...next,manifest:{...next.manifest,faces:next.manifest.faces.map(f=>({...f,triangles:Array.from(f.triangles)}))}};delete flat.faceTriangles;
+  assert.deepEqual(flat,old);
+  const clone=structuredClone(next,{transfer:[next.faceTriangles.buffer]});
+  assert.equal(next.faceTriangles.byteLength,0);for(const f of clone.manifest.faces)assert.equal(f.triangles.buffer,clone.faceTriangles.buffer);
+ }
 });

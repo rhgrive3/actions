@@ -205,7 +205,9 @@ if (!vm.SourceTextModule) {
   test('failed transcoder initialization backs off and a later loader recovers; idle release is idempotent',async()=>{
     const clock={value:0},f=await textures({manual:true,initFails:1,clock});
     await f.run();assert.equal(f.calls.initialized,1);assert.equal(f.calls.parsed,0);assert.equal(f.calls.bitmaps,2);
+    assert.equal(f.calls.packs.length,0,'a failed loader cannot consume a pack before falling back');
     await f.run();assert.equal(f.calls.initialized,1,'same failed init is not retried per texture or load');
+    assert.equal(f.calls.packs.length,0,'backoff also skips redundant verified pack downloads');
     clock.value=30001;const result=await f.run();assert.equal(f.calls.initialized,2);assert.equal(f.calls.parsed,2);
     assert.equal(result._releaseWorkers(),true);assert.equal(result._releaseWorkers(),false);
     await Promise.resolve();assert.equal(f.calls.disposedLoaders,2,'failed and recovered loaders each dispose once');

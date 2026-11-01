@@ -51,3 +51,7 @@ HydrateしたHagglefishの17ファイルは[asset binding](native-asset-binding.
 ## 現行mainへの適用確認
 
 [db2134上の通常配信buildと30-frame actual native smoke](latest-main/README.md)を追加した。baseline `db2134a7` とcandidate `df2491c6` のbuild・source/asset照合、emitted 24/30 tests、実16,000 rayの一致、12 windows/6組の記録state parityを確認した。30-frame smokeは性能認定に使わず、A/Aの時間外れ値と後処理の誤assertも保持する。公開準備時のmain `42e6d107` はWebKit scroll QAの2ファイルのみ増えておりray runtimeは同一だが、このmainと公開用merge commitでの再build・対戦計測は未実施。
+
+## 全体44窓の完了測定（改善は未確認）
+
+[全体benchmarkの報告・raw・readback](whole-benchmark/README.md)を追加した。測定対象はdb2134a7 / df2491c6。44窓・22組の厳密な記録state/BVH parityは成功したが、A/Bのwall 22.6327→21.9577ms/tick、ThreadTime 9.0856→8.8373ms/tickはA/A雑音と95%記述区間から全体短縮を確認できない。throttleを含む全窓と中断rnfull0も保存し、後者は集計に混ぜない。scene submissionなしで、実表示・実機GPU・FPS・画像同一性は未測定。

@@ -3,8 +3,6 @@ const SNAPSHOT_FIELDS_1 = Object.freeze([4, 5, 6]);
 const SNAPSHOT_FIELDS_2 = Object.freeze([7, 8, 9]);
 const SNAPSHOT_FIELDS_3 = Object.freeze([12, 13, 14]);
 const SNAPSHOT_FIELDS_4 = Object.freeze([17, 18, 19]);
-const SNAPSHOT_FIELDS_5 = Object.freeze(['x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'aimYaw', 'aimPitch', 'hp', 'ink', 'sp', 'ch', 'turf', 'lock']);
-const SNAPSHOT_FIELDS_6 = Object.freeze(['x', 'y', 'z']);
 // #1178: reject malformed owner-owned actor rows before Hermite sampling.
 // Current producer extends the legacy 21–25 column range with authoritative
 // hit and action sidecars (26/27). Validate core scalars here and leave each
@@ -283,13 +281,15 @@ export function validActorSnapshotRow(row, timestamp) {
 }
 export function validRemoteActorPose(sample, correction) {
   if (!sample || !correction) return false;
-  for (let i = 0; i < SNAPSHOT_FIELDS_5.length; i++)
-    if (!finite(sample[SNAPSHOT_FIELDS_5[i]])) return false;
+  if (!finite(sample.x) || !finite(sample.y) || !finite(sample.z)
+      || !finite(sample.vx) || !finite(sample.vy) || !finite(sample.vz)
+      || !finite(sample.yaw) || !finite(sample.aimYaw) || !finite(sample.aimPitch)
+      || !finite(sample.hp) || !finite(sample.ink) || !finite(sample.sp)
+      || !finite(sample.ch) || !finite(sample.turf) || !finite(sample.lock)) return false;
   if (!integer(sample.f, 0, 0x7fffffff)) return false;
   if (!bounded(sample.x + correction.x, -1e6, 1e6)
       || !bounded(sample.y + correction.y, -1e6, 1e6)
       || !bounded(sample.z + correction.z, -1e6, 1e6)) return false;
-  for (let i = 0; i < SNAPSHOT_FIELDS_6.length; i++)
-    if (!finite(correction[SNAPSHOT_FIELDS_6[i]])) return false;
+  if (!finite(correction.x) || !finite(correction.y) || !finite(correction.z)) return false;
   return true;
 }

@@ -33,6 +33,51 @@ export function adaptMotionFkHotpath(rel, code, replaceOnce) {
       '  if(!this.total)this.center.copy(profile.centerPose);else this.center.mix(profile.centerPose,a);',
       '  if(!this.total)this.center.copy(profile.centerPose,count);else this.center.mix(profile.centerPose,a,count);',
       'body balance centre blend range');
+    // A mixed centre is private scratch: apply() consumes its local root
+    // position and the world rotations of the gain joints, not its world
+    // matrices or positions. Evaluate precisely those joints and ancestors in
+    // SourcePose.fk's order and arithmetic. Keep the original FK for unusual
+    // skeletons, overridden FK methods or observable quaternion callbacks.
+    // Older source fixtures have no _soleCenter contract and retain full FK.
+    if (code.includes('  if(!this._soleCenter)this.center.fk(')) {
+      code = replaceOnce(code, 'export class BodyBalance {', `const balanceCenterCanonicalFk = SourcePose.prototype.fk;
+const balanceCenterEmptyChange = THREE.Quaternion.prototype._onChangeCallback;
+const balanceCenterCanSkipCallbacks = typeof balanceCenterEmptyChange === 'function' &&
+ /^[^{]*\\{\\s*\\}$/.test(Object.getPrototypeOf(()=>{}).toString.call(balanceCenterEmptyChange));
+const balanceCenterSqrt = Math.sqrt;
+const balanceCenterNativeSqrt = /\\{\\s*\\[native code\\]\\s*\\}/.test(
+ Object.getPrototypeOf(()=>{}).toString.call(balanceCenterSqrt));
+function updateBalanceCenterRotations(balance) {
+ const pose=balance.center,bank=balance.bank;
+ const count=balance._centerFk??=bank.fkCount?.([...balance.rotationGain.keys()])??true;
+ if(!balanceCenterCanSkipCallbacks||!balanceCenterNativeSqrt||Math.sqrt!==balanceCenterSqrt||
+    !bank.parentsFirst||pose.fk!==balanceCenterCanonicalFk||
+    !Number.isInteger(count)||count<0||count>bank.bones.length)return false;
+ // FK calls each output callback, including callbacks on unused joints. Do not
+ // skip any observable callbacks, even when the joint itself has no reader.
+ for(let i=0;i<count;i++)if(!pose.wq[i]||pose.wq[i]._onChangeCallback!==balanceCenterEmptyChange)return false;
+ const bones=bank.bones,local=pose.q,world=pose.wq,indices=balance.rotationWorldIndices;
+ for(let k=0;k<indices.length;k++)if(indices[k]>=count)return false;
+ for(const i of indices){
+  const q=local[i],target=world[i],parent=bones[i].parent,x=q._x,y=q._y,z=q._z,w=q._w;
+  if(parent>=0){
+   const pq=world[parent],qax=pq._x,qay=pq._y,qaz=pq._z,qaw=pq._w;
+   let rx=qax*w+qaw*x+qay*z-qaz*y,ry=qay*w+qaw*y+qaz*x-qax*z;
+   let rz=qaz*w+qaw*z+qax*y-qay*x,rw=qaw*w-qax*x-qay*y-qaz*z;
+   let length=Math.sqrt(rx*rx+ry*ry+rz*rz+rw*rw);
+   if(length===0){rx=0;ry=0;rz=0;rw=1;}
+   else{length=1/length;rx=rx*length;ry=ry*length;rz=rz*length;rw=rw*length;}
+   target._x=rx;target._y=ry;target._z=rz;target._w=rw;target._onChangeCallback();
+  }else{target._x=x;target._y=y;target._z=z;target._w=w;target._onChangeCallback();}
+ }
+ return true;
+}
+export class BodyBalance {`, 'body balance centre quaternion closure');
+      code = replaceOnce(code,
+        '  if(!this._soleCenter)this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this._soleCenter||this.center;const gainX=',
+        '  if(!this._soleCenter&&!updateBalanceCenterRotations(this))this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this._soleCenter||this.center;const gainX=',
+        'body balance centre quaternion-only FK');
+    }
   }
   // A settled contact's four Hermite coefficients are exactly +0. Retain the
   // clamp, active polynomial order and final zero additions for signed-zero

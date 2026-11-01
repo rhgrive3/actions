@@ -27,9 +27,30 @@ async function setup(t,{kind='shooter'}={}) {
   const claim=(extra={})=>({k:'bhit',m:nm.cfg.id,a:17,l:0,q:1,d:36,w:kind,c:-1,weak:0,...extra});
   const send=(extra={})=>nm.onMessage('peer',claim(extra));
   function fire(ts=1000,{slot='main'}={}) {
-    const event=slot==='main'&&kind==='shooter'?nativeMainBirth(f,nm,actor,actor.weapon,ts):slot==='main'?[ts,'ev','weapon:fire',{
+    if(slot==='sub') {
+      // Use the installed launch, native recorder and actor serializer. A raw
+      // legacy bomb row no longer authorizes this completed receiver birth.
+      const remote=actor.remote,clock=f.clock.now(),broadcast=nm.s.tr.broadcast;
+      let packet;
+      try {
+        actor.remote=false;actor.weaponRunner.charge=0;f.clock.set(ts);nm.out.length=0;nm.match.boss=null;
+        f.projectiles.throwBomb(actor);
+        assert.ok(nm.out.some(e=>e[1]==='b'),'actual native bomb producer records a birth');
+        nm.s.tr.broadcast=message=>{packet=JSON.parse(JSON.stringify(message));};
+        nm._sendTick();
+      } finally {
+        actor.remote=remote;f.clock.set(clock);nm.s.tr.broadcast=broadcast;nm.match.boss=boss;
+        f.projectiles.clear();nm.out.length=0;
+      }
+      nm.onMessage('peer',packet);
+      for(const event of nm.peers.get('peer')?.events.splice(0)||[])nm._play('peer',event);
+      const proof=nm._combatProvenance.proofs.get('peer')?.at(-1);
+      assert.ok(proof,'completed native ghost creation commits the bomb proof');
+      return proof;
+    }
+    const event=kind==='shooter'?nativeMainBirth(f,nm,actor,actor.weapon,ts):[ts,'ev','weapon:fire',{
       actor:{n:17},weapon:actor.weapon.id,muzzle:[0,1,0],dir:[0,0,1],
-    }]:[ts,'b',17,'bomb',0,1,0,0,0,10];
+    }];
     nm.onMessage('peer',{k:'t',ts,u:60000+Math.round((ts-1000)*60),
       a:[f.packActor(actor,{f:1})],l:{17:0},e:[event]});
     return nm._combatProvenance.proofs.get('peer').at(-1);
@@ -86,6 +107,17 @@ test('an equipped bomb proof retains its damage and independent crablet contacts
   x.send({c:3,w:'crab',d:100});x.send({q:2,c:4,w:'crab',d:100});
   assert.equal(x.boss.crabs.get(3).hp,900);assert.equal(x.boss.crabs.get(4).hp,900);
   assert.equal(p.uses,2);
+});
+
+test('a legacy bomb row cannot grant Boss proof without completed native birth',async t=>{
+  const x=await setup(t);
+  x.nm.onMessage('peer',{k:'t',r:2,ts:1000,u:60000,a:[x.f.packActor(x.actor,{f:1})],l:{17:0},
+    e:[[1000,'b',17,'bomb',0,1,0,0,0,10,60000,1]]});
+  for(const event of x.nm.peers.get('peer')?.events.splice(0)||[])x.nm._play('peer',event);
+  x.send({c:3,w:'crab',d:100});
+  assert.equal(x.boss.crabs.get(3).hp,1000);
+  assert.equal(x.nm._combatProvenance.proofs.get('peer')?.length??0,0);
+  assert.equal(x.nm.peers.get('peer').lastBossHit,undefined);
 });
 
 for(const phase of ['invuln','hidden'])test(`Boss ${phase} rejection does not consume proof before body becomes vulnerable`,async t=>{

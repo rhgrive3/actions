@@ -124,9 +124,15 @@ test('lobby glows keep animated matrices live but upload unchanged colors only o
  const chain={identity(){return this;},compose(){return this;},setScalar(){return this;},copy(){return this;}};
  const place=vm.runInNewContext('({'+code.slice(start,end)+'\n})',{_q:chain,_m:chain,_p:chain,_s:chain})._placeGlows;
  let matrices=0,colors=0,uploads=0;const attribute={set needsUpdate(v){if(v)uploads++;}},glows={setMatrixAt(){matrices++;},setColorAt(){colors++;},instanceMatrix:{},instanceColor:attribute};
- const owner={_glowList:[{pos:{},r:1,color:{r:1,g:.5,b:0}},{pos:{},r:2,color:{r:0,g:1,b:0}}],glows,bulbs:{instanceMatrix:{},setMatrixAt(){}}};
+ // Tagged bulbs are the animated native path. Untagged street lamps are
+ // static and the later renderer optimization correctly avoids their writes.
+ const segment={a:{x:0,y:2,z:1},b:{x:4,y:2,z:1},n:2,sag:.2};
+ const position=()=>({x:0,y:0,z:0,lerpVectors(a,b,t){for(const axis of ['x','y','z'])this[axis]=a[axis]+(b[axis]-a[axis])*t;return this;}});
+ const owner={_bulbPos:method('src/game/lobbySet.js','_bulbPos','_skyline'),
+  _glowList:[{pos:position(),tag:{s:segment,k:0},r:1,color:{r:1,g:.5,b:0}},{pos:position(),tag:{s:segment,k:1},r:2,color:{r:0,g:1,b:0}}],glows,bulbs:{instanceMatrix:{},setMatrixAt(){}}};
  place.call(owner,0);assert.equal(colors,2);assert.equal(uploads,1);place.call(owner,1);assert.equal(colors,2);assert.equal(uploads,1);assert.equal(matrices,4);
  owner._glowList[1].color.r=.75;place.call(owner,2);assert.equal(colors,3);assert.equal(uploads,2);assert.equal(matrices,6);
+ place.call(owner,2);assert.equal(matrices,6,'identical native positions do not dirty the same matrices again');
 });
 test('lobby slot occupancy is sampled once for eight anchors and direct callers retain live fallback',()=>{
  const occupied=method('src/game/showcase.js','lobbySlotOccupancy','lobbySlotAnchor');

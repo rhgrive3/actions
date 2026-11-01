@@ -1,0 +1,339 @@
+{
+  "fixedAt": "2026-10-30T21:44:59.352613+00:00",
+  "purpose": "Actual endpoint live-HUD score parity and independent reversed page/order sensitivity after noisy cf0",
+  "authorization": "Parent instructed smoke followed by two sequential independent full sessions; raw compression completed before launch.",
+  "cwd": "/workspace/actions-battle-benchmark",
+  "environment": {
+    "CHROMIUM_PATH": "/usr/bin/chromium"
+  },
+  "source": {
+    "a": {
+      "site": "/workspace/actions-score-base/_site",
+      "sha": "17ce3883007b9f402a82dc194285f23deba3afb9",
+      "contentHash": "3b3361d48aab678c369fef73b57c724a9bf12df024d6ba707c00094553eefb5d"
+    },
+    "b": {
+      "site": "/workspace/actions-score-main/_site",
+      "sha": "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+      "contentHash": "b533be802784df3aec66803ef733352f8caa07eaf238709fde2c9a095b80aff8"
+    }
+  },
+  "harness": {
+    "benchmark-inkwave-composed-native-counterbalanced.mjs": "489d3480866c822aea3a61e8c57e290882613f9aac992ad7addb20a10be5c079",
+    "lib/inkwave-native-pool-admission.mjs": "1937df956ae33479cf650c057f977a77a938c51ee1d68906977524aa1eaac5fb",
+    "lib/inkwave-cpu-affinity-pool.mjs": "232b6dfae7d2c046af9ffab0e2c5addd0cfdd1dcc53c4395a23d255f1809bc56",
+    "lib/inkwave-composed-cpu-replay.mjs": "0db34e5d12355e1e7cf68512e1ab1112565b0d4a69f48ec640ad61840c2dab11",
+    "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+    "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+    "lib/inkwave-runtime-evidence.mjs": "b7607520b0c116d00fb5cb214f7cba261fb22aa3bd1a5143f869bc045c70f5af",
+    "lib/inkwave-network-source-coverage.mjs": "0004afcfc1f51de4dd0acba781aa878c1376c14401a7f265fa571a91bdabfeba",
+    "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+  },
+  "exclusiveEntrypoints": [
+    "benchmark-inkwave-composed-native-gpu-pool.mjs",
+    "benchmark-inkwave-composed-native-counterbalanced.mjs"
+  ],
+  "runs": [
+    {
+      "name": "smoke",
+      "evidence": "/workspace/actions-battle-benchmark/e/cbsm0",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-counterbalanced.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-score-base/_site",
+        "--sha-a",
+        "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "--site-b",
+        "/workspace/actions-score-main/_site",
+        "--sha-b",
+        "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "--frames",
+        "30",
+        "--warmup-runs",
+        "1",
+        "--warmup-frames",
+        "30",
+        "--aa-rounds",
+        "2",
+        "--rounds",
+        "2",
+        "--page-order",
+        "ab",
+        "--quartet-start",
+        "a",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/cbsm0"
+      ],
+      "requires": [],
+      "conditions": {
+        "frames": 30,
+        "warmupFrames": 30,
+        "warmupRunsPerSidePerPhase": 1,
+        "aaQuartets": 2,
+        "abQuartets": 2,
+        "pageOrder": "ab",
+        "quartetStart": "a",
+        "warmupSchedulePerPhase": [
+          "a",
+          "b"
+        ],
+        "aaOrders": [
+          "ABBA",
+          "BAAB"
+        ],
+        "abOrders": [
+          "ABBA",
+          "BAAB"
+        ]
+      },
+      "expected": {
+        "warmups": 4,
+        "preflight": 8,
+        "measurements": 8,
+        "totalWindows": 20,
+        "parityPairs": 10,
+        "rejectedWindowAttempts": 0
+      }
+    },
+    {
+      "name": "ab",
+      "evidence": "/workspace/actions-battle-benchmark/e/cba0",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-counterbalanced.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-score-base/_site",
+        "--sha-a",
+        "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "--site-b",
+        "/workspace/actions-score-main/_site",
+        "--sha-b",
+        "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "--frames",
+        "300",
+        "--warmup-runs",
+        "5",
+        "--warmup-frames",
+        "300",
+        "--aa-rounds",
+        "2",
+        "--rounds",
+        "4",
+        "--page-order",
+        "ab",
+        "--quartet-start",
+        "a",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/cba0"
+      ],
+      "requires": [
+        "smoke"
+      ],
+      "conditions": {
+        "frames": 300,
+        "warmupFrames": 300,
+        "warmupRunsPerSidePerPhase": 5,
+        "aaQuartets": 2,
+        "abQuartets": 4,
+        "pageOrder": "ab",
+        "quartetStart": "a",
+        "warmupSchedulePerPhase": [
+          "a",
+          "b",
+          "a",
+          "b",
+          "b",
+          "a",
+          "a",
+          "b",
+          "b",
+          "a"
+        ],
+        "aaOrders": [
+          "ABBA",
+          "BAAB"
+        ],
+        "abOrders": [
+          "ABBA",
+          "BAAB",
+          "ABBA",
+          "BAAB"
+        ]
+      },
+      "expected": {
+        "warmups": 20,
+        "preflight": 8,
+        "measurements": 16,
+        "totalWindows": 44,
+        "parityPairs": 22,
+        "rejectedWindowAttempts": 0
+      }
+    },
+    {
+      "name": "ba",
+      "evidence": "/workspace/actions-battle-benchmark/e/cbb0",
+      "args": [
+        "node",
+        "scripts/benchmark-inkwave-composed-native-counterbalanced.mjs",
+        "--stage",
+        "hagglefish",
+        "--quality",
+        "low",
+        "--width",
+        "480",
+        "--height",
+        "300",
+        "--hz",
+        "60",
+        "--weapon",
+        "shooter",
+        "--gpu-cpus",
+        "0-1",
+        "--worker-cpus",
+        "2-3",
+        "--site-a",
+        "/workspace/actions-score-base/_site",
+        "--sha-a",
+        "17ce3883007b9f402a82dc194285f23deba3afb9",
+        "--site-b",
+        "/workspace/actions-score-main/_site",
+        "--sha-b",
+        "470e952a2066adfbbeedf754850a0abd0f7d9fd2",
+        "--frames",
+        "300",
+        "--warmup-runs",
+        "5",
+        "--warmup-frames",
+        "300",
+        "--aa-rounds",
+        "2",
+        "--rounds",
+        "4",
+        "--page-order",
+        "ba",
+        "--quartet-start",
+        "b",
+        "--evidence-dir",
+        "/workspace/actions-battle-benchmark/e/cbb0"
+      ],
+      "requires": [
+        "smoke",
+        "ab"
+      ],
+      "conditions": {
+        "frames": 300,
+        "warmupFrames": 300,
+        "warmupRunsPerSidePerPhase": 5,
+        "aaQuartets": 2,
+        "abQuartets": 4,
+        "pageOrder": "ba",
+        "quartetStart": "b",
+        "warmupSchedulePerPhase": [
+          "b",
+          "a",
+          "b",
+          "a",
+          "a",
+          "b",
+          "b",
+          "a",
+          "a",
+          "b"
+        ],
+        "aaOrders": [
+          "BAAB",
+          "ABBA"
+        ],
+        "abOrders": [
+          "BAAB",
+          "ABBA",
+          "BAAB",
+          "ABBA"
+        ]
+      },
+      "expected": {
+        "warmups": 20,
+        "preflight": 8,
+        "measurements": 16,
+        "totalWindows": 44,
+        "parityPairs": 22,
+        "rejectedWindowAttempts": 0
+      }
+    }
+  ],
+  "sharedConditions": {
+    "stage": "hagglefish",
+    "quality": "low",
+    "viewport": [
+      480,
+      300
+    ],
+    "hz": 60,
+    "weapon": "shooter",
+    "gpuCpus": [
+      0,
+      1
+    ],
+    "workerCpus": [
+      2,
+      3
+    ],
+    "sceneRender": false,
+    "paintAtlasDraws": true,
+    "allowBvhWorkReduction": false,
+    "profiling": false,
+    "allocations": false,
+    "forcedGc": false
+  },
+  "timingPolicy": {
+    "discardOutliers": false,
+    "automaticRetry": false,
+    "reportingUnit": "ABBA/BAAB quartet; retained-page quartets do not establish independent replication",
+    "independentUnit": "Two independently launched Chromium sessions, assessed separately; n=2 sessions is insufficient for robust population inference",
+    "schedule": "Fixed ab/a session followed by ba/b session; page creation order and quartet start reversed together, not independently varied or randomized",
+    "scoreObserver": "Copy existing own-data live HUD caches after both timing metrics and GPU drain; no getters, coverage/teamSummary calls, simulation, or state transitions; tiny observation allocations can affect later heap history",
+    "priorData": "cf0 900-frame timing and 30-frame smoke are not pooled with 300-frame measurement",
+    "retention": "Every raw window, warmup, failure, receipt, heap/cgroup snapshot retained; failures use new evidence folders"
+  },
+  "limits": [
+    "Software GPU paint workload with scene submissions disabled; no device/presented FPS claim.",
+    "Exact recorded state/score endpoint/paint/BVH parity is not all pixels, audio, intermediate HUD frames, winner/judge/finish, or external-device behavior.",
+    "Per-frame wall excludes observers; renderer ThreadTime includes digest/counter/CDP observer work.",
+    "A/A timing-noise assessment is separate from state parity. No numerical noise acceptance threshold was predeclared.",
+    "Conditional quartet log-ratio t intervals assume approximate normality/independence; persistent page effects, drift, host interference, and shared-browser dependence can invalidate coverage.",
+    "Heap snapshots do not identify individual GC events, allocation causality, or leak absence."
+  ]
+}

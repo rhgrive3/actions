@@ -106,6 +106,29 @@ test('#1767 rate-limited same-nonce retry preserves its TTL and queued work unti
   assert.equal(h.accepted.length, 1);
 });
 
+test('locally refused owner-clock challenges retry promptly without renewing their nonce or freshness origin', () => {
+  for (const refusal of [false, 'throw']) {
+    const h = harness(), send = h.nm.s.tr.sendTo;
+    let recovered = false, attempts = 0;
+    h.nm.s.tr.sendTo = (to, data) => {
+      attempts++; send(to, data);
+      if (!recovered && refusal === 'throw') throw Error('backpressure');
+      return recovered;
+    };
+    const start = h.now(); h.begin(); const nonce = h.query().n;
+    h.tick(100); // The existing first-current-packet retry also refuses.
+    assert.equal(attempts, 2);
+    h.set(start + .05); h.retry(); assert.equal(attempts, 2);
+    recovered = true; h.set(start + .101); h.retry();
+    assert.equal(attempts, 3); assert.equal(h.query().n, nonce);
+    h.set(start + .3); h.retry(); assert.equal(attempts, 3, 'accepted writes keep the normal TTL');
+    h.reply(100.3);
+    assert.equal(h.status().origin.sentAt, start);
+    assert.equal(h.accepted.length, 1);
+    h.set(start + 1); h.retry(); assert.equal(attempts, 3);
+  }
+});
+
 test('#1767 a current-session peer cannot opt out by omitting all capability fields and ignoring challenges', () => {
   const h = harness(); h.begin();
   for (let i = 0; i < 30; i++) {

@@ -331,3 +331,8 @@ test('follow transitions stay finite for jump, swim, wall, roll and scoped charg
   }
  }
 });
+
+test('neutral look skips exponential work while preserving exact baseline arithmetic, invalid inputs and nonzero decay',async()=>{
+ const f=await world(),baseline=(state,axis,target,dt,rate=60)=>{if(!(Number.isFinite(dt)&&dt>0))return 0;target=Math.max(-1,Math.min(1,Number.isFinite(target)?target:0));const old=Number.isFinite(state[axis])?state[axis]:0;if(!(Number.isFinite(rate)&&rate>0)){state[axis]=target;return target*dt;}const k=-Math.expm1(-rate*dt);state[axis]=old+(target-old)*k;return target*dt+(old-target)*k/rate;};
+ for(const old of [0,-0,NaN,Infinity,-1e-30,1e-30,.5,-1])for(const target of [0,-0,NaN,Infinity,1e-20,1,-2])for(const dt of [0,-1,NaN,Infinity,Number.MIN_VALUE,1/120,1/60,.25,4])for(const rate of [0,-1,NaN,Infinity,1e-30,60]){const a={x:old},b={x:old},expected=baseline(a,'x',target,dt,rate),actual=f.integrateLookAxis(b,'x',target,dt,rate);assert(Object.is(actual,expected),`${old}/${target}/${dt}/${rate} displacement`);assert(Object.is(a.x,b.x),'state');}
+});

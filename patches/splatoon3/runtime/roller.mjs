@@ -76,6 +76,15 @@ export function rollerSwingMoveSpeed(runner) {
 export function rollerMode(w, vertical) {
   return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;
 }
+// A vertical mode is already a private ordinary data record. Later overlays
+// can define its data fields directly instead of copying the whole weapon a
+// second/third time. DefineProperty keeps spread's own-property semantics even
+// when Object.prototype has a setter; no source config or getter is cached.
+const MODE_FIELD={value:null,writable:true,enumerable:true,configurable:true};
+function setModeField(mode,key,value){
+  MODE_FIELD.value=value;
+  try{Object.defineProperty(mode,key,MODE_FIELD);}finally{MODE_FIELD.value=null;}
+}
 
 // 847: the Splat Roller body dimensions in the pinned 11.3.0 parameter table
 // (Radius 0.4, WidthHalf 1.4). Retain the runner's existing 0.75 forward
@@ -573,14 +582,19 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     }
     const vertical = state ? state.vertical : this.s3FlickVertical;
     let mode = rollerMode(w, vertical);
-    if (state) mode = { ...mode, flickWindup: state.windup, flickInterval: state.interval };
+    if (state) {
+      if(mode===w)mode={...mode,flickWindup:state.windup,flickInterval:state.interval};
+      else {setModeField(mode,'flickWindup',state.windup);setModeField(mode,'flickInterval',state.interval);}
+    }
     // The depletion volley keeps the swing's sourced count/speed/damage owners:
     // the public emitter reads flickDrops, the vertical wrapper reads the
     // sibling drops field, and configureFidelityFlick reads the per-unit
     // DepletionBulletNum/DepletionSpeedRate straight from the pinned raw units.
     if (state?.depleted) {
       const drops = depletionDrops(vertical);
-      if (drops !== null) mode = { ...mode, s3Depletion: true, s3DepletionDrops: drops, flickDrops: drops };
+      if (drops !== null) {
+        setModeField(mode,'s3Depletion',true);setModeField(mode,'s3DepletionDrops',drops);setModeField(mode,'flickDrops',drops);
+      }
     }
 
     // Float accumulation must not add a 22nd/27th tick to a 21F/26F windup.

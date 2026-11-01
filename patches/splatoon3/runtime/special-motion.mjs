@@ -4,6 +4,7 @@
 // calibration for this rig. No Actor/Runner clocks or world transforms change.
 const INSTALL = Symbol.for('inkwave.s3.special-motion.install.v1');
 import {excludeFromOverridePasses} from './special-vfx-kit.mjs';
+import {warmProgramReflection} from '../../local-quality/shader-program-reflection.mjs';
 const states = new WeakMap();
 const stateMap = ch => ch?.[INSTALL]?.states ?? states;
 const isSlam = id => id === 'slam' || id === 'tripleSplashdown';
@@ -616,7 +617,8 @@ export function warmSpecialPrograms(THREE,G,renderer,camera,target){
   const frame=renderer.info?.render?.frame;
   if(keeperWarmFrame.get(target)===frame)return null;   // once per load batch (every kid's warmAll shares the frame)
   keeperWarmFrame.set(target,frame);
-  const p=compileKeeper(THREE,G,renderer,camera,target,specialProgramKeepers(THREE));
+  const keepers=specialProgramKeepers(THREE);
+  const p=compileKeeper(THREE,G,renderer,camera,target,keepers);
   // shadow-depth variants (e.g. the instanced storm cloud): one shadow pass of the keepers, as Character.warmAll does
   const sm=renderer.shadowMap,lights=[];
   if(sm?.enabled&&typeof sm.render==='function'&&target.traverseVisible)target.traverseVisible(o=>{if(o.isLight&&o.castShadow&&o.shadow)lights.push(o);});
@@ -625,7 +627,11 @@ export function warmSpecialPrograms(THREE,G,renderer,camera,target){
     try{sm.needsUpdate=true;sm.render(lights,keepers,camera);}catch(e){console.warn('[inkwave] special shadow warm',e);}
     finally{sm.needsUpdate=nu;}
   }
-  return p?.catch?.(e=>console.warn('[inkwave] special program warm',e))??null;
+  // The cooler's transparent double-sided material owns two program variants.
+  // Compile does not populate their uniform/attribute reflection; do it now,
+  // while the match-load fade is still active and the keeper is retained.
+  return p?.then?.(v=>{warmProgramReflection(renderer,keepers.getObjectByName('cooler-glass')?.material);return v;})
+    ?.catch?.(e=>console.warn('[inkwave] special program warm',e))??null;
 }
 
 // Observe the final native special owners. This layer never steps gameplay,

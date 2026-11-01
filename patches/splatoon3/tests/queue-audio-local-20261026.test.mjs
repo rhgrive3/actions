@@ -23,7 +23,7 @@ function fixture({legacy=false}={}){
   const node=(kind)=>({connect(){},disconnect(){},gain:param(kind+':gain')});
   class Voice{constructor(ctx,out,t){this.ctx=ctx;this.out=out;this.t=t;this.nodes=[];this.srcs=[];this.end=t;this.dead=false;}
     dispose(){this.dead=true;this.ondispose?.();}finish(){}kill(){this.dispose();}}
-  const C=vm.runInNewContext('(class{'+methods+'})',{V:Voice,distCut:cutoff,validPos:finite,audioEmitterKey,selectVictim,taper:v=>Math.pow(Math.min(1,Math.max(0,+v||0)),1.5),MAX_VOICES:48,MAX_LOOPS:24,NOOP_HANDLE:{playing:false,set(){},stop(){}},console});
+  const C=vm.runInNewContext('(class{'+methods+'})',{V:Voice,distCut:cutoff,validPos:finite,audioEmitterKey,selectVictim,taper:v=>Math.pow(Math.min(1,Math.max(0,+v||0)),1.5),MAX_VOICES:48,RESOLVE_WEAPON_OCCLUSION:Symbol.for('inkwave.weapon-audio.resolve-occlusion'),MAX_LOOPS:24,NOOP_HANDLE:{playing:false,set(){},stop(){}},console});
   // The native listener method is replaced by an imported helper in composition.
   C.prototype.setListener=function(pos){if(finite(pos)){this.L.x=pos.x;this.L.y=pos.y;this.L.z=pos.z;}};
   installAudioSpatialDsp(C,cutoff);installAudioLoopDedupe(C);
@@ -110,4 +110,15 @@ test('weapon obstruction cache refreshes either moving endpoint and idle roller 
   runner.update(1/60,{});assert.equal(velReads,0);
   runner.rolling=true;runner.s3RollerSuspendedHold=true;runner.update(1/60,{});assert.equal(velReads,0);
   runner.s3RollerSuspendedHold=false;runner.update(1/60,{});assert.ok(velReads>0);
+});
+
+test('one-shot LOS resolver runs only after mute, quiet volume, min-gap and voice-priority admission',()=>{
+ const{e}=fixture(),resolve=Symbol.for('inkwave.weapon-audio.resolve-occlusion');let calls=0;
+ const options={actor:{},pos:{x:2,y:1,z:3},priority:1,[resolve](arg){calls++;arg.occlusion=.78;}};
+ e.vol.sfx=0;assert.equal(e.play('sound',options),null);assert.equal(calls,0);
+ e.vol.sfx=1;assert.equal(e.play('sound',{...options,volume:0}),null);assert.equal(calls,0);
+ e.voices=Array.from({length:48},()=>({priority:100,v:{dead:false}}));assert.equal(e.play('sound',options),null);assert.equal(calls,0);
+ e.voices=[];const voice=e.play('sound',options);assert(voice);assert.equal(calls,1);assert.equal(voice.lp.frequency.value,22000*Math.pow(.055,.78));
+ assert.equal(e.play('sound',options),null);assert.equal(calls,1);
+ e.ctx.currentTime=.2;assert(e.play('sound',options));assert.equal(calls,2);
 });

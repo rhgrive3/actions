@@ -31,7 +31,7 @@ test('sub defense materializes only the final nearest candidate with identical g
       // The current Beakon sphere is intentionally centered above its foot;
       // align the historical sphere to compare all other geometry and effects.
       if(legacy)for(const object of records)if(object.subId==='beakon')object.pos.y+=.48;
-      const env={finite3,clamp,ALL_SUB_SPECS,syncObjectAttachment(){},targetableTorpedo:o=>o.subId==='torpedo'&&o.phase==='chase',objectDamageScale:()=>1,localOwner:o=>!!o&&!o.remote,emitObjectHit:(_api,o,_p,pt)=>effects.push(['proposal',o.seq,...pt.toArray()]),removeObject:(_api,_projectiles,o)=>{o.dead=true;effects.push(['remove',o.seq]);},blast:(_api,_p,pt)=>effects.push(['blast',...pt.toArray()])};
+      const env={finite3,clamp,ALL_SUB_SPECS,subDeviceImpactBurst:evaluate(current('subDeviceImpactBurst')),syncObjectAttachment(){},targetableTorpedo:o=>o.subId==='torpedo'&&o.phase==='chase',objectDamageScale:()=>1,localOwner:o=>!!o&&!o.remote,emitObjectHit:(_api,o,_p,pt)=>effects.push(['proposal',o.seq,...pt.toArray()]),removeObject:(_api,_projectiles,o)=>{o.dead=true;effects.push(['remove',o.seq]);},blast:(_api,_p,pt)=>effects.push(['blast',...pt.toArray()])};
       const api={THREE:{Vector3},_allSubBeakonCenter:new THREE.Vector3(),_allSubBeakonOffset:new THREE.Vector3(0,.48,0)};
       const result=evaluate(code,env)(api, {_s3SubObjects:records},p,start,end);
       if(!result)return{result:null,vectors};

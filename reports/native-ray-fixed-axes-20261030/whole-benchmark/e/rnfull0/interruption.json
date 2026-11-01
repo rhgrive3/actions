@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-30T20:15:27.031239+00:00",
+  "classification": "interrupted-incomplete",
+  "cause": "Environment reconnection; prior measuring node/chromium processes no longer exist. No harness completion or failure status was written.",
+  "resultFile": "result.json",
+  "resultSha256BeforeMetadata": "3e7532f3e4d7f32c4504761bd66a50cc5868ec8e929d4adccf7db2fd657bb39f",
+  "resultBytes": 4927123,
+  "resultModified": false,
+  "savedWindows": {
+    "warmups": 20,
+    "preflight": 8,
+    "measurements": 5,
+    "parityPairs": 16,
+    "rejectedWindowAttempts": 0
+  },
+  "originalStartedAt": "2026-10-30T19:47:04.586Z",
+  "originalStatusPresent": false,
+  "retryPolicy": "Original attempt retained in full. New explicitly recorded execution from the beginning under the same fixed plan; no outliers or unfavorable values removed.",
+  "replacementEvidence": "../rnfull1",
+  "interruptedInFlightWindow": "Unknown: no attempt beyond the five saved A/B windows was serialized."
+}

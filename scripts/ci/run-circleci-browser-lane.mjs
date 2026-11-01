@@ -24,6 +24,18 @@ const RUN_STEP = /^        run: (.*)$/;
 const INDENTED_RUN = /^          /;
 const WIPER_TITLE = 'Capture all current-head Wiper charged and tap native views';
 const WIPER_GUARD = "${{ !cancelled() && matrix.suite == 'catalog' && steps.verified-site.outcome == 'success' && steps.browser-prepare.outcome == 'success' }}";
+
+const RESPONSIVE_SUCCESS_TITLE = "Package verified responsive success evidence";
+const RESPONSIVE_SUCCESS_COMMAND = "node scripts/ci/package-inkwave-success-evidence.mjs responsive \"$CI_STORAGE/evidence\" \"$CI_STORAGE/success-evidence\" .built-site/_site/inkwave-build.json \"$SOURCE_SHA\"";
+const RESPONSIVE_SUCCESS_ATTRIBUTES = [
+  "        if: success() && matrix.suite == 'responsive'",
+  "        id: browser_success_evidence",
+  "        env:",
+  "          INKWAVE_BROWSER_STEP_OUTCOME: ${{ steps.bind_browser_evidence.outcome }}",
+  "          INKWAVE_FULL_SUCCESS_EVIDENCE: ${{ inputs.full_success_evidence == true && '1' || '0' }}",
+  "        run: node scripts/ci/package-inkwave-success-evidence.mjs responsive \"$CI_STORAGE/evidence\" \"$CI_STORAGE/success-evidence\" .built-site/_site/inkwave-build.json \"$SOURCE_SHA\""
+];
+const BIND_TITLE = 'Bind passing browser evidence to the tested commit';
 const MATCH_SUITE = /^matrix\.suite == '([a-z]+)'(?: && env\.RUNTIME_PERFORMANCE == 'true')?$/;
 
 function parseCommand(attrs, label) {
@@ -69,8 +81,10 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
   }
   const commands = [];
   const coverage = {};
+  let successEvidence = null, successEvidenceSeen = 0, bindingSeen = false;
   for (let i = 0; i < block.length; i++) {
     if (!STEP_HEADER.test(block[i])) continue;
+    const stepIndex = i;
     const title = block[i].replace(/^      - (?:name|uses): /, '');
     let j = i + 1;
     while (j < block.length && !STEP_HEADER.test(block[j])) j++;
@@ -79,6 +93,21 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
     const command = parseCommand(attrs, title);
     if (title === WIPER_TITLE && (command === null || attrs.filter(x => /^        if: /.test(x)).length !== 1 || attrs.some(x => /^        continue-on-error:/.test(x))))
       throw Error('Invalid Wiper capture step');
+    if (title === RESPONSIVE_SUCCESS_TITLE) {
+      if (command !== RESPONSIVE_SUCCESS_COMMAND ||
+          attrs.filter(line => line.trim()).join('\n') !== RESPONSIVE_SUCCESS_ATTRIBUTES.join('\n'))
+        throw Error('Unreviewed responsive success evidence step');
+      const binding = block.flatMap((line, index) => line === '      - name: ' + BIND_TITLE ? [index] : []);
+      const bindingID = block.flatMap((line, index) => line === '        id: bind_browser_evidence' ? [index] : []);
+      if (++successEvidenceSeen !== 1 || binding.length !== 1 || bindingID.length !== 1 ||
+          bindingID[0] !== binding[0] + 1 || binding[0] >= stepIndex || !bindingSeen ||
+          block.slice(binding[0] + 1, stepIndex).some(line => STEP_HEADER.test(line)))
+        throw Error('Invalid responsive success evidence binding order');
+      // Packaging is not a native acceptance command. Keep the exact source
+      // command separate and run it only after CircleCI validates the bound receipt.
+      if (suite === 'responsive') successEvidence = { name: title, command };
+      continue;
+    }
     if (command === null) continue; // GitHub-only actions: checkout/cache/upload artifacts.
     if (title === 'Package bounded browser failure evidence') {
       if (command !== 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$RUNNER_TEMP/inkwave-browser-failure-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${BROWSER_SUITE}" .built-site/_site/inkwave-build.json'
@@ -87,6 +116,7 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
       continue; // CircleCI packages failures in its always-run artifact step.
     }
     if (EXTERNAL_STEPS.has(title)) continue; // CircleCI handles these in its own immutable setup.
+    if (bindingSeen) throw Error('Native acceptance step after terminal evidence binding: ' + title);
     const whenLine = attrs.find(x => /^        if: /.test(x));
     const condition = whenLine ? whenLine.slice(12).trim() : null;
     if (condition === null && title !== 'Bind passing browser evidence to the tested commit')
@@ -103,12 +133,40 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
       if (condition.includes('RUNTIME_PERFORMANCE') && !runtimePerformance) continue;
     }
     commands.push({ name: title, command });
+    if (title === BIND_TITLE) bindingSeen = true;
   }
+  if (successEvidenceSeen !== 1) throw Error('Missing reviewed responsive success evidence step');
   if (!commands.length || !commands.some(x => x.name === 'Bind passing browser evidence to the tested commit'))
     throw Error('Browser lane lacks full immutable acceptance receipt');
   for (const s of SUITES) if (!coverage[s]) throw Error('Missing required native browser suite: ' + s);
   if (runtimePerformance) throw Error('Runtime-performance baseline lane stays on GitHub until a dedicated parity review');
-  return { sourceHash, commands, coverage };
+  return { sourceHash, commands, coverage, successEvidence };
+}
+
+
+// The GitHub-only outcome expression is not evaluated on CircleCI. Its value
+// comes from the actual immutable receipt, after every native command passed.
+export function runBoundResponsiveSuccessEvidence(step, native, binding, env, execute = spawnSync) {
+  assert.equal(step?.name, RESPONSIVE_SUCCESS_TITLE, 'Exact reviewed responsive evidence step');
+  assert.equal(step.command, RESPONSIVE_SUCCESS_COMMAND, 'Exact reviewed responsive evidence command');
+  assert.equal(binding.suite, 'responsive');
+  assert.equal(native?.status, 'passed');
+  assert.equal(native.sourceSha, binding.sourceSha);
+  assert.equal(native.contentHash, binding.contentHash);
+  assert.equal(native.suite, binding.suite);
+  assert(Array.isArray(native.checks) && native.checks.length, 'Empty native acceptance checklist');
+  const fullEvidence = env.INKWAVE_FULL_SUCCESS_EVIDENCE ?? '0';
+  assert(fullEvidence === '0' || fullEvidence === '1', 'CircleCI full success evidence flag must be 0 or 1');
+  const boundEnv = { ...env, INKWAVE_BROWSER_STEP_OUTCOME: 'success',
+    INKWAVE_FULL_SUCCESS_EVIDENCE: fullEvidence };
+  const result = execute('bash', ['-e', '-o', 'pipefail', '-c', step.command],
+    { cwd: process.cwd(), env: boundEnv, stdio: 'inherit' });
+  if (result.status !== 0) {
+    const error = Error('Responsive success evidence failed: ' + step.name + ' (status=' + result.status + ')');
+    error.exitCode = result.status; error.signal = result.signal || null;
+    if (result.error !== undefined) error.cause = result.error;
+    throw error;
+  }
 }
 
 function verifySite(sha, siteRoot) {
@@ -129,7 +187,7 @@ function run() {
   assert.equal(exactHead.stdout.trim(), sha, 'Refuse mismatched CircleCI source checkout');
   const expectedHash = verifySite(sha, '.built-site/_site');
   const runtimePerformance = process.env.RUNTIME_PERFORMANCE === 'true';
-  const { sourceHash, commands, coverage } = parseBrowserLane(fs.readFileSync(WORKFLOW, 'utf8'), suite, runtimePerformance);
+  const { sourceHash, commands, coverage, successEvidence } = parseBrowserLane(fs.readFileSync(WORKFLOW, 'utf8'), suite, runtimePerformance);
   const root = process.env.CI_STORAGE || path.join(process.cwd(), '.ci-scratch', 'circleci-browser', suite);
   fs.mkdirSync(path.join(root, 'evidence'), { recursive: true });
   fs.mkdirSync(path.join(root, 'cache'), { recursive: true });
@@ -148,6 +206,7 @@ function run() {
   const record = {
     sourceSha: sha, contentHash: expectedHash, suite, nativeWorkflowSourceHash: sourceHash,
     selectedSteps: commands.map(x => x.name), nativeSuiteStepCounts: coverage,
+    successEvidenceStep: successEvidence?.name || null,
     platform: os.platform(), node: process.version, status: 'running'
   };
   const resultFile = path.join(root, 'circleci-lane-receipt.json');
@@ -171,6 +230,16 @@ function run() {
   assert.equal(native.suite, suite);
   assert.equal(native.contentHash, expectedHash);
   assert(native.checks && native.checks.length, 'Empty native acceptance checklist');
+  if (successEvidence) {
+    try {
+      runBoundResponsiveSuccessEvidence(successEvidence, native,
+        { sourceSha: sha, contentHash: expectedHash, suite }, env);
+    } catch (error) {
+      record.status = 'failed'; record.failedStep = successEvidence.name;
+      record.exitCode = error?.exitCode ?? null; record.signal = error?.signal || null;
+      recordWrite(); throw error;
+    }
+  }
   record.status = 'passed';
   record.nativeChecks = native.checks;
   recordWrite();

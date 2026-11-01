@@ -132,6 +132,17 @@ export function installChargerFlight(api,completion) {
     }
     return path;
   };
+  // Receiver device contacts use the native legacy beam shape and damage.
+  // This record never enters the rendered beam/flight arrays or spends ink.
+  P.makeDeviceChargerProbe=function(proof,actor){
+    const w=actor?.weapon,charge=proof.beamCharge;
+    if(w?.kind!=='charger'||w.catalogRecord||!Number.isFinite(charge)||charge<0||charge>1)return null;
+    const path=this.makeCrabletChargerPath(proof);if(!path?.length)return null;
+    const full=isChargerFullCharge(charge);
+    return {type:'beam',size:0,owner:actor,team:actor.team,ghost:true,full,legacyDeviceCharger:true,
+      damage:full?w.damageMax:chargerDamage({weaponRunner:{chargeT:charge}},w,charge),
+      prev:new THREE.Vector3(...proof.origin),pos:new THREE.Vector3(...proof.origin),vel:new THREE.Vector3(...proof.unit),path};
+  };
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
   function feetSplash(actor,w){
     const radius=w.feetPaintRadius;
@@ -263,16 +274,16 @@ export function installChargerFlight(api,completion) {
     const length=Math.min(job.speed*dt,Math.max(0,job.range-job.travel));
     job.pos.copy(job.prev).addScaledVector(job.dir,length);
     const world=sweptWorldHit(G.physics,job.prev,job.pos,collision.InitRadiusForField,collision.EndRadiusForField,job.hit,true);
-    let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():null,target=null;
+    let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit&&!job.ghost?world.normal.clone():null,target=null;
     // One source flight owns these scalar fields and the same movement vectors.
     // Candidate callbacks are settled synchronously below before the next step.
     const probe=job.defenseProbe||=( {type:'beam',size:0} );
     probe.owner=job.owner;probe.team=job.team;probe.prev=job.prev;probe.pos=job.pos;probe.vel=job.dir;
     probe.damage=job.damage;probe.ghost=job.ghost;probe.full=!!job.full;
     const defense=system.kitDefenseCandidate?.(probe);
-    if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.dir.clone().negate();}
+    if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.ghost?null:job.dir.clone().negate();}
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
-    if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
+    if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.ghost?null:job.dir.clone().negate();target='boss';}
     const depth=job.hitCandidateDepth||0,leases=job.hitCandidateLeases||=([]);
     const lease=leases[depth]||=( {actors:[],rows:[]} ),actors=lease.actors;actors.length=0;job.hitCandidateDepth=depth+1;
     let amount,clippedFraction;
@@ -306,7 +317,7 @@ export function installChargerFlight(api,completion) {
         try{system.applyHit(job.owner,a.actor,amount,job.weapon.id);}
         finally{job.owner._sourceChargerAudioHit=previous;}
       }
-      if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
+      if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.ghost?null:job.dir.clone().negate();break;}
     }
     }finally{for(const row of actors)row.actor=null;actors.length=0;job.hitCandidateDepth=depth;}
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
@@ -316,7 +327,7 @@ export function installChargerFlight(api,completion) {
     if(job.beam){job.beam.mesh.scale.z=Math.max(.0001,job.travel);job.beam.mesh.material.uniforms.uLen.value=Math.max(.0001,job.travel);}
     ended=ended||job.travel+EPS>=job.range;
     if(ended){
-      normal||=job.dir.clone().negate();
+      if(!job.ghost)normal||=job.dir.clone().negate();
       // Final trail stamp at the stopping point, never beyond an obstruction.
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         job.owner.addTurf(splatTravelPoint(system,job,job.pos,chargerPaintWorldRadius(job.paint.width)*job.paint.terminalRate,true));
