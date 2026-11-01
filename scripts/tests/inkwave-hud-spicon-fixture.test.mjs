@@ -29,7 +29,7 @@ function collectorInitialization(code){
 // browser SVG visibility, which remains in the full strict browser harness.
 function element(){
  const labels={i:{innerHTML:''},b:{textContent:''}};
- return {innerHTML:'',style:{setProperty(){}},classList:{toggle(){}},querySelector:s=>labels[s],cloneNode:()=>element(),contains:()=>true};
+ return {innerHTML:'',style:{setProperty(){}},classList:{add(){},remove(){},contains(){return false;},toggle(){}},querySelector:s=>labels[s],cloneNode:()=>element(),contains:()=>true};
 }
 function holder(f,code){
  const h={spIcon:element(),scopeMask:element(),subChip:element()};h.spIcon.innerHTML='LIVE_NATIVE_ICON';
