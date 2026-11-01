@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "beforeSHA256": "9c13cb324400af285b3b67d4852c39880f37822cf128a2630e4a0b2fdd644c7e",
+  "currentSHA256": "54eb5800b9073b69ad3ddda13d03f99ea1e10ebe762396c98a26390d4088d170",
+  "hunks": [
+    {
+      "current": "  let flightLane = null;\n  if (name === 'floor-washtub') {\n    // The stage-redesign fixture adds native walls around the original spawn\n    // deck. Keep the real Explosher/Actor.update/Projectiles flight test, but\n    // select an unobstructed heading from the actual muzzle instead of assuming\n    // +Z is open forever. A short native ray probe chooses a path with enough\n    // initial clearance for the required F5/F15 airborne captures; the later\n    // production projectile must still retire on a real paintable floor face.\n    const lanes = [];\n    for (let index = 0; index < 32; index++) {\n      const yaw = index * Math.PI * 2 / 32;\n      // Rotate the real character first so the probe starts at that heading's\n      // actual hand/muzzle transform, not the default +Z muzzle offset.\n      a.yaw = yaw; a.aimYaw = yaw;\n      a.character.root.rotation.y = yaw; a.character.root.updateMatrixWorld(true);\n      G.scene.updateMatrixWorld(true);\n      const muzzle = G.projectiles._muzzle(a, new V());\n      const direction = new V(Math.sin(yaw), 0, Math.cos(yaw));\n      const hit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1, u: 0, v: 0 };\n      const result = G.physics.raycast(muzzle, direction, 10, hit, true);\n      const clearance = result?.hit === true ? result.dist : 10;\n      lanes.push({ yaw, muzzle: muzzle.toArray(), direction: direction.toArray(), clearance,\n        obstruction: result?.hit === true ? { block: result.block, face: result.face, point: result.point.toArray() } : null });\n    }\n    lanes.sort((left, right) => right.clearance - left.clearance || left.yaw - right.yaw);\n    flightLane = lanes[0] ?? null;\n    if (!flightLane || flightLane.clearance < 8) {\n      throw new Error('No native Explosher flight lane has the required 8m initial clearance: ' + JSON.stringify(lanes));\n    }\n    a.yaw = flightLane.yaw; a.aimYaw = flightLane.yaw; a.aimPitch = 0;\n    a.aimDir.set(...flightLane.direction);\n    a.aimPoint.copy(a.pos).add(new V(flightLane.direction[0] * 24, 1.05, flightLane.direction[2] * 24));\n    a.character.root.rotation.y = flightLane.yaw; a.character.root.updateMatrixWorld(true);\n    G.scene.updateMatrixWorld(true);\n  }",
+      "prior": "",
+      "label": "capture harness revision 1"
+    },
+    {
+      "current": "  const setup = { weapon, actor: a.pos.toArray(), wall, flightLane, impact, seed, bootSeed: canonical.bootSeed,",
+      "prior": "  const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,",
+      "label": "capture harness revision 2"
+    },
+    {
+      "current": "",
+      "prior": "      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {\n        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');\n        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);\n      }",
+      "label": "capture harness revision 3"
+    },
+    {
+      "current": "      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {\n        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view; diagnostics ' +\n          JSON.stringify({ setup, births: born, frame, row, flightHistory }));\n        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);\n      }",
+      "prior": "",
+      "label": "capture harness revision 4"
+    }
+  ]
+}
