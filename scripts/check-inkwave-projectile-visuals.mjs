@@ -1466,6 +1466,37 @@ async function runContactScenarios(page) {
         const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
         const attemptsStart = window.__iwProjectileImpactAttempts.length;
         const catalogStepStart = window.__iwProjectileCatalogSteps.length;
+        const P = G.projectiles;
+        if(!P.__iwLifecycleTraceWashtub){
+          const trace=window.__iwProjectileLifecycleTrace=[];
+          const watch=p=>p?.wid==='s3-slosher-washtub'||p?.catalog?.r?.sourceActor==='WeaponSlosherBathtub';
+          const state=p=>p?{seed:p.seed,wid:p.wid,age:p.age,life:p.life,delay:p.delay,pos:p.pos?.toArray?.(),vel:p.vel?.toArray?.(),catalog:!!p.catalog,travel:p.catalog?.travel,range:p.catalog?.range,descriptorLife:p.catalog?.descriptor?.life}:null;
+          const originalStep=P._step;
+          P._step=function(p,stepDt){
+            const active=watch(p);if(active)trace.push({event:'step-enter',state:state(p),dt:stepDt});
+            const result=originalStep.call(this,p,stepDt);
+            if(active)trace.push({event:'step-exit',state:state(p),result});
+            return result;
+          };
+          const originalUpdate=P.update;
+          P.update=function(updateDt,...args){
+            const before=this.list.filter(watch).map(state);trace.push({event:'update-enter',dt:updateDt,before});
+            const result=originalUpdate.call(this,updateDt,...args);
+            const after=this.list.filter(watch).map(state);trace.push({event:'update-exit',after});
+            return result;
+          };
+          const list=P.list,originalPop=list.pop;
+          list.pop=function(...args){
+            const item=this[this.length-1];if(watch(item))trace.push({event:'list-pop',state:state(item),stack:new Error('Washtub list pop').stack});
+            return originalPop.apply(this,args);
+          };
+          if(typeof P._recycle==='function'){
+            const originalRecycle=P._recycle;
+            P._recycle=function(p,...args){if(watch(p))trace.push({event:'recycle',state:state(p),stack:new Error('Washtub recycle').stack});return originalRecycle.call(this,p,...args);};
+          }
+          P.__iwLifecycleTraceWashtub=true;
+        }
+        const lifecycleTraceStart=window.__iwProjectileLifecycleTrace.length;
         G.projectiles.update(dt); G.fx.update(dt, G.camera); g.fxHooks?.update?.(dt); G.paint.flush(dt);
         const after = new Set(G.projectiles.list.map(p => p.seed));
         return { before, afterCount: G.projectiles.list.length, retired: before.filter(p => !after.has(p.seed)), paintQuads: G.paint.quads,
@@ -1476,6 +1507,7 @@ async function runContactScenarios(page) {
           headImpacts: G.projectiles.inkFlight?.stats?.headImpacts ?? null,
           surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
           catalogSteps: window.__iwProjectileCatalogSteps.slice(catalogStepStart),
+          lifecycleTrace: window.__iwProjectileLifecycleTrace.slice(lifecycleTraceStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       },frame);
       captureFrame = frame;
