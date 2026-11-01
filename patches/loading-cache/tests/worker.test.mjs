@@ -130,9 +130,10 @@ test('storage denial leaves online requests functional',async()=>{
  const world=new World(),build=makeBuild();world.serve(build);world.failOpen=true;const worker=world.worker(build);
  assert.equal(await(await get(worker,asset(REV_A))).text(),'export const v=1;');await assert.rejects(worker.install(),/SecurityError/);
 });
-test('mutable root, query, range, POST, cross-origin and unknown assets bypass cache policy',async()=>{
+// Byte ranges on declared immutable assets are answered by worker-audio-range.test.mjs.
+test('mutable root, query, POST, cross-origin and unknown assets bypass cache policy',async()=>{
  const {world,worker}=await installed();world.resetStats();
- for(const [url,options] of [ ['src/main.js',{}],[asset(REV_A)+'?x=1',{}],[asset(REV_A),{headers:{Range:'bytes=0-3'}}],[asset(REV_A),{method:'POST'}],['https://other.invalid/file.js',{}],[asset(REV_A,'unknown.js'),{}]]){
+ for(const [url,options] of [ ['src/main.js',{}],[asset(REV_A)+'?x=1',{}],[asset(REV_A),{method:'POST'}],['https://other.invalid/file.js',{}],[asset(REV_A,'unknown.js'),{}]]){
   const result=await worker.request(url,options);assert.equal(result.handled,false,url);
  }
  assert.equal(world.puts.length,0);

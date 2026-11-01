@@ -349,6 +349,53 @@ async function retainedAsset(request, revision) {
     return timedFetch(new Request(request, { cache: 'reload' }), 30000);
   return response; // Unknown future revisions never create unbounded caches.
 }
+// One `bytes=` span (`N-`, `N-M`, `-S`) inside a body of `size` bytes, or null for anything the
+// network should answer (multiple ranges, malformed or unsatisfiable spans).
+function singleByteSpan(header, size) {
+  const m = /^bytes=(\d*)-(\d*)$/.exec(String(header || '').trim());
+  if (!m || (m[1] === '' && m[2] === '')) return null;
+  let start, end;
+  if (m[1] === '') {
+    const suffix = Number(m[2]);
+    if (!Number.isSafeInteger(suffix) || suffix <= 0) return null;
+    start = Math.max(0, size - suffix); end = size - 1;
+  } else {
+    start = Number(m[1]); end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  }
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= size) return null;
+  return { start, end };
+}
+// Media elements read the recordings in byte ranges. A cached immutable body answers them with a 206 slice;
+// otherwise the browser's own ranged request goes to the network. Declared current assets also warm the
+// full body in the background (synchronously registered with waitUntil), so the next playback can be offline.
+async function rangedAsset(event, request, revision, rel) {
+  const current = revision === BUILD.revision;
+  const declared = current && Object.hasOwn(BUILD.assets, rel);
+  const conditional = request.headers.has('if-range');
+  const plain = new Request(request.url);
+  if (declared && !conditional) event.waitUntil(currentAsset(plain, rel).then(() => undefined, () => undefined));
+  if (conditional) return fetch(request);
+  let full;
+  try {
+    const cache = current ? await openCurrentCache() : await openRetainedCache(revision);
+    full = cache ? await cache.match(plain) : undefined;
+  } catch { full = undefined; }
+  if (!full?.ok) return fetch(request);
+  const blob = await full.blob();
+  const span = singleByteSpan(request.headers.get('range'), blob.size);
+  if (!span) return fetch(request);
+  const { start, end } = span;
+  return new Response(blob.slice(start, end + 1), {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: {
+      'Content-Type': full.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Length': String(end - start + 1),
+      'Content-Range': `bytes ${start}-${end}/${blob.size}`,
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
@@ -361,13 +408,15 @@ self.addEventListener('fetch', event => {
     event.waitUntil(repairActiveState());
     work = navigation(request);
   } else {
-    if (url.search || request.headers.has('range')) return; // No query-key cache growth or partial-body poisoning.
+    if (url.search) return; // No query-key cache growth.
     const prefix = new URL('_versions/', SCOPE).pathname;
     if (!url.pathname.startsWith(prefix)) return; // Mutable root assets stay in the native HTTP cache.
     const match = /^([a-f0-9]{64})\/(.+)$/.exec(url.pathname.slice(prefix.length));
     if (!match) return;
     const [, revision, rel] = match;
-    if (revision === BUILD.revision) {
+    // Partial bodies are never stored as assets: a range is only sliced from a complete cached body.
+    if (request.headers.has('range')) work = rangedAsset(event, request, revision, rel);
+    else if (revision === BUILD.revision) {
       if (!Object.hasOwn(BUILD.assets, rel)) return;
       work = currentAsset(request, rel);
     } else work = retainedAsset(request, revision);
