@@ -30,6 +30,11 @@ on:
       - ".github/workflows/pages-inkwave.yml"
       - "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs"
   workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Skip the Validate gates and publish this main commit (manual override)'
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -90,6 +95,7 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
 
       - name: Require successful Validate for current main before upload
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.force_publish }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/ci/inkwave-pages-validation.mjs --wait
@@ -100,6 +106,7 @@ jobs:
           path: _site
 
       - name: Recheck Validate and current main before publication
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.force_publish }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/ci/inkwave-pages-validation.mjs --once
