@@ -9,13 +9,18 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
-      - name: Export exact tracked source
-        run: git archive --format=tar "${GITHUB_SHA}" | gzip -1 > source.tar.gz
+      - name: Verify and export exact tracked source
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git archive --format=tar HEAD | gzip -1 > source.tar.gz
+          test "$(stat -c %s source.tar.gz)" -gt 1000000
       - uses: actions/upload-artifact@v4
         with:
           name: temporary-source-export
