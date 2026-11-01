@@ -72,7 +72,7 @@ test('ranked browser installs the live reader before its unchanged real-audio ga
   assert.match(c,/s\.realRollLoops\.some\(h=>h\.playing&&h\.registered\)/);
   const clock=fs.readFileSync(new URL('../../../scripts/lib/ranked-roller-audio.mjs',import.meta.url),'utf8');
   assert.match(clock,/h\.playing&&h\.registered&&h\.volume>0/);
-  assert.equal(c.split('await proveRankedRollAudio(host,guest,').length,3);
+  assert.equal(c.split('await proveRankedRollAudio(host,guest,').length,2);
   assert.match(c,/G\.audio\.loop=s\.loop;for\(const r of s\.audio\)r\.handle\.stop\(\.05\)/);
   assert.match(c,/const timeout=\{timeout:30000\}/);
 });

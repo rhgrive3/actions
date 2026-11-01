@@ -99,9 +99,9 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   }
   await bounded(()=>waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu'),'setup readiness');
   await click('.iw-setup [data-id="map-'+expected.mapId+'"]');
-  const config=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
-  if(config.mode!==expected.mode||config.map!==expected.mapId||config.difficulty!==expected.difficulty||config.duration!==expected.duration||config.weapon!==expected.weapon||config.time!==expected.time)throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(config));
-  note('native-setup-verified',{config});
+  const setupConfig=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
+  if(setupConfig.mode!==expected.mode||setupConfig.map!==expected.mapId||setupConfig.difficulty!==expected.difficulty||setupConfig.duration!==expected.duration||setupConfig.weapon!==expected.weapon||setupConfig.time!==expected.time)throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(setupConfig));
+  note('native-setup-verified',{config:setupConfig});
   // The real handler invokes prepareMatch during this gesture, then the wipe,
   // then startMatch. Never call audio readiness or startMatch from this helper.
   await click('.iw-setup [data-id="start"].iw-btn--start');
