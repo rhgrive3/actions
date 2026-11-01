@@ -8,7 +8,7 @@ const source = fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs'
 // Extract the actual evaluate call, including its callback and arguments. Both
 // expression callbacks and async block callbacks must reach the same test.
 function evaluationFor(method) {
-  const operation = source.indexOf('__inkwave.' + method + '(');
+  const operation = source.indexOf('__inkwave.' + method + '(', source.indexOf('page.evaluate('));
   assert.notEqual(operation, -1, method + ' action present');
   const begin = source.lastIndexOf('page.evaluate(', operation);
   assert.notEqual(begin, -1, method + ' evaluate owner present');
@@ -25,7 +25,18 @@ function evaluationFor(method) {
   throw Error('Unterminated evaluate for ' + method);
 }
 
-for (const method of ['startMatch', 'quitToMenu']) test(method + ' awaits native completion without serializing its Match result', async () => {
+test('gameplay START unlocks audio from a trusted keyboard gesture and launches through native menu controls',()=>{
+  // The app initializes Web Audio in its real keydown handler. Keep this test
+  // on Chromium's trusted input path instead of calling startMatch inside
+  // page.evaluate, which has no user activation and leaves AudioContext asleep.
+  assert.match(source,/await page\.keyboard\.press\('Enter'\)/);
+  assert.match(source,/await page\.locator\('\.iw-mode--turf'\)\.click\(\)/);
+  assert.match(source,/await page\.locator\('\.iw-ticket'\)\.nth\(ticketIndex\)\.click\(\)/);
+  assert.match(source,/await page\.locator\('\.iw-btn--start'\)\.click\(\)/);
+  assert.doesNotMatch(source,/page\.evaluate\(async\(\{mapId\}\)=>\{await __inkwave\.startMatch/);
+});
+
+test('quitToMenu awaits native completion without serializing its Match result', async () => {
   let release, completed = false, reads = 0;
   const gate = new Promise(resolve => { release = resolve; });
   const cyclic = {}; cyclic.self = cyclic;
