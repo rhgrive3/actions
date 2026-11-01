@@ -9,6 +9,7 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -16,11 +17,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
-      - name: Verify and export exact tracked source
+      - name: Verify and export exact tracked verification source
         run: |
+          set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          git archive --format=tar HEAD | gzip -1 > source.tar.gz
+          git archive --format=tar HEAD .github/workflows inkwave-public patches scripts tests package.json package-lock.json | gzip -1 > source.tar.gz
           test "$(stat -c %s source.tar.gz)" -gt 1000000
+          sha256sum source.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: temporary-source-export
