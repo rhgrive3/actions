@@ -31,7 +31,7 @@ function element(){
  const child=()=>({
   innerHTML:'',textContent:'',dataset:{},style:{setProperty(){}},
   classList:{add(){},remove(){},contains(){return false;},toggle(){}},
-  querySelector:()=>child(),querySelectorAll:()=>[],setAttribute(){},removeAttribute(){},remove(){},
+  querySelector:()=>child(),querySelectorAll:()=>[],setAttribute(){},removeAttribute(){},insertAdjacentHTML(){},remove(){},
   appendChild(){},contains:()=>true
  });
  const labels={i:child(),b:child()};
@@ -39,7 +39,7 @@ function element(){
   innerHTML:'',textContent:'',dataset:{},style:{setProperty(){}},
   classList:{add(){},remove(){},contains(){return false;},toggle(){}},
   firstChild:child(),querySelector:s=>labels[s]??child(),querySelectorAll:()=>[],
-  cloneNode:()=>element(),contains:()=>true,appendChild(){},setAttribute(){},removeAttribute(){},remove(){}
+  cloneNode:()=>element(),contains:()=>true,appendChild(){},setAttribute(){},removeAttribute(){},insertAdjacentHTML(){},remove(){}
  };
 }
 function holder(f,code){
