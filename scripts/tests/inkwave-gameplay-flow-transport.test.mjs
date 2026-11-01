@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = fs.readFileSync(new URL('../check-inkwave-gameplay-resources.mjs', import.meta.url), 'utf8');
+const source = [
+  '../check-inkwave-gameplay-resources.mjs',
+  '../lib/inkwave-projectile-menu-start.mjs',
+].map(file => fs.readFileSync(new URL(file, import.meta.url), 'utf8')).join('\n');
 
 // Extract the actual evaluate call, including its callback and arguments. Both
 // expression callbacks and async block callbacks must reach the same test.
@@ -29,10 +32,13 @@ test('gameplay START unlocks audio from a trusted keyboard gesture and launches 
   // The app initializes Web Audio in its real keydown handler. Keep this test
   // on Chromium's trusted input path instead of calling startMatch inside
   // page.evaluate, which has no user activation and leaves AudioContext asleep.
-  assert.match(source,/await page\.keyboard\.press\('Enter'\)/);
-  assert.match(source,/await page\.locator\('\.iw-mode--turf'\)\.click\(\)/);
-  assert.match(source,/await page\.locator\('\.iw-ticket'\)\.nth\(ticketIndex\)\.click\(\)/);
-  assert.match(source,/await page\.locator\('\.iw-btn--start'\)\.click\(\)/);
+  // Navigation now lives in the shared native-menu helper: it drives the
+  // production menu with Playwright locator clicks and keyboard input.
+  assert.match(source,/await startProjectileThroughMenu\(page,/);
+  assert.match(source,/page\.keyboard\.press\('Enter'\)/);
+  assert.match(source,/await click\('\.iw-main \[data-id="play"\]'\);/);
+  assert.match(source,/mode-turf/);
+  assert.match(source,/click\('\.iw-setup \[data-id="start"\]\.iw-btn--start'\)/);
   assert.doesNotMatch(source,/page\.evaluate\(async\(\{mapId\}\)=>\{await __inkwave\.startMatch/);
 });
 
