@@ -1169,6 +1169,36 @@ async function resetCaptureCharacter(actor) {
   a.aimDir.set(0, 0, 1); a.aimPoint.copy(a.pos).add(new V(0, 1.05, 24));
   a.character.root.rotation.y = 0; a.character.root.updateMatrixWorld(true);
   G.scene.updateMatrixWorld(true);
+  let flightLane = null;
+  if (name === 'floor-washtub') {
+    // The stage-redesign fixture adds native walls around the original spawn
+    // deck. Keep the real Explosher/Actor.update/Projectiles flight test, but
+    // select an unobstructed heading from the actual muzzle instead of assuming
+    // +Z is open forever. A short native ray probe chooses a path with enough
+    // initial clearance for the required F5/F15 airborne captures; the later
+    // production projectile must still retire on a real paintable floor face.
+    const muzzle = G.projectiles._muzzle(a, new V());
+    const lanes = [];
+    for (let index = 0; index < 32; index++) {
+      const yaw = index * Math.PI * 2 / 32;
+      const direction = new V(Math.sin(yaw), 0, Math.cos(yaw));
+      const hit = { hit: false, point: new V(), normal: new V(), dist: 0, block: -1, face: -1, u: 0, v: 0 };
+      const result = G.physics.raycast(muzzle, direction, 10, hit, true);
+      const clearance = result?.hit === true ? result.dist : 10;
+      lanes.push({ yaw, direction: direction.toArray(), clearance,
+        obstruction: result?.hit === true ? { block: result.block, face: result.face, point: result.point.toArray() } : null });
+    }
+    lanes.sort((left, right) => right.clearance - left.clearance || left.yaw - right.yaw);
+    flightLane = lanes[0] ?? null;
+    if (!flightLane || flightLane.clearance < 8) {
+      throw new Error('No native Explosher flight lane has the required 8m initial clearance: ' + JSON.stringify(lanes));
+    }
+    a.yaw = flightLane.yaw; a.aimYaw = flightLane.yaw; a.aimPitch = 0;
+    a.aimDir.set(...flightLane.direction);
+    a.aimPoint.copy(a.pos).add(new V(flightLane.direction[0] * 24, 1.05, flightLane.direction[2] * 24));
+    a.character.root.rotation.y = flightLane.yaw; a.character.root.updateMatrixWorld(true);
+    G.scene.updateMatrixWorld(true);
+  }
   let wall = null;
   if (impact === 'wall') {
     const level = G.physics.level;
@@ -1253,7 +1283,7 @@ async function resetCaptureCharacter(actor) {
     neutralIntent: { fire: a.intent.fire, jump: a.intent.jump, squid: a.intent.squid, sub: a.intent.sub,
       special: a.intent.special, move: a.intent.move.toArray() },
     grounded: a.grounded, invulnerability: a.invuln, kidFrames: a.kidT };
-  const setup = { weapon, actor: a.pos.toArray(), wall, impact, seed, bootSeed: canonical.bootSeed,
+  const setup = { weapon, actor: a.pos.toArray(), wall, flightLane, impact, seed, bootSeed: canonical.bootSeed,
     aim: { yaw: a.yaw, aimYaw: a.aimYaw, aimPitch: a.aimPitch,
       direction: a.aimDir.toArray(), point: a.aimPoint.toArray() },
     inkHex: '#' + a.color.getHexString(), canonicalPlacement: canonical,
