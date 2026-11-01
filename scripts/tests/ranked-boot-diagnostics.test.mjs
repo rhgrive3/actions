@@ -144,30 +144,16 @@ function dodgeWitnessHarness(){
  const cleanup=()=>new Function('s',cleanupSource[0])({offDodge:off});
  return {state,runner,actor,G,arm,cleanup,emit:payload=>emitNativeEvent('weapon:dodge',payload)};
 }
-const recoveryStart=rankedCheckerSource.indexOf('  // Recovery must re-admit native contact');
-const recoveryEnd=rankedCheckerSource.indexOf("  phase('recovered-real-audio'",recoveryStart);
-assert(recoveryStart>=0&&recoveryEnd>recoveryStart);
-const executeRecovery=new Function('host','guest','place','setInput','lane','timeout','identities','snapshot','proveRankedRollAudio','phase',`return (async()=>{${rankedCheckerSource.slice(recoveryStart,recoveryEnd)};return recovered;})();`);
-function recoveryHarness({rejectAdmission=false}={}){
- const calls=[],waits=[],pending={};
- const host={waitForFunction:async(fn,arg,options)=>{assert.equal(options.timeout,30000);calls.push('owner-admitted');}};
- const guest={waitForFunction:(predicate,nid,options)=>{
-  assert.equal(nid,7);assert.equal(options.timeout,30000);waits.push(predicate);
-  assert.equal(waits.length,1,'readiness is admitted once before the native-clock proof');
-  calls.push('remote-readiness');return new Promise((resolve,reject)=>{pending.resolve=resolve;pending.reject=reject;if(rejectAdmission)reject(Error('recovery admission timeout'));});
- }};
- const run=()=>executeRecovery(host,guest,async(_page,position,yaw)=>{assert.deepEqual(position,[1,2,3]);assert.equal(yaw,Math.PI);calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);if(keys.length)assert.deepEqual(keys,['KeyW']);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0,travelYaw:Math.PI},{timeout:30000},[{nid:7}],async p=>p,async(_host,_guest,nid,_input,_save,key)=>{assert.equal(nid,7);assert.equal(key,'KeyW');calls.push('positive-audio');return {remote:'positive-real-audio'};},()=>{});
- return {calls,waits,pending,run};
-}
-function withRankedRead(state,fn){const previous=globalThis.__rankedReplication;globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return state;}};try{return fn();}finally{globalThis.__rankedReplication=previous;}}
 const recoveredAtRest={held:true,grounded:true,suspended:false,f:17,near:true,rollLoop:true,audioState:'running',realRollLoops:[{playing:true,registered:true,volume:0}]};
-test('ranked recovery waits for native and real remote loop admission before its bounded movement pulse',async()=>{
- const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
- assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness']);
- assert(!h.calls.includes('pulse'),'relay delay cannot consume movement before readiness');
- assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[0](7)),true,'a registered playing loop may be ready at zero volume');
- h.pending.resolve();assert.deepEqual(await run,{remote:'positive-real-audio'});
- assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness','positive-audio']);
+test('ranked browser acceptance keeps the supported-floor sequence, ordinary release and bounded forward pulse',()=>{
+ const markers=["phase('native-ledge'","phase('supported-real-audio'","phase('released'"];
+ const at=markers.map(marker=>{const found=rankedCheckerSource.indexOf(marker);assert(found>=0,marker);return found;});
+ assert(at[0]<at[1]&&at[1]<at[2],'supported-floor rollout precedes ordinary release');
+ const release=rankedCheckerSource.slice(at[1],at[2]);
+ assert(release.includes('await setInput(host,false);'),'release retires native input before the remote state is read');
+ assert(release.includes('!s.held&&!s.suspended'),'release requires the remote to drop both held and suspended state');
+ assert(!release.includes('proveRankedRollAudio'),'the bounded forward pulse is proven before the ordinary release');
+ assert(!rankedCheckerSource.includes("phase('recovered-real-audio'"),'the removed terrain-edge recovery phase cannot silently return');
  assert.ok(rankedCheckerSource.includes("if(keys.includes('KeyW')&&!RG.game.frozen)state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyW'),250)"),'live forward movement retains the original wall-clock bound');
 });
 test('ranked movement pulse starts at the next actual native frame and retains the 250ms timer and exact frame ownership',async()=>{
@@ -288,14 +274,6 @@ test('ranked native lane queries reject the historical Tidewater center-cover ov
  assert(contacts.wall);assert.equal(contacts.wallBlock,2);assert(Math.abs(resolved.x-(-1.9501))<1e-12,'the real solver reproduces both browser failure positions');
  for(let distance=0;distance<=2;distance+=.25){const at=query(-1.9+distance,2.8,2,yaw);assert(at?.support.floor,'nearby unobstructed native support remains eligible');}
  assert.match(rankedCheckerSource,/if\(corridor.length===17\)/,'all 17 quarter-metre support checks are required across 4m');
-});
-test('ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse',async()=>{
- const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
- const invalid=[{held:false},{grounded:false},{suspended:true},{f:17|(1<<28)},{near:false},{rollLoop:false},{audioState:'suspended'},
-  {realRollLoops:[]},{realRollLoops:[{playing:true,registered:false,volume:1}]},{realRollLoops:[{playing:false,registered:true,volume:1}]}];
- for(const delta of invalid)assert.equal(!!withRankedRead({...recoveredAtRest,...delta},()=>h.waits[0](7)),false,JSON.stringify(delta));
- h.pending.reject(Error('recovery admission timeout'));await assert.rejects(run,/recovery admission timeout/);
- assert(!h.calls.includes('pulse'));assert(!h.calls.includes('positive-audio'));
 });
 const failureStart=rankedCheckerSource.indexOf(" }catch(error){\n  receipt.status='failed';receipt.error=error?.stack||String(error);");
 const failureEnd=rankedCheckerSource.indexOf('\n finally{\n  const cleanupErrors=[];receipt.restoration=[];',failureStart);
