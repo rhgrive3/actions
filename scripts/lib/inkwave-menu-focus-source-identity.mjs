@@ -6,7 +6,7 @@ export const CURRENT_MENU_LAYOUT_SHA256='ff0a0c479e5aca4f88082836c17d8631e2d835c
 export const HISTORICAL_MENU_INSTALLER_SHA256='c5991f05eaa7b8b81ca43f36d9278237e00dfc44c714b7a60fe635203c98cb0f';
 export const ICON_MENU_INSTALLER_SHA256='43c46f4e81cd6f73c27d7c8ba4dc6507561c638b48ef379c341dd4fd88d6e6ac';
 export const SQUIDROLL_MENU_INSTALLER_SHA256='897584395e2e3e070e5d499d1e579c7fd2eb0b5e833e96bff874602a5435aea8';
-export const THROW_PREDICTION_MENU_INSTALLER_SHA256='7c76f6c1dde17a1f6ec9fda5e7959d1dbcdc69de4af5ea2f5eb83814e1ec8cb8';
+export const THROW_PREDICTION_MENU_INSTALLER_SHA256='3628cf5e2435cbd6b28d7f011f1e7d551594cc3a0198b351367203423bdd1966';
 export const MENU_ICON_INPUT_SHA256=Object.freeze({
  'patch/runtime/ui-kit-icons.mjs':'d4196644a1867263f6ba22814d7d0174426ec838031c5b3df51e6360d47e2e08',
  'patch/runtime/ui-sub-icons.mjs':'0fe024784718d29fcc552a9f981b4eb78e359cfd4eb6a49e273da4a212978e2d',
@@ -136,6 +136,16 @@ export function restoreSquidrollMenuInstaller(source,frozenIcon){
 // 03a34916 adds one import and the final preview-owner installation. The full
 // Squid Roll predecessor is frozen separately; both directions require exact
 // bytes, including ordering after all weapon-specific prediction owners.
+// The current main-line installer also gained the independent self-occlusion
+// owner after the frozen Squid Roll predecessor was recorded. Keep that exact
+// two-site successor separate from the throw-prediction owner below; never
+// rewrite the historical/icon/Squid Roll fixture pins to absorb main changes.
+const mainSelfOcclusionChanges=[
+ ["import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';\n",
+  "import { installSelfOcclusion } from './self-occlusion.mjs';\nimport { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';\n"],
+ ["  installShotGuide(api, profile);\n",
+  "  installShotGuide(api, profile);\n  installSelfOcclusion(api);\n"],
+];
 const throwPredictionChanges=[
  ["import { installAllSpecials, replaySpecial } from './all-specials.mjs';\n", "import { installAllSpecials, replaySpecial } from './all-specials.mjs';\nimport { installThrowPrediction } from './throw-prediction.mjs';\n"],
  ["  installMainWeaponCatalogRuntime(api, profile);\n", "  installMainWeaponCatalogRuntime(api, profile);\n  // Every weapon-specific flight/activation owner is now installed. Render\n  // its exact prediction instead of falling back to the Splat Bomb equation.\n  installThrowPrediction(api);\n"],
@@ -147,12 +157,16 @@ function assertSquidrollInstaller(source,frozenSquidroll){
 }
 export function projectThrowPredictionMenuInstaller(source,frozenSquidroll){
  assertSquidrollInstaller(source,frozenSquidroll);
+ // Preserve the subsequently accepted main-line self-occlusion owner as its
+ // own reversible successor before appending the throw-prediction owner.
+ for(const [before,after] of mainSelfOcclusionChanges)source=once(source,before,after);
  for(const [before,after] of throwPredictionChanges)source=once(source,before,after);
  assert.equal(hash(source),THROW_PREDICTION_MENU_INSTALLER_SHA256,'Reviewed throw prediction menu installer epoch');return source;
 }
 export function restoreThrowPredictionMenuInstaller(source,frozenSquidroll){
  assert.equal(hash(source),THROW_PREDICTION_MENU_INSTALLER_SHA256,'Reviewed throw prediction menu installer epoch');
  for(const [before,after] of [...throwPredictionChanges].reverse())source=once(source,after,before);
+ for(const [before,after] of [...mainSelfOcclusionChanges].reverse())source=once(source,after,before);
  assertSquidrollInstaller(source,frozenSquidroll);return source;
 }
 export function verifyMenuInstallerSourceIdentity(source,manifestDigest,historicalDigest,frozen,iconInputs={},frozenIcon,frozenSquidroll){
