@@ -1,0 +1,23 @@
+name: Temporary local verification source export
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/workflows/ci-source-export-temporary.yml'
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+      - name: Export exact tracked source
+        run: git archive --format=tar "${GITHUB_SHA}" | gzip -1 > source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporary-source-export
+          path: source.tar.gz
+          retention-days: 1
