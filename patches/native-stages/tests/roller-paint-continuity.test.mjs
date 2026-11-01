@@ -81,12 +81,18 @@ test('native contact cannot paint through a raised floor, lower floor, wall or N
   assert.equal(level.manifest.objects.find(object => object.name === 'Fld_Dry').paintable, false);
 });
 
-test('ordinary native projectile impacts remain restricted to their struck chart', async () => {
-  const { level, paint, at, reference } = await world();
+test('ordinary native projectile impacts paint the coplanar chart across the seam, not raised or lowered charts', async () => {
+  const { f, level, paint, at, reference } = await world({ neighbours: true });
   paint.splat(at, 2, 0, { kind: 'source-shot', face: reference.id, seed: .2, instant: true });
-  const other = level.faces.find(face => face !== reference);
-  assert.ok(paint.grid.slice(other.grid, other.grid + other.nu * other.nv).every(value => value === 0));
-  assert.ok(!paint.quads.includes(other.id));
+  const other = level.faces.find(face => face !== reference && Math.abs(face.origin.y) < 1e-8 && face.n.y > .99);
+  assert.ok(other, 'the seam must split the floor into two charts');
+  assert.equal(paint.sampleWorld(other.id, new f.THREE.Vector3(9, 0, 4)), 1, 'the splat must cross the chart boundary');
+  assert.ok(paint.quads.includes(other.id));
+  // Raised/lowered parallels, the wall and every other chart stay untouched (see native-face-lock-coplanar).
+  for (const face of level.faces.filter(face => face !== reference && face !== other)) {
+    assert.ok(paint.grid.slice(face.grid, face.grid + face.nu * face.nv).every(value => value === 0), `chart ${face.id}`);
+    assert.ok(!paint.quads.includes(face.id));
+  }
 });
 
 test('a native contact crossing charts records one event and replays identical ownership', async () => {

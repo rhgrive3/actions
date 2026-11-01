@@ -202,7 +202,8 @@ test('native all-dead paint charts skip pure CPU work but retain identical owner
  const raw=paint._cpuSplat;
  let cpuCalls=0,pushCalls=0;
  const rawPush=paint._pushQuad;
- paint._cpuSplat=function(...args){cpuCalls++;return raw.apply(this,args);};
+ // A face-locked splat also visits live coplanar charts of the same surface; only the struck chart is counted.
+ paint._cpuSplat=function(f,...args){if(f===face)cpuCalls++;return raw.apply(this,[f,...args]);};
  paint._pushQuad=function(...args){pushCalls++;return rawPush.apply(this,args);};
  try{
   paint.dead.fill(1,begin,end);face.nativeEmpty=true;
@@ -214,8 +215,9 @@ test('native all-dead paint charts skip pure CPU work but retain identical owner
   paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
   assert.equal(cpuCalls,0,'a provably all-dead chart has no CPU ink cells to visit');
   assert(pushCalls>0,'GPU splat entries remain even when authoritative cells are dead');
-  assert.deepEqual(paint.grid,oldGrid,'authoritative ink cells remain unchanged');
-  assert.equal(paint.version,oldVersion,'no turf grid version changes');
+  // The face-locked splat may paint live coplanar neighbours; the dead chart's own cells must not change.
+  assert.deepEqual(Array.from(paint.grid.slice(begin,end)),Array.from(oldGrid.slice(begin,end)),'authoritative ink cells of the dead chart remain unchanged');
+  assert.equal(paint.version>oldVersion,paint.grid.some((value,i)=>value!==oldGrid[i]),'the turf grid version moves only with ink cells');
   face.nativeEmpty=false;
   paint.splat(position,.45,0,{seed:.5,face:face.id,instant:true});
   assert(cpuCalls>0,'unknown/nonempty native charts retain original CPU ownership work');
