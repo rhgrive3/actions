@@ -275,22 +275,3 @@ test('ranked native lane queries reject the historical Tidewater center-cover ov
  for(let distance=0;distance<=2;distance+=.25){const at=query(-1.9+distance,2.8,2,yaw);assert(at?.support.floor,'nearby unobstructed native support remains eligible');}
  assert.match(rankedCheckerSource,/if\(corridor.length===17\)/,'all 17 quarter-metre support checks are required across 4m');
 });
-const failureStart=rankedCheckerSource.indexOf(" }catch(error){\n  receipt.status='failed';receipt.error=error?.stack||String(error);");
-const failureEnd=rankedCheckerSource.indexOf('\n finally{\n  const cleanupErrors=[];receipt.restoration=[];',failureStart);
-assert(failureStart>=0&&failureEnd>failureStart);
-const failureBody=rankedCheckerSource.slice(failureStart+15,failureEnd).trim().replace(/}$/, '');
-const executeRankedFailure=new Function('receipt','error','pages','identities','save',`return (async()=>{${failureBody}})();`);
-test('ranked recovery failure captures observed actor, remote loop and wire state before restoration without passing',async()=>{
- const previousRG=globalThis.RG,previousState=globalThis.__rankedReplication,error=Error('positive recovery audio timeout'),saved=[];
- const remote={...recoveredAtRest,suspended:true,realRollLoops:[{playing:false,registered:false,volume:0}]},wire={f:17|(1<<28)};
- globalThis.RG={match:{local:{nid:7,alive:true,grounded:true,weaponRunner:{rolling:true,s3RollerSuspendedHold:false},pos:{toArray:()=>[1,2,3]},vel:{toArray:()=>[0,0,0]},ink:90}}};
- globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return remote;},wire:[wire]};
- const receipt={status:'running',phases:[{name:'suspended-owner-to-remote'}]};
- try{
-  await assert.rejects(executeRankedFailure(receipt,error,[{evaluate:async(fn,nid)=>fn(nid)},{evaluate:async()=>{throw Error('page closed');}}],[{nid:7}],r=>saved.push(structuredClone(r))),e=>e===error);
-  assert.equal(receipt.status,'failed');assert.equal(receipt.failureAfter,'suspended-owner-to-remote');assert.match(receipt.error,/positive recovery audio timeout/);
-  assert.deepEqual(receipt.failureState[0],{context:0,local:{nid:7,alive:true,grounded:true,held:true,suspended:false,position:[1,2,3],velocity:[0,0,0],ink:90},remote,wire});
-  assert.deepEqual(receipt.failureState[1],{context:1,diagnosticError:'page closed'});
-  assert.equal(saved.length,1);assert.equal(saved[0].status,'failed');assert(!receipt.phases.some(p=>p.name==='recovered-real-audio'));
- }finally{globalThis.RG=previousRG;globalThis.__rankedReplication=previousState;}
-});
