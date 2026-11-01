@@ -580,6 +580,7 @@ test('native _buildWorld epoch cancellation: uncommitted candidate library dispo
     },
     effectiveQuality: () => ({ paintAtlas: 256 }),
     dressingFor: () => [],
+    map3ArtColliders: () => [],
     Level: class {
       constructor(layout) { this.id = layout.id; this.bounds = {}; }
       buildGeometry() { return resource('geo:' + this.id, { index: { count: 1 } }); }
@@ -826,7 +827,7 @@ test('native world commit uses the published default factory route and preserves
   const context = vm.createContext({
     G, THREE, console, Promise,
     MAP_LAYOUTS: { tidewater: {}, cargo: {}, kelpline: {} },
-    effectiveQuality: () => ({ paintAtlas: 2048 }), dressingFor: () => [],
+    effectiveQuality: () => ({ paintAtlas: 2048 }), dressingFor: () => [], map3ArtColliders: () => [],
     Level: class { constructor() { this.bounds = {}; } buildGeometry() { return new THREE.BoxGeometry(); } },
     Physics: class {}, SwimWake: class { reset() {} }, Decor: class { dispose() {} },
     NavGraph: class {}, Minimap: class {}, PaintSystem: Paint,

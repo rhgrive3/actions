@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {buildSubModel,isSharedGeometry} from '../runtime/sub-models.mjs';
+import {createKrakenJumpObserver} from '../runtime/kraken-jump-motion.mjs';
 import '../runtime/special-models.mjs';
 
 const source=fs.readFileSync(new URL('../runtime/special-presentation.mjs',import.meta.url),'utf8');
@@ -17,7 +18,7 @@ function world(old){
   // Expose only the private admission index in this extracted-function harness;
   // every producer, consumer, reset, Three model and disposal path is real code.
   if(!old){assert.equal(install.split('const speakerCandidates = new Set();').length,2);install=install.replace('const speakerCandidates = new Set();','const speakerCandidates = api.testCandidates = new Set();');}
-  const apply=new Function('buildSubModel','isSharedGeometry','INSTALL','OBJECTS','ROUNDS','SPECIAL_PROJECTILE_MODELS',declaration(source,'disposeModel')+';'+install+';return installSpecialModels;')(buildSubModel,isSharedGeometry,Symbol(),Symbol(),Symbol(),{});
+  const apply=new Function('buildSubModel','isSharedGeometry','INSTALL','OBJECTS','ROUNDS','SPECIAL_PROJECTILE_MODELS','createKrakenJumpObserver',declaration(source,'disposeModel')+';'+install+';return installSpecialModels;')(buildSubModel,isSharedGeometry,Symbol(),Symbol(),Symbol(),{},createKrakenJumpObserver);
   class Projectiles{constructor(){this.list=[];this._s3AllSpecialObjects=[];this._s3WailTails=[];}update(dt){return dt;}clear(){this.list.length=0;this._s3AllSpecialObjects.length=0;this._s3WailTails.length=0;}}
   const G={time:0,scene:new T.Scene(),actors:[],teamColors:[0x2266aa]},listeners=[],api={THREE:T,G,Projectiles,on(name,fn){if(name==='all:special')listeners.push(fn);}};
   apply(api);const projectiles=new Projectiles(),stats={walks:0,visits:0};

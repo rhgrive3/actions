@@ -13,9 +13,12 @@ const start = source.indexOf('    const colliders = [];');
 const end = source.indexOf('    let level, lightmap, physics, nav, pendingLightmap;', start);
 assert.ok(start >= 0 && end > start, 'composed async prop transaction anchors');
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-const prepare = new AsyncFunction('scene', 'dressingFor', 'layoutId', 'worldCurrent', source.slice(start, end) + '\nreturn { props, colliders };');
+const prepare = new AsyncFunction('scene', 'dressingFor', 'layoutId', 'worldCurrent', 'MAP_LAYOUTS', 'map3ArtColliders', source.slice(start, end) + '\nreturn { props, colliders };');
 function transaction(K, { current = () => true, scene = new THREE.Scene(), owner = {} } = {}) {
-  return prepare.call(Object.assign(owner, { PropKit: K, settings: { quality: 'high' } }), scene, () => placements, 'test', current);
+  // The composed transaction reads MAP3's art colliders from its own import;
+  // this harness only exercises pre-Level failure ownership, so the art list is
+  // irrelevant here and bound as an empty, non-allocating provider.
+  return prepare.call(Object.assign(owner, { PropKit: K, settings: { quality: 'high' } }), scene, () => placements, 'test', current, { test: { id: 'test' } }, () => []);
 }
 
 // Watch only resources owned by this kit (not shared template geometries).
