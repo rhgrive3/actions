@@ -12,7 +12,8 @@ const descriptorPins=Object.freeze([
  '296b51be954c524d11212b28e500505240adee708975673eee11852438458d95',
  '503f96cec4971444e2d93676f9291bd1d8eabfb42407d4ca0eaed481cf5ff324',
  '15b44cad2187d28e55a7c8b06eadb22ff9a08d46f6373c8c2b9d65ae09b1cfca',
- 'c742ad3e35124c63da6deceb485b8c08a87aa5181d333c9e89f341fd6b33b58b'
+ 'c742ad3e35124c63da6deceb485b8c08a87aa5181d333c9e89f341fd6b33b58b',
+ '17447a0a639537fcf7783bfa299b4d7d3c4a59c36c53e050cac1297f9967a6f2'
 ]);
 const descriptorHash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function assertExactDescriptors(values){
@@ -39,12 +40,15 @@ test('old runtime/new adapter and new runtime/old adapter cannot form a third ep
  for(const file of[runtime,adapter])assert.throws(()=>assertReviewedMinimapSources({...epochs[0].pins,[file]:epochs[1].pins[file]}),/Minimap source pin mismatch/);
 });
 
-test('existing sixth epoch stays exact and an unreviewed seventh or replacement fails closed',()=>{
+test('six prior epochs stay exact; the reviewed main 16-bit epoch is seventh and an eighth is rejected',()=>{
  assert.equal(epochs[5].name,'library-queue-world-minimap-typed-storage-20261028');
  assert.equal(epochs[5].pins['patches/native-stages/runtime/native-minimap.mjs'],'f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5');
- const unreviewed={name:'unreviewed-seventh',pins:{...epochs[5].pins,'patches/native-stages/runtime/native-minimap.mjs':'1'.repeat(64)}};
+ assert.equal(epochs[6].name,'main-queue-reviewed-minimap-16bit-owner-1a17d7b4');
+ assert.equal(epochs[6].pins['inkwave-public/src/game/minimap.js'],'01f6856605b2347182d7e732b9c3487dff667134389721bee2be4fcab63cee30');
+ assert.equal(epochs[6].pins['patches/native-stages/runtime/native-minimap.mjs'],'f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5');
+ const unreviewed={name:'unreviewed-eighth',pins:{...epochs[6].pins,'patches/native-stages/runtime/native-minimap.mjs':'1'.repeat(64)}};
  assert.throws(()=>assertExactDescriptors([...epochs,unreviewed]),assert.AssertionError);
- assert.throws(()=>assertExactDescriptors([...epochs.slice(0,5),unreviewed]),assert.AssertionError);
+ assert.throws(()=>assertExactDescriptors([...epochs.slice(0,6),unreviewed]),assert.AssertionError);
  assert.throws(()=>assertReviewedMinimapSources(unreviewed.pins),/Minimap source pin mismatch/);
  for(let i=0;i<epochs.length;i++){const changed=structuredClone(epochs);changed[i].name+='-edited';assert.throws(()=>assertExactDescriptors(changed),assert.AssertionError);}
 });
