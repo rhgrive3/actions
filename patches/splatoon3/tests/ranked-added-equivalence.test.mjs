@@ -43,8 +43,11 @@ test('Clams distance uses dense arrays without slice and retains unusual-input v
  const p=[0,1,2];p.slice=()=>{throw Error('per-pair slice');};assert.equal(current._pickupDistanceSq(p,target),old._distanceSq([0,1,2],target));
 });
 const stageFixture=id=>{let ground=0,queries=0;const G={level:{layout:{id},blocks:[],groundHeight(x,z){ground++;return .02*x+.01*z;},queryBlocks(){queries++;return[];}}};return{G,counts:()=>({ground,queries})};};
-test('five live stage builders defer unused Tower work and lazily retain the exact route',()=>{
- for(const id of ['tidewater','kelpline','halyard','cargo','scorch']){
+// tidewater and kelpline are MAP3 layouts (layout.map3) and take the MAP3 builder,
+// so the legacy SPECS equivalence below does not apply to them; they are covered by
+// patches/local-quality/tests/map3-ranked.test.mjs.
+test('four legacy stage builders defer unused Tower work and lazily retain the exact route',()=>{
+ for(const id of ['halyard','cargo','scorch']){
   const a=stageFixture(id),b=stageFixture(id),c=stageFixture(id);
   const baseline=oldStage(a.G),legacy=createRankedStage(b.G),tower=createRankedStage(c.G,'tower');
   assert.deepEqual(legacy,baseline);assert.deepEqual(tower,baseline);assert.deepEqual(b.counts(),a.counts());assert.deepEqual(c.counts(),a.counts());

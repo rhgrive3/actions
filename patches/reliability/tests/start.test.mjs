@@ -99,6 +99,8 @@ function boot(source, held = []) {
     DEV_STAGE: false, MATCH: { defaultDuration: 180 }, params: { has: () => false },
     mapTheme: (_map, time) => time, TEAM_PALETTES: [{}], COLORBLIND_PALETTE: {},
     effectiveQuality: () => ({ paintAtlas: 64 }), dressingFor: () => [{}],
+    // MAP3 stages add authored collision bounds; this startup test only needs an array.
+    map3ArtColliders: () => [],
     syncWorldTexlib: async () => ({ nextTexlib: null, oldTexlib: null }), updateLobbyTexlib() {}, STAGE_SURFACES: {},
     Physics: class { constructor(level) { this.id = level.id; } },
     PaintSystem: class { constructor(_renderer, level) { return resource('paint:' + level.id, { texture: {}, size: 64, clear() {} }); } },
