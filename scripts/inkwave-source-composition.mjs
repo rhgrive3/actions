@@ -8,6 +8,7 @@ import { adaptFxShaderStability } from '../patches/local-quality/fx-shader-stabi
 import { adaptMenuCardLayout } from '../patches/local-quality/menu-card-layout-adapter.mjs';
 import { adaptQueueVisualWorld20261031 } from '../patches/local-quality/queue-visual-world-20261031-adapter.mjs';
 import { adaptQueueUiAudio20261031 } from '../patches/local-quality/queue-ui-audio-20261031-adapter.mjs';
+import { adaptViewportCache } from '../patches/local-quality/viewport-cache-adapter.mjs';
 import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
 import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
 import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
@@ -197,6 +198,8 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptTitleDemoBudget(rel, code);
   code = adaptTitlePresentation(rel, code, replaceOnce);
   code = adaptBlasterReticle(rel, code, replaceOnce);
+  // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
+  code = adaptViewportCache(rel, code);
   return code;
 }
 
