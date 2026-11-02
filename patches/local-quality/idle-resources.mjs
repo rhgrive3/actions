@@ -130,7 +130,9 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
     previous.reflectionScale !== env?.reflScale || previous.marina !== env?._marina || previous.farTarget !== far ||
     previous.farWidth !== far?.width || previous.farHeight !== far?.height;
   if (!draw) return PAUSED_UNCHANGED;
-  return { paused: true, draw: true, freshShadows: afterLive && !previous,
+  // The low preset updates shadows only every other live frame, so its last
+  // live shadow map may be a frame old: keep the forced pass there (it is cheap).
+  return { paused: true, draw: true, freshShadows: afterLive && !previous && settings.quality !== 'low',
     commit() {
       game._pausedWorld = { match: game.match, level: G.level, width, height, pixelRatio, settings,
         quality: settings.quality, shadowsSetting: settings.shadows, bloomSetting: settings.bloom,

@@ -211,4 +211,7 @@ test('the first paused draw after a live frame reuses its shadow map; later inva
   view.innerWidth++;f=pausedWorldFrame(game,G,view);assert.equal(f.draw,true);assert.equal(f.freshShadows,false);
   // An uncommitted (failed) first capture retries with a forced shadow pass.
   f=pausedWorldFrame(game,G,view);assert.equal(f.draw,true);assert.equal(f.freshShadows,false);
+  // Low updates shadows every other live frame: its first paused draw keeps the forced shadow pass.
+  game.match.paused=false;pausedWorldFrame(game,G,view);game.match.paused=true;game.settings.quality='low';
+  assert.equal(pausedWorldFrame(game,G,view).freshShadows,false);
 });
