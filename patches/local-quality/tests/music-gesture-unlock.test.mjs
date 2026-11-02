@@ -21,6 +21,7 @@ async function rig({ withCtx = true } = {}) {
     play() {
       this.plays++; this.paused = false;
       if (state.blocked) return Promise.reject(Object.assign(new Error('autoplay blocked'), { name: 'NotAllowedError' }));
+      if (state.abort) return Promise.reject(Object.assign(new Error('interrupted by pause()'), { name: 'AbortError' }));
       return Promise.resolve();
     }
     pause() { this.pauses++; this.paused = true; }
@@ -148,5 +149,29 @@ test('gestures during a live match fetch nothing, and dispose releases everythin
     assert.equal(f.windowListeners.length, 0, 'gesture listeners are removed');
     assert.equal(menu.src, '', 'unused unlocked elements are released');
     assert.equal(f.music._unlockedFiles.size, 0);
+  } finally { f.music.dispose(); }
+});
+
+test('a refused unlock is forgotten so a later event of the same tap can unlock', async () => {
+  const f = await rig();
+  try {
+    f.state.blocked = true;                     // e.g. iOS refusing activation on pointerdown
+    f.gesture('pointerdown', true);
+    await flush();
+    assert.equal(f.music._unlockedFiles.size, 0, 'refused unlock elements are dropped');
+    f.state.blocked = false;                    // the touchend/click of the same tap is accepted
+    f.gesture('touchend', true);
+    await flush();
+    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu']);
+  } finally { f.music.dispose(); }
+});
+
+test('the AbortError from the immediate pause() keeps the unlock', async () => {
+  const f = await rig();
+  try {
+    f.state.abort = true;
+    f.gesture('pointerdown', true);
+    await flush();
+    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu'], 'an interrupted play is still a granted unlock');
   } finally { f.music.dispose(); }
 });

@@ -1341,9 +1341,16 @@ export class MusicEngine {
         element.preload = 'none';
         element.src = SILENT_UNLOCK_SRC;
         const started = element.play();
-        if (started && typeof started.catch === 'function') started.catch(() => {});
         element.pause();
         unlocked.set(track, element);
+        // Not every gesture type grants media activation (iOS can refuse a pointerdown and accept
+        // the touchend/click of the same tap). Forget a refused unlock so the next event retries.
+        // The immediate pause() aborts the play() promise (AbortError); that is not a refusal.
+        if (started && typeof started.catch === 'function') started.catch((error) => {
+          if (error?.name === 'NotAllowedError' && this._unlockedFiles?.get(track) === element) {
+            this._unlockedFiles.delete(track); this._releaseFileElement(element);
+          }
+        });
       } catch (_) { /* a refused media element falls back to the normal retry and recovery path */ }
     }
   }
