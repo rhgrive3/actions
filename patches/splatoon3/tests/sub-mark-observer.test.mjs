@@ -4,16 +4,26 @@ async function world(){const f=await fixture({fullRuntime:true,productionComposi
 async function peer(id,sub,ap){
  const f=await world();f.G.level.spawnPads=[new f.THREE.Vector3(),new f.THREE.Vector3()];f.G.scene ||= new f.THREE.Scene();f.G.camera ||= new f.THREE.PerspectiveCamera();
  const o=f.make('shooter'),v=f.make('shooter');Object.assign(o,{nid:1,owner:'a',team:0,remote:id!=='a',invuln:0});Object.assign(v,{nid:2,owner:'b',team:1,remote:id!=='b',invuln:0});equip(v,ap);o.weapon={...o.weapon,sub};o.pos.set(0,0,0);o.aimDir.set(0,0,1);v.pos.set(0,0,2);
- const nm=new f.NetMatch({myId:id,hostId:'a',isHost:id==='a',tr:{sendTo(){},broadcast(){}}},{id:'mark-resistance'});f.G.match.actors=[o,v];f.G.match.removeActor=a=>{f.G.match.actors=f.G.match.actors.filter(x=>x!==a);f.G.actors=f.G.actors.filter(x=>x!==a);};nm.bind(f.G.match);f.G.netm=nm;f.G.actors=[o,v];
+ const nm=new f.NetMatch({myId:id,hostId:'a',isHost:id==='a',tr:{sendTo(){return true;},broadcast(){return true;}},_members:new Map([['a',{}],['b',{}],['c',{}]])},{id:'mark-resistance'});f.G.match.actors=[o,v];f.G.match.removeActor=a=>{f.G.match.actors=f.G.match.actors.filter(x=>x!==a);f.G.actors=f.G.actors.filter(x=>x!==a);};nm.bind(f.G.match);f.G.netm=nm;f.G.actors=[o,v];
  f.G.level={...f.G.level,blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
  return{f,o,v,nm};
 }
 
 for(const sub of ['angleShooter','inkMine'])for(const ap of [0,57])test(`${sub} actual three-peer JSON exposes ${ap}AP marks to source and observer`,async()=>{
- const a=await peer('a',sub,0),b=await peer('b',sub,ap),c=await peer('c',sub,0);let packet;b.nm.s.tr.broadcast=p=>{packet=JSON.parse(JSON.stringify(p));};b.nm._sendTick();for(const receiver of [a,c]){receiver.nm.onMessage('b',JSON.parse(JSON.stringify(packet)));const p=receiver.nm._peer('b');p.tr=packet.ts;receiver.nm._sample(receiver.v,p.tr,0);receiver.nm.applyRemote(receiver.v,1/60);assert.equal(receiver.v.s3.modifiers.subMarkResistance,ap===57?.1:1,'accepted remote gear drives display coefficient');}let lastMark;const replay=()=>{for(const e of a.nm.out.splice(0)){if(e[1]==='ac'&&e[5].phase==='mark')lastMark=JSON.parse(JSON.stringify(e));for(const peer of [b,c])peer.nm._play('a',JSON.parse(JSON.stringify(e)));}};
- const o=a.f.G.projectiles.throwBomb(a.o);replay();o.pos.set(0,.7,0);o.prev.copy(o.pos);o.vel.set(0,0,60);if(sub==='inkMine'){o.phase='deployed';o.vel.set(0,0,0);o.activeAt=0;o.deployedAt=0;o.expireAt=Infinity;}
- for(let i=0;i<10&&!b.v.s3.revealedUntil?.[0];i++){a.f.G.projectiles.update(1/60);replay();}
- assert.ok(b.v.s3.revealedUntil?.[0]>b.f.G.time,'victim accepted marking');for(const peer of [a,b,c])assert.ok(Math.abs(peer.v.s3.revealedUntil[0]-peer.f.G.time-(5-(lastMark[5].markAgeFrames||0)/60)*(ap===57?.1:1))<1e-8,'single resistance application on all views');
+ const a=await peer('a',sub,0),b=await peer('b',sub,ap),c=await peer('c',sub,0);let packet;b.nm.s.tr.broadcast=p=>{packet=JSON.parse(JSON.stringify(p));};b.nm._sendTick();for(const receiver of [a,c]){receiver.nm.onMessage('b',JSON.parse(JSON.stringify(packet)));const p=receiver.nm._peer('b');p.tr=packet.ts;receiver.nm._sample(receiver.v,p.tr,0);receiver.nm.applyRemote(receiver.v,1/60);assert.equal(receiver.v.s3.modifiers.subMarkResistance,ap===57?.1:1,'accepted remote gear drives display coefficient');}let lastMark;
+ // #1975: rows arrive in a's actual tick, and each receiver's own fixed-step
+ // contact (victim b locally, observer c with the pending row) settles marks.
+ const replay=()=>{const packets=[];a.nm.s.tr.broadcast=p=>{packets.push(JSON.parse(JSON.stringify(p)));return true;};a.nm._sendTick();
+  for(const packet of packets){for(const e of packet.e||[])if(e[1]==='ac'&&e[5].phase==='mark')lastMark=JSON.parse(JSON.stringify(e));
+   for(const peer of [b,c]){peer.nm.onMessage('a',JSON.parse(JSON.stringify(packet)));for(const e of peer.nm.peers.get('a')?.events.splice(0)||[])peer.nm._play('a',e);}}};
+ const stepReceivers=()=>{for(const peer of [b,c]){peer.f.G.time+=1/60;peer.f.G.projectiles.update(1/60);}};
+ const o=a.f.G.projectiles.throwBomb(a.o);replay();o.pos.set(0,.7,0);o.prev.copy(o.pos);o.vel.set(0,0,60);if(sub==='inkMine'){o.phase='deployed';o.vel.set(0,0,0);o.activeAt=0;o.deployedAt=0;o.expireAt=Infinity;
+  // Mirror the forced immediate arming on each receiver's own native mine.
+  for(const peer of [b,c])for(const g of peer.f.G.projectiles._s3SubObjects||[])if(g.ghost&&g.subId==='inkMine'){g.phase='deployed';g.activeAt=0;}}
+ for(let i=0;i<60&&!(b.v.s3.revealedUntil?.[0]>b.f.G.time&&c.v.s3.revealedUntil?.[0]>c.f.G.time);i++){a.f.G.time+=1/60;a.f.G.projectiles.update(1/60);replay();stepReceivers();}
+ assert.ok(b.v.s3.revealedUntil?.[0]>b.f.G.time,'victim accepted marking');
+ // Each view applies Mark Resistance exactly once; only the source contact age may shorten it.
+ for(const peer of [a,b,c]){const remaining=peer.v.s3.revealedUntil[0]-peer.f.G.time,scale=ap===57?.1:1;assert.ok(remaining<=5*scale+1e-8&&remaining>=(5-20/60)*scale-1e-8,'single resistance application on all views');}
  assert.ok(a.v.s3.revealedUntil?.[0]>a.f.G.time,'source sees victim mark');assert.ok(c.v.s3.revealedUntil?.[0]>c.f.G.time,'third observer stores team-scoped mark');
  for(const peer of [a,b,c]){assert.equal(peer.f.revealedTo(peer.v,{team:0},peer.f.G.time),true);assert.equal(peer.f.revealedTo(peer.v,{team:1},peer.f.G.time),false);assert.equal(peer.f.revealedTo(peer.v,{team:2},peer.f.G.time),false);assert.equal(peer.f.revealedTo(peer.v,null,peer.f.G.time),false);}
  const old=[a,b,c].map(p=>p.v.s3.revealedUntil[0]);equip(b.v,0);b.f.G.time+=1/60;b.nm._sendTick();for(const receiver of [a,c]){receiver.nm.onMessage('b',JSON.parse(JSON.stringify(packet)));const p=receiver.nm._peer('b');p.tr=packet.ts;receiver.nm._sample(receiver.v,p.tr,0);receiver.nm.applyRemote(receiver.v,1/60);}for(let i=0;i<3;i++)assert.equal([a,b,c][i].v.s3.revealedUntil[0],old[i],'equipment changes do not retime admitted displays');

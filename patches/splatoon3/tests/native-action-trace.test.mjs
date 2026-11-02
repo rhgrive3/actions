@@ -22,7 +22,20 @@ test('all 65 production main actors emit native action traces with full tick inp
  assert.deepEqual(missed,[],'all non-hitscan records produce a native projectile in the ordinary input trace');
  assert.ok(hitFamilies.size>0,'native projectile contact causes a real hit');
  const serialized=JSON.stringify({schema:1,source:'035233299348e5c3527f6106b98e721ed2dfd011',records:f.records,traces:trace});
- requireFrozenTrace(serialized,new URL('./fixtures/native-action-trace-035.json.gz',import.meta.url));
+ // #1975 adds one native 'weapon:melee' source receipt per Splatana swing. Only
+ // those rows are removed (and the ordered wire sequence closed up again)
+ // before the immutable corpus comparison; every other byte must still match.
+ const melee=e=>Array.isArray(e)&&e[1]==='ev'&&e[2]==='weapon:melee';
+ const frozenView=JSON.parse(serialized);
+ frozenView.traces.forEach((t,i)=>{
+  const id=frozenView.records[i].id,rows=t.packets.flatMap(p=>p.e||[]),meleeRows=rows.filter(melee);
+  assert.equal(meleeRows.length>0,/^s3-saber-/.test(id),id+' native melee receipt only for Splatanas');
+  if(!meleeRows.length)return;
+  let seq=rows[0].at(-1)-1;
+  for(const p of t.packets){if(!p.e)continue;p.e=p.e.filter(e=>!melee(e));if(!p.e.length){delete p.e;delete p.r;continue;}
+   for(const e of p.e)e[e.length-1]=++seq;}
+ });
+ requireFrozenTrace(JSON.stringify(frozenView),new URL('./fixtures/native-action-trace-035.json.gz',import.meta.url));
  if(process.env.INKWAVE_NATIVE_TRACE_OUTPUT)fs.writeFileSync(process.env.INKWAVE_NATIVE_TRACE_OUTPUT,gzipSync(serialized,{level:9}));
 });
 test('two legal Charger inputs yield an identical received packet before distinct native births',()=>{

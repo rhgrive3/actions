@@ -11,10 +11,12 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 import {adaptQueueWorld20261024} from '../../local-quality/queue-world-20261024-adapter.mjs';
 import {installIssue264PaintOwnership} from '../runtime/paint-ownership.mjs';
 import {installMinimapDirty} from '../runtime/minimap-dirty.mjs';
+import {markPaintAttributeRange} from '../../local-quality/paint-attribute-upload-cache.mjs';
 const composed=adaptBuildSource('src/world/paint.js',fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js',import.meta.url),'utf8'));
-const source=composed.includes('at._paintRange')?composed:adaptQueueWorld20261024('src/world/paint.js',composed);
+// #1977 moved the reused range into markPaintAttributeRange (same _paintRange owner).
+const source=composed.includes('at._paintRange')||composed.includes('markPaintAttributeRange(at, n, THREE.BufferAttribute)')?composed:adaptQueueWorld20261024('src/world/paint.js',composed);
 const draw=source.slice(source.indexOf('  _drawQuads() {'),source.indexOf('  // ------------------------------------------------------------ queries'));
-const drawQuads=compileFunction('PAINT_GPU_ATTRIBUTE_NAMES','return ({'+draw+'})._drawQuads;')(['aPos','aLocal','aSplat','aStretch','aGrow']);
+const drawQuads=compileFunction('PAINT_GPU_ATTRIBUTE_NAMES','markPaintAttributeRange','THREE','return ({'+draw+'})._drawQuads;')(['aPos','aLocal','aSplat','aStretch','aGrow'],markPaintAttributeRange,THREE);
 const clearPart=source.slice(source.indexOf('\n  clear() {'),source.indexOf('  // Camera position for ripple priorities'));
 const clear=compileFunction('THREE','RIP_N','return ({'+clearPart+'}).clear;')(THREE,24);
 test('actual composed paint draw restores renderer state and blocks retry after a partial pass',t=>{
