@@ -17,7 +17,7 @@ try{
  await page.goto(`http://127.0.0.1:${server.address().port}/?range&skipTitle&news=0`,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__G?.match?.range&&__G.match.state==='playing'||document.querySelector('#boot-error')?.textContent,null,{timeout:180000});if(await page.locator('#boot-error').textContent())throw Error(await page.locator('#boot-error').textContent());console.log('range booted');
  const rows=await page.evaluate(async()=>{
-  const G=window.__G,g=G.game,rows=[];g.debug.freeze();document.documentElement.classList.add('iw-ios');
+  const G=window.__G,g=G.game,rows=[];g.debug.freeze();document.documentElement.classList.add('iw-ios','iw-touch');
   for(let i=0;i<6;i++){
    g.pause();g._frame(1/60);if(!g.R._pauseSnapshot)throw Error('No paused app snapshot');
    await new Promise(r=>requestAnimationFrame(r));g._frame(1/60);

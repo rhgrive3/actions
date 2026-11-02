@@ -25,7 +25,7 @@ async function rig({ withCtx = true } = {}) {
     }
     pause() { this.pauses++; this.paused = true; }
     removeAttribute(name) { if (name === 'src') this.src = ''; }
-    load() {}
+    load() { created.loads?.push(this.src); }
   }
   const win = {
     addEventListener(type, fn, options) { windowListeners.push({ type, fn, capture: options === true || !!options?.capture }); },
@@ -42,6 +42,7 @@ async function rig({ withCtx = true } = {}) {
     for (const listener of [...windowListeners]) if (listener.type === type) listener.fn({ type, isTrusted });
   };
   const elementFor = (name) => created.filter(el => el.src.endsWith(name));
+  const loaded = created.loads = [];
   return { music, f, created, windowListeners, state, gesture, elementFor };
 }
 
@@ -52,7 +53,12 @@ test('only trusted gestures unlock both recordings, once', async () => {
     assert.equal(f.created.length, 0, 'synthetic events cannot unlock media');
     f.gesture('pointerdown', true);
     assert.equal(f.created.length, 2);
-    for (const el of f.created) { assert.equal(el.plays, 1); assert.equal(el.pauses, 1); assert.equal(el.paused, true); }
+    for (const el of f.created) {
+      assert.equal(el.plays, 1); assert.equal(el.pauses, 1); assert.equal(el.paused, true);
+      assert.match(el.src, /^data:audio\/wav;base64,/, 'unlock plays a silent clip, never the recording');
+      assert.equal(el.preload, 'none');
+    }
+    assert.equal(f.elementFor(MENU).length + f.elementFor(BATTLE).length, 0, 'no recording is fetched by a gesture');
     assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu']);
     f.gesture('keydown', true); f.gesture('touchend', true);
     assert.equal(f.created.length, 2, 'an unlocked element is not recreated');
@@ -63,9 +69,10 @@ test('menu started after an await reuses the element a gesture unlocked', async 
   const f = await rig();
   try {
     f.gesture('pointerdown', true);
-    const [menuElement] = f.elementFor(MENU);
+    const menuElement = f.music._unlockedFiles.get('menu');
     await new Promise(resolve => setTimeout(resolve, 5));   // stands in for the quit-to-menu fade
     f.music.play('menu', { fade: 0 });
+    assert.ok(menuElement.src.endsWith(MENU), 'the unlocked element receives the recording only when it plays');
     assert.equal(f.music.current.element, menuElement, 'the unlocked element is the one that plays');
     assert.equal(f.created.length, 2, 'no fresh media element is created after the await');
     assert.equal(menuElement.plays, 2, 'unlock play plus the menu start');
@@ -77,8 +84,10 @@ test('battle prime adopts the unlocked recording and runs without a fresh gestur
   const f = await rig();
   try {
     f.gesture('pointerdown', true);
-    const [battleElement] = f.elementFor(BATTLE);
+    const battleElement = f.music._unlockedFiles.get('battle');
     f.music.preloadFile('battle', { prime: true });
+    assert.ok(battleElement.src.endsWith(BATTLE));
+    assert.ok(f.created.loads.includes(battleElement.src), 'the adopted element loads the recording');
     assert.equal(f.music._preloadedFile.element, battleElement);
     assert.ok(f.music._preloadedFile.player, 'the WebAudio source is attached once');
     assert.equal(battleElement.plays, 2, 'unlock plus prime');
@@ -121,17 +130,19 @@ test('autoplay rejection waits for a trusted gesture instead of timed retries', 
   } finally { f.music.dispose(); }
 });
 
-test('a live match does not refetch the battle recording on gestures, and dispose releases everything', async () => {
+test('gestures during a live match fetch nothing, and dispose releases everything', async () => {
   const f = await rig();
   try {
     f.gesture('pointerdown', true);
     f.music.play('battle', { fade: 0 });
-    assert.equal(f.music.current.element, f.elementFor(BATTLE)[0]);
+    assert.ok(f.music.current.element.src.endsWith(BATTLE));
     assert.equal(f.music._unlockedFiles.has('battle'), false);
-    f.gesture('pointerdown', true);
-    assert.equal(f.music._unlockedFiles.has('battle'), false, 'battle is not re-fetched during the match');
-    assert.equal(f.music._unlockedFiles.has('menu'), true, 'menu may be refreshed for the quit tap');
-    const menu = f._menuUnlock = f.music._unlockedFiles.get('menu');
+    const menu = f.music._unlockedFiles.get('menu');
+    const before = f.created.length;
+    for (let i = 0; i < 5; i++) f.gesture('pointerdown', true);
+    assert.equal(f.created.length, before, 'no element is created while the battle recording itself is playing');
+    assert.equal(f.elementFor(MENU).length, 0, 'the menu recording is not downloaded during the match');
+    assert.equal(f.music._unlockedFiles.get('menu'), menu, 'the menu unlock is kept for the quit tap');
     assert.ok(f.windowListeners.length > 0);
     f.music.dispose();
     assert.equal(f.windowListeners.length, 0, 'gesture listeners are removed');

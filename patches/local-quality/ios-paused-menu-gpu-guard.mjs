@@ -1,17 +1,18 @@
-// Build-only GPU guard for paused in-battle menus, on every platform.
+// Build-only GPU guard for paused in-battle menus on touch devices (iOS and Android).
 // Native Practice Range: Pause -> Settings stacks a WebGL framebuffer snapshot,
 // two fullscreen DOM screens, backdrop blur layers and a 1.5-DPR Canvas2D wipe.
 // Offline pause keeps only the retained frame; online pause keeps the live match
 // rendering underneath. Neither needs compositor blur or a decorative fullscreen
-// wipe while the battle is paused. Integrated GPUs on Android/Windows/Mac stack
-// the same layers, so the guard is not limited to iOS WebKit.
+// wipe while the battle is paused. Android phones/tablets stack the same layers
+// as iPad, so the guard covers every touch-primary device (html.iw-touch), not
+// only iOS WebKit. Desktop keeps its original blurred pause presentation.
 // Scope is the in-battle pause stack only (.iw-ui.is-ingame / stack[0] === 'pause');
 // menus outside battle keep their blur and wipes.
 // Capture the outgoing pause owner before show() replaces its navigation stack.
 // Otherwise quit/resume lose the guard precisely while the old GPU layers are live.
 // The file keeps its historical name and export names; the guard is not iOS-only.
-const MARKER = '/* Paused in-battle menus: bound paused WebGL + overlaid menu compositor surfaces. */';
-export const IOS_PAUSED_MENU_CSS = MARKER + "\n.iw-ui.is-ingame .iw-dimbg,\n.iw-ui.is-ingame .iw-pause__dim,\n.iw-ui.is-ingame .iw-scrim-full,\n.iw-ui.is-ingame .iw-modal,\n.iw-ui.is-ingame .iw-panel,\n.iw-ui.is-ingame .iw-prompts {\n  -webkit-backdrop-filter: none !important;\n  backdrop-filter: none !important;\n}\n";
+const MARKER = '/* Paused in-battle menus on touch devices: bound paused WebGL + overlaid menu compositor surfaces. */';
+export const IOS_PAUSED_MENU_CSS = MARKER + "\nhtml.iw-touch .iw-ui.is-ingame .iw-dimbg,\nhtml.iw-touch .iw-ui.is-ingame .iw-pause__dim,\nhtml.iw-touch .iw-ui.is-ingame .iw-scrim-full,\nhtml.iw-touch .iw-ui.is-ingame .iw-modal,\nhtml.iw-touch .iw-ui.is-ingame .iw-panel,\nhtml.iw-touch .iw-ui.is-ingame .iw-prompts {\n  -webkit-backdrop-filter: none !important;\n  backdrop-filter: none !important;\n}\n";
 export function adaptIosPausedMenuGpuGuard(rel, code, once) {
   if (rel === 'styles/ui.css') {
     if (code.includes(MARKER))
@@ -21,7 +22,8 @@ export function adaptIosPausedMenuGpuGuard(rel, code, once) {
   if (rel !== 'src/ui/menus.js') return code;
   const patch = (before,after,why) => { code = once(code,before,after,'paused battle GPU: '+why); };
   patch("    const prev = this.current;", `    const prev = this.current;
-    const battlePauseMenu = this._stack[0] === 'pause' || name === 'pause';
+    const battlePauseMenu = (this._stack[0] === 'pause' || name === 'pause') &&
+      document.documentElement.classList.contains('iw-touch');
     if (battlePauseMenu) opts = { ...opts, instantLeave: true, pausedBattle: true };`,
     'retain incoming and outgoing pause ownership before stack mutation');
   patch('    const token = ++this._swapToken;', `    const token = ++this._swapToken;

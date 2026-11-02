@@ -1263,8 +1263,9 @@ const FILE_TRACK_URLS = Object.freeze({
   battle: new URL('../../assets/audio/Jet_Arrow.mp3', import.meta.url).href,
 });
 const REQUIRED_FILE_TRACKS = new Set(['menu', 'battle']);
-// Tracks that may be active while a gesture refreshes the unlocked MP3 elements (not during a live match).
-const FILE_LOBBY_TRACKS = new Set(['title', 'menu', 'results_win', 'results_lose']);
+// A two-sample silent clip. Unlocking a media element with it (instead of the MP3) keeps a gesture from
+// fetching a multi-megabyte recording that may never play, e.g. the menu track during a live match.
+const SILENT_UNLOCK_SRC = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
 const LOOKAHEAD = 0.16, TICK_MS = 25;
 
 export class MusicEngine {
@@ -1292,10 +1293,9 @@ export class MusicEngine {
     if (this._preloadedFile?.id !== track) {
       this._dropPreload();
       try {
-        // Reuse the element a trusted gesture already unlocked, if any; it is already loaded.
-        const unlocked = this._takeUnlockedFile(track);
-        const element = unlocked || new Audio();
-        if (!unlocked) { element.preload = 'auto'; element.src = url; element.load(); }
+        // Reuse the element a trusted gesture already unlocked, if any; it receives the recording now.
+        const element = this._takeUnlockedFile(track) || this._newFileElement(url);
+        element.load();
         this._preloadedFile = { id: track, element, player: null };
       } catch (_) {
         this._fileFailures.add(track);
@@ -1328,22 +1328,18 @@ export class MusicEngine {
 
   // Autoplay rules (iOS Safari in particular) admit media playback only for an element that a
   // trusted gesture has already started. Each licensed recording gets such an element on the first
-  // gesture: play() then pause() at position 0. A later start after an await (quit to menu, GO of an
-  // online match) reuses that element, so it no longer needs a live user activation of its own.
+  // gesture: play() then pause() of a one-sample silent clip, so nothing large is downloaded. A
+  // later start after an await (quit to menu, GO of an online match) reuses that element with the
+  // real recording as its source, so it no longer needs a live user activation of its own.
   _unlockFileTracks() {
     if (this.offline || !this.ctx || this.ctx.state === 'closed' || typeof Audio !== 'function') return;
     const unlocked = this._unlockedFiles || (this._unlockedFiles = new Map());
     for (const track of REQUIRED_FILE_TRACKS) {
-      const have = unlocked.get(track);
-      if (have && !have.error) continue;
-      if (have) this._releaseFileElement(have);
-      unlocked.delete(track);
-      // Menu music may be refreshed at any gesture (pause-menu quit). The battle recording is not
-      // fetched while a match is live; a START tap or lobby gesture already covers its prime.
-      if (track === 'battle' && this._desiredTrack != null && !FILE_LOBBY_TRACKS.has(this._desiredTrack)) continue;
-      if (this.current?.id === track || this._preloadedFile?.id === track) continue;
+      if (unlocked.has(track) || this.current?.id === track || this._preloadedFile?.id === track) continue;
       try {
-        const element = this._newFileElement(FILE_TRACK_URLS[track]);
+        const element = new Audio();
+        element.preload = 'none';
+        element.src = SILENT_UNLOCK_SRC;
         const started = element.play();
         if (started && typeof started.catch === 'function') started.catch(() => {});
         element.pause();
@@ -1355,7 +1351,8 @@ export class MusicEngine {
     const element = this._unlockedFiles?.get(track);
     if (!element) return null;
     this._unlockedFiles.delete(track);
-    if (element.error) { this._releaseFileElement(element); return null; }
+    element.preload = 'auto';
+    element.src = FILE_TRACK_URLS[track];
     return element;
   }
   _releaseFileElement(element) {
