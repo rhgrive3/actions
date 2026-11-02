@@ -190,7 +190,8 @@ test('Rainmaker carrier releases the full charge, then starts the next charge cy
 test('Clam bots collect and throw on a dedicated edge without triggering bombs', () => {
   const pickup = setup('clams', 'collect', [4, 0, 0]);
   pickup.brain.update(1 / 60);
-  assert.equal(pickup.actor.intent.fire, false);
+  assert.equal(pickup.actor.intent.fire, true, 'a collector off its own ink paints the walk');
+  assert.equal(pickup.actor.intent.sub, false);
   assert.ok(pickup.brain.pathCalls.length > 0);
 
   const thrower = setup('clams', 'throw', [4, 0, 0]);
@@ -225,6 +226,56 @@ test('Clam carrier keeps moving toward the basket until a throw can reach it', (
   thrower.brain.update(1 / 60);
   assert.equal(thrower.actor.intent.throw, false);
   assert.ok(thrower.brain.pathCalls.length > 0);
+});
+
+test('Clam collectors paint the walk off their own ink, keep the far own-ink swim, and stop firing when empty', () => {
+  const walk = setup('clams', 'collect', [4, 0, 0]);
+  walk.brain.update(1 / 60);
+  assert.equal(walk.actor.intent.fire, true);
+  assert.equal(walk.actor.intent.squid, false);
+
+  const swim = setup('clams', 'collect', [8, 0, 0], { groundTeam: 1 });
+  swim.brain.update(1 / 60);
+  assert.equal(swim.actor.intent.fire, false, 'a far swim on its own ink keeps the squid route');
+  assert.equal(swim.actor.intent.squid, true);
+
+  const arrival = setup('clams', 'collect', [2, 0, 0], { groundTeam: 1 });
+  arrival.brain.update(1 / 60);
+  assert.equal(arrival.actor.intent.fire, true, 'the last three metres on own ink are walked and fired');
+  assert.equal(arrival.actor.intent.squid, false);
+
+  const empty = setup('clams', 'collect', [4, 0, 0], { ink: 2 });
+  empty.brain.update(1 / 60);
+  assert.equal(empty.actor.intent.fire, false, 'no ink means no collection fire');
+});
+
+test('Clam collectors, carriers and defenders fight a visible enemy within sixteen metres through the native tail', () => {
+  for (const action of ['collect', 'carry', 'defend']) {
+    const { actor, brain } = setup('clams', action, [6, 0, 0]);
+    brain.nativeMode = 'fight';
+    brain.nativeInput = { fire: true };
+    brain.target = { team: 1, alive: true, pos: new Vec3(0, 0, 8) };
+    brain.seeTimer = 1;
+    brain.update(1 / 60);
+    assert.equal(actor.intent.fire, true, `${action} keeps the native fire from the visible duel`);
+    assert.equal(brain.mode, 'fight', `${action} hands control to the native combat tail`);
+    assert.equal(brain.pathCalls.length, 0, `${action} must not replace a visible duel with objective steering`);
+
+    brain.target = { team: 1, alive: true, pos: new Vec3(0, 0, 20) };
+    brain.update(1 / 60);
+    assert.equal(brain.mode, 'ranked', `${action} resumes objective steering beyond sixteen metres`);
+  }
+});
+
+test('a clam throw keeps its rule-owned aim and release with a visible enemy nearby', () => {
+  const { actor, brain } = setup('clams', 'throw', [4, 0, 0]);
+  brain.nativeMode = 'fight';
+  brain.target = { team: 1, alive: true, pos: new Vec3(0, 0, 8) };
+  brain.seeTimer = 1;
+  brain.update(1 / 60);
+  assert.equal(brain.mode, 'ranked', 'a scoring throw is not hijacked into a duel');
+  assert.ok(brain.pathCalls.length > 0);
+  assert.equal(actor.intent.throw, true);
 });
 
 test('a bot uses a clear short route when a ranked objective has no static nav node', () => {

@@ -385,3 +385,30 @@ test('restore and removeActor preserve detached authority and drop the carried o
   assert.equal(restored.state.clams.filter(clam => clam.kind === 'small').length, 2);
   assert.notEqual(restored.state.clams, snapshot.clams);
 });
+
+test('bot goal line-of-sight answers are reused briefly and refreshed after time or movement', () => {
+  const { rule } = makeRule();
+  for (let i = 0; i < 12; i++) addGroundClam(rule, 'small', null, [3 + i, 0, 0]);
+  let casts = 0, wall = true;
+  // Every clam except the farthest is hidden: the bot walks the whole candidate list.
+  const blocked = (a, b) => { casts++; return wall && b[0] < 14; };
+  const frame = actors => blankFrame(actors, {}, { blocked });
+  let actor = point('bot', 0, [0, 0, 0]);
+  const first = rule.botGoal(actor, frame([actor]));
+  assert.equal(first.action, 'collect');
+  assert.deepEqual(first.pos, [14, 0, 0]);
+  const cold = casts;
+  assert.ok(cold >= 12, 'the first goal casts against every hidden candidate');
+  for (let i = 0; i < 10; i++) assert.deepEqual(rule.botGoal(actor, frame([actor])).pos, [14, 0, 0]);
+  assert.equal(casts, cold, 'a still bot reuses its answers inside the reuse window');
+  wall = false;
+  rule.update(0.25, frame([actor]));
+  casts = 0;
+  assert.deepEqual(rule.botGoal(actor, frame([actor])).pos, [3, 0, 0], 'answers refresh after the reuse window');
+  assert.ok(casts > 0);
+  wall = true;
+  casts = 0;
+  actor = point('bot', 0, [0.6, 0, 0]);
+  assert.deepEqual(rule.botGoal(actor, frame([actor])).pos, [14, 0, 0], 'moving half a metre refreshes the answers');
+  assert.ok(casts > 0);
+});

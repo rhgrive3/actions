@@ -49,3 +49,43 @@ export function admitPrebuiltStages(stages, root = PREBUILT_ROOT) {
   }
   return {admitted, stale, missing, converter};
 }
+
+// Files that decide the encoded KTX2 textures. A record whose geometry
+// conversion is stale can still supply GPU-compressed textures when these and
+// the pinned source match: textures are keyed by source image and role, and the
+// browser-direct conversion references the same source images.
+const TEXTURE_FILES = ['patches/native-stages/tools/prebuild-native.mjs', 'patches/native-stages/tools/prebuild_textures.py'];
+/**
+ * Texture-only admission for stages without an admitted full record. Only the
+ * colour group (albedo/opacity, the touch High/Balanced profile) is offered;
+ * detail maps keep their PNG path. Returns {id: {file, table, bytes}}.
+ */
+export function admitPrebuiltTextures(stages, admittedIds = new Set(), root = PREBUILT_ROOT, groups = ['color']) {
+  const converter = prebuiltConverterIdentity(), out = {}, skipped = [];
+  for (const s of stages) {
+    if (admittedIds.has(s.id)) continue;
+    const file = path.join(root, s.id, 'stage.json');
+    if (!fs.existsSync(file)) continue;
+    const bytes = fs.readFileSync(file);
+    if (bytes.subarray(0, 64).toString('latin1').startsWith('version https://git-lfs')) { skipped.push(s.id); continue; }
+    const record = JSON.parse(bytes);
+    const sameTools = TEXTURE_FILES.every(rel => record.converter?.files?.[rel] === converter.files[rel]);
+    if (record.schema !== PREBUILT_SCHEMA || record.id !== s.id || record.sourceSha256 !== s.sourceSha256 || !sameTools) { skipped.push(s.id); continue; }
+    const packs = (record.manifest.prebuiltTexturePacks || []).filter(p => groups.includes(p.group)
+      && fs.existsSync(path.join(root, p.file)) && fs.statSync(path.join(root, p.file)).size === p.bytes
+      && sha256(fs.readFileSync(path.join(root, p.file))) === p.sha256);
+    const allowed = new Set(packs.map(p => p.file)), table = {};
+    for (const [image, roles] of Object.entries(record.manifest.prebuiltTextures || {})) {
+      for (const [role, variant] of Object.entries(roles)) {
+        if (!allowed.has(variant.pack) || !Number.isSafeInteger(variant.offset) || variant.offset < 0) continue;
+        const pack = packs.find(p => p.file === variant.pack);
+        if (variant.offset + variant.bytes > pack.bytes) continue;
+        (table[image] ||= {})[role] = variant;
+      }
+    }
+    if (!Object.keys(table).length) { skipped.push(s.id); continue; }
+    const json = Buffer.from(JSON.stringify({schema: 1, id: s.id, sourceSha256: s.sourceSha256, prebuiltTextures: table, prebuiltTexturePacks: packs}));
+    out[s.id] = {file: s.id + '/textures.json', bytes: json.length, sha256: sha256(json), json, packs: packs.map(p => p.file)};
+  }
+  return {textures: out, skipped};
+}

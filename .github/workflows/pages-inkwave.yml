@@ -67,6 +67,29 @@ jobs:
             tools/squid-heading-qa
             server/src
             reports/ink-volume/source
+            native-prebuilt
+
+      # Native stages: GPU-compressed colour textures (KTX2) for stages whose
+      # browser conversion is otherwise uncompressed. Only stage.json records and
+      # the colour packs they list are fetched (~315 MB); LFS objects are cached
+      # by pointer content so an unchanged set is not downloaded again.
+      - name: Restore native texture LFS cache
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs/objects
+          key: native-textures-lfs-${{ hashFiles('native-prebuilt/*/stage.json', 'native-prebuilt/packs/*') }}
+          restore-keys: native-textures-lfs-
+
+      # Optional: a failed LFS fetch (quota, outage) must not block publication.
+      # The build then admits no texture table and stages keep their PNG path.
+      - name: Fetch native colour textures
+        run: |
+          set -uo pipefail
+          warn() { echo "::warning::native colour textures unavailable ($1); stages keep their PNG path"; exit 0; }
+          git lfs install --local || warn "git lfs install"
+          git lfs pull --include="native-prebuilt/*/stage.json" || warn "stage records"
+          packs=$(node -e "const fs=require('fs');const out=new Set();for(const id of fs.readdirSync('native-prebuilt')){const f='native-prebuilt/'+id+'/stage.json';if(!fs.existsSync(f))continue;const b=fs.readFileSync(f);if(b.subarray(0,40).toString().startsWith('version https://git-lfs'))continue;for(const p of JSON.parse(b).manifest.prebuiltTexturePacks||[])if(p.group==='color')out.add('native-prebuilt/'+p.file);}process.stdout.write([...out].join(','));")
+          if [ -n "$packs" ]; then git lfs pull --include="$packs" || warn "colour packs"; fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

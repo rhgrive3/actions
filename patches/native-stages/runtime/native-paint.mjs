@@ -16,6 +16,33 @@ export function nativeContactCoplanar(reference, face) {
  return Math.abs((b.x-a.x)*n.x + (b.y-a.y)*n.y + (b.z-a.z)*n.z) <= 1e-4;
 }
 
+// A face-locked impact (main weapon shot, drop, trail) keeps its struck chart as
+// the ownership seed. Native charts split one physical surface by object, 8 m tile
+// and quantised plane, so the same surface's neighbouring chart must take the ink
+// too. Only the same normal within FACE_LOCK_PLANE metres of the reference plane
+// qualifies: a thin ceiling (opposite normal), a raised or lowered floor (plane
+// offset) and a wall (other normal) never inherit the splat.
+// FACE_LOCK_PLANE matches the 0.12 m below-plane gate of unlocked splats, so a
+// deck plate overlapping the struck floor by a small step still takes the ink.
+const FACE_LOCK_COS = .999, FACE_LOCK_PLANE = .12;
+export function nativeFaceLockFace(level, faceId) {
+ if (!level.native || !Number.isInteger(faceId) || faceId < 0) return null;
+ return level.faces[faceId] || null;
+}
+export function nativeFaceLockCoplanar(reference, face) {
+ if (reference === face) return true;
+ if (!face) return false;
+ const n = reference.n, m = face.n;
+ if (n.x*m.x + n.y*m.y + n.z*m.z <= FACE_LOCK_COS) return false;
+ const a = reference.origin, b = face.origin;
+ const offset = (x, y, z) => (x-a.x)*n.x + (y-a.y)*n.y + (z-a.z)*n.z;
+ if (Math.abs(offset(b.x, b.y, b.z)) > FACE_LOCK_PLANE) return false;
+ // The far corner rejects a tilted neighbour whose origin happens to sit on the plane.
+ const far = offset(b.x + face.u.x*face.su + face.v.x*face.sv,
+   b.y + face.u.y*face.su + face.v.y*face.sv, b.z + face.u.z*face.su + face.v.z*face.sv);
+ return Math.abs(far) <= FACE_LOCK_PLANE;
+}
+
 // #264: sub-cell dot cores can claim without exceeding the legacy fixed-sample
 // margin. Native cache pruning must opt into the same ownership rule.
 /** Conservative maximum interior depth of the existing signed-distance pieces.

@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {BASE_SOURCE_STAGES,SOURCE_RECIPE,SOURCE_COMMIT} from '../../patches/native-stages/runtime/source-catalog.mjs';
 import {assertSourceTerrainObjects} from '../../patches/native-stages/runtime/source-terrain-contract.mjs';
-import {PREBUILT_ROOT,admitPrebuiltStages} from './inkwave-native-prebuilt.mjs';
+import {PREBUILT_ROOT,admitPrebuiltStages,admitPrebuiltTextures} from './inkwave-native-prebuilt.mjs';
 export const NATIVE_ROOT=path.resolve((import.meta.dirname || fileURLToPath(new URL(".", import.meta.url))),'../../patches/native-stages');
 // Stateful ordinary movement stays the already-installed browser singleton.
 export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','../../../vendor/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
@@ -68,7 +68,15 @@ export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIden
   if(prebuilt?.missing.length)console.warn('native prebuilt: payload absent or unverified for '+prebuilt.missing.join(', ')+' (git lfs pull?) — browser conversion is used');
   if(prebuilt?.stale.length)console.warn('native prebuilt: stale records ignored for '+prebuilt.stale.join(', ')+' (re-run patches/native-stages/tools/prebuild-native.mjs)');
   if(prebuilt&&Object.keys(prebuilt.admitted).length)config.prebuilt={baseURL:'../../native-prebuilt/',converterSha256:prebuilt.converter.sha256,stages:prebuilt.admitted};
-  return {root:null,prebuiltRoot,config};
+  // Stale geometry records can still supply GPU-compressed colour textures.
+  const textures=process.env.INKWAVE_NATIVE_PREBUILT==='0'||process.env.INKWAVE_NATIVE_PREBUILT_TEXTURES==='0'?null:admitPrebuiltTextures(stages,new Set(Object.keys(prebuilt?.admitted||{})),prebuiltRoot);
+  let textureFiles=null;
+  if(textures&&Object.keys(textures.textures).length){
+   config.prebuilt||={baseURL:'../../native-prebuilt/',converterSha256:prebuilt.converter.sha256,stages:{}};
+   config.prebuilt.textures=Object.fromEntries(Object.entries(textures.textures).map(([id,t])=>[id,{file:t.file,bytes:t.bytes,sha256:t.sha256}]));
+   textureFiles=textures.textures;
+  }
+  return {root:null,prebuiltRoot,config,textureFiles};
  }
  const root=fs.realpathSync(path.resolve(assetPath)),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json')));
  if(catalog.schema!==1||catalog.sourceCommit!==SOURCE_COMMIT||!Array.isArray(catalog.stages)||!catalog.stages.length||new Set(catalog.stages.map(s=>s.id)).size!==catalog.stages.length)throw Error('Native build requires unique pinned stage conversions');
@@ -87,6 +95,11 @@ export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIden
 export function copyPrebuiltNativeAssets(build,prepared){
  const stages=prepared?.config?.prebuilt?.stages;if(!stages)return null;
  const target=path.join(build,'native-prebuilt'),packs=new Set();let bytes=0,files=0;
+ // Texture-only stages: the colour table plus the packs it references.
+ for(const t of Object.values(prepared.textureFiles||{})){
+  fs.mkdirSync(path.dirname(path.join(target,t.file)),{recursive:true});fs.writeFileSync(path.join(target,t.file),t.json);bytes+=t.json.length;files++;
+  for(const p of t.packs)packs.add(p);
+ }
  for(const id of Object.keys(stages)){
   const dir=path.join(prepared.prebuiltRoot,id),record=JSON.parse(fs.readFileSync(path.join(dir,'stage.json')));
   fs.mkdirSync(path.join(target,id),{recursive:true});
@@ -94,7 +107,7 @@ export function copyPrebuiltNativeAssets(build,prepared){
   for(const p of record.manifest.prebuiltTexturePacks||[])packs.add(p.file);
  }
  for(const file of packs){fs.mkdirSync(path.dirname(path.join(target,file)),{recursive:true});fs.copyFileSync(path.join(prepared.prebuiltRoot,file),path.join(target,file));bytes+=fs.statSync(path.join(target,file)).size;files++;}
- return {stages:Object.keys(stages).length,files,bytes};
+ return {stages:Object.keys(stages).length,textureStages:Object.keys(prepared.textureFiles||{}).length,files,bytes};
 }
 export function copyLocalNativeAssets(build,prepared){
  if(!prepared?.root)return;

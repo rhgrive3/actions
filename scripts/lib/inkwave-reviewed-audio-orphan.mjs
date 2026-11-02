@@ -23,7 +23,7 @@ const closureHashes = new Map([
 // They run outside the module graph and cannot load this helper; their
 // Emscripten code generation is reviewed for this exact vendored file only.
 const sealedWorkerScripts = new Map([
-  ['vendor/three/jsm/libs/basis/basis_transcoder.js', '8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1'],
+  ['vendor/three/jsm/libs/basis/basis_transcoder.js', '4c050c8b4f3da3153aabbb17c7605098134a9d3fe9166a9472d1cc0a2571f81a'],
 ]);
 // KTX2Loader builds its transcoder Worker from strings in its own source (a
 // Blob of its worker function plus the sealed transcoder). It ships

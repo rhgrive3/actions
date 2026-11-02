@@ -34,7 +34,7 @@ try{
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto(`http://127.0.0.1:${server.address().port}/__menus?news=0`);await page.waitForFunction(()=>window.ready);
  const menus=await page.evaluate(async()=>{
-  const m=window.menus;document.documentElement.classList.add('iw-ios');
+  const m=window.menus;document.documentElement.classList.add('iw-ios','iw-touch');
   const rows=[],original=m._runWipe;let wipes=0;
   m._runWipe=function(...args){wipes++;return original.apply(this,args);};
   // A previous full wipe's onMid must not restore the old page when pause cancels it.
