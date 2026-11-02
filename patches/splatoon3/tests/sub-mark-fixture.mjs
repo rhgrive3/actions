@@ -10,7 +10,7 @@ async function peer(id,sub,ap){
  const tr=new f.Transport();tr.ws={readyState:1,bufferedAmount:0,send(){}};
  const nm=new f.NetMatch({myId:id,hostId:'a',isHost:id==='a',tr,_members:new Map([['a',{}],['b',{}],['c',{}]])},{id:'mark-resistance'});f.G.match.actors=[o,v];f.G.match.removeActor=a=>{f.G.match.actors=f.G.match.actors.filter(x=>x!==a);f.G.actors=f.G.actors.filter(x=>x!==a);};nm.bind(f.G.match);f.G.netm=nm;f.G.actors=[o,v];
  f.G.level={...f.G.level,blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
- return{id,f,o,v,nm};
+ return{id,f,o,v,nm,close(){nm.dispose();f.G.projectiles.clear();}};
 }
 // #1975 admits sub/support rows only from the owner's actual tick. Send the
 // sender's real tick through its transport and play it on the receiver exactly
@@ -33,7 +33,21 @@ function nativeThrow(a){
  for(let i=0;i<30&&!list().some(o=>!before.has(o));i++)a.o.weaponRunner.update(1/60,{sub:false,subReleased:i===0});
  return list().find(o=>!before.has(o));
 }
+const json=value=>JSON.parse(JSON.stringify(value));
+const isMark=e=>(e[1]==='ks'&&e[2]==='m')||(e[1]==='ac'&&e[5]?.phase==='mark');
+// Throw from the real installed producer and deliver its birth tick.
+function launch(a,receivers){const object=a.f.G.projectiles.throwBomb(a.o);for(const b of receivers)deliver(b,a.id,capture(a));return object;}
+function advance(peers){for(const x of peers){x.f.G.time+=1/60;x.f.G.projectiles.update(1/60);}}
+// Send the sender's actual next tick; `map` may inspect or trim its rows.
+function send(a,b,{map}={}){const packets=capture(a);for(const p of packets)map?.(p);return deliver(b,a.id,packets);}
+// Re-send rows inside a fresh actual owner tick with fresh transport envelopes.
+function sendRows(a,b,rows){
+ const packets=capture(a);if(!packets.length)return [];
+ const p=packets.at(-1);let next=b.nm.peers.get(a.id)?._lastEventSeq||0;
+ p.e=json(rows).map(e=>{e[0]=p.ts-.001;e[e.length-2]=Math.max(0,(p.u??1)-1);e[e.length-1]=++next;return e;});
+ return deliver(b,a.id,[p]);
+}
 // Advance the receiver's own fixed-step world (its native contact owns marks).
 function stepUntil(b,done,frames=60){for(let i=0;i<frames&&!done();i++){b.f.G.time+=1/60;b.f.G.projectiles.update(1/60);}return done();}
 
-export {near,equip,world,peer,tickTo,stepUntil,nativeThrow,capture,deliver};
+export {near,equip,world,peer,tickTo,stepUntil,nativeThrow,capture,deliver,json,isMark,launch,advance,send,sendRows};
