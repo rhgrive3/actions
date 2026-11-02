@@ -1263,6 +1263,9 @@ const FILE_TRACK_URLS = Object.freeze({
   battle: new URL('../../assets/audio/Jet_Arrow.mp3', import.meta.url).href,
 });
 const REQUIRED_FILE_TRACKS = new Set(['menu', 'battle']);
+// A two-sample silent clip. Unlocking a media element with it (instead of the MP3) keeps a gesture from
+// fetching a multi-megabyte recording that may never play, e.g. the menu track during a live match.
+const SILENT_UNLOCK_SRC = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
 const LOOKAHEAD = 0.16, TICK_MS = 25;
 
 export class MusicEngine {
@@ -1281,14 +1284,17 @@ export class MusicEngine {
     const url = FILE_TRACK_URLS[track];
     // Every new START/REMATCH is allowed a fresh media load, even if the
     // previous match exhausted its retries. Never latch the error permanently.
-    if (!url || !this.ctx || this.offline || typeof Audio !== 'function' ||
-        !this.ctx.createMediaElementSource) return;
+    if (!url || this.offline || typeof Audio !== 'function') return;
+    if (!this.ctx || !this.ctx.createMediaElementSource) {
+      // A START tap may precede AudioContext creation. Keep the gesture-time prime request until _init().
+      if (prime) this._pendingFilePrime = track;
+      return;
+    }
     if (this._preloadedFile?.id !== track) {
       this._dropPreload();
       try {
-        const element = new Audio();
-        element.preload = 'auto';
-        element.src = url;
+        // Reuse the element a trusted gesture already unlocked, if any; it receives the recording now.
+        const element = this._takeUnlockedFile(track) || this._newFileElement(url);
         element.load();
         this._preloadedFile = { id: track, element, player: null };
       } catch (_) {
@@ -1311,6 +1317,67 @@ export class MusicEngine {
         this._dropPreload();
       }
     }
+  }
+
+  _newFileElement(url) {
+    const element = new Audio();
+    element.preload = 'auto';
+    element.src = url;
+    return element;
+  }
+
+  // Autoplay rules (iOS Safari in particular) admit media playback only for an element that a
+  // trusted gesture has already started. Each licensed recording gets such an element on the first
+  // gesture: play() then pause() of a one-sample silent clip, so nothing large is downloaded. A
+  // later start after an await (quit to menu, GO of an online match) reuses that element with the
+  // real recording as its source, so it no longer needs a live user activation of its own.
+  _unlockFileTracks() {
+    if (this.offline || !this.ctx || this.ctx.state === 'closed' || typeof Audio !== 'function') return;
+    const unlocked = this._unlockedFiles || (this._unlockedFiles = new Map());
+    for (const track of REQUIRED_FILE_TRACKS) {
+      if (unlocked.has(track) || this.current?.id === track || this._preloadedFile?.id === track) continue;
+      try {
+        const element = new Audio();
+        element.preload = 'none';
+        element.src = SILENT_UNLOCK_SRC;
+        const started = element.play();
+        element.pause();
+        unlocked.set(track, element);
+        // Not every gesture type grants media activation (iOS can refuse a pointerdown and accept
+        // the touchend/click of the same tap). Forget a refused unlock so the next event retries.
+        // The immediate pause() aborts the play() promise (AbortError); that is not a refusal.
+        if (started && typeof started.catch === 'function') started.catch((error) => {
+          if (error?.name === 'NotAllowedError' && this._unlockedFiles?.get(track) === element) {
+            this._unlockedFiles.delete(track); this._releaseFileElement(element);
+          }
+        });
+      } catch (_) { /* a refused media element falls back to the normal retry and recovery path */ }
+    }
+  }
+  _takeUnlockedFile(track) {
+    const element = this._unlockedFiles?.get(track);
+    if (!element) return null;
+    this._unlockedFiles.delete(track);
+    element.preload = 'auto';
+    element.src = FILE_TRACK_URLS[track];
+    return element;
+  }
+  _releaseFileElement(element) {
+    try { element.pause(); element.removeAttribute('src'); element.load(); } catch (_) { /* already released */ }
+  }
+  _armFileUnlock() {
+    if (this._fileUnlockListener || this.offline || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    this._fileUnlockListener = (event) => { if (event?.isTrusted === true) this._unlockFileTracks(); };
+    for (const type of ['pointerdown', 'keydown', 'touchend', 'click']) window.addEventListener(type, this._fileUnlockListener, { capture: true, passive: true });
+  }
+  _disarmFileUnlock() {
+    const listener = this._fileUnlockListener;
+    this._fileUnlockListener = null;
+    if (listener && typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+      for (const type of ['pointerdown', 'keydown', 'touchend', 'click']) window.removeEventListener(type, listener, true);
+    }
+    for (const element of this._unlockedFiles?.values() || []) this._releaseFileElement(element);
+    this._unlockedFiles?.clear();
   }
 
   _dropPreload() {
@@ -1337,6 +1404,13 @@ export class MusicEngine {
   _retryFile(track, reason) {
     if (this.offline || typeof window === 'undefined' || this._desiredTrack !== track || !FILE_TRACK_URLS[track]) return;
     this._fileFailures.add(track);
+    // An autoplay rejection cannot clear on a timer: wait for the next trusted gesture instead of
+    // spending the two timed retries, then stay silent until a tap or key (no misleading error report).
+    if (reason?.name === 'NotAllowedError' && typeof this._armFileRecovery === 'function') {
+      this._cancelFileRetry();
+      this._armFileRecovery(track, reason);
+      return;
+    }
     if (this._fileRetryTimer != null) return;
     if (this._fileRetryCount >= 2) {
       if (!this._fileErrorReported) {
@@ -1386,6 +1460,10 @@ export class MusicEngine {
     this.revIn.connect(conv); conv.connect(rOut); rOut.connect(this.mix);
     this._nodes = [this.mix, hp, comp, this.out, this.dlyIn, dhp, dlp, this.dA, this.dB, fbA, fbB, dOut, pl, pr, this.revIn, conv, rOut];
     if (!this.offline) this._startTimer();
+    this._armFileUnlock();
+    // A START gesture that ran before AudioContext existed: prime the battle MP3 now, still in its gesture.
+    const pendingPrime = this._pendingFilePrime; this._pendingFilePrime = null;
+    if (pendingPrime) this.preloadFile(pendingPrime, { prime: true });
     const w = this._want; this._want = undefined;
     if (w !== undefined) this.play(w.track, w.opts);
     return this;
@@ -1485,9 +1563,8 @@ export class MusicEngine {
           primedPlayer = this._preloadedFile.player;
           this._preloadedFile = null;
         } else {
-          element = new Audio();
-          element.preload = 'auto';
-          element.src = FILE_TRACK_URLS[track];
+          // An element unlocked by an earlier trusted gesture may start without a fresh activation.
+          element = this._takeUnlockedFile(track) || this._newFileElement(FILE_TRACK_URLS[track]);
         }
       } catch (_) {
         this._fileFailures.add(track);
@@ -1571,6 +1648,7 @@ export class MusicEngine {
     this._cancelFileRetry();
     this._desiredTrack = null;
     this._dropPreload();
+    this._disarmFileUnlock();
     for (const p of this.players) p.dispose();
     this.players.length = 0; this.current = null;
     if (this.worker) { this.worker.postMessage(0); this.worker.terminate(); this.worker = null; }

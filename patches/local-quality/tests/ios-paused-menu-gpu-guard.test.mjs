@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {adaptIosPausedMenuGpuGuard,IOS_PAUSED_MENU_CSS} from '../ios-paused-menu-gpu-guard.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 const read = relative => fs.readFileSync(fileURLToPath(new URL('../../../'+relative,import.meta.url)),'utf8');
 function once(s,before,after,label) {
@@ -14,20 +15,35 @@ function once(s,before,after,label) {
 const upstreamMenus = read('inkwave-public/src/ui/menus.js');
 const upstreamCss = read('inkwave-public/styles/ui.css');
 
-test('iOS rule is scoped to in-game menus and does not disable all blur or Android',()=>{
+test('paused in-battle GPU guard covers every touch device (not only iOS) and exactly the paused battle stack',()=>{
   const css=adaptIosPausedMenuGpuGuard('styles/ui.css',upstreamCss,once);
   assert.ok(css.endsWith(IOS_PAUSED_MENU_CSS));
-  assert.ok(css.includes('html.iw-ios .iw-ui.is-ingame .iw-dimbg'));
-  assert.ok(css.includes('html.iw-ios .iw-ui.is-ingame .iw-panel'));
-  assert.ok(css.includes('-webkit-backdrop-filter: none !important'));
-  assert.ok(css.includes('backdrop-filter: none !important'));
-  assert.doesNotMatch(IOS_PAUSED_MENU_CSS,/html\.iw-android|html:not\(\.iw-ios\)/);
-  assert.match(upstreamCss,/backdrop-filter: blur\(8px\)/);
+  assert.doesNotMatch(IOS_PAUSED_MENU_CSS,/iw-ios|iw-android|:not\(/);
+  const selectors=IOS_PAUSED_MENU_CSS.slice(0,IOS_PAUSED_MENU_CSS.indexOf('{')).split('\n').slice(1).join(' ')
+    .split(',').map(s=>s.trim()).filter(Boolean);
+  assert.deepEqual(selectors,[
+    'html.iw-touch .iw-ui.is-ingame .iw-dimbg','html.iw-touch .iw-ui.is-ingame .iw-pause__dim','html.iw-touch .iw-ui.is-ingame .iw-scrim-full',
+    'html.iw-touch .iw-ui.is-ingame .iw-modal','html.iw-touch .iw-ui.is-ingame .iw-panel','html.iw-touch .iw-ui.is-ingame .iw-prompts']);
+  assert.ok(IOS_PAUSED_MENU_CSS.includes('-webkit-backdrop-filter: none !important'));
+  assert.ok(IOS_PAUSED_MENU_CSS.includes('backdrop-filter: none !important'));
+  // Menus outside battle keep their own blur: the base rules are untouched.
+  assert.match(upstreamCss,/\.iw-dimbg \{ position: absolute; inset: 0; background: rgba\(8, 6, 14, \.6\); backdrop-filter: blur\(8px\) saturate\(\.8\); \}/);
+  assert.match(upstreamCss,/\.iw-pause__dim \{[^}]*backdrop-filter: blur\(7px\)/);
   assert.throws(()=>adaptIosPausedMenuGpuGuard('styles/ui.css',css,once),/already applied/);
 });
 
+test('shipped build composition carries the touch guard once and no iOS-only selector',()=>{
+  const shipped=adaptBuildSource('styles/ui.css',upstreamCss);
+  assert.equal(shipped.split('/* Paused in-battle menus on touch devices: bound paused WebGL').length-1,1);
+  assert.ok(shipped.includes('html.iw-touch .iw-ui.is-ingame .iw-dimbg,'));
+  assert.ok(shipped.includes('html.iw-touch .iw-ui.is-ingame .iw-prompts {'));
+  assert.doesNotMatch(shipped,/html\.iw-ios \.iw-ui\.is-ingame/);
+});
+
 const patched = adaptIosPausedMenuGpuGuard('src/ui/menus.js',upstreamMenus,once);
-function runShow({ios,from,to,stack,opts={push:true},onCancel}) {
+assert.doesNotMatch(patched,/iw-ios/,'menu transition guard must not depend on the iOS class');
+assert.match(patched,/classList\.contains\('iw-touch'\)/,'menu transition guard follows the touch-device class');
+function runShow({touch,from,to,stack,opts={push:true},onCancel}) {
   const begin=patched.indexOf('  show(name = null, opts = {}) {');
   const end=patched.indexOf('\n  setLoading(',begin);
   assert.ok(begin>=0&&end>begin);
@@ -35,7 +51,7 @@ function runShow({ios,from,to,stack,opts={push:true},onCancel}) {
   const seen=[];
   const Fake=new Function('document','SCREENS','WIPES','LIGHT','performance','safeCall',
     'prefersReducedMotion','console','return class M { '+body+' }')(
-      {documentElement:{classList:{contains:s=>s==='iw-ios'&&ios}}},
+      {documentElement:{classList:{contains:s=>s==='iw-touch'&&touch}}},
       ['pause','settings','main','title'],new Set(['pause>main','pause>title']),new Set(['pause','settings','main']),
       {now:()=>1},cb=>cb(),()=>false,{warn(){}});
   const m=new Fake();
@@ -47,18 +63,37 @@ function runShow({ios,from,to,stack,opts={push:true},onCancel}) {
   m.show(to,opts);
   return seen;
 }
-test('iPad pause to options never starts DPR-scaled fullscreen Canvas2D wipe',()=>{
-  assert.deepEqual(runShow({ios:true,from:'pause',to:'settings',stack:['pause']}),['swap']);
-});
-test('Android pause to options retains the original light wipe',()=>{
-  assert.deepEqual(runShow({ios:false,from:'pause',to:'settings',stack:['pause']}),['swap','wipe:light']);
-});
-test('iOS main menu retains existing presentation',()=>{
-  assert.deepEqual(runShow({ios:true,from:'main',to:'settings',stack:['main']}),['swap','wipe:light']);
-});
-test('old paused page is released immediately rather than 340ms overlapping new settings',()=>{
-  assert.match(patched,/\(opts\.instantLeave \|\| this\._stack\[0\] === 'pause'\) &&\s*document\.documentElement\.classList\.contains\('iw-ios'\)\) oe\.remove\(\);/);
-  assert.match(patched,/else setTimeout\(\(\) => oe\.remove\(\), opts\.instantLeave \? 0 : 340\);/);
+const PLATFORMS = [['iPad', true], ['Android', true], ['desktop', false]];
+for (const [platform, touch] of PLATFORMS) {
+  test(`${platform} in-battle pause to options ${touch ? 'never starts' : 'keeps'} the decorative wipe`,()=>{
+    assert.deepEqual(runShow({touch,from:'pause',to:'settings',stack:['pause']}),touch ? ['swap'] : ['swap','wipe:light']);
+  });
+  test(`${platform} outside-battle main to options keeps the original light wipe`,()=>{
+    assert.deepEqual(runShow({touch,from:'main',to:'settings',stack:['main']}),['swap','wipe:light']);
+  });
+  for (const from of ['pause', 'settings']) {
+    for (const to of ['main', 'title', null]) {
+      test(`${platform} in-battle ${from} -> ${to}: explicit wipe is ${touch ? 'suppressed' : 'kept'}`, () => {
+        const seen = runShow({touch,from,to,stack:from === 'pause' ? ['pause'] : ['pause',from],opts:{wipe:true}});
+        if (touch) assert.deepEqual(seen, ['swap']);
+        else assert.ok(seen.some(e => e.startsWith('wipe')), 'desktop keeps its original wipe');
+      });
+    }
+  }
+  if (touch) test(`${platform} entering in-battle pause cancels an earlier wipe after its swap callback has been revoked`,()=>{
+    let calls=0;
+    const seen=runShow({touch,from:'main',to:'pause',stack:['main'],opts:{},onCancel(menu,events){
+      calls++;events.push('cancel');
+      // Existing transition callbacks retain token 0; cancellation must not be
+      // able to restore that screen during the newly requested pause.
+      if(menu._swapToken===0)events.push('stale-swap');
+    }});
+    assert.equal(calls,1);assert.deepEqual(seen,['cancel','swap']);
+  });
+}
+test('old in-battle pause page is released immediately rather than 340ms overlapping new settings',()=>{
+  assert.match(patched,/if \(opts\.pausedBattle\) oe\.remove\(\);\s*else setTimeout\(\(\) => oe\.remove\(\), opts\.instantLeave \? 0 : 340\);/);
+  assert.match(patched,/opts = \{ \.\.\.opts, instantLeave: true, pausedBattle: true \};/);
 });
 test('all other game modules and original menu screen implementations are untouched',()=>{
   assert.equal(adaptIosPausedMenuGpuGuard('src/game/weapons.js','unmodified',once),'unmodified');
@@ -68,19 +103,12 @@ test('all other game modules and original menu screen implementations are untouc
   assert.throws(()=>adaptIosPausedMenuGpuGuard('src/ui/menus.js',patched,once),/Missing production anchor/);
 });
 
-for (const from of ['pause', 'settings']) {
-  for (const to of ['main', 'title', null]) {
-    test(`iPad ${from} -> ${to}: outgoing pause owner suppresses explicit quit wipe`, () => {
-      assert.deepEqual(runShow({ios:true,from,to,stack:from === 'pause' ? ['pause'] : ['pause',from],opts:{wipe:true}}), ['swap']);
-    });
-  }
-}
-test('outgoing iOS pause removes its DOM immediately after its stack is cleared', () => {
-  const begin = patched.indexOf('  _swap(name, opts) {');
-  const end = patched.indexOf('    this._modal = null;', begin);
-  const run = new Function('safeCall','document','setTimeout',
-    'return function(name,opts) {' + patched.slice(begin + '  _swap(name, opts) {'.length, end) + '}');
-  for (const ios of [true, false]) {
+for (const [platform, ios] of PLATFORMS) {
+  test(`${platform} outgoing in-battle pause ${ios ? 'removes its DOM immediately' : 'keeps its original leave timer'} after its stack is cleared`, () => {
+    const begin = patched.indexOf('  _swap(name, opts) {');
+    const end = patched.indexOf('    this._modal = null;', begin);
+    const run = new Function('safeCall','document','setTimeout',
+      'return function(name,opts) {' + patched.slice(begin + '  _swap(name, opts) {'.length, end) + '}');
     const events = [], stack = ['pause'];
     let transition;
     const start = patched.indexOf('  show(name = null, opts = {}) {');
@@ -95,17 +123,13 @@ test('outgoing iOS pause removes its DOM immediately after its stack is cleared'
     assert.equal(menu._stack.length,0);
     run(cb=>cb(), {documentElement:{classList:{contains:()=>ios}}}, ()=>events.push('timer'))
       .call({_stack:menu._stack,_scr:{el:{classList:{add(){}},remove(){events.push('remove');}}}},null,transition);
-    assert.deepEqual(events, ios ? ['remove'] : ['timer']);
-  }
-});
-
-test('entering iPad pause cancels an earlier wipe after its swap callback has been revoked',()=>{
-  let calls=0;
-  const seen=runShow({ios:true,from:'main',to:'pause',stack:['main'],opts:{},onCancel(menu,events){
-    calls++;events.push('cancel');
-    // Existing transition callbacks retain token 0; cancellation must not be
-    // able to restore that screen during the newly requested pause.
-    if(menu._swapToken===0)events.push('stale-swap');
-  }});
-  assert.equal(calls,1);assert.deepEqual(seen,['cancel','swap']);
-});
+    assert.deepEqual(events, ios ? ['remove'] : ['timer'], 'desktop keeps its original leave timer');
+    // Outside battle the original leave timing is untouched: instantLeave keeps its 0 ms timer, otherwise 340 ms.
+    for (const [opts, delay] of [[{}, 340], [{instantLeave:true}, 0]]) {
+      const outside = [];
+      run(cb=>cb(), {documentElement:{classList:{contains:()=>ios}}}, (fn, ms)=>outside.push('timer:'+ms))
+        .call({_stack:['main'],_scr:{el:{classList:{add(){}},remove(){outside.push('remove');}}}},null,opts);
+      assert.deepEqual(outside, ['timer:'+delay]);
+    }
+  });
+}

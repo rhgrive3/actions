@@ -27,14 +27,15 @@ function replayFinalPaintOwners(source,bytes=finalPaintOwnerBytes){
   return source;
 }
 // Reviewed native-stage contact-plane routing, subsequently added to the
-// source chain. Keep every historical byte and prove each new anchor exactly.
+// source chain, and its face-lock extension (native-face-lock-coplanar). Keep
+// every historical byte and prove each new anchor exactly.
 const nativeContactOwners = [
   ["import { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';",
-   "import { nativeContactFace, nativeContactCoplanar } from '../../patches/native-stages/runtime/native-paint.mjs';\nimport { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';"],
+   "import { nativeContactFace, nativeContactCoplanar, nativeFaceLockFace, nativeFaceLockCoplanar } from '../../patches/native-stages/runtime/native-paint.mjs';\nimport { initNativeGrid, layoutNativePaint } from '../../patches/native-stages/runtime/engine.mjs';"],
   ['    const faceIds = Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;',
-   '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    const faceIds = !contactFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;'],
+   '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    // A native face lock searches the band so coplanar charts of the struck surface are candidates too.\n    const lockFace = contactFace ? null : nativeFaceLockFace(this.level, opts.face);\n    const faceIds = !contactFace && !lockFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;'],
   ['          if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
-   '          if (fid < 0 || (!contactFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f))) continue;'],
+   '          if (fid < 0 || (!contactFace && !lockFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f))) continue;'],
 ];
 function replayNativeContact(source, reverse=false){
   for(const [before,after] of reverse?[...nativeContactOwners].reverse():nativeContactOwners)

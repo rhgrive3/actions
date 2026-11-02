@@ -136,8 +136,26 @@ test('detail replay preserves attribute bytes and bounds projection-cache retent
   const before={...d,triangle:new Float64Array(12),arrays:Object.fromEntries(Object.entries(d.arrays).map(([name,a])=>[name,new Float32Array(a.length)])),draw(){throw Error('unexpected capacity overflow');}};
   for(let frame=0;frame<40;frame++){
     d.vertexCount=before.vertexCount=0;const args=[f,0,8,0,8,rng(),rng(),0,1,1,rng(),frame%3,1,0,.2,frame*.01,.1,0];
-    beforeTriangles.apply(before,args);d.triangles(...args);assert.equal(d.vertexCount,before.vertexCount);
-    for(const [name,a]of Object.entries(d.arrays)){const size=d.geometry.getAttribute(name).itemSize;assert.deepEqual(a.slice(0,d.vertexCount*size),before.arrays[name].slice(0,d.vertexCount*size),name);}
+    beforeTriangles.apply(before,args);d.triangles(...args);
+    // Triangles are now clipped to the splat box [u0,u1]x[v0,v1] (the only area
+    // the base atlas quad ever draws). Per-splat attributes are unchanged, every
+    // vertex stays inside the box, and the covered area equals old ∩ box.
+    const [,u0,u1,v0,v1,lu,lv]=args,eps=1e-4;
+    for(let i=0;i<d.vertexCount;i++){
+      const u=d.arrays.aLocal[i*3]+lu,v=d.arrays.aLocal[i*3+1]+lv;
+      assert.ok(u>=u0-eps&&u<=u1+eps&&v>=v0-eps&&v<=v1+eps,'clipped vertex inside the splat box');
+      assert.equal(d.arrays.aLocal[i*3+2],before.arrays.aLocal[2]);
+      for(const name of ['aSplat','aStretch','aGrow']){const size=d.geometry.getAttribute(name).itemSize;
+        assert.deepEqual(Array.from(d.arrays[name].slice(i*size,i*size+size)),Array.from(before.arrays[name].slice(0,size)),name);}
+      // Position and local coordinates stay on the same affine map as before.
+      const x=(d.arrays.aPos[i*2]+1)/2*1024,z=(d.arrays.aPos[i*2+1]+1)/2*1024;
+      assert.ok(Math.abs(x-(8+u*30))<1e-2&&Math.abs(z-(8+v*30))<1e-2,'position/local affine map');
+    }
+    const covered=(arrays,count,u,v)=>{for(let t=0;t+2<count;t+=3){const P=k=>[arrays.aLocal[(t+k)*3]+lu,arrays.aLocal[(t+k)*3+1]+lv];
+      const [a,b,c]=[P(0),P(1),P(2)],s=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),w=[s(a,b,[u,v]),s(b,c,[u,v]),s(c,a,[u,v])];
+      if((w[0]>=-1e-9&&w[1]>=-1e-9&&w[2]>=-1e-9)||(w[0]<=1e-9&&w[1]<=1e-9&&w[2]<=1e-9))return true;}return false;};
+    for(let k=0;k<200;k++){const u=u0+(u1-u0)*((k*37%200)+.5)/200,v=v0+(v1-v0)*((k*91%200)+.5)/200;
+      assert.equal(covered(d.arrays,d.vertexCount,u,v),covered(before.arrays,before.vertexCount,u,v),'coverage inside the box');}
   }
   const first=d._projectedTriangles(f,plane,T);assert.equal(first,d._projectedTriangles(f,plane,T));
   f.origin.x=.01;const shifted=d._projectedTriangles(f,plane,T);assert.notEqual(first,shifted,'basis mutation invalidates');

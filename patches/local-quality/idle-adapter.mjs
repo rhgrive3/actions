@@ -167,7 +167,7 @@ export function adaptIdleSource(rel, code, replace) {
             sm.needsUpdate = false;
           }
         } else {
-          if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
+          if (pausedFrame.paused && sm.enabled && !pausedFrame.freshShadows) sm.needsUpdate = true;
           // A resize/settings invalidation supersedes the old frozen image.
           // Drop it before the real draw recreates the compositor attachments.
           if (pausedFrame.paused) this.R.releasePausedFrame?.();

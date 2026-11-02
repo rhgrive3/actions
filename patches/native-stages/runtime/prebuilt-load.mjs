@@ -99,3 +99,20 @@ export async function loadPrebuiltSource(id, signal) {
   progress('ready');
   return data;
 }
+
+/** Texture-only table for a browser-converted stage (colour packs only). */
+export async function attachPrebuiltTextures(id, data, signal) {
+  const entry = nativeStageBuild?.prebuilt?.textures?.[id];
+  if (!entry) return false;
+  const bytes = await fetchVerified(entry.file, entry, signal);
+  const record = JSON.parse(new TextDecoder().decode(bytes));
+  if (record.schema !== 1 || record.id !== id || !record.prebuiltTextures || !Array.isArray(record.prebuiltTexturePacks))
+    throw Error('Unsupported prebuilt texture table: ' + id);
+  if (data.manifest.sourceSha256 && record.sourceSha256 && data.manifest.sourceSha256 !== record.sourceSha256)
+    throw Error('Prebuilt texture source mismatch: ' + id);
+  throwIfAborted(signal);
+  data.manifest.prebuiltTextures = record.prebuiltTextures;
+  data.manifest.prebuiltTexturePacks = record.prebuiltTexturePacks;
+  data.manifest.prebuiltTexturesOnly = true;
+  return true;
+}
