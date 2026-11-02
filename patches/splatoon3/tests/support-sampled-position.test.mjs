@@ -17,7 +17,7 @@ function world() {
       { kind: 'box', min: [-60, -.5, -60], max: [60, 0, 60] }] });
   G.physics = new f.Physics(G.level);
   const source = f.make('support'), proxy = f.make('support');
-  for (const a of [source, proxy]) Object.assign(a, { nid: 7, owner: 'A', slot: 0 });
+  for (const a of [source, proxy]) Object.assign(a, { nid: 7, owner: 'A', slot: 0, special: a.specialCost() });
   const match = actors => ({ state: 'playing', mode: 'turf', time: 180, actors, playing: () => true });
   const sent = [], sender = new f.NetMatch(session('A', sent), cfg), receiver = new f.NetMatch(session('B', []), cfg);
   sender.bind(match([source])); receiver.bind(match([proxy]));
@@ -32,7 +32,7 @@ for (const hz of [30, 60, 120]) for (const life of [0, 2]) for (const kind of ['
       if (life) for (let i = 0; i < life; i++) w.source.spawnAt(new f.THREE.Vector3(40, 0, 0), 0);
       else { w.source.pos.set(40, 0, 0); w.source.netTp = (w.source.netTp || 0) + 1; }
       w.source.aimDir.set(0, -1, 0);
-      if (kind === 'sensor') G.projectiles.throwBomb(w.source);
+      if (kind === 'sensor') { w.source.ink = Math.max(0, w.source.ink - 45); G.projectiles.throwBomb(w.source); }
       else {
         w.source.special = w.source.specialCost(); w.source._startSpecial();
         w.source.intent.sub = true; w.source._updateSpecial(1 / hz);
@@ -56,6 +56,9 @@ for (const hz of [30, 60, 120]) for (const life of [0, 2]) for (const kind of ['
       // NetMatch.update samples every peer, then plays its events. Match.update
       // applies remote positions afterwards; preserve this native ordering.
       w.receiver._playEvents();
+      if (kind === 'cooler') for (let i = 0; i < hz && !G.projectiles._s3SupportCoolers?.some(s => s.owner === w.proxy); i++) {
+        G.time += 1 / hz; G.projectiles.update(1 / hz);
+      }
       const records = kind === 'sensor' ? G.projectiles._s3SupportSensors : G.projectiles._s3SupportCoolers;
       assert.equal(records.filter(s => s.owner === w.proxy).length, 1, 'valid event near the sampled owner must survive');
       const tag = kind === 'sensor' ? 'p' : 'c';

@@ -513,7 +513,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   while (list.length >= MAX_OBJECTS) {
     // An incoming replica never spends a local device (or another owner's
     // replica) to obtain a cosmetic slot. Its own oldest ghost may be retired.
-    const victim=object.ghost?list.find(x=>x.ghost&&x.owner===owner):list[0];
+    const victim=object.ghost?(list.find(x=>x.ghost&&!nativeMarkBirth(api,x))||list.find(x=>x.ghost&&x.owner===owner)):list[0];
     if(!victim)return null;
     removeObject(api,projectiles,victim,true);
   }
@@ -1471,14 +1471,15 @@ function applyRemoteObjectHit(api,event) {
   // Match Vector3 constructor defaults, subtraction order and distanceTo square root.
   const dx=hitPos.x-(hitX===undefined?0:hitX), dy=hitPos.y-(hitY===undefined?0:hitY), dz=hitPos.z-(hitZ===undefined?0:hitZ);
   if(Math.sqrt(dx*dx+dy*dy+dz*dz)>reach)return false;
-  const admitted=admitDeviceHit(api.G.netm,shooter,target,event.damage,event.cause,event);
+  const admitted=admitDeviceHit(api.G.netm,shooter,target,event.damage,event.cause,event)
+    ||(event[Symbol.for('inkwave.legacy-direct-play')]===true&&!api.G.netm?.s?._members?{damage:clamp(event.damage,0,2200),cause:event.cause||'Default',legacyGear:true}:null);
   if(!admitted){deferNativeDeviceHit(api.G.netm,shooter,event,()=>applyRemoteObjectHit(api,event));return false;}
   // An invalid target, a premature birth or a geometric miss must not poison
   // this attacker's replay window. Reserve only accepted hits, immediately
   // before HP callbacks so synchronous replay cannot apply them twice.
   objectHitSeen.add(key);
   while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);
-  target.hp-=admitted.damage*objectDamageScale(shooter,target.subId,admitted.cause);
+  target.hp-=admitted.damage*(admitted.legacyGear?withObjectHitGear(shooter,event.objectShredder,()=>objectDamageScale(shooter,target.subId,admitted.cause)):objectDamageScale(shooter,target.subId,admitted.cause));
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
 }
@@ -1976,7 +1977,14 @@ function replayMark(api,event,owner){
   // different: it marks at detonation and may remain planted indefinitely.
   const birthAge=event.subId==='angleShooter'&&Number.isFinite(birth.receivedAt)
     ?Math.max(0,Math.floor(((api.G.time||0)-birth.receivedAt)*60+1e-8)):0;
-  if(!nativeMarkBirth(api,birth.object)||birth.targets.get(target)===event.targetLife)return false;
+  if(!nativeMarkBirth(api,birth.object)){
+    if(api.G.netm?.s?._members||birth.targets.get(target)===event.targetLife)return false;
+    const remaining=Math.max(0,event.frames-Math.max(elapsed,birthAge))/60;
+    const applied=applyMark(api,target,owner.team,remaining,event.subId);
+    if(applied)birth.targets.set(target,event.targetLife);
+    return applied;
+  }
+  if(birth.targets.get(target)===event.targetLife)return false;
   if(event.subId==='inkMine')observeNativeMine(api,api.G.projectiles,birth.object);
   if(birth.contacts.get(target)?.life===event.targetLife)return consumeNativeMark(api,birth,target,event);
   // A valid mark may lead the receiver's fixed-step contact; the event cannot

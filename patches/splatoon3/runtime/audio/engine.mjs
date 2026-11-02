@@ -196,16 +196,14 @@ export function installWeaponAudioEngine(Engine){
     // first playable hit for every weapon. Lightweight audio is decoded once
     // into the shared bounded bank. Tests/operator packs that do not declare
     // these independent cues may still use their own isolated sound fixtures.
-    // Batch only two shared events at a time, retaining an explicit residency
-    // receipt for every cue even when the transaction partially succeeds.
-    const combat=RECORDED_COMBAT_CUES.filter(cue=>loader.declares(cue,'fire')===true);
-    for(let i=0;i<combat.length;i+=2){
-      const batch=combat.slice(i,i+2);
-      const row=await audioLoadDeadline(loader.ensureMany
-        ?loader.ensureMany(batch.map(id=>({id,event:'fire'})),{priority:true})
-        :Promise.all(batch.map(id=>loader.ensure(id,'fire',{priority:true}))).then(results=>({errors:results.flatMap(r=>r?.errors||[])})),12000);
-      for(const cue of batch)if(!(loader.isEventResident?.(cue,'fire') ?? bank.authorized.byEvent.has(cue+':fire'))){
-        const why=row?.errors?.find(error=>error.id===cue)?.error||row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
+    // Keep a distinct source decode receipt per cue. Bundled loading can
+    // leave individual combat events unresident after a partial decode error;
+    // never admit a hit unless that exact recorded event is authorized.
+    for(const cue of RECORDED_COMBAT_CUES){
+      if(loader.declares(cue,'fire')!==true)continue;
+      const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
+      if(!(loader.isEventResident?.(cue,'fire') ?? bank.authorized.byEvent.has(cue+':fire'))){
+        const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
       }
     }
@@ -249,7 +247,7 @@ export function installWeaponAudioEngine(Engine){
       // regular shot over a non-existent specialized synthesized sample.
       if(mainAttack&&event!=='fire'&&bank.has(id,'fire')){
         if(bank.authorized.byEvent.has(`${id}:fire`)){
-          return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});}
+          return this.play(bank.name(id,'fire'),options.priority!==undefined?options:{...options,priority:options.actor?.isLocal?88:64});}
         if(loader?.declares(id,'fire')===true)loader?.ensure(id,'fire');
       }
       const declared=loader?.declares(id,event);
@@ -272,7 +270,7 @@ export function installWeaponAudioEngine(Engine){
       }
       this._realAudioFallbackShots=(this._realAudioFallbackShots||0)+1;
     }
-    return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
+    return this.play(name,options.priority!==undefined?options:{...options,priority:options.actor?.isLocal?88:64});
   };
   p.loopWeapon=function(id,event,options={}){
     id=borrowedRecordedMainId(mainAudioSourceId(id));

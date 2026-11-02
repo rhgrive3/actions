@@ -62,7 +62,6 @@ export function observeNativeSpecialUse(nm,from,event,previousSequence){
  }else if(!Number.isSafeInteger(event._netSeq)||event._netSeq<=previousSequence
    ||nm.peers?.get(from)?._lastEventSeq!==event._netSeq)return false;
  const native=consumeSupportEvent(nm,from,event,actor);
- if(id==='splattercolorScreen'&&!native)return false;
  const a=actorState(nm,actor),t=clock();prune(a,t);
  if(legacy&&event[0]<=a.legacyUseTime)return false;
  if(legacy){a.legacyUseTime=event[0];legacy.order=++state(nm).order;}

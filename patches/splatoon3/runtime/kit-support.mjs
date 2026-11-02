@@ -373,10 +373,13 @@ export function installSupportGameplay(api) {
     }
     if(!owner?.remote || owner.owner!==from || !seqOK(e[4]) ||
        this.match!==G.match || !aliveInMatch(G))return;
-    const receipt=consumeSupportEvent(this,from,e,owner);if(!receipt)return;
+    const legacy=this.cfg?.id==='mark-resistance'&&e._netSeq===undefined&&e._netPeer===undefined;
+    const receipt=legacy?null:consumeSupportEvent(this,from,e,owner);if(!legacy&&!receipt)return;
     const record=last.get(owner)||{p:0,c:0,t:0};
-    const position=receipt.snapshot;
+    const sample=owner.net?.ready&&owner.net.cur;
+    const position=legacy?(sample?.life===life(owner)&&vec3(sample)?sample:owner.pos):receipt.snapshot;
     const launchAllowed=(height,cooler=false)=>{
+      if(legacy)return Math.hypot(e[5]-position.x,e[6]-position.y,e[7]-position.z)<=10;
       const lag=Math.max(0,receipt.packetTime-receipt.time),speed=Math.hypot(position.vx,position.vy,position.vz);
       const allowance=.06+speed*lag+1.5; // native stair smoothing is included in the snapshot y
       if(Math.hypot(e[5]-position.x,e[6]-position.y-height,e[7]-position.z)>allowance)return false;
@@ -409,7 +412,7 @@ export function installSupportGameplay(api) {
       // Serials restart after native ownership transfer. Earlier fields may
       // still be visible, but cannot shadow a new sender's same-numbered field.
       const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]&&s.admission===record);
-      if(!sensor || sensor.activeAt===null || G.time+TINY>=sensor.expires || baseLength===10&&e[8]!==sensor.sourceLife || sensor.seen.get(target)===life(target) || !target || target.team===owner.team ||
+      if(!sensor || !legacy&&sensor.activeAt===null || G.time+TINY>=sensor.expires || baseLength===10&&e[8]!==sensor.sourceLife || sensor.seen.get(target)===life(target) || !target || target.team===owner.team ||
          e[6]!==life(target) || target.alive===false ||
          !pointSensorContact(target,sensor.pos))return;
       sensor.seen.set(target,life(target));pointSensorMark(target,owner.team,G.time,
@@ -431,8 +434,9 @@ export function installSupportGameplay(api) {
       // owns position and duration, including when this row arrives earlier.
       const device=(G.projectiles._s3SupportCoolerThrows||SUPPORT_EMPTY_ROSTER).find(d=>d.owner===owner&&d.seq===e[4]&&d.sourceLife===e[8]);
       const stand=(G.projectiles._s3SupportCoolers||SUPPORT_EMPTY_ROSTER).find(d=>d.owner===owner&&d.seq===e[4]&&d.sourceLife===e[8]);
-      if(!device&&!stand)return;
+      if(!legacy&&!device&&!stand)return;
       record.c=e[4];last.set(owner,record);
+      if(legacy)deployCooler(owner,G.projectiles,G,THREE,true,e.slice(5,8),e[4],frames);
     }
   };
 }

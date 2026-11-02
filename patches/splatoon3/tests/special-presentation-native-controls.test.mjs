@@ -44,6 +44,8 @@ test('Zipcaster retirement preserves borrowed body geometry and disposes its coa
   r.a.specialActive=null;r.a._s3AllSpecialState=null;r.ch.update(1/60,r.a.anim);
   assert.equal(r.ch.kid.getObjectByName('zipcaster-ink-coat'),undefined);
   for(const g of source)assert.equal(counts.get(g),0,'ending the special must not invalidate the normal rig');
+  for(const m of new Set(twins.map(o=>o.material)))assert.equal(counts.get(m),0,'coat material stays cached across activations until character dispose');
+  r.ch.dispose();
   for(const m of new Set(twins.map(o=>o.material)))assert.equal(counts.get(m),1,'coat material has one owner');
  }finally{for(const[o,cb]of listeners)o.removeEventListener('dispose',cb);r.close();}
 });

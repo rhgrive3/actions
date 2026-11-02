@@ -166,6 +166,7 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
     seen.add(key);while(seen.size>512)seen.delete(seen.values().next().value);
     play.call(this,from,event);
     payload.actor=actor;
+    if(seq===null&&!this.s?._members)Object.defineProperty(payload,Symbol.for('inkwave.legacy-direct-play'),{value:true});
     bindCatalogueActionPayload(this,event,payload,actor);
     const id=payload.subId||payload.id;
     const objectHit=payload.phase==='objectHit'||payload.action==='objectHit';

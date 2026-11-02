@@ -36,7 +36,7 @@ test('cosmetic trials and periodic phases agree over equal elapsed time at 30, 6
 test('one-shot resolution avoids LOS on cold and failed samples but retains native, base and routed recording occlusion',()=>{
  const symbol=Symbol.for('inkwave.weapon-audio.resolve-occlusion');let los=0;const G={time:0,camera:{position:{x:0,y:1,z:0}},physics:{los:()=>{los++;return false;}}},obstruction=new WeakMap(),deferredOcclusion=symbol,finite3=p=>!!p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z);
  const options=compileFunction('G','obstruction','deferredOcclusion','deferredPosition','finite3',functions(read('../runtime/audio/runtime.mjs'),['options','occlusion','resolveOcclusion'])+'\nreturn options;')(G,obstruction,deferredOcclusion,Symbol.for('inkwave.weapon-audio.occlusion-position'),finite3);
- class Engine{_def(){return 'generic';}play(name,o){this.played.push({name,o});return o;}}
+ class Engine{_def(){return 'generic';}play(name,o){o?.[symbol]?.(o);this.played.push({name,o});return o;}}
  installWeaponAudioEngine(Engine);const e=new Engine(),events=new Map(),ensures=[],declares=new Map();e.played=[];e.weaponBank=()=>({name:(id,event)=>id+':'+event,authorized:{byEvent:events},has:()=>true,audibleShotFallback:true});e._realS3Loader={ensure:(...args)=>ensures.push(args),declares:(id,event)=>declares.get(id+':'+event)};
  const actor={pos:{x:3,y:0,z:4},isLocal:false};
  const fire=(id,event='fire')=>e.playWeapon(id,event,options(actor,actor.pos,.7,true));

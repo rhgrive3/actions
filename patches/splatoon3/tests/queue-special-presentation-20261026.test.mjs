@@ -50,8 +50,9 @@ test('Wail updates a shared scene once, retaining exact instance matrices and se
   }
 });
 test('Zipcaster refreshes only paired mesh branches, preserving coat transforms, skin bindings, visibility and reparent fallback',()=>{
-  const next=declaration(read('../runtime/special-presentation.mjs'),'inkCoat');
-  const compile=source=>new Function('THREE','inv','keep','colorOf',source+';return inkCoat;')(T,new T.Matrix4(),new T.Matrix4(),()=>new T.Color(0x123456));
+  const presentationSource=read('../runtime/special-presentation.mjs');
+  const next=[declaration(presentationSource,'disposeModel'),declaration(presentationSource,'coatFor'),declaration(presentationSource,'inkCoat')].join('\n');
+  const compile=source=>new Function('THREE','inv','keep','colorOf','coatKeepers',source+';return inkCoat;')(T,new T.Matrix4(),new T.Matrix4(),()=>new T.Color(0x123456),new WeakMap());
   const apis=[compile(frozen.inkCoat),compile(next)];
   function rig(){
     const scene=new T.Scene(),kid=new T.Group(),nested=new T.Group(),bone=new T.Bone();scene.add(kid);kid.add(nested,bone);

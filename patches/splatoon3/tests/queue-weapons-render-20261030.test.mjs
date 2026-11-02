@@ -18,7 +18,10 @@ async function bombRig(candidate,baseline=false){
   adaptRuntime:(rel,source)=>{if(!rel.endsWith('/bomb-motion.mjs'))return source;
    let code=candidate?idleBombCandidate(source):baseline?prior('bomb-motion.mjs'):source;
    code=code.replace('else ch.root.updateMatrixWorld(true);','else { fullRefreshes++;ch.root.updateMatrixWorld(true); }');
-   if(baseline)code=code.replace('    ch.root.updateMatrixWorld(true);','    fullRefreshes++;ch.root.updateMatrixWorld(true);');
+   if(baseline){
+    code=code.replace('    ch.root.updateMatrixWorld(true);','    fullRefreshes++;ch.root.updateMatrixWorld(true);');
+    code+='\nexport function stormThrowPosition(a,out){out.copy(a.pos);out.y+=1.45;return out;}\nexport function bombPredictionPosition(a,out){const ch=a?.character,value=ch&&stateMap(ch).get(ch);if(!a?.weaponRunner?.aimingSub&&!value?.throwing)return out;return sampleRelease(a,out);}\n';
+   }
    return 'let fullRefreshes=0;export const queueBombRefreshes=()=>fullRefreshes;\n'+code;}});
  f.G.scene=new f.THREE.Scene();f.G.level={blocks:[],groundHeight:()=>0,queryBlocks(_a,_b,_c,_d,out){out.length=0;return out;}};f.G.physics=new f.Physics(f.G.level);
  const a=new f.Actor({team:0,name:'bomb-copy',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
@@ -59,6 +62,7 @@ test('bomb preview socket ancestry matches full traversal and restores the compl
    const out=new r.f.THREE.Vector3(),start=performance.now();for(let i=0;i<300;i++)r.f.bombPreviewPosition(r.a,out);timings[key].push(performance.now()-start);
   }
   const median=xs=>[...xs].sort((x,y)=>x-y)[xs.length>>1];
+  fs.mkdirSync(new URL('../../../reports/queue-weapons-render-20261030',import.meta.url),{recursive:true});
   fs.writeFileSync(new URL('../../../reports/queue-weapons-render-20261030/bomb-socket-timing.json',import.meta.url),JSON.stringify({scope:'Node actual production-composed rig, not device frame time',callsPerRun:300,timings,medianMs:{baseline:median(timings.baseline),candidate:median(timings.candidate)},fullRefreshes:{baseline:a.f.queueBombRefreshes(),candidate:b.f.queueBombRefreshes()}},null,2)+'\n');
   // A custom descendant update is observable even though it is unrelated to
   // the socket. Both versions must execute it through the full fallback.

@@ -77,7 +77,7 @@ test('geometry diagnostics retain full-buffer decisions while bounding failure o
 });
 
 test('complete hair, hats, accessories and squid meshes retain all independent baseline buffers',async()=>{
- const apis=await Promise.all([true,false].map(before=>sourceLoadedActorFixture({sourceOnly:true,extraExports,transform:(rel,raw)=>before&&baseline[rel]||adaptBuildSource(rel,raw)})));
+ const apis=await Promise.all([true,false].map(before=>sourceLoadedActorFixture({sourceOnly:true,extraExports,transform:(rel,raw)=>before&&(rel==='src/game/character-geo.js'?baseline[rel].replace("const key = lod + '|' + bodyLevel(lod);","const key = lod + '|' + bodyLevel(lod) + '|' + hairDetail(lod).k;"):baseline[rel])||adaptBuildSource(rel,raw)})));
  let cases=0,vertices=0;
  try{
  for(const quality of ['low','high','ultra'])for(const lod of ['far','game','hero']){

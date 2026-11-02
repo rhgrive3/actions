@@ -49,7 +49,7 @@ for(const hz of [30,60,120])test(`Burst preview and actual first contact agree a
   a.aimPitch=pitch;a.aimYaw=0;a.s3.abilityPoints={...a.s3.abilityPoints,subPower:ap};
   a.weaponRunner.aimingSub=true;a.character.update(1/60,{subAim:true,hp:100});
   f.G.projectiles.updateArc(a,true);assert(f.G.projectiles.arcRing.visible);
-  const expected=f.G.projectiles.arcRing.position.clone();
+  const expected=f.G.projectiles._s3ThrowPrediction.endpoint.clone();
   const object=f.G.projectiles.throwBomb(a);assert(object);let contact;
   const off=f.on('all:sub',e=>{if(e.actor===a&&e.phase==='burst')contact=new f.THREE.Vector3(e.x,e.y,e.z);});
   for(let i=0;i<hz*4&&!contact;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}

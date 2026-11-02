@@ -18,10 +18,11 @@ async function setup(id,ap=57){
  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};f.G.level.groundHeight=()=>0;
  const owner=f.make(),proxy=f.make();
  for(const a of [owner,proxy]){
-  Object.assign(a,{nid:77,owner:'A',netLife:3});a.weapon={...a.weapon,special:id,specialCost:100};
+  Object.assign(a,{nid:77,owner:'A',netLife:3});
+  a.s3.loadout=f.emptyLoadout();if(ap===57)for(const slot of a.s3.loadout){slot.main='specialPower';slot.subs.fill('specialPower');}a.s3RefreshGear();
+  a.weapon={...a.weapon,special:id,specialCost:100};
   a.special=100;a._resolve=()=>{};a.aimYaw=.3;a.aimDir.set(Math.sin(.3),0,Math.cos(.3));
  }
- owner.s3.loadout=f.emptyLoadout();if(ap===57)for(const slot of owner.s3.loadout){slot.main='specialPower';slot.subs.fill('specialPower');}owner.s3RefreshGear();owner.weapon={...owner.weapon,special:id,specialCost:100};
  proxy.aimYaw=-1.2;proxy.remote=true;
  const match={id:'sparse-device-replay',state:'playing',time:180,actors:[owner],playing:()=>true,canRespawn:()=>false};
  const sent=[],session=myId=>({myId,hostId:'A',isHost:myId==='A',_members:new Map([['A',{}],['B',{}]]),
@@ -35,8 +36,9 @@ async function setup(id,ap=57){
  const deploy=()=>{select(sender);owner.special=100;owner._startSpecial();assert.ok(owner.specialActive,'real special input must activate');
   nativeUse=json(sender.out.findLast(e=>e[1]==='ev'&&e[2]==='special:use'));
   assert.equal(nativeUse[3].id,id,'the real Actor activation records its native use');
-  owner.intent.sub=true;owner._updateSpecial(1/60);
-  owner.intent.sub=false;owner._updateSpecial(1/60);for(let i=0;i<16&&owner.specialActive;i++)owner._updateSpecial(1/60);
+  const stepSpecial=()=>{clock+=1/60;f.G.time+=1/60;owner._updateSpecial(1/60);};
+  owner.intent.sub=true;stepSpecial();
+  owner.intent.sub=false;stepSpecial();for(let i=0;i<16&&owner.specialActive;i++)stepSpecial();
   const rows=json(sender.out.filter(e=>e[1]==='ac'&&['deploy','device','screen'].includes(e[5].action)));
   assert.equal(rows.length,2,'one canonical and one companion birth');return rows;};
  const rows=deploy(),objects=()=>f.G.projectiles._s3AllSpecialObjects||[],ghost=()=>objects().find(o=>o.owner===proxy);

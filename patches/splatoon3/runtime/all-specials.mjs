@@ -1420,6 +1420,7 @@ function chumpLandingPlan(rt,actor,state,out=null){
   return chumpPositionsFromTarget(rt,actor,state,target,out);
 }
 function chumpPositionsFromTarget(rt,actor,state,target,out=null){
+  if(!target||typeof target.x!=='number')return chumpLandingPlan(rt,actor,state,target);
   const count=12,positions=out?out.positions:[],rotation=seedUnit(state.seed,17)*Math.PI*2;
   const direction=(out?out.direction.copy(target):target.clone()).sub(actor.pos).setY(0).normalize(),side=out?out.side.set(direction.z,0,-direction.x):new rt.api.THREE.Vector3(direction.z,0,-direction.x);
   let ellipse=state.chumpEllipse;
@@ -2949,7 +2950,7 @@ function replayObjectEvent(rt,actor,event,approvedObject=null,approvedHit=null) 
     const object=approvedObject||findObjectHitTarget(rt,actor,event);
     if(!object)return false;
     const admitted=approvedHit||admitDeviceHit(rt.api.G.netm,actor,object,event.damage,event.cause,event);if(!admitted)return false;
-    const rate=objectDamageScale(actor,object.id,admitted.cause);
+    const rate=admitted.legacyGear?withObjectHitGear(actor,event.objectShredder,()=>objectDamageScale(actor,object.id,admitted.cause)):objectDamageScale(actor,object.id,admitted.cause);
     object.hp=Math.max(0,object.hp-admitted.damage*rate);
     if(object.hp<=0)removeWorld(rt,object,'destroy');else emitObject(rt,object,'hit');
     return true;
@@ -2998,7 +2999,7 @@ function replayObjectEvent(rt,actor,event,approvedObject=null,approvedHit=null) 
   }
   if(!object)return false;
   if(object.kind==='screen'&&nativeScreenLive(rt,object)&&object._nativeScreenInitialized&&['deploy','screen','land','move','active'].includes(event.action))return true;
-  if(event.action==='land'&&object.replayLandAccepted||event.action==='active'&&object.replayActiveAccepted)return false;
+  if(event.action==='land'&&object.replayLandAccepted&&!(finite(event.age)&&event.age>object.age&&event.age<=3600&&point.distanceTo(object.pos)<=1e-6)||event.action==='active'&&object.replayActiveAccepted)return false;
   const previousAge=object.age,previousLandedAt=object.landedAt;
   if(!existingDeviceBirth&&['deploy','device','screen','land','active'].includes(event.action)){
     if(finite(event.age)&&event.age>=0&&event.age<=3600)object.age=Math.max(object.age,event.age);
@@ -3090,7 +3091,8 @@ export function replaySpecial(api,event) {
   if(deviceKey&&ledger.has(deviceKey)&&['deploy','device','screen'].includes(event.action)
     &&!(rt.system||api.G.projectiles)?._s3AllSpecialObjects?.some(o=>o.owner===actor&&o.id===event.id
       &&o.activation===event.activation&&o.serial===event.object&&o.replayLife===life))return false;
-  const approvedHit=approvedObject?admitDeviceHit(rt.api.G.netm,actor,approvedObject,event.damage,event.cause,event):null;
+  const approvedHit=approvedObject?(admitDeviceHit(rt.api.G.netm,actor,approvedObject,event.damage,event.cause,event)
+    ||(event[Symbol.for('inkwave.legacy-direct-play')]===true&&!api.G.netm?.s?._members?{damage:clamp(event.damage,0,10000),cause:event.cause||'Default',legacyGear:true}:null)):null;
   if(approvedObject&&!approvedHit){deferNativeDeviceHit(api.G.netm,actor,event,()=>replaySpecial(api,event));return false;}
   ledger.add(key);if(ledger.size>SEEN_LIMIT)ledger.delete(ledger.values().next().value);
   if(event.action==='cheer'){

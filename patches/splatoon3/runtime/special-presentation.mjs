@@ -623,7 +623,7 @@ export function installSpecialModels(api) {
       const coat = coatFor(ch);
       s.coatGroup = coat.coatGroup; s.coatMat = coat.coatMat; s.coatPairs = coat.coatPairs;
       s.coatMat.color.set(ch.color || colorOf(ch.actor));
-      if (s.coatGroup.parent !== ch.kid) ch.kid.add(s.coatGroup);
+      if (!s.coatGroup.parent) ch.kid.add(s.coatGroup);
     }
     if (s.coatGroup) {
       s.coatGroup.visible = on;

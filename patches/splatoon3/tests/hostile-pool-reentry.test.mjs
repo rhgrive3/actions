@@ -31,16 +31,16 @@ function fixture() {
 test('all ten sub-weapon enemy lookups release their borrowed array even when hooks throw', () => {
   const acquired = (source.match(/\bhostileActors\(api,\s*[^)]+\)/g) || []).length - 1; // exclude declaration
   const released = (source.match(/releaseHostileActors\(api\)/g) || []).length - 1; // exclude declaration
-  assert.equal(acquired, 10, 'every current sub-weapon acquisition, including drop.owner, is counted');
+  assert.equal(acquired, 11, 'every current sub-weapon acquisition, including drop.owner, is counted');
   assert.equal(released, acquired, 'every acquisition has its own try/finally release');
   assert.equal((source.match(/for \(const target of __iwHostiles\)/g) || []).length, 6);
   assert.match(source, /finally \{ releaseHostileActors\(api\); \}/);
 });
 
 test('Torpedo splash returns its drop-owned enemy buffer when a hit callback throws', () => {
-  const burst = new Function('hostileActors', 'releaseHostileActors', 'localOwner', 'surfacePaint', 'damageSubObjectsInRadius',
+  const burst = new Function('hostileActors', 'releaseHostileActors', 'localOwner', 'surfacePaint', 'damageSubObjectsInRadius', 'subDeviceProbes',
     extract('burstTorpedoSplash') + '\nreturn burstTorpedoSplash;'
-  )(hostileActors, releaseHostileActors, () => true, () => {}, () => assert.fail('hit must throw first'));
+  )(hostileActors, releaseHostileActors, () => true, () => {}, () => assert.fail('hit must throw first'), new WeakMap());
   const { api, owner } = fixture(), failure = new Error('Torpedo splash hit callback');
   api.THREE = { Vector3: class { copy(p) { Object.assign(this, p); return this; } distanceTo() { return 0; } } };
   let calls = 0;

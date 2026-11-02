@@ -10,7 +10,8 @@ function state(nm){let s=states.get(nm);if(!s||s.session!==nm.s||s.match!==nm.ma
 export function observeSupportTick(nm,from,packet,run){
   if(!Array.isArray(packet?.a)||!packet.a.some(row=>{const a=nm.byNid?.get(row?.[0]);return a?.remote&&a.owner===from&&(a.weapon?.sub==='pointSensor'||a.weapon?.special);}))return run();
   const prior=new Map();
-  for(const actor of nm.byNid?.values?.()||[])if(actor.remote&&actor.owner===from){const snap=actor.net?.buf?.at(-1);prior.set(actor,{ink:snap?.ink??actor.ink,sp:snap?.sp??actor.special,t:snap?.t??packet.ts-1/60,life:snap?.life??life(actor),count:actor.stats?.specials||0,snapshot:snap?{...snap}:null});}
+  const coldStart=Math.min(packet.ts-1/60,...(Array.isArray(packet.e)?packet.e.map(e=>finite(e?.[0])?e[0]:Infinity):[]));
+  for(const actor of nm.byNid?.values?.()||[])if(actor.remote&&actor.owner===from){const snap=actor.net?.buf?.at(-1);prior.set(actor,{ink:snap?.ink??actor.ink,sp:snap?.sp??actor.special,t:snap?.t??coldStart,life:snap?.life??life(actor),count:actor.stats?.specials||0,snapshot:snap?{...snap}:null});}
   const observed=observeOwnerTick(nm,from,packet,run),receipt=observed.receipt;
   if(!receipt||receipt.ownerSession!==nm.s||receipt.ownerMatch!==nm.match||receipt.ownerMatchId!==nm.cfg?.id||nm._disposed)return observed.result;
   const s=state(nm),peer=nm.peers?.get(from);
@@ -21,7 +22,7 @@ export function observeSupportTick(nm,from,packet,run){
     const actor=nm.byNid?.get(id),snap=actor?.net?.buf?.at(-1),before=prior.get(actor);
     if(!actor||actor.owner!==from||!snap||snap.t!==packet.ts||snap.life!==life(actor))continue;
     let r=s.resources.get(actor);
-    if(!r||r.net!==actor.net||r.life!==snap.life||r.owner!==from){r={net:actor.net,life:snap.life,owner:from,time:-Infinity,last:before,ink:[],special:[]};s.resources.set(actor,r);}
+    if(!r||r.net!==actor.net||r.life!==snap.life||r.owner!==from){r={net:actor.net,life:snap.life,owner:from,time:-Infinity,last:before?.snapshot?before:{...before,life:snap.life},ink:[],special:[]};s.resources.set(actor,r);}
     const last=r.last,row=packet.a.find(row=>row?.[0]===id),count=Number.isSafeInteger(row?.[22])?row[22]:null;
     r.ink=r.ink.filter(c=>packet.ts-c.at<=1.4&&c.amount>0);r.special=r.special.filter(c=>packet.ts-c.at<=1.4&&!c.used);
     if(last?.life===snap.life&&Number.isFinite(last.t)&&snap.t>last.t){

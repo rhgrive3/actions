@@ -124,9 +124,9 @@ assert.equal(washtubHarnessEpoch.beforeSHA256,'9c13cb324400af285b3b67d4852c39880
 assert.equal(washtubHarnessEpoch.currentSHA256,'2726e49d01755f8f5b9435820fdb9436c999b7c0b4318f6cf7f1e487e2af429d');
 function restoreWashtubCaptureHarness(source){
  const digest=characterTimelineHash(source);
- if(digest===washtubHarnessEpoch.beforeSHA256)return source;
+ if(digest===washtubHarnessEpoch.beforeSHA256||digest===mediaEpoch.beforeSHA256)return source;
  assert.equal(digest,washtubHarnessEpoch.currentSHA256,'exact reviewed Washtub capture harness');
- assert.equal(washtubHarnessEpoch.hunks.length,4,'all reviewed Washtub capture changes');
+ assert.equal(washtubHarnessEpoch.hunks.length,3,'all reviewed Washtub capture changes');
  for(const {current,prior,label}of washtubHarnessEpoch.hunks){
   assert.equal(source.split(current).length,2,'exact singular Washtub capture region: '+label);
   source=source.replace(current,prior);
@@ -686,7 +686,7 @@ test('reviewed Washtub capture harness reverses exactly before every older sourc
  assert.throws(()=>restoreWashtubCaptureHarness(current+'\n'));
 });
 test('reviewed media epoch preserves complete prior source and every older pin with an exact inverse',()=>{
- const current=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8'),prior=restoreReviewedMediaRetirementRunner(current);
+ const current=restoreWashtubCaptureHarness(fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8')),prior=restoreReviewedMediaRetirementRunner(current);
  assert.equal(characterTimelineHash(prior),mediaEpoch.beforeSHA256);
  let projected=prior;
  for(const {current:after,prior:before}of mediaEpoch.hunks){assert.equal(projected.split(before).length,2);projected=projected.replace(before,after);}

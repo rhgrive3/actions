@@ -98,9 +98,6 @@ function nearestFloor(world, p) {
     const y = world.floorAt(p[0] + ox*L.floorProbe, p[2] + oz*L.floorProbe, p[1] + 1.8);
     if (finite(y)) {
       const d=Math.abs(p[1]-y);
-      // The caller only asks whether any floor lies within its tolerance.
-      // A later nearer floor cannot change this successful support decision.
-      if (d <= L.floorTolerance) return y;
       if(best===null || d<bestDistance){best=y;bestDistance=d;}
     }
   }

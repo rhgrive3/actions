@@ -74,8 +74,8 @@ test('q286 native reuse may execute an observable setter that repopulates anothe
   async function run(candidate){
     const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
       adaptRuntime:(rel,s)=>candidate&&rel.endsWith('/weapons-fidelity.mjs')?replace(s,
-        'const p=fresh.apply(this,args);kitTrizookaClearPooled(p);',
-        "const p=fresh.apply(this,args);if(p===recycled){delete p.s3SpecialWeapon;delete p.s3Weapon;}else kitTrizookaClearPooled(p);"):s});
+        'const p=fresh.apply(this,arguments);kitTrizookaClearPooled(p);',
+        "const p=fresh.apply(this,arguments);if(p===recycled){delete p.s3SpecialWeapon;delete p.s3Weapon;}else kitTrizookaClearPooled(p);"):s});
     const ps=f.G.projectiles,p=ps._new();ps.pool.length=0;let injected=0;
     const retained=new Proxy(p,{set(target,key,value){if(key==='s3SpecialWeapon'){target.s3Stage=123;injected++;}return Reflect.set(target,key,value);}});
     ps.pool.push(retained);const next=ps._new();assert.equal(next,retained);assert.equal(injected,1);
