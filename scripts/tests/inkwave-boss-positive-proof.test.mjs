@@ -31,6 +31,22 @@ if (built) {
     ['upstream/src/net/netmatch.js', 'inkwave-public/src/net/netmatch.js'],
   ]) assert.equal(hash(fs.readFileSync(new URL(rel, sourceRoot))), manifest.files[key], 'current source input ' + key);
 }
+if (built) {
+  // Emitted modules resolve bare specifiers through the page's own import map
+  // (the #1975 provenance graph now reaches the emitted native engine, which
+  // imports "three"). Apply exactly that map to these Node imports.
+  const html = fs.readFileSync(new URL('index.html', runtimeRoot), 'utf8');
+  const block = html.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+  assert.ok(block, 'emitted page declares its import map');
+  const imports = Object.fromEntries(Object.entries(JSON.parse(block[1]).imports).map(([key, value]) => [key, new URL(value, runtimeRoot).href]));
+  const { register } = await import('node:module');
+  register('data:text/javascript,' + encodeURIComponent(`const map=${JSON.stringify(imports)};
+export async function resolve(specifier, context, next) {
+  if (Object.hasOwn(map, specifier)) return { url: map[specifier], shortCircuit: true };
+  for (const [key, url] of Object.entries(map)) if (key.endsWith('/') && specifier.startsWith(key)) return { url: url + specifier.slice(key.length), shortCircuit: true };
+  return next(specifier, context);
+}`));
+}
 const { combatAdmission, installCombatProvenance } = await import(new URL(runtimePaths[0], runtimeRoot));
 const { applyBlasterKnockback } = await import(new URL(runtimePaths[1], runtimeRoot));
 const { commitOwnerTick } = await import(new URL(runtimePaths[2], runtimeRoot));
