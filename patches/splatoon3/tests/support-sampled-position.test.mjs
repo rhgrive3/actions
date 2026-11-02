@@ -32,7 +32,19 @@ for (const hz of [30, 60, 120]) for (const life of [0, 2]) for (const kind of ['
       if (life) for (let i = 0; i < life; i++) w.source.spawnAt(new f.THREE.Vector3(40, 0, 0), 0);
       else { w.source.pos.set(40, 0, 0); w.source.netTp = (w.source.netTp || 0) + 1; }
       w.source.aimDir.set(0, -1, 0);
-      if (kind === 'sensor') G.projectiles.throwBomb(w.source);
+      // #1975: the receiver credits a support action only against a native
+      // resource debit between two same-life owner snapshots. Send the owner's
+      // full-resource snapshot first, then pay through the native owners.
+      w.source.ink = 100; if (kind === 'cooler') w.source.special = w.source.specialCost();
+      w.sender._sendTick(); const baseline = w.sent.at(-1);
+      G.match = w.receiver.match; G.netm = w.receiver; G.actors = [w.proxy];
+      w.receiver.onMessage('A', baseline);
+      G.match = w.sender.match; G.netm = w.sender; G.actors = [w.source]; G.time += 1 / hz;
+      if (kind === 'sensor') {
+        w.source.intent.sub = true; w.source.weaponRunner.update(1 / hz, { sub: true, subReleased: false }); w.source.intent.sub = false;
+        for (let i = 0; i < 30 && !G.projectiles._s3SupportSensors?.length; i++) w.source.weaponRunner.update(1 / hz, { sub: false, subReleased: i === 0 });
+        assert.equal(G.projectiles._s3SupportSensors.length, 1, 'native paid Point Sensor throw');
+      }
       else {
         w.source.special = w.source.specialCost(); w.source._startSpecial();
         w.source.intent.sub = true; w.source._updateSpecial(1 / hz);
@@ -57,29 +69,20 @@ for (const hz of [30, 60, 120]) for (const life of [0, 2]) for (const kind of ['
       // applies remote positions afterwards; preserve this native ordering.
       w.receiver._playEvents();
       const records = kind === 'sensor' ? G.projectiles._s3SupportSensors : G.projectiles._s3SupportCoolers;
+      // The receiver-owned Tacticooler flight lands before its stand exists.
+      if (kind === 'cooler') for (let i = 0; i < 2 * hz && !records.some(s => s.owner === w.proxy); i++) { G.time += 1 / hz; G.projectiles.update(1 / hz); }
       assert.equal(records.filter(s => s.owner === w.proxy).length, 1, 'valid event near the sampled owner must survive');
       const tag = kind === 'sensor' ? 'p' : 'c';
       const next = packet.e.find(e => e[1] === 'ks' && e[2] === tag).slice(0, tag === 'p' ? 12 : 10);
       next[4] += 1;
-      const sample = w.proxy.net.cur, sampleLife = sample.life, sampleX = sample.x;
-      for (const invalid of ['unready', 'other-life', 'nonfinite']) {
-        if (invalid === 'unready') w.proxy.net.ready = false;
-        if (invalid === 'other-life') sample.life = life + 1;
-        if (invalid === 'nonfinite') sample.x = NaN;
-        w.receiver._play('A', next);
-        assert.equal(records.filter(s => s.owner === w.proxy && s.seq === next[4]).length, 0,
-          `${invalid} sample cannot authorize placement forty units from the rendered owner`);
-        w.proxy.net.ready = true; sample.life = sampleLife; sample.x = sampleX;
-      }
+      // A row outside its owner's native tick has no support receipt (#1975),
+      // even when the sampled owner is ready, same-life and nearby.
       w.receiver._play('A', next);
-      assert.equal(records.filter(s => s.owner === w.proxy && s.seq === next[4]).length, 1,
-        'rejected rows never consume the next legitimate support serial');
+      assert.equal(records.filter(s => s.owner === w.proxy && s.seq === next[4]).length, 0,
+        'a bare support row cannot authorize a second placement');
       w.receiver.applyRemote(w.proxy, 1 / hz); assert.equal(w.proxy.pos.x, 40);
-      // The same-life sample does not grant a larger placement radius.
-      const before = records.length, row = next.slice();
-      row[4] += 1; row[5] += 11;
-      w.receiver._play('A', row);
-      assert.equal(records.length, before, 'distant forged placement remains outside the original ten-unit bound');
+      const row = next.slice(); row[4] += 1; row[5] += 11; w.receiver._play('A', row);
+      assert.equal(records.filter(s => s.owner === w.proxy).length, 1, 'distant forged placement remains rejected');
     } finally { w.receiver.dispose(); w.sender.dispose(); G.netm = null; }
   });
 }
