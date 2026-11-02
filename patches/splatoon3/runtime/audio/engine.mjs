@@ -13,6 +13,7 @@ import { usesStringerCharge, stringerChargeAudioLoop } from './stringer-charge-c
 import { installChargeAudioLifecycle, prewarmChargeCue } from './charge-audio-lifecycle.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
+const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
 const RECORDED_COMBAT_CUES=Object.freeze(['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']);
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
@@ -249,6 +250,7 @@ export function installWeaponAudioEngine(Engine){
       // regular shot over a non-existent specialized synthesized sample.
       if(mainAttack&&event!=='fire'&&bank.has(id,'fire')){
         if(bank.authorized.byEvent.has(`${id}:fire`)){
+          options[RESOLVE_OCCLUSION]?.(options);
           return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});}
         if(loader?.declares(id,'fire')===true)loader?.ensure(id,'fire');
       }
@@ -272,6 +274,8 @@ export function installWeaponAudioEngine(Engine){
       }
       this._realAudioFallbackShots=(this._realAudioFallbackShots||0)+1;
     }
+    // Deferred one-shot LOS: resolved only once the recording is admitted.
+    options[RESOLVE_OCCLUSION]?.(options);
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){

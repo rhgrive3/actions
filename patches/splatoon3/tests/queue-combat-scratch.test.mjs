@@ -89,7 +89,8 @@ test('bot gameplay decisions are called at fixed 60Hz independently of render ca
     for(let i=0;i<2*hz;i++)runSimulation(game,1/hz);assert.equal(calls,120);
   }
   const source=adaptBuildSource('src/main.js',read('inkwave-public/src/main.js'));
-  assert.ok(source.includes('runSimulation(this, portraitFrame.released ? 0 : dt)'));
+  // #1988 also pauses the decorative title demo only while its reduced budget is active.
+  assert.ok(source.includes('runSimulation(this, portraitFrame.released || (titleDemo.active && titleDemo.reduced) ? 0 : dt)'));
   assert.ok(read('inkwave-public/src/game/match.js').includes('if (live) a.bot.update(dt)'));
 });
 

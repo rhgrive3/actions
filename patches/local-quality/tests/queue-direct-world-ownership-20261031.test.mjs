@@ -7,6 +7,12 @@ import {directWorldBaseline, raw, rawBefore, composed} from './queue-visual-worl
 
 const sha256 = source => crypto.createHash('sha256').update(source).digest('hex');
 const paths = ['src/world/props-core.js', 'src/world/props-marina-vessels.js'];
+// Reviewed direct-owner revisions after adoption (integration #1995): the merged
+// part box is accumulated from the same stored Float32 coordinates that
+// Box3.expandByPoint read back, and the out-of-bounds plaza backdrop prop is new.
+const reviewedLaterOwners = Object.freeze({
+  'src/world/props-core.js': '52dab30705cf8435374d74e5774bf453c68357ba9e7f42c130da0c94a8425f45',
+});
 
 for (const rel of paths) test('direct owner keeps the previously emitted bytes and immutable old control: ' + rel, () => {
   assert.equal(directWorldBaseline.schema, 1);
@@ -16,7 +22,10 @@ for (const rel of paths) test('direct owner keeps the previously emitted bytes a
   assert.equal(sha256(before), snapshot.rawSha256, 'old raw bytes must retain their recorded identity');
   assert.equal(composed(rel, true), before, 'before=true must still execute the real old source');
   assert.notEqual(before, current, 'the optimization comparison must not become self-comparison');
-  assert.equal(sha256(current), snapshot.composedSha256, 'adopted source must equal the former composed bytes');
+  // A direct owner may only move past its adopted composed bytes through an
+  // exact reviewed later revision; any other edit still fails this pin.
+  const adopted = sha256(current) === snapshot.composedSha256;
+  assert(adopted || reviewedLaterOwners[rel] === sha256(current), 'adopted source must equal the former composed bytes or an exact reviewed later revision');
   assert.equal(adaptBuildSource(rel, current), current, 'direct-owned production source must have zero build-time rewrite');
   assert.equal(adaptQueueVisualWorld20261031(rel, current), current, 'the removed adapter must leave the owner intact');
   assert.equal(adaptQueueVisualWorld20261031(rel, before), before, 'the removed adapter must not rewrite the old raw owner either');

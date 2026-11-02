@@ -39,6 +39,11 @@ const afterArtifact=emittedPath?emittedArtifact(emittedPath,'after'):null;
 const beforeArtifact=baselineEmittedPath?emittedArtifact(baselineEmittedPath,'before'):null;
 const emittedSource=afterArtifact?.body??null,emittedAst=afterArtifact?.tree??null;
 if(emittedSource&&process.env.SPECIAL_WORLD_BENCH==='1')assert.ok(beforeArtifact,'emitted timing requires SPECIAL_WORLD_BASELINE_EMITTED; never compare host-realm frozen code against a VM candidate');
+function callsAny(node,names){
+  if(!node||typeof node!=='object')return false;
+  if(node.type==='CallExpression'&&node.callee?.type==='Identifier'&&names.has(node.callee.name))return true;
+  return Object.values(node).some(value=>Array.isArray(value)?value.some(n=>callsAny(n,names)):callsAny(value,names));
+}
 function readsProperty(node,key){
   if(!node||typeof node!=='object')return false;
   if(node.type==='MemberExpression'&&(node.property.name??node.property.value)===key)return true;
@@ -47,10 +52,14 @@ function readsProperty(node,key){
 async function emittedKernel(math,body=emittedSource,tree=emittedAst,before=false){
   assert.equal(typeof vm.SourceTextModule,'function','actual emitted mode requires --experimental-vm-modules');
   const aliases={};
+  // The landing plan may own the cached ellipse itself or delegate it to a
+  // target-position helper (chumpPositionsFromTarget); select the aim owner.
+  const ellipseOwners=new Set(tree.body.filter(n=>n.type==='FunctionDeclaration'&&readsProperty(n.body,'chumpEllipse')).map(n=>n.id.name));
+  const landingPlan=n=>readsProperty(n.body,'aimYaw')&&(readsProperty(n.body,'chumpEllipse')||callsAny(n.body,ellipseOwners));
   for(const [name,marker]of Object.entries({inkstrikePaint:'_inkstrikeProbe',chumpLandingPlan:'chumpEllipse'})){
     const matches=tree.body.filter(n=>n.type==='FunctionDeclaration'&&(before&&name==='chumpLandingPlan'
       ?readsProperty(n.body,'groundHeight')&&readsProperty(n.body,'aimYaw')&&readsProperty(n.body,'positions')
-      :readsProperty(n.body,marker)));
+      :name==='chumpLandingPlan'?landingPlan(n):readsProperty(n.body,marker)));
     assert.equal(matches.length,1,'unique actual emitted function '+name);aliases[name]=matches[0].id.name;
   }
   // Evaluate the complete production artifact. Only unrelated imported owners

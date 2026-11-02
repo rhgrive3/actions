@@ -7,6 +7,25 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 const prior=name=>fs.readFileSync(new URL(`./fixtures/queue-weapons-render-20261030/${name}.txt`,import.meta.url),'utf8');
 const json=value=>JSON.parse(JSON.stringify(value));
 
+// #1981 added two exports consumed by other runtime modules. They only sample
+// the same release socket (or Storm's fixed origin); the frozen baseline socket
+// code below them is unchanged.
+const LATER_BOMB_EXPORTS=`
+export function stormThrowPosition(a, out) {
+  out.copy(a.pos); out.y += 1.45;
+  return out;
+}
+export function bombPredictionPosition(a, out) {
+  const ch=a?.character,value=ch&&stateMap(ch).get(ch);
+  if(!a?.weaponRunner?.aimingSub&&!value?.throwing)return out;
+  return sampleRelease(a,out);
+}
+`;
+function priorWithLaterExports(code){
+ const marker='export function installBombMotion(';
+ assert.equal(code.split(marker).length,2,'one baseline install anchor');
+ return code.replace(marker,LATER_BOMB_EXPORTS+marker);
+}
 function idleBombCandidate(source){
  return source.replace('pose.set(value?.basePose || ch.P)','pose.set(value?.basePoseCurrent ? value.basePose : ch.P)')
   .replace('value.basePose ||= new Float32Array(this.P.length); value.basePose.set(this.P);',
@@ -16,7 +35,7 @@ async function bombRig(candidate,baseline=false){
  const f=await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.37,
   extraExports:"export {bombPreviewPosition,bombReleasePosition,bombMotionSnapshot,queueBombRefreshes} from './patches/splatoon3/runtime/bomb-motion.mjs';",
   adaptRuntime:(rel,source)=>{if(!rel.endsWith('/bomb-motion.mjs'))return source;
-   let code=candidate?idleBombCandidate(source):baseline?prior('bomb-motion.mjs'):source;
+   let code=candidate?idleBombCandidate(source):baseline?priorWithLaterExports(prior('bomb-motion.mjs')):source;
    code=code.replace('else ch.root.updateMatrixWorld(true);','else { fullRefreshes++;ch.root.updateMatrixWorld(true); }');
    if(baseline)code=code.replace('    ch.root.updateMatrixWorld(true);','    fullRefreshes++;ch.root.updateMatrixWorld(true);');
    return 'let fullRefreshes=0;export const queueBombRefreshes=()=>fullRefreshes;\n'+code;}});
@@ -59,6 +78,7 @@ test('bomb preview socket ancestry matches full traversal and restores the compl
    const out=new r.f.THREE.Vector3(),start=performance.now();for(let i=0;i<300;i++)r.f.bombPreviewPosition(r.a,out);timings[key].push(performance.now()-start);
   }
   const median=xs=>[...xs].sort((x,y)=>x-y)[xs.length>>1];
+  fs.mkdirSync(new URL('../../../reports/queue-weapons-render-20261030/',import.meta.url),{recursive:true});
   fs.writeFileSync(new URL('../../../reports/queue-weapons-render-20261030/bomb-socket-timing.json',import.meta.url),JSON.stringify({scope:'Node actual production-composed rig, not device frame time',callsPerRun:300,timings,medianMs:{baseline:median(timings.baseline),candidate:median(timings.candidate)},fullRefreshes:{baseline:a.f.queueBombRefreshes(),candidate:b.f.queueBombRefreshes()}},null,2)+'\n');
   // A custom descendant update is observable even though it is unrelated to
   // the socket. Both versions must execute it through the full fallback.

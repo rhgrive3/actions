@@ -14,7 +14,13 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
       // would otherwise fill the negative control's central holes before frame 6.
       s=s.replace('paintBooyahGrowth(rt,o,paintFrame,o.paintRadius||13.5,o.seed);','if(paintFrame===6)paintDisk(rt,o.owner,o.pos,o.paintRadius||13.5,o.seed);');
     }
-    if(oldGround)s=s.replace('from.y += .25;','from.y += 24;').replace('rt.down, .5, rt.hit','rt.down, 60, rt.hit');
+    if(oldGround){
+      // #1981 keeps the Booyah terminal point; the negative control restores the
+      // old ground-projected deployment as well as the old broad projection.
+      const terminal='const pos=at.clone();',projected='const pos=groundAt(rt,at,rt.v0).clone();';
+      assert.equal(s.split(terminal).length,2,'one Booyah terminal deployment');
+      s=s.replace(terminal,projected).replace('from.y += .25;','from.y += 24;').replace('rt.down, .5, rt.hit','rt.down, 60, rt.hit');
+    }
     return s;
   }});
  const {paint,V,face,level}=makePaintWorld(f,{wall});f.G.settings={};f.setRandom(()=>.37);

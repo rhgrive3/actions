@@ -25,7 +25,7 @@ test('legacy viewer flips preserve all seven projection arrays and shaded RGBA f
   const a=fixture(id,scale),b=fixture(id,scale);a.flip=flip;a._build();a.version=-1;
   b.flip=!flip;b._build();const cache=b._legacyProjectionCache,owned=arrays.map(key=>b[key]);b.owner.fill(1);b.setViewerTeam(flip?1:0);
   equal(a,b);assert.equal(b._legacyProjectionCache,cache,'the cached projection was reused');arrays.forEach((key,i)=>assert.equal(b[key],owned[i]));samples+=a.w*a.h;
- }assert.equal(samples,3814092);
+ }assert.equal(samples,5776212,'MAP3 (integration #1995) resized the five shipped layouts; every cell is still compared');
 });
 test('dead mask runs preserve exact terrain cells, invalidate byte mutations, and bound retained proof',()=>{
  const a=fixture('range',3.5,true),b=fixture('range',3.5,true);a.flip=true;a._build();b.setViewerTeam(1);equal(a,b);

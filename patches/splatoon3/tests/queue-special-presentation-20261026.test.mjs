@@ -50,9 +50,18 @@ test('Wail updates a shared scene once, retaining exact instance matrices and se
   }
 });
 test('Zipcaster refreshes only paired mesh branches, preserving coat transforms, skin bindings, visibility and reparent fallback',()=>{
-  const next=declaration(read('../runtime/special-presentation.mjs'),'inkCoat');
-  const compile=source=>new Function('THREE','inv','keep','colorOf',source+';return inkCoat;')(T,new T.Matrix4(),new T.Matrix4(),()=>new T.Color(0x123456));
-  const apis=[compile(frozen.inkCoat),compile(next)];
+  // The current owner caches the paired coat per character (coatFor), so bind
+  // that real declaration, its keeper map and the real disposer as well.
+  const presentation=read('../runtime/special-presentation.mjs');
+  const next=declaration(presentation,'coatFor')+'\n'+declaration(presentation,'inkCoat');
+  const disposer=new Function('isSharedGeometry',declaration(presentation,'disposeModel')+';return disposeModel;')(()=>false);
+  const compile=source=>new Function('THREE','inv','keep','colorOf','coatKeepers','disposeModel',source+';return inkCoat;')(T,new T.Matrix4(),new T.Matrix4(),()=>new T.Color(0x123456),new WeakMap(),disposer);
+  // The current owner also re-attaches a reparented coat to its kid whenever
+  // the coat is shown. Give the frozen baseline that same ownership rule so the
+  // comparison stays about transforms, skin bindings and visibility.
+  const reattach=frozen.inkCoat.replace('    if (s.coatGroup) {\n','    if (s.coatGroup && on && s.coatGroup.parent !== ch.kid) ch.kid.add(s.coatGroup);\n    if (s.coatGroup) {\n');
+  assert.notEqual(reattach,frozen.inkCoat);
+  const apis=[compile(reattach),compile(next)];
   function rig(){
     const scene=new T.Scene(),kid=new T.Group(),nested=new T.Group(),bone=new T.Bone();scene.add(kid);kid.add(nested,bone);
     const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([0,0,0,1,0,0,0,1,0],3));
@@ -74,8 +83,11 @@ test('Zipcaster refreshes only paired mesh branches, preserving coat transforms,
     const [a,b]=states;
     const snapshot=r=>({visible:r.s.coatGroup.visible,pairs:r.s.coatPairs.map(([o,t])=>({visible:t.visible,position:t.position.toArray(),quaternion:t.quaternion.toArray(),scale:t.scale.toArray(),binding:t.skeleton===o.skeleton,bind:[...t.bindMatrix.elements]}))});
     assert.deepEqual(snapshot(b),snapshot(a),`frame ${frame}`);
-    if(frame<30||frame>=40&&frame<50||frame>=60){assert.equal(a.visits,60);assert.equal(b.visits,0);}
-    else assert.equal(b.visits,60);
+    const owned=o=>{let p=o.parent;while(p&&p!==b.kid)p=p.parent;return !!p;};
+    const selective=b.s.coatGroup.parent===b.kid&&b.s.coatPairs.every(([o])=>owned(o));
+    if(frame>=50&&frame<60&&frame%7!==0)assert.equal(b.s.coatGroup.parent,b.kid,'a shown coat is re-attached to its kid');
+    assert.equal(a.visits,60);assert.equal(b.visits,selective?0:60,'only an owned coat skips unrelated descendants');
+    if(frame<30||frame>=40&&frame<50||frame>=60)assert.equal(b.visits,0);
     // The normal renderer update still refreshes all bones/children, after
     // which the entire original and optimized hierarchy has the same pose.
     for(const r of states){r.scene.updateMatrixWorld(true);r.s.coatPairs[0][0].skeleton.update();}

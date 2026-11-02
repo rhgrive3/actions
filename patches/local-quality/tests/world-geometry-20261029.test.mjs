@@ -12,8 +12,24 @@ const frozen=JSON.parse(frozenBytes);
 // Retain the older numerical kernels while giving both sides the separately
 // reviewed fdb74165 shapes and detail policy. No expected buffers are regenerated
 // from the candidate, and every old fixture byte remains independently sealed.
+// #1989 keys the shared squid by the quality-dependent hair detail too, so a
+// quality change no longer returns the squid tessellated for an earlier
+// quality. Give the frozen kernels the same cache identity (cache key only;
+// every squid buffer is still produced by the frozen buildSquid).
+const squidVariantCachePairs=[
+ ["    sh = { skin: buildSkin(lod), cloth: buildCloth(lod), eyes: buildEyes(lod), tank: buildTankParts(lod), squid: buildSquid(lod) };",
+  "    sh = { skin: buildSkin(lod), cloth: buildCloth(lod), eyes: buildEyes(lod), tank: buildTankParts(lod) };"],
+ ["    _shared.set(key, sh);\n  }\n  return sh;\n}",
+  "    _shared.set(key, sh);\n  }\n  const variantKey = key + '|' + hairDetail(lod).k;\n  let variant = _sharedSquidVariants.get(variantKey);\n  if (!variant) { variant = { ...sh, squid: buildSquid(lod) }; _sharedSquidVariants.set(variantKey, variant); }\n  return variant;\n}"],
+ ["const _shared = new Map();\n","const _shared = new Map();\nconst _sharedSquidVariants = new Map();\n"],
+];
+function adoptReviewedSquidVariantCache(source){
+ for(const [from,to] of squidVariantCachePairs){assert.equal(source.split(from).length,2,'one exact squid variant cache anchor');source=source.replace(from,to);}
+ return source;
+}
+const shapedCharacterGeo=adoptReviewedCharacterShape(frozen['src/game/character-geo.js']);
 const baseline={...frozen,
- 'src/game/character-geo.js':adoptReviewedCharacterShape(frozen['src/game/character-geo.js']),
+ 'src/game/character-geo.js':adoptReviewedSquidVariantCache(shapedCharacterGeo),
  'src/game/character-hair.js':adoptReviewedHairDetail(frozen['src/game/character-hair.js']),
 };
 const extraExports="export {getHairStyle,getKidShared,HAIR_STYLE_NAMES,HAT_KINDS} from './src/game/character-geo.js'; export {TentacleSurface} from './src/game/character-hair.js';";
@@ -48,7 +64,7 @@ test('fdb74165 shape successor is reversible against complete raw and historical
  assert.equal(blob(prior),'f1d8fd875b29dc7868f820853e38eb99ac6fcfe5');
  assert.equal(blob(raw),'712768ac32f2459ee369e12a540d25edb9fc1b56');
  assert.equal(adoptReviewedCharacterShape(prior,'raw'),raw);
- assert.equal(restoreReviewedCharacterShape(baseline['src/game/character-geo.js']),frozen['src/game/character-geo.js']);
+ assert.equal(restoreReviewedCharacterShape(shapedCharacterGeo),frozen['src/game/character-geo.js']);
  const descriptorBytes=fs.readFileSync(new URL('./fixtures/reviewed-character-shape-fdb74165.json',import.meta.url));
  const descriptor=JSON.parse(descriptorBytes);
  for(const hunk of descriptor.hunks){
