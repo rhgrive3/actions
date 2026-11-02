@@ -7315,7 +7315,8 @@ AI/ルールへの差分: 到達できる経路が旧6,000探索上限で14件�
 - 利用者からの報告: iPad mini 6 で、重いときにポーズを押した瞬間に落ちる。この現象を実機で再現・確認できていない。
 
 ### BGM（`inkwave-public/src/audio/music.js`、`patches/loading-cache/sw.js`）
-- 修正: 最初の操作で menu / battle の音声要素を再生許可済みにし、後で使い回す。NotAllowedError が出たら、時間待ちの再試行をせず次の操作を待つ。Service Worker は、キャッシュ済みの音声全体から Range 要求に 206 で応答する。
+- 修正: 最初の操作で menu / battle の音声要素を再生許可済みにし、後で使い回す。NotAllowedError が出たら、時間待ちの再試行をせず次の操作を待つ。
+- Service Worker の Range 応答（キャッシュ済み音声からの 206）は、いったん実装したが取り消した。Service Worker は合成後 64 KiB の上限まで残り 79 バイトしかなく、この追加は約 1,060 バイトあったため（`inkwave-worker-compaction` テスト）。
 - 確認: ロジックテストと Chromium のみ。iOS Safari の実機では未確認。本家の挙動ではなく、Web での再生基盤の不具合。
 
 ### ガチアサリの CPU 負荷（`patches/splatoon3/runtime/ranked/clams.mjs`）

@@ -62,8 +62,7 @@
           "patches/local-quality/tests/prop-retention.test.mjs",
           "patches/splatoon3/tests/charger-load-disposal.test.mjs",
           "patches/loading-cache/tests/worker-navigation-deadline.test.mjs",
-          "patches/loading-cache/tests/worker-navigation-stream-review.test.mjs",
-          "patches/loading-cache/tests/worker-audio-range.test.mjs"
+          "patches/loading-cache/tests/worker-navigation-stream-review.test.mjs"
         ]
       },
       {
