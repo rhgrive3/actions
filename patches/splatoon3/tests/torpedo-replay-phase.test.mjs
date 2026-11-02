@@ -36,7 +36,8 @@ for(const mode of ['legal','early','malformed','identity','unchased'])test(`Torp
   if(mode==='early'){
    const before=ghost.pos.clone();assert.equal(play(burst),false);assert.equal(ghost.phase,'torpedoRotate');assert.equal(ghost.pos.distanceTo(before),0);assert.equal(drops(w),0);assert.ok(!ghost.torpedoBurstReplayed);
    // An unrelated bounce must not turn a prelaunch replica into a valid chased burst.
-   assert.equal(play({...lock,phase:'bounce'}),true);assert.equal(play(burst),false);return;
+   // Bounce rows now replay only for Angle Shooter; a Torpedo bounce cannot re-seat it at all.
+   assert.equal(play({...lock,phase:'bounce'}),false);assert.equal(ghost.phase,'torpedoRotate');assert.equal(play(burst),false);return;
   }
   if(mode==='identity'){
    for(const e of [{...launch,life:1},{...launch,sourceLife:1},{...launch,actorId:99},{...launch,seq:launch.seq+1}])assert.equal(play(e),false);

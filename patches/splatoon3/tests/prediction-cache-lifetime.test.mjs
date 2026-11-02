@@ -178,29 +178,33 @@ test('legacy default retains full-flight contact independently of the HUD obstru
   ps.clear();
 });
 
+// #1981 routes updateArc through the shared throw forecast and preserves the
+// exact pre-forecast native arc (with its 30 Hz cache) as a compatibility owner.
+// These lifetime oracles exercise that preserved owner directly.
+const nativeArc = (ps, ...args) => Object.getPrototypeOf(ps)[Symbol.for('inkwave.s3.throw-prediction.native-arc.v1')].call(ps, ...args);
 function arcState(ps) {
   const key = Object.getOwnPropertySymbols(ps).find(k => k.description === 'inkwave.s3.arc-preview-performance.state');
   return key ? ps[key] : undefined;
 }
 test('counterfactual bomb arc retains Actor and Physics after clear, and hide still retains Physics', async () => {
   const f = await world('arc'), actor = f.make('shooter'), ps = f.G.projectiles;
-  ps.updateArc(actor, true); ps.clear();
+  nativeArc(ps, actor, true); ps.clear();
   assert.equal(arcState(ps).actor, actor); assert.equal(arcState(ps).physics, f.G.physics);
   assert.equal(ps._arcCache.physics, f.G.physics);
-  ps.updateArc(actor, false);
+  nativeArc(ps, actor, false);
   assert.equal(arcState(ps), undefined);
   assert.equal(ps._arcCache.physics, f.G.physics, 'hiding alone was not world-reference cleanup');
 });
 
 test('bomb arc clear releases owner/world keys, preserves geometry and rebuilds identical prediction', async () => {
   const f = await world(), actor = f.make('shooter'), ps = f.G.projectiles;
-  ps.updateArc(actor, true);
+  nativeArc(ps, actor, true);
   const pos = ps.arcGeo.attributes.position, dist = ps.arcGeo.attributes.lineDistance;
   const expected = [...pos.array], pathLength = ps.arcGeo.drawRange.count;
   for (let match = 0; match < 10; match++) {
     ps.clear(); assert.equal(arcState(ps), undefined); assert.equal(ps._arcCache, null);
     assert.equal(ps.arcGeo.attributes.position, pos); assert.equal(ps.arcGeo.attributes.lineDistance, dist);
-    ps.updateArc(actor, true);
+    nativeArc(ps, actor, true);
     assert.equal(arcState(ps).actor, actor); assert.equal(ps._arcCache.physics, f.G.physics);
     assert.deepEqual([...pos.array], expected); assert.equal(ps.arcGeo.drawRange.count, pathLength);
     assert.equal(ps.bombs.length, 0, 'preview clear/rebuild never emits a gameplay bomb');
@@ -209,7 +213,7 @@ test('bomb arc clear releases owner/world keys, preserves geometry and rebuilds 
 
 test('clearing another projectile system cannot retire the active bomb arc cache', async () => {
   const f = await world(), actor = f.make('shooter'), ps = f.G.projectiles;
-  ps.updateArc(actor, true); const state = arcState(ps), cache = ps._arcCache;
+  nativeArc(ps, actor, true); const state = arcState(ps), cache = ps._arcCache;
   const other = new f.Projectiles({ add() {}, remove() {} }); other.clear();
   assert.equal(arcState(ps), state); assert.equal(ps._arcCache, cache);
 });

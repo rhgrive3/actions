@@ -22,14 +22,13 @@ test('Curling release and preview consume own launch Y and inherited vertical tu
  f.a.vel.y=20;b=f.throw();near(b.vel.y,16.8,'YMax 0.16/F');
  f.a.vel.y=-20;b=f.throw();near(b.vel.y,7.2,'YMinusRate zero');
  f.a.vel.y=0; f.a.aimPitch=.3;
- // Curling has no airborne path or blast-radius guide. Verify that switching
- // from an already visible preview clears both render owners, rather than
- // comparing hidden stale vertices to the later physical bomb trajectory.
- f.ps.arcLine.visible=f.ps.arcRing.visible=true;
+ // PR #1520 hid the Curling guide; #1981 (reports/throw-prediction-20261030)
+ // reintroduced it as the shared forecast of the real charge/roll/fuse owner.
+ // The guide must therefore come from that forecast with the release velocity.
  f.ps.updateArc(f.a,true);
- assert.equal(f.ps.arcLine.visible,false,"Curling never draws a ballistic guide");
- assert.equal(f.ps.arcRing.visible,false,"Curling never draws a predicted blast circle");
+ const forecast=f.ps._s3ThrowPrediction;assert.ok(forecast,'Curling uses the shared throw forecast');
  b=f.throw();
+ assert.ok(forecast.velocity.distanceTo(b.vel)<1e-6,'forecast launch equals the released Curling velocity');
  const start=b.pos.clone(), beforeVy=b.vel.y;
  f.step();
  assert.ok(b.pos.distanceTo(start)>0,"real Curling still integrates its launched trajectory");

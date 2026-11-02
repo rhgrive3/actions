@@ -9,6 +9,8 @@ import {fidelityThrowVelocity,SUB_SPECIAL_FIDELITY} from '../runtime/sub-special
 import {gearCurve} from '../runtime/gear.mjs';
 import {spawnFizzySplashes,stepTorpedoSplashes,clearTorpedoSplashes,beginTorpedoVisualBatch,endTorpedoVisualBatch} from '../runtime/torpedo-splashes.mjs';
 import {fixture} from './source-fixture.mjs';
+import {drawSubTrajectory} from '../runtime/sub-trajectory-preview.mjs';
+import {resolveSubForThrow} from '../runtime/kit-subs.mjs';
 const baseline=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-subs-before-20261026.json',import.meta.url),'utf8'));
 const source=fs.readFileSync(new URL('../runtime/all-subs.mjs',import.meta.url),'utf8'),ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
 function current(name){const n=ast.body.find(n=>n.type==='FunctionDeclaration'&&n.id.name===name);return source.slice(n.start,n.end);}
@@ -89,19 +91,24 @@ test('mine zero-owner index tracks birth and idempotent retirement and scans unk
 
 function arcFunction(){let found;
 function walk(n){if(!n||typeof n!=='object')return;if(n.type==='AssignmentExpression'&&n.left?.property?.name==='updateArc'&&n.right.type==='FunctionExpression')found=source.slice(n.right.start,n.right.end);for(const v of Object.values(n)){if(Array.isArray(v)){for(const x of v)walk(x);}else if(v&&typeof v==='object')walk(v);}}walk(ast);return found;}
-test('Burst preview scratch produces identical trajectory, ring, colors and arc cache across repeated renders',()=>{
+test('Burst preview scratch produces identical trajectory, ring, colors and landing state across repeated renders',()=>{
   const run=(code,launch)=>{
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(96*3),3));geo.setAttribute('lineDistance',new THREE.Float32BufferAttribute(new Float32Array(96),1));
     class Hit{constructor(){this.hit=false;this.dist=0;this.point=new THREE.Vector3();this.normal=new THREE.Vector3();this.block=this.face=-1;this.u=this.v=0;}}
     const G={physics:{segment(a,b,out){out.hit=b.y<=0;if(out.hit){const t=a.y/(a.y-b.y);out.point.copy(a).lerp(b,t);out.normal.set(0,1,0);out.dist=a.distanceTo(out.point);}return out;}}};
-    const api={THREE,Hit};const env={ALL_SUB_SPECS,G,api,STEP:1/60,SUB_SPECIAL_FIDELITY,fidelityThrowVelocity,gearCurve,subLaunchPosition:(_a,out)=>out,contactActor:()=>null,applyFlightPositionAirResist(o,dt){o.vel.multiplyScalar(dt===1/60?1-o.spec.flyPositionAirResist:Math.pow(1-o.spec.flyPositionAirResist,dt*60));},nativeArc(){this.nativeCalls=(this.nativeCalls||0)+1;}};
-    env.launchVelocity=evaluate(launch,env);const fn=evaluate(code,env),system={arcGeo:geo,arcN:96,arcLine:{material:{color:new THREE.Color()}},arcRing:{position:new THREE.Vector3(),quaternion:new THREE.Quaternion(),material:{color:new THREE.Color()}}},out=[];
+    const api={THREE,Hit,G};const env={ALL_SUB_SPECS,G,api,STEP:1/60,SUB_SPECIAL_FIDELITY,fidelityThrowVelocity,gearCurve,subLaunchPosition:(_a,out)=>out,contactActor:()=>null,applyFlightPositionAirResist(o,dt){o.vel.multiplyScalar(dt===1/60?1-o.spec.flyPositionAirResist:Math.pow(1-o.spec.flyPositionAirResist,dt*60));},nativeArc(){this.nativeCalls=(this.nativeCalls||0)+1;},
+      // #1981 owners shared by the current Burst preview: the common sub
+      // trajectory renderer and the release-cost resolver (ink color gate).
+      drawSubTrajectory,resolveSubForThrow,SUB:{burst:{...ALL_SUB_SPECS.burst}},NO_FLIGHT_ACTOR_CONTACT:[],coolerSegmentContact:()=>null,frameSeconds:f=>f/60,findTorpedoTarget:()=>null};
+    env.advanceInitialSubFlight=evaluate(current('advanceInitialSubFlight'),env);
+    env.launchVelocity=evaluate(launch,env);const fn=evaluate(code,env),system={arcGeo:geo,arcN:96,arcLine:{material:{color:new THREE.Color()}},arcRing:{position:new THREE.Vector3(),quaternion:new THREE.Quaternion(),scale:new THREE.Vector3(1,1,1),material:{color:new THREE.Color()}}},out=[];
     for(let i=0;i<40;i++){
       const a={alive:true,weapon:{sub:'burst'},pos:new THREE.Vector3(i%4,0,i%3),vel:new THREE.Vector3(i%2,0,-i%3),aimYaw:i*.12,aimPitch:(i%6-2)*.15,s3:{abilityPoints:{subPower:i%58}},ink:i%2?100:0,color:new THREE.Color(.8,.3,.1)};
       fn.call(system,a,true);const n=geo.drawRange.count;
-      out.push({points:Array.from(geo.attributes.position.array.slice(0,n*3)),distance:Array.from(geo.attributes.lineDistance.array.slice(0,n)),ring:system.arcRing.position.toArray(),q:system.arcRing.quaternion.toArray(),color:system.arcLine.material.color.toArray(),visible:system.arcRing.visible,cache:{...system._arcCache,physics:null}});
+      out.push({points:Array.from(geo.attributes.position.array.slice(0,n*3)),distance:Array.from(geo.attributes.lineDistance.array.slice(0,n)),ring:system.arcRing.position.toArray(),q:system.arcRing.quaternion.toArray(),color:system.arcLine.material.color.toArray(),visible:system.arcRing.visible,landed:system._arcCache?.landed});
     }
     fn.call(system,{alive:true,weapon:{sub:'bomb'}},true);assert.equal(system.nativeCalls,1);
+    // #1981 cache records extra forecast keys; only its landing decision is compared.
     if(system._s3BurstArcScratch){assert.equal(system._s3BurstArcScratch.depth,0);assert.equal(system._s3BurstArcScratch.frames[0].contact.owner,null);}
     return out;
   };

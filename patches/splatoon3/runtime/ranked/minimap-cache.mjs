@@ -57,7 +57,7 @@ function snapshot(out,minimap,engine,G) {
     for(let t=0;t<teamLength;t++){
       if(!(t in teams))continue;
       const team=teams[t]||[],length=team.length;out.push(t,length);
-      for(let i=0;i<length;i++){if(i in team)out.push(i,team[i].progress);}
+      for(let i=0;i<length;i++){if(i in team)out.push(i,team[i]?.progress);}
     }
   }
   else if(engine.mode==='rainmaker'){
