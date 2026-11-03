@@ -151,14 +151,25 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
   if(keys.length!==1)throw Error('Unique versioned minimap dependency required: '+suffix);
   emitted[name]={path:keys[0],sha256:manifest.artifacts[keys[0]]};
  }
- const result=await page.evaluate(async ({sources,runtime,emitted,currentClock})=>{
+ // The production page carries a strict meta CSP (no 'unsafe-eval'); an
+ // about:blank iframe inherits it, so the reviewed source texts below could not
+ // be evaluated. Give the QA comparison realm its own empty same-origin harness
+ // document instead; the production document and its CSP are unchanged.
+ const harnessPath='/__inkwave-qa/minimap-canvas-harness.html';
+ const harnessRoute=url=>new URL(url).pathname===harnessPath;
+ await page.route(harnessRoute,route=>route.fulfill({status:200,contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><title>INKWAVE minimap QA harness</title>'}));
+ let result;
+ try {
+ result=await page.evaluate(async ({sources,runtime,emitted,currentClock,harnessPath})=>{
  let failureComparison=null;const completedCases=[];
  const assert=(v,m='assertion')=>{if(!v)throw Error(m);};assert.equal=(a,b,m)=>assert(a===b,m);assert.deepEqual=(a,b,m)=>{if(JSON.stringify(a)!==JSON.stringify(b)){failureComparison={label:m,actual:a,expected:b};throw Error(m);}};
  const images=[];
  // Expected negative comparisons must not replace a later real failure receipt.
  const rejectsComparison=(actual,expected,label)=>{const previous=failureComparison;try{assert.deepEqual(actual,expected,label);return false;}catch{return true;}finally{failureComparison=previous;}};
- const frame=document.createElement('iframe');frame.hidden=true;document.body.appendChild(frame);
+ const frame=document.createElement('iframe');frame.hidden=true;
  try {
+ await new Promise((resolve,reject)=>{frame.onload=resolve;frame.onerror=()=>reject(Error('Minimap QA harness load failure'));frame.src=harnessPath;document.body.appendChild(frame);});
+ assert.equal(frame.contentDocument?.title,'INKWAVE minimap QA harness','minimap QA harness document');
  const load=frame.contentWindow.Function('url','return import(url)');
  const origin=location.origin+'/';
  // about:blank frames do not inherit the parent import map. Bind the same emitted Three before any module import.
@@ -243,7 +254,8 @@ const x=harness('baseline'),y=harness('naive');try{for(let i=0;i<20;i++)for(cons
 assert(blankRejected&&corruptionRejected&&clockRejected,'negative controls must fail');
 return {cases,negativeControls:{blankRejected,corruptionRejected,clockRejected,...clockWitnesses},images,emitted};
  } catch(error) {return {failed:true,error:String(error),comparison:failureComparison,cases:completedCases,images,emitted};} finally {frame.remove();}
- },{sources,runtime,emitted,currentClock});
+ },{sources,runtime,emitted,currentClock,harnessPath});
+ } finally { await page.unroute(harnessRoute); }
  for(const item of result.images)fs.writeFileSync(path.join(evidence,'minimap-'+item.name+'.png'),Buffer.from(item.png.split(',')[1],'base64'));
  if(result.failed){fs.writeFileSync(path.join(evidence,'minimap-canvas-failure.json'),JSON.stringify({...result,sourceSha,contentHash,sourceHashes,clockEpoch,clockReference,images:result.images.map(x=>x.name)},null,2));throw Error(result.error);}
  const images=result.images.map(x=>'minimap-'+x.name+'.png');delete result.images;
