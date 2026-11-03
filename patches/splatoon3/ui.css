@@ -864,6 +864,8 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(
   transform-origin: 0 0;
 }
 
-/* Entrance elements far past the capped stagger (see menu-layout.mjs) skip
-   the simultaneous spring burst and render in their final state. */
-.iw-ui .s3-in-static { animation: none !important; }
+/* menu-layout.mjs caps the entrance stagger at index 14, so every later
+   .iw-in started the same spring on one frame (~146 weapon cards, each with
+   inline SVG and a 3D tilt) and dropped frames on every re-open. List items
+   past the first screenful (3x the cap) render in their final state. */
+.iw-ui .iw-in:nth-child(n+43) { animation: none !important; }
