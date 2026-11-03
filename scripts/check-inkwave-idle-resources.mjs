@@ -35,7 +35,11 @@ export const IDLE_OPERATION_TIMEOUT_MS=120000;
 // expired after 171/240 frames, not because a measured acceptance threshold
 // was violated. Permit 480s for complete evidence; still fail-closed on hangs.
 // No CPU/FPS/GPU acceptance threshold changes; all other evaluates remain 120s.
-export const RESULTS_WORK_TIMEOUT_MS=480000;
+// 2026-11-03: the same unchanged workload ran at ~1.25 s/frame on one hosted
+// runner and ~2.2 s/frame on another (and locally, for both the #1997 and the
+// #2000 builds), expiring at 216/240 frames. Permit 900s for the evidence
+// deadline; the 45-minute job limit still bounds a hang.
+export const RESULTS_WORK_TIMEOUT_MS=900000;
 export const CLOUD_SEQUENCE_TIMEOUT_MS=360000;
 export const CLOUD_THEMES=Object.freeze(['day','sunset','golden']);
 // Three sequential theme operations. This increases aggregate supervision from

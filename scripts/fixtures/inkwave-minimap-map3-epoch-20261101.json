@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "source": "inkwave-public/src/game/minimap.js",
+  "description": "Reviewed MAP3 minimap projection epoch (integration #1995); exact inverse to the typed-storage minimap owner.",
+  "beforeSHA256": "18a7b3711083fc5e2a0f8d3782f2ff95fcd62df4b2e6cf8f867e18c72854c493",
+  "currentSHA256": "01f6856605b2347182d7e732b9c3487dff667134389721bee2be4fcab63cee30",
+  "hunks": [
+    {
+      "label": "MAP3 minimap projection region 1",
+      "current": "    const W = this.w, H = this.h, N = W * H, lvl = this.level, s = this.s;\n    const map3Clip = lvl.layout?.minimapProjection?.prepare(this);\n    const hgt = (this.hgt = new Float32Array(N).fill(-99));\n",
+      "prior": "    const W = this.w, H = this.h, N = W * H, lvl = this.level, s = this.s;\n    const hgt = (this.hgt = new Float32Array(N).fill(-99));\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 2",
+      "current": "      if (!b.solid) continue;\n      if (lvl.layout?.map3 && b.hidden && !b.paint) continue;\n      if (b.hidden && (b.roof || b.perch) && b.aabbMin.y > 3) continue;   // overhead steel (crane girders, booms): not over the turf\n",
+      "prior": "      if (!b.solid) continue;\n      if (b.hidden && (b.roof || b.perch) && b.aabbMin.y > 3) continue;   // overhead steel (crane girders, booms): not over the turf\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 3",
+      "current": "          const i = py * W + px;\n          if (map3Clip && y > map3Clip[i]) continue;\n          if (y > hgt[i]) { hgt[i] = y; top[i] = b.id; }\n",
+      "prior": "          const i = py * W + px;\n          if (y > hgt[i]) { hgt[i] = y; top[i] = b.id; }\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 4",
+      "current": "          const x = this._worldX(px + 0.5);\n          if (map3Clip && f.origin.y - (f.n.x * (x - f.origin.x) + f.n.z * (z - f.origin.z)) / f.n.y > map3Clip[i]) continue;\n          const dx = x - f.origin.x, dz = z - f.origin.z;\n",
+      "prior": "          const x = this._worldX(px + 0.5);\n          const dx = x - f.origin.x, dz = z - f.origin.z;\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 5",
+      "current": "    this._built = true;\n    lvl.layout?.minimapProjection?.remember(this);\n  }\n",
+      "prior": "    this._built = true;\n  }\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 6",
+      "current": "    let dirty = false;\n    if (this.level.layout?.minimapProjection) {\n      this.level.layout.minimapProjection.update(this, G.local, dt);\n      if (!this._built) this._build();\n    }\n    const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';\n",
+      "prior": "    let dirty = false;\n    const teamKey = G.teamHex ? G.teamHex[0] + G.teamHex[1] : '';\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 7",
+      "current": "    const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';\n    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this.level.layout?.minimapProjection?.invalidateTheme(this); this._drawBase(); dirty = true; } }\n    const BANDS = 3;\n",
+      "prior": "    const theme = G.game?.theme || G.game?.mapDef?.theme || 'day';\n    if (theme !== this._theme) { const had = this._theme; this._theme = theme; if (had) { this._drawBase(); dirty = true; } }\n    const BANDS = 3;\n"
+    },
+    {
+      "label": "MAP3 minimap projection region 8",
+      "current": "    c.globalAlpha = 1;\n    this.level.layout?.minimapProjection?.drawLabel(this);\n    void W; void H;\n",
+      "prior": "    c.globalAlpha = 1;\n    void W; void H;\n"
+    }
+  ]
+}

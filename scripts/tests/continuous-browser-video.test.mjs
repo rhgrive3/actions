@@ -58,6 +58,11 @@ function assertUnchangedDefaultVolumeJob(y){
  // These exact source/build triggers broaden CI coverage; they do not change
  // the default volume job or grant permission to alter any of its assertions.
  for(const trigger of [buildTrigger,compositionTrigger])assert.equal(old.split(trigger).length-1,1,'Exactly one reviewed source/build trigger is required');
+ // #1990 added three exact ink-volume input triggers ahead of them (coverage only).
+ const libraryTriggers=["      - 'inkwave-public/src/fx/fx.js'\n","      - 'inkwave-public/src/main.js'\n","      - 'inkwave-public/src/game/weapons.js'\n"];
+ const libraryPrefix='on:\n  pull_request:\n    paths:\n'+libraryTriggers.join('');
+ assert.ok(old.includes(libraryPrefix),'Reviewed #1990 triggers must lead pull_request.paths');
+ old=old.replace(libraryPrefix,'on:\n  pull_request:\n    paths:\n');
  const triggerPrefix='on:\n  pull_request:\n    paths:\n'+buildTrigger+compositionTrigger;
  assert.ok(old.includes(triggerPrefix),'Reviewed triggers must remain first in pull_request.paths');
  old=old.replace(triggerPrefix,'on:\n  pull_request:\n    paths:\n');

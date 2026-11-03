@@ -12,9 +12,12 @@ export function calibratedChargerStamps(prior, widthScale = 1) {
   return prior.paintPoints.map((old, i) => {
     const stamp = {...old, center:[...old.center], footprint:'ink-charger'};
     if (i) {
-      const radius = width * widthScale * (i === prior.paintPoints.length - 1 ? 1.5 : 1);
+      const terminal = i === prior.paintPoints.length - 1;
+      const radius = width * widthScale * (terminal ? 1.5 : 1);
       const depth = width * (1 + old.stretchAmt);
-      const stretch = Math.max(0, depth / radius - 1) * 1.6;
+      // The terminal stamp is round and centred on the stopping point: a
+      // DepthHalf stretch there pushed ink up to 2.7 WU past a tap's range.
+      const stretch = terminal ? 0 : Math.max(0, depth / radius - 1) * 1.6;
       stamp.radius = radius;
       stamp.stretchAmt = stretch;
       stamp.center[1] = .015;

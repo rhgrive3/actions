@@ -2,20 +2,34 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';import {geometryFixture} from '../../patches/local-quality/tests/geometry-build-fixture.mjs';
 import { assertReviewedMinimapSources, REVIEWED_MINIMAP_SOURCE_EPOCHS } from '../lib/minimap-canvas-probe.mjs';
 const raw=fs.readFileSync(new URL('../../inkwave-public/src/game/minimap.js',import.meta.url),'utf8'),frozen=JSON.parse(fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/world-queue/baseline.json',import.meta.url)))['game/minimap.js'];
-let previous=raw;for(const [name,body]of Object.entries(frozen)){const ast=parse(previous,{ecmaVersion:'latest',sourceType:'module'}),klass=ast.body.find(n=>n.type==='ExportNamedDeclaration'&&n.declaration?.id?.name==='Minimap').declaration,node=klass.body.body.find(n=>n.key.name===name);previous=previous.slice(0,node.start)+body+previous.slice(node.end);}
+// MAP3 (integration #1995) is a later complete minimap source epoch. Reverse
+// exactly its reviewed regions before the older independent oracle below.
+const map3Epoch=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-minimap-map3-epoch-20261101.json',import.meta.url),'utf8'));
+function restoreMap3Minimap(source){
+ assert.equal(crypto.createHash('sha256').update(source).digest('hex'),map3Epoch.currentSHA256,'complete current MAP3 minimap owner');
+ for(const {current,prior,label} of map3Epoch.hunks){assert.equal(source.split(current).length,2,'one exact '+label);source=source.replace(current,prior);}
+ assert.equal(crypto.createHash('sha256').update(source).digest('hex'),map3Epoch.beforeSHA256,'complete preceding typed-storage minimap owner');
+ return source;
+}
+let previous=restoreMap3Minimap(raw);for(const [name,body]of Object.entries(frozen)){const ast=parse(previous,{ecmaVersion:'latest',sourceType:'module'}),klass=ast.body.find(n=>n.type==='ExportNamedDeclaration'&&n.declaration?.id?.name==='Minimap').declaration,node=klass.body.body.find(n=>n.key.name===name);previous=previous.slice(0,node.start)+body+previous.slice(node.end);}
 const digest=x=>crypto.createHash('sha256').update(x).digest('hex');
 test('independent pre-world minimap oracle reconstructs the already-reviewed source pin',()=>assert.equal(digest(previous),'ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6'));
 test('abortable native minimap source epoch remains exact and rejects mixed or edited source sets',()=>{
  const sourcePaths=['inkwave-public/src/game/minimap.js','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/native-stages/runtime/native-minimap.mjs'];
  const pins=Object.fromEntries(sourcePaths.map(file=>[file,digest(fs.readFileSync(new URL('../../'+file,import.meta.url)))]));
- assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-typed-storage-20261028');
+ assert.equal(assertReviewedMinimapSources(pins),'main-queue-reviewed-minimap-16bit-owner-1a17d7b4');
+ const typed=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-typed-storage-20261028');
+ assert.equal(digest(restoreMap3Minimap(raw)),typed.pins['inkwave-public/src/game/minimap.js'],'MAP3 epoch reverses to the reviewed typed-storage minimap');
+ const typedPins={...pins,'inkwave-public/src/game/minimap.js':typed.pins['inkwave-public/src/game/minimap.js']};
+ assert.equal(assertReviewedMinimapSources(typedPins),typed.name);
+ for(const {current} of map3Epoch.hunks)for(const changed of [raw.replace(current,''),raw.replace(current,current+current)])assert.throws(()=>restoreMap3Minimap(changed),/MAP3 minimap owner/);
  const old=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-storage-beec332');
  assert.ok(old,'previous reviewed native renderer remains admissible');
  const native='patches/native-stages/runtime/native-minimap.mjs';
  const axis=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-abortable-axis-prefilter-1870');
  assert.ok(axis,'historical axis-prefilter source epoch remains admissible');
- assert.equal(assertReviewedMinimapSources({...pins,[native]:axis.pins[native]}),axis.name);
- assert.equal(assertReviewedMinimapSources({...pins,[native]:old.pins[native]}),old.name);
+ assert.equal(assertReviewedMinimapSources({...typedPins,[native]:axis.pins[native]}),axis.name);
+ assert.equal(assertReviewedMinimapSources({...typedPins,[native]:old.pins[native]}),old.name);
  assert.throws(()=>assertReviewedMinimapSources({...pins,[native]:'0'.repeat(64)}),/source pin mismatch/);
  assert.throws(()=>assertReviewedMinimapSources({...pins,[native]:'47daa3d3a880e425b4a4580de56d688011d34ab7fc7ae2b7029c1c4581acc08b'}),/source pin mismatch/);
  for(const file of sourcePaths){const missing={...pins};delete missing[file];assert.throws(()=>assertReviewedMinimapSources(missing),/source pin mismatch/);}
@@ -101,7 +115,7 @@ test('merged axis-prefilter epoch rejects edited prefilter and mixed renderer so
  const source=fs.readFileSync(new URL(nativePath,import.meta.url),'utf8');
  reviewedNativeSource(source);
  assert.equal(digest(restoreAxisEpoch(source)),'668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb');
- const current=REVIEWED_MINIMAP_SOURCE_EPOCHS.at(-1),native='patches/native-stages/runtime/native-minimap.mjs';
+ const current=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-typed-storage-20261028'),native='patches/native-stages/runtime/native-minimap.mjs';
  const changed=source.replace('Math.abs(dx)>reach','Math.abs(dx)>=reach');assert.notEqual(changed,source);
  assert.throws(()=>assertReviewedMinimapSources({...current.pins,[native]:digest(changed)}),/source pin mismatch/);
  assert.throws(()=>assertReviewedMinimapSources({...current.pins,['patches/splatoon3/runtime/minimap-dirty.mjs']:REVIEWED_MINIMAP_SOURCE_EPOCHS[0].pins['patches/splatoon3/runtime/minimap-dirty.mjs']}),/source pin mismatch/);

@@ -14,7 +14,7 @@ function functionText(source,name){
   }
   throw new Error('Missing source function '+name);
 }
-test('already-installed nearest-floor distance cache retains independent frozen baseline results and all five ordered probes',()=>{
+test('already-installed nearest-floor distance cache retains independent frozen baseline decisions and ordered probes',()=>{
   const reference=JSON.parse(read('./fixtures/drive-ranked-before-7f863ea2.json'));
   assert.equal(reference.sourceSha,'7f863ea2d65671abd1453fdae1b61de00f1d10e2');
   const source=read('../runtime/ranked/pose-admission.mjs');
@@ -31,8 +31,13 @@ test('already-installed nearest-floor distance cache retains independent frozen 
     if(trial%7===0){floors[0]=y-2;floors[1]=y+2;}
     const p=[random()*20-10,y,random()*20-10],calls=[[],[]];
     const results=[old,current].map((fn,i)=>{let index=0;return fn({floorAt(...args){calls[i].push(args);return floors[index++];}},p);});
-    assert.ok(Object.is(results[0],results[1]),'floor '+trial);
-    assert.deepEqual(calls[1],calls[0]);assert.equal(calls[1].length,5);
+    // The only caller asks whether any probed floor lies within tolerance; the
+    // current owner stops at the first such floor. Every other outcome, and
+    // every probe before that point, remains identical to the frozen baseline.
+    const decision=r=>r===null?'none':Math.abs(p[1]-r)<=RANKED_POSE_LIMITS.floorTolerance?'support':'reject';
+    assert.equal(decision(results[1]),decision(results[0]),'floor decision '+trial);
+    assert.deepEqual(calls[1],calls[0].slice(0,calls[1].length));
+    if(decision(results[0])!=='support'){assert.ok(Object.is(results[0],results[1]),'floor '+trial);assert.equal(calls[1].length,5);}
   }
   assert.equal(current({},[0,0,0]),undefined);
   assert.equal(current({floorAt:()=>NaN},[0,0,0]),null);

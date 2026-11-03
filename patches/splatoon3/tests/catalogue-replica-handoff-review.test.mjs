@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { nativeScreenReplica } from './native-screen-replica.mjs';
 
-const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
+const clock = { ms: 1000 };
+const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true, vmPerformance: { now: () => clock.ms } });
 const subIds = ['beakon', 'splashWall', 'inkMine', 'torpedo'];
 const specialIds = ['waveBreaker', 'splattercolorScreen', 'superChump', 'tripleInkstrike'];
 function world(id, adopt) {
@@ -29,6 +31,10 @@ function world(id, adopt) {
     if (id !== 'torpedo') n._play('A', [1, 'ac', 'sub', 7, 0, { ...p, eventSeq: 2, phase: 'deploy', usesLeft: 2 }]);
     ghost = G.projectiles._s3SubObjects.find(o => o.owner === owner);
     assert.ok(ghost?.ghost, 'control: native catalogue replay created the sub replica');
+  } else if (id === 'splattercolorScreen') {
+    // Screen births require the owner's native paid use (#1975); forged rows are rejected.
+    ghost = nativeScreenReplica(f, n, owner, { advance: dt => { clock.ms += dt * 1000; } });
+    assert.ok(ghost?.remote, 'control: native owner tick created the special replica');
   } else {
     const kind = { waveBreaker: 'wave', splattercolorScreen: 'screen', superChump: 'decoy', tripleInkstrike: 'marker' }[id];
     const p = { id, action: 'deploy', kind, activation: 1, object: 1, seed: 1, pos: [0, 0, 0], target: [0, 0, 1],

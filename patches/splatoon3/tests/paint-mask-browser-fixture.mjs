@@ -26,7 +26,8 @@ export function calibratedChargerMaskCases(raw, parameters, worldRadius) {
     const paint=parameters(raw,charge);
     for(const terminal of [false,true]) {
       const R=worldRadius(paint.width)*(terminal?paint.terminalRate:1);
-      const sa=Math.max(0,paint.depth/R-1)*1.6;
+      // Terminal stamps are round on their stopping point (no forward overshoot).
+      const sa=terminal?0:Math.max(0,paint.depth/R-1)*1.6;
       for(const wall of [false,true]) for(const kind of [15,16,17])
         for(const seed of [.11,.93]) for(const angle of [0,Math.PI/4])
           cases.push({wall,kind,R,sa,seed,angle,depth:paint.depth,charge,terminal,calibrated:true});
@@ -655,7 +656,11 @@ function ownedRunScanRows() {
         const encode=bytes=>{let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw);};
         globalThis.paintMaskDiagnostic={wall,seed,mismatch,maxDifference,alphaMismatch,solidAlphaChanges,channelMismatches,examples,beforeQuads:before.quads,afterQuads:after.quads,beforeDrawRectangles:before.drawRectangles,afterDrawRectangles:after.drawRectangles,pixels:{width:512,height:512,format:'RGBA8',before:encode(before.pixels),after:encode(after.pixels)}};
       }
-      check(mismatch===0,'run scan changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));
+      // Chromium/SwiftShader must stay byte-exact. WebKit's GPU blend may round a
+      // texel by one unit between the two scan orders; any coverage/alpha change
+      // or a larger or wider difference still fails (PR #1998 observation).
+      const webkitRounding=!/Chrome\//.test(navigator.userAgent)&&mismatch<=2&&maxDifference<=1&&solidAlphaChanges===0;
+      check(mismatch===0||webkitRounding,'run scan changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch,maxDifference,solidAlphaChanges}));
       check(after.quads<=before.quads,'run scan increased native submissions');
       checkOwnedRunCoverage(before.drawRectangles,after.drawRectangles);
       rows.push({wall,seed,beforeQuads:before.quads,afterQuads:after.quads,mismatch});

@@ -117,12 +117,15 @@ try {
   return false;
  },spawnStarts[i],{timeout:180000})));
  report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
- await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingPlacement.releaseOpeningDraw())));
  report.phase='native-actor-placement';
  assert(loaded.has(motionPath),'Native game must already load the same actor motion module');
  report.roles=await Promise.all(pages.map(p=>p.evaluate(async ({actorURL,motionURL})=>{
   const {Actor}=await import(actorURL),{beginActorMotionTick}=await import(motionURL),G=__G,n=G.netm;
-  window.__ceilingBeginActorMotionTick=beginActorMotionTick;__inkwave.debug.freeze();
+  window.__ceilingBeginActorMotionTick=beginActorMotionTick;
+  // Freeze the native RAF before restoring draw. Under CI SwiftShader the first
+  // unheld frame compiles the match materials for seconds; letting it run here
+  // would charge that GPU stall to the online owner as simulation debt.
+  __inkwave.debug.freeze();__ceilingPlacement.releaseOpeningDraw();
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};

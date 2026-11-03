@@ -22,30 +22,45 @@ async function setup(id,ap=57){
   a.special=100;a._resolve=()=>{};a.aimYaw=.3;a.aimDir.set(Math.sin(.3),0,Math.cos(.3));
  }
  owner.s3.loadout=f.emptyLoadout();if(ap===57)for(const slot of owner.s3.loadout){slot.main='specialPower';slot.subs.fill('specialPower');}owner.s3RefreshGear();owner.weapon={...owner.weapon,special:id,specialCost:100};
+ // Mirror the owner's already-accepted wire gear on the proxy (gear sync is not under test).
+ proxy.s3.loadout=owner.s3.loadout.map(slot=>({...slot,subs:[...slot.subs]}));proxy.s3RefreshGear();
  proxy.aimYaw=-1.2;proxy.remote=true;
  const match={id:'sparse-device-replay',state:'playing',time:180,actors:[owner],playing:()=>true,canRespawn:()=>false};
  const sent=[],session=myId=>({myId,hostId:'A',isHost:myId==='A',_members:new Map([['A',{}],['B',{}]]),
-  tr:{broadcast:p=>sent.push(json(p)),sendTo(){}}});
+  // Transports report an accepted frame with true; the outbound prefix keeps unaccepted rows queued.
+  tr:{broadcast:p=>{sent.push(json(p));return true;},sendTo(){return true;}}});
  const sender=new f.NetMatch(session('A'),{id:match.id,map:'reef'}),receiver=new f.NetMatch(session('B'),{id:match.id,map:'reef'});
  sender.bind(match);receiver.bind({...match,actors:[proxy]});receiver.byNid.set(77,proxy);
  const select=nm=>{f.G.netm=nm;f.G.match=nm.match;};
  const receive=p=>{select(receiver);receiver.onMessage('A',p);const peer=receiver.peers.get('A');if(peer){peer.tr=p.ts;receiver._playEvents();}};
  select(sender);sender._sendTick();receive(sent.at(-1));clock+=.1;f.G.time=.1;
  let nativeUse;
- const deploy=()=>{select(sender);owner.special=100;owner._startSpecial();assert.ok(owner.specialActive,'real special input must activate');
+ const deploy=()=>{select(sender);owner.special=100;
+  // One owner snapshot at the current life with a full gauge precedes the use,
+  // so the receiver observes the native gauge debit that pays for it.
+  clock+=1/60;f.G.time+=1/60;sender._sendTick();const baseline=json(sent.at(-1));baseline.e=[];receive(baseline);
+  select(sender);owner._startSpecial();assert.ok(owner.specialActive,'real special input must activate');
   nativeUse=json(sender.out.findLast(e=>e[1]==='ev'&&e[2]==='special:use'));
   assert.equal(nativeUse[3].id,id,'the real Actor activation records its native use');
-  owner.intent.sub=true;owner._updateSpecial(1/60);
-  owner.intent.sub=false;owner._updateSpecial(1/60);for(let i=0;i<16&&owner.specialActive;i++)owner._updateSpecial(1/60);
+  // Native frames advance the shared clock: a device birth follows its use by real source frames.
+  const frame=()=>{clock+=1/60;f.G.time+=1/60;owner._updateSpecial(1/60);};
+  owner.intent.sub=true;frame();
+  owner.intent.sub=false;frame();for(let i=0;i<16&&owner.specialActive;i++)frame();
   const rows=json(sender.out.filter(e=>e[1]==='ac'&&['deploy','device','screen'].includes(e[5].action)));
   assert.equal(rows.length,2,'one canonical and one companion birth');return rows;};
  const rows=deploy(),objects=()=>f.G.projectiles._s3AllSpecialObjects||[],ghost=()=>objects().find(o=>o.owner===proxy);
  const play=(row,from='A')=>{select(receiver);receiver._play(from,json(row));};
  // Direct _play probes must supply the same accepted use and wire sidecars
  // that the real tick receiver supplies before catalogue replay admission.
- const acceptUse=(row=nativeUse)=>{select(receiver);const event=json(row);event._netTick=event.at(-2);event._netSeq=event.at(-1);
-  receiver._peer('A');receiver._play('A',event);assert.equal(receiver._peer('A')._lastEventSeq,event._netSeq);return event;};
- const renewUse=()=>{select(sender);sender._rec(['ev','special:use',{actor:{n:owner.nid},id}]);return acceptUse(sender.out.at(-1));};
+ // The native use must arrive in an actual owner tick: Screen births require
+ // its paid-gauge support receipt (#1975), which bare row playback cannot mint.
+ const acceptUse=(row=nativeUse)=>{select(sender);const same=e=>e[1]==='ev'&&e[2]==='special:use'&&e.at(-1)===row.at(-1);let packet;
+  // A tick carries a bounded event window; send until the use's own tick.
+  for(let i=0;i<32&&!packet?.e?.some(same);i++){sender._sendTick();packet=sent.at(-1);}
+  packet=json(packet);packet.e=packet.e.filter(same);assert.equal(packet.e.length,1,'the native use rides its own tick');
+  receive(packet);const event=packet.e[0];event._netTick=event.at(-2);event._netSeq=event.at(-1);assert.equal(receiver._peer('A')._lastEventSeq,event._netSeq);return event;};
+ // A new life activates its own special natively; its rows are the real births.
+ const renewUse=()=>{owner.netLife=proxy.netLife;const rows=deploy();const use=acceptUse();use.rows=rows;return use;};
  const tick=(frames,hz=60)=>{select(sender);for(let i=0;i<frames;i++){clock+=1/hz;f.G.time+=1/hz;f.G.projectiles.update(1/hz);}};
  return{f,id,owner,proxy,sender,receiver,rows,objects,ghost,play,tick,deploy,receive,sent,select,acceptUse,renewUse,
   close(){receiver.dispose();sender.dispose();f.G.projectiles.clear();}};
@@ -147,9 +162,9 @@ for(const id of IDS)test(`${id}: unseen late birth is retired by expiry, clear o
    w.play(w.rows[0]);assert.equal(w.ghost(),undefined,`${retire}: previously unseen sibling cannot resurrect a retired device`);
    // Same action/object/activation/seed with a new accepted actor life is not
    // the old device. The envelope's life guard remains the authority boundary.
-   w.proxy.netLife=4;const renewed=json(w.rows[1]);renewed[4]=4;renewed[7]+=100;
+   w.proxy.netLife=4;let renewed=json(w.rows[1]);renewed[4]=4;renewed[7]+=100;
    w.play(renewed);assert.equal(w.ghost(),undefined,'a new life cannot inherit the prior native-use admission');
-   const use=w.renewUse();renewed[0]=use[0];renewed[6]=use._netTick;renewed[7]=use._netSeq+1;
+   const use=w.renewUse();renewed=json(use.rows[1]);assert.equal(renewed[4],4);
    w.play(renewed);const o=w.ghost();assert.ok(o,'new life may create its own device');assert.equal(o.replayLife,4);
    const badLife=json(renewed);badLife[4]=3;badLife[7]++;w.play(badLife);assert.equal(w.ghost(),o);
    const land=json(renewed);land[7]+=1;Object.assign(land[5],{action:'land',tick:10,age:2,landedAt:2,phase:'active',pos:[3,.08,4]});
@@ -159,7 +174,8 @@ for(const id of IDS)test(`${id}: unseen late birth is retired by expiry, clear o
    // a newer valid owner attachment update advances authoritative device age.
    const active=json(land);active[7]++;Object.assign(active[5],{action:'active',tick:11,age:2.25});
    const beforeInvalid=snapshot(o);w.play(active);assert.deepEqual(snapshot(o),beforeInvalid,'foreign device action cannot update this device');
-   const attachment=json(land);attachment[7]+=2;Object.assign(attachment[5],{tick:12,age:2.25});w.play(attachment);assert.equal(o.age,2.25);
+   // #1975: a device accepts one owner land; a later land row cannot re-seat it.
+   const attachment=json(land);attachment[7]+=2;Object.assign(attachment[5],{tick:12,age:2.25});w.play(attachment);assert.equal(o.age,2,'a second land row is not a new attachment');
    const state=snapshot(o);w.play(land);assert.deepEqual(snapshot(o),state,'duplicate land cannot rewind authoritative active state');
   }finally{w.close();}
  }

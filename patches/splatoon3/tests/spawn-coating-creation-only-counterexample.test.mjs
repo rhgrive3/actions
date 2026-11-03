@@ -21,7 +21,9 @@ async function result(counterfactual){
   a._finishFrame(0);
   const shader=m=>{const s={vertexShader:f.THREE.ShaderLib.physical.vertexShader,fragmentShader:f.THREE.ShaderLib.physical.fragmentShader,uniforms:{}};m.onBeforeCompile(s);return s;};
   const base=shader(material),twin=shader(dither);
-  return{baseCoated:!!base.uniforms.uS3SpawnCoating,ditherCoated:!!twin.uniforms.uS3SpawnCoating,baseMarker:material.customProgramCacheKey().includes('|iwSpawnCoating1'),renderedMaterialRetained:selected.every(m=>m.material===material)};
+  return{baseCoated:!!base.uniforms.uS3SpawnCoating,ditherCoated:!!twin.uniforms.uS3SpawnCoating,baseMarker:material.customProgramCacheKey().includes('|iwSpawnCoating1'),// #1994 self-occlusion renders a local delegate clone whose program hook
+  // calls the base material's hook, so the rendered program must follow the base.
+  renderedMaterialRetained:selected.every(m=>m.material===material||!!shader(m.material).uniforms.uS3SpawnCoating===!!base.uniforms.uS3SpawnCoating)};
  }finally{f.reset();}
 }
 test('creation-only coating misses actual public base/dither replacements that current update safely coats',async()=>{

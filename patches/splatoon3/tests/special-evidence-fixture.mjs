@@ -21,7 +21,7 @@ const installers = [
   ['installWeaponsFidelity', 'splatoon3/runtime/weapons-fidelity.mjs'],
   ['installIssueEightFollowup', 'splatoon3/runtime/issue-eight-followup.mjs'],
 ];
-export async function specialEvidenceFixture({ completeBootstrap = false } = {}) {
+export async function specialEvidenceFixture({ completeBootstrap = false, vmPerformance } = {}) {
   const selected = completeBootstrap ? [...installers,
     ['installMainWeaponCatalogRuntime', 'splatoon3/runtime/main-weapon-catalog.mjs'],
     ['installWeaponAudioRuntime', 'splatoon3/runtime/audio/runtime.mjs'],
@@ -29,7 +29,11 @@ export async function specialEvidenceFixture({ completeBootstrap = false } = {})
   const extraExports = selected.map(([name, path]) => `export { ${name} } from './patches/${path}';`).join('\n') + `
     export { inkVacActorContact, inkVacState, disposeInkVac, replayInkVac, advanceInkVacReplica, INK_VAC_EVENTS, INK_VAC_CALIBRATION } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
   `;
-  const f = await fixture({ fullRuntime: true, realProjectiles: true, adapt: compose, adaptRuntime: compose, extraExports });
+  // The complete bootstrap uses the actual production source composition so
+  // later network owners (native owner-tick receipts) are present as shipped.
+  const f = await fixture({ fullRuntime: true, realProjectiles: true,
+    ...(completeBootstrap ? { productionComposition: true } : { adapt: compose }), adaptRuntime: compose, extraExports,
+    ...(vmPerformance ? { vmPerformance } : {}) });
   const source = fs.readFileSync(new URL('../bootstrap.mjs', import.meta.url), 'utf8');
   let previous = source.indexOf('const context = install(profile);');
   assert.ok(previous >= 0);

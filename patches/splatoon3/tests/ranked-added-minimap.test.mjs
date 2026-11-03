@@ -83,9 +83,12 @@ for(const mode of ['zones','tower','clams'])test(`composed ${mode} sparse object
   a=>{a.length=1;},
  ];
  for(const change of steps){const before=pair[1].counts();for(const h of pair){change(objectiveCollection(h.G.match.ranked,mode));h.m.update(1/30,h===pair[0]);}assert.deepEqual(pair[1].snapshot().output,pair[0].snapshot().output);assert.equal(pair[1].counts().rasters,before.rasters,'objective-only mutation does not rasterize ink');}
- // Explicit malformed values retain the production snapshot TypeError contract.
- // The normalized old renderer has no snapshot cache; its checkpoint formula skips invalid progress.
- for(const value of [null,undefined])for(const install of [oldInstall,installRankedUi]){const h=minimapHarness(install);h.G.match.ranked=engine(mode);objectiveCollection(h.G.match.ranked,mode)[0]=value;if(mode==='tower'&&install===oldInstall)assert.doesNotThrow(()=>h.m.update(0,true));else assert.throws(()=>h.m.update(0,true),error=>error.name==='TypeError');}
+ // Explicit malformed zone/clam values retain the production snapshot TypeError contract.
+ // Tower checkpoints are skipped by drawObjectives (cp?.progress) in both renderers;
+ // the composed snapshot follows that drawn state instead of crashing after the draw
+ // (tower-checkpoint-projection-20261029 pins the installed skip).
+ for(const value of [null,undefined])for(const install of [oldInstall,installRankedUi]){const h=minimapHarness(install);h.G.match.ranked=engine(mode);objectiveCollection(h.G.match.ranked,mode)[0]=value;if(mode==='tower')assert.doesNotThrow(()=>h.m.update(0,true));else assert.throws(()=>h.m.update(0,true),error=>error.name==='TypeError');}
+ if(mode==='tower'){const skipped=[minimapHarness(oldInstall),minimapHarness(installRankedUi)];for(const h of skipped){h.G.match.ranked=engine(mode);objectiveCollection(h.G.match.ranked,mode)[0]=null;h.m.update(0,true);}assert.deepEqual(skipped[1].snapshot().output,skipped[0].snapshot().output,'installed renderer draws the same skipped checkpoint as the old renderer');}
 });
 test('composed Tower sparse checkpoint teams retain team-index colours and inherited teams',()=>{
  const pair=[minimapHarness(oldInstall),minimapHarness(installRankedUi)];

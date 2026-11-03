@@ -93,7 +93,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
  [sparseFixtureFile]:'83f64c3958ed05d5622fc031a85c48a7f43eb585b8fd48e33419d3f6bc7078e5',
- 'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
+ 'scripts/tests/continuous-browser-video.test.mjs':'73b306fdb8945f9a81ba49262de1452aab099fdd5e59cc4f9aae6fc154dcef79',
 };
 // Re-reviewed touch CI delta: crypto import, test title/unused-install expectation,
 // and one workflow-restoration negative control only. Reverse the exact reviewed
@@ -221,8 +221,11 @@ test('queue sparse CI authoring exclusions remain literal fixture data and rejec
 
 const volumeFixtureFile='scripts/tests/continuous-browser-video.test.mjs';
 const volumeSparseLiteral='          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n';
+// Re-reviewed 2026-11-03: assertUnchangedDefaultVolumeJob only strips the three
+// exact #1990 ink-volume path triggers (coverage) before the original checks;
+// no sparse literal, filesystem access or new consumer was added.
 const volumeConsumerPins={
- assertUnchangedDefaultVolumeJob:'21c5260329a72134ccd25df81c597362ffd5e03373155e79c2fb0c44df7f5c0f',
+ assertUnchangedDefaultVolumeJob:'af1f3d54a228873e16d822bd5066dcae3f6bb4e4a6b9165654f3f3cf3736ef57',
  sparseNegativeControls:'536b2a51855b47a205fb9ea08bf4b78e1b0df743916715d47fba74a85c4fca7a',
  workflowNegativeControls:'2090dd9f7cc10b7fcd94c91e3d53bdef2dfc3c3fd160348145d19c07eff3ccc5',
 };
@@ -374,6 +377,11 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
+ // Pull requests skip only the browser lanes; CPU core/patch receipts stay mandatory.
+ const pr={...baseline,EVENT_NAME:'pull_request',BROWSER_RESULT:'skipped',SEVEN_RESULT:'skipped',RESOURCE_RESULT:'skipped'};
+ assert.equal(run(shell,pr).status,0,'pull request without browser lanes');
+ for(const name of ['BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])for(const state of ['success','failure','cancelled'])assert.notEqual(run(shell,{...pr,[name]:state}).status,0,'PR '+name+'='+state);
+ for(const name of ['CORE_RESULT','PATCH_RESULT'])for(const state of ['failure','cancelled','skipped'])assert.notEqual(run(shell,{...pr,[name]:state}).status,0,'PR '+name+'='+state);
  // Each mandatory new result must reject failure, cancellation and omission.
  for(const name of ['PREFLIGHT_RESULT','BUILD_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])for(const state of ['failure','cancelled','skipped'])assert.notEqual(run(shell,{[name]:state}).status,0,name+'='+state);
  for(const state of ['failure','cancelled','success'])assert.notEqual(run(shell,{OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:state}).status,0,'offloaded browser '+state);

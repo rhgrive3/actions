@@ -62,6 +62,9 @@ test('input order: startup short tap fires one paid minimum shot, later release 
     a.intent.fire = false;
     f.tick(a);
     assert.equal(f.shots.length, 0, 'startup short tap still has a release-gap frame');
+    // The tap keeps charging to the 8F minimum (tick 9), then the release gap.
+    f.tick(a, 8);
+    assert.equal(f.shots.length, 0, 'no shot before the 8F minimum + release gap');
     f.tick(a, 3);
     assert.equal(r.charging, false);
     assert.equal(r.chargeT, 0);

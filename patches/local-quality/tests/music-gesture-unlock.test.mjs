@@ -7,6 +7,9 @@ import { idleFixture, audioFixture } from './idle-fixture.mjs';
 // Logic-only check of the production music owner with fake media elements. It proves the element
 // handoffs and recovery ordering; it is NOT evidence of iOS Safari or Chrome playback.
 const MENU = 'menu_the_ika_swing_aoi_kenban.mp3', BATTLE = 'Jet_Arrow.mp3';
+// Every file track is unlocked: menu/battle plus the owner-supplied match recordings
+// (opening, results_win, results_lose) that also start after an await.
+const UNLOCKED = ['battle', 'menu', 'opening', 'results_lose', 'results_win'];
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 async function rig({ withCtx = true } = {}) {
@@ -47,22 +50,22 @@ async function rig({ withCtx = true } = {}) {
   return { music, f, created, windowListeners, state, gesture, elementFor };
 }
 
-test('only trusted gestures unlock both recordings, once', async () => {
+test('only trusted gestures unlock every recording, once', async () => {
   const f = await rig();
   try {
     f.gesture('pointerdown', false);
     assert.equal(f.created.length, 0, 'synthetic events cannot unlock media');
     f.gesture('pointerdown', true);
-    assert.equal(f.created.length, 2);
+    assert.equal(f.created.length, UNLOCKED.length);
     for (const el of f.created) {
       assert.equal(el.plays, 1); assert.equal(el.pauses, 1); assert.equal(el.paused, true);
       assert.match(el.src, /^data:audio\/wav;base64,/, 'unlock plays a silent clip, never the recording');
       assert.equal(el.preload, 'none');
     }
     assert.equal(f.elementFor(MENU).length + f.elementFor(BATTLE).length, 0, 'no recording is fetched by a gesture');
-    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu']);
+    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), UNLOCKED);
     f.gesture('keydown', true); f.gesture('touchend', true);
-    assert.equal(f.created.length, 2, 'an unlocked element is not recreated');
+    assert.equal(f.created.length, UNLOCKED.length, 'an unlocked element is not recreated');
   } finally { f.music.dispose(); }
 });
 
@@ -75,7 +78,7 @@ test('menu started after an await reuses the element a gesture unlocked', async 
     f.music.play('menu', { fade: 0 });
     assert.ok(menuElement.src.endsWith(MENU), 'the unlocked element receives the recording only when it plays');
     assert.equal(f.music.current.element, menuElement, 'the unlocked element is the one that plays');
-    assert.equal(f.created.length, 2, 'no fresh media element is created after the await');
+    assert.equal(f.created.length, UNLOCKED.length, 'no fresh media element is created after the await');
     assert.equal(menuElement.plays, 2, 'unlock play plus the menu start');
     assert.equal(f.music._unlockedFiles.has('menu'), false);
   } finally { f.music.dispose(); }
@@ -92,7 +95,7 @@ test('battle prime adopts the unlocked recording and runs without a fresh gestur
     assert.equal(f.music._preloadedFile.element, battleElement);
     assert.ok(f.music._preloadedFile.player, 'the WebAudio source is attached once');
     assert.equal(battleElement.plays, 2, 'unlock plus prime');
-    assert.equal(f.created.length, 2);
+    assert.equal(f.created.length, UNLOCKED.length);
   } finally { f.music.dispose(); }
 });
 
@@ -162,7 +165,7 @@ test('a refused unlock is forgotten so a later event of the same tap can unlock'
     f.state.blocked = false;                    // the touchend/click of the same tap is accepted
     f.gesture('touchend', true);
     await flush();
-    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu']);
+    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), UNLOCKED);
   } finally { f.music.dispose(); }
 });
 
@@ -172,6 +175,6 @@ test('the AbortError from the immediate pause() keeps the unlock', async () => {
     f.state.abort = true;
     f.gesture('pointerdown', true);
     await flush();
-    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), ['battle', 'menu'], 'an interrupted play is still a granted unlock');
+    assert.deepEqual([...f.music._unlockedFiles.keys()].sort(), UNLOCKED, 'an interrupted play is still a granted unlock');
   } finally { f.music.dispose(); }
 });

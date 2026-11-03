@@ -60,7 +60,7 @@ test('full installed Kit releases keep nested same-sub cost actor-local',async()
 });
 test('full installed Kit preview and nested throw share actor-local power and restore preview context on error',async()=>{
  const f=await rig();try{const a=f.make('charger','subPower',57),b=f.make('charger','subPower',0),ps=f.G.projectiles,base=f.SUB.bomb.throwSpeed;let nested=false,preview;
- f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=new f.THREE.Vector3(ps._arcCache.vx,ps._arcCache.vy,ps._arcCache.vz);f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
+ f.G.netm={recBomb(){if(nested)return;nested=true;ps.updateArc(b,true);preview=ps._s3ThrowPrediction.velocity.clone();f.step(b,{sub:true},8);f.step(b,{subReleased:true});f.step(b,{});}};
  f.step(a,{sub:true},8);f.step(a,{subReleased:true});f.step(a,{});assert.equal(ps.bombs.length,2);assert.ok(ps.bombs[1].vel.distanceTo(preview)<1e-8);
  const inherited=ps.throwVelocity(a,0,new f.THREE.Vector3());const ratio=ps.bombs[0].vel.clone().sub(inherited).length()/ps.bombs[1].vel.clone().sub(ps.throwVelocity(b,0,new f.THREE.Vector3())).length();assert.ok(Math.abs(ratio-a.s3.modifiers.subPower)<1e-8,JSON.stringify({ratio,wanted:a.s3.modifiers.subPower,a:ps.bombs[0].vel.toArray(),b:ps.bombs[1].vel.toArray(),inherited:inherited.toArray()}));assert.equal(f.SUB.bomb.throwSpeed,base);
  ps.updateArc(a,false);f.G.physics.segment=()=>{throw Error('arc collision failed');};assert.throws(()=>ps.updateArc(a,true),/arc collision failed/);assert.equal(ps.s3PreviewSubSpeed,undefined);assert.equal(f.SUB.bomb.throwSpeed,base);

@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { specialEvidenceFixture } from './special-evidence-fixture.mjs';
+import { nativeScreenReplica } from './native-screen-replica.mjs';
 
-const f = await specialEvidenceFixture({ completeBootstrap: true });
+const clock = { ms: 1000 };
+const f = await specialEvidenceFixture({ completeBootstrap: true, vmPerformance: { now: () => clock.ms } });
 function world(phase) {
   const { G, THREE } = f;
   G.projectiles.clear(); G.scene ||= new THREE.Scene(); G.actors = []; G.netm = null; G.time = 0;
@@ -37,6 +39,9 @@ for (const phase of ['intro', 'playing', 'finish']) for (const id of ['beakon', 
           x: 12, y: 0, z: 0, vx: 0, vy: 0, vz: 0, seed: 1, charge: 0, subPowerAP: 0 };
         w.n._play('A', [1, 'ac', 'sub', 7, 0, p]);
         replica = G.projectiles._s3SubObjects.find(o => o.owner === w.owner); assert.ok(replica?.ghost);
+      } else if (id === 'splattercolorScreen') {
+        // Screen births require the owner's native paid use (#1975); forged rows are rejected.
+        replica = nativeScreenReplica(f, w.n, w.owner, { advance: dt => { clock.ms += dt * 1000; } }); assert.ok(replica?.remote);
       } else if (id !== 'inkVac') {
         w.owner.weapon = { ...w.owner.weapon, special: id };
         const payload = { id, kind: id === 'waveBreaker' ? 'wave' : 'screen',

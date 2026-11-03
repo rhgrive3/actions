@@ -15,7 +15,9 @@ const replaceOnce=(s,a,b,label)=>{assert.equal(s.indexOf(a),s.lastIndexOf(a),lab
 // The test runs before or after the central composer registers this adapter.
 // Undo only these exact transformations to construct the same composed control.
 function baseline(rel,raw){
- let s=adaptBuildSource(rel,raw);
+ // The later 20261031 queue pass rewrites Math.sin(up) into a shared sinUp
+ // over this owner's output; compose without it so this owner reverses exactly.
+ let s=adaptBuildSource(rel,raw,{queueWeapons20261031:false});
  // Later queue adapters may modify the class declaration following the known
  // scalar helper block. Undo that exact helper block independently so that
  // this test does not accidentally inject it twice when reconstructing control.

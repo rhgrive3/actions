@@ -1,3 +1,4 @@
+import { captureNav, followNav, strafe, noteSighting, recentSighting } from './bot-special-movement.mjs';
 import { KRAKEN_MOVEMENT, reefsliderRawSpeed } from './all-specials.mjs';
 
 // INKWAVE AI heuristics in world units. These decision ranges are not retail
@@ -29,6 +30,17 @@ function safeRush(ctx, direction, length) {
 }
 function facing(ctx) {
   return ctx.actor.pos.clone().set(Math.sin(ctx.actor.aimYaw || 0), 0, Math.cos(ctx.actor.aimYaw || 0));
+}
+// No visible target: chase the last-seen point briefly, then keep moving on
+// the brain's own navigation (objective / ink) instead of idling in place.
+function roam(ctx, scale = 1) {
+  const point = recentSighting(ctx, 2.5);
+  if (point && Math.hypot(point.x - ctx.actor.pos.x, point.z - ctx.actor.pos.z) > 1.5 &&
+      Math.abs(point.y - ctx.actor.pos.y) <= 2 && ctx.moveToward(point, scale)) {
+    ctx.aimAt(point, { height: .7 });
+    return true;
+  }
+  return !!followNav(ctx, scale);
 }
 function activate(ctx) {
   quiet(ctx); stop(ctx); ctx.intent.special = true;
@@ -74,9 +86,13 @@ function kraken(ctx) {
   } else if (chargeTarget && enoughTime && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), 12)) {
     intent.fire = true;
   } else if (target && Math.abs(ctx.height) <= 2 && ctx.distance > 2.5 && remaining(ctx, st) > 1.3) {
-    ctx.moveToward(ctx.enemy.pos);
+    if (!ctx.moveToward(ctx.enemy.pos)) strafe(ctx, ctx.enemy.pos);
+  } else if (!target) {
+    // A Kraken that sits motionless for its whole duration is the most
+    // unnatural possible use; keep swimming toward the fight.
+    roam(ctx);
   }
-  memory.meleeMode = near ? 'jump' : intent.fire ? 'charge' : 'approach';
+  memory.meleeMode = near ? 'jump' : intent.fire ? 'charge' : target ? 'approach' : 'roam';
 }
 // Match the existing UltraStamp source flight (51WU/s, +10.2Y, gravity
 // 46.8WU/s², .97 horizontal retention per source frame). The low arc aims
@@ -113,7 +129,10 @@ function stamp(ctx) {
   const st = actor._s3AllSpecialState;
   const target = seen(ctx) && Math.abs(ctx.height) <= 3;
   if (!ctx.state) {
-    if (target && ctx.distance <= 14 && actor.grounded && aimEnemy(ctx, .2) && actor.specialReady?.()) activate(ctx);
+    // Ultra Stamp is a close-range push: activate when the hammer can reach
+    // the target on foot, not at throwing range (the bot then only threw).
+    if (target && ctx.distance <= 9 && Math.abs(ctx.height) <= 1.2 && actor.grounded &&
+        safeRush(ctx, facing(ctx), Math.min(ctx.distance, 4)) && aimEnemy(ctx, .2) && actor.specialReady?.()) activate(ctx);
     return;
   }
   stop(ctx);
@@ -125,11 +144,17 @@ function stamp(ctx) {
   if (!target) {
     // Releasing a previously held throw would launch blindly. Keep holding
     // until a visible target returns or the normal special duration expires.
-    if (memory.stampAimThrow) intent.sub = true;
+    if (memory.stampAimThrow) { intent.sub = true; roam(ctx, .6); return; }
+    // Keep stamping forward on the way back to the fight instead of
+    // standing still with the hammer raised.
+    if (roam(ctx)) intent.fire = true;
     return;
   }
-  const throwRange = ctx.distance >= 6 && ctx.distance <= 24 && Math.abs(ctx.height) <= 3;
-  const shouldThrow = throwRange && (ctx.distance > 8 || remaining(ctx, st) < 1.35);
+  const throwRange = ctx.distance >= 3 && ctx.distance <= 24 && Math.abs(ctx.height) <= 3;
+  // Throwing ends the special. Prefer the hammer: throw only when time is
+  // nearly up or the target cannot be reached on foot (height / blocked path).
+  const reachable = Math.abs(ctx.height) <= 1 && safeRush(ctx, facing(ctx), Math.min(ctx.distance, 6));
+  const shouldThrow = throwRange && (remaining(ctx, st) < 1.35 || (!reachable && ctx.distance > 4));
   const aimed = shouldThrow || memory.stampAimThrow || memory.stampReleased ? aimStampThrow(ctx, st) : aimEnemy(ctx, .2);
   if (memory.stampAimThrow) {
     if (aimed && throwRange) {
@@ -147,10 +172,13 @@ function stamp(ctx) {
   // Close the remaining gap instead of hopping in place for 40-damage spray.
   if (ctx.distance <= 2.4 && Math.abs(ctx.height) <= 2.5) {
     intent.fire = true; hop(ctx, .6);
-  } else if (ctx.distance <= 8 && Math.abs(ctx.height) <= 1 && safeRush(ctx, facing(ctx), 2.2)) {
+  } else if (Math.abs(ctx.height) <= 1 && safeRush(ctx, facing(ctx), 2.2)) {
+    // Stamp toward the target: the stamping itself carries the bot forward.
     intent.fire = true;
     ctx.moveToward(ctx.enemy.pos);
-  } else if (ctx.distance <= 14) ctx.moveToward(ctx.enemy.pos);
+  } else if (!ctx.moveToward(ctx.enemy.pos)) {
+    intent.fire = true; strafe(ctx, ctx.enemy.pos, .8);
+  }
 }
 function reefBrakeDistance(raw) {
   let distance = 0;
@@ -199,7 +227,9 @@ function splashdown(ctx) {
 export function driveMeleeSpecial(ctx) {
   if (!IDS.has(ctx.special)) return false;
   ctx.memory.meleeHop = Math.max(0, (ctx.memory.meleeHop || 0) - ctx.dt);
+  captureNav(ctx);
   if (ctx.state) quiet(ctx);
+  noteSighting(ctx);
   if (ctx.special === 'krakenRoyale') kraken(ctx);
   else if (ctx.special === 'ultraStamp') stamp(ctx);
   else if (ctx.special === 'reefslider') reef(ctx);

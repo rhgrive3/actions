@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptQueueVisualWorld20261031} from '../queue-visual-world-20261031-adapter.mjs';
 import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
 import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
 import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
@@ -159,7 +160,12 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  const rawCurrent=fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8');
  const currentGitBlob=createHash('sha1').update('blob '+Buffer.byteLength(rawCurrent)+'\0').update(rawCurrent).digest('hex');
  assert.equal(currentGitBlob,'111747a0ab4141af1cb3c58258e6ca24b88716f2','the separately reviewed current raw controller remains exact');
- const current=reverseReviewedRenderQueueOwner(adaptBuildSource(REL,rawCurrent),REL);
+ // The later visual-world owner (submerged-eye visibility) is a separate final
+ // epoch: it must be the only difference before the reviewed render owner.
+ const composedCurrent=adaptBuildSource(REL,rawCurrent),beforeVisualWorld=adaptBuildSource(REL,rawCurrent,{queueVisualWorld20261031:false});
+ assert.notEqual(beforeVisualWorld,composedCurrent,'the later visual-world owner is exercised');
+ assert.equal(adaptQueueVisualWorld20261031(REL,beforeVisualWorld),composedCurrent,'only the reviewed visual-world owner follows the render owner');
+ const current=reverseReviewedRenderQueueOwner(beforeVisualWorld,REL);
  const beforeCurrentForm=reverseCurrentFormOwner(current);
  assert.equal(beforeCurrentForm,reverseReviewedMotionEpoch(current,'motion'),'independent form pairs and sealed motion epoch reverse the same complete boundary once');
  assert.notEqual(beforeCurrentForm,current,'the subsequent form owner is exercised');

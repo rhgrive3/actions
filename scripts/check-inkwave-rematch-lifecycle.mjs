@@ -244,6 +244,10 @@ const snap = () => page.evaluate(() => {
     },
     controller: m?.controller ? { enabled: m.controller.enabled, blocked: !!m.controller.menuBlocked, local: m.controller.a === m.local } : null,
     rigFollowsLocal: g.rig?.mode === 'follow' && g.rig?.target === m?.local, actors: G.actors?.length, sights: G.projectiles?.sights?.size,
+    // The S3 projectile-shape renderer is created once, on the first shaped
+    // projectile the shared Projectiles system draws, and then kept (8-9 pooled
+    // meshes). Whether a round's attract bots fired one first is random.
+    shapePool: (r => r ? [r.body, r.slashH, r.slashV, r.shell, r.core, r.sparks, r.sheets?.mesh, r.sheets?.drillMesh, r.wetSlashV].filter(o => o && o.parent === G.scene).length : 0)(G.projectiles?._s3Shapes),
     sceneChildren: G.scene?.children.length, listeners: Object.fromEntries([...window.__lifecycleListeners].filter(([, n]) => n > 0).sort()), intervals: window.__lifecycleIntervals(),
     fade: g.fadeEl ? +getComputedStyle(g.fadeEl).opacity : null, range: !!m?.range, time: Number.isFinite(m?.time) ? m.time : String(m?.time),
     resources: {
@@ -291,6 +295,15 @@ const alignedFocusSnapshot = async (phase) => operationTrace.run('aligned focus:
   } while (Date.now() - start < 30000);
   return last;
 });
+// The HUD must show the new battle's own live clock near the full Turf War
+// length, not a stale value from the previous battle (e.g. 0:00). Under a slow
+// SwiftShader cadence more than one second can pass between the first
+// completed tick and this snapshot, so compare the HUD with the match clock
+// (the HUD may still show the previous frame's second) instead of a fixed
+// wall-clock window.
+const clockText = s => { const t = Math.max(0, Math.ceil(s - 1e-6)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+const freshTurfClock = snap => Number.isFinite(snap.time) && snap.time <= 180 && snap.time >= 170 &&
+  (snap.timer === clockText(snap.time) || snap.timer === clockText(snap.time + 1));
 const check = (round, phase, cond, message, detail) => { if (!cond) failures.push({ round, phase, message, detail }); };
 
 let status = 'failed';
@@ -318,7 +331,7 @@ try {
     check(i + 1, 'play', play.matchId !== previousMatch, 'a fresh match object');
     previousMatch = play.matchId;
     check(i + 1, 'play', play.hudHidden === false && play.hudLive === true && play.hudRange === false, 'HUD visible and live', play);
-    check(i + 1, 'play', play.timer === '3:00' || play.timer === '2:59', 'HUD clock restarted at the Turf War length', play.timer);
+    check(i + 1, 'play', freshTurfClock(play), 'HUD clock restarted at the Turf War length', [play.timer, play.time]);
     check(i + 1, 'play', play.lineup === 8 && play.actors === 8, 'eight-player lineup', [play.lineup, play.actors]);
     check(i + 1, 'play', play.touchVisible && play.touchDown.length === 0 && play.touchDownEls === 0, 'touch controls visible and released', play);
     check(i + 1, 'play', play.controller?.enabled && !play.controller.blocked && play.controller.local && play.rigFollowsLocal, 'controller and camera own the new local player', play.controller);
@@ -363,7 +376,8 @@ try {
       check(i + 1, 'menu', JSON.stringify(menu.listeners) === JSON.stringify(baseline.listeners), 'listener set stable across rounds', { now: menu.listeners, first: baseline.listeners });
       check(i + 1, 'menu', menu.intervals === baseline.intervals, 'interval count stable', [menu.intervals, baseline.intervals]);
       // pooled charger sights come and go with the attract bots' weapons; a leaked match would add whole squads
-      check(i + 1, 'menu', (menu.sceneChildren - menu.sights) - (baseline.sceneChildren - baseline.sights) <= 2, 'scene does not accumulate objects', [menu.sceneChildren, menu.sights, baseline.sceneChildren, baseline.sights]);
+      check(i + 1, 'menu', (menu.sceneChildren - menu.sights - menu.shapePool) - (baseline.sceneChildren - baseline.sights - baseline.shapePool) <= 2, 'scene does not accumulate objects', [menu.sceneChildren, menu.sights, menu.shapePool, baseline.sceneChildren, baseline.sights, baseline.shapePool]);
+      check(i + 1, 'menu', menu.shapePool <= 9, 'single projectile-shape renderer pool', menu.shapePool);
       check(i + 1, 'menu', menu.sights <= 8, 'charger sight pool bounded', menu.sights);
     }
     rounds.push(round);
@@ -391,7 +405,7 @@ try {
   await until(() => { const m = window.__G.match; return m && !m.attract && m.state === 'playing'; }, null, 300000, 'battle after range');
   await page.waitForTimeout(600);
   const after = (rangeRound.turfAfter = await snap());
-  check('range', 'turf after', after.range === false && after.hudRange === false && (after.timer === '3:00' || after.timer === '2:59') && Number.isFinite(after.time), 'next Turf War keeps its own clock and HUD', after);
+  check('range', 'turf after', after.range === false && after.hudRange === false && freshTurfClock(after), 'next Turf War keeps its own clock and HUD', after);
   rounds.push(rangeRound);
   activeRound = { round: 'rematch-failure-recovery' };
   activeRound.receipts = await operationTrace.run('rematch: reject, retry and stale rejection', () => verifyRematchFailureRecovery(page, { evidenceDir: evidence, contentHash: manifest.contentHash }));

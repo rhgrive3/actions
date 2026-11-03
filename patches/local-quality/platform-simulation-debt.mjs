@@ -58,6 +58,11 @@ export function createPlatformSimulationDebt(game, G, env, runtime) {
   const ordinary={elapsed:0,budget:PLATFORM_DEBT_TICK_BUDGET},presentation={presentationOnly:true};
   const now=()=>env.performance?.now?.();
   const owns=()=>!!saved&&G.mode==='match'&&!!saved.match&&!saved.match.attract&&currentMatch(game,G,runtime,saved)&&runtime.owner.active;
+  // The pre-GO opening has no combat history to reconstruct. Its length is a
+  // local timer that a follower re-aligns from the host's 'st' state, and the
+  // host's GO is authoritative. A stall here (stage/shader warm-up on a slow
+  // GPU) is not a stopped owner: drop the excess wall time instead of leaving.
+  const opening=()=>saved?.match?.state==='intro'&&!queue.length;
   const cancelTimer=()=>{if(timer!==null){env.clearTimeout?.(timer);timer=null;}};
   function unwrap(){
     if(!wrapped)return;
@@ -118,6 +123,7 @@ export function createPlatformSimulationDebt(game, G, env, runtime) {
           return result;
         }
         if(!queue.length&&elapsed<=GAP)return original.call(this,from,data);
+        if(opening())return original.call(this,from,data);
         if(messages>=MAX_MESSAGES||tooMuch(elapsed)){disconnect();return;}
         const resume=receivedCall(this,original,from,data);
         at=time;enqueue(elapsed,resume);metrics.received++;schedule();
@@ -186,6 +192,7 @@ export function createPlatformSimulationDebt(game, G, env, runtime) {
       const delta=Number.isFinite(time)&&Number.isFinite(at)?Math.max(0,(time-at)/1000):elapsed;
       at=time;
       if(!queue.length&&delta<=GAP){ordinary.elapsed=delta;return ordinary;}
+      if(opening()){ordinary.elapsed=GAP;return ordinary;}
       if(tooMuch(delta)){disconnect();return presentation;}
       inputDt=dt;enqueue(delta);drain();schedule();return presentation;
     },

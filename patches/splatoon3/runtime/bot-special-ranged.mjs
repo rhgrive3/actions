@@ -1,3 +1,4 @@
+import { captureNav, followNav, strafe, noteSighting, recentSighting } from './bot-special-movement.mjs';
 import { trizookaState } from './kit-trizooka.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { tentaMissilesLockPreview } from './all-specials.mjs';
@@ -17,9 +18,25 @@ function safeFloor(c,p) {
 }
 function aim(c,p,height=.7,lead=0) { c.aimAt?.(p,{height,lead}); }
 function keepDistance(c,near,far) {
-  if(c.distance<near)c.moveToward?.(c.enemy.pos,-1);
-  else if(c.distance>far)c.moveToward?.(c.enemy.pos,.65);
+  // A blocked retreat/approach sidesteps instead of freezing in place.
+  if(c.distance<near){if(!c.moveToward?.(c.enemy.pos,-1))strafe(c,c.enemy.pos,.8);}
+  else if(c.distance>far){if(!c.moveToward?.(c.enemy.pos,.65))strafe(c,c.enemy.pos,.65);}
   else stop(c);
+}
+// No visible target while a moving special is active: chase the recent
+// sighting, then follow the brain's own navigation instead of idling.
+function roam(c,scale=1) {
+  const p=recentSighting(c,2.5);
+  if(p&&Math.hypot(p.x-c.actor.pos.x,p.z-c.actor.pos.z)>2&&Math.abs(p.y-c.actor.pos.y)<=3&&c.moveToward?.(p,scale)){aim(c,p,.7);return true;}
+  if(followNav(c,scale))return true;
+  stop(c);return false;
+}
+// Crab Tank paints while travelling; aim the stream at the ground ahead.
+function paintAhead(c) {
+  const mv=c.move;if(!mv||Math.hypot(mv.x,mv.z)<.1)return false;
+  const l=Math.hypot(mv.x,mv.z),p=(c.memory.rangedPaintPoint ||= c.actor.pos.clone());
+  p.set(c.actor.pos.x+mv.x/l*9,c.actor.pos.y,c.actor.pos.z+mv.z/l*9);
+  aim(c,p,0);return aimed(c,.2);
 }
 function flyToward(c,point,scale=1) {
   const {actor,world,move,memory:m}=c;
@@ -141,12 +158,14 @@ function hookAimedAtSurface(c,point) {
 
 export function driveRangedSpecial(c) {
   if(!RANGED.has(c.special))return false;
+  captureNav(c);
   const {actor,intent:it}=c;
   if(!actor?.alive||actor.remote||!(c.dt>0)||!Number.isFinite(c.dt)){inputsOff(c);return true;}
   c.memory ||= {};
   const valid=c.enemy?.alive&&c.enemy.team!==actor.team&&finitePoint(c.enemy.pos)&&c.visible===true;
   if(!valid)c.enemy=null;
   rememberVisible(c);
+  noteSighting(c);
   const active=c.state?.id===c.special;
   if(!active){
     it.special=false;
@@ -211,6 +230,12 @@ export function driveRangedSpecial(c) {
     return true;
   }
   if(!enemy){
+    if(c.special==='crabTank'){
+      // Never sit idle in the tank: move on and keep painting the route.
+      if(roam(c,.8))it.fire=paintAhead(c);
+      return true;
+    }
+    if(c.special==='trizooka'){roam(c,.8);return true;}
     if(c.special==='inkjet'&&finitePoint(s.origin))flyToward(c,s.origin,.65);
     else if(c.special==='zipcaster'&&s.phase==='ready'){
       // Entering swim cancels a held native charge; releasing ZR in kid form
@@ -238,7 +263,12 @@ export function driveRangedSpecial(c) {
     const yaw=Math.atan2(enemy.pos.x-actor.pos.x,enemy.pos.z-actor.pos.z);
     const rear=Math.cos(yaw-(actor.yaw||0))<0&&c.distance<12;
     const rolling=c.distance<6||rear||(actor.hp<35&&actor.lastDamage<.8)||bombThreat(c);
-    if(rolling){it.squid=true;c.moveToward?.(enemy.pos,-1);return true;}
+    if(rolling){
+      it.squid=true;
+      // Roll away; when the retreat is walled off roll sideways past the threat.
+      if(!c.moveToward?.(enemy.pos,-1)&&!strafe(c,enemy.pos,1))c.moveToward?.(enemy.pos,1);
+      return true;
+    }
     const cannon=c.distance<=9&&Math.abs(c.height)<=3&&enemy.hp<=50&&(s.t||0)>=(s.nextCannon||0);
     // R interrupts the accelerating ZR stream; use it only for a close finisher.
     // Settle this short lob before R instead of firing a flat shell into the floor.

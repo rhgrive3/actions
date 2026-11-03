@@ -5,7 +5,7 @@ import { CANONICAL_KITS } from '../runtime/canonical-kits-data.mjs';
 export const STEP = 1 / 60;
 const KIT = Object.fromEntries(Object.entries(CANONICAL_KITS).map(([id, k]) => [k.special, id]));
 export const SPECIAL_SCENARIOS = Object.freeze({
-  ultraStamp: 12, krakenRoyale: 8, reefslider: 12, tripleSplashdown: 5,
+  ultraStamp: 7, krakenRoyale: 8, reefslider: 12, tripleSplashdown: 5,
   trizooka: 20, zipcaster: 20, tentaMissiles: 20, inkjet: 20,
   booyahBomb: 20, killerWail: 20, inkVac: 20, crabTank: 20,
   bubbler: 20, storm: 20, tripleInkstrike: 20, tacticooler: 20,

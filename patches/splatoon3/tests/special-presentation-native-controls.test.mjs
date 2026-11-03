@@ -44,8 +44,12 @@ test('Zipcaster retirement preserves borrowed body geometry and disposes its coa
   r.a.specialActive=null;r.a._s3AllSpecialState=null;r.ch.update(1/60,r.a.anim);
   assert.equal(r.ch.kid.getObjectByName('zipcaster-ink-coat'),undefined);
   for(const g of source)assert.equal(counts.get(g),0,'ending the special must not invalidate the normal rig');
+  // The paired coat is retained per character for the next activation and
+  // released exactly once when the character itself is retired.
+  for(const m of new Set(twins.map(o=>o.material)))assert.equal(counts.get(m),0,'ended special keeps the cached coat for reuse');
+  r.close();
   for(const m of new Set(twins.map(o=>o.material)))assert.equal(counts.get(m),1,'coat material has one owner');
- }finally{for(const[o,cb]of listeners)o.removeEventListener('dispose',cb);r.close();}
+ }finally{for(const[o,cb]of listeners)o.removeEventListener('dispose',cb);}
 });
 
 test('Screen renders only the thrown jar in flight and unfolds from its actual landing time',()=>{

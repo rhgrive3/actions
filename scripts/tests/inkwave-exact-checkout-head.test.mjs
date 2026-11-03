@@ -31,9 +31,9 @@ process.on('exit', () => rmSync(repo, { recursive: true, force: true }));
 // be inserted between immutable checkout and the mandatory identity assertion.
 const reviewedCheckoutOptionHashes = {
   "inkwave-paint-hotpath": "568beeb11b18b04b4991b7db25dd0f61dba7fbe26929b4de89df77414e82e7f1",
-  "inkwave-runtime-frame-parity": "861ccf2c250ffda6f0cb94eda41c19083810ef7887e82ee9fba0f46b5d1c00d9",
-  "inkwave-touch-frame-pacing": "6c12fe3093a63ce3ce49436d1ba1184606f7c69cfb336205fc9e1fc431721a1e",
-  "inkwave-pause-gpu": "3e868f8f44b4527eac373d1cd045f50c79a5222eb573545572d5cacce5315699"
+  "inkwave-runtime-frame-parity": "cda43d53804065f0a626d5b8d0081a03f6ea1be40d77694236546c58946da949",
+  "inkwave-touch-frame-pacing": "035afd6b6457de5e957771cce4c934ea9be3c2098c4769df9727837281c1f864",
+  "inkwave-pause-gpu": "7c255a631746827313f436441cf82bb5b05055882d04b80bb78dee9a222b66f4"
 };
 const checkoutPrefix="      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha || github.sha }}\n";
 function assertCheckoutSequence(yaml,name) {
