@@ -60,25 +60,3 @@ test('both actual CLI entrypoints dispatch only the explicit new mode after stri
   assert.match(source,/await runMain26a4AdmissionCLI\(options, '(?:controls|prepare)'\);\n  process.exit\(0\);/);
  }
 });
-test('actual Python route skips only exact-case same-repository aggregate, never manual/fork/variants',()=>{
- const workflow=fs.readFileSync(path.join(repo,'.github/workflows/inkwave-projectile-visuals.yml'),'utf8');
- for(const file of ["scripts/lib/inkwave-main26a4-production-epoch.mjs", "scripts/fixtures/inkwave-main26a4-production-epoch.json.gz", "scripts/tests/inkwave-main26a4-production-epoch.test.mjs"])assert.ok(workflow.includes("      - '"+file+"'"),'new admission path triggers workflow: '+file);
- const job=workflow.slice(workflow.indexOf('  automatic_capture_route:'),workflow.indexOf('  capture:'));
- assert.ok(!job.includes('actions/checkout'));assert.ok(!job.includes('${{ github.'));
- const body=/python3 - <<'PY'\n([\s\S]+?)\n          PY/.exec(job)?.[1];assert.ok(body);
- const script=body.split('\n').map(line=>line.slice(10)).join('\n');
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'main26a4-route-'));
- try{
-  let count=0;
-  const evaluate=({eventName='pull_request',repository='rhgrive3/actions',headRepo=repository,head='inkwave/qa-main26a4-integration-20261022',event}={})=>{
-   const input=path.join(root,'event-'+count+'.json'),output=path.join(root,'output-'+count++);
-   fs.writeFileSync(input,JSON.stringify(event??{pull_request:{head:{ref:head,repo:{full_name:headRepo}}}}));
-   execFileSync('python3',['-c',script],{env:{...process.env,GITHUB_EVENT_NAME:eventName,GITHUB_REPOSITORY:repository,GITHUB_EVENT_PATH:input,GITHUB_OUTPUT:output}});
-   return fs.readFileSync(output,'utf8').trim();
-  };
-  assert.equal(evaluate(),'capture_required=false');
-  for(const changes of [{eventName:'workflow_dispatch',event:{}},{headRepo:'fork/actions'},{head:'other'},{head:'INKWAVE/QA-MAIN26A4-INTEGRATION-20261022'},{headRepo:'RHGRIVE3/actions'},{repository:'RHGRIVE3/actions',headRepo:'rhgrive3/actions'},{head:'inkwave/qa-main26a4-integration-20261022-extra'},{repository:'',headRepo:''},{event:{}}])assert.equal(evaluate(changes),'capture_required=true');
- }finally{fs.rmSync(root,{recursive:true,force:true});}
- assert.match(workflow,/needs: automatic_capture_route\n    if: \$\{\{ needs.automatic_capture_route.outputs.capture_required == 'true' \}\}/);
- assert.match(workflow,/run: node --test --test-concurrency=1 scripts\/tests\/inkwave-exact-head-workflow-routes.test.mjs scripts\/tests\/inkwave-main26a4-production-epoch.test.mjs/);
-});

@@ -13,6 +13,13 @@ export function assertPagesTrigger({sha,githubSha,eventName,event,repository,ref
   requireProof(sha===githubSha,'manual Pages source must be its exact workflow SHA');
   return null;
  }
+ // A main push starts Pages and Validate together; --wait then polls for the
+ // latest Validate attempt on this exact SHA, as a manual dispatch does.
+ if(eventName==='push'){
+  requireProof(sha===githubSha&&event?.after===sha,'push Pages source must be its exact pushed SHA');
+  requireProof(event.ref==='refs/heads/main'&&event.repository?.full_name===REPOSITORY,'push must be to trusted main');
+  return null;
+ }
  requireProof(eventName==='workflow_run'&&event?.action==='completed','expected completed Validate trigger');
  const run=event.workflow_run;
  requireProof(event.repository?.full_name===REPOSITORY&&run?.head_repository?.full_name===REPOSITORY,'untrusted triggering repository');

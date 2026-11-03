@@ -33,3 +33,12 @@ test('workflow checks validation before upload and again before deploy, with rea
  const wait=w.indexOf('node scripts/ci/inkwave-pages-validation.mjs --wait'),upload=w.indexOf('uses: actions/upload-pages-artifact@'),once=w.indexOf('node scripts/ci/inkwave-pages-validation.mjs --once'),deploy=w.indexOf('uses: actions/deploy-pages@');
  assert(wait>=0&&wait<upload&&upload<once&&once<deploy);assert.match(w,/actions: read/);assert.doesNotMatch(w,/actions: write|continue-on-error/);
 });
+test('main push, manual dispatch and Validate workflow_run triggers are accepted; others fail closed',async()=>{
+ const {assertPagesTrigger}=await import('../ci/inkwave-pages-validation.mjs');
+ const base={sha,githubSha:sha,repository:'rhgrive3/actions',ref:'refs/heads/main'};
+ const push={after:sha,ref:'refs/heads/main',repository:{full_name:'rhgrive3/actions'}};
+ assert.equal(assertPagesTrigger({...base,eventName:'push',event:push}),null);
+ assert.equal(assertPagesTrigger({...base,eventName:'workflow_dispatch',event:{}}),null);
+ for(const bad of [{githubSha:other},{ref:'refs/heads/topic'},{repository:'fork/actions'},{eventName:'pull_request'},{event:{...push,after:other}},{event:{...push,ref:'refs/heads/topic'}},{event:{...push,repository:{full_name:'fork/actions'}}},{event:null}])
+  assert.throws(()=>assertPagesTrigger({...base,eventName:'push',event:push,...bad}),/Pages validation barrier/);
+});
