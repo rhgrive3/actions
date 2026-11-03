@@ -90,7 +90,17 @@ test('lifecycle diagnostics keep real tap timeout and original assertions and sa
   assert.equal((tapBody.match(/\.tap\(/g) || []).length, 1, 'dispatch one real gesture');
   assert.doesNotMatch(tapBody, /force:|\.click\(/, 'native actionability and stable positioning remain required');
   assert.match(source, /rangeRound\.simulated\.state === 'playing' && !rangeRound\.simulated\.result && rangeRound\.simulated\.menu === null/);
-  assert.match(source, /after\.range === false && after\.hudRange === false && \(after\.timer === '3:00' \|\| after\.timer === '2:59'\) && Number\.isFinite\(after\.time\)/);
+  assert.match(source, /after\.range === false && after\.hudRange === false && freshTurfClock\(after\)/);
+  // The HUD clock must be the new battle's live Turf clock: a stale 0:00 or a
+  // clock unrelated to the match time is still rejected.
+  const clockSource = source.slice(source.indexOf('const clockText ='), source.indexOf('const check ='));
+  const { clockText, freshTurfClock } = new Function(clockSource + 'return { clockText, freshTurfClock };')();
+  assert.equal(clockText(180), '3:00'); assert.equal(clockText(178.4), '2:59');
+  assert.equal(freshTurfClock({ timer: '2:58', time: 177.9 }), true, 'a slow cadence may pass more than one second');
+  assert.equal(freshTurfClock({ timer: '2:59', time: 177.9 }), true, 'the HUD may still show the previous frame second');
+  assert.equal(freshTurfClock({ timer: '0:00', time: 178.2 }), false, 'stale previous-battle HUD clock');
+  assert.equal(freshTurfClock({ timer: '3:00', time: 0.05 }), false, 'stale previous-battle match clock');
+  assert.equal(freshTurfClock({ timer: '2:30', time: 178.2 }), false, 'HUD must follow the match clock');
   const catchBlock = source.slice(source.lastIndexOf('} catch (e) {'));
   assert.ok(catchBlock.indexOf('writeResult();') < catchBlock.indexOf('boundedDiagnostic(snap)'));
   assert.match(catchBlock, /failures\.push\(\{ round: 'fatal', message: String\(e\?\.stack \|\| e\)\.slice\(0, 2000\) \}\)/);
