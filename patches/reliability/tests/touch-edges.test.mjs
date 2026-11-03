@@ -147,7 +147,7 @@ for (const hz of [20, 30, 60, 90, 120, 144]) test(`${hz}Hz rendering delivers to
   assert.equal(h.rig.yaw, -.25); assert.equal(h.rig.pitch, -.1);
 });
 
-test('actual charger fires legal holds once and cancels completed sub-8F fire taps', async () => {
+test('actual charger fires legal holds once and charges a completed sub-8F tap to its 8F boundary', async () => {
   const h = await boot({ weapon: 'charger' }), held = h.press('fire');
   for (let i = 0; i < 20; i++) h.frame();
   assert.equal(h.actor.weaponRunner.charging, true); assert.ok(h.actor.weaponRunner.charge > 0);
@@ -161,9 +161,19 @@ test('actual charger fires legal holds once and cancels completed sub-8F fire ta
   assert.equal(h.shots.length, 1);
   h.tap('fire'); h.frame();
   assert.equal(h.rows.at(-1).fire, true); assert.equal(h.actor.weaponRunner.charging, true);
-  h.frame();
-  assert.equal(h.rows.at(-1).fire, false); assert.equal(h.actor.weaponRunner.charging, false);
-  assert.equal(h.shots.length, 1);
+  // A completed tap is still one guaranteed shot, but it keeps charging to
+  // the 8F minimum (then the ordinary 1F release) instead of being promoted
+  // at once, so tapping cannot outpace the 8F charge + 6F recharge cycle.
+  let frames = 0;
+  while (h.shots.length === 1 && frames < 30) {
+    h.frame(); frames++;
+    assert.equal(h.rows.at(-1).fire, false, 'the released touch input stays released');
+  }
+  assert.equal(h.shots.length, 2); assert.equal(h.shots[1].kind, 'charger');
+  assert.equal(frames, 9, '7 more charge frames after the tap frame, the 8F boundary, then the 1F release');
+  assert.equal(h.actor.weaponRunner.charging, false);
+  for (let i = 0; i < 30; i++) h.frame();
+  assert.equal(h.shots.length, 2, 'one tap is exactly one shot');
 });
 
 test('actual roller completes a tap flick and stops rolling after a held trigger releases', async () => {
