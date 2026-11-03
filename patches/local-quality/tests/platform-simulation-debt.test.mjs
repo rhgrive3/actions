@@ -173,3 +173,18 @@ test('only unrecoverable online debt above the explicit budget leaves; Turf, Ran
     }finally{x.close();}
   }
 });
+test('a stall during the pre-GO opening is dropped instead of leaving the online match',()=>{
+  for(const stall of [2617,6716]){
+    const x=setup({online:true});try{
+      x.m.setState('intro');const ticks=x.game.s3Clock.ticks;
+      x.frame(stall);x.drain();
+      assert.equal(x.session.state,'match','an opening hitch is not a stopped owner');
+      assert.equal(x.counters().aborted,0);assert.equal(x.counters().closed,0);
+      assert(x.game.s3Clock.ticks-ticks<=Math.ceil(.25*60)+1,'only the bounded ordinary gap is simulated');
+      assert.equal(x.game.platform.simulation.snapshot().pending,0);
+      x.m.setState('playing');const before=x.m.time;x.session._members=new Map([['host','host']]);
+      x.frame(stall+2*PLATFORM_ONLINE_DEBT_LIMIT*1000+1);
+      assert.equal(x.session.state,'offline','after GO the explicit online budget still applies');assert.equal(x.m.time,before);
+    }finally{x.close();}
+  }
+});
