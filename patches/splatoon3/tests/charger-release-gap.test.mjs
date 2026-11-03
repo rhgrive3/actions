@@ -130,15 +130,19 @@ test('a special that owns the next tick cannot replay the old Charger release af
   assert.equal(f.shots.length, 0, 'no stale shot after the special');
 });
 
-test('short physical release tops up the paid minimum and retains the release gap', async () => {
+test('short physical release charges to the 8F minimum, pays it, then keeps the release gap', async () => {
   const f = await fixture(), a = await charged(f, 8), r = a.weaponRunner;
   const paid = a.ink;
   const missing = a.weapon.inkMin - r.s3ChargerSpent;
+  // 1F startup + 7 charge frames: the release keeps charging for the 8th.
   a.intent.fire = false; f.tick(a);
   assert.equal(f.shots.length, 0);
-  assert.equal(r.s3ReleaseHold, true);
+  assert.equal(r.charging, true, 'the press is still charging to its minimum');
   assert.ok(Math.abs(a.ink - (paid - missing)) < 1e-9, 'only the unpaid minimum is debited');
-  f.tick(a, 2);
+  f.tick(a);
+  assert.equal(f.shots.length, 0);
+  assert.equal(r.s3ReleaseHold, true);
+  f.tick(a);
   assert.equal(f.shots.length, 1);
   assert.equal(f.shots[0].charge, a.weapon.minimumChargeTime / a.weapon.chargeTime);
   assert.equal(r.s3ReleaseHold, false);

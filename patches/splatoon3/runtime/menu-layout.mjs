@@ -25,12 +25,19 @@ const L = (en, ja) => (isJa ? ja : en);
 // switch on a hybrid laptop must not leave mobile nodes in a desktop layout.
 const touchMenu = () => !!globalThis.document?.documentElement?.classList.contains('iw-touch');
 
-export function capEntranceStagger(root, cap = ENTRANCE_STAGGER_CAP) {
+// Capping alone made every element past the cap start the same 0.6 s spring
+// on the same frame: ~146 weapon cards (inline SVG + 3D tilt each) animating
+// at once dropped frames every time the loadout re-opened. Elements far past
+// the cap are outside the first screenful of a scrolling grid; they appear
+// in their final state instead of joining that burst.
+export const ENTRANCE_ANIMATED_LIMIT = ENTRANCE_STAGGER_CAP * 3;
+export function capEntranceStagger(root, cap = ENTRANCE_STAGGER_CAP, limit = Math.max(cap, cap * 3)) {
   if (!root?.querySelectorAll) return 0;
   let capped = 0;
   for (const n of root.querySelectorAll('.iw-in')) {
     const i = Number.parseFloat(n.style.getPropertyValue('--i'));
     if (i > cap) { n.style.setProperty('--i', String(cap)); capped++; }
+    if (i > limit) n.classList?.add('s3-in-static');
   }
   return capped;
 }

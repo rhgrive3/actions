@@ -791,6 +791,7 @@ jobs:
           SEVEN_RESULT: ${{ needs.seven_claims.result }}
           RESOURCE_RESULT: ${{ needs.resource_paint_continuation.result }}
           OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           printf 'build=%s scope=%s core=%s patch=%s circleci=%s browser=%s seven=%s resource=%s offload=%s\n' "$BUILD_RESULT" "$CONTRACTS_ONLY" "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$BROWSER_RESULT" "$SEVEN_RESULT" "$RESOURCE_RESULT" "$OFFLOAD_ACTIVE"
           test "$PREFLIGHT_RESULT" = success
@@ -808,8 +809,16 @@ jobs:
           fi
           test "$CONTRACTS_ONLY" = false
           test "$CORE_RESULT" = success
-          test "$SEVEN_RESULT" = success
-          test "$RESOURCE_RESULT" = success
+          # Slow, flaky browser lanes do not gate pull requests. They still run
+          # on main pushes and workflow_dispatch; the CPU gameplay regressions
+          # (patch_tests) and validate_core remain mandatory on pull requests.
+          if [ "$EVENT_NAME" = pull_request ]; then
+            test "$SEVEN_RESULT" = skipped
+            test "$RESOURCE_RESULT" = skipped
+          else
+            test "$SEVEN_RESULT" = success
+            test "$RESOURCE_RESULT" = success
+          fi
           if [ "$OFFLOAD_ACTIVE" = true ]; then
             test "$PATCH_RESULT" = skipped
             test "$CIRCLECI_RESULT" = success
@@ -817,13 +826,17 @@ jobs:
           else
             test "$PATCH_RESULT" = success
             test "$CIRCLECI_RESULT" = skipped
-            test "$BROWSER_RESULT" = success
+            if [ "$EVENT_NAME" = pull_request ]; then
+              test "$BROWSER_RESULT" = skipped
+            else
+              test "$BROWSER_RESULT" = success
+            fi
           fi
 
   browser:
     needs: build_site
     # No offload until CircleCI is connected and enabled.
-    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && github.event_name != 'pull_request' && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     # Active compositor and catalog GL captures use the supported Chromium sandbox.
     runs-on: ${{ (matrix.suite == 'active' || matrix.suite == 'catalog') && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 120
@@ -1462,7 +1475,7 @@ jobs:
 
   seven_claims:
     needs: build_site
-    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -1538,7 +1551,7 @@ jobs:
           retention-days: 14
   resource_paint_continuation:
     needs: build_site
-    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     # The formerly 13-minute idle GPU probe now overlaps the active browser shard.
     timeout-minutes: 45

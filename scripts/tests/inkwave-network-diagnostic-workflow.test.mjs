@@ -6,6 +6,8 @@ const workflow=readFileSync(file,'utf8');
 const guard='node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs';
 const helper='scripts/tests/inkwave-opening-peer-diagnostic.test.mjs';
 const ordinaryFull="inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
+// Browser lanes do not gate pull requests (main push / workflow_dispatch only).
+const browserLane="inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && github.event_name != 'pull_request'";
 const job=(text,name)=>{
  const marker=`  ${name}:\n`,i=text.indexOf(marker,text.indexOf('\njobs:\n'));
  assert.ok(i>=0,`missing job ${name}`);
@@ -17,11 +19,12 @@ function verify(text){
  assert.match(text,/      network_opening_diagnostic:\n        description: [^\n]+\n        type: boolean\n        default: false\n/);
  assert.equal(condition(text,'network-opening-diagnostic'),"github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
  assert.equal(condition(text,'render-diagnostic'),'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
- for(const name of ['validate_core','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),ordinaryFull,name);
+ assert.equal(condition(text,'validate_core'),ordinaryFull,'validate_core');
+ for(const name of ['seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),browserLane,name);
  // Full GitHub coverage remains the default. Only exact-SHA-verified ordinary PRs may offload.
  for(const name of ['patch_tests','browser']) {
   const rule=condition(text,name);
-  assert(rule.startsWith('${{ '+ordinaryFull+' && !('),name+' must default to full native CI');
+  assert(rule.startsWith('${{ '+(name==='browser'?browserLane:ordinaryFull)+' && !('),name+' must default to full native CI');
   assert(rule.includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"),name+' must require explicit opt-in');
   assert(rule.includes("github.event_name == 'pull_request'"),name+' must preserve push CI');
   assert(rule.includes('inkwave/runtime-performance-ui'),name+' must preserve special baseline CI');

@@ -34,10 +34,12 @@ test('held specials reach their native throw/release effects through the complet
     ['booyahBomb', 'throw', 1], ['ultraStamp', 'throw', 1], ['tripleInkstrike', 'marker', 3],
     ['superChump', 'balloon', 12],
   ]) {
-    const { a, b } = f.scenario(special);
+    const { a, b, enemy } = f.scenario(special);
     let held = false, released = false;
     for (let i = 0; i < 600; i++) {
       const wasHeld = held;
+      // A Stamp only throws once its hammer cannot reach: the target escapes onto a ledge.
+      if (special === 'ultraStamp' && a.specialActive && enemy.pos.y < 1) enemy.pos.set(0, 1.6, a.pos.z + 8);
       f.tick(a, b); held ||= a.intent.sub;
       released ||= wasHeld && !a.intent.sub;
       if (f.events.filter(e => e.actor === a && e.id === special && e.action === action).length >= count) break;

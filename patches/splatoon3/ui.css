@@ -863,3 +863,7 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(
   transform: scale(var(--iw-reticle-scale, 1));
   transform-origin: 0 0;
 }
+
+/* Entrance elements far past the capped stagger (see menu-layout.mjs) skip
+   the simultaneous spring burst and render in their final state. */
+.iw-ui .s3-in-static { animation: none !important; }

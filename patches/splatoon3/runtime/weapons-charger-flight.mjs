@@ -231,8 +231,10 @@ export function installChargerFlight(api,completion) {
     const limit=Math.max(3.5,Math.min(512,point.y-PLAYER.waterY+6));
     return G.physics.raycast(point,paintDown,limit,paintHit,true);
   }
-  function postponePaint(system,job,from,hit,radius,seed) {
-    queueChargerPaintDrop(system,{from,hit,radius,depth:job.paint.depth,direction:job.dir,
+  function postponePaint(system,job,from,hit,radius,seed,terminal=false) {
+    // A terminal stamp is round (see splatTravelPoint); depth 0 keeps its
+    // delayed landing unstretched too.
+    queueChargerPaintDrop(system,{from,hit,radius,depth:terminal?0:job.paint.depth,direction:job.dir,
       owner:job.owner,team:job.team,seed,waterY:PLAYER.waterY});
   }
   function splatTravelPoint(system,job,at,radius,terminal=false){
@@ -243,7 +245,10 @@ export function installChargerFlight(api,completion) {
       if(paintTangent.lengthSq()<1e-8)paintTangent.set(1,0,0);else paintTangent.normalize();
       // Match the packed source WidthHalf/DepthHalf ellipse in both immediate
       // and delayed paths. GPU footprint and CPU ownership share this centre.
-      const stretch=Math.max(0,job.paint.depth/radius-1)*1.6;
+      // The terminal stamp sits on the stopping point. Stretching it along the
+      // DepthHalf ellipse (centred back by .375) pushed its leading edge up
+      // to 2.7WU past the bullet's range on a 9WU tap shot.
+      const stretch=terminal?0:Math.max(0,job.paint.depth/radius-1)*1.6;
       paintPoint.copy(h.point).addScaledVector(h.normal,.015)
         .addScaledVector(paintTangent,-radius*stretch*.375);
       return G.paint.splat(paintPoint,radius,job.team,
@@ -252,7 +257,7 @@ export function installChargerFlight(api,completion) {
     }
     // Airborne ink is not destroyed: it remains a pooled bead until actual
     // ground contact. A miss only expires after falling through the water plane.
-    postponePaint(system,job,at,h,radius,seed);
+    postponePaint(system,job,at,h,radius,seed,terminal);
     return 0;
   }
   function paintTravel(system,job,end){
