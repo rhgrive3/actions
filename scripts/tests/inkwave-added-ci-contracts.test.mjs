@@ -377,6 +377,11 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
+ // Pull requests skip only the browser lanes; CPU core/patch receipts stay mandatory.
+ const pr={...baseline,EVENT_NAME:'pull_request',BROWSER_RESULT:'skipped',SEVEN_RESULT:'skipped',RESOURCE_RESULT:'skipped'};
+ assert.equal(run(shell,pr).status,0,'pull request without browser lanes');
+ for(const name of ['BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])for(const state of ['success','failure','cancelled'])assert.notEqual(run(shell,{...pr,[name]:state}).status,0,'PR '+name+'='+state);
+ for(const name of ['CORE_RESULT','PATCH_RESULT'])for(const state of ['failure','cancelled','skipped'])assert.notEqual(run(shell,{...pr,[name]:state}).status,0,'PR '+name+'='+state);
  // Each mandatory new result must reject failure, cancellation and omission.
  for(const name of ['PREFLIGHT_RESULT','BUILD_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])for(const state of ['failure','cancelled','skipped'])assert.notEqual(run(shell,{[name]:state}).status,0,name+'='+state);
  for(const state of ['failure','cancelled','success'])assert.notEqual(run(shell,{OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:state}).status,0,'offloaded browser '+state);

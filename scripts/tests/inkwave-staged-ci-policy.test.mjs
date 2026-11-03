@@ -35,9 +35,11 @@ test('draft PRs omit all heavy jobs; ready PRs and main preserve the full native
   for (const name of fullJobs) {
     assert(!active(full, name, {draft: true}), 'draft must not launch expensive ' + name);
   }
+  // Browser lanes run on main and manual dispatch; they never gate a pull request.
+  const browserLanes = ['browser', 'seven_claims', 'resource_paint_continuation'];
   for (const name of fullJobs.filter(name => name !== 'circleci_offload_gate')) {
     assert(active(full, name, {event: 'push'}), 'main: ' + name);
-    assert(active(full, name), 'ready PR: ' + name);
+    assert.equal(active(full, name), !browserLanes.includes(name), 'ready PR: ' + name);
   }
   assert(!active(full, 'circleci_offload_gate', {event: 'push'}));
   assert(!active(full, 'circleci_offload_gate'));
@@ -194,7 +196,9 @@ test('CI-only exact-tree acceptance never substitutes success for unverified sou
   assert(active(full,'validate',{ciOnly:true}));
   for(const name of ['validate_core','patch_tests','browser','seven_claims','resource_paint_continuation']){
     assert(!active(full,name,{ciOnly:true}),'CI-only must skip heavy '+name);
-    assert(active(full,name,{ciOnly:false}),'changed game code must run '+name);
+    // Browser lanes are main/dispatch only; check them on a main push.
+    const event=['browser','seven_claims','resource_paint_continuation'].includes(name)?'push':'pull_request';
+    assert(active(full,name,{ciOnly:false,event}),'changed game code must run '+name);
   }
   const gate=job(full,'validate');
   assert.match(gate,/test "\$BUILD_RESULT" = success/);

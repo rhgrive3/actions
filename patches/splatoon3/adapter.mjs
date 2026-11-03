@@ -1347,6 +1347,16 @@ export function adaptSource(rel, code) {
       "        const wk = a.weapon?.behaviorKind ?? a.weapon?.kind ?? 'charger';",
       'catalogue muzzle-charge VFX family');
     code = adaptChargerSightCache(rel, code, replaceOnce);
+    // S3 shows a held full-charge keep as a team-colour light on the swimming
+    // squid (and on the gun while the kept shot's pre-delay runs after
+    // emergence). The keep had no presentation at all before.
+    code = replaceOnce(code, "        } else s.full = false;\n",
+      "        } else s.full = false;\n" +
+      "        if (wk === 'charger' && wr.s3Stored && a.alive) {\n" +
+      "          if (form === 'kid') a.character?.getMuzzle?.(_v);\n" +
+      "          else _v.set(pos.x, pos.y + 0.3, pos.z);\n" +
+      "          if (Number.isFinite(_v.x)) fx.chargeGlow?.(_v, col, form === 'kid' ? 1 : 0.8);\n" +
+      "        }\n", 'charger keep glow');
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
     // VFX droplets leave no ink speck on surfaces: a GPU-only mark that looks like

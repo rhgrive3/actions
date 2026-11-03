@@ -1,4 +1,5 @@
 import { adaptBlasterReticle } from '../patches/splatoon3/blaster-reticle-adapter.mjs';
+import { adaptMatchRecordings } from '../patches/splatoon3/match-recordings-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
 import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
 import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
@@ -198,6 +199,8 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptTitleDemoBudget(rel, code);
   code = adaptTitlePresentation(rel, code, replaceOnce);
   code = adaptBlasterReticle(rel, code, replaceOnce);
+  // Owner-supplied match music/cues; anchors are the final composed text.
+  code = adaptMatchRecordings(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
   code = adaptViewportCache(rel, code);
   return code;

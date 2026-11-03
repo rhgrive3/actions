@@ -321,7 +321,8 @@ export function installGear(api, tuning) {
     const swingActive = (w.kind === 'roller' && !!this.s3RollerAttack && !this.rolling) ||
       (w.catalogRecord?.family === 'roller' && !!this.catalogState?.s3SwingMode &&
         (this.catalogState?.pending || this.cooldown > 1e-10) && !this.rolling);
-    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming || swingActive;
+    const attacking = (w.kind === 'shooter' ? shooterMovementActive(this) : this.firingT > 0) || this.flick >= 0 || this.flickRecover > 0 || this.slosh >= 0 || this.charging || this.streaming || swingActive ||
+      (w.kind === 'charger' && !!this.s3Stored && this.a.form !== 'squid');
     // Ordinary airborne steering must not acquire extra reach from the ground
     // run-speed ability. Keep attack/ready/action-specific speed owners separate;
     // this only changes the target multiplier, never the velocity at takeoff.

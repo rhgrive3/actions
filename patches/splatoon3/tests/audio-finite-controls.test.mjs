@@ -179,7 +179,14 @@ test('method loader retains actual private constant identity and source-relative
   assert(Object.isFrozen(tracks));
   assert.equal(tracks.menu,new URL('../../assets/audio/menu_the_ika_swing_aoi_kenban.mp3',url).href);
   assert.equal(tracks.battle,new URL('../../assets/audio/Jet_Arrow.mp3',url).href);
-  assert.deepEqual(nativeConstant(composedMusic,'FILE_TRACK_URLS',url),tracks);
+  // The composition adds the owner-supplied match recordings (match-recordings-adapter.mjs)
+  // and keeps every native entry byte-identical.
+  const composedTracks=nativeConstant(composedMusic,'FILE_TRACK_URLS',url);
+  assert(Object.isFrozen(composedTracks));
+  assert.deepEqual(composedTracks,{...tracks,
+    opening:new URL('../../assets/audio/battle_opening.mp3',url).href,
+    results_win:new URL('../../assets/audio/result_win_turf_master.mp3',url).href,
+    results_lose:new URL('../../assets/audio/result_lose_battle_defeat.mp3',url).href});
 });
 test('private constant extraction rejects missing bindings and evaluates the real initializer',()=>{
   assert.throws(()=>nativeConstant('const other=1;','wanted','file:///unused.js'),/one actual private declaration/);

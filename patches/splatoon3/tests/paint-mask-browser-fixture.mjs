@@ -26,7 +26,8 @@ export function calibratedChargerMaskCases(raw, parameters, worldRadius) {
     const paint=parameters(raw,charge);
     for(const terminal of [false,true]) {
       const R=worldRadius(paint.width)*(terminal?paint.terminalRate:1);
-      const sa=Math.max(0,paint.depth/R-1)*1.6;
+      // Terminal stamps are round on their stopping point (no forward overshoot).
+      const sa=terminal?0:Math.max(0,paint.depth/R-1)*1.6;
       for(const wall of [false,true]) for(const kind of [15,16,17])
         for(const seed of [.11,.93]) for(const angle of [0,Math.PI/4])
           cases.push({wall,kind,R,sa,seed,angle,depth:paint.depth,charge,terminal,calibrated:true});

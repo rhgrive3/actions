@@ -11,6 +11,9 @@ const job = (text, name) => {
 };
 const condition = (text, name) => job(text, name).match(/^    if: (.+)$/m)?.[1];
 const fullCondition = "inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
+// Browser lanes do not gate pull requests (main push / workflow_dispatch only).
+const browserCondition = "inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && github.event_name != 'pull_request'";
+const browserOffloadCondition = "${{ "+browserCondition+" && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
 const nativeOffloadCondition = "${{ "+fullCondition+" && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
 const guard = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs';
 const source = 'node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs';
@@ -23,8 +26,10 @@ function verify(text) {
   assert.equal(condition(text, 'wall-render-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true");
   assert.equal(condition(text, 'render-diagnostic'), 'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
   assert.equal(condition(text, 'network-opening-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
-  for (const name of ['validate_core','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), fullCondition);
-  for (const name of ['patch_tests','browser']) assert.equal(condition(text,name), nativeOffloadCondition);
+  assert.equal(condition(text,'validate_core'), fullCondition);
+  for (const name of ['seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), browserCondition);
+  assert.equal(condition(text,'patch_tests'), nativeOffloadCondition);
+  assert.equal(condition(text,'browser'), browserOffloadCondition);
   assert.equal(condition(text,'validate'), '${{ always() && inputs.diagnostic_only != true && (github.event_name != \'pull_request\' || github.event.pull_request.draft == false) }}');
   assert.ok(text.includes("inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || ''"));
   assert.ok(text.includes("group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}"));
@@ -59,6 +64,8 @@ function verify(text) {
 }
 function evaluate(expression, c) {
   if (expression === fullCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false);
+  if (expression === browserCondition) return c.diagnostic_only !== true && c.ciOnly !== true && c.event !== 'pull_request';
+  if (expression === browserOffloadCondition) return c.diagnostic_only !== true && c.ciOnly !== true && c.event !== 'pull_request';
   if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false) && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
   return expression.split(' && ').every(term=> {
     if(term === "github.event_name == 'workflow_dispatch'") return c.event === 'workflow_dispatch';

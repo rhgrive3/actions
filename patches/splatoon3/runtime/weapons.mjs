@@ -121,6 +121,12 @@ export function splatlingChargeCap(ink, w) {
 export function isChargerFullCharge(charge) {
   return Number.isFinite(charge) && charge >= 1;
 }
+/** A full-charge keep carried back to humanoid form, before the kept shot
+ * becomes an ordinary live charge. The squid itself is not in a stance. */
+export function chargerKeepReady(runner) {
+  const a = runner?.a;
+  return !!runner?.s3Stored && a?.weapon?.kind === 'charger' && a.form !== 'squid' && a.alive !== false;
+}
 /** #539: partial-charge movement runs from the S3 normal-side endpoint
  * (partialChargeMoveStart) to the maximum-partial endpoint
  * (partialChargeMoveEnd); true full charge uses moveSpeedFiring. Progress is
@@ -453,6 +459,7 @@ export function installWeapons(context, profile) {
     this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false; this.s3ChargerRepeat = false;
     this.s3ChargerSpent = 0; this.s3ChargerProgressiveSpend = false; this.s3ChargerHeldTime = 0;
     this.s3ChargerElapsed = null; this.s3ChargerElapsedCompensation = 0;
+    this.s3ChargerTapPending = false; this.s3ChargerTapAge = 0;
     this.s3ReleaseHold = false; this.s3HeldCharge = 0; this.s3HeldChargeT = 0; this.s3ReleaseAt = 0;
     releaseSplatlingInterrupt(this, -1);
     this.s3ChargerPostShot = 0; this.s3DualiesPostShot = 0; this.s3SloshPostShot = 0; this.s3DodgeShotPending = 0;
@@ -686,6 +693,7 @@ export function installWeapons(context, profile) {
   // Stored-charge lifetime/startup ownership from C22 is composed with #775's
   // progressive ink commitment. Paid ink is never refunded by cancel/keep.
   const cancelStored = r => {
+    r.s3ChargerTapPending = false; r.s3ChargerTapAge = 0;
     r.s3Stored = null; r.s3KeepMuzzlePending = false; r.s3KeepMuzzleFiring = false; r.charging = false; r.charge = 0; r.chargeT = 0; r.chargeDinged = false;
     r.s3ChargerSpent = 0;
     r.s3ChargerElapsed = null; r.s3ChargerElapsedCompensation = 0;
@@ -714,6 +722,27 @@ export function installWeapons(context, profile) {
     const releasedStartup = this.s3ChargerStartupT > epsilon;
     // A held ZR must not reopen a new charge during the 6F ZL-cancel recovery.
     if (this.s3ChargerCancelSwimRemaining > epsilon) return;
+    // A short press is still guaranteed to fire, but S3 releases a Charger
+    // shot only after its 8F minimum charge (Inkipedia, Splat Charger: "must
+    // charge for at least 8 frames before it can release a shot"). The press
+    // keeps charging behind the scenes until that boundary instead of being
+    // promoted to a minimum shot instantly, so tapping cannot outpace the
+    // native 8F charge + 6F recharge cycle.
+    if (this.s3ChargerTapPending) {
+      const minimum = Math.min(1, (w.minimumChargeTime ?? 8 / 60) / Math.max(epsilon, w.chargeTime));
+      const interrupted = a.form === 'squid' || a.intent.squid || inp.sub || a.specialActive ||
+        a.superJumpState || a.alive === false;
+      this.s3ChargerTapAge = (this.s3ChargerTapAge || 0) + dt;
+      if (held) { this.s3ChargerTapPending = false; this.s3ChargerTapAge = 0; }
+      else if (interrupted || this.s3ChargerTapAge > 1.5) {
+        cancelStored(this); this.s3ChargerHeldTime = 0; this.s3ChargerRepeat = false;
+        return;
+      } else if (this.charging && this.chargeT + epsilon >= minimum) {
+        this.s3ChargerTapPending = false; this.s3ChargerTapAge = 0;
+      } else {
+        inp = { ...inp, fire: true };
+      }
+    }
     // #680: retain the already-paid charge across the one fixed release frame.
     // The current progressive-payment and finite-flight owners still perform release.
     let releaseDue = false;
@@ -801,17 +830,17 @@ export function installWeapons(context, profile) {
         !a.specialActive && !a.superJumpState && a.alive !== false &&
         (this.charging || releasedStartup) && this.cooldown <= 0) {
       const minimum = Math.min(1, (w.minimumChargeTime ?? 8 / 60) / Math.max(epsilon, w.chargeTime));
-      if (!this.charging || this.chargeT + epsilon < minimum ||
-          this.s3ChargerHeldTime + epsilon < (w.minReleaseTime || 0)) {
+      if (!this.charging || this.chargeT + epsilon < minimum) {
         const missingInk = Math.max(0, w.inkMin - (this.s3ChargerSpent || 0));
         if (a.ink + epsilon < missingInk) {
           cancelStored(this); this.s3ChargerHeldTime = 0; this._empty(); return;
         }
-        a.ink = Math.max(0, a.ink - missingInk);
-        this.s3ChargerSpent = (this.s3ChargerSpent || 0) + missingInk;
-        this.s3ChargerProgressiveSpend = true;
-        this.charging = true; this.charge = Math.max(this.charge || 0, minimum);
-        this.chargeT = Math.max(this.chargeT || 0, minimum);
+        // Keep charging to the 8F boundary (see s3ChargerTapPending above).
+        // A release inside the 1F startup already spent that startup frame.
+        this.s3ChargerTapPending = true; this.s3ChargerTapAge = 0;
+        this.s3ChargerHeldGate = true;
+        inp = { ...inp, fire: true };
+      } else if (this.s3ChargerHeldTime + epsilon < (w.minReleaseTime || 0)) {
         this.s3ChargerHeldTime = Math.max(this.s3ChargerHeldTime || 0, w.minReleaseTime || 0);
       }
     }
@@ -901,7 +930,7 @@ export function installWeapons(context, profile) {
         this.s3ChargerSpent = (this.s3ChargerSpent || 0) + spent;
         this.s3ChargerProgressiveSpend = true;
       }
-      if (held && this.charging) this.s3ChargerHeldTime += dt;
+      if ((held || this.s3ChargerTapPending) && this.charging) this.s3ChargerHeldTime += dt;
       return result;
     }
 
@@ -1246,7 +1275,17 @@ export function installWeapons(context, profile) {
     if (this.lockT > 0) return moveSpeed.call(this);
     if (w.kind === 'blaster' && this.s3BlasterMoveRemaining > 1e-10 && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     if (this.charging && w.kind === 'charger' && Number.isFinite(w.moveSpeedFiring)) return chargerPartialMoveSpeed(w, this.chargeT, PLAYER.runSpeed);
+    // A resurfaced full-charge keep is still a held full charge during its
+    // fire/laser pre-delay. Walking at run speed there and then snapping to
+    // the 1.2 full-charge speed made the body and laser lurch on emergence.
+    if (chargerKeepReady(this) && Number.isFinite(w.moveSpeedFiring)) return w.moveSpeedFiring;
     return moveSpeed.call(this);
+  };
+  // The same held keep owns the aiming stance: face the aim, attack
+  // acceleration and charge pose, instead of the ordinary walking pose.
+  const firingPose = WeaponRunner.prototype.firingPose;
+  WeaponRunner.prototype.firingPose = function () {
+    return firingPose.call(this) || chargerKeepReady(this);
   };
   installSplatlingRadiusCharge(api, profile);
   installWeaponGates(api);

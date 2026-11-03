@@ -191,7 +191,8 @@ test('#572: releasing before the display threshold leaves no stale ring state', 
   hud.update();
   assert.equal(hud.ringOn(), false, 'still inside the dead period');
   a.intent.fire = false;
-  f.tick(a);
+  // A short press still charges to the 8F minimum before its release gap.
+  f.tick(a, 8);
   hud.update();
   assert.equal(a.weaponRunner.charging, false, 'authoritative release');
   assert.equal(hud.ringOn(), false, 'no stale is-charging after release');
@@ -233,7 +234,7 @@ test('#572: the whole charger reticle is hidden while a real charge is still ins
   hud2.update();
   assert.equal(hud2.delayOn(), true, 'still inside the dead period');
   a2.intent.fire = false;
-  f2.tick(a2);
+  f2.tick(a2, 8);                  // short press finishes its 8F minimum, then releases
   hud2.update();
   assert.equal(hud2.delayOn(), false, 'release clears the delay gate');
   assert.equal(hud2.ringOn(), false, 'idle Charger visibility is not gated here (#594 is a separate owner)');

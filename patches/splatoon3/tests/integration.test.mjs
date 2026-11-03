@@ -171,9 +171,13 @@ test('a sub-8F physical Charger release pays only missing minimum ink and emits 
   for(let i=0;i<7;i++)r.update(1/60,{fire:true});
   const paid=100-a.ink;
   assert.ok(paid>0 && paid<a.weapon.inkMin,'partial progressive payment precedes the short release');
+  // The release keeps charging through the 8th charge frame (S3 8F minimum),
+  // which completes the minimum payment; the 1F release gap follows.
   a.intent.fire=false;r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,0,'the existing one-tick release gap is retained');
+  assert.equal(f.shots.length,0,'the press still charges to its 8F minimum');
   assert.ok(Math.abs((100-a.ink)-a.weapon.inkMin)<1e-9,'only the unpaid minimum is added, without refund');
+  r.update(1/60,{fire:false});
+  assert.equal(f.shots.length,0,'the existing one-tick release gap is retained');
   r.update(1/60,{fire:false});
   assert.equal(f.shots.length,1);
   assert.ok(Math.abs(f.shots[0].charge-a.weapon.minimumChargeTime/a.weapon.chargeTime)<1e-9);

@@ -41,10 +41,11 @@ for (const hz of [30, 60, 120]) {
     assert.ok(t.a.pos.z > 5, 'native dash advanced beyond charge movement');
     assert.ok(t.e.hp < 1000, 'native swept contact damaged the visible enemy');
   });
-  test(`Kraken with no enemy neither advances nor jumps at ${hz}Hz`, async () => {
+  test(`Kraken that loses its target pursues the sighting without blind attacks at ${hz}Hz`, async () => {
     const t = await setup('krakenRoyale'); t.step(1 / hz);
     t.brain.target = null; const start = t.a.pos.clone(); run(t, 3, hz);
-    assert.ok(t.a.pos.distanceTo(start) < .01);
+    // It used to sit motionless for the rest of its duration.
+    assert.ok(t.a.pos.z > start.z + 2, `swam toward the last sighting: ${t.a.pos.z}`);
     assert.equal(t.events.filter(e => e.action === 'jump').length, 0);
     assert.equal(t.a.intent.fire, false); assert.equal(t.a.intent.jump, false);
   });
@@ -75,8 +76,28 @@ for (const mode of ['dead', 'ally', 'occluded', 'height', 'cliff']) test(`Kraken
   assert.equal(t.a.stats.specials, 0);
 });
 
-test('Stamp uses an admitted sub hold/release and waits for the native throw startup', async () => {
+// The target climbs out of hammer reach (a ledge): throwing is the only hit.
+async function unreachableStamp() {
+  const t = await setup('ultraStamp', 7);
+  for (let i = 0; i < 30 && !t.a.specialActive; i++) t.step();
+  assert.ok(t.a.specialActive, 'close reachable target admits the Stamp');
+  t.e.pos.set(0, 1.6, t.a.pos.z + 8);
+  return t;
+}
+test('Stamp at throwing range does not activate just to throw', async () => {
   const t = await setup('ultraStamp', 13); run(t, .5);
+  assert.equal(t.a.stats.specials, 0);
+});
+test('Stamp near a reachable target hammers toward it instead of throwing', async () => {
+  const t = await setup('ultraStamp', 7); run(t, 2);
+  assert.equal(t.a.stats.specials, 1);
+  assert.equal(t.events.filter(e => e.action === 'throw').length, 0, 'no throw while the hammer can reach');
+  assert.ok(t.events.some(e => e.action === 'swing' || e.action === 'jumpSwing'), 'native stamping swings');
+  assert.ok(t.a.pos.z > 2, `advanced on the target: ${t.a.pos.z}`);
+});
+test('Stamp uses an admitted sub hold/release and waits for the native throw startup', async () => {
+  const t = await unreachableStamp();
+  for (let i = 0; i < 90 && t.a._s3AllSpecialState?.throwAt === undefined; i++) t.step();
   assert.ok(t.a._s3AllSpecialState.throwAt > t.a._s3AllSpecialState.t);
   assert.equal(t.events.filter(e => e.action === 'throw').length, 0);
   run(t, .9);
@@ -85,7 +106,7 @@ test('Stamp uses an admitted sub hold/release and waits for the native throw sta
 });
 
 test('Stamp does not blindly release a held throw after target loss', async () => {
-  const t = await setup('ultraStamp', 13);
+  const t = await unreachableStamp();
   for (let i = 0; i < 60 && !t.a.intent.sub; i++) t.step();
   assert.equal(t.a.intent.sub, true); t.brain.target = null; run(t, .8);
   assert.equal(t.events.filter(e => e.action === 'throw').length, 0);
@@ -127,7 +148,11 @@ test('Stamp full BotBrain throw hits stationary and moving enemies through nativ
   };
   for (const [distance, speed] of [[10, 0], [14, 0], [14, 2]]) {
     const { a, b, enemy } = f.scenario('ultraStamp');
-    enemy.pos.z = distance; enemy.vel.x = speed; f.aim(a, b, enemy.pos); hits.length = 0;
+    // Admitted at hammer range, then the target escapes onto a ledge out of
+    // reach: the throw is the bot's only way to land the special.
+    for (let frame = 0; frame < 60 && !a.specialActive; frame++) f.tick(a, b);
+    assert.ok(a.specialActive, 'close target admits the Stamp');
+    enemy.pos.set(0, 1.6, a.pos.z + distance); enemy.vel.x = speed; f.aim(a, b, enemy.pos); hits.length = 0;
     for (let frame = 0; frame < 180 && !hits.some(h => h.owner === a && h.victim === enemy); frame++) {
       enemy.pos.x += speed / 60; f.tick(a, b);
     }

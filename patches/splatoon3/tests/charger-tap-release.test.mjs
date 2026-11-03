@@ -3,15 +3,32 @@ import assert from 'node:assert/strict';
 import {fixture} from './weapon-edgecases-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
 
-for(const frames of [1,2,3,7,9])test(`${frames}-tick Charger press releases one paid minimum shot`,async()=>{
+// S3: a Charger shot is released only after its 8F minimum charge. A tap is
+// still guaranteed to fire, but at the same tick as a press held to 8F:
+// 1F startup + 8F charge + 1F release gap -> emitted on tick 11.
+for(const frames of [1,2,3,7,9])test(`${frames}-tick Charger press releases one paid minimum shot after the 8F minimum`,async()=>{
  const f=await fixture({composeProductionAdapters:true}),a=f.make('charger'),r=a.weaponRunner;
- a.intent.fire=true;f.tick(a,frames);assert.equal(f.shots.length,0);
- const paid=r.s3ChargerSpent||0,ink=a.ink;
- a.intent.fire=false;f.tick(a);assert.equal(f.shots.length,0,'ordinary one-tick release gap');
- assert(Math.abs(r.s3ChargerSpent-a.weapon.inkMin)<1e-9);
- assert(Math.abs(a.ink-(ink-(a.weapon.inkMin-paid)))<1e-9,'only missing minimum ink is charged');
- f.tick(a);assert.equal(f.shots.length,1);assert.equal(f.shots[0].charge,a.weapon.minimumChargeTime/a.weapon.chargeTime);
+ a.ink=100;a.intent.fire=true;f.tick(a,frames);assert.equal(f.shots.length,0);
+ a.intent.fire=false;let shotTick=0,holdTick=0,paid=NaN;
+ for(let t=frames+1;t<=20&&!shotTick;t++){f.tick(a);if(!holdTick&&r.s3ReleaseHold){holdTick=t;paid=100-a.ink;}if(f.shots.length)shotTick=t;}
+ assert.equal(holdTick,10,'release recognised after the 8th charge frame');
+ assert.equal(shotTick,11,'tap fires at the native 8F minimum boundary');
+ assert(Math.abs(paid-a.weapon.inkMin)<1e-9,'exactly the minimum ink is paid');
+ assert.equal(f.shots[0].charge,a.weapon.minimumChargeTime/a.weapon.chargeTime);
  f.tick(a,60);assert.equal(f.shots.length,1,'released input cannot auto-repeat');
+});
+test('mashing ZR cannot outpace the 8F charge + 6F recharge cycle',async()=>{
+ for(const [hold,gap] of [[1,1],[1,2],[2,1],[2,3]]){
+  const f=await fixture({composeProductionAdapters:true}),a=f.make('charger');a.ink=100;
+  const times=[];let t=0;
+  while(t<300){
+   a.intent.fire=true;for(let i=0;i<hold;i++){f.tick(a);t++;a.ink=100;if(f.shots.length>times.length)times.push(t);}
+   a.intent.fire=false;for(let i=0;i<gap;i++){f.tick(a);t++;a.ink=100;if(f.shots.length>times.length)times.push(t);}
+  }
+  const gaps=times.slice(1).map((x,i)=>x-times[i]);
+  assert(gaps.length>10,`${hold}/${gap}: mashing still fires`);
+  assert(Math.min(...gaps)>=15,`${hold}/${gap}: minimum shot interval ${Math.min(...gaps)}F >= 1F gap + 6F recharge + 8F charge`);
+ }
 });
 test('minimum tap cannot bypass empty ink, squid, sub, input cancellation or reset',async()=>{
  for(const stop of ['empty','squid','sub','cancel','reset']){

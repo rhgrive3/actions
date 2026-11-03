@@ -149,9 +149,16 @@ test('#675 pre-minimum physical taps emit one authorized, paid minimum shot afte
     for (let i = 0; i < heldFrames; i++) f.tick(actor);
     assert.equal(f.shots.length, 0, 'held startup / charging never fires');
     actor.intent.fire = false;
-    f.tick(actor);
-    const paidOnRelease = 100 - actor.ink;
-    assert.equal(f.shots.length, 0, 'one release-gap frame for ' + heldFrames + 'F tap');
+    // S3 releases only after the 8F minimum charge: the tap keeps charging
+    // through charge frame 8 (tick 9), recognises the release on tick 10 and
+    // emits on tick 11, whatever the tap length.
+    let shotTick = 0, paidOnRelease = NaN;
+    for (let t = 2 + heldFrames; t <= 16 && !shotTick; t++) {
+      f.tick(actor);
+      if (Number.isNaN(paidOnRelease) && actor.weaponRunner.s3ReleaseHold) paidOnRelease = 100 - actor.ink;
+      if (f.shots.length) shotTick = t;
+    }
+    assert.equal(shotTick, 11, 'minimum shot after 1F startup + 8F charge + 1F release gap for ' + heldFrames + 'F tap');
     f.tick(actor, 4);
     assert.equal(f.shots.length, 1, 'exactly one authorized ' + heldFrames + 'F minimum shot');
     const minimum = (actor.weapon.minimumChargeTime ?? 8 / 60) / actor.weapon.chargeTime;
