@@ -8,6 +8,10 @@ function session(myId, wire) {
   return { myId, hostId: 'B', isHost: myId === 'B', _members: new Set(['A', 'B']),
     tr: { broadcast(d) { wire.push(JSON.parse(JSON.stringify(d))); return true; }, sendTo() { return true; } } };
 }
+function waitTick(hz) {
+  const mark = performance.now();
+  while (performance.now() - mark < 1000 / hz || performance.now() <= mark) {}
+}
 function world() {
   const { G, THREE } = f;
   G.projectiles.clear(); G.actors = []; G.netm = null; G.time = 0;
@@ -39,6 +43,11 @@ for (const hz of [30, 60, 120]) for (const life of [0, 2]) for (const kind of ['
       w.sender._sendTick(); const baseline = w.sent.at(-1);
       G.match = w.receiver.match; G.netm = w.receiver; G.actors = [w.proxy];
       w.receiver.onMessage('A', baseline);
+      // Owner snapshots carry millisecond wall-clock stamps, and the receiver
+      // credits a debit only between two strictly later same-life snapshots.
+      // A fast runner can finish this whole case inside one millisecond, so
+      // let one real owner tick pass, as it always does between game ticks.
+      waitTick(hz);
       G.match = w.sender.match; G.netm = w.sender; G.actors = [w.source]; G.time += 1 / hz;
       if (kind === 'sensor') {
         w.source.intent.sub = true; w.source.weaponRunner.update(1 / hz, { sub: true, subReleased: false }); w.source.intent.sub = false;
