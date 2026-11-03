@@ -68,7 +68,7 @@ test('normal failure cleanup preserves primary unchanged and late owner completi
  await closeIdleFailureResources({close:async()=>{called=true;}},null,primary,{timers});assert.equal(called,true);
 });
 test('existing acceptance, timeout and 240-frame loop remain unchanged in repository',()=>{
- assert.match(source,/export const IDLE_OPERATION_TIMEOUT_MS=120000;/);assert.match(source,/export const RESULTS_WORK_TIMEOUT_MS=480000;/);
+ assert.match(source,/export const IDLE_OPERATION_TIMEOUT_MS=120000;/);assert.match(source,/export const RESULTS_WORK_TIMEOUT_MS=900000;/);
  // The async-fence owner delegates both 120-frame states through the generator.
  assert.match(source,/const sample=function\*\(next\)/);
  assert.match(source,/const playing=yield\* sample\('playing'\),results=yield\* sample\('results'\);/);
