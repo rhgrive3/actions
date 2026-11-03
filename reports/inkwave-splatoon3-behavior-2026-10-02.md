@@ -1,5 +1,13 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-11-03：統合後の CI 修正に伴う表示・音の復元（PR #1997）
+
+本家との比較で新しく一致させた挙動はない。#1981〜#1995 の統合で意図せず失われた既存挙動を戻しただけで、本家の値や仕様についての主張は増やしていない。
+
+- **武器音の壁遮蔽**：#1995 で `patches/splatoon3/runtime/audio/engine.mjs` の `playWeapon` から遅延遮蔽フック（`Symbol.for('inkwave.weapon-audio.resolve-occlusion')`）の呼び出しが落ち、壁越しの武器音が遮蔽されずに鳴っていた。両方の `play` 経路の直前で呼び出しを戻した。遮蔽量・距離減衰・音量は変えていない。本家の壁越し音の聞こえ方との比較は、引き続き未確認（実機計測なし）。
+- **ヤグラのミニマップ**：Tower の進行チェックポイントに `null` が入ると、描画（`drawObjectives` の `cp?.progress`）では飛ばしているのに、描画後の再描画判定（`patches/splatoon3/runtime/ranked/minimap-cache.mjs`）が例外で止まっていた。判定も同じく飛ばすようにした。表示のみの修正で、ルール・カウント・ネットワークは変わらない。
+- 確認はロジック単独のテスト（Node）とCIのブラウザ検査のみで、本家実機との比較はしていない。
+
 ## 2026-10-30：#735 Boss雨の完全遮蔽（内部整合性の部分修正）
 
 比較対象はSplatoon 3 Ver.11.3.0のアメフラシ。ただし下方cutoff値・単位対応は未確認で、既存のcloudY−0.8／reach12を本家値とは扱わない。INKWAVE main `d187b0d6` の実Boss/Level/Physicsでは、固体屋根で垂直rayと通常Actor雨が止まってもBossに雨damageが残る。
