@@ -86,7 +86,8 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const read=p=>fs.readFileSync(path.join(root,p),'utf8');
  const raw=read('inkwave-public/src/game/minimap.js'),runtime=read('patches/splatoon3/runtime/minimap-dirty.mjs').replace(/export /g,'');
  const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('Minimap source anchor mismatch');return s.replace(a,b);};
- const compose=adapt=>adaptMinimapResources('src/game/minimap.js',adapt('src/game/minimap.js',raw,once)).replace("import { G, on } from '../core/ctx.js';",'').replace("import { SPECIALS, SUB } from '../config.js';",'').replace('export class Minimap','class Minimap');
+ const compose_=(adapt,source)=>adaptMinimapResources('src/game/minimap.js',adapt('src/game/minimap.js',source,once)).replace("import { G, on } from '../core/ctx.js';",'').replace("import { SPECIALS, SUB } from '../config.js';",'').replace('export class Minimap','class Minimap');
+ const compose=adapt=>compose_(adapt,raw);
  const sources={baseline:compose(baseline),candidate:compose(candidate)};
  const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
  if(hash(read('patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'))!=='6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1')throw Error('Baseline minimap adapter binding mismatch');
@@ -100,8 +101,38 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const clockEpoch=admitMinimapClockEpoch(sourceHashes,manifest),currentClock=clockEpoch!=='legacy-composite-credit';
  // Preserve both legacy owners byte-for-byte. Only this separately sealed
  // two-hunk presentation epoch supplies the emitted comparison's current clock.
- sources.clockBaseline=currentClock?projectMinimapUpdateClock(sources.baseline,'baseline'):sources.baseline;
- sources.clockCandidate=currentClock?projectMinimapUpdateClock(sources.candidate,'candidate'):sources.candidate;
+ // The clock fixture seals the composed owners that preceded the reviewed #1995
+ // MAP3 projection hunks (scripts/fixtures/inkwave-minimap-map3-epoch-20261101.json).
+ // Project the clock on those exact preceding owners, prove the MAP3 hunks
+ // reapply to the actual composed owner byte-for-byte, then carry them over.
+ const map3=JSON.parse(read('scripts/fixtures/inkwave-minimap-map3-epoch-20261101.json'));
+ const map3Current=hash(raw)===map3.currentSHA256;
+ let map3Raw=raw;
+ if(map3Current){
+  for(const {current,prior,label} of map3.hunks){if(map3Raw.split(current).length!==2)throw Error('Minimap MAP3 epoch requires one exact '+label);map3Raw=map3Raw.replace(current,prior);}
+  if(hash(map3Raw)!==map3.beforeSHA256)throw Error('Minimap MAP3 epoch inverse mismatch');
+ }
+ // An adapter may rewrite a shared leading context line; drop only identical
+ // leading lines until the hunk is unique. The full-owner equality below still binds the result.
+ const reapplyMap3=source=>{
+  for(let {current,prior,label} of map3.hunks){
+   while(source.split(prior).length!==2){
+    const cut=prior.indexOf('\n')+1;
+    if(!cut||current.slice(0,cut)!==prior.slice(0,cut)||cut>=prior.length)throw Error('Minimap MAP3 composed hunk mismatch: '+label);
+    prior=prior.slice(cut);current=current.slice(cut);
+   }
+   source=source.replace(prior,current);
+  }
+  return source;
+ };
+ const clockOwner=(owner,adapt)=>{
+  if(!map3Current)return projectMinimapUpdateClock(sources[owner],owner);
+  const preceding=compose_(adapt,map3Raw);
+  if(reapplyMap3(preceding)!==sources[owner])throw Error('Minimap MAP3 composed owner mismatch: '+owner);
+  return reapplyMap3(projectMinimapUpdateClock(preceding,owner));
+ };
+ sources.clockBaseline=currentClock?clockOwner('baseline',baseline):sources.baseline;
+ sources.clockCandidate=currentClock?clockOwner('candidate',candidate):sources.candidate;
  // Match the pinned *current build inputs*, not stale pre-migration hashes.
  const sourceKeys={
    'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',

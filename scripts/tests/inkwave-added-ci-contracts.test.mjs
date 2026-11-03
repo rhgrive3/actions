@@ -93,7 +93,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
  [sparseFixtureFile]:'83f64c3958ed05d5622fc031a85c48a7f43eb585b8fd48e33419d3f6bc7078e5',
- 'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
+ 'scripts/tests/continuous-browser-video.test.mjs':'73b306fdb8945f9a81ba49262de1452aab099fdd5e59cc4f9aae6fc154dcef79',
 };
 // Re-reviewed touch CI delta: crypto import, test title/unused-install expectation,
 // and one workflow-restoration negative control only. Reverse the exact reviewed
@@ -221,8 +221,11 @@ test('queue sparse CI authoring exclusions remain literal fixture data and rejec
 
 const volumeFixtureFile='scripts/tests/continuous-browser-video.test.mjs';
 const volumeSparseLiteral='          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n';
+// Re-reviewed 2026-11-03: assertUnchangedDefaultVolumeJob only strips the three
+// exact #1990 ink-volume path triggers (coverage) before the original checks;
+// no sparse literal, filesystem access or new consumer was added.
 const volumeConsumerPins={
- assertUnchangedDefaultVolumeJob:'21c5260329a72134ccd25df81c597362ffd5e03373155e79c2fb0c44df7f5c0f',
+ assertUnchangedDefaultVolumeJob:'af1f3d54a228873e16d822bd5066dcae3f6bb4e4a6b9165654f3f3cf3736ef57',
  sparseNegativeControls:'536b2a51855b47a205fb9ea08bf4b78e1b0df743916715d47fba74a85c4fca7a',
  workflowNegativeControls:'2090dd9f7cc10b7fcd94c91e3d53bdef2dfc3c3fd160348145d19c07eff3ccc5',
 };

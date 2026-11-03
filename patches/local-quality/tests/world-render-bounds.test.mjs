@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isDeepStrictEqual } from 'node:util';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { loadNative } from './prop-retention-fixture.mjs';
@@ -30,9 +31,19 @@ function environment(patched, trial = false) {
     time: 0, moored: [], _foamShapes: [], _buildFoamField() {}, lhBeam: new THREE.Object3D() });
   env._initUniforms(); env._buildScenery(); env._buildLife(); return env;
 }
-function bufferSnapshot(geo) {
+// A later reviewed owner keeps the far terrain indexed instead of expanding it;
+// rendered vertices are compared in their expanded (non-indexed) form.
+function bufferSnapshot(source) {
+  const geo = source.index ? source.toNonIndexed() : source;
   return Object.fromEntries([...Object.entries(geo.attributes).map(([key, attr]) => [key, Buffer.from(attr.array.buffer, attr.array.byteOffset, attr.array.byteLength)]),
     ['index', geo.index ? Buffer.from(geo.index.array.buffer, geo.index.array.byteOffset, geo.index.array.byteLength) : null]]);
+}
+// Node's diff of ~1.6 MB Buffers exhausts CI runner memory before reporting
+// (shard killed with a shutdown signal); report only the differing keys.
+function sameBuffers(actual, expected, label = 'geometry') {
+  if (isDeepStrictEqual(actual, expected)) return;
+  const keys = [...new Set([...Object.keys(actual), ...Object.keys(expected)])].filter(k => !isDeepStrictEqual(actual[k], expected[k]));
+  assert.fail(`${label}: buffers differ in ${keys.map(k => `${k} (${actual[k]?.length}/${expected[k]?.length} bytes)`).join(', ')}`);
 }
 function verifyNativeChildren(root, original, viewCount = 0) {
   const children = root.children.slice(viewCount);
@@ -42,7 +53,7 @@ function verifyNativeChildren(root, original, viewCount = 0) {
     assert.equal(child.name, before.name);
     assert.equal(child.isInstancedMesh, before.isInstancedMesh);
     assert.equal(child.count, before.count);
-    assert.deepEqual(bufferSnapshot(child.geometry), bufferSnapshot(before.geometry));
+    sameBuffers(bufferSnapshot(child.geometry), bufferSnapshot(before.geometry), child.name);
     assert.deepEqual(child.position.toArray(), before.position.toArray());
     assert.deepEqual(child.quaternion.toArray(), before.quaternion.toArray());
     assert.deepEqual(child.scale.toArray(), before.scale.toArray());
@@ -105,8 +116,8 @@ function assertVerticesEnclosed(mesh, time, kind = '') {
 test('real scenery preserves source bytes/RNG; the rejected static trial alone creates bounded shared-buffer views', t => {
   const before = environment(false), after = environment(true), trial = environment(true, true), counts = {};
   for (const name of ['terrain', 'staticScenery', 'city']) {
-    assert.deepEqual(bufferSnapshot(after[name].geometry), bufferSnapshot(before[name].geometry));
-    assert.deepEqual(bufferSnapshot(trial[name].geometry), bufferSnapshot(before[name].geometry));
+    sameBuffers(bufferSnapshot(after[name].geometry), bufferSnapshot(before[name].geometry), name);
+    sameBuffers(bufferSnapshot(trial[name].geometry), bufferSnapshot(before[name].geometry), 'trial '+name);
     verifyNativeChildren(after[name], before[name]);
     counts[name] = verifyRanges(trial[name], before[name]);
     assert.equal(after[name].isMesh,true,'production retains its original material bucket');
