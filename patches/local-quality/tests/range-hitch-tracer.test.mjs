@@ -118,6 +118,41 @@ test('native count-only wrapper preserves exceptions and restores the exact sour
  assert.equal(source._capsuleDistance,original);
 });
 
+test('native ray tracer samples real callsites without stacking a stack trace on every query',()=>{
+ let clock=0;
+ const source={queryCount:0,triangleTests:0,ray(){this.queryCount++;this.triangleTests+=3;return null;}};
+ const driveRays=()=>{for(let i=0;i<1025;i++)source.ray({x:i,y:0,z:0},{x:0,y:-1,z:0},10);};
+ const game={_frame(){driveRays();}};
+ const env={__G:{level:{native:true,triangleWorld:source}}};
+ const tracer=installHitchTracer(game,{env,now:()=>clock});
+ try{
+  const stamp=clock;game._frame();tracer.record(stamp,2,{frameRateHz:60});
+  const row=tracer.snapshot().latest;
+  assert.equal(row.methodCalls['source-ray'],1025);
+  assert.deepEqual(row.sourceBVH,{queries:1025,triangleTests:3075});
+  const samples=row.sourceCallers['source-ray'];
+  assert.ok(samples?.length);
+  assert.ok(samples.some(item=>/driveRays/.test(item.caller)),
+    'sampled stack must identify the function that repeatedly requested native rays');
+  assert.ok(samples.every(item=>item.sampleStride===512));
+ }finally{tracer.dispose();}
+ assert.strictEqual(source.ray.toString().includes('this.queryCount++'),true);
+});
+
+test('frame trace flags contradictory frame-work clocks instead of blaming CPU owners',()=>{
+ let clock=0;
+ const game={_frame(){clock+=344;}};
+ const tracer=installHitchTracer(game,{now:()=>clock});
+ try{
+  const stamp=clock;game._frame(1/60);tracer.record(stamp,40,{frameRateHz:60});
+  const row=tracer.snapshot().latest;
+  assert.equal(row.workTiming.wrapperMeasuredMs,344);
+  assert.equal(row.workTiming.frameOwnerReportedMs,40);
+  assert.equal(row.workTiming.consistent,false);
+  assert.equal(row.cause,'instrumentation timing mismatch');
+ }finally{tracer.dispose();}
+});
+
 function fakeWebGL() {
   const events = [];
   let ready = false, disjoint = false, qid = 0;
