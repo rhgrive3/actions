@@ -41,7 +41,9 @@ export function prepareTitleDemoFrame(game, G, dt, env = globalThis) {
     state.motionQuery = typeof env.matchMedia === 'function'
       ? env.matchMedia('(prefers-reduced-motion: reduce)') : null;
   }
-  const reduced = !!state.motionQuery?.matches;
+  // A title with opaque key art (staticBackdrop) needs one captured frame,
+  // exactly like reduced motion; the live demo underneath is never visible.
+  const reduced = !!state.motionQuery?.matches || game.menus?._scr?.staticBackdrop === true;
   const hidden = !!env.document?.hidden;
   const w = env.innerWidth || 0, h = env.innerHeight || 0, dpr = env.devicePixelRatio || 1;
   const invalidated = entered || state.match !== game.match || state.reduced !== reduced ||

@@ -13,6 +13,7 @@ import { adaptViewportCache } from '../patches/local-quality/viewport-cache-adap
 import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
 import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
 import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
+import { adaptUiFeedback20261104 } from '../patches/local-quality/ui-feedback-20261104-adapter.mjs';
 import { adaptLandscapeWeaponDrawer } from '../patches/local-quality/landscape-weapon-drawer-adapter.mjs';
 import { adaptLandscapeHome } from '../patches/local-quality/landscape-home-adapter.mjs';
 import { adaptLandscapeWeapons } from '../patches/local-quality/landscape-weapons-adapter.mjs';
@@ -201,6 +202,9 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptBlasterReticle(rel, code, replaceOnce);
   // Owner-supplied match music/cues; anchors are the final composed text.
   code = adaptMatchRecordings(rel, code, replaceOnce);
+  // Owner feedback (menus, icons, result music hand-off, clam chime) after
+  // every other menu/UI pass; anchors are the final composed text.
+  code = adaptUiFeedback20261104(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
   code = adaptViewportCache(rel, code);
   return code;

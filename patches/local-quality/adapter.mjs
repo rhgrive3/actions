@@ -117,6 +117,7 @@ const IDENTITY_FILES = [
   'menu-card-layout-adapter.mjs',
   'title-demo-budget-adapter.mjs',
   'title-presentation-adapter.mjs',
+  'ui-feedback-20261104-adapter.mjs',
   'landscape-weapon-drawer-adapter.mjs',
   'landscape-home-adapter.mjs',
   'landscape-weapons-adapter.mjs',

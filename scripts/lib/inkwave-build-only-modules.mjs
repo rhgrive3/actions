@@ -12,6 +12,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/menu-card-layout-adapter.mjs',
   'patches/local-quality/title-demo-budget-adapter.mjs',
   'patches/local-quality/title-presentation-adapter.mjs',
+  'patches/local-quality/ui-feedback-20261104-adapter.mjs',
   'patches/network-replication/storm-device-contact-adapter.mjs',
   'patches/network-replication/queue-network-20261030-adapter.mjs',
   'patches/local-quality/queue-bots-20261030-adapter.mjs',

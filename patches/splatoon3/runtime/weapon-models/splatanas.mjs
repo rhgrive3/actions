@@ -121,6 +121,14 @@ function decavitator(d) {
 // ------------------------------------------------------------------------------------------ motion
 // swing durations (s): weak / charge, the WeakSwingFrame / ChargeSwingFrame values at 60 fps
 const SABER = { 's3-saber-normal': { tap: 26 / 60, full: 22 / 60 }, 's3-saber-lite': { tap: 16 / 60, full: 22 / 60 }, 's3-saber-heavy': { tap: 30 / 60, full: 32 / 60 } };
+// Wave emission (s) after the swing starts: Weak/ChargeSwingShotBulletFrame and
+// ChargeSwingStepShotBulletFrame (S3 11.3.0 SwingParam). The blade passes the
+// body centre on this frame, so the drawn slash and the emitted wave agree.
+const SABER_SHOT = { 's3-saber-normal': { tap: 9 / 60, full: 6 / 60, step: 18 / 60 }, 's3-saber-lite': { tap: 6 / 60, full: 6 / 60, step: 17 / 60 }, 's3-saber-heavy': { tap: 12 / 60, full: 23 / 60, step: 37 / 60 } };
+// Pose calibration (INKWAVE, not recovered animation data): a short cock-back,
+// a fast sweep centred on the shot frame, then a held follow-through.
+const SWING_POSE = Object.freeze({ cock: 0.06, sweepBefore: 0.045, sweepAfter: 0.05, yaw: 1.3, chest: 0.42, spine: 0.22, recover: 0.16 });
+const easeOut = (t) => 1 - (1 - t) * (1 - t) * (1 - t);
 const state = new WeakMap();
 function sabState(ch) { let m = state.get(ch); if (!m) state.set(ch, m = { age: 99, full: false, dur: 0.3, was: false, chg: 0, raise: 0, side: 1, k: 0 }); return m; }
 export function sabreSnapshot(ch) { const m = state.get(ch); return m ? { age: m.age, full: m.full, raise: m.raise, k: m.k, side:m.side, serial:m.serial, horizontal:m.horizontal, yaw:m.yaw, pitch:m.pitch } : null; }
@@ -144,6 +152,8 @@ export function FAMILY_POSE(ch, dt, s, C) {
     m.age=Number.isFinite(swing?.ageOffset)?swing.ageOffset:0;m.full=swing?swing.key==='saber-vertical':m.chg>.97;
     m.dur=Number.isFinite(swing?.duration)?swing.duration:m.full?cfg.full:cfg.tap;
     m.side=swing?(swing.ordinal%2===0?1:-1):-m.side;
+    const shot=SABER_SHOT[weaponId];
+    m.shot=shot?(swing?.stepped?shot.step:m.full?shot.full:shot.tap):m.dur*0.4;
   }
   m.was = busy;
   m.age += dt;
@@ -151,14 +161,18 @@ export function FAMILY_POSE(ch, dt, s, C) {
   if (!busy && r) m.chg = clamp(r.charge || 0);
   m.raise = damp(m.raise, m.full && m.age < 0.1 ? 1 : charge, 18, dt);
   if (!(ch.kidForm && !ch.dance && (ch.wSub || 0) <= 0.01)) { m.k = 0; return; }
-  const P = ch.P, u = m.age / (m.dur + 0.12);       // 0..1 over the swing plus a short follow-through
+  const P = ch.P, T = SWING_POSE, t = m.age, end = m.dur + T.recover;
   let k = 0, yaw = 0, pitch = 0, lift = 0, x = 0;
-  if (u < 1) {
-    const ee = smooth((u - 0.12) / 0.4);                // sweep 12..52 % of the swing
-    k = Math.min(1, u * 8) * (1 - smooth((u - 0.6) / 0.4));
+  if (t < end) {
+    const shot = Math.max(T.sweepBefore, Number.isFinite(m.shot) ? m.shot : m.dur * 0.4);
+    const s0 = shot - T.sweepBefore, s1 = shot + T.sweepAfter;
+    // -1: cocked back, 0: blade through the centre on the shot frame, +1: follow-through
+    const sweep = t < s0 ? -smooth(t / Math.max(1e-3, Math.min(T.cock, s0))) :
+      t < s1 ? -1 + 2 * easeOut((t - s0) / (s1 - s0)) : 1;
+    k = Math.min(1, t / 0.03) * (1 - smooth((t - m.dur) / T.recover));
     m.horizontal=!m.full||(ch.weapon?.def?.modelId||ch.weaponModel)==='s3-saber-heavy';
-    if (!m.horizontal) { pitch = mix(-1.15, 0.55, ee); lift = mix(0.14, -0.05, ee); }       // raised guard → vertical chop
-    else { yaw = mix(-0.9, 0.9, ee)*m.side; x = mix(-0.08, 0.1, ee)*m.side; pitch = 0.1; }          // right → left horizontal slash
+    if (!m.horizontal) { const v = (sweep + 1) / 2; pitch = mix(-1.55, 0.75, v); lift = mix(0.2, -0.08, v); }  // raised blade → vertical chop
+    else { yaw = sweep * T.yaw * m.side; x = sweep * 0.12 * m.side; pitch = 0.08; lift = 0.04 * (1 - Math.abs(sweep)); }  // alternating wide horizontal slash
   }
   m.k = k;m.yaw=yaw;m.pitch=pitch;
   const rs = smooth(m.raise);                           // charging guard
@@ -167,7 +181,7 @@ export function FAMILY_POSE(ch, dt, s, C) {
   P[C.ANCR] += pitch * w - 1.0 * rs * (1 - w);
   P[C.ANCR + 1] += yaw * w;
   P[C.ANCR + 2] += -0.5 * rs * (1 - w);
-  P[C.CHEST + 1] += 0.3 * yaw * w; P[C.SPINE + 1] += 0.15 * yaw * w; P[C.SPINE] += 0.12 * (m.full ? pitch : 0) * w;
+  P[C.CHEST + 1] += SWING_POSE.chest * yaw * w; P[C.SPINE + 1] += SWING_POSE.spine * yaw * w; P[C.SPINE] += 0.16 * (m.horizontal ? 0 : pitch) * w;
   P[C.IKL] = 0;                                         // a splatana is a one-handed weapon
 }
 

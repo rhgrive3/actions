@@ -92,12 +92,25 @@ export function installRanked(context) {
       for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
     }
     this.rankedEffects.event(e, visualOnly);
+    if (e.kind === 'clam-pickup' || e.kind === 'clam-pass') playClamPickup(this, e);
     const kind = e.kind;
     if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
       || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
       api.emit('ranked:event', { match: this, ...e });
       if (e.kind !== 'clam-score') G.audio?.play?.(e.kind === 'overtime' ? 'ui_confirm' : 'splat_small', { volume: .6 });
     }
+  }
+  // Owner request (2026-11-04): each clam the local player picks up sounds one
+  // step higher. Scale degrees are INKWAVE presentation, not a recovered cue.
+  const CLAM_PICKUP_STEPS = [0, 2, 4, 5, 7, 9, 11, 12];
+  function playClamPickup(match, e) {
+    const local = match.local;
+    if (!local || actorId(local) !== String(e.actor)) return;
+    const inv = match.ranked?.rule?.state?.inventories?.[String(e.actor)];
+    const power = e.kind === 'power' || e.power === true || inv?.power === true;
+    const held = Number.isFinite(e.small) ? e.small : Number(inv?.small) || 0;
+    const step = power ? 14 : CLAM_PICKUP_STEPS[Math.max(0, Math.min(CLAM_PICKUP_STEPS.length - 1, held - 1))];
+    G.audio?.play?.('clam_pickup', { pitch: Math.pow(2, step / 12), volume: power ? 1 : .85 });
   }
   function playRankedEvents(events, visualOnly = false) {
     if (!this.ranked) return;

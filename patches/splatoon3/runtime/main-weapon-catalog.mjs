@@ -49,6 +49,7 @@ import { resetBloblobberYawSweep, sampleBloblobberWindupYaw, bloblobberSweepOffs
 import { catalogRollerSourcePitch, catalogUnitYawBase, catalogSlosherYawScatter,
   catalogSlosherHasSweptAim, catalogBrushNearestDue } from './catalog-source-launch.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
+import { installSplatanaWavePresentation } from './splatana-wave-presentation.mjs';
 import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
@@ -63,6 +64,8 @@ import {installNativeMainMeleeDeviceContact,publishNativeMainMeleeFrame} from '.
 // Models remain separate work. Extracted numbers do not certify Nintendo engine equivalence.
 const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
 const UNMODIFIED_MOVE_FAMILIES=Object.freeze(['roller','brush','splatana']);
+const SABER_RESERVED_PRESS=Object.freeze({fire:true,firePressed:true,sub:false,subReleased:false});
+const SABER_RESERVED_RELEASE=Object.freeze({fire:false,firePressed:false,sub:false,subReleased:false});
 const SWING_MODES=Object.freeze(['horizontal','vertical','brush']);
 const NEAREST_SPLASH_FAMILIES=Object.freeze(['shooter','splatling','dualies']);
 const SABER_DEVICE_RADIUS_IDS=Object.freeze(['sprinkler','beakon']);
@@ -343,6 +346,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   installNativeMainMeleeDeviceContact(api);
   installActorFreefallHooks(api);
   installS3ProjectileShapes(api);
+  installSplatanaWavePresentation(api);
   // #1431 presentation-only: connect raw-socket births to the same tick's drawn muzzle.
   const poseBirth = installCatalogPoseBirth(api);
   const legacyUpdate = R.update, legacyReset = R.reset, legacyBusy = R.busy, legacyMove = R.moveSpeed;
@@ -413,7 +417,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     else if (!keep) s.stored = null;
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
     s.s3SwingInterval = null;
-    s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
+    s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0; s.saberReserve = null;
     slidePaint(r,s,true);
     s.roll = null; s.slip=null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;s.turretHeld=false;s.rolls=0;
     // A hard-cancelled main never resumes its old recovery after a special,
@@ -1987,6 +1991,30 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         FreezeMax:finite(t.FreezeFrameFullCharge,15)},'Freeze',frames,15)/HZ;
     }
   }
+  // Splatana input reservation (先行入力). SwingParam.ReserveAcceptFrame is an
+  // exported S3 11.3.0 field (Lite 14F, Normal 11F, Heavy 14F). INKWAVE reads
+  // it as "a press during the last N frames of the current swing is kept":
+  // that interpretation is not recovered Nintendo code. A reserved press that
+  // is still held simply starts the normal charge when the swing ends; a tap
+  // released during the swing is replayed as one funded weak swing.
+  function saberReserve(runner,r,input,s,dt){
+    const swing=r.parameters.spl__WeaponSaberParam?.SwingParam;
+    const window=finite(swing?.ReserveAcceptFrame,0)/HZ;
+    const busy=runner.cooldown>EPS||!!s.pending;
+    if(busy){
+      const edge=!!(input.firePressed||input.fire&&!s.pressed);
+      if(edge&&window>0&&s.chargeF<=EPS&&runner.cooldown<=window+EPS)s.saberReserve={held:true};
+      if(s.saberReserve&&!input.fire)s.saberReserve.held=false;
+      charge(runner,r,input,s,dt);return;
+    }
+    const reserve=s.saberReserve;s.saberReserve=null;
+    if(reserve&&!reserve.held&&!input.fire&&s.chargeF<=EPS&&runner.a.form==='kid'){
+      charge(runner,r,SABER_RESERVED_PRESS,s,1/HZ);
+      if(s.chargeF>EPS)charge(runner,r,SABER_RESERVED_RELEASE,s,0);
+      return;
+    }
+    charge(runner,r,input,s,dt);
+  }
   function saberMeleeContact(melee,target,feet,radius,height,mark=true){
     if(melee.seen.has(target)||!feet)return false;
     const shape=melee.shape,bound=shape.bound+radius;
@@ -2474,6 +2502,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     else if(r.family==='roller'||r.family==='brush')swing(this,r,input,s,dt);
     else if(r.family==='slosher')slosh(this,r,input,s);
     else if(r.family==='brella')brella(this,r,input,s,dt);
+    else if(r.family==='splatana')saberReserve(this,r,input,s,dt);
     else charge(this,r,input,s,dt);
     if(r.family==='splatling')G.audio?.syncSpinnerCharge?.(this);
     s.frame=input.fire?s.frame+dt*HZ:0;s.pressed=!!input.fire;

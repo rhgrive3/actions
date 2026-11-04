@@ -2,6 +2,8 @@
 // confirmation delay, cancellation and screen lifetime. This presentation adds
 // no loop, timer, remote asset or renderer dependency.
 const MARKER = 'ZEVANT title presentation 20261031';
+// 20261104: owner-supplied key art replaces the live demo backdrop; the tagline
+// and the DEMO PLAY footer label are removed at the owner's request.
 const TITLE_START = '  _scr_title() {';
 const TITLE_END = '\n  // ================================================================ SCREEN: main';
 
@@ -26,6 +28,7 @@ const TITLE_METHOD = `  _scr_title() {
         html: '<svg viewBox="0 0 32 24"><path d="M2 12h26M18 2l10 10-10 10"/></svg>' }));
     const el = h('section', { class: 'iw-screen iw-title iw-launch',
       'aria-label': GAME_TITLE, onclick: () => this._titleGo() },
+      h('div', { class: 'iw-launch__art', 'aria-hidden': 'true' }),
       h('div', { class: 'iw-launch__scrim', 'aria-hidden': 'true' }),
       h('div', { class: 'iw-launch__field-lines', 'aria-hidden': 'true' }, h('i'), h('i')),
       h('header', { class: 'iw-launch__top' },
@@ -39,15 +42,13 @@ const TITLE_METHOD = `  _scr_title() {
         h('div', { class: 'iw-launch__hero' },
           h('div', { class: 'iw-launch__eyebrow', 'aria-hidden': 'true' }, h('i'), 'MAKE YOUR MARK'),
           h('h1', { class: 'iw-launch__wordmark' }, GAME_TITLE),
-          h('p', { class: 'iw-launch__tagline' }, ja ? '塗りかえろ、この一瞬を。' : 'Every move. Your territory.'),
           h('div', { class: 'iw-launch__action' }, start,
             h('p', { class: 'iw-launch__input' }, inputIcon, inputText)))),
       h('footer', { class: 'iw-launch__footer' },
         h('div', { class: 'iw-launch__motto', 'aria-hidden': 'true' },
-          h('span', null, 'INK.'), h('span', null, 'MOVE.'), h('span', null, 'REPEAT.')),
-        h('div', { class: 'iw-launch__demo' }, h('i', { 'aria-hidden': 'true' }), ja ? 'デモプレイ' : 'DEMO PLAY')));
+          h('span', null, 'INK.'), h('span', null, 'MOVE.'), h('span', null, 'REPEAT.'))));
     return {
-      el, noCursor: true,
+      el, noCursor: true, staticBackdrop: true,
       afterMount: () => { if (this._input !== 'touch') start.focus({ preventScroll: true }); },
       onInputMode: (m) => {
         inputText.textContent = pressTxt(m);
@@ -67,10 +68,19 @@ const TITLE_CSS = `
     max(var(--launch-pad-y), env(safe-area-inset-bottom)) max(var(--launch-pad-x), env(safe-area-inset-left));
   color: var(--launch-white); font-family: 'Rubik', 'IW JP Body', system-ui, sans-serif;
 }
+.iw-launch__art {
+  position: absolute; z-index: -3; inset: 0; pointer-events: none; background: #0c1626
+    url('../patches/local-quality/assets/title/title.webp') 62% 50% / cover no-repeat;
+  animation: iw-launch-art 1.1s cubic-bezier(.2,.7,.2,1) both;
+}
+@media (max-width: 1100px) and (max-height: 700px) {
+  .iw-launch__art { background-image: url('../patches/local-quality/assets/title/title-sm.webp'); }
+}
+@keyframes iw-launch-art { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
 .iw-launch__scrim {
   position: absolute; z-index: -2; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(7,13,19,.98) 0%, rgba(7,13,19,.94) 26%, rgba(7,13,19,.75) 44%, rgba(7,13,19,.12) 76%),
-    linear-gradient(0deg, rgba(7,13,19,.86), rgba(7,13,19,0) 25%, rgba(7,13,19,0) 70%, rgba(7,13,19,.7));
+  background: linear-gradient(90deg, rgba(7,13,19,.9) 0%, rgba(7,13,19,.72) 26%, rgba(7,13,19,.36) 46%, rgba(7,13,19,0) 72%),
+    linear-gradient(0deg, rgba(7,13,19,.78), rgba(7,13,19,0) 26%, rgba(7,13,19,0) 76%, rgba(7,13,19,.45));
 }
 .iw-launch__field-lines { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .iw-launch__field-lines::before {

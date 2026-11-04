@@ -124,7 +124,11 @@ test('Japanese and English titles retain readable branding and native keyboard f
 test('presentation CSS keeps native font/assets, scopes reduced motion and fits compact landscape buttons', () => {
   const css = adaptTitlePresentation('styles/ui.css', '/* existing styles */', once);
   assert.ok(css.startsWith('/* existing styles */'));
-  assert.doesNotMatch(css, /url\(|@font-face|backdrop-filter|\binfinite\b/);
+  // 20261104: the only images are the owner-supplied key art shipped with this patch.
+  const urls = [...css.matchAll(/url\('([^']+)'\)/g)].map(m => m[1]);
+  assert.deepEqual(urls, ['../patches/local-quality/assets/title/title.webp', '../patches/local-quality/assets/title/title-sm.webp']);
+  for (const url of urls) assert.ok(fs.existsSync(new URL(url.replace('../patches/local-quality/', '../'), import.meta.url)), url);
+  assert.doesNotMatch(css.replace(/url\('[^']+'\)/g, ''), /url\(|@font-face|backdrop-filter|\binfinite\b/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /\.iw-launch__start:focus-visible/);
   assert.match(css, /min-height: 48px/);
