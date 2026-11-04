@@ -40,7 +40,10 @@ export async function runFormScenario({api,weapon,pitch,deliveryAt=null,priorFul
   if(onSetup)await onSetup({a,ch,m,mesh});
   const capture=ch._captureRainmakerForm;if(capture)ch._captureRainmakerForm=function(sm){captureCalls++;return capture.call(this,sm);};
   const advance=ch.sourceMotion.advance;ch.sourceMotion.advance=function(...args){if(recording)entry=snapshot();return advance.apply(this,args);};
-  for(let i=0;i<60;i++)tick();state.barrier.active=false;for(let i=0;i<12;i++)tick();check(state.carrier==='carrier','normal pickup');
+  // The active shield is solid to bodies (and damages them), so the shielded
+  // device warms up 5 m away; the pickup then happens at the actor's spot.
+  const home=state.pos.slice();state.pos=[home[0],home[1],home[2]+5];
+  for(let i=0;i<60;i++)tick();state.pos=home;state.barrier.active=false;for(let i=0;i<12;i++)tick();check(state.carrier==='carrier','normal pickup');
   if(priorFullForm){a.intent.squid=true;for(let i=0;i<15;i++)tick();a.intent.squid=false;for(let i=0;i<15;i++)tick();}
   a.intent.fire=true;for(let i=0;i<60;i++)tick();a.intent.fire=false;
   if(deliveryAt===null){for(const p of [-1.05,0,1.15]){aim(p);a.intent.squid=true;for(let i=0;i<15;i++)tick();a.intent.squid=false;for(let i=0;i<15;i++)tick();}}
