@@ -134,7 +134,15 @@ export function installHitchTracer(game, {
   let longTasks = 0, longTaskSupported = false, observer = null;
   let gpuTimer = null, paintGpuTimer = null; const pendingEvents = [];
   const stageState = new Map();
+  const SOURCE_CALLER_SAMPLE_STRIDE = 512;
+  let nestedFrameCalls = 0;
 
+  const callerFromStack = stack => {
+    const lines = String(stack || '').split('\n').slice(1);
+    const line = lines.find(value =>
+      !/range-hitch-tracer|(?:TriangleWorld\.)?ray\s*\(|NativePhysics\.(?:raycast|los)\s*\(/.test(value));
+    return line ? line.trim().replace(/^at\s+/, '').slice(0, 220) : 'unknown';
+  };
   const getWorld = () => env?.__G || {};
   const stageOwners = () => {
     const G = getWorld();
@@ -238,6 +246,12 @@ export function installHitchTracer(game, {
         const rec = active;
         if (!rec) return original.apply(this, args);
         const countOnly = name === 'source-capsule-distance' || name === 'block-query';
+        // Stack capture is sampled 1/512 calls (plus the first call), and only
+        // for the native ray/sweep methods while the user has opted in.
+        const callIndex = (rec.calls[name] || 0) + 1;
+        const caller = (name === 'source-ray' || name === 'source-sweep') &&
+          (callIndex === 1 || callIndex % SOURCE_CALLER_SAMPLE_STRIDE === 0)
+          ? callerFromStack(new Error().stack) : null;
         const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
         if (rec && (name === 'render' || name === 'paint')) {
@@ -256,6 +270,13 @@ export function installHitchTracer(game, {
           if (gpuStarted) timer.end();
           if (rec) {
             rec.calls[name] = (rec.calls[name] || 0) + 1;
+            if (caller) {
+              const bucket = rec.sourceCallers[name] || (rec.sourceCallers[name] = Object.create(null));
+              const sample = bucket[caller] || (bucket[caller] = { samples: 0, lastQuerySize: null });
+              sample.samples++;
+              const size = name === 'source-ray' ? args[2] : args[2];
+              sample.lastQuerySize = Number.isFinite(size) ? round(size) : null;
+            }
             if (!countOnly) rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
           }
         }
@@ -319,7 +340,12 @@ export function installHitchTracer(game, {
   const wrappedFrame = function (...args) {
     if (disposed) return originalFrame.apply(this, args);
     rebind();
-    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), calls: Object.create(null), events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
+    const parentFrame = active;
+    if (parentFrame) parentFrame.nestedFrameCalls = (parentFrame.nestedFrameCalls || 0) + 1;
+    const priorActive = active;
+    const rec = { id: ++nextId, start: now(), cpu: Object.create(null), calls: Object.create(null),
+      sourceCallers: Object.create(null), nestedFrameCalls: 0,
+      events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
     // Read the existing ray/sphere-sweep counters in O(1), without graphics sync.
     // Box queries and capsule-distance work are separate opt-in method counters
     // installed above; the capsule wrapper counts calls without per-call timing.
@@ -350,7 +376,8 @@ export function installHitchTracer(game, {
           if (canonical in rec.cpu) rec.cpu[alias] = rec.cpu[canonical];
         }
       }
-      active = null;
+      active = priorActive;
+      rec.wrapperWorkMs = round(rec.end - rec.start);
       last = rec;
     }
   };
@@ -392,6 +419,18 @@ export function installHitchTracer(game, {
     last = null;
     rec.stamp = stamp; rec.workMs = round(ms); rec.targetHz = data.frameRateHz || 60;
     rec.frameGapMs = previousStamp ? round(stamp - previousStamp) : null;
+    const durationDelta = round((rec.wrapperWorkMs ?? ms) - ms);
+    const startOffset = round(rec.start - stamp);
+    const timingTolerance = Math.max(2, Math.abs(ms) * 0.05);
+    rec.workTiming = {
+      wrapperMeasuredMs: rec.wrapperWorkMs ?? null,
+      frameOwnerReportedMs: round(ms),
+      durationDeltaMs: durationDelta,
+      wrapperStartOffsetMs: startOffset,
+      nestedFrameCalls: rec.nestedFrameCalls || 0,
+      consistent: Number.isFinite(durationDelta) && Number.isFinite(startOffset) &&
+        Math.abs(durationDelta) <= timingTolerance && Math.abs(startOffset) <= 2,
+    };
     previousStamp = stamp;
     rec.scale = round(data.scale ?? game.R?.dynScale ?? 1);
     rec.mode = data.phase || 'unknown';
@@ -400,7 +439,8 @@ export function installHitchTracer(game, {
       if (task.at >= rec.start - 2 && task.at <= rec.end + 2)
         rec.longTaskMs = Math.max(rec.longTaskMs, task.ms);
     }
-    rec.cause = classify(rec);
+    rec.cause = rec.workTiming?.consistent === false
+      ? 'instrumentation timing mismatch' : classify(rec);
     current.push(rec);
     if (current.length > maxFrames) current.shift();
     const budget = 1000 / rec.targetHz;
@@ -440,6 +480,11 @@ export function installHitchTracer(game, {
     gpuCommandsMs:rec.gpuMs, gpuPaintCommandsMs:rec.gpuPaintMs, longTaskMs:round(rec.longTaskMs),
     stages:Object.fromEntries(Object.entries(rec.cpu).map(([k,v])=>[k,round(v)])),
     sourceBVH: rec.sourceBVH || null,
+    sourceCallers: Object.fromEntries(Object.entries(rec.sourceCallers || {}).map(([method, callers]) => [
+      method, Object.entries(callers).sort((a,b)=>b[1].samples-a[1].samples).slice(0,12)
+        .map(([caller,value])=>({caller,samples:value.samples,sampleStride:SOURCE_CALLER_SAMPLE_STRIDE,lastQuerySize:value.lastQuerySize}))
+    ])),
+    workTiming: rec.workTiming || null,
     sourceBVHCounterCoverage: rec.sourceBVH ? 'ray and sphere-sweep only; box/capsule work is in methodCalls' : null,
     methodCalls: { ...rec.calls },
     scopeAliases: rec.scopeAliases || null,
