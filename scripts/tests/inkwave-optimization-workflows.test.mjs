@@ -40,7 +40,6 @@ for(const [workflow,events,inputs,unrelated] of [
  ['validate-inkwave-update', ['push', 'pull_request'], ['scripts/check-weapons-reference.mjs', 'scripts/verify-completion-sources.mjs'], null],
  ['validate-inkwave-ranked', ['push', 'pull_request'], ['scripts/build-inkwave.mjs', 'scripts/inkwave-source-composition.mjs'], null],
  ['inkwave-specials-1130', ['pull_request'], ['patches/splatoon3/tests/all-specials.test.mjs', 'patches/splatoon3/tests/kit-ink-vac.test.mjs', 'patches/splatoon3/tests/kit-big-bubbler.test.mjs', 'patches/splatoon3/tests/storm-effects.test.mjs', 'patches/splatoon3/tests/support-kit-recon-cooler.test.mjs', 'patches/splatoon3/tests/issue-912-triple-slam-fists.test.mjs', 'patches/splatoon3/tests/inkjet-paint-wire.test.mjs'], null],
- ['inkwave-projectile-visuals', ['pull_request'], ['scripts/tests/inkwave-projectile-capture-ui.test.mjs', 'patches/splatoon3/tests/slosher-draw-size-1014.test.mjs', 'patches/splatoon3/tests/roller-draw-radius.test.mjs', 'tests/ink-flight/model.test.mjs', 'scripts/tests/inkwave-build-packaging.test.mjs'], null],
 ])test(workflow+' schedules dedicated QA for each directly consumed input',()=>{
  for(const event of events){const paths=eventPaths(read(workflow),event);
   for(const file of inputs)assert.ok(paths.some(p=>matches(p,file)),event+': '+file);

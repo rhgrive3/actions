@@ -32,15 +32,12 @@ for(const name of ['inkwave-pause-gpu.yml','inkwave-gameplay-resources.yml','val
     const changed=source.replace("      - '"+input+"'\n",'');assert.notEqual(changed,source);assert.throws(()=>assertPaths(name,changed));
   }
 });
-// Owner-requested manual override (bdcd4d7): push runs and default manual runs keep both barriers.
-const MANUAL_FORCE_PUBLISH="${{ github.event_name != 'workflow_dispatch' || !inputs.force_publish }}";
+// Owner decision (2026-11-04): Pages publishes main without waiting for Validate.
+// Validate still runs on the same push and owns the full regression matrix.
 function assertPagesDelegation(source,validate){
   const steps=parseValidateWorkflow(source).jobs.deploy.steps;
-  const exact=flag=>steps.map((step,index)=>({step,index})).filter(({step})=>step.run==='node scripts/ci/inkwave-pages-validation.mjs '+flag);
-  const wait=exact('--wait'),once=exact('--once');assert.equal(wait.length,1);assert.equal(once.length,1);
-  for(const {step} of [...wait,...once]){assert(step.if===undefined||step.if===MANUAL_FORCE_PUBLISH,'only the explicit manual force_publish override may skip a Validate barrier');assert.equal(step['continue-on-error'],undefined);assert.equal(step.env.GITHUB_TOKEN,'${{ secrets.GITHUB_TOKEN }}');}
   const upload=steps.findIndex(s=>s.uses?.startsWith('actions/upload-pages-artifact@')),deploy=steps.findIndex(s=>s.uses?.startsWith('actions/deploy-pages@'));
-  assert(wait[0].index<upload&&upload<once[0].index&&once[0].index<deploy,'both same-SHA validation barriers precede publication');
+  assert(upload>=0&&upload<deploy,'upload precedes deployment');
   assert.doesNotMatch(source,/--test patches\/local-quality\/tests\/\*\.test\.mjs/,'Pages deliberately delegates full source regression');
   return assertSourceSuiteCoverage(validate,'quality');
 }
@@ -49,12 +46,10 @@ function qualityCommand(args=planTestSuite('source-quality')[0].args){
   assert(args.slice(3).length>0&&args.slice(3).every(x=>x.endsWith('.test.mjs')),'only full test file operands follow the options');
   return args;
 }
-test('Pages delegates full quality coverage to mandatory Validate and retains both same-SHA publication barriers',()=>{
+test('Pages delegates full quality coverage to mandatory Validate and publishes without waiting for it',()=>{
   const source=read('pages-inkwave.yml'),validate=read('validate-inkwave-update.yml');
   const plan=assertPagesDelegation(source,validate);assert(plan.all.length>0);
-  for(const flag of ['--wait','--once'])assert.throws(()=>assertPagesDelegation(source.replace('node scripts/ci/inkwave-pages-validation.mjs '+flag,'true'),validate));
-  const guard="        if: "+MANUAL_FORCE_PUBLISH+"\n";assert(source.includes(guard));
-  for(const broader of ['        if: ${{ false }}\n','        if: ${{ github.event_name != \'push\' }}\n'])assert.throws(()=>assertPagesDelegation(source.replace(guard,broader),validate),/force_publish/);
+  assert.doesNotMatch(source,/inkwave-pages-validation|force_publish|actions: read/,'no Validate wait before publication');
   const full='        run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs\n';
   assert(validate.includes(full));
   for(const replacement of ['        run: true\n',full.trimEnd()+' --exclude patches/local-quality/tests\n'])assert.throws(()=>assertPagesDelegation(source,validate.replace(full,replacement)),/mandatory complete CPU source shards/);

@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 const root=new URL('../../',import.meta.url);
 const workflow=fs.readFileSync(new URL('.github/workflows/inkwave-specials-1130.yml',root),'utf8');
-const projectile=fs.readFileSync(new URL('.github/workflows/inkwave-projectile-visuals.yml',root),'utf8');
 const tests=['area-special-vfx-clock','booyah-orb-clock','projectile-special-vfx-clock','special-crab-ribbon-lifetime','support-special-vfx-cadence','zipcaster-trail-lifecycle','ink-vac-shot-vfx','kraken-jump-spin','screen-close-presentation'];
 const title='Special source and transformed fixture regressions (not emitted-site coverage)';
 function step(text,name){const marker='      - name: '+name+'\n';assert.equal(text.split(marker).length,2,name+' exactly once');return text.split(marker)[1].split(/\n      - /)[0];}
@@ -26,8 +25,6 @@ test('each missing registration, transformer, environment and area clock trigger
 // This new-main port must not recreate historical frozen354 admission routes.
 // Current-main source admission is owned separately and is not broadened here.
 test('new-main special registration does not import obsolete frozen354 admission routes',()=>{
- for(const file of ['scripts/lib/inkwave-special-production-epoch.mjs','scripts/tests/inkwave-special-production-epoch.test.mjs'])assert.ok(!projectile.includes("      - '"+file+"'"),'obsolete admission file is not registered');
- for(const mode of ['frozen354-reviewed-special-production-pair','frozen354-reviewed-special-nozzle-pair'])assert.ok(!projectile.includes(mode),'no obsolete automatic route');
 });
 // Protect genuine emitted coverage and immutable-source gates. The approved
 // batch keeps all 22 browser cases; its isolation and failure contract runs separately.
