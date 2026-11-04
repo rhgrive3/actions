@@ -27,12 +27,15 @@ export const OWNER_SFX = Object.freeze({
   special_charged: Object.freeze({ file: 'sfx_special_ready.mp3', gain: 0.146, seconds: 1.825, maxBytes: 96 * KB, reverb: 0.05, fallback: 'special_ready' }),
   team_wipeout: Object.freeze({ file: 'sfx_wipeout.mp3', gain: 0.112, seconds: 1.281, maxBytes: 64 * KB, reverb: 0.05, fallback: 'special_ready' }),
   clam_pickup: Object.freeze({ file: 'sfx_clam_blitz_collect.mp3', gain: 0.122, seconds: 8.758, maxBytes: 256 * KB, reverb: 0.04, slices: CLAM_SLICES }),
-  clam_throw: Object.freeze({ file: 'sfx_throw_smallfry.mp3', gain: 0.062, seconds: 1.843, maxBytes: 96 * KB, reverb: 0.04, fallback: 'bomb_throw' }),
+  // Splat Bomb pre-explosion sound: a falling whistle (≈5 kHz → 0.5 kHz) whose
+  // sweep ends at `sweepEnd`. It starts when the bomb lands and arms, offset so
+  // the sweep ends with the explosion; the bomb stops it when it is released.
+  bomb_fuse: Object.freeze({ file: 'sfx_throw_smallfry.mp3', gain: 0.085, seconds: 1.843, maxBytes: 96 * KB, reverb: 0.05, sweepEnd: 1.25, fallback: 'bomb_beep' }),
   // Looping swim bed. The ends are cross-faded into a seamless loop at decode time.
   swim: Object.freeze({ file: 'sfx_swimming_in_ink.mp3', gain: 0.186, seconds: 20.28, maxBytes: 1024 * KB, reverb: 0.03, loop: true, crossfade: 0.35 }),
 });
 // UI first: those are heard on the menu right after the first gesture.
-const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'special_charged', 'times_up', 'team_wipeout', 'clam_pickup', 'clam_throw', 'swim']);
+const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'special_charged', 'times_up', 'team_wipeout', 'bomb_fuse', 'clam_pickup', 'swim']);
 const INSTALLED = Symbol.for('inkwave.owner-sfx-recordings.v1');
 const LOAD_TIMEOUT_MS = 15000, RETRY_MS = 20000;
 const permanent = message => Object.assign(new Error(message), { permanent: true });
@@ -112,6 +115,7 @@ function recordedDef(base, spec, buffer) {
   } else {
     def.build = (v, p, o) => {
       let offset = 0, length = buffer.duration;
+      if (Number.isFinite(o?.offset) && o.offset > 0) { offset = Math.min(o.offset, buffer.duration - 0.01); length = buffer.duration - offset; }
       if (spec.slices) {
         const i = Math.max(0, Math.min(spec.slices.length - 1, Math.round(Number(o?.slice) || 0)));
         [offset, length] = spec.slices[i];
@@ -151,4 +155,16 @@ export function installOwnerSfxRecordings(AudioEngine, SFX) {
     return def.def;
   };
   P.preloadOwnerSfx = function (options) { return preloadOwnerSfx(this, options); };
+  P.ownerSfxReady = function (name) {
+    const state = this._ownerSfx;
+    return !!(OWNER_SFX[name] && this.ctx && !this.offline && state?.ctx === this.ctx && state.buffers.has(name));
+  };
+  // Splat Bomb fuse: a stoppable handle whose sweep ends after `fuseSeconds`, or
+  // null while the recording is not decoded (the caller keeps its beeps).
+  P.startOwnerBombFuse = function (pos, fuseSeconds) {
+    if (!this.ownerSfxReady('bomb_fuse')) return null;
+    const offset = Math.max(0, OWNER_SFX.bomb_fuse.sweepEnd - (Number(fuseSeconds) || 0));
+    const handle = this.loop('bomb_fuse', { pos, volume: 1, offset });
+    return handle?.stop ? handle : null;
+  };
 }
