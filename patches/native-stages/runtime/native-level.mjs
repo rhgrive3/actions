@@ -27,6 +27,8 @@ const UNDERLAY_PARALLEL = 0.9;
 function* classifyInkUnderlays(level, data) {
   const world = level?.triangleWorld, m = data?.manifest, V = data?.vertices, I = data?.indices, face = data?.triangleFace;
   if (!world || !m?.objects || !V || !I || !face || typeof world.ray !== 'function') return 0;
+  // No source triangle means nothing to hug, and an empty BVH has no traversable root.
+  if (!(world.triangleCount > 0) || !face.some(f => f >= 0)) return 0;
   const normals = world.normals, O = new THREE.Vector3(), D = new THREE.Vector3();
   let marked = 0, work = 0;
   for (const o of m.objects) {

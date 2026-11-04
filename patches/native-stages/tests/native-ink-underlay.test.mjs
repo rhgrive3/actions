@@ -67,3 +67,18 @@ test('display-only decals on paintable surfaces are drawn under the ink overlay;
     console.log(JSON.stringify({ objects: marked.map(o => o.name.replace(/^Fld_Yunohana_/, '').slice(0, 32)), underTriangles: under / 3, sampledArea: +area.toFixed(1) }));
   } finally { display.dispose(); }
 });
+
+test('a stage without source triangles skips decal classification (empty BVH)', async () => {
+  const f = await fixture({ fullRuntime: true, extraExports: `
+    export { NativeLevel } from './patches/native-stages/runtime/native-level.mjs';` });
+  // The shape the native recovery QA prepares: one display-only triangle, no collision.
+  const manifest = { schema: 1, id: 'empty', bounds: { minX: -4, maxX: 4, minZ: -4, maxZ: 4 }, spawnPads: [[-3, 1, 0], [3, 1, 0]], spawnBarrier: 0, faces: [], gridCells: 0,
+    geometry: { vertices: 3, triangles: 1, collisionTriangles: 0 },
+    objects: [{ name: 'prepared-triangle', active: true, collidable: false, material: 'test', vo: 0, vc: 3, io: 0, ic: 3 }], materials: { test: { tint: '#3987df' } } };
+  const data = { manifest, vertices: new Float32Array([-2,0,-2,0,1,0,0,0,2,0,-2,0,1,0,1,0,0,0,2,0,1,0,.5,1]), indices: new Uint32Array([0,1,2]),
+    triangles: new Float32Array(), normals: new Float32Array(), flags: new Uint32Array(), objectIds: new Uint32Array(), nodes: new Float32Array([-4,0,-4,4,0,4,0,0]),
+    order: new Uint32Array(), triangleFace: new Int32Array(), mask: new Uint8Array() };
+  const level = new f.NativeLevel(data);
+  assert.equal(level.native, true);
+  assert.equal(manifest.objects[0].inkUnderlayMask ?? null, null);
+});
