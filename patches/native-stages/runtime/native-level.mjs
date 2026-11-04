@@ -24,7 +24,7 @@ const UNDERLAY_GAP = 0.015;
 const UNDERLAY_PARALLEL = 0.9;
 
 /** Generator: sets `o.inkUnderlayMask` (Uint8Array per display triangle, or null). */
-export function* classifyInkUnderlays(level, data) {
+function* classifyInkUnderlays(level, data) {
   const world = level?.triangleWorld, m = data?.manifest, V = data?.vertices, I = data?.indices, face = data?.triangleFace;
   if (!world || !m?.objects || !V || !I || !face || typeof world.ray !== 'function') return 0;
   const normals = world.normals, O = new THREE.Vector3(), D = new THREE.Vector3();
