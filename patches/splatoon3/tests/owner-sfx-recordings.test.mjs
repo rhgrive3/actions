@@ -44,7 +44,8 @@ function fakeContext() {
 }
 function engineClass(SFX) {
   class Engine {
-    constructor(ctx) { this.ctx = ctx; this.offline = false; }
+    constructor(ctx) { this.ctx = ctx; this.offline = false; this.loops = []; }
+    loop(name, o) { const d = this._def(name), v = fakeVoice(); d.build(v, 1, o); const h = { name, o, v, stop(f) { h.stopped = f; } }; this.loops.push(h); return h; }
     init() { return this; }
     _def(name) { return SFX[name]; }
   }
@@ -64,7 +65,7 @@ function fakeVoice() {
 
 test('synthesized cue until decoded, then a recorded definition with the base voice policy', async () => {
   const synth = (n) => ({ gain: 0.2, max: 3, minGap: 0.03, build() { return n; } });
-  const SFX = { ui_hover: synth('hover'), special_ready: synth('ready'), bomb_throw: synth('throw'), clam_pickup: synth('clam'), swim: { gain: 0.18, max: 2, loop() {} } };
+  const SFX = { ui_hover: synth('hover'), special_ready: synth('ready'), bomb_beep: synth('beep'), bomb_throw: synth('throw'), clam_pickup: synth('clam'), swim: { gain: 0.18, max: 2, loop() {} } };
   const ctx = fakeContext(), sizes = {};
   ctx.durations = new Map();
   let size = 2000;
@@ -75,7 +76,7 @@ test('synthesized cue until decoded, then a recorded definition with the base vo
   // New names alias their synthesized fallback.
   assert.equal(SFX.team_wipeout, SFX.special_ready);
   assert.equal(SFX.special_charged, SFX.special_ready);
-  assert.equal(SFX.clam_throw, SFX.bomb_throw);
+  assert.equal(SFX.bomb_fuse, SFX.bomb_beep);
   // Not decoded: the synthesized definition, and the load starts.
   assert.equal(e._def('ui_hover'), SFX.ui_hover);
   await loadOwnerSfx(e, 'ui_hover');
@@ -94,6 +95,16 @@ test('synthesized cue until decoded, then a recorded definition with the base vo
   const clam = e._def('clam_pickup'), cv = fakeVoice();
   clam.build(cv, 2, { slice: 3 }); clam.build(cv, 1, { slice: 8 }); clam.build(cv, 1, { slice: 99 });
   assert.deepEqual(cv.calls.map(c => [c.offset, +(c.t1 - c.t0).toFixed(3)]), [[3, 1], [8, 0.758], [8, 0.758]]);
+  // Splat Bomb pre-explosion sound: none until decoded (the caller keeps its
+  // beeps), then a stoppable voice offset so the falling sweep ends at the blast.
+  assert.equal(e.startOwnerBombFuse({ x: 1, y: 0, z: 2 }, 1), null);
+  await loadOwnerSfx(e, 'bomb_fuse');
+  const fuse = e.startOwnerBombFuse({ x: 1, y: 0, z: 2 }, 1);
+  assert.equal(fuse.name, 'bomb_fuse'); assert.deepEqual(fuse.o.pos, { x: 1, y: 0, z: 2 });
+  const fc = fuse.v.calls[0];
+  assert.ok(Math.abs(fc.offset - (OWNER_SFX.bomb_fuse.sweepEnd - 1)) < 1e-9);
+  assert.ok(Math.abs(fc.t1 - fc.t0 - (OWNER_SFX.bomb_fuse.seconds - fc.offset)) < 1e-9);
+  assert.equal(e.startOwnerBombFuse(null, 3).v.calls[0].offset, 0, 'a longer fuse starts from the top');
   // The swim bed loops seamlessly, starts at a varied offset and follows speed mildly.
   await loadOwnerSfx(e, 'swim');
   const swim = e._def('swim'), sv = fakeVoice();
@@ -132,4 +143,8 @@ test('composed sources install the recordings and route only the gauge-full cue'
   const main = adaptBuildSource('src/main.js', read('src/main.js'));
   assert.equal((main.match(/play\('special_charged'\)/g) || []).length, 1);
   assert.match(main, /play\('times_up'\)/);
+  const weapons = adaptBuildSource('src/game/weapons.js', read('src/game/weapons.js'));
+  assert.equal((weapons.match(/b\.s3FuseSfx = G\.audio\?\.startOwnerBombFuse\?\.\(b\.pos, b\.fuse\) \|\| null; if \(!b\.s3FuseSfx\) G\.audio\?\.play\('bomb_beep'/g) || []).length, 1);
+  assert.equal((weapons.match(/if \(!b\.s3FuseSfx && G\.camera/g) || []).length, 1);
+  assert.match(weapons, /_releaseBomb\(b\) \{\n    if \(b\?\.s3FuseSfx\) \{ b\.s3FuseSfx\.stop\(0\.03\); b\.s3FuseSfx = null; \}/);
 });

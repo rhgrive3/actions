@@ -93,7 +93,6 @@ export function installRanked(context) {
     }
     this.rankedEffects.event(e, visualOnly);
     if (e.kind === 'clam-pickup' || e.kind === 'clam-pass') playClamPickup(this, e);
-    if (e.kind === 'clam-throw') playClamThrow(this, e);
     const kind = e.kind;
     if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
       || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
@@ -119,15 +118,6 @@ export function installRanked(context) {
     const index = Math.max(0, Math.min(CLAM_PICKUP_STEPS.length - 1, held - 1));
     const step = power ? 14 : CLAM_PICKUP_STEPS[index];
     G.audio?.play?.('clam_pickup', { pitch: Math.pow(2, step / 12), volume: power ? 1 : .85, slice: powerClam ? CLAM_PICKUP_STEPS.length : index });
-  }
-  // Owner-recorded throw (2026-11-04): the local thrower hears it in 2D, other
-  // throws are positioned at the release point.
-  function playClamThrow(match, e) {
-    const local = match.local, own = !!local && actorId(local) === String(e.actor);
-    const p = Array.isArray(e.pos) ? e.pos : null;
-    const pos = !own && p && p.every(Number.isFinite) ? { x: p[0], y: p[1], z: p[2] } : undefined;
-    if (!own && !pos) return;
-    G.audio?.play?.('clam_throw', { pos, volume: own ? 1 : .8 });
   }
   function playRankedEvents(events, visualOnly = false) {
     if (!this.ranked) return;
