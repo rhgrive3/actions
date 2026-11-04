@@ -32,7 +32,7 @@ export function flushTeamWipeHud(hud,current,tr=x=>x){
  // Both teams can drop in one simulation tick. Own-team danger has priority;
  // the event producer still reports both transitions for independent consumers.
  const own=!!(s.pending&(1<<me.team));s.pending=0;
- hud._callout('WIPEOUT!!!',tr(own?'Your whole team is splatted':'The whole team is splatted'),true,own?'defeat_jingle':'special_ready');
+ hud._callout('WIPEOUT!!!',tr(own?'Your whole team is splatted':'The whole team is splatted'),true,'team_wipeout');
  const el=hud.callouts.lastElementChild||hud.callouts.children?.[hud.callouts.children.length-1];
  el?.classList.add(own?'is-own-wipeout':'is-enemy-wipeout');
 }
