@@ -93,6 +93,7 @@ export function installRanked(context) {
     }
     this.rankedEffects.event(e, visualOnly);
     if (e.kind === 'clam-pickup' || e.kind === 'clam-pass') playClamPickup(this, e);
+    if (e.kind === 'clam-throw') playClamThrow(this, e);
     const kind = e.kind;
     if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
       || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
@@ -101,16 +102,32 @@ export function installRanked(context) {
     }
   }
   // Owner request (2026-11-04): each clam the local player picks up sounds one
-  // step higher. Scale degrees are INKWAVE presentation, not a recovered cue.
+  // step higher. The owner's recording holds one tone per step (slice 0..7 =
+  // 1st..8th clam, the 8th completing a Power Clam; slice 8 = Power Clam
+  // pickup); the pitch is only for the synthesized fallback. INKWAVE
+  // presentation, not a recovered Splatoon 3 cue.
   const CLAM_PICKUP_STEPS = [0, 2, 4, 5, 7, 9, 11, 12];
   function playClamPickup(match, e) {
     const local = match.local;
     if (!local || actorId(local) !== String(e.actor)) return;
     const inv = match.ranked?.rule?.state?.inventories?.[String(e.actor)];
-    const power = e.kind === 'power' || e.power === true || inv?.power === true;
-    const held = Number.isFinite(e.small) ? e.small : Number(inv?.small) || 0;
-    const step = power ? 14 : CLAM_PICKUP_STEPS[Math.max(0, Math.min(CLAM_PICKUP_STEPS.length - 1, held - 1))];
-    G.audio?.play?.('clam_pickup', { pitch: Math.pow(2, step / 12), volume: power ? 1 : .85 });
+    // RankedEngine keeps the event discriminator in `kind`; the clam's own kind is `clamKind`.
+    const powerClam = e.clamKind === 'power';
+    const power = powerClam || e.power === true || inv?.power === true;
+    // The 8th small clam converts the inventory to a Power Clam (small resets to 0).
+    const held = power && !powerClam ? CLAM_PICKUP_STEPS.length : Number.isFinite(e.small) ? e.small : Number(inv?.small) || 0;
+    const index = Math.max(0, Math.min(CLAM_PICKUP_STEPS.length - 1, held - 1));
+    const step = power ? 14 : CLAM_PICKUP_STEPS[index];
+    G.audio?.play?.('clam_pickup', { pitch: Math.pow(2, step / 12), volume: power ? 1 : .85, slice: powerClam ? CLAM_PICKUP_STEPS.length : index });
+  }
+  // Owner-recorded throw (2026-11-04): the local thrower hears it in 2D, other
+  // throws are positioned at the release point.
+  function playClamThrow(match, e) {
+    const local = match.local, own = !!local && actorId(local) === String(e.actor);
+    const p = Array.isArray(e.pos) ? e.pos : null;
+    const pos = !own && p && p.every(Number.isFinite) ? { x: p[0], y: p[1], z: p[2] } : undefined;
+    if (!own && !pos) return;
+    G.audio?.play?.('clam_throw', { pos, volume: own ? 1 : .8 });
   }
   function playRankedEvents(events, visualOnly = false) {
     if (!this.ranked) return;
