@@ -22,6 +22,7 @@ function captureRankedTail(dt, move, yaw, pitch, distance, moving) {
   this._rankedTailReady = true;
 }
 const RANKED_MODES = new Set(['zones', 'tower', 'rainmaker', 'clams']);
+const CHARGE_KINDS = new Set(['charger', 'splatling', 'stringer', 'splatana']);
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
 const point = value => {
   if (firstThreeFinite(value)) return { x: value[0], y: value[1], z: value[2] };
@@ -218,6 +219,10 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
 
 function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   const a = brain.a, it = a.intent;
+  // Native perception already decided this tick whether to shoot the enemy ink
+  // underfoot (grounded on enemy ink, no visible enemy, not retreating, ink
+  // left; bounded 1.5 s with a 2 s rest) and set the family's fire input.
+  const nativeFootPaint = !!brain._footPaint, nativeFootFire = !!it.fire;
   const objective = point(goal.pos);
   if (!objective) return false;
   const action = typeof goal.action === 'string' ? goal.action : 'paint';
@@ -396,6 +401,26 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
     }
   }
 
+  // Charge weapons emit on release. Objective fire held Fire every tick, so a
+  // Splatling/Charger/Stringer/Splatana spun up and never shot. Release at the
+  // bot's own full-charge point; a Splatling waits for its stream to finish.
+  const chargeKind = a.weapon?.behaviorKind || a.weapon?.kind;
+  if (it.fire && !rainmakerCarrier && CHARGE_KINDS.has(chargeKind)) {
+    const wr = a.weaponRunner || {}, release = finite(brain.chargeRelease, 0.95);
+    it.fire = !wr.streaming && !(wr.charging && finite(wr.charge) >= release);
+  }
+
+  // Objective steering used to replace that decision, so bots walked straight
+  // through enemy ink at its slow speed. Keep it, except for the Rainmaker
+  // carrier's charge cycle, a shield attack (already firing) and a ready throw.
+  const throwReady = action === 'throw' && clamThrow?.reachable && brain._rankedThrowCd <= 0;
+  if (nativeFootPaint && !rainmakerCarrier && action !== 'barrier' && !throwReady) {
+    it.fire = nativeFootFire;
+    it.squid = false;
+    wantPitch = -0.42;
+    if (move.lengthSq() > 0.01) wantYaw = Math.atan2(move.x, move.z);
+  }
+
   brain.mode = 'ranked';
   brain._bombAim = false;
   brain._releaseBomb = false;
@@ -482,7 +507,10 @@ export function installRankedBots(api = {}) {
       && escortAction(goal?.action)
       && engine.rule?.state?.carrier !== actorId(actor);
     const towerCombat = engine.mode === 'tower' && towerCombatAction(goal.action);
-    const clamCombat = engine.mode === 'clams' && clamCombatAction(goal.action);
+    // A clam holder heading for the basket fights a visible enemy too, unless
+    // the throw itself is already in reach.
+    const clamCombat = engine.mode === 'clams' && (clamCombatAction(goal.action)
+      || goal.action === 'throw' && !clamThrowAim(actor, goal, engine)?.reachable);
     const carrier = engine.mode === 'rainmaker' && engine.rule?.state?.carrier === actorId(actor);
     // Refill owns its swim/paint cycle until the native controller releases it.
     // Replacing it with an objective fire input strands an empty tank on land.

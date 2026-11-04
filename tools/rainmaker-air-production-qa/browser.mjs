@@ -41,7 +41,10 @@ export async function runAirScenario({api,scenario,onFrame=null,injectLandingFau
  }};
  try{
   await ch._sourceMotionLoader;await ch.sourceMotion?.ready;check(ch.sourceMotion?.status==='ready','Player00 source ready');
-  await tick(60);engine.rule.state.barrier.active=false;stage='pickup';await tick(12);check(engine.rule.state.carrier==='carrier','normal rule pickup');
+  // The active shield is solid to bodies (and damages them), so the shielded
+  // device warms up 5 m away; the pickup then happens at the actor's spot.
+  const home=engine.rule.state.pos.slice();engine.rule.state.pos=[home[0],home[1],home[2]+5];
+  await tick(60);engine.rule.state.pos=home;engine.rule.state.barrier.active=false;stage='pickup';await tick(12);check(engine.rule.state.carrier==='carrier','normal rule pickup');
   for(cycle=0;cycle<3;cycle++){
    stage='carry';await tick(scenario==='charge-jump'?62:12,scenario==='charge-jump');
    stage='jump';await tick(8,scenario==='charge-jump',true);stage='air-and-land';await tick(72);

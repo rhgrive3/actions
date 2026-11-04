@@ -120,10 +120,15 @@ export function nativeInkMaterial(paint, murals, texlib){
   // Avoid shader kills so early stencil rejection can skip physical shading;
   // reflection targets without stencil keep the same transparent result.
   shader.fragmentShader=shader.fragmentShader.replace(/\bdiscard\s*;/g,'diffuseColor.a = 0.0;');
-  if(detail){Object.assign(shader.uniforms,detail.uniforms);shader.fragmentShader=detail.decorate(shader.fragmentShader);}
+  if(detail){
+   Object.assign(shader.uniforms,detail.uniforms);shader.fragmentShader=detail.decorate(shader.fragmentShader);
+   // Detail pages are matched by the vertex's static plane group, never by distance.
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float nativeDetailPlane;\nvarying float vNativeDetailPlane;')
+    .replace('#include <project_vertex>','#include <project_vertex>\nvNativeDetailPlane = nativeDetailPlane;');
+  }
  };
  mat.defaultAttributeValues={...mat.defaultAttributeValues,color:[1,1,1],lightUv:[-1,-1]};
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v9'+(detail?'-detail':'');return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v10'+(detail?'-detail':'');return mat;
 }
 
 export function nativeInkGeometry(level,paint){return consumeNativeWork(nativeInkGeometrySteps(level,paint));}
@@ -137,10 +142,17 @@ function* nativeInkGeometrySteps(level,paint){
   for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
   const arrays=Object.fromEntries(specs.map(([name,size])=>[name,name==='nativeWall'?new Uint8Array(count*size):new Float32Array(count*size)]));
   const {position,normal,paintUv,faceUv,nativeFaceSize,nativeWall,faceTan}=arrays;
+  // Static detail-page plane group per vertex (0 = coarse atlas only).
+  // Read through the detail owner so module stand-ins without detail keep zeros.
+  const planes=enableNativePaintDetail.planes?.(level)||null;let maxPlane=0;
+  if(planes)for(const plane of planes.values())maxPlane=Math.max(maxPlane,plane.id);
+  const detailPlane=maxPlane<65536?new Uint16Array(count):new Float32Array(count);
+  specs.push(['nativeDetailPlane',1]);arrays.nativeDetailPlane=detailPlane;
   const triangles=level.data.triangles;
   let vertex=0;
   for(const f of paint.paintFaces){
     const a=f.atlas;if(!a||!f.triangles)continue;
+    const planeId=planes?.get(f)?.id||0;
     for(const id of f.triangles)for(let k=0;k<3;k++){
       const at=id*9+k*3,x=triangles[at],y=triangles[at+1],z=triangles[at+2],rx=x-f.origin.x,ry=y-f.origin.y,rz=z-f.origin.z;
       const u=rx*f.u.x+ry*f.u.y+rz*f.u.z,v=rx*f.v.x+ry*f.v.y+rz*f.v.z,i2=vertex*2,i3=vertex*3;
@@ -152,6 +164,7 @@ function* nativeInkGeometrySteps(level,paint){
       nativeFaceSize[i2]=f.su;nativeFaceSize[i2+1]=f.sv;
       nativeWall[vertex]=f.wall?1:0;
       faceTan[i3]=f.u.x;faceTan[i3+1]=f.u.y;faceTan[i3+2]=f.u.z;
+      detailPlane[vertex]=planeId;
       vertex++;
       if(vertex%768===0)yield;
     }
@@ -331,6 +344,14 @@ export function compactNativeIndices(indices){
  return new Uint16Array(indices);
 }
 
+/** Split one object's index list by its per-triangle under-ink mask. */
+function splitUnderlayIndices(ib,mask){
+ let under=0;for(let t=0;t<mask.length;t++)under+=mask[t]?1:0;
+ if(!under)return [{ib,underlay:false}];
+ const main=new Uint32Array(ib.length-under*3),low=new Uint32Array(under*3);let a=0,b=0;
+ for(let t=0;t<mask.length;t++){const k=t*3;if(mask[t]){low[b++]=ib[k];low[b++]=ib[k+1];low[b++]=ib[k+2];}else{main[a++]=ib[k];main[a++]=ib[k+1];main[a++]=ib[k+2];}}
+ return main.length?[{ib:main,underlay:false},{ib:low,underlay:true}]:[{ib:low,underlay:true}];
+}
 export function nativeDisplay(data,textures,quality){return consumeNativeWork(nativeDisplaySteps(data,textures,quality));}
 nativeDisplay.create=(data,textures,quality,options)=>consumeNativeWorkAsync(nativeDisplaySteps(data,textures,quality),options);
 function* nativeDisplaySteps(data,textures,quality){
@@ -340,7 +361,13 @@ function* nativeDisplaySteps(data,textures,quality){
  try{
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
-  let mat=cache.get(o.material)?.mat;
+  // Display-only triangles hugging a paintable surface form a separate part
+  // drawn under the ink overlay (native-ink-underlay.mjs); the rest is unchanged.
+  const allIndices=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),underMask=o.inkUnderlayMask;
+  const parts=underMask?splitUnderlayIndices(allIndices,underMask):[{ib:allIndices,underlay:false}];
+  for(const {ib,underlay} of parts){
+  const key=underlay?o.material+'\u0000ink-underlay':o.material;
+  let mat=cache.get(key)?.mat;
   if(!mat){
    mat=new THREE.MeshStandardMaterial({color:src.albedo?0xffffff:(src.tint||'#c3c3b8'),map:textures.get(src.albedo)||null,
     side:THREE.DoubleSide,roughness:glass?.24:.78,metalness:glass?.1:0,transparent:glass,opacity:glass?.48:1,depthWrite:!glass,alphaTest:alpha?.3:0});
@@ -361,9 +388,11 @@ function* nativeDisplaySteps(data,textures,quality){
    };
    syncChannelProgram();
    mat.defaultAttributeValues={...mat.defaultAttributeValues,nativeNormalCone:[1]};
-   mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
+   mat.name=o.material;
+   if(underlay){mat.depthWrite=false;mat.name+='#ink-underlay';}
+   cache.set(key,{mat,channels,syncChannelProgram,source:o.material});materials.push(mat);
   }
-  const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
+  const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   geometries.push(g);
   const cones=yield* nativeNormalConeSteps(vb,ib);if(cones){g.setAttribute('nativeNormalCone',cones);cones.onUpload(releaseArray);}
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));yield* objectBoundingSphereSteps(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
@@ -382,6 +411,8 @@ function* nativeDisplaySteps(data,textures,quality){
   const sphere=g.boundingSphere;
   const subTexelCaster=!!sphere&&Number.isFinite(sphere.radius)&&sphere.radius<0.025;
   mesh.castShadow=o.collidable&&!glass&&!alpha&&!subTexelCaster;
+  // After the opaque stage it hugs, before the transparent ink overlay.
+  if(underlay)mesh.renderOrder=1;
   mesh.receiveShadow=!glass;
   const culler=!glass&&!alpha?yield* nativeDisplayCullingSteps(mesh):null;
   if(culler)cullers.push(culler);else g.index.onUpload(releaseArray);
@@ -394,11 +425,12 @@ function* nativeDisplaySteps(data,textures,quality){
       else if(g.drawRange.start!==drawStart||g.drawRange.count!==drawCount)g.setDrawRange(drawStart,drawCount);
     };
   }
-  mesh.userData.nativeObject=o;group.add(mesh);yield;
+  mesh.userData.nativeObject=o;if(underlay)mesh.userData.nativeInkUnderlay=true;group.add(mesh);yield;
+  }
  }
  completed=true;
  return {group,currentTextures(){return liveTextures;},updateTextures(next,quality){
-  for(const [name,{mat,channels,syncChannelProgram}] of cache){const src=m.materials[name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
+  for(const [name,{mat,channels,syncChannelProgram,source}] of cache){const src=m.materials[source??name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
    normal=quality==='high'?(next.get(src.maps?.normal)||null):null,rough=quality==='high'?(next.get(src.maps?.roughness)||null):null,emissive=quality==='high'?(next.get(src.maps?.emissive)||null):null;
    const changed=mat.map!==map||mat.alphaMap!==alpha||mat.normalMap!==normal||mat.roughnessMap!==rough||mat.emissiveMap!==emissive;
    const nextOpacity=src.channels?.opacity||'g',nextRough=src.channels?.roughness||'g';

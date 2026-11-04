@@ -3,7 +3,9 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {consumeNativeWork,consumeNativeWorkAsync} from '../../native-stages/runtime/native-work.mjs';
 const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-world-native-extra-before-20261029.json',import.meta.url)));
 const raw=p=>fs.readFileSync(new URL('../../../'+p,import.meta.url),'utf8');
-const compile=(s,names)=>new Function('THREE','Level','consumeNativeWork','consumeNativeWorkAsync',s.replace(/^import .*;$/gm,'').replaceAll('export ','')+'\nreturn {'+names+'};')(THREE,class{},consumeNativeWork,consumeNativeWorkAsync);
+// The overlay builder reads static detail plane groups through enableNativePaintDetail.planes.
+const detailStub=()=>null;
+const compile=(s,names)=>new Function('THREE','Level','consumeNativeWork','consumeNativeWorkAsync','enableNativePaintDetail',s.replace(/^import .*;$/gm,'').replaceAll('export ','')+'\nreturn {'+names+'};')(THREE,class{},consumeNativeWork,consumeNativeWorkAsync,detailStub);
 const render='patches/native-stages/runtime/native-render.mjs',level='patches/native-stages/runtime/native-level.mjs';
 const renderPair=[frozen[render],raw(render)].map(s=>compile(s,'nativeInkGeometry,nativeDisplay'));
 const bytes=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength);
@@ -13,7 +15,12 @@ test('native scalar triangle projection retains all Float32 GPU bytes and attrib
   const triangles=new Float32Array(Array.from({length:900},(_,i)=>Math.sin(i*.37)*scalar));
   const v=(x,y,z)=>new THREE.Vector3(x,y,z),faces=Array.from({length:12},(_,i)=>({triangles:[i,i+13,i+25],origin:v(i*.01,-i*.13,scalar),u:v(.1,.7,-.5),v:v(.3,.17,-.9),n:v(0,1,0),su:2,sv:3,wall:i%2,atlas:i%4===0?null:{x:i*9,y:i*11,pad:2,ppm:3.1}}));
   const models=renderPair.map(k=>k.nativeInkGeometry({data:{triangles}},{paintFaces:faces,size:4096}));
-  assert.deepEqual(snap(models[1]),snap(models[0]));assert.deepEqual(models[1].boundingSphere,models[0].boundingSphere);models.forEach(g=>g.dispose());
+  // Later native rendering adds the detail-page plane id. Without plane groups
+  // every vertex is 0 (coarse atlas); the historical attributes stay byte-equal.
+  const actual=snap(models[1]),plane=models[1].getAttribute('nativeDetailPlane');
+  assert.ok(plane);assert.equal(plane.itemSize,1);assert.equal(plane.count,models[1].getAttribute('position').count);
+  assert.ok(plane.array.every(value=>value===0));delete actual.nativeDetailPlane;
+  assert.deepEqual(actual,snap(models[0]));assert.deepEqual(models[1].boundingSphere,models[0].boundingSphere);models.forEach(g=>g.dispose());
  }
 });
 test('native Uint16 display indices preserve exact vertex IDs with 65535 primitive-restart and offset fallback',()=>{

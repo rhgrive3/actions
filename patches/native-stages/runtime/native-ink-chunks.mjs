@@ -242,7 +242,7 @@ export class NativeInkMesh extends THREE.Mesh {
     const detail=this.material.userData.nativePaintDetail;
     if(detail){
       Object.assign(uniforms,detail.uniforms);
-      material.vertexShader='attribute vec2 paintUv; varying vec2 vPaintUv; varying vec3 vWPos; varying vec3 vWNorm; void main(){vPaintUv=paintUv;vWPos=(modelMatrix*vec4(position,1.0)).xyz;vWNorm=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
+      material.vertexShader='attribute vec2 paintUv; attribute float nativeDetailPlane; varying vec2 vPaintUv; varying float vNativeDetailPlane; varying vec3 vWPos; varying vec3 vWNorm; void main(){vPaintUv=paintUv;vNativeDetailPlane=nativeDetailPlane;vWPos=(modelMatrix*vec4(position,1.0)).xyz;vWNorm=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
       material.fragmentShader=detail.decorate('uniform sampler2D uPaint; varying vec2 vPaintUv; varying vec3 vWPos; varying vec3 vWNorm; ',true);
     }
     Object.defineProperty(material,'visible',{configurable:true,get(){return !!renderer.getRenderTarget?.()?.stencilBuffer;}});

@@ -15,6 +15,59 @@ const RESIDENT_HOLD = SIDE / 2;
 const GUARD = PAD / NATIVE_DETAIL_PPM;
 const floorSurface = f => f?.triangles && f.turf;
 
+// Detail pages belong to a static plane group, and every ink-overlay vertex
+// carries its group id (nativeDetailPlane). The shader uses a page only when
+// the ids match. Source charts split one physical floor by object and tile,
+// with chart u axes and plane offsets that differ by a few millimetres. The
+// former per-chart key plus a 6 mm shader distance test let a fragment sample
+// another chart's page, which never received this chart's ink, so painted
+// floor looked unpainted wherever the camera made that page resident.
+// Groups join floor charts whose normals agree (dot > PLANE_COS, the former
+// shader test) and whose plane offsets lie within PLANE_GAP (above the 2.4 mm
+// source chart plane error), transitively, in source face order.
+const PLANE_GAP = 0.003, PLANE_COS = 0.9999;
+const detailPlaneCache = new WeakMap();
+/** Map face -> {id,key,n,u,v,d}; ids start at 1 (0 = no detail page). */
+export function nativeDetailPlanes(level) {
+  const faces = level?.faces;
+  if (!Array.isArray(faces)) return null;
+  const cached = detailPlaneCache.get(level);
+  if (cached && cached.faces === faces && cached.count === faces.length) return cached.byFace;
+  const items = [];
+  for (const f of faces) {
+    if (!floorSurface(f) || !f.n || !f.u || !f.v || !f.origin) continue;
+    const d = f.origin.x * f.n.x + f.origin.y * f.n.y + f.origin.z * f.n.z;
+    if (!Number.isFinite(d) || !Number.isFinite(f.n.x + f.n.y + f.n.z)) continue;
+    items.push({ f, d });
+  }
+  const parent = Int32Array.from(items, (_, i) => i);
+  const find = i => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  // Every pair within PLANE_GAP in offset is visited once through the d-sorted window.
+  const order = Uint32Array.from(items, (_, i) => i).sort((a, b) => items[a].d - items[b].d || a - b);
+  for (let at = 0; at < order.length; at++) {
+    const i = order[at], { f, d } = items[i];
+    for (let next = at + 1; next < order.length; next++) {
+      const j = order[next];
+      if (items[j].d - d >= PLANE_GAP) break;
+      const g = items[j].f;
+      if (f.n.x * g.n.x + f.n.y * g.n.y + f.n.z * g.n.z > PLANE_COS) {
+        const a = find(i), c = find(j);
+        if (a !== c) parent[Math.max(a, c)] = Math.min(a, c);
+      }
+    }
+  }
+  // The earliest source face of each group fixes its id and page basis.
+  const byFace = new Map(), planes = new Map();
+  for (let i = 0; i < items.length; i++) {
+    const root = find(i);
+    let plane = planes.get(root);
+    if (!plane) { const { f, d } = items[root]; plane = { id: planes.size + 1, key: 'p' + (planes.size + 1), u: f.u, v: f.v, n: f.n, d }; planes.set(root, plane); }
+    byFace.set(items[i].f, plane);
+  }
+  detailPlaneCache.set(level, { faces, count: faces.length, byFace });
+  return byFace;
+}
+
 // Static projection data is useful while replaying growing splats, but the
 // unbounded 160-byte-per-triangle proposal can retain hundreds of megabytes.
 // Keep a per-detail FIFO with both byte and face limits; oversized charts use
@@ -68,6 +121,8 @@ export function enableNativePaintDetail(paint) {
   if (!paint.level?.native || !paint.mat || !paint.renderer?.getContext || !paint._emitGrowth) return null;
   return paint.nativeDetail = new NativePaintDetail(paint);
 }
+// The overlay geometry builder reaches the same static groups through its existing import.
+enableNativePaintDetail.planes = nativeDetailPlanes;
 
 export class NativePaintDetail {
   constructor(paint) {
@@ -151,9 +206,9 @@ export class NativePaintDetail {
     if (u1<=u0 || v1<=v0) return;
     let plane=this.planeByFace.get(f);
     if(!plane){
-      const d=f.origin.dot(f.n),key=[f.n.x,f.n.y,f.n.z,...f.u.toArray(),d].map((v,i)=>Math.round(v*(i===6?1000:10000))).join(',');
-      plane=this.planes.get(key);
-      if(!plane){plane={key,u:f.u,v:f.v,n:f.n,d};this.planes.set(key,plane);}
+      // A face outside the static groups has no overlay id; it keeps the coarse atlas.
+      plane=nativeDetailPlanes(this.paint.level)?.get(f);
+      if(!plane)return;
       this.planeByFace.set(f,plane);
     }
     let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
@@ -202,7 +257,7 @@ export class NativePaintDetail {
     const page=this.slots[i],uniform=this.uniforms.uNativeDetailPages.value[i];
     if(page&&!page.pending.size&&!page.needsClear)page.ready=true;
     if(page?.ready){
-      const {n,u,v,d}=page.plane;uniform.set(n.x,n.y,n.z,d);
+      const {n,u,v,id}=page.plane;uniform.set(n.x,n.y,n.z,id);
       this.uniforms.uNativeDetailU.value[i].set(u.x,u.y,u.z,page.x);
       this.uniforms.uNativeDetailV.value[i].set(v.x,v.y,v.z,page.z);
     }else uniform.set(0,0,0,0);
@@ -340,6 +395,7 @@ uniform sampler2D uNativeDetailPaint;
 uniform vec4 uNativeDetailPages[16];
 uniform vec4 uNativeDetailU[16],uNativeDetailV[16];
 uniform float uNativeBaseSize,uNativeBasePpm;
+varying float vNativeDetailPlane;
 vec2 iwPaintUv,iwPaintDx,iwPaintDy;
 float iwPaintSize,iwPaintTexel,iwPaintPpm;
 bool iwDetailActive=false;
@@ -348,15 +404,14 @@ void iwPrepareNativePaint(){
  vec2 baseDx=dFdx(vPaintUv),baseDy=dFdy(vPaintUv);
  vec3 worldDx=dFdx(vWPos),worldDy=dFdy(vWPos);
  iwPaintDx=baseDx;iwPaintDy=baseDy;
- float closest=0.006;bool found=false;vec2 bestPoint=vec2(0.0),bestSlot=vec2(0.0);vec3 bestU=vec3(0.0),bestV=vec3(0.0);
+ bool found=false;vec2 bestPoint=vec2(0.0),bestSlot=vec2(0.0);vec3 bestU=vec3(0.0),bestV=vec3(0.0);
+ // A page holds only its own plane group's ink: use it only for that group.
  for(int i=0;i<16;i++){
   vec4 page=uNativeDetailPages[i],u=uNativeDetailU[i],v=uNativeDetailV[i];
-  if(!(dot(vWNorm,page.xyz)>0.9999))continue;
-  float distance=abs(dot(vWPos,page.xyz)-page.w);
-  if(!(distance<closest))continue;
+  if(page.w<0.5||abs(page.w-vNativeDetailPlane)>0.25)continue;
   vec2 p=vec2(dot(vWPos,u.xyz)-u.w,dot(vWPos,v.xyz)-v.w);
   if(p.x>=0.0&&p.x<8.0&&p.y>=0.0&&p.y<8.0){
-   closest=distance;found=true;bestPoint=p;bestSlot=vec2(mod(float(i),4.0),floor(float(i)/4.0))*256.0;bestU=u.xyz;bestV=v.xyz;
+   found=true;bestPoint=p;bestSlot=vec2(mod(float(i),4.0),floor(float(i)/4.0))*256.0;bestU=u.xyz;bestV=v.xyz;break;
   }
  }
  if(found){

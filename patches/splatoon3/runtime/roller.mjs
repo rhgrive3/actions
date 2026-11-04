@@ -212,9 +212,30 @@ export function rollerDrumSupport(a, G, scratch) {
   start.x = cx - rx * half; start.y = cy; start.z = cz - rz * half;
   delta.x = rx * half * 2; delta.y = 0; delta.z = rz * half * 2;
   const endX = start.x + delta.x, endZ = start.z + delta.z, radius = ROLLER_BODY_RADIUS;
-  const ids = level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
-    Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);
   let floor = false, wall = false;
+  // Source stages: level.blocks are chart rectangles and whole-object boxes
+  // (bookkeeping, not solids). Test the drum capsule against the exact source
+  // triangles and keep the oriented-box test for genuinely moving blocks only.
+  const world = level.native ? level.triangleWorld : null;
+  if (world && typeof world.capsuleContacts === 'function') {
+    const end = scratch.end ||= { x: 0, y: 0, z: 0 };
+    end.x = endX; end.y = start.y + delta.y; end.z = endZ;
+    const normals = world.normals;
+    let nearestWall = Infinity;
+    world.capsuleContacts(start, end, radius + Math.sqrt(CONTACT_EPS), (id, distance, point) => {
+      const ny = normals[id * 3 + 1];
+      if (ny >= WALL_BAND) floor = true;
+      else if (Math.abs(ny) < WALL_BAND && distance < nearestWall) {
+        wall = true; nearestWall = distance;
+        scratch.wallPoint.x = point.x; scratch.wallPoint.y = point.y; scratch.wallPoint.z = point.z;
+      }
+    });
+  }
+  const ids = world && typeof level.queryDynamicBlocks === 'function'
+    ? level.queryDynamicBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
+      Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids)
+    : level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
+      Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);
   for (let i = 0; i < ids.length; i++) {
     const block = level.blocks[ids[i]];
     if (!block.solid || cy + radius < block.aabbMin.y || cy - radius > block.aabbMax.y) continue;
