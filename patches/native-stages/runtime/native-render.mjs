@@ -120,10 +120,15 @@ export function nativeInkMaterial(paint, murals, texlib){
   // Avoid shader kills so early stencil rejection can skip physical shading;
   // reflection targets without stencil keep the same transparent result.
   shader.fragmentShader=shader.fragmentShader.replace(/\bdiscard\s*;/g,'diffuseColor.a = 0.0;');
-  if(detail){Object.assign(shader.uniforms,detail.uniforms);shader.fragmentShader=detail.decorate(shader.fragmentShader);}
+  if(detail){
+   Object.assign(shader.uniforms,detail.uniforms);shader.fragmentShader=detail.decorate(shader.fragmentShader);
+   // Detail pages are matched by the vertex's static plane group, never by distance.
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float nativeDetailPlane;\nvarying float vNativeDetailPlane;')
+    .replace('#include <project_vertex>','#include <project_vertex>\nvNativeDetailPlane = nativeDetailPlane;');
+  }
  };
  mat.defaultAttributeValues={...mat.defaultAttributeValues,color:[1,1,1],lightUv:[-1,-1]};
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v9'+(detail?'-detail':'');return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v10'+(detail?'-detail':'');return mat;
 }
 
 export function nativeInkGeometry(level,paint){return consumeNativeWork(nativeInkGeometrySteps(level,paint));}
@@ -137,10 +142,17 @@ function* nativeInkGeometrySteps(level,paint){
   for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
   const arrays=Object.fromEntries(specs.map(([name,size])=>[name,name==='nativeWall'?new Uint8Array(count*size):new Float32Array(count*size)]));
   const {position,normal,paintUv,faceUv,nativeFaceSize,nativeWall,faceTan}=arrays;
+  // Static detail-page plane group per vertex (0 = coarse atlas only).
+  // Read through the detail owner so module stand-ins without detail keep zeros.
+  const planes=enableNativePaintDetail.planes?.(level)||null;let maxPlane=0;
+  if(planes)for(const plane of planes.values())maxPlane=Math.max(maxPlane,plane.id);
+  const detailPlane=maxPlane<65536?new Uint16Array(count):new Float32Array(count);
+  specs.push(['nativeDetailPlane',1]);arrays.nativeDetailPlane=detailPlane;
   const triangles=level.data.triangles;
   let vertex=0;
   for(const f of paint.paintFaces){
     const a=f.atlas;if(!a||!f.triangles)continue;
+    const planeId=planes?.get(f)?.id||0;
     for(const id of f.triangles)for(let k=0;k<3;k++){
       const at=id*9+k*3,x=triangles[at],y=triangles[at+1],z=triangles[at+2],rx=x-f.origin.x,ry=y-f.origin.y,rz=z-f.origin.z;
       const u=rx*f.u.x+ry*f.u.y+rz*f.u.z,v=rx*f.v.x+ry*f.v.y+rz*f.v.z,i2=vertex*2,i3=vertex*3;
@@ -152,6 +164,7 @@ function* nativeInkGeometrySteps(level,paint){
       nativeFaceSize[i2]=f.su;nativeFaceSize[i2+1]=f.sv;
       nativeWall[vertex]=f.wall?1:0;
       faceTan[i3]=f.u.x;faceTan[i3+1]=f.u.y;faceTan[i3+2]=f.u.z;
+      detailPlane[vertex]=planeId;
       vertex++;
       if(vertex%768===0)yield;
     }

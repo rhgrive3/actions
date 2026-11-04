@@ -16,6 +16,7 @@
 // to this kit, so an un-composed build stays byte-identical to native.
 import { selectTrizookaFlight, selectTrizookaCollision, VOLLEY_CONFIG, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
 import { damageGroupId } from './final-damage.mjs';
+import { sweepNativeLevelSphere } from '../../native-stages/runtime/native-projectile-sweep.mjs';
 
 export const TRIZOOKA_WID = 'trizooka';
 
@@ -451,6 +452,14 @@ export function kitSweepSphereBlocks(level, a, b, radius, out) {
   return out;
 }
 
+// Dynamic-block view supplied by `sweepNativeLevelSphere` (its queryBlocks
+// returns moving blocks only).
+function nativeDynamicSweep(view, from, to, radius, hit) {
+  hit.__level = view;
+  sweepFill(hit, from, to, radius);
+  return hit;
+}
+
 // Replaces the native block query for a growing kit shell only.
 export function kitTrizookaWorldSweep(system, p, out, physics) {
   if (!isKitProjectile(p)) return physics.segment(p.prev, p.pos, out, true);
@@ -458,6 +467,15 @@ export function kitTrizookaWorldSweep(system, p, out, physics) {
   if (!(r > 0)) return physics.segment(p.prev, p.pos, out, true);
   const level = physics.level;
   if (!level?.blocks?.length) return physics.segment(p.prev, p.pos, out, true);
+  // Source-stage blocks are chart rectangles and whole-object AABBs (one stage-wide
+  // box per collidable source object), not solids. Sweeping the shell against them
+  // reported a t = 0 overlap almost everywhere, so the volley vanished at birth.
+  // Use the source triangles like every other catalogue projectile; the rounded-OBB
+  // sweep remains for genuine moving blocks only.
+  if (level.native) {
+    out.center = false; out.grate = false;
+    return sweepNativeLevelSphere(level, p.prev, p.pos, r, out, true, nativeDynamicSweep);
+  }
   out.__level = level;
   // an already-overlapping shell is in contact at t = 0
   if (!sweepFill(out, p.prev, p.pos, r)) return physics.segment(p.prev, p.pos, out, true);
