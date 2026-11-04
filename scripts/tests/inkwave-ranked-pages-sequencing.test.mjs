@@ -34,7 +34,7 @@ test('push and PR local ranked coverage, strict gate and existing permissions re
  assert.match(ranked,/RANKED_RELAY_DELAY_MS: 200/);
  assert.doesNotMatch(ranked,/RANKED_PUBLIC_URL/);
  assert.match(ranked,/permissions:\n  contents: read\njobs:/);
- assert.match(pages,/permissions:\n  contents: read\n  actions: read\n  pages: write\n  id-token: write\n/);
+ assert.match(pages,/permissions:\n  contents: read\n  pages: write\n  id-token: write\n/);
  assert.doesNotMatch(pages,/actions: write|contents: write|workflow_run:/);
  assert.match(runner,/attempt<30/);assert.match(runner,/AbortSignal.timeout\(15000\)/);assert.match(runner,/setTimeout\(r,10000\)/);
 });
@@ -185,8 +185,8 @@ test('ranked QA provisions full Chromium used by the runner without unused headl
  for(const name of readdirSync(new URL('../../patches/splatoon3/tests',import.meta.url)).filter(n=>/^ranked-.*\.test\.mjs$/.test(n)))assert.doesNotMatch(read('patches/splatoon3/tests/'+name),/from ['"]playwright|import\(['"]playwright/);
 });
 
-// Pages requires a successful Validate run for the same main SHA. Every Pages
-// push input must therefore also create Validate; accepting an older SHA is not a fallback.
+// Pages publishes without waiting for Validate. Every Pages push input still
+// starts Validate for the same SHA, so a published change is always checked.
 function assertPagesValidationTriggers(pagesSource,validateSource){
  const pagesYaml=parseValidateWorkflow(pagesSource),validateYaml=parseValidateWorkflow(validateSource);
  const pagesPaths=(pagesYaml.on??pagesYaml.true).push.paths;

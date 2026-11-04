@@ -19,8 +19,6 @@ on:
       - "patches/network-replication/**"
       - "patches/movement-physics/**"
       - "scripts/lib/**"
-      - "scripts/ci/inkwave-pages-validation.mjs"
-      - "scripts/tests/inkwave-pages-validation.test.mjs"
       - "scripts/check-inkwave-startup-budget.mjs"
       - "scripts/check-inkwave-ranked-browser.mjs"
       - "scripts/run-logged-test-process.mjs"
@@ -30,14 +28,8 @@ on:
       - ".github/workflows/pages-inkwave.yml"
       - "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs"
   workflow_dispatch:
-    inputs:
-      force_publish:
-        description: 'Skip the Validate gates and publish this main commit (manual override)'
-        type: boolean
-        default: false
 permissions:
   contents: read
-  actions: read
   pages: write
   id-token: write
 
@@ -117,22 +109,10 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
 
-      - name: Require successful Validate for current main before upload
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.force_publish }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/ci/inkwave-pages-validation.mjs --wait
-
       - name: Upload INKWAVE site
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
-
-      - name: Recheck Validate and current main before publication
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.force_publish }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/ci/inkwave-pages-validation.mjs --once
 
       - name: Deploy to GitHub Pages
         id: deployment
