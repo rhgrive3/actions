@@ -181,7 +181,7 @@ export function FAMILY_POSE(ch, dt, s, C) {
   P[C.ANCR] += pitch * w - 1.0 * rs * (1 - w);
   P[C.ANCR + 1] += yaw * w;
   P[C.ANCR + 2] += -0.5 * rs * (1 - w);
-  P[C.CHEST + 1] += SWING_POSE.chest * yaw * w; P[C.SPINE + 1] += SWING_POSE.spine * yaw * w; P[C.SPINE] += 0.16 * (m.horizontal ? 0 : pitch) * w;
+  P[C.CHEST + 1] += SWING_POSE.chest * yaw * w; P[C.SPINE + 1] += SWING_POSE.spine * yaw * w; P[C.SPINE] += 0.16 * (m.full ? pitch : 0) * w;
   P[C.IKL] = 0;                                         // a splatana is a one-handed weapon
 }
 

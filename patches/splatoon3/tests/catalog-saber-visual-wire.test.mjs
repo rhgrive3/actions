@@ -11,10 +11,13 @@ async function setup(){
 }
 function tick(a,fire,n=1){for(let i=0;i<n;i++)a.weaponRunner.update(1/60,{fire,firePressed:fire&&i===0});}
 function record(f,p,time){let packet;f.NetMatch.prototype.recProj.call({_rec:row=>{packet=[time,...row,0,1];return packet;},cfg:{id:'saber-wire'}},p);return packet;}
+// 20261104 pose: the blade crosses the body centre on the shot frame (the
+// remote ageOffset), sweeping -1..+1 x 1.3 rad over shot-45ms..shot+50ms.
 function expectedYaw(visual){
  const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
- const u=(visual.ageOffset+1/60)/(visual.duration+.12),ee=smooth((u-.12)/.4);
- const k=Math.min(1,u*8)*(1-smooth((u-.6)/.4));return (-.9+1.8*ee)*(visual.ordinal%2===0?1:-1)*k;
+ const ease=x=>1-(1-x)**3,t=visual.ageOffset+1/60,shot=visual.ageOffset,s0=shot-.045,s1=shot+.05;
+ const sweep=t<s0?-smooth(t/Math.min(.06,s0)):t<s1?-1+2*ease((t-s0)/(s1-s0)):1;
+ const k=Math.min(1,t/.03)*(1-smooth((t-visual.duration)/.16));return sweep*1.3*(visual.ordinal%2===0?1:-1)*k;
 }
 function pose(f,a){
  const ch={weapon:{def:{modelId:a.weapon.variantOf||a.weapon.id}},_runner:()=>a.weaponRunner,kidForm:true,P:new Float64Array(16)};
