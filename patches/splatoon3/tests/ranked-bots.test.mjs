@@ -24,6 +24,7 @@ class FakeBotBrain {
     this.a.intent.sub = true; // ranked actions must suppress native bomb throws
     if (this.nativeInput) Object.assign(this.a.intent, this.nativeInput);
     if (this.nativeMode) this.mode = this.nativeMode;
+    this._footPaint = !!this.nativeFootPaint;
     this._tail(dt, this._steer(dt), 0, 0, 6, false);
     return 'native-update';
   }
@@ -284,4 +285,55 @@ test('a bot uses a clear short route when a ranked objective has no static nav n
   brain.update(1 / 60);
   assert.deepEqual(actor.intent.move, new Vec3(1, 0, 0));
   assert.equal(actor.intent.jump, true);
+});
+
+test('Clam carriers heading for a distant basket duel a visible enemy instead of walking past it', () => {
+  for (const [action, pos, duel] of [['throw', [40, 0, 0], true], ['collect', [6, 0, 0], true], ['throw', [3, 0, 0], false]]) {
+    const { actor, brain } = setup('clams', action, pos);
+    brain.nativeMode = 'fight';
+    brain.nativeInput = { fire: true };
+    brain.target = { team: 1, alive: true, pos: new Vec3(0, 0, 6) };
+    brain.seeTimer = 1;
+    brain.update(1 / 60);
+    if (duel) {
+      assert.equal(brain.mode, 'fight', action + ' keeps the native duel');
+      assert.equal(actor.intent.fire, true);
+      assert.equal(brain.pathCalls.length, 0, 'the objective does not replace the duel');
+    } else assert.equal(brain.mode, 'ranked', 'a throw already in reach keeps the objective');
+  }
+});
+
+test('ranked steering keeps the native enemy-ink foot paint instead of walking through enemy ink', () => {
+  for (const [mode, action] of [['clams', 'throw'], ['clams', 'collect'], ['zones', 'paint'], ['tower', 'ride']]) {
+    const { actor, brain } = setup(mode, action, [40, 0, 0], { groundTeam: 2 });
+    brain.nativeFootPaint = true;
+    brain.nativeInput = { fire: true };
+    brain.update(1 / 60);
+    assert.equal(actor.intent.fire, true, mode + '/' + action + ' fires at the enemy ink underfoot');
+    assert.equal(actor.intent.squid, false);
+    assert.equal(brain.tailCalls.at(-1).pitch, -0.42, 'aimed down at the floor');
+  }
+  // Without the native decision (e.g. a visible enemy or no ink), objective steering is unchanged.
+  const { actor, brain } = setup('clams', 'throw', [40, 0, 0], { groundTeam: 2 });
+  brain.nativeInput = { fire: true };
+  brain.update(1 / 60);
+  assert.equal(actor.intent.fire, false);
+});
+
+test('ranked objective fire releases charge weapons at their full-charge point', () => {
+  for (const kind of ['splatling', 'charger', 'stringer', 'splatana']) {
+    const { actor, brain } = setup('zones', 'paint', [5, 0, 0], { weapon: { weight: 'middle', kind }, weaponRunner: { charging: true, charge: 0.4 } });
+    brain.chargeRelease = 0.96;
+    brain.update(1 / 60);
+    assert.equal(actor.intent.fire, true, kind + ' keeps charging below the release point');
+    actor.weaponRunner.charge = 0.97;
+    brain.update(1 / 60);
+    assert.equal(actor.intent.fire, false, kind + ' releases at full charge');
+    actor.weaponRunner = { charging: false, charge: 0, streaming: kind === 'splatling' };
+    brain.update(1 / 60);
+    assert.equal(actor.intent.fire, kind !== 'splatling', 'a Splatling waits for its stream before the next spin-up');
+  }
+  const shooter = setup('zones', 'paint', [5, 0, 0], { weaponRunner: { charging: true, charge: 1 } });
+  shooter.brain.update(1 / 60);
+  assert.equal(shooter.actor.intent.fire, true, 'hold-to-fire weapons keep the held objective fire');
 });

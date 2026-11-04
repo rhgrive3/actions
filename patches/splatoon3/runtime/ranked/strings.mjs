@@ -2,6 +2,7 @@
 export const RANKED_JA = Object.freeze({
   'SPLAT ZONES': 'ガチエリア', 'TOWER CONTROL': 'ガチヤグラ',
   'RAINMAKER': 'ガチホコバトル', 'CLAM BLITZ': 'ガチアサリ', 'RANKED': 'ガチルール',
+  'Rainmaker': 'ガチホコ',
   'BOSS BATTLE': 'ボスバトル', 'CO-OP': '協力プレイ', 'CLASSIC': '基本ルール',
   'VS BOTS': 'ボット対戦', 'SQUAD OF 8': '8人で協力', '1 BOSS': 'ボス1体',
   'SELECT': '決定', 'Mode': 'ルール', 'PUBLIC BETA': '公開テスト版',

@@ -344,6 +344,19 @@ export class TriangleWorld {
   }
   return {ground,wall,maxPush,normal:velocityNormal.normalize()};
  }
+ /** Visit each source triangle within `radius` of the segment s0-s1 (an
+  * inclusive contact test, no push). fn(id, distance, closestPointOnTriangle);
+  * the point object is reused by the next visit. */
+ capsuleContacts(s0,s1,radius,fn){
+  const x0=(s0.x<s1.x?s0.x:s1.x)-radius,y0=(s0.y<s1.y?s0.y:s1.y)-radius,z0=(s0.z<s1.z?s0.z:s1.z)-radius;
+  const x1=(s0.x>s1.x?s0.x:s1.x)+radius,y1=(s0.y>s1.y?s0.y:s1.y)+radius,z1=(s0.z>s1.z?s0.z:s1.z)+radius;
+  const box=this._box;box.min.set(x0,y0,z0);box.max.set(x1,y1,z1);
+  this.queryBox(box.min,box.max,id=>{
+   if(!this.triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1))return;
+   this.triangle(id);const distance=this._capsuleDistance(s0,s1,this._triangle);
+   if(distance<=radius)fn(id,distance,this._bestp);
+  });
+ }
  capsulePenetration(feet,height=1.45,radius=.38){
   const sy0=feet.y+radius,sy1=feet.y+Math.max(radius,height-radius);
   const s0=this._s0.set(feet.x,sy0,feet.z),s1=this._s1.set(feet.x,sy1,feet.z),box=this._box;

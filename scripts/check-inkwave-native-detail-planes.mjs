@@ -51,13 +51,18 @@ try{
    const obj=[];let count=0;
    const quad=(name,x0,x1,z0,z1,y)=>{obj.push('o '+name,'usemtl Concrete00');for(const v of [[x0,y,z0],[x0,y,z1],[x1,y,z0],[x1,y,z1]])obj.push('v '+v.join(' '),'vn 0 1 0');
     const [a,b,c,d]=[1,2,3,4].map(i=>`${count+i}//${count+i}`);obj.push(`f ${a} ${b} ${c}`,`f ${c} ${b} ${d}`);count+=4;};
-   quad('Fld_FloorA',1,4,1,7,0);quad('Fld_FloorB',4,7,1,7,.0026);
+   quad('Fld_FloorA',1,4,1,7,0);quad('Fld_FloorB',4,7,1,7,.0026);quad('Fld_Graffiti_A',5,6.2,3,5,.0076);
    for(let k=1;k<=15;k++)quad('Fld_Plate'+k,1,7,9,15,.02*k);
    const data=convertSource({id:'detail-planes',bounds:{minX:0,maxX:8,minZ:0,maxZ:16},spawnPads:[[1,0,1],[7,0,15]],spawnBarrier:0},obj.join('\n'),'newmtl Concrete00\nKd 1 1 1\n',{});
    const level=G.level=new NativeLevel(data),paint=G.paint=new PaintSystem(renderer,level,{atlasSize:1024,maxDensity:3.2768});
    paint.texture.generateMipmaps=false;paint.texture.minFilter=THREE.LinearFilter;
    const scene=G.scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x718297,2));
    const geometry=nativeInkGeometry(level,paint),groundMaterial=new THREE.MeshBasicMaterial({color:'#79828b'}),ground=new THREE.Mesh(geometry,groundMaterial);scene.add(ground);
+   const {nativeDisplay}=await import('/source/patches/native-stages/runtime/native-render.mjs');
+   const display=nativeDisplay(data,new Map(),'balanced');scene.add(display.group);
+   const decal=display.group.children.find(m=>m.userData.nativeInkUnderlay);
+   if(!decal)throw Error('graffiti decal was not classified under the ink');
+   for(const m of display.group.children){m.material.color?.set(m.userData.nativeInkUnderlay?'#20e0ff':'#79828b');m.material.map=null;}
    const material=nativeInkMaterial(paint,null,null);paint.nativeDetail.enabled=detail;
    const ink=new NativeInkMesh(geometry,material).bindPaint(paint,{knownEmpty:true});scene.add(ink);
    const camera=new THREE.OrthographicCamera(-4,4,4,-4,.1,30);camera.position.set(4,10,4);camera.up.set(0,0,-1);camera.lookAt(4,0,4);camera.updateMatrixWorld();G.camera=camera;
@@ -75,8 +80,13 @@ try{
    const inked=(x,z)=>{const p=new THREE.Vector3(x,0,z).project(camera),px=Math.floor((p.x*.5+.5)*800),py=Math.floor((p.y*.5+.5)*800),i=(py*800+px)*4;return frame[i]>180&&frame[i+1]>70&&frame[i+2]<70;};
    let a=0,b=0,n=0;for(let z=2.5;z<=5.5;z+=.25)for(let d=-.4;d<=.4;d+=.1){a+=inked(2.4+d,z);b+=inked(5.6+d,z);n++;}
    const cpuB=paint.sampleWorld(faceAt(5.6,4,.0026).id,new THREE.Vector3(5.6,.0026,4));
-   globalThis.cleanup=()=>{ink.dispose();material.dispose();geometry.dispose();groundMaterial.dispose();paint.dispose();renderer.dispose();};
-   return {detail,resident,chartAInked:a/n,chartBInked:b/n,cpuB,glError:gl.getError()};
+   globalThis.cleanup=()=>{display.dispose();ink.dispose();material.dispose();geometry.dispose();groundMaterial.dispose();paint.dispose();renderer.dispose();};
+   // Without ink the decal shows its own colour (cyan) at its centre.
+   const at=(x,z)=>{const p=new THREE.Vector3(x,0,z).project(camera),px=Math.floor((p.x*.5+.5)*800),py=Math.floor((p.y*.5+.5)*800),i=(py*800+px)*4;return [frame[i],frame[i+1],frame[i+2]];};
+   const decalSample=at(5.6,4);
+   paint.clear();for(let k=0;k<4;k++)paint.flush(0);renderer.render(scene,camera);gl.readPixels(0,0,800,800,gl.RGBA,gl.UNSIGNED_BYTE,frame);
+   const bareDecal=at(5.6,4);
+   return {detail,resident,chartAInked:a/n,chartBInked:b/n,cpuB,decalInked:decalSample[0]>180&&decalSample[2]<70,bareDecalVisible:bareDecal[2]>180&&bareDecal[0]<120,glError:gl.getError()};
   },detail));
   await page.screenshot({path:path.join(out,`detail-${detail?'on':'off'}.png`)});
  }

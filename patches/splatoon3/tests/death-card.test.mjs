@@ -103,6 +103,10 @@ test('#918: environmental and unattributed deaths state their cause; an attacker
   assert.deepEqual({ ...splatCardText('water', null) }, { cause: 'the sea', who: null });
   assert.deepEqual({ ...splatCardText('ink', null) }, { cause: 'enemy ink', who: null });
   assert.deepEqual({ ...splatCardText('weapon', null) }, { cause: 'enemy ink', who: null });
+  // #rainmaker-timeout: the carrier's own Rainmaker burst is not enemy ink.
+  assert.deepEqual({ ...splatCardText('rainmaker-timeout', null) }, { cause: 'Rainmaker', who: null });
+  assert.deepEqual({ ...splatCardText('bomb', null) }, { cause: SUB_BOMB, who: null });
+  assert.deepEqual({ ...splatCardText('slam', null) }, { cause: SLAM, who: null });
   assert.deepEqual({ ...splatCardText('water', rival) }, { cause: 'the sea', who: 'Rival' });
   assert.deepEqual({ ...splatCardText('ink', rival) }, { cause: 'enemy ink', who: 'Rival' });
   const hud = showSplatted(compose('src/ui/hud.js'), { by: 'the sea', who: null });

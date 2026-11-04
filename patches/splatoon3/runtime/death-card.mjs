@@ -7,9 +7,13 @@ const entry = (table, id) => typeof id === 'string' && Object.hasOwn(table, id) 
 
 // `cause` is the 'splatted' event cause: a weapon id, a sub/special id, 'weapon', 'ink' or 'water'.
 // Returns { cause, who }: `cause` is the SPLATTED BY value, `who` the separately shown opponent (or null).
+// Deaths without an opponent keep their own cause: the sea, the Rainmaker held past
+// its countdown (it bursts in the carrier's hands), or a known weapon/sub/special.
+// Enemy ink only drains HP to its cap and never splats; the native label stays
+// only for an otherwise unnamed cause.
 export function splatCardText(cause, attacker, t = v => v) {
-  const environment = cause === 'water' ? t('the sea') : cause === 'ink' ? t('enemy ink') : null;
-  if (!attacker) return { cause: environment || t('enemy ink'), who: null };
+  const environment = cause === 'water' ? t('the sea') : cause === 'ink' ? t('enemy ink') : cause === 'rainmaker-timeout' || cause === 'rainmaker-shield' ? t('Rainmaker') : null;
+  if (!attacker) return { cause: environment || entry(SUB, cause) || entry(SPECIALS, cause) || entry(WEAPONS, cause) || t('enemy ink'), who: null };
   const named = environment || entry(SUB, cause) || entry(SPECIALS, cause) || entry(WEAPONS, cause) || entry(WEAPONS, attacker.weaponId);
   // An attacker with no resolvable cause (e.g. the Boss pseudo-attacker) stays the only fact available.
   return named ? { cause: named, who: attacker.name } : { cause: attacker.name, who: null };

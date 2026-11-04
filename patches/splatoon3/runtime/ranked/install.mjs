@@ -15,6 +15,7 @@ import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mj
 import { interruptSpecialForObjective } from '../all-specials.mjs';
 import { specialGaugeLocked, clearSpecialGaugeLocks } from '../tacticooler-gauge.mjs';
 import { catalogSplatanaThrowBlocked } from '../main-weapon-catalog.mjs';
+import { resolveRainmakerShieldContact } from './rainmaker-shield-contact.mjs';
 
 const INSTALLED = Symbol.for('inkwave.ranked.v1');
 export function installRanked(context) {
@@ -193,7 +194,11 @@ export function installRanked(context) {
         this._rankedInput.fire = false;
       }
     } else this._rankedCarrierPrepared = false;
-    return actorUpdate.call(this, dt);
+    const result = actorUpdate.call(this, dt);
+    // The active shield is solid to bodies: after this tick's own movement.
+    if (m.mode === 'rainmaker') resolveRainmakerShieldContact(this, m.ranked.rule.state, dt,
+      { radius: api.PLAYER.radius, height: api.PLAYER.height, squidHeight: api.PLAYER.squidHeight });
+    return result;
   };
 }
 

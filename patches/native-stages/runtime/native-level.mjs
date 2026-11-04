@@ -7,6 +7,59 @@ const DOWN = new THREE.Vector3(0,-1,0);
 // Source face tints are immutable; dynamic object colors retain separate owners.
 const SOURCE_NEUTRAL_COLOR = Object.freeze(new THREE.Color('#bfc3c6'));
 
+// Display-only source decals that hug a paintable surface (tape, graffiti and
+// painted marks laid a few millimetres over a floor or wall) were drawn as
+// ordinary opaque meshes. The ink overlay lies on the collision surface just
+// behind them, so painted, swimmable floor looked bare wherever such a cover
+// lay over it. In Splatoon 3 ink covers floor markings.
+//
+// A display-only object (not collidable, not background, not glass) is split
+// per triangle: a triangle lying within UNDERLAY_GAP in front of a paintable
+// source triangle facing the same way is drawn after the opaque stage without
+// writing depth. Nothing can lie between it and the surface it hugs, so the
+// ink overlay draws over it; the object's other triangles are unchanged.
+// Decal offsets measured on Scorch Gorge: tape and graffiti sit within ~15 mm
+// of their surface; cloth and light covers stand 15-60 mm off and stay opaque.
+const UNDERLAY_GAP = 0.015;
+const UNDERLAY_PARALLEL = 0.9;
+
+/** Generator: sets `o.inkUnderlayMask` (Uint8Array per display triangle, or null). */
+export function* classifyInkUnderlays(level, data) {
+  const world = level?.triangleWorld, m = data?.manifest, V = data?.vertices, I = data?.indices, face = data?.triangleFace;
+  if (!world || !m?.objects || !V || !I || !face || typeof world.ray !== 'function') return 0;
+  const normals = world.normals, O = new THREE.Vector3(), D = new THREE.Vector3();
+  let marked = 0, work = 0;
+  for (const o of m.objects) {
+    if (o.inkUnderlayMask !== undefined) { if (o.inkUnderlayMask) marked++; continue; }
+    o.inkUnderlayMask = null;
+    if (!o.active || o.collidable || o.background || o.glass || /_Water$/.test(o.material || '')) continue;
+    const mask = new Uint8Array(Math.floor(o.ic / 3));
+    let count = 0;
+    for (let t = 0; t < mask.length; t++) {
+      if (++work % 512 === 0) yield;
+      const k = o.io + t * 3, a = (o.vo + I[k]) * 8, b = (o.vo + I[k + 1]) * 8, c = (o.vo + I[k + 2]) * 8;
+      const ux = V[b] - V[a], uy = V[b + 1] - V[a + 1], uz = V[b + 2] - V[a + 2];
+      const vx = V[c] - V[a], vy = V[c + 1] - V[a + 1], vz = V[c + 2] - V[a + 2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      const length = Math.hypot(nx, ny, nz);
+      if (!(length > 1e-12)) continue;
+      nx /= length; ny /= length; nz /= length;
+      const cx = (V[a] + V[b] + V[c]) / 3, cy = (V[a + 1] + V[b + 1] + V[c + 1]) / 3, cz = (V[a + 2] + V[b + 2] + V[c + 2]) / 3;
+      // Display triangles are double sided: look behind either face.
+      for (const s of [1, -1]) {
+        D.set(-nx * s, -ny * s, -nz * s);
+        O.set(cx - D.x * 0.002, cy - D.y * 0.002, cz - D.z * 0.002);
+        const hit = world.ray(O, D, UNDERLAY_GAP + 0.002);
+        if (!hit || face[hit.triangle] < 0) continue;
+        const i = hit.triangle * 3;
+        if (-(normals[i] * D.x + normals[i + 1] * D.y + normals[i + 2] * D.z) > UNDERLAY_PARALLEL) { mask[t] = 1; count++; break; }
+      }
+    }
+    if (count) { o.inkUnderlayMask = mask; marked++; }
+  }
+  return marked;
+}
+
 /** Compatibility with the original Level's face/grid and dynamic box contracts.
  * Static collision remains exact triangles; chart rectangles are NEVER colliders. */
 export class NativeLevel extends Level {
@@ -60,6 +113,8 @@ export class NativeLevel extends Level {
   }
   this.staticBlockCount=this.blocks.length;
   yield;
+  // Display-only covers lying on paintable surfaces are drawn under the ink overlay.
+  yield* classifyInkUnderlays(this,data);
   this._buildHash();
   yield;
   this._probe=new THREE.Vector3();

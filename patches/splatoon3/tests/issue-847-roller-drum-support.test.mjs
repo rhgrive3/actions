@@ -33,7 +33,7 @@ const MAIN_ROLLER_CLAMP_REVERSE = Object.freeze([
   ["    const unclampedDistance = delta.length();\n    if (unclampedDistance > reachR) target.copy(rightOrigin).add(delta.divideScalar(unclampedDistance || 1).multiplyScalar(reachR));", "    if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));", 'main-clamp-right'],
 ]);
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "be669b23402d1639d4d00451c0ae84dbf1cf3d7ac209fee8e87abffe072e0f5e",
+  "patches/splatoon3/runtime/roller.mjs": "1688fe40eb482084f9e4d7b0315cd08eaf99433fe448ee9466528a02e16c20ca",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "a4af2a6a78adafe886a291a3dab0a6d15f65c84999e74dcc6e28317f49f50b2d"
 });
 const headlessPaintRenderer = () => ({
@@ -62,6 +62,18 @@ function frozenRollerSource() {
 function exactFault(source, needle, replacement, name) {
   assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
   return source.replace(needle,replacement);
+}
+// 2026-11-04: on source (native) stages the drum tests exact source triangles
+// and only moving blocks; chart rectangles and whole-object boxes were false
+// walls/floors. Undo that one hunk to recover the previously pinned input.
+const NATIVE_TRIANGLE_SUPPORT_REVERSE = Object.freeze(["  let floor = false, wall = false;\n  // Source stages: level.blocks are chart rectangles and whole-object boxes\n  // (bookkeeping, not solids). Test the drum capsule against the exact source\n  // triangles and keep the oriented-box test for genuinely moving blocks only.\n  const world = level.native ? level.triangleWorld : null;\n  if (world && typeof world.capsuleContacts === 'function') {\n    const end = scratch.end ||= { x: 0, y: 0, z: 0 };\n    end.x = endX; end.y = start.y + delta.y; end.z = endZ;\n    const normals = world.normals;\n    let nearestWall = Infinity;\n    world.capsuleContacts(start, end, radius + Math.sqrt(CONTACT_EPS), (id, distance, point) => {\n      const ny = normals[id * 3 + 1];\n      if (ny >= WALL_BAND) floor = true;\n      else if (Math.abs(ny) < WALL_BAND && distance < nearestWall) {\n        wall = true; nearestWall = distance;\n        scratch.wallPoint.x = point.x; scratch.wallPoint.y = point.y; scratch.wallPoint.z = point.z;\n      }\n    });\n  }\n  const ids = world && typeof level.queryDynamicBlocks === 'function'\n    ? level.queryDynamicBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,\n      Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids)\n    : level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,\n      Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);\n", "  const ids = level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,\n    Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);\n  let floor = false, wall = false;\n", 'native-triangle-drum-support']);
+const BEFORE_NATIVE_TRIANGLE_SUPPORT_SHA256 = 'be669b23402d1639d4d00451c0ae84dbf1cf3d7ac209fee8e87abffe072e0f5e';
+function beforeNativeTriangleSupport(source) {
+  const [after, before, name] = NATIVE_TRIANGLE_SUPPORT_REVERSE;
+  source = exactFault(source, after, before, name);
+  assert.equal(createHash('sha256').update(source).digest('hex'), BEFORE_NATIVE_TRIANGLE_SUPPORT_SHA256,
+    'native triangle drum support inverse preserves the previously pinned roller input');
+  return source;
 }
 function beforeMainClamp(source) {
   for (const [after,before,name] of MAIN_ROLLER_CLAMP_REVERSE) source=exactFault(source,after,before,name);
@@ -98,7 +110,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
       const followThroughBytes=fs.readFileSync(new URL('./fixtures/roller-follow-through-20261030-reviewed-delta.json',import.meta.url));
       assert.equal(createHash('sha256').update(followThroughBytes).digest('hex'),
         '359dc78dfdf663069f20e6a2ea5d35a1d7e68661e78763737c94a82a77d2ab25');
-      const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=beforeMainClamp(raw);
+      const followThrough=JSON.parse(followThroughBytes);let beforeFollowThrough=beforeMainClamp(beforeNativeTriangleSupport(raw));
       for(const [after,before,name] of QUEUE_20261030_ROLLER_INVERSE)
         beforeFollowThrough=exactFault(beforeFollowThrough,after,before,name);
       assert.equal(createHash('sha256').update(beforeFollowThrough).digest('hex'),
@@ -390,7 +402,10 @@ test('847 rejects missing or modified fault inputs before VM linking and keeps e
   }
   assert.throws(() => exactFault('anchor anchor', 'anchor', '', 'duplicate'), /counterfactual anchor/);
   assert.throws(() => exactFault('other', 'anchor', '', 'missing'), /counterfactual anchor/);
-  const roller = inputs.get('patches/splatoon3/runtime/roller.mjs');
+  const current = inputs.get('patches/splatoon3/runtime/roller.mjs');
+  assert.throws(() => beforeNativeTriangleSupport(current.replace(NATIVE_TRIANGLE_SUPPORT_REVERSE[0], '')), /counterfactual anchor/);
+  assert.throws(() => beforeNativeTriangleSupport(current + NATIVE_TRIANGLE_SUPPORT_REVERSE[0]), /counterfactual anchor/);
+  const roller = beforeNativeTriangleSupport(current);
   for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) {
     assert.throws(() => exactFault(roller.replace(before,''), before, after, name), /counterfactual anchor/);
     assert.throws(() => exactFault(roller+before, before, after, name), /counterfactual anchor/);
