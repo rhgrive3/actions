@@ -10,13 +10,13 @@
 //     paused 0.3-0.65 s after every release, so the horizontal swing rate was
 //     well below the tap cadence. Paint with release-on-next-frame taps, the
 //     same edge pattern the quick chargers already use (`fastPaint`).
-//   - Brush: holding ZR run-paints after a flick and ToPaintFrame. Painting
-//     released Fire whenever the region ahead read as owned, so each restart
-//     paid a new flick and ToPaintFrame. Hold the stroke for BRUSH_ROLL_HOLD
-//     seconds after the last unpainted reading.
+//   - Brush: turf is painted with rapid ZR flicks; holding ZR (brush-run) is
+//     mainly movement, e.g. across enemy ink (game guides: "フデ移動はあくまで
+//     移動手段として使って、塗りはZR連打のフデ振りで行う"). The Bot was mapped
+//     onto the Roller branch and painted only by holding Fire while moving.
+//     Paint with flick taps; brush-run only to cross enemy ink while travelling.
 // Bots are an INKWAVE feature: these are input patterns, not Splatoon 3 data.
 // Weapon timing, ink cost, paint and damage are unchanged.
-const BRUSH_ROLL_HOLD = 1.2;
 export function adaptBotFamilyInput(rel, code, once) {
   if (rel !== 'src/game/bots.js') return code;
   code = once(code,
@@ -45,12 +45,11 @@ export function adaptBotFamilyInput(rel, code, once) {
   code = once(code,
     "        it.fire = inkFrac > 0.08 && (needPaint || Math.random() < 0.02) && wantMove;\n",
     "        if (brush) {\n" +
-    "          // A Brush paints by holding ZR (flick, then run-paint after ToPaintFrame).\n" +
-    "          // Keep the stroke through briefly-owned ground instead of re-flicking.\n" +
-    `          this._brushRollHold = needPaint ? ${BRUSH_ROLL_HOLD} : Math.max(0, (this._brushRollHold || 0) - dt);\n` +
-    "          it.fire = inkFrac > 0.08 && wantMove && this._brushRollHold > 0;\n" +
+    "          // Brushes paint with rapid flicks; brush-run (held ZR) is travel across enemy ink.\n" +
+    "          if (needPaint && inkFrac > 0.08) it.fire = botReadyPress(a);\n" +
+    "          else it.fire = inkFrac > 0.08 && wantMove && a.groundTeam === 2;\n" +
     "        } else it.fire = inkFrac > 0.08 && (needPaint || Math.random() < 0.02) && wantMove;\n",
-    'bot brush paint stroke hold');
+    'bot brush paint flicks');
   code = once(code,
     "    if (k !== 'charger' && k !== 'splatling' && k !== 'stringer' && k !== 'splatana') return true;\n",
     "    if (k !== 'charger' && k !== 'splatling' && k !== 'stringer' && k !== 'splatana')\n" +

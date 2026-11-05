@@ -21,10 +21,15 @@ const control = (rel, code) => {
   undo("inkFrac > 0.18 && (!brella || botReadyPress(a));\n      }", "inkFrac > 0.18;\n      }");
   undo("else it.fire = !brella || botReadyPress(a);", "else it.fire = true;");
   undo(" ||\n      family === 'splatana');", ");");
+  undo(`        if (brush) {
+          // Brushes paint with rapid flicks; brush-run (held ZR) is travel across enemy ink.
+          if (needPaint && inkFrac > 0.08) it.fire = botReadyPress(a);
+          else it.fire = inkFrac > 0.08 && wantMove && a.groundTeam === 2;
+        } else it.fire`, "        it.fire");
   return code;
 };
 
-async function world(weapon, adapt, hz = 60) {
+async function world(weapon, adapt, hz = 60, { walk = false } = {}) {
   const f = await fixture({ adapt, fullRuntime: true, realProjectiles: true,
     extraExports: "export * from './inkwave-public/src/game/bots.js';" });
   const a = f.make(weapon); a.isBot = true; a.isLocal = false; a.remote = false;
@@ -32,19 +37,20 @@ async function world(weapon, adapt, hz = 60) {
   f.G.paint.sample = () => 0;
   f.G.paint.regionStats = (_x, _y, _z, _r, _t, out) => Object.assign(out, { own: 0, enemy: 0, empty: 1, n: 1 });
   const brain = new f.BotBrain(a, 'normal'); a.bot = brain;
-  brain._perceive = () => {}; brain._steer = () => new f.THREE.Vector3();
+  brain._perceive = () => {}; brain._steer = () => new f.THREE.Vector3(0, 0, walk ? 1 : 0);
   brain._pickPaintGoal = () => { brain.path = null; brain.goalTimer = 1; };
   const fires = [];
   f.on('weapon:fire', e => { if (e.actor === a) fires.push(e); });
   const dt = 1 / hz;
-  let canopyOpen = 0;
+  let canopyOpen = 0, rolling = 0;
   const run = seconds => {
     for (let i = 0; i < Math.round(seconds * hz); i++) {
       f.G.time += dt; a.ink = f.PLAYER.inkMax; brain.update(dt); a.update(dt);
       if (a.weaponRunner.catalogState?.canopy?.open) canopyOpen += dt;
+      if (a.weaponRunner.rolling) rolling += dt;
     }
   };
-  return { f, a, brain, fires, run, get canopyOpen() { return canopyOpen; } };
+  return { f, a, brain, fires, run, get canopyOpen() { return canopyOpen; }, get rolling() { return rolling; } };
 }
 
 for (const hz of [30, 60, 120]) {
@@ -69,5 +75,15 @@ for (const hz of [30, 60, 120]) {
     // A press/release edge pair costs two ticks; at 30 Hz that is 4F per swing.
     assert.ok(after.fires.length >= ceiling - (hz < 60 ? 2 : 1), `taps reach the ${frame}F swing cadence (${after.fires.length}/${ceiling})`);
     assert.ok(after.fires.every(e => !(e.charge >= 1)), 'paint taps never become the full-charge vertical slash');
+  });
+
+  test(`Brush Bot paints unpainted ground with flicks, not by brush-running (${hz}Hz)`, async () => {
+    const before = await world('s3-brush-mini', control, hz, { walk: true }), after = await world('s3-brush-mini', composed, hz, { walk: true });
+    before.run(3); after.run(3);
+    assert.ok(before.rolling > 1.5, `control brush-runs to paint (${before.rolling.toFixed(2)} s)`);
+    assert.equal(after.rolling, 0, 'neutral ground is painted with flicks, not by brush-running');
+    // Inkbrush repeats a flick every 7F (first interval 6F) while tapped.
+    assert.ok(after.fires.length >= 10 * Math.max(1, before.fires.length) / 2 && after.fires.length >= 10,
+      `flick count ${before.fires.length} -> ${after.fires.length}`);
   });
 }
