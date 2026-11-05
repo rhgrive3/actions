@@ -29,6 +29,9 @@ test('an un-contacted Ink Storm device does not deploy a cloud after 1.1s of air
   noContactPhysics(f);
   const waterY = f.PLAYER.waterY;
   try {
+    // The canister now uses the bomb-family FlyGravity (57.6), so lower the
+    // water cull for this negative control to keep it airborne past 1.1s.
+    f.PLAYER.waterY = -200;
     const ps = new f.Projectiles(new f.THREE.Scene());
     const b = throwUpward(f, ps);
     // 67 fixed 60Hz ticks = 1.11667s, just past the removed age>1.1 boundary.
@@ -38,7 +41,7 @@ test('an un-contacted Ink Storm device does not deploy a cloud after 1.1s of air
     assert.equal(ps.bombs.length, 1, 'the un-contacted device survives the 1.1s tick');
     // Keep flying longer than the old boundary while still airborne.
     for (let i = 0; i < 23; i++) ps._updateBombs(1 / 60);
-    assert.ok(b.pos.y > waterY - 1.8, 'the negative control is still airborne, not water-culled');
+    assert.ok(b.pos.y > f.PLAYER.waterY - 1.8, 'the negative control is still airborne, not water-culled');
     assert.equal(ps.clouds.length, 0);
     assert.equal(ps.bombs.length, 1);
   } finally { f.PLAYER.waterY = waterY; }

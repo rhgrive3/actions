@@ -45,6 +45,29 @@ export function createTowerModel(THREE, halfWidth, halfLength) {
   for (const x of [-0.21, 0.21]) for (const z of [-0.21, 0.21]) {
     bar([x, 1.76, z], [0, 1.99, 0], 0.026, dark);
   }
+  // Body: the deck alone (0.24 thick) read as a flat plate. S3's Tower is a
+  // boxy vehicle, so fill the 0.40 WU of clearance under the deck top with a
+  // chassis: an inset steel hull, a yellow/black hazard band on every side,
+  // pale corner bumpers and a centre rail truck. Everything stays below the
+  // deck (y <= 0) and inside the footprint; the path keeps >= 0.40 WU between
+  // deck top and the highest floor under it, so the hull bottom (-0.37)
+  // never reaches terrain. Silhouette from Nintendo's Tower Control
+  // screenshots; dimensions are INKWAVE calibration, not retail geometry.
+  const hullW = halfWidth * 2 - 0.12, hullL = halfLength * 2 - 0.12;
+  box(0, -0.305, 0, hullW, 0.13, hullL, dark);
+  const yellow = new THREE.Color(0xf0c419), black = new THREE.Color(0x1c1d1f);
+  const stripes = Math.max(4, Math.round(hullW / 0.24));
+  for (let i = 0; i < stripes; i++) {
+    const t = -hullW / 2 + (i + .5) * hullW / stripes, tint = i % 2 ? black : yellow, w = hullW / stripes;
+    box(t, -0.30, hullL / 2 + 0.006, w, 0.075, 0.012, tint);
+    box(t, -0.30, -hullL / 2 - 0.006, w, 0.075, 0.012, tint);
+    box(hullW / 2 + 0.006, -0.30, t, 0.012, 0.075, w, tint);
+    box(-hullW / 2 - 0.006, -0.30, t, 0.012, 0.075, w, tint);
+  }
+  for (const x of [-1, 1]) for (const z of [-1, 1]) {
+    box(x * (halfWidth - 0.11), -0.245, z * (halfLength - 0.11), 0.22, 0.25, 0.22, white);
+  }
+  box(0, -0.355, 0, 0.62, 0.03, hullL * .86, column);
   // Perimeter trim stays within the existing deck silhouette. Its top sits
   // at .003/.004 to avoid coplanar deck faces, below paint .009 and grate .012;
   // it never creates a walkable overhang or changes the original deck y=0.

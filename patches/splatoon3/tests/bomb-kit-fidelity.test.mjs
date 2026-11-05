@@ -241,7 +241,9 @@ test('Splat Bomb ground resistance applies while resting between swept hits (bou
     slides.push(burst.pos.z - landed);
   }
   // Before this change the per-hit-only drag let the bomb slide 22-28 units.
-  assert.ok(slides.every(s => s > 1 && s < 13), `slides ${slides.join(' / ')}`);
+  // With the bomb-family flight drag the bomb now lands with far less
+  // horizontal speed, so the remaining slide is short but still present.
+  assert.ok(slides.every(s => s > .3 && s < 13), `slides ${slides.join(' / ')}`);
 });
 
 test('thrown models: per-sub silhouette, native fuse pulse rebound to the model, Curling lights and Suction cup', async () => {

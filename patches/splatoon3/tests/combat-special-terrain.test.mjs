@@ -71,7 +71,8 @@ test('Ultra Stamp selects its 8F swing when ZR is pressed after leaving the floo
 });
 test('Ultra Stamp guard is absent while idle, before the first swing, and after releasing ZR',()=>{
  world();const a=actor('ultraStamp'),shooter=f.make();shooter.team=1;
- const candidate=()=>f.G.projectiles.kitDefenseCandidate({owner:shooter,team:1,prev:new f.THREE.Vector3(0,.78,3),pos:new f.THREE.Vector3(0,.78,.2),damage:20,size:.15,ghost:false});
+ // Held ZR now advances the stamp; keep the probe in front of the actor.
+ const candidate=()=>f.G.projectiles.kitDefenseCandidate({owner:shooter,team:1,prev:a.pos.clone().add(new f.THREE.Vector3(0,.78,3)),pos:a.pos.clone().add(new f.THREE.Vector3(0,.78,.2)),damage:20,size:.15,ghost:false});
  assert.equal(candidate(),null);tick(a,17);a.intent.fire=true;tick(a,30);assert.equal(candidate(),null);
  tick(a,1);assert.equal(candidate()?.kind,'ultra-stamp-guard');a.intent.fire=false;tick(a,1);assert.equal(candidate(),null);
 });

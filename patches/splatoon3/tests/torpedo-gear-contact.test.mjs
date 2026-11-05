@@ -47,9 +47,14 @@ async function world(client=null,clock=null){
   }
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
+// Mirrors the runtime 60 Hz integration, including the per-frame drag.
 function landing(drop){
-  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
-  return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
+  const g=drop.gravity??drop.source.spec.gravity,k=drop.airResist||0,pos=drop.pos.clone(),vel=drop.vel.clone();
+  for(let i=0;i<600&&pos.y>0;i++){
+    const prevY=pos.y;vel.y-=g*STEP;if(k>0)vel.multiplyScalar(1-k);pos.addScaledVector(vel,STEP);
+    if(pos.y<=0){const t=prevY/(prevY-pos.y);pos.addScaledVector(vel,-STEP*(1-t));}
+  }
+  return pos.setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}
 function play(w,rows){w.nm._peer('a');for(const row of rows)w.nm._play('a',wire(row));}

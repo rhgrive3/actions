@@ -454,6 +454,25 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
+  // Charger and Stringer export only MoveSpeedFullCharge: the speed at full
+  // draw. S3 slows the walk progressively while charging (Splat Charger's Wiki
+  // table: 0.96 at the minimum-charge side down to 0.21 just below full; the
+  // Ver.4.1.0 Tri-Stringer note separates "charging" from "full charge" speed).
+  // Holding MoveSpeedFullCharge from the first charge frame made every
+  // catalogue Charger/Stringer crawl at its full-draw speed immediately. The
+  // walk now runs from normal run speed through the minimum-charge window
+  // down to MoveSpeedFullCharge; the linear interior is a calibration (未確認).
+  // Splatlings keep their constant exported MoveSpeed_Charge.
+  function catalogChargingMoveSpeed(runner, r, t, s, w, mod) {
+    const full = w.moveSpeedCharging * mod;
+    if (r.family !== 'charger' && r.family !== 'stringer' || !Number.isFinite(t.MoveSpeedFullCharge)) return full;
+    const fullF = chargeFrames(r), minF = Math.min(fullF * .9, finite(t.ChargeFrameMinCharge, 8));
+    const frames = Number.isFinite(s?.chargeF) ? s.chargeF : 0;
+    if (frames + EPS >= fullF) return full;
+    const start = Math.max(full, PLAYER.runSpeed * (runner.a.grounded ? (runner.a.s3?.modifiers?.runSpeed ?? 1) : 1));
+    if (frames <= minF) return start;
+    return lerp(start, full, clamp((frames - minF) / Math.max(EPS, fullF - minF)));
+  }
   function catalogMoveSpeed() {
     const w = this.a.weapon;
     if (!w.catalogRecord) return legacyMove.call(this);
@@ -492,7 +511,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       return shotGate ? w.moveSpeedFiring * mod
         : PLAYER.runSpeed * (this.a.grounded ? (this.a.s3?.modifiers?.runSpeed ?? 1) : 1);
     }
-    if (this.charging) return w.moveSpeedCharging*mod;
+    if (this.charging) return catalogChargingMoveSpeed(this, r, t, s, w, mod);
     if (r.sourceActor==='WeaponSpinnerDownpour'&&s?.streamElapsed+EPS>=.5)
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
         clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;

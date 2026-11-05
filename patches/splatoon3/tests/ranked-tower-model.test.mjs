@@ -8,11 +8,11 @@ test('presentation has one static draw and stays inside existing deck/pole colli
     assert.equal(mesh.isMesh, true); assert.equal(mesh.children.length, 0);
     assert.equal(mesh.material.vertexColors, true); assert.equal(mesh.material.transparent, false);
     const geometry = mesh.geometry, p = geometry.attributes.position;
-    assert.ok(geometry.index.count / 3 < 600);
+    assert.ok(geometry.index.count / 3 < 1200);
     for (let i = 0; i < p.count; i++) {
       const x=p.getX(i), y=p.getY(i), z=p.getZ(i);
       assert.ok([x,y,z].every(Number.isFinite));
-      assert.ok(y >= -.120001 && y <= 2.010001);
+      assert.ok(y >= -.370001 && y <= 2.010001, 'chassis stays above the 0.40 deck clearance');
       assert.ok(Math.abs(x) <= half + 1e-6 && Math.abs(z) <= half + 1e-6);
       if (y > .004001) assert.ok(Math.abs(x) <= .28 && Math.abs(z) <= .28, 'above floor stays in pole footprint');
     }
@@ -36,4 +36,16 @@ test('perimeter trim clears the deck without covering the paint or grate layers'
     if(y>0){trimTop++;assert.ok(y>=.002999 && y<=.004001 && y<.009);}
   }
   assert.ok(trimTop>0);mesh.geometry.dispose();mesh.material.dispose();
+});
+
+test('the tower reads as a solid vehicle, not a flat plate', () => {
+  const mesh = createTowerModel(THREE, 1.4, 1.4), p = mesh.geometry.attributes.position;
+  let low = 0, wideLow = 0;
+  for (let i = 0; i < p.count; i++) {
+    low = Math.min(low, p.getY(i));
+    if (p.getY(i) < -.3 && (Math.abs(p.getX(i)) > 1.2 || Math.abs(p.getZ(i)) > 1.2)) wideLow++;
+  }
+  assert.ok(low < -.35, 'visible body extends well below the 0.24 deck slab');
+  assert.ok(wideLow > 0, 'the hull spans the footprint edges, not only the centre');
+  mesh.geometry.dispose(); mesh.material.dispose();
 });

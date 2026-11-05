@@ -145,8 +145,12 @@ test('recorded Charger stalls enqueue zero additional settled gain/rate targets 
       createBufferSource(){const s={playbackRate:audioParam(1),connect(){},disconnect(){},start(){},stop(){}};sources.push(s);return s;},
       createGain(){const g={gain:audioParam(),connect(){},disconnect(){}};gains.push(g);return g;}};
     const h=playProgressCharge({ctx,sfxIn:{}},pcm(16000),{length:1.215,progress:.5,chargeTime:1});
-    ctx.currentTime=1/hz;h.set({progress:.5});const rates=sources[0].playbackRate.calls.length,levels=gains[0].gain.calls.length;
-    for(let i=2;i<=hz*10;i++){ctx.currentTime=i/hz;h.set({progress:.5});}
+    // The pause settles within ~60 ms (the read head reaching the funded end,
+    // or no funded progress); it is not decided from one jittery frame.
+    const settle=Math.ceil(hz*.1);
+    for(let i=1;i<=settle;i++){ctx.currentTime=i/hz;h.set({progress:.5});}
+    assert.equal(sources[0].playbackRate.value,0);const rates=sources[0].playbackRate.calls.length,levels=gains[0].gain.calls.length;
+    for(let i=settle+1;i<=hz*10;i++){ctx.currentTime=i/hz;h.set({progress:.5});}
     assert.equal(sources[0].playbackRate.value,0);assert.equal(sources[0].playbackRate.calls.length,rates);assert.equal(gains[0].gain.calls.length,levels);
     ctx.currentTime+=1/hz;h.set({progress:.5+1/hz});assert.ok(Math.abs(sources[0].playbackRate.value-1)<1e-12);assert.equal(gains[0].gain.value,.55);
     ctx.currentTime+=1/hz;h.set({progress:.5+2/hz,volume:.2});assert.equal(gains[0].gain.value,.2);h.stop();assert.equal(h.playing,false);

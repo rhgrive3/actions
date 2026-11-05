@@ -101,6 +101,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
       Math.sin(pitch)*speed,Math.sin(angle)*Math.cos(pitch)*speed);
     const drop={owner:source.owner,team:source.team,sourceLife:source.sourceLife,source,ghost:source.ghost,
       gravity:kind==='chase'?(source.spec.splashGravity??source.spec.gravity):source.spec.gravity,
+      airResist:kind==='chase'?(source.spec.splashAirResist||0):0,
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
     const scene=api.G.scene;
@@ -124,7 +125,10 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
   const list=projectiles._s3TorpedoSplashes;
   if(!list?.length)return;
   for(let i=list.length-1;i>=0;i--){
-    const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=(d.gravity??d.source.spec.gravity)*dt;d.pos.addScaledVector(d.vel,dt);
+    const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=(d.gravity??d.source.spec.gravity)*dt;
+    // Per-60Hz-frame drag, integrated for any fixed step length.
+    if(d.airResist>0)d.vel.multiplyScalar(Math.pow(1-d.airResist,dt*60));
+    d.pos.addScaledVector(d.vel,dt);
     const world=api.G.physics?.segment?.(d.prev,d.pos,projectiles._s3TorpedoSplashHit ||= new api.Hit());
     // Physics owns reusable Hit vectors. Capture primitives before later
     // collision/defense callbacks can reenter and overwrite that scratch.

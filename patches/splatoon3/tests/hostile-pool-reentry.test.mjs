@@ -40,7 +40,7 @@ test('all eleven sub-weapon enemy lookups release their borrowed array even when
 test('Torpedo splash returns its drop-owned enemy buffer when a hit callback throws', () => {
   // A non-probe drop never reads the device-probe registry; bind it empty.
   const burst = new Function('hostileActors', 'releaseHostileActors', 'localOwner', 'surfacePaint', 'damageSubObjectsInRadius', 'subDeviceProbes',
-    extract('burstTorpedoSplash') + '\nreturn burstTorpedoSplash;'
+    extract('takeTorpedoSplashHit') + '\n' + extract('burstTorpedoSplash') + '\nreturn burstTorpedoSplash;'
   )(hostileActors, releaseHostileActors, () => true, () => {}, () => assert.fail('hit must throw first'), new WeakMap());
   const { api, owner } = fixture(), failure = new Error('Torpedo splash hit callback');
   api.THREE = { Vector3: class { copy(p) { Object.assign(this, p); return this; } distanceTo() { return 0; } } };

@@ -21,8 +21,18 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   const baseUpdate={volume,pos:position};
   const safeNative=()=>{try{return nativeLoop();}catch{return null;}};
   const valid=()=>!stopped&&engine.ctx===ctx&&ctx.state!=='closed';
+  // Full-charge hold: S3 keeps the recorded Motor hum running (looped over its
+  // steady window, see spinner-motor-hold.mjs) rather than looping a slice of
+  // the charge-up phrase. Downpour has no Motor take; it keeps its phrase.
+  const motorHold=id!=='s3-spinner-downpour';
+  function holdMotor(){
+    clip?.stop?.(.05);clip=null;clipPhase=-1;
+    if(!native?.playing)native=safeNative();
+  }
   function start(resume=true){
-    if(!valid()||!spinnerCached(engine,id))return;
+    if(!valid())return;
+    if(phase===2&&motorHold){holdMotor();return;}
+    if(!spinnerCached(engine,id))return;
     let offset=0;
     if(phrase){
       const lo=phase===1?firstAt:0;
@@ -52,7 +62,8 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
         progress=q;
         if(changed){
           const backwards=stage<phase;phase=stage;pitch=phrase?nominal(phase):.88+.32*q;
-          if(phrase)start(backwards); // forward edge starts the recorded cue, never the looped tail
+          if(phase===2&&motorHold)holdMotor();
+          else if(phrase||motorHold&&backwards&&!clip)start(backwards); // forward edge starts the recorded cue, never the looped tail
         }else if(!phrase)pitch=.88+.32*q;
         else if(phase===2)pitch=1;
         else if(dt>=1/240){
@@ -78,11 +89,13 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   retire=trackChargeHandle(engine,handle,opts.priority??(opts.actor?.isLocal?88:64));
   if(!valid())return QUIET_CHARGE;
   prewarmChargeCue(engine);
-  if(!phrase||!spinnerCached(engine,id))native=safeNative();
-  if(spinnerCached(engine,id))start(progress>0);
+  if(phase===2&&motorHold)holdMotor();
+  else if(!phrase||!spinnerCached(engine,id))native=safeNative();
+  if(phase===2&&motorHold){}
+  else if(spinnerCached(engine,id))start(progress>0);
   else{
     pending=true;
-    spinnerPreload(engine,id).then(buffer=>{pending=false;if(valid()&&buffer)start(true);},()=>{pending=false;});
+    spinnerPreload(engine,id).then(buffer=>{pending=false;if(valid()&&buffer&&!(phase===2&&motorHold))start(true);},()=>{pending=false;});
   }
   return handle;
 }

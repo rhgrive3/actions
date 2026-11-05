@@ -59,3 +59,26 @@ test('shot/impact resources are bounded, expire while idle, and dispose shared G
   assert.equal(geometryDisposals, 1); assert.equal(materialDisposals, 1);
   assert.equal(scene.getObjectByName('rainmaker-ink-splashes'), undefined);
 });
+
+test('Rainmaker detonation is a blast-sized ink dome with flash and 15 sourced globs, pooled', async () => {
+  const THREE = await import('../../../inkwave-public/vendor/three/build/three.module.js');
+  const { createRainmakerAttackVisuals } = await import('../runtime/ranked/rainmaker-visuals.mjs');
+  const scene = new THREE.Scene(), fx = createRainmakerAttackVisuals(THREE, scene), color = new THREE.Color(1, .6, .1);
+  try {
+    fx.blast(new THREE.Vector3(0, 0, 0), color, 7);
+    const blast = scene.getObjectByName('rainmaker-blast'), dome = blast.getObjectByName('rainmaker-blast-dome');
+    const globs = blast.getObjectByName('rainmaker-blast-globs');
+    assert.equal(globs.count, 15, 'BlastParamFullCharge.SplashAroundParam.Num');
+    fx.update(.14);
+    assert.ok(dome.scale.x > 6.5 && dome.scale.x <= 7.0001, `dome reaches the 7 WU blast radius (${dome.scale.x})`);
+    const m = new THREE.Matrix4(), p = new THREE.Vector3();
+    let far = 0;
+    for (let i = 0; i < 15; i++) { globs.getMatrixAt(i, m); p.setFromMatrixPosition(m); far = Math.max(far, Math.hypot(p.x, p.z)); }
+    assert.ok(far > 2, 'globs are thrown outward');
+    fx.update(1.2);
+    assert.equal(blast.visible, false, 'expires');
+    for (let i = 0; i < 20; i++) fx.blast(new THREE.Vector3(i, 0, 0), color, 7);
+    assert.ok(scene.getObjectByName('rainmaker-ink-splashes').children.filter(c => c.name === 'rainmaker-blast').length <= 4, 'bounded pool');
+  } finally { fx.dispose(); }
+  assert.equal(scene.getObjectByName('rainmaker-ink-splashes'), undefined);
+});

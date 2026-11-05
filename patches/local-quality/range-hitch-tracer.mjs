@@ -140,7 +140,7 @@ export function installHitchTracer(game, {
   const callerFromStack = stack => {
     const lines = String(stack || '').split('\n').slice(1);
     const line = lines.find(value =>
-      !/range-hitch-tracer|(?:TriangleWorld\.)?ray\s*\(|NativePhysics\.(?:raycast|los)\s*\(/.test(value));
+      !/range-hitch-tracer\.mjs|(?:TriangleWorld\.)?ray\s*\(|NativePhysics\.(?:raycast|los)\s*\(/.test(value));
     return line ? line.trim().replace(/^at\s+/, '').slice(0, 220) : 'unknown';
   };
   const getWorld = () => env?.__G || {};

@@ -186,7 +186,10 @@ export const ALL_SUB_SPECS = Object.freeze({
       Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.8, crossPaintRadius: 2.0,
         splashAround:Object.freeze({count:6,offsetY:.3,paintRadius:.7,pitchMinDegrees:10,pitchMaxDegrees:20,velocityMin:speedPerSecond(.39),velocityMax:speedPerSecond(.43)}) }),
     ]),
-    gravity: 24, maxFlightSeconds: 2.2, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
+    // Fizzy's table also omits the flight pair; bomb-family flight replaces the
+    // drag-free gravity24 that sent a standing throw ~104 WU. Calibrated.
+    gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flightStatus: 'bomb-family-flight-calibrated',
+    maxFlightSeconds: 2.2, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
     calibration: 'per-stage charge/wait/warn frames, blast, hop and flight-splash arrays extracted; Wiki measures initial grounded fuse about 30F and later bursts on re-landing; acceleration mapped from community testing; ground rolling/side-wall rebound, bounce flight, stamp shape and exact warning-state mapping calibrated',
   }),
   torpedo: Object.freeze({
@@ -199,7 +202,11 @@ export const ALL_SUB_SPECS = Object.freeze({
     // shot-down threshold. This is not extracted from the pinned JSON.
     hp: 20, hpStatus: 'public-gameplay',
     radius: 6, damageInner: 2.6, damageOuter: 6, damageMax: rawDamage(600), damageMin: rawDamage(350), damageFalloff: 'discrete',
-    paintRadius: 3.5, burstSeconds: frameSeconds(30), gravity: 24, flyRotateAirResist: .018,
+    paintRadius: 3.5, burstSeconds: frameSeconds(30),
+    // Table omits FlyGravity/FlyPositionAirResist: use the bomb-family flight
+    // (Robot's explicit .016/.05866). Gravity24 without drag sent a standing
+    // throw ~107 WU (21 trial lines). Calibrated, not an extracted Torpedo row.
+    gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flightStatus: 'bomb-family-flight-calibrated', flyRotateAirResist: .018,
     chaseRadius: 1.8*5, findHeightAbove: 1*5, findHeightBelow: .5*5,
     findStartFrames: 6, findStartStatus: 'calibrated-from-legacy-community-5-to-6F-estimate', findCollisionStartRadiusRate: .55555,
     rotationFrames: 25, rotationStatus: 'calibrated-from-provisional-community-45F-total-minus-extracted-20F-wait',
@@ -211,6 +218,13 @@ export const ALL_SUB_SPECS = Object.freeze({
     // Detached chase droplets use their own calibrated gravity. The parent
     // projectile's gravity is not the source of the secondary burst timing.
     splashGravity: 60,
+    // Detached chase droplets were landing 8-11 world units away (no drag),
+    // so they could never reach the target the parent had just hit, contrary
+    // to the Wiki's "droplets can hit up to three times, capped at 96". The
+    // per-frame air resistance and the three-hit cap restore that documented
+    // outcome; the drag coefficient is a calibration, not an extracted value.
+    splashAirResist: .1, splashAirResistStatus: 'calibrated-to-wiki-up-to-three-droplet-hits',
+    splashMaxHitsPerTarget: 3, splashMaxHitsStatus: 'wiki-documented-cap-96',
     splashAround: Object.freeze({count:8,pitchDegrees:65,velocityMin:speedPerSecond(.42),velocityMax:speedPerSecond(.48)}),
     findSplashAround: Object.freeze({count:6,pitchMinDegrees:30,pitchMaxDegrees:45,velocityMin:speedPerSecond(.15),velocityMax:speedPerSecond(.23),paintRadius:.7}),
     inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, ground fuse, 20F post-rotation wait, ground drag and throw tuple extracted; Wiki reports stop/transform then straight flight, approximate asymmetric search and provisional 45F total transform. Rotation25F is a calibration from that tentative total minus20F, not extracted; startup6F uses a legacy community estimate; chase speed/timeout, lost-target last-position aim and world mapping remain calibrated',
@@ -238,7 +252,9 @@ export const ALL_SUB_SPECS = Object.freeze({
     // trial lines; its system page defines one line as 5 world units/metres.
     radius: 1.05 * 5, sourceCutoff: 5.4, radiusStatus: 'wiki-measured-trial-lines-to-world-units', lifetime: 5,
     effectLevels: Object.freeze([{ frame: 60, nextLevelCount: 3 }, { frame: 30, nextLevelCount: 4 }, { frame: 15, nextLevelCount: 0 }]),
-    gravity: 24, slowScale: .5, inkDrainMaxPercent: 40, jumpScale: .5,
+    // Bomb-family flight (calibrated); gravity24 without drag reached ~85 WU.
+    gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flightStatus: 'bomb-family-flight-calibrated',
+    slowScale: .5, inkDrainMaxPercent: 40, jumpScale: .5,
     inkCostFallback: 55, calibration: 'cost, 80F lockout, effect levels and cutoff extracted; 5s/1.05 trial-line (5.25 world-unit)/50% slow/40% max drain are Wiki measurements; jump magnitude is unquantified and retained as explicit calibration',
   }),
   angleShooter: Object.freeze({
@@ -270,7 +286,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
     hitPaintRadius: 2.9, placePaintRadius: .3, spoutDrawRadius: .25, paintRadius: 1.4, dropletDamage: 20, dropletHitRadius: .15,
     firstPeriodFrames: Object.freeze([480, 630, 780]), laterPeriodFrames: Object.freeze([900, 960, 1020]),
-    maxOwnerObjects: 1, lifetime: Infinity, hp: 120, gravity: 24,
+    maxOwnerObjects: 1, lifetime: Infinity, hp: 120, gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flightStatus: 'bomb-family-flight-calibrated',
     inkCostFallback: 60, calibration: 'cost/recovery/cadence/paint radii extracted; droplet pattern and world mapping calibrated; public references report 120 HP and unlimited low-power duration',
   }),
   beakon: Object.freeze({
@@ -1084,6 +1100,16 @@ function blast(api, object, pos, burstIndex = 0) {
   if(object.subId==='fizzy')spawnFizzySplashes(api,api.G.projectiles,object,pos,burstIndex);
 }
 
+// One parent's eight droplets share a per-target budget (Wiki: up to three
+// droplet hits, 60+3x12=96). Owned by the parent object so replay/ghost lanes
+// and the local lane cannot exceed the same documented cap.
+function takeTorpedoSplashHit(drop,target){
+  const source=drop.source,cap=source?.spec?.splashMaxHitsPerTarget;
+  if(!source||!Number.isFinite(cap))return true;
+  const hits=source._s3SplashHits ||= new WeakMap(),n=hits.get(target)||0;
+  if(n>=cap)return false;
+  hits.set(target,n+1);return true;
+}
 function burstTorpedoSplash(api,drop,pos){
   const spec=drop.source.spec;
   const probe=subDeviceProbes.get(drop.source);
@@ -1113,6 +1139,7 @@ function burstTorpedoSplash(api,drop,pos){
       if(point.distanceTo(pos)>spec.splashRadius||api.G.physics?.los&&!api.G.physics.los(pos,point))continue;
       const shelter=api.G.projectiles?.kitBarrierCandidate?.(drop,pos,point);
       if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(point)-1e-6)continue;
+      if(!takeTorpedoSplashHit(drop,target))continue;
       observeLimitedContact(api.G.projectiles,drop,target,spec.splashDamage);
     }
   }
@@ -1125,6 +1152,7 @@ function burstTorpedoSplash(api,drop,pos){
         if(point.distanceTo(pos)>spec.splashRadius||api.G.physics?.los&&!api.G.physics.los(pos,point))continue;
         const shelter=api.G.projectiles?.kitBarrierCandidate?.(drop,pos,point);
         if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(point)-1e-6)continue;
+        if(!takeTorpedoSplashHit(drop,target))continue;
         api.G.projectiles?.applyHit?.(drop.owner,target,spec.splashDamage,'torpedo-splash');
       }
     }finally{releaseHostileActors(api);}

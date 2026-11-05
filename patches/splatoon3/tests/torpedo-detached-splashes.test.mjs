@@ -47,9 +47,14 @@ async function world(client=null,clock=null){
   }
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
+// Mirrors the runtime 60 Hz integration, including the per-frame drag.
 function landing(drop){
-  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
-  return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
+  const g=drop.gravity??drop.source.spec.gravity,k=drop.airResist||0,pos=drop.pos.clone(),vel=drop.vel.clone();
+  for(let i=0;i<600&&pos.y>0;i++){
+    const prevY=pos.y;vel.y-=g*STEP;if(k>0)vel.multiplyScalar(1-k);pos.addScaledVector(vel,STEP);
+    if(pos.y<=0){const t=prevY/(prevY-pos.y);pos.addScaledVector(vel,-STEP*(1-t));}
+  }
+  return pos.setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}
 function play(w,rows){w.nm._peer('a');for(const row of rows)w.nm._play('a',wire(row));}
@@ -88,8 +93,10 @@ test('Torpedo main contact does not apply an immediate extra12 and each detached
   assert.equal(w.f.G.projectiles._s3TorpedoSplashes.length,0);
   assert.equal(w.stamps.filter(s=>s.radius===2).length,8,'all8 children paint once, independently of retired parent/dead owner');
   assert.equal(w.stamps.filter(s=>s.radius===.7).length,6,'capture paint has6 independent harmless droplets');
-  assert.deepEqual(w.hits.filter(h=>h.cause==='torpedo-splash').map(h=>h.amount),[12]);
-  assert.equal(w.victim.hp,28);
+  // The victim at a landing spot is reached by neighbouring droplets too, but
+  // one parent's droplets are capped at three hits per target (Wiki: max 96).
+  assert.deepEqual(w.hits.filter(h=>h.cause==='torpedo-splash').map(h=>h.amount),[12,12,12]);
+  assert.equal(w.victim.hp,4);
   const before=[w.hits.length,w.stamps.length];for(let i=0;i<10;i++)w.step();assert.deepEqual([w.hits.length,w.stamps.length],before);
 });
 
@@ -155,16 +162,32 @@ test('Torpedo JSON replay keeps native hit and paint authority while ghosts carr
   }
   assert.deepEqual([receiver.hits.length,receiver.stamps.length,receiver.packets.length,receiver.events.length],counters,'receiver child contacts cannot propose hit/paint/events');
   assert.equal(receiver.victim.hp,40,'contact without a valid owner claim changes no HP');
-  const hits=source.packets.filter(p=>p.p.k==='hit').map(p=>p.p);
-  assert.deepEqual(hits.map(p=>[p.w,p.d]),[['torpedo',60],['torpedo-splash',12]]);
-  const splash=hits[1];receiver.nm.onMessage('foreign',splash);receiver.nm.onMessage('a',{...splash,d:12.1});assert.equal(receiver.victim.hp,40);
-  receiver.nm.onMessage('a',splash);assert.equal(receiver.victim.hp,28);
+  const hits=source.packets.filter(p=>p.p.k==='hit').map(p=>p.p),splashes=hits.slice(1);
+  assert.deepEqual(hits[0]&&[hits[0].w,hits[0].d],['torpedo',60]);
+  assert.ok(splashes.length>=1&&splashes.length<=3,'the first landing frame reports at most the three-hit cap');
+  assert.ok(splashes.every(p=>p.w==='torpedo-splash'&&p.d===12));
+  const splash=splashes[0];receiver.nm.onMessage('foreign',splash);receiver.nm.onMessage('a',{...splash,d:12.1});assert.equal(receiver.victim.hp,40);
+  for(const p of splashes)receiver.nm.onMessage('a',p);
+  const expectedHp=40-12*splashes.length;assert.equal(receiver.victim.hp,expectedHp);
   // Finish native child paint; replicate it through the real owner tick/playback path.
   for(let i=0;i<200;i++){clock.ms+=STEP*1000;source.step();receiver.step();}
+  assert.ok(source.packets.filter(p=>p.p.k==='hit'&&p.p.w==='torpedo-splash').length<=3,'one parent never exceeds three droplet hits');
   assert.equal(source.nm._sendTick(),true);const paintTick=source.packets.filter(p=>p.p.k==='t').at(-1).p;
   receiver.nm.onMessage('a',paintTick);clock.ms+=150;receiver.nm.update(.15);settle(source);settle(receiver);
   assert.deepEqual(Array.from(receiver.paint.grid),Array.from(source.paint.grid));
   const before=Array.from(receiver.paint.grid);receiver.nm.onMessage('a',paintTick);for(const p of hits)receiver.nm.onMessage('a',p);settle(receiver);
-  assert.deepEqual(Array.from(receiver.paint.grid),before);assert.equal(receiver.victim.hp,28);
+  assert.deepEqual(Array.from(receiver.paint.grid),before);assert.equal(receiver.victim.hp,expectedHp);
   source.nm.dispose();receiver.nm.dispose();source.f.G.projectiles.clear();receiver.f.G.projectiles.clear();
+});
+
+test('a target hit by the chase blast also receives detached droplets, capped at 96 total',async()=>{
+  const w=await world(),b=w.fire(),drops=w.contact(b);
+  assert.equal(drops.length,8);
+  for(const d of drops){
+    const at=landing(d),reach=Math.hypot(at.x-w.victim.pos.x,.7,at.z-w.victim.pos.z);
+    assert.ok(reach<=ALL_SUB_SPECS.torpedo.splashRadius,`droplet lands within the splash radius of the hit target (${reach.toFixed(2)})`);
+  }
+  for(let i=0;i<200;i++)w.step();
+  assert.deepEqual(w.hits.map(h=>[h.cause,h.amount]),[['torpedo',60],['torpedo-splash',12],['torpedo-splash',12],['torpedo-splash',12]]);
+  assert.equal(w.victim.hp,4);
 });
