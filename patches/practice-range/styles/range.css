@@ -224,3 +224,9 @@ html:not(.iw-touch-ui) .iwr-pausescr { overflow: hidden auto; }
 }
 html:lang(ja) .iwr-wchip b { letter-spacing: -.03em; }
 @media (max-width: 520px) { .iwr-zbtns { grid-template-columns: minmax(0, 1fr); } }
+
+/* Sparring Bot read-out (sparring.mjs): one line under the target card; touch layout wraps it at the bottom. */
+.iwr-spar { position: absolute; left: calc(var(--u) * 2.2); top: calc(var(--u) * 33); max-width: calc(var(--u) * 46); padding: 6px 10px; border-radius: 10px;
+  background: rgba(14, 11, 22, .82); color: #fff; font: 700 12px/1.35 system-ui, sans-serif; pointer-events: none; }
+.iwr-spar[hidden] { display: none; }
+html.iw-touch-ui .iwr-spar { left: 50%; top: auto; bottom: 86px; translate: -50% 0; max-width: min(92vw, 560px); font-size: 11px; text-align: center; }

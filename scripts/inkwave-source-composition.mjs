@@ -1,6 +1,10 @@
 import { adaptBlasterReticle } from '../patches/splatoon3/blaster-reticle-adapter.mjs';
 import { adaptMatchRecordings } from '../patches/splatoon3/match-recordings-adapter.mjs';
 import { adaptOwnerSfxRecordings } from '../patches/splatoon3/owner-sfx-recordings-adapter.mjs';
+import { adaptChargerReticleSize } from '../patches/splatoon3/charger-reticle-size-adapter.mjs';
+import { adaptCustomMatch } from '../patches/splatoon3/custom-match-adapter.mjs';
+import { adaptBotCombatQuality } from '../patches/splatoon3/bot-combat-quality-adapter.mjs';
+import { adaptBombBlastForecast } from '../patches/splatoon3/bomb-blast-forecast-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
 import { adaptOnlineAsyncEntry } from '../patches/local-quality/online-async-entry-adapter.mjs';
 import { adaptLandscapePracticeWeapons } from '../patches/local-quality/landscape-practice-weapons-adapter.mjs';
@@ -208,6 +212,14 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptUiFeedback20261104(rel, code, replaceOnce);
   // Owner-recorded original SFX replace synthesized cues by name (final text).
   code = adaptOwnerSfxRecordings(rel, code, replaceOnce);
+  // Charger-family charge circle at 60% radius (final HUD text and CSS).
+  code = adaptChargerReticleSize(rel, code, replaceOnce);
+  // Offline custom match rules, detailed results (installed from main.js).
+  code = adaptCustomMatch(rel, code, replaceOnce);
+  // Bot combat quality (final bots.js text).
+  code = adaptBotCombatQuality(rel, code, replaceOnce);
+  // No bomb blast-radius forecast rings (owner request).
+  code = adaptBombBlastForecast(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
   code = adaptViewportCache(rel, code);
   return code;

@@ -45,6 +45,7 @@ function fakeContext() {
 function engineClass(SFX) {
   class Engine {
     constructor(ctx) { this.ctx = ctx; this.offline = false; this.loops = []; }
+    play(name, o) { const d = this._def(name), v = fakeVoice(); d.build(v, 1, o); (this.plays ||= []).push({ name, o, v }); return v; }
     loop(name, o) { const d = this._def(name), v = fakeVoice(); d.build(v, 1, o); const h = { name, o, v, stop(f) { h.stopped = f; } }; this.loops.push(h); return h; }
     init() { return this; }
     _def(name) { return SFX[name]; }
@@ -76,7 +77,8 @@ test('synthesized cue until decoded, then a recorded definition with the base vo
   // New names alias their synthesized fallback.
   assert.equal(SFX.team_wipeout, SFX.special_ready);
   assert.equal(SFX.special_charged, SFX.special_ready);
-  assert.equal(SFX.bomb_fuse, SFX.bomb_beep);
+  assert.equal(SFX.splat_bomb_throw, SFX.bomb_throw);
+  assert.equal(SFX.bomb_fuse, undefined, 'the throw recording is not a fuse sound');
   // Not decoded: the synthesized definition, and the load starts.
   assert.equal(e._def('ui_hover'), SFX.ui_hover);
   await loadOwnerSfx(e, 'ui_hover');
@@ -90,21 +92,25 @@ test('synthesized cue until decoded, then a recorded definition with the base vo
   assert.equal(v.calls[0].s.loop, false); assert.ok(Math.abs(v.calls[0].t1 - (5 + OWNER_SFX.ui_hover.seconds)) < 1e-9);
   // Unrelated names are untouched.
   assert.equal(e._def('bomb_throw'), SFX.bomb_throw);
+  assert.equal(e._def('bomb_beep'), SFX.bomb_beep);
   // Clam pickups play one slice per held clam.
   await loadOwnerSfx(e, 'clam_pickup');
   const clam = e._def('clam_pickup'), cv = fakeVoice();
   clam.build(cv, 2, { slice: 3 }); clam.build(cv, 1, { slice: 8 }); clam.build(cv, 1, { slice: 99 });
   assert.deepEqual(cv.calls.map(c => [c.offset, +(c.t1 - c.t0).toFixed(3)]), [[3, 1], [8, 0.758], [8, 0.758]]);
-  // Splat Bomb pre-explosion sound: none until decoded (the caller keeps its
-  // beeps), then a stoppable voice offset so the falling sweep ends at the blast.
-  assert.equal(e.startOwnerBombFuse({ x: 1, y: 0, z: 2 }, 1), null);
-  await loadOwnerSfx(e, 'bomb_fuse');
-  const fuse = e.startOwnerBombFuse({ x: 1, y: 0, z: 2 }, 1);
-  assert.equal(fuse.name, 'bomb_fuse'); assert.deepEqual(fuse.o.pos, { x: 1, y: 0, z: 2 });
-  const fc = fuse.v.calls[0];
-  assert.ok(Math.abs(fc.offset - (OWNER_SFX.bomb_fuse.sweepEnd - 1)) < 1e-9);
-  assert.ok(Math.abs(fc.t1 - fc.t0 - (OWNER_SFX.bomb_fuse.seconds - fc.offset)) < 1e-9);
-  assert.equal(e.startOwnerBombFuse(null, 3).v.calls[0].offset, 0, 'a longer fuse starts from the top');
+  // Splat Bomb throw: false until decoded (the caller keeps its synthesized
+  // throw cue), then exactly one recorded voice from the top, at the given pos.
+  assert.equal(e.playOwnerBombThrow({ pos: { x: 1, y: 0, z: 2 }, volume: .68 }), false);
+  assert.equal(e.plays, undefined);
+  await loadOwnerSfx(e, 'splat_bomb_throw');
+  assert.equal(e.playOwnerBombThrow({ pos: { x: 1, y: 0, z: 2 }, volume: .68 }), true);
+  assert.equal(e.plays.length, 1);
+  const thrown = e.plays[0];
+  assert.equal(thrown.name, 'splat_bomb_throw'); assert.deepEqual(thrown.o, { pos: { x: 1, y: 0, z: 2 }, volume: .68 });
+  assert.equal(thrown.v.calls[0].offset, 0);
+  assert.ok(Math.abs(thrown.v.calls[0].t1 - thrown.v.calls[0].t0 - OWNER_SFX.splat_bomb_throw.seconds) < 1e-9);
+  assert.equal(e._def('bomb_beep'), SFX.bomb_beep, 'fuse beeps keep their synthesized definition');
+  assert.equal(e.startOwnerBombFuse, undefined);
   // The swim bed loops seamlessly, starts at a varied offset and follows speed mildly.
   await loadOwnerSfx(e, 'swim');
   const swim = e._def('swim'), sv = fakeVoice();
@@ -143,8 +149,43 @@ test('composed sources install the recordings and route only the gauge-full cue'
   const main = adaptBuildSource('src/main.js', read('src/main.js'));
   assert.equal((main.match(/play\('special_charged'\)/g) || []).length, 1);
   assert.match(main, /play\('times_up'\)/);
+  // The fuse keeps the native landing beep and the shortening fuse beeps; no
+  // recording handle is attached to the bomb.
   const weapons = adaptBuildSource('src/game/weapons.js', read('src/game/weapons.js'));
-  assert.equal((weapons.match(/b\.s3FuseSfx = G\.audio\?\.startOwnerBombFuse\?\.\(b\.pos, b\.fuse\) \|\| null; if \(!b\.s3FuseSfx\) G\.audio\?\.play\('bomb_beep'/g) || []).length, 1);
-  assert.equal((weapons.match(/if \(!b\.s3FuseSfx && G\.camera/g) || []).length, 1);
-  assert.match(weapons, /_releaseBomb\(b\) \{\n    if \(b\?\.s3FuseSfx\) \{ b\.s3FuseSfx\.stop\(0\.03\); b\.s3FuseSfx = null; \}/);
+  assert.doesNotMatch(weapons, /s3FuseSfx|startOwnerBombFuse/);
+  assert.match(weapons, /G\.audio\?\.play\('bomb_beep', \{ pos: b\.pos, volume: 0\.6 \}\); emit\('bomb:arm'/);
+  assert.match(weapons, /distanceToSquared\(b\.pos\) < 30 \* 30\) G\.audio\?\.play\('bomb_beep'/);
+});
+
+test('bomb throw event plays one sound: the recording once decoded, else the kit cue', async () => {
+  const { installKitAudio } = await import('../runtime/audio/kit-runtime.mjs');
+  const handlers = new Map(), weapon = [], owner = [];
+  let ready = false;
+  const G = { local: null, time: 0, audio: {
+    playWeapon: (id, event, o) => { weapon.push([id, event]); return {}; },
+    playOwnerBombThrow: o => { if (!ready) return false; owner.push(o); return true; },
+  } };
+  class Actor { _startSpecial() {} _updateSpecial() {} }
+  class Projectiles { throwBomb() {} _push() {} _blastBurst() {} }
+  installKitAudio({ G, Actor, Projectiles }, {
+    listen: (name, fn) => handlers.set(name, fn),
+    options: (a, pos, volume) => ({ actor: a, pos: a.isLocal ? undefined : pos, volume }),
+  });
+  const thrower = { isLocal: true, team: 0, pos: { x: 0, y: 0, z: 0 }, weapon: { sub: 'bomb' } };
+  const throwAt = { x: 1, y: 2, z: 3 };
+  handlers.get('bomb:throw')({ actor: thrower, pos: throwAt });
+  assert.deepEqual(weapon, [['sub:bomb', 'fire']]); assert.equal(owner.length, 0);
+  ready = true;
+  handlers.get('bomb:throw')({ actor: thrower, pos: throwAt });
+  assert.deepEqual(weapon, [['sub:bomb', 'fire']], 'no synthesized throw under the recording');
+  assert.deepEqual(owner, [{ pos: undefined, volume: .68 }]);
+  const remote = { isLocal: false, team: 1, pos: { x: 9, y: 0, z: 9 }, weapon: { sub: 'bomb' } };
+  handlers.get('bomb:throw')({ actor: remote, pos: throwAt });
+  assert.deepEqual(owner[1], { pos: throwAt, volume: .68 });
+  // Other bomb families and the fuse / explosion events keep their own cues.
+  handlers.get('bomb:throw')({ actor: thrower, subId: 'suction', pos: throwAt });
+  handlers.get('bomb:arm')({ actor: thrower, subId: 'bomb', pos: throwAt });
+  handlers.get('bomb:explode')({ actor: thrower, subId: 'bomb', pos: throwAt });
+  assert.deepEqual(weapon.slice(1), [['sub:suction', 'fire'], ['sub:bomb', 'impact'], ['sub:bomb', 'explosion']]);
+  assert.equal(owner.length, 2);
 });

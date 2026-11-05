@@ -33,6 +33,11 @@ export function installKitAudio(api,{listen,options}){
    const o=options(a,pos3(pos)||a.pos,volume*relation,true);if(event==='impact'||event==='explosion')o.pos=pos3(pos)||a.pos;
    o.priority=kind==='special'?76:60;return G.audio?.playWeapon?.(kind+':'+id,event,o);
  }
+ function ownerBombThrow(a,pos){
+   if(typeof G.audio?.playOwnerBombThrow!=='function')return false;
+   const o=options(a,pos3(pos)||a.pos,.68,true);
+   return G.audio.playOwnerBombThrow({pos:o.pos,volume:o.volume})===true;
+ }
  function sourceSound(a,source,pos,volume=.64){
    if(!a||!source)return null;
    const o=options(a,pos3(pos)||a.pos,volume,true);o.priority=76;
@@ -57,7 +62,11 @@ export function installKitAudio(api,{listen,options}){
  listen('all:sub',subEvent);listen('audio:sub-replay',subEvent);
  // Five native bomb families (including Autobomb / Sprinkler) share this lifecycle.
  for(const [ev,event] of [['bomb:throw','fire'],['bomb:explode','explosion'],['bomb:arm','impact']])listen(ev,e=>{
-   const id=e?.subId||e?.actor?.weapon?.sub||'bomb';if(['bomb','suction','curling','autobomb','sprinkler'].includes(id))sound(e.actor,'sub',id,event,e.pos,.68);
+   const id=e?.subId||e?.actor?.weapon?.sub||'bomb';if(!['bomb','suction','curling','autobomb','sprinkler'].includes(id))return;
+   // Splat Bomb release: the owner's throw recording replaces the synthesized
+   // throw cue once decoded. Fuse (arm) and explosion events are unchanged.
+   if(ev==='bomb:throw'&&id==='bomb'&&e.actor&&ownerBombThrow(e.actor,e.pos))return;
+   sound(e.actor,'sub',id,event,e.pos,.68);
  });
  listen('kit:bubbler:deploy',e=>activation(e?.actor||e?.owner,'bubbler'));
  listen('special:slam',e=>sound(e?.actor,'special','slam','explosion',e?.pos,.9));

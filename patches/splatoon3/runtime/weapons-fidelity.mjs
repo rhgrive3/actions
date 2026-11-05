@@ -2390,6 +2390,9 @@ export function installWeaponsFidelity(context,profile) {
     return p.pos;
   };
   Projectiles.prototype.s3DualiesGuides=function(actor,w,camera=context.G.camera){
+    // Catalogue Dualies predict with their own motion owner (ShotGuideFrame
+    // is on the pinned record, not on the live profile).
+    if(w?.kind==='catalog')return this.s3CatalogDualiesGuides?.(actor,w)||null;
     const frame=w?.shotGuideFrame;
     if(w?.kind!=='dualies'||!Number.isFinite(frame))return null;
     if(!dualiesGuideInputsChanged(this,actor,w,context.G,camera))return this._s3DualiesGuidePoints;
@@ -2785,6 +2788,16 @@ function guideLaunchState(actor, weapon, out) {
 // or null when the weapon has no guide frame / no installed launch path.
 export function computeShotGuide(actor) {
   const weapon = actor?.weapon, frames = shotGuideFrames(weapon);
+  // Catalogue Shooters / Splatlings carry ShotGuideFrame in their pinned
+  // record, not on the live profile; their own motion owner predicts it.
+  if (guideApi && weapon?.kind === 'catalog' && typeof guideApi.G?.projectiles?.s3CatalogShotGuide === 'function') {
+    const point = guideApi.G.projectiles.s3CatalogShotGuide(actor, weapon);
+    if (!point) return null;
+    const s = guideScratch();
+    s.state.x = point.x; s.state.y = point.y; s.state.z = point.z;
+    s.state.frames = weapon.catalogRecord.parameters.WeaponParam.ShotGuideFrame;
+    return s.state;
+  }
   // Partial/source-only test realms can execute the adapted PlayerController
   // before installShotGuide owns a runtime context. That path has no guide,
   // rather than being allowed to dereference an uninstalled scratch owner.

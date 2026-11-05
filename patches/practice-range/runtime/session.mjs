@@ -41,6 +41,7 @@ export class RangeSession {
     this.log = [];                         // last damage events (for the HUD + tests)
     this.last = null;                      // { target, amount, dist, t }
     this._buildTargets();
+    this.sparring = null;   // AI sparring Bots (sparring.mjs), loaded on the first addSparringBot()
     this.pads = this.headless ? headlessPads(this._padDefs()) : new RangePads(G.scene, this._padDefs());
     this.hud = this.headless ? HEADLESS_HUD : new RangeHud(this);
     this.unsubs = [];   // ('damage' / 'splatted' arrive through install.mjs → onDamage / onSplatted)
@@ -101,6 +102,7 @@ export class RangeSession {
   }
 
   onDamage({ victim, attacker, amount, source }) {
+    this.sparring?.onDamage({ victim, attacker, amount });
     const t = victim && victim.rangeTarget;
     if (!t || !this.targets.includes(victim) || !(amount > 0)) return;
     const now = this.time;
@@ -113,6 +115,7 @@ export class RangeSession {
     this.hud.damageNumber(victim, amount, false);
   }
   onSplatted({ victim }) {
+    this.sparring?.onSplatted({ victim });
     const t = victim && victim.rangeTarget;
     if (!t || !this.targets.includes(victim)) return;
     t.deaths++;
@@ -228,6 +231,15 @@ export class RangeSession {
     this.hud.toast(id === 'spawn' ? L('Back to the start') : L(ZONES[tp.zone].name));
   }
   setMovingTargets(on) { this.movingTargets = !!on; }
+  // Sparring Bots are an opt-in tool: their module stays out of the range preload set.
+  async addSparringBot(opts) {
+    if (!this.sparring) {
+      const { SparringBots } = await import('./sparring.mjs');
+      if (this.m.range !== this) return null;   // the range closed while loading
+      this.sparring ||= new SparringBots(this);
+    }
+    return this.sparring.spawn(opts);
+  }
 
   // ------------------------------------------------------------------ per tick (60 Hz, after the match update)
   update(dt) {
@@ -250,6 +262,7 @@ export class RangeSession {
       a.character.root.position.set(a.pos.x, a.pos.y + (a.smoothY || 0), a.pos.z);
       a.character.root.rotation.y = t.yaw;
     }
+    this.sparring?.update(dt);
     this._updatePads(dt);
     // keyboard shortcuts (range only): R reset paint, T reset targets, G back to the start
     const inp = G.input;
@@ -310,6 +323,7 @@ export class RangeSession {
 
   dispose() {
     this.unsubs.forEach((u) => u());
+    this.sparring?.dispose();
     this.pads.dispose();
     this.hud.dispose();
     G.hud?.el?.classList.remove('iw-hud--range');

@@ -55,7 +55,9 @@ export class RangeHud {
     this.toastEl = h('div', { class: 'iwr-toast' });
     this.keys = h('div', { class: 'iwr-keys' },
       ...[['R', 'Reset paint'], ['T', 'Reset targets'], ['G', 'Back to start']].map(([k, t]) => h('span', null, h('kbd', null, k), L(t))));
-    this.root = h('div', { class: 'iwr-hud' }, this.nums, this.tel, this.card, this.prompt, this.toastEl, this.keys);
+    // sparring Bot read-out (sparring.mjs): shown only while a Bot is out
+    this.spar = h('div', { class: 'iwr-spar', hidden: true });
+    this.root = h('div', { class: 'iwr-hud' }, this.nums, this.tel, this.card, this.spar, this.prompt, this.toastEl, this.keys);
     host.appendChild(this.root);
     this._L = {};
     this._cardT = 99; this._toastT = 99;
@@ -88,7 +90,19 @@ export class RangeHud {
     this._cardT = 0;
   }
 
+  _updSparring() {
+    if (!this.spar) return;
+    const r = this.s?.sparring?.readout();
+    const on = !!r && r.bots > 0;
+    if (this.spar.hidden === on) this.spar.hidden = !on;
+    if (!on) return;
+    const pct = r.accuracy == null ? '—' : Math.round(r.accuracy * 100) + '%';
+    const sec = v => (Number.isFinite(v) ? v.toFixed(2) + ' s' : '—');
+    const text = `${L('SPARRING BOT')} ×${r.bots} · ${L('ACCURACY')} ${pct} (${r.landed}/${r.attacks}) · ${L('DAMAGE')} ${r.damage} · ${L('TIME TO SPLAT')} ${sec(r.lastTtk)} (${L('BEST')} ${sec(r.bestTtk)}) · ${L('TAKEN')} ${r.damageTaken}`;
+    if (this._L.spar !== text) { this._L.spar = text; this.spar.textContent = text; }
+  }
   update(dt) {
+    this._updSparring();
     const tel = this.s.telemetry();
     if (!tel) return;
     const L0 = this._L;

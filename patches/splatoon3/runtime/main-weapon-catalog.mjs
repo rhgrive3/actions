@@ -2179,6 +2179,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const old=runner.cooldown;auto(runner,r,input,s,dt);
     if(runner.cooldown>old+EPS&&catalogDualiesTurret(s))runner.cooldown=finite(weaponParam(r).LapOver_RepeatFrame,4)/HZ;
   }
+  // Catalogue Dualies keep the aiming stance through the roll, the post-roll
+  // slide and the turret, exactly as the legacy runner does with dodge/lockT:
+  // the body faces the aim instead of swinging toward the roll direction.
+  const nativeFiringPose=R.firingPose;
+  R.firingPose=function(){
+    if(nativeFiringPose.call(this))return true;
+    const r=this.a?.weapon?.catalogRecord,s=this.catalogState;
+    return r?.family==='dualies'&&!r.legacy&&s?.id===r.id&&!!(s.roll||s.slip||s.turret>EPS);
+  };
   const nativeDodge=R.tryDodge,nativeHorizontal=Actor.prototype._horizontal;
   R.tryDodge=function(move){
     const a=this.a,r=a.weapon.catalogRecord;

@@ -6,6 +6,7 @@ import { receiverSprinklerObserved, recordReceiverSprinklerContact } from '../..
 // S3 verification: https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/スプリンクラー
 import {gearCurve} from './gear.mjs';
 import {captureSubAttachment,syncSubAttachment} from './sub-surface-attachment.mjs';
+import {sprinklerSprayVisual} from './sprinkler-spray-visual.mjs';
 const FRAME=1/60, EPS=1e-9;
 export const SPRINKLER=Object.freeze({
   id:'sprinkler', name:'Sprinkler', mode:'sprinkler', chargeable:false,
@@ -85,6 +86,9 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
       const seed=unit(st.baseSeed+st.spraySequence*3+arm);
       if(!b.ghost&&recycled){recycled.life=0;recycled.seed=seed;st.drops.push(recycled);}
       else st.drops.push({pos,vel:velocity,life:0,seed});
+      // Presentation only: a cosmetic FX droplet on the same launch (no paint,
+      // no contact, no state). See sprinkler-spray-visual.mjs.
+      sprinklerSprayVisual(G,b,st.drops[st.drops.length-1],spec,arm,st.spraySequence);
     }
     st.spraySequence++;
     let next=at+spec.cadenceFrames[phase];
