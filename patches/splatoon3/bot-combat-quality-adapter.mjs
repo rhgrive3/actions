@@ -6,8 +6,10 @@ export function adaptBotCombatQuality(rel, code, replaceOnce) {
   if (code.includes(IMPORT)) throw new Error('INKWAVE bot combat quality: repeated bots.js transform');
   code = replaceOnce(code, '    this.acqT += dt; this.t += dt;\n',
     '    this.acqT += dt; this.t += dt;\n    botTickAlert(this, dt);\n', 'bot alert clock');
-  code = replaceOnce(code, '      this.seeTimer = 1.2;\n      this.lostTimer = 0;\n',
-    '      this.seeTimer = 1.2;\n      this.lostTimer = 0;\n      botNoteSighting(this, best, G.time);\n', 'bot sighting record');
+  // _perceive itself stays native (other tests extract it); the sighting is
+  // read right after the perception tick.
+  code = replaceOnce(code, '      this._perceive();\n    }\n',
+    '      this._perceive();\n      if (this.target && this.seeTimer >= 1.2 - 1e-9) botNoteSighting(this, this.target, G.time);\n    }\n', 'bot sighting record');
   code = replaceOnce(code,
     "      _v.set(t.pos.x + t.vel.x * lead, t.pos.y + (t.smoothY || 0) + (t.form === 'squid' ? 0.3 : 0.85), t.pos.z + t.vel.z * lead);\n",
     "      _v.set(t.pos.x + t.vel.x * lead, t.pos.y + (t.smoothY || 0) + (t.form === 'squid' ? 0.3 : 0.85), t.pos.z + t.vel.z * lead);\n      botBlasterAimPoint(family, t, dist, range, _v);\n",
@@ -17,7 +19,7 @@ export function adaptBotCombatQuality(rel, code, replaceOnce) {
     '        if (this.strafeT <= 0) botStrafePlan(this);', 'bot purposeful strafe');
   code = replaceOnce(code,
     '        if (enemyVisible && this.react <= 0 && aimed && inkFrac > 0.02) {',
-    '        if (enemyVisible && this.react <= 0 && aimed && inkFrac > 0.02 && botClearShot(this, family, G.time)) {', 'bot no shots into walls');
+    '        if (enemyVisible && this.react <= 0 && aimed && inkFrac > 0.02 && botClearShot(this, family)) {', 'bot no shots into walls');
   code = replaceOnce(code,
     '            it.fire = dist < range * 1.08 && (!brella || botReadyPress(a));',
     '            it.fire = dist < botFireReach(family, range, w) && (!brella || botReadyPress(a));', 'bot Blaster burst reach');

@@ -18,12 +18,11 @@ test('alert keeps a painting Bot aim near the horizon for a few seconds after a 
   assert.equal(botAlertPitch(b, -.42), -.42);
 });
 
-test('fire only with a line of sight from the latest perception; lobbers exempt', () => {
-  const b = {}; botNoteSighting(b, { pos: { x: 0, y: 0, z: 0 } }, 5);
-  assert.equal(botClearShot(b, 'shooter', 5.2), true);
-  assert.equal(botClearShot(b, 'shooter', 5.31), false);
-  assert.equal(botClearShot(b, 'slosher', 99), true);
-  assert.equal(botClearShot({}, 'blaster', 0), false);
+test('fire only with a line of sight from the latest perception tick; lobbers exempt', () => {
+  assert.equal(botClearShot({ seeTimer: 1.2 }, 'shooter'), true, 'seen on the latest tick');
+  assert.equal(botClearShot({ seeTimer: 1.2 - .2 }, 'shooter'), false, 'one tick without a sighting');
+  assert.equal(botClearShot({ seeTimer: .4 }, 'slosher'), true);
+  assert.equal(botClearShot({}, 'blaster'), false);
 });
 
 test('Blaster feet aim is off by default (measured worse); its rule and the blast reach stay testable', () => {
@@ -62,7 +61,7 @@ test('cover bomb only for a target that just broke line of sight at throwing dis
 
 test('composed bots.js wires each rule exactly once', () => {
   const code = adaptBuildSource('src/game/bots.js', fs.readFileSync(new URL('../../../inkwave-public/src/game/bots.js', import.meta.url), 'utf8'));
-  for (const call of ['botTickAlert(this, dt)', 'botNoteSighting(this, best, G.time)', 'botBlasterAimPoint(family, t, dist, range, _v)', 'if (this.strafeT <= 0) botStrafePlan(this);',
-    'botClearShot(this, family, G.time)', 'botFireReach(family, range, w)', 'botCoverBomb(this, a, dist, a.ink, selectedSubCost(a, SUB), dt)', 'wantPitch = botAlertPitch(this, wantPitch);'])
+  for (const call of ['botTickAlert(this, dt)', 'if (this.target && this.seeTimer >= 1.2 - 1e-9) botNoteSighting(this, this.target, G.time);', 'botBlasterAimPoint(family, t, dist, range, _v)', 'if (this.strafeT <= 0) botStrafePlan(this);',
+    'botClearShot(this, family)', 'botFireReach(family, range, w)', 'botCoverBomb(this, a, dist, a.ink, selectedSubCost(a, SUB), dt)', 'wantPitch = botAlertPitch(this, wantPitch);'])
     assert.equal(code.split(call).length - 1, 1, call);
 });

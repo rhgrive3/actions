@@ -21,7 +21,6 @@
 
 export const BOT_COMBAT = Object.freeze({
   alertSeconds: 2.5, alertPitch: -0.12,
-  clearShotSeconds: .3,
   blasterFeetAim: false, blasterDirectRange: 2.5, blasterFeetHeight: .1, blasterReachRadiusShare: .7, blasterDefaultRadius: 2.2,
   strafeMin: 1.0, strafeSpan: 1.2, strafeFlip: .35,
   coverBombMin: 4, coverBombMax: 13, coverBombLost: 1.4, coverBombChancePerSecond: .9, coverBombLift: .35,
@@ -39,10 +38,14 @@ export function botAlertPitch(brain, wantPitch) {
   return brain._s3Alert > 0 ? Math.max(wantPitch, BOT_COMBAT.alertPitch) : wantPitch;
 }
 
-/** Line of sight confirmed by the latest perception tick (lob families exempt). */
-export function botClearShot(brain, family, now) {
+/**
+ * Line of sight confirmed by the latest perception tick (lob families exempt).
+ * Native perception sets seeTimer = 1.2 on a sighting and lowers it by 0.2 on
+ * every tick without one, so seeTimer > 1 means the last tick saw the target.
+ */
+export function botClearShot(brain, family) {
   if (LOB_FAMILIES.has(family)) return true;
-  return Number.isFinite(brain._s3SeenAt) && now - brain._s3SeenAt <= BOT_COMBAT.clearShotSeconds;
+  return brain.seeTimer > 1 + 1e-9;
 }
 
 export function blasterRadius(w) {
