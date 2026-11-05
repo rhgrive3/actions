@@ -137,12 +137,11 @@ export function installHitchTracer(game, {
   const SOURCE_CALLER_SAMPLE_STRIDE = 512;
   let nestedFrameCalls = 0;
 
-  const callerFromStack = stack => {
-    const lines = String(stack || '').split('\n').slice(1);
-    const line = lines.find(value =>
-      !/range-hitch-tracer\.mjs|(?:TriangleWorld\.)?ray\s*\(|NativePhysics\.(?:raycast|los)\s*\(/.test(value));
-    return line ? line.trim().replace(/^at\s+/, '').slice(0, 220) : 'unknown';
-  };
+  const callerFramesFromStack = stack => String(stack || '').split('\n').slice(1)
+    .filter(value => !/range-hitch-tracer\.mjs|(?:TriangleWorld\.)?ray\s*\(|NativePhysics\.(?:raycast|los)\s*\(/.test(value))
+    .map(value => value.trim().replace(/^at\s+/, '').slice(0, 180))
+    .filter(Boolean).slice(0, 5);
+  const callerFromStack = stack => callerFramesFromStack(stack)[0] || 'unknown';
   const getWorld = () => env?.__G || {};
   const stageOwners = () => {
     const G = getWorld();
@@ -249,9 +248,11 @@ export function installHitchTracer(game, {
         // Stack capture is sampled 1/512 calls (plus the first call), and only
         // for the native ray/sweep methods while the user has opted in.
         const callIndex = (rec.calls[name] || 0) + 1;
-        const caller = (name === 'source-ray' || name === 'source-sweep') &&
+        const sampledCaller = (name === 'source-ray' || name === 'source-sweep') &&
           (callIndex === 1 || callIndex % SOURCE_CALLER_SAMPLE_STRIDE === 0)
-          ? callerFromStack(new Error().stack) : null;
+          ? callerFramesFromStack(new Error().stack) : null;
+        const caller = sampledCaller?.[0] || null;
+        const callerChain = sampledCaller?.length ? sampledCaller.join(' <- ') : null;
         const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
         if (rec && (name === 'render' || name === 'paint')) {
@@ -274,8 +275,11 @@ export function installHitchTracer(game, {
               const bucket = rec.sourceCallers[name] || (rec.sourceCallers[name] = Object.create(null));
               const sample = bucket[caller] || (bucket[caller] = { samples: 0, lastQuerySize: null });
               sample.samples++;
-              const size = name === 'source-ray' ? args[2] : args[2];
+              const size = args[2];
               sample.lastQuerySize = Number.isFinite(size) ? round(size) : null;
+              const chains = rec.sourceCallerChains[name] || (rec.sourceCallerChains[name] = Object.create(null));
+              const chain = chains[callerChain] || (chains[callerChain] = { samples: 0 });
+              chain.samples++;
             }
             if (!countOnly) rec.cpu[name] = (rec.cpu[name] || 0) + Math.max(0, now() - t);
           }
@@ -344,7 +348,7 @@ export function installHitchTracer(game, {
     if (parentFrame) parentFrame.nestedFrameCalls = (parentFrame.nestedFrameCalls || 0) + 1;
     const priorActive = active;
     const rec = { id: ++nextId, start: now(), cpu: Object.create(null), calls: Object.create(null),
-      sourceCallers: Object.create(null), nestedFrameCalls: 0,
+      sourceCallers: Object.create(null), sourceCallerChains: Object.create(null), nestedFrameCalls: 0,
       events: pendingEvents.splice(0), gpuMs: null, gpuPaintMs: null };
     // Read the existing ray/sphere-sweep counters in O(1), without graphics sync.
     // Box queries and capsule-distance work are separate opt-in method counters
@@ -483,6 +487,10 @@ export function installHitchTracer(game, {
     sourceCallers: Object.fromEntries(Object.entries(rec.sourceCallers || {}).map(([method, callers]) => [
       method, Object.entries(callers).sort((a,b)=>b[1].samples-a[1].samples).slice(0,12)
         .map(([caller,value])=>({caller,samples:value.samples,sampleStride:SOURCE_CALLER_SAMPLE_STRIDE,lastQuerySize:value.lastQuerySize}))
+    ])),
+    sourceCallerChains: Object.fromEntries(Object.entries(rec.sourceCallerChains || {}).map(([method, chains]) => [
+      method, Object.entries(chains).sort((a,b)=>b[1].samples-a[1].samples).slice(0,12)
+        .map(([chain,value])=>({chain,samples:value.samples,sampleStride:SOURCE_CALLER_SAMPLE_STRIDE}))
     ])),
     workTiming: rec.workTiming || null,
     sourceBVHCounterCoverage: rec.sourceBVH ? 'ray and sphere-sweep only; box/capsule work is in methodCalls' : null,
