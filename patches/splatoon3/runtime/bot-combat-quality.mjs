@@ -6,10 +6,12 @@
 //  - Alert pitch: after seeing an enemy, a painting Bot keeps its aim near the
 //    horizon (not on the floor) for a few seconds, so a re-acquired target is
 //    not shot at from below its feet while the aim spring climbs back.
-//  - Blasters use their blast: a shell that reaches the ground at the target's
-//    feet bursts there; one past its range bursts in the air at range end. Aim
-//    at the feet of a grounded target inside range (direct-hit range excepted),
-//    and allow the shot out to range + most of the blast radius.
+//  - Blasters use their blast: a shell past its range bursts in the air at
+//    range end, so a Blaster may fire out to range + most of the blast radius.
+//    Aiming at the feet (a ground burst) was tried and measured worse against a
+//    strafing target (scripts/measure-inkwave-bot-duel.mjs --target strafe:
+//    Blaster kills 7 -> 3 of 9, hits per shell .88 -> .64), so it is off
+//    (blasterFeetAim) and the body stays the aim point.
 //  - No shots into walls: a Bot opens fire only with a line of sight confirmed
 //    by its latest perception tick (Sloshers lob over cover and are exempt).
 //  - Purposeful strafing: keep one strafe direction for 1-2.2 s and flip it
@@ -20,7 +22,7 @@
 export const BOT_COMBAT = Object.freeze({
   alertSeconds: 2.5, alertPitch: -0.12,
   clearShotSeconds: .3,
-  blasterDirectRange: 2.5, blasterFeetHeight: .1, blasterReachRadiusShare: .7, blasterDefaultRadius: 2.2,
+  blasterFeetAim: false, blasterDirectRange: 2.5, blasterFeetHeight: .1, blasterReachRadiusShare: .7, blasterDefaultRadius: 2.2,
   strafeMin: 1.0, strafeSpan: 1.2, strafeFlip: .35,
   coverBombMin: 4, coverBombMax: 13, coverBombLost: 1.4, coverBombChancePerSecond: .9, coverBombLift: .35,
 });
@@ -48,9 +50,9 @@ export function blasterRadius(w) {
   const r = p?.DistanceDamage?.at?.(-1)?.Distance ?? w?.splashRadius;
   return Number.isFinite(r) && r > 0 ? r : BOT_COMBAT.blasterDefaultRadius;
 }
-/** Blaster aim point: the target's feet inside range (a ground burst), else unchanged. */
-export function botBlasterAimPoint(family, target, dist, range, out) {
-  if (family !== 'blaster' || !target || !out) return false;
+/** Blaster feet aim (off by default, see header): the target's feet inside range, else unchanged. */
+export function botBlasterAimPoint(family, target, dist, range, out, enabled = BOT_COMBAT.blasterFeetAim) {
+  if (!enabled || family !== 'blaster' || !target || !out) return false;
   if (dist <= BOT_COMBAT.blasterDirectRange || dist > range || target.form === 'squid' || target.grounded === false) return false;
   out.y = target.pos.y + BOT_COMBAT.blasterFeetHeight;
   return true;

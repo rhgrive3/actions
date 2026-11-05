@@ -26,11 +26,13 @@ test('fire only with a line of sight from the latest perception; lobbers exempt'
   assert.equal(botClearShot({}, 'blaster', 0), false);
 });
 
-test('Blasters aim at the feet of a grounded target inside range and reach out by most of the blast', () => {
+test('Blaster feet aim is off by default (measured worse); its rule and the blast reach stay testable', () => {
   const t = { pos: { x: 0, y: 1, z: 8 }, form: 'kid', grounded: true }, v = { y: 1.85 };
-  assert.equal(botBlasterAimPoint('blaster', t, 8, 10, v), true); assert.ok(Math.abs(v.y - 1.1) < 1e-12);
+  assert.equal(BOT_COMBAT.blasterFeetAim, false);
+  assert.equal(botBlasterAimPoint('blaster', t, 8, 10, v), false); assert.equal(v.y, 1.85, 'body aim kept');
+  assert.equal(botBlasterAimPoint('blaster', t, 8, 10, v, true), true); assert.ok(Math.abs(v.y - 1.1) < 1e-12);
   for (const [family, target, dist] of [['shooter', t, 8], ['blaster', t, 2], ['blaster', t, 11], ['blaster', { ...t, grounded: false }, 8], ['blaster', { ...t, form: 'squid' }, 8]]) {
-    const w = { y: 1.85 }; assert.equal(botBlasterAimPoint(family, target, dist, 10, w), false); assert.equal(w.y, 1.85);
+    const w = { y: 1.85 }; assert.equal(botBlasterAimPoint(family, target, dist, 10, w, true), false); assert.equal(w.y, 1.85);
   }
   const catalog = { catalogRecord: { parameters: { BlastParam: { DistanceDamage: [{ Distance: 1 }, { Distance: 3.385 }] } } } };
   assert.equal(blasterRadius(catalog), 3.385);
