@@ -605,9 +605,10 @@ export function kitBombStep(SUB, b, dt) {
     // 0.016 and FlyPositionAirResist 0.05866 per 60 Hz frame (both explicit on
     // WeaponBombRobot; Splat Bomb states FlyGravity 0.016). Without the drag a
     // standing Splat Bomb landed ~38 WU (7.6 trial lines) away instead of ~17.
-    // Generic bombs stop damping once armed by floor contact (their ground
-    // slide keeps the native/S3 resting resistance).
-    if(b.s3Mode!=='flight'||spec.mode==='generic'&&b.fuse>=0)return;
+    // Damping stops once floor contact arms the bomb (its ground slide keeps
+    // the native resting resistance), for every mode: an unstuck Suction Bomb
+    // and an untagged replay (kitBombStep's !spec branch) must slide alike.
+    if(b.s3Mode!=='flight'||b.fuse>=0)return;
     const resist=Number.isFinite(spec.flyPositionAirResist)?spec.flyPositionAirResist:BOMB_FAMILY_FLY_AIR_RESIST;
     if(!(resist>0))return;
     const keep=Math.pow(1-resist,dt*60);
