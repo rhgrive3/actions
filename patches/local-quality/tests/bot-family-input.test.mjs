@@ -43,14 +43,16 @@ async function world(weapon, adapt, hz = 60, { walk = false } = {}) {
   f.on('weapon:fire', e => { if (e.actor === a) fires.push(e); });
   const dt = 1 / hz;
   let canopyOpen = 0, rolling = 0;
+  const pitch = [], yaw = [];
   const run = seconds => {
     for (let i = 0; i < Math.round(seconds * hz); i++) {
       f.G.time += dt; a.ink = f.PLAYER.inkMax; brain.update(dt); a.update(dt);
       if (a.weaponRunner.catalogState?.canopy?.open) canopyOpen += dt;
       if (a.weaponRunner.rolling) rolling += dt;
+      pitch.push(brain.aimPitch); yaw.push(brain.aimYaw);
     }
   };
-  return { f, a, brain, fires, run, get canopyOpen() { return canopyOpen; }, get rolling() { return rolling; } };
+  return { f, a, brain, fires, run, get canopyOpen() { return canopyOpen; }, get rolling() { return rolling; }, pitch, yaw };
 }
 
 for (const hz of [30, 60, 120]) {
@@ -82,6 +84,11 @@ for (const hz of [30, 60, 120]) {
     before.run(3); after.run(3);
     assert.ok(before.rolling > 1.5, `control brush-runs to paint (${before.rolling.toFixed(2)} s)`);
     assert.equal(after.rolling, 0, 'neutral ground is painted with flicks, not by brush-running');
+    // Flicks follow the aim: paint aim sits slightly above level (not the
+    // Roller's 0.42 rad down) and sweeps across the lane.
+    assert.ok(after.pitch.at(-1) > 0.15, `brush paint aim is raised (${after.pitch.at(-1).toFixed(2)} rad)`);
+    const yaws = after.yaw.slice(Math.floor(after.yaw.length / 2));
+    assert.ok(Math.max(...yaws) - Math.min(...yaws) > 0.3, 'brush paint aim sweeps across the lane');
     // Inkbrush repeats a flick every 7F (first interval 6F) while tapped.
     assert.ok(after.fires.length >= 10 * Math.max(1, before.fires.length) / 2 && after.fires.length >= 10,
       `flick count ${before.fires.length} -> ${after.fires.length}`);
