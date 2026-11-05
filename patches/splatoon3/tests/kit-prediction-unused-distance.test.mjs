@@ -6,8 +6,8 @@ import { fixture } from './source-fixture.mjs';
 const TARGET = 'patches/splatoon3/runtime/kit-subs.mjs';
 const BEFORE = 'const distance=previous.distanceTo(b.pos),worldDistance=world.hit?previous.distanceTo(world.point):Infinity;';
 const AFTER = 'const distance=defense?previous.distanceTo(b.pos):0,worldDistance=world.hit?previous.distanceTo(world.point):Infinity;';
-const BASE_SHA = 'aef676b054e158f35c3b96743aa3543fb703290ed808480788500714aa39686e';
-const CANDIDATE_SHA = 'e4ac84b96cab2c63034bcbb8787963ae57bbcb498ec7d3b703c4e9c6cab8542b';
+const BASE_SHA = '494c2a1611b9cc516ba9ee61f5c59766df6187cac8baf4e3275670e37e7232cb';
+const CANDIDATE_SHA = 'a8899bff39a97f1165c0f25a947e4e4a28cd202773f7faf7cb58a549ac79644e';
 const sha = source => createHash('sha256').update(source).digest('hex');
 function previousRuntime(rel, source) {
   if (rel !== TARGET) return source;
