@@ -3,6 +3,77 @@
 const percentile = (sorted, pct) => sorted.length
   ? sorted[Math.min(sorted.length-1, Math.ceil(pct * sorted.length)-1)] : 0;
 
+const compactFrame = row => ({
+  id:row.id, gap:row.gapMs, work:row.workMs, cause:row.cause,
+  bvh:row.sourceBVH || undefined,
+  calls:Object.fromEntries(Object.entries(row.methodCalls || {}).filter(([,v])=>v)),
+  stages:Object.fromEntries(Object.entries(row.stages || {}).sort((a,b)=>b[1]-a[1]).slice(0,8)),
+  scopes:row.topNativeScopes?.slice(0,5) || [],
+  callers:row.sourceCallers || undefined,
+  timing:row.workTiming?.consistent===false ? row.workTiming : undefined,
+  ticks:row.fixedClock ? {n:row.fixedClock.ticks,queued:row.fixedClock.queuedAfterSeconds} : undefined,
+});
+const compactTrial = trial => trial ? ({
+  status:trial.status, frames:trial.frames, fps:trial.observedFPS,
+  gap:trial.frameGapMs, work:trial.gameFrameWorkMs,
+  draw:trial.drawCalls, tris:trial.triangles,
+  meta:trial.meta,
+  gpuScene:trial.gpuSceneCommandsMs, gpuPaint:trial.gpuPaintCommandsMs,
+  owners:trial.ownerMeanMs,
+  calls:trial.callsPerFrame,
+}) : null;
+
+// Share/export format: retain diagnostic evidence, remove repeated aliases,
+// empty counters, verbose prose and the duplicate full per-frame capture.
+export function buildCompactProfilerReport(raw, shooterAB = null) {
+  const hitches = raw?.recentHitches || raw?.trace?.recentHitches || [];
+  const ranked = [...hitches].sort((a,b) =>
+    Math.max(b.workMs || 0, b.gapMs || 0) - Math.max(a.workMs || 0, a.gapMs || 0));
+  const unique = new Map();
+  for (const row of ranked) if (!unique.has(row.id)) unique.set(row.id,row);
+  const chosen = [...unique.values()].slice(0,8).sort((a,b)=>a.id-b.id);
+  const gpu = raw?.gpu ? {
+    scene:raw.gpu, paint:raw.gpuPaint, samples:raw.gpuSamples,
+    paintSamples:raw.gpuPaintSamples, p95:raw.gpuP95Ms,
+    max:raw.gpuMaxMs, latest:raw.latestGPUCommandsMs,
+    latestPaint:raw.latestGPUPaintMs,
+  } : raw?.trace ? {
+    scene:raw.trace.gpu, paint:raw.trace.gpuPaint,
+    samples:raw.trace.gpuSamples, paintSamples:raw.trace.gpuPaintSamples,
+    p95:raw.trace.gpuP95Ms, max:raw.trace.gpuMaxMs,
+    latest:raw.trace.latestGPUCommandsMs, latestPaint:raw.trace.latestGPUPaintMs,
+  } : undefined;
+  const frameStats = raw?.capturedFrames != null ? {
+    captured:raw.capturedFrames, hitches:raw.hitchCount,
+    longTasks:raw.longTaskCount, observer:raw.longTaskObserver,
+  } : raw?.trace ? {
+    captured:raw.trace.capturedFrames, hitches:raw.trace.hitchCount,
+    longTasks:raw.trace.longTaskCount, observer:raw.trace.longTaskObserver,
+  } : undefined;
+  const latest = raw?.latest || raw?.trace?.latest;
+  const ab = shooterAB || raw?.shooterAB;
+  const out = {
+    v:1, schema:"inkwave-v1",
+    gpu, frames:frameStats,
+    latest:latest ? compactFrame(latest) : undefined,
+    hitches:chosen.map(compactFrame),
+    ab:ab ? {
+      status:ab.status,
+      idle:compactTrial(ab.idle), fire:compactTrial(ab.fire),
+      delta:ab.delta,
+      resolution:ab.resolutionSweep ? {
+        status:ab.resolutionSweep.status,
+        completed:ab.resolutionSweep.completed,
+        phases:ab.resolutionSweep.phases,
+        sensitivity:ab.resolutionSweep.sensitivity,
+        cautions:ab.resolutionSweep.cautions,
+      } : undefined,
+      cautions:ab.cautions,
+    } : undefined,
+  };
+  return JSON.stringify(out);
+}
+
 export function createFrameTimingProbe({ now = () => performance.now(), env = globalThis, maxSamples = 240, game = null } = {}) {
   if (!Number.isInteger(maxSamples) || maxSamples < 24 || maxSamples > 2000) throw new RangeError('frame buffer limit');
   const delivered = new Float32Array(maxSamples);
@@ -75,8 +146,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     comparison() { return ab?.comparison() || {status:'unavailable'}; },
     report() {
       const raw=tracer ? JSON.parse(tracer.report()) : snapshot();
-      return JSON.stringify({...raw, shooterAB:ab?.comparison() || {status:'unavailable'},
-        debugModePrivacy:'Device-local only; no automatic upload or retained log.'},null,2);
+      return buildCompactProfilerReport(raw, ab?.comparison() || {status:'unavailable'});
     },
     dispose() { disposed = true; copyEpoch++; dump?.remove?.(); dump=null; ab?.dispose(); ab=null; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
   };
