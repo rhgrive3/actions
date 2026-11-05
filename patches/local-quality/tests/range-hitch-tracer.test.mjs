@@ -133,8 +133,14 @@ test('native ray tracer samples real callsites without stacking a stack trace on
   const samples=row.sourceCallers['source-ray'];
   assert.ok(samples?.length);
   assert.ok(samples.some(item=>/driveRays/.test(item.caller)),
-    'sampled stack must identify the function that repeatedly requested native rays');
+    'sampled stack must identify the immediate function that requested native rays');
   assert.ok(samples.every(item=>item.sampleStride===512));
+  const chains=row.sourceCallerChains['source-ray'];
+  assert.ok(chains?.some(item=>/driveRays/.test(item.chain)),
+    'sampled caller chain must retain the parent call path beyond the immediate ray wrapper');
+  assert.ok(chains.every(item=>item.sampleStride===512));
+  assert.ok(chains.every(item=>item.chain.split(' <- ').length<=5),
+    'caller-chain depth stays bounded');
  }finally{tracer.dispose();}
  assert.strictEqual(source.ray.toString().includes('this.queryCount++'),true);
 });
