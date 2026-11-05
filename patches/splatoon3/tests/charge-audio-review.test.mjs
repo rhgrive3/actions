@@ -29,16 +29,20 @@ const load=(e,id,extra={})=>spinnerPreload(e,id,{fetcher:async()=>raw(),...extra
 
 test('premix never runs into the next charge stage; actual thresholds own source starts',async()=>{
  const e=new Engine(),a=actor('s3-spinner-quick');await load(e,a.weapon.id);
- const h=spinnerChargeAudioLoop(e,a.weapon.id,{actor:a},()=>source());
+ const motors=[];
+ const h=spinnerChargeAudioLoop(e,a.weapon.id,{actor:a},()=>{const m=source();motors.push(m);return m;});
  assert.equal(e.voices.length,1);assert.equal(e.voices[0].o.phase,0);
  for(let n=0;n<120;n++){e.ctx.currentTime+=1/60;h.set({progress:.2});}
  assert.equal(e.voices.length,1,'a stalled first ring never starts its ready cue');
  h.set({progress:18/27});assert.equal(e.voices.length,2);assert.equal(e.voices[1].o.phase,1);
  assert.ok(Math.abs(e.voices[1].o.offset-.406061)<1e-8);
- h.set({progress:1});assert.equal(e.voices.length,3);assert.equal(e.voices[2].o.phase,2);
- assert.ok(Math.abs(e.voices[2].o.offset-(.633333+.30))<1e-8,'skip embedded full beep');
+ // Full-charge hold: the premix stops and the recorded Motor hum (steady
+ // hold window) carries the held trigger, as in S3, instead of a looped slice.
+ h.set({progress:1});assert.equal(e.voices.length,2,'no premix tail voice at full');
+ assert.equal(e.voices[1].h.playing,false,'charge-up phrase stops at full');
+ assert.equal(motors.length,1);assert.equal(motors[0].playing,true,'recorded Motor holds the full charge');
  for(let n=0;n<300;n++)h.set({progress:1});
- assert.equal(e.voices.length,3,'full hold never restarts either beep');
+ assert.equal(e.voices.length,2,'full hold never restarts either beep');assert.equal(motors.length,1);
  assert.equal(e.cues.length,1,'sole independent unwarped full cue');
  assert.equal(e.cues[0].name,'charge:confirmation');assert.equal(e.cues[0].o.pitch,1.15);
  h.stop();assert.ok(e.voices.every(v=>!v.h.playing));
@@ -48,9 +52,11 @@ test('premix never runs into the next charge stage; actual thresholds own source
 test('partial and full charge restoration do not replay earlier premix cues',async()=>{
  for(const q of [.8,1]){
   const e=new Engine(),a=actor('s3-spinner-quick');a.weaponRunner.charge=q;await load(e,a.weapon.id);
-  const h=spinnerChargeAudioLoop(e,a.weapon.id,{actor:a},()=>source());
-  assert.equal(e.voices.length,1);assert.equal(e.voices[0].o.phase,q===1?2:1);
-  assert.ok(e.voices[0].o.offset>(q===1?.633333:.406061));h.set({progress:q});
+  const motors=[];
+  const h=spinnerChargeAudioLoop(e,a.weapon.id,{actor:a},()=>{const m=source();motors.push(m);return m;});
+  if(q===1){assert.equal(e.voices.length,0,'restored full charge resumes the Motor hold, not a premix');assert.equal(motors.length,1);}
+  else{assert.equal(e.voices.length,1);assert.equal(e.voices[0].o.phase,1);assert.ok(e.voices[0].o.offset>.406061);}
+  h.set({progress:q});
   assert.equal(e.cues.length,0);h.stop();spinnerReleaseCache(e);
  }
 });

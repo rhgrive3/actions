@@ -13,6 +13,26 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
   let stopped=false,ended=false,src=null,sourceGain=null,untrack=()=>{};
   let previous=q,last=ctx.currentTime,rate=1,level=clamp(Number(volume)||0,0,1),position=pos;
   let appliedRate=1,gainTarget=0,gainSettlesAt=0;
+  // Read-head model. The buffer is meant to play at one steady speed: the
+  // stretched phrase spans `body` seconds for a `chargeTime` charge, so the
+  // nominal rate is body/chargeTime (1x once the stretch is ready). Deriving
+  // the rate from each frame's dp/dt made it follow AudioContext quantum and
+  // render-frame jitter (and 0/2 sim ticks per frame at high refresh or
+  // accelerated simulation), which warbled the pitch and chopped the gain:
+  // the reported charge "noise". The rate is now the nominal speed, scaled
+  // only by a sustained (not per-frame) change of charge speed and a small,
+  // slow drift correction that keeps the head just behind the funded end, so
+  // it never wraps the 35 ms guard loop.
+  const nominal=clamp(body/Math.max(.05,chargeTime),.02,4);
+  let head=0,headAt=ctx.currentTime,anchorQ=q,anchorAt=ctx.currentTime,progressAt=ctx.currentTime,speed=1;
+  const headNow=now=>head+appliedRate*Math.max(0,now-headAt);
+  function applyRate(next,now){
+    head=headNow(now);headAt=now;
+    src.playbackRate.cancelScheduledValues?.(now);
+    if(src.playbackRate.setValueAtTime)src.playbackRate.setValueAtTime(next,now);
+    else src.playbackRate.value=next;
+    appliedRate=next;
+  }
   const panner=finitePos(pos)&&typeof audio._panner==='function'?audio._panner(pos,3):null;
   if(panner)panner.connect(target);
   const valid=()=>!stopped&&!ended&&audio.ctx===ctx&&ctx.state!=='closed';
@@ -31,6 +51,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
     s.playbackRate.value=full?1:rate;
     appliedRate=full?1:rate;
     const end=offset+Math.max(step*2,body*q);
+    head=Math.max(offset,end-Math.min(.016,body*q));headAt=now;
     s.loop=!full;s.loopStart=Math.max(offset,end-.035);s.loopEnd=end;
     g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(q>0?level:0,now+.006);
     gainTarget=q>0?level:0;gainSettlesAt=now+.006;
@@ -59,15 +80,30 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
       if(q>=1){start(true);return;}
       const end=offset+Math.max(step*2,body*q);
       src.loopStart=Math.max(offset,end-.035);src.loopEnd=end;
+      if(dp>0)progressAt=now;
       if(dt>=1/240){
-        rate=dp>0?clamp(dp*Math.max(.05,chargeTime)/dt,.02,4):0;
-        // Exact zero, not the general mixer 0.05 minimum: no hidden crawl.
-        if(rate!==appliedRate){
-          src.playbackRate.cancelScheduledValues?.(now);
-          if(src.playbackRate.setValueAtTime)src.playbackRate.setValueAtTime(rate,now);
-          else src.playbackRate.value=rate;
-          appliedRate=rate;
+        // Sustained charge speed relative to the nominal clock (1 = normal,
+        // ~1/3 for an airborne/empty-tank charge), measured over >=80 ms.
+        const span=now-anchorAt;
+        if(span>=.08){
+          const measured=(q-anchorQ)*Math.max(.05,chargeTime)/span;
+          if(measured>0)speed=Math.abs(measured-1)<.2?1:clamp(measured,.05,4);
+          anchorQ=q;anchorAt=now;
         }
+        // A real stall (no funded progress for 60 ms) pauses exactly at zero,
+        // not the general mixer 0.05 minimum: no hidden crawl.
+        // The head reaching the funded end is also a pause (never a wrap).
+        const stalled=now-progressAt>.06||headNow(now)>=end-.002;
+        if(stalled){rate=0;anchorQ=q;anchorAt=now;}
+        else{
+          // Keep the head ~20 ms behind the funded end; a 30 ms deadband
+          // leaves ordinary charging at exactly the nominal (pitch 1x) rate.
+          const lag=end-.02-headNow(now);
+          const correction=Math.abs(lag)<.03?1:clamp(1+lag/.4,.9,1.06);
+          rate=clamp(nominal*speed*correction,.02,4);
+        }
+        if(rate===0?appliedRate!==0:Math.abs(rate-appliedRate)>.012*Math.max(rate,appliedRate))applyRate(rate,now);
+        else rate=appliedRate;
         const target=rate>0&&q>0?level:0;
         // Preserve every in-flight ramp, but do not reschedule a settled target.
         if(target!==gainTarget || now<gainSettlesAt){

@@ -85,6 +85,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     const stormAgeAnchor = code.includes(guardedStormAge) ? guardedStormAge : legacyStormAge;
     patch(stormAgeAnchor,"      kitBombTrail(SUB, b, G.paint, this);\n      if (kitBombRetire(b)) { this._releaseBomb(b); this.bombs.splice(i, 1); continue; }\n" + stormAgeAnchor,'curling trail');
     patch("      b.vel.y -= (b.kind === 'bomb' ? SUB.bomb.gravity : 24) * dt;","      kitBombStep(SUB, b, dt);\n      b.vel.y -= kitBombGravity(SUB, b) * dt;",'kit bomb gravity and Curling speed law');
+    patch('        vel.y -= SUB.bomb.gravity * dt;','        kitArcFlightDrag(this.s3KitPreviewResolved, vel, dt);\n        vel.y -= SUB.bomb.gravity * dt;','bomb preview shares the bomb-family flight drag');
     patch("0.21 + 1e-8, _hit2).hit;\n      if (b.fuse >= 0 && fuseContact) {",
       "0.21 + 1e-8, _hit2).hit;\n      if (!hit.hit && fuseContact && b.s3FuseNormal) applySplatBombRestingResistance(b, b.s3FuseNormal, dt);\n      if (b.fuse >= 0 && fuseContact) {",'Splat Bomb resting-contact resistance');
     patch('distanceDamage(s.damageBands, d, false)','distanceDamage(kitBombDamageBands(SUB, b, s.damageBands), d, false)','kit bomb bands');
@@ -130,7 +131,7 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("    this.list.push(p);\n  }",
       "    kitTrizookaGhost(p, a, SPECIALS, { volleyIndex: s3Volley, actionIndex: s3Action, specialPowerAP: e[34]?.s3SpecialPowerAP ?? e[33]?.s3SpecialPowerAP ?? e[30]?.s3SpecialPowerAP ?? e[29]?.s3SpecialPowerAP });\n    this.list.push(p);\n  }",
       'trizooka ghost reconstruction');
-    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands, kitTrizookaApplyHit, flushTrizookaBirths } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { applySplatBombRestingResistance } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombRetire, kitBombStep, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
+    code="import { kitPaintAuthority, kitTrizookaGhost, kitTrizookaSteppedBands, kitTrizookaApplyHit, flushTrizookaBirths } from '../../patches/splatoon3/runtime/trizooka-collision.mjs';\nimport { applySplatBombRestingResistance } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { kitSubRelease, kitBombAttach, kitBombGravity, kitBombRetire, kitBombStep, kitArcFlightDrag, kitBombContact, kitBombTrail, kitBombFuseTotal, kitBombKeepsFuse, kitBombRadius, kitBombFxRadius, kitBombDamageBands, kitBombDamageMax, kitBombDamageMin, kitGhostBombAttach, withGhostBombSpawn } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n"+code;
   }
   return code;
 }

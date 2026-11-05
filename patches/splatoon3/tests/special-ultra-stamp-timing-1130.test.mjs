@@ -45,3 +45,15 @@ test('Ultra Stamp throwing has 42F source windup after releasing R',async()=>{
  assert.ok(f.G.projectiles.list.some(p=>p.s3AllSpecial==='ultraStamp'));
  assert.equal(actor.specialActive,null);
 });
+test('Ultra Stamp held ZR advances forward on its own and steers at a bounded rate',async()=>{
+ const {f,actor}=await setup();
+ actor.aimYaw=0;actor.intent.fire=true;actor.intent.move?.set?.(0,0,0);
+ for(let i=0;i<60;i++)actor._updateSpecial(1/60);
+ assert.ok(actor.vel.z>f.PLAYER.runSpeed*.95,`advances without stick input (${actor.vel.z})`);
+ assert.ok(Math.abs(actor.vel.x)<1e-6);
+ actor.aimYaw=Math.PI/2;actor._updateSpecial(1/60);
+ const heading=Math.atan2(actor.vel.x,actor.vel.z);
+ assert.ok(heading>0&&heading<Math.PI/2*.5,'a 90 degree aim change turns gradually');
+ actor.intent.fire=false;for(let i=0;i<60;i++)actor._updateSpecial(1/60);
+ assert.ok(Math.hypot(actor.vel.x,actor.vel.z)<f.PLAYER.runSpeed*.5||actor.form==='squid','releasing ZR stops the forced advance');
+});

@@ -91,9 +91,8 @@ test('all six Splatlings use one unwarped full cue, gated by funded ink rather t
   const full=e.cues.filter(c=>c.o.pitch===1.15);assert.equal(full.length,1,r.id);
   assert.equal(full[0].name,'charge:confirmation');
   for(let i=0;i<300;i++)h.set({progress:1});assert.equal(e.cues.filter(c=>c.o.pitch===1.15).length,1);
-  if(['splatling','s3-spinner-quick','s3-spinner-hypershort'].includes(r.id)){
-   const end=e.voices.find(v=>v.o.phase===2);assert.ok(end.o.offset>(r.id==='splatling'?1.383333:r.id==='s3-spinner-quick'?.633333:2)+.25,'skip embedded full beep');
-  }
+  // Full hold uses the recorded Motor, never a looped premix slice.
+  if(r.id!=='s3-spinner-downpour')assert.ok(e.voices.every(v=>v.o.phase!==2||!v.h.playing),r.id+' no premix slice loops at full');
   h.stop();spinnerReleaseCache(e);
  }
 });

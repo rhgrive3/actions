@@ -413,11 +413,11 @@ test('native release charges suction ink 70 and rejects a 69 tank', async () => 
   assert.equal(short.actor.ink, 69, 'a refused release costs nothing');
 });
 
-test('gravity keeps storm at the native 24 and uses spec flight/ground values', async () => {
+test('gravity gives storm the bomb-family flight and uses spec flight/ground values', async () => {
   const api = await production();
   ground(api, 'record');
-  assert.equal(NATIVE_STORM_GRAVITY, 24);
-  assert.equal(kitBombGravity(api.SUB, { kind: 'storm' }), 24, 'storm is untouched by the bomb gravity');
+  assert.equal(NATIVE_STORM_GRAVITY, 24, 'native constant retained only for reference');
+  assert.equal(kitBombGravity(api.SUB, { kind: 'storm' }), 0.016 * 3600, 'storm canister uses the bomb-family FlyGravity');
   assert.equal(kitBombGravity(api.SUB, { kind: 'bomb', s3Mode: 'flight' }), api.SUB.bomb.gravity,
     'an untagged generic bomb keeps the configured bomb gravity');
 

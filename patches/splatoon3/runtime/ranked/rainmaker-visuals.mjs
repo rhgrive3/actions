@@ -176,8 +176,8 @@ function inkTailGeometry(THREE) {
 // A bounded pool for detonation/impact droplets, shared immutable shot geometry,
 // and one cached material per team color. No per-frame geometry/material churn.
 export function createRainmakerAttackVisuals(THREE, scene) {
-  let headGeometry, tailGeometry, dropletGeometry, burstRoot;
-  const materials = new Map(), bursts = [], transform = new THREE.Object3D();
+  let headGeometry, tailGeometry, dropletGeometry, burstRoot, domeGeometry, flashGeometry;
+  const materials = new Map(), bursts = [], blasts = [], transform = new THREE.Object3D();
   const forward = new THREE.Vector3(0, 0, 1), up = new THREE.Vector3(0, 1, 0), direction = new THREE.Vector3();
   function resources(color) {
     const key = color?.isColor ? `${color.r}:${color.g}:${color.b}` : String(color);
@@ -270,18 +270,88 @@ export function createRainmakerAttackVisuals(THREE, scene) {
     }
     mesh.instanceMatrix.needsUpdate = true;
   }
+  // Detonation of the Rainmaker shot. S3 shows a large round ink burst the
+  // size of the blast (BlastParamFullCharge 4.6/7.0), a bright core flash and
+  // SplashAroundParam's 15 ink globs (pitch 10-45 deg, 0.45-0.52 WU/F) thrown
+  // out under the bomb-family flight; the old 32 small beads read as a tiny
+  // puff. Pooled (4 blasts), no per-event geometry/material/vector churn.
+  // Timing/opacity curves are local presentation calibration.
+  const GLOBS = 15, GLOB_GRAVITY = .016 * 3600, GLOB_KEEP = 1 - .05866;
+  function blast(position, color, radius) {
+    const material = resources(color);
+    if (!burstRoot) { burstRoot = new THREE.Group(); burstRoot.name = 'rainmaker-ink-splashes'; scene.add(burstRoot); }
+    domeGeometry ||= new THREE.SphereGeometry(1, 28, 18);
+    flashGeometry ||= new THREE.PlaneGeometry(2, 2);
+    let b = blasts.find(item => !item.group.visible);
+    if (!b && blasts.length < 4) {
+      const group = new THREE.Group(); group.name = 'rainmaker-blast';
+      const domeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: .35,
+        roughness: .2, metalness: 0, transparent: true, opacity: .9, depthWrite: false });
+      const dome = new THREE.Mesh(domeGeometry, domeMaterial); dome.name = 'rainmaker-blast-dome';
+      const flash = new THREE.Mesh(flashGeometry, glowMaterial(THREE)); flash.name = 'rainmaker-blast-flash'; flash.frustumCulled = false;
+      const globs = new THREE.InstancedMesh(dropletGeometry, material, GLOBS);
+      globs.name = 'rainmaker-blast-globs'; globs.frustumCulled = false;
+      group.add(dome, flash, globs);
+      b = { group, dome, domeMaterial, flash, globs, age: 0, radius: 1, p: new Float32Array(GLOBS * 3), v: new Float32Array(GLOBS * 3) };
+      blasts.push(b); burstRoot.add(group);
+    }
+    b ||= blasts.reduce((a, c) => a.age > c.age ? a : c);
+    b.age = 0; b.radius = Math.max(1, Math.min(9, radius));
+    b.group.position.copy(position); b.group.visible = true;
+    b.domeMaterial.color.set(color); b.domeMaterial.emissive.set(color);
+    b.globs.material = material;
+    for (let i = 0; i < GLOBS; i++) {
+      const yaw = i * TAU / GLOBS + .21 * Math.sin(i * 12.9898);
+      const pitch = (10 + 35 * ((i * .618034) % 1)) * Math.PI / 180;
+      const speed = (.45 + .07 * ((i * .414214) % 1)) * 60;
+      const c = Math.cos(pitch);
+      b.p[i * 3] = Math.cos(yaw) * .35; b.p[i * 3 + 1] = .5; b.p[i * 3 + 2] = Math.sin(yaw) * .35;
+      b.v[i * 3] = Math.cos(yaw) * c * speed; b.v[i * 3 + 1] = Math.sin(pitch) * speed; b.v[i * 3 + 2] = Math.sin(yaw) * c * speed;
+    }
+    updateBlast(b, 0);
+  }
+  function updateBlast(b, dt) {
+    b.age += dt;
+    const t = b.age, R = b.radius;
+    const grow = 1 - Math.pow(1 - unit(t / .14), 3);
+    const domeScale = R * (.3 + .7 * grow);
+    b.dome.scale.set(domeScale, domeScale * .82, domeScale);
+    b.dome.position.y = domeScale * .2;
+    const opacity = .9 * (1 - unit((t - .14) / .3));
+    b.domeMaterial.opacity = opacity; b.dome.visible = opacity > .005;
+    b.flash.scale.setScalar(R * 1.25 * (.6 + .4 * grow)); b.flash.position.y = R * .2;
+    b.flash.material.uniforms.uPower.value = 1.6 * (1 - unit(t / .22));
+    b.flash.visible = t < .22;
+    const keep = Math.pow(GLOB_KEEP, dt * 60), fade = 1 - unit((t - .75) / .25);
+    for (let i = 0; i < GLOBS; i++) {
+      const k = i * 3;
+      b.v[k] *= keep; b.v[k + 2] *= keep; b.v[k + 1] = b.v[k + 1] * keep - GLOB_GRAVITY * dt;
+      b.p[k] += b.v[k] * dt; b.p[k + 1] = Math.max(.05, b.p[k + 1] + b.v[k + 1] * dt); b.p[k + 2] += b.v[k + 2] * dt;
+      const size = (.16 + (i % 3) * .06) * Math.max(.6, R / 7) * fade + .001;
+      transform.position.set(b.p[k], b.p[k + 1], b.p[k + 2]);
+      transform.quaternion.identity();
+      transform.scale.set(size, size, size * 1.6);
+      transform.updateMatrix(); b.globs.setMatrixAt(i, transform.matrix);
+    }
+    b.globs.instanceMatrix.needsUpdate = true;
+    b.group.visible = t < 1;
+    b.group.userData.phase = 'blast';
+  }
   function update(dt) {
     const delta = step(dt);
     for (const material of materials.values()) material.userData.rainmakerClock.value += delta;
     for (const burst of bursts) if (burst.mesh.visible) { burst.age += delta; updateBurst(burst); }
+    for (const b of blasts) if (b.group.visible) updateBlast(b, delta);
   }
   function dispose() {
     if (burstRoot) scene.remove(burstRoot);
     for (const burst of bursts) burst.mesh.dispose();
-    bursts.length = 0; burstRoot = null;
+    for (const b of blasts) { b.globs.dispose(); b.domeMaterial.dispose(); b.flash.material.dispose(); }
+    bursts.length = 0; blasts.length = 0; burstRoot = null;
+    domeGeometry?.dispose(); flashGeometry?.dispose(); domeGeometry = flashGeometry = undefined;
     headGeometry?.dispose(); tailGeometry?.dispose(); dropletGeometry?.dispose();
     headGeometry = tailGeometry = dropletGeometry = undefined;
     for (const material of materials.values()) material.dispose(); materials.clear();
   }
-  return { shot, updateShot, splash, update, dispose };
+  return { shot, updateShot, splash, blast, update, dispose };
 }

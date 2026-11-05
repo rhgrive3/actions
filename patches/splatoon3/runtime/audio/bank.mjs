@@ -7,6 +7,7 @@ export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT
 import { renderSound } from './render.mjs';
 import { audioWorkerDeadline } from './worker-deadline.mjs';
 import { isFinitePCM } from './finite-pcm.mjs';
+import { spinnerMotorHoldBuffer } from './spinner-motor-hold.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
@@ -130,6 +131,11 @@ export class WeaponSoundBank {
       const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
       s.buffer=buffer;s.loop=loop;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
+      else if(loop&&recordedSpinnerMotor&&event==='charge'){
+        // Steady Motor hold window instead of the fading 10 s take.
+        const hold=spinnerMotorHoldBuffer(v.ctx,buffer);
+        if(hold){s.buffer=hold.buffer;s.loopStart=hold.loopStart;s.loopEnd=hold.loopEnd;}
+      }
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
       // A recorded click stays at the recorded speed and retains its full
       // attack/decay. Do not pitch-sweep, stretch, stitch or endlessly loop it.

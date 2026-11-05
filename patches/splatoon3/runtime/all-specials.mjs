@@ -47,6 +47,8 @@ import { installSpecialTrajectory, specialTrajectoryAimReady } from './special-t
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
+// Ultra Stamp held-ZR advance (calibrated; see moveActor 'stamp').
+const STAMP_HOLD_FORWARD_RATE = 1, STAMP_HOLD_TURN_RATE = Math.PI;
 // Community verification: Wail aims at the target's position 0.5 seconds ago.
 // https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/メガホンレーザー5.1ch
 const WAIL_TRACK_DELAY = .5;
@@ -633,6 +635,19 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
     const alpha=1-Math.exp(-8*dt);
     actor.vel.x+=(target.x-actor.vel.x)*alpha;
     actor.vel.z+=(target.z-actor.vel.z)*alpha;
+  }else if(speed==='stamp'){
+    // S3 Ultra Stamp: holding ZR hammers while advancing forward on its own;
+    // steering is heavier than walking (official/Wiki descriptions). The
+    // heading follows the aim at a bounded turn rate. Forward speed and turn
+    // rate are calibrations (run speed, 180 deg/s), not extracted table rows.
+    const aim=actor.aimYaw??actor.yaw??0;
+    if(!Number.isFinite(state.stampHeading))state.stampHeading=aim;
+    const diff=Math.atan2(Math.sin(aim-state.stampHeading),Math.cos(aim-state.stampHeading));
+    const turn=STAMP_HOLD_TURN_RATE*dt;
+    state.stampHeading+=Math.max(-turn,Math.min(turn,diff));
+    const cap=P.runSpeed*STAMP_HOLD_FORWARD_RATE,alpha=1-Math.exp(-8*dt);
+    actor.vel.x+=(Math.sin(state.stampHeading)*cap-actor.vel.x)*alpha;
+    actor.vel.z+=(Math.cos(state.stampHeading)*cap-actor.vel.z)*alpha;
   }else {
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
@@ -2013,7 +2028,9 @@ function activeStep(rt,actor,dt) {
     const throwing=!!actor.intent.sub;
     const jumpStarted=edges.jump&&actor.intent.fire&&actor.grounded&&!throwing;
     const airAttackStarted=edges.fire&&!actor.grounded&&!throwing;
-    moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?2.6:null,squid:!actor.intent.fire&&!throwing,jump:true});
+    // Holding ZR advances on its own (was a 2.6 stick-driven crawl).
+    if(!(actor.intent.fire&&!throwing))state.stampHeading=null;
+    moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?'stamp':null,squid:!actor.intent.fire&&!throwing,jump:true});
     if(throwing){
       if(state.stampHolding)emitAction(rt,actor,state.id,state.serial,'swingEnd',actor.pos,null,nextSeed(state));
       state.stampHolding=false;state.stampCount=0;

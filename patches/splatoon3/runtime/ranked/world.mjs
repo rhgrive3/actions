@@ -4,6 +4,7 @@ import { createZoneCoveragePair } from './zone-coverage-samples.mjs';
 import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
 import { createClamBarrier } from './clam-presentation.mjs';
+import { createClamBasketModel } from './clam-basket-model.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 import { createRainmakerBarrier, createRainmakerChargeAura } from './rainmaker-visuals.mjs';
 import { createRainmakerCarrierMarker } from './rainmaker-carrier-marker.mjs';
@@ -321,18 +322,12 @@ export class RankedWorld {
       for (let team = 0; team < 2; team++) {
         const marker = new THREE.Group();
         const color = this.teamInk[team];
-        const hoop = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.09, 10, 28),
-          this._material(color, { transparent: true, opacity: 0.88, emissive: color, emissiveIntensity: 0.12 }));
-        hoop.rotation.x = Math.PI / 2;
-        hoop.position.y = 0.14;
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 1.5, 8),
-          this._material(0x4a4b4d, { metalness: 0.2, roughness: 0.7 }));
-        post.position.y = 0.75;
+        const model = createClamBasketModel(THREE, color), hoop = model.hoop;
         const barrier = createClamBarrier(THREE, color), gate = barrier.mesh;
-        marker.add(hoop, post, gate);
+        marker.add(model.group, gate);
         marker.name = `ranked-clam-basket-${team}`;
         this.clamsGroup.add(marker);
-        this.baskets.push({ marker, gate, hoop, barrier });
+        this.baskets.push({ marker, gate, hoop, barrier, model });
       }
       this.smallClamResources = createSmallClamResources(THREE);
       this.powerClamResources = createPowerClamResources(THREE);
@@ -799,6 +794,7 @@ export class RankedWorld {
       item.marker.position.set(goal[0], goal[1], goal[2]);
       const open = !!state.barrierOpen;
       item.barrier.update(state, dt);
+      item.model?.update(state, dt);
       const color = open ? 0x8dffcf : this.teamInk[team];
       if (item._hoopColor !== color) { item.hoop.material.color.setHex(color); item._hoopColor = color; }
       item.marker.userData.barrierOpen = open;

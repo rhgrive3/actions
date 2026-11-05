@@ -166,7 +166,11 @@ export function createRankedEffects(api, match) {
     const scratch = _blastFrames[depth] || (_blastFrames[depth] = { body: new THREE.Vector3(), from: null });
     const p = new THREE.Vector3(...pos); // Owned by this event; FX/audio may retain it.
     G.fx?.ring?.(p, _blastUp, G.teamColors[team], { radius, life: .6 });
-    attackVisuals()?.splash(p, G.teamColors[team], radius);
+    // Big round ink detonation (dome, flash, 15 globs) plus the shared bomb
+    // FX spray/ripple; the small splash alone read as a weak puff.
+    const blastVisuals = attackVisuals();
+    if (blastVisuals?.blast) blastVisuals.blast(p, G.teamColors[team], radius); else blastVisuals?.splash(p, G.teamColors[team], radius);
+    G.fx?.explosion?.(p, G.teamColors[team], radius);
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
     const blastFrom = shot?.from || (scratch.from || (scratch.from = new THREE.Vector3())).copy(p).add(_blastLift);
     const domeSheltered = shot && !visualOnly ? new Set() : null;

@@ -47,9 +47,14 @@ async function world(client=null,clock=null){
   }
   return {f,paint,owner,victim,nm,packets,hits,stamps,events,step,fire,contact};
 }
+// Mirrors the runtime 60 Hz integration, including the per-frame drag.
 function landing(drop){
-  const g=drop.gravity??drop.source.spec.gravity,time=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;
-  return drop.pos.clone().addScaledVector(drop.vel,time).setY(0);
+  const g=drop.gravity??drop.source.spec.gravity,k=drop.airResist||0,pos=drop.pos.clone(),vel=drop.vel.clone();
+  for(let i=0;i<600&&pos.y>0;i++){
+    const prevY=pos.y;vel.y-=g*STEP;if(k>0)vel.multiplyScalar(1-k);pos.addScaledVector(vel,STEP);
+    if(pos.y<=0){const t=prevY/(prevY-pos.y);pos.addScaledVector(vel,-STEP*(1-t));}
+  }
+  return pos.setY(0);
 }
 function wire(e){const r=JSON.parse(JSON.stringify(e));r._netSeq=e._netSeq;r._netTick=e._netTick;return r;}
 function play(w,rows){w.nm._peer('a');for(const row of rows)w.nm._play('a',wire(row));}
@@ -81,7 +86,16 @@ for(const mode of ['stopped','moving','life','clear','reuse','replacement'])test
  rx.nm.onMessage('a',splash);assert.equal(rx.victim.hp,['life','clear','replacement'].includes(mode)?40:28);
  if(mode==='life')rx.owner.netLife=0;
  rx.nm.onMessage('a',splash);assert.equal(rx.victim.hp,['life','clear','replacement'].includes(mode)?40:28);
- if(mode==='reuse'){rx.nm.onMessage('a',{...splash,h:splash.h+1,seq:splash.seq+1});assert.equal(rx.victim.hp,28,'consumed contact cannot support a fresh hit ID');}
+ if(mode==='reuse'){
+  // Neighbouring droplets also reach this spot (capped at three per parent);
+  // consume every genuine observed contact before forging a fresh hit ID.
+  const genuine=tx.packets.filter(p=>p.p.k==='hit'&&p.p.w==='torpedo-splash').map(p=>p.p);
+  assert.ok(genuine.length>=1&&genuine.length<=3);
+  for(const p of genuine.slice(1))rx.nm.onMessage('a',p);
+  const hp=40-12*genuine.length;assert.equal(rx.victim.hp,hp);
+  const last=genuine.at(-1);
+  rx.nm.onMessage('a',{...last,h:Math.max(...genuine.map(p=>p.h))+1,seq:Math.max(...genuine.map(p=>p.seq))+1});assert.equal(rx.victim.hp,hp,'consumed contact cannot support a fresh hit ID');
+ }
  if(rx.replacement)assert.equal(rx.replacement.hp,40);
  console.log('LIMITED_CONTACT',JSON.stringify({moving,hp:rx.victim.hp,sourceDamage:splash.d}));
  tx.nm.dispose();rx.nm.dispose();tx.f.G.projectiles.clear();rx.f.G.projectiles.clear();

@@ -680,7 +680,8 @@ try {
           const w={owner,victim,nm,packets,context:{time:G.time,scene:G.scene,actors:G.actors,netm:nm,match,level:G.level,physics:G.physics,paint:G.paint,projectiles:G.projectiles}};worlds.push(w);return w;
         };
         const step=w=>{activate(w);G.time+=DT;w.context.time=G.time;G.projectiles.update(DT);};
-        const land=drop=>{const g=drop.source.spec.splashGravity??drop.source.spec.gravity,t=(drop.vel.y+Math.sqrt(drop.vel.y**2+2*g*drop.pos.y))/g;return drop.pos.clone().addScaledVector(drop.vel,t).setY(0);};
+        // Mirrors the runtime 60 Hz droplet integration, including per-frame drag.
+        const land=drop=>{const g=drop.source.spec.splashGravity??drop.source.spec.gravity,k=drop.airResist||0,pos=drop.pos.clone(),vel=drop.vel.clone();for(let i=0;i<600&&pos.y>0;i++){const prevY=pos.y;vel.y-=g*DT;if(k>0)vel.multiplyScalar(1-k);pos.addScaledVector(vel,DT);if(pos.y<=0){const t=prevY/(prevY-pos.y);pos.addScaledVector(vel,-DT*(1-t));}}return pos.setY(0);};
         try{
           const tx=world('torpedo-owner');if(attackerAP===57)for(const piece of tx.owner.s3.loadout){piece.main='subPower';piece.subs.fill('subPower');}tx.owner.s3RefreshGear();
           check((tx.owner.s3.abilityPoints.subPower||0)===attackerAP,'Torpedo sender subPower matches fixture');
@@ -693,7 +694,7 @@ try {
           for(let i=0;i<300&&!parent.dead;i++)step(tx);check(parent.dead,'native sender parent collision');
           const drops=G.projectiles._s3TorpedoSplashes.filter(d=>d.kind==='chase');check(drops.length===8,'native sender eight terrain drops');const target=land(drops[0]);
           const main=tx.packets.find(p=>p.k==='hit'&&p.w==='torpedo');check(main?.d===60,'native sender main claim60');tx.victim.pos.copy(target);
-          for(let i=0;i<200;i++)step(tx);const splash=tx.packets.find(p=>p.k==='hit'&&p.w==='torpedo-splash');check(splash?.d===12,'native sender terrain claim12');
+          for(let i=0;i<200;i++)step(tx);const genuineSplashes=tx.packets.filter(p=>p.k==='hit'&&p.w==='torpedo-splash'),splash=genuineSplashes[0];check(splash?.d===12&&genuineSplashes.length<=3&&genuineSplashes.every(p=>p.d===12),'native sender terrain claim12');
           tx.nm.dispose();G.projectiles.clear();
           const rx=world('torpedo-victim');rx.nm.onMessage('torpedo-owner',tick);
           let replica;const adoptionFrames=[];
@@ -726,9 +727,15 @@ try {
           rx.nm.onMessage('foreign',splash);rx.nm.onMessage('torpedo-owner',{...splash,d:12.1});rx.nm.onMessage('torpedo-owner',splash);
           check(rx.victim.hp===expectedHP,'foreign/overflow/duplicate terrain claims inert');
           check(rx.packets.filter(p=>p.k==='hit_ack'&&p.h===splash.h).length===count,'duplicate terrain claim does not add ACK');
-          rx.nm.onMessage('torpedo-owner',{...splash,h:splash.h+1,seq:(splash.seq||0)+1});check(rx.victim.hp===expectedHP,'consumed terrain contact cannot authorize a fresh hit ID');
+          // Neighbouring droplets may also reach the victim (capped at three
+          // per parent); consume every genuine claim before forging a fresh ID.
+          const firstSplashHP=rx.victim.hp;
+          for(const extra of genuineSplashes.slice(1))rx.nm.onMessage('torpedo-owner',extra);
+          const cappedHP=rx.victim.hp;check(genuineSplashes.length<=3&&firstSplashHP-cappedHP===expectedSplash*(genuineSplashes.length-1),'remaining genuine droplet claims stay within the three-hit cap');
+          const freshH=Math.max(...genuineSplashes.map(p=>p.h))+1,freshSeq=Math.max(...genuineSplashes.map(p=>p.seq||0))+1;
+          rx.nm.onMessage('torpedo-owner',{...splash,h:freshH,seq:freshSeq});check(rx.victim.hp===cappedHP,'consumed terrain contact cannot authorize a fresh hit ID');
           if(victimAP===57)catalogueSubChecks.push({source:'torpedo-splash',ap:victimAP,wire:true,nativeContact:true,damage:ack.d});
-          torpedoGearContactChecks.push({attackerSubPowerAP:attackerAP,victimSubResistanceAP:victimAP,firstPacket:true,adoptionFrames,mainRaw:60,terrainRaw:12,hp:rx.victim.hp,ackDamage:ack.d,nativeTerrain:true,duplicateInert:true});
+          torpedoGearContactChecks.push({attackerSubPowerAP:attackerAP,victimSubResistanceAP:victimAP,firstPacket:true,adoptionFrames,mainRaw:60,terrainRaw:12,hp:firstSplashHP,cappedHp:cappedHP,splashHits:genuineSplashes.length,ackDamage:ack.d,nativeTerrain:true,duplicateInert:true});
         }finally{for(const w of worlds){activate(w);w.nm.dispose();w.context.projectiles.clear();}Object.assign(G,saved);}
       }
       const directSubChecks=[];

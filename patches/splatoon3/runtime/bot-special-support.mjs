@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { SUB, SPECIALS } from '../../../src/config.js';
 import { specialDeviceFlight } from './special-device-flight.mjs';
 import { fidelityThrowVelocity } from './sub-special-fidelity.mjs';
-import { NATIVE_STORM_GRAVITY } from './kit-subs.mjs';
+import { STORM_FLY_GRAVITY, STORM_FLY_AIR_RESIST } from './kit-subs.mjs';
 import { TACTICOOLER_SOURCE } from './support-cooler.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 
@@ -97,7 +97,9 @@ function choosePoint(ctx, active) {
     const chumpAhead = clamp(d + 8, 18, 26), chumpBehind = clamp(d - 8, 18, 26);
     const chumpCenter = Math.abs(d - chumpAhead) >= Math.abs(d - chumpBehind) ? chumpAhead : chumpBehind;
     const reach = special === 'superChump' ? chumpCenter :
-      special === 'splattercolorScreen' ? clamp(d * .45, 5, 12) : clamp(d, 8, 34);
+      special === 'splattercolorScreen' ? clamp(d * .45, 5, 12) :
+      // Ink Storm's damped bomb-family flight has a finite reach; aim inside it.
+      special === 'storm' ? Math.min(clamp(d, 8, 15), stormReach(ctx) * .9) : clamp(d, 8, 34);
     point = toward(ctx, target, reach);
     if (special === 'tripleInkstrike') {
       const shot = actor._s3AllSpecialState?.shots || 0;
@@ -120,9 +122,35 @@ function launch(ctx, pitch, yaw) {
   if (special === 'storm') return {
     vel: fidelityThrowVelocity(proxy, 'storm', new THREE.Vector3(), SPECIALS.storm.throwSpeed *
       (actor.s3?.stormPowerSnapshot?.throwScale ?? actor.s3?.modifiers?.stormThrowScale ?? 1)),
-    gravity: NATIVE_STORM_GRAVITY,
+    gravity: STORM_FLY_GRAVITY, airResist: STORM_FLY_AIR_RESIST,
   };
   return specialDeviceFlight({ THREE, SUB }, proxy, special, actor.s3?.abilityPoints?.specialPower || 0);
+}
+// Horizontal per-60Hz-frame drag (Ink Storm's bomb-family flight) in closed
+// form: distance(t) = h * (1 - keep^(60t)) / (-60 ln keep). Drag-free flights
+// keep distance = h * t. Unreachable distances answer Infinity.
+// Farthest flat-ground landing of the current Ink Storm launch over the bot's
+// admitted pitch range (closed-form drag, same launch helper as aimPlan).
+function stormReach(ctx) {
+  let best = 0;
+  for (let pitch = -.2; pitch <= .55 + 1e-9; pitch += .05) {
+    const flight = launch(ctx, pitch, ctx.wantYaw ?? ctx.actor.aimYaw ?? 0), g = flight.gravity, vy = flight.vel.y, drop = 1.45;
+    if (!(g > 0)) continue;
+    const t = (vy + Math.sqrt(vy * vy + 2 * g * drop)) / g;
+    best = Math.max(best, Math.hypot(flight.vel.x, flight.vel.z) * flightHorizontalScale(flight, t));
+  }
+  return best;
+}
+function flightHorizontalScale({ airResist = 0 }, t) {
+  if (!(airResist > 0)) return t;
+  const rate = -60 * Math.log(1 - airResist);
+  return (1 - Math.exp(-rate * t)) / rate;
+}
+function flightTimeToDistance({ vel, airResist = 0 }, distance) {
+  const h = Math.max(.001, Math.hypot(vel.x, vel.z));
+  if (!(airResist > 0)) return distance / h;
+  const rate = -60 * Math.log(1 - airResist), left = 1 - distance * rate / h;
+  return left > 0 ? -Math.log(left) / rate : Infinity;
 }
 function aimPlan(ctx, point) {
   ctx.aimAt(point);
@@ -139,20 +167,20 @@ function aimPlan(ctx, point) {
   // projectile retains its own fixed-step gravity, drag and collision owner.
   let lo = -1.05, hi = .55;
   for (let i = 0; i < 15; i++) {
-    const pitch = (lo + hi) / 2, { vel, gravity } = launch(ctx, pitch, yaw);
-    const t = distance / Math.max(.001, Math.hypot(vel.x, vel.z));
-    const y = from.y + vel.y * t - gravity * t * t / 2;
+    const pitch = (lo + hi) / 2, flight = launch(ctx, pitch, yaw);
+    const t = flightTimeToDistance(flight, distance);
+    const y = Number.isFinite(t) ? from.y + flight.vel.y * t - flight.gravity * t * t / 2 : -Infinity;
     if (y > point.y) hi = pitch; else lo = pitch;
   }
   ctx.wantPitch = (lo + hi) / 2;
-  const { vel, gravity } = launch(ctx, ctx.wantPitch, yaw);
-  const time = distance / Math.max(.001, Math.hypot(vel.x, vel.z));
+  const flight = launch(ctx, ctx.wantPitch, yaw), { vel, gravity } = flight;
+  const time = flightTimeToDistance(flight, distance);
   const endY = from.y + vel.y * time - gravity * time * time / 2;
   if (!Number.isFinite(time) || time > 2 || Math.abs(endY - point.y) > .8) return false;
   let previous = from;
   for (let i = 1; i <= 6; i++) {
-    const t = time * i / 6, next = from.clone().addScaledVector(vel, t);
-    next.y -= gravity * t * t / 2;
+    const t = time * i / 6, next = from.clone().addScaledVector(vel, flightHorizontalScale(flight, t));
+    next.y = from.y + vel.y * t - gravity * t * t / 2;
     // LOS intentionally omits its last .05 WU and ignores grates. A thrown
     // guide has neither exception: trace the full low arc at its real height.
     if (ctx.world?.physics?.segment) {

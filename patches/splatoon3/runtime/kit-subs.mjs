@@ -547,9 +547,43 @@ function followRollingGround(b) {
   if (vn < 0) b.vel.addScaledVector(g.normal, -vn);
 }
 
+// Bomb-family flight defaults (see kitBombStep). Ink Storm's canister shares the
+// bomb SpawnSpeedZ 1.12 / SpawnSpeedY 0.24 launch; its table omits gravity and
+// drag, so it follows the same family flight instead of the native 24 constant
+// that let a standing throw travel ~85 WU (17 trial lines). Calibrated mapping.
+export const BOMB_FAMILY_FLY_GRAVITY = 0.016 * 3600;
+export const BOMB_FAMILY_FLY_AIR_RESIST = 0.05866;
+export const STORM_FLY_GRAVITY = BOMB_FAMILY_FLY_GRAVITY;
+export const STORM_FLY_AIR_RESIST = BOMB_FAMILY_FLY_AIR_RESIST;
+// The native drawn arc integrates bombs without the per-bomb record. Apply the
+// same horizontal flight drag the released bomb receives in kitBombStep so the
+// guide lands where the bomb lands (Splat/Suction/Curling flight alike).
+export function kitArcFlightDrag(resolved, vel, dt) {
+  if (!vel || !(dt > 0)) return;
+  const spec = resolved?.spec;
+  const resist = Number.isFinite(spec?.flyPositionAirResist) ? spec.flyPositionAirResist : BOMB_FAMILY_FLY_AIR_RESIST;
+  if (!(resist > 0)) return;
+  const keep = Math.pow(1 - resist, dt * 60);
+  vel.x *= keep; vel.z *= keep;
+}
 export function kitBombStep(SUB, b, dt) {
+  if (b?.kind === 'storm') {
+    if (!(dt > 0) || !b.vel) return;
+    const keep = Math.pow(1 - STORM_FLY_AIR_RESIST, dt * 60);
+    b.vel.x *= keep; b.vel.z *= keep;
+    return;
+  }
   const spec = presentedOf(b)?.spec;
-  if (!spec || !(dt > 0) || !b?.vel) return;
+  if (!spec) {
+    // An untagged record is the native Splat Bomb (e.g. a replayed ghost with
+    // no kit identity). It must fly the same damped arc as the owner's bomb.
+    if (b?.kind === 'bomb' && dt > 0 && b.vel && b.fuse < 0 && b.s3Mode !== 'stuck') {
+      const keep = Math.pow(1 - BOMB_FAMILY_FLY_AIR_RESIST, dt * 60);
+      b.vel.x *= keep; b.vel.z *= keep;
+    }
+    return;
+  }
+  if (!(dt > 0) || !b?.vel) return;
   if(spec.mode==='stick'&&b.s3Mode==='stuck') {
     const frame=b.s3SuctionFrame||(b.s3SuctionFrame={normal:null});
     frame.normal=b.s3SurfaceNormal;
@@ -566,7 +600,20 @@ export function kitBombStep(SUB, b, dt) {
     }
     return;
   }
-  if(spec.mode!=='roll')return;
+  if(spec.mode!=='roll'){
+    // Splat/Suction Bomb and Sprinkler share the bomb-family flight: FlyGravity
+    // 0.016 and FlyPositionAirResist 0.05866 per 60 Hz frame (both explicit on
+    // WeaponBombRobot; Splat Bomb states FlyGravity 0.016). Without the drag a
+    // standing Splat Bomb landed ~38 WU (7.6 trial lines) away instead of ~17.
+    // Generic bombs stop damping once armed by floor contact (their ground
+    // slide keeps the native/S3 resting resistance).
+    if(b.s3Mode!=='flight'||spec.mode==='generic'&&b.fuse>=0)return;
+    const resist=Number.isFinite(spec.flyPositionAirResist)?spec.flyPositionAirResist:BOMB_FAMILY_FLY_AIR_RESIST;
+    if(!(resist>0))return;
+    const keep=Math.pow(1-resist,dt*60);
+    b.vel.x*=keep;b.vel.z*=keep;
+    return;
+  }
   if (b.s3Mode === 'rolling') followRollingGround(b);
   const h = Math.hypot(b.vel.x, b.vel.z);
   if (!(h > 1e-9)) return;            // no direction to restore
@@ -578,13 +625,14 @@ export function kitBombStep(SUB, b, dt) {
   b.vel.z *= next / h;
 }
 
-// Storm keeps the native 24 constant; this hook must not drag it onto the bomb
-// gravity. A stuck bomb gets zero, so it cannot drift off its surface without a
-// fresh physics hit. Otherwise the spec's own flight or ground value is used.
+// Storm uses the bomb-family flight gravity (STORM_FLY_GRAVITY), not the
+// native 24 constant kept below for reference. A stuck bomb gets zero, so it
+// cannot drift off its surface without a fresh physics hit. Otherwise the
+// spec's own flight or ground value is used.
 // Presentation-only, so a replayed ghost follows the same arc the owner threw.
 export const NATIVE_STORM_GRAVITY = 24;
 export function kitBombGravity(SUB, b) {
-  if (b?.kind === 'storm') return NATIVE_STORM_GRAVITY;
+  if (b?.kind === 'storm') return STORM_FLY_GRAVITY;
   if (b?.s3Mode === 'stuck' || b?.s3Mode === 'sprinkling' || b?.s3Mode === 'chasing'&&b.s3Auto?.grounded!==false) return 0;
   const spec = presentedOf(b)?.spec;
   if (!spec) return SUB.bomb.gravity;
