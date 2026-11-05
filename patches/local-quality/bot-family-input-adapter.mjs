@@ -15,8 +15,15 @@
 //     移動手段として使って、塗りはZR連打のフデ振りで行う"). The Bot was mapped
 //     onto the Roller branch and painted only by holding Fire while moving.
 //     Paint with flick taps; brush-run only to cross enemy ink while travelling.
+//     Flicks follow the aim (yaw and pitch). The Roller branch also froze the
+//     paint sweep (sweepAmt 0) and aimed 0.42 rad down, so every flick landed
+//     short on the same lane; Brushes sweep like shooters and aim slightly up.
+//     BRUSH_PAINT_PITCH is calibrated with scripts/measure-inkwave-bot-turf.mjs
+//     (60 s, three seeds: -0.42 / +0.05 / +0.30 rad gave Inkbrush 336 / 491 /
+//     610 and Octobrush 211 / 436 / 438); it is not Splatoon 3 data.
 // Bots are an INKWAVE feature: these are input patterns, not Splatoon 3 data.
 // Weapon timing, ink cost, paint and damage are unchanged.
+const BRUSH_PAINT_PITCH = 0.3;
 export function adaptBotFamilyInput(rel, code, once) {
   if (rel !== 'src/game/bots.js') return code;
   code = once(code,
@@ -50,6 +57,14 @@ export function adaptBotFamilyInput(rel, code, once) {
     "          else it.fire = inkFrac > 0.08 && wantMove && a.groundTeam === 2;\n" +
     "        } else it.fire = inkFrac > 0.08 && (needPaint || Math.random() < 0.02) && wantMove;\n",
     'bot brush paint flicks');
+  code = once(code,
+    "      const sweepAmt = family === 'roller' ? 0 : 0.55;\n",
+    "      const sweepAmt = family === 'roller' && !brush ? 0 : 0.55;   // Brush flicks fan across the lane\n",
+    'bot brush paint sweep');
+  code = once(code,
+    "      wantPitch = family === 'charger' ? -0.12 : family === 'blaster' ? -0.28 : family === 'slosher'",
+    `      wantPitch = brush ? ${BRUSH_PAINT_PITCH} : family === 'charger' ? -0.12 : family === 'blaster' ? -0.28 : family === 'slosher'`,
+    'bot brush paint pitch');
   code = once(code,
     "    if (k !== 'charger' && k !== 'splatling' && k !== 'stringer' && k !== 'splatana') return true;\n",
     "    if (k !== 'charger' && k !== 'splatling' && k !== 'stringer' && k !== 'splatana')\n" +
