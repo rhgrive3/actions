@@ -63,6 +63,7 @@ import { adaptScreenfxLensRelease } from './screenfx-lens-release-adapter.mjs';
 import { adaptActorWeaponInput } from './actor-weapon-input-adapter.mjs';
 import { adaptBotRefillRelease } from './bot-refill-release-adapter.mjs';
 import { adaptBotSplatling } from './bot-splatling-adapter.mjs';
+import { adaptBotFamilyInput } from './bot-family-input-adapter.mjs';
 import { adaptBotEdgeGuard } from './bot-edge-guard-adapter.mjs';
 import { adaptFinalMinuteMusic } from './final-minute-music-adapter.mjs';
 import { adaptFinalCount } from './final-count-adapter.mjs';
@@ -158,7 +159,7 @@ const IDENTITY_FILES = [
   'boss-hit-adapter.mjs',
   'team-special-signal-adapter.mjs',
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
-  'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs', 'bot-splatling-adapter.mjs',
+  'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs', 'bot-splatling-adapter.mjs', 'bot-family-input-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs', 'layout-sample.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'swim-splash-adapter.mjs', 'swim-surface.mjs', 'walk-presentation.mjs', 'walk-presentation-adapter.mjs', 's3-face-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
@@ -271,6 +272,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptBotRefillRelease(rel, code, replaceOnce);
   code = adaptBotEdgeGuard(rel, code, replaceOnce);
   code = adaptBotSplatling(rel, code, replaceOnce);
+  code = adaptBotFamilyInput(rel, code, replaceOnce);
   code = adaptFinalMinuteMusic(rel, code, replaceOnce);
   code = adaptFinalCount(rel, code, replaceOnce);
   code = adaptTurfLead(rel, code, replaceOnce);
