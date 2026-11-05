@@ -3,10 +3,12 @@
 const percentile = (sorted, pct) => sorted.length
   ? sorted[Math.min(sorted.length-1, Math.ceil(pct * sorted.length)-1)] : 0;
 
+const topEntries = (value, limit=12) => Object.fromEntries(Object.entries(value || {})
+  .filter(([,n])=>Number.isFinite(n) && n!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,limit));
 const compactFrame = row => ({
   id:row.id, gap:row.gapMs, work:row.workMs, cause:row.cause,
   bvh:row.sourceBVH || undefined,
-  calls:Object.fromEntries(Object.entries(row.methodCalls || {}).filter(([,v])=>v)),
+  calls:Object.fromEntries(Object.entries(row.methodCalls || {}).filter(([key,v])=>v && !row.scopeAliases?.[key])),
   stages:Object.fromEntries(Object.entries(row.stages || {}).sort((a,b)=>b[1]-a[1]).slice(0,8)),
   scopes:row.topNativeScopes?.slice(0,5) || [],
   callers:row.sourceCallers || undefined,
@@ -19,8 +21,8 @@ const compactTrial = trial => trial ? ({
   draw:trial.drawCalls, tris:trial.triangles,
   meta:trial.meta,
   gpuScene:trial.gpuSceneCommandsMs, gpuPaint:trial.gpuPaintCommandsMs,
-  owners:trial.ownerMeanMs,
-  calls:trial.callsPerFrame,
+  owners:topEntries(trial.ownerMeanMs),
+  calls:topEntries(trial.callsPerFrame),
 }) : null;
 
 // Share/export format: retain diagnostic evidence, remove repeated aliases,
