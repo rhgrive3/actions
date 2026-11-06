@@ -104,6 +104,22 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   note('native-setup-verified',{config:setupConfig});
   // The real handler invokes prepareMatch during this gesture, then the wipe,
   // then startMatch. Never call audio readiness or startMatch from this helper.
+  // START is the last Setup item to pop in (stagger index 14: ~1.2 s). The
+  // menu input guard drops a click on an item that is not yet visible, as it
+  // should for a player, so wait for the same visibility the guard checks.
+  await bounded(()=>waitForPhase(()=>{
+    const m=window.__inkwave?.menus,root=m?._scr?.el;
+    if(!root||m.current!=='setup'||root.inert)return false;
+    const controls=[...document.querySelectorAll('.iw-setup [data-id="start"].iw-btn--start')];
+    if(controls.length!==1||!root.contains(controls[0])||controls[0].disabled)return false;
+    let opacity=1;
+    for(let e=controls[0];e&&e!==root.parentNode;e=e.parentElement){
+      const value=Number(getComputedStyle(e).opacity);if(!Number.isFinite(value))return false;
+      opacity*=value;if(e===root)break;
+    }
+    return opacity>0.6;
+  },'native start pointer readiness'),'start readiness');
+  note('native-start-ready');
   await click('.iw-setup [data-id="start"].iw-btn--start');
   note('native-start-clicked',{attempt:1});
 }
