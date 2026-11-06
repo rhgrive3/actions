@@ -492,6 +492,15 @@ export function installCatalogueControls({G,PlayerController,HUD,emit}) {
    button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const a=G.match?.local;if(a)a._catalogueCheerPending=true;});
    this.el.append(button);this._catalogueCheer=button;
   }
+  if(this._catalogueCheer){
+   // Touch play covers the screen with the look zone (#iw-mobile-controls,
+   // z-index 9000) above the HUD, so a HUD button never receives a tap there.
+   // While touch controls are active the same button lives in that layer; its
+   // pointerdown stops propagation, so the look/move router never sees it.
+   const mobile=G.input?.mobile,touch=!!(mobile?.active&&mobile.root),host=touch?mobile.root:this.el,button=this._catalogueCheer;
+   if(host&&button.parentNode!==host)host.append(button);
+   const label=touch?'ナイス':'ナイス (N / ↓)';if(button.textContent!==label)button.textContent=label;
+  }
   if(this._catalogueCheer){const me=G.match?.local;this._catalogueCheer.hidden=!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');}
   return result;
  };
