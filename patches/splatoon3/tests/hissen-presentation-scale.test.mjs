@@ -43,7 +43,8 @@ test('Hissen falling child matrices grow 50%; paint footprints, headings and oth
     const mesh={setMatrixAt:(_i,m)=>matrices.push(m.clone()),setColorAt:()=>{}};
     const n=f.appendSourcedSplashVisuals({_s3SplashDrops:[child]},mesh,new Float32Array(4),new Float32Array(4),new Float32Array(2),0,48,new T.Matrix4(),new T.Quaternion(),new T.Vector3(),new T.Vector3(),new T.Vector3(0,0,1));
     assert.equal(n,1);const scale=new T.Vector3(),position=new T.Vector3(),rotation=new T.Quaternion();matrices[0].decompose(position,rotation,scale);
-    const expected=actor==='WeaponSlosherDiffusion'?.225:actor==='WeaponSlosherDouble'||actor==='WeaponSlosherStrong'?.15:.3;
+    // Slosher (bucket) drops: 20% of the previous .15 (owner request 2026-11-06).
+    const expected=actor==='WeaponSlosherDiffusion'?.225:actor==='WeaponSlosherDouble'?.15:actor==='WeaponSlosherStrong'?.03:.3;
     for(const v of scale.toArray())close(v,expected);
     assert.deepEqual(position.toArray(),child.pos.toArray());assert.equal(JSON.stringify(child),before);
   }

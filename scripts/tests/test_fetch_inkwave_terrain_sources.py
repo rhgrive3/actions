@@ -180,6 +180,42 @@ class FetchTests(unittest.TestCase):
         self.assertEqual(self.receipt['bytes'], 0)
         self.assert_numeric(self.receipt)
 
+    def test_transient_upstream_http_errors_retry_same_url_and_digest(self):
+        for code in (500, 502, 503, 504):
+            with self.subTest(http_status=code):
+                self.target.unlink(missing_ok=True)
+                receipt = {}
+                error = urllib.error.HTTPError('https://example.invalid/private', code, 'private message', {}, None)
+                with mock.patch.object(FETCH.urllib.request, 'urlopen',
+                                       side_effect=[error, Response(b'abc')]) as request, \
+                     mock.patch.object(FETCH.time, 'sleep') as sleep:
+                    FETCH.fetch('https://example.invalid/pinned', self.target, 'sha256', ABC_SHA256, receipt=receipt)
+                self.assertEqual(request.call_count, 2)
+                self.assertEqual(request.call_args_list, [
+                    mock.call('https://example.invalid/pinned', timeout=180),
+                    mock.call('https://example.invalid/pinned', timeout=180),
+                ])
+                sleep.assert_called_once_with(1)
+                self.assertEqual(receipt['attemptCount'], 2)
+                self.assertEqual(receipt['status'], 1)
+                self.assertEqual(self.target.read_bytes(), b'abc')
+                self.assert_numeric(receipt)
+
+    def test_repeated_http_503_stops_after_three_attempts_and_records_numeric_status(self):
+        error = urllib.error.HTTPError('https://example.invalid/private', 503, 'private message', {}, None)
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=error) as request, \
+             mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(urllib.error.HTTPError) as caught:
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(sleep.call_args_list, [mock.call(1), mock.call(2)])
+        self.assertEqual(self.receipt['attemptCount'], 3)
+        self.assertEqual(self.receipt['httpStatus'], 503)
+        self.assertEqual(self.receipt['status'], 3)
+        self.assertFalse(self.target.exists())
+        self.assertFalse(self.target.with_suffix('.obj.download').exists())
+        self.assert_numeric(self.receipt)
+
     def synthetic_stage(self, name='synthetic', truncated=False):
         stage = {'id': name, 'internal': 'Vss_Test', 'tree': 'a' * 40, 'sourceSha256': ABC_SHA256}
         directory = self.root / name
@@ -312,7 +348,7 @@ class FetchTests(unittest.TestCase):
 
     def test_access_tls_unknown_and_filesystem_errors_are_not_retried(self):
         import ssl
-        errors = [urllib.error.HTTPError('unused', code, 'private', {}, None) for code in [401, 403, 404, 429, 500, 503]]
+        errors = [urllib.error.HTTPError('unused', code, 'private', {}, None) for code in [401, 403, 404, 429, 501]]
         errors += [ssl.SSLCertVerificationError(1, 'certificate failure'), ssl.SSLError(1, 'TLS failure'),
                    urllib.error.URLError(ssl.SSLCertVerificationError(1, 'certificate failure')),
                    urllib.error.URLError('unknown'), OSError('unknown I/O')]

@@ -153,6 +153,14 @@ export function catalogBubbleLimitGroundNormalSpeed(velocity, normal, perFrameLi
   return velocity;
 }
 
+export const SMALL_FLOOR_DROP_SCALE=.2;
+export function smallFloorDropScale(d){
+  if(d?.sourceActor==='WeaponSlosherStrong')return SMALL_FLOOR_DROP_SCALE;
+  if(d?.sourceActor)return 1;
+  const w=d?.owner?.weapon,family=w?.kind==='catalog'?w.catalogRecord?.family:w?.kind;
+  return family==='shooter'||family==='dualies'||(family==='slosher'&&w?.kind!=='catalog')?SMALL_FLOOR_DROP_SCALE:1;
+}
+
 // Source-owned, fixed-60Hz falling paint drops already live in _s3SplashDrops.
 // Draw their actual positions, NOT a guessed second visual trajectory.
 // This path never modifies collision, lifetime, landing paint or network state.
@@ -188,7 +196,10 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Match the shared Bucket sheet's existing *visual* width calibration.
     // This is not a new retail draw-radius or world-unit conversion claim.
     const bucket=tri||d.sourceActor==='WeaponSlosherDouble';
-    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1)*(d.sourceActor==='WeaponSlosherStrong'?.5:1));
+    // Owner request 2026-11-06 (visual only): the floor-paint drops that fall
+    // straight down from Shooter / Dualies shots and the Slosher (bucket) are
+    // drawn at 20% of their previous size. Paint, physics and count unchanged.
+    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1)*(d.sourceActor==='WeaponSlosherStrong'?.5:1)*smallFloorDropScale(d));
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

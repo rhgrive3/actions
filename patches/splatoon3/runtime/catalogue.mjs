@@ -1,4 +1,5 @@
 import { installTeamSignals } from './team-signals.mjs';
+import { installS3ReticleLook } from './s3-reticle-look.mjs';
 import {recordSpecialDeviceAction} from '../../network-replication/special-device-contact-proof.mjs';
 import {bindCatalogueActionPayload} from '../../network-replication/catalogue-action-receipt.mjs';
 import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
@@ -510,4 +511,6 @@ export function installCatalogueControls({G,PlayerController,HUD,emit,on}) {
  // Team signals wrap the controller after this Nice owner (installed here, not
  // in the hash-pinned install.mjs) so they read its intent.booyah edge.
  installTeamSignals({G,PlayerController,HUD,on,emit});
+ // Shooter / Dualies reticle look and the world-anchored hit flash (presentation only).
+ installS3ReticleLook({G,HUD,on});
 }
