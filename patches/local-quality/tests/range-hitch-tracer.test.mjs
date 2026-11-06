@@ -328,7 +328,7 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.ok(snap.trace.latest.stages.paint>=2);
   assert.equal(typeof p.report(),'string');
   await nodes.find(n=>n.id==='inkwave-copy-frame-trace').listeners.click();
-  assert.match(f.copied,/"schema": "inkwave-frame-trace-v1"/);
+  assert.equal(JSON.parse(f.copied).schema,'inkwave-v1');
   assert.equal(nodes.filter(n=>n.nodeName==='button').length,1);
   p.dispose();
   assert.equal(f.game.R.dynScale,1,'closing Debug profiler restores the original render density');
