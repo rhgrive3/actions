@@ -6,19 +6,32 @@ function hasJumpEdgeTo(node,toId){
  for(let i=0;i<nb.length;i++){const e=nb[i];if(e.to===toId)return e.type==='jump';}
  return false;
 }
-function cautiousSourceTurn(brain,G){
- const N=G.nav,from=N?.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N?.nodes[brain.path?.[brain.pi]],next=N?.nodes[brain.path?.[brain.pi+1]];
- if(!from||!to)return false;
+function cautiousSourceTurnUncached(from,to,next){
  if(hasJumpEdgeTo(from,to.id)||next&&hasJumpEdgeTo(to,next.id))return true;
  if(!next)return true;
  const ax=to.x-from.x,az=to.z-from.z,bx=next.x-to.x,bz=next.z-to.z;
  return ax*bx+az*bz<.85*Math.hypot(ax,az)*Math.hypot(bx,bz);
 }
+// The answer depends only on the current path segment's nodes, so it is kept
+// until the path, index or any node position/edge list changes.
+function cautiousSourceTurn(brain,G){
+ const N=G.nav,path=brain.path,pi=brain.pi;
+ const from=N?.nodes[path?.[Math.max(0,pi-1)]],to=N?.nodes[path?.[pi]],next=N?.nodes[path?.[pi+1]];
+ if(!from||!to)return false;
+ const m=brain._nativeCautiousTurn;
+ if(m&&m.path===path&&m.pi===pi&&m.from===from&&m.to===to&&m.next===next&&m.fx===from.x&&m.fz===from.z&&m.tx===to.x&&m.tz===to.z&&
+    m.nx===next?.x&&m.nz===next?.z&&m.fnb===from.nb&&m.fn===from.nb?.length&&m.tnb===to.nb&&m.tn===to.nb?.length)return m.val;
+ const val=cautiousSourceTurnUncached(from,to,next);
+ brain._nativeCautiousTurn={path,pi,from,to,next,fx:from.x,fz:from.z,tx:to.x,tz:to.z,nx:next?.x,nz:next?.z,fnb:from.nb,fn:from.nb?.length,tnb:to.nb,tn:to.nb?.length,val};
+ return val;
+}
 /** Native source routes require the actual support before a bot turns toward
  * its next waypoint. Legacy stage followers keep their original policy. */
 export function nativeSourceWaypointReached(G,actor,node){
  if(!G.level?.native)return !G.level?.manifest?.sourceNavigation?.highDrops;
- if(!actor.grounded||Math.hypot(node.x-actor.pos.x,node.z-actor.pos.z)>.18)return false;
+ const dx=node.x-actor.pos.x,dz=node.z-actor.pos.z;
+ // Cheap reject well outside .18 m; Math.hypot keeps the exact boundary.
+ if(!actor.grounded||dx*dx+dz*dz>.0325||Math.hypot(dx,dz)>.18)return false;
  if(actor.bot&&!actor.bot.target&&cautiousSourceTurn(actor.bot,G)&&Math.hypot(actor.vel.x,actor.vel.z)>.65)return false;
  return nativeSourceFootSupported(G,actor,node);
 }

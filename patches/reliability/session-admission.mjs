@@ -60,7 +60,7 @@ export function validLobbySnapshot(l, maps, weapons, paletteCount) {
       !Number.isFinite(l.duration) || l.duration <= 0 || l.duration > 86400 ||
       typeof l.bots !== 'boolean' || !['easy','normal','hard'].includes(l.difficulty) ||
       !optional(l,'palette',p=>Number.isInteger(p) && p >= 0 && p < paletteCount) ||
-      !optional(l,'mode',m=>['turf','boss','zones','tower','rainmaker','clams'].includes(m)) ||
+      !optional(l,'mode',m=>['turf','boss','zones','tower','rainmaker','clams','duo','solo'].includes(m)) ||
       !optional(l,'teamsConfirmed',b=>typeof b === 'boolean') ||
       !Array.isArray(l.players) || l.players.length < 1 || l.players.length > 8) return false;
   const ids = new Set();

@@ -18,6 +18,10 @@ const opt=(k,d)=>{const i=process.argv.indexOf(k);return i<0?d:process.argv[i+1]
 const root=process.cwd(),site=path.resolve(opt('--site','_site')),out=persistentDirectory(opt('--evidence-dir','.ci-scratch/gameplay/run'));
 const sha=opt('--source-sha',execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()),build=verifyRuntimeBuild(site,root,sha);
 const crabLifecycle=process.argv.includes('--crab-lifecycle');
+// The Crab lifecycle needs a real Crab Tank kit. Splattershot is Suction
+// Bomb + Trizooka in Ver. 11.3.0 (canonical-kits-data.mjs); Shooter_Precision
+// (Burst Bomb + Crab Tank) is a canonical Crab Tank kit.
+const CRAB_WEAPON='s3-shooter-precision';
 const expectedLifecycle=validateLifecycleExpectation(opt('--expect-lifecycle','released'),crabLifecycle,process.argv.includes('--expect-lifecycle'));
 const maps=opt('--maps','tidewater,kelpline,halyard').split(',');
 if(!maps.length||maps.some(id=>!id||!/^[-a-z0-9]+$/.test(id)))throw Error('Nonempty comma-separated map IDs required');
@@ -40,7 +44,7 @@ try{
  context=await browser.newContext({viewport:{width,height},deviceScaleFactor:dpr,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',...(mobile?{userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();await page.bringToFront();
  page.on('pageerror',e=>{report.errors.push(e.message);checkpoint();});
  await page.addInitScript(installGameplayObserver);
- await page.addInitScript(({quality})=>{let seed=20261026;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality,frameRate:60}));},{quality});
+ await page.addInitScript(({quality,crabWeapon})=>{let seed=20261026;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality,frameRate:60}));if(crabWeapon){let p={};try{p=JSON.parse(localStorage.getItem('inkwave.profile')||'{}')||{};}catch{}p.weapon=crabWeapon;localStorage.setItem('inkwave.profile',JSON.stringify(p));}},{quality,crabWeapon:crabLifecycle?CRAB_WEAPON:null});
  system=await browser.newBrowserCDPSession();cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
  const sample=async()=>{if(sampling)return;sampling=true;try{
   const {processInfo}=await system.send('SystemInfo.getProcessInfo'),memory=sampleChromiumProcessMemory(processInfo);

@@ -80,6 +80,8 @@ test('shared menu phases retain strict context-recovery control admission and re
     'native mode menu': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
     'native turf pointer readiness': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
     'native setup menu': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+    'native stage pointer readiness': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+    'native start pointer readiness': { selector: '.iw-setup [data-id="start"].iw-btn--start', menu: 'setup' },
   };
   for (const [label, control] of Object.entries(expected)) assert.deepEqual(contextMenuControlForPhase(label), control);
   for (const bad of ['unknown', 'toString', '__proto__', '']) assert.throws(() => contextMenuControlForPhase(bad), /Unknown native menu phase/);

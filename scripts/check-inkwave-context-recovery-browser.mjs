@@ -219,6 +219,8 @@ export function contextMenuControlForPhase(label) {
     'native mode menu': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
     'native turf pointer readiness': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
     'native setup menu': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+    'native stage pointer readiness': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+    'native start pointer readiness': { selector: '.iw-setup [data-id="start"].iw-btn--start', menu: 'setup' },
   };
   assert(Object.hasOwn(phases,label), 'Unknown native menu phase: ' + label);
   return phases[label];

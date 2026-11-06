@@ -85,9 +85,11 @@ function assertTowerSweepClear(level, stage) {
 
 test('ranked stage coordinates use reachable live floors, symmetric routes, and clear swept tower volumes', () => {
   assert.ok(f.MAP_LAYOUTS.range, 'practice range remains registered outside battle stage selection');
+  // Inkbox Depot is the 2v2 / 1v1 mode's own stage, registered outside MAPS like the range.
+  assert.ok(f.MAP_LAYOUTS.depot, 'Inkbox Depot remains registered outside battle stage selection');
   for (const id of MAP_IDS) assert.ok(f.MAP_LAYOUTS[id], `${id} remains registered`);
   for (const [id, layout] of Object.entries(f.MAP_LAYOUTS)) {
-    if (id !== 'range' && !MAP_IDS.includes(id)) assert.equal(layout.nativeSource, true, `${id} is a native loading descriptor`);
+    if (id !== 'range' && id !== 'depot' && !MAP_IDS.includes(id)) assert.equal(layout.nativeSource, true, `${id} is a native loading descriptor`);
   }
   for (const id of MAP_IDS) {
     const { level, physics, stage } = makeMap(id);

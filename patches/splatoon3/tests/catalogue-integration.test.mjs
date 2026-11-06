@@ -173,6 +173,27 @@ test('keyboard, standard-pad and touch Booyah controls produce edges and respect
  c.mapHeld=false;c.a._catalogueCheerPending=true;c.update();assert.equal(c.a.intent.booyah,true);G.match.paused=true;c.a._catalogueCheerPending=true;c.update();assert.equal(c.a.intent.booyah,false);
 });
 
+test('Booyah Nice button: touch layer host, hidden on touch, HUD button on keyboard/pad, still cheers',()=>{
+ const node=()=>{const n={children:[],parentNode:null,style:{},hidden:false,textContent:'',listeners:{},
+  setAttribute(){},addEventListener(type,fn){this.listeners[type]=fn;},
+  append(child){if(child.parentNode)child.parentNode.children.splice(child.parentNode.children.indexOf(child),1);this.children.push(child);child.parentNode=this;}};return n;};
+ const previous=globalThis.document;globalThis.document={createElement:node};
+ try{
+  class Controller{constructor(){this.a={alive:true,team:0,intent:{}};this.enabled=true;this.input={down:()=>false};}update(){}}
+  class HUD{constructor(){this.el=node();this._visible=true;}update(){}}
+  const local={alive:true,team:0,intent:{}},caster={alive:true,team:0,specialActive:{id:'booyahBomb'}};
+  const mobile={active:true,root:node()},G={match:{paused:false,local},actors:[local,caster],input:{mobile}};
+  installCatalogueControls({G,PlayerController:Controller,HUD,emit:()=>{}});
+  const hud=new HUD();hud.update();const button=hud._catalogueCheer;
+  assert.equal(button.parentNode,mobile.root,'touch play hosts the button in #iw-mobile-controls (z-index 9000), not under it');
+  assert.equal(button.textContent,'ナイス');
+  assert.equal(button.hidden,true,'touch play cheers through the always-present signal pair (team-signals.mjs), not a second button');
+  let stopped=false;button.listeners.pointerdown({preventDefault(){},stopPropagation(){stopped=true;}});
+  assert.equal(stopped,true,'the look/move router never receives the tap');assert.equal(local._catalogueCheerPending,true);
+  const c=new Controller();c.a=local;c.update();assert.equal(local.intent.booyah,true,'the tap becomes one Nice edge');
+  mobile.active=false;hud.update();assert.equal(button.parentNode,hud.el,'keyboard/pad play keeps the HUD button');assert.equal(button.textContent,'ナイス (N / ↓)');assert.equal(button.hidden,false);
+ }finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
 test('remote Ink Vac absorption admits new equipped attacks with registry limits and deduplicates credit',async()=>{
  const f=await setup(),vac=f.make('charger'),shooter=f.make();equip(f,vac,'bomb','inkVac');vac._startSpecial();const state=f.inkVacState(vac);assert.ok(state);
  Object.assign(shooter,{remote:true,team:1,nid:2,owner:'A'});equip(f,shooter,'burst','inkjet');f.installInkVacSenderValidator(()=>true);

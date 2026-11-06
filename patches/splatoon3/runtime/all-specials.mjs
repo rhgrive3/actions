@@ -1626,6 +1626,25 @@ function stampSwing(rt,actor,state,jump=false) {
   fxBurst(rt,actor,center,4,'hit');
   emitAction(rt,actor,'ultraStamp',state.serial,jump?'jumpSwing':'swing',actor.pos,center,nextSeed(state),{index:state.swings++});
 }
+// Allied Bots answer a teammate's charging Booyah Bomb with the same Nice
+// signal a player sends (one press = one released edge). Each Bot reacts after
+// its own short, deterministic delay, repeats while the bomb still charges, and
+// stays on its fight when it has a visible target. The press is a single-frame
+// pulse so the ordinary edge, per-cheerer diminishing charge and the sender's
+// gauge credit (6/3/2/1/.5) apply unchanged.
+const BOT_CHEER_FIRST=.45,BOT_CHEER_SPREAD=.4,BOT_CHEER_REPEAT=.9;
+function botBooyahCheer(rt,state,ally,elapsed) {
+  if(!ally.bot||ally.remote||ally.specialActive||ally.bot.target)return false;
+  const plan=state.botCheers||=new WeakMap();
+  let next=plan.get(ally);
+  if(next===undefined){
+    const index=Math.max(0,(rt.api.G.actors||[]).indexOf(ally));
+    next=.5+BOT_CHEER_FIRST+((index*.173)%BOT_CHEER_SPREAD);plan.set(ally,next);
+  }
+  if(state.cheerHeld.get(ally)===true||elapsed+1e-8<next)return false;
+  plan.set(ally,elapsed+BOT_CHEER_REPEAT);
+  return true;
+}
 function addBooyahCall(rt,owner,state,cheerer,{network=false,callId=null}={}) {
   // Every rising-edge call is a contribution. A player may call again during
   // the same activation; the five-call source cap bounds the total charge.
@@ -1651,7 +1670,9 @@ function addBooyahCall(rt,owner,state,cheerer,{network=false,callId=null}={}) {
   return true;
 }
 function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordinal=null) {
-  if(!cheerer?.isLocal||cheerer.remote||!Number.isSafeInteger(callId))return false;
+  // Splatoon 3: the cheerer's own gauge also rises. Bots simulated on this
+  // client earn it like the local player; remote actors credit themselves.
+  if(!(cheerer?.isLocal||cheerer?.bot)||cheerer.remote||!Number.isSafeInteger(callId))return false;
   const ownerNid=Number.isSafeInteger(ownerRef)?ownerRef:ownerRef?.nid;
   const target=ownerRef&&typeof ownerRef==='object'?ownerRef:
     rt.api.G.netm?.byNid?.get(ownerNid)||(rt.api.G.actors||[]).find(a=>a.nid===ownerNid);
@@ -2009,7 +2030,7 @@ function activeStep(rt,actor,dt) {
       if(edges.booyah&&elapsed+1e-8>=(state.nextCheer||0)){state.charge=Math.min(1,state.charge+.077);state.nextCheer=elapsed+10/FPS;}
       state.cheerHeld ||= new WeakMap();
       for(const ally of rt.api.G.actors||[])if(ally!==actor&&ally.alive&&ally.team===actor.team){
-        const pressed=!!ally.intent?.booyah,wasPressed=state.cheerHeld.get(ally)===true;
+        const pressed=!!ally.intent?.booyah||botBooyahCheer(rt,state,ally,elapsed),wasPressed=state.cheerHeld.get(ally)===true;
         state.cheerHeld.set(ally,pressed);
         if(pressed&&!wasPressed)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
       }

@@ -61,6 +61,15 @@ test('normal menu navigation issues one real START after verifying exact scenari
   assert.deepEqual(h.pointerMoves,[[1,1]],'clear the previous card hover without force-clicking');
   assert.equal(h.events.at(-1).event,'native-start-clicked');assert.equal(h.events.at(-1).attempt,1);
   assert.equal(h.events.find(e=>e.event==='native-setup-verified').config.map,'tidewater');
+  assert.ok(h.phases.indexOf('native start pointer readiness')>h.phases.indexOf('native setup menu'),'START is clicked only once it is visible');
+});
+test('START waits for its pop-in: an invisible START is not clicked',async()=>{
+  const h=fakePage();h.control.opacity='0';
+  h.options.waitForPhase=async(fn,label)=>{h.phases.push(label);if(label==='native start pointer readiness'){assert.equal(h.evaluate(fn),false,'opacity 0 is not ready');h.control.opacity='1';}assert.equal(h.evaluate(fn),true);};
+  // turf readiness reads the same control; keep it visible for that phase.
+  const wait=h.options.waitForPhase;h.options.waitForPhase=async(fn,label)=>{if(label!=='native start pointer readiness')h.control.opacity='1';else h.control.opacity='0';return wait(fn,label);};
+  await startProjectileThroughMenu(h.page,h.options);
+  assert.equal(h.clicks.at(-1),'.iw-setup [data-id="start"].iw-btn--start');
 });
 for(const [width,visualCols] of [[320,1],[480,1],[720,2],[1000,3]])test('touch-sized performance route observes all seven initial focuses at width '+width,async()=>{
   for(let initial=0;initial<7;initial++){

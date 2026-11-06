@@ -7,6 +7,8 @@ export function adaptNavigation(rel, code) {
       this.padJumpTarget = null; this.padJumpIndex = -1;
       inp.mobile?.pressed?.delete('cameraReset');`, 'disabled navigation edges');
     patch('    // ---- move (camera relative)', `    if (touch?.wasPressed('cameraReset')) { this.resetCamera(); touch.pressed.delete('cameraReset'); }
+    // Keyboard owner of the same reset (the mouse already aims; V re-levels the view).
+    if (inp.wasPressed('KeyV')) { this.resetCamera(); inp.pressed.delete('KeyV'); }
     // ---- move (camera relative)`, 'shared touch reset');
     patch('    // super jump: 1-3 / d-pad directions retain teammate targeting, 4 / d-pad down is home;', `    this.updatePadMapSelection(standardPad && usingPad);
     // super jump: 1-3 / d-pad directions retain teammate targeting, 4 / d-pad down is home;`, 'map selection owner');
@@ -97,7 +99,7 @@ const GYRO_ICON =`, 'reset icon');
     patch('    if (best !== this.hover) {', '    if (padChoice) best = G.match?.controller?.padJumpIndex ?? -1;\n    if (best !== this.hover) {', 'diorama pad target identity');
   }
   if(rel==='src/ui/menus.js') {
-    patch("    if (mode === 'pad' && standardPad) rows.push(['Camera reset', null, '', T('Left face · Y on Nintendo'), '']);", "    if (mode === 'pad' && standardPad) {\n      rows.push(['Camera reset', null, '', T('Left face · Y on Nintendo'), '']);\n      rows.push(['Super Jump', null, '', T('D-pad selects · right face A confirms'), '']);\n    }\n    if (mode === 'touch') rows.push(['Camera reset', null, '', '', T('Camera reset button')]);", 'navigation guide');
+    patch("    if (mode === 'pad' && standardPad) rows.push(['Camera reset', null, '', T('Left face · Y on Nintendo'), '']);", "    if (mode === 'pad' && standardPad) {\n      rows.push(['Camera reset', null, '', T('Left face · Y on Nintendo'), '']);\n      rows.push(['Super Jump', null, '', T('D-pad selects · right face A confirms'), '']);\n    }\n    if (mode === 'touch') rows.push(['Camera reset', null, '', '', T('Camera reset button')]);\n    if (mode !== 'pad' && mode !== 'touch') rows.push(['Camera reset', null, K('V'), '', '']);", 'navigation guide');
   }
   return code;
 }

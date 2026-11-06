@@ -824,6 +824,17 @@ export class SwimWake {`
       'MOV-09 precompute trigonometric values in _edgeGuardUncached',
       '    for (let _egi = 0; _egi < 4; _egi++) {'
     );
+    // CPU-13: _bossGoal reuses its own mates scratch (not the paint-goal _mates,
+    // which is guarded for re-entrancy) instead of a filtered array per pick.
+    code = applyIdempotent(
+      code,
+      `    const mates = G.actors.filter((o) => o !== a && o.bot && o.alive && o.bot.goal >= 0);`,
+      `    const mates = this._bossMates || (this._bossMates = []); mates.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o !== a && o.bot && o.alive && o.bot.goal >= 0) mates.push(o); }`,
+      replaceOnce,
+      'CPU-13 reuse boss-goal mates scratch in bots.js',
+      '    const mates = this._bossMates || (this._bossMates = []); mates.length = 0;'
+    );
   }
 
   if (rel === 'src/boss/boss.js') {
