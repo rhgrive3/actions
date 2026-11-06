@@ -65,6 +65,13 @@ for(const enabled of [false,true])test(`#421 touch reset shares Y path with gyro
  m._press('cameraReset',{});h.c.update(STEP);h.input.endFrame();assert.equal(calls,2);
  h.frame([2]);assert.equal(calls,3,'same shared function for standard Y');
 });
+test('keyboard V uses the shared camera reset owner once per press',async()=>{
+ const h=await rig();h.a.yaw=.9;h.camera.yaw=-1.7;h.camera.pitch=.6;
+ const original=h.c.resetCamera;let calls=0;h.c.resetCamera=function(){calls++;return original.call(this);};
+ h.input.keys.add('KeyV');h.input.pressed.add('KeyV');h.c.update(STEP);assert.equal(calls,1);assert.equal(h.camera.yaw,h.a.yaw);assert.equal(h.camera.pitch,0);
+ assert.equal(h.input.wasPressed('KeyV'),false,'the edge is consumed');
+ h.camera.pitch=.4;h.c.update(STEP);assert.equal(calls,1,'holding V does not repeat the reset');assert.equal(h.camera.pitch,.4);
+});
 test('#421 disabled/reset lifecycle drops pending recenter and retains independent control layout',async()=>{
  const h=await rig(),m=touch(h);h.camera.pitch=.7;m._press('cameraReset',{});h.c.enabled=false;h.c.update(STEP);h.c.enabled=true;h.c.update(STEP);assert.equal(h.camera.pitch,.7);
  const old={...m._box('fire')};m.layout.cameraReset={ax:'l',ay:'b',dx:.5,dy:.4,s:1.3};const moved=m._box('cameraReset');assert.ok(moved.x<500);assert.ok(moved.y>350);assert.deepEqual({...m._box('fire')},old);
