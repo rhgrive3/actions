@@ -161,7 +161,7 @@ export function installS3ReticleLook({ G, HUD, on }) {
     const local = G.match?.local;
     if (!local || attacker !== local || !victim?.pos || victim === local || G.match?.attract || G.match?.mode === 'boss') return;
     if (!(damage > 0)) return;
-    flashes.push({ victim, t0: performance.now() / 1000, el: null });
+    flashes.push({ victim, t0: null, el: null });
     if (flashes.length > 6) flashes.shift().el?.remove();
   });
   const update = P.update;
@@ -178,7 +178,11 @@ function drawFlashes(hud, G, flashes) {
   if (!flashes.length) return;
   const cam = G.camera, layer = hud.downLayer || hud.el, now = performance.now() / 1000;
   for (let i = flashes.length - 1; i >= 0; i--) {
-    const f = flashes[i], age = now - f.t0;
+    const f = flashes[i];
+    // The clock starts at the first drawn frame: a long frame right after the
+    // hit must not expire the flash before it is ever shown.
+    if (f.t0 == null) f.t0 = now;
+    const age = now - f.t0;
     if (age > S3_RETICLE.flashLife || !cam || typeof hud._project !== 'function' || !layer) { f.el?.remove(); flashes.splice(i, 1); continue; }
     if (!f.el && globalThis.document) {
       f.el = document.createElement('div');
