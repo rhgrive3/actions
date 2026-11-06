@@ -537,7 +537,7 @@ test('allied Bots send Nice to a charging Booyah Bomb on a frame-rate independen
  const f=await setup();
  for(const hz of [30,60,144]){
   const owner=f.make(),bot=f.make(),busy=f.make();equip(owner,'booyahBomb');
-  Object.assign(bot,{team:owner.team,isLocal:false,bot:{target:null}});Object.assign(busy,{team:owner.team,isLocal:false,bot:{target:{}}});
+  Object.assign(bot,{team:owner.team,isLocal:false,bot:{target:null},special:0,weapon:{...bot.weapon,specialCost:200}});Object.assign(busy,{team:owner.team,isLocal:false,bot:{target:{}}});
   f.G.actors=[owner,bot,busy];owner._startSpecial();const state=owner._s3AllSpecialState,botGauge=bot.special;
   const times=[];let t=0,last=0;
   for(let i=0;i<Math.round(3*hz);i++){owner._updateSpecial(1/hz);t+=1/hz;const n=state.cheerCalls?.get(bot)?.count||0;if(n>last){times.push(t);last=n;}}
@@ -546,7 +546,8 @@ test('allied Bots send Nice to a charging Booyah Bomb on a frame-rate independen
   const first=.5+.45+.173; // hover .5 s, then the second actor's deterministic reaction delay
   assert.ok(times[0]>=first-1e-9&&times[0]<=first+1/hz+1e-9,`${hz}Hz first Nice after the reaction delay, got ${times[0]}`);
   assert.ok(Math.abs(times[1]-times[0]-.9)<=1/hz+1e-9,`${hz}Hz repeat interval`);
-  assert.equal(bot.special,botGauge,'a Bot cheer earns no sender gauge while the local-only gauge bridge applies');
+  const credited=[6,3,2].slice(0,times.length).reduce((x,y)=>x+y,0);
+  assert.equal(bot.special,botGauge+credited,'Splatoon 3: the cheering Bot gains special points 6/3/2 per call');
  }
 });
 test('Booyah cheer accepts distinct calls up to the source cap and rejects duplicate or stale remote calls',async()=>{

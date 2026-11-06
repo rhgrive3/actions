@@ -1630,8 +1630,8 @@ function stampSwing(rt,actor,state,jump=false) {
 // signal a player sends (one press = one released edge). Each Bot reacts after
 // its own short, deterministic delay, repeats while the bomb still charges, and
 // stays on its fight when it has a visible target. The press is a single-frame
-// pulse so the ordinary edge, per-cheerer diminishing charge and gauge credit
-// apply unchanged.
+// pulse so the ordinary edge, per-cheerer diminishing charge and the sender's
+// gauge credit (6/3/2/1/.5) apply unchanged.
 const BOT_CHEER_FIRST=.45,BOT_CHEER_SPREAD=.4,BOT_CHEER_REPEAT=.9;
 function botBooyahCheer(rt,state,ally,elapsed) {
   if(!ally.bot||ally.remote||ally.specialActive||ally.bot.target)return false;
@@ -1670,7 +1670,9 @@ function addBooyahCall(rt,owner,state,cheerer,{network=false,callId=null}={}) {
   return true;
 }
 function creditBooyahGauge(rt,cheerer,ownerRef,ownerLife,activation,callId,ordinal=null) {
-  if(!cheerer?.isLocal||cheerer.remote||!Number.isSafeInteger(callId))return false;
+  // Splatoon 3: the cheerer's own gauge also rises. Bots simulated on this
+  // client earn it like the local player; remote actors credit themselves.
+  if(!(cheerer?.isLocal||cheerer?.bot)||cheerer.remote||!Number.isSafeInteger(callId))return false;
   const ownerNid=Number.isSafeInteger(ownerRef)?ownerRef:ownerRef?.nid;
   const target=ownerRef&&typeof ownerRef==='object'?ownerRef:
     rt.api.G.netm?.byNid?.get(ownerNid)||(rt.api.G.actors||[]).find(a=>a.nid===ownerNid);

@@ -501,7 +501,9 @@ export function installCatalogueControls({G,PlayerController,HUD,emit}) {
    if(host&&button.parentNode!==host)host.append(button);
    const label=touch?'ナイス':'ナイス (N / ↓)';if(button.textContent!==label)button.textContent=label;
   }
-  if(this._catalogueCheer){const me=G.match?.local;this._catalogueCheer.hidden=!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');}
+  // Touch play has the always-present signal pair (team-signals.mjs) whose
+  // ナイス uses this same cheer owner; the Booyah-only button stays for keyboard/pad.
+  if(this._catalogueCheer){const me=G.match?.local;this._catalogueCheer.hidden=!!(G.input?.mobile?.active&&G.input.mobile.root)||!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');}
   return result;
  };
 }
