@@ -76,7 +76,7 @@ test('disabled measurement adds no game probe and reports unavailable timers',as
   assert.equal(await probe.ready,null);
   assert.equal(probe.beginTrial('fire'),false);
   const data=JSON.parse(probe.report());
-  assert.equal(data.shooterAB.status,'unavailable');
+  assert.equal(data.ab.status,'unavailable');
   assert.match(data.debugModePrivacy,/Device-local/);
   probe.dispose();
 });
