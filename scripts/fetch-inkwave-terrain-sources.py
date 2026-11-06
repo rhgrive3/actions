@@ -25,8 +25,14 @@ def _network_call(operation, *args, **kwargs):
         return operation(*args, **kwargs)
     except (ConnectionResetError, TimeoutError) as error:
         raise _TransientTransferError() from error
+    except urllib.error.HTTPError as error:
+        # Retry upstream server failures, but not authentication, rate-limit,
+        # not-found or other client errors.
+        if error.code in {408, 500, 502, 503, 504}:
+            raise _TransientTransferError() from error
+        raise
     except urllib.error.URLError as error:
-        # HTTP/auth errors, TLS/certificate failures and unknown reasons are fatal.
+        # TLS/certificate failures and unknown reasons are fatal.
         if (not isinstance(error, urllib.error.HTTPError)
                 and isinstance(error.reason, (ConnectionResetError, TimeoutError))):
             raise _TransientTransferError() from error
@@ -35,8 +41,9 @@ def _network_call(operation, *args, **kwargs):
 
 def fetch(url, target, algorithm, expected, git_blob=False, receipt=None):
     receipt = receipt if receipt is not None else {}
-    # At most three attempts total, for incomplete HTTP200 bodies or narrowly
-    # classified network resets/timeouts. Same URL/digest and180s socket timeout;
+    # At most three attempts total, for incomplete HTTP200 bodies, narrowly
+    # classified network resets/timeouts, and transient upstream HTTP failures.
+    # Same URL/digest and180s socket timeout;
     # no retry of complete wrong bodies, access/TLS errors or filesystem failures.
     for attempt in range(1, 4):
         receipt['attemptCount'] = attempt
@@ -95,6 +102,9 @@ def _fetch_once(url, target, algorithm, expected, git_blob=False, receipt=None):
             receipt['status'] = 3
         if isinstance(getattr(error, 'code', None), int):
             receipt['httpStatus'] = error.code
+        cause = getattr(error, '__cause__', None)
+        if isinstance(cause, urllib.error.HTTPError):
+            receipt['httpStatus'] = cause.code
         raise
     finally:
         temporary.unlink(missing_ok=True)
