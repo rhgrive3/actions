@@ -98,27 +98,29 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
     await click(turfSelector);
   }
   await bounded(()=>waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu'),'setup readiness');
-  await click('.iw-setup [data-id="map-'+expected.mapId+'"]');
-  const setupConfig=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
-  if(setupConfig.mode!==expected.mode||setupConfig.map!==expected.mapId||setupConfig.difficulty!==expected.difficulty||setupConfig.duration!==expected.duration||setupConfig.weapon!==expected.weapon||setupConfig.time!==expected.time)throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(setupConfig));
-  note('native-setup-verified',{config:setupConfig});
-  // The real handler invokes prepareMatch during this gesture, then the wipe,
-  // then startMatch. Never call audio readiness or startMatch from this helper.
-  // START is the last Setup item to pop in (stagger index 14: ~1.2 s). The
-  // menu input guard drops a click on an item that is not yet visible, as it
-  // should for a player, so wait for the same visibility the guard checks.
-  await bounded(()=>waitForPhase(()=>{
+  const setupVisible=(selector,phase,label)=>bounded(()=>waitForPhase(new Function(`
     const m=window.__inkwave?.menus,root=m?._scr?.el;
     if(!root||m.current!=='setup'||root.inert)return false;
-    const controls=[...document.querySelectorAll('.iw-setup [data-id="start"].iw-btn--start')];
+    const controls=[...document.querySelectorAll(${JSON.stringify(selector)})];
     if(controls.length!==1||!root.contains(controls[0])||controls[0].disabled)return false;
     let opacity=1;
     for(let e=controls[0];e&&e!==root.parentNode;e=e.parentElement){
       const value=Number(getComputedStyle(e).opacity);if(!Number.isFinite(value))return false;
       opacity*=value;if(e===root)break;
     }
-    return opacity>0.6;
-  },'native start pointer readiness'),'start readiness');
+    return opacity>0.6;`),phase),label);
+  await setupVisible('.iw-setup [data-id="map-'+expected.mapId+'"]','native stage pointer readiness','stage readiness');
+  await click('.iw-setup [data-id="map-'+expected.mapId+'"]');
+  const setupConfig=await bounded(()=>page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};}),'read setup');budget();
+  if(setupConfig.mode!==expected.mode||setupConfig.map!==expected.mapId||setupConfig.difficulty!==expected.difficulty||setupConfig.duration!==expected.duration||setupConfig.weapon!==expected.weapon||setupConfig.time!==expected.time)throw new Error('Native projectile menu configuration mismatch: '+JSON.stringify(setupConfig));
+  note('native-setup-verified',{config:setupConfig});
+  // The real handler invokes prepareMatch during this gesture, then the wipe,
+  // then startMatch. Never call audio readiness or startMatch from this helper.
+  // Setup items pop in on a stagger (START last, ~1.2 s after the screen
+  // opens). The menu input guard drops a click on an item that is not yet
+  // visible, as it should for a player, so wait for the same visibility the
+  // guard checks (ancestor opacity > 0.6) before each Setup click.
+  await setupVisible('.iw-setup [data-id="start"].iw-btn--start','native start pointer readiness','start readiness');
   note('native-start-ready');
   await click('.iw-setup [data-id="start"].iw-btn--start');
   note('native-start-clicked',{attempt:1});

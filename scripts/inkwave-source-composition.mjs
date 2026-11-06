@@ -3,6 +3,7 @@ import { adaptMatchRecordings } from '../patches/splatoon3/match-recordings-adap
 import { adaptOwnerSfxRecordings } from '../patches/splatoon3/owner-sfx-recordings-adapter.mjs';
 import { adaptChargerReticleSize } from '../patches/splatoon3/charger-reticle-size-adapter.mjs';
 import { adaptCustomMatch } from '../patches/splatoon3/custom-match-adapter.mjs';
+import { adaptSmallTeamModes } from '../patches/splatoon3/small-team-modes-adapter.mjs';
 import { adaptBotCombatQuality } from '../patches/splatoon3/bot-combat-quality-adapter.mjs';
 import { adaptBombBlastForecast } from '../patches/splatoon3/bomb-blast-forecast-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
@@ -216,6 +217,8 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptChargerReticleSize(rel, code, replaceOnce);
   // Offline custom match rules, detailed results (installed from main.js).
   code = adaptCustomMatch(rel, code, replaceOnce);
+  // Inkbox Depot and the lobby's 2v2 / 1v1 Turf War (final composed text).
+  code = adaptSmallTeamModes(rel, code, replaceOnce);
   // Bot combat quality (final bots.js text).
   code = adaptBotCombatQuality(rel, code, replaceOnce);
   // No bomb blast-radius forecast rings (owner request).
