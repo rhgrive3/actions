@@ -37,7 +37,7 @@ let browser,context,page,cdp,system,sampler;let phase='boot',sampling=false;
 try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader-webgl','--enable-unsafe-swiftshader']});
- context=await browser.newContext({viewport:{width,height},deviceScaleFactor:dpr,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',...(mobile?{userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
+ context=await browser.newContext({viewport:{width,height},deviceScaleFactor:dpr,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',...(mobile?{userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();await page.bringToFront();
  page.on('pageerror',e=>{report.errors.push(e.message);checkpoint();});
  await page.addInitScript(installGameplayObserver);
  await page.addInitScript(({quality})=>{let seed=20261026;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality,frameRate:60}));},{quality});
