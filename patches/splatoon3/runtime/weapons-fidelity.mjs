@@ -2783,11 +2783,45 @@ function guideLaunchState(actor, weapon, out) {
   return probe;
 }
 
+// Chargers: Splatoon 3 places the reticle where the charge shot would land,
+// like the Blaster marks. A charger shot travels straight from the muzzle
+// toward the aim point, so when a wall lies between the muzzle and the camera's
+// aim point (peeking past a corner, a ledge under the barrel) the reticle moves
+// to that first wall contact. Unobstructed, the guide is null and the reticle
+// keeps its centre anchor. Ink passes grates, so grates are skipped.
+export function isChargerWeapon(weapon) {
+  return weapon?.kind === 'charger' || weapon?.catalogRecord?.family === 'charger';
+}
+export function chargerObstructionPoint(projectiles, physics, actor, weapon, scratch) {
+  if (!projectiles || typeof projectiles._muzzle !== 'function' || typeof projectiles._aimFrom !== 'function' ||
+      typeof physics?.raycast !== 'function' || !actor?.aimPoint || !scratch) return null;
+  const { muzzle, dir } = scratch;
+  projectiles._muzzle(actor, muzzle);
+  if (!Number.isFinite(muzzle.x) || !Number.isFinite(muzzle.y) || !Number.isFinite(muzzle.z)) return null;
+  const dx = actor.aimPoint.x - muzzle.x, dy = actor.aimPoint.y - muzzle.y, dz = actor.aimPoint.z - muzzle.z;
+  const toAim = Math.hypot(dx, dy, dz);
+  if (!(toAim > 0.1)) return null;
+  projectiles._aimFrom(actor, muzzle, dir);
+  const len = Math.hypot(dir.x, dir.y, dir.z);
+  if (!(len > 0)) return null;
+  dir.x /= len; dir.y /= len; dir.z /= len;
+  const range = Number.isFinite(weapon?.rangeMax) && weapon.rangeMax > 0 ? weapon.rangeMax : Infinity;
+  // Stop just short of the aim point itself: that surface is the target, not cover.
+  const reach = Math.min(toAim - 0.15, range);
+  if (!(reach > 0)) return null;
+  const hit = physics.raycast(muzzle, dir, reach, scratch.hit || undefined, true);
+  if (!hit?.hit || !hit.point) return null;
+  scratch.state.x = hit.point.x; scratch.state.y = hit.point.y; scratch.state.z = hit.point.z; scratch.state.frames = 0;
+  return scratch.state;
+}
+
 // World point the weapon's own projectile reaches by ShotGuideFrame fixed steps,
 // stopping at its first solid field contact. Returns the shared state object,
 // or null when the weapon has no guide frame / no installed launch path.
 export function computeShotGuide(actor) {
   const weapon = actor?.weapon, frames = shotGuideFrames(weapon);
+  if (guideApi && isChargerWeapon(weapon))
+    return chargerObstructionPoint(guideApi.G?.projectiles, guideApi.G?.physics, actor, weapon, guideScratch());
   // Catalogue Shooters / Splatlings carry ShotGuideFrame in their pinned
   // record, not on the live profile; their own motion owner predicts it.
   if (guideApi && weapon?.kind === 'catalog' && typeof guideApi.G?.projectiles?.s3CatalogShotGuide === 'function') {
