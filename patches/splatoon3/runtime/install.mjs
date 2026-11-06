@@ -98,7 +98,6 @@ import { installAllSpecials, replaySpecial } from './all-specials.mjs';
 import { installThrowPrediction } from './throw-prediction.mjs';
 import { installSpecialModels } from './special-presentation.mjs';
 import { installSpecialVfx, observeSpecialReplay } from './special-vfx.mjs';
-import { installTeamSignals } from './team-signals.mjs';
 import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
 
 let installed = false;
@@ -243,7 +242,6 @@ export function install(profile) {
   installCatalogueVision(api);
   installCatalogueBeakonJumps(api);
   installCatalogueControls(api);
-  installTeamSignals(api);
   installCatalogueNetwork(api, { replaySub, replaySpecial: observeSpecialReplay(api, replaySpecial), replaySplashdown: observeSpecialReplay(api, replaySplashdown) });
   installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });

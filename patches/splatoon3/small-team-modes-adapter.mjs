@@ -43,7 +43,7 @@ export function adaptSmallTeamModes(rel, code, replaceOnce) {
       '    if (!mapOfflineOk(map.id) && !DEV_STAGE && !isRangeMap(map) && !isDepotMap(map)) {', 'depot offline admission');
     code = replaceOnce(code,
       " range: isRangeMap(map),",
-      " range: isRangeMap(map), teamSize: isDepotMap(map) ? (Number.isInteger(opts.teamSize) ? opts.teamSize : map.teamSize) : undefined,",
+      " range: isRangeMap(map), teamSize: map.duel ? (Number.isInteger(opts.teamSize) ? opts.teamSize : map.teamSize) : undefined,",   // (inline: harnesses compile this method without its imports)
       'depot offline team size');
     code = replaceOnce(code,
       '    const map = MAPS.find((m) => m.id === cfg.map) || MAPS[0];',
@@ -54,39 +54,50 @@ export function adaptSmallTeamModes(rel, code, replaceOnce) {
     return DUEL_IMPORT_MAIN + code;
   }
   if (rel === 'src/net/session.js') {
-    code = DUEL_IMPORT_SRC + code;
-    code = replaceOnce(code, 'const TEAM = 4;\n',
-      "const TEAM = 4;\nconst teamCap = (l) => SMALL_TEAM_MODES[l?.mode] || TEAM;\nconst LOBBY_MAPS = [...MAPS, DEPOT_MAP];\n",
-      'small team caps');
-    code = replaceOnce(code, '    const map = g?.mapDef?.id || MAPS[0].id;',
-      '    const map = (g?.mapDef?.id !== DEPOT_MAP.id && g?.mapDef?.id) || MAPS[0].id;   // (Inkbox Depot opens only with its 2v2 / 1v1 modes)', 'new rooms never open on Inkbox Depot');
-    code = replaceOnce(code, '{ if (count[p.team] < TEAM) count[p.team]++; else p.team = \'auto\'; }',
-      '{ if (count[p.team] < teamCap(this.lobby)) count[p.team]++; else p.team = \'auto\'; }', 'team cap in fixTeams');
-    code = replaceOnce(code, 'if (others.length>=TEAM) {', 'if (others.length>=teamCap(this.lobby)) {', 'team cap in assignTeam');
-    // Inline (no helper): tests compile these method bodies on their own.
-    code = code.split("(this.lobby.mode !== 'turf' && !isRankedMode(this.lobby.mode))").join("(this.lobby.mode !== 'turf' && this.lobby.mode !== 'duo' && this.lobby.mode !== 'solo' && !isRankedMode(this.lobby.mode))");
+    // Every session.js insertion is inline (literal 'depot', mode checks): the
+    // network harnesses compile these method bodies without module scope.
+    code = replaceOnce(code,
+      `    const map = g?.mapDef?.id || MAPS[0].id;`,
+      `    const map = (g?.mapDef?.id !== 'depot' && g?.mapDef?.id) || MAPS[0].id;   // (Inkbox Depot opens only with its 2v2 / 1v1 modes)`, 'new rooms never open on Inkbox Depot');
+    code = replaceOnce(code,
+      `{ if (count[p.team] < TEAM) count[p.team]++; else p.team = 'auto'; }`,
+      `{ if (count[p.team] < (this.lobby.mode === 'solo' ? 1 : this.lobby.mode === 'duo' ? 2 : TEAM)) count[p.team]++; else p.team = 'auto'; }`, 'team cap in fixTeams');
+    code = replaceOnce(code,
+      `if (others.length>=TEAM) {`,
+      `if (others.length>=(this.lobby.mode === 'solo' ? 1 : this.lobby.mode === 'duo' ? 2 : TEAM)) {`, 'team cap in assignTeam');
+    code = code.split(`(this.lobby.mode !== 'turf' && !isRankedMode(this.lobby.mode))`).join(`(this.lobby.mode !== 'turf' && this.lobby.mode !== 'duo' && this.lobby.mode !== 'solo' && !isRankedMode(this.lobby.mode))`);
     // Inkbox Depot belongs to the 2v2 / 1v1 modes alone.
-    code = replaceOnce(code, '    if (s.map && MAPS.some((m) => m.id === s.map)) l.map = s.map;',
-      '    if (s.map && MAPS.some((m) => m.id === s.map)) l.map = s.map;\n    else if (s.map === \'depot\') l.map = s.map;', 'depot room stage');
-    code = replaceOnce(code, "if (s.mode === 'turf' || s.mode === 'boss' || isRankedMode(s.mode)) l.mode = s.mode;",
-      "if (s.mode === 'turf' || s.mode === 'boss' || isRankedMode(s.mode) || s.mode === 'duo' || s.mode === 'solo') l.mode = s.mode;\n" +
-      "    // (inline: tests compile this method body alone; 'depot' is DEPOT_MAP.id)\n" +
-      "    if (l.mode === 'duo' || l.mode === 'solo') l.map = 'depot';\n" +
-      "    else if (l.map === 'depot') l.map = MAPS[0].id;", 'small modes own Inkbox Depot');
-    code = replaceOnce(code, "    if (unavailable) return unavailable.name + '：' + unavailable.reason; return ",
-      "    if (unavailable) return unavailable.name + '：' + unavailable.reason;\n" +
-      "    const cap = teamCap(this.lobby);\n" +
-      "    if (cap < TEAM && [0, 1].some((t) => this.lobby.players.filter((p) => p.team === t).length > cap)) return cap === 1 ? '1対1：1チーム1人まで' : '2対2：1チーム2人まで';\n" +
-      "    return ", 'small mode start block');
-    code = replaceOnce(code, "if ((this.lobby.mode === 'turf' || isRankedMode(this.lobby.mode)) && this.lobby.players.length < 2) return false;",
-      "if ((this.lobby.mode === 'turf' || this.lobby.mode === 'duo' || this.lobby.mode === 'solo' || isRankedMode(this.lobby.mode)) && this.lobby.players.length < 2) return false;", 'small mode two-human start');
-    code = replaceOnce(code, 'while (slot < (boss ? TEAM * 2 : TEAM)) {', 'while (slot < (boss ? TEAM * 2 : teamCap(l))) {', 'small mode bot fill');
-    code = replaceOnce(code, "mode: boss ? 'boss' : isRankedMode(l.mode) ? l.mode : 'turf', host: this.myId,",
-      "mode: boss ? 'boss' : isRankedMode(l.mode) ? l.mode : 'turf', teamSize: boss ? TEAM * 2 : teamCap(l), host: this.myId,", 'start team size');
-    code = replaceOnce(code, 'if (!validLobbySnapshot(l, MAPS, WEAPONS, TEAM_PALETTES.length)) return;',
-      'if (!validLobbySnapshot(l, LOBBY_MAPS, WEAPONS, TEAM_PALETTES.length)) return;', 'guest lobby stage list');
-    return replaceOnce(code, "this.lobby.mode = l.mode === 'boss' || isRankedMode(l.mode) ? l.mode : 'turf';",
-      "this.lobby.mode = l.mode === 'boss' || isRankedMode(l.mode) || isSmallTeamMode(l.mode) ? l.mode : 'turf';", 'guest small modes');
+    code = replaceOnce(code,
+      `    if (s.map && MAPS.some((m) => m.id === s.map)) l.map = s.map;`,
+      `    if (s.map && MAPS.some((m) => m.id === s.map)) l.map = s.map;
+    else if (s.map === 'depot') l.map = s.map;`, 'depot room stage');
+    code = replaceOnce(code,
+      `if (s.mode === 'turf' || s.mode === 'boss' || isRankedMode(s.mode)) l.mode = s.mode;`,
+      `if (s.mode === 'turf' || s.mode === 'boss' || isRankedMode(s.mode) || s.mode === 'duo' || s.mode === 'solo') l.mode = s.mode;
+    if (l.mode === 'duo' || l.mode === 'solo') l.map = 'depot';
+    else if (l.map === 'depot') l.map = MAPS[0].id;`, 'small modes own Inkbox Depot');
+    code = replaceOnce(code,
+      `    if (unavailable) return unavailable.name + '：' + unavailable.reason; return `,
+      `    if (unavailable) return unavailable.name + '：' + unavailable.reason;
+    const cap = (this.lobby.mode === 'solo' ? 1 : this.lobby.mode === 'duo' ? 2 : TEAM);
+    if (cap < TEAM && [0, 1].some((t) => this.lobby.players.filter((p) => p.team === t).length > cap)) return cap === 1 ? '1対1：1チーム1人まで' : '2対2：1チーム2人まで';
+    return `, 'small mode start block');
+    code = replaceOnce(code,
+      `if ((this.lobby.mode === 'turf' || isRankedMode(this.lobby.mode)) && this.lobby.players.length < 2) return false;`,
+      `if ((this.lobby.mode === 'turf' || this.lobby.mode === 'duo' || this.lobby.mode === 'solo' || isRankedMode(this.lobby.mode)) && this.lobby.players.length < 2) return false;`, 'small mode two-human start');
+    code = replaceOnce(code,
+      `while (slot < (boss ? TEAM * 2 : TEAM)) {`,
+      `while (slot < (boss ? TEAM * 2 : (l.mode === 'solo' ? 1 : l.mode === 'duo' ? 2 : TEAM))) {`, 'small mode bot fill');
+    code = replaceOnce(code,
+      `mode: boss ? 'boss' : isRankedMode(l.mode) ? l.mode : 'turf', host: this.myId,`,
+      `mode: boss ? 'boss' : isRankedMode(l.mode) ? l.mode : 'turf', teamSize: boss ? TEAM * 2 : (l.mode === 'solo' ? 1 : l.mode === 'duo' ? 2 : TEAM), host: this.myId,`, 'start team size');
+    code = replaceOnce(code,
+      `if (!validLobbySnapshot(l, MAPS, WEAPONS, TEAM_PALETTES.length)) return;`,
+      `if (!validLobbySnapshot(l, [...MAPS, { id: 'depot' }], WEAPONS, TEAM_PALETTES.length)) return;`, 'guest lobby stage list');
+    code = replaceOnce(code,
+      `this.lobby.mode = l.mode === 'boss' || isRankedMode(l.mode) ? l.mode : 'turf';`,
+      `this.lobby.mode = l.mode === 'boss' || isRankedMode(l.mode) || l.mode === 'duo' || l.mode === 'solo' ? l.mode : 'turf';`, 'guest small modes');
+    return code;
   }
   if (rel === 'src/ui/menus.js') {
     code = DUEL_IMPORT_SRC + code;

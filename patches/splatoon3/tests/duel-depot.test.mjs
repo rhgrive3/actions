@@ -32,10 +32,10 @@ test('Inkbox Depot: indoor, not too wide, no half-height walls', () => {
 
 test('2v2 / 1v1 are dedicated lobby modes that own Inkbox Depot', () => {
   const session = src('src/net/session.js');
-  assert.match(session, /const teamCap = \(l\) => SMALL_TEAM_MODES\[l\?\.mode\] \|\| TEAM;/);
+  assert.match(session, /if \(count\[p\.team\] < \(this\.lobby\.mode === 'solo' \? 1 : this\.lobby\.mode === 'duo' \? 2 : TEAM\)\)/);
   assert.match(session, /if \(l\.mode === 'duo' \|\| l\.mode === 'solo'\) l\.map = 'depot';\n    else if \(l\.map === 'depot'\) l\.map = MAPS\[0\]\.id;/);
-  assert.match(session, /while \(slot < \(boss \? TEAM \* 2 : teamCap\(l\)\)\) \{/);
-  assert.match(session, /teamSize: boss \? TEAM \* 2 : teamCap\(l\)/);
+  assert.match(session, /while \(slot < \(boss \? TEAM \* 2 : \(l\.mode === 'solo' \? 1 : l\.mode === 'duo' \? 2 : TEAM\)\)\) \{/);
+  assert.match(session, /teamSize: boss \? TEAM \* 2 : \(l\.mode === 'solo' \? 1 : l\.mode === 'duo' \? 2 : TEAM\)/);
   assert.match(session, /'1対1：1チーム1人まで' : '2対2：1チーム2人まで'/);
   const menus = src('src/ui/menus.js');
   assert.match(menus, /const LOBBY_MODE_IDS = Object\.freeze\(\[\.\.\.PLAY_MODE_IDS, 'duo', 'solo'\]\);/);

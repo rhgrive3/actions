@@ -50,16 +50,19 @@ export function installTeamSignals({ G, PlayerController, HUD, on, emit }) {
     // Match.updateController disables the controller while its actor is
     // splatted, so admission reads the match state: Ouch is a splatted signal.
     const usable = !!(a && !this.mapHeld && G.match?.state === 'playing' && !G.match?.paused);
+    // Poll only when a signal can be sent: a disabled controller (menus, intro,
+    // results) keeps its exact input-poll order; a splatted actor may signal.
+    if (!usable || (!this.enabled && a.alive !== false)) { this._signalUpHeld = this._signalDownHeld = false; if (a) a._signalUpPending = false; return result; }
     const pad = input?.lastDevice === 'pad';
     const upHeld = !!(input?.down?.('KeyH') || pad && input?.padButton?.(12));
     const upEdge = upHeld && !this._signalUpHeld; this._signalUpHeld = upHeld;
-    const touchUp = !!a?._signalUpPending; if (a) a._signalUpPending = false;
-    if (usable && (upEdge || touchUp)) send(a, signalKindForUp(a));
+    const touchUp = !!a._signalUpPending; a._signalUpPending = false;
+    if (upEdge || touchUp) send(a, signalKindForUp(a));
     // The Nice edge is owned by catalogue.mjs (intent.booyah); a splatted
     // player may still send Nice, which that owner does not admit.
     const downHeld = !!(input?.down?.('KeyN') || pad && input?.padButton?.(13));
     const downEdge = downHeld && !this._signalDownHeld; this._signalDownHeld = downHeld;
-    if (usable && (a.intent?.booyah || (a.alive === false && downEdge))) send(a, 'nice');
+    if (a.intent?.booyah || (a.alive === false && downEdge)) send(a, 'nice');
     return result;
   };
 

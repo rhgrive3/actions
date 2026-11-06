@@ -1,3 +1,4 @@
+import { installTeamSignals } from './team-signals.mjs';
 import {recordSpecialDeviceAction} from '../../network-replication/special-device-contact-proof.mjs';
 import {bindCatalogueActionPayload} from '../../network-replication/catalogue-action-receipt.mjs';
 import { admitDeviceHit } from '../../network-replication/combat-provenance.mjs';
@@ -470,7 +471,7 @@ export function installCatalogueBeakonJumps(api) {
  for(const method of ['reset','splat']){const original=Actor.prototype[method];if(original)Actor.prototype[method]=function(...args){const state=this.superJumpState;if(state?.beakonObject)api.useSubBeakon?.(this,state.beakonObject,'cancel');return original.apply(this,args);};}
 }
 
-export function installCatalogueControls({G,PlayerController,HUD,emit}) {
+export function installCatalogueControls({G,PlayerController,HUD,emit,on}) {
  const update=PlayerController.prototype.update;
  PlayerController.prototype.update=function(...args){
   const result=update.apply(this,args),a=this.a,input=this.input;
@@ -506,4 +507,7 @@ export function installCatalogueControls({G,PlayerController,HUD,emit}) {
   if(this._catalogueCheer){const me=G.match?.local;this._catalogueCheer.hidden=!!(G.input?.mobile?.active&&G.input.mobile.root)||!this._visible||!me?.alive||!!G.match?.paused||!(G.actors||[]).some(a=>a.alive&&a.team===me.team&&a.specialActive?.id==='booyahBomb');}
   return result;
  };
+ // Team signals wrap the controller after this Nice owner (installed here, not
+ // in the hash-pinned install.mjs) so they read its intent.booyah edge.
+ installTeamSignals({G,PlayerController,HUD,on,emit});
 }
