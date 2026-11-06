@@ -182,6 +182,30 @@ function rangePause(menus) {
     moving.classList.toggle('is-on', on); moving.querySelector('.iwr-toggle__v').textContent = on ? L('ON') : L('OFF');
   } });
 
+  // ---- SPARRING BOTS (sparring.mjs): add a static / moving / fighting Bot in front of you
+  let botWeaponSame = !!G.match?.range?._sparWeaponSame;
+  const botWeapon = h('button', { class: 'iwr-rbtn iwr-toggle' }, h('b', null, L('BOT WEAPON')), h('span', { class: 'iwr-toggle__v' }, botWeaponSame ? L('SAME AS YOURS') : L('RANDOM')));
+  menus._fx(botWeapon);
+  menus._bind(botWeapon, { id: 'r-bot-weapon', accept: () => {
+    menus._sfx('ui_toggle'); botWeaponSame = !botWeaponSame; if (session) session._sparWeaponSame = botWeaponSame;
+    botWeapon.querySelector('.iwr-toggle__v').textContent = botWeaponSame ? L('SAME AS YOURS') : L('RANDOM');
+  } });
+  const sparring = [
+    ['bot-static', L('STATIC BOT'), 'static'], ['bot-move', L('MOVING BOT'), 'move'], ['bot-combat', L('COMBAT BOT'), 'combat'],
+  ].map(([id, label, behavior]) => {
+    const b = h('button', { class: 'iwr-rbtn' }, h('b', null, label));
+    menus._fx(b);
+    menus._bind(b, { id: 'r-' + id, accept: act(() => {
+      session?.addSparringBot({ behavior, weapon: botWeaponSame ? session.local?.weaponId : null, difficulty: menus._settings?.()?.difficulty || 'normal' })
+        .then(a => { if (a) session.hud.toast(L('Bot added: {name}', { name: WEAPONS[a.weaponId]?.name || a.weaponId })); })
+        .catch(e => console.warn('[range] sparring bot unavailable', e));
+    }) });
+    return b;
+  });
+  const removeBots = h('button', { class: 'iwr-rbtn' }, h('b', null, L('REMOVE BOTS')));
+  menus._fx(removeBots);
+  menus._bind(removeBots, { id: 'r-bot-remove', accept: act(() => { session?.sparring?.removeAll(); session?.hud.toast(L('Bots removed')); }) });
+
   // ---- TRAVEL
   const travel = ['spawn', ...ZONE_ORDER].map((id) => {
     const z = id === 'spawn' ? null : ZONES[id];
@@ -194,7 +218,9 @@ function rangePause(menus) {
 
   const secs = {
     tools: h('div', { class: 'iwr-pause__sec', 'data-tab': 'tools' }, h('div', { class: 'iwr-rbtns' }, resets, moving),
-      h('div', { class: 'iwr-pause__hint' }, L('R · T · G also work during play.'))),
+      h('div', { class: 'iwr-pause__hint' }, L('R · T · G also work during play.')),
+      h('div', { class: 'iwr-pause__hint' }, L('Add a Bot that stands, strafes or fights back. Your accuracy, damage and time to splat appear while it is out.')),
+      h('div', { class: 'iwr-rbtns' }, sparring, removeBots, botWeapon)),
     travel: h('div', { class: 'iwr-pause__sec', 'data-tab': 'travel' },
       h('div', { class: 'iwr-pause__hint' }, L('Choose a zone to jump straight to its reference stand.')), h('div', { class: 'iwr-zbtns' }, travel)),
     weapon: h('div', { class: 'iwr-pause__sec', 'data-tab': 'weapon' }, filterRoot, wgrid),

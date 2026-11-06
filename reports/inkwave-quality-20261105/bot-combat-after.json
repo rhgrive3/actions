@@ -1,0 +1,710 @@
+{
+  "stage": "scorch",
+  "seconds": 120,
+  "seeds": 1,
+  "opponent": "shooter",
+  "scope": "headless Bot logic; not retail S3 data",
+  "results": [
+    {
+      "weapon": "shooter",
+      "splats": 4,
+      "deaths": 4,
+      "enemySplats": 5,
+      "turf": 1100,
+      "shots": 1232,
+      "hits": 3,
+      "hitsPerShot": 0.002,
+      "damagePerMin": 19.8,
+      "meanPitchErr": -0.056,
+      "meanAbsPitchErr": 0.063,
+      "belowFeetShare": 0.173,
+      "aboveHeadShare": 0,
+      "fightShare": 0.028,
+      "reversalsPerMin": 9.36,
+      "idleShare": 0.171,
+      "missedEngageShare": 0.303,
+      "enemyInRangeShare": 0.017,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 33,
+            "missedN": 10,
+            "hitIds": {
+              "trizooka": 3,
+              "shooter": 3
+            },
+            "shots": 1232,
+            "hits": 3,
+            "damage": 108,
+            "fightN": 548,
+            "pitchErr": -30.882813984560276,
+            "belowFeet": 95,
+            "aboveHead": 0,
+            "absErr": 34.499215396887934,
+            "idleN": 3349,
+            "aliveN": 19625,
+            "reversals": 51,
+            "pitchHist": {
+              "-0.4": 13,
+              "-0.3": 21,
+              "-0.2": 31,
+              "-0.1": 88,
+              "0.0": 385,
+              "-0.7": 1,
+              "-0.6": 2,
+              "-0.5": 3,
+              "0.1": 4
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "shooter",
+              "turf": 646.7279268679823,
+              "splats": 0,
+              "deaths": 1,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "shooter",
+              "turf": 1385.479215203819,
+              "splats": 2,
+              "deaths": 2,
+              "specials": 2
+            },
+            {
+              "team": 0,
+              "weapon": "shooter",
+              "turf": 1266.5502647120616,
+              "splats": 2,
+              "deaths": 1,
+              "specials": 2
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 986.4619626239839,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1358.0897491196781,
+              "splats": 3,
+              "deaths": 0,
+              "specials": 3
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1268.985762017861,
+              "splats": 2,
+              "deaths": 2,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1057.796972275935,
+              "splats": 0,
+              "deaths": 2,
+              "specials": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weapon": "blaster",
+      "splats": 5,
+      "deaths": 11,
+      "enemySplats": 12,
+      "turf": 717,
+      "shots": 177,
+      "hits": 5,
+      "hitsPerShot": 0.028,
+      "damagePerMin": 140.6,
+      "meanPitchErr": -0.019,
+      "meanAbsPitchErr": 0.173,
+      "belowFeetShare": 0.252,
+      "aboveHeadShare": 0.173,
+      "fightShare": 0.052,
+      "reversalsPerMin": 3.37,
+      "idleShare": 0.072,
+      "missedEngageShare": 0.301,
+      "enemyInRangeShare": 0.071,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 113,
+            "missedN": 34,
+            "hitIds": {
+              "blaster": 5
+            },
+            "shots": 177,
+            "hits": 5,
+            "damage": 625,
+            "fightN": 826,
+            "pitchErr": -15.743554324170114,
+            "belowFeet": 208,
+            "aboveHead": 143,
+            "absErr": 142.52026632900612,
+            "idleN": 1146,
+            "aliveN": 16001,
+            "reversals": 15,
+            "pitchHist": {
+              "0.1": 61,
+              "0.0": 180,
+              "-0.1": 270,
+              "-0.2": 123,
+              "0.2": 26,
+              "0.5": 19,
+              "0.4": 37,
+              "0.3": 16,
+              "-0.3": 41,
+              "0.6": 7,
+              "-0.4": 10,
+              "-0.5": 7,
+              "1.4": 1,
+              "1.3": 2,
+              "1.2": 2,
+              "1.1": 2,
+              "1.0": 3,
+              "0.9": 2,
+              "0.8": 4,
+              "0.7": 3,
+              "-0.7": 2,
+              "-0.8": 2,
+              "-1.2": 1,
+              "-1.1": 2,
+              "-1.0": 1,
+              "-0.9": 1,
+              "-0.6": 1
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "blaster",
+              "turf": 687.2990916920071,
+              "splats": 2,
+              "deaths": 4,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "blaster",
+              "turf": 930.5393560413044,
+              "splats": 3,
+              "deaths": 4,
+              "specials": 3
+            },
+            {
+              "team": 0,
+              "weapon": "blaster",
+              "turf": 531.7090013893627,
+              "splats": 0,
+              "deaths": 3,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1565.3201882415353,
+              "splats": 6,
+              "deaths": 2,
+              "specials": 2
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1362.9429526388383,
+              "splats": 3,
+              "deaths": 2,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 500.8411370464428,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1683.620108080047,
+              "splats": 3,
+              "deaths": 1,
+              "specials": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weapon": "s3-blaster-long",
+      "splats": 4,
+      "deaths": 10,
+      "enemySplats": 11,
+      "turf": 618,
+      "shots": 170,
+      "hits": 4,
+      "hitsPerShot": 0.024,
+      "damagePerMin": 94.6,
+      "meanPitchErr": -0.038,
+      "meanAbsPitchErr": 0.069,
+      "belowFeetShare": 0.144,
+      "aboveHeadShare": 0.048,
+      "fightShare": 0.052,
+      "reversalsPerMin": 2.76,
+      "idleShare": 0.081,
+      "missedEngageShare": 0.333,
+      "enemyInRangeShare": 0.057,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 96,
+            "missedN": 32,
+            "hitIds": {
+              "splat-bomb-far": 1,
+              "bomb": 1,
+              "s3-blaster-long": 4
+            },
+            "shots": 170,
+            "hits": 4,
+            "damage": 445,
+            "fightN": 873,
+            "pitchErr": -33.39713923901566,
+            "belowFeet": 126,
+            "aboveHead": 42,
+            "absErr": 60.409160158867834,
+            "idleN": 1367,
+            "aliveN": 16937,
+            "reversals": 13,
+            "pitchHist": {
+              "0.3": 6,
+              "0.2": 18,
+              "0.1": 20,
+              "0.0": 431,
+              "-0.1": 327,
+              "0.5": 2,
+              "0.4": 4,
+              "-0.2": 58,
+              "-0.3": 5,
+              "0.6": 2
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "s3-blaster-long",
+              "turf": 690.9637193556789,
+              "splats": 1,
+              "deaths": 3,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "s3-blaster-long",
+              "turf": 569.2916833191869,
+              "splats": 0,
+              "deaths": 3,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "s3-blaster-long",
+              "turf": 593.9961921436596,
+              "splats": 3,
+              "deaths": 4,
+              "specials": 0
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1104.0631226423507,
+              "splats": 1,
+              "deaths": 1,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1858.2367039015978,
+              "splats": 9,
+              "deaths": 3,
+              "specials": 3
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1268.9100270792255,
+              "splats": 1,
+              "deaths": 0,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1057.1182644120286,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weapon": "charger",
+      "splats": 3,
+      "deaths": 5,
+      "enemySplats": 6,
+      "turf": 814,
+      "shots": 0,
+      "hits": 3,
+      "hitsPerShot": 3,
+      "damagePerMin": 43.9,
+      "meanPitchErr": -0.005,
+      "meanAbsPitchErr": 0.023,
+      "belowFeetShare": 0.013,
+      "aboveHeadShare": 0.028,
+      "fightShare": 0.059,
+      "reversalsPerMin": 7.78,
+      "idleShare": 0.146,
+      "missedEngageShare": 0.289,
+      "enemyInRangeShare": 0.066,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 128,
+            "missedN": 37,
+            "hitIds": {
+              "inkVac": 2,
+              "charger": 3
+            },
+            "shots": 0,
+            "hits": 3,
+            "damage": 236.92307692307713,
+            "fightN": 1149,
+            "pitchErr": -5.616084060267805,
+            "belowFeet": 15,
+            "aboveHead": 32,
+            "absErr": 26.282656926485217,
+            "idleN": 2843,
+            "aliveN": 19433,
+            "reversals": 42,
+            "pitchHist": {
+              "0.0": 980,
+              "0.1": 54,
+              "0.2": 4,
+              "-0.1": 103,
+              "-0.3": 3,
+              "-0.2": 5
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "charger",
+              "turf": 1236.3084944419006,
+              "splats": 3,
+              "deaths": 1,
+              "specials": 3
+            },
+            {
+              "team": 0,
+              "weapon": "charger",
+              "turf": 498.22568021039893,
+              "splats": 0,
+              "deaths": 2,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "charger",
+              "turf": 708.7721250483153,
+              "splats": 0,
+              "deaths": 2,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1206.594297257308,
+              "splats": 2,
+              "deaths": 1,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 643.6653448981918,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1947.328959149537,
+              "splats": 3,
+              "deaths": 0,
+              "specials": 4
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1142.6251837064126,
+              "splats": 1,
+              "deaths": 2,
+              "specials": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weapon": "splatling",
+      "splats": 2,
+      "deaths": 3,
+      "enemySplats": 3,
+      "turf": 1400,
+      "shots": 1375,
+      "hits": 9,
+      "hitsPerShot": 0.007,
+      "damagePerMin": 45.7,
+      "meanPitchErr": -0.022,
+      "meanAbsPitchErr": 0.061,
+      "belowFeetShare": 0.148,
+      "aboveHeadShare": 0.055,
+      "fightShare": 0.025,
+      "reversalsPerMin": 17.58,
+      "idleShare": 0.045,
+      "missedEngageShare": 0.545,
+      "enemyInRangeShare": 0.044,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 88,
+            "missedN": 48,
+            "hitIds": {
+              "splatling": 9,
+              "waveBreaker": 1
+            },
+            "shots": 1375,
+            "hits": 9,
+            "damage": 255,
+            "fightN": 493,
+            "pitchErr": -10.657508806571897,
+            "belowFeet": 73,
+            "aboveHead": 27,
+            "absErr": 30.181464892236928,
+            "idleN": 896,
+            "aliveN": 20073,
+            "reversals": 98,
+            "pitchHist": {
+              "-0.1": 50,
+              "-0.2": 19,
+              "-0.3": 32,
+              "0.0": 341,
+              "0.2": 16,
+              "0.1": 33,
+              "0.3": 1,
+              "-0.4": 1
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "splatling",
+              "turf": 1644.7540727778628,
+              "splats": 1,
+              "deaths": 1,
+              "specials": 2
+            },
+            {
+              "team": 0,
+              "weapon": "splatling",
+              "turf": 993.0897812497102,
+              "splats": 0,
+              "deaths": 1,
+              "specials": 2
+            },
+            {
+              "team": 0,
+              "weapon": "splatling",
+              "turf": 1560.9448232188354,
+              "splats": 1,
+              "deaths": 1,
+              "specials": 3
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 408.68621519850643,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1543.5690078155767,
+              "splats": 1,
+              "deaths": 2,
+              "specials": 2
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1139.4540514093596,
+              "splats": 2,
+              "deaths": 0,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 951.6115671499821,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weapon": "roller",
+      "splats": 4,
+      "deaths": 11,
+      "enemySplats": 12,
+      "turf": 644,
+      "shots": 826,
+      "hits": 4,
+      "hitsPerShot": 0.005,
+      "damagePerMin": 135,
+      "meanPitchErr": 0.015,
+      "meanAbsPitchErr": 0.124,
+      "belowFeetShare": 0.142,
+      "aboveHeadShare": 0.15,
+      "fightShare": 0.074,
+      "reversalsPerMin": 4.27,
+      "idleShare": 0.068,
+      "missedEngageShare": 0.027,
+      "enemyInRangeShare": 0.023,
+      "runs": [
+        {
+          "m": {
+            "inRangeN": 37,
+            "missedN": 1,
+            "hitIds": {
+              "roller": 4,
+              "curling": 1
+            },
+            "shots": 826,
+            "hits": 4,
+            "damage": 600,
+            "fightN": 1183,
+            "pitchErr": 18.16742857588838,
+            "belowFeet": 168,
+            "aboveHead": 177,
+            "absErr": 146.5544053052475,
+            "idleN": 1087,
+            "aliveN": 16001,
+            "reversals": 19,
+            "pitchHist": {
+              "0.0": 572,
+              "-0.2": 84,
+              "-0.1": 241,
+              "0.1": 96,
+              "0.3": 30,
+              "0.2": 39,
+              "0.6": 9,
+              "0.5": 14,
+              "0.4": 16,
+              "-0.3": 20,
+              "-0.5": 10,
+              "-0.4": 11,
+              "0.7": 8,
+              "1.3": 3,
+              "1.2": 5,
+              "1.1": 4,
+              "1.0": 3,
+              "0.9": 5,
+              "0.8": 5,
+              "-0.6": 5,
+              "-0.8": 1,
+              "1.4": 1,
+              "-0.7": 1
+            }
+          },
+          "actors": [
+            {
+              "team": 0,
+              "weapon": "roller",
+              "turf": 506.08862647503565,
+              "splats": 1,
+              "deaths": 4,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "roller",
+              "turf": 683.1518605107993,
+              "splats": 2,
+              "deaths": 4,
+              "specials": 1
+            },
+            {
+              "team": 0,
+              "weapon": "roller",
+              "turf": 742.9871590447424,
+              "splats": 1,
+              "deaths": 3,
+              "specials": 2
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1133.1182006988681,
+              "splats": 1,
+              "deaths": 1,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1796.8559640078663,
+              "splats": 7,
+              "deaths": 1,
+              "specials": 2
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 1287.0256203766603,
+              "splats": 4,
+              "deaths": 2,
+              "specials": 1
+            },
+            {
+              "team": 1,
+              "weapon": "shooter",
+              "turf": 892.0739145153129,
+              "splats": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

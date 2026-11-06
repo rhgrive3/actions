@@ -84,6 +84,9 @@ export function modifiersFor(loadout, curves, points = abilityPoints(loadout)) {
   return result;
 }
 const STORAGE = 'inkwave.splatoon3.gear.v1';
+const gearFinalizers = new Set();
+/** Run `fn(actor, { transient, rescaled })` after every gear equip; returns a remover. */
+export function addGearFinalizer(fn) { gearFinalizers.add(fn); return () => gearFinalizers.delete(fn); }
 const DROP_ROLLER_BUFF_SECONDS = 3;
 const DROP_ROLLER_CONTROL_SECONDS = 0.3;
 // Keep landing admission aligned with Actor._horizontal's production movement
@@ -140,7 +143,9 @@ export function installGear(api, tuning) {
   dropRollerApi = api;
   configureSwimStealth(api, tuning);
   const reset = Actor.prototype.reset, setWeapon = Actor.prototype.setWeapon;
-  const refreshFlow = actor => refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve);
+  // Flow refreshes recompute some movement modifiers; finalizers (idempotent)
+  // re-apply match-wide rules on top of the recomputed values.
+  const refreshFlow = actor => { refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve); for (const finish of gearFinalizers) finish(actor, { transient: true, rescaled: false, flow: true }); };
   api.on('actor:flow', ({ actor }) => refreshFlow(actor));
   const key = a => conditionalKey(a, G.match, tuning.conditionalGear);
   const refreshConditional = a => { if (a.s3?.modifiers && a.s3.conditionalKey !== key(a)) equip(a, true); };
@@ -228,8 +233,12 @@ export function installGear(api, tuning) {
     m.stormThrowScale = gearCurve(ap.specialPower || 0, ...tuning.gearExtra.stormThrowScale);
     a.weapon.specialCost /= m.specialCharge ?? 1;
     // A temporary charge-rate bonus cannot create/delete already-filled gauge.
-    if (transient && beforeCost > 0 && Number.isFinite(beforeSpecial)) a.special = beforeSpecial / beforeCost * a.weapon.specialCost;
+    const rescaled = transient && beforeCost > 0 && Number.isFinite(beforeSpecial);
+    if (rescaled) a.special = beforeSpecial / beforeCost * a.weapon.specialCost;
     a.s3.conditionalKey = key(a);
+    // Match-wide rule owners (custom-match.mjs Mutators) finish every equip of
+    // every actor the same way, so a respawn or weapon change keeps them.
+    for (const finish of gearFinalizers) finish(a, { transient, rescaled });
     refreshFlow(a);
   }
   Actor.prototype.reset = function (...args) {

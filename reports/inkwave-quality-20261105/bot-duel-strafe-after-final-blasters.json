@@ -1,0 +1,78 @@
+{
+  "opponent": "shooter",
+  "targetMode": "strafe",
+  "distances": [
+    5,
+    9,
+    13
+  ],
+  "rounds": 3,
+  "seconds": 10,
+  "scope": "headless Bot duel in the Practice Range lane; not retail S3 data",
+  "results": [
+    {
+      "weapon": "blaster",
+      "rounds": 9,
+      "won": 8,
+      "lost": 0,
+      "draw": 1,
+      "damage": 4602,
+      "hits": 39,
+      "shots": 50,
+      "hitsPerShot": 0.78,
+      "meanTtk": 4.18,
+      "belowFeetShare": 0.015,
+      "raw": {
+        "rounds": 9,
+        "won": 8,
+        "lost": 0,
+        "draw": 1,
+        "shots": 50,
+        "hits": 39,
+        "damage": 4601.77447502271,
+        "ttk": [
+          3.8,
+          0.333,
+          2.6,
+          4.183,
+          5.95,
+          3.717,
+          6.083,
+          6.75
+        ],
+        "fightN": 750,
+        "belowFeet": 11
+      }
+    },
+    {
+      "weapon": "s3-blaster-long",
+      "rounds": 9,
+      "won": 4,
+      "lost": 0,
+      "draw": 5,
+      "damage": 3569,
+      "hits": 36,
+      "shots": 61,
+      "hitsPerShot": 0.59,
+      "meanTtk": 3.6,
+      "belowFeetShare": 0,
+      "raw": {
+        "rounds": 9,
+        "won": 4,
+        "lost": 0,
+        "draw": 5,
+        "shots": 61,
+        "hits": 36,
+        "damage": 3568.9152698436965,
+        "ttk": [
+          7.267,
+          0.25,
+          2.533,
+          4.333
+        ],
+        "fightN": 451,
+        "belowFeet": 0
+      }
+    }
+  ]
+}

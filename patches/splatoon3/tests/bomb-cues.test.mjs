@@ -33,23 +33,19 @@ for (const ghost of [false, true]) test(`Curling has no post-release explosion f
   assert.equal(JSON.stringify(w.b, (k, v) => k === 'owner' || k === 'group' ? undefined : v), before, 'display leaves the native record unchanged');
 });
 
-test('Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming', async () => {
+test('Splat Bomb shows no blast-radius forecast: no ground ring, the beep glows on the bomb only (owner request 2026-11-05)', async () => {
   const w = await world();
-  const first = w.draw().find(c => c.name === 'dangerRing');
-  assert.deepEqual(Array.from(first.args[0].toArray()), [0, .02, 0]);
-  const probes = w.probes(); w.draw(); assert.equal(w.probes(), probes, 'stationary cue reuses support');
-  const cached = w.hooks.bombs.get(w.b).cue; w.draw();
-  assert.equal(w.hooks.bombs.get(w.b).cue, cached, 'steady draw reuses its cue record');
+  assert.equal(w.draw().some(c => c.name === 'dangerRing'), false, 'no ring under an armed bomb');
   w.b.pos.set(3, .21, 4); w.b.beepT = 1;
   w.draw();
-  assert.deepEqual(Array.from(w.calls.find(c => c.name === 'dangerRing').args[0].toArray()), [3, .02, 4]);
-  assert.deepEqual(Array.from(w.calls.find(c => c.name === 'beepPulse').args[1].toArray()), [3, 0, 4]);
-  assert.equal(w.calls.filter(c => c.name === 'bounceSplash').length, 0, 'moving the marker does not repeat arming FX');
+  assert.equal(w.calls.some(c => c.name === 'dangerRing'), false);
+  const beep = w.calls.find(c => c.name === 'beepPulse');
+  assert.ok(beep, 'the fuse beep still pulses');
+  assert.deepEqual(Array.from(beep.args[0].toArray()), [3, .21, 4], 'pulse on the bomb body');
+  assert.equal(beep.args[1], null, 'no ground ring sized to the blast radius');
+  assert.equal(w.calls.filter(c => c.name === 'bounceSplash').length, 0, 'moving the bomb does not repeat arming FX');
   w.support(false); w.b.pos.y = 4; w.b.beepT = 2; w.draw();
-  assert.equal(w.calls.some(c => c.name === 'dangerRing'), false, 'ledge exit never leaves a ring at its first landing');
   assert.equal(w.calls.find(c => c.name === 'beepPulse').args[1], null);
-  w.support(true); w.b.pos.set(5, .21, 6); w.draw();
-  assert.deepEqual(Array.from(w.calls.find(c => c.name === 'dangerRing').args[0].toArray()), [5, .02, 6]);
 });
 
 for (const ghost of [false, true]) test(`Autobomb scan starts at actual floor contact and expires before chase (${ghost ? 'ghost' : 'owner'})`, async () => {

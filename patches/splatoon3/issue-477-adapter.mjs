@@ -154,7 +154,7 @@ export function adaptIssue477DualiesMotion(code) {
   code = replaceOnce(
     code,
     '    if (s?.phase !== \'roll\') {\n      // Native D..D+.28 recovery was still layering foot/hip offsets over the\n      // planted weapon pose and the first actual post-roll recoil impulses.\n      this.tumble = this.tumbleDrop = 0;\n      return;\n    }',
-    '    if (s?.phase !== \'roll\' && s?.phase !== \'startup\') {\n      this.tumble = this.tumbleDrop = 0;\n      return;\n    }\n    if (s?.phase === \'startup\') {\n      const { turnStart } = DUALIES_MOTION_CALIBRATION;\n      const tuckTime = turnStart * this.dodgeDur;\n      const result = dodge.call(this, P, tuckTime);\n      this.tumble = 0;\n      this.tumbleDrop = 0;\n      return result;\n    }',
+    '    if (s?.phase !== \'roll\' && s?.phase !== \'startup\') {\n      this.tumble = this.tumbleDrop = 0;\n      return;\n    }\n    if (s?.phase === \'startup\') {\n      // Lean into the tuck over the sourced startup, and lower the body with it,\n      // so neither the pose nor the 0.26 drop snaps on one frame.\n      const lean = dualiesStartupProgress(s.runner?.dodge);\n      const result = dodge.call(this, P, .1 * lean * this.dodgeDur);\n      this.tumble = 0;\n      this.tumbleDrop = DUALIES_ROLL_DROP * lean;\n      return result;\n    }',
     'dualies-motion _poseDodge startup anticipation tuck'
   );
 

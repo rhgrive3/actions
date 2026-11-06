@@ -1,0 +1,207 @@
+{
+  "opponent": "shooter",
+  "targetMode": "strafe",
+  "distances": [
+    5,
+    9,
+    13
+  ],
+  "rounds": 3,
+  "seconds": 10,
+  "scope": "headless Bot duel in the Practice Range lane; not retail S3 data",
+  "results": [
+    {
+      "weapon": "shooter",
+      "rounds": 9,
+      "won": 9,
+      "lost": 0,
+      "draw": 0,
+      "damage": 3280,
+      "hits": 86,
+      "shots": 130,
+      "hitsPerShot": 0.662,
+      "meanTtk": 3.26,
+      "belowFeetShare": 0.035,
+      "raw": {
+        "rounds": 9,
+        "won": 9,
+        "lost": 0,
+        "draw": 0,
+        "shots": 130,
+        "hits": 86,
+        "damage": 3280,
+        "ttk": [
+          3.35,
+          1.717,
+          2.317,
+          2.8,
+          1.417,
+          1.25,
+          6.7,
+          3.75,
+          6.05
+        ],
+        "fightN": 577,
+        "belowFeet": 20
+      }
+    },
+    {
+      "weapon": "blaster",
+      "rounds": 9,
+      "won": 7,
+      "lost": 0,
+      "draw": 2,
+      "damage": 4248,
+      "hits": 37,
+      "shots": 42,
+      "hitsPerShot": 0.881,
+      "meanTtk": 2.61,
+      "belowFeetShare": 0.095,
+      "raw": {
+        "rounds": 9,
+        "won": 7,
+        "lost": 0,
+        "draw": 2,
+        "shots": 42,
+        "hits": 37,
+        "damage": 4247.627559582592,
+        "ttk": [
+          1.2,
+          0.333,
+          2.267,
+          2.917,
+          2.95,
+          2.95,
+          5.633
+        ],
+        "fightN": 580,
+        "belowFeet": 55
+      }
+    },
+    {
+      "weapon": "s3-blaster-long",
+      "rounds": 9,
+      "won": 3,
+      "lost": 0,
+      "draw": 6,
+      "damage": 3862,
+      "hits": 38,
+      "shots": 62,
+      "hitsPerShot": 0.613,
+      "meanTtk": 2.03,
+      "belowFeetShare": 0.007,
+      "raw": {
+        "rounds": 9,
+        "won": 3,
+        "lost": 0,
+        "draw": 6,
+        "shots": 62,
+        "hits": 38,
+        "damage": 3862.0474627365847,
+        "ttk": [
+          3.333,
+          0.25,
+          2.517
+        ],
+        "fightN": 714,
+        "belowFeet": 5
+      }
+    },
+    {
+      "weapon": "charger",
+      "rounds": 9,
+      "won": 3,
+      "lost": 0,
+      "draw": 6,
+      "damage": 5175,
+      "hits": 41,
+      "shots": 0,
+      "hitsPerShot": null,
+      "meanTtk": 7.39,
+      "belowFeetShare": 0.004,
+      "raw": {
+        "rounds": 9,
+        "won": 3,
+        "lost": 0,
+        "draw": 6,
+        "shots": 0,
+        "hits": 41,
+        "damage": 5174.615384615387,
+        "ttk": [
+          3.583,
+          9.217,
+          9.383
+        ],
+        "fightN": 765,
+        "belowFeet": 3
+      }
+    },
+    {
+      "weapon": "splatling",
+      "rounds": 9,
+      "won": 6,
+      "lost": 0,
+      "draw": 3,
+      "damage": 6140,
+      "hits": 195,
+      "shots": 333,
+      "hitsPerShot": 0.586,
+      "meanTtk": 5.94,
+      "belowFeetShare": 0.129,
+      "raw": {
+        "rounds": 9,
+        "won": 6,
+        "lost": 0,
+        "draw": 3,
+        "shots": 333,
+        "hits": 195,
+        "damage": 6140,
+        "ttk": [
+          2.533,
+          2.417,
+          4.05,
+          9.867,
+          7.717,
+          9.05
+        ],
+        "fightN": 688,
+        "belowFeet": 89
+      }
+    },
+    {
+      "weapon": "roller",
+      "rounds": 9,
+      "won": 9,
+      "lost": 0,
+      "draw": 0,
+      "damage": 2885,
+      "hits": 22,
+      "shots": 180,
+      "hitsPerShot": 0.122,
+      "meanTtk": 1.19,
+      "belowFeetShare": 0.099,
+      "raw": {
+        "rounds": 9,
+        "won": 9,
+        "lost": 0,
+        "draw": 0,
+        "shots": 180,
+        "hits": 22,
+        "damage": 2884.6289113012426,
+        "ttk": [
+          0.417,
+          0.417,
+          0.433,
+          0.45,
+          0.467,
+          0.45,
+          2.65,
+          2.783,
+          2.667
+        ],
+        "fightN": 283,
+        "belowFeet": 28
+      }
+    }
+  ]
+}

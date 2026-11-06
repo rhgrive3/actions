@@ -27,6 +27,45 @@ export function dualiesTurnFraction(progress, calibration = DUALIES_MOTION_CALIB
     + (-2 * v3 + 3 * v2) * endValue + (v3 - v2) * h * m1));
 }
 
+// Fraction of the roll's ground distance covered at progress u, for the same
+// profile that moves the actor: geometric per-frame retention `kd` when the
+// weapon sources MoveStepKd (catalogue Dualies), otherwise the cubic default
+// 1.5u - .5u^3 shared by movement-physics and catalog-dualies-motion.
+export function dualiesRollTravelFraction(progress, kd = null, durationSeconds = 0) {
+  const u = clamp01(progress);
+  if (kd > 0 && kd < 1 && durationSeconds > 0) {
+    const log = Math.log(kd) * durationSeconds * 60;
+    return clamp01(Math.expm1(log * u) / Math.expm1(log));
+  }
+  return clamp01(1.5 * u - .5 * u * u * u);
+}
+
+// Roll turn driven by distance, not by a separate clock: the tucked body turns
+// in step with the ground it covers (fast at the push-off, slowing with the
+// braking), completes one turn when 96 % of the distance is covered, and eases
+// the last 15 % of the turn into the landing (C1, no snap at either end).
+// INKWAVE calibration; no Nintendo joint curve is published.
+export const DUALIES_ROLL_TURN = Object.freeze({ completeAtTravel: .96, landingEase: .15 });
+export function dualiesRollTurnFraction(progress, motion = null) {
+  const travel = dualiesRollTravelFraction(progress, motion?.kd, motion?.dur);
+  const t = clamp01(travel / DUALIES_ROLL_TURN.completeAtTravel), e = DUALIES_ROLL_TURN.landingEase;
+  if (t <= 1 - e) return t;
+  const x = (t - (1 - e)) / e;
+  return (1 - e) + e * (-x * x * x + x * x + x);
+}
+
+// Startup (sourced ChargeFrame / legacy 4F) leans into the tuck progressively
+// instead of snapping into it on the first frame, and drops the body by the
+// same amount the roll starts with, so the roll does not jump down 0.26.
+export function dualiesStartupProgress(dodge) {
+  const total = dodge?.startupDur;
+  if (!(total > 0)) return 1;
+  const remaining = Number.isFinite(dodge.startup) ? dodge.startup : 0;
+  const p = clamp01(1 - remaining / total);
+  return p * p * (3 - 2 * p);
+}
+export const DUALIES_ROLL_DROP = .26; // native tumbleDrop at full tuck
+
 export const DUALIES_MOTION_CALIBRATION = Object.freeze({
   status: 'visual calibration on the public INKWAVE rig; not Nintendo joint data',
   turnStart: .12, turnCruise: .62, turnAtCruise: .76, turnEnd: .94,
@@ -165,12 +204,16 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
       this.tumble = this.tumbleDrop = 0;
       return;
     }
-    const result = dodge.call(this, P, s.progress * this.dodgeDur);
-    // Keep original native tuck, weapon grips and IK. One rotation velocity
-    // spans the drive and unwind phases; no independent easing at the shared
-    // keyframe. Root-local axis is reprojected from the fixed world dodge
-    // direction above, so camera yaw does not rotate the physical tumble.
-    this.tumble = s.progress < 1 ? 2 * Math.PI * dualiesTurnFraction(s.progress) : 0;
+    // A roll that had a startup is already tucked: start the native pose at
+    // its full-tuck point instead of un-tucking for one frame.
+    const motion = s.remoteClock ? null : s.runner?.dodge;
+    const tucked = motion?.startupDur > 0 ? Math.max(s.progress, .1) : s.progress;
+    const result = dodge.call(this, P, tucked * this.dodgeDur);
+    // Keep original native tuck, weapon grips and IK. The turn follows the
+    // roll's own distance profile (see dualiesRollTurnFraction). Root-local
+    // axis is reprojected from the fixed world dodge direction above, so
+    // camera yaw does not rotate the physical tumble.
+    this.tumble = s.progress < 1 ? 2 * Math.PI * dualiesRollTurnFraction(s.progress, motion) : 0;
     this.tumbleX = s.z; this.tumbleZ = -s.x;
     return result;
   };

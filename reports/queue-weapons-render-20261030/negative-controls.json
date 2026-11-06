@@ -1,0 +1,145 @@
+{
+  "scope": "Actual source functions/classes and real Three.js, with explicit fixture boundaries; test-only unsafe candidates are never shipped",
+  "controls": [
+    {
+      "slug": "special-shapepool-full-cap-birth-shift-batching",
+      "baseline": {
+        "length": 2,
+        "retired": true,
+        "firstIsSecond": true
+      },
+      "candidate": {
+        "length": 3,
+        "retired": true,
+        "firstIsSecond": false
+      },
+      "reason": "An escaped Array alias cannot be repaired by a getter on the pool; preserving immediate dense membership requires compaction before that observation."
+    },
+    {
+      "slug": "special-ribbonpool-recycle-detached-sample-rings",
+      "baseline": {
+        "afterRetire": 0,
+        "pointBefore": [
+          1,
+          2,
+          3,
+          0
+        ],
+        "pointAfter": [
+          1,
+          2,
+          3,
+          0
+        ],
+        "oldPublicLength": 0
+      },
+      "candidate": {
+        "afterRetire": 4,
+        "pointBefore": [
+          1,
+          2,
+          3,
+          0
+        ],
+        "pointAfter": [
+          90,
+          80,
+          70,
+          1
+        ],
+        "oldPublicLength": 0
+      },
+      "reason": "The issue protects the remaining pts[0], but earlier published sample points and the samples Array itself can also remain referenced."
+    },
+    {
+      "slug": "special-spritepool-reuse-full-frame-eviction-winner",
+      "baseline": [
+        2,
+        3
+      ],
+      "candidate": [
+        1,
+        3
+      ],
+      "reason": "No mutation version exists for the exposed Float32Array. Checking the old winner alone cannot observe a different slot becoming oldest."
+    },
+    {
+      "slug": "splashdown-fist-distant-cosmetic-sprite-emission-gate",
+      "baselineVisible": [
+        2
+      ],
+      "candidateVisible": [
+        1,
+        2
+      ],
+      "reason": "Registration participates in global eviction; retaining RNG consumption alone does not preserve visible pool output. No guaranteed future multi-camera visibility contract exists."
+    },
+    {
+      "slug": "legacy-charger-beam-active-record-reuse",
+      "freshTrails": 2,
+      "reusedTrails": 1,
+      "reason": "FXHooks.seenBeams is a lifetime WeakSet keyed by the record. Native flights also retain job.beam, and transport adds _netPeer/_netBorn/_netBornTick/_netOwner/_netSteps beyond the four proposed fields."
+    },
+    {
+      "slug": "wave-breaker-overlap-marking-beam-roster-and-instance-coalescing",
+      "currentSecondDevice": 0,
+      "cachedSecondDevice": 1,
+      "reason": "Same render timestamp does not establish roster stability. Beam output also applies alpha discard and tone mapping before additive blend; multiplying pre-shader alpha is not a proven pixel-equivalent coalescing rule."
+    },
+    {
+      "slug": "native-roller-vertical-flight-reuse-seven-vectors",
+      "baselineRetainedPoint": [
+        1,
+        2,
+        3
+      ],
+      "candidateRetainedPoint": [
+        9,
+        8,
+        7
+      ],
+      "reason": "The null field is a release convention, not evidence that a debugger/callback has released an old flight/vector reference. No non-escape ownership capability exists for this field."
+    },
+    {
+      "slug": "tacticooler-empty-roster-skip-actor-movement-snapshot",
+      "baselineX": -0.8600000004632569,
+      "candidateX": 3,
+      "reason": "Actual installed movement/resolve wrappers and native sphere/stand sweep, with a synchronous stand birth in the delegated movement; zero-at-entry is not zero-until-resolve."
+    },
+    {
+      "slug": "tacticooler-collider-reuse-live-stand-snapshot-with-invalidation",
+      "baselineAfterSameTimeMove": false,
+      "candidateAfterSameTimeMove": true,
+      "reason": "Stand pose, expiry, retirement, roster and Tower axes are mutable without a shared revision. The original per-query live scan is retained until all writers can provide trustworthy invalidation."
+    },
+    {
+      "slug": "turf-squidspawn-idle-aim-supported-target-physics-probe-gate",
+      "first": {
+        "x": 4,
+        "y": 0,
+        "z": 6
+      },
+      "second": {
+        "x": 4,
+        "y": 2,
+        "z": 6
+      },
+      "queryStamp": 5,
+      "reason": "The real target probe delegates to mutable ground/resolve behavior. No authenticated static collision epoch is exposed; matching coordinates or query stamp cannot authorize reuse."
+    },
+    {
+      "slug": "special-motion-trizooka-inkvac-targeted-ik-matrix-refresh",
+      "baseline": {
+        "callbacks": 1,
+        "otherWorldX": 7,
+        "handError": 0.37416573867739417
+      },
+      "candidate": {
+        "callbacks": 0,
+        "otherWorldX": 0,
+        "handError": 0.37416573867739417
+      },
+      "reason": "The actual fit body can match all three immediately measured nodes while changing other synchronous consumers. Unlike bomb preview there is no enclosing whole-rig rollback transaction. Full traversal remains until guarded downstream equivalence and device benefit are established."
+    }
+  ]
+}
