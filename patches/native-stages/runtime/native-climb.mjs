@@ -16,6 +16,7 @@ function findMissingClimbSample(samples, paint, team, actorY) {
 }
 import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
+import { Physics } from '../../../src/game/physics.js';
 const terrainRadius=squid=>{const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;return Number.isFinite(raw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?raw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;};
 const _v0=new THREE.Vector3(),_v1=new THREE.Vector3(),_v2=new THREE.Vector3();
 
@@ -68,16 +69,40 @@ function sourceClimbAtLine(graph,lower,upper,first,direction,length,rise,offset,
  return {to:upper.id,type:'climb',cost:length+rise*1.8+distance*2+4,climb:{lower:[lower.x,lower.y,lower.z],upper:[upper.x,upper.y,upper.z],normal:normal.toArray(),spine:[spine.x,lower.y,spine.z],paintStance:stance.toArray(),samples,...(checkMargin?{contactMargin:.05}:{}),assurance:'Inferred source paintable wall, supported firing stance and live capsule corridor; retail navigation unverified'}};
 }
 
+/** First edge to toId, as Array.prototype.find returned it, without a closure. */
+function firstEdgeTo(list,toId){
+ if(!list)return undefined;
+ for(let i=0;i<list.length;i++){const e=list[i];if(e.to===toId)return e;}
+ return undefined;
+}
+/** A waypoint's swim-capsule clearance only changes with the static collision
+ * world, so it is cached per nav node while no moving block or dynamic/custom
+ * body test is installed. Any of those falls back to the live query. */
+function waypointSwimBodyFitsLive(P,to,radius,lift,height){return P.bodyFits(_v0.set(to.x,to.y+.01,to.z),radius,lift,height,true,.015);}
+function waypointSwimBodyFits(G,N,to,radius){
+ const L=G.level,P=G.physics,lift=PLAYER.squidBodyLift,height=PLAYER.squidHeight;
+ if(!L?.native||P?.level!==L||Object.hasOwn(P,'bodyFits')||!Number.isInteger(L.staticBlockCount)||L.blocks?.length!==L.staticBlockCount||
+    (P.dynamic&&P.dynamic.bodyFits!==Physics.prototype.bodyFits)||!Number.isInteger(to.id)||N?.nodes?.[to.id]!==to)return waypointSwimBodyFitsLive(P,to,radius,lift,height);
+ let cache=L._nativeClimbWaypointFit;
+ if(!cache||cache.physics!==P||cache.bodyFitsFn!==P.bodyFits||cache.world!==L.triangleWorld||cache.revision!==L.collisionRevision||
+    cache.nav!==N||cache.navNodes!==N.nodes||cache.radius!==radius||cache.lift!==lift||cache.height!==height)
+  cache=L._nativeClimbWaypointFit={physics:P,bodyFitsFn:P.bodyFits,world:L.triangleWorld,revision:L.collisionRevision,nav:N,navNodes:N.nodes,radius,lift,height,slots:[]};
+ const slot=cache.slots[to.id];
+ if(slot&&slot.x===to.x&&slot.y===to.y&&slot.z===to.z)return slot.fits;
+ const fits=waypointSwimBodyFitsLive(P,to,radius,lift,height);
+ cache.slots[to.id]={x:to.x,y:to.y,z:to.z,fits};
+ return fits;
+}
 /** Travel routes are sampled for the human body. Keep ordinary squid input only
  * where the live, wider swim capsule also clears the next source support. */
 export function nativeClimbTravelForm(brain,G){
  if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.a.intent.squid||brain.a.climbing)return;
  const a=brain.a,N=G.nav,from=N.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N.nodes[brain.path?.[brain.pi]];
  if(!to)return;
- const edge=from?.nb.find(e=>e.to===to.id),p=_v0.copy(a.pos),radius=terrainRadius(true);
- const clear=point=>G.physics.bodyFits(point,radius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015);
- p.set(to.x,to.y+.01,to.z);
- if(edge?.type!=='walk'||!clear(a.pos)||!clear(p))a.intent.squid=false;
+ const edge=firstEdgeTo(from?.nb,to.id);
+ if(edge?.type!=='walk'){a.intent.squid=false;return;}
+ const radius=terrainRadius(true);
+ if(!G.physics.bodyFits(a.pos,radius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015)||!waypointSwimBodyFits(G,N,to,radius))a.intent.squid=false;
 }
 
 /** Existing BotBrain selects paths; this owns ordinary input for their current
