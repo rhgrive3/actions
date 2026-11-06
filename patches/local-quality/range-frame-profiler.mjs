@@ -72,6 +72,8 @@ export function buildCompactProfilerReport(raw, shooterAB = null) {
       } : undefined,
       cautions:ab.cautions,
     } : undefined,
+    // Shared text must still say where the capture lives (one short line).
+    debugModePrivacy:'Device-local only; no automatic upload or retained log.',
   };
   return JSON.stringify(out);
 }
