@@ -18,7 +18,7 @@ function fakeContext(durations) {
     state: 'running', currentTime: 10,
     createGain: () => ({ gain: param(), connect() {}, disconnect() {} }),
     createBufferSource() {
-      const s = { buffer: null, onended: null, connect() {}, disconnect() {}, start(at) { started.push({ s, at }); }, stop(at) { stopped.push(at); } };
+      const s = { buffer: null, onended: null, connect() {}, disconnect() {}, start(at, offset = 0) { started.push({ s, at, offset }); }, stop(at) { stopped.push(at); } };
       return s;
     },
     decodeAudioData: async bytes => ({ duration: durations.get(bytes.byteLength), sampleRate: 48000 }),
@@ -67,8 +67,12 @@ test('cues keep the synthesized sound until decoded, then play the recording on 
   const meter = e.play('judge_drumroll'), win = e.play('victory_fanfare');
   assert.equal(meter.recorded, true); assert.equal(win.recorded, true);
   assert.equal(started.length, 2);
+  assert.equal(started[0].offset, 0, 'the meter starts at its head');
+  assert.equal(started[1].offset, MATCH_RECORDINGS.victory_fanfare.lead, 'the victory jingle starts after its silence');
   assert.deepEqual(e.synth, ['judge_drumroll'], 'no synthesized duplicate once recorded');
-  assert.equal(e.recordedCueSeconds('defeat_jingle'), 6.922);
+  // The jingles skip their leading silence (owner request 2026-11-07).
+  assert.ok(Math.abs(e.recordedCueSeconds('defeat_jingle') - (6.922 - MATCH_RECORDINGS.defeat_jingle.lead)) < 1e-9);
+  assert.ok(MATCH_RECORDINGS.victory_fanfare.lead > .3 && MATCH_RECORDINGS.defeat_jingle.lead > .3);
   assert.equal(e.recordedCueSeconds('reveal'), null);
   // Unrelated sounds are untouched.
   assert.deepEqual(e.play('judge_reveal'), { synth: 'judge_reveal' });

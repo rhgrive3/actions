@@ -25,6 +25,8 @@ export const SPLATANA_WAVE = Object.freeze({
   flightSpray: 2,          // droplets per drawn flight frame
   dissolveSpray: 12,       // droplets released when the wave breaks
   dropSize: [0.022, 0.05], // fx.drop radius (m); native splashes use 0.012-0.05
+  // Owner request 2026-11-07: horizontal-swing droplets drawn at 20% size.
+  horizontalDropScale: 0.2,
   dropForward: [0.06, 0.16], // share of the carried wave speed
   dropUp: [0.8, 2.6],      // m/s
 });
@@ -77,7 +79,7 @@ function spray(W, fx, rec, at, n, speed, seedBase) {
     dv.copy(rec.f).multiplyScalar(speed * (f0 + (f1 - f0) * h2));
     if (rec.horizontal) dv.addScaledVector(x, a * 0.9); else dv.addScaledVector(y, a * 0.6);
     dv.y += u0 + (u1 - u0) * h3;
-    fx.drop(v, dv, rec.color, { size: s0 + (s1 - s0) * h2, life: 0.45 + 0.35 * h3, gravity: 1, stretch: 1, quiet: true });
+    fx.drop(v, dv, rec.color, { size: (s0 + (s1 - s0) * h2) * (rec.kind === 'slash-h' ? SPLATANA_WAVE.horizontalDropScale : 1), life: 0.45 + 0.35 * h3, gravity: 1, stretch: 1, quiet: true });
   }
 }
 

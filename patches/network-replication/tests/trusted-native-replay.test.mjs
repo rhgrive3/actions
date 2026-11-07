@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../../splatoon3/runtime/special-paint-rate.mjs';
 import {MessageChannel} from 'node:worker_threads';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 
@@ -212,7 +213,7 @@ test('worker/session cleanup releases every owned resource and lease despite a d
 });
 test('native Crab Tank armor absorption is a one-use effect even with zero player HP delta',()=>{
  const weapon=Object.values(f.WEAPONS).find(w=>w.special==='crabTank').id;
- const w=setup({roster:[spawn(1,0,0),spawn(2,1,7,weapon)],initializeActor(a,r){a.spawnAt(V(...r.position),r.yaw);if(r.nid===2)a.addTurf(a.specialCost());}});
+ const w=setup({roster:[spawn(1,0,0),spawn(2,1,7,weapon)],initializeActor(a,r){a.spawnAt(V(...r.position),r.yaw);if(r.nid===2)a.addTurf(a.specialCost()/PAINT_RATE);}});
  try{
   assert.equal(w.step({2:{special:true}}).ok,true);
   for(let i=0;i<40;i++)assert.equal(w.step().ok,true);

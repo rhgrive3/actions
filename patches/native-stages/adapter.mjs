@@ -184,7 +184,7 @@ const game = new Game();`);
   once('if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
    'if (fid < 0 || (!contactFace && !lockFace && faceOnly >= 0 && fid !== faceOnly)) continue;');
   once('          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
-   '          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f))) continue;');
+   '          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f, center)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f, center))) continue;');
   once('    const ids = this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));',
    '    const ids = this.level.queryBlocksBand ? this.level.queryBlocksBand(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []), y, 2.5, 1) : this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));');
   once('    const shouldRebuild = this._mipsDirty &&', '    const shouldRebuild = !this.level.native && this._mipsDirty &&');

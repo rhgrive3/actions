@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../../splatoon3/runtime/special-paint-rate.mjs';
 import test from 'node:test';
 import { combatWorld } from './combat-integration-fixture.mjs';
 
@@ -40,7 +41,7 @@ test('combined lethal owner hit transfers exact original burst credit once throu
     defender.net._sendTick(); const terminal = defender.wire.at(-1).data;
     shooter.deliver('B', terminal);
     assert.equal(shooter.attacker.stats.turf, .123456789);
-    assert.equal(shooter.attacker.special, .123456789);
+    assert.equal(shooter.attacker.special, .123456789 * PAINT_RATE);
     assert.equal(shooter.attacker.stats.splats, 1);
     assert.equal(shooter.paint.length, 1, 'one replicated world paint, no repaint for scoring');
     shooter.deliver('B', terminal);
@@ -62,7 +63,7 @@ test('reverse ownership retains the exact same splat reward', async () => {
     flushLethal(defender, defender.attacker);
     defender.net._sendTick(); shooter.deliver('A', defender.wire.at(-1).data);
     assert.equal(shooter.victim.stats.turf, .123456789);
-    assert.equal(shooter.victim.special, .123456789);
+    assert.equal(shooter.victim.special, .123456789 * PAINT_RATE);
     assert.equal(shooter.victim.stats.splats, 1);
     assert.equal(defender.victim.stats.turf, 0);
   } finally { shooter.dispose(); defender.dispose(); }
@@ -192,7 +193,7 @@ test('offline damage and death-burst rewards remain native with no network owner
     assert.equal(world.victim.alive, true);
     flushLethal(world);
     assert.equal(world.attacker.stats.turf, .123456789);
-    assert.equal(world.attacker.special, .123456789);
+    assert.equal(world.attacker.special, .123456789 * PAINT_RATE);
     assert.equal(world.paint.length, 1);
   } finally { world.dispose(); }
 });
@@ -262,14 +263,14 @@ test('remote scorer proxy converges through the native integer-precision reward 
     b.net.onMessage('A', a.wire.at(-1).data); flushLethal(b); b.net._sendTick();
     a.deliver('B', b.wire.at(-1).data);
     assert.equal(a.attacker.stats.turf, area);
-    assert.equal(a.attacker.special, area);
+    assert.equal(a.attacker.special, area * PAINT_RATE);
     assert.equal(b.attacker.stats.turf, 0);
     a.net._sendTick(); const owned = a.wire.at(-1).data;
     b.net.onMessage('A', owned);
     const peer = b.net.peers.get('A'); peer.tr = owned.ts;
     b.net._sample(b.attacker, peer.tr, 1 / 60); b.net.applyRemote(b.attacker, 1 / 60);
     assert.equal(b.attacker.stats.turf, Math.round(area));
-    assert.equal(b.attacker.special, Math.round(area));
+    assert.equal(b.attacker.special, Math.round(area * PAINT_RATE));
     assert.equal(a.attacker.stats.turf, area, 'owner preserves original fractional reward');
     assert.equal(a.paint.length, 1); assert.equal(b.paint.length, 1);
   } finally { a.dispose(); b.dispose(); }

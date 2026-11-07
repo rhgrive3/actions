@@ -14,8 +14,11 @@ const assetURL = name => {
   catch { return null; }
 };
 export const MATCH_RECORDINGS = Object.freeze({
-  victory_fanfare: Object.freeze({ file: 'result_victory_jingle.mp3', bus: 'music', gain: 0.7, seconds: 5.825, maxBytes: 400 * 1024 }),
-  defeat_jingle: Object.freeze({ file: 'result_defeat_jingle.mp3', bus: 'music', gain: 0.7, seconds: 6.922, maxBytes: 400 * 1024 }),
+  // `lead`: seconds of leading silence skipped at playback (owner request
+  // 2026-11-07: the pause after the judge's flag was too long). Measured with
+  // ffmpeg silencedetect at -45 dB: victory 0.488 s, defeat 0.446 s; ~40 ms kept.
+  victory_fanfare: Object.freeze({ file: 'result_victory_jingle.mp3', bus: 'music', gain: 0.7, seconds: 5.825, maxBytes: 400 * 1024, lead: 0.44 }),
+  defeat_jingle: Object.freeze({ file: 'result_defeat_jingle.mp3', bus: 'music', gain: 0.7, seconds: 6.922, maxBytes: 400 * 1024, lead: 0.4 }),
   judge_drumroll: Object.freeze({ file: 'UI_VS_ResultMeter_00.mp3', bus: 'sfx', gain: 1.5, seconds: 2.544, maxBytes: 200 * 1024 }),
 });
 const INSTALLED = Symbol.for('inkwave.match-recordings.v1');
@@ -92,7 +95,8 @@ function playBuffer(engine, name, buffer, o) {
     try { source.disconnect(); gain.disconnect(); } catch { /* released */ }
   };
   state.voices.add(voice);
-  source.start(at);
+  const lead = Math.max(0, Math.min(buffer.duration - 0.05, Number(spec.lead) || 0));
+  source.start(at, lead);
   return voice;
 }
 
@@ -129,7 +133,7 @@ export function installMatchRecordings(AudioEngine) {
   // Seconds until a recorded cue (if it will be the one that plays) finishes.
   P.recordedCueSeconds = function (name) {
     const buffer = this._matchRecordings?.ctx === this.ctx ? this._matchRecordings?.buffers.get(name) : null;
-    return buffer ? buffer.duration : null;
+    return buffer ? Math.max(0, buffer.duration - Math.max(0, Number(MATCH_RECORDINGS[name]?.lead) || 0)) : null;
   };
   P.preloadMatchRecordings = function (options) { return preloadMatchRecordings(this, options); };
 }

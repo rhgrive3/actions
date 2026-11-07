@@ -25,11 +25,12 @@ const bufferResizable = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, '
 
 function coverageIndex(paint) {
   const cached = paint._s3CoverageIndex;
-  if (cached && cached.grid === paint.grid && cached.dead === paint.dead && cached.faces === paint.paintFaces) return cached;
+  const ignore = paint.turfIgnore || null;
+  if (cached && cached.grid === paint.grid && cached.dead === paint.dead && cached.faces === paint.paintFaces && cached.ignore === ignore) return cached;
   let n = 0;
   for (const f of paint.paintFaces) {
     if (!f.turf) continue;
-    for (let k = f.grid; k < f.grid + f.nu * f.nv; k++) if (!paint.dead[k]) n++;
+    for (let k = f.grid; k < f.grid + f.nu * f.nv; k++) if (!paint.dead[k] && !ignore?.[k]) n++;
   }
   const cells = new Int32Array(n), weights = new Float64Array(n);
   let area = 0, i = 0;
@@ -37,20 +38,20 @@ function coverageIndex(paint) {
     if (!f.turf) continue;
     const weight = f.cu * f.cv * Math.max(0, f.n.y);
     for (let k = f.grid; k < f.grid + f.nu * f.nv; k++) {
-      if (paint.dead[k]) continue;
+      if (paint.dead[k] || ignore?.[k]) continue;
       area += weight;
       cells[i] = k; weights[i] = weight; i++;
     }
   }
-  return (paint._s3CoverageIndex = { grid: paint.grid, dead: paint.dead, faces: paint.paintFaces, cells, weights, area });
+  return (paint._s3CoverageIndex = { grid: paint.grid, dead: paint.dead, faces: paint.paintFaces, ignore, cells, weights, area });
 }
 export function floorCoverage(paint) {
-  const totals = [0, 0]; let area = 0;
+  const totals = [0, 0], ignore = paint.turfIgnore || null; let area = 0;
   for (const f of paint.paintFaces) {
     if (!f.turf) continue;
     const weight = f.cu * f.cv * Math.max(0, f.n.y);
     for (let k = f.grid; k < f.grid + f.nu * f.nv; k++) {
-      if (paint.dead[k]) continue;
+      if (paint.dead[k] || ignore?.[k]) continue;
       area += weight;
       const team = paint.grid[k];
       if (team === 1 || team === 2) totals[team - 1] += weight;
@@ -170,7 +171,8 @@ export function installScoring({ PaintSystem }) {
   PaintSystem.prototype.coverage = function (out = null) {
     observePaintVersion(this);
     if (this._s3CoverageVersion !== this._s3TurfVersion || this._s3CoverageGrid !== this.grid ||
-        this._s3CoverageDead !== this.dead || this._s3CoverageFaces !== this.paintFaces) {
+        this._s3CoverageDead !== this.dead || this._s3CoverageFaces !== this.paintFaces ||
+        this._s3CoverageIgnore !== (this.turfIgnore || null)) {
       // Capture the same index/grid reads as indexedFloorCoverage. Comparing
       // identities through the captured index avoids extra public getter reads.
       const index = coverageIndex(this), grid = this.grid;
@@ -180,6 +182,7 @@ export function installScoring({ PaintSystem }) {
       this._s3CoverageFullScan = false;
       this._s3CoverageVersion = this._s3TurfVersion; this._s3CoverageGrid = this.grid;
       this._s3CoverageDead = this.dead; this._s3CoverageFaces = this.paintFaces;
+      this._s3CoverageIgnore = index.ignore;
     }
     if (out) { out[0] = this._s3Coverage[0]; out[1] = this._s3Coverage[1]; out.length = 2; return out; }
     return this._s3Coverage.slice();

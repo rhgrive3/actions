@@ -22,7 +22,9 @@ function sweep(level,from,to,r0=.2,r1=r0,skip=true){return f.sweptWorldHit(new f
 
 test('catalogue collision bypasses enclosing source bookkeeping boxes and hits the actual thin triangle',()=>{
  const level=stage();level.native=false;const before=sweep(level,[-5,.5,.5],[5,.5,.5]);level.native=true;
- assert.equal(before.hit,true);assert.equal(before.dist,0);assert.equal(before.face,-1);
+ // The enclosing object box is kept out of every block query, so even the
+ // legacy OBB path no longer stops at its boundary (formerly dist 0, face -1).
+ assert.equal(before.hit,true);assert.notEqual(before.block,level.objectBlock[0],'legacy OBB query never meets the object box');close(before.dist,4.8);
  const actual=sweep(level,[-5,.5,.5],[5,.5,.5]);assert.equal(actual.hit,true);assert.equal(actual.triangle,0);assert.equal(actual.face,0);
  close(actual.dist,4.8);close(actual.point.x,0);close(actual.point.y,.5);close(actual.normal.x,-1);
  const empty=sweep(level,[-5,1.7,1.7],[5,1.7,1.7],.1);assert.equal(empty.hit,false);assert.equal(empty.triangle,-1);assert.equal(empty.block,-1);assert.equal(empty.face,-1);

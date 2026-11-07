@@ -36,9 +36,10 @@ export const OWNER_SFX = Object.freeze({
   swim: Object.freeze({ file: 'sfx_swimming_in_ink.mp3', gain: 0.186, seconds: 20.28, maxBytes: 1024 * KB, reverb: 0.03, loop: true, crossfade: 0.35 }),
   // Title screen: the A press (menus.js _titleGo plays it in place of ui_confirm). Provisional gain: the
   // loudest 300 ms RMS of this file scaled to the level of ui_decide at its gain. Not yet heard in-game.
-  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.062, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
+  // Owner request 2026-11-07: both title cues were too quiet; raised by about 4.4 dB (x1.66).
+  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.103, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
   // Title screen: a single tone 300 ms after the A press (menus.js _titleGo). No synthesized equivalent.
-  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.025, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
+  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.0415, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
   // Battle start GO (main.js plays go_horn): the same A recording, level matched to the special-gauge cue.
   go_horn: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.125, seconds: 2.55, maxBytes: 128 * KB }),
   // Judge's decision moment (hud.js judge_reveal). Level matched to the special-gauge cue.

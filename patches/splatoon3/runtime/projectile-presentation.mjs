@@ -173,6 +173,11 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
   for(let i=queue.length-1;i>=0&&count<capacity&&drawn<48;i--){
     const d=queue[i];
     if(!d?.owner?.color||!d.pos||!d.vel||d.owner.remote)continue;
+    // Owner request 2026-11-07 (visual only): Tri-Slosher draws its flight
+    // with the ink volume, so its own falling beads mixed two looks; they are
+    // no longer drawn (paint, fall and count unchanged). Dread Wringer's drop
+    // is drawn by the same volume as its first hit when that owner took it.
+    if(d.sourceActor==='WeaponSlosherDiffusion'||d._iwVolumeDrawn)continue;
     if(cameraPosition&&cameraPosition.distanceToSquared(d.pos)>900)continue;
     const speed=d.vel.length();
     const tri=d.sourceActor==='WeaponSlosherDiffusion';
@@ -199,7 +204,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Owner request 2026-11-06 (visual only): the floor-paint drops that fall
     // straight down from Shooter / Dualies shots and the Slosher (bucket) are
     // drawn at 20% of their previous size. Paint, physics and count unchanged.
-    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1)*(d.sourceActor==='WeaponSlosherStrong'?.5:1)*smallFloorDropScale(d));
+    scale.setScalar((strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius)*(tri?HISSEN_PRESENTATION_SCALE:1)*(d.sourceActor==='WeaponSlosherStrong'?.5:1)*smallFloorDropScale(d)*(d.visualScale>0?d.visualScale:1));
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

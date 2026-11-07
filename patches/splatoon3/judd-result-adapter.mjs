@@ -135,5 +135,13 @@ export function adaptJuddResult(rel, code, once) {
     `        if (!punched && t > 3.75) { punched = true; el.classList.add('is-winner', winner === 1 ? 'is-win-b' : winner === 0 ? 'is-win-a' : 'is-tie'); setRefOutcome(); }`,
     'authoritative winner drives the referee flags');
 
+  // Owner request 2026-11-07: after the flag (judge_reveal at 3.45 s, 0.61 s
+  // long) the result jingle started only after a long silence. The winner pose
+  // at 3.75 s is kept; the scene hands over to the result 0.6 s sooner.
+  patch(
+    '        if (!finished && t > 5.1) {',
+    '        if (!finished && t > 4.5) {',
+    'shorter hold after the flag');
+
   return code;
 }

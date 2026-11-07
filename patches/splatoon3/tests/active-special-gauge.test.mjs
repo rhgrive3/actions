@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../runtime/special-paint-rate.mjs';
 import {fixture} from './source-fixture.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:`
  export {specialGaugeLocked} from './patches/splatoon3/runtime/tacticooler-gauge.mjs';
@@ -129,7 +130,7 @@ test('early throws and third Inkstrike release empty the native remainder while 
   }
   assert.equal(a.specialActive,null,id);near(a.special,0,`${id} early finish consumes remainder`);
   assert.ok(G.projectiles.list.some(p=>p.s3AllSpecial===id)||(G.projectiles._s3AllSpecialObjects||[]).some(o=>o.id===id),'the committed attack survives native gauge completion');
-  a.addTurf(4);near(a.special,4,'only new post-completion turf may refill');
+  a.addTurf(4);near(a.special,4*PAINT_RATE,'only new post-completion turf may refill');
  }
 });
 test('timeout, objective pickup, reset and world clear empty tracked points, without changing Crab or Reef',()=>{

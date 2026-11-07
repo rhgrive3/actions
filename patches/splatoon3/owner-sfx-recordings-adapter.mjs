@@ -30,7 +30,8 @@ export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
   if (rel === 'src/ui/menus.js') {
     // Title screen: the A press (TitlePressA) replaces the synthesized confirm and the
     // single tone (N0010A10) follows 0.3 s later on the audio clock, with no second timer.
-    // The splat accent stays. GO (go_horn) and judge_reveal need no call-site change.
+    // Owner request 2026-11-07: the synthesized splat accent no longer layers
+    // over the two recordings. GO (go_horn) and judge_reveal need no call-site change.
     code = replaceOnce(code,
       "  _sfx(name, minGap = 0.03) {",
       "  _sfx(name, minGap = 0.03, opts) {",
@@ -41,7 +42,7 @@ export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
       'owner SFX: pass playback options to the engine');
     return replaceOnce(code,
       "    this._leavingTitle = true;\n    this._sfx('ui_confirm');\n    this._sfx('splat_small');",
-      "    this._leavingTitle = true;\n    this._sfx('title_press');\n    this._sfx('title_follow', 0.03, { delay: 0.3 });\n    this._sfx('splat_small');",
+      "    this._leavingTitle = true;\n    this._sfx('title_press');\n    this._sfx('title_follow', 0.03, { delay: 0.3 });",
       'owner SFX: title A press and follow-up tone');
   }
   return code;
