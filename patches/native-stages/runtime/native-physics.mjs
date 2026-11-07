@@ -3,6 +3,8 @@ import { Physics, Hit, GroundHit, WALKABLE } from '../../../src/game/physics.js'
 import { PLAYER } from '../../../src/config.js';
 const min = new THREE.Vector3(), max = new THREE.Vector3(), _sortAsc = (a, b) => a - b;
 const SOURCE_CONTACT_EPSILON=1e-4;
+// Source floor seams and bevels below this rise are not curbs (m).
+const SOURCE_SEAM_STEP=.05;
 const FOOT_RING=Array.from({length:8},(_,i)=>[Math.cos(i/8*Math.PI*2),Math.sin(i/8*Math.PI*2)]);
 const DOWN=new THREE.Vector3(0,-1,0);
 const FOOT_SUPPORT_KEYS=Object.freeze(['block','face','u','v','center','grate']);
@@ -209,7 +211,12 @@ export class NativePhysics extends Physics {
   for(const key of FOOT_SUPPORT_KEYS)ground[key]=support[key];
   if(!support.hit)return false;
   raised.copy(pos).setY(support.y);
-  if(!this.dynamic.bodyFits(raised,radius,lift,height,skipGrates)||!this._sourceBodyFits(raised,radius,lift,height,skipGrates,SOURCE_CONTACT_EPSILON))return false;
+  if(!this.dynamic.bodyFits(raised,radius,lift,height,skipGrates))return false;
+  // A seam/bevel lift of a few millimetres that still fits within the public
+  // .01 contract keeps the foot grounded. Rejecting it at the 0.1 mm contact
+  // epsilon dropped the player into air control on flat source floor.
+  if(!this._sourceBodyFits(raised,radius,lift,height,skipGrates,SOURCE_CONTACT_EPSILON)&&
+    !(support.y-pos.y<=SOURCE_SEAM_STEP&&this._sourceBodyFits(raised,radius,lift,height,skipGrates,.01)))return false;
   pos.y=support.y;
   return true;
  }

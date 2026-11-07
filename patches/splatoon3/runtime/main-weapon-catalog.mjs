@@ -68,6 +68,10 @@ const SABER_RESERVED_PRESS=Object.freeze({fire:true,firePressed:true,sub:false,s
 const SABER_RESERVED_RELEASE=Object.freeze({fire:false,firePressed:false,sub:false,subReleased:false});
 const SWING_MODES=Object.freeze(['horizontal','vertical','brush']);
 const NEAREST_SPLASH_FAMILIES=Object.freeze(['shooter','splatling','dualies']);
+// Owner request 2026-11-07 (visual only): the round splash drops a Splatana's
+// horizontal swing throws are drawn at 20% size. The slash wave, paint radius,
+// fall and drop count are unchanged.
+const SABER_HORIZONTAL_DROP_SCALE=.2;
 const SABER_DEVICE_RADIUS_IDS=Object.freeze(['sprinkler','beakon']);
 const EMPTY_LOBE_OFFSETS=Object.freeze([]),EMPTY_LOBE_OFFSET=Object.freeze({});
 const SOURCE_FOOTPRINT_RECORDS=new WeakSet(MAIN_WEAPON_CATALOG.records);
@@ -544,7 +548,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
-    const fxKind=r.family==='blaster'?'blaster':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    // A Splatana horizontal swing draws its muzzle droplets at 20% (fx.js 'splatana-h').
+    const fxKind=r.family==='blaster'?'blaster':r.family==='splatana'&&a._s3SaberHorizontalNotify?'splatana-h':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    a._s3SaberHorizontalNotify=false;
     const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
     // Raw-socket births defer only the FX request until this tick's pose (#1431).
     const deferred=poseBirth.commit(a,origin,direction,a.color,fxKind,wantMuzzle);
@@ -860,6 +866,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Only an admitted, spawned catalogue round consumes the chosen hand.
     // Hand-specific physics muzzle, network birth and visual trigger agree.
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
+    a._s3SaberHorizontalNotify=horizontal;
     notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     // Staggered source rounds already own the nearest event in their splash
@@ -1649,6 +1656,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             args.depth=true;args.catchUpSeconds=s.carry;args.footprint=footprint;
             const drop=spawnSplashDrop(G,args);
             if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
+            if(drop&&d.key==='saber-horizontal')drop.visualScale=SABER_HORIZONTAL_DROP_SCALE;
           }else{
             footprintReady=false;
             // Geometry-aware nearest/intermediate fallback. Its centre is the
@@ -1710,7 +1718,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const spec=addedFamilySplash(d.b,'splatana',0)?.spec;
           const terminal=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:255,from:p.pos,
             direction:p.vel,radius:d.b.BurstParam?.SplashPaintRadius,spec,depth:false,kind:SOURCE_SHOT_PAINT_KIND,footprint:mainInkBurstFootprint(s.r),catchUpSeconds:s.carry});
-          if(terminal)terminal.drawRadius=d.b.BurstParam.SplashDrawRadius;
+          if(terminal){terminal.drawRadius=d.b.BurstParam.SplashDrawRadius;if(d.key==='saber-horizontal')terminal.visualScale=SABER_HORIZONTAL_DROP_SCALE;}
         }
         return true;
       }

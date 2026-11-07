@@ -420,7 +420,16 @@ void iwPrepareNativePaint(){
   iwPaintDy=vec2(dot(worldDy,bestU),dot(worldDy,bestV))*30.0/1024.0;iwDetailActive=true;
  }
 }
-vec4 iwCombinePaint(vec4 fine,vec4 coarse){return coarse.a>0.00001?vec4(coarse.rgb*(fine.a/coarse.a),fine.a):fine;}
+// The fine page owns the edge, but it holds only ink replayed through its own
+// records. Ink that reached the atlas by another path (or a page whose replay
+// lost a record) left a resident page at alpha 0 over clearly inked floor, so
+// moving made painted floor look bare. Solid coarse coverage (well inside the
+// atlas edge, whose half-alpha marks the true boundary) is kept as a floor.
+vec4 iwCombinePaint(vec4 fine,vec4 coarse){
+ if(!(coarse.a>0.00001))return fine;
+ float a=max(fine.a,coarse.a*smoothstep(0.55,0.9,coarse.a));
+ return vec4(coarse.rgb*(a/coarse.a),a);
+}
 vec2 iwCoarseUV(vec2 uv){return vPaintUv+(uv-iwPaintUv)*(uNativeBasePpm/30.0)*(1024.0/uNativeBaseSize);}
 vec4 iwPaintSample(vec2 uv){if(!iwDetailActive)return texture2D(uPaint,uv);return iwCombinePaint(texture2D(uNativeDetailPaint,uv),texture2D(uPaint,iwCoarseUV(uv)));}
 vec4 iwPaintLod(vec2 uv,float lod){if(!iwDetailActive)return textureLod(uPaint,uv,lod);return iwCombinePaint(textureLod(uNativeDetailPaint,uv,0.0),textureLod(uPaint,iwCoarseUV(uv),0.0));}

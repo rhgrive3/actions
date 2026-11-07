@@ -18,7 +18,7 @@ export function recordNativeModuleWorkerCreation(e,p,origin){
  assert.equal(frame.path,t.prefix+t.name+'-prewarm'+t.extension,'Wrong native module Worker owner');
  const rows=e.moduleCreations||= [];assert(rows.length<8&&!rows.some(r=>r.path===t.path),'Duplicate native module Worker');rows.push({...t,creator:frame,workerOptions:p.workerOptions});
 }
-export function observeNativeModuleWorker(e,url,origin){const t=target(url,origin),rows=e.moduleWorkers||=[];assert(!rows.includes(t.path),'Duplicate observed native module Worker');rows.push(t.path);}
+export function observeNativeModuleWorker(e,url,origin){const t=target(url,origin),rows=e.moduleWorkers||=[];/* The constructor observer and Playwright's worker event can arrive in either order. */if(!rows.includes(t.path))rows.push(t.path);}
 function derivedCall(source,name,extension){
  const calls=[];const visit=n=>{if(!n||typeof n!=='object')return;
   if(n.type==='VariableDeclarator'&&['Worker','URL'].includes(n.id?.name)||n.type==='ImportSpecifier'&&['Worker','URL'].includes(n.local?.name))assert.fail('Native module Worker global shadowed');

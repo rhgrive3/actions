@@ -2,6 +2,7 @@ import { damageTenths } from '../runtime/final-damage.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './storm-effects-fixture.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 const STEP = 1 / 60;
 const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-8, msg || `${a} != ${b}`);
 function system(f) {
@@ -34,7 +35,7 @@ function driveBotStorm(f, p, a, brain, maxFrames = 120) {
     wasDown = down;
   }
   assert.equal(pressed, true, 'a real local bot must press sub while holding');
-  assert.equal(released, true, 'a real local bot must release the admitted sub command');
+  assert.equal(released, true, 'the bot must release the admitted sub command');
   assert.equal(p.bombs.length, 1, 'the bot must not retain its held device forever');
   assert.equal(p.bombs[0].kind, 'storm');
   assert.equal(a.specialActive.phase, 'throw');
@@ -115,7 +116,7 @@ test('#223 gauge lock is separate from recovery, preserves turf points, and expi
   close(a.stormGaugeLock, 8); a.addTurf(10); close(a.special, 0); close(a.stats.turf, 10);
   f.tick(a, 479); assert.equal(a.specialActive, null); assert.ok(a.stormGaugeLock > 0);
   a.addTurf(10); close(a.special, 0); close(a.stats.turf, 20);
-  f.tick(a); close(a.stormGaugeLock, 0); a.addTurf(10); close(a.special, 10); close(a.stats.turf, 30); p.clear();
+  f.tick(a); close(a.stormGaugeLock, 0); a.addTurf(10); close(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE); close(a.stats.turf, 30); p.clear();
 });
 
 test('#223 death/respawn preserve remaining lock while a new match actor starts unlocked', async () => {
@@ -123,7 +124,7 @@ test('#223 death/respawn preserve remaining lock while a new match actor starts 
   p._spawnCloud(p.bombs.at(-1));
   f.tick(a, 60); close(a.stormGaugeLock, 7); a.splat(null, 'water'); f.tick(a, 60); close(a.stormGaugeLock, 6);
   a.reset(); close(a.stormGaugeLock, 6); a.addTurf(10); close(a.special, 0);
-  f.tick(a, 360); a.addTurf(10); close(a.special, 10); close(chargeActor(f).stormGaugeLock || 0, 0); p.clear();
+  f.tick(a, 360); a.addTurf(10); close(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE); close(chargeActor(f).stormGaugeLock || 0, 0); p.clear();
 });
 
 test('#212 allied rain uses current submerged recovery rate, not a stacked heal or shortened delay', async () => {
@@ -141,7 +142,7 @@ test('#212 allied rain uses current submerged recovery rate, not a stacked heal 
 
 for (const count of [1, 2, 3]) test(`#225 ${count} overlapping rains deal only one cloud amount and keep stable attribution`, async () => {
   const f = await fixture(), p = system(f), victim = f.make(); victim.team = 1; f.G.actors = [victim];
-  const owners = Array.from({ length: count }, (_, i) => { const a = f.make(); a.nid = i + 1; return a; });
+  const owners = Array.from({ length: count }, (_, i) => { const a = f.make(); a.nid = i + 1; return a; }); 
   owners.forEach(owner => cloud(f, owner)); p.clouds.reverse();
   const raw=[];const nativeDamage=victim.damage;victim.damage=function(amount,...args){raw.push(amount);return nativeDamage.call(this,amount,...args);};
   p._updateClouds(STEP); assert.deepEqual(raw,[f.SPECIALS.storm.dps*STEP],'one unrounded rain amount reaches the actual Actor'); close(victim.hp, 100 - damageTenths(f.SPECIALS.storm.dps * STEP)); assert.equal(victim.lastAttacker, owners[0]);

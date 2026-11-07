@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../runtime/special-paint-rate.mjs';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
@@ -39,7 +40,7 @@ test('native Tenta/Chump/Wave/Screen spent HUD follows the captured lock after d
   near(w.game._hudTransport.mobile.special,.5,'touch receives identical spent fraction');near(a.specialFrac(),0,'native snapshot charge stays empty');assert.equal(a.specialReady(),false);
   a.remote=true;assert.equal(f.specialGaugeFraction(a),null,'remote proxy has no invented local clock');near(w.view().special,0,'remote fallback uses native charge');a.remote=false;
   G.time=state.until;assert.equal(f.specialGaugeFraction(a),null,'exact expiry returns to normal HUD');
-  a.addTurf(4);near(a.special,4,'only newly earned points refill after expiry');
+  a.addTurf(4);near(a.special,4*PAINT_RATE,'only newly earned points refill after expiry');
  }
  G.projectiles.clear();assert.equal(f.specialGaugeFraction(a),null,'match teardown removes display ownership');
 });
@@ -62,7 +63,7 @@ test('Bubbler spent display uses undamaged natural lifetime rather than remainin
  near(w.view().special,.75,'incoming damage does not accelerate the depletion display');
  a.splat(null,'water');a.reset();near(w.view().special,.75,'death/reset preserve the original AP/lifetime denominator');
  f.clearBigBubblers('gauge-display-test');assert.equal(f.specialGaugeFraction(a),null,'real early collapse immediately empties display');
- a.addTurf(6);near(a.special,6,'collapse grants no deferred earlier points');
+ a.addTurf(6);near(a.special,6*PAINT_RATE,'collapse grants no deferred earlier points');
 });
 
 test('spent display traces and point admission agree at 30/60/120 Hz, and changing matches retires old display state',async()=>{
@@ -72,7 +73,7 @@ test('spent display traces and point admission agree at 30/60/120 Hz, and changi
   f.startSpecialGauge(a,G,'splattercolorScreen',300,{dead:false});
   for(let frame=0;frame<5*hz;frame++)clock.advance(1/hz,dt=>{G.time+=dt;rows.push(f.specialGaugeFraction(a));a.addTurf(1);});
   if(expected)assert.deepEqual(rows,expected);else expected=rows;
-  assert.equal(rows.at(-1),null);assert.ok(rows.at(-2)>0);near(a.special,1,'only final unlocked tick earns points');
+  assert.equal(rows.at(-1),null);assert.ok(rows.at(-2)>0);near(a.special,PAINT_RATE,'only final unlocked tick earns points');
  }
  f.startSpecialGauge(a,G,'tentaMissiles',600);assert.ok(f.specialGaugeFraction(a)>0);G.match={...G.match};assert.equal(f.specialGaugeFraction(a),null,'old match is never a display source');
 });

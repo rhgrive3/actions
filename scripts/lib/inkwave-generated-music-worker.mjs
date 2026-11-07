@@ -17,7 +17,7 @@ function caller(stack,origin){
 }
 export function recordBlobWorkerCreation(e,p,origin,frame){
  assert(frame?.mainFrame&&new URL(frame.frameUrl).origin===origin,'Worker must originate in captured main frame');
- if(p.kind==='native-module')return recordNativeModuleWorkerCreation(e,p,origin);
+ if(p.kind==='native-module'){const row=recordNativeModuleWorkerCreation(e,p,origin);observeNativeModuleWorker(e,p.url,origin);return row;}
  assert(!p.error,p.error);const u=new URL(p.url);assert(u.protocol==='blob:'&&u.origin===origin,'Foreign Blob creation');
  assert.equal(p.mime,'text/javascript');assert.equal(p.workerOptions,'default');
  assert(Array.isArray(p.bytes)&&p.bytes.length<=4096&&p.bytes.every(n=>Number.isInteger(n)&&n>=0&&n<=255));

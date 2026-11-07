@@ -23,7 +23,9 @@ function sweep(level,a,b,r=.2,skip=true){return f.sweepLevelSphere(level,V(...a)
 test('source sweep reaches the actual thin wall instead of enclosing object bounds',()=>{
  const level=triangleStage(),a=[-5,.5,.5],b=[5,.5,.5];
  level.native=false;const old=sweep(level,a,b);level.native=true;
- assert.equal(old.hit,true);assert.equal(old.dist,0);assert.equal(old.face,-1,'negative control hits giant inferred object box');
+ // The giant inferred object box is kept out of every block query, so even the
+ // legacy OBB path no longer stops at its boundary (formerly dist 0, face -1).
+ assert.equal(old.hit,true);assert.notEqual(old.block,level.objectBlock[0],'legacy OBB query never meets the object box');close(old.dist,4.8);
  const hit=sweep(level,a,b);assert.equal(hit.hit,true);close(hit.dist,4.8);assert.equal(hit.triangle,0);assert.equal(hit.face,0);
  close(hit.point.x,0);close(hit.point.y,.5);close(hit.point.z,.5);close(hit.normal.x,-1);close(hit.u,.5);close(hit.v,.5);
  const reverse=sweep(level,b,a);close(reverse.dist,4.8);close(reverse.normal.x,1);
