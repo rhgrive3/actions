@@ -2395,18 +2395,31 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Keep native defense and active-shield ordering, but avoid all actor scans
     // and segment setup when no held/purged catalogue shield is active.
     if(!heldCanopyActors.size&&!launchedCanopies.size)return best;
-    const len=p.prev.distanceTo(p.pos);
-    const consider=(a,s,c)=>{
-      if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)return;
+    let len=-1;
+    if(heldCanopyActors.size){
+      for(const a of G.actors||[]){
+        const s=a.weaponRunner?.catalogState,c=s?.canopy;
+        if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)continue;
+        if(len<0)len=p.prev.distanceTo(p.pos);
+        const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
+        if(t==null||t*len>=(best?.distance??Infinity))continue;
+        best={brella:true,damageTarget:c,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
+          if(shot.ghost)return;
+          hurtCanopy(a,s,c,finite(shot.damage,finite(shot.catalog?.descriptor.damage,0)));
+        }};
+      }
+    }
+    for(const c of launchedCanopies){
+      const a=c.owner,s=a.weaponRunner?.catalogState;
+      if(a.team===p.team||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)continue;
+      if(len<0)len=p.prev.distanceTo(p.pos);
       const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
-      if(t==null||t*len>=(best?.distance??Infinity))return;
+      if(t==null||t*len>=(best?.distance??Infinity))continue;
       best={brella:true,damageTarget:c,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
         if(shot.ghost)return;
         hurtCanopy(a,s,c,finite(shot.damage,finite(shot.catalog?.descriptor.damage,0)));
       }};
-    };
-    if(heldCanopyActors.size)for(const a of G.actors||[])consider(a,a.weaponRunner?.catalogState,a.weaponRunner?.catalogState?.canopy);
-    for(const c of launchedCanopies)consider(c.owner,c.owner.weaponRunner?.catalogState,c);
+    }
     return best;
   };
   // Owner-side online defense uses the actual final projectile segment sent

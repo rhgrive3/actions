@@ -351,9 +351,11 @@ export function installAttractBotBudget({ BotBrain }, G) {
     if (!menuAttractAiEligible(this, G) || !Number.isFinite(dt) || dt <= 0) {
       // Death/super-jump and scope transitions must clear commands on this
       // very frame via native BotBrain.update, never wait for a menu budget.
-      this._menuAttractPending = 0;
-      this._menuAttractFirst = undefined;
-      this._menuAttractStep = undefined;
+      if (this._menuAttractPending || this._menuAttractFirst !== undefined || this._menuAttractStep !== undefined) {
+        this._menuAttractPending = 0;
+        this._menuAttractFirst = undefined;
+        this._menuAttractStep = undefined;
+      }
       return nativeUpdate.call(this, dt);
     }
     const actor = this.a, step = attractAiStep(G);

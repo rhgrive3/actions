@@ -8,12 +8,47 @@ const BEFORE = 'const distance=previous.distanceTo(b.pos),worldDistance=world.hi
 const AFTER = 'const distance=defense?previous.distanceTo(b.pos):0,worldDistance=world.hit?previous.distanceTo(world.point):Infinity;';
 const BASE_SHA = '4c1e5c0cd4c4367e7c3ba696d1c6e4c4bd37d922a05c16a32cc73e44a9b4b9cb';
 const CANDIDATE_SHA = 'a37a338e51c473130edabe1f2dbcaa81d8f61498ce73cf33718c400f7139eb73';
+const CURRENT_SHA = 'dea19925f4deffd4ed8f965df4af2c19868a49ba237186b556c1cae24e06c152';
+const SUB_RELEASE_MEMO = `  if (!inp?.sub && !inp?.subReleased && hold === 0 && baseSub && baseSub.mode !== 'sprinkler' && !baseSub.chargeable) {
+    const m = a?.s3?.modifiers, power = m?.subPower ?? 1, saver = m?.inkSaverSub ?? 1;
+    const fallbackBombCost = SUB?.bomb?.inkCost;
+    const memo = runner._s3ReleaseMemo;
+    if (memo && memo.baseSub === baseSub && Object.is(memo.power, power) && Object.is(memo.saver, saver)
+      && Object.is(memo.rawCost, baseSub.inkCost) && Object.is(memo.rawFallback, baseSub.inkCostFallback)
+      && Object.is(memo.throwSpeed, baseSub.throwSpeed) && Object.is(memo.throwSpeedMax, baseSub.throwSpeedMaxCharge)
+      && Object.is(memo.rollScale, baseSub.rollSpeedScale) && Object.is(memo.costStatus, baseSub.inkCostStatus)
+      && Object.is(memo.bombCost, fallbackBombCost)) {
+      runner.s3Release = memo.release;
+      return memo.release;
+    }
+    const release = actorSubSpec(a, baseSub);
+    const tpl = kitTemplate(release);
+    const inkCost = Number.isFinite(release.inkCost) ? release.inkCost
+      : Number.isFinite(release.inkCostFallback) ? release.inkCostFallback
+      : SUB.bomb.inkCost;
+    release.inkCost = inkCost;
+    release.__charge = 0;
+    release.__hold = 0;
+    release.__inkCostStatus = tpl?.inkCost != null ? release.inkCostStatus : 'calibrated';
+    runner._s3ReleaseMemo = {
+      baseSub, power, saver,
+      rawCost: baseSub.inkCost, rawFallback: baseSub.inkCostFallback,
+      throwSpeed: baseSub.throwSpeed, throwSpeedMax: baseSub.throwSpeedMaxCharge,
+      rollScale: baseSub.rollSpeedScale, costStatus: baseSub.inkCostStatus,
+      bombCost: fallbackBombCost, release,
+    };
+    runner.s3Release = release;
+    return release;
+  }\n`;
 const sha = source => createHash('sha256').update(source).digest('hex');
 function previousRuntime(rel, source) {
   if (rel !== TARGET) return source;
-  assert.equal(sha(source), CANDIDATE_SHA, 'whole candidate source epoch');
-  assert.equal(source.split(AFTER).length, 2, 'only the reviewed length expression is reversed');
-  const result = source.replace(AFTER, BEFORE);
+  assert.equal(sha(source), CURRENT_SHA, 'whole current source epoch');
+  assert.equal(source.split(SUB_RELEASE_MEMO).length, 2, 'only the reviewed idle sub-release memo is reversed first');
+  const prior = source.replace(SUB_RELEASE_MEMO, '');
+  assert.equal(sha(prior), CANDIDATE_SHA, 'whole candidate source epoch');
+  assert.equal(prior.split(AFTER).length, 2, 'only the reviewed length expression is reversed');
+  const result = prior.replace(AFTER, BEFORE);
   assert.equal(sha(result), BASE_SHA, 'whole original source recovered, not an alternative implementation');
   return result;
 }
