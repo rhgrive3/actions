@@ -70,7 +70,8 @@ export function installHitSpawnMotion(api, _profile) {
       let s = states.get(ch);
       if (!s) {
         s = { phase: 'off', age: 0, spawnProtection: false, disposed: false, owner: null,
-          level: { value: 0 }, color: { value: ch.color.clone() }, materials: new Set() };
+          level: { value: 0 }, color: { value: ch.color.clone() }, materials: new Set(),
+          coatedRefs: new Array(15) };
         states.set(ch, s);
       }
       return s;
@@ -89,11 +90,26 @@ export function installHitSpawnMotion(api, _profile) {
       clear(ch); s.spawnProtection = true; s.phase = 'entry';
       s.owner = bound?.character === ch ? bound : null;
     };
+    const coatSlot = (m, s, refs, idx) => {
+      if (!m || refs[idx] === m) return;
+      coatMaterial(m, s, cfg);
+      refs[idx] = m;
+    };
     const coatAll = ch => {
-      const s = get(ch);
-      for (const kind of COATED) {
-        coatMaterial(ch.mats[kind], s, cfg);
-        for (const dither of ch.matsD || []) coatMaterial(dither[kind], s, cfg);
+      const s = get(ch), refs = s.coatedRefs, mats = ch.mats, matsD = ch.matsD;
+      const d0 = matsD?.[0], d1 = matsD?.[1];
+      for (let i = 0; i < 5; i++) {
+        const kind = COATED[i];
+        coatSlot(mats[kind], s, refs, i);
+        if (d0) coatSlot(d0[kind], s, refs, 5 + i);
+        if (d1) coatSlot(d1[kind], s, refs, 10 + i);
+      }
+      if (matsD && matsD.length > 2) {
+        for (let d = 2; d < matsD.length; d++) {
+          const dither = matsD[d];
+          if (!dither) continue;
+          for (let i = 0; i < 5; i++) coatMaterial(dither[COATED[i]], s, cfg);
+        }
       }
     };
     hooks = { states, get, clear, start };
@@ -158,7 +174,7 @@ export function installHitSpawnMotion(api, _profile) {
     C.dispose = function (...args) {
       const s = get(this);
       if (s.disposed) return;
-      clear(this); s.disposed = true;
+      clear(this); s.disposed = true; s.coatedRefs.fill(undefined);
       // No geometry/material clones or GPU resources: the native owner
       // disposes its original materials. Our shared scalar is reset first.
       const result = dispose.apply(this, args);

@@ -185,6 +185,28 @@ export class TriangleWorld {
   const az=a[i+2],bz=a[i+5],cz=a[i+8];
   return !((az>z1&&bz>z1&&cz>z1)||(az<z0&&bz<z0&&cz<z0));
  }
+ // Conservative existence check for walkable support within an AABB. Source
+ // ray queries treat triangles as double-sided, so test |normal.y|.
+ hasWalkableInBox(x0,y0,z0,x1,y1,z1,ignoreGrates=false,minNormalY=.68){
+  if(this.nodes.length<8)return false;
+  if(!Number.isFinite(x0+y0+z0+x1+y1+z1))return true;
+  const a=this.nodes,norm=this.normals,flags=this.flags,order=this.order,stack=this._acquireStack();let top=1;
+  try{
+   while(top){
+    const n=stack[--top]*8;
+    if(a[n]>x1||a[n+1]>y1||a[n+2]>z1||a[n+3]<x0||a[n+4]<y0||a[n+5]<z0)continue;
+    const left=a[n+6]|0,right=a[n+7]|0;
+    if(left>=0){stack[top++]=left;stack[top++]=right;continue;}
+    const start=-left-1;
+    for(let k=start;k<start+right;k++){
+     const id=order[k];
+     if((ignoreGrates&&(flags[id]&4))||Math.abs(norm[id*3+1])<minNormalY)continue;
+     if(this.triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1))return true;
+    }
+   }
+   return false;
+  }finally{this._releaseStack(stack);}
+ }
  /** Continuous sphere contact with unchanged source faces, edges and vertices.
   * Each feature yields a linear/quadratic earliest entry, including a linearly
   * changing radius. The BVH and contact/material selection stay authoritative.

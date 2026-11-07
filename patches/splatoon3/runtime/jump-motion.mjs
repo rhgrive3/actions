@@ -154,13 +154,15 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   };
   proto.update = function (dt, input) {
     const s = state(this);
-    // Evaluate interruptions even when the native hidden-character path skips
-    // posing. Never advance our own clock or write a native gameplay clock.
-    if (interrupted(this, input) || s.started !== null && s.weaponKind !== this.weaponKind
-      || ((input?.grounded ?? true) && this.t > (s.started ?? this.t))) clear(this);
-    s.allowed = s.started !== null && s.family !== null && s.weaponKind === this.weaponKind && !(input?.grounded ?? true);
-    s.firing = s.started !== null && input?.firing === true;
-    s.phase = null; s.weight = 0;
+    if (s.started !== null) {
+      // Evaluate interruptions even when the native hidden-character path skips
+      // posing. Never advance our own clock or write a native gameplay clock.
+      if (interrupted(this, input) || s.weaponKind !== this.weaponKind
+        || ((input?.grounded ?? true) && this.t > s.started)) clear(this);
+      s.allowed = s.started !== null && s.family !== null && s.weaponKind === this.weaponKind && !(input?.grounded ?? true);
+      s.firing = s.started !== null && input?.firing === true;
+      s.phase = null; s.weight = 0;
+    }
     return update.call(this, dt, input);
   };
   proto._poseAir = function (P, dt, air) {

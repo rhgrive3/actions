@@ -141,7 +141,10 @@ export function installWeaponHitReaction(api) {
   };
   proto._buildPose=function(dt,s){
     const result=buildPose.call(this,dt,s),v=stateOf(this);
-    if(v){v.basePose.set(this.P);v.mv=false;applyPresentation(this,T,C,v);}
+    if(v){
+      if(v.basePose.length!==this.P.length)v.basePose=new Float32Array(this.P.length);
+      v.basePose.set(this.P);v.mv=false;applyPresentation(this,T,C,v);
+    }
     return result;
   };
   proto._applyPose=function(dt,s){
@@ -149,7 +152,7 @@ export function installWeaponHitReaction(api) {
     if(!v?.on||v.q||v.basePose.length!==this.P.length) return applyPose.call(this,dt,s);
     const render=this.P;v.q=true;let result;
     try {
-      this.P=v.basePose;applyPose.call(this,dt,s);this.root.updateMatrixWorld(true);
+      this.P=v.basePose;applyPose.call(this,dt,s);this.kid.updateWorldMatrix(true,false);
       v.kp.copy(this.kid.position);v.kq.copy(this.kid.quaternion);v.ks.copy(this.kid.scale);
       const main=this.weapon?.muzzle;v.mm=!!main;if(main)main.getWorldPosition(v.gm);
       const left=this.dual&&this.weapon?.left?.muzzle;v.lm=!!left;if(left)left.getWorldPosition(v.gl);

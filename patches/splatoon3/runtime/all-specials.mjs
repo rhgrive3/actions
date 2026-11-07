@@ -2632,7 +2632,7 @@ function installRuntime(api) {
   // Projectiles are pooled, so every field owned by this module expires on reuse.
   P._new=function(...args){
     const p=newProjectile.apply(this,args);
-    for(const key of SPECIAL_ROUND_FIELDS)delete p[key];
+    for(const key of SPECIAL_ROUND_FIELDS)if(key in p)delete p[key];
     return p;
   };
   P.ghostProjectile=function(...args){
@@ -2651,6 +2651,7 @@ function installRuntime(api) {
     return result;
   };
   if(typeof projectileStep==='function')P._step=function(p,...args){
+    if(!p?.s3AllSpecial&&!p?.s3AllSpecialFlight)return projectileStep.call(this,p,...args);
     const cause=p?.s3AllSpecial?projectileObjectCause(p):null;
     if(cause&&!p?.ghost&&!p?.owner?.remote){
       const advance=()=>p?.s3AllSpecialFlight
@@ -2714,7 +2715,7 @@ function installRuntime(api) {
     if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=cause;
     let result;
     try{result=blast.call(this,p,at,...args);}finally{
-      if(owner){if(previousCause===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previousCause;}
+      if(owner){if(previousCause===undefined){if('_s3AllSpecialDamageCause' in owner)delete owner._s3AllSpecialDamageCause;}else owner._s3AllSpecialDamageCause=previousCause;}
     }
     // Terrain impact queues its complete special snapshot for the next tick.
     // Object hits and special paint belong to that flush, once, with HP damage.

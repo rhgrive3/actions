@@ -431,13 +431,7 @@ export function installGear(api, tuning) {
   const update = WeaponRunner.prototype.update;
   WeaponRunner.prototype.update = function (dt, input) {
     refresh(this.a);
-    const a = this.a, m = a.s3?.modifiers || {}, beforeInk = a.ink;
-    const sub = selectedSub(a, api.SUB);
-    const hold = this.s3SubHold || 0;
-    const charge = sub.chargeable ? Math.min(1, Math.max(0, hold / sub.maxChargeTime)) : 0;
-    const subDelay = sub.inkRecoverStopMaxCharge == null ? sub.inkRecoverStop
-      : sub.inkRecoverStop + (sub.inkRecoverStopMaxCharge - sub.inkRecoverStop) * charge;
-    const effectiveSubCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
+    const a = this.a, beforeInk = a.ink, beforeHold = this.s3SubHold || 0;
     const bombsBefore = G.projectiles?.bombs?.length ?? 0;
     try { return update.call(this, dt, input); }
     finally {
@@ -447,6 +441,12 @@ export function installGear(api, tuning) {
       const spent = Math.max(0, beforeInk - a.ink);
       if (spent > 1e-10) {
         a.s3 ||= {};
+        const m = a.s3.modifiers || {};
+        const sub = selectedSub(a, api.SUB);
+        const charge = sub.chargeable ? Math.min(1, Math.max(0, beforeHold / sub.maxChargeTime)) : 0;
+        const subDelay = sub.inkRecoverStopMaxCharge == null ? sub.inkRecoverStop
+          : sub.inkRecoverStop + (sub.inkRecoverStopMaxCharge - sub.inkRecoverStop) * charge;
+        const effectiveSubCost = (sub.inkCost ?? sub.inkCostFallback) * (m.inkSaverSub ?? 1);
         const mainSpent = (sub === api.SUB.bomb ? (!bombSpent || spent > effectiveSubCost + 1e-8) : !input.subReleased) && !progressiveChargerSpend;
         const rollingUse = mainSpent && !input.subReleased && a.weapon.kind === 'roller' && this.rolling;
         a.s3.rollerRefillMode = rollingUse;

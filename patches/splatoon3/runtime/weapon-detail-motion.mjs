@@ -18,10 +18,7 @@ const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 function registry(ch) {
-  const p0 = ch && Object.getPrototypeOf(ch);
-  if (p0 && Object.hasOwn(p0, INSTALLED)) return p0[INSTALLED];
-  for (let p = p0 && Object.getPrototypeOf(p0); p; p = Object.getPrototypeOf(p))
-    if (Object.hasOwn(p, INSTALLED)) return p[INSTALLED];
+  return ch?.[INSTALLED];
 }
 const trackMap = ch => registry(ch)?.tracks ?? tracks;
 export const WEAPON_DETAIL_CALIBRATION = Object.freeze({
@@ -51,23 +48,47 @@ function enumerableSymbols(source) {
   if (!symbols) { symbols = Object.getOwnPropertySymbols(source); spreadSymbols.set(source, symbols); }
   return symbols;
 }
-function refreshSpread(target, source, slot, symbolField) {
-  for (const key of slot[symbolField]) delete target[key];
-  for (const key in target) if (Object.hasOwn(target, key)) delete target[key];
+function refreshOverlayRecord(slot, targetField, symbolField, source, extra) {
+  const target = slot[targetField];
+  const prevSymbols = slot[symbolField];
   const symbols = enumerableSymbols(source);
-  slot[symbolField] = symbols;
-  if (source == null) return;
-  for (const key in source) if (Object.hasOwn(source, key)) {
-    const value = source[key];
-    if (key === '__proto__') Object.defineProperty(target, key, { value, writable: true, configurable: true, enumerable: true });
-    else target[key] = value;
+  const extraSymbols = enumerableSymbols(extra);
+  for (const key in target) {
+    if (Object.hasOwn(target, key) && !(source != null && Object.hasOwn(source, key)) && !(extra != null && Object.hasOwn(extra, key))) {
+      delete target[key];
+    }
   }
-  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
-}
-function spreadInto(target, source) {
-  for (const key in source) if (Object.hasOwn(source, key)) target[key] = source[key];
-  const symbols = enumerableSymbols(source);
-  for (const key of symbols) if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+  for (let i = 0; i < prevSymbols.length; i++) {
+    const sym = prevSymbols[i];
+    if (!(source != null && Object.prototype.propertyIsEnumerable.call(source, sym)) &&
+        !(extra != null && Object.prototype.propertyIsEnumerable.call(extra, sym))) {
+      delete target[sym];
+    }
+  }
+  slot[symbolField] = extraSymbols.length ? (symbols.length ? [...symbols, ...extraSymbols] : extraSymbols) : symbols;
+  if (source != null) {
+    for (const key in source) if (Object.hasOwn(source, key)) {
+      const value = source[key];
+      if (key === '__proto__') Object.defineProperty(target, key, { value, writable: true, configurable: true, enumerable: true });
+      else target[key] = value;
+    }
+    for (let i = 0; i < symbols.length; i++) {
+      const key = symbols[i];
+      if (Object.prototype.propertyIsEnumerable.call(source, key)) target[key] = source[key];
+    }
+  }
+  if (extra != null) {
+    for (const key in extra) if (Object.hasOwn(extra, key)) {
+      const value = extra[key];
+      if (key === '__proto__') Object.defineProperty(target, key, { value, writable: true, configurable: true, enumerable: true });
+      else target[key] = value;
+    }
+    for (let i = 0; i < extraSymbols.length; i++) {
+      const key = extraSymbols[i];
+      if (Object.prototype.propertyIsEnumerable.call(extra, key)) target[key] = extra[key];
+    }
+  }
+  return target;
 }
 function recoilOverlayState(ch) {
   let state = recoilOverlayStates.get(ch);
@@ -97,11 +118,10 @@ function withRecoil(ch, fn, a, b, args) {
     // Re-read native fields on every entry so mutable records and weapon
     // changes stay visible; a nested call gets another slot and finally puts
     // back the exact hold identity that was installed on entry.
-    refreshSpread(overlay.hold, original, overlay, 'holdSymbols');
-    refreshSpread(overlay.rc, original.rc, overlay, 'rcSymbols');
-    spreadInto(overlay.rc, tune);
-    overlay.hold.rc = overlay.rc;
-    ch.hold = overlay.hold;
+    const rc = refreshOverlayRecord(overlay, 'rc', 'rcSymbols', original.rc, tune);
+    const hold = refreshOverlayRecord(overlay, 'hold', 'holdSymbols', original, null);
+    hold.rc = rc;
+    ch.hold = hold;
     try { return args ? fn.apply(ch, args) : fn.call(ch, a, b); } finally { ch.hold = original; }
   } finally { state.depth = depth; }
 }
@@ -306,10 +326,12 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     // both hands still own their real sockets. Preserve those retries and the
     // first-error feedback; only the remaining unreachable weapon translation
     // is corrected, without changing sockets, limb lengths or the shared IK.
-    const chargerHeld = this.weaponKind === 'charger' && enabled(this) &&
-      this.kidForm && !this.dual && !this.dance && !activeSpecial(this, T) &&
+    const chargerHeld = this.weaponKind === 'charger' &&
+      (limb === this.limbs.armR || limb === this.limbs.armL) &&
+      this.kidForm && !this.dual && !this.dance &&
       this.sourceMotion?.active && !this.sourceMotion.sourceUpper &&
-      A[C.IKR] > .99 && A[C.IKL] > .99 && (A[C.LTW] || 0) < .001;
+      A[C.IKR] > .99 && A[C.IKL] > .99 && (A[C.LTW] || 0) < .001 &&
+      enabled(this) && !activeSpecial(this, T);
     if (chargerHeld && limb === this.limbs.armR) {
       let x = chargerReaches.get(this);
       if (!x) {
@@ -354,9 +376,9 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
         }
       }
     }
-    if (enabled(this) && this.kidForm && !this.dance && !activeSpecial(this, T) &&
-      limb === this.limbs.armR && endQuat && weight > .99 &&
-      (this.weaponKind === 'slosher' || this.weaponKind === 'splatling' || this.weaponKind === 'blaster')) {
+    if (limb === this.limbs.armR && endQuat && weight > .99 &&
+      (this.weaponKind === 'slosher' || this.weaponKind === 'splatling' || this.weaponKind === 'blaster') &&
+      this.kidForm && !this.dance && enabled(this) && !activeSpecial(this, T)) {
       let x = reaches.get(this);
       if (!x) { x = { right: new THREE.Vector3(), left: new THREE.Vector3(), delta: new THREE.Vector3(),
         leftCenter: new THREE.Vector3(), point: new THREE.Vector3(), original: new THREE.Vector3(),
@@ -461,12 +483,13 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
   };
   P._poseWeapon = function (dt, s) {
     s = s || {};
-    if (enabled(this) && this.weaponKind === 'blaster' && this.weapon) this.weapon.pump = 0;
+    if (this.weaponKind === 'blaster' && this.weapon && enabled(this)) this.weapon.pump = 0;
     // A partially detached sub-throw hand is not trying to reach the foregrip.
     // Its raw partial-IK error must not build next frame's gun-shoulder reach.
-    if (enabled(this) && this.wSub > .05 && (this.weaponKind === 'blaster' || this.weaponKind === 'slosher')) this.ikErrPre = 0;
+    if (this.wSub > .05 && (this.weaponKind === 'blaster' || this.weaponKind === 'slosher') && enabled(this)) this.ikErrPre = 0;
     const result = withRecoil(this, poseWeapon, dt, s);
-    if (!enabled(this) || !this.kidForm || this.dance || this.wSub > .05 || activeSpecial(this, T)) return result;
+    if ((this.weaponKind !== 'blaster' && this.weaponKind !== 'splatling') ||
+      !this.kidForm || this.dance || this.wSub > .05 || !enabled(this) || activeSpecial(this, T)) return result;
     const A = this.P, r = this._runner(s), k = this.wAim;
     if (this.weaponKind === 'blaster') {
       const span = this.rest.hips.y - this.rest.footL.y;

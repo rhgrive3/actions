@@ -422,6 +422,37 @@ export function kitSubRelease(SUB, runner, dt, inp) {
   else if (!inp?.subReleased) runner.s3SubHold = 0;
   const hold = runner.s3SubHold || 0;
   const a = runner.a, baseSub = kitSubFor(a?.weapon, SUB);
+  if (!inp?.sub && !inp?.subReleased && hold === 0 && baseSub && baseSub.mode !== 'sprinkler' && !baseSub.chargeable) {
+    const m = a?.s3?.modifiers, power = m?.subPower ?? 1, saver = m?.inkSaverSub ?? 1;
+    const fallbackBombCost = SUB?.bomb?.inkCost;
+    const memo = runner._s3ReleaseMemo;
+    if (memo && memo.baseSub === baseSub && Object.is(memo.power, power) && Object.is(memo.saver, saver)
+      && Object.is(memo.rawCost, baseSub.inkCost) && Object.is(memo.rawFallback, baseSub.inkCostFallback)
+      && Object.is(memo.throwSpeed, baseSub.throwSpeed) && Object.is(memo.throwSpeedMax, baseSub.throwSpeedMaxCharge)
+      && Object.is(memo.rollScale, baseSub.rollSpeedScale) && Object.is(memo.costStatus, baseSub.inkCostStatus)
+      && Object.is(memo.bombCost, fallbackBombCost)) {
+      runner.s3Release = memo.release;
+      return memo.release;
+    }
+    const release = actorSubSpec(a, baseSub);
+    const tpl = kitTemplate(release);
+    const inkCost = Number.isFinite(release.inkCost) ? release.inkCost
+      : Number.isFinite(release.inkCostFallback) ? release.inkCostFallback
+      : SUB.bomb.inkCost;
+    release.inkCost = inkCost;
+    release.__charge = 0;
+    release.__hold = 0;
+    release.__inkCostStatus = tpl?.inkCost != null ? release.inkCostStatus : 'calibrated';
+    runner._s3ReleaseMemo = {
+      baseSub, power, saver,
+      rawCost: baseSub.inkCost, rawFallback: baseSub.inkCostFallback,
+      throwSpeed: baseSub.throwSpeed, throwSpeedMax: baseSub.throwSpeedMaxCharge,
+      rollScale: baseSub.rollSpeedScale, costStatus: baseSub.inkCostStatus,
+      bombCost: fallbackBombCost, release,
+    };
+    runner.s3Release = release;
+    return release;
+  }
   const release = actorSubSpec(a, baseSub);
   const charge = release.chargeable ? curlingChargeFraction(hold, release) : 0;
   const tpl = kitTemplate(release);

@@ -18,6 +18,10 @@ export function movementMotionSnapshot(ch) {
   return ch?.[CHARACTER_OWNER]?.snapshot(ch) ?? null;
 }
 
+export function movementRollAge(ch) {
+  return ch?.[CHARACTER_OWNER]?.rollAge(ch) ?? null;
+}
+
 function restore(ch, m) {
   if (!m.applied) return;
   ch.squid.pivot.position.copy(m.basePosition);
@@ -54,6 +58,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
         return m ? { phase: m.phase, rollAge: m.roll?.age ?? null,
           topAge: m.top?.age ?? null, spin: m.spin, charge: m.charge } : null;
       },
+      rollAge(ch) { return states.get(ch)?.roll?.age ?? null; },
       cancel(ch) { const m = states.get(ch); if (m) cancel(ch, m); },
       disposed(ch) { return disposed.has(ch); },
     }) });

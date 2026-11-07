@@ -330,6 +330,11 @@ function step(ch, dt, THREE) {
   const actor = ch._owner(), flow = actor?.s3?.flow;
   const enabled = ch.s3FlowMotionEnabled !== false && actor && actor.alive !== false;
   const s = makeState(ch, THREE);
+  if (ch.s3FlowMotionEnabled !== false && !flow?.active && s.phase === 'off' && s.level === 0 && !s.resources?.group.visible) {
+    if (s.owner && (!enabled || s.owner !== actor)) clear(ch);
+    s.owner = enabled ? actor : null;
+    return;
+  }
   if (ch.s3FlowMotionEnabled === false) {
     // Counterfactual review renders keep the already-installed material hooks,
     // including their old Flow emission. Opt-out suppresses only this layer.
