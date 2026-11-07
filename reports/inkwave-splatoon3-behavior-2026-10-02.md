@@ -1,5 +1,25 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-11-07（所有者提供の音声の差し替え：タイトルの A 押下、0.3 秒後の単発、GO、ジャッジの決定、ローラーの転がし）
+
+本家の根拠：所有者が渡した 4 つの録音（Roller00・TitlePressA・N0010A10・PutOnCloth00。原ファイル名は本家の音源名と同じ形式）。どの場面の音かは所有者の指定で、公式資料や本家の再生では確認していない。音量は本家と比べていない。
+
+### 差分と修正
+- タイトルの A 押下（`menus.js` の `_titleGo`）：合成の `ui_confirm` ＋ `splat_small` だった。修正：`title_press`（TitlePressA）を `ui_confirm` の代わりに鳴らし、`splat_small` は残す。`title_press` は録音が読めない時に `ui_confirm` に戻る。
+- A 押下の 0.3 秒後の単発（同）：所有者の指定。`title_follow`（N0010A10）を、オーディオ時計の遅延 0.3 秒で鳴らす。別のタイマーは作らない（既存の #950 のタイマー所有のテストを守るため）。`playSound` に遅延の引数を渡すよう、`main.js` の配線をアダプタで変えた。
+- 実装の方法：原本の `src/main.js`・`src/ui/menus.js` は変更していない（`upstream-lock.json` のハッシュを守るため）。すべて `patches/splatoon3/owner-sfx-recordings-adapter.mjs` の `replaceOnce` で合成時に差し込む。
+- GO（`main.js` の `go_horn`）：合成の GO ホーン → TitlePressA（所有者の指定）。
+- ジャッジの決定の瞬間（`hud.js` の `judge_reveal`）：合成の決定ファンファーレ → PutOnCloth00（所有者の指定）。ドラムロール（`judge_drumroll`）は既存の UI_VS_ResultMeter_00 のまま。
+- ローラーの転がし（`weapons.js` の `roll`）：合成のループ → Roller00 のシームレスなループ（3.9 秒、交差フェード 0.35 秒）。ピッチは合成と同じ値（0.6〜1.6）をそのまま使う。スイム用の緩い曲線は使わない。
+
+### 音量（暫定）
+- 合成音は描画できないため、本家や合成との音量比較はしていない。各録音の最大 300 ms の RMS を、置き換え元に近い既存のオーナー録音（`ui_decide`、`sfx_special_ready`、`swim`）の「元の gain × RMS」と同じ実効音量に合わせた。値は `owner-sfx-recordings.mjs` に書いてあり、実機で聴いて決める必要がある。
+
+### 確認状態
+- ロジック単独テスト：`owner-sfx-cues-20261107.test.mjs`（新規 4 件）、`owner-sfx-recordings.test.mjs`（SHA 追加）。`menu-navigation-timer.test.mjs` は、タイトル押下の音が 2 から 3 つ（名前付き）になったため期待値を更新した（意図した変更）。タイトル・HUD・マッチ音声の関連テストは全て通過。
+- 未確認：ブラウザでの実際の聞こえ、0.3 秒の遅延の聞こえ方、GO・ジャッジ・ローラーの音量、本家の同じ場面との比較。
+- 未確認のまま残すこと：N0010A10 が本家でどの場面の音か（所有者の指定どおりに配線したが、公式資料では未確認）。
+
 ## 2026-11-06（照準の見た目・ヒット表示・Bot の塗り角度・床塗りの飛沫）
 
 本家の参照：Ver. 11.3.0。根拠は所有者が撮影した本家のプレイ画面（スプラシューター、マニューバー、スピナー、敵に照準が合った時、敵に当たった時）と、#871 で固定した公式スクリーンショットの照準寸法（`patches/splatoon3/reference/shooter-reticle-reference.json`）。画面上の寸法は圧縮動画から読んだ値で ±1〜2 px。見た目だけの変更で、拡散・照準位置・当たり判定・ダメージ・塗りは変えていない（実装：`patches/splatoon3/runtime/s3-reticle-look.mjs`、`catalogue.mjs` から導入）。

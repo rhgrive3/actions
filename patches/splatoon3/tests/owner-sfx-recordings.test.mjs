@@ -21,10 +21,15 @@ const SHA = {
   'sfx_clam_blitz_collect.mp3': '009695aedd6ecfe105a306e4a044e50166e0e9c451d577858d8bb40729219661',
   'sfx_throw_smallfry.mp3': '14624eff492f8e6a5b15c27999223b4fec8403551e09b89af76dca5897311a45',
   'sfx_swimming_in_ink.mp3': '185e74038d3eccdfe9c914d9f1d1eccde3ecf9a056309f064a16b515cf90033e',
+  'sfx_roller_roll.mp3': '31f830d98b832a81a65f0e80c9c56d8cc79d85d0d63be86a374ad605cdc280f0',
+  'ui_title_press_a.mp3': 'b0686da080152ae72325b765954305d894565e7096e0561661f00f6e34fd6963',
+  'sfx_gear_put_on_cloth.mp3': '701c65b5ff50fc00d4a837a1ed2fb1e98fe4386962a8f083c465a57be7aa984f',
+  'sfx_n0010a10.mp3': '9cd13b1d90779087f942fa7817569823721be1acafd64ff45840e50eacdc13c6',
 };
 
 test('shipped recordings are the exact owner files and fit their byte limits', () => {
-  assert.deepEqual(Object.values(OWNER_SFX).map(s => s.file).sort(), Object.keys(SHA).sort());
+  // Two cues may share one file (the A press plays on the title and as GO).
+  assert.deepEqual([...new Set(Object.values(OWNER_SFX).map(s => s.file))].sort(), Object.keys(SHA).sort());
   for (const [name, sha] of Object.entries(SHA))
     assert.equal(createHash('sha256').update(fs.readFileSync(asset(name))).digest('hex'), sha, name);
   for (const spec of Object.values(OWNER_SFX)) assert.ok(fs.statSync(asset(spec.file)).size <= spec.maxBytes, spec.file);

@@ -34,14 +34,27 @@ export const OWNER_SFX = Object.freeze({
   splat_bomb_throw: Object.freeze({ file: 'sfx_throw_smallfry.mp3', gain: 0.062, seconds: 1.843, maxBytes: 96 * KB, reverb: 0.04, fallback: 'bomb_throw' }),
   // Looping swim bed. The ends are cross-faded into a seamless loop at decode time.
   swim: Object.freeze({ file: 'sfx_swimming_in_ink.mp3', gain: 0.186, seconds: 20.28, maxBytes: 1024 * KB, reverb: 0.03, loop: true, crossfade: 0.35 }),
+  // Title screen: the A press (menus.js _titleGo plays it in place of ui_confirm). Provisional gain: the
+  // loudest 300 ms RMS of this file scaled to the level of ui_decide at its gain. Not yet heard in-game.
+  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.062, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
+  // Title screen: a single tone 300 ms after the A press (menus.js _titleGo). No synthesized equivalent.
+  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.025, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
+  // Battle start GO (main.js plays go_horn): the same A recording, level matched to the special-gauge cue.
+  go_horn: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.125, seconds: 2.55, maxBytes: 128 * KB }),
+  // Judge's decision moment (hud.js judge_reveal). Level matched to the special-gauge cue.
+  judge_reveal: Object.freeze({ file: 'sfx_gear_put_on_cloth.mp3', gain: 0.149, seconds: 0.61, maxBytes: 48 * KB }),
+  // Rolling loop (weapons.js loop 'roll'). Pitch follows the synth's own rate (q, 0.6..1.6), not swimRate.
+  roll: Object.freeze({ file: 'sfx_roller_roll.mp3', gain: 0.33, seconds: 3.92, maxBytes: 256 * KB, loop: true, crossfade: 0.35, rate: 'linear' }),
 });
 // UI first: those are heard on the menu right after the first gesture.
-const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'special_charged', 'times_up', 'team_wipeout', 'splat_bomb_throw', 'clam_pickup', 'swim']);
+const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'title_press', 'title_follow', 'special_charged', 'times_up', 'team_wipeout', 'splat_bomb_throw', 'clam_pickup', 'go_horn', 'judge_reveal', 'roll', 'swim']);
 const INSTALLED = Symbol.for('inkwave.owner-sfx-recordings.v1');
 const LOAD_TIMEOUT_MS = 15000, RETRY_MS = 20000;
 const permanent = message => Object.assign(new Error(message), { permanent: true });
 // Speed changes the swim bed only slightly (synth: rate = q, q ≈ 0.6..1.6).
 export const swimRate = q => Math.pow(Math.min(1.8, Math.max(0.4, Number(q) || 1)), 0.25);
+// Rolling loop: the synthesized roll takes the pitch factor directly (about 0.6..1.6).
+export const rollRate = q => Math.min(1.6, Math.max(0.6, Number(q) || 1));
 
 function stateOf(engine) {
   return engine._ownerSfx ||= { ctx: null, buffers: new Map(), loading: new Map(), failed: new Map(), defs: new Map() };
@@ -109,9 +122,10 @@ function recordedDef(base, spec, buffer) {
     minGap: base?.minGap, ref: base?.ref, oneShot: base?.oneShot, recorded: true,
   };
   if (spec.loop) {
+    const rateOf = spec.rate === 'linear' ? rollRate : swimRate;
     def.loop = (v, p) => {
-      const s = v.buffer(buffer, v.t, null, v.out, swimRate(p), v.r(0, buffer.duration * 0.95));
-      return { pitch(q, now) { s.playbackRate.setTargetAtTime(swimRate(q), now, 0.05); } };
+      const s = v.buffer(buffer, v.t, null, v.out, rateOf(p), v.r(0, buffer.duration * 0.95));
+      return { pitch(q, now) { s.playbackRate.setTargetAtTime(rateOf(q), now, 0.05); } };
     };
   } else {
     def.build = (v, p, o) => {
