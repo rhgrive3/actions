@@ -8,6 +8,7 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 
@@ -62,7 +63,7 @@ test('production-composed paint keeps the landing body immediate and advances ow
   assert.ok(paint.submitted.some(q => q.mode === 0), 'later shader growth uses the native ancillary mode');
   assert.ok(paint.counts[0] > bodyCells, 'late visible cells enter the authoritative turf grid');
   assert.ok(owner.stats.turf > 0, 'late cells are credited through the real local Actor.addTurf callback');
-  assert.equal(owner.special, owner.stats.turf, 'late ordinary paint keeps native special bookkeeping');
+  assert.equal(owner.special, owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE, 'late ordinary paint keeps the 60% native special bookkeeping');
   assert.ok(paint.drawCalls >= 30, 'fixed simulation reaches the paint draw hook while render is idle');
 });
 

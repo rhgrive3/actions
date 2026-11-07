@@ -20,7 +20,7 @@ test('#950 raw negative: disposed title timer reopens the menu API', () => {
 });
 test('#950 title keeps the 350ms admission guard and exactly one 200ms confirmation', () => {
   const f = fixture(); f.m.show('title', { wipe: false }); f.m._titleGo(); assert.equal(f.navTimer(), undefined);
-  f.advance(350); f.m._titleGo(); f.m._titleGo(); assert.deepEqual(f.sounds.map(a => a[0]), ['title_press', 'title_follow', 'splat_small']);
+  f.advance(350); f.m._titleGo(); f.m._titleGo(); assert.deepEqual(f.sounds.map(a => a[0]), ['title_press', 'title_follow']);
   const timer = f.navTimer(); assert.ok(timer); f.advance(199); assert.equal(f.m.current, 'title');
   f.advance(1); assert.equal(f.m.current, 'main'); assert.equal(f.m._qualityNavigationTimer, null);
   f.mid(); assert.deepEqual(f.calls, ['title', 'main']); f.archive.get(timer[0]).fn(); f.mid();

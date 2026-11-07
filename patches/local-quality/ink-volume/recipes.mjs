@@ -144,3 +144,48 @@ export function submitInkVolume(engine,p) {
   }
   return false;
 }
+
+// Dread Wringer's falling slosh drop (the one paint drop per swing, released
+// after the delayed second unit) was drawn as INKWAVE's own round bead while
+// both sloshes use the shared Bucket sheet volume (owner request 2026-11-07:
+// draw it like the first hit). Submit each live drop through the same volume
+// recipe as a glob of the first unit whose drawn radius matches the drop's
+// source DrawRadius. Visual only: the drop's queue, fall, paint and network
+// state are read, never written, except the per-frame _iwVolumeDrawn flag the
+// bead renderer reads to skip a drop already drawn here.
+const DROP_VOLUME_ACTORS = Object.freeze({ WeaponSlosherDouble: 's3-slosher-double' });
+const dropProxies = new WeakMap();
+function dropProxyIndex(actor, drawRadius) {
+  const d = sharedBucketDraw({ catalog: { r: { sourceActor: actor }, descriptor: { unit: 0 } } });
+  const end = Number.isFinite(d?.EndRadius) ? d.EndRadius : 0, step = Number.isFinite(d?.AfterOffsetEndRadius) ? d.AfterOffsetEndRadius : 0;
+  if (!(drawRadius > 0) || !(step < 0)) return 0;
+  return Math.max(0, Math.round((drawRadius - end) / step));
+}
+export function submitSplashDropVolumes(engine, system) {
+  const queue = system?._s3SplashDrops;
+  if (!queue?.length) return 0;
+  let drawn = 0;
+  for (const d of queue) {
+    if (!d) continue;
+    d._iwVolumeDrawn = false;
+    const wid = DROP_VOLUME_ACTORS[d.sourceActor];
+    if (!engine || !wid || !d.pos || !d.vel || !d.owner?.color) continue;
+    let p = dropProxies.get(d);
+    if (!p) {
+      p = { wid, _inkVolumeRecipe: 'slosher', _inkVolumeAssetName: 'projectile:slosher:slosher', _inkVolumeDirection: new THREE.Vector3(),
+        catalog: { r: { sourceActor: d.sourceActor }, descriptor: { key: 'slosh', unit: 0 }, index: 0 },
+        pos: null, vel: null, owner: null, age: 0, seed: 0, generation: 0, delay: 0 };
+      dropProxies.set(d, p);
+    }
+    const age = Math.max(0, (d.frames || 0) / 60);
+    // A recycled pooled drop restarts its frame count: start a new sheet binding.
+    if (age < p.age || p.seed !== (d.seed || 0)) p.generation++;
+    p.pos = d.pos; p.vel = d.vel; p.owner = d.owner; p.age = age; p.seed = d.seed || 0;
+    p.catalog.index = dropProxyIndex(d.sourceActor, d.drawRadius);
+    // Keep the captured horizontal heading; the falling velocity is not a launch heading.
+    if (Math.hypot(d.dirX || 0, d.dirZ || 0) > 1e-6) p._inkVolumeDirection.set(d.dirX, 0, d.dirZ);
+    else p._inkVolumeDirection.copy(d.vel);
+    if (submitInkVolume(engine, p)) { d._iwVolumeDrawn = true; drawn++; }
+  }
+  return drawn;
+}

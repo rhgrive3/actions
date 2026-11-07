@@ -5,7 +5,9 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
   };
   if (rel === 'src/game/actor.js') {
     replace('const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3();',
-      'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3(), _fitGround = new THREE.Vector3();',
+      'const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _fwd = new THREE.Vector3(), _fitGround = new THREE.Vector3();\n' +
+      '// Height of a source-stage floor seam/bevel that never blocks a step (m).\n' +
+      'const NATIVE_STEP_SEAM = 0.05;',
       '#1160 raised-ground fit scratch');
     replace("    this.form = 'kid';           // desired form",
       "    this.form = 'kid';           // desired form\n    this._stepClearanceBlocked = false;",
@@ -44,13 +46,20 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '      const raisedSupport = gh.hit && gh.y > this.pos.y + 1e-4;\n' +
       '      const raisedBodyFits = !raisedSupport || !G.physics.bodyFits ||\n' +
       '        G.physics.bodyFits(_fitGround.set(this.pos.x, gh.y, this.pos.z), terrainRadius, lift, height, isSquid);\n' +
-      '      if (raisedSupport && !raisedBodyFits) this._stepClearanceBlocked = true;\n' +
+      '      // Source floors are split into many triangles whose shared edges and\n' +
+      '      // bevels differ by millimetres. Such a seam is not a curb: latching the\n' +
+      '      // blocked-step path there lowered the capsule to the feet and the\n' +
+      '      // seam edge became a wall, stopping the player on open floor.\n' +
+      '      const sourceSeam = raisedSupport && G.level?.native && gh.y - this.pos.y <= NATIVE_STEP_SEAM;\n' +
+      '      if (raisedSupport && !raisedBodyFits && !sourceSeam) this._stepClearanceBlocked = true;\n' +
       '      else if (raisedSupport) this._stepClearanceBlocked = false;\n' +
       '      if (this._stepClearanceBlocked) {\n' +
       '        // Feet may reach a step whose raised body would hit a ceiling. Keep the\n' +
       '        // current height and resolve the curb side with the same capsule lowered\n' +
-      '        // to the feet. Keep doing so until the capsule clears the side.\n' +
-      '        G.physics.collideBody(this.pos, terrainRadius, 0, height, this.contacts, true, isSquid);\n' +
+      '        // to the feet. Keep doing so until the capsule clears the side. On a\n' +
+      '        // source stage the feet stay a seam height up, so floor seams under the\n' +
+      '        // body are not walls while the curb itself remains solid.\n' +
+      '        G.physics.collideBody(this.pos, terrainRadius, G.level?.native ? Math.min(lift, NATIVE_STEP_SEAM) : 0, height, this.contacts, true, isSquid);\n' +
       '        const sideBlocked = this.contacts.wall;\n' +
       '        if (sideBlocked) {\n' +
       '          const n = this.contacts.wallNormal;\n' +

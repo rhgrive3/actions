@@ -7,14 +7,38 @@ export function nativeContactFace(level, faceId, kind) {
  return face?.turf ? face : null;
 }
 
-export function nativeContactCoplanar(reference, face) {
+// Source charts split one physical floor by object, 8 m tile and quantised
+// plane, and a curved ramp is one chart per triangle with its own normal. A
+// stamp must reach every chart the ink actually touches: an adjacent floor of
+// another object at the same height (within millimetres, not 0.1 mm), and the
+// next facets of a ramp or a crest leading down a slope. With the strike
+// position, a chart qualifies when its normal lies within SURFACE_COS of the
+// struck chart's and its own plane passes the strike within the same height
+// as the struck plane does (to SURFACE_PLANE metres): a parallel floor above
+// or below, a wall and a thin ceiling (opposite normal) never qualify.
+// Without a position the former plane-offset rules remain.
+const SURFACE_COS = .85;
+function strikeOffset(face, p) {
+ const n = face.n, o = face.origin;
+ return (p.x-o.x)*n.x + (p.y-o.y)*n.y + (p.z-o.z)*n.z;
+}
+function sameStrikeSurface(reference, face, at, plane) {
+ const n = reference.n, m = face.n;
+ if (n.x*m.x + n.y*m.y + n.z*m.z <= SURFACE_COS) return false;
+ return Math.abs(strikeOffset(face, at) - strikeOffset(reference, at)) <= plane;
+}
+
+export function nativeContactCoplanar(reference, face, at = null) {
  if (reference === face) return true;
  if (!face?.turf) return false;
+ if (at) return sameStrikeSurface(reference, face, at, CONTACT_PLANE);
  const n = reference.n, m = face.n;
  if (Math.abs(n.x*m.x + n.y*m.y + n.z*m.z - 1) > 1e-6) return false;
  const a = reference.origin, b = face.origin;
  return Math.abs((b.x-a.x)*n.x + (b.y-a.y)*n.y + (b.z-a.z)*n.z) <= 1e-4;
 }
+// A rolling drum rests on the floor: a 5 cm seam or bevel is the same floor.
+const CONTACT_PLANE = .05;
 
 // A face-locked impact (main weapon shot, drop, trail) keeps its struck chart as
 // the ownership seed. Native charts split one physical surface by object, 8 m tile
@@ -29,9 +53,10 @@ export function nativeFaceLockFace(level, faceId) {
  if (!level.native || !Number.isInteger(faceId) || faceId < 0) return null;
  return level.faces[faceId] || null;
 }
-export function nativeFaceLockCoplanar(reference, face) {
+export function nativeFaceLockCoplanar(reference, face, at = null) {
  if (reference === face) return true;
  if (!face) return false;
+ if (at) return sameStrikeSurface(reference, face, at, FACE_LOCK_PLANE);
  const n = reference.n, m = face.n;
  if (n.x*m.x + n.y*m.y + n.z*m.z <= FACE_LOCK_COS) return false;
  const a = reference.origin, b = face.origin;

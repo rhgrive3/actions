@@ -5,6 +5,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { TACTICOOLER_SOURCE } from '../runtime/support-cooler.mjs';
 import {nativeSpecialReceiver} from './native-special-receiver-fixture.mjs';
 import { tacticoolerGaugeLocked } from '../runtime/tacticooler-gauge.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 import { supportNativeProducer } from '../../network-replication/tests/support-native-producer-fixture.mjs';
 
 const STEP = 1 / 60;
@@ -81,7 +82,7 @@ test('Tacticooler locks at placement for exactly 600F, independently of drink Sp
       if (ticks < 600) { assert.equal(f.tacticoolerGaugeLocked(a), true); near(a.special, 0, `no turf refill at tick ${ticks}`); }
     });
     assert.equal(ticks, 600); near(G.time - placement, 10, 'elapsed placement interval');
-    assert.equal(f.tacticoolerGaugeLocked(a), false); near(a.special, 1, 'turf charging resumes on the 600th tick');
+    assert.equal(f.tacticoolerGaugeLocked(a), false); near(a.special, SPECIAL_PAINT_CHARGE_RATE, 'turf charging resumes on the 600th tick');
     assert.ok(G.projectiles._s3SupportCoolers.includes(stand), 'ordinary stand still has five seconds to live');
   }
 });
@@ -99,7 +100,7 @@ test('Tacticooler gate preserves paint scoring, blocks readiness and both Tenaci
     a._startSpecial(); assert.equal(a.specialActive, null, 'real activation admission respects lock'); a.special = 0;
     w.tick(599); near(a.special, 0, 'Tenacity cannot refill during the post-placement lock');
     w.tick(); near(a.special, (matchOwner ? 3.26 : 3.24) * STEP, 'one passive award when the lock ends');
-    a.addTurf(20); near(a.special, 20 + (matchOwner ? 3.26 : 3.24) * STEP, 'normal paint refill resumes');
+    a.addTurf(20); near(a.special, 20 * SPECIAL_PAINT_CHARGE_RATE + (matchOwner ? 3.26 : 3.24) * STEP, 'normal paint refill resumes');
   }
 });
 
@@ -109,7 +110,7 @@ test('Tower stand disappearance releases its gauge at 450F, including before pro
   w.tick(449); assert.equal(f.tacticoolerGaugeLocked(a), true);
   G.time += STEP; a.update(STEP);
   assert.equal(f.tacticoolerGaugeLocked(a), false, 'expiry already unlocks before Projectiles.update');
-  a.addTurf(5); near(a.special, 5, '450F expiry allows charge');
+  a.addTurf(5); near(a.special, 5 * SPECIAL_PAINT_CHARGE_RATE, '450F expiry allows charge');
   G.projectiles.update(STEP);
   assert.equal(G.projectiles._s3SupportCoolers.includes(stand), false);
   assert.equal(a.s3TacticoolerGauge, null);
@@ -124,7 +125,7 @@ test('a thrown cooler landing after death creates its lock; respawn reset keeps 
   assert.equal(a.alive, true); assert.ok(G.projectiles._s3SupportCoolers.includes(stand));
   near(f.tacticoolerGaugeRemaining(a), 9, 'reset does not restart or clear the stand clock');
   a.addTurf(10); near(a.special, 0, 'respawn cannot bypass lock');
-  w.tick(540); a.addTurf(10); near(a.special, 10, 'remaining lock elapses across death/respawn');
+  w.tick(540); a.addTurf(10); near(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE, 'remaining lock elapses across death/respawn');
 });
 
 test('replacement and match clear retire only the matching cooler lock without changing Storm state', async () => {
@@ -148,7 +149,7 @@ test('replacement and match clear retire only the matching cooler lock without c
   assert.equal(a.stormGaugeLock, 3); assert.equal(a.stormGaugeDuration, 8); assert.equal(a.s3.stormPowerSnapshot, storm);
   G.projectiles.clear(); assert.equal(a.s3TacticoolerGauge, null);
   assert.equal(a.stormGaugeLock, 3, 'match clear cannot remove an independent Storm lock');
-  a.stormGaugeLock = 0; a.addTurf(10); near(a.special, 10, 'clear removes the cooler gate');
+  a.stormGaugeLock = 0; a.addTurf(10); near(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE, 'clear removes the cooler gate');
 });
 
 test('unadmitted remote deploy cannot create a stand or local lock; a new match cannot retain one', async () => {

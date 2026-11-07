@@ -43,7 +43,7 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
     patch("    await progress(0.85, t('Warming up…'));", "    // Complete the default pack load in the existing warmup phase, before\n    // shader compilation and the first shot.\n    await Promise.all([G.fx.inkVolumeReady, progress(0.85, t('Warming up…'))]);", 'default packs ready before gameplay');
   }
   if (rel === 'src/game/weapons.js') {
-    code = "import { hissenVolumeFallback } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\nimport { captureInkVolume, submitInkVolume, prepareHissenVolumeLOD } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;
+    code = "import { hissenVolumeFallback } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\nimport { captureInkVolume, submitInkVolume, prepareHissenVolumeLOD, submitSplashDropVolumes } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;
     patch('  _push(p) {', '  _push(p) {\n    captureInkVolume(p, WEAPONS[p.wid] || p.owner?.weapon);\n    if (G.match && !G.match.attract && hissenVolumeFallback(p)) G.fx?.requestHissenFallback?.();', 'snapshot local projectile presentation');
     // Network composition finalizes immutable mode/identity after velocity.
     // Observe the completed native birth instead of classifying midway through
@@ -65,7 +65,7 @@ Projectiles.prototype.ghostProjectile = function(a, e) {
     const dropAnchor = code.includes('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);')
       ? '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS - reserve);'
       : '    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);';
-    patch(dropAnchor, '    volumes?.end();\n' + dropAnchor, 'flush shared frame batches');
+    patch(dropAnchor, '    submitSplashDropVolumes(volumes, this);\n    volumes?.end();\n' + dropAnchor, 'flush shared frame batches');
   }
   return code;
 }

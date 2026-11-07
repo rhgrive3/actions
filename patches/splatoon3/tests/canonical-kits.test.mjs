@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../runtime/special-paint-rate.mjs';
 import fs from 'node:fs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
 import {fixture} from './source-fixture.mjs';
@@ -68,7 +69,7 @@ test('canonical Splat Bomb paint credits floor owner and exact kit gauge, then d
  f.G.projectiles._explodeBomb(bomb);
  for(let i=0;i<200;i++)paint.advanceSimulation(1/60);
  assert.ok(a.stats.turf>0);assert.equal(a.stats.turf,paint.counts[0]*face.cu*face.cv);
- assert.equal(a.special,Math.min(180,a.stats.turf));
+ assert.ok(Math.abs(a.special-Math.min(180,a.stats.turf*PAINT_RATE))<1e-9,'gauge charges the paint rate per inked area');
  const before=a.special;a.splat(null,'test');assert.equal(a.special,before*.5);
 });
 

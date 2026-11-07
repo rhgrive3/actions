@@ -3,6 +3,8 @@ import { Level } from '../../../src/world/level.js';
 import { nativeInkGeometry } from './native-render.mjs';
 import { TriangleWorld } from './triangle-world.mjs';
 import { assertSourceTerrainObjects } from './source-terrain-contract.mjs';
+import { nativeDetailPlanes } from './native-paint-detail.mjs';
+import { PLAYER } from '../../../src/config.js';
 const DOWN = new THREE.Vector3(0,-1,0);
 // Source face tints are immutable; dynamic object colors retain separate owners.
 const SOURCE_NEUTRAL_COLOR = Object.freeze(new THREE.Color('#bfc3c6'));
@@ -62,6 +64,79 @@ function* classifyInkUnderlays(level, data) {
   return marked;
 }
 
+// Turf War judge eligibility for source floor cells. Splatoon 3 counts the
+// floor a player can actually ink; the source chart mask marks every 0.25 m
+// cell that any chart triangle merely grazes, on every upward source face.
+// Measured on Hagglefish (8 players, ~20 s): 249,161 eligible cells (~15,600
+// m2) put ~780 m2 of real ink at 2.8 % per team. A cell is kept out of the
+// judge (it still takes, shows and swims ink) when:
+//  - its centre lies outside the chart's own triangles: the paint grid owns
+//    cells by centre, so a grazed boundary cell counted a full cell of area
+//    that the paint could rarely reach, and neighbouring charts both kept it;
+//  - an earlier coplanar floor chart already contains its centre (kitbashed
+//    objects stack the same floor several times);
+//  - the surface is covered within TURF_COVER by a surface facing the same way
+//    (a slab laid over the floor), or the cell lies inside a closed source
+//    solid (its up and horizontal rays all leave through back faces);
+//  - its centre lies outside the arena bounds or at/below the fall-death height.
+const TURF_COVER = 0.08, TURF_INSIDE_REACH = 24, TURF_PROBE = 0.06;
+const TURF_RAY = Object.freeze({});
+const TURF_SIDES = [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]];
+function* classifyTurfCells(level){
+ const world=level.triangleWorld,mask=level.mask,faces=level.faces;
+ const ignore=new Uint8Array(mask?.length||0);level.turfIgnore=ignore;
+ if(!world||!mask||!faces?.length||!(world.triangleCount>0)||typeof world.ray!=='function')return 0;
+ const B=level.bounds,fallY=Number.isFinite(PLAYER?.fallDeathY)?PLAYER.fallDeathY:-Infinity,normals=world.normals;
+ const P=new THREE.Vector3(),O=new THREE.Vector3(),D=new THREE.Vector3(),hit={point:new THREE.Vector3(),normal:new THREE.Vector3()};
+ const backFace=(origin,dir,far)=>{
+  const h=world.ray(origin,dir,far,TURF_RAY,hit);if(!h)return -1;
+  const t=hit.triangle*3;return normals[t]*dir.x+normals[t+1]*dir.y+normals[t+2]*dir.z>0?hit.distance:-1;
+ };
+ // Coplanar floor charts, bucketed by 4 m column, for the duplicate test.
+ const planes=nativeDetailPlanes(level),columns=new Map(),column=(x,z)=>Math.floor(x/4)+','+Math.floor(z/4);
+ if(planes)for(const f of faces){
+  if(!f.turf)continue;const plane=planes.get(f);if(!plane)continue;
+  const [lo,hi]=f.bounds;
+  for(let x=Math.floor(lo[0]/4);x<=Math.floor(hi[0]/4);x++)for(let z=Math.floor(lo[2]/4);z<=Math.floor(hi[2]/4);z++){
+   const key=x+','+z;let list=columns.get(key);if(!list)columns.set(key,list=[]);list.push(f);
+  }
+ }
+ let excluded=0,work=0;
+ for(const f of faces){
+  if(!f.turf)continue;
+  const plane=planes?.get(f),end=f.grid+f.nu*f.nv;
+  for(let k=f.grid;k<end;k++){
+   if(!mask[k])continue;
+   if(++work%256===0)yield;
+   const local=k-f.grid,i=local%f.nu,j=(local-i)/f.nu,u=(i+.5)*f.cu,v=(j+.5)*f.cv;
+   P.copy(f.origin).addScaledVector(f.u,u).addScaledVector(f.v,v);
+   let out=!(P.x>=B.minX&&P.x<=B.maxX&&P.z>=B.minZ&&P.z<=B.maxZ)||P.y<=fallY||!level.containsOnFace(f,P,0);
+   if(!out&&plane){
+    const list=columns.get(column(P.x,P.z));
+    if(list)for(const g of list){
+     if(g.id>=f.id)break;
+     if(planes.get(g)!==plane)continue;
+     const [lo,hi]=g.bounds;
+     if(P.x<lo[0]-.01||P.x>hi[0]+.01||P.z<lo[2]-.01||P.z>hi[2]+.01||P.y<lo[1]-.01||P.y>hi[1]+.01)continue;
+     if(level.containsOnFace(g,P,.002)){out=true;break;}
+    }
+   }
+   if(!out){
+    O.copy(P).addScaledVector(f.n,.002);
+    const up=backFace(O,f.n,TURF_INSIDE_REACH);
+    if(up>=0&&up<=TURF_COVER)out=true;
+    else if(up>=0){
+     O.copy(P).addScaledVector(f.n,TURF_PROBE);let inside=true;
+     for(const s of TURF_SIDES){if(backFace(O,D.fromArray(s),TURF_INSIDE_REACH)<0){inside=false;break;}}
+     out=inside;
+    }
+   }
+   if(out){ignore[k]=1;excluded++;}
+  }
+ }
+ return excluded;
+}
+
 /** Compatibility with the original Level's face/grid and dynamic box contracts.
  * Static collision remains exact triangles; chart rectangles are NEVER colliders. */
 export class NativeLevel extends Level {
@@ -119,9 +194,25 @@ export class NativeLevel extends Level {
   yield* classifyInkUnderlays(this,data);
   this._buildHash();
   yield;
+  // Turf War judge eligibility depends only on static source geometry.
+  yield* classifyTurfCells(this);
+  yield;
   this._probe=new THREE.Vector3();
   this._groundHit={point:new THREE.Vector3(),normal:new THREE.Vector3()};
   this._groundOptions={minNormalY:.68};this._supportOptions={minNormalY:.68,anyHit:true,minHitY:-Infinity};
+ }
+ // Whole-object source boxes exist only so blockForTriangle() can name a
+ // block for an uncharted collision triangle. One Fld_* terrain object spans
+ // tens of metres, so its box encloses open floor and air; any legacy block
+ // query (muzzle guards, OBB sweeps, rail/nav probes) read it as a solid wall
+ // standing in the middle of a plaza. Keep them out of the spatial hash: exact
+ // source triangles own static collision, and a query never meets the box.
+ _buildHash(){
+  const blocks=this.blocks;
+  if(!blocks.some(b=>b?.nativeObject!==undefined))return super._buildHash();
+  this.blocks=blocks.filter(b=>b?.nativeObject===undefined);
+  try{super._buildHash();}finally{this.blocks=blocks;}
+  this.blockStamp=new Uint32Array(blocks.length);
  }
  invalidateMinimapSupport(){this.minimapSupportRevision=(this.minimapSupportRevision||0)+1;}
  groundHeight(x,z,yMax=50){
@@ -246,12 +337,14 @@ export function initNativeGrid(paint){
  const lvl=paint.level;paint.grid=new Uint8Array(lvl.mask.length);
  paint.dead=new Uint8Array(lvl.mask.length);
  for(let k=0;k<lvl.mask.length;k++)paint.dead[k]=lvl.mask[k]?0:1;
+ // Cells that take ink but stay out of the Turf War judge (classifyTurfCells).
+ if(lvl.turfIgnore?.length===lvl.mask.length)paint.turfIgnore=lvl.turfIgnore;else if('turfIgnore' in paint)paint.turfIgnore=null;
  paint.counts=[0,0];paint.turfTotal=0;paint.turfArea=0;
  for(const f of paint.paintFaces){
   f.nativeEmpty=true;const end=f.grid+f.nu*f.nv;
   for(let k=f.grid;k<end;k++)if(!paint.dead[k]){
    f.nativeEmpty=false;
-   if(f.turf){paint.turfTotal++;paint.turfArea+=f.cu*f.cv;}
+   if(f.turf){if(!paint.turfIgnore?.[k]){paint.turfTotal++;paint.turfArea+=f.cu*f.cv;}}
    else break;
   }
  }

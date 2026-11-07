@@ -42,13 +42,15 @@ test('composed build passes playback options to the engine and keeps one title t
   assert.match(main, /G\.audio\?\.play\('special_charged'\)/);
 });
 
-test('title screen: A press, then the tone 300 ms later, without the synthesized confirm', () => {
+test('title screen: A press, then the tone 300 ms later, without the synthesized confirm or splat', () => {
   const body = menus.slice(menus.indexOf('  _titleGo() {'), menus.indexOf('  _titleGo() {') + 500);
   assert.match(body, /this\._sfx\('title_press'\);/);
   assert.match(body, /this\._sfx\('title_follow', 0\.03, \{ delay: 0\.3 \}\);/, 'scheduled on the audio clock, not a second timer');
   assert.equal((body.match(/setTimeout/g) || []).length, 1, 'only the existing 200 ms transition timer');
   assert.doesNotMatch(body, /_sfx\('ui_confirm'\)/);
-  assert.match(body, /this\._sfx\('splat_small'\);/, 'the splat accent stays');
+  // Owner request 2026-11-07: the synthesized splat no longer layers over the recordings.
+  assert.doesNotMatch(body, /_sfx\('splat_small'\)/, 'only the two recordings play');
+  assert.ok(OWNER_SFX.title_press.gain > 0.1 && OWNER_SFX.title_follow.gain > 0.04, 'both title recordings were raised');
 });
 
 test('title cues are fetched at page load and decode without a gesture', async () => {

@@ -1694,7 +1694,7 @@ function updateFlight(api, projectiles, object, dt) {
   const defense=projectiles.kitDefenseCandidate?.(object);
   const defenseDistance=defense?.distance??Infinity, actorDistance=actor?.distance??Infinity;
   const worldDistance=world?.hit?world.dist:Infinity;
-  if(object.subId==='fizzy'&&!object.ghost){
+  if(object.subId==='fizzy'&&!object.ghost&&!object.s3Prediction){
     // Schedule only the physically traversed prefix, before interception or
     // terrain response can mutate the endpoint. Falling drops own later paint;
     // no unsupported fizzyFlightPaint action is emitted or accepted.
@@ -1832,7 +1832,19 @@ function burstFizzy(api,projectiles,object){
   object.fuse=frameSeconds(object.spec.burstWaitFrames[Math.min(2,index+1)]||1);
   const direction=new api.THREE.Vector3(object.vel.x,0,object.vel.z);
   if(direction.lengthSq()<1e-6)direction.set(Math.sin(object.yaw),0,Math.cos(object.yaw));
-  direction.normalize();object.pos.addScaledVector(direction,.62);
+  direction.normalize();
+  // The hop leaves .62 ahead of the pop. A bomb resting against a wall used to
+  // be placed straight through it: sweep that offset, stop at the wall and hop
+  // back off it instead.
+  const hopFrom=(object._hopFrom ||= object.pos.clone()).copy(object.pos);hopFrom.y+=.08;
+  const hopTo=(object._hopTo ||= object.pos.clone()).copy(hopFrom).addScaledVector(direction,.62);
+  const blocked=api.G.physics?.segment?.(hopFrom,hopTo,projectiles._s3FizzyHopHit ||= new api.Hit());
+  if(blocked?.hit&&blocked.normal.y<=.5){
+    const nx=blocked.normal.x,nz=blocked.normal.z,nl=Math.hypot(nx,nz);
+    const back=Math.max(0,(blocked.dist??hopFrom.distanceTo(blocked.point))-.05);
+    object.pos.addScaledVector(direction,back);
+    if(nl>1e-6){const vn=(direction.x*nx+direction.z*nz)/nl;if(vn<0){direction.x-=2*vn*nx/nl;direction.z-=2*vn*nz/nl;direction.normalize();}}
+  }else object.pos.addScaledVector(direction,.62);
   const hop=object.spec.hop,high=object.popLimit>=3;
   const velocity=high?hop.highVelocity:hop.lowVelocity,pitch=(high?hop.highPitchDeg:hop.lowPitchDeg)*Math.PI/180;
   object.vel.x=direction.x*velocity*Math.cos(pitch);object.vel.z=direction.z*velocity*Math.cos(pitch);object.vel.y=velocity*Math.sin(pitch);
