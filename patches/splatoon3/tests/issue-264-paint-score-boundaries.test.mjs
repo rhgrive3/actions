@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} sourced paint keeps physical ownership bounded without inventing spatter credit`, async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
@@ -69,5 +70,5 @@ test('real native Slosher flight credits its source body once at finer supported
   assert.equal(physicalLateCredit, physicalLateCells * face.cu * face.cv);
   assert.equal(lateCells, 0, 'source masks cannot add procedural late satellite cells, even at finer resolution');
   assert.equal(lateCredit, 0, 'no second credit after the full source body was claimed');
-  assert.equal(owner.special, owner.stats.turf);
+  assert.equal(owner.special, owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE);
 });
