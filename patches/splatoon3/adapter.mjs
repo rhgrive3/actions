@@ -25,6 +25,7 @@ import { adaptRollerDepletion } from './roller-depletion-adapter.mjs';
 // Every connection has a unique exact anchor; missing/duplicated hooks are errors.
 import { adaptMovementPhysics } from './movement-physics-adapter.mjs';
 import { adaptBrellaGuardFacing } from './brella-guard-facing-adapter.mjs';
+import { adaptFireHoldFacing } from './fire-hold-facing-adapter.mjs';
 import { adaptSubSpecialFidelity } from './sub-special-adapter.mjs';
 import { adaptChargerSightCache } from './charger-sight-cache-adapter.mjs';
 import { adaptJuddResult } from './judd-result-adapter.mjs';
@@ -437,6 +438,7 @@ export function adaptSource(rel, code) {
   if (rel === 'patches/splatoon3/runtime/resources.mjs') return adaptIssue415(rel, code);
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptBrellaGuardFacing(rel, code, replaceOnce);
+  code = adaptFireHoldFacing(rel, code, replaceOnce);
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptKitRescue(rel, code, replaceOnce);
