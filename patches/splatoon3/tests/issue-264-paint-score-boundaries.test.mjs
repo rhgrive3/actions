@@ -70,5 +70,6 @@ test('real native Slosher flight credits its source body once at finer supported
   assert.equal(physicalLateCredit, physicalLateCells * face.cu * face.cv);
   assert.equal(lateCells, 0, 'source masks cannot add procedural late satellite cells, even at finer resolution');
   assert.equal(lateCredit, 0, 'no second credit after the full source body was claimed');
-  assert.equal(owner.special, owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE);
+  assert.ok(Math.abs(owner.special - owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE) < 1e-9,
+    'special gauge follows the 60% paint rate within floating-point precision');
 });
