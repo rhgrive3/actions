@@ -338,7 +338,7 @@ export function initNativeGrid(paint){
  paint.dead=new Uint8Array(lvl.mask.length);
  for(let k=0;k<lvl.mask.length;k++)paint.dead[k]=lvl.mask[k]?0:1;
  // Cells that take ink but stay out of the Turf War judge (classifyTurfCells).
- paint.turfIgnore=lvl.turfIgnore?.length===lvl.mask.length?lvl.turfIgnore:null;
+ if(lvl.turfIgnore?.length===lvl.mask.length)paint.turfIgnore=lvl.turfIgnore;else if('turfIgnore' in paint)paint.turfIgnore=null;
  paint.counts=[0,0];paint.turfTotal=0;paint.turfArea=0;
  for(const f of paint.paintFaces){
   f.nativeEmpty=true;const end=f.grid+f.nu*f.nv;
