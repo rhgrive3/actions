@@ -37,6 +37,8 @@ export class BotBrain {
   reset() {
     this.path = null; this.pi = 0; this.goal = -1; this.repath = 0; this.goalTimer = 0;
     this.target = null; this.seeTimer = 0; this.react = 0; this.lostTimer = 0;
+    // Where the current target was when the latest perception tick saw it (see _trackedTarget).
+    this.lastSeenPos = this.lastSeenPos ? this.lastSeenPos.set(0, 0, 0) : new THREE.Vector3(); this.hasLastSeen = false;
     this.stuck = 0; this.lastPos = new THREE.Vector3(); this.jumpCd = 0; this.bestD = Infinity; this.noProg = 0;
     this.mode = 'paint';
     this.sweep = Math.random() * 10;
@@ -63,7 +65,7 @@ export class BotBrain {
   update(dt) {
     const a = this.a;
     const it = a.intent;
-    if (!a.alive) { it.move.set(0, 0, 0); it.fire = it.squid = it.sub = it.jump = it.special = false; this.path = null; this.target = null; this._wasDead = true; this.mvMag = 0; return; }
+    if (!a.alive) { it.move.set(0, 0, 0); it.fire = it.squid = it.sub = it.jump = it.special = false; this.path = null; this.target = null; this.hasLastSeen = false; this._wasDead = true; this.mvMag = 0; return; }
     if (this._wasDead && G.match && G.match.playing()) {
       // just respawned: face the way the body faces, then sometimes super jump to the teammate furthest up the field
       this._wasDead = false;
@@ -92,6 +94,11 @@ export class BotBrain {
     }
     const tgt = this.target;
     if (tgt && !tgt.alive) { this.target = null; }
+    // seeTimer is a 1.2 s memory of a sighting, but only a value above 1 means the latest perception tick had a line
+    // of sight. Remember where the enemy was then; once it breaks cover the Bot works from that spot, not from the
+    // enemy's live position behind the wall (no see-through aim, strafing or pursuit).
+    if (this.target && this.seeTimer > 1 + 1e-9) { this.lastSeenPos.copy(this.target.pos); this.hasLastSeen = true; }
+    else if (!this.target) this.hasLastSeen = false;
 
     // ---------------- mode selection (retreat = break line of sight and heal in own ink when losing a duel)
     const inkFrac = a.ink / PLAYER.inkMax;
@@ -117,7 +124,13 @@ export class BotBrain {
 
     // ---------------- navigation goal
     this.goalTimer -= dt; this.repath -= dt;
-    if (this.mode === 'fight' && this.target) {
+    if (this.mode === 'fight' && this.target && this._targetHidden()) {
+      // Lost behind cover: walk to the last seen spot and give up there if nobody is around.
+      if (Math.hypot(this.lastSeenPos.x - a.pos.x, this.lastSeenPos.z - a.pos.z) < 2.2) {
+        this.target = null; this.seeTimer = 0; this.lostTimer = 0; this.hasLastSeen = false;
+        this.mode = 'paint'; this.path = null; this.goalTimer = 0;
+      } else if (this.repath <= 0) this._pathTo(this.lastSeenPos, 0.6);
+    } else if (this.mode === 'fight' && this.target) {
       if (this.repath <= 0) this._pathTo(this.target.pos, 0.6);
     } else if (this.mode === 'refill') {
       if (this.repath <= 0 || !this.path) this._pickRefill();
@@ -139,7 +152,7 @@ export class BotBrain {
     let fightDist = 0, idealYaw = 0, idealPitch = 0, aimDist = 6;
 
     if ((this.mode === 'fight' || this.mode === 'retreat') && this.target) {
-      const t = this.target;
+      const t = this._trackedTarget();
       const dx = t.pos.x - a.pos.x, dz = t.pos.z - a.pos.z;
       const dist = Math.hypot(dx, dz);
       fightDist = dist;
@@ -382,6 +395,17 @@ export class BotBrain {
     if (family === 'charger') return w.rangeMax * 0.9;
     if (family === 'roller') return 6;
     return w.range;
+  }
+
+  // The target is out of sight (not seen by the latest perception tick) and a sighting position is on record.
+  _targetHidden() { return !!this.target && this.hasLastSeen && this.seeTimer <= 1 + 1e-9; }
+  // The target as the Bot knows it: the live actor while it is in sight, else a stand-in at the last seen spot.
+  _trackedTarget() {
+    const t = this.target;
+    if (!t || !this._targetHidden()) return t;
+    const g = this._lastSeenGhost || (this._lastSeenGhost = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), smoothY: 0, form: 'human', grounded: true });
+    g.pos.copy(this.lastSeenPos); g.vel.set(0, 0, 0); g.form = t.form === 'squid' ? 'human' : t.form;
+    return g;
   }
 
   _perceive() {
