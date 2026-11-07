@@ -83,52 +83,6 @@ export function adaptReviewedHotpaths20261107(rel, code, replaceOnce) {
   }
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
-      '    const body = new THREE.Mesh(d.body, getPlasticMaterial()); body.castShadow = true;\n    const ink = new THREE.Mesh(d.ink, getInkMaterial(this.color)); ink.castShadow = true;',
-      '    const body = new THREE.Mesh(d.body, getPlasticMaterial()); body.castShadow = true; body.matrixAutoUpdate = false;\n    const ink = new THREE.Mesh(d.ink, getInkMaterial(this.color)); ink.castShadow = true; ink.matrixAutoUpdate = false;',
-      'character static bomb leaf mesh matrixAutoUpdate');
-    code = replaceOnce(code,
-      `    const body = new THREE.Mesh(d.bodyStatic || d.body, getPlasticMaterial()); body.castShadow = true;
-    const ink = new THREE.Mesh(d.inkStatic || d.ink, getInkMaterial(this.color)); ink.castShadow = true;
-    const bodyFar = new THREE.Mesh(d.body, getPlasticMaterial()); bodyFar.castShadow = true; bodyFar.visible = false;
-    const inkFar = new THREE.Mesh(d.ink, getInkMaterial(this.color)); inkFar.castShadow = true; inkFar.visible = false;`,
-      `    const body = new THREE.Mesh(d.bodyStatic || d.body, getPlasticMaterial()); body.castShadow = true; body.matrixAutoUpdate = false;
-    const ink = new THREE.Mesh(d.inkStatic || d.ink, getInkMaterial(this.color)); ink.castShadow = true; ink.matrixAutoUpdate = false;
-    const bodyFar = new THREE.Mesh(d.body, getPlasticMaterial()); bodyFar.castShadow = true; bodyFar.visible = false; bodyFar.matrixAutoUpdate = false;
-    const inkFar = new THREE.Mesh(d.ink, getInkMaterial(this.color)); inkFar.castShadow = true; inkFar.visible = false; inkFar.matrixAutoUpdate = false;`,
-      'character static weapon shell leaf mesh matrixAutoUpdate');
-    code = replaceOnce(code,
-      '      const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate; m.visible = pd.hidden !== true;',
-      '      const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate; m.visible = pd.hidden !== true; m.matrixAutoUpdate = false;',
-      'character weapon part leaf mesh matrixAutoUpdate');
-    code = replaceOnce(code,
-      '      m.bind(this.skeleton, IDENT);\n      m.castShadow = p.shadow; m.receiveShadow = true;',
-      '      m.bind(this.skeleton, IDENT); m.matrixAutoUpdate = false;\n      m.castShadow = p.shadow; m.receiveShadow = true;',
-      'character tier SkinnedMesh matrixAutoUpdate');
-    code = replaceOnce(code,
-      `      // trigger finger: the right index squeezes with the weapon's trigger blade (only while gripping)
-      const trig = sd === 1 && this.weapon ? (this.weapon.trig || 0) * clamp(1 - Math.abs(h), 0, 1) : 0;
-      for (let k = 0; k < 4; k++) {
-        const casc = (k - 1.5) * 0.07 * relaxW; // the pinky side curls a little more than the index side
-        const sq = k === 0 ? trig : 0;
-        F.f1[k].rotation.set(FINGER_SPREAD[k] * (openW + 0.35 * relaxW), 0, side * (f1 - casc + life - 0.3 * sq));
-        F.f2[k].rotation.set(0, 0, side * (f2 - casc * 0.8 + life * 0.5 - 0.35 * sq));
-      }
-      F.t1.rotation.set(hk(h, 0, 0, 0.35, 0.55), side * hk(h, -0.1, 0, 0, 0), side * hk(h, 0.12, 0, 0, 0));
-      F.t2.rotation.set(0, 0, side * hk(h, 0.3, 0, -0.25, -0.5));`,
-      `      // trigger finger: the right index squeezes with the weapon's trigger blade (only while gripping)
-      const trig = sd === 1 && this.weapon ? (this.weapon.trig || 0) * clamp(1 - Math.abs(h), 0, 1) : 0;
-      if (relaxW === 0 && life === 0 && F._iwSteady && Object.is(F._iwH, h) && Object.is(F._iwGq, gq) && Object.is(F._iwTrig, trig)) continue;
-      for (let k = 0; k < 4; k++) {
-        const casc = (k - 1.5) * 0.07 * relaxW; // the pinky side curls a little more than the index side
-        const sq = k === 0 ? trig : 0;
-        F.f1[k].rotation.set(FINGER_SPREAD[k] * (openW + 0.35 * relaxW), 0, side * (f1 - casc + life - 0.3 * sq));
-        F.f2[k].rotation.set(0, 0, side * (f2 - casc * 0.8 + life * 0.5 - 0.35 * sq));
-      }
-      F.t1.rotation.set(hk(h, 0, 0, 0.35, 0.55), side * hk(h, -0.1, 0, 0, 0), side * hk(h, 0.12, 0, 0, 0));
-      F.t2.rotation.set(0, 0, side * hk(h, 0.3, 0, -0.25, -0.5));
-      if (relaxW === 0 && life === 0) { F._iwSteady = true; F._iwH = h; F._iwGq = gq; F._iwTrig = trig; } else F._iwSteady = false;`,
-      'character steady-state finger rotation cache');
-    code = replaceOnce(code,
       `    _sQb.copy(_sQp).invert().multiply(_sQa);
     L.up.quaternion.slerp(_sQb, weight);
     _by.copy(_sT).sub(_pE).normalize();

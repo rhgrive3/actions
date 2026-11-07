@@ -313,13 +313,9 @@ export function installBombMotion({ Character, WeaponRunner, THREE, CHARACTER_TI
     if (!enabled(this) || !this.kidForm || this.dance || hidden(this.root) || owner?.alive === false
       || owner?.superJumpState || !specialAllows(this, owner, timers)) return result;
     const value = state(this), age = this.tr[timers.T_THROW];
-    const activeThrow = value.throwing && age < RECOVERY;
-    const activeHold = !activeThrow && this.bombHeld && this.wSub > .001;
-    if (activeThrow || activeHold || value.throwing || owner?.weaponRunner?.aimingSub) {
-      value.basePose ||= new Float32Array(this.P.length); value.basePose.set(this.P);
-    }
-    if (activeThrow) throwing.call(this, this.P, RELEASE_AGE + age);
-    else if (activeHold) holding.call(this, this.P, this.wSub);
+    value.basePose ||= new Float32Array(this.P.length); value.basePose.set(this.P);
+    if (value.throwing && age < RECOVERY) throwing.call(this, this.P, RELEASE_AGE + age);
+    else if (this.bombHeld && this.wSub > .001) holding.call(this, this.P, this.wSub);
     return result;
   };
   C.setWeapon = function (...args) {

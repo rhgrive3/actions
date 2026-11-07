@@ -326,12 +326,12 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     // both hands still own their real sockets. Preserve those retries and the
     // first-error feedback; only the remaining unreachable weapon translation
     // is corrected, without changing sockets, limb lengths or the shared IK.
-    const chargerHeld = this.weaponKind === 'charger' &&
+    const chargerHeld = this.weaponKind === 'charger' && enabled(this) &&
       (limb === this.limbs.armR || limb === this.limbs.armL) &&
       this.kidForm && !this.dual && !this.dance &&
       this.sourceMotion?.active && !this.sourceMotion.sourceUpper &&
       A[C.IKR] > .99 && A[C.IKL] > .99 && (A[C.LTW] || 0) < .001 &&
-      enabled(this) && !activeSpecial(this, T);
+      !activeSpecial(this, T);
     if (chargerHeld && limb === this.limbs.armR) {
       let x = chargerReaches.get(this);
       if (!x) {

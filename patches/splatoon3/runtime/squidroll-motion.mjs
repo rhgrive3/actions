@@ -2,13 +2,18 @@
 // supports an airborne turnover and direction reversal, not these exact curves.
 // Install after installMovementMotion and the other squid layers. Only Roll owns
 // the squid pivot here; the original springs, IK and gameplay remain untouched.
-import { movementMotionSnapshot, movementRollAge, MOVEMENT_MOTION_CALIBRATION } from './movement-motion.mjs';
+import { movementMotionSnapshot, MOVEMENT_MOTION_CALIBRATION } from './movement-motion.mjs';
 
 export const SQUIDROLL_MOTION_CALIBRATION = Object.freeze({
   turns: 1, tuck: .22, directionRelease: .65,
   status: 'visual calibration; original angle, shape and timing curves unknown',
 });
 const INSTALL = Symbol.for('inkwave.s3.squidroll-motion.install.v1');
+const MOVEMENT_CHARACTER_OWNER = Symbol.for('inkwave.s3.movement-motion.character.v1');
+const movementRollAge = ch => {
+  const owner = ch?.[MOVEMENT_CHARACTER_OWNER];
+  return owner?.rollAge ? owner.rollAge(ch) : movementMotionSnapshot(ch)?.rollAge ?? null;
+};
 const states = new WeakMap();
 const disposed = new WeakSet();
 const TAU = Math.PI * 2;

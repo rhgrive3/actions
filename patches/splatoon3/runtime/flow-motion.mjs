@@ -333,6 +333,7 @@ function step(ch, dt, THREE) {
   if (ch.s3FlowMotionEnabled !== false && !flow?.active && s.phase === 'off' && s.level === 0 && !s.resources?.group.visible) {
     if (s.owner && (!enabled || s.owner !== actor)) clear(ch);
     s.owner = enabled ? actor : null;
+    if (s.resources) draw(ch, s, THREE);
     return;
   }
   if (ch.s3FlowMotionEnabled === false) {

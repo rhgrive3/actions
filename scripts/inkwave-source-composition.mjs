@@ -229,7 +229,7 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptBombBlastForecast(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
   code = adaptViewportCache(rel, code);
-  code = adaptReviewedHotpaths20261107(rel, code, replaceOnce);
+  if (options.reviewedHotpaths20261107 !== false) code = adaptReviewedHotpaths20261107(rel, code, replaceOnce);
   return code;
 }
 

@@ -2651,7 +2651,6 @@ function installRuntime(api) {
     return result;
   };
   if(typeof projectileStep==='function')P._step=function(p,...args){
-    if(!p?.s3AllSpecial&&!p?.s3AllSpecialFlight)return projectileStep.call(this,p,...args);
     const cause=p?.s3AllSpecial?projectileObjectCause(p):null;
     if(cause&&!p?.ghost&&!p?.owner?.remote){
       const advance=()=>p?.s3AllSpecialFlight

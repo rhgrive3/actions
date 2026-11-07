@@ -18,10 +18,6 @@ export function movementMotionSnapshot(ch) {
   return ch?.[CHARACTER_OWNER]?.snapshot(ch) ?? null;
 }
 
-export function movementRollAge(ch) {
-  return ch?.[CHARACTER_OWNER]?.rollAge(ch) ?? null;
-}
-
 function restore(ch, m) {
   if (!m.applied) return;
   ch.squid.pivot.position.copy(m.basePosition);
