@@ -143,7 +143,7 @@ test('actual minified native audio module Workers bind beside the unchanged Blob
   assert.equal(f.evidence.owners.filter(o=>o.url===ORIGIN+'/'+owner).length,1);
   await assert.rejects(recordLoadedModuleResponse(response(ORIGIN+'/'+owner,code+';'),ORIGIN,f.loaded,f.evidence),/owner changed/);
   const lines=code.split('\n'),line=lines.findIndex(l=>l.includes('new Worker(')),column=lines[line].indexOf('new Worker(')+1,url=ORIGIN+'/'+path;
-  creation(f,url,{kind:'native-module',url,workerOptions:{type:'module',name:'inkwave-'+name},workerStack:`Error\n at construct (<anonymous>:1:1)\n at native (${ORIGIN}/${owner}:${line+1}:${column})`});observeGeneratedWorker(f.evidence,url,ORIGIN);
+  creation(f,url,{kind:'native-module',url,workerOptions:{type:'module',name:'inkwave-'+name},workerStack:`Error\n at construct (<anonymous>:1:1)\n at native (${ORIGIN}/${owner}:${line+1}:${column})`});assert.deepEqual(f.evidence.moduleWorkers,[path]);observeGeneratedWorker(f.evidence,url,ORIGIN);assert.deepEqual(f.evidence.moduleWorkers,[path]);
   await recordLoadedModuleResponse(response(url,body,'other'),ORIGIN,f.loaded,f.evidence);
  }
  const identity=await native(f);assert.equal(identity.moduleCount,107);
