@@ -50,3 +50,26 @@ test('title screen: A press, then the tone 300 ms later, without the synthesized
   assert.doesNotMatch(body, /_sfx\('ui_confirm'\)/);
   assert.match(body, /this\._sfx\('splat_small'\);/, 'the splat accent stays');
 });
+
+test('title cues are fetched at page load and decode without a gesture', async () => {
+  const { prefetchOwnerSfx, loadOwnerSfx, TITLE_SFX } = await import('../runtime/audio/owner-sfx-recordings.mjs');
+  assert.deepEqual([...TITLE_SFX], ['title_press', 'title_follow']);
+  const requested = [];
+  prefetchOwnerSfx(TITLE_SFX, async (href) => { requested.push(String(href).split('/').pop()); return { ok: true, arrayBuffer: async () => new ArrayBuffer(4096) }; });
+  await new Promise(r => setTimeout(r, 0));
+  assert.deepEqual(requested, ['ui_title_press_a.mp3', 'sfx_n0010a10.mp3']);
+  // Decoding uses the prefetched bytes: the engine's own fetcher is never called.
+  const ctx = {
+    state: 'suspended',
+    decodeAudioData: async bytes => {
+      assert.equal(bytes.byteLength, 4096);
+      const seconds = bytes.byteLength === 4096 ? 2.55 : 1.12;
+      return { duration: seconds, length: 255, sampleRate: 100, numberOfChannels: 1, getChannelData: () => new Float32Array(255) };
+    },
+  };
+  let engineFetches = 0;
+  const engine = { ctx, _ownerSfxFetcher: async () => { engineFetches++; return { ok: false, status: 500 }; } };
+  const buffer = await loadOwnerSfx(engine, 'title_press');
+  assert.ok(buffer, 'decoded from the prefetched bytes');
+  assert.equal(engineFetches, 0);
+});

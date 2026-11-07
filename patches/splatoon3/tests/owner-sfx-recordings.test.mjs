@@ -150,7 +150,7 @@ test('composed sources install the recordings and route only the gauge-full cue'
   const read = rel => fs.readFileSync(new URL('inkwave-public/' + rel, ROOT), 'utf8');
   const audio = adaptBuildSource('src/audio/audio.js', read('src/audio/audio.js'));
   assert.match(audio, /^import \{ installOwnerSfxRecordings \}/m);
-  assert.ok(audio.trimEnd().endsWith('installOwnerSfxRecordings(AudioEngine, SFX);'));
+  assert.ok(audio.trimEnd().endsWith('installOwnerSfxRecordings(AudioEngine, SFX, audio);'));
   const main = adaptBuildSource('src/main.js', read('src/main.js'));
   assert.equal((main.match(/play\('special_charged'\)/g) || []).length, 1);
   assert.match(main, /play\('times_up'\)/);

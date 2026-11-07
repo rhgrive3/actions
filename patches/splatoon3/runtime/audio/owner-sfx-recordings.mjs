@@ -76,6 +76,24 @@ export function seamlessLoop(ctx, buffer, seconds) {
   return out;
 }
 
+// The title cues are fetched as soon as the page loads, and the engine is created then too, so the
+// first press (which is also the first gesture) finds them already decoded. Bytes only: no context.
+export const TITLE_SFX = Object.freeze(['title_press', 'title_follow']);
+const PREFETCHED = new Map();
+export function prefetchOwnerSfx(names = TITLE_SFX, fetcher = globalThis.fetch?.bind(globalThis)) {
+  if (!fetcher) return;
+  for (const name of names) {
+    const spec = OWNER_SFX[name];
+    if (!spec || PREFETCHED.has(spec.file)) continue;
+    const href = assetURL(spec.file);
+    if (!href) continue;
+    PREFETCHED.set(spec.file, Promise.resolve()
+      .then(() => fetcher(href, { credentials: 'same-origin', cache: 'force-cache' }))
+      .then(response => (response?.ok ? response.arrayBuffer() : null))
+      .catch(() => null));
+  }
+}
+
 export function loadOwnerSfx(engine, name, { fetcher = engine?._ownerSfxFetcher || globalThis.fetch?.bind(globalThis), url } = {}) {
   const spec = OWNER_SFX[name], ctx = engine?.ctx;
   if (!spec || !ctx || ctx.state === 'closed' || typeof ctx.decodeAudioData !== 'function') return Promise.resolve(null);
@@ -89,9 +107,14 @@ export function loadOwnerSfx(engine, name, { fetcher = engine?._ownerSfxFetcher 
   const abort = typeof AbortController === 'function' ? new AbortController() : null;
   const timer = setTimeout(() => abort?.abort(), LOAD_TIMEOUT_MS);
   const job = (async () => {
-    const response = await fetcher(href, { credentials: 'same-origin', cache: 'force-cache', ...(abort ? { signal: abort.signal } : {}) });
-    if (!response?.ok) throw new Error(`${spec.file} unavailable (${response?.status ?? 'network'})`);
-    const bytes = await response.arrayBuffer();
+    // A copy: decodeAudioData detaches the buffer it is given.
+    const early = !url && PREFETCHED.has(spec.file) ? await PREFETCHED.get(spec.file) : null;
+    let bytes = early ? early.slice(0) : null;
+    if (!bytes) {
+      const response = await fetcher(href, { credentials: 'same-origin', cache: 'force-cache', ...(abort ? { signal: abort.signal } : {}) });
+      if (!response?.ok) throw new Error(`${spec.file} unavailable (${response?.status ?? 'network'})`);
+      bytes = await response.arrayBuffer();
+    }
     if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 1024 || bytes.byteLength > spec.maxBytes) throw permanent(`${spec.file} has an unexpected size`);
     const decoded = await ctx.decodeAudioData(bytes);
     if (!decoded || !Number.isFinite(decoded.duration) || Math.abs(decoded.duration - spec.seconds) > 0.25) throw permanent(`${spec.file} duration mismatch`);
@@ -143,21 +166,30 @@ function recordedDef(base, spec, buffer) {
   return def;
 }
 
-export function installOwnerSfxRecordings(AudioEngine, SFX) {
+export function installOwnerSfxRecordings(AudioEngine, SFX, instance) {
   const P = AudioEngine?.prototype;
   if (!P || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   // New names keep a synthesized fallback until their recording is decoded.
   for (const [name, spec] of Object.entries(OWNER_SFX)) if (!SFX[name] && spec.fallback && SFX[spec.fallback]) SFX[name] = SFX[spec.fallback];
+  const browser = typeof window !== 'undefined';
+  if (browser) prefetchOwnerSfx();
   const init = P.init, resolve = P._def;
   if (init) P.init = function (...args) {
     const result = init.apply(this, args);
     if (!this.offline && this.ctx && !this._ownerSfxQueued) {
       this._ownerSfxQueued = true;
+      // Title cues first, with no delay: the first press must find them decoded.
+      for (const name of TITLE_SFX) loadOwnerSfx(this, name);
       setTimeout(() => { this._ownerSfxQueued = false; preloadOwnerSfx(this); }, 400);
     }
     return result;
   };
+  // Page load, not the first gesture: create the engine now. The context stays suspended until the
+  // existing input listeners resume it (audio.js _installUnlock), and the title cues decode meanwhile.
+  if (browser && instance && !instance.ctx && typeof instance.init === 'function') {
+    try { instance.init(); } catch (e) { /* audio is optional */ }
+  }
   P._def = function (name) {
     const base = resolve.call(this, name);
     const spec = OWNER_SFX[name];

@@ -12,7 +12,7 @@ const IMPORT = "import { installOwnerSfxRecordings } from '../../patches/splatoo
 export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
   if (rel === 'src/audio/audio.js') {
     if (code.includes(IMPORT)) throw new Error('INKWAVE owner SFX recordings: repeated audio.js transform');
-    return IMPORT + code + '\ninstallOwnerSfxRecordings(AudioEngine, SFX);\n';
+    return IMPORT + code + '\ninstallOwnerSfxRecordings(AudioEngine, SFX, audio);\n';
   }
   if (rel === 'src/main.js') {
     // The recorded special-ready cue belongs to the local gauge-full event only;
