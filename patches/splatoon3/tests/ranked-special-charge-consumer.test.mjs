@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { emptyLoadout } from '../runtime/gear.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 // Actual shipped adapters, Actor, Match.playRankedEvents and NetMatch.onMessage.
 // Display/audio are fixture sinks. No browser or retail hardware claim.
@@ -57,7 +58,7 @@ test('ranked host and authenticated follower baseline points stay SCU-independen
     w.receive(45); near(w.a.specialFrac(), .225, `${mode}/${ap} follower`);
     w.receive(45); near(w.a.specialFrac(), .225, 'same cumulative total never awards twice');
     w.a.special = 0; const turf = w.a.stats.turf;
-    w.a.addTurf(45); near(w.a.specialFrac(), .225 * w.a.s3.modifiers.specialCharge, 'paint retains SCU');
+    w.a.addTurf(45); near(w.a.specialFrac(), .225 * SPECIAL_PAINT_CHARGE_RATE * w.a.s3.modifiers.specialCharge, 'paint retains SCU');
     near(w.a.stats.turf - turf, 45, 'paint score is unscaled');
     const before = w.a.special;
     f.emit('splatted', { attacker: w.a, victim: { team: 1 } });

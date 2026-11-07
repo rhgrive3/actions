@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './storm-effects-fixture.mjs';
 import { installStormPower } from '../runtime/storm-power.mjs';
 import { hudFrameSnapshot } from '../../local-quality/hud-snapshots.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 // #469: the spent Ink Storm gauge is displayed from the existing actor-owned lock
 // (480 ticks in INKWAVE; see reports/inkwave-splatoon3-behavior-2026-10-02.md).
 // The lock value itself is unverified against a primary Nintendo source.
@@ -50,7 +51,7 @@ test('#469 activation keeps the held remainder full and unusable, then drains on
   }
   assert.ok(f.stormGaugeFraction(a) > 0, 'gauge is still draining at tick 479');
   f.tick(a); assert.equal(a.stormGaugeLock, 0); assert.equal(f.stormGaugeFraction(a), null, 'final tick ends the display');
-  a.addTurf(10); close(a.special, 10, 'normal charging resumes after the lock ends');
+  a.addTurf(10); close(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE, 'normal charging resumes after the lock ends');
   p.clear();
 });
 
@@ -86,7 +87,7 @@ test('#469 Special Power extension sets the denominator once; death and reset ke
   close(f.stormGaugeFraction(a), before, 'reset removes the temporary power snapshot without a display jump');
   close(a.stormGaugeLock, 5, 'death and reset retain the lock');
   f.tick(a, 300); assert.equal(f.stormGaugeFraction(a), null, 'lock expires after the remaining ticks');
-  a.addTurf(10); close(a.special, 10, 'reset does not reopen recharge early');
+  a.addTurf(10); close(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE, 'reset does not reopen recharge early');
   p.clear();
 });
 

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock, STEP } from '../runtime/clock.mjs';
 import { SPECIAL_GAUGE_SEGMENTS } from '../runtime/tidal-slam-gauge.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 import { adaptSource } from '../adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
@@ -67,8 +68,8 @@ test('#647 negative control allows pending landing gauge refill and a second nat
   assert.ok(a.s3TidalSlamGaugeFinish && a.hardLand > 0);
   const held = a.special, priorUses = a.stats.specials;
   a.addTurf(10);
-  assert.equal(a.special, held + 10, 'existing landing-owned gauge incorrectly rises');
-  a.addTurf(a.specialCost());
+  assert.equal(a.special, held + 10 * SPECIAL_PAINT_CHARGE_RATE, 'existing landing-owned gauge incorrectly rises');
+  a.addTurf(a.specialCost() / SPECIAL_PAINT_CHARGE_RATE);
   assert.equal(a.specialReady(), true, 'the pending action can incorrectly be activated again');
   a.intent.special = true; f.tick(a);
   assert.equal(a.specialActive?.id, 'slam');
@@ -93,7 +94,7 @@ test('#647 pending landing earns turf but cannot refill, emit ready, or restart 
   a.special = held;
   let count = 0; while (a.s3TidalSlamGaugeFinish && count++ < 60) f.tick(a);
   assert.ok(count < 60); assert.equal(a.special, 0);
-  a.addTurf(a.specialCost()); assert.equal(a.specialReady(), true);
+  a.addTurf(a.specialCost() / SPECIAL_PAINT_CHARGE_RATE); assert.equal(a.specialReady(), true);
   assert.equal(events.length, 1, 'the next real ready transition is emitted normally');
 });
 
@@ -107,7 +108,7 @@ test('#647 timeout landing and Special Saver keep the same recharge boundary', a
   assert.equal(a.s3TidalSlamGaugeFinish, null);
   assert.equal(a.special, held * .5, 'Saver receives only the original action remainder');
   f.tick(a); assert.equal(a.special, held * .5);
-  a.reset(); a.addTurf(10); assert.equal(a.special, 10, 'reset clears the old lock');
+  a.reset(); a.addTurf(10); assert.equal(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE, 'reset clears the old lock');
 });
 
 test('#647 fixed-tick refill admission is identical at 30/60/120Hz', async () => {

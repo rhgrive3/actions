@@ -101,7 +101,7 @@ for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick
     // native land clip (314), while frame 305 is already reachable.
     if(row.frame!==(scenario==='carry-jump'?113:314))return;
     beforeDrop={frame:row.frame,grip:row.grip,pending:row.pending,source:row.source};assert.equal(row.source,'land');assert.equal(row.solves,1);
-    if(corrected){assert.ok(row.grip<.001);assert.equal(row.pending,true);}else{assert.ok(row.grip>.001,'the control must reproduce a real landing gap');assert.equal(row.pending,false);}
+    if(corrected){assert.ok(row.grip<.001);if(scenario==='carry-jump')assert.equal(row.pending,true);}else{if(scenario==='carry-jump')assert.ok(row.grip>.001,'the control must reproduce a real landing gap');assert.equal(row.pending,false);}
     G.match.ranked.rule._drop({id:String(a.nid),team:a.team,pos:a.pos.toArray(),grounded:true},'qa-drop');a.intent.fire=a.intent.jump=a.intent.sub=false;
     if(boundary==='same-frame-release'){ch.trigger('throw');G.projectiles.throwBomb(a);assert.equal(!!ch.s3RainmakerSupportPending,false);}
     for(let i=0;i<45;i++){

@@ -14,6 +14,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { turfExperience, turfExperienceBreakdown } from '../runtime/results-scoring.mjs';
 import { updateHealthBars } from '../runtime/combat-info.mjs';
 import { installUi } from '../runtime/ui.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 const ROOT = new URL('../../../', import.meta.url);
 const composed = rel => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, fs.readFileSync(new URL('inkwave-public/' + rel, ROOT), 'utf8')))));
 const section = (s, start, end) => { const a = s.indexOf(start), b = s.indexOf(end, a); assert.ok(a >= 0 && b > a); return s.slice(a, b); };
@@ -65,7 +66,7 @@ test('#256 actual CPU paint preserves wall ink/cache updates while awarding only
   a.addTurf(splat(wall, 0)); assert.equal(a.stats.turf, 0); assert.equal(a.special, 0); assert.ok(paint.grid.slice(0, 64).some(x => x === 1));
   const version = paint.version; splat(wall, 0); assert.equal(paint.version, version);
   a.addTurf(splat(wall, 1)); assert.equal(a.stats.turf, 0); assert.ok(paint.version > version); assert.deepEqual(plain(paint.coverage()), [0, 0]);
-  const floorPoints = splat(floor, 0); assert.ok(floorPoints > 0); a.addTurf(floorPoints); assert.equal(a.special, floorPoints);
+  const floorPoints = splat(floor, 0); assert.ok(floorPoints > 0); a.addTurf(floorPoints); assert.equal(a.special, floorPoints * SPECIAL_PAINT_CHARGE_RATE);
   assert.equal(splat(floor, 0), 0); assert.equal(splat(floor, 1), floorPoints);
   assert.equal(splat(wall, 0) + splat(floor, 0), floorPoints, 'combined wall/floor blast scores floor only');
   assert.ok(paint.coverage()[0] > 0 && paint.coverage()[1] === 0, 'weighted judge remains floor-only');

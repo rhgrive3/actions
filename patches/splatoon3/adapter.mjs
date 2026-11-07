@@ -386,11 +386,6 @@ export function adaptSource(rel, code) {
       'col, (0.022 + rand() * 0.028) * dropScale, 0.28 + rand() * 0.12, 0.6, 1.4, 0);', 'splatana horizontal muzzle drop size');
   }
   if (rel === 'src/game/match.js') {
-    // Owner report 2026-11-07: CPU form flicker (runtime/bot-form-stability.mjs).
-    code = "import { stabilizeBotForm } from '../../patches/splatoon3/runtime/bot-form-stability.mjs';\n" + code;
-    code = replaceOnce(code, '        if (live) a.bot.update(dt);',
-      '        if (live) { a.bot._nativeTraversalHandled = false; a.bot.update(dt); stabilizeBotForm(a, dt, !!a.bot._nativeTraversalHandled); }',
-      'CPU form hold');
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
     // Preserve that match-side assignment; never redraw a winner at judgment.
     code = replaceOnce(code,
@@ -432,6 +427,11 @@ export function adaptSource(rel, code) {
       '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
       '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
       'standard Turf weapon draws allow duplicates');
+    // Owner report 2026-11-07: CPU form flicker (runtime/bot-form-stability.mjs).
+    code = "import { stabilizeBotForm } from '../../patches/splatoon3/runtime/bot-form-stability.mjs';\n" + code;
+    code = replaceOnce(code, '        if (live) a.bot.update(dt);',
+      '        if (live) { a.bot._nativeTraversalHandled = false; a.bot.update(dt); stabilizeBotForm(a, dt, !!a.bot._nativeTraversalHandled); }',
+      'CPU form hold');
     code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput, requestTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 
     return code;
