@@ -1,5 +1,78 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-11-07（射撃移動ボタン長押し中の身体の向き：ブラスターの射撃間隔の待ち時間、カタログのスロッシャー）
+
+本家の根拠：未取得。公式資料・実機映像では、ブラスターの射撃間隔の待ち時間中に体がどちらを向くかを確認していない。参照版は Ver. 11.3.0（`patches/splatoon3/profile.json`）。今回の判断は、依頼（射撃移動ボタン長押し中は通常の射撃中と同じく照準方向を向く）と、INKWAVE 内で同じ FIRE 長押しに照準を向く他ブキ（シューター・マニューバー・チャージャー・スピナー）との整合による。本家との一致は主張しない。
+
+### 射撃移動ボタンの特定
+- 対象は FIRE（メイン）。PC は `inkwave-public/src/game/player.js:117` の `it.fire`（マウス左・ゲームパッドのトリガー `padValue(7)`・画面の `fire`）。画面は `inkwave-public/src/core/mobile.js:22`（`hold: true, aim: true`、日本語ラベル「メイン」は 33 行）。
+- 候補の検討：SUB（`player.js:118`）は `Actor._face` の `intent.sub` で既に照準を向く（変更なし）。SQUID（`player.js:116`）はイカ形態で移動方向を向く仕様で射撃ボタンではない（変更なし）。INKWAVE の文言・コードに「射撃移動」という名称のボタンは無い。
+- 除外したもの：ローラー・筆は FIRE 長押し＋移動が「転がし」になり、向きは進行方向（2026-10-19 の所有者指摘の規則）。傘は FIRE 長押しで傘を開く独自の向き規則（`patches/splatoon3/runtime/brella-guard-facing.mjs`）。どちらも変更していない。
+
+### 差分と修正
+- 依頼の前提（FIRE 長押し中に体が照準を向かない）は、全武器のうち一部でのみ成り立っていた。変更前の探針（照準を体の向きから 90° 横へ向け、照準の反対へ後退しながら FIRE 長押し）では、シューター・マニューバー・スロッシャーの基本型の照準からのずれは 0 だった。
+- 原因（ブラスター）：`patches/splatoon3/runtime/weapons.mjs` の 1265〜1266 行で、射撃間隔の待ち時間（`cooldown > 0`）には `firingT` が更新されない。`firingT` と `fireFacing` が切れると `Actor._face` の照準分岐（`firingPose()` / `fireFacing > 0`）から外れ、後退の移動方向へ向く。
+- 変更前の測定（実 Actor・合成済み本番ソース・固定 60 Hz・ギアなし・地上・人型・照準 90°・照準の反対へ後退・FIRE 長押し、0.5 秒以降の照準からのずれの最大）：
+  - ブラスター（基本の `blaster`）：約 1.83 rad（約 105°）。待ち時間（約 0.3 秒）の間だけ、後ろへ振れて次の発射で戻る。
+  - カタログのブラスター（`s3-blaster-long` 3.14 rad、`s3-blaster-precision` 3.13、`s3-blaster-short` 2.85、`s3-blaster-light` 2.39）。
+  - カタログのスロッシャー（`s3-slosher-washtub` 2.78 rad、`s3-slosher-double` 1.20、`s3-slosher-launcher` 0.56、`s3-slosher-bathtub` 0.14）。
+  - チャージャー・スピナーは押し始めの数フレームだけ最大 0.047 rad（約 2.7°）。
+- 修正：
+  - `patches/splatoon3/runtime/fire-hold-facing.mjs`：判定 `heldFireAimFacing(a, isSquid)`。FIRE 押下中で、人型・通常の状態（特殊・スーパージャンプ・遠隔ではない）のとき真。ローラー・筆・傘は除く。
+  - `patches/splatoon3/fire-hold-facing-adapter.mjs`：合成後の `Actor._face` の照準分岐の末尾に `|| heldFireAimFacing(this, isSquid)` を 1 つ足す。移動物理・傘のアダプタの後に適用し、対象文字列が一意であることを要求する（違えば合成を止める）。
+  - `patches/splatoon3/adapter.mjs` に登録（傘のアダプタの直後）。`scripts/lib/inkwave-build-only-modules.mjs` にソース変換器として登録（傘と同じ扱い）。
+- 変更しないもの：照準角の式（既存の `aimYaw` と `aimFaceOmega` をそのまま使う）、移動入力・移動速度（`moveSpeed`）、射撃の時計（`firingT`・`fireFacing`・`cooldown`）、離した後の後退（`reverseShotRelease`）、転がし、傘、潜伏、特殊、スーパージャンプ、遠隔プレイヤーの表示。後ろ歩きの見た目は既存の `localMove`（`actor.js` の `_finishFrame`）で、照準を向いたまま後ろへ動けば後ろ歩きの表示になる。ブラスターでこの表示を確認したわけではない。
+
+### 再現操作（変更前）
+1. ポッパーブラスター（またはカタログのブラスター）を持つ。
+2. FIRE（マウス左・ゲームパッドのトリガー・画面の「メイン」）を押し続ける。
+3. 照準の反対方向（後ろ）へ移動する（WASD の S、または左スティックを後ろへ）。
+4. 射撃の間隔（約 0.3 秒）ごとに、体が後ろへ振れる。変更後は照準を向いたまま後ろへ歩く。
+
+### プレイへの影響
+- 変わる：FIRE 押下中、ブラスター（基本・カタログ）とカタログのスロッシャーで、射撃の待ち時間に後退しても体が照準を向き続ける。チャージャー・スピナーの押し始めの数フレームのずれも消える。
+- 変わらない：移動入力・移動速度・弾・射撃間隔・塗り・当たり判定、離した後の後退の向き、ローラー・筆の転がし、傘、サブ、スペシャル、イカ、他プレイヤーの表示。
+- 変わりうる：Bot（同じ `intent.fire` を使う）の射撃待ち時間中の向き。Bot は INKWAVE 独自で本家の対応物は無い。確認はロジック単独のみ。
+
+### 残る差分（今回は変更しない）
+- ブラスターの射撃待ち時間中は `firingT` が 0 のため、移動速度が射撃中の 2.70 から通常の 5.76 へ戻る（実 Actor の測定。`moveSpeed` は `firingT > 0` で射撃移動速度を返す。`inkwave-public/src/game/weapons.js:68`）。移動速度に関わるため依頼の範囲外。本家の射撃移動速度の適用区間は未確認。
+- 上半身の構え（腕と武器）は従来どおり `firingPose()` に従う（`actor.js` の `a.firing`）。待ち時間中は体だけが照準を向き、腕の構えは抜けたままになる可能性がある（コードの条件からの推定。ブラウザでは未確認）。
+- 傘（`s3-shelter-*`）は変更前と同じ。傘の独自規則（開いている・構えている時だけ照準を向く）の外では移動方向を向く。本家の傘の向きは未確認。
+- ローラー・筆の転がし中は進行方向を向く（2026-10-19 の規則のまま）。
+
+### 確認状態
+- ロジック単独テスト（合成済み本番ソース・実 Actor と WeaponRunner・固定 60 Hz の時計）：`patches/splatoon3/tests/fire-hold-aim-facing.test.mjs` 7 件すべて通過。変更を外すと、ブラスターを使う実 Actor の試験（全武器の照準維持、ブラスターの待ち時間、離した後退の前提）が失敗することを確認した。
+- フレーム間隔：ゲームの更新は `runtime/clock.mjs` の 1/60 秒固定ティック。`FixedClock` に 30・60・120 Hz の描画間隔を与えた試験で、ブラスターの向きの列が一致する（ロジック単独）。
+- 既存の関連試験：`patches/splatoon3/tests` のうち向き・射撃姿勢・転がし・傘を参照する 197 ファイルを実行し、196 件が通過した。
+  - `super-chump-launch-direction.test.mjs` は `esbuild` が無く起動できない（環境要因。今回の変更とは無関係）。
+  - `brella-guard-facing.test.mjs` は、合成後の `_face` を試験内で組み直す際に新しい識別子 `heldFireAimFacing` を渡すよう更新した（試験の組み立てのみ。期待値は変えていない）。更新後は 9 件とも通過。
+  - `rainmaker-model-actor.test.mjs` は並列実行で時間切れになった。単独では 3 件とも通過（598 秒）。
+  - ビルド一覧の試験（`scripts/tests/inkwave-network-source-coverage.test.mjs` 2 件、`inkwave-direct-source-ownership.test.mjs` 14 件）は通過。`inkwave-build-packaging.test.mjs` は 6 件通過、5 件はビルド済みサイト（`_site`）が無いためスキップ。
+- ブラウザ実動作：未実施。`esbuild` と `playwright` が環境に無く、`check-inkwave-browser.mjs` と `check-inkwave-motion.mjs` は実行していない。
+- 本家との実機比較：未実施。
+- 未確認：本家のブラスター待ち時間の体の向き・移動速度・腕の構え、本家の傘の向き。
+
+## 2026-11-07（所有者提供の音声の差し替え：タイトルの A 押下、0.3 秒後の単発、GO、ジャッジの決定、ローラーの転がし）
+
+本家の根拠：所有者が渡した 4 つの録音（Roller00・TitlePressA・N0010A10・PutOnCloth00。原ファイル名は本家の音源名と同じ形式）。どの場面の音かは所有者の指定で、公式資料や本家の再生では確認していない。音量は本家と比べていない。
+
+### 差分と修正
+- タイトルの A 押下（`menus.js` の `_titleGo`）：合成の `ui_confirm` ＋ `splat_small` だった。修正：`title_press`（TitlePressA）を `ui_confirm` の代わりに鳴らし、`splat_small` は残す。`title_press` は録音が読めない時に `ui_confirm` に戻る。
+- A 押下の 0.3 秒後の単発（同）：所有者の指定。`title_follow`（N0010A10）を、オーディオ時計の遅延 0.3 秒で鳴らす。別のタイマーは作らない（既存の #950 のタイマー所有のテストを守るため）。`playSound` に遅延の引数を渡すよう、`main.js` の配線をアダプタで変えた。
+- 実装の方法：原本の `src/main.js`・`src/ui/menus.js` は変更していない（`upstream-lock.json` のハッシュを守るため）。すべて `patches/splatoon3/owner-sfx-recordings-adapter.mjs` の `replaceOnce` で合成時に差し込む。
+- GO（`main.js` の `go_horn`）：合成の GO ホーン → TitlePressA（所有者の指定）。
+- ジャッジの決定の瞬間（`hud.js` の `judge_reveal`）：合成の決定ファンファーレ → PutOnCloth00（所有者の指定）。ドラムロール（`judge_drumroll`）は既存の UI_VS_ResultMeter_00 のまま。
+- ローラーの転がし（`weapons.js` の `roll`）：合成のループ → Roller00 のシームレスなループ（3.9 秒、交差フェード 0.35 秒）。ピッチは合成と同じ値（0.6〜1.6）をそのまま使う。スイム用の緩い曲線は使わない。
+
+### 音量（暫定）
+- 合成音は描画できないため、本家や合成との音量比較はしていない。各録音の最大 300 ms の RMS を、置き換え元に近い既存のオーナー録音（`ui_decide`、`sfx_special_ready`、`swim`）の「元の gain × RMS」と同じ実効音量に合わせた。値は `owner-sfx-recordings.mjs` に書いてあり、実機で聴いて決める必要がある。
+
+### 確認状態
+- ロジック単独テスト：`owner-sfx-cues-20261107.test.mjs`（新規 4 件）、`owner-sfx-recordings.test.mjs`（SHA 追加）。`menu-navigation-timer.test.mjs` は、タイトル押下の音が 2 から 3 つ（名前付き）になったため期待値を更新した（意図した変更）。タイトル・HUD・マッチ音声の関連テストは全て通過。
+- 未確認：ブラウザでの実際の聞こえ、0.3 秒の遅延の聞こえ方、GO・ジャッジ・ローラーの音量、本家の同じ場面との比較。
+- 初期ロード：タイトルの 2 音（`title_press`・`title_follow`）は、ページを開いた時点でバイト列を先取りし、音声エンジンも読み込み時に作る（最初の操作で止まらないよう AudioContext は操作後に resume される）。以前は最初の操作（＝A 押下）の後に読み込んでいたため、最初の押下では合成音か無音になり得た。ロジック単独テストのみ（`owner-sfx-cues-20261107.test.mjs`）。ブラウザでの初回押下の確認は未実施。
+- 未確認のまま残すこと：N0010A10 が本家でどの場面の音か（所有者の指定どおりに配線したが、公式資料では未確認）。
+
 ## 2026-11-06（照準の見た目・ヒット表示・Bot の塗り角度・床塗りの飛沫）
 
 本家の参照：Ver. 11.3.0。根拠は所有者が撮影した本家のプレイ画面（スプラシューター、マニューバー、スピナー、敵に照準が合った時、敵に当たった時）と、#871 で固定した公式スクリーンショットの照準寸法（`patches/splatoon3/reference/shooter-reticle-reference.json`）。画面上の寸法は圧縮動画から読んだ値で ±1〜2 px。見た目だけの変更で、拡散・照準位置・当たり判定・ダメージ・塗りは変えていない（実装：`patches/splatoon3/runtime/s3-reticle-look.mjs`、`catalogue.mjs` から導入）。

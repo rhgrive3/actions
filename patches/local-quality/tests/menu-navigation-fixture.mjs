@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { adaptSource, replaceOnce } from '../../splatoon3/adapter.mjs';
+import { adaptOwnerSfxRecordings } from '../../splatoon3/owner-sfx-recordings-adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
@@ -11,8 +12,9 @@ import { clearContinuation, continuationNavigation } from '../result-continuatio
 const ROOT = new URL('../../../', import.meta.url);
 const read = p => fs.readFileSync(new URL(p, ROOT), 'utf8');
 const raw = read('inkwave-public/src/ui/menus.js');
-const composed = adaptQualitySource('src/ui/menus.js', adaptReliability('src/ui/menus.js',
-  adaptTouchLayout('src/ui/menus.js', adaptSource('src/ui/menus.js', raw))));
+// Owner recordings (title A press and follow-up tone) are the last pass of the real composition.
+const composed = adaptOwnerSfxRecordings('src/ui/menus.js', adaptQualitySource('src/ui/menus.js', adaptReliability('src/ui/menus.js',
+  adaptTouchLayout('src/ui/menus.js', adaptSource('src/ui/menus.js', raw)))), replaceOnce);
 const section = (s, from, to) => {
   const start = s.indexOf(from), end = s.indexOf(to, start);
   assert(start >= 0 && end > start, from); return s.slice(start, end);

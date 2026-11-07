@@ -34,14 +34,27 @@ export const OWNER_SFX = Object.freeze({
   splat_bomb_throw: Object.freeze({ file: 'sfx_throw_smallfry.mp3', gain: 0.062, seconds: 1.843, maxBytes: 96 * KB, reverb: 0.04, fallback: 'bomb_throw' }),
   // Looping swim bed. The ends are cross-faded into a seamless loop at decode time.
   swim: Object.freeze({ file: 'sfx_swimming_in_ink.mp3', gain: 0.186, seconds: 20.28, maxBytes: 1024 * KB, reverb: 0.03, loop: true, crossfade: 0.35 }),
+  // Title screen: the A press (menus.js _titleGo plays it in place of ui_confirm). Provisional gain: the
+  // loudest 300 ms RMS of this file scaled to the level of ui_decide at its gain. Not yet heard in-game.
+  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.062, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
+  // Title screen: a single tone 300 ms after the A press (menus.js _titleGo). No synthesized equivalent.
+  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.025, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
+  // Battle start GO (main.js plays go_horn): the same A recording, level matched to the special-gauge cue.
+  go_horn: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.125, seconds: 2.55, maxBytes: 128 * KB }),
+  // Judge's decision moment (hud.js judge_reveal). Level matched to the special-gauge cue.
+  judge_reveal: Object.freeze({ file: 'sfx_gear_put_on_cloth.mp3', gain: 0.149, seconds: 0.61, maxBytes: 48 * KB }),
+  // Rolling loop (weapons.js loop 'roll'). Pitch follows the synth's own rate (q, 0.6..1.6), not swimRate.
+  roll: Object.freeze({ file: 'sfx_roller_roll.mp3', gain: 0.33, seconds: 3.92, maxBytes: 256 * KB, loop: true, crossfade: 0.35, rate: 'linear' }),
 });
 // UI first: those are heard on the menu right after the first gesture.
-const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'special_charged', 'times_up', 'team_wipeout', 'splat_bomb_throw', 'clam_pickup', 'swim']);
+const LOAD_ORDER = Object.freeze(['ui_hover', 'ui_click', 'ui_confirm', 'ui_back', 'title_press', 'title_follow', 'special_charged', 'times_up', 'team_wipeout', 'splat_bomb_throw', 'clam_pickup', 'go_horn', 'judge_reveal', 'roll', 'swim']);
 const INSTALLED = Symbol.for('inkwave.owner-sfx-recordings.v1');
 const LOAD_TIMEOUT_MS = 15000, RETRY_MS = 20000;
 const permanent = message => Object.assign(new Error(message), { permanent: true });
 // Speed changes the swim bed only slightly (synth: rate = q, q ≈ 0.6..1.6).
 export const swimRate = q => Math.pow(Math.min(1.8, Math.max(0.4, Number(q) || 1)), 0.25);
+// Rolling loop: the synthesized roll takes the pitch factor directly (about 0.6..1.6).
+export const rollRate = q => Math.min(1.6, Math.max(0.6, Number(q) || 1));
 
 function stateOf(engine) {
   return engine._ownerSfx ||= { ctx: null, buffers: new Map(), loading: new Map(), failed: new Map(), defs: new Map() };
@@ -63,6 +76,24 @@ export function seamlessLoop(ctx, buffer, seconds) {
   return out;
 }
 
+// The title cues are fetched as soon as the page loads, and the engine is created then too, so the
+// first press (which is also the first gesture) finds them already decoded. Bytes only: no context.
+export const TITLE_SFX = Object.freeze(['title_press', 'title_follow']);
+const PREFETCHED = new Map();
+export function prefetchOwnerSfx(names = TITLE_SFX, fetcher = globalThis.fetch?.bind(globalThis)) {
+  if (!fetcher) return;
+  for (const name of names) {
+    const spec = OWNER_SFX[name];
+    if (!spec || PREFETCHED.has(spec.file)) continue;
+    const href = assetURL(spec.file);
+    if (!href) continue;
+    PREFETCHED.set(spec.file, Promise.resolve()
+      .then(() => fetcher(href, { credentials: 'same-origin', cache: 'force-cache' }))
+      .then(response => (response?.ok ? response.arrayBuffer() : null))
+      .catch(() => null));
+  }
+}
+
 export function loadOwnerSfx(engine, name, { fetcher = engine?._ownerSfxFetcher || globalThis.fetch?.bind(globalThis), url } = {}) {
   const spec = OWNER_SFX[name], ctx = engine?.ctx;
   if (!spec || !ctx || ctx.state === 'closed' || typeof ctx.decodeAudioData !== 'function') return Promise.resolve(null);
@@ -76,9 +107,14 @@ export function loadOwnerSfx(engine, name, { fetcher = engine?._ownerSfxFetcher 
   const abort = typeof AbortController === 'function' ? new AbortController() : null;
   const timer = setTimeout(() => abort?.abort(), LOAD_TIMEOUT_MS);
   const job = (async () => {
-    const response = await fetcher(href, { credentials: 'same-origin', cache: 'force-cache', ...(abort ? { signal: abort.signal } : {}) });
-    if (!response?.ok) throw new Error(`${spec.file} unavailable (${response?.status ?? 'network'})`);
-    const bytes = await response.arrayBuffer();
+    // A copy: decodeAudioData detaches the buffer it is given.
+    const early = !url && PREFETCHED.has(spec.file) ? await PREFETCHED.get(spec.file) : null;
+    let bytes = early ? early.slice(0) : null;
+    if (!bytes) {
+      const response = await fetcher(href, { credentials: 'same-origin', cache: 'force-cache', ...(abort ? { signal: abort.signal } : {}) });
+      if (!response?.ok) throw new Error(`${spec.file} unavailable (${response?.status ?? 'network'})`);
+      bytes = await response.arrayBuffer();
+    }
     if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 1024 || bytes.byteLength > spec.maxBytes) throw permanent(`${spec.file} has an unexpected size`);
     const decoded = await ctx.decodeAudioData(bytes);
     if (!decoded || !Number.isFinite(decoded.duration) || Math.abs(decoded.duration - spec.seconds) > 0.25) throw permanent(`${spec.file} duration mismatch`);
@@ -109,9 +145,10 @@ function recordedDef(base, spec, buffer) {
     minGap: base?.minGap, ref: base?.ref, oneShot: base?.oneShot, recorded: true,
   };
   if (spec.loop) {
+    const rateOf = spec.rate === 'linear' ? rollRate : swimRate;
     def.loop = (v, p) => {
-      const s = v.buffer(buffer, v.t, null, v.out, swimRate(p), v.r(0, buffer.duration * 0.95));
-      return { pitch(q, now) { s.playbackRate.setTargetAtTime(swimRate(q), now, 0.05); } };
+      const s = v.buffer(buffer, v.t, null, v.out, rateOf(p), v.r(0, buffer.duration * 0.95));
+      return { pitch(q, now) { s.playbackRate.setTargetAtTime(rateOf(q), now, 0.05); } };
     };
   } else {
     def.build = (v, p, o) => {
@@ -129,21 +166,30 @@ function recordedDef(base, spec, buffer) {
   return def;
 }
 
-export function installOwnerSfxRecordings(AudioEngine, SFX) {
+export function installOwnerSfxRecordings(AudioEngine, SFX, instance) {
   const P = AudioEngine?.prototype;
   if (!P || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   // New names keep a synthesized fallback until their recording is decoded.
   for (const [name, spec] of Object.entries(OWNER_SFX)) if (!SFX[name] && spec.fallback && SFX[spec.fallback]) SFX[name] = SFX[spec.fallback];
+  const browser = typeof window !== 'undefined';
+  if (browser) prefetchOwnerSfx();
   const init = P.init, resolve = P._def;
   if (init) P.init = function (...args) {
     const result = init.apply(this, args);
     if (!this.offline && this.ctx && !this._ownerSfxQueued) {
       this._ownerSfxQueued = true;
+      // Title cues first, with no delay: the first press must find them decoded.
+      for (const name of TITLE_SFX) loadOwnerSfx(this, name);
       setTimeout(() => { this._ownerSfxQueued = false; preloadOwnerSfx(this); }, 400);
     }
     return result;
   };
+  // Page load, not the first gesture: create the engine now. The context stays suspended until the
+  // existing input listeners resume it (audio.js _installUnlock), and the title cues decode meanwhile.
+  if (browser && instance && !instance.ctx && typeof instance.init === 'function') {
+    try { instance.init(); } catch (e) { /* audio is optional */ }
+  }
   P._def = function (name) {
     const base = resolve.call(this, name);
     const spec = OWNER_SFX[name];

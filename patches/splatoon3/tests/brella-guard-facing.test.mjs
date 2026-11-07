@@ -4,6 +4,7 @@ import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { fixture } from './source-fixture.mjs';
 import { heldBrellaGuardFacing } from '../runtime/brella-guard-facing.mjs';
+import { heldFireAimFacing } from '../runtime/fire-hold-facing.mjs';
 import { adaptBrellaGuardFacing } from '../brella-guard-facing-adapter.mjs';
 import { adaptSource, replaceOnce } from '../adapter.mjs';
 import fs from 'node:fs';
@@ -76,8 +77,8 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
   const f=await setup(),code=adaptBuildSource('src/game/actor.js',actorSource()),{method,source}=faceMethod(code);
   const special=method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='this.specialActive || this.superJumpState');
   const rolling=special.alternate;
-  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing','rollingHeadingActive',
-    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard,rollingHeadingActive);
+  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing','heldFireAimFacing','rollingHeadingActive',
+    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard,heldFireAimFacing,rollingHeadingActive);
   const without=(node)=>source.slice(0,node.test.start-method.start)+'false'+source.slice(node.test.end-method.start);
   const cases=[...IDS.flatMap(id=>[
     {name:id+' guard',id,target:.8,guard:1,pose:1},
