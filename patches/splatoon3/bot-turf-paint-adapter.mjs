@@ -3,6 +3,10 @@
 // and earlier adapter anchors.
 const IMPORT = "import { botEvaluateTurfPaint, botStabilizeTurfAim, botTurfPitchReady, botApplyTurfPaintMechanics, botApplyTurfCombatPaint, botScorePaintCandidate, botRawWeaponFamily } from '../../patches/splatoon3/runtime/bot-turf-paint.mjs';\n";
 
+/**
+ * Transforms src/game/bots.js with authentic Splatoon 3 Turf War painting,
+ * aim stabilization, combat approach path-painting, and strategic candidate selection.
+ */
 export function adaptBotTurfPaint(rel, code, replaceOnce) {
   if (rel !== 'src/game/bots.js') return code;
   if (code.includes(IMPORT)) throw new Error('INKWAVE bot turf paint: repeated bots.js transform');
@@ -11,7 +15,7 @@ export function adaptBotTurfPaint(rel, code, replaceOnce) {
   code = replaceOnce(
     code,
     '    this._paintObservation = null; this._paintObservationEpoch = 0;\n',
-    '    this._paintObservation = null; this._paintObservationEpoch = 0; this._turfPaintLatch = false; this._rollerRollTime = 0; this._rollerSwimGap = 0; this._smoothStrafe = null; this._smoothFlankBias = 0; if (this._turfMultiCache) this._turfMultiCache.epoch = -1;\n',
+    '    this._paintObservation = null; this._paintObservationEpoch = 0; this._turfPaintLatch = false; this._turfPaintValidated = false; this._rollerRollTime = 0; this._rollerSwimGap = 0; this._smoothStrafe = null; this._smoothFlankBias = 0; if (this._turfMultiCache) this._turfMultiCache.epoch = -1;\n',
     'bot turf paint reset state'
   );
 
@@ -38,7 +42,8 @@ export function adaptBotTurfPaint(rel, code, replaceOnce) {
     "      const _rawNeedPaint = aheadStats.n === 0 || aheadStats.own < 0.75;\n" +
     "      const _turfAim = botStabilizeTurfAim(this, G, a, family, _basePaintYaw, wantYaw, wantPitch);\n" +
     "      wantYaw = _turfAim.yaw; wantPitch = _turfAim.pitch;\n" +
-    "      const needPaint = botEvaluateTurfPaint(this, G, a, move, wantMove, _basePaintYaw, aheadStats, inkFrac) && botTurfPitchReady(this, a, botRawWeaponFamily(w, family), wantPitch);",
+    "      const needPaint = botEvaluateTurfPaint(this, G, a, move, wantMove, _basePaintYaw, aheadStats, inkFrac) && botTurfPitchReady(this, a, botRawWeaponFamily(w, family), wantPitch);\n" +
+    "      this._turfPaintValidated = needPaint;",
     'bot turf multi-point paint and aim stabilization'
   );
 

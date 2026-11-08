@@ -1,8 +1,8 @@
-# INKWAVE ナワバリバトル（Turf War）本家攻略準拠・最新コミット `427f7aec` 対応 Patch ＆ 旧ロジック4体 vs 現ロジック4体 8戦8勝（100%全勝）検証報告書
+# INKWAVE ナワバリバトル（Turf War）本家攻略準拠・PR #2019 HEAD 対応 Patch ＆ 検証報告書
 
-## 1\. 概要と参照した本家『スプラトゥーン3』攻略ソース・Patch構成
+## 1. 概要と参照した本家『スプラトゥーン3』攻略ソース・Patch構成
 
-本報告書は、Google Drive 内の [INKWAVE-main-b1f571da-20261016-edit](https://drive.google.com/drive/folders/1hLvz1DGhRuYZVPI3l5HTiAVGvxD8f1KS) フォルダに格納された `rhgrive3/actions` リポジトリ（自動更新チェーン最新コミット `427f7aec4a6acba311f24a2d0dac84b8c0232a0f`：[INKWAVE\_AUTO\_LATEST.json](https://drive.google.com/file/d/1x9xMNBPLe4XEaVLWBR56KKCjMXGcIMu1/view)・[INKWAVE-auto-e40aab15-to-427f7aec-manifest.json](https://drive.google.com/file/d/1MhjKGFQswrLopPcL0hKwZFNmATopl7Xq/view)）に対し、**適用先の本体コード（`inkwave-public/src/game/bots.js` 等）を一切直接変更せず、`patches/splatoon3/` 配下のランタイム＆アダプタ追加および `scripts/inkwave-source-composition.mjs` への2行フック接続のみ**で実装したナワバリバトルBot塗りAI改善パッチの技術・実戦検証レポートです。
+本報告書は、Google Drive 内の [INKWAVE-main-b1f571da-20261016-edit](https://drive.google.com/drive/folders/1hLvz1DGhRuYZVPI3l5HTiAVGvxD8f1KS) フォルダに格納された `rhgrive3/actions` リポジトリ（PR #2019：`feat/bot-turf-war-paint`）に対し、**適用先の本体コード（`inkwave-public/src/game/bots.js` 等）を一切直接変更せず、`patches/splatoon3/` 配下のランタイム＆アダプタ追加および `scripts/inkwave-source-composition.mjs` への2行フック接続のみ**で実装したナワバリバトルBot塗りAI改善パッチの技術・実戦検証レポートです。
 
 1. [**効率のいい塗り方：MatchGuyのスプラ塾（Spl3.ink）**](https://spl3.ink/matchguy-vol03/):  
    - **カニ歩き塗り（Strafe Painting）**: 射撃中に横方向へ移動し、着弾の重複を防いで面で塗る技術（切り返しカクつきを防ぐ指数平滑フィルタ `_smoothStrafe` 付き）。  
@@ -20,7 +20,10 @@
    - **残り50〜30秒のスペシャル温存とラスト30秒の一斉解放**: 残り50秒〜30秒の非交戦時はスペシャルの無駄吐きを控え（`it.special = false`）、ラスト30秒に入った瞬間に未塗り・敵インク領域へ向けて塗装系スペシャルを解放する時間管理。  
    - **終了間際（ラスト6.5秒）の全面塗り切り替え**: 残り6.5秒以下では交戦中でもローラー横振り・ワイパー横斬り・長射程チャージャー中チャージ解放を優先し、ブザービーターで盤面を塗り切るロジック。
 
-## 2\. 実戦4v4ランダムブキ対決（旧ロジック4体 vs 現ロジック4体・重複なし）全8戦8勝（100%全勝）結果
+## 2. 実戦4v4ランダムブキ対決（旧ロジック4体 vs 現ロジック4体・重複なし）参考測定結果
+
+> [!NOTE]
+> 本節の実戦8戦（旧ロジック vs 現ロジック）は、初期試作段階（コミット `427f7aec`）において動作確認・定性評価のために実施された参考測定データです。固定乱数シードや機械可読ログによる完全再現可能なベンチマークではなく、またその後にプッシュされたコミット（`4856f1f` および本PR HEAD）でのランタイム変更（R-PEN・ソイチューバー・スピナーのチャージ契約整合、足元塗り照準ガード、SMIキャッシュ最適化等）を含んでいません。現PR HEADにおける挙動および契約の正当性検証は、第4節に記載の単体・統合・回帰テスト全件合格によって担保されています。
 
 実エンジンに登録された全161種のカタログブキから、毎試合8丁を完全ランダム・重複なし（同一ブキミラーなし）で抽出し、ステージおよびチーム（Alpha `team=0` / Bravo `team=1`）を交互に入れ替えて実施した4v4実戦ベンチマークにおいて、**現ロジック（New Logic）が8戦8勝（勝率100%・平均塗りカバー率 `44.59% vs 28.66%`、平均リード `+15.93%`）を達成**しました。
 
@@ -35,19 +38,26 @@
 | **\#7** | `kelpline` (`team=0`) | Dread Wringer D (1052p, 0k/1d) / Splattershot Pro FRZ-N (1078p, 5k/1d) / Nautilus 47 (506p, 1k/1d) / Splattershot Jr. (801p, 1k/1d) | Splatana Stamper Nouveau (729p, 1k/2d) / Bulbz Tri-Stringer (388p, 0k/2d) / Cometz Octobrush (336p, 0k/2d) / Annaki Splattershot Nova (742p, 3k/1d) | **54.21%** | 24.81% | **\+29.40%** | **WIN** |
 | **\#8** | `halyard` (`team=1`) | Nautilus 79 (489p, 1k/0d) / Heavy Splatling (393p, 3k/1d) / Bamboozler 14 Mk II (211p, 0k/1d) / Inkbrush (394p, 0k/1d) | Custom Range Blaster (204p, 0k/1d) / Range Blaster (316p, 3k/1d) / Tri-Slosher Nouveau (519p, 0k/1d) / Neo Sploosh-o-matic (234p, 0k/1d) | **38.03%** | 32.89% | **\+5.14%** | **WIN** |
 
-## 3\. Patch方式準拠の最小差分ファイル一覧（コミット `427f7aec4a6acba311f24a2d0dac84b8c0232a0f` 基準）
+## 3. Patch方式準拠の最小差分ファイル一覧（PR #2019 HEAD 基準）
 
-- `patches/splatoon3/runtime/bot-turf-paint.mjs`（新規追加：全11ブキ系統・サブ系統別プロファイル、マルチプローブエポックキャッシュ、4体味方非干渉＆広域プラザ評価、交戦時道作り・足元塗り、ラスト30秒SP管理＆終了間際塗装ボム・全面塗り切り替え）  
+- `patches/splatoon3/runtime/bot-turf-paint.mjs`（新規追加：全11ブキ系統・サブ系統別プロファイル、マルチプローブエポックキャッシュ、4体味方非干渉＆広域プラザ評価・SMI整数キャッシュ、交戦時道作り・足元塗り照準ガード、ラスト30秒SP管理＆終了間際塗装ボム・全面塗り切り替え、Tacticoolerドリンク受取ヒト復帰）  
 - `patches/splatoon3/bot-turf-paint-adapter.mjs`（新規追加：`src/game/bots.js` に対する `replaceOnce` アダプタ。本体コードを直接編集せず、`adaptBotPaintPitch` の直後に合成）  
-- `patches/splatoon3/tests/bot-turf-paint.test.mjs`（新規追加：単体テストおよび `MAP_LAYOUTS.kelpline` 実エンジン結合テスト）  
+- `patches/splatoon3/tests/bot-turf-paint.test.mjs`（新規追加：単体テスト、照準ピッチ検証ゲート、LACT-450チャージ上限、足元塗り照準ガード、SMIキャッシュインプレース更新、および `MAP_LAYOUTS.kelpline` 実エンジン結合テスト）  
 - `scripts/inkwave-source-composition.mjs`（既存ファイルへの2行フック追加のみ：`adaptBotTurfPaint` の import と呼び出し）
 
-## 4\. 関連テストおよび回帰テスト検証結果（全38項目 PASS）
+## 4. 関連テストおよび回帰テスト検証結果（全124項目 PASS）
 
-最新コミット `427f7aec4a6acba311f24a2d0dac84b8c0232a0f`（新たに追加された `bot-form-stability.test.mjs` を含む）上で関連テスト・回帰テストを実行し、**38項目すべてが100% PASS（失敗0）** することを確認しました。
+PR #2019 HEAD 上で関連テスト・回帰テストを実行し、**124項目すべてが100% PASS（失敗0）** することを確認しました。
 
-- `patches/splatoon3/tests/bot-turf-paint.test.mjs`: **7/7 PASS**  
+- `patches/splatoon3/tests/bot-turf-paint.test.mjs`: **15/15 PASS**（ピッチ検証ゲート、LACT-450上限0.14、足元塗り照準保護、SMIインプレースキャッシュ、実エンジン統合含む）  
+- `patches/local-quality/tests/bot-weapon-territory.test.mjs`: **28/28 PASS**（R-PEN満充電連続発射、ソイチューバー0.22短チャージ、通常チャージャー0.70、30/60/120Hz制御）  
+- `patches/splatoon3/tests/bot-splatling-charge.test.mjs`: **2/2 PASS**（スピナーTurf平均チャージ `0.8918` >= 0.85）  
+- `patches/splatoon3/tests/bot-special-support.test.mjs`: **20/20 PASS**（Tacticooler自陣展開・ドリンク受取ヒト復帰含む全スペシャル）  
+- `patches/splatoon3/tests/sub-mark-lifecycle.test.mjs`: **11/11 PASS**  
+- `patches/local-quality/tests/bot-navigation.test.mjs`: **15/15 PASS**  
+- `patches/local-quality/tests/bot-navigation-respawn.test.mjs`: **2/2 PASS**  
 - `patches/splatoon3/tests/bot-combat-quality.test.mjs`: **6/6 PASS**  
-- `patches/splatoon3/tests/bot-form-stability.test.mjs`（`427f7aec` 新規テスト）: **6/6 PASS**  
-- `patches/local-quality/tests/bot-paint-observation.test.mjs`: **9/9 PASS**（7体のBot×60tickで `regionStats` 呼び出し回数が `420回 → 35回`、CPU時間が `12.67ms → 1.40ms` へ削減されることを検証）  
-- `patches/local-quality/tests/bot-edge-guard.test.mjs`: **10/10 PASS**
+- `patches/splatoon3/tests/bot-form-stability.test.mjs`: **6/6 PASS**  
+- `patches/local-quality/tests/bot-paint-observation.test.mjs`: **9/9 PASS**  
+- `patches/local-quality/tests/bot-edge-guard.test.mjs`: **10/10 PASS**  
+- クオリティ監査: `npm run check:patches`（183/183 PASS）、`npm run test:ci-config`（17/17 PASS）、`npm run audit:migration` 全パス。

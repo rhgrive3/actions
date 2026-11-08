@@ -67,6 +67,9 @@ const _probeScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _macroScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _profileScratch = { pitch: -0.10, sweepAmp: 0.50, strafe: 0.32, rollHold: 0.26, stringerChargeCap: 0.22 };
 
+/**
+ * Clamps a numeric value between a lower and upper bound.
+ */
 function clampVal(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
 }
@@ -510,6 +513,20 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   const cache = brain._turfMultiCache;
   const wr = actor.weaponRunner;
 
+  // 0. Allied available Tacticooler drink pickup: pop up to kid form when within pickup range (< 6.8m)
+  const coolers = G?.projectiles?._s3SupportCoolers;
+  if (coolers && coolers.length && !actor.s3?.drink) {
+    for (let i = 0; i < coolers.length; i++) {
+      const c = coolers[i];
+      if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
+        if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
+          it.squid = false;
+          break;
+        }
+      }
+    }
+  }
+
   // 1. Suppress arbitrary long paintPause stalls from legacy bot logic when there is turf to paint!
   if (rawFamily === 'stringer' || rawFamily === 'charger' || rawFamily === 'splatling' || rawFamily === 'splatana') {
     if ((brain.paintPause || 0) > 0.02) {
@@ -518,28 +535,38 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   }
 
   // 2. Authentic weapon-class firing cadences for Turf War painting
-  const wantPaintNow = Boolean(brain._turfPaintLatch && inkFrac > 0.10 && (brain.paintPause || 0) <= 0);
+  const pitchReady = typeof brain._turfPaintValidated === 'boolean'
+    ? brain._turfPaintValidated
+    : botTurfPitchReady(brain, actor, rawFamily, brain.aimPitch);
+  const wantPaintNow = Boolean(brain._turfPaintLatch && pitchReady && inkFrac > 0.10 && (brain.paintPause || 0) <= 0);
+  if (brain._turfPaintValidated === false) {
+    it.fire = false;
+  }
+
   if (rawFamily === 'charger') {
     const isPencil = actor.weapon?.sourceMainActor === 'WeaponChargerPencil' || (actor.weapon?.id || '').includes('pencil') || (actor.weapon?.id || '').includes('snipewriter');
+    const isKeeper = actor.weapon?.sourceMainActor === 'WeaponChargerKeeper' || (actor.weapon?.id || '').includes('keeper') || (actor.weapon?.id || '').includes('soituber') || (actor.weapon?.id || '').includes('squiffer');
     const isLongCharger = (actor.weapon?.chargeTime || 1.0) >= 1.25;
-    const targetCharge = isPencil ? 0.98 : isLongCharger ? 0.38 : 0.56;
-    if (isPencil && wr?.catalogState?.rounds > 0) {
-      // Always expend remaining loaded Snipewriter rounds without stalling
-      it.fire = wr.cooldown <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
-    } else if (wr?.s3ReleaseHold || (wr?.s3ChargerCancelSwimRemaining || 0) > 1e-6) {
+    const targetCharge = isPencil ? 1.0 : isKeeper ? 0.22 : 0.70;
+
+    if (wr?.s3ReleaseHold || (wr?.s3ChargerCancelSwimRemaining || 0) > 1e-6) {
       it.fire = false;
     } else if (wr?.charging) {
-      if (wr.charge >= targetCharge || inkFrac < 0.15) {
+      // Active charging takes strict precedence: never emit loaded rounds prematurely
+      if (wr.charge >= targetCharge || (inkFrac < 0.15 && !isPencil)) {
         it.fire = false;
         brain.paintPause = 0.02;
       } else {
         it.fire = true;
       }
+    } else if (isPencil && wr?.catalogState?.rounds > 0) {
+      // Consume buffered Snipewriter rounds only once charge cycle has permitted
+      it.fire = wantPaintNow && (wr.cooldown || 0) <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
     } else if ((wantPaintNow || (isLongCharger && wantMove && inkFrac > 0.24)) && (wr?.cooldown || 0) <= 1e-6) {
       it.fire = true;
     }
   } else if (rawFamily === 'stringer') {
-    const cap = Math.max(0.18, profile.stringerChargeCap || 0.22);
+    const cap = profile.stringerChargeCap || 0.22;
     if (wr?.catalogState?.pending) {
       it.fire = false;
     } else if (wr?.charging) {
@@ -566,12 +593,13 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       it.fire = true;
     }
   } else if (rawFamily === 'splatling') {
-    // Medium spin-up (45%) for rapid lane coating instead of waiting 100% full spin-up + 0.55s pause
+    // Preserve full spin-up (>= 0.88) for standard splatlings per test contract;
+    // Ballpoint Splatling retains authentic short-charge high-spread mode (0.24).
     if (wr?.streaming) {
       it.fire = false;
     } else if (wr?.charging) {
       const isBallpoint = actor.weapon?.sourceMainActor === 'WeaponSpinnerDownpour' || (actor.weapon?.id || '').includes('ballpoint');
-      const targetSpin = isBallpoint ? 0.24 : ((actor.weapon?.chargeTime || 1.0) > 1.3 ? 0.38 : 0.48);
+      const targetSpin = isBallpoint ? 0.24 : 0.90;
       if (wr.charge >= targetSpin || inkFrac < 0.16) {
         it.fire = false;
         brain._splatlingHold = 0;
@@ -612,6 +640,10 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     if (wantPaintNow && inkFrac > 0.08) {
       it.fire = wr.cooldown <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
     } else if (inkFrac > 0.08 && wantMove && actor.groundTeam === 2) {
+      it.fire = true;
+    }
+  } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'slosher' || rawFamily === 'brella') {
+    if (brain._turfPaintValidated === true && brain._turfPaintLatch && (wr?.cooldown || 0) <= 1e-6) {
       it.fire = true;
     }
   }
@@ -703,6 +735,20 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   const srcActor = actor?.weapon?.sourceMainActor || '';
   const tLeft = resolveMatchTimeLeft(G);
 
+  // 0. Allied available Tacticooler drink pickup: pop up to kid form when within pickup range (< 6.8m)
+  const coolers = G?.projectiles?._s3SupportCoolers;
+  if (coolers && coolers.length && !actor.s3?.drink) {
+    for (let i = 0; i < coolers.length; i++) {
+      const c = coolers[i];
+      if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
+        if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
+          it.squid = false;
+          break;
+        }
+      }
+    }
+  }
+
   // 1. Buzzer-beater sub throw in combat approach (Curling, Burst, Fizzy)
   const subId = actor?.weapon?.sub;
   if (
@@ -751,85 +797,83 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
 
   // 3. Combat approach path-painting ("道作り"): out of range (dist > range * 1.08)
   if (dist > range * 1.08) {
-    if (actor.groundTeam === 1 && wantMove) {
-      if (wr?.charging && wr.charge >= 0.12) {
-        it.fire = false;
-      } else if (!wr?.charging) {
-        it.fire = false;
-        it.squid = true;
-      }
-    } else if (inkFrac > 0.18 && !actor.specialActive) {
+    if (rawFamily === 'roller' && actor.groundTeam === 1 && wantMove) {
+      it.fire = false;
+      it.squid = true;
+    } else if (actor.groundTeam !== 1 && inkFrac > 0.18 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging) {
       if (rawFamily === 'splatana') {
-        if (wr?.catalogState?.pending || wr?.catalogState?.melee) {
-          it.fire = false;
-        } else if (wr?.charging && wr.charge >= 0.08) {
-          it.fire = false;
-        } else if (!wr?.charging && (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire && actor.groundTeam !== 1) {
+        if (!actor._prevIntent?.fire && !wr?.catalogState?.pending && !wr?.catalogState?.melee && (wr?.cooldown || 0) <= 1e-6) {
           it.fire = true;
           it.squid = false;
           return Math.min(wantPitch, -0.10);
         }
-      } else if (rawFamily === 'slosher' && actor.groundTeam !== 1) {
+      } else if (rawFamily === 'slosher') {
         if ((wr?.cooldown || 0) <= 1e-6) {
           it.fire = true;
           it.squid = false;
           return Math.min(wantPitch, -0.10);
         }
       } else if (rawFamily === 'roller') {
-        if (!wr?.catalogState?.pending && (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire && actor.groundTeam !== 1) {
+        if (!wr?.catalogState?.pending && (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire) {
           it.fire = true;
           it.squid = false;
           return Math.min(wantPitch, -0.12);
-        } else if (actor.groundTeam === 1 && wantMove) {
-          it.fire = false;
-          it.squid = true;
         }
-      } else if (rawFamily === 'brush' && actor.groundTeam !== 1) {
+      } else if (rawFamily === 'brush') {
         if (!wr?.catalogState?.pending && (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire) {
           it.fire = true;
           it.squid = false;
           return Math.min(wantPitch, -0.06);
         }
-      } else if ((rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') && actor.groundTeam !== 1) {
+      } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') {
         if ((wr?.cooldown || 0) <= 1e-6) {
           it.fire = true;
           it.squid = false;
           return Math.min(wantPitch, -0.12);
         }
       }
-    } else if (actor.groundTeam === 1 && wantMove) {
-      it.fire = false;
-      it.squid = true;
     }
   } else if (rawFamily === 'splatana' && wr?.charging && dist < 8.5 && wr.charge >= 0.08) {
     it.fire = false;
   }
 
   // 4. Enemy ink underfoot clearing ("足元塗り"): stuck on enemy ink during fight
-  if (!it.fire && actor.groundTeam === 2 && inkFrac > 0.14 && !actor.specialActive) {
-    it.squid = false;
+  if (!it.fire && actor.groundTeam === 2 && inkFrac > 0.14 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging && (wr?.cooldown || 0) <= 1e-6) {
+    let canClear = false;
     if (rawFamily === 'splatana') {
-      it.fire = (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire;
+      if (!actor._prevIntent?.fire && !wr?.catalogState?.pending && !wr?.catalogState?.melee) {
+        it.fire = true;
+        canClear = true;
+      }
     } else if (rawFamily === 'slosher' || rawFamily === 'roller' || rawFamily === 'brush') {
-      it.fire = (wr?.cooldown || 0) <= 1e-6;
+      it.fire = true;
+      canClear = true;
     } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') {
-      it.fire = (wr?.cooldown || 0) <= 1e-6;
+      it.fire = true;
+      canClear = true;
     }
-    return Math.min(wantPitch, -0.32);
+    if (canClear) {
+      it.squid = false;
+      return Math.min(wantPitch, -0.32);
+    }
   }
 
   // 5. Long-range charge cancellation
   if ((rawFamily === 'splatana' || rawFamily === 'stringer' || rawFamily === 'charger') && dist > range * 1.12) {
-    if (wr?.charging) {
-      if (wr.charge >= 0.15) it.fire = false;
-    } else {
+    if (wr?.charging && wr.charge >= 0.15) {
       it.fire = false;
-      if (actor.groundTeam === 1 && wantMove) it.squid = true;
     }
   }
   return wantPitch;
 }
 
+/**
+ * Evaluates candidate navigation goals for Turf War painting:
+ * 1. Macro-plaza evaluation (6.5m radius) with spatial deduplication and cross-team cache sharing.
+ * 2. Finishing-paint bonus ("塗るところは綺麗に塗る" - Game8).
+ * 3. 4-Bot ally deconfliction ("味方と塗る場所が被らないように分かれて塗る" - Game8).
+ * 4. 3-phase strategic pace: Opening expansion, Mid-game contest, and Endgame defense (GameWith).
+ */
 export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st, baseScore) {
   if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return baseScore;
   if (!G?.level || !Array.isArray(G.level.faces) || G.level.faces.length <= 6) {
@@ -845,6 +889,7 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
   // 1. Macro-plaza evaluation (6.5m radius): prefer wide-open paintable plazas with high cell count (n)
   // over tiny cramped corners, and strongly reward overwriting enemy ink (1p enemy ink = 2p net swing!).
   // Cached with spatial deduplication (2.5m grid) and cross-team inversion to eliminate redundant CPU queries.
+  // Uses a 31-bit Small Integer (SMI) key and in-place entry mutation to eliminate heap allocations.
   const paint = G?.paint;
   if (paint && typeof paint.regionStats === 'function' && paint.grid) {
     if (!paint._macroPlazaCache) {
@@ -860,10 +905,12 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
           ? brain.t
           : (typeof G?.timeLeft === 'number' ? G.timeLeft : 0));
     const team = actor.team ?? 0;
-    const px = Math.round(node.x / 2.5);
-    const py = Math.round((node.y || 0) / 2.0);
-    const pz = Math.round(node.z / 2.5);
-    const plazaKey = `${px},${py},${pz}`;
+    const px = Math.round(node.x / 2.5) | 0;
+    const py = Math.round((node.y || 0) / 2.0) | 0;
+    const pz = Math.round(node.z / 2.5) | 0;
+    // Pack 3D coordinates into a 31-bit SMI key (never allocated on heap):
+    // px (-128..127) -> 8 bits, py (-32..95) -> 7 bits, pz (-128..127) -> 8 bits
+    const plazaKey = (((px + 128) & 0xff) << 15) | (((py + 32) & 0x7f) << 8) | ((pz + 128) & 0xff);
 
     let cached = cache.get(plazaKey);
     let macroEmpty = 0, macroEnemy = 0, macroOwn = 0, macroN = 0;
@@ -888,13 +935,22 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
       const team0Frac = team === 1 ? macroEnemy : macroOwn;
       const team1Frac = team === 1 ? macroOwn : macroEnemy;
 
-      cache.set(plazaKey, {
-        empty: macroEmpty,
-        team0: team0Frac,
-        team1: team1Frac,
-        n: macroN,
-        t: now,
-      });
+      if (cached) {
+        // Mutate existing cache object in-place to avoid heap allocations on refresh
+        cached.empty = macroEmpty;
+        cached.team0 = team0Frac;
+        cached.team1 = team1Frac;
+        cached.n = macroN;
+        cached.t = now;
+      } else {
+        cache.set(plazaKey, {
+          empty: macroEmpty,
+          team0: team0Frac,
+          team1: team1Frac,
+          n: macroN,
+          t: now,
+        });
+      }
     }
 
     if (macroN > 0) {

@@ -349,3 +349,121 @@ test('macro-plaza 6.5m paint evaluation caches across nearby candidates and cros
   assert.ok(Number.isFinite(scoreAExpired));
 });
 
+test('validated aim-pitch gate (_turfPaintValidated) prevents firing even when unvalidated paint latch is true', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    weapon: { catalogRecord: { family: 'shooter' }, id: 's3-shooter-normal' },
+    weaponRunner: { cooldown: 0 },
+    intent: { fire: false, squid: false },
+    groundTeam: 1,
+  };
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: false };
+
+  // 1. With _turfPaintValidated = false, fire is suppressed despite latch = true
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, false, 'fire must be gated off when _turfPaintValidated is false');
+
+  // 2. Once aim pitch stabilizes and _turfPaintValidated becomes true, firing is allowed
+  brain._turfPaintValidated = true;
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, true, 'fire enabled when _turfPaintValidated is true');
+});
+
+test('LACT-450 charge cap honors configured 0.14 threshold without being clamped to 0.18', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    weapon: { sourceMainActor: 'WeaponStringerShort', catalogRecord: { family: 'stringer' }, id: 's3-stringer-short' },
+    weaponRunner: { charging: true, charge: 0.15, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: true };
+
+  // Profile specifies 0.14
+  const profile = botWeaponPaintProfile(actor.weapon, 'stringer');
+  assert.equal(profile.stringerChargeCap, 0.14);
+
+  // At charge = 0.15 >= 0.14, stringer releases fire (stops holding fire)
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, false, 'LACT-450 releases charge at 0.15 >= 0.14');
+
+  // At charge = 0.12 < 0.14, stringer continues charging (holds fire)
+  actor.weaponRunner.charge = 0.12;
+  actor.intent.fire = false;
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, true, 'LACT-450 continues charging at 0.12 < 0.14');
+});
+
+test('combat foot-clearing leaves pitch untouched when weapon cannot clear ink', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const brain = {};
+
+  // 1. Charger cannot foot-clear: pitch must remain untouched at 0.05
+  const chargerActor = {
+    team: 0,
+    groundTeam: 2,
+    intent: { fire: false, squid: false },
+    weapon: { catalogRecord: { family: 'charger' }, range: 14 },
+    weaponRunner: { charging: false, cooldown: 0 },
+  };
+  const chargerPitch = botApplyTurfCombatPaint(brain, G, chargerActor, 1 / 60, move, true, 0, 0.05, 8, 14, 0.8);
+  assert.equal(chargerActor.intent.fire, false, 'charger does not fire foot clear');
+  assert.equal(chargerPitch, 0.05, 'charger pitch is preserved instead of being forced downward');
+
+  // 2. Weapon on cooldown cannot foot-clear: pitch must remain untouched
+  const shooterCooldownActor = {
+    team: 0,
+    groundTeam: 2,
+    intent: { fire: false, squid: false },
+    weapon: { catalogRecord: { family: 'shooter' }, range: 12 },
+    weaponRunner: { charging: false, cooldown: 0.15 },
+  };
+  const shooterPitch = botApplyTurfCombatPaint(brain, G, shooterCooldownActor, 1 / 60, move, true, 0, 0.08, 8, 12, 0.8);
+  assert.equal(shooterCooldownActor.intent.fire, false, 'shooter on cooldown cannot fire');
+  assert.equal(shooterPitch, 0.08, 'pitch preserved when weapon is on cooldown');
+});
+
+test('macro-plaza cache uses 31-bit integer SMI keys and mutates entries in-place on refresh', () => {
+  const mockPaint = {
+    grid: new Uint8Array(64),
+    regionStats(x, y, z, r, team, out) {
+      out.empty = 0.50;
+      out.own = 0.30;
+      out.enemy = 0.20;
+      out.n = 32;
+      return out;
+    },
+  };
+  const G = {
+    level: { faces: new Array(12).fill({}) },
+    match: { mode: 'turf', time: 100 },
+    paint: mockPaint,
+  };
+  const brain = { t: 0 };
+  const actor = { id: 1, team: 0, weapon: { range: 12 } };
+  const node = { x: 5.0, y: 0, z: 5.0 };
+  const st = { empty: 0.5, enemy: 0.2, own: 0.3 };
+
+  // First candidate call initializes cache
+  botScorePaintCandidate(brain, G, actor, node, 10, 0.5, st, 10);
+  assert.ok(mockPaint._macroPlazaCache instanceof Map);
+  assert.equal(mockPaint._macroPlazaCache.size, 1);
+
+  // Check that key is a number (31-bit SMI integer, not a string)
+  const [key, entry] = Array.from(mockPaint._macroPlazaCache.entries())[0];
+  assert.equal(typeof key, 'number', 'plaza cache key must be a 31-bit integer to prevent heap string allocation');
+  assert.ok(Number.isSafeInteger(key));
+
+  // Expire TTL (0.8s later) and re-query same plaza node
+  G.match.time = 99.2;
+  botScorePaintCandidate(brain, G, actor, node, 10, 0.5, st, 10);
+  const refreshedEntry = mockPaint._macroPlazaCache.get(key);
+
+  // Entry object must be identical reference (in-place mutation, no new heap object allocated)
+  assert.equal(refreshedEntry, entry, 'cache entry must be mutated in-place on refresh to prevent GC churn');
+  assert.equal(refreshedEntry.t, 99.2, 'timestamp updated in-place');
+});
+
