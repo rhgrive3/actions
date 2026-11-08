@@ -43,7 +43,7 @@ test('declared native prebuilt payload is admitted outside artifacts; undeclared
 });
 test('source closure detects runtime, helper and inventory drift',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'turf-source-v2-'));for(const p of ['patches','scripts','inkwave-public'])fs.mkdirSync(path.join(dir,p));const file=path.join(dir,'scripts/helper.mjs');fs.writeFileSync(file,'export{}');const b=bindSource(dir);verifySource(b);fs.writeFileSync(file,'export const changed=true;');assert.throws(()=>verifySource(b),/Source closure changed/);});
 
-function active(pid){try{const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8');return stat.slice(stat.lastIndexOf(')')+2).split(' ')[0]!=='Z';}catch(e){if(e.code==='ENOENT')return false;throw e;}}
+function active(pid){try{const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8');return stat.slice(stat.lastIndexOf(')')+2).split(' ')[0]!=='Z';}catch(e){if(e.code==='ENOENT'||e.code==='ESRCH')return false;throw e;}}
 async function dead(pid){for(let i=0;i<40&&active(pid);i++)await new Promise(r=>setTimeout(r,25));assert.equal(active(pid),false,'Live descendant survived group cleanup: '+pid);}
 test('ignored SIGTERM is forcibly bounded and cannot pass',async()=>{
  const start=performance.now();const run=await runBounded(process.execPath,['-e',"process.on('SIGTERM',()=>{});console.log(process.pid);setInterval(()=>{},1000)"],{timeout:500,maxBuffer:4096});
