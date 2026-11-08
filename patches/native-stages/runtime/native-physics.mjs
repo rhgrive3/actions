@@ -3,6 +3,8 @@ import { Physics, Hit, GroundHit, WALKABLE } from '../../../src/game/physics.js'
 import { PLAYER } from '../../../src/config.js';
 const min = new THREE.Vector3(), max = new THREE.Vector3(), _sortAsc = (a, b) => a - b;
 const SOURCE_CONTACT_EPSILON=1e-4;
+// Source floor seams and bevels below this rise are not curbs (m).
+const SOURCE_SEAM_STEP=.05;
 const FOOT_RING=Array.from({length:8},(_,i)=>[Math.cos(i/8*Math.PI*2),Math.sin(i/8*Math.PI*2)]);
 const DOWN=new THREE.Vector3(0,-1,0);
 const FOOT_SUPPORT_KEYS=Object.freeze(['block','face','u','v','center','grate']);
@@ -55,13 +57,44 @@ export class NativePhysics extends Physics {
   const far=up+down;
   if(this.raycast!==CANONICAL_NATIVE_RAYCAST||this.dynamic.raycast!==Physics.prototype.raycast||!this.world.rayDownBatch||!this.world.hasCanonicalRay?.()||!(far>0)||!Number.isFinite(far))
    return super.groundProbe(x,y,z,up,down,foot,out,skipGrates,stepMin);
-  const state=this._groundBatch||(this._groundBatch={origins:Array.from({length:9},()=>new THREE.Vector3()),hits:Array.from({length:9},()=>new Hit()),options:{ignoreGrates:false}});
+  const state=this._groundBatch||(this._groundBatch={origins:Array.from({length:9},()=>new THREE.Vector3()),ringOrigins:null,ringHits:null,hits:Array.from({length:9},()=>new Hit()),options:{ignoreGrates:false}});
   const {origins,hits,options}=state;options.ignoreGrates=skipGrates;
-  origins[0].set(x,y+up,z);
-  for(let i=0;i<8;i++)origins[i+1].set(x+FOOT_RING[i][0]*foot,y+up,z+FOOT_RING[i][1]*foot);
+  const oy=y+up,moving=this.level.blocks.length>this.level.staticBlockCount;
+  if(!moving&&this.world.hasWalkableInBox&&Number.isFinite(x+oy+z+foot+stepMin)){
+   out.hit=false;out.center=false;let have=false,by=-Infinity;
+   origins[0].set(x,oy,z);
+   const h0=hits[0];h0.hit=!!this.world.ray(origins[0],DOWN,far,options,h0);
+   h0.dist=h0.hit?h0.distance:far;h0.block=h0.face=-1;
+   if(h0.hit&&h0.normal.y>=WALKABLE){
+    h0.block=this.level.blockForTriangle(h0.triangle);h0.face=this.level.data.triangleFace[h0.triangle];
+    if(h0.face>=0){const f=this.level.faces[h0.face],p=this.world._p.copy(h0.point).sub(f.origin);h0.u=p.dot(f.u);h0.v=p.dot(f.v);}else h0.u=h0.v=0;
+    have=true;by=h0.point.y+stepMin;this._fillGround(out,h0,true);
+    if(oy<=by){out.hit=true;return out;}
+    const fPad=Math.abs(foot)+1e-3;
+    if(!this.world.hasWalkableInBox(x-fPad,by-1e-3,z-fPad,x+fPad,oy+1e-3,z+fPad,skipGrates,WALKABLE)){
+     out.hit=true;return out;
+    }
+   }
+   const rFar=have?Math.min(far,(oy-by)+1e-5):far;
+   if(rFar>0){
+    const ringOrigins=state.ringOrigins||(state.ringOrigins=origins.slice(1));
+    const ringHits=state.ringHits||(state.ringHits=hits.slice(1));
+    for(let i=0;i<8;i++)ringOrigins[i].set(x+FOOT_RING[i][0]*foot,oy,z+FOOT_RING[i][1]*foot);
+    this.world.rayDownBatch(ringOrigins,rFar,options,ringHits);
+    for(let i=0;i<8;i++){
+     const h=ringHits[i];
+     if(!h.hit||h.normal.y<WALKABLE||!(h.point.y>by))continue;
+     h.dist=h.distance;h.block=this.level.blockForTriangle(h.triangle);h.face=this.level.data.triangleFace[h.triangle];
+     if(h.face>=0){const f=this.level.faces[h.face],p=this.world._p.copy(h.point).sub(f.origin);h.u=p.dot(f.u);h.v=p.dot(f.v);}else h.u=h.v=0;
+     have=true;by=h.point.y;this._fillGround(out,h,false);
+    }
+   }
+   out.hit=have;return out;
+  }
+  origins[0].set(x,oy,z);
+  for(let i=0;i<8;i++)origins[i+1].set(x+FOOT_RING[i][0]*foot,oy,z+FOOT_RING[i][1]*foot);
   this.world.rayDownBatch(origins,far,options,hits);
   out.hit=false;out.center=false;let have=false,by=-Infinity;
-  const moving=this.level.blocks.length>this.level.staticBlockCount;
   for(let i=0;i<9;i++){
    const h=hits[i];h.dist=h.hit?h.distance:far;h.block=h.face=-1;
    if(h.hit){
@@ -178,7 +211,12 @@ export class NativePhysics extends Physics {
   for(const key of FOOT_SUPPORT_KEYS)ground[key]=support[key];
   if(!support.hit)return false;
   raised.copy(pos).setY(support.y);
-  if(!this.dynamic.bodyFits(raised,radius,lift,height,skipGrates)||!this._sourceBodyFits(raised,radius,lift,height,skipGrates,SOURCE_CONTACT_EPSILON))return false;
+  if(!this.dynamic.bodyFits(raised,radius,lift,height,skipGrates))return false;
+  // A seam/bevel lift of a few millimetres that still fits within the public
+  // .01 contract keeps the foot grounded. Rejecting it at the 0.1 mm contact
+  // epsilon dropped the player into air control on flat source floor.
+  if(!this._sourceBodyFits(raised,radius,lift,height,skipGrates,SOURCE_CONTACT_EPSILON)&&
+    !(support.y-pos.y<=SOURCE_SEAM_STEP&&this._sourceBodyFits(raised,radius,lift,height,skipGrates,.01)))return false;
   pos.y=support.y;
   return true;
  }

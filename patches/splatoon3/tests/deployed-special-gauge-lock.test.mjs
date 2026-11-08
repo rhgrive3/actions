@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../runtime/special-paint-rate.mjs';
 import { fixture } from './source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
@@ -47,7 +48,7 @@ test('Tenta and Chump fixed activation locks survive death/reset and cleared mis
   a.addTurf(10);near(a.special,0,'dead/reset cannot recharge');
   G.time=started+(frames-1)/60;assert.equal(f.specialGaugeLocked(a),true,'penultimate source frame');
   G.time=started+frames/60;assert.equal(f.specialGaugeLocked(a),false,'exact fixed deadline');
-  a.addTurf(10);near(a.special,10,'recharge resumes');
+  a.addTurf(10);near(a.special,10*PAINT_RATE,'recharge resumes');
  }
 });
 
@@ -62,7 +63,7 @@ test('Wave/Screen begin at throw for community-measured ~390F/300F, independent 
   w.tick(frames-1);assert.equal(f.specialGaugeLocked(a),true,'last locked source frame');
   w.tick();assert.equal(f.specialGaugeLocked(a),false,'source deadline during the real world update');
   assert.equal(object.dead,false,'device still exists after its shorter gauge window');
-  a.addTurf(4);near(a.special,4,'living device no longer blocks recharge');
+  a.addTurf(4);near(a.special,4*PAINT_RATE,'living device no longer blocks recharge');
  }
 });
 
@@ -72,7 +73,7 @@ test('Wave destruction ends its lock immediately; stale retirement cannot clear 
  enemy.remote=false;p.s3DamageSpecialObjects(enemy,object.pos,5,()=>10000,'Shooter');
  assert.equal(object.dead,true,'real device HP destruction path is exercised');
  assert.equal(f.specialGaugeLocked(a),false,'destroyed device immediately releases its own lock');
- a.addTurf(5);near(a.special,5,'recharge after destruction');
+ a.addTurf(5);near(a.special,5*PAINT_RATE,'recharge after destruction');
  p.clear();w.start('tentaMissiles');assert.equal(f.specialGaugeLocked(a),true);
  object.dead=true;assert.equal(f.specialGaugeLocked(a),true,'retired wave cannot unlock a fixed missile use');
 });
@@ -86,7 +87,7 @@ test('Big Bubbler starts during device ignition motion, retains AP-controlled HP
   a.splat(null,'water');a.reset();assert.equal(f.bigBubblerDomes().includes(dome),true);assert.equal(f.specialGaugeLocked(a),true);
   let frames=15;while(!dome.dead&&frames<1400){w.tick();frames++;}
   assert.ok(dome.dead);assert.equal(f.specialGaugeLocked(a),false);lifetimes.push(frames);
-  a.addTurf(4);near(a.special,4,'collapse resumes charge');
+  a.addTurf(4);near(a.special,4*PAINT_RATE,'collapse resumes charge');
   assert.equal(a.stormGaugeLock||0,0,'Bubbler never borrowed the Storm clock');
  }
  assert.ok(lifetimes[1]>lifetimes[0],'Special Power already extends the real HP lifetime; no guessed lock interpolation');

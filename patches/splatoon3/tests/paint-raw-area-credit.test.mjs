@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
+import {SPECIAL_PAINT_CHARGE_RATE} from '../runtime/special-paint-rate.mjs';
 
 // Preserve current-main world-area accounting; this is not a retail point calibration.
 test('native composed Actor and PaintSystem credit owned raw world area, exactly once',async()=>{
@@ -23,7 +24,7 @@ test('native composed Actor and PaintSystem credit owned raw world area, exactly
  const squares=paint.counts[0]*face.cu*face.cv;
  assert.ok(Math.abs(a.stats.turf-squares)<1e-7,
   'all late rays and body cells retain main raw-area accounting once');
- assert.ok(Math.abs(a.special-a.stats.turf)<1e-7,'special gauge retains main raw-area accounting');
+ assert.ok(Math.abs(a.special-a.stats.turf * SPECIAL_PAINT_CHARGE_RATE)<1e-7,'special gauge retains main raw-area accounting');
  assert.equal(paint.counts[0],paint.grid.filter(team=>team===1).length,'owned cells remain independent of credit units');
  const total=a.stats.turf;
  for(let i=0;i<60;i++)paint.advanceSimulation(1/60);
@@ -57,7 +58,7 @@ test('unchanged main Turf credit respects active Storm and Tidal Slam gauge lock
   a.s3TidalSlamGaugeFinish = null;
   a.addTurf(area);
   assert.ok(Math.abs(a.stats.turf - 3) < 1e-12, 'ordinary Turf retains the main area convention');
-  assert.ok(Math.abs(a.special - 1) < 1e-12, 'ordinary gauge charges exactly once under the main convention');
+  assert.ok(Math.abs(a.special - 1 * SPECIAL_PAINT_CHARGE_RATE) < 1e-12, 'ordinary gauge charges exactly once under the main convention');
 });
 
 
@@ -83,7 +84,7 @@ test('native projectile and installed Slam callers credit initial body area exac
   for(let i=0;i<210;i++)paint.advanceSimulation(1/60);
   assert.ok(Math.abs(a.stats.turf-(paint.counts[0]*face.cu*face.cv))<1e-7);
   if(kind==='slam')assert.equal(a.special,0);
-  else assert.ok(Math.abs(a.special-a.stats.turf)<1e-7);
+  else assert.ok(Math.abs(a.special-a.stats.turf * SPECIAL_PAINT_CHARGE_RATE)<1e-7);
  }
 });
 

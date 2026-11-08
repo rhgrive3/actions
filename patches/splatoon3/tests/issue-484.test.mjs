@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 import { adaptSource } from '../adapter.mjs';
 import { adaptIssue484 } from '../issue-484-adapter.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -523,7 +524,7 @@ test('host adoption: _adopt clears presentation overrides and preserves original
   assert.equal(proxy.specialReady(), false, 'Adopted bot with 165p is NOT ready (needs 180p)');
 
   // Bot charges 15 more points to 180
-  proxy.addTurf(15);
+  proxy.addTurf(15 / SPECIAL_PAINT_CHARGE_RATE);
   assert.ok(proxy.special >= 180);
   assert.equal(proxy.specialReady(), true, 'Adopted bot becomes ready only upon reaching full 180p');
 });

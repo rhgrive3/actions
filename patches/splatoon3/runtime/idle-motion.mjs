@@ -70,11 +70,22 @@ export function installIdleMotion(api, _profile) {
   const states = new WeakMap(), disposed = new WeakSet();
   Object.defineProperty(C, INSTALL, { value: { states, disposed } });
   const updateStates = C._updateStates, fidget = C._poseFidget;
+  // Native ready crouch and bob (the source rig owns its own stance when active).
+  const channels = api.CHARACTER_CHANNELS, buildPose = C._buildPose;
+  const readyTarget = (ch, m) => {
+    if (!m || ch.sourceMotion?.active || !ch.weapon || !ch.kidForm || !ch.grounded || ch.dance || ch.wDance > .001) return 0;
+    // Standing quiet only: attacks, subs and actions own their own native stance and release it smoothly.
+    if (m.reason !== 'quiet') return 0;
+    return (1 - (ch.gaitW || 0)) * (1 - (ch.wAir || 0));
+  };
   C._updateStates = function (dt, s) {
-    const result = updateStates.call(this, dt, s);
-    const m = state(this), reason = classify(this, s || {}, api);
+    const result = updateStates.call(this, dt, s), frame = s || {};
+    const m = state(this), reason = classify(this, frame, api);
     m.reason = reason; m.quiet = reason === 'quiet';
     m.phase = m.quiet ? 'ready' : 'off';
+    const want = readyTarget(this, m);
+    if (m.ready === undefined) m.ready = want;
+    else m.ready += (want - m.ready) * (1 - Math.exp(-IDLE_MOTION_CALIBRATION.ready.response * Math.max(0, dt || 0)));
     return result;
   };
   C._poseFidget = function (P, id, elapsed) {
@@ -93,28 +104,10 @@ export function installIdleMotion(api, _profile) {
     // A match glance keeps the carry facing the controlled body direction.
     // The source look fidget rotates the chest too, moving the weapon with it.
     // Leave that showcase detail outside the match-only head/eye gesture.
-    const channels = api.CHARACTER_CHANNELS;
     P[channels.SPINE + 1] = before[channels.SPINE + 1];
     P[channels.CHEST + 1] = before[channels.CHEST + 1];
     if (this._dt > 0) m.looks++;
   };
-  // Native ready crouch and bob (the source rig owns its own stance when active).
-  const channels = api.CHARACTER_CHANNELS, buildPose = C._buildPose;
-  const readyTarget = (ch, s) => {
-    const m = states.get(ch);
-    if (!m || ch.sourceMotion?.active || !ch.weapon || !ch.kidForm || !ch.grounded || ch.dance || ch.wDance > .001) return 0;
-    // Standing quiet only: attacks, subs and actions own their own native stance and release it smoothly.
-    if (m.reason !== 'quiet') return 0;
-    return (1 - (ch.gaitW || 0)) * (1 - (ch.wAir || 0));
-  };
-  C._updateStates = (function (inner) {
-    return function (dt, s) {
-      const result = inner.call(this, dt, s), k = state(this), want = readyTarget(this, s || {});
-      if (k.ready === undefined) k.ready = want;
-      else k.ready += (want - k.ready) * (1 - Math.exp(-IDLE_MOTION_CALIBRATION.ready.response * Math.max(0, dt || 0)));
-      return result;
-    };
-  })(C._updateStates);
   C._buildPose = function (dt, s) {
     const result = buildPose.call(this, dt, s);
     const m = states.get(this), w = m?.ready || 0;

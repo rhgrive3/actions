@@ -377,6 +377,14 @@ export function adaptSource(rel, code) {
     "  'Minimap': 'ミニマップ',",
     "  'Connect Joy-Con / Pro Controller': 'Joy-Con / Proコントローラー接続', 'Pair a Nintendo Switch Joy-Con (R) or Pro Controller via WebHID for motion gyro aiming.': 'WebHID経由でJoy-Con (R) または Proコントローラーを接続し、ジャイロ照準を使用します。',\n  'Controller motion connected using user gyro calibration.': 'ユーザー校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected using factory gyro calibration.': '工場校正を使ってコントローラーのモーション入力を接続しました。', 'Controller motion connected; nominal gyro calibration used (SPI unavailable).': 'SPI校正を取得できないため、公称値でコントローラーのモーション入力を接続しました。', 'WebHID is unavailable in this browser.': 'このブラウザーではWebHIDを利用できません。', 'This browser cannot open the WebHID chooser.': 'このブラウザーではWebHIDデバイス選択を開けません。', 'No controller was selected.': 'コントローラーが選択されませんでした。', 'Controller initialization failed. Check WebHID permissions and reconnect.': 'コントローラーを初期化できませんでした。WebHIDの許可を確認して再接続してください。', 'Controller connection was denied or failed.': 'コントローラーへの接続が拒否されたか失敗しました。',\n  'Corner map (non-S3 aid)': '画面端マップ（本家外の補助）', 'Optional aid outside the S3 baseline. The full Turf Map remains available.': '本家の標準とは異なる任意の補助です。全体マップは引き続き使用できます。',\n  'Minimap': 'ミニマップ',",
     'optional corner map Japanese explanation');
+  if (rel === 'src/fx/fx.js') {
+    // Owner request 2026-11-07 (visual only): a Splatana horizontal swing's
+    // muzzle droplets are drawn at 20% size; glow and puff are unchanged.
+    code = replaceOnce(code, "  muzzle(pos, dir, color, kind = 'shooter') {\n",
+      "  muzzle(pos, dir, color, kind = 'shooter') {\n    const dropScale = kind === 'splatana-h' ? 0.2 : 1;\n", 'splatana horizontal muzzle drop scale');
+    code = replaceOnce(code, 'col, 0.022 + rand() * 0.028, 0.28 + rand() * 0.12, 0.6, 1.4, 0);',
+      'col, (0.022 + rand() * 0.028) * dropScale, 0.28 + rand() * 0.12, 0.6, 1.4, 0);', 'splatana horizontal muzzle drop size');
+  }
   if (rel === 'src/game/match.js') {
     // The lobby/roster protocol assigns team 0 to Alpha and team 1 to Bravo.
     // Preserve that match-side assignment; never redraw a winner at judgment.
@@ -419,6 +427,11 @@ export function adaptSource(rel, code) {
       '        out.push(pool.splice((Math.random() * pool.length) | 0, 1)[0]);',
       '        const pick = (Math.random() * pool.length) | 0;\n        out.push(independent ? pool[pick] : pool.splice(pick, 1)[0]);',
       'standard Turf weapon draws allow duplicates');
+    // Owner report 2026-11-07: CPU form flicker (runtime/bot-form-stability.mjs).
+    code = "import { stabilizeBotForm } from '../../patches/splatoon3/runtime/bot-form-stability.mjs';\n" + code;
+    code = replaceOnce(code, '        if (live) a.bot.update(dt);',
+      '        if (live) { a.bot._nativeTraversalHandled = false; a.bot.update(dt); stabilizeBotForm(a, dt, !!a.bot._nativeTraversalHandled); }',
+      'CPU form hold');
     code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput, requestTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 
     return code;
@@ -1437,6 +1450,12 @@ export function adaptSource(rel, code) {
     return `import { recordHostDeadline } from '../../patches/splatoon3/runtime/turf-finish.mjs';\nimport { swimTrailVisible, swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/game/actor.js') {
+    // Owner request 2026-11-07: the special gauge filled too fast from paint.
+    // Inked area now charges 60% of its former amount (turf points, score and
+    // the 'turf' event are unchanged). INKWAVE balance, not a retail value.
+    code = replaceOnce(code, '      this.special = Math.min(this.specialCost(), this.special + area);',
+      '      this.special = Math.min(this.specialCost(), this.special + area * SPECIAL_PAINT_CHARGE_RATE);', 'special gauge paint charge rate');
+    code = "import { SPECIAL_PAINT_CHARGE_RATE } from '../../patches/splatoon3/runtime/special-paint-rate.mjs';\n" + code;
     code = replaceOnce(code, 'this.fireBuffer = firePressed ? P.fireBuffer : Math.max(0, this.fireBuffer - dt);',
       'this.fireBuffer = firePressed ? rollerFireBuffer(this, P.fireBuffer, dt) : Math.max(0, this.fireBuffer - dt);', 'roller buffered squid-start press');
     code = replaceOnce(code, 'this.kidT >= P.emergeDelay',

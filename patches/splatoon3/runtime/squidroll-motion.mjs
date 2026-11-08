@@ -9,6 +9,11 @@ export const SQUIDROLL_MOTION_CALIBRATION = Object.freeze({
   status: 'visual calibration; original angle, shape and timing curves unknown',
 });
 const INSTALL = Symbol.for('inkwave.s3.squidroll-motion.install.v1');
+const MOVEMENT_CHARACTER_OWNER = Symbol.for('inkwave.s3.movement-motion.character.v1');
+const movementRollAge = ch => {
+  const owner = ch?.[MOVEMENT_CHARACTER_OWNER];
+  return owner?.rollAge ? owner.rollAge(ch) : movementMotionSnapshot(ch)?.rollAge ?? null;
+};
 const states = new WeakMap();
 const disposed = new WeakSet();
 const TAU = Math.PI * 2;
@@ -78,7 +83,7 @@ export function installSquidrollMotion({ Character, Actor, THREE }, profile) {
     m.frame = s || {};
     m.active = false; m.spin = 0;
     const result = update.call(this, dt, s);
-    m.age = movementMotionSnapshot(this)?.rollAge ?? null;
+    m.age = movementRollAge(this);
     if (m.age === null) m.live = m.blocked = null;
     return result;
   };
@@ -87,9 +92,9 @@ export function installSquidrollMotion({ Character, Actor, THREE }, profile) {
     const m = get(this);
     restore(this, m);
     const result = squid.call(this, dt, s);
+    if (this.sqScale <= .001 || this.s3SquidrollMotionEnabled === false) return result;
     const motion = movementMotionSnapshot(this);
-    if (motion?.phase !== 'roll' || this.sqScale <= .001
-      || this.s3SquidrollMotionEnabled === false) return result;
+    if (motion?.phase !== 'roll') return result;
     const frame = m.frame, action = frame.movementMotion?.actions?.roll;
     const pivot = this.squid.pivot, u = clamp(motion.rollAge / (action ? duration : m.previewDuration));
     m.baseQ.copy(pivot.quaternion); m.baseScale.copy(pivot.scale);

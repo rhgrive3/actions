@@ -6,6 +6,13 @@ import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs'
 import {createPresentationClock} from '../presentation-clock.mjs';
 import {getPlatformLifecycle} from '../platform-lifecycle.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/presentation-clock-before-e67c636b.json',import.meta.url),'utf8')).files;
+// Owner request 2026-11-07: the judge scene hands over to the result 0.6 s
+// sooner (resolve at 4.5 s instead of 5.1 s). Apply only that intended change
+// to the frozen baseline so every other timeline stays compared byte for byte.
+const JUDGE_RESOLVE_MS=4500;
+for(const [name,body] of Object.entries(before['src/ui/hud.js'].methods)){
+ if(typeof body==='string'&&body.includes('if (!finished && t > 5.1) {'))before['src/ui/hud.js'].methods[name]=body.replace('if (!finished && t > 5.1) {','if (!finished && t > 4.5) {');
+}
 const current={};for(const[rel,entry]of Object.entries(before)){
  const source=adaptBuildSource(rel,fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8'));
  const body=parse(source,{ecmaVersion:'latest',sourceType:'module'}).body;
@@ -45,7 +52,7 @@ for(const hz of [30,60,120])test('normal '+hz+' FPS actual HUD/wipe/showcase mat
 for(const hz of [5,7,10,13,19])test('deadline consumers track visible elapsed at '+hz+' FPS, physical showcase stays <= .1',async()=>{
  const f=hud(),w=wipe(),s=showcase();let result;f.x.judge().then(x=>result=x);w.x.run();let wipeAt=null,judgeAt=null;
  for(let i=0;i<Math.ceil(hz*5.5);i++){const at=f.advance(1000/hz);w.advance(1000/hz);s.x.update(1/hz);await Promise.resolve();if(!w.x.r&&wipeAt===null)wipeAt=at;if(result&&judgeAt===null)judgeAt=at;}
- assert(wipeAt>=1000-1e-7&&wipeAt<=1000+1000/hz+1e-7);assert(judgeAt>5100&&judgeAt<=5100+1000/hz+1e-7);assert(s.steps.every(x=>x>=0&&x<=.1));assert(Math.abs(s.x.t-Math.ceil(hz*5.5)/hz)<1e-9);
+ assert(wipeAt>=1000-1e-7&&wipeAt<=1000+1000/hz+1e-7);assert(judgeAt>JUDGE_RESOLVE_MS&&judgeAt<=JUDGE_RESOLVE_MS+1000/hz+1e-7);assert(s.steps.every(x=>x>=0&&x<=.1));assert(Math.abs(s.x.t-Math.ceil(hz*5.5)/hz)<1e-9);
  const old=wipe(before);old.x.run();for(let i=0;i<hz;i++)old.advance(1000/hz);assert(old.x.r,'baseline clamp misses 1 s wipe deadline');
 });
 test('HUD autonomous loop freezes world/timeScale/hidden intervals and preserves reentrant callback ownership',()=>{

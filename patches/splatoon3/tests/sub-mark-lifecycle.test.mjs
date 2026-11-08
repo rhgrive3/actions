@@ -83,7 +83,7 @@ test('leave/rejoin actor identity cannot reuse a former owner receipt',async()=>
 });
 test('long-lived mine proof survives same-owner retired births and owner respawn',async()=>{
  const a=await peer('a','inkMine',10),b=await peer('b','inkMine',10);a.v.pos.set(0,0,50);b.v.pos.set(0,0,50);
- const mine=a.f.G.projectiles.throwBomb(a.o);mine.pos.set(0,.7,0);mine.prev.copy(mine.pos);mine.phase='deployed';mine.vel.set(0,0,0);mine.activeAt=0;mine.deployedAt=0;mine.expireAt=Infinity;
+ const mine=a.f.G.projectiles.throwBomb(a.o);mine.pos.set(0,.7,0);mine.prev.copy(mine.pos);mine.phase='deployed';mine.vel.set(0,0,0);mine.activeAt=0;mine.deployedAt=0;mine.expireAt=Infinity;a.f.G.projectiles.update(1/60);
  tickTo(a,b);
  a.o.weapon={...a.o.weapon,sub:'angleShooter'};
  for(let i=0;i<110;i++){const shot=a.f.G.projectiles.throwBomb(a.o);shot.age=10;for(let j=0;j<2;j++)a.f.G.projectiles.update(1/60);tickTo(a,b);}

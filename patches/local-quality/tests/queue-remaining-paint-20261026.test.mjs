@@ -35,7 +35,7 @@ const nativeContactOwners = [
   ['    const faceIds = Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;',
    '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    // A native face lock searches the band so coplanar charts of the struck surface are candidates too.\n    const lockFace = contactFace ? null : nativeFaceLockFace(this.level, opts.face);\n    const faceIds = !contactFace && !lockFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;'],
   ['          if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
-   '          if (fid < 0 || (!contactFace && !lockFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f))) continue;'],
+   '          if (fid < 0 || (!contactFace && !lockFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f, center)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f, center))) continue;'],
 ];
 function replayNativeContact(source, reverse=false){
   for(const [before,after] of reverse?[...nativeContactOwners].reverse():nativeContactOwners)

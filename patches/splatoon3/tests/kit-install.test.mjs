@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 // One module realm and the unmodified production installer. Do not combine this
 // with individual installers in another realm: their WeakSets are independent.
@@ -128,7 +129,7 @@ test('ordinary turf scores during the Bubbler lock and refills only after real d
     const turf=a.stats.turf;a.addTurf(4); // native owner credit while the deployed device still operates
     assert.equal(a.stats.turf,turf+4,'the lock preserves ordinary turf score');assert.equal(a.special,0,'a deployed lock prevents refill');assert.equal(a.specialReady(),false);
     api.clearBigBubblers('kit-install-fixture');a.addTurf(4);
-    assert.equal(a.special,4,'new ordinary turf refills after actual device retirement');
+    assert.equal(a.special, 4 * SPECIAL_PAINT_CHARGE_RATE, 'new ordinary turf refills after actual device retirement');
     assert.equal(a.stats.specials,count+1);assert.equal(a.ink,api.PLAYER.inkMax);
     a.reset();
   } finally {api.G.projectiles.clear();a.character.dispose();}

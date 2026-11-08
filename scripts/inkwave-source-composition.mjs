@@ -17,6 +17,7 @@ import { adaptMenuCardLayout } from '../patches/local-quality/menu-card-layout-a
 import { adaptQueueVisualWorld20261031 } from '../patches/local-quality/queue-visual-world-20261031-adapter.mjs';
 import { adaptQueueUiAudio20261031 } from '../patches/local-quality/queue-ui-audio-20261031-adapter.mjs';
 import { adaptViewportCache } from '../patches/local-quality/viewport-cache-adapter.mjs';
+import { adaptReviewedHotpaths20261107 } from '../patches/local-quality/reviewed-hotpaths-20261107-adapter.mjs';
 import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
 import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
 import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
@@ -228,6 +229,7 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptBombBlastForecast(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
   code = adaptViewportCache(rel, code);
+  if (options.reviewedHotpaths20261107 !== false) code = adaptReviewedHotpaths20261107(rel, code, replaceOnce);
   return code;
 }
 

@@ -8,6 +8,7 @@ import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 const compose = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
@@ -96,7 +97,7 @@ test('#647 removed admission guard still permits native reactivation under compl
   let ticks = 0; while (a.specialActive && ticks++ < 180) f.tick(a);
   assert.ok(ticks < 180); assert.ok(a.s3TidalSlamGaugeFinish);
   const uses = a.stats.specials;
-  a.addTurf(a.specialCost()); assert.equal(a.specialReady(), true);
+  a.addTurf(a.specialCost() / SPECIAL_PAINT_CHARGE_RATE); assert.equal(a.specialReady(), true);
   a.intent.special = true; f.tick(a);
   assert.equal(a.specialActive?.id, 'slam'); assert.equal(a.stats.specials, uses + 1);
 });
@@ -114,7 +115,7 @@ test('#469 personal Storm used gauge remains connected with every production boo
   assert.equal(a.specialActive, null); assert.equal(view(f, a).specialActive, true);
   a.addTurf(10); assert.equal(a.special, 0);
   f.tick(a, 240); assert.equal(view(f, a).specialActive, false);
-  a.addTurf(10); assert.equal(a.special, 10);
+  a.addTurf(10); assert.equal(a.special, 10 * SPECIAL_PAINT_CHARGE_RATE);
 });
 
 test('#647 local pending-landing admission remains effective after every bootstrap wrapper', async () => {
@@ -130,7 +131,7 @@ test('#647 local pending-landing admission remains effective after every bootstr
   assert.equal(a.specialActive, null); assert.equal(a.stats.specials, uses);
   ticks = 0; while (a.s3TidalSlamGaugeFinish && ticks++ < 60) f.tick(a);
   assert.ok(ticks < 60); assert.equal(a.special, 0);
-  a.addTurf(a.specialCost()); assert.equal(a.specialReady(), true);
+  a.addTurf(a.specialCost() / SPECIAL_PAINT_CHARGE_RATE); assert.equal(a.specialReady(), true);
 });
 
 test('#469/#647 installed production leave retires a human and never invokes native adoption', async () => {

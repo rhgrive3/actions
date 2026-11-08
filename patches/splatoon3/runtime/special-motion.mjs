@@ -165,9 +165,11 @@ export function installSpecialMotion({ Character, Actor, THREE, CHARACTER_CHANNE
     // Managed Storm is applied once after all build layers below.
   };
   proto._solveLimb = function (limb, target, pole, endQuat, weight, slot) {
-    const m = state(this), R = this.limbs.armR, L = this.limbs.armL;
-    if (this.s3SpecialMotionEnabled === false || !m.controlled || m.nativeOnly || m.kind !== 'slam'
-      || !m.phase || !endQuat || weight <= .99 || (limb !== R && !(this.dual && limb === L)))
+    const R = this.limbs.armR, L = this.limbs.armL;
+    if (this.s3SpecialMotionEnabled === false || !endQuat || weight <= .99 || (limb !== R && !(this.dual && limb === L)))
+      return solve.call(this, limb, target, pole, endQuat, weight, slot);
+    const m = state(this);
+    if (!m.controlled || m.nativeOnly || m.kind !== 'slam' || !m.phase)
       return solve.call(this, limb, target, pole, endQuat, weight, slot);
     const x = m.reach ||= { right: new THREE.Vector3(), left: new THREE.Vector3(), delta: new THREE.Vector3(),
       leftCenter: new THREE.Vector3(), point: new THREE.Vector3(), parentQ: new THREE.Quaternion(),
@@ -661,18 +663,21 @@ export const SPECIAL_RIDER_CALIBRATION = Object.freeze({
 });
 const riderBlend=(P,slot,value,w)=>{P[slot]+=(value-P[slot])*w;};
 function riderKind(ch) {
-  const a=ch.actor,token=specialPresentationToken(a),id=token?.id;
-  if(!a||a.character!==ch||!a.alive||a.superJumpState||ch.dance||!ch.kidForm||!presentationShown(ch)
-    ||ch.s3SpecialMotionEnabled===false||ch.s3SpecialPresentationEnabled===false||blockedMap(ch).get(ch)===token)return null;
+  const a=ch.actor;
+  if(!a||a.character!==ch||!a.alive||a.superJumpState||ch.dance||!ch.kidForm
+    ||ch.s3SpecialMotionEnabled===false||ch.s3SpecialPresentationEnabled===false)return null;
+  const token=specialPresentationToken(a),id=token?.id;
+  if(!token||(id!=='crabTank'&&id!=='reefslider')||!presentationShown(ch)||blockedMap(ch).get(ch)===token)return null;
   if(id==='crabTank'&&(token.pose==='ball'||a._s3AllSpecialState?.ballMode))return null;
-  return id==='crabTank'||id==='reefslider'?id:null;
+  return id;
 }
 export function specialRiderMotionSnapshot(ch) {
   const m=presentationMap(ch).get(ch);
   return m?.riderKind?{kind:m.riderKind,age:m.riderAge,weight:m.riderWeight}:null;
 }
-function mapped(ch){const a=ch.actor,token=specialPresentationToken(a);if(!a||blockedMap(ch).get(ch)===token||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return null;
-  const id=token?.id;return id==='trizooka'||id==='inkVac'||isSlam(id)||id==='storm'&&token.phase==='hold'?id:null;}
+function mapped(ch){const a=ch.actor;if(!a||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm)return null;
+  const token=specialPresentationToken(a),id=token?.id;if(!token||!(id==='trizooka'||id==='inkVac'||isSlam(id)||id==='storm'&&token.phase==='hold'))return null;
+  if(blockedMap(ch).get(ch)===token||!presentationShown(ch))return null;return id;}
 export function specialPresentationSnapshot(ch){const m=presentationMap(ch).get(ch);return m?{kind:m.kind,handError:m.error,
   heldVisible:!!m.model?.visible,fistsVisible:!!m.fists?.visible,ejects:m.ejects?.children.filter(x=>x.visible).length||0,status:SPECIAL_ART_STATUS}:null;}
 // Read-only cosmetic origin. Projectile launch snapshots and native getMuzzle

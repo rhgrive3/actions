@@ -55,7 +55,7 @@ export function installLandingMotion(api, _profile) {
     if (this.s3LandingMotionEnabled === false) return result;
     const m = state(this);
     m.phase = null; m.compression = m.drop = 0;
-    if (!eligible(this, s)) clear(this);
+    if (!m.cancelled && !eligible(this, s)) clear(this);
     return result;
   };
   proto.trigger = function (name, arg) {

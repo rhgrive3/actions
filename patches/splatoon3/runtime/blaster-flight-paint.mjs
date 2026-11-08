@@ -211,7 +211,7 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   drop.spec=spec;drop.depth=depth;drop.kind=kind;drop.footprint=footprint;
   drop.dirX=fx;drop.dirZ=fz;drop.spawnY=from.y;drop.releaseX=from.x;drop.releaseZ=from.z;drop.frames=0;
   drop.carry=Number.isFinite(catchUpSeconds)&&catchUpSeconds>0?catchUpSeconds*STEP_FRAMES_PER_SECOND:0;
-  drop.landing=null;drop.landingDepth=undefined;drop.drawRadius=undefined;drop.sourceActor=undefined;drop._s3SplashDropPooled=false;
+  drop.landing=null;drop.landingDepth=undefined;drop.drawRadius=undefined;drop.sourceActor=undefined;if('visualScale' in drop)delete drop.visualScale;drop._s3SplashDropPooled=false;
   drop.pos.set(from.x,from.y,from.z);
   drop.vel.set(fx*vz-fz*vx,vy-Math.max(0,initialDownSpeed),fz*vz+fx*vx);
   drop.next.set(0,0,0);

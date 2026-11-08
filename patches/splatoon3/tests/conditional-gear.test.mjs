@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { SPECIAL_PAINT_CHARGE_RATE as PAINT_RATE } from '../runtime/special-paint-rate.mjs';
 import { fixture } from './source-fixture.mjs';
 import { abilityAllowed, emptyLoadout, normalizeLoadout, abilityPoints, gearCurve } from '../runtime/gear.mjs';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
@@ -83,7 +84,7 @@ test('comeback refresh preserves filled special fraction, weapon identity and ac
   const f=await setup(),a=f.make();equip(a,'comeback');death(f,a);a.special=.4*a.specialCost();
   const w=a.weapon,r=a.weaponRunner;r.s3Stored=.7;r.firingT=.3;a.s3.conditionalGear.comeback=1/60;
   f.tick(a);close(a.specialFrac(),.4);assert.equal(a.weapon,w);assert.equal(a.weaponRunner,r);assert.equal(r.s3Stored,.7);
-  const before=a.specialFrac();a.addTurf(10);close(a.specialFrac()-before,10/a.specialCost());
+  const before=a.specialFrac();a.addTurf(10);close(a.specialFrac()-before,10*PAINT_RATE/a.specialCost());
 });
 test('opening gambit excludes intro, countdown, attract and pause; all four abilities activate in play',async()=>{
   const f=await setup(),a=f.make('blaster');equip(a,'openingGambit');

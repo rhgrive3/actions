@@ -12,6 +12,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 const near = (a, b, label = '') => assert.ok(Math.abs(a - b) < 1e-8, `${label}: ${a} != ${b}`);
 const lerp = (a, b, t) => a + (b - a) * t, clamp01 = t => Math.max(0, Math.min(1, t));
@@ -65,7 +66,7 @@ function checkCredit(s) {
   const actor = s.actor, total = s.records.reduce((sum, r) => sum + r.area, 0);
   near(s.turf(), total, 'recorded paint areas reach the actual actor');
   near(actor.stats.turf, s.initialTurf + total, 'native Actor.addTurf updates shooter stats');
-  near(actor.special, Math.min(actor.specialCost(), s.initialSpecial + total), 'native Actor.addTurf applies the special gauge cap');
+  near(actor.special, Math.min(actor.specialCost(), s.initialSpecial + total * SPECIAL_PAINT_CHARGE_RATE), 'native Actor.addTurf applies the 60% special gauge paint rate and cap');
 }
 function fire(s, { angle = 20, height = 0 } = {}) {
   const { actor: a, ps } = s, rad = angle * Math.PI / 180;

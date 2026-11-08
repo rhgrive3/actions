@@ -3,6 +3,7 @@ import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
 
 import { makePaintWorld } from './paint-authority-fixture.mjs';
+import { SPECIAL_PAINT_CHARGE_RATE } from '../runtime/special-paint-rate.mjs';
 
 function makeGame(f, { paused = false, attract = false } = {}) {
   const { G } = f;
@@ -35,7 +36,7 @@ for (const weapon of ['shooter', 'dualies', 'splatling']) {
     assert.equal(owner.stats.turf, bodyCredit, 'real drops were credited at their own landing, never after the fact');
     assert.equal(paint.counts[0], paint.grid.filter(team => team === 1).length, 'raw floor ownership counts body and late cells');
     assert.equal(owner.stats.turf, paint.counts[0] * face.cu * face.cv, 'every claimed floor cell credits exactly once');
-    assert.equal(owner.special, owner.stats.turf, 'ordinary late paint contributes the native special gauge');
+    assert.equal(owner.special, owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE, 'ordinary late paint contributes 60% to the native special gauge');
     const done = owner.stats.turf;
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
     assert.equal(owner.stats.turf, done, 'finished growth cannot credit twice');
@@ -108,7 +109,7 @@ for (const rate of [30, 60, 120]) test(`offline pause freezes native paint and r
   for (let tick = 0; tick < 31; tick++) f.runSimulation(game, 1 / 60);
   assert.equal(paint.counts[0], before.cells, 'the source body has no late invented spatter');
   assert.equal(owner.stats.turf, before.turf, 'resuming cannot award extra synthetic Turf');
-  assert.equal(owner.special, owner.stats.turf);
+  assert.equal(owner.special, owner.stats.turf * SPECIAL_PAINT_CHARGE_RATE);
 });
 
 for (const mode of ['offline', 'online-menu', 'attract']) test(`${mode} without an offline pause keeps authoritative paint advancing`, async () => {

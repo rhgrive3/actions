@@ -81,9 +81,10 @@ export function installEmotesMotion({ Character, Actor, THREE }, _profile) {
   };
   const solve = C._solveLimb;
   C._solveLimb = function (limb, target, pole, endQuat, weight, slot) {
-    const victory = this.dance === 'victory' || this.lastDance === 'victory' || this.prevDance === 'victory';
-    if (!enabled(this) || !victory || this.wDance <= .001 || !endQuat || weight <= .999
-      || !(limb === this.limbs.armR || this.dual && limb === this.limbs.armL))
+    if (this.wDance <= .001 || !endQuat || weight <= .999
+      || (this.dance !== 'victory' && this.lastDance !== 'victory' && this.prevDance !== 'victory')
+      || !(limb === this.limbs.armR || this.dual && limb === this.limbs.armL)
+      || !enabled(this))
       return solve.call(this, limb, target, pole, endQuat, weight, slot);
     // Preserve the authored native pose and real IK. Project only an unreachable
     // held-hand target onto the actual arm span, including the outgoing fade.

@@ -67,9 +67,13 @@ export class BodyBalance {
    for(const n of chain)length+=character.rest[n].distanceTo(character.rest[character.bones[n].parent.name]);
    entries=this._reachChain=chain.map(n=>{const b=character.bones[n];return {b,parent:b.parent,share:character.rest[n].distanceTo(character.rest[b.parent.name])/length};});
   }
+  const kid=character.kid;
   for(let i=0;i<entries.length;i++){
    const {b,parent,share}=entries[i];
-   this.parent.identity();for(let x=parent;x&&x!==character.kid;x=x.parent)this.parent.premultiply(x.quaternion);
+   if(i===0&&parent&&parent.parent===kid)this.parent.copy(parent.quaternion);
+   else if(i===1&&parent===entries[0].b&&entries[0].parent&&entries[0].parent.parent===kid)this.parent.multiplyQuaternions(entries[0].parent.quaternion,parent.quaternion);
+   else if(i===2&&parent===entries[1].b&&entries[1].parent===entries[0].b&&entries[0].parent&&entries[0].parent.parent===kid)this.parent.multiplyQuaternions(entries[1].b.quaternion,parent.quaternion).premultiply(entries[0].parent.quaternion);
+   else{this.parent.identity();for(let x=parent;x&&x!==kid;x=x.parent)this.parent.premultiply(x.quaternion);}
    this.v.set(0,this.reachCorrection*share,0).applyQuaternion(this.parent.invert());b.position.add(this.v);
   }
  }

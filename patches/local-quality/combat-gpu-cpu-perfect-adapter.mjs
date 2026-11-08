@@ -1453,6 +1453,16 @@ export function adaptCombatWave345(rel, code, replaceOnce, options = {}) {
       if (b.aabbMin && (b.aabbMin.x > xHi || b.aabbMax.x < xLo || b.aabbMin.z > zHi || b.aabbMax.z < zLo)) continue;
       // AABB precheck along the segment (cheap)
       const ox = ox0 - b.center.x, oy = oy0 - b.center.y, oz = oz0 - b.center.z;
+      if (b.aligned && dx0 === 0 && dy0 === -1 && dz0 === 0 && b.half.y > 0 && b.half.x >= 0 && b.half.z >= 0 && Number.isFinite(ox) && Number.isFinite(oy) && Number.isFinite(oz)) {
+        if (ox < -b.half.x || ox > b.half.x || oz < -b.half.z || oz > b.half.z) continue;
+        const tEnter = (b.half.y - oy) / -1, tExit = (-b.half.y - oy) / -1;
+        if (tExit > tEnter) {
+          if (tEnter < 0 || tEnter > best) continue;
+          if (anyHit) { out.hit = true; return out; }
+          best = tEnter; bestK = 1; bestSign = 1; bestB = b.id;
+          continue;
+        }
+      }
       _o.x = ox; _o.y = oy; _o.z = oz;
       let tmin = -Infinity, tmax = Infinity, kmin = -1, smin = 0, miss = false;
       for (let k = 0; k < 3; k++) {

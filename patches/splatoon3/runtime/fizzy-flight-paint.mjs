@@ -8,7 +8,10 @@ import {spawnSplashDrop} from './blaster-flight-paint.mjs';
 // or the unresolved relationship of FlySplashPaintRadiusArray to WidthHalf.
 const states=new WeakMap();
 export function paintFizzyFlight(game,object,start,end){
-  if(!object||object.dead||object.ghost||object.subId!=='fizzy'||!object.owner||object.owner.remote||!game?.projectiles)return 0;
+  // The throw guide simulates a Fizzy while the sub is held (s3Prediction).
+  // That simulated bomb painted real ink along the whole predicted path every
+  // frame of the hold; only a thrown bomb lays its flight drops.
+  if(!object||object.dead||object.ghost||object.s3Prediction||object.subId!=='fizzy'||!object.owner||object.owner.remote||!game?.projectiles)return 0;
   const spec=object.spec,index=Math.max(0,Math.min(2,(object.popLimit||1)-1));
   const interval=spec?.flySplashDistance?.[index],paint=spec?.flySplashPaintParam?.[index];
   if(!(Number.isFinite(interval)&&interval>0)||!paint||!(Number.isFinite(paint.widthHalf)&&paint.widthHalf>0)||

@@ -11,20 +11,7 @@ test('Tri-Slosher floor drops use the Bucket visual scale and captured paint hea
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   const {G,THREE}=f,system=G.projectiles;
   const color=new THREE.Color('#f80'),matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
-  for(const drawRadius of [.2,.3])for(const [x,z] of [[0,1],[1,0],[-.6,.8]])for(const down of [0,-.96,-6.33]){
-    const d={owner:{color,remote:false},pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,down,0),
-      dirX:x,dirZ:z,radius:.94,drawRadius,sourceActor:'WeaponSlosherDiffusion',frames:4,seed:.23};
-    system._s3SplashDrops=[d];
-    const before=JSON.stringify(d);let paintCalls=0;G.paint.splat=()=>{paintCalls++;return 1;};
-    system._draw();assert.equal(system.blobs.count,1,'one existing drop remains one instance');
-    system.blobs.getMatrixAt(0,matrix);matrix.decompose(position,rotation,scale);
-    assert.ok(Math.abs(scale.x-drawRadius*.5*1.5)<1e-7,'Hissen floor bead uses the 1.5x display calibration over the shared Bucket width');
-    assert.ok(position.distanceTo(d.pos)<1e-6,'draw stays at the actual physical drop');
-    const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
-    assert.ok(forward.dot(new THREE.Vector3(x,0,z))>.999999,'floor bead follows captured forward heading, not its vertical fall velocity');
-    assert.equal(JSON.stringify(d),before,'no authoritative position, velocity, radius, frame, seed or owner changes');
-    assert.equal(paintCalls,0,'drawing never paints');
-  }
+  const clean=d=>{const c={...d};delete c._iwVolumeDrawn;return JSON.stringify(c);};
   for(const actor of ['WeaponSlosherDouble','WeaponSlosherLauncher',undefined]){
     const d={owner:{color},pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,-6,0),dirX:1,dirZ:0,
       drawRadius:.2,radius:.94,sourceActor:actor};system._s3SplashDrops=[d];system._draw();
@@ -33,16 +20,22 @@ test('Tri-Slosher floor drops use the Bucket visual scale and captured paint hea
       'Dread Wringer shares the main sheet scale; unrelated weapons retain their size');
     assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).y<-.99999,'other weapons retain their direction');
   }
+  const hissen={owner:{color,remote:false},pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,-6,0),
+    dirX:0,dirZ:1,radius:.94,drawRadius:.3,sourceActor:'WeaponSlosherDiffusion',frames:4,seed:.23};
+  system._s3SplashDrops=[hissen];const beforeHissen=clean(hissen);
+  let paintCalls=0;G.paint.splat=()=>{paintCalls++;return 1;};
+  system._draw();assert.equal(system.blobs.count,0,'Tri-Slosher shows only ink volume, no separate falling bead');
+  assert.equal(clean(hissen),beforeHissen);
+  assert.equal(paintCalls,0,'drawing never paints');
 });
 
 test('Tri-Slosher floor bead never rotates into a vertical launch when gravity first acts',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),{THREE,G}=f;
-  G.projectiles._s3SplashDrops=[{owner:{color:new THREE.Color('#f80')},pos:new THREE.Vector3(0,2,0),
-    vel:new THREE.Vector3(0,-.96,0),dirX:1,dirZ:0,drawRadius:.3,sourceActor:'WeaponSlosherDiffusion'}];
-  G.projectiles._draw();const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
-  G.projectiles.blobs.getMatrixAt(0,matrix);matrix.decompose(position,rotation,scale);
-  const direction=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
-  assert.ok(direction.x>.999999&&Math.abs(direction.y)<1e-6,'first gravity tick keeps the original forward heading');
+  const d={owner:{color:new THREE.Color('#f80')},pos:new THREE.Vector3(0,2,0),
+    vel:new THREE.Vector3(0,-.96,0),dirX:1,dirZ:0,drawRadius:.3,sourceActor:'WeaponSlosherDiffusion'};
+  G.projectiles._s3SplashDrops=[d];
+  G.projectiles._draw();
+  assert.equal(G.projectiles.blobs.count,0,'Tri-Slosher has no falling beads');
 });
 
 test('all three Hissen kits reuse the existing non-spherical Slosher shader profile without new resources or RNG',async()=>{
@@ -67,20 +60,20 @@ test('all three Hissen kits reuse the existing non-spherical Slosher shader prof
     for(const radius of [.2,.3])for(const frames of [0,1,4,12]){
       const drop={owner,pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,-frames*.96,0),
         dirX:.6,dirZ:.8,radius:.94,drawRadius:radius,sourceActor:owner.weapon.catalogRecord.sourceActor,frames,seed:.23};
-      const state=()=>JSON.stringify({...drop,owner:{id:owner.id,ink:owner.ink,pos:owner.pos.toArray(),vel:owner.vel.toArray(),weapon:owner.weapon.id,color:owner.color.toArray()}});
+      const state=()=>{const d={...drop};delete d._iwVolumeDrawn;return JSON.stringify({...d,owner:{id:owner.id,ink:owner.ink,pos:owner.pos.toArray(),vel:owner.vel.toArray(),weapon:owner.weapon.id,color:owner.color.toArray()}});};
       system._s3SplashDrops=[drop];const before=state(),calls=randomCalls;
-      system._draw();assert.equal(mesh.count,1,'one physical child remains one visible-flag/count-admitted instance');
-      assert.equal(mesh.visible,true);assert.equal(randomCalls,calls,'drawing consumes no random sample');
+      system._draw();assert.equal(mesh.count,0,'Hissen produces no separate falling beads');
+      assert.equal(randomCalls,calls,'drawing consumes no random sample');
       assert.equal(state(),before,'physical/source state and actor ink/transform/weapon/color are read-only');assert.equal(drop.owner,owner);
-      mesh.getMatrixAt(0,matrix);
-      const position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();matrix.decompose(position,rotation,scale);
-      assert.ok(position.distanceTo(drop.pos)<1e-6);for(const axis of ['x','y','z'])assert.ok(Math.abs(scale[axis]-radius*.5*1.5)<1e-7,'Hissen instance uses 1.5x display calibration while the source radius remains unchanged');
-      assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).dot(new THREE.Vector3(.6,0,.8))>.999999,'same horizontal paint heading');
-      assert.deepEqual(Array.from(system.blobInkLook.array.slice(0,3)).map(v=>+v.toFixed(6)),INK_LOOK.slosh.slice(0,3));
-      assert.ok(Math.abs(system.blobShape.array[0]-(1.05+Math.min(.6,drop.vel.length()*.006)))<1e-6,'short tail remains unchanged');
-      assert.deepEqual(Array.from(system.blobFourPetals.array.slice(0,2)),[0,0],'no added petals or satellites');
     }
   }
+  const doubleDrop={owner:f.make('s3-slosher-double'),pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,-4*.96,0),
+    dirX:.6,dirZ:.8,radius:.94,drawRadius:.3,sourceActor:'WeaponSlosherDouble',frames:4,seed:.23};
+  system._s3SplashDrops=[doubleDrop];system._draw();assert.equal(mesh.count,1);
+  const position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+  mesh.getMatrixAt(0,matrix);matrix.decompose(position,rotation,scale);
+  assert.ok(position.distanceTo(doubleDrop.pos)<1e-6);
+  assert.deepEqual(Array.from(system.blobInkLook.array.slice(0,3)).map(v=>+v.toFixed(6)),INK_LOOK.droplet.slice(0,3));
   assert.equal(system.blobs,mesh);assert.equal(mesh.geometry,geometry);assert.equal(mesh.material,material);
   assert.deepEqual([mesh.instanceMatrix,mesh.instanceColor,system.blobShape,system.blobInkLook,system.blobFourPetals],buffers,'fixed buffers are reused');
 });
@@ -94,9 +87,10 @@ test('only Hissen floor-child profile changes; other actors retain their bead or
     assert.deepEqual(Array.from(system.blobInkLook.array.slice(0,3)).map(v=>+v.toFixed(6)),INK_LOOK.droplet.slice(0,3),String(actor)+' unchanged bead profile');
     assert.ok(Math.abs(system.blobShape.array[0]-(actor==='WeaponSlosherLauncher'?2.4:1.086))<1e-6,'unrelated tail unchanged');
   }
-  system._s3SplashDrops=Array.from({length:100},()=>drop('WeaponSlosherDiffusion'));system._draw();assert.equal(system.blobs.count,48,'same per-pass cap');
+  system._s3SplashDrops=Array.from({length:100},()=>drop('WeaponSlosherDouble'));system._draw();assert.equal(system.blobs.count,48,'same per-pass cap');
   G.camera={position:new THREE.Vector3(100,100,100)};system._draw();assert.equal(system.blobs.count,0,'same 30-unit camera cull');
-  G.camera=null;system._s3SplashDrops=[drop('WeaponSlosherDiffusion')];system._s3SplashDrops[0].owner.remote=true;system._draw();assert.equal(system.blobs.count,0,'same remote-owner rejection');
+  G.camera=null;system._s3SplashDrops=[drop('WeaponSlosherDouble')];system._s3SplashDrops[0].owner.remote=true;system._draw();assert.equal(system.blobs.count,0,'same remote-owner rejection');
+  system._s3SplashDrops=[drop('WeaponSlosherDiffusion')];system._draw();assert.equal(system.blobs.count,0,'Hissen beads are suppressed');
 });
 
 async function volley(hz,draw){
