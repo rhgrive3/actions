@@ -88,6 +88,17 @@ export function botRawWeaponFamily(weapon, fallbackFamily) {
   if (catFam === 'blaster') return 'blaster';
   if (catFam === 'charger') return 'charger';
   if (catFam === 'roller') return 'roller';
+  const src = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
+  const wId = weapon.id || '';
+  if (src.includes('Roller') || wId.includes('roller')) return 'roller';
+  if (src.includes('Brush') || wId.includes('brush')) return 'brush';
+  if (src.includes('Splatana') || wId.includes('splatana') || wId.includes('wiper')) return 'splatana';
+  if (src.includes('Stringer') || wId.includes('stringer') || wId.includes('bow')) return 'stringer';
+  if (src.includes('Shelter') || src.includes('Brella') || wId.includes('brella')) return 'brella';
+  if (src.includes('Slosher') || wId.includes('slosher')) return 'slosher';
+  if (src.includes('Blaster') || wId.includes('blaster')) return 'blaster';
+  if (src.includes('Charger') || wId.includes('charger')) return 'charger';
+  if (src.includes('Spinner') || src.includes('Splatling') || wId.includes('splatling')) return 'splatling';
   return fallbackFamily || catFam || weapon.behaviorKind || weapon.kind || 'shooter';
 }
 
@@ -573,43 +584,29 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     }
   } else if (rawFamily === 'roller') {
     // Authentic Splatoon 3 Roller turf cycle:
-    // Carbon & Dynamo Roller maximize turf via rapid horizontal flicks + swim recovery;
-    // Standard / Flingza / Wide Rollers combine horizontal flick with short ground roll.
-    const rActor = actor.weapon?.sourceMainActor;
-    const rId = actor.weapon?.id || '';
-    const timeLeftNow = resolveMatchTimeLeft(G);
-    const isFlickRoller = rActor === 'WeaponRollerCompact' || rActor === 'WeaponRollerHeavy' || rId.includes('carbon') || rId.includes('dynamo');
-    if (isFlickRoller) {
-      if (wr?.catalogState?.pending) {
-        it.fire = false;
-      } else if ((wr?.cooldown || 0) > 1e-6) {
-        it.fire = false;
-        if (actor.groundTeam === 1 && wantMove && (wr?.cooldown || 0) > 0.06) {
-          it.squid = true;
-        }
-      } else if (actor._prevIntent?.fire) {
-        it.fire = false;
-      } else if (wantMove && inkFrac > 0.10 && (brain._turfPaintLatch || actor.groundTeam !== 1 || (resolveMatchTimeLeft(G) <= 6.5 && inkFrac > 0.18))) {
-        it.fire = true;
-        it.squid = false;
-      }
-    } else {
-      const maxRollHold = 0.38;
-      if (wr?.rolling) {
-        brain._rollerRollTime = (brain._rollerRollTime || 0) + dt;
-      }
-      if ((brain._rollerSwimGap || 0) > 0) {
-        brain._rollerSwimGap = Math.max(0, brain._rollerSwimGap - dt);
-        it.fire = false;
-        if (actor.groundTeam === 1 && wantMove) it.squid = true;
-      } else if ((brain._rollerRollTime || 0) >= maxRollHold) {
-        brain._rollerRollTime = 0;
-        brain._rollerSwimGap = actor.groundTeam === 1 ? 0.22 : 0.04;
-        it.fire = false;
-        if (actor.groundTeam === 1 && wantMove) it.squid = true;
-      } else if (wantMove && inkFrac > 0.08 && (brain._turfPaintLatch || actor.groundTeam !== 1)) {
-        it.fire = true;
-      }
+    // Roller sub-archetypes combine flick paint with weapon-calibrated roll duration (profile.rollHold),
+    // followed by squid swim recovery into own ink to restore momentum and ink reserve.
+    const maxRollHold = profile.rollHold || 0.26;
+    if (wr?.catalogState?.pending) {
+      it.fire = false;
+    } else if (wr?.rolling) {
+      brain._rollerRollTime = (brain._rollerRollTime || 0) + dt;
+    }
+    if ((brain._rollerSwimGap || 0) > 0) {
+      brain._rollerSwimGap = Math.max(0, brain._rollerSwimGap - dt);
+      it.fire = false;
+      if (actor.groundTeam === 1 && wantMove) it.squid = true;
+    } else if ((brain._rollerRollTime || 0) >= maxRollHold) {
+      brain._rollerRollTime = 0;
+      brain._rollerSwimGap = actor.groundTeam === 1 ? 0.22 : 0.04;
+      it.fire = false;
+      if (actor.groundTeam === 1 && wantMove) it.squid = true;
+    } else if ((wr?.cooldown || 0) > 0.06 && actor.groundTeam === 1 && wantMove) {
+      it.fire = false;
+      it.squid = true;
+    } else if (wantMove && inkFrac > 0.08 && (brain._turfPaintLatch || actor.groundTeam !== 1 || (resolveMatchTimeLeft(G) <= 6.5 && inkFrac > 0.18))) {
+      it.fire = true;
+      it.squid = false;
     }
   } else if (rawFamily === 'brush') {
     if (wantPaintNow && inkFrac > 0.08) {
@@ -617,11 +614,6 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     } else if (inkFrac > 0.08 && wantMove && actor.groundTeam === 2) {
       it.fire = true;
     }
-  }
-
-  // 3a. Immediate path recovery: never stand still with a null path waiting for goalTimer to expire
-  if (!brain.path && (brain.goalTimer || 0) > 0.04) {
-    brain.goalTimer = 0.02;
   }
 
   // 3. Rapid goal cycling: if the bot is close to its paint goal and the area ahead is already >=72% own ink,
@@ -851,13 +843,63 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
   const enemyFrac = st.enemy || 0;
 
   // 1. Macro-plaza evaluation (6.5m radius): prefer wide-open paintable plazas with high cell count (n)
-  // over tiny cramped corners, and strongly reward overwriting enemy ink (1p enemy ink = 2p net swing!)
+  // over tiny cramped corners, and strongly reward overwriting enemy ink (1p enemy ink = 2p net swing!).
+  // Cached with spatial deduplication (2.5m grid) and cross-team inversion to eliminate redundant CPU queries.
   const paint = G?.paint;
   if (paint && typeof paint.regionStats === 'function' && paint.grid) {
-    const macroSt = paint.regionStats(node.x, node.y, node.z, 6.5, actor.team, _macroScratch);
-    if (macroSt.n > 0) {
-      const areaRichness = clampVal(macroSt.n / 32, 0.5, 1.75);
-      score += (macroSt.empty * 6.5 + macroSt.enemy * 10.5 - macroSt.own * 3.5) * areaRichness;
+    if (!paint._macroPlazaCache) {
+      paint._macroPlazaCache = new Map();
+    }
+    const cache = paint._macroPlazaCache;
+    if (cache.size > 256) {
+      cache.clear();
+    }
+    const now = (typeof G?.match?.time === 'number')
+      ? G.match.time
+      : (typeof brain?.t === 'number'
+          ? brain.t
+          : (typeof G?.timeLeft === 'number' ? G.timeLeft : 0));
+    const team = actor.team ?? 0;
+    const px = Math.round(node.x / 2.5);
+    const py = Math.round((node.y || 0) / 2.0);
+    const pz = Math.round(node.z / 2.5);
+    const plazaKey = `${px},${py},${pz}`;
+
+    let cached = cache.get(plazaKey);
+    let macroEmpty = 0, macroEnemy = 0, macroOwn = 0, macroN = 0;
+
+    if (cached && Math.abs(cached.t - now) <= 0.5) {
+      macroEmpty = cached.empty;
+      macroN = cached.n;
+      if (team === 1) {
+        macroOwn = cached.team1;
+        macroEnemy = cached.team0;
+      } else {
+        macroOwn = cached.team0;
+        macroEnemy = cached.team1;
+      }
+    } else {
+      const res = paint.regionStats(node.x, node.y, node.z, 6.5, team, _macroScratch);
+      macroEmpty = res.empty || 0;
+      macroEnemy = res.enemy || 0;
+      macroOwn = res.own || 0;
+      macroN = res.n || 0;
+
+      const team0Frac = team === 1 ? macroEnemy : macroOwn;
+      const team1Frac = team === 1 ? macroOwn : macroEnemy;
+
+      cache.set(plazaKey, {
+        empty: macroEmpty,
+        team0: team0Frac,
+        team1: team1Frac,
+        n: macroN,
+        t: now,
+      });
+    }
+
+    if (macroN > 0) {
+      const areaRichness = clampVal(macroN / 32, 0.5, 1.75);
+      score += (macroEmpty * 6.5 + macroEnemy * 10.5 - macroOwn * 3.5) * areaRichness;
     }
   } else {
     score += enemyFrac * 4.5 + emptyFrac * 2.5 - ownFrac * 2.0;

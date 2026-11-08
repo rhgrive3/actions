@@ -268,3 +268,84 @@ test('composed bots.js wires bot-turf-paint hooks exactly once and resets all st
   assert.ok(composed.includes('this._rollerSwimGap = 0'));
   assert.ok(composed.includes('this._smoothStrafe = null'));
 });
+
+test('roller weapon-calibrated rollHold controls rolling cycle per weapon archetype (Carbon vs Big Swig)', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+
+  // 1. Carbon Roller (rollHold = 0.15s)
+  const carbonActor = {
+    weapon: { sourceMainActor: 'WeaponRollerCompact', id: 's3-roller-carbon' },
+    weaponRunner: { rolling: true, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const carbonBrain = { _turfPaintLatch: true, _rollerRollTime: 0.14 };
+  botApplyTurfPaintMechanics(carbonBrain, G, carbonActor, 0.02, move, true, 0, 0.8);
+  // At 0.14 + 0.02 = 0.16s >= 0.15s, roll time expires and transitions to squid swim recovery
+  assert.equal(carbonBrain._rollerRollTime, 0, 'carbon roll time reset');
+  assert.equal(carbonBrain._rollerSwimGap, 0.22, 'carbon swim gap set to 0.22');
+  assert.equal(carbonActor.intent.fire, false, 'fire dropped');
+  assert.equal(carbonActor.intent.squid, true, 'swimming entered');
+
+  // 2. Big Swig Roller (rollHold = 0.36s)
+  const bigSwigActor = {
+    weapon: { sourceMainActor: 'WeaponRollerWide', id: 's3-roller-wide' },
+    weaponRunner: { rolling: true, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const bigSwigBrain = { _turfPaintLatch: true, _rollerRollTime: 0.20 };
+  botApplyTurfPaintMechanics(bigSwigBrain, G, bigSwigActor, 0.05, move, true, 0, 0.8);
+  // At 0.20 + 0.05 = 0.25s < 0.36s, Big Swig is STILL rolling!
+  assert.ok(Math.abs(bigSwigBrain._rollerRollTime - 0.25) < 1e-6, 'big swig continues rolling past 0.20s');
+  assert.equal(bigSwigActor.intent.fire, true, 'big swig maintains fire while rolling');
+  assert.equal(bigSwigActor.intent.squid, false, 'not in squid yet');
+});
+
+test('macro-plaza 6.5m paint evaluation caches across nearby candidates and cross-team bots with TTL expiry', () => {
+  let statsCalls = 0;
+  const mockPaint = {
+    grid: new Uint8Array(64),
+    regionStats(x, y, z, r, team, out) {
+      statsCalls++;
+      out.empty = 0.40;
+      out.own = 0.50; // for team 0, own is team 0
+      out.enemy = 0.10;
+      out.n = 64;
+      return out;
+    },
+  };
+  const G = {
+    level: { faces: new Array(12).fill({}) },
+    match: { mode: 'turf', time: 100 },
+    paint: mockPaint,
+  };
+  const brain = { t: 10 };
+  const team0Actor = { id: 1, team: 0, weapon: { range: 12 } };
+  const team1Actor = { id: 2, team: 1, weapon: { range: 12 } };
+  const nodeA = { x: 10.0, y: 0, z: 10.0 };
+  const nodeB = { x: 11.0, y: 0, z: 10.5 }; // within 2.5m plaza bucket of nodeA
+  const st = { empty: 0.4, enemy: 0.1, own: 0.5 };
+
+  // First call computes macro stats
+  const scoreA = botScorePaintCandidate(brain, G, team0Actor, nodeA, 10, 0.5, st, 10);
+  assert.equal(statsCalls, 1, 'first candidate calls regionStats');
+
+  // Candidate B in same plaza hits cache within 0.5s window
+  const scoreB = botScorePaintCandidate(brain, G, team0Actor, nodeB, 10, 0.5, st, 10);
+  assert.equal(statsCalls, 1, 'nearby candidate within 2.5m bucket hits plaza cache');
+  assert.ok(Number.isFinite(scoreB));
+
+  // Enemy bot (Team 1) in same plaza also hits cache and inverts own/enemy
+  const scoreEnemy = botScorePaintCandidate(brain, G, team1Actor, nodeA, 10, 0.5, st, 10);
+  assert.equal(statsCalls, 1, 'cross-team candidate hits plaza cache without regionStats re-query');
+  assert.ok(Number.isFinite(scoreEnemy));
+
+  // Advancing time past 0.5s expires cache and triggers fresh query
+  G.match.time = 99.2; // 0.8s elapsed
+  const scoreAExpired = botScorePaintCandidate(brain, G, team0Actor, nodeA, 10, 0.5, st, 10);
+  assert.equal(statsCalls, 2, 'expired TTL recalculates macro plaza stats');
+  assert.ok(Number.isFinite(scoreAExpired));
+});
+
