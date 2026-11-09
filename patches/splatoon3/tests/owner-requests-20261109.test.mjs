@@ -53,3 +53,19 @@ test('dualies fixed camera rings copy the Blaster fixed camera ring', () => {
   assert.deepEqual([BLASTER_CAMERA_RING.radius, BLASTER_CAMERA_RING.stroke, BLASTER_CAMERA_RING.width, BLASTER_CAMERA_RING.opacity],
     [Number(ring[1]), ring[2], Number(ring[3]), Number(ring[4])]);
 });
+
+test('dualies: wide aim stance and a mirrored left muzzle until the arms are up (composed build)', async () => {
+  const { DUALIES_AIM_ANCHOR_X } = await import('../dualies-stance-spread-adapter.mjs');
+  const character = adaptBuildSource('src/game/character.js', read('src/game/character.js'));
+  const weapons = adaptBuildSource('src/game/weapons.js', read('src/game/weapons.js'));
+  const hold = character.slice(character.indexOf('HOLD.dualies = {'), character.indexOf('HOLD.slosher = {'));
+  assert.match(hold, new RegExp(`  aim: \\{ p: \\[${String(DUALIES_AIM_ANCHOR_X).replace('.', '\\.')}, -0\\.07, 0\\.27\\]`));
+  assert.doesNotMatch(hold, /aim: \{ p: \[-0\.055,/);
+  // the post-roll turret stance is untouched
+  assert.match(hold, /lock: \{ p: \[-0\.07, -0\.05, 0\.31\]/);
+  // ±17.5 px at 720p needs ~0.71 m between parallel muzzles at the ShotGuideFrame-7 distance
+  // (~48.7 px per metre measured in the practice range); the anchor plus the grip offset gives ~±0.36 m.
+  assert.ok(Math.abs(DUALIES_AIM_ANCHOR_X) > 0.3 && Math.abs(DUALIES_AIM_ANCHOR_X) < 0.4);
+  const muzzleHand = weapons.slice(weapons.indexOf('  _muzzleHand(a, hand, out) {'), weapons.indexOf('  _muzzleHand(a, hand, out) {') + 700);
+  assert.match(muzzleHand, /if \(hand && ch\.getMuzzleHand && \(!ch\.aimReady \|\| ch\.aimReady\(\) >= 0\.98\)\)/);
+});
