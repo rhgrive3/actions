@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { OWNER_SFX } from '../runtime/audio/owner-sfx-recordings.mjs';
 import { blasterReticleMarkup } from '../runtime/blaster-reticle-presentation.mjs';
-import { BLASTER_MARK, S3_RETICLE_CSS, blasterMarkMarkup } from '../runtime/s3-reticle-look.mjs';
+import { BLASTER_CAMERA_RING, BLASTER_MARK, S3_RETICLE_CSS, blasterMarkMarkup } from '../runtime/s3-reticle-look.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const ROOT = new URL('../../../', import.meta.url);
@@ -45,4 +45,11 @@ test('the copied mark carries the Blaster impact mark geometry and colours', () 
   // the on-target cross is hidden until the reticle is on an enemy, as on the Blaster
   assert.match(S3_RETICLE_CSS, /\.iw-xh \.iw-ret g\.s3-blast-direct \{ display: none; \}/);
   assert.match(S3_RETICLE_CSS, /\.iw-xh\.is-target \.iw-ret g\.s3-blast-direct \{ display: inline; \}/);
+});
+
+test('dualies fixed camera rings copy the Blaster fixed camera ring', () => {
+  const ring = /<circle data-blaster="camera-ring" r="([\d.]+)" stroke="([^"]+)" stroke-width="([\d.]+)" opacity="([\d.]+)"/.exec(blasterReticleMarkup());
+  assert.ok(ring, 'Blaster camera ring markup');
+  assert.deepEqual([BLASTER_CAMERA_RING.radius, BLASTER_CAMERA_RING.stroke, BLASTER_CAMERA_RING.width, BLASTER_CAMERA_RING.opacity],
+    [Number(ring[1]), ring[2], Number(ring[3]), Number(ring[4])]);
 });

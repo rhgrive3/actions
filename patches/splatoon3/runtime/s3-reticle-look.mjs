@@ -41,6 +41,8 @@
 //   ink/white diagonal cross on target) in place of the r13 ring above. Shooter
 //   draws one at the screen centre (it does not move); Dualies draw two, one on
 //   each hand's landing guide, and the merged turret ring becomes one mark.
+//   Dualies keep their two fixed camera rings, now drawn like the Blaster's
+//   fixed camera ring (grey r13) so the fixed pair stays visible.
 //   This is an owner design choice, not a Splatoon 3 measurement: the retail
 //   Shooter/Dualies rings are the r~13 white rings described above.
 import { BLASTER_RETICLE_CALIBRATION } from './blaster-reticle-presentation.mjs';
@@ -51,6 +53,12 @@ export const S3_RETICLE = Object.freeze({
   dualRingCx: 17.5, dualTickBaseX: 52, dualTickHalfY: 27,
   crossInner: 7, crossOuter: 28,
   flashLife: 0.22, flashSize: 46,
+});
+
+// The Blaster's fixed camera ring (blaster-reticle-presentation.mjs markup: r13, #b7b7b7, w1.5, opacity .75).
+export const BLASTER_CAMERA_RING = Object.freeze({
+  radius: BLASTER_RETICLE_CALIBRATION.metrics.cameraRingRadius, width: BLASTER_RETICLE_CALIBRATION.metrics.cameraRingWidth,
+  stroke: '#b7b7b7', opacity: 0.75,
 });
 
 export const S3_RETICLE_CSS = `
@@ -81,6 +89,8 @@ export const S3_RETICLE_CSS = `
 .iw-xh .iw-ret.iw-ret--shooter, .iw-xh .iw-ret.iw-ret--dualies { filter: drop-shadow(0 0 .7px rgba(0,0,0,.9)); }
 .iw-xh.is-target .iw-ret.iw-ret--shooter { scale: 1; color: #fff; }
 .iw-xh .iw-ret--shooter > .iw-ret__dot { display: none; }
+/* Dualies' fixed camera rings: the Blaster's fixed camera ring (grey r13 w1.5, .75), one per hand */
+.iw-xh .iw-ret--dualies .iw-ret__dual-camera circle { stroke: ${BLASTER_CAMERA_RING.stroke}; stroke-width: ${BLASTER_CAMERA_RING.width}; opacity: ${BLASTER_CAMERA_RING.opacity}; stroke-dasharray: none; }
 .iw-xh .iw-ret g.s3-blast-direct { display: none; }
 .iw-xh.is-target .iw-ret g.s3-blast-direct { display: inline; }
 `;
