@@ -14,9 +14,11 @@
 //
 // Fix: the aim anchor moves out to 0.345 m (muzzles about +-0.36 m), so the
 // guides land ~35 px apart at 720p, the +-17.5 px side-by-side spacing of the
-// owner's Splatoon 3 capture (S3_RETICLE.dualRingCx). The left muzzle mirrors
-// the right one until the arms are up. Shots and guides keep sharing one
-// origin, so the marks still show where the shots go. The spacing is fitted to
+// owner's Splatoon 3 capture (S3_RETICLE.dualRingCx). For (2) only the guide
+// changes: until the arms are up, the left guide starts from the right muzzle
+// mirrored (weapons-fidelity.mjs s3DualiesGuides). Live shots keep leaving
+// from the left pistol's bone (#1431 pose-birth contract), so the guide shows
+// the aimed geometry, not where a carry-pose first shot leaves. The spacing is fitted to
 // one capture at INKWAVE's camera; Nintendo's muzzle offsets are not published
 // and are not claimed. The post-roll turret stance (HOLD.dualies.lock) and the
 // merged turret guide are unchanged.
@@ -28,12 +30,6 @@ export function adaptDualiesStanceSpread(rel, code, replaceOnce) {
       '  aim: { p: [-0.055, -0.07, 0.27], r: [0, 0.03, 0] }, twoAim: 0,',
       `  aim: { p: [${DUALIES_AIM_ANCHOR_X}, -0.07, 0.27], r: [0, 0.03, 0] }, twoAim: 0,   // owner 2026-11-09: S3-like spread (dualies-stance-spread-adapter.mjs)`,
       'Dualies aim stance spread');
-  }
-  if (rel === 'src/game/weapons.js') {
-    return replaceOnce(code,
-      '    if (hand && ch.getMuzzleHand) {',
-      '    if (hand && ch.getMuzzleHand && (!ch.aimReady || ch.aimReady() >= 0.98)) {   // arms not up yet: mirror the right muzzle',
-      'Dualies left muzzle mirrors the right until aimed');
   }
   return code;
 }

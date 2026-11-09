@@ -66,6 +66,20 @@ test('dualies: wide aim stance and a mirrored left muzzle until the arms are up 
   // ±17.5 px at 720p needs ~0.71 m between parallel muzzles at the ShotGuideFrame-7 distance
   // (~48.7 px per metre measured in the practice range); the anchor plus the grip offset gives ~±0.36 m.
   assert.ok(Math.abs(DUALIES_AIM_ANCHOR_X) > 0.3 && Math.abs(DUALIES_AIM_ANCHOR_X) < 0.4);
-  const muzzleHand = weapons.slice(weapons.indexOf('  _muzzleHand(a, hand, out) {'), weapons.indexOf('  _muzzleHand(a, hand, out) {') + 700);
-  assert.match(muzzleHand, /if \(hand && ch\.getMuzzleHand && \(!ch\.aimReady \|\| ch\.aimReady\(\) >= 0\.98\)\)/);
+  // live shots keep the left pistol's bone muzzle (#1431); only the guide mirrors while the arms are down
+  assert.match(weapons, /    if \(hand && ch\.getMuzzleHand\) \{/);
+});
+
+test('dualies guide: the left start mirrors the right muzzle across the midline', async () => {
+  const { mirrorDualiesMuzzle } = await import('../runtime/weapons-fidelity.mjs');
+  const v = (x, y, z) => ({ x, y, z, set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; } });
+  for (const yaw of [0, 0.7, -2.1]) {
+    const actor = { pos: v(1, 0, -3), yaw };
+    // a point 0.36 m to the actor's right (local -x) and 0.56 m forward
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), lx = -0.36, lz = 0.56;
+    const right = v(1 + lx * cy + lz * sy, 0.7, -3 - lx * sy + lz * cy);
+    const out = mirrorDualiesMuzzle(actor, right, v(0, 0, 0));
+    const ex = 1 + 0.36 * cy + lz * sy, ez = -3 - 0.36 * sy + lz * cy;
+    assert.ok(Math.abs(out.x - ex) < 1e-12 && Math.abs(out.z - ez) < 1e-12 && out.y === 0.7, `yaw ${yaw}`);
+  }
 });
