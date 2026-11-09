@@ -17,7 +17,7 @@ if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INK
 const BUILT_SITE = process.env.INKWAVE_BUILT_SITE;
 const SOURCE_UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 // Cache only derived immutable text/compiled bytecode, never a VM context or evaluated module.
-const adaptProduction = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
+const adaptProductionShared = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
   ? adaptBuildSource : memoizeFixtureSourceAdapter(adaptBuildSource);
 const cachedVmModule = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
   ? (source, options) => new vm.SourceTextModule(source, options)
@@ -34,7 +34,7 @@ export async function fixture(options = {}) {
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
     vmPerformance = performance, vmMathRandom = null, compositionOptions = null } = typeof options === 'string' ? {} : options;
   // Explicit composition options bypass the shared text cache (keyed by path only).
-  const adaptComposed = compositionOptions ? (rel, raw) => adaptBuildSource(rel, raw, compositionOptions) : adaptProduction;
+  const adaptProduction = compositionOptions ? (rel, raw) => adaptBuildSource(rel, raw, compositionOptions) : adaptProductionShared;
   // A built site holds only the default composition, so explicit composition
   // options always compose from source, even when INKWAVE_BUILT_SITE is set.
   const BUILT = compositionOptions ? undefined : BUILT_SITE;
@@ -77,7 +77,7 @@ export async function fixture(options = {}) {
     // constrained pass; preserve explicitly customized adapter callbacks.
     const native = !BUILT && upstream && (!productionComposition || adaptNative !== adaptConstrainedSource)
       ? adaptNative(relative, raw) : raw;
-    const source = !BUILT && productionComposition && upstream ? adaptComposed(rel, raw)
+    const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
       : !upstream ? adaptRuntime(rel, native)
       : BUILT && rel.startsWith('patches/') ? adaptEmittedRuntime(rel, native) : native;
     const mod = (generation ? generation.compile : cachedVmModule)(source, { context, identifier: file,
