@@ -39,9 +39,11 @@ export async function fixture(options = {}) {
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
     adaptEmittedRuntime = (_rel, source) => source,
     fullRuntime = false, productionComposition = false, realProjectiles = false, includeCharacter = false,
-    vmPerformance = performance, vmMathRandom = null } = typeof options === 'string' ? {} : options;
+    vmPerformance = performance, vmMathRandom = null, compositionOptions = null } = typeof options === 'string' ? {} : options;
+  // Explicit composition options bypass the shared text cache (keyed by path only).
+  const adaptComposed = compositionOptions ? (rel, raw) => adaptBuildSource(rel, raw, compositionOptions) : adaptProduction;
   const generation = compilerProfiles?.begin(JSON.stringify([UPSTREAM, !!BUILT,
-    fullRuntime, productionComposition, realProjectiles, includeCharacter, extraExports]));
+    fullRuntime, productionComposition, realProjectiles, includeCharacter, extraExports, compositionOptions]));
   let generationSucceeded = false;
   try {
   const context = vm.createContext({ console, crypto: globalThis.crypto, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
@@ -72,7 +74,7 @@ export async function fixture(options = {}) {
     // constrained pass; preserve explicitly customized adapter callbacks.
     const native = !BUILT && upstream && (!productionComposition || adaptNative !== adaptConstrainedSource)
       ? adaptNative(relative, raw) : raw;
-    const source = !BUILT && productionComposition && upstream ? adaptProduction(rel, raw)
+    const source = !BUILT && productionComposition && upstream ? adaptComposed(rel, raw)
       : !upstream ? adaptRuntime(rel, native)
       : BUILT && rel.startsWith('patches/') ? adaptEmittedRuntime(rel, native) : native;
     const mod = (generation ? generation.compile : cachedVmModule)(source, { context, identifier: file,

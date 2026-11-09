@@ -227,7 +227,9 @@ export function adaptBuildSource(rel, code, options = {}) {
   // Shooter / Dualies Bots paint with a shallower aim (owner request).
   code = adaptBotPaintPitch(rel, code, replaceOnce);
   // Dualies: wider aim stance so the two landing guides sit side by side (owner request).
-  code = adaptDualiesStanceSpread(rel, code, replaceOnce);
+  // Frozen pre-request evidence (native action corpus, historical Character
+  // owner) may compose without this pass and replay it explicitly.
+  if (options.dualiesStanceSpread !== false) code = adaptDualiesStanceSpread(rel, code, replaceOnce);
   // No bomb blast-radius forecast rings (owner request).
   code = adaptBombBlastForecast(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.
