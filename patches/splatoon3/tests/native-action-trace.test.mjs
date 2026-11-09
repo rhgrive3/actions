@@ -38,7 +38,9 @@ test('all 65 production main actors emit native action traces with full tick inp
  // The 2026-11-09 Dualies aim stance (dualies-stance-spread-adapter.mjs) moves
  // only Dualies muzzles. Those records are compared from a composition without
  // that one pass; the default composition must still differ for them, and
- // every other record above is the default production composition.
+ // every other record above is the default production composition. With a
+ // built site the prior composition comes from source (a site holds only the
+ // default composition).
  const spreadIds=frozenView.records.filter(r=>r.family==='dualies').map(r=>r.id);
  assert.equal(spreadIds.length,6);
  const prior=await nativeTraceFixture({compositionOptions:{dualiesStanceSpread:false}});

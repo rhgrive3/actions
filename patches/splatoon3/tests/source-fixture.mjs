@@ -14,8 +14,8 @@ import { adaptSource } from '../adapter.mjs';
 import { adaptSpecialWater } from '../../reliability/special-water-adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INKWAVE_BUILT_ROOT is not a supported fixture switch');
-const BUILT = process.env.INKWAVE_BUILT_SITE;
-const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const BUILT_SITE = process.env.INKWAVE_BUILT_SITE;
+const SOURCE_UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 // Cache only derived immutable text/compiled bytecode, never a VM context or evaluated module.
 const adaptProduction = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
   ? adaptBuildSource : memoizeFixtureSourceAdapter(adaptBuildSource);
@@ -28,13 +28,6 @@ const compilerProfiles = process.env.INKWAVE_DISABLE_FIXTURE_CACHES === '1'
 // special movement. Include its real production adapter in constrained boots.
 export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));
 export async function fixture(options = {}) {
-  // Importers may reject alternate fixture roots before starting a fixture.
-  // Validate and report the manifest only when the fixture is actually used.
-  if (BUILT) {
-    const manifest = JSON.parse(fs.readFileSync(path.join(UPSTREAM, 'inkwave-build.json'), 'utf8'));
-    console.log('INKWAVE built fixture', UPSTREAM, 'contentHash=' + manifest.contentHash);
-  }
-
   const extraExports = typeof options === 'string' ? options : options.extraExports || '';
   const { adapt = adaptConstrainedSource, adaptNative = adapt, adaptRuntime = (_rel, source) => source,
     adaptEmittedRuntime = (_rel, source) => source,
@@ -42,6 +35,16 @@ export async function fixture(options = {}) {
     vmPerformance = performance, vmMathRandom = null, compositionOptions = null } = typeof options === 'string' ? {} : options;
   // Explicit composition options bypass the shared text cache (keyed by path only).
   const adaptComposed = compositionOptions ? (rel, raw) => adaptBuildSource(rel, raw, compositionOptions) : adaptProduction;
+  // A built site holds only the default composition, so explicit composition
+  // options always compose from source, even when INKWAVE_BUILT_SITE is set.
+  const BUILT = compositionOptions ? undefined : BUILT_SITE;
+  const UPSTREAM = BUILT ? path.resolve(BUILT) : SOURCE_UPSTREAM;
+  // Importers may reject alternate fixture roots before starting a fixture.
+  // Validate and report the manifest only when the fixture is actually used.
+  if (BUILT) {
+    const manifest = JSON.parse(fs.readFileSync(path.join(UPSTREAM, 'inkwave-build.json'), 'utf8'));
+    console.log('INKWAVE built fixture', UPSTREAM, 'contentHash=' + manifest.contentHash);
+  }
   const generation = compilerProfiles?.begin(JSON.stringify([UPSTREAM, !!BUILT,
     fullRuntime, productionComposition, realProjectiles, includeCharacter, extraExports, compositionOptions]));
   let generationSucceeded = false;
