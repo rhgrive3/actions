@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   pause-gpu:
-    runs-on: ubuntu-24.04  # Playwright 1.62 has no ubuntu26.04 browser build
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4

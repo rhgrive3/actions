@@ -33,7 +33,7 @@ permissions:
   contents: read
 jobs:
   comparison:
-    runs-on: ubuntu-24.04  # Playwright 1.62 has no ubuntu26.04 browser build
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
