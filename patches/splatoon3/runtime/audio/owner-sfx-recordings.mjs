@@ -37,13 +37,16 @@ export const OWNER_SFX = Object.freeze({
   // Title screen: the A press (menus.js _titleGo plays it in place of ui_confirm). Provisional gain: the
   // loudest 300 ms RMS of this file scaled to the level of ui_decide at its gain. Not yet heard in-game.
   // Owner request 2026-11-07: both title cues were too quiet; raised by about 4.4 dB (x1.66).
-  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.103, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
+  // Owner request 2026-11-09: both title cues x1.5 again (0.103 -> 0.1545, 0.0415 -> 0.06225).
+  title_press: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.1545, seconds: 2.55, maxBytes: 128 * KB, fallback: 'ui_confirm' }),
   // Title screen: a single tone 300 ms after the A press (menus.js _titleGo). No synthesized equivalent.
-  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.0415, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
+  title_follow: Object.freeze({ file: 'sfx_n0010a10.mp3', gain: 0.06225, seconds: 1.12, maxBytes: 64 * KB, reverb: 0.04 }),
   // Battle start GO (main.js plays go_horn): the same A recording, level matched to the special-gauge cue.
-  go_horn: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.125, seconds: 2.55, maxBytes: 128 * KB }),
+  // Owner request 2026-11-09: x1.5 (0.125 -> 0.1875).
+  go_horn: Object.freeze({ file: 'ui_title_press_a.mp3', gain: 0.1875, seconds: 2.55, maxBytes: 128 * KB }),
   // Judge's decision moment (hud.js judge_reveal). Level matched to the special-gauge cue.
-  judge_reveal: Object.freeze({ file: 'sfx_gear_put_on_cloth.mp3', gain: 0.149, seconds: 0.61, maxBytes: 48 * KB }),
+  // Owner request 2026-11-09: x1.5 (0.149 -> 0.2235).
+  judge_reveal: Object.freeze({ file: 'sfx_gear_put_on_cloth.mp3', gain: 0.2235, seconds: 0.61, maxBytes: 48 * KB }),
   // Rolling loop (weapons.js loop 'roll'). Pitch follows the synth's own rate (q, 0.6..1.6), not swimRate.
   roll: Object.freeze({ file: 'sfx_roller_roll.mp3', gain: 0.33, seconds: 3.92, maxBytes: 256 * KB, loop: true, crossfade: 0.35, rate: 'linear' }),
 });
