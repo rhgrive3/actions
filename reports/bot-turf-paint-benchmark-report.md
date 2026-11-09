@@ -42,14 +42,26 @@
 
 - `patches/splatoon3/runtime/bot-turf-paint.mjs`（新規追加：全11ブキ系統・サブ系統別プロファイル、マルチプローブエポックキャッシュ、4体味方非干渉＆広域プラザ評価・SMI整数キャッシュ、交戦時道作り・足元塗り照準ガード、ラスト30秒SP管理＆終了間際塗装ボム・全面塗り切り替え、Tacticoolerドリンク受取ヒト復帰）  
 - `patches/splatoon3/bot-turf-paint-adapter.mjs`（新規追加：`src/game/bots.js` に対する `replaceOnce` アダプタ。本体コードを直接編集せず、`adaptBotPaintPitch` の直後に合成）  
-- `patches/splatoon3/tests/bot-turf-paint.test.mjs`（新規追加：単体テスト、照準ピッチ検証ゲート、LACT-450チャージ上限、足元塗り照準ガード、SMIキャッシュインプレース更新、および `MAP_LAYOUTS.kelpline` 実エンジン結合テスト）  
-- `scripts/inkwave-source-composition.mjs`（既存ファイルへの2行フック追加のみ：`adaptBotTurfPaint` の import と呼び出し）
+- `patches/splatoon3/tests/bot-turf-paint.test.mjs`（新規追加：単体テスト、チャージ武器照準ピッチ検証ゲート、シューターwantPaintNow制約、ローラーpendingガード、ブラシエッジ入力、Tacticoolerドリンク受取ヒト復帰意図保持、LACT-450チャージ上限、足元塗り照準ガード、SMIキャッシュインプレース更新、および `MAP_LAYOUTS.kelpline` 実エンジン結合テスト）  
+- `scripts/inkwave-source-composition.mjs`（既存ファイルへの2行フック追加のみ：`adaptBotTurfPaint` の import と呼び出し）  
+- `scripts/ci/inkwave-test-suites.json`（必須CI接続：`quality` スイートに本PRの集中回帰テスト4ファイルを追加登録し、`ci-quality-gate.yml` の `npm run test:quality` 経由で毎回のPR検証にて常時実行されるよう保護）
 
-## 4. 関連テストおよび回帰テスト検証結果（全124項目 PASS）
+## 4. 関連テストおよび回帰テスト検証結果（全129項目 PASS）
 
-PR #2019 HEAD 上で関連テスト・回帰テストを実行し、**124項目すべてが100% PASS（失敗0）** することを確認しました。
+PR #2019 HEAD 上で関連テスト・回帰テストを実行し、**129項目すべてが100% PASS（失敗0）** することを確認しました。
 
-- `patches/splatoon3/tests/bot-turf-paint.test.mjs`: **15/15 PASS**（ピッチ検証ゲート、LACT-450上限0.14、足元塗り照準保護、SMIインプレースキャッシュ、実エンジン統合含む）  
+### 必須CI / テストスイートランナー接続
+- 必須CI `INKWAVE A+ Quality & Security Gate`（`.github/workflows/ci-quality-gate.yml`）内の `npm run test:quality`（`node scripts/ci/run-inkwave-test-suite.mjs quality`）にて、以下の集中テスト4スイートが毎回のPR pushで自動実行されます：
+  ```bash
+  node --experimental-vm-modules --test \
+    patches/splatoon3/tests/bot-turf-paint.test.mjs \
+    patches/local-quality/tests/bot-weapon-territory.test.mjs \
+    patches/splatoon3/tests/bot-splatling-charge.test.mjs \
+    patches/splatoon3/tests/bot-special-support.test.mjs
+  ```
+
+### 個別テストスイート結果
+- `patches/splatoon3/tests/bot-turf-paint.test.mjs`: **20/20 PASS**（チャージ中ピッチ検証ゲート、シューターwantPaintNow制約、ローラーpendingガード、ブラシエッジ入力、Tacticoolerドリンク受取ヒト復帰意図保持、LACT-450上限0.14、足元塗り照準保護、SMIインプレースキャッシュ、実エンジン統合含む）  
 - `patches/local-quality/tests/bot-weapon-territory.test.mjs`: **28/28 PASS**（R-PEN満充電連続発射、ソイチューバー0.22短チャージ、通常チャージャー0.70、30/60/120Hz制御）  
 - `patches/splatoon3/tests/bot-splatling-charge.test.mjs`: **2/2 PASS**（スピナーTurf平均チャージ `0.8918` >= 0.85）  
 - `patches/splatoon3/tests/bot-special-support.test.mjs`: **20/20 PASS**（Tacticooler自陣展開・ドリンク受取ヒト復帰含む全スペシャル）  
@@ -60,4 +72,4 @@ PR #2019 HEAD 上で関連テスト・回帰テストを実行し、**124項目�
 - `patches/splatoon3/tests/bot-form-stability.test.mjs`: **6/6 PASS**  
 - `patches/local-quality/tests/bot-paint-observation.test.mjs`: **9/9 PASS**  
 - `patches/local-quality/tests/bot-edge-guard.test.mjs`: **10/10 PASS**  
-- クオリティ監査: `npm run check:patches`（183/183 PASS）、`npm run test:ci-config`（17/17 PASS）、`npm run audit:migration` 全パス。
+- クオリティ監査: `npm run check:patches`（183/183 PASS）、`npm run test:ci-config`（17/17 PASS）、`npm run audit:migration`（133/133 CLEAN）全パス。

@@ -15,7 +15,7 @@ export function adaptBotTurfPaint(rel, code, replaceOnce) {
   code = replaceOnce(
     code,
     '    this._paintObservation = null; this._paintObservationEpoch = 0;\n',
-    '    this._paintObservation = null; this._paintObservationEpoch = 0; this._turfPaintLatch = false; this._turfPaintValidated = false; this._rollerRollTime = 0; this._rollerSwimGap = 0; this._smoothStrafe = null; this._smoothFlankBias = 0; if (this._turfMultiCache) this._turfMultiCache.epoch = -1;\n',
+    '    this._paintObservation = null; this._paintObservationEpoch = 0; this._turfPaintLatch = false; this._turfPaintValidated = false; this._coolerPickupPending = false; this._rollerRollTime = 0; this._rollerSwimGap = 0; this._smoothStrafe = null; this._smoothFlankBias = 0; if (this._turfMultiCache) this._turfMultiCache.epoch = -1;\n',
     'bot turf paint reset state'
   );
 
@@ -54,7 +54,7 @@ export function adaptBotTurfPaint(rel, code, replaceOnce) {
     '      if (!it.fire && this._pathRemaining() > 5 && a.groundTeam === 1) it.squid = true;',
     '      botApplyTurfPaintMechanics(this, G, a, dt, move, wantMove, _basePaintYaw, inkFrac);\n' +
     '      // travel as a squid through own ink when not painting\n' +
-    '      if (!it.fire && this._pathRemaining() > 5 && a.groundTeam === 1) it.squid = true;',
+    '      if (!it.fire && !this._coolerPickupPending && this._pathRemaining() > 5 && a.groundTeam === 1) it.squid = true;',
     'bot turf paint mechanics hook'
   );
 

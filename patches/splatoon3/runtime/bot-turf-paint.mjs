@@ -514,6 +514,7 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   const wr = actor.weaponRunner;
 
   // 0. Allied available Tacticooler drink pickup: pop up to kid form when within pickup range (< 6.8m)
+  let coolerPending = false;
   const coolers = G?.projectiles?._s3SupportCoolers;
   if (coolers && coolers.length && !actor.s3?.drink) {
     for (let i = 0; i < coolers.length; i++) {
@@ -521,11 +522,13 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
         if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
           it.squid = false;
+          coolerPending = true;
           break;
         }
       }
     }
   }
+  brain._coolerPickupPending = coolerPending;
 
   // 1. Suppress arbitrary long paintPause stalls from legacy bot logic when there is turf to paint!
   if (rawFamily === 'stringer' || rawFamily === 'charger' || rawFamily === 'splatling' || rawFamily === 'splatana') {
@@ -554,15 +557,19 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     } else if (wr?.charging) {
       // Active charging takes strict precedence: never emit loaded rounds prematurely
       if (wr.charge >= targetCharge || (inkFrac < 0.15 && !isPencil)) {
-        it.fire = false;
-        brain.paintPause = 0.02;
+        if (!pitchReady && inkFrac >= 0.15) {
+          it.fire = true;
+        } else {
+          it.fire = false;
+          brain.paintPause = 0.02;
+        }
       } else {
         it.fire = true;
       }
     } else if (isPencil && wr?.catalogState?.rounds > 0) {
       // Consume buffered Snipewriter rounds only once charge cycle has permitted
       it.fire = wantPaintNow && (wr.cooldown || 0) <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
-    } else if ((wantPaintNow || (isLongCharger && wantMove && inkFrac > 0.24)) && (wr?.cooldown || 0) <= 1e-6) {
+    } else if (pitchReady && (wantPaintNow || (isLongCharger && wantMove && inkFrac > 0.24)) && (wr?.cooldown || 0) <= 1e-6) {
       it.fire = true;
     }
   } else if (rawFamily === 'stringer') {
@@ -571,8 +578,12 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       it.fire = false;
     } else if (wr?.charging) {
       if (wr.charge >= cap || inkFrac < 0.15) {
-        it.fire = false;
-        brain.paintPause = 0.02;
+        if (!pitchReady && inkFrac >= 0.15) {
+          it.fire = true;
+        } else {
+          it.fire = false;
+          brain.paintPause = 0.02;
+        }
       } else {
         it.fire = true;
       }
@@ -584,8 +595,12 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       it.fire = false;
     } else if (wr?.charging) {
       if (wr.charge >= 0.12 || inkFrac < 0.15) {
-        it.fire = false;
-        brain.paintPause = 0.02;
+        if (!pitchReady && inkFrac >= 0.15) {
+          it.fire = true;
+        } else {
+          it.fire = false;
+          brain.paintPause = 0.02;
+        }
       } else {
         it.fire = true;
       }
@@ -601,9 +616,13 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       const isBallpoint = actor.weapon?.sourceMainActor === 'WeaponSpinnerDownpour' || (actor.weapon?.id || '').includes('ballpoint');
       const targetSpin = isBallpoint ? 0.24 : 0.90;
       if (wr.charge >= targetSpin || inkFrac < 0.16) {
-        it.fire = false;
-        brain._splatlingHold = 0;
-        brain.paintPause = 0.03;
+        if (!pitchReady && inkFrac >= 0.16) {
+          it.fire = true;
+        } else {
+          it.fire = false;
+          brain._splatlingHold = 0;
+          brain.paintPause = 0.03;
+        }
       } else {
         it.fire = true;
       }
@@ -617,33 +636,35 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     const maxRollHold = profile.rollHold || 0.26;
     if (wr?.catalogState?.pending) {
       it.fire = false;
-    } else if (wr?.rolling) {
-      brain._rollerRollTime = (brain._rollerRollTime || 0) + dt;
-    }
-    if ((brain._rollerSwimGap || 0) > 0) {
-      brain._rollerSwimGap = Math.max(0, brain._rollerSwimGap - dt);
-      it.fire = false;
-      if (actor.groundTeam === 1 && wantMove) it.squid = true;
-    } else if ((brain._rollerRollTime || 0) >= maxRollHold) {
-      brain._rollerRollTime = 0;
-      brain._rollerSwimGap = actor.groundTeam === 1 ? 0.22 : 0.04;
-      it.fire = false;
-      if (actor.groundTeam === 1 && wantMove) it.squid = true;
-    } else if ((wr?.cooldown || 0) > 0.06 && actor.groundTeam === 1 && wantMove) {
-      it.fire = false;
-      it.squid = true;
-    } else if (wantMove && inkFrac > 0.08 && (brain._turfPaintLatch || actor.groundTeam !== 1 || (resolveMatchTimeLeft(G) <= 6.5 && inkFrac > 0.18))) {
-      it.fire = true;
-      it.squid = false;
+    } else {
+      if (wr?.rolling) {
+        brain._rollerRollTime = (brain._rollerRollTime || 0) + dt;
+      }
+      if ((brain._rollerSwimGap || 0) > 0) {
+        brain._rollerSwimGap = Math.max(0, brain._rollerSwimGap - dt);
+        it.fire = false;
+        if (!brain._coolerPickupPending && actor.groundTeam === 1 && wantMove) it.squid = true;
+      } else if ((brain._rollerRollTime || 0) >= maxRollHold) {
+        brain._rollerRollTime = 0;
+        brain._rollerSwimGap = actor.groundTeam === 1 ? 0.22 : 0.04;
+        it.fire = false;
+        if (!brain._coolerPickupPending && actor.groundTeam === 1 && wantMove) it.squid = true;
+      } else if ((wr?.cooldown || 0) > 0.06 && actor.groundTeam === 1 && wantMove) {
+        it.fire = false;
+        if (!brain._coolerPickupPending) it.squid = true;
+      } else if (wantMove && inkFrac > 0.08 && (brain._turfPaintLatch || actor.groundTeam !== 1 || (resolveMatchTimeLeft(G) <= 6.5 && inkFrac > 0.18))) {
+        it.fire = true;
+        it.squid = false;
+      }
     }
   } else if (rawFamily === 'brush') {
     if (wantPaintNow && inkFrac > 0.08) {
-      it.fire = wr.cooldown <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
+      it.fire = (wr?.cooldown || 0) <= 1e-6 && !wr?.catalogState?.pending && !actor._prevIntent?.fire;
     } else if (inkFrac > 0.08 && wantMove && actor.groundTeam === 2) {
-      it.fire = true;
+      it.fire = (wr?.cooldown || 0) <= 1e-6 && !wr?.catalogState?.pending && !actor._prevIntent?.fire;
     }
   } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'slosher' || rawFamily === 'brella') {
-    if (brain._turfPaintValidated === true && brain._turfPaintLatch && (wr?.cooldown || 0) <= 1e-6) {
+    if (brain._turfPaintValidated === true && wantPaintNow && (wr?.cooldown || 0) <= 1e-6) {
       it.fire = true;
     }
   }
@@ -736,6 +757,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   const tLeft = resolveMatchTimeLeft(G);
 
   // 0. Allied available Tacticooler drink pickup: pop up to kid form when within pickup range (< 6.8m)
+  let coolerPending = false;
   const coolers = G?.projectiles?._s3SupportCoolers;
   if (coolers && coolers.length && !actor.s3?.drink) {
     for (let i = 0; i < coolers.length; i++) {
@@ -743,11 +765,13 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
       if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
         if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
           it.squid = false;
+          coolerPending = true;
           break;
         }
       }
     }
   }
+  brain._coolerPickupPending = coolerPending;
 
   // 1. Buzzer-beater sub throw in combat approach (Curling, Burst, Fizzy)
   const subId = actor?.weapon?.sub;
@@ -797,7 +821,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
 
   // 3. Combat approach path-painting ("道作り"): out of range (dist > range * 1.08)
   if (dist > range * 1.08) {
-    if (rawFamily === 'roller' && actor.groundTeam === 1 && wantMove) {
+    if (!brain._coolerPickupPending && rawFamily === 'roller' && actor.groundTeam === 1 && wantMove) {
       it.fire = false;
       it.squid = true;
     } else if (actor.groundTeam !== 1 && inkFrac > 0.18 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging) {
@@ -845,7 +869,12 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
         it.fire = true;
         canClear = true;
       }
-    } else if (rawFamily === 'slosher' || rawFamily === 'roller' || rawFamily === 'brush') {
+    } else if (rawFamily === 'brush') {
+      if (!actor._prevIntent?.fire && !wr?.catalogState?.pending) {
+        it.fire = true;
+        canClear = true;
+      }
+    } else if (rawFamily === 'slosher' || rawFamily === 'roller') {
       it.fire = true;
       canClear = true;
     } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') {

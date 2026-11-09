@@ -467,3 +467,175 @@ test('macro-plaza cache uses 31-bit integer SMI keys and mutates entries in-plac
   assert.equal(refreshedEntry.t, 99.2, 'timestamp updated in-place');
 });
 
+test('charging weapons hold charge and do not release when pitchReady is false, and long charger fallback respects pitchReady', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+
+  // 1. Charger with pitchReady = false holds charge at threshold instead of releasing shot
+  const chargerActor = {
+    weapon: { catalogRecord: { family: 'charger' }, id: 's3-charger-std' },
+    weaponRunner: { charging: true, charge: 0.75, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const chargerBrain = { _turfPaintLatch: true, _turfPaintValidated: false };
+  botApplyTurfPaintMechanics(chargerBrain, G, chargerActor, 0.02, move, true, 0, 0.8);
+  assert.equal(chargerActor.intent.fire, true, 'charger must hold charge (fire=true) when pitch is not ready');
+
+  // Once pitch stabilizes (_turfPaintValidated = true), charger releases shot (fire=false)
+  chargerBrain._turfPaintValidated = true;
+  botApplyTurfPaintMechanics(chargerBrain, G, chargerActor, 0.02, move, true, 0, 0.8);
+  assert.equal(chargerActor.intent.fire, false, 'charger releases shot once pitch is ready');
+
+  // Non-charging long charger fallback must not fire when pitchReady = false
+  const longChargerActor = {
+    weapon: { catalogRecord: { family: 'charger' }, chargeTime: 1.5, id: 's3-eliter' },
+    weaponRunner: { charging: false, cooldown: 0 },
+    intent: { fire: false, squid: false },
+    groundTeam: 1,
+  };
+  const longChargerBrain = { _turfPaintLatch: true, _turfPaintValidated: false };
+  botApplyTurfPaintMechanics(longChargerBrain, G, longChargerActor, 0.02, move, true, 0, 0.8);
+  assert.equal(longChargerActor.intent.fire, false, 'long charger fallback must not fire when pitch is not validated');
+
+  // 2. Stringer holds charge when pitchReady = false
+  const stringerActor = {
+    weapon: { catalogRecord: { family: 'stringer' }, id: 's3-stringer-std' },
+    weaponRunner: { charging: true, charge: 0.25, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const stringerBrain = { _turfPaintLatch: true, _turfPaintValidated: false };
+  botApplyTurfPaintMechanics(stringerBrain, G, stringerActor, 0.02, move, true, 0, 0.8);
+  assert.equal(stringerActor.intent.fire, true, 'stringer holds charge when pitch is not ready');
+
+  // 3. Splatana holds charge when pitchReady = false
+  const splatanaActor = {
+    weapon: { catalogRecord: { family: 'splatana' }, id: 's3-wiper-std' },
+    weaponRunner: { charging: true, charge: 0.15, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const splatanaBrain = { _turfPaintLatch: true, _turfPaintValidated: false };
+  botApplyTurfPaintMechanics(splatanaBrain, G, splatanaActor, 0.02, move, true, 0, 0.8);
+  assert.equal(splatanaActor.intent.fire, true, 'splatana holds charge when pitch is not ready');
+
+  // 4. Splatling holds spin when pitchReady = false
+  const splatlingActor = {
+    weapon: { catalogRecord: { family: 'splatling' }, id: 's3-splatling-std' },
+    weaponRunner: { charging: true, charge: 0.95, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const splatlingBrain = { _turfPaintLatch: true, _turfPaintValidated: false };
+  botApplyTurfPaintMechanics(splatlingBrain, G, splatlingActor, 0.02, move, true, 0, 0.8);
+  assert.equal(splatlingActor.intent.fire, true, 'splatling holds spin when pitch is not ready');
+});
+
+test('shooter family firing branch requires wantPaintNow (suppresses fire on low ink or active paintPause)', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    weapon: { catalogRecord: { family: 'shooter' }, id: 's3-shooter-normal' },
+    weaponRunner: { cooldown: 0 },
+    intent: { fire: false, squid: false },
+    groundTeam: 1,
+  };
+
+  // Case 1: inkFrac <= 0.10 suppresses firing even if latch and validation are true
+  const lowInkBrain = { _turfPaintLatch: true, _turfPaintValidated: true, paintPause: 0 };
+  botApplyTurfPaintMechanics(lowInkBrain, G, actor, 0.02, move, true, 0, 0.08);
+  assert.equal(actor.intent.fire, false, 'shooter must not fire when inkFrac <= 0.10');
+
+  // Case 2: paintPause > 0 suppresses firing
+  const pauseBrain = { _turfPaintLatch: true, _turfPaintValidated: true, paintPause: 0.05 };
+  botApplyTurfPaintMechanics(pauseBrain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, false, 'shooter must not fire when paintPause > 0');
+});
+
+test('roller catalogState.pending suppresses firing without being overwritten by following roll branches', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    weapon: { catalogRecord: { family: 'roller' }, id: 's3-roller-normal' },
+    weaponRunner: { catalogState: { pending: true }, cooldown: 0 },
+    intent: { fire: true, squid: false },
+    groundTeam: 1,
+  };
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: true, _rollerRollTime: 0, _rollerSwimGap: 0 };
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, false, 'roller with catalogState.pending must set fire=false and not be overwritten');
+});
+
+test('brush weapons require a fresh edge when moving on enemy ink and in combat foot clearing', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    weapon: { catalogRecord: { family: 'brush' }, id: 's3-inkbrush' },
+    weaponRunner: { cooldown: 0 },
+    intent: { fire: false, squid: false },
+    _prevIntent: { fire: false },
+    groundTeam: 2, // Enemy ink
+  };
+  const brain = { _turfPaintLatch: false, _turfPaintValidated: false };
+
+  // 1. Paint mode on enemy ink: first tick with _prevIntent.fire=false fires
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, true, 'brush fires fresh press on enemy ink');
+
+  // Next tick with _prevIntent.fire=true releases trigger
+  actor._prevIntent.fire = true;
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(actor.intent.fire, false, 'brush releases trigger on held state to enforce edge');
+
+  // 2. Combat foot-clearing: edge-triggered check
+  actor.intent.fire = false;
+  actor._prevIntent.fire = false;
+  actor.team = 0;
+  const combatPitch1 = botApplyTurfCombatPaint(brain, G, actor, 1 / 60, move, true, 0, 0, 5, 8, 0.8);
+  assert.equal(actor.intent.fire, true, 'combat foot clearing fires fresh brush press');
+  assert.equal(combatPitch1, -0.32);
+
+  // If already firing in prevIntent, combat foot-clearing does not hold trigger
+  actor.intent.fire = false;
+  actor._prevIntent.fire = true;
+  const combatPitch2 = botApplyTurfCombatPaint(brain, G, actor, 1 / 60, move, true, 0, 0, 5, 8, 0.8);
+  assert.equal(actor.intent.fire, false, 'combat foot clearing releases held brush trigger');
+  assert.equal(combatPitch2, 0);
+});
+
+test('allied Tacticooler drink pickup intent is preserved and prevents subsequent squid form overrides', () => {
+  const cooler = {
+    pos: { x: 2, y: 0, z: 2 },
+    team: 1,
+    expires: 120,
+    taken: new Set(),
+  };
+  const G = {
+    time: 10,
+    match: { mode: 'turf', time: 100 },
+    projectiles: { _s3SupportCoolers: [cooler] },
+  };
+  const move = { x: 0, z: 1 };
+  const actor = {
+    pos: { x: 3, y: 0, z: 3 }, // 1.41m away (< 6.8m)
+    team: 1,
+    groundTeam: 1, // On friendly ink
+    weapon: { catalogRecord: { family: 'roller' }, id: 's3-roller-normal' },
+    weaponRunner: { cooldown: 0.15 }, // Would normally trigger squid=true
+    intent: { fire: false, squid: true },
+  };
+  const brain = { _turfPaintLatch: false, _turfPaintValidated: false, _pathRemaining: () => 10 };
+
+  // 1. Paint mechanics maintains kid form near cooler despite roller cooldown on friendly ink
+  botApplyTurfPaintMechanics(brain, G, actor, 0.02, move, true, 0, 0.8);
+  assert.equal(brain._coolerPickupPending, true);
+  assert.equal(actor.intent.squid, false, 'roller near cooler must stay in kid form');
+
+  // 2. Combat paint helper preserves cooler pickup intent
+  actor.intent.squid = true;
+  botApplyTurfCombatPaint(brain, G, actor, 1 / 60, move, true, 0, 0, 15, 10, 0.8);
+  assert.equal(brain._coolerPickupPending, true);
+  assert.equal(actor.intent.squid, false, 'combat helper preserves kid form near cooler');
+});
+
