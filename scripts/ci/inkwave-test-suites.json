@@ -179,6 +179,17 @@
           "--test",
           "patches/reliability/tests/queue-boss-fixed-copy-20261031.test.mjs"
         ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/bot-turf-paint.test.mjs",
+          "patches/local-quality/tests/bot-weapon-territory.test.mjs",
+          "patches/splatoon3/tests/bot-splatling-charge.test.mjs",
+          "patches/splatoon3/tests/bot-special-support.test.mjs"
+        ]
       }
     ]
   },
