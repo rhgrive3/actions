@@ -6,7 +6,8 @@
 //    recordings once decoded (runtime/audio/owner-sfx-recordings.mjs); the
 //    2026-11-07 set adds the title screen A press (+ a tone 0.3 s later), GO,
 //    the judge's decision and the rolling loop. The upstream files stay untouched;
-//    synthesized definitions remain the fallback. The Splat Bomb fuse keeps its
+//    synthesized definitions remain the fallback. 2026-11-09: the synthesized
+//    title score is silenced on the title screen. The Splat Bomb fuse keeps its
 //    landing / fuse beeps (`bomb_beep`); the throw recording is not a fuse.
 const IMPORT = "import { installOwnerSfxRecordings } from '../../patches/splatoon3/runtime/audio/owner-sfx-recordings.mjs';\n";
 export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
@@ -21,6 +22,14 @@ export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
       "      if (actor.isLocal && !this.match?.attract) { G.audio?.play('special_ready'); }",
       "      if (actor.isLocal && !this.match?.attract) { G.audio?.play('special_charged'); }",
       'owner SFX: special gauge full');
+    // Owner request 2026-11-09: the synthesized title score ('title', Splash
+    // Attitude) no longer plays on the title screen. The title stays silent
+    // apart from the two recorded A-press cues; the menu MP3 starts as before.
+    // _musicTrack still records 'title' so the title -> menu switch is unchanged.
+    code = replaceOnce(code,
+      "this._musicTrack = t; try { G.music?.play(t, { fade }); }",
+      "this._musicTrack = t; try { G.music?.play(t === 'title' ? null : t, { fade }); }",
+      'owner SFX: no synthesized title score');
     // Playback options (a delay on the audio clock) reach the engine.
     return replaceOnce(code,
       "      playSound: (n) => { G.audio?.init?.(); G.audio?.play(n); },",

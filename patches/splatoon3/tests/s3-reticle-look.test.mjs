@@ -18,9 +18,10 @@ test('on-target shows the X and hides the strokes; the centre hit X yields to th
   assert.match(S3_RETICLE_CSS, /\.iw-xh\.s3-world-hit \.iw-hit \{ visibility: hidden; \}/);
 });
 
-test('dualies: the moving guide rings are the bright ones; the fixed camera rings keep their faint look', () => {
+test('dualies: the moving guide marks are the bright ones; the fixed camera rings use the Blaster camera ring', () => {
   assert.match(S3_RETICLE_CSS, /\.iw-ret__hand circle\.s3-ring \{ stroke: #fff;/);
-  assert.doesNotMatch(S3_RETICLE_CSS, /iw-ret__dual-camera/);
+  // owner request 2026-11-09: the fixed pair was nearly invisible (opacity .22, 1 px); now the Blaster's grey ring
+  assert.match(S3_RETICLE_CSS, /\.iw-ret--dualies \.iw-ret__dual-camera circle \{ stroke: #b7b7b7; stroke-width: 1\.5; opacity: 0\.75;/);
 });
 
 test('splatling: both stages on one ring in white shades, the second solid', () => {

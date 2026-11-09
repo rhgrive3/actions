@@ -36,13 +36,29 @@
 // - Hit (owner capture): a white star flash at the enemy's body, not an X fixed at
 //   the screen centre. Boss fights keep their own centre feedback.
 // Pixel sizes come from compressed video frames: about +-1-2 px.
-const SVG_NS = 'http://www.w3.org/2000/svg';
+// - Owner request 2026-11-09: Shooter and Dualies use the Blaster's moving
+//   impact mark verbatim (ink ring r15 w4, white ring r12.5 w2, white dot r3,
+//   ink/white diagonal cross on target) in place of the r13 ring above. Shooter
+//   draws one at the screen centre (it does not move); Dualies draw two, one on
+//   each hand's landing guide, and the merged turret ring becomes one mark.
+//   Dualies keep their two fixed camera rings, now drawn like the Blaster's
+//   fixed camera ring (grey r13) so the fixed pair stays visible.
+//   This is an owner design choice, not a Splatoon 3 measurement: the retail
+//   Shooter/Dualies rings are the r~13 white rings described above.
+import { BLASTER_RETICLE_CALIBRATION } from './blaster-reticle-presentation.mjs';
+
 export const S3_RETICLE = Object.freeze({
   ringRadius: 13, ringStroke: 2.2, edgeStroke: 4.4, dotSize: 3,
   tickBaseX: 24, tickHalfY: 24, spreadScale: 0.347,
   dualRingCx: 17.5, dualTickBaseX: 52, dualTickHalfY: 27,
   crossInner: 7, crossOuter: 28,
   flashLife: 0.22, flashSize: 46,
+});
+
+// The Blaster's fixed camera ring (blaster-reticle-presentation.mjs markup: r13, #b7b7b7, w1.5, opacity .75).
+export const BLASTER_CAMERA_RING = Object.freeze({
+  radius: BLASTER_RETICLE_CALIBRATION.metrics.cameraRingRadius, width: BLASTER_RETICLE_CALIBRATION.metrics.cameraRingWidth,
+  stroke: '#b7b7b7', opacity: 0.75,
 });
 
 export const S3_RETICLE_CSS = `
@@ -70,6 +86,13 @@ export const S3_RETICLE_CSS = `
 .s3-hitflash { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 3; }
 .s3-hitflash svg { position: absolute; left: -${S3_RETICLE.flashSize / 2}px; top: -${S3_RETICLE.flashSize / 2}px; width: ${S3_RETICLE.flashSize}px; height: ${S3_RETICLE.flashSize}px; overflow: visible; filter: drop-shadow(0 0 4px rgba(255, 255, 255, .9)); }
 .s3-hitflash path { fill: #fff; }
+.iw-xh .iw-ret.iw-ret--shooter, .iw-xh .iw-ret.iw-ret--dualies { filter: drop-shadow(0 0 .7px rgba(0,0,0,.9)); }
+.iw-xh.is-target .iw-ret.iw-ret--shooter { scale: 1; color: #fff; }
+.iw-xh .iw-ret--shooter > .iw-ret__dot { display: none; }
+/* Dualies' fixed camera rings: the Blaster's fixed camera ring (grey r13 w1.5, .75), one per hand */
+.iw-xh .iw-ret--dualies .iw-ret__dual-camera circle { stroke: ${BLASTER_CAMERA_RING.stroke}; stroke-width: ${BLASTER_CAMERA_RING.width}; opacity: ${BLASTER_CAMERA_RING.opacity}; stroke-dasharray: none; }
+.iw-xh .iw-ret g.s3-blast-direct { display: none; }
+.iw-xh.is-target .iw-ret g.s3-blast-direct { display: inline; }
 `;
 
 // Eight-point star: long spikes on the axes, short on the diagonals.
@@ -83,12 +106,25 @@ export function hitFlashPath(long = 23, short = 11, waist = 3.2) {
   return 'M' + pts.join(' L') + ' Z';
 }
 
-function crossGroup(cx = 0) {
-  const d = [];
-  const k = Math.SQRT1_2, a = S3_RETICLE.crossInner * k, b = S3_RETICLE.crossOuter * k;
-  for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) d.push(`M${cx + sx * a} ${sy * a} L${cx + sx * b} ${sy * b}`);
-  const path = d.join(' ');
-  return `<g class="s3-x"><path class="sh" d="${path}"/><path d="${path}"/></g>`;
+// The Blaster's moving impact mark (blaster-reticle-presentation.mjs), centred
+// on (cx, 0). Inline styles: inside .iw-ret__svg the legacy circle/path rules
+// (currentColor strokes, out-of-range dashes) would otherwise override the
+// Blaster's attributes and the copies would stop looking the same.
+const BM = BLASTER_RETICLE_CALIBRATION.metrics;
+export const BLASTER_MARK = Object.freeze({
+  inkRadius: BM.impactInkOuterRadius - 2, inkWidth: 4,
+  ringRadius: BM.impactRingRadius, ringWidth: BM.impactRingWidth, dotRadius: BM.impactDotRadius,
+  crossInner: BM.directCrossInner, crossOuter: BM.directCrossOuter,
+});
+export function blasterMarkMarkup(cx = 0) {
+  const i = BLASTER_MARK.crossInner, o = BLASTER_MARK.crossOuter;
+  const cross = `M-${o},-${o}L-${i},-${i}M${o},-${o}L${i},-${i}M-${o},${o}L-${i},${i}M${o},${o}L${i},${i}`;
+  const st = (stroke, width) => `style="fill:none;stroke:${stroke};stroke-width:${width};stroke-linecap:butt;stroke-dasharray:none;opacity:1"`;
+  return `<g class="s3-blast-mark" transform="translate(${cx} 0)">` +
+    `<g class="s3-blast-direct"><path d="${cross}" ${st('var(--self, #7040ff)', 3)}/><path d="${cross}" ${st('#fff', 1)}/></g>` +
+    `<circle r="${BLASTER_MARK.inkRadius}" ${st('var(--self, #7040ff)', BLASTER_MARK.inkWidth)}/>` +
+    `<circle r="${BLASTER_MARK.ringRadius}" ${st('#fff', BLASTER_MARK.ringWidth)}/>` +
+    `<circle r="${BLASTER_MARK.dotRadius}" style="fill:#fff;stroke:none;opacity:1"/></g>`;
 }
 
 // Post-process the reticle the HUD just built. Pure DOM edits on its own nodes.
@@ -96,16 +132,12 @@ export function restyleReticle(ret, kind) {
   const svg = ret?.querySelector?.('svg.iw-ret__svg');
   if (!svg) return false;
   if (kind === 'shooter') {
+    // One Blaster impact mark, fixed at the centre, replaces the ring.
+    if (svg.querySelector('g.s3-blast-mark')) return true;
     const ring = svg.querySelector('circle.iw-ret__ring');
     if (!ring) return false;
-    ring.setAttribute('r', String(S3_RETICLE.ringRadius));
-    ring.classList.add('s3-ring');
-    if (!svg.querySelector('circle.s3-ring-edge')) {
-      const edge = svg.ownerDocument.createElementNS(SVG_NS, 'circle');
-      edge.setAttribute('r', String(S3_RETICLE.ringRadius)); edge.setAttribute('class', 's3-ring-edge');
-      svg.insertBefore(edge, ring);
-    }
-    if (!svg.querySelector('g.s3-x')) svg.insertAdjacentHTML('beforeend', crossGroup());
+    ring.remove();
+    svg.insertAdjacentHTML('beforeend', blasterMarkMarkup(0));
     return true;
   }
   if (kind === 'dualies') {
@@ -115,15 +147,16 @@ export function restyleReticle(ret, kind) {
       if (Math.abs(Math.abs(x) - 19.5) < 1e-6) c.setAttribute('cx', String(Math.sign(x) * cx));
       if (Math.abs(Number(c.getAttribute('r')) - 12.8) < 1e-6) c.setAttribute('r', String(S3_RETICLE.ringRadius));
     }
-    // The moving (landing guide) rings get the ink edge; the on-target X rides
-    // with each of them. The fixed camera rings keep INKWAVE's faint look.
-    for (const hand of svg.querySelectorAll('g.iw-ret__hand')) {
-      const ring = hand.querySelector('circle.iw-ret__ring');
-      if (!ring || hand.querySelector('.s3-ring-edge')) continue;
-      const edge = ring.cloneNode(); edge.setAttribute('class', 's3-ring-edge');
-      hand.insertBefore(edge, ring); ring.classList.add('s3-ring');
-      hand.querySelector('.iw-ret__dual-dot')?.setAttribute('r', '2.2');
-      hand.insertAdjacentHTML('beforeend', crossGroup(Number(ring.getAttribute('cx')) || 0));
+    // Each moving (landing guide) ring becomes one Blaster impact mark, so the
+    // two marks follow the two hands' guides. The fixed camera rings keep
+    // INKWAVE's faint look. The merged turret ring becomes a single mark.
+    for (const group of svg.querySelectorAll('g.iw-ret__hand, g.iw-ret__merged')) {
+      if (group.querySelector('g.s3-blast-mark')) continue;
+      const ring = group.querySelector('circle.iw-ret__ring');
+      if (!ring) continue;
+      const x = Number(ring.getAttribute('cx')) || 0;
+      for (const old of group.querySelectorAll('circle')) old.remove();
+      group.insertAdjacentHTML('beforeend', blasterMarkMarkup(x));
     }
     return true;
   }

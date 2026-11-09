@@ -9,6 +9,7 @@ import {adaptQueueVisualWorld20261031} from '../queue-visual-world-20261031-adap
 import {adaptQueueUiAudio20261031} from '../queue-ui-audio-20261031-adapter.mjs';
 import {adaptQueueWeapons20261031} from '../queue-weapons-20261031-adapter.mjs';
 import {adaptReviewedHotpaths20261107} from '../reviewed-hotpaths-20261107-adapter.mjs';
+import {adaptDualiesStanceSpread} from '../../splatoon3/dualies-stance-spread-adapter.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
@@ -33,8 +34,8 @@ const candidate=(rel,source)=>adaptBuildSource(rel,source);
 // Only the frozen textual boundary uses the preceding composition. Runtime
 // geometry and pose cases below still compare the complete default pipeline.
 function historicalOwnerCandidate(rel,source){
- const prior=adaptBuildSource(rel,source,{queueVisualWorld20261031:false,queueUiAudio20261031:false,queueWeapons20261031:false,reviewedHotpaths20261107:false});
- const replay=adaptReviewedHotpaths20261107(rel,adaptQueueWeapons20261031(rel,adaptQueueUiAudio20261031(rel,adaptQueueVisualWorld20261031(rel,prior))),replaceOnce);
+ const prior=adaptBuildSource(rel,source,{queueVisualWorld20261031:false,queueUiAudio20261031:false,queueWeapons20261031:false,dualiesStanceSpread:false,reviewedHotpaths20261107:false});
+ const replay=adaptReviewedHotpaths20261107(rel,adaptDualiesStanceSpread(rel,adaptQueueWeapons20261031(rel,adaptQueueUiAudio20261031(rel,adaptQueueVisualWorld20261031(rel,prior))),replaceOnce),replaceOnce);
  assert.equal(replay,candidate(rel,source),rel+' complete later queue replay retains the default production composition');
  return prior;
 }

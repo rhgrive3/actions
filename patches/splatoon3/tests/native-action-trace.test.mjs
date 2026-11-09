@@ -3,7 +3,7 @@ import {nativeTraceFixture} from './native-action-trace-fixture.mjs';
 import {requireFrozenTrace} from './native-action-trace-binding.mjs';
 const f=await nativeTraceFixture();
 test.after(()=>f.close());
-test('all 65 production main actors emit native action traces with full tick inputs and accepted packet snapshots',()=>{
+test('all 65 production main actors emit native action traces with full tick inputs and accepted packet snapshots',async()=>{
  assert.equal(f.records.length,65);assert.equal(new Set(f.records.map(r=>r.id)).size,65);
  const missed=[],trace=[],hitFamilies=new Set();
  for(const r of f.records){const t=f.run(r.id);const births=t.frames.flatMap(frame=>frame.births),fires=t.frames.flatMap(frame=>frame.fires),hits=t.frames.flatMap(frame=>frame.hits);
@@ -35,6 +35,18 @@ test('all 65 production main actors emit native action traces with full tick inp
   for(const p of t.packets){if(!p.e)continue;p.e=p.e.filter(e=>!melee(e));if(!p.e.length){delete p.e;delete p.r;continue;}
    for(const e of p.e)e[e.length-1]=++seq;}
  });
+ // The 2026-11-09 Dualies aim stance (dualies-stance-spread-adapter.mjs) moves
+ // only Dualies muzzles. Those records are compared from a composition without
+ // that one pass; the default composition must still differ for them, and
+ // every other record above is the default production composition. With a
+ // built site the prior composition comes from source (a site holds only the
+ // default composition).
+ const spreadIds=frozenView.records.filter(r=>r.family==='dualies').map(r=>r.id);
+ assert.equal(spreadIds.length,6);
+ const prior=await nativeTraceFixture({compositionOptions:{dualiesStanceSpread:false}});
+ try{for(const id of spreadIds){const i=frozenView.records.findIndex(r=>r.id===id),t=JSON.parse(JSON.stringify(prior.run(id)));
+  assert.notDeepEqual(frozenView.traces[i],t,id+' default composition applies the Dualies stance');frozenView.traces[i]=t;}}
+ finally{prior.close();}
  requireFrozenTrace(JSON.stringify(frozenView),new URL('./fixtures/native-action-trace-035.json.gz',import.meta.url));
  if(process.env.INKWAVE_NATIVE_TRACE_OUTPUT)fs.writeFileSync(process.env.INKWAVE_NATIVE_TRACE_OUTPUT,gzipSync(serialized,{level:9}));
 });

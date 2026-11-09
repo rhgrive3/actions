@@ -6,6 +6,7 @@ import { adaptCustomMatch } from '../patches/splatoon3/custom-match-adapter.mjs'
 import { adaptSmallTeamModes } from '../patches/splatoon3/small-team-modes-adapter.mjs';
 import { adaptBotPaintPitch } from '../patches/splatoon3/bot-paint-pitch-adapter.mjs';
 import { adaptBotTurfPaint } from '../patches/splatoon3/bot-turf-paint-adapter.mjs';
+import { adaptDualiesStanceSpread } from '../patches/splatoon3/dualies-stance-spread-adapter.mjs';
 import { adaptBotCombatQuality } from '../patches/splatoon3/bot-combat-quality-adapter.mjs';
 import { adaptBombBlastForecast } from '../patches/splatoon3/bomb-blast-forecast-adapter.mjs';
 import { adaptPauseModalLifetime } from '../patches/local-quality/pause-modal-lifetime-adapter.mjs';
@@ -227,6 +228,10 @@ export function adaptBuildSource(rel, code, options = {}) {
   // Shooter / Dualies Bots paint with a shallower aim (owner request).
   code = adaptBotPaintPitch(rel, code, replaceOnce);
   code = adaptBotTurfPaint(rel, code, replaceOnce);
+  // Dualies: wider aim stance so the two landing guides sit side by side (owner request).
+  // Frozen pre-request evidence (native action corpus, historical Character
+  // owner) may compose without this pass and replay it explicitly.
+  if (options.dualiesStanceSpread !== false) code = adaptDualiesStanceSpread(rel, code, replaceOnce);
   // No bomb blast-radius forecast rings (owner request).
   code = adaptBombBlastForecast(rel, code, replaceOnce);
   // Every per-frame window.innerWidth/innerHeight read answers from one cached pair.

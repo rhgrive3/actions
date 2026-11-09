@@ -27,9 +27,9 @@ function birth(p){const c=p.catalog,d=c?.descriptor;return {wid:p.wid??null,owne
 function flight(j){return {owner:j.owner?.nid??null,weapon:j.weapon?.id??null,ghost:!!j.ghost,
  charge:numeric(j.charge),chargeT:numeric(j.chargeT),speed:numeric(j.speed),range:numeric(j.range),travel:numeric(j.travel),
  origin:vec(j.origin),position:vec(j.pos),direction:vec(j.dir),seen:j.seen?.size??null,damage:numeric(j.damage)};}
-export async function nativeTraceFixture(){
+export async function nativeTraceFixture({compositionOptions=null}={}){
  let tick=0;const perf={now:()=>1000000+tick*1000/60};
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,includeCharacter:true,
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,includeCharacter:true,compositionOptions,
   vmPerformance:perf,extraExports:"export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';"});
  const {G,THREE}=f;G.scene=new THREE.Scene();G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-18,0,0],[18,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-20,-.5,-20],max:[20,0,20]}]});
  G.physics=new f.Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.projectiles=new f.Projectiles(G.scene);G.camera=new THREE.PerspectiveCamera();G.camera.position.set(0,3,-3);G.camera.updateMatrixWorld();G.settings={};G.time=0;G.mode='match';G.actors=[];G.netm=null;

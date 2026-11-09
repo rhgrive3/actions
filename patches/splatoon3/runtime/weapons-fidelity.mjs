@@ -239,6 +239,19 @@ function dualiesAimScratch(projectiles) {
 // Keep the two normal-fire rays parallel to the current center aim ray. Their
 // lateral offset comes from the live native hand muzzle origins, projected onto
 // the aim-plane right axis; it is geometry, not a Nintendo spacing calibration.
+const dualiesGuideArmsDown = actor => {
+  const ch = actor?.character;
+  return !!ch && typeof ch.aimReady === 'function' && !(ch.aimReady() >= 0.98);
+};
+// Left muzzle = right muzzle mirrored across the actor's midline (actor yaw frame).
+export function mirrorDualiesMuzzle(actor, right, out) {
+  const cy = Math.cos(actor.yaw || 0), sy = Math.sin(actor.yaw || 0);
+  const dx = right.x - actor.pos.x, dz = right.z - actor.pos.z;
+  const lx = -(dx * cy - dz * sy), lz = dx * sy + dz * cy;
+  out.set(actor.pos.x + lx * cy + lz * sy, right.y, actor.pos.z - lx * sy + lz * cy);
+  return out;
+}
+
 export function fidelityDualiesAimTargets(projectiles, actor, muzzle0, muzzle1) {
   const scratch = dualiesAimScratch(projectiles);
   const { muzzles, midpoint, forward, right, targets } = scratch;
@@ -2407,6 +2420,12 @@ export function installWeaponsFidelity(context,profile) {
       const p=shots[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
     }
+    // Owner report 2026-11-09: before the arms reach the aim pose the right
+    // muzzle already eases to the aim pose but the left one is the lowered
+    // carry pistol (~.5 m lower), so the two guides stacked vertically. The
+    // guide mirrors the right muzzle across the kid's midline until aimed.
+    // Live shots are unchanged (they keep the left bone muzzle, #1431).
+    if(dualiesGuideArmsDown(actor)){mirrorDualiesMuzzle(actor,shots[0].pos,shots[1].pos);shots[1].prev.copy(shots[1].pos);shots[1].start.copy(shots[1].pos);}
     const targets=fidelityDualiesAimTargets(this,actor,shots[0].pos,shots[1].pos);
     for(let hand=0;hand<2;hand++){
       const p=shots[hand],out=points[hand],dir=dirs[hand];
