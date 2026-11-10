@@ -7968,3 +7968,9 @@ AI/ルールへの差分: 到達できる経路が旧6,000探索上限で14件�
 - 本家パラメータ（`WeaponSpChimney` 11.3.0 `WallParam`）: `SplashPaintRadius 2.5`、`SplashSpawnSpan 45`、`SplashSpawnAllFrame 10`、`SplashSpawnPosition` 12 点（X ±1〜±11、Y 4〜6.5）、`WallWidth 15`、`RunningFrame 560`。INKWAVE の値はこれと一致する。1 回の塗りの実測面積（ブラウザ）は 20.6 ㎡で、半径 2.5 の円（19.6 ㎡）とほぼ同じ。
 - 未確認の点: 着地直後の 1 周期（INKWAVE の補正、全体の約 7%）。滴は落下せず、出現位置の真下を即座に塗る。出現点 X ±11 はシートの半幅 7.5 より外側で、座標系の解釈が正しいかは未確認。公開資料の記述は割れている（Inkipedia の本文は「シートの真下を塗る」、対戦解説は「塗りはほとんどしない」とされる。今回の環境では wikiwiki.jp・splatoonwiki.org の本文を取得できず、検索結果の要約のみ）。
 - 判定: パラメータの値は本家と一致するが、本家での実際の塗り量は未確認のため変更しない。実機の塗りポイント計測が必要。
+
+### アメフラシの塗り量（調査のみ、変更なし）
+- 本家パラメータ（`WeaponSpInkStorm` 11.3.0、Leanny/splat3 `7280ff9c`）: `CloudParam.DamageRadius 10`、`RainyFrame` 480/540/600F（スペシャル性能アップ Low/Mid/High）、`RainNum 72`、`WithNoPaintRainNum 120`、雨の当たり半径（地形）0.25。雨1滴の塗り半径はこの表にない。
+- INKWAVE の実装（`config.js` の `SPECIALS.storm` と `weapons.js` の `_updateClouds`）: 雲の半径 3.4、移動 1.1/s、0.045 秒ごとに雲の中のランダムな位置を半径 0.45〜0.8 で塗る。持続時間 8 秒（`storm-power.mjs`）。
+- 塗り面積の見積もり（ロジック単独の計算、平らな床、重なりを除く）: アメフラシ 約 77 m²、スミナガシート 約 780 m²（重なりを含む合計は約 210 m² と約 3300 m²）。
+- 差分: 雲の半径が本家の `DamageRadius` 10 に対して 3.4 で、範囲の面積は約 1/9。雨の数と1滴の塗り半径の本家値は未確認。本家での塗り量の比較は実機計測が必要（未確認）。
