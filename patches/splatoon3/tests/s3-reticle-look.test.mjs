@@ -65,13 +65,15 @@ test('hit flash: only the local player hitting a real victim, not in boss or att
   assert.equal(projected, 1);
 });
 
-test('floor-paint drops: Shooter, Dualies and the Slosher bucket are drawn at 20%; others unchanged', async () => {
+test('floor-paint drops: Shooter and the Slosher bucket at 20%, Dualies at 20% x 60%; others unchanged', async () => {
   const { smallFloorDropScale } = await import('../runtime/projectile-presentation.mjs');
   const owner = (kind, family) => ({ owner: { weapon: kind === 'catalog' ? { kind, catalogRecord: { family } } : { kind } } });
   assert.equal(smallFloorDropScale(owner('catalog', 'shooter')), 0.2);
-  assert.equal(smallFloorDropScale(owner('catalog', 'dualies')), 0.2);
+  assert.ok(Math.abs(smallFloorDropScale(owner('catalog', 'dualies')) - 0.12) < 1e-12);
   assert.equal(smallFloorDropScale(owner('shooter')), 0.2);
-  assert.equal(smallFloorDropScale(owner('dualies')), 0.2);
+  assert.ok(Math.abs(smallFloorDropScale(owner('dualies')) - 0.12) < 1e-12);
+  // Owner request 2026-11-10: a sourced Dualies drop is drawn at 60% too
+  assert.equal(smallFloorDropScale({ ...owner('catalog', 'dualies'), sourceActor: 'WeaponManeuverNormal' }), 0.6);
   assert.equal(smallFloorDropScale(owner('slosher')), 0.2);
   assert.equal(smallFloorDropScale({ sourceActor: 'WeaponSlosherStrong' }), 0.2);
   assert.equal(smallFloorDropScale({ ...owner('catalog', 'slosher'), sourceActor: 'WeaponSlosherDiffusion' }), 1);

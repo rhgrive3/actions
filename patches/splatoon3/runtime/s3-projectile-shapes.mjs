@@ -28,6 +28,7 @@ import { setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 import { shotTailFrames } from './weapons-fidelity.mjs';
+import { dualiesShotVisualScale } from './dualies-shot-visual-scale.mjs';
 import { createInkSheets, FIRE_INK, MACHINE_DRILL } from './s3-ink-sheets.mjs';
 
 const INSTALLED = Symbol.for('inkwave.s3.projectile-shapes.v1');
@@ -433,7 +434,7 @@ function direction(p, out) {
 function drawRadius(p) { return p.vis || p.size || 0.1; }
 // Shooter drawn width is not published; the player collider is a hitbox.
 // Native rounds keep their drawn radius, catalog Shooters share 0.1.
-function shotRadius(p) { return p.catalog ? 0.1 : p.vis || 0.1; }
+function shotRadius(p) { return (p.catalog ? 0.1 : p.vis || 0.1) * dualiesShotVisualScale(p); }
 
 export function bodyParams(p, kind, sp, out = {}) {
   const travel = p.start ? p.start.distanceTo(p.pos) : Infinity;

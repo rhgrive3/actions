@@ -91,6 +91,12 @@ export const S3_RETICLE_CSS = `
 .iw-xh .iw-ret--shooter > .iw-ret__dot { display: none; }
 /* Dualies' fixed camera rings: the Blaster's fixed camera ring (grey r13 w1.5, .75), one per hand */
 .iw-xh .iw-ret--dualies .iw-ret__dual-camera circle { stroke: ${BLASTER_CAMERA_RING.stroke}; stroke-width: ${BLASTER_CAMERA_RING.width}; opacity: ${BLASTER_CAMERA_RING.opacity}; stroke-dasharray: none; }
+/* Owner request 2026-11-10: Shooter / Dualies reticles stay at full strength. Beyond reach
+   (is-far) and mid-roll they no longer ghost (opacity, shrunken dot, dashed rings). */
+.iw-xh.is-far .iw-ret.iw-ret--shooter, .iw-xh.is-far .iw-ret.iw-ret--dualies, .iw-xh .iw-ret.iw-ret--dualies.is-roll { opacity: 1; }
+.iw-xh.is-far .iw-ret--shooter .iw-ret__dot, .iw-xh.is-far .iw-ret--dualies .iw-ret__dot { scale: 1; }
+.iw-xh.is-far .iw-ret--shooter .iw-ret__svg circle, .iw-xh.is-far .iw-ret--shooter .iw-ret__svg path,
+.iw-xh.is-far .iw-ret--dualies .iw-ret__svg circle, .iw-xh.is-far .iw-ret--dualies .iw-ret__svg path { stroke-dasharray: none; }
 .iw-xh .iw-ret g.s3-blast-direct { display: none; }
 .iw-xh.is-target .iw-ret g.s3-blast-direct { display: inline; }
 `;

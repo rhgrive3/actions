@@ -5,6 +5,7 @@
 // never used for player or field collision, damage, trajectory or turf paint.
 import { sharedBucketDraw, sharedBucketDrawIndex, VISUAL_WIDTH_CALIBRATION, HISSEN_PRESENTATION_SCALE } from './projectile-visuals.mjs';
 import { INK_LOOK } from './weapons-fidelity.mjs';
+import { DUALIES_SHOT_VISUAL_SCALE } from './dualies-shot-visual-scale.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -156,9 +157,11 @@ export function catalogBubbleLimitGroundNormalSpeed(velocity, normal, perFrameLi
 export const SMALL_FLOOR_DROP_SCALE=.2;
 export function smallFloorDropScale(d){
   if(d?.sourceActor==='WeaponSlosherStrong')return SMALL_FLOOR_DROP_SCALE;
-  if(d?.sourceActor)return 1;
   const w=d?.owner?.weapon,family=w?.kind==='catalog'?w.catalogRecord?.family:w?.kind;
-  return family==='shooter'||family==='dualies'||(family==='slosher'&&w?.kind!=='catalog')?SMALL_FLOOR_DROP_SCALE:1;
+  // Owner request 2026-11-10: Dualies main-weapon drops at 60% (dualies-shot-visual-scale.mjs).
+  const dual=family==='dualies'&&!d?.s3SpecialWeapon?DUALIES_SHOT_VISUAL_SCALE:1;
+  if(d?.sourceActor)return dual;
+  return (family==='shooter'||family==='dualies'||(family==='slosher'&&w?.kind!=='catalog')?SMALL_FLOOR_DROP_SCALE:1)*dual;
 }
 
 // Source-owned, fixed-60Hz falling paint drops already live in _s3SplashDrops.

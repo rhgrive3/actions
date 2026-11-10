@@ -68,6 +68,32 @@ export function nativeFaceLockCoplanar(reference, face, at = null) {
  return Math.abs(far) <= FACE_LOCK_PLANE;
 }
 
+// Owner report 2026-11-10: block-built stages (the Practice Range, the original
+// arenas) are made of one box per zone, so the next floor at the same height is
+// another block's face. A face-locked stamp (a Roller's rolling contact, a shot
+// or drop striking the floor) stayed on the struck face only: rolling along the
+// Long Lane's edge never inked the Target Gallery floor beside it. Block faces
+// are exact planes, so only a face with the same normal on the same plane (to
+// BLOCK_LOCK_PLANE metres, origin and far corner) shares the stamp: a raised
+// plate, a step, a wall or an underside never does.
+const BLOCK_LOCK_COS = .999, BLOCK_LOCK_PLANE = .02;
+export function blockFaceLockFace(level, faceId) {
+ if (!level || level.native || !Number.isInteger(faceId) || faceId < 0) return null;
+ return level.faces?.[faceId] || null;
+}
+export function blockFaceLockCoplanar(reference, face) {
+ if (reference === face) return true;
+ if (!face?.n || !reference?.n) return false;
+ const n = reference.n, m = face.n;
+ if (n.x*m.x + n.y*m.y + n.z*m.z <= BLOCK_LOCK_COS) return false;
+ const a = reference.origin, b = face.origin;
+ const offset = (x, y, z) => (x-a.x)*n.x + (y-a.y)*n.y + (z-a.z)*n.z;
+ if (Math.abs(offset(b.x, b.y, b.z)) > BLOCK_LOCK_PLANE) return false;
+ const far = offset(b.x + face.u.x*face.su + face.v.x*face.sv,
+   b.y + face.u.y*face.su + face.v.y*face.sv, b.z + face.u.z*face.su + face.v.z*face.sv);
+ return Math.abs(far) <= BLOCK_LOCK_PLANE;
+}
+
 // #264: sub-cell dot cores can claim without exceeding the legacy fixed-sample
 // margin. Native cache pruning must opt into the same ownership rule.
 /** Conservative maximum interior depth of the existing signed-distance pieces.

@@ -381,7 +381,7 @@ export function adaptSource(rel, code) {
     // Owner request 2026-11-07 (visual only): a Splatana horizontal swing's
     // muzzle droplets are drawn at 20% size; glow and puff are unchanged.
     code = replaceOnce(code, "  muzzle(pos, dir, color, kind = 'shooter') {\n",
-      "  muzzle(pos, dir, color, kind = 'shooter') {\n    const dropScale = kind === 'splatana-h' ? 0.2 : 1;\n", 'splatana horizontal muzzle drop scale');
+      "  muzzle(pos, dir, color, kind = 'shooter') {\n    const dropScale = kind === 'splatana-h' ? 0.2 : kind === 'dualies' ? 0.6 : 1;\n", 'splatana horizontal muzzle drop scale');
     code = replaceOnce(code, 'col, 0.022 + rand() * 0.028, 0.28 + rand() * 0.12, 0.6, 1.4, 0);',
       'col, (0.022 + rand() * 0.028) * dropScale, 0.28 + rand() * 0.12, 0.6, 1.4, 0);', 'splatana horizontal muzzle drop size');
   }

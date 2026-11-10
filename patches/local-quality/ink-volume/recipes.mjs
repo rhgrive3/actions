@@ -6,6 +6,7 @@ import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDra
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
 import { usesBucketSlosherSheet, sharedBucketDraw, hissenVolumeFallback, sharedBucketTailLength, projectileDrawRadius, projectilePresentationScale } from '../../splatoon3/runtime/projectile-visuals.mjs';
 import { poseBirthOffset } from '../../splatoon3/runtime/catalog-pose-birth.mjs';
+import { dualiesShotVisualScale } from '../../splatoon3/runtime/dualies-shot-visual-scale.mjs';
 
 const states = new WeakMap();
 const X = new THREE.Vector3(1,0,0), Y = new THREE.Vector3(0,1,0), Z = new THREE.Vector3(0,0,1);
@@ -112,7 +113,7 @@ export function submitInkVolume(engine,p) {
   if(recipe==='shooter') {
     const name=engine.assets.has(specific)?specific:'shooter',asset=engine.assets.get(name);
     if(!asset||asset.patterns.length!==2)return false;
-    const g=Math.min(1,p.age*20),radius=nativeRadius(p)*g*(1+.3*Math.sin(g*Math.PI))*INK_LOOK.shot[4];
+    const g=Math.min(1,p.age*20),radius=nativeRadius(p)*g*(1+.3*Math.sin(g*Math.PI))*INK_LOOK.shot[4]*dualiesShotVisualScale(p);
     if(!(radius>0))return false;
     const speed=p.vel.length();s.dir.copy(p.vel);if(speed>1e-8)s.dir.multiplyScalar(1/speed);else s.dir.copy(p._inkVolumeDirection).normalize();
     const frame=p.catalog?.r?.parameters?.spl__BulletShooterTailLengthParam?.MaxLengthFrame,frames=Number.isFinite(frame)&&frame>0?frame:shotTailFrames(p);

@@ -1,3 +1,4 @@
+import { DUALIES_SHOT_VISUAL_SCALE } from './dualies-shot-visual-scale.mjs';
 // Small independent 3D muzzle beads for Shooter, Splatling and Dualies.
 // Existing muzzle flashes and the Splatling's compact projectile body stay intact.
 // Fixed reusable CPU records + existing glossy blob mesh; no physics, paint,
@@ -62,7 +63,7 @@ export class ShooterMuzzleDroplets{
     dir.copy(b.dir).multiplyScalar(speed).addScaledVector(b.right,b.phaseCos[i]*lateral*5).addScaledVector(b.up,b.phaseSin[i]*lateral*5);
     pos.copy(b.pos).addScaledVector(b.dir,.12).addScaledVector(dir,age).addScaledVector(b.up,-3*age*age);
     dir.addScaledVector(b.up,-6*age).normalize();q.setFromUnitVectors(axis,dir);
-    const r=SHOOTER_MUZZLE_COSMETICS.radius*(1-i*.12)*(1-age/SHOOTER_MUZZLE_COSMETICS.life*.55);
+    const r=SHOOTER_MUZZLE_COSMETICS.radius*(1-i*.12)*(1-age/SHOOTER_MUZZLE_COSMETICS.life*.55)*(b.family==='dualies'?DUALIES_SHOT_VISUAL_SCALE:1);
     s.setScalar(r);m.compose(pos,q,s);mesh.setMatrixAt(n,m);mesh.setColorAt(n,b.owner.color);
     const o=n*4;shape[o]=1.35;shape[o+1]=.02;shape[o+2]=phase;shape[o+3]=0;
     look[o]=.01;look[o+1]=4;look[o+2]=1;look[o+3]=phase;petals[n*2]=petals[n*2+1]=0;n++;this.drawn++;

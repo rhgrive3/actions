@@ -4,7 +4,7 @@ import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
 import { fixture } from './source-fixture.mjs';
 import { heldBrellaGuardFacing } from '../runtime/brella-guard-facing.mjs';
-import { heldFireAimFacing } from '../runtime/fire-hold-facing.mjs';
+import { heldFireAimFacing, specialYieldsToMainFacing } from '../runtime/fire-hold-facing.mjs';
 import { adaptBrellaGuardFacing } from '../brella-guard-facing-adapter.mjs';
 import { adaptSource, replaceOnce } from '../adapter.mjs';
 import fs from 'node:fs';
@@ -55,7 +55,7 @@ test('build hook is single-use and preserves special/superjump and roller preced
   const raw=actorSource(),code=adaptBuildSource('src/game/actor.js',raw),face=faceMethod(code);
   assert.equal(face.source,faceMethod(adaptSource('src/game/actor.js',raw)).source,
     'later production overlays preserve the movement and Brella facing owner');
-  const special=face.method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='this.specialActive || this.superJumpState');
+  const special=face.method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='(this.specialActive && !specialYieldsToMainFacing(this, isSquid)) || this.superJumpState');
   assert.ok(special,'special/superjump own the first facing branch');
   // Grounded rolling follows the stick; the held swing before rolling keeps aim.
   const rolling=special.alternate,held=rolling?.alternate,guard=held?.alternate;
@@ -75,10 +75,10 @@ test('build hook is single-use and preserves special/superjump and roller preced
 });
 test('actual Actor facing executes higher-priority owners before held Brella admission',async()=>{
   const f=await setup(),code=adaptBuildSource('src/game/actor.js',actorSource()),{method,source}=faceMethod(code);
-  const special=method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='this.specialActive || this.superJumpState');
+  const special=method.value.body.body.find(n=>n.type==='IfStatement'&&code.slice(n.test.start,n.test.end)==='(this.specialActive && !specialYieldsToMainFacing(this, isSquid)) || this.superJumpState');
   const rolling=special.alternate;
-  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing','heldFireAimFacing','rollingHeadingActive',
-    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard,heldFireAimFacing,rollingHeadingActive);
+  const compile=(text,guard=heldBrellaGuardFacing)=>new Function('PLAYER','clamp','angleDiff','TAU','reverseShotRelease','heldBrellaGuardFacing','heldFireAimFacing','rollingHeadingActive','specialYieldsToMainFacing',
+    'return (class {'+text+'}).prototype._face;')(f.PLAYER,f.clamp,f.angleDiff,Math.PI*2,reverseShotRelease,guard,heldFireAimFacing,rollingHeadingActive,specialYieldsToMainFacing);
   const without=(node)=>source.slice(0,node.test.start-method.start)+'false'+source.slice(node.test.end-method.start);
   const cases=[...IDS.flatMap(id=>[
     {name:id+' guard',id,target:.8,guard:1,pose:1},
@@ -86,6 +86,10 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
     {name:id+' superjump',id,jump:true,target:Math.PI,guard:0,pose:0},
     {name:id+' closed',id,closed:true,target:Math.PI/2,guard:1,pose:1}]),
     {name:'roller',id:'roller',rolling:true,target:Math.PI/2,guard:0,pose:0}, // follows the stick, not aim
+    // Owner report 2026-11-10: Killer Wail keeps the main weapon usable; firing faces the aim, idle follows travel
+    {name:'killer wail fire',id:'shooter',wail:true,fire:true,target:.8,guard:1,pose:1},
+    {name:'killer wail idle',id:'shooter',wail:true,target:Math.PI,guard:0,pose:1},
+    {name:'other special fire',id:'shooter',special:true,fire:true,target:Math.PI,guard:0,pose:0},
     {name:'held catalog roller',id:'s3-roller-heavy',fire:true,target:.8,guard:0,pose:0},
     {name:'held brush',id:'s3-brush-normal',fire:true,target:.8,guard:0,pose:0},
     {name:'sub supersedes roller',id:'roller',rolling:true,sub:true,target:.8,guard:0,pose:1},
@@ -94,7 +98,7 @@ test('actual Actor facing executes higher-priority owners before held Brella adm
     const a=f.make(c.id);a.yaw=a.yawVel=a.fireFacing=0;a._faceTarget=null;a.aimYaw=.8;
     a.intent.move.set(1,0,0);a.vel.set(0,0,-2);a.grounded=true;a.weaponRunner.firingPose=()=>false;
     a.weaponRunner.rolling=!!c.rolling;a.intent.fire=!!c.fire;a.intent.sub=!!c.sub;
-    a.specialActive=c.special?{}:null;a.superJumpState=c.jump?{}:null;a.form=c.squid?'squid':'kid';
+    a.specialActive=c.wail?{id:'killerWail'}:c.special?{}:null;a.superJumpState=c.jump?{}:null;a.form=c.squid?'squid':'kid';
     a.weaponRunner.catalogState={id:c.id,canopy:{open:!c.closed,launched:false,hp:100}};return a;
   }
   for(const hz of[30,60,120])for(const c of cases){

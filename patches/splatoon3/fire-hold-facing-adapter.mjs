@@ -9,5 +9,8 @@ export function adaptFireHoldFacing(rel, code, replaceOnce) {
   if (code.split(before).length !== 2)
     throw new Error('INKWAVE patch conflict (held FIRE aim-facing): expected exactly one composed Actor._face aim branch.');
   code = replaceOnce(code, before, after, 'held FIRE aim-facing');
-  return "import { heldFireAimFacing } from '../../patches/splatoon3/runtime/fire-hold-facing.mjs';\n" + code;
+  // Killer Wail: main/sub use keeps the aim facing (runtime/fire-hold-facing.mjs).
+  code = replaceOnce(code, '    if (this.specialActive || this.superJumpState) {',
+    '    if ((this.specialActive && !specialYieldsToMainFacing(this, isSquid)) || this.superJumpState) {', 'Killer Wail main aim-facing');
+  return "import { heldFireAimFacing, specialYieldsToMainFacing } from '../../patches/splatoon3/runtime/fire-hold-facing.mjs';\n" + code;
 }

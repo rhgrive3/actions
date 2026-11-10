@@ -548,8 +548,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
-    // A Splatana horizontal swing draws its muzzle droplets at 20% (fx.js 'splatana-h').
-    const fxKind=r.family==='blaster'?'blaster':r.family==='splatana'&&a._s3SaberHorizontalNotify?'splatana-h':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    // A Splatana horizontal swing draws its muzzle droplets at 20% (fx.js 'splatana-h');
+    // Dualies at 60% (fx.js 'dualies', owner request 2026-11-10).
+    const fxKind=r.family==='blaster'?'blaster':r.family==='splatana'&&a._s3SaberHorizontalNotify?'splatana-h':r.family==='dualies'?'dualies':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
     a._s3SaberHorizontalNotify=false;
     const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
     // Raw-socket births defer only the FX request until this tick's pose (#1431).
