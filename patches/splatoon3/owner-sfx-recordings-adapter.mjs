@@ -10,12 +10,20 @@
 //    title score is silenced on the title screen. The Splat Bomb fuse keeps its
 //    landing / fuse beeps (`bomb_beep`); the throw recording is not a fuse.
 const IMPORT = "import { installOwnerSfxRecordings } from '../../patches/splatoon3/runtime/audio/owner-sfx-recordings.mjs';\n";
+const BOOT_IMPORT = "import { bootOwnerSfx } from '../patches/splatoon3/runtime/audio/owner-sfx-recordings.mjs';\n";
 export function adaptOwnerSfxRecordings(rel, code, replaceOnce) {
   if (rel === 'src/audio/audio.js') {
     if (code.includes(IMPORT)) throw new Error('INKWAVE owner SFX recordings: repeated audio.js transform');
-    return IMPORT + code + '\ninstallOwnerSfxRecordings(AudioEngine, SFX, audio);\n';
+    return IMPORT + code + '\ninstallOwnerSfxRecordings(AudioEngine, SFX);\n';
   }
   if (rel === 'src/main.js') {
+    // The game boot (not the audio.js import) creates the suspended engine so the
+    // title cues decode before the first press.
+    code = replaceOnce(code,
+      "    G.audio = audioMod.audio; G.music = musicMod.music;",
+      "    G.audio = audioMod.audio; G.music = musicMod.music;\n    bootOwnerSfx(G.audio);",
+      'owner SFX: create the engine at game boot');
+    if (!code.includes(BOOT_IMPORT)) code = BOOT_IMPORT + code;
     // The recorded special-ready cue belongs to the local gauge-full event only;
     // HUD streak callouts and menus keep reusing the synthesized special_ready.
     code = replaceOnce(code,

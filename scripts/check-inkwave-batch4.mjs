@@ -35,7 +35,7 @@ try{
      G.actors=actors;G.local=actors.find(a=>a.owner===id);G.local.isLocal=true;
      const m=G.match={mode:'turf',state:'playing',duration:180,time:180,actors,local:G.local,playing:()=>m.state==='playing',removeActor(a){this.actors=this.actors.filter(x=>x!==a);}};
      const s=G.net=new NetSession();s.myId=id;s.hostId='host';s.state='match';s.code='TEST3';s._members=new Map([['host','Host'],['guest','Guest']]);s.lobby.players=['host','guest'].map((id,i)=>({id,name:id,team:i,weapon:'shooter',ready:false,style:{}}));
-     window.messages=[];s.tr={broadcast:d=>messages.push({d:structuredClone(d)}),sendTo:(to,d)=>messages.push({to,d:structuredClone(d)}),lock(){},rtt:0};
+     window.messages=[];s.tr={broadcast:d=>(messages.push({d:structuredClone(d)}),true),sendTo:(to,d)=>(messages.push({to,d:structuredClone(d)}),true),lock(){return true;},close(){},rtt:0};
      const nm=s.match=new NetMatch(s,{id:'batch4-room',map:'tidewater'});nm.bind(m);
      window.ended=0;const account={name:id,level:1,xp:0,weapon:'shooter',style:{}};G.game={profile:account,netMatchEnd(){if(s.state==='lobby')return;ended++;s.endMatch();menus.show('lobby',{wipe:false});}};
      const api={getSettings:()=>G.settings,setSettings:v=>Object.assign(G.settings,v),getProfile:()=>account,getLoadout:()=>({weapon:account.weapon}),setLoadout:v=>account.weapon=v.weapon,setProfileStyle:v=>account.style=v,

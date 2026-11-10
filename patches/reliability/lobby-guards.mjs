@@ -40,6 +40,19 @@ export function installLobbyGuards(Session, validPlayer) {
     lobby.players=players;return true;
   };
   P._applyMe = function(id, data) {
+    // Online Turf results: a player may change gear before choosing to keep
+    // going. Record only weapon/style for the next lobby; endMatch broadcasts it.
+    if (this.state === 'match' && this.isHost && this.match?.match?.state === 'results' &&
+        (id === this.myId || this._members.has(id)) && data && typeof data === 'object') {
+      const p = this.lobby.players.find(x => x.id === id);
+      if (!p) return;
+      const next = {};
+      if (data.weapon !== undefined) next.weapon = data.weapon;
+      if (data.style !== undefined) next.style = data.style;
+      if (!Object.keys(next).length || !validPlayer({ weapon: p.weapon, ...next })) return;
+      Object.assign(p, next);
+      return;
+    }
     if (this.state !== 'lobby' || !this.isHost || (id !== this.myId && !this._members.has(id))) return;
     const previous = this._guestLobbyUpdate;
     this._guestLobbyUpdate = id !== this.myId;

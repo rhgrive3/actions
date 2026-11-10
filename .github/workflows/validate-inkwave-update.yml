@@ -1605,6 +1605,7 @@ jobs:
           INKWAVE_BASELINE_SITE: .ci-scratch/batch4-site
           INKWAVE_CONTINUATION_BUILT_SITE: .ci-scratch/batch4-site
         run: |
+          set -o pipefail
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/batch4-site
           node --experimental-vm-modules --test patches/splatoon3/tests/trizooka-enemy-ink.test.mjs patches/splatoon3/tests/slam-damage-state.test.mjs patches/splatoon3/tests/surge-wall-launch-armor.test.mjs patches/splatoon3/tests/charger-wall-drop.test.mjs patches/splatoon3/tests/disconnected-main-projectiles.test.mjs patches/splatoon3/tests/online-continuation.test.mjs patches/network-replication/tests/wipeout-owner-history.test.mjs patches/local-quality/tests/result-continuation.test.mjs
           node scripts/check-inkwave-batch4.mjs .ci-scratch/batch4-site --webkit | tee .ci-scratch/batch4-browser.json

@@ -150,8 +150,13 @@ test('composed sources install the recordings and route only the gauge-full cue'
   const read = rel => fs.readFileSync(new URL('inkwave-public/' + rel, ROOT), 'utf8');
   const audio = adaptBuildSource('src/audio/audio.js', read('src/audio/audio.js'));
   assert.match(audio, /^import \{ installOwnerSfxRecordings \}/m);
-  assert.ok(audio.trimEnd().endsWith('installOwnerSfxRecordings(AudioEngine, SFX, audio);'));
+  // Importing audio.js registers the recordings but never opens an audio device.
+  assert.ok(audio.trimEnd().endsWith('installOwnerSfxRecordings(AudioEngine, SFX);'));
   const main = adaptBuildSource('src/main.js', read('src/main.js'));
+  // The game boot creates the suspended engine once, right after taking the module.
+  assert.match(main, /^import \{ bootOwnerSfx \}/m);
+  assert.equal((main.match(/bootOwnerSfx\(G\.audio\);/g) || []).length, 1);
+  assert.match(main, /G\.audio = audioMod\.audio; G\.music = musicMod\.music;\n\s*bootOwnerSfx\(G\.audio\);/);
   assert.equal((main.match(/play\('special_charged'\)/g) || []).length, 1);
   assert.match(main, /play\('times_up'\)/);
   // The fuse keeps the native landing beep and the shortening fuse beeps; no
@@ -193,4 +198,17 @@ test('bomb throw event plays one sound: the recording once decoded, else the kit
   handlers.get('bomb:explode')({ actor: thrower, subId: 'bomb', pos: throwAt });
   assert.deepEqual(weapon.slice(1), [['sub:suction', 'fire'], ['sub:bomb', 'impact'], ['sub:bomb', 'explosion']]);
   assert.equal(owner.length, 2);
+});
+
+test('game boot creates the engine once; outside a browser it stays closed', async () => {
+  const { bootOwnerSfx } = await import('../runtime/audio/owner-sfx-recordings.mjs');
+  let inits = 0;
+  const engine = { ctx: null, init() { inits++; this.ctx = {}; return this; } };
+  assert.equal(bootOwnerSfx(engine), false, 'no window: no device');
+  globalThis.window = globalThis.window || {};
+  try {
+    assert.equal(bootOwnerSfx(engine), true);
+    assert.equal(bootOwnerSfx(engine), false, 'an existing context is kept');
+    assert.equal(inits, 1);
+  } finally { delete globalThis.window; }
 });
