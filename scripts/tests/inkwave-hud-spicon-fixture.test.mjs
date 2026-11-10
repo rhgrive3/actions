@@ -9,7 +9,10 @@ const source=fs.readFileSync(new URL('../check-inkwave-hud-authority.mjs',import
 const privateIcon='spIcon:h.spIcon.cloneNode(false),';
 assert.equal(source.split(privateIcon).length-1,1);
 const previous=source.replace(privateIcon,'');
-assert.equal(crypto.createHash('sha256').update(previous).digest('hex'),'30425d5aad2f70741a076b7fe5fd04ac2b7a2420a2adffdd4484e9423dc2e427','complete failed 39c collector is the negative counterfactual');
+// Re-pinned 2026-11-10: unrelated sections of the checker were brought up to
+// the owner wipeout cue (2129e29) and the shared Splatling ring (c8e82aa).
+// The counterfactual is unchanged: the same file minus the private spIcon.
+assert.equal(crypto.createHash('sha256').update(previous).digest('hex'),'91791dd2ca4e6f2640d008f8ff9ef021dbe212e8d2ce95a8b5448912d3882596','complete failed 39c collector is the negative counterfactual');
 function collectorInitialization(code){
  const sites=[];
  function visit(node){

@@ -1,11 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import{inspectSplatlingStages}from '../../../scripts/check-inkwave-hud-authority.mjs';
-function run(negative=null,inspect=inspectSplatlingStages){
+function run(negative=null,inspect=inspectSplatlingStages,radii=[21,21]){
  const saved={probe:globalThis.__splatlingProbe,style:globalThis.getComputedStyle,width:globalThis.innerWidth,height:globalThis.innerHeight};
  const base={display:'block',visibility:'visible',opacity:'1',contentVisibility:'visible',stroke:'rgb(255, 255, 255)',strokeWidth:'4.5',strokeOpacity:'1',strokeDashoffset:'0',transform:'none'};
  const node=(tag,parent=null)=>({tagName:tag,parentElement:parent,style:{...base,setProperty(k,v){this[k]=v;}},getAttribute(k){return k==='style'?JSON.stringify(this.style):k==='r'&&this.r?String(this.r.baseVal.value):null;},setAttribute(k,v){if(k==='style')this.style={...JSON.parse(v),setProperty(k,v){this[k]=v;}};if(k==='r')this.r.baseVal.value=Number(v);},removeAttribute(){},getBoundingClientRect(){const size=this.r?this.r.baseVal.value*2:80,left=xh.style.left==='200vw'?2000:600-size/2;return{x:left,y:400-size/2,left,right:left+size,top:400-size/2,bottom:400+size/2,width:size,height:size};}});
  const xh=node('DIV'),ret=node('DIV',xh),svg=node('svg',ret);svg.checkVisibility=()=>svg.style.visibility==='visible'&&Number(getComputedStyle(xh).opacity)>0;ret.querySelector=()=>svg;
- const rings=[21,28].map(r=>{const x=node('circle',svg);Object.assign(x,{r:{baseVal:{value:r}},cx:{baseVal:{value:0}},cy:{baseVal:{value:0}},checkVisibility:()=>false,isPointInStroke(p){let angle=Math.atan2(p.y,p.x);if(angle<0)angle+=Math.PI*2;return this.style.stroke!=='none'&&angle/(Math.PI*2)<1-Number(this.style.strokeDashoffset)/100;}});return x;});
+ // Both charge stages share one ring; the second is drawn after (over) the first (c8e82aa).
+ const rings=radii.map(r=>{const x=node('circle',svg);Object.assign(x,{r:{baseVal:{value:r}},compareDocumentPosition(other){return other===rings[1]&&this===rings[0]?4:2;},cx:{baseVal:{value:0}},cy:{baseVal:{value:0}},checkVisibility:()=>false,isPointInStroke(p){let angle=Math.atan2(p.y,p.x);if(angle<0)angle+=Math.PI*2;return this.style.stroke!=='none'&&angle/(Math.PI*2)<1-Number(this.style.strokeDashoffset)/100;}});return x;});
  const runner={},h={xh,ret,_chargeEl:rings[0],_chargeSecond:rings[1],_local:()=>({weaponRunner:runner}),_updCrosshair(){rings[0].style.strokeDashoffset='0';rings[1].style.strokeDashoffset='50';}};
  globalThis.__splatlingProbe={holder:h};globalThis.getComputedStyle=el=>el===xh&&el.style.opacity==='0'&&el.style.transition!=='none'?{...el.style,opacity:'1'}:el.style;globalThis.innerWidth=1280;globalThis.innerHeight=800;
  try{return inspect({charge:5/6,streaming:false,left:0,first:1,second:.5,negative});}finally{globalThis.__splatlingProbe=saved.probe;globalThis.getComputedStyle=saved.style;globalThis.innerWidth=saved.width;globalThis.innerHeight=saved.height;}
@@ -16,3 +17,5 @@ for(const negative of ['hidden','opacity','offscreen','stroke','zero-size','prog
 test('opacity negative disables transition and verifies computed zero, not just inline assignment',()=>{const r=run('opacity');assert.equal(r.negativeState.style.opacity,'0');assert.equal(r.negativeState.style.transition,'none');assert(r.errors.includes('container/ancestor hidden'));});
 
 test('old inline-only opacity mutation reproduces the CI unapplied-negative state',()=>{const old=Function('return ('+inspectSplatlingStages.toString().replace("changed.style.setProperty('transition','none','important');",'')+')')();const r=run('opacity',old);assert.equal(r.negativeState.inlineOpacity,'0');assert.equal(r.negativeState.style.opacity,'1');assert.equal(r.negativeApplied,false);assert.deepEqual(r.errors,[]);});
+
+test('a separate outer second-stage ring (pre-c8e82aa look) is rejected',()=>{const r=run(null,inspectSplatlingStages,[21,28]);assert(r.errors.includes('Splatling second stage does not share the first-stage ring'));});
