@@ -55,11 +55,13 @@ test('dualies fixed camera rings copy the Blaster fixed camera ring', () => {
 });
 
 test('dualies: wide aim stance and a mirrored left muzzle until the arms are up (composed build)', async () => {
-  const { DUALIES_AIM_ANCHOR_X } = await import('../dualies-stance-spread-adapter.mjs');
+  const { DUALIES_AIM_ANCHOR_X, DUALIES_AIM_ANCHOR_Z } = await import('../dualies-stance-spread-adapter.mjs');
   const character = adaptBuildSource('src/game/character.js', read('src/game/character.js'));
   const weapons = adaptBuildSource('src/game/weapons.js', read('src/game/weapons.js'));
   const hold = character.slice(character.indexOf('HOLD.dualies = {'), character.indexOf('HOLD.slosher = {'));
-  assert.match(hold, new RegExp(`  aim: \\{ p: \\[${String(DUALIES_AIM_ANCHOR_X).replace('.', '\\.')}, -0\\.07, 0\\.27\\]`));
+  assert.match(hold, new RegExp(`  aim: \\{ p: \\[${String(DUALIES_AIM_ANCHOR_X).replace('.', '\\.')}, -0\\.07, ${String(DUALIES_AIM_ANCHOR_Z).replace('.', '\\.')}\\]`));
+  // within the arm's reach while blending back from a sub throw or the turret stance (motion catalog gate)
+  assert.ok(DUALIES_AIM_ANCHOR_Z <= 0.25);
   assert.doesNotMatch(hold, /aim: \{ p: \[-0\.055,/);
   // the post-roll turret stance is untouched
   assert.match(hold, /lock: \{ p: \[-0\.07, -0\.05, 0\.31\]/);

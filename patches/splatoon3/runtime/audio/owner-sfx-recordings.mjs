@@ -170,7 +170,17 @@ function recordedDef(base, spec, buffer) {
   return def;
 }
 
-export function installOwnerSfxRecordings(AudioEngine, SFX, instance) {
+// Game boot, not the first gesture: create the engine as soon as main.js takes the audio module.
+// The context stays suspended until the existing input listeners resume it (audio.js
+// _installUnlock), and the title cues decode meanwhile. Importing audio.js alone (tools,
+// catalogue fixtures) never opens an audio device.
+export function bootOwnerSfx(instance) {
+  if (typeof window === 'undefined' || !instance || instance.ctx || typeof instance.init !== 'function') return false;
+  try { instance.init(); } catch (e) { /* audio is optional */ }
+  return !!instance.ctx;
+}
+
+export function installOwnerSfxRecordings(AudioEngine, SFX) {
   const P = AudioEngine?.prototype;
   if (!P || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
@@ -189,11 +199,6 @@ export function installOwnerSfxRecordings(AudioEngine, SFX, instance) {
     }
     return result;
   };
-  // Page load, not the first gesture: create the engine now. The context stays suspended until the
-  // existing input listeners resume it (audio.js _installUnlock), and the title cues decode meanwhile.
-  if (browser && instance && !instance.ctx && typeof instance.init === 'function') {
-    try { instance.init(); } catch (e) { /* audio is optional */ }
-  }
   P._def = function (name) {
     const base = resolve.call(this, name);
     const spec = OWNER_SFX[name];

@@ -255,7 +255,7 @@ test('touch screenshot acceptance checks rendered ownership before and after cap
   assert.match(stages,/rawCircleVisible/);
   assert.match(stages,/isPointInStroke/);
   assert.match(stages,/checkVisibility\(\{checkOpacity:true,checkVisibilityCSS:true\}\)/);
-  assert.match(stages,/Splatling second stage is not a distinct outer ring/);
+  assert.match(stages,/Splatling second stage does not share the first-stage ring/);assert.match(stages,/Splatling second stage is not drawn over the first/);
   assert.match(stages,/Splatling rendered ring has not reached expected progress/);
  });
 

@@ -80,6 +80,18 @@ html body .iw-ui .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > .iw-btn
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > [data-id="play"] { font-size: 34px; padding: 18px 20px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="online"], [data-id="loadout"]) { font-size: 21px; padding: 10px 14px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="locker"], [data-id="settings"], [data-id="howto"], [data-id="credits"]) { font-size: 15px; padding: 8px 4px; }
+/* Portrait touch tiles are only ~110-150px wide. Stack the icon above a
+   one-line label sized to the tile, so ONLINE never wraps into the LIVE badge. */
+@media (orientation: portrait) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="online"], [data-id="loadout"]) {
+    container-type: inline-size; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 12px 20px;
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="online"], [data-id="loadout"]) .iw-btn__icon { width: 22px; height: 22px; flex: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="online"], [data-id="loadout"]) .iw-btn__text { max-width: 100%; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > :is([data-id="online"], [data-id="loadout"]) .iw-btn__label {
+    white-space: nowrap; font-size: min(1em, 17cqi); line-height: 1.1; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+}
 @media (orientation: landscape) and (max-height: 500px) {
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu { --tile-row: 50px; --tile-sys: 62px; gap: 8px; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-main.iw-main--tiles.iw-main--tiles .iw-main__menu > [data-id="play"] { font-size: 26px; padding: 10px 14px; }

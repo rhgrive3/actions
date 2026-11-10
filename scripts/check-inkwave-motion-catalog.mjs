@@ -477,6 +477,14 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // motion fixture never enters the ranked bootstrap path. Load and verify its
   // immutable emitted graph without changing the Turf fixture's behaviour.
   const audioGraph=await globalThis.catalogAudioGraph(prefix);
+  // Custom match rules and detailed results are installed by composed main.js,
+  // which this isolated fixture never boots. Load the exact emitted modules
+  // (no top-level side effects) so the installed-graph byte audit covers them.
+  const [customMatch,matchInsights,resultsDetail]=await Promise.all(['custom-match','match-insights','results-detail']
+    .map(name=>import(prefix+'patches/splatoon3/runtime/'+name+'.mjs')));
+  if(typeof customMatch.installCustomMatch!=='function'||typeof customMatch.installCustomMatchMenus!=='function'||
+     typeof matchInsights.installMatchInsights!=='function'||typeof resultsDetail.installResultsDetail!=='function')
+    throw Error('Catalog main-owned custom match/result modules missing');
   // One real module Worker, retaining the external probe's original protocol.
   audioGraph.prewarmWorkers.push(await globalThis.catalogChargeWorker(prefix));
   // Production bomb FX is activated through the main FX hook graph, outside

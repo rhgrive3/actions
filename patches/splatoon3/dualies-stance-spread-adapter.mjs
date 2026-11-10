@@ -23,12 +23,18 @@
 // and are not claimed. The post-roll turret stance (HOLD.dualies.lock) and the
 // merged turret guide are unchanged.
 export const DUALIES_AIM_ANCHOR_X = -0.345;
+// Forward reach of the spread anchor. At the original 0.27 m the right arm fell
+// up to ~6 cm short of its IK target while blending back from a sub throw or
+// the post-roll turret (motion catalog held-grip gate, limit 2.5 cm); 0.24 m
+// still left 3.5 cm. At 0.20 m the residual is <= 0.6 cm in every catalog case.
+// The lateral spread (what sets the guide spacing) is unchanged.
+export const DUALIES_AIM_ANCHOR_Z = 0.2;
 
 export function adaptDualiesStanceSpread(rel, code, replaceOnce) {
   if (rel === 'src/game/character.js') {
     return replaceOnce(code,
       '  aim: { p: [-0.055, -0.07, 0.27], r: [0, 0.03, 0] }, twoAim: 0,',
-      `  aim: { p: [${DUALIES_AIM_ANCHOR_X}, -0.07, 0.27], r: [0, 0.03, 0] }, twoAim: 0,   // owner 2026-11-09: S3-like spread (dualies-stance-spread-adapter.mjs)`,
+      `  aim: { p: [${DUALIES_AIM_ANCHOR_X}, -0.07, ${DUALIES_AIM_ANCHOR_Z}], r: [0, 0.03, 0] }, twoAim: 0,   // owner 2026-11-09: S3-like spread (dualies-stance-spread-adapter.mjs)`,
       'Dualies aim stance spread');
   }
   return code;
