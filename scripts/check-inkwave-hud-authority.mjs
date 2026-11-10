@@ -39,7 +39,10 @@ export function inspectSplatlingStages({charge,streaming,left,first,second,settl
       if(settled&&((expected[i]>0&&strokeSamples===0)||(expected[i]===0&&strokeSamples>1)))errors.push(`ring${i}: SVG stroke samples`);
       return{progress,computedProgress,rawCircleVisible,strokeSamples,bounds,style};
     });
-    if(rows[1].bounds.width<=rows[0].bounds.width)errors.push('Splatling second stage is not a distinct outer ring');
+    // Owner capture (c8e82aa): both charge stages share one ring; the second
+    // stage is drawn over the first in solid white, not as an outer ring.
+    if(Math.abs(rows[1].bounds.width-rows[0].bounds.width)>.5||Math.abs(rows[1].bounds.left-rows[0].bounds.left)>.5)errors.push('Splatling second stage does not share the first-stage ring');
+    if(!(rings[0].compareDocumentPosition(rings[1])&Node.DOCUMENT_POSITION_FOLLOWING))errors.push('Splatling second stage is not drawn over the first');
     const negativeState=changed?{style:css(changed),inlineOpacity:changed.style.opacity,bounds:box(changed),radius:changed.getAttribute('r')}:null;
     const negativeApplied=!negative||({hidden:()=>negativeState.style.visibility==='hidden',opacity:()=>Number(negativeState.style.opacity)===0,offscreen:()=>negativeState.bounds.left>=innerWidth,stroke:()=>negativeState.style.stroke==='none','zero-size':()=>Number(negativeState.radius)===0,progress:()=>Number(changed.style.strokeDashoffset)===100})[negative]();
     const row={charge,streaming,left,expected,settled,negative,negativeState,negativeApplied,viewport,mount:probe.mount,svgVisible,svgBounds:box(svg),ancestors,rings:rows,errors};probe.last=row;return row;
