@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {profileRangeAcceptanceSnapshot as observe} from '../inkwave-range-profile-acceptance.mjs';
 function fixture(frames=24){
  const snapshot={mode:'practice',traceError:null,trace:{capturedFrames:frames,gpu:'unavailable',gpuSamples:0,latest:{id:24,stages:{paint:1,render:2}}}};
- const probe={snapshot:()=>snapshot,report:()=>JSON.stringify({schema:'inkwave-frame-trace-v1'})};
+ const probe={snapshot:()=>snapshot,report:()=>JSON.stringify({schema:'inkwave-v1'})};
  return {env:{__inkwaveRangePerf:probe,__inkwave:{_rangeFrameProbe:probe},__G:{match:{range:{},state:'playing'}},performance:{now:()=>90001},document:{querySelector:()=>({})}},snapshot};
 }
 test('saved failure facts satisfy unchanged acceptance; legacy loop string is irrelevant',()=>{const {env}=fixture();env.__inkwave._loop=()=>{};const r=observe(env);assert.equal(r.collected,24);assert.equal(r.tracerRuntimeInstalled,true);assert.equal(env.__inkwaveRangeAcceptancePoll.reason,'snapshot-ready');assert.equal(env.__inkwaveRangeAcceptancePoll.probeMatchesFrameOwner,true);});
