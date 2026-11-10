@@ -15,13 +15,21 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','
 const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');if(url.pathname==='/probe'){res.setHeader('content-type','text/html');res.end(html);return;}const p=path.resolve(site,'.'+url.pathname);if(!p.startsWith(site+path.sep)||!fs.existsSync(p)){res.writeHead(404);res.end();return;}res.setHeader('content-type',mime[path.extname(p)]||'application/octet-stream');fs.createReadStream(p).pipe(res);});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
+// Progress goes to stderr (stdout is the JSON receipt). A watchdog turns a
+// silent hang into a failure that names the last stage reached.
+let stage='start';
+const mark=s=>{stage=s;process.stderr.write('[batch4] '+s+'\n');};
+const watchdog=setTimeout(()=>{process.stderr.write('[batch4] watchdog: no completion after 12 min; last stage: '+stage+'\n');process.exit(1);},12*60*1000);
 try{
  const results=[];
  for(const engine of process.argv.includes('--webkit')?['chromium','webkit']:['chromium']){
+  mark(engine+' launch');
   browser=await ({chromium,webkit}[engine]).launch({headless:true,...(engine==='chromium'?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage']}: {})});
   for(const touch of [false,true]){
+   mark(engine+' touch='+touch+' setup');
    const contexts=[],pages=[],errors=[];
    for(const id of ['host','guest']){
+    mark(engine+' touch='+touch+' load '+id);
     const context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1440,height:900},hasTouch:touch,reducedMotion:'reduce'}),page=await context.newPage();contexts.push(context);pages.push(page);page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/probe`);
     await page.evaluate(async id=>{
@@ -48,12 +56,14 @@ try{
    const pump=async()=>{for(let n=0;n<20;n++){let count=0;for(let i=0;i<2;i++){const packets=await pages[i].evaluate(()=>messages.splice(0));count+=packets.length;for(const {to,d} of packets)if(!to||to===['host','guest'][1-i])await pages[1-i].evaluate(({from,d})=>receive(from,d),{from:['host','guest'][i],d});}if(!count)return;}throw Error('packet loop');};
    // Full owner histories cross two JS realms. Delay all four splats until the
    // next packet; proxies need not replay them before the bonus is accepted.
+   mark(engine+' touch='+touch+' wipeout packets');
    for(const page of pages)await page.evaluate(()=>tickWire(1));await pump();
    await pages[1].evaluate(()=>{G.match.time=179;for(const a of G.match.actors.slice(4)){a.alive=false;nm._onLocalEvent('splatted',{victim:a,attacker:G.match.actors[0]});}tickWire(61);});await pages[0].evaluate(()=>tickWire(61));await pump();
    for(const page of pages)assert(await page.evaluate(()=>G.match.actors.slice(0,4).every(a=>a.s3.flow.score===profile.flow.progress.wipeoutBonus*profile.flow.threshold/profile.flow.progress.referenceThreshold)),'online +10fp on both peers');
+   mark(engine+' touch='+touch+' results');
    for(const page of pages)await page.evaluate(()=>results());
-   const settle=async page=>{await page.evaluate(async()=>{await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});await page.waitForFunction(()=>performance.now()-menus._shownAt>=220);};
-   const press=async(page,selector)=>{await settle(page);const e=page.locator(selector).first();await e.scrollIntoViewIfNeeded();await (touch?e.tap():e.click());};
+   const settle=async page=>{await page.evaluate(async()=>{const running=document.getAnimations().filter(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity);await Promise.race([Promise.all(running.map(a=>a.finished.catch(()=>{}))),new Promise(r=>setTimeout(r,5000))]);});await page.waitForFunction(()=>performance.now()-menus._shownAt>=220);};
+   const press=async(page,selector)=>{mark(engine+' touch='+touch+' press '+selector);await settle(page);const e=page.locator(selector).first();await e.scrollIntoViewIfNeeded();await (touch?e.tap():e.click());};
    await press(pages[0],'[data-id="keep-going"]');await pump();assert.equal(await pages[0].evaluate(()=>ended),0);
    await press(pages[1],'[data-id="change-gear-continue"]');await pump();await pages[1].waitForFunction(()=>menus.current==='loadout');
    const gear=pages[1].locator('.s3-gear > fieldset:not(.s3-catalogue) select').first();await pages[1].locator('.s3-gear summary').click();await gear.selectOption('swimSpeed');
@@ -70,5 +80,6 @@ try{
   }
   await browser.close();browser=null;
  }
+ clearTimeout(watchdog);mark('done');
  console.log(JSON.stringify({source:process.env.SOURCE_SHA||null,build:manifest.build.revision,workerBytes:fs.statSync(path.join(site,'sw.js')).size,results},null,2));
 }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
