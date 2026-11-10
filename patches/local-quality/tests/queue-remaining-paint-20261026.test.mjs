@@ -36,6 +36,13 @@ const nativeContactOwners = [
    '    const contactFace = nativeContactFace(this.level, opts.face, opts.kind);\n    // A native face lock searches the band so coplanar charts of the struck surface are candidates too.\n    const lockFace = contactFace ? null : nativeFaceLockFace(this.level, opts.face);\n    const faceIds = !contactFace && !lockFace && Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;'],
   ['          if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas) continue;',
    '          if (fid < 0 || (!contactFace && !lockFace && faceOnly >= 0 && fid !== faceOnly)) continue;\n          const f = this.level.faces[fid];\n          if (!f.atlas || (contactFace && !nativeContactCoplanar(contactFace, f, center)) || (lockFace && !nativeFaceLockCoplanar(lockFace, f, center))) continue;'],
+  // Owner report 2026-11-10: block-stage face locks cross onto coplanar floors.
+  ["import { nativeContactFace, nativeContactCoplanar, nativeFaceLockFace, nativeFaceLockCoplanar } from",
+   "import { nativeContactFace, nativeContactCoplanar, nativeFaceLockFace, nativeFaceLockCoplanar, blockFaceLockFace, blockFaceLockCoplanar } from"],
+  ['    const lockFace = contactFace ? null : nativeFaceLockFace(this.level, opts.face);',
+   '    const lockFace = contactFace ? null : (nativeFaceLockFace(this.level, opts.face) || blockFaceLockFace(this.level, opts.face, center, reach, opts));'],
+  ['(lockFace && !nativeFaceLockCoplanar(lockFace, f, center))',
+   '(lockFace && !(this.level.native ? nativeFaceLockCoplanar(lockFace, f, center) : blockFaceLockCoplanar(lockFace, f)))'],
 ];
 function replayNativeContact(source, reverse=false){
   for(const [before,after] of reverse?[...nativeContactOwners].reverse():nativeContactOwners)

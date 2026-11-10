@@ -25,3 +25,16 @@ test('block stages: steps, plates, walls and undersides never share the stamp', 
   const under = { n: v(0, -1, 0), origin: v(-1, 0, 0), u: v(1, 0, 0), v: v(0, 0, 1), su: 1, sv: 1 };
   assert.equal(blockFaceLockCoplanar(lane, under), false);
 });
+
+test('block stages: a stamp inside the struck face keeps the direct-face path', () => {
+  const lane = top(0, 12, 0, 0, 50);
+  const level = { native: false, faces: [lane] };
+  assert.equal(blockFaceLockFace(level, 0, v(6, 0, 25), 1), null);
+  assert.equal(blockFaceLockFace(level, 0, v(11.5, 0, 25), 1), lane);
+  assert.equal(blockFaceLockFace(level, 0, v(6, 0, 0.5), 1), lane);
+});
+
+test('block stages: instant face stamps (ranked zone capture) stay on their face', () => {
+  const lane = top(0, 12, 0, 0, 50);
+  assert.equal(blockFaceLockFace({ native: false, faces: [lane] }, 0, v(11.5, 0, 25), 1, { instant: true }), null);
+});

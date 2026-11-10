@@ -77,9 +77,19 @@ export function nativeFaceLockCoplanar(reference, face, at = null) {
 // BLOCK_LOCK_PLANE metres, origin and far corner) shares the stamp: a raised
 // plate, a step, a wall or an underside never does.
 const BLOCK_LOCK_COS = .999, BLOCK_LOCK_PLANE = .02;
-export function blockFaceLockFace(level, faceId) {
- if (!level || level.native || !Number.isInteger(faceId) || faceId < 0) return null;
- return level.faces?.[faceId] || null;
+// A stamp whose reach stays inside the struck face cannot meet another face, so
+// it keeps the direct-face path (no broadphase). Instant stamps (ranked zone
+// capture, which owns one face cell at a time) stay on their face as before.
+export function blockFaceLockFace(level, faceId, center = null, reach = 0, opts = null) {
+ if (!level || level.native || opts?.instant || !Number.isInteger(faceId) || faceId < 0) return null;
+ const f = level.faces?.[faceId];
+ if (!f) return null;
+ if (center && f.origin && f.u && f.v && Number.isFinite(f.su) && Number.isFinite(f.sv)) {
+  const dx = center.x - f.origin.x, dy = center.y - f.origin.y, dz = center.z - f.origin.z;
+  const u = dx*f.u.x + dy*f.u.y + dz*f.u.z, v = dx*f.v.x + dy*f.v.y + dz*f.v.z;
+  if (u - reach >= 0 && u + reach <= f.su && v - reach >= 0 && v + reach <= f.sv) return null;
+ }
+ return f;
 }
 export function blockFaceLockCoplanar(reference, face) {
  if (reference === face) return true;

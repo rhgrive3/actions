@@ -34,7 +34,8 @@ test('every Spinner and Dualies base/alternate emits visible muzzle ink on admit
       assert.equal(flashes.length,fires.length,id+' lost or duplicated a muzzle burst');
       for(let i=0;i<flashes.length;i++){
         const burst=flashes[i],shot=fires[i];
-        assert.equal(burst.kind,'shooter',id+' uses existing shot muzzle recipe');
+        // Owner report 2026-11-10: Dualies route to the 60% 'dualies' shot recipe.
+        assert.equal(burst.kind,familyOf.get(a.weapon.variantOf||id)==='dualies'?'dualies':'shooter',id+' uses existing shot muzzle recipe');
         assert.ok(Number.isFinite(burst.at.x+burst.at.y+burst.at.z+
           burst.dir.x+burst.dir.y+burst.dir.z),id+' finite FX');
         assert.ok(burst.at.distanceTo(shot.muzzle)<=.51,id+' FX still belongs to its firing muzzle');

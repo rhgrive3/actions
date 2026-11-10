@@ -14,6 +14,13 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch(`  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch) {\n    const dir = this._aimFrom(a, m, _dir);\n    const inkProfile = profileFor(w);\n    const inkSpeed = inkProfile ? launchSpeed(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0)) : w.projSpeed;\n    if (inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, (a.weaponRunner?.charge || 0) * (w.chargeTime || 0))));\n    else this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);`,
     `  _fireRound(a, w, spreadDeg, m, look, snd, sndVol, pitch, hand = null) {\n    const aimTarget = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesAimTarget(this, a, m, hand)\n      : a.aimPoint;\n    const dir = this._aimFrom(a, m, _dir, aimTarget);\n    const dualiesLaunch = w.kind === 'dualies' && hand != null\n      ? fidelityDualiesLaunchPlan(this, a, w, m, aimTarget, dir)\n      : null;\n    const inkProfile = dualiesLaunch?.profile ?? profileFor(w);\n    const chargeSeconds = dualiesLaunch?.chargeSeconds ?? ((a.weaponRunner?.charge || 0) * (w.chargeTime || 0));\n    const inkSpeed = dualiesLaunch?.speed ?? (inkProfile ? launchSpeed(inkProfile, chargeSeconds) : w.projSpeed);\n    if (!dualiesLaunch && inkProfile) correctInkAim(inkProfile, m, dir, a.aimPoint, inkSpeed, Math.min(w.range, referenceReach(inkProfile, chargeSeconds)));\n    else if (!inkProfile) this._ballistic(m, dir, a.aimPoint, w.projSpeed, w.straightTime, 28, 0.8, w.range);`,
     'Dualies live fire and guide share the production launch plan');
+  // Owner report 2026-11-10: Dualies main-weapon droplets draw at 60% (fx.js 'dualies').
+  patch("      G.fx?.muzzle(m, dir, a.color, 'shooter');\n    }\n    return dir;",
+    "      G.fx?.muzzle(m, dir, a.color, w.kind === 'dualies' ? 'dualies' : 'shooter');\n    }\n    return dir;",
+    'native Dualies muzzle droplet scale');
+  patch("pitch: e.hand ? 1.05 : 0.97 }); G.fx?.muzzle(m, dir, a.color, 'shooter'); } break;",
+    "pitch: e.hand ? 1.05 : 0.97 }); G.fx?.muzzle(m, dir, a.color, 'dualies'); } break;",
+    'remote Dualies muzzle droplet scale');
   patch(`    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97);`,
     `    const dir = this._fireRound(a, w, spreadDeg, m, hand ? LOOK_DUAL_L : LOOK_DUAL_R, 'shoot_dualies', 0.5, hand ? 1.05 : 0.97, hand);`,
     'native fireDualies hand index');
