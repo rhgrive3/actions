@@ -211,7 +211,9 @@ try {
     await page.waitForFunction(() => { const node = window.__inkwave?.hud?.xh; if (!node) return false; const style = getComputedStyle(node); return (style.scale === 'none' || Math.abs(parseFloat(style.scale) - 1) < 1e-6) && parseFloat(style.opacity) > .999; }, null, { timeout: 30000 });
     const shot = async name => {
       const file = viewport.name + '-' + name + '.png';
-      await page.screenshot({ path: path.join(out, file) }); scenario.screenshots.push(file);
+      // SwiftShader can need 30-45 s for the first capture after a new shader
+      // set (first frame, jump, GTAO toggle); the default 30 s is too tight.
+      await page.screenshot({ path: path.join(out, file), timeout: 120000 }); scenario.screenshots.push(file);
     };
     for (const id of [...bases, ...(viewportIndex === 0 ? variants.map(x => x.id) : [])]) {
       const row = await page.evaluate(async id => {

@@ -384,7 +384,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
         const visible=label.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})&&getComputedStyle(el).opacity==='1';
         const expected=own?'rgb(17, 17, 17)':'rgb(255, 255, 255)';
         if(label.textContent!=='WIPEOUT!!!'||color!==expected||!visible||rect.width<=0||rect.left<0||rect.right>innerWidth||rect.top<0||rect.bottom>innerHeight)throw Error('WIPEOUT visibility/color/label regression');
-        if(!el.classList.contains(own?'is-own-wipeout':'is-enemy-wipeout')||sounds.length!==1||sounds[0]!== (own?'defeat_jingle':'special_ready'))throw Error('WIPEOUT team variant regression');
+        if(!el.classList.contains(own?'is-own-wipeout':'is-enemy-wipeout')||sounds.length!==1||sounds[0]!=='team_wipeout')throw Error('WIPEOUT team variant regression');
         if(sub.textContent!==t(own?'Your whole team is splatted':'The whole team is splatted'))throw Error('WIPEOUT subtitle regression');
         return {own,color,visible,label:label.textContent,subtitle:sub.textContent,sound:sounds[0],width:rect.width};
       },own);
