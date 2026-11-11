@@ -292,7 +292,7 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
           <div>
             <div className="mb-1 text-[11px] font-bold tracking-widest text-gold-500">タッチ操作</div>
             {touch.map(([k, v]) => <div key={k} className="help-row"><b>{k}</b><span>{v}</span></div>)}
-            <p className="mt-3 text-[11px] leading-relaxed text-steel-300">開戦前に資金内で編成します。「自動編成」で1クリック戦術配置も可能。側面・背後からの攻撃は威力1.3倍です。</p>
+            <p className="mt-3 text-[11px] leading-relaxed text-steel-300">開戦前に、敵の編成を見て資金内で部隊を組みます。側面・背後からの攻撃は威力1.3倍です。</p>
           </div>
         </div>
       </div>
@@ -538,16 +538,6 @@ export default function App() {
                 >
                   追従<kbd>V</kbd>
                 </button>
-                {hud.phase === "setup" && !hud.showcase && (
-                  <button
-                    className="btn btn-steel command-button hide-sm"
-                    data-testid="auto-deploy"
-                    title="予算内でバランスの良い戦術部隊を自動配置"
-                    onClick={() => eng?.autoDeploy()}
-                  >
-                    自動編成
-                  </button>
-                )}
                 {customSetup && (
                   <>
                     <button

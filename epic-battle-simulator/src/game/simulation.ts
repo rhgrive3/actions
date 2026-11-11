@@ -412,69 +412,6 @@ export class BattleSimulation {
     return { count: ids.length, reason: ids.length ? null : "occupied" };
   }
 
-  /**
-   * Fills the remaining budget with a generic textbook formation: a wall in front, reach weapons behind it,
-   * shooters at the back and one specialist group. It reads nothing about the enemy, so it is a starting
-   * point to edit, not an answer: stages that punish the textbook still need the player to adapt.
-   */
-  autoDeploy(team: TeamId = 0): number {
-    if (this.phase !== "setup") return 0;
-    if (team === 1 && !this.allowBattleDeploy) return 0;
-    const available = team === 0 ? [...this.unlocked] : (Object.keys(DEFS) as UnitKind[]);
-    if (!available.length) return 0;
-    const sign = team === 0 ? -1 : 1;
-    const per = (f: (d: UnitDef) => number) => (a: UnitKind, b: UnitKind) => f(DEFS[b]) / DEFS[b].cost - f(DEFS[a]) / DEFS[a].cost;
-    const dps = (d: UnitDef) => d.dmg / (d.windup + d.cooldown);
-    const foot = available.filter(k => !DEFS[k].ranged && !DEFS[k].hunter && !(DEFS[k].heal && !DEFS[k].shield));
-    const wall = [...foot].sort(per(d => d.hp / (1 - (d.shield ?? 0))))[0];
-    const reach = foot.filter(k => DEFS[k].brace).sort(per(dps))[0] ?? [...foot].filter(k => k !== wall).sort(per(dps))[0];
-    const shooter = available.filter(k => DEFS[k].ranged && !DEFS[k].aoe).sort(per(d => dps(d) * Math.min(d.range, 30)))[0];
-    const caster = available.filter(k => DEFS[k].ranged && DEFS[k].aoe).sort(per(dps))[0];
-    const healer = available.filter(k => DEFS[k].heal && !DEFS[k].shield)[0];
-    const hunter = available.filter(k => DEFS[k].hunter).sort(per(d => dps(d) * d.hp))[0];
-
-    const budget = this.gold[team];
-    const batchIds: number[] = [];
-    const placeLine = (kind: UnitKind | undefined, spend: number, x: number, wings = false) => {
-      if (!kind) return;
-      const count = Math.floor(Math.min(spend, this.gold[team]) / DEFS[kind].cost);
-      const step = Math.max(2.4, DEFS[kind].radius * 2 + 1.2);
-      for (let i = 0; i < count; i++) {
-        if (this.gold[team] < DEFS[kind].cost) break;
-        const cap = Math.min(MAX_PER_TEAM - this.count(team), MAX_TOTAL - this.count(0) - this.count(1));
-        if (cap <= 0) break;
-        const perRow = 14;
-        const row = Math.floor(i / perRow), col = i % perRow, inRow = Math.min(perRow, count - row * perRow);
-        const z = wings
-          ? (i % 2 ? 1 : -1) * (20 + Math.floor(i / 2) * 3)
-          : clamp((col - (inRow - 1) / 2) * step, -44, 44);
-        const spot = this.findSpawnPosition(sign * (x + row * 2.6), z, kind, team);
-        if (!spot) continue;
-        const u = this.spawn(team, kind, spot.x, spot.z);
-        this.gold[team] -= DEFS[kind].cost;
-        batchIds.push(u.id);
-      }
-    };
-
-    const special = budget >= 600 ? 0.15 : 0;
-    placeLine(wall, budget * 0.35, 9);
-    placeLine(reach, budget * 0.25, 11.8);
-    if (special) {
-      const picks = [caster, healer, hunter].filter((k): k is UnitKind => !!k);
-      for (const k of picks) placeLine(k, Math.max(DEFS[k].cost, (budget * special) / picks.length), k === hunter ? 12 : k === healer ? 29 : 25.5, k === hunter);
-    }
-    placeLine(shooter, this.gold[team], 21);
-    // Whatever is left goes to the cheapest of the chosen kinds, front first.
-    const chosen = [wall, reach, shooter].filter((k): k is UnitKind => !!k).sort((a, b) => DEFS[a].cost - DEFS[b].cost);
-    const cheapest = [...available].sort((a, b) => DEFS[a].cost - DEFS[b].cost)[0];
-    for (const k of [...chosen, cheapest]) {
-      if (this.gold[team] >= DEFS[k].cost) placeLine(k, this.gold[team], DEFS[k].ranged ? 23.8 : 14.4);
-    }
-
-    if (batchIds.length > 0) this.deploymentHistory.push(batchIds);
-    return batchIds.length;
-  }
-
   private findSpawnPosition(x: number, z: number, kind: UnitKind, team: TeamId) {
     const r = DEFS[kind].radius;
     for (let i = 0; i < 96; i++) {

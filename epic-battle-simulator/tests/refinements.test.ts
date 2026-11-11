@@ -233,24 +233,6 @@ test("king aura boosts actual melee and ranged damage dealt by 30%", () => {
   assert.ok(Math.abs(rangedTrial(-12) / rangedTrial(-50) - 1.3) < 1e-6, "ranged projectile damage boosted by 30%");
 });
 
-test("autoDeploy builds a balanced tactical formation, spends leftover budget down to cheapest unit, and undoes in a single step", () => {
-  const s = new BattleSimulation();
-  s.setupStage(STAGES[4], 4);
-  const startGold = s.gold[0];
-  const added = s.autoDeploy(0);
-  assert.ok(added >= 4, `autoDeploy should place multiple units (placed ${added})`);
-  assert.ok(s.gold[0] < startGold && s.gold[0] < Math.min(...unlockedThrough(4).map(k => DEFS[k].cost)), `autoDeploy spends leftover gold down below cheapest unit (left ${s.gold[0]})`);
-  assert.equal(s.undoDeploy(), true, "entire autoDeploy batch can be undone at once");
-  assert.equal(s.count(0), 0);
-  assert.equal(s.gold[0], startGold);
-
-  // With pocket change it still buys what it can, down to less than the cheapest unlocked unit.
-  s.gold[0] = 60;
-  assert.equal(s.autoDeploy(0), 1);
-  const cheapest = Math.min(...unlockedThrough(4).map(k => DEFS[k].cost));
-  assert.ok(s.gold[0] < cheapest, `left ${s.gold[0]}`);
-});
-
 test("tactical formations (box, line, wedge, scatter) assign valid distinct obstacle-clear destinations and MVP is tracked", () => {
   for (const form of ["box", "line", "wedge", "scatter"] as const) {
     const s = new BattleSimulation(); s.reset(false); s.sceneIndex = 4;

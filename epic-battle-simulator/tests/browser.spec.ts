@@ -79,7 +79,12 @@ test("story: stage 1 setup, budget spending, unlock on victory, progress persist
   await expect.poll(() => page.getByTestId("blue-count").textContent().then(Number)).toBeGreaterThan(3);
   await expect(page.getByTestId("blue-gold")).not.toHaveText(budget);
   await page.getByRole("button", { name: "戻す", exact: true }).click();
-  await page.getByTestId("auto-deploy").click();
+  // Build the stage's lesson by hand: guards in front, spears behind them, archers at the back.
+  for (const [kind, x, n] of [["guardian", 560, 5], ["spear", 520, 3], ["archer", 380, 1]] as const) {
+    await pickUnit(page, kind);
+    for (let i = 0; i < n; i++) await canvas.click({ position: { x, y: 380 + i * 30 } });
+  }
+  await expect.poll(() => page.getByTestId("blue-count").textContent().then(Number)).toBeGreaterThanOrEqual(9);
   await page.getByRole("button", { name: "戦闘開始", exact: true }).click();
   await expect(page.getByTestId("game")).toHaveAttribute("data-phase", "playing");
   const result = page.getByRole("dialog", { name: "結果" });

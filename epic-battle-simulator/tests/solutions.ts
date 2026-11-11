@@ -3,9 +3,9 @@
 import type { Army } from "../tools/balance-lib";
 
 export const SOLUTIONS: Record<number, Army[]> = {
-  1: [[["archer",2],["guardian",3],["spear",3]],[["spear",5],["guardian",3]]],
-  2: [[["guardian",4],["archer",5]],[["swordsman",5],["archer",4]]],
-  3: [[["guardian",5],["archer",5],["swordsman",2]],[["spear",6],["archer",7]]],
+  1: [[["spear",8],["archer",1],["guardian",2]],[["spear",7],["guardian",4]]],
+  2: [[["spear",7],["archer",6]],[["guardian",7],["archer",5]]],
+  3: [[["zombie",7],["swordsman",1],["archer",6],["spear",7]],[["guardian",6],["archer",7],["swordsman",2]]],
   4: [[["skeleton",13],["archer",7]],[["zombie",17],["crossbow",4],["skeleton",5]]],
   5: [[["archer",11],["guardian",7]],[["archer",4],["guardian",2],["cleric",2],["crossbow",6]]],
   6: [[["guardian",5],["crossbow",3],["halberdier",2],["archer",3]],[["halberdier",4],["archer",3],["crossbow",3],["skeleton",4]]],

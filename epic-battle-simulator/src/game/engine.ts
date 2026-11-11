@@ -392,21 +392,6 @@ export class Engine {
     this.setDeploy(null);
   }
 
-  autoDeploy() {
-    if (this.disposed || this.sim.phase !== "setup" || this.showcaseMode) return;
-    const team = this.story ? 0 : this.deployTeam;
-    const added = this.sim.autoDeploy(team);
-    this.audio.init();
-    if (added > 0) {
-      this.audio.sfx("horn");
-      this.notify(`${team === 0 ? "味方" : "敵"}を戦術陣形で${added}体自動編成しました`);
-    } else {
-      this.notify("これ以上自動編成できません（資金または上限）", true);
-    }
-    this.miniTimer = 0;
-    this.pushHud();
-  }
-
   setFormation(formation: Formation) {
     if (this.disposed) return;
     this.formation = formation;

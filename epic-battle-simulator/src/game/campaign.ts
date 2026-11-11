@@ -72,9 +72,9 @@ const stage = (id: number, name: string, hint: string, unlock: UnitKind[], army:
 
 export const STAGES: Stage[] = [
   // ---- Scene 1: Borderland Wastes (Undead) ----
-  stage(1, "墓地の夜", "骨弓兵の矢は盾兵が止める。ただし盾兵は敵を倒せない。壁の後ろに槍と弓を置き、役割を分けよう。", ["swordsman"], [["zombie", 6], ["skeleton", 6], ["bonearcher", 4]]),
-  stage(2, "霧の街道", "足の速いスケルトンが射手に取り付くと、弓は撃てなくなる。爆弾は盾を無視して密集を吹き飛ばす。", ["zombie", "skeleton"], [["skeleton", 8], ["orc", 2], ["bonearcher", 4], ["bomber", 1]]),
-  stage(3, "廃村の包囲", "オークの大斧は隣の兵まで巻き込む。爆弾兵が2人いるので、固まりすぎず、射手で先に削ろう。", ["crossbow"], [["skeleton", 10], ["orc", 3], ["bonearcher", 4], ["bomber", 2]]),
+  stage(1, "墓地の夜", "骨弓兵の矢は盾兵が止める。ただし盾兵は敵を倒せない。壁の後ろに槍と弓を置き、役割を分けよう。", ["swordsman"], [["zombie", 6], ["skeleton", 8], ["orc", 2], ["bonearcher", 4]]),
+  stage(2, "霧の街道", "足の速いスケルトンが射手に取り付くと、弓は撃てなくなる。爆弾は盾を無視して密集を吹き飛ばす。", ["zombie", "skeleton"], [["skeleton", 8], ["orc", 3], ["bonearcher", 4], ["bomber", 2]]),
+  stage(3, "廃村の包囲", "オークの大斧は隣の兵まで巻き込む。爆弾兵が2人いるので、固まりすぎず、射手で先に削ろう。", ["crossbow"], [["skeleton", 10], ["orc", 4], ["bonearcher", 4], ["bomber", 3]]),
   stage(4, "朽ちた関所", "呪術師の呪いは範囲内の移動と攻撃を鈍らせる。数で押す骨の群れに、単発の重い矢は間に合わない。", ["cleric"], [["shaman", 1], ["skeleton", 10], ["zombie", 6], ["orc", 2], ["bonearcher", 4], ["bomber", 1]]),
   stage(5, "闇の主", "吸血鬼は斬るたびに回復する。弱い前衛は餌になるだけ。盾で受け、火力を一体に集めて落とせ。", ["halberdier", "bonearcher"], [["vampire", 2], ["skeleton", 16], ["bonearcher", 5], ["bomber", 2]]),
 

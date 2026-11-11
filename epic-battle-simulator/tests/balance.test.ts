@@ -1,7 +1,6 @@
 // Campaign-level guarantees: nothing here checks a tuned number, only outcomes of whole battles.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BattleSimulation, FIXED_STEP } from "../src/game/simulation";
 import { DEFS, STAGES, armyCost, fightStage, mono, unlockedThrough, type Army, type Layout } from "../tools/balance-lib";
 import { BUDGET_RATIO, enemyCost, enemyRoster } from "../src/game/campaign";
 import type { UnitKind } from "../src/game/units";
@@ -83,18 +82,3 @@ test("no fixed recipe carries the campaign: reusing one formation loses most sta
   for (const [name, won, played] of results) assert.ok(won <= played * RECIPE_LIMIT, `${name} clears ${won}/${played} stages`);
 });
 const RECIPE_LIMIT = 0.5;
-
-test("auto-deploy is a textbook draft: it wins the tutorial but cannot carry the campaign", () => {
-  const cleared: number[] = [];
-  for (const stage of STAGES) {
-    const sim = new BattleSimulation(2026);
-    sim.setupStage(stage, stage.id - 1);
-    sim.autoDeploy();
-    sim.begin();
-    for (let i = 0; i < 150 * 60 && sim.phase === "playing"; i++) sim.advance(FIXED_STEP);
-    if (sim.result?.winner === 0) cleared.push(stage.id);
-  }
-  console.log(`auto-deploy clears ${cleared.length}/20 [${cleared.join(",")}]`);
-  assert.ok(cleared.includes(1), "the first stage teaches the textbook and the textbook wins it");
-  assert.ok(cleared.length <= 12, `the enemy-blind draft must fail a large part of the campaign (${cleared.length}/20)`);
-});

@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { positions } from "../tools/balance-lib";
+import { SOLUTIONS } from "./solutions";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
@@ -114,7 +116,7 @@ test("all 4 stage environments build distinct sky/fog/props and dispose cleanly"
   assert.equal(skies.size, 4, "each chapter has a distinct sky atmosphere");
 });
 
-test("all 20 campaign stages run autoDeploy + simulation + batch rendering + effects + audio cleanly and dist/index.html is a self-contained build", () => {
+test("all 20 campaign stages run a reference army + simulation + batch rendering + effects + audio cleanly and dist/index.html is a self-contained build", () => {
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(55, 1.6, 0.3, 600);
   const audio = new AudioFX();
@@ -130,9 +132,7 @@ test("all 20 campaign stages run autoDeploy + simulation + batch rendering + eff
   for (let i = 0; i < STAGES.length; i++) {
     const sim = new BattleSimulation(1000 + i);
     sim.setupStage(STAGES[i], i);
-    const deployed = sim.autoDeploy(0);
-    assert.ok(deployed > 0, `Stage ${i + 1} autoDeploy placed ${deployed} units`);
-    assert.ok(sim.gold[0] < DEFS.spear.cost, `Stage ${i + 1} leftover gold ${sim.gold[0]} < 50`);
+    for (const p of positions(SOLUTIONS[i + 1][0], "ranks")) sim.spawn(0, p.kind, p.x, p.z);
     assert.equal(sim.begin(), true);
 
     const env = buildStageEnv(scene, STAGES[i].scene);
