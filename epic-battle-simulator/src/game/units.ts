@@ -6,13 +6,13 @@ export type UnitKind =
   // kingdom
   | "spear" | "guardian" | "archer" | "crossbow" | "swordsman" | "halberdier" | "knight" | "paladin" | "king"
   // warband
-  | "orc" | "berserker" | "javelin" | "bomber" | "shaman" | "troll" | "giant" | "pirate"
+  | "orc" | "berserker" | "javelin" | "bomber" | "shaman" | "troll" | "giant" | "pirate" | "sapper"
   // mystic
   | "elf" | "monk" | "assassin" | "mage" | "frost" | "cleric" | "zeus"
   // undead
-  | "zombie" | "skeleton" | "bonearcher" | "vampire"
+  | "zombie" | "skeleton" | "bonearcher" | "vampire" | "necromancer"
   // machines
-  | "robot" | "tank" | "railgun";
+  | "robot" | "tank" | "railgun" | "catapult";
 export type TeamId = 0 | 1;
 export type Faction = "kingdom" | "warband" | "mystic" | "undead" | "machine";
 export type ProjectileStyle = "arrow" | "quarrel" | "bolt" | "bomb" | "javelin" | "pistol" | "cannon" | "rail";
@@ -64,8 +64,12 @@ export interface UnitDef {
   chain?: number;
   /** Pierces the first N targets it hits. */
   pierce?: number;
-  /** Summons a temporary fighting drone on deploy. */
-  drone?: number;
+  /** Carries a powder keg: its one attack blows itself up, and it also goes off when killed. */
+  detonate?: boolean;
+  /** Raises a skeleton this often (seconds), up to SUMMON_LIMIT per caster. */
+  summon?: number;
+  /** Cannot aim at anything closer than this. */
+  minRange?: number;
   desc: string;
   icon: string;
 }
@@ -186,6 +190,19 @@ export const DEFS: Record<UnitKind, UnitDef> = {
     projSpeed: 62, proj: "rail", pierce: 3,
     desc: "列ごと貫く超長射程の一撃。大物と縦列に絶大だが、装填が長く群れには間に合わない。", icon: "railgun" }),
 
+  sapper: D({ kind: "sapper", faction: "warband", name: "樽爆兵", en: "KEG RUNNER", role: "自爆", cost: 90, hp: 55, dmg: 70, range: 1.9,
+    speed: 5.0, windup: 0.25, cooldown: 1.0, aggro: 18, ranged: false, radius: 0.56, height: 2.4, armor: 0, impact: 9.0, mass: 1.0,
+    aoe: 3.4, detonate: true,
+    desc: "火薬樽を抱えて走り込み、敵陣のど真ん中で自爆する。倒されてもその場で爆発する。届く前に撃ち落とせ。", icon: "bomb" }),
+  necromancer: D({ kind: "necromancer", faction: "undead", name: "死霊術師", en: "NECROMANCER", role: "召喚", cost: 150, hp: 60, dmg: 12, range: 18,
+    speed: 3.0, windup: 1.10, cooldown: 1.40, aggro: 20, ranged: true, radius: 0.52, height: 2.8, armor: 0, impact: 1.2, mass: 0.85,
+    projSpeed: 22, proj: "bolt", summon: 5,
+    desc: "戦っている間じゅうスケルトンを呼び出し続ける。本人は弱い。長引くほど不利になるので真っ先に討て。", icon: "skull" }),
+  catapult: D({ kind: "catapult", faction: "machine", name: "投石機", en: "CATAPULT", role: "攻城", cost: 280, hp: 200, dmg: 60, range: 42,
+    speed: 1.8, windup: 2.40, cooldown: 4.00, aggro: 40, ranged: true, radius: 1.2, height: 2.6, armor: 3, impact: 12.0, mass: 3.5,
+    projSpeed: 20, proj: "cannon", aoe: 3.6, minRange: 12,
+    desc: "戦場の端から大岩を放り込み、隊列を丸ごと吹き飛ばす。弾は遅く、12m以内には撃てない。懐に入れば無力。", icon: "tank" }),
+
   zombie: D({ kind: "zombie", faction: "undead", name: "ゾンビ", en: "ZOMBIE", role: "物量", cost: 20, hp: 50, dmg: 7, range: 1.9,
     speed: 2.5, windup: 0.90, cooldown: 0.80, aggro: 13, ranged: false, radius: 0.52, height: 2.2, armor: 0, impact: 1.3, mass: 0.9,
     desc: "遅くて弱いが、とにかく安い。単発の重い攻撃を無駄撃ちさせる肉の壁。", icon: "skull" }),
@@ -209,10 +226,10 @@ export function pierceFor(kind: UnitKind): number {
 export interface FactionInfo { id: Faction; name: string; en: string; color: string; units: UnitKind[] }
 export const FACTIONS: FactionInfo[] = [
   { id: "kingdom", name: "王国軍", en: "KINGDOM", color: "#6aa7f5", units: ["spear", "guardian", "archer", "swordsman", "crossbow", "halberdier", "knight", "paladin", "king"] },
-  { id: "warband", name: "蛮族", en: "WARBAND", color: "#e48a4a", units: ["orc", "berserker", "javelin", "bomber", "shaman", "troll", "giant", "pirate"] },
+  { id: "warband", name: "蛮族", en: "WARBAND", color: "#e48a4a", units: ["orc", "berserker", "javelin", "bomber", "shaman", "troll", "giant", "pirate", "sapper"] },
   { id: "mystic", name: "神秘", en: "MYSTIC", color: "#b58cff", units: ["elf", "monk", "assassin", "mage", "frost", "cleric", "zeus"] },
-  { id: "undead", name: "不死", en: "UNDEAD", color: "#9fc27a", units: ["zombie", "skeleton", "bonearcher", "vampire"] },
-  { id: "machine", name: "機械", en: "MACHINE", color: "#8fa2b8", units: ["robot", "tank", "railgun"] },
+  { id: "undead", name: "不死", en: "UNDEAD", color: "#9fc27a", units: ["zombie", "skeleton", "bonearcher", "vampire", "necromancer"] },
+  { id: "machine", name: "機械", en: "MACHINE", color: "#8fa2b8", units: ["robot", "tank", "railgun", "catapult"] },
 ];
 export const FACTION_UNITS: Record<Faction, UnitKind[]> = Object.fromEntries(FACTIONS.map(f => [f.id, f.units])) as Record<Faction, UnitKind[]>;
 export const DEPLOY: UnitKind[] = FACTIONS.flatMap(f => f.units);

@@ -21,9 +21,9 @@ function dummy(sim: BattleSimulation, x: number, z = 0, hp = 1e6) {
   return d;
 }
 
-test("roster: 31 units, 5 factions, every unit sits in exactly one tab", () => {
-  assert.equal(DEPLOY.length, 31);
-  assert.equal(new Set(DEPLOY).size, 31);
+test("roster: 34 units, 5 factions, every unit sits in exactly one tab", () => {
+  assert.equal(DEPLOY.length, 34);
+  assert.equal(new Set(DEPLOY).size, 34);
   assert.equal(FACTIONS.length, 5);
   for (const kind of Object.keys(DEFS) as UnitKind[]) {
     const d = DEFS[kind];
@@ -38,13 +38,13 @@ test("roster: 31 units, 5 factions, every unit sits in exactly one tab", () => {
   }
 });
 
-test("campaign: 4 scenes x 5 stages, sequential ids, escalating scale and full unlocks", () => {
-  assert.equal(STAGES.length, 20);
+test("campaign: 4 scenes x 5 stages plus one extra, sequential ids, escalating scale and full unlocks", () => {
+  assert.equal(STAGES.length, 21);
   const seen = new Set<UnitKind>();
   for (let i = 0; i < STAGES.length; i++) {
     const s = STAGES[i];
     assert.equal(s.id, i + 1);
-    assert.equal(s.scene, Math.floor(i / 5) + 1);
+    assert.equal(s.scene, Math.min(4, Math.floor(i / 5) + 1));
     assert.ok(s.name && s.hint && s.budget > 0, `stage ${s.id} metadata`);
     assert.ok(s.enemies.length > 0, `stage ${s.id} has enemies`);
     assert.ok(s.budget >= 300, `stage ${s.id} budget`);

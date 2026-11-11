@@ -130,6 +130,9 @@ const POSE: Record<UnitKind, { r: number; l: number; swing: number; style: Attac
   vampire: { r: -0.4, l: -0.35, swing: 0.45, style: "slash" },
   robot: { r: -0.35, l: -0.35, swing: 0.35, style: "slash" },
   tank: { r: -0.2, l: 0.05, swing: 0.1, style: "shoot" },
+  sapper: { r: -1.1, l: -1.1, swing: 0.2, style: "overhead" },
+  necromancer: { r: -0.9, l: -0.3, swing: 0.1, style: "cast" },
+  catapult: { r: -0.5, l: 0, swing: 1.3, style: "overhead" },
   railgun: { r: -1.1, l: -1.15, swing: 0.06, style: "shoot" },
 };
 

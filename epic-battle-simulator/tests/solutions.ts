@@ -3,7 +3,7 @@
 import type { Army } from "../tools/balance-lib";
 
 export const SOLUTIONS: Record<number, Army[]> = {
-  1: [[["spear",8],["archer",1],["guardian",2]],[["spear",7],["guardian",4]]],
+  1: [[["guardian",3],["spear",5],["archer",3]],[["guardian",3],["archer",7]]],
   2: [[["spear",7],["archer",6]],[["guardian",7],["archer",5]]],
   3: [[["zombie",7],["swordsman",1],["archer",6],["spear",7]],[["guardian",6],["archer",7],["swordsman",2]]],
   4: [[["skeleton",13],["archer",7]],[["zombie",17],["crossbow",4],["skeleton",5]]],
@@ -23,4 +23,5 @@ export const SOLUTIONS: Record<number, Army[]> = {
   18: [[["bomber",8],["paladin",3],["frost",10]],[["paladin",2],["spear",19],["guardian",12],["bomber",7]]],
   19: [[["cleric",11],["troll",3],["elf",10],["knight",2]],[["knight",4],["paladin",3],["vampire",4],["skeleton",33]]],
   20: [[["javelin",11],["paladin",3],["railgun",4],["knight",4]],[["cleric",8],["orc",18],["paladin",3],["monk",10]]],
+  21: [[["monk",13],["knight",4],["guardian",16],["railgun",4]],[["paladin",6],["necromancer",3],["spear",16],["knight",6]]],
 };

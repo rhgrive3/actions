@@ -105,7 +105,8 @@ for (const kind of DEPLOY) {
     s.speed = 4;
     run(s, 30);
     assert.ok(target.hp < 5000, `${kind} never hit its target`);
-    assert.ok(s.units.filter(u => u.team === 0 && !u.dead).length > 0, `${kind} died without a fight`);
+    // The keg runner's whole job is to not survive its one attack.
+    if (!DEFS[kind].detonate) assert.ok(s.units.filter(u => u.team === 0 && !u.dead).length > 0, `${kind} died without a fight`);
   });
 }
 

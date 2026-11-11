@@ -43,6 +43,8 @@ export interface CombatUnit {
   chargeRun: number;
   /** A shooter with an enemy on top of it has dropped the bow for a knife. */
   sidearm: boolean;
+  /** Skeletons this caster has raised so far. */
+  summoned: number;
   /** Smoothed movement speed: how much momentum the unit carries into contact. */
   pace: number;
   /** Knockdown state. */
@@ -144,6 +146,8 @@ export const BLAST_RIM = 0.5;
 export const SIDEARM_LOCK = 6.0;
 const SIDEARM_REACH = 2.2;
 const PIN_MAX_RADIUS = 0.8;
+/** A necromancer runs dry after this many skeletons. */
+export const SUMMON_LIMIT = 4;
 export const SIDEARM_DAMAGE = 3;
 const SIDEARM_WINDUP = 0.6;
 const SIDEARM_COOLDOWN = 1.0;
@@ -184,6 +188,8 @@ export class BattleSimulation {
   /** Until the lines meet, each army advances at the pace of its slowest fighter so it arrives as one formation. */
   private marchSpeed: [number, number] = [Infinity, Infinity];
   engaged = false;
+  /** Keg carriers that died this step and still have to go off. */
+  private fuses: CombatUnit[] = [];
 
   constructor(seed = 2026) {
     this.randomState = seed >>> 0;
@@ -302,6 +308,7 @@ export class BattleSimulation {
   begin() {
     if (this.phase !== "setup" || this.count(0) === 0 || this.count(1) === 0) return false;
     this.engaged = false;
+    this.fuses = [];
     for (const team of [0, 1] as const) {
       let slowest = Infinity;
       for (const u of this.units) {
@@ -369,7 +376,7 @@ export class BattleSimulation {
       facing: team === 0 ? Math.PI / 2 : -Math.PI / 2,
       gait: this.random() * Math.PI * 2, flinch: 0, slowT: 0,
       charge: 1, chargeReady: true, chargeRun: 0,
-      pace: 0, sidearm: false,
+      pace: 0, sidearm: false, summoned: 0,
       airborne: false, downTime: 0, getUp: 0, spin: 0, spinAxis: 1,
       dead: false, deathTime: 0, kills: 0, damageDealt: 0, scratch: new Vector3(),
     };
@@ -528,6 +535,7 @@ export class BattleSimulation {
     for (const c of this.units) {
       if (c.dead || c.team === u.team) continue;
       let score = planarDistanceSq(u.position, c.position);
+      if (d.minRange && score < d.minRange * d.minRange) continue;
       if (d.hunter) {
         const cd = DEFS[c.kind];
         if (cd.ranged || cd.heal) score *= HUNTER_WEIGHT;
@@ -644,6 +652,7 @@ export class BattleSimulation {
     this.kills[sourceTeam]++;
     this.losses[unit.team]++;
     if (attacker) attacker.kills++;
+    if (def.detonate) this.fuses.push(unit);
     this.emit("death", unit.position, unit.team);
     return dealt;
   }
@@ -701,6 +710,7 @@ export class BattleSimulation {
       if (u.slowT > 0) u.slowT = Math.max(0, u.slowT - dt);
       this.updateKnockback(u, dt) || this.updateUnit(u, dt);
     }
+    while (this.fuses.length) this.blast(this.fuses.pop()!);
     this.resolveBodyCollisions();
     this.updateProjectiles(dt);
     this.units = this.units.filter(u => {
@@ -848,6 +858,16 @@ export class BattleSimulation {
       if (u.animation >= 1) u.animation = -1;
     }
 
+    // Necromancers keep raising skeletons for as long as they stand.
+    if (d.summon && u.summoned < SUMMON_LIMIT && u.healCd <= 0 && this.count(u.team) < MAX_PER_TEAM && this.count(0) + this.count(1) < MAX_TOTAL) {
+      const fwd = u.team === 0 ? 1 : -1;
+      const raised = this.spawn(u.team, "skeleton", u.position.x + fwd * 1.6, u.position.z + (u.summoned % 2 ? 1.4 : -1.4));
+      raised.cooldown = 0.8;
+      u.summoned++;
+      u.healCd = d.summon;
+      this.emit("heal", raised.position, u.team, 0);
+    }
+
     // Paladin (frontline aura healer): heals all wounded nearby allies while fighting or advancing.
     if (d.heal && u.kind !== "cleric") {
       this.updatePaladin(u, d);
@@ -900,6 +920,15 @@ export class BattleSimulation {
     delta.y = 0; // chasing a flying target must not lift the chaser off the ground
     const distance = delta.length();
     this.face(u, Math.atan2(delta.x, delta.z), dt);
+
+    // Siege engines cannot depress their aim: anything inside the minimum range is safe from them.
+    if (d.minRange && distance < d.minRange) {
+      u.windup = null;
+      u.thinkTimer = 0;
+      u.scratch.set(0, 0, 0);
+      this.move(u, u.scratch, 0, dt);
+      return;
+    }
 
     // Cavalry re-arms its charge by sprinting across open ground again.
     if (d.charge) {
@@ -973,7 +1002,35 @@ export class BattleSimulation {
     if (healed) u.healCd = 1.6;
   }
 
+  /** A powder keg going off: an explosion centred on its carrier, who does not survive it. */
+  private blast(u: CombatUnit) {
+    const d = DEFS[u.kind];
+    const aoe = d.aoe ?? 3;
+    for (const o of this.nearby(u.position, aoe + 1.4)) {
+      if (o.dead || o.team === u.team) continue;
+      const dist = Math.sqrt(planarDistanceSq(u.position, o.position));
+      if (dist > aoe + radius(o)) continue;
+      const falloff = 1 - (1 - BLAST_RIM) * clamp((dist - radius(o)) / aoe, 0, 1);
+      this.damage(o, d.dmg * falloff, u.team, u.position, d.impact * falloff, u.id, true);
+    }
+    this.emit("boom", u.position, u.team, aoe);
+    if (!u.dead) {
+      u.hp = 0;
+      u.dead = true;
+      u.deathTime = 0;
+      u.velocity.set(0, 0, 0);
+      u.targetId = null;
+      u.windup = null;
+      u.animation = -1;
+      const foe = u.team === 0 ? 1 : 0;
+      this.kills[foe]++;
+      this.losses[u.team]++;
+      this.emit("death", u.position, u.team);
+    }
+  }
+
   private strike(u: CombatUnit, d: UnitDef, target: CombatUnit) {
+    if (d.detonate) { this.blast(u); return; }
     let mult = 1;
     let isChargeHit = false;
     if (d.charge && u.chargeReady) {

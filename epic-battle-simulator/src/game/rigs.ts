@@ -128,7 +128,7 @@ function addFace(head: THREE.Group, skin: number, f: Face = {}) {
 
 /* ============ humanoid ============ */
 
-type HumanKind = Exclude<UnitKind, "knight" | "robot" | "tank" | "railgun">;
+type HumanKind = Exclude<UnitKind, "knight" | "robot" | "tank" | "railgun" | "catapult">;
 interface Look { skin: number; armor: number; pants: number; boot: number; chest: number; scale: number; head: number; legs: number; tilt: number }
 
 function lookOf(kind: HumanKind, tc: number, tcd: number): Look {
@@ -160,6 +160,8 @@ function lookOf(kind: HumanKind, tc: number, tcd: number): Look {
     case "vampire": return { ...base, skin: 0xe8dcd0, armor: 0x241f2c, pants: 0x1c1824, boot: 0x141119, chest: 0.72, scale: 1.06, head: 1.24, legs: 1.04, tilt: 0.05 };
     case "king": return { ...base, skin: 0xefc39a, armor: 0x8a2f3c, pants: 0x5a1620, boot: 0x3d1016, chest: 0.88, scale: 1.2, head: 1.2, legs: 0.94, tilt: 0.03 };
     case "pirate": return { ...base, skin: 0xd19a6a, armor: 0x4a3a52, pants: 0x2e2734, boot: 0x241d22, chest: 0.72, scale: 1.02, head: 1.26, legs: 1.0, tilt: 0.07 };
+    case "sapper": return { ...base, skin: 0xd8a070, armor: 0x7a3a26, pants: 0x3a3326, boot: 0x1f1a12, chest: 0.74, scale: 0.98, head: 1.34, legs: 1.0, tilt: 0.16 };
+    case "necromancer": return { ...base, skin: 0xb9c4a8, armor: 0x2c2238, pants: 0x1c1626, boot: 0x120e18, chest: 0.6, scale: 1.08, head: 1.22, tilt: 0.1 };
     case "zeus": return { ...base, skin: 0xe9c9a0, armor: 0xf2ead4, pants: 0xf2ead4, boot: 0xc2a45c, chest: 0.98, scale: 1.3, head: 1.14, legs: 1.12, tilt: 0.0 };
   }
 }
@@ -232,8 +234,8 @@ function buildHumanoid(kind: HumanKind, team: TeamId): UnitRig {
     part(torso, GEO.box, boneMat(L.skin), cw * 1.08, 0.055, 0.08, 0, 0.78, 0.02);
     part(torso, GEO.box, M(tc), cw * 1.05, 0.1, cw * 0.56, 0, 0.74, 0.0, 0, 0, 0.35);
     part(torso, GEO.box, cloth(tcd), ww * 0.96, 0.24, 0.04, -0.08, -0.09, cw * 0.27, 0, 0, 0.08);
-  } else if (kind === "mage" || kind === "frost") {
-    const robe = kind === "frost" ? 0x4f7fbf : tc;
+  } else if (kind === "mage" || kind === "frost" || kind === "necromancer") {
+    const robe = kind === "frost" ? 0x4f7fbf : kind === "necromancer" ? 0x2c2238 : tc;
     part(torso, GEO.box, M(robe), cw, 0.8, cw * 0.62, 0, 0.42, 0);
     part(torso, GEO.cone, M(robe), 0.62, 1.7, 0.62, 0, -0.2, 0);
     part(torso, GEO.ring, steel(GOLD), 0.62, 0.62, 0.62, 0, -1.04, 0, PI / 2, 0, 0);
@@ -568,6 +570,25 @@ function buildHumanoid(kind: HumanKind, team: TeamId): UnitRig {
       addFace(head, L.skin, { brow: -0.22, mouth: "smile", pupil: 0x3a2a1a });
       headExtra = 0.35;
       break;
+    case "sapper":
+      // soot-stained bandana, a lit match behind the ear and a grin that knows how this ends
+      part(head, GEO.dome, M(tc), 0.29, 0.2, 0.29, 0, 0.08, 0);
+      part(head, GEO.box, M(tc), 0.1, 0.05, 0.3, 0.2, 0.06, -0.3, 0.3, 0.4, 0);
+      part(head, GEO.cyl, M(0xd8c090), 0.012, 0.2, 0.012, 0.3, 0.1, 0.02, 0.3, 0, 0);
+      part(head, GEO.sph, B(0xffa040), 0.035, 0.035, 0.035, 0.3, 0.2, 0.05);
+      part(head, GEO.box, B(0x2a2420), 0.2, 0.07, 0.02, 0.06, -0.02, 0.255);
+      addFace(head, L.skin, { brow: 0.25, mouth: "grin", uneven: true, sclera: 0xfaf3d8 });
+      teeth();
+      break;
+    case "necromancer":
+      // deep hood with a bone crest; only the green eye-lights show
+      part(head, GEO.cone, M(0x2c2238), 0.36, 0.66, 0.36, 0, 0.3, -0.06, -0.22, 0, 0);
+      part(head, GEO.box, M(0x1c1626), 0.5, 0.36, 0.2, 0, 0.0, -0.2);
+      for (const sgn of [-1, 1]) part(head, GEO.cone, boneMat(), 0.045, 0.3, 0.045, sgn * 0.2, 0.34, 0.02, 0, 0, sgn * -0.5);
+      part(head, GEO.cone, boneMat(), 0.05, 0.36, 0.05, 0, 0.5, 0.0);
+      addFace(head, L.skin, { socket: true, pupil: 0x8fff6a, size: 0.066, brow: 0.05, mouth: "none" });
+      headExtra = 0.5;
+      break;
     case "zombie":
       part(head, GEO.sph, M(0x4a3325), 0.19, 0.09, 0.09, 0.14, 0.06, 0.2);
       part(head, GEO.box, M(0xe0d8c0), 0.14, 0.12, 0.05, -0.12, 0.2, 0.18, 0, 0, 0.3);
@@ -891,6 +912,28 @@ function buildHumanoid(kind: HumanKind, team: TeamId): UnitRig {
       handMode = "fixed"; handRest = -1.3;
       break;
     }
+    case "sapper": {
+      // powder keg hugged to the chest, fuse already burning
+      part(hand, GEO.cyl, M(0x6b4a2a, 0.8), 0.27, 0.56, 0.27, 0.2, 0.18, 0.2, 0, 0, PI / 2);
+      for (const k of [-0.2, 0, 0.2]) part(hand, GEO.cyl, steel(IRON), 0.285, 0.05, 0.285, 0.2 + k, 0.18, 0.2, 0, 0, PI / 2);
+      part(hand, GEO.cyl, M(0x2a2420), 0.07, 0.04, 0.07, 0.2, 0.46, 0.2);
+      part(hand, GEO.cyl, M(0xd8c090), 0.014, 0.2, 0.014, 0.2, 0.56, 0.2, 0, 0, 0.3);
+      part(hand, GEO.sph, B(0xffa040), 0.07, 0.07, 0.07, 0.17, 0.68, 0.2);
+      part(hand, GEO.sph, B(0xfff2b0), 0.035, 0.035, 0.035, 0.17, 0.7, 0.2);
+      handMode = "fixed"; handRest = -0.9;
+      break;
+    }
+    case "necromancer": {
+      // crooked staff topped with a skull that leaks green light
+      part(hand, GEO.cyl, M(0x2a1f18), 0.04, 1.8, 0.04, 0, 0, 0.3, PI / 2, 0, 0);
+      part(hand, GEO.sph, boneMat(), 0.15, 0.16, 0.15, 0, 0.0, 1.26);
+      part(hand, GEO.box, boneMat(BONE_DARK), 0.14, 0.08, 0.1, 0, -0.1, 1.26);
+      for (const sgn of [-1, 1]) part(hand, GEO.sph, B(0x8fff6a), 0.04, 0.04, 0.04, sgn * 0.06, 0.03, 1.39);
+      part(hand, GEO.ring, B(0x5fd04a), 0.24, 0.24, 0.24, 0, 0.0, 1.26, 0.5, 0.3, 0);
+      for (const sgn of [-1, 1]) part(hand, GEO.cone, boneMat(), 0.03, 0.2, 0.03, sgn * 0.12, 0.0, 1.05, PI / 2, 0, sgn * 0.6);
+      handMode = "fixed"; handRest = -1.45;
+      break;
+    }
     case "skeleton": {
       part(hand, GEO.box, steel(0x8c8f8a), 0.05, 0.12, 0.95, 0, 0, 0.55);
       part(hand, GEO.box, M(0x5a4630), 0.3, 0.05, 0.07, 0, 0, 0.1);
@@ -1156,6 +1199,77 @@ function buildTank(team: TeamId): UnitRig {
     root, body, torso, head, hand, lLeg, rLeg, lArm, rArm, cloak: null,
     headH: 2.6, heavy: true, scale: 1, tilt: 0.02, kind: "tank",
     handMode: "fixed", handRest: -0.2, parts: [], fx: {},
+  };
+}
+
+function buildCatapult(team: TeamId): UnitRig {
+  const tc = TEAM_COLORS[team], tcd = dark(tc);
+  const wood = 0x7a5632, woodDark = 0x4f3620, rope = 0xc9b27a;
+  const root = new THREE.Group();
+  root.rotation.order = "YXZ";
+  const body = new THREE.Group();
+  root.add(body);
+
+  // two wheel trucks stand in for legs so the whole frame rocks as it rolls
+  const lLeg = new THREE.Group(); lLeg.position.set(0.86, 0.46, 0); body.add(lLeg);
+  const rLeg = new THREE.Group(); rLeg.position.set(-0.86, 0.46, 0); body.add(rLeg);
+  for (const g of [lLeg, rLeg]) {
+    for (const wz of [-0.85, 0.85]) {
+      part(g, GEO.cyl, M(woodDark, 0.85), 0.46, 0.14, 0.46, 0, 0, wz, 0, 0, PI / 2);
+      part(g, GEO.cyl, steel(IRON), 0.48, 0.05, 0.48, 0, 0, wz, 0, 0, PI / 2);
+      part(g, GEO.cyl, steel(STEEL_DARK), 0.1, 0.2, 0.1, 0, 0, wz, 0, 0, PI / 2);
+      for (let i = 0; i < 4; i++) part(g, GEO.box, M(wood, 0.85), 0.05, 0.84, 0.07, 0.03, 0, wz, (i * PI) / 4, 0, 0);
+    }
+  }
+
+  const torso = new THREE.Group();
+  torso.position.set(0, 0.56, 0);
+  body.add(torso);
+  // bed: two long rails and cross beams
+  for (const s of [-1, 1]) part(torso, GEO.box, M(wood, 0.85), 0.2, 0.22, 2.7, s * 0.6, 0, 0);
+  for (const z of [-1.15, 0, 1.15]) part(torso, GEO.box, M(woodDark, 0.85), 1.5, 0.18, 0.2, 0, 0.02, z);
+  // A-frame uprights and the padded crossbar the arm slams into
+  for (const s of [-1, 1]) {
+    part(torso, GEO.box, M(wood, 0.85), 0.16, 1.5, 0.16, s * 0.6, 0.7, 0.42, 0.28, 0, 0);
+    part(torso, GEO.box, M(wood, 0.85), 0.14, 1.3, 0.14, s * 0.6, 0.56, 0.98, -0.5, 0, 0);
+    part(torso, GEO.box, M(tc), 0.04, 0.5, 0.36, s * 0.7, 0.9, 0.5);
+  }
+  part(torso, GEO.box, M(woodDark, 0.85), 1.4, 0.2, 0.2, 0, 1.4, 0.62);
+  part(torso, GEO.box, M(0xb89a6a, 0.95), 1.0, 0.24, 0.1, 0, 1.4, 0.5);
+  // twisted rope bundle and winch
+  part(torso, GEO.cyl, M(rope, 0.95), 0.2, 1.3, 0.2, 0, 0.2, -0.2, 0, 0, PI / 2);
+  part(torso, GEO.cyl, M(woodDark, 0.85), 0.12, 1.56, 0.12, 0, 0.14, -1.1, 0, 0, PI / 2);
+  for (const s of [-1, 1]) part(torso, GEO.box, steel(IRON), 0.04, 0.5, 0.06, s * 0.82, 0.14, -1.1, 0.7, 0, 0);
+  part(torso, GEO.box, M(tcd), 1.0, 0.04, 0.5, 0, 0.14, 0.9);
+  // spare boulders riding on the bed
+  part(torso, GEO.sph, M(0x8a8a86, 0.95), 0.2, 0.18, 0.2, 0.3, 0.26, -0.72);
+  part(torso, GEO.sph, M(0x77777a, 0.95), 0.17, 0.16, 0.18, -0.24, 0.24, -0.66);
+
+  const head = new THREE.Group();
+  head.position.set(0, 1.4, 0.62);
+  torso.add(head);
+  // a skull daubed on the pennant: the crew's idea of a warning
+  for (const sx of [-1, 1]) part(head, GEO.sph, B(0x14100c), 0.07, 0.08, 0.02, sx * 0.1, 0.48, 0.2);
+  part(head, GEO.box, B(0x14100c), 0.16, 0.05, 0.02, 0, 0.33, 0.2);
+  part(head, GEO.sph, B(0xf2ead4), 0.2, 0.2, 0.015, 0, 0.44, 0.19);
+  part(head, GEO.box, M(tc), 0.5, 0.5, 0.04, 0, 0.42, 0.16);
+  part(head, GEO.cyl, M(woodDark, 0.85), 0.03, 0.8, 0.03, 0, 0.3, 0.14);
+
+  const lArm = new THREE.Group(); lArm.position.set(0.6, 0.2, -0.2); torso.add(lArm);
+  // the throwing arm pivots at the rope bundle and lies back, loaded
+  const rArm = new THREE.Group(); rArm.position.set(0, 0.2, -0.2); torso.add(rArm);
+  const hand = new THREE.Group();
+  rArm.add(hand);
+  part(hand, GEO.box, M(wood, 0.85), 0.16, 0.16, 2.1, 0, 0, -1.0);
+  part(hand, GEO.box, steel(IRON), 0.2, 0.2, 0.12, 0, 0, -0.2);
+  part(hand, GEO.dome, M(woodDark, 0.85), 0.34, 0.2, 0.34, 0, 0.02, -2.08, PI, 0, 0);
+  part(hand, GEO.ring, steel(IRON), 0.34, 0.34, 0.2, 0, 0.04, -2.08, PI / 2, 0, 0);
+  part(hand, GEO.sph, M(0x8d8d88, 0.95), 0.27, 0.25, 0.27, 0, 0.2, -2.08);
+
+  return {
+    root, body, torso, head, hand, lLeg, rLeg, lArm, rArm, cloak: null,
+    headH: 2.7, heavy: true, scale: 1, tilt: 0, kind: "catapult",
+    handMode: "fixed", handRest: -0.25, parts: [], fx: {},
   };
 }
 
@@ -1429,6 +1543,7 @@ export function buildUnitRig(kind: UnitKind, team: TeamId): UnitRig {
       : kind === "robot" ? buildRobot(team)
       : kind === "tank" ? buildTank(team)
       : kind === "railgun" ? buildRailgun(team)
+      : kind === "catapult" ? buildCatapult(team)
       : buildHumanoid(kind, team);
     baked = bake(template);
     bakedCache.set(key, baked);

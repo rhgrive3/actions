@@ -102,7 +102,10 @@ function traitsOf(d: UnitDef): string[] {
   if (d.brace) t.push("槍衾: 走ってくる敵に大打撃・突撃を止める");
   if (d.charge) t.push("突撃: 助走した初撃が強化");
   if (d.hunter) t.push("追撃: 射手・術師・僧侶を優先");
-  if (d.aoe) t.push("爆発: 盾を無視・中心ほど強い");
+  if (d.detonate) t.push("自爆: 敵陣で爆発して消える・倒されても爆発");
+  if (d.summon) t.push("召喚: スケルトンを呼び続ける");
+  if (d.minRange) t.push(`最低射程: ${d.minRange}m以内には撃てない`);
+  if (d.aoe && !d.detonate) t.push("爆発: 盾を無視・中心ほど強い");
   if (d.cleave) t.push("薙ぎ払い: 周囲の敵も巻き込む");
   if (d.pierce && !d.aoe) t.push(`貫通: ${d.pierce + 1}体まで射抜く`);
   if (d.chain) t.push(`連鎖: ${d.chain}体へ雷が走る`);
@@ -617,7 +620,7 @@ export default function App() {
               <div className="font-display text-[13px] font-bold tracking-[0.6em] text-gold-500">EPIC SANDBOX</div>
               <h1 className="title-eng anim-pulseGold mt-1 text-3xl font-extrabold text-gold-300 sm:text-5xl md:text-6xl">BATTLE SIMULATOR</h1>
               <div className="title-jp mt-2 text-sm text-steel-300 sm:text-lg">3D戦争シミュレーター</div>
-              <div className="mt-2 text-[11px] tracking-wider text-steel-300">5勢力・31兵種 / 4つの戦場 / 全20ステージ</div>
+              <div className="mt-2 text-[11px] tracking-wider text-steel-300">5勢力・34兵種 / 4つの戦場 / 全21ステージ</div>
             </div>
 
             <div className="mt-6 flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row">
@@ -635,11 +638,11 @@ export default function App() {
             <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
               <div className="panel px-4 py-3">
                 <div className="mb-1 font-display text-sm font-bold tracking-widest text-gold-300">ストーリー</div>
-                <p className="text-[11px] leading-relaxed text-steel-300">4つの戦場・全20ステージを攻略。クリアするたびに新たな兵種が解放されます。</p>
+                <p className="text-[11px] leading-relaxed text-steel-300">4つの戦場・全21ステージを攻略。クリアするたびに新たな兵種が解放されます。</p>
               </div>
               <div className="panel px-4 py-3">
                 <div className="mb-1 font-display text-sm font-bold tracking-widest text-gold-300">カスタム戦</div>
-                <p className="text-[11px] leading-relaxed text-steel-300">全31兵種を使い、敵味方を自由に並べて対戦させるモードです。</p>
+                <p className="text-[11px] leading-relaxed text-steel-300">全34兵種を使い、敵味方を自由に並べて対戦させるモードです。</p>
               </div>
             </div>
           </div>

@@ -296,7 +296,7 @@ kbd {
   line-height: 1.6;
 }
 .hud-notice.with-brief {
-  top: 104px;
+  top: 136px;
 }
 .hud-notice p {
   background: rgba(12, 18, 23, 0.88);

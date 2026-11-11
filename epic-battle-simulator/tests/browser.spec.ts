@@ -5,10 +5,10 @@ import { DEFS } from "../src/game/units";
 const TAB_OF: Record<string, string> = {
   spear: "kingdom", guardian: "kingdom", archer: "kingdom", swordsman: "kingdom", crossbow: "kingdom",
   halberdier: "kingdom", knight: "kingdom", paladin: "kingdom", king: "kingdom",
-  orc: "warband", berserker: "warband", javelin: "warband", bomber: "warband", shaman: "warband", troll: "warband", giant: "warband", pirate: "warband",
+  orc: "warband", berserker: "warband", javelin: "warband", bomber: "warband", shaman: "warband", troll: "warband", giant: "warband", pirate: "warband", sapper: "warband",
   elf: "mystic", monk: "mystic", assassin: "mystic", mage: "mystic", frost: "mystic", cleric: "mystic", zeus: "mystic",
-  zombie: "undead", skeleton: "undead", bonearcher: "undead", vampire: "undead",
-  robot: "machine", tank: "machine", railgun: "machine",
+  zombie: "undead", skeleton: "undead", bonearcher: "undead", vampire: "undead", necromancer: "undead",
+  robot: "machine", tank: "machine", railgun: "machine", catapult: "machine",
 };
 
 async function openStage(page: Page, id = 1) {
@@ -44,7 +44,7 @@ test("story: stage select locks future stages and styles stage cards properly", 
   await expect(page.getByTestId("stage-2")).toBeDisabled();
   await expect(page.getByTestId("stage-20")).toBeDisabled();
   await expect(page.getByTestId("stage-1")).toContainText("解放");
-  await expect(page.getByText("クリア 0 / 20")).toBeVisible();
+  await expect(page.getByText("クリア 0 / 21")).toBeVisible();
   // verify CSS for .stage-card was actually applied (non-zero border/padding, bounded height)
   const box = (await page.getByTestId("stage-1").boundingBox())!;
   expect(box.height).toBeGreaterThan(60);
@@ -78,13 +78,16 @@ test("story: stage 1 setup, budget spending, unlock on victory, progress persist
   await page.mouse.up();
   await expect.poll(() => page.getByTestId("blue-count").textContent().then(Number)).toBeGreaterThan(3);
   await expect(page.getByTestId("blue-gold")).not.toHaveText(budget);
-  await page.getByRole("button", { name: "戻す", exact: true }).click();
+  const undo = page.getByRole("button", { name: "戻す", exact: true });
+  await undo.click();
+  for (let i = 0; i < 12 && await undo.isEnabled(); i++) await undo.click();
+  await expect(page.getByTestId("blue-count")).toHaveText("0");
   // Build the stage's lesson by hand: guards in front, spears behind them, archers at the back.
-  for (const [kind, x, n] of [["guardian", 560, 5], ["spear", 520, 3], ["archer", 380, 1]] as const) {
+  for (const [kind, x, n] of [["guardian", 575, 3], ["spear", 545, 5], ["archer", 440, 3]] as const) {
     await pickUnit(page, kind);
-    for (let i = 0; i < n; i++) await canvas.click({ position: { x, y: 380 + i * 30 } });
+    for (let i = 0; i < n; i++) await canvas.click({ position: { x, y: 385 + (i - (n - 1) / 2) * 26 } });
   }
-  await expect.poll(() => page.getByTestId("blue-count").textContent().then(Number)).toBeGreaterThanOrEqual(9);
+  await expect.poll(() => page.getByTestId("blue-count").textContent().then(Number)).toBeGreaterThanOrEqual(11);
   await page.getByRole("button", { name: "戦闘開始", exact: true }).click();
   await expect(page.getByTestId("game")).toHaveAttribute("data-phase", "playing");
   const result = page.getByRole("dialog", { name: "結果" });
@@ -96,7 +99,7 @@ test("story: stage 1 setup, budget spending, unlock on victory, progress persist
   await page.getByRole("button", { name: "やめる", exact: true }).click();
   await expect(page.getByTestId("stage-2")).toBeEnabled();
   await expect(page.getByTestId("stage-3")).toBeDisabled();
-  await expect(page.getByText("クリア 1 / 20")).toBeVisible();
+  await expect(page.getByText("クリア 1 / 21")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -245,14 +248,14 @@ test("custom battle reaches a result at 4x with consistent tallies", async ({ pa
   expect(errors).toEqual([]);
 });
 
-test("showcase lists all 31 units, then returns to the menu", async ({ page }) => {
+test("showcase lists all 34 units, then returns to the menu", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByTestId("showcase").click();
   await expect(page.getByTestId("game")).toHaveAttribute("data-phase", "setup");
-  await expect(page.getByTestId("blue-count")).toHaveText("31");
-  await expect(page.getByTestId("red-count")).toHaveText("31");
+  await expect(page.getByTestId("blue-count")).toHaveText("34");
+  await expect(page.getByTestId("red-count")).toHaveText("34");
   await page.waitForTimeout(2200);
   await page.screenshot({ path: "test-results/showcase.png", animations: "disabled" });
   await page.getByRole("button", { name: "やめる", exact: true }).click();

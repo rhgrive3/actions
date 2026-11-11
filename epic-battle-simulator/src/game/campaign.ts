@@ -67,21 +67,21 @@ function formation(army: Roster): EnemyGroup[] {
 
 const stage = (id: number, name: string, hint: string, unlock: UnitKind[], army: Roster): Stage => {
   const cost = army.reduce((sum, [k, n]) => sum + DEFS[k].cost * n, 0);
-  return { id, scene: Math.ceil(id / 5), name, hint, unlock, enemies: formation(army), budget: Math.round((cost * BUDGET_RATIO) / 25) * 25 };
+  return { id, scene: Math.min(4, Math.ceil(id / 5)), name, hint, unlock, enemies: formation(army), budget: Math.round((cost * BUDGET_RATIO) / 25) * 25 };
 };
 
 export const STAGES: Stage[] = [
   // ---- Scene 1: Borderland Wastes (Undead) ----
-  stage(1, "墓地の夜", "骨弓兵の矢は盾兵が止める。ただし盾兵は敵を倒せない。壁の後ろに槍と弓を置き、役割を分けよう。", ["swordsman"], [["zombie", 6], ["skeleton", 8], ["orc", 2], ["bonearcher", 4]]),
+  stage(1, "墓地の夜", "骨弓兵の矢は盾兵が止める。ただし盾兵は敵を倒せない。壁の後ろに槍と弓を置き、役割を分けよう。", ["swordsman"], [["zombie", 6], ["skeleton", 8], ["orc", 3], ["bonearcher", 4]]),
   stage(2, "霧の街道", "足の速いスケルトンが射手に取り付くと、弓は撃てなくなる。爆弾は盾を無視して密集を吹き飛ばす。", ["zombie", "skeleton"], [["skeleton", 8], ["orc", 3], ["bonearcher", 4], ["bomber", 2]]),
   stage(3, "廃村の包囲", "オークの大斧は隣の兵まで巻き込む。爆弾兵が2人いるので、固まりすぎず、射手で先に削ろう。", ["crossbow"], [["skeleton", 10], ["orc", 4], ["bonearcher", 4], ["bomber", 3]]),
   stage(4, "朽ちた関所", "呪術師の呪いは範囲内の移動と攻撃を鈍らせる。数で押す骨の群れに、単発の重い矢は間に合わない。", ["cleric"], [["shaman", 1], ["skeleton", 10], ["zombie", 6], ["orc", 2], ["bonearcher", 4], ["bomber", 1]]),
-  stage(5, "闇の主", "吸血鬼は斬るたびに回復する。弱い前衛は餌になるだけ。盾で受け、火力を一体に集めて落とせ。", ["halberdier", "bonearcher"], [["vampire", 2], ["skeleton", 16], ["bonearcher", 5], ["bomber", 2]]),
+  stage(5, "闇の主", "吸血鬼は斬るたびに回復する。弱い前衛は餌になるだけ。盾で受け、火力を一体に集めて落とせ。", ["halberdier", "bonearcher", "necromancer"], [["vampire", 2], ["skeleton", 16], ["bonearcher", 5], ["bomber", 2]]),
 
   // ---- Scene 2: Rift Canyon (Warband) ----
   stage(6, "峡谷の哨戒", "投槍は射程こそ短いが盾兵を転ばせる。転んだ兵に盾は効かない。投槍兵に届く手を用意しよう。", ["orc"], [["orc", 7], ["javelin", 6], ["berserker", 2], ["bomber", 1]]),
   stage(7, "赤土の野営", "狂戦士は駆け込んでくる。その速さは槍衾の餌食だ。後衛まで走らせないよう長柄で受け止めよ。", ["javelin"], [["orc", 6], ["berserker", 5], ["javelin", 5], ["shaman", 1], ["bomber", 1]]),
-  stage(8, "火薬庫", "爆弾兵が4人。盾も密集も無意味になる。散らして置くか、撃たれる前に爆弾兵を黙らせる手を。", ["berserker"], [["orc", 8], ["berserker", 6], ["bomber", 4], ["javelin", 2]]),
+  stage(8, "火薬庫", "爆弾兵が4人。盾も密集も無意味になる。散らして置くか、撃たれる前に爆弾兵を黙らせる手を。", ["berserker", "sapper"], [["orc", 8], ["berserker", 6], ["bomber", 4], ["javelin", 2]]),
   stage(9, "再生する巨体", "トロールは削っても再生する。少しずつ殴るのは無駄だ。重い一撃を集めて一気に倒せ。", ["bomber"], [["troll", 2], ["orc", 6], ["javelin", 5], ["berserker", 4]]),
   stage(10, "巨人の谷", "巨人は歩兵を隊列ごと叩き飛ばす。殴り合わず、弩や投槍の重い射撃を壁の後ろから浴びせよう。", ["shaman", "pirate"], [["giant", 1], ["orc", 6], ["berserker", 4], ["javelin", 4], ["bomber", 2], ["shaman", 1]]),
 
@@ -97,7 +97,11 @@ export const STAGES: Stage[] = [
   stage(17, "燃える広場", "重騎兵4騎が後衛へ突っ込んでくる。槍衾なしでは止まらない。爆弾と魔法も密集を狙っている。", ["vampire", "troll"], [["guardian", 6], ["swordsman", 4], ["spear", 6], ["knight", 4], ["bomber", 3], ["mage", 2], ["archer", 6]]),
   stage(18, "王宮回廊", "聖騎士が前線を癒やし、電磁砲が縦列を貫く。縦に並ぶな。刺客6人と騎兵が両翼から来る。", ["king"], [["paladin", 2], ["guardian", 6], ["halberdier", 5], ["railgun", 2], ["assassin", 6], ["knight", 2], ["archer", 4], ["crossbow", 3]]),
   stage(19, "玉座の前", "王の周囲は3割強くなる。戦車の装甲は軽い攻撃を通さない。王と戦車、どちらから崩すか決めて組め。", ["railgun"], [["king", 1], ["tank", 1], ["guardian", 6], ["halberdier", 5], ["spear", 4], ["knight", 2], ["assassin", 5], ["archer", 4], ["crossbow", 4], ["mage", 2], ["cleric", 1]]),
-  stage(20, "王都決戦", "王・雷神・大盾・槍衾・騎兵・刺客・弩。弱点のない軍はない。敵のどの兵に何を当てるか、全てを使え。", ["giant", "tank", "zeus"], [["king", 1], ["zeus", 1], ["guardian", 8], ["spear", 8], ["halberdier", 4], ["knight", 3], ["assassin", 4], ["crossbow", 6], ["cleric", 1]]),
+  stage(20, "王都決戦", "王・雷神・大盾・槍衾・騎兵・刺客・弩。弱点のない軍はない。敵のどの兵に何を当てるか、全てを使え。", ["catapult"], [["king", 1], ["zeus", 1], ["guardian", 8], ["spear", 8], ["halberdier", 4], ["knight", 3], ["assassin", 4], ["crossbow", 6], ["cleric", 1]]),
+
+  // ---- Extra: beyond the throne ----
+  stage(21, "奈落の門", "樽爆兵は盾壁ごと吹き飛ばし、死霊術師は骨を呼び続け、投石機は遠くから隊列を潰す。待てば負ける。何から黙らせる？", ["giant", "tank", "zeus"],
+    [["guardian", 8], ["spear", 8], ["halberdier", 4], ["sapper", 4], ["knight", 3], ["assassin", 4], ["necromancer", 2], ["crossbow", 7], ["elf", 3], ["catapult", 1], ["cleric", 1]]),
 ];
 
 /** Units usable once `cleared` stages are done (0 = nothing cleared yet). */
