@@ -7991,3 +7991,11 @@ AI/ルールへの差分: 到達できる経路が旧6,000探索上限で14件�
   - 理系社会人の日常: 「塗りは少なく、効果は約11秒間継続」。
   - note.com/j1per「スプラ3学会#4」（ver.7.2 時点）: 塗り量の記述はない。高低差の記述は Wiki の引用。
   - 判定の更新: 着地時の塗り（INKWAVE の補正としていた着地直後の1周期）は「展開したときにシートの下を塗る」の記述と方向が一致する。量は未確認。前進中の塗りは「少し」で、通った面積より塗る面積が小さいとされる。INKWAVE は前進中も 45F ごとに 12 か所を半径 2.5 で塗り、塗り面積（約 780 m²）がシートの通る面積（幅 15 × 前進 約 22 ≒ 330 m²）を上回る。前進中の塗りが本家より多い可能性が高い（記事の記述による。数値は未確認）。
+
+### スミナガシートの前進: 1 秒静止のあと 5 秒かけて最高速度へ（2026-11-11、修正）
+- 本家の根拠: Inkipedia「Splattercolor Screen」（MediaWiki API で原文を取得）: "Once the sheet spawns, it inks the ground directly under itself. After spawning, it takes 1 second for the sheet to start moving, and 5 more seconds for the sheet to reach the full speed of 0.04 units per frame. Every 45 frames, the sheet will produce droplets at preset locations." 11.3.0 `WallParam` の `StartUpFrame 60`、`TargetSpeedFrame 300`、`MoveSpeed 0.04/0.053/0.06`、`RunningFrame 560` と一致する。
+- 原因: INKWAVE は 60F 後にすぐ最高速度で進んでいた。`TargetSpeedFrame` を使っていなかった。
+- 修正: `patches/splatoon3/runtime/screen-motion.mjs`（新規）。60F 静止し、300F かけて最高速度まで加速し、動き始めから 560F で止まる。ゲーム本体（`all-specials.mjs`）と、通信時の当たり判定の再現（`special-world-device-contact.mjs`）は同じ式を使う。加速の形（直線的か）は公開されておらず、直線と仮定した（未確認）。`RunningFrame 560` を動き始めから数える点も従来どおりで、未確認。
+- 影響: 前進距離（ギアなし）22.4 → 16.4。スペシャル性能アップ最大では 33.6 → 24.6。塗り面積の見積もり（ロジック単独の計算）は 約 780 m² → 約 560 m²。
+- 確認状態: ロジック単独テスト（`screen-motion.test.mjs`、30/60/120 Hz で同じ距離）。既存の当たり判定・通信テストは、到達時刻が遅くなる分の待ち時間を延ばした。ブラウザ・本家の実機比較は未確認。
+- 海外資料の追記: Inkipedia 本記事は展開時に下を塗り、45F ごとに滴を出すとする。Inkipedia の Competitive 記事（作成途中・非公式の注記つき）は "doesn't ink any turf at all" とする。2 つの記事は食い違っている。reddit はアクセスが拒否され、確認できていない。展開後の滴の塗り量は依然として未確認。

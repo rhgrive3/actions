@@ -1,3 +1,4 @@
+import { screenStep } from './screen-motion.mjs';
 import {gearCurve} from './gear.mjs';
 import {specialDeviceFlight,stepSpecialDeviceFlight,deviceBelowWorld} from './special-device-flight.mjs';
 import {inkVacAbsorbCandidate} from './kit-ink-vac.mjs';
@@ -207,9 +208,9 @@ export function nativeSpecialWorldDeviceContact({api,system,actor,payload,target
      area(system,actor,target,o.pos,Math.hypot(radius,20),(_d,object)=>inside(object.pos)?37.5:0,true);
     offer(frame,prefix+(active/5),amount);
    }else{
-    from.copy(o.pos);const deviceAge=deviceFrame/FPS,runEnd=1+560/FPS;
-    const moving=Math.max(0,Math.min(deviceAge,runEnd)-Math.max(deviceAge-DT,1));
-    if(moving>0)o.pos.addScaledVector(o.direction,gearCurve(r.ap,.04,.053,.06)*FPS*moving);
+    from.copy(o.pos);const deviceAge=deviceFrame/FPS;
+    const travel=screenStep(deviceAge,DT,gearCurve(r.ap,.04,.053,.06)*FPS);
+    if(travel>0)o.pos.addScaledVector(o.direction,travel);
     if(frame-previousScreen>=60&&frame/FPS>=recent){
      const intersects=()=>screenContact(o,from,o.pos,target)?40:0;
      const amount=localSpecialTarget(system,actor,target)?intersects():

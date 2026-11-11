@@ -49,7 +49,8 @@ async function setup(t,kind,{spam=false,repeat=false}={}){
   attacker.aimPitch=-.6;attacker.aimDir.set(0,Math.sin(-.6),Math.cos(-.6));attacker.aimPoint.set(0,-10,20);attacker._startSpecial();assert.ok(attacker.specialActive);
  }
  const unpaidUse=spam?json(nm.out.find(e=>e[1]==='ev'&&e[2]==='special:use')[3]):null;
- const frames=kind==='mine'?270:repeat?1140:360;
+ // Screen travel ramps to MoveSpeed over TargetSpeedFrame 300 (screen-motion.mjs), so it reaches the device later.
+ const frames=kind==='mine'?270:repeat?1320:540;
  for(let i=0;i<frames;i++){
   f.clock.set(1000+(i+1)*DT);f.G.time=(i+1)*DT;
   const firingFrame=i-(repeat?780:0);

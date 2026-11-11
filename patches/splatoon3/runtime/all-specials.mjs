@@ -1,3 +1,4 @@
+import { screenStep } from './screen-motion.mjs';
 import {nativeSpecialActionDeviceContact as readSpecialActionContact,nativeSpecialPassiveDeviceContact as readSpecialPassiveContact} from './special-action-device-contact.mjs';
 import {rainmakerDeviceIdentity} from './ranked/rainmaker-device-contact.mjs';
 import {sealNativeSpecialWorldDeviceBirth,nativeSpecialWorldDeviceContact as readSpecialWorldContact} from './special-world-device-contact.mjs';
@@ -1901,11 +1902,12 @@ function updateWorld(rt,dt) {
         removeWorld(rt,o,'expire');
       }
     }else if(o.kind==='screen'){
-      const runStart=1,runEnd=1+560/FPS;
+      const runEnd=1+560/FPS;
       // Preserve the pre-move sample without allocating two vectors each fixed tick.
       const oldScreenPos=(o._screenOldPosScratch ||= o.pos.clone()).copy(o.lastObjectScreenPos??o.pos);
-      const movingSeconds=Math.max(0,Math.min(deviceAge,runEnd)-Math.max(deviceAge-dt,runStart));
-      if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
+      // 1 s still, a 5 s ramp to MoveSpeed, then 560F of travel in total (screen-motion.mjs).
+      const travel=screenStep(deviceAge,dt,o.moveSpeed);
+      if(travel>0)o.pos.addScaledVector(o.direction,travel);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
       if(o.mesh){o.mesh.material.opacity=.27+.06*Math.sin(o.age*7);o.mesh.rotation.y=Math.atan2(o.normal.x,o.normal.z);}
       for(const victim of rt.api.G.actors||[]){

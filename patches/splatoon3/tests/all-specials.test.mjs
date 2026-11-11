@@ -236,7 +236,8 @@ test('Splattercolor Screen applies the recipient color and mark timers on a real
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  ready(owner);deployInput(owner,f);assert.ok(owner.specialActive===null);
  const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.owner===owner&&o.kind==='screen');victim.pos.copy(screen.pos).addScaledVector(screen.normal,.7);
- tickWorld(f,90);
+ // 1 s still, then the 300F ramp: .7 is reached about 2.7 s after spawn.
+ tickWorld(f,180);
  assert.ok(victim.s3.splattercolorUntil>f.G.time);assert.ok(victim.s3.splattercolorMarkUntil>f.G.time);
  assert.ok(Math.abs(victim.s3.splattercolorUntil-victim.s3.splattercolorMarkUntil-4)<1e-9);
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===40&&h[3]==='splattercolorScreen'));
@@ -423,7 +424,8 @@ test('Splattercolor Screen moving plane damages deployed Splash Wall with Chimne
  const f=await setup(),owner=f.make(),enemy=f.make();equip(owner,'splattercolorScreen');enemy.team=1;enemy.pos.set(100,0,100);
  const wall=deployedWall(f,enemy,[0,.08,5]);ready(owner);deployInput(owner,f);
  const screen=f.G.projectiles._s3AllSpecialObjects.find(o=>o.owner===owner&&o.kind==='screen');wall.pos.copy(screen.pos).addScaledVector(screen.normal,2.5);wall.prev.copy(wall.pos);
- const before=wall.hp,age=wall.age;tickWorld(f,130);
+ // The 300F speed ramp reaches 2.5 about 4.2 s after spawn.
+ const before=wall.hp,age=wall.age;tickWorld(f,280);
  const damage=before-wall.hp-wall.wallHpInitial*(wall.age-age)/(wall.spec.hpDecayFrames/60);
  assert.ok(Math.abs(damage-120)<1e-6,'one plane crossing applies 40×Chimney 3 after subtracting normal wall decay');
 });
@@ -672,7 +674,8 @@ test('Screen travel integrates startup and closing boundaries identically at 30/
   f.G.projectiles.clear();const a=f.make();equip(a,'splattercolorScreen');f.G.actors=[a];ready(a);deployInput(a,f);
   const o=f.G.projectiles._s3AllSpecialObjects.find(x=>x.kind==='screen'),start=o.pos.clone();
   for(let i=0;i<11*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
-  distances.push(o.pos.distanceTo(start));assert.ok(Math.abs(distances.at(-1)-2.4*560/60)<1e-8,`${hz} Hz travel`);
+  distances.push(o.pos.distanceTo(start));// 300F linear ramp to 2.4/s, then full speed for the rest of RunningFrame 560.
+  assert.ok(Math.abs(distances.at(-1)-(2.4*5/2+2.4*(560-300)/60))<1e-8,`${hz} Hz travel`);
  }
  assert.ok(Math.max(...distances)-Math.min(...distances)<1e-8);
 });
