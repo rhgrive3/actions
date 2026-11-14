@@ -248,8 +248,8 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['content="INKWAVE：4対4', 'content="ZEVANT：4対4'],
   ],
   'src/ui/hud.js': [
-    ["h('small', null, kind === 'assist' ? 'ASSIST' : (isJa ? 'たおした！' : 'SPLATTED')),",
-     "kind === 'assist' ? h('small', null, 'ASSIST') : null,"],
+    ["h('small', null, kind === 'assist' ? tu('ASSIST') : (isJa ? 'たおした！' : tu('SPLATTED'))),",
+     "kind === 'assist' ? h('small', null, tu('ASSIST')) : null,"],
   ],
   'styles/hud.css': [
     ['.iw-ret--charger .iw-ret__dot, .iw-ret--splatling .iw-ret__dot { width:',
