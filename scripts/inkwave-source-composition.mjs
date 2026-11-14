@@ -247,6 +247,10 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['<title>INKWAVE — ナワバリバトル</title>', '<title>ZEVANT — ナワバリバトル</title>'],
     ['content="INKWAVE：4対4', 'content="ZEVANT：4対4'],
   ],
+  'src/ui/hud.js': [
+    ["h('small', null, kind === 'assist' ? 'ASSIST' : (isJa ? 'たおした！' : 'SPLATTED')),",
+     "kind === 'assist' ? h('small', null, 'ASSIST') : null,"],
+  ],
   'src/config.js': [
     ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
   ],
@@ -262,6 +266,13 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
 export function applyZevantDisplayName(rel, code) {
   for (const [before, after] of ZEVANT_DISPLAY_REPLACEMENTS[rel] || []) {
     code = replaceOnce(code, before, after, 'ZEVANT public display name (' + rel + ')');
+  }
+  if (rel === 'index.html') {
+    const inlineFavicon = /<link rel="icon" href="data:image\/svg\+xml,[^"]*">/;
+    if (!inlineFavicon.test(code)) throw new Error('ZEVANT PWA: expected the original inline favicon exactly once');
+    code = code.replace(inlineFavicon,
+      '<link rel="icon" type="image/png" sizes="32x32" href="patches/splatoon3/pwa/favicon-32.png">\n' +
+      '<link rel="manifest" href="patches/splatoon3/pwa/manifest.webmanifest">');
   }
   return code;
 }
