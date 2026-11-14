@@ -251,6 +251,10 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ["h('small', null, kind === 'assist' ? 'ASSIST' : (isJa ? 'たおした！' : 'SPLATTED')),",
      "kind === 'assist' ? h('small', null, 'ASSIST') : null,"],
   ],
+  'styles/hud.css': [
+    ['.iw-ret--charger .iw-ret__dot, .iw-ret--splatling .iw-ret__dot { width:',
+     '.iw-ret--shooter .iw-ret__dot { display: none; }\n.iw-ret--charger .iw-ret__dot, .iw-ret--splatling .iw-ret__dot { width:'],
+  ],
   'src/config.js': [
     ["export const GAME_TITLE = 'INKWAVE';", "export const GAME_TITLE = 'ZEVANT';"],
   ],
