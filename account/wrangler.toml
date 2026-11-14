@@ -1,6 +1,6 @@
 # ZEVANT web: the game (static assets built into ../dist by `npm run build:prod`) + the account API (/api/*).
 # Setup and deploy steps: account/README.md
-name = "zevant-web"
+name = "spr"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
@@ -15,8 +15,8 @@ not_found_handling = "none"
 [[d1_databases]]
 binding = "DB"
 database_name = "zevant-accounts"
-# Replace with the id printed by `npx wrangler d1 create zevant-accounts`.
-database_id = "00000000-0000-0000-0000-000000000000"
+# Created with `npx wrangler d1 create zevant-accounts`.
+database_id = "06309376-ccc2-4122-b06c-030e3aff0010"
 migrations_dir = "migrations"
 
 [vars]
