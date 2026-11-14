@@ -581,7 +581,6 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/showcase-shadow.mjs',
   'patches/splatoon3/runtime/splatling-radius-charge.mjs',
   'patches/splatoon3/runtime/weapon-paint-inertia.mjs',
-  'patches/local-quality/aim-profile.mjs',
   'patches/local-quality/charger-sight.mjs',
   'patches/local-quality/first-touch-adapter.mjs',
   'patches/local-quality/gyro-permission.mjs',

@@ -93,14 +93,17 @@ export function updateFXQuality(fx, targetMultiplier, THREE_LIB = THREE) {
 
   // 4. Ambient motes
   if (fx.motes) {
+    const prevMoteCol = fx._moteU?.uCol?.value?.clone?.();
     fx.root?.remove(fx.motes);
     fx.motes.geometry?.dispose?.();
     fx.motes.material?.dispose?.();
     if (typeof fx._initMotes === 'function') {
       fx._initMotes(Math.round(300 * q));
+      if (prevMoteCol && fx._moteU?.uCol?.value) fx._moteU.uCol.value.copy(prevMoteCol);
     }
   }
 
+  fx._iwPoolMeshes = null;
   return true;
 }
 

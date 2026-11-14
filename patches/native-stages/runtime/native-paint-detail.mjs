@@ -406,18 +406,20 @@ void iwPrepareNativePaint(){
  iwPaintDx=baseDx;iwPaintDy=baseDy;
  bool found=false;vec2 bestPoint=vec2(0.0),bestSlot=vec2(0.0);vec3 bestU=vec3(0.0),bestV=vec3(0.0);
  // A page holds only its own plane group's ink: use it only for that group.
- for(int i=0;i<16;i++){
-  vec4 page=uNativeDetailPages[i],u=uNativeDetailU[i],v=uNativeDetailV[i];
-  if(page.w<0.5||abs(page.w-vNativeDetailPlane)>0.25)continue;
-  vec2 p=vec2(dot(vWPos,u.xyz)-u.w,dot(vWPos,v.xyz)-v.w);
-  if(p.x>=0.0&&p.x<8.0&&p.y>=0.0&&p.y<8.0){
-   found=true;bestPoint=p;bestSlot=vec2(mod(float(i),4.0),floor(float(i)/4.0))*256.0;bestU=u.xyz;bestV=v.xyz;break;
+ if(vNativeDetailPlane>=0.25){
+  for(int i=0;i<16;i++){
+   vec4 page=uNativeDetailPages[i],u=uNativeDetailU[i],v=uNativeDetailV[i];
+   if(page.w<0.5||abs(page.w-vNativeDetailPlane)>0.25)continue;
+   vec2 p=vec2(dot(vWPos,u.xyz)-u.w,dot(vWPos,v.xyz)-v.w);
+   if(p.x>=0.0&&p.x<8.0&&p.y>=0.0&&p.y<8.0){
+    found=true;bestPoint=p;bestSlot=vec2(mod(float(i),4.0),floor(float(i)/4.0))*256.0;bestU=u.xyz;bestV=v.xyz;break;
+   }
   }
- }
- if(found){
-  iwPaintUv=(bestSlot+8.0+bestPoint*30.0)/1024.0;iwPaintSize=1024.0;iwPaintTexel=1.0/1024.0;iwPaintPpm=30.0;
-  iwPaintDx=vec2(dot(worldDx,bestU),dot(worldDx,bestV))*30.0/1024.0;
-  iwPaintDy=vec2(dot(worldDy,bestU),dot(worldDy,bestV))*30.0/1024.0;iwDetailActive=true;
+  if(found){
+   iwPaintUv=(bestSlot+8.0+bestPoint*30.0)/1024.0;iwPaintSize=1024.0;iwPaintTexel=1.0/1024.0;iwPaintPpm=30.0;
+   iwPaintDx=vec2(dot(worldDx,bestU),dot(worldDx,bestV))*30.0/1024.0;
+   iwPaintDy=vec2(dot(worldDy,bestU),dot(worldDy,bestV))*30.0/1024.0;iwDetailActive=true;
+  }
  }
 }
 // The fine page owns the edge, but it holds only ink replayed through its own

@@ -128,5 +128,41 @@ export function adaptReviewedHotpaths20261107(rel, code, replaceOnce) {
     }`,
       'character _solveLimb exact weight===1 quaternion assign');
   }
+  if (rel === 'src/world/paint.js') {
+    code = replaceOnce(code,
+      '          const rrGrowth = Math.sqrt(projectionSq);\n          const rr = projectionSq < 0 ? 0 : Math.max(0, rrGrowth);',
+      '          const rr = projectionSq > 0 ? Math.sqrt(projectionSq) : 0;',
+      'paint splat clamp negative projectionSq before sqrt');
+    code = replaceOnce(code,
+      '          entries.push(f, lu, lv, dn, sdu, sdv, sa, rrGrowth); // Ancillary ink can hit cells even when the body hits none.',
+      '          entries.push(f, lu, lv, dn, sdu, sdv, sa, rr); // Ancillary ink can hit cells even when the body hits none.',
+      'paint splat cache non-NaN rr in entries');
+    code = replaceOnce(code,
+      '      const rr = cachedProjection ? E[i + 7] : Math.sqrt(R * R - dn * dn);',
+      '      const rr = cachedProjection ? E[i + 7] : Math.sqrt(Math.max(0, R * R - dn * dn));',
+      'paint _emitGrowth guard negative R*R - dn*dn before sqrt');
+  }
+  if (rel === 'src/boss/bossHazards.js') {
+    code = replaceOnce(code,
+      "      if (!hz.moves.some((m) => m.t0 === t0)) { this.group.remove(o); if (o.geometry.attributes.aReach) o.geometry.deleteAttribute('aReach'); o.geometry.dispose(); o.material.dispose(); this._per.delete(key); }",
+      "      if (!hz.moves.some((m) => m.t0 === t0)) { this.group.remove(o); if (o.geometry.attributes.aReach) { o.geometry.deleteAttribute('position'); o.geometry.deleteAttribute('aA'); o.geometry.deleteAttribute('aSide'); } o.geometry.dispose(); o.material.dispose(); this._per.delete(key); }",
+      'bossHazards detach shared ring attributes and dispose per-ring aReach');
+  }
+  if (rel === 'src/ui/menu-art.js') {
+    code = replaceOnce(code,
+      "  for (const k in MATCH_TAGS) MATCH_TAGS[k].label = tr(MATCH_TAGS[k].label);\n  if (margin < 3) match.push({ ...MATCH_TAGS.close, value: tr('{n}% margin', { n: margin.toFixed(1) }) });\n  else if (margin >= 20) match.push({ ...MATCH_TAGS.landslide, value: `+${margin.toFixed(1)}%` });",
+      "  if (margin < 3) match.push({ ...MATCH_TAGS.close, label: tr(MATCH_TAGS.close.label), value: tr('{n}% margin', { n: margin.toFixed(1) }) });\n  else if (margin >= 20) match.push({ ...MATCH_TAGS.landslide, label: tr(MATCH_TAGS.landslide.label), value: `+${margin.toFixed(1)}%` });",
+      'menu-art avoid mutating shared MATCH_TAGS template labels');
+  }
+  if (rel === 'src/game/lobbySet.js') {
+    code = replaceOnce(code,
+      "    const m = new THREE.Mesh(mergeGeometries(geos), mat); m.name = 'lobbySet:wires'; m.matrixAutoUpdate = false;",
+      "    const m = new THREE.Mesh(mergeGeometries(geos), mat); for (const g of geos) g.dispose(); m.name = 'lobbySet:wires'; m.matrixAutoUpdate = false;",
+      'lobbySet _wires dispose temporary geometries after merge');
+    code = replaceOnce(code,
+      "    const m = new THREE.Mesh(mergeGeometries(geos), mat); m.name = 'lobbySet:volumes'; m.renderOrder = 2; m.matrixAutoUpdate = false;",
+      "    const m = new THREE.Mesh(mergeGeometries(geos), mat); for (const g of geos) g.dispose(); m.name = 'lobbySet:volumes'; m.renderOrder = 2; m.matrixAutoUpdate = false;",
+      'lobbySet _volumes dispose temporary geometries after merge');
+  }
   return code;
 }

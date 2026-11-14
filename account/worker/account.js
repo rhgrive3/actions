@@ -62,8 +62,15 @@ async function verifyTurnstile(cfg, token, request) {
   form.append('response', token);
   if (request.headers.get('CF-Connecting-IP')) form.append('remoteip', request.headers.get('CF-Connecting-IP'));
   let ok = false;
-  try { ok = (await (await fetch(TURNSTILE_VERIFY, { method: 'POST', body: form })).json())?.success === true; }
+  const ac = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => ac?.abort(), 5000);
+  try {
+    const res = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: form, ...(ac ? { signal: ac.signal } : {}) });
+    if (!res.ok) throw new Error('turnstile_http_' + res.status);
+    ok = (await res.json())?.success === true;
+  }
   catch { throw new ApiError(503, 'captcha_unavailable'); }
+  finally { clearTimeout(timer); }
   if (!ok) throw new ApiError(400, 'captcha_failed');
 }
 

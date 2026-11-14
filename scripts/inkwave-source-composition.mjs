@@ -248,8 +248,8 @@ const ZEVANT_DISPLAY_REPLACEMENTS = {
     ['content="INKWAVE：4対4', 'content="ZEVANT：4対4'],
   ],
   'src/ui/hud.js': [
-    ["h('small', null, kind === 'assist' ? tu('ASSIST') : (isJa ? 'たおした！' : tu('SPLATTED'))),",
-     "kind === 'assist' ? h('small', null, tu('ASSIST')) : null,"],
+    ["        h('small', null, isJa ? 'をたおした!' : tu('SPLATTED')),",
+     "        null,"],
   ],
   'styles/hud.css': [
     ['.iw-ret--charger .iw-ret__dot, .iw-ret--splatling .iw-ret__dot { width:',
@@ -275,8 +275,7 @@ export function applyZevantDisplayName(rel, code) {
     const inlineFavicon = /<link rel="icon" href="data:image\/svg\+xml,[^"]*">/;
     if (!inlineFavicon.test(code)) throw new Error('ZEVANT PWA: expected the original inline favicon exactly once');
     code = code.replace(inlineFavicon,
-      '<link rel="icon" type="image/png" sizes="32x32" href="patches/splatoon3/pwa/favicon-32.png">\n' +
-      '<link rel="manifest" href="patches/splatoon3/pwa/manifest.webmanifest">');
+      '<link rel="icon" type="image/png" sizes="32x32" href="patches/splatoon3/pwa/favicon-32.png">');
   }
   return code;
 }

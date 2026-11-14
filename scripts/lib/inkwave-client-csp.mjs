@@ -23,7 +23,7 @@ export function clientScriptPolicy(html) {
     hashes.add("'sha256-" + createHash('sha256').update(source, 'utf8').digest('base64') + "'");
   }
   return [
-    "script-src 'self' 'wasm-unsafe-eval'" + (hashes.size ? ' ' + [...hashes].join(' ') : ''),
+    "script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com" + (hashes.size ? ' ' + [...hashes].join(' ') : ''),
     "script-src-attr 'none'",
     // KTX2/Three and other genuine game workers may be constructed from Blob URLs.
     "worker-src 'self' blob:",

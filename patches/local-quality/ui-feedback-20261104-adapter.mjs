@@ -226,6 +226,9 @@ export function adaptUiFeedback20261104(rel, code, replaceOnce) {
   }
   if (rel === 'src/main.js') {
     once(RESULT_MUSIC_OLD, RESULT_MUSIC_NEW, 'result music hand-off');
+    once('      this.rig.yaw = G.time > 0 ? this.rig.yaw + (((a.yaw - this.rig.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * (1 - Math.exp(-2 * dt)) : a.yaw;',
+      '      this.rig.yaw = G.time > 0 ? this.rig.yaw + ((((a.yaw - this.rig.yaw + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) - Math.PI) * (1 - Math.exp(-2 * dt)) : a.yaw;',
+      'attract yaw positive-modulo wrap');
     return code;
   }
   if (rel === 'src/audio/audio.js') {
@@ -241,6 +244,9 @@ export function adaptUiFeedback20261104(rel, code, replaceOnce) {
   once('      desc,\n      h(\'div\', { class: \'iw-main__side\' }', "      h('div', { class: 'iw-main__side' }", 'main description');
   // Rapid taps on touch: a push navigation in the first 160 ms after the last
   // screen change is the same gesture landing twice, not a new request.
+  once('    this.wipe.cancel();\n    this.el.remove();',
+    "    if (this._iwBackdropPin) { this.layer?.removeEventListener('scroll', this._iwBackdropPin, { capture: true }); this._iwBackdropPin = null; }\n    this._iwSortedWeaponOrder = null;\n    this.wipe.cancel();\n    this.el.remove();",
+    'backdrop pin dispose');
   once('    if (name === prev && !force) return;',
     "    if (name === prev && !force) return;\n    if (opts.push && prev && (document.documentElement.classList.contains('iw-touch') || this.el.classList.contains('is-touch')) && performance.now() - (this._shownAt || 0) < 160) return;",
     'touch double navigation');

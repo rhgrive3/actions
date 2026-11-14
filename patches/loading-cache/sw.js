@@ -315,19 +315,18 @@ async function currentAsset(request, rel) {
   if (!flight) {
     flight = { users: 0, task: null };
     flight.task = (async () => {
-      let cache;
+      let cache = null;
       try {
         cache = await openCurrentCache();
         const hit = await cache.match(request);
         if (hit) return hit;
       } catch {
-        // A single cancelled caller cannot abort another subscriber's fetch.
-        return fetch(new Request(request, { signal: new AbortController().signal }));
+        cache = null;
       }
       const { response, verified } = await verifiedAsset(request, BUILD.assets[rel]);
       if (!response.ok) return response;
       if (!verified) throw new Error('Uncacheable');
-      try { await cache.put(request, response.clone()); } catch { /* quota: online play must still work */ }
+      if (cache) try { await cache.put(request, response.clone()); } catch { /* quota: online play must still work */ }
       return response;
     })();
     flights.set(request.url, flight);
