@@ -678,7 +678,9 @@ const preloadOrder = order.filter((file) => {
   return true;
 });
 const preload = preloadOrder.map((file) => `<link rel="modulepreload" href="./${file}">`).join('\n');
-const loadingHTML = injectAccountEntry(loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`), accountBundle);
+const loadingHTML1 = loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
+if (loadingHTML1 === loadingHTML0) throw new Error('INKWAVE build: missing </head> in index.html');
+const loadingHTML = injectAccountEntry(loadingHTML1, accountBundle);
 fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must

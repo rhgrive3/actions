@@ -97,10 +97,14 @@ export const account = {
   },
 
   async loadConfig() {
-    if (!this.config) {
-      try { this.config = await api.config(); } catch { this.config = { registrationOpen: true, turnstileSiteKey: '' }; }
+    if (this.config) return this.config;
+    if (!this._configPromise) {
+      this._configPromise = api.config().then(
+        (cfg) => { this.config = cfg; this._configPromise = null; return cfg; },
+        () => { this._configPromise = null; return { registrationOpen: true, turnstileSiteKey: '' }; }
+      );
     }
-    return this.config;
+    return this._configPromise;
   },
 
   /** Called with the user from any successful API answer (or null after sign-out). */

@@ -248,9 +248,17 @@ test('Turnstile is enforced on sign-up when configured', async () => {
   assert.equal((await call('POST', '/api/account/register', { body: NEW })).data.error.code, 'captcha_required');
   const realFetch = globalThis.fetch;
   const seen = [];
-  globalThis.fetch = async (url, init) => { seen.push([String(url), init.body.get('response')]); return Response.json({ success: init.body.get('response') === 'good' }); };
+  globalThis.fetch = async (url, init) => {
+    const tok = init.body.get('response');
+    seen.push([String(url), tok]);
+    if (tok === 'wrong-host') return Response.json({ success: true, hostname: 'evil.example', action: 'account_register' });
+    if (tok === 'wrong-action') return Response.json({ success: true, hostname: 'zevant.example', action: 'inkwave_access' });
+    return Response.json({ success: tok === 'good', hostname: 'zevant.example', action: 'account_register' });
+  };
   try {
     assert.equal((await call('POST', '/api/account/register', { body: { ...NEW, turnstileToken: 'bad' } })).data.error.code, 'captcha_failed');
+    assert.equal((await call('POST', '/api/account/register', { body: { ...NEW, turnstileToken: 'wrong-host' } })).data.error.code, 'captcha_failed');
+    assert.equal((await call('POST', '/api/account/register', { body: { ...NEW, turnstileToken: 'wrong-action' } })).data.error.code, 'captcha_failed');
     assert.equal((await call('POST', '/api/account/register', { body: { ...NEW, turnstileToken: 'good' } })).status, 201);
   } finally { globalThis.fetch = realFetch; }
   assert.equal(seen[0][0], 'https://challenges.cloudflare.com/turnstile/v0/siteverify');

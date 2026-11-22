@@ -286,6 +286,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
   function show(name, { dir = 0, focus = true, notice = null } = {}) {
     if (closed) return;
+    if (!account.user && name !== 'login' && name !== 'register') name = 'login';
     ++viewEpoch;
     const prev = current;
     prev?.destroy?.();
@@ -335,8 +336,13 @@ export function mountPanel({ view: startView, onClose } = {}) {
       const result = await run();
       return !closed && ownerEpoch === viewEpoch ? result : null;
     } catch (e) {
-      if (closed || ownerEpoch !== viewEpoch) return null;
+      if (closed) return null;
       const err = e instanceof AccountError ? e : new AccountError('unknown');
+      if (err.code === 'not_signed_in' && !account.user && viewName === 'login' && ownerEpoch !== viewEpoch) {
+        current?.banner?.show(t('session.expired'), 'error');
+        return null;
+      }
+      if (ownerEpoch !== viewEpoch) return null;
       game.sfx('ui_error');
       if (err.code === 'not_signed_in') {
         // The store commits authorization failures inside its mutation queue.
@@ -461,7 +467,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
           if (closed || !captchaBox.isConnected) return;
           captchaBox.replaceChildren();
           widget = ts.render(captchaBox, {
-            sitekey: cfg.turnstileSiteKey, theme: 'dark', size: 'flexible', language: LANG,
+            sitekey: cfg.turnstileSiteKey, action: 'account_register', theme: 'dark', size: 'flexible', language: LANG,
             callback: (tok) => { captchaToken = tok; },
             'expired-callback': () => { captchaToken = ''; },
             'error-callback': () => { captchaToken = ''; },
@@ -823,7 +829,8 @@ export function mountPanel({ view: startView, onClose } = {}) {
   window.visualViewport?.addEventListener('resize', onResize);
   disposers.push(() => window.visualViewport?.removeEventListener('resize', onResize));
 
-  show(startView || (account.user ? 'account' : 'login'));
+  try { show(startView || (account.user ? 'account' : 'login')); }
+  catch (err) { close({ silent: true }); throw err; }
   account.loadConfig();
   return { close, show: (v) => show(v), get view() { return viewName; } };
 }

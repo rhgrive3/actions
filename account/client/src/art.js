@@ -111,6 +111,6 @@ function iconMarkup(name, fill) {
  *  `user` may be a preview { loginId, avatarIcon, avatarColor }. Guests get a grey squid. */
 export function avatarSVG(user) {
   if (!user) return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(7)}" fill="rgba(255,255,255,.14)"/>${iconMarkup('squid', '#8d86a6')}</svg>`;
-  const ink = user.avatarColor || inkFor(user.loginId);
+  const ink = INKS.includes(user.avatarColor) ? user.avatarColor : inkFor(user.loginId);
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(hashString(user.loginId))}" fill="${ink}"/>${iconMarkup(user.avatarIcon, '#fff')}</svg>`;
 }

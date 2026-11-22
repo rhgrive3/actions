@@ -54,7 +54,7 @@ async function assertRegistrationAllowed(env, key, now) {
   if (until > now) throw new ApiError(429, 'rate_limited', { retryAfter: Math.ceil((until - now) / 1000) });
 }
 
-async function verifyTurnstile(cfg, token, request) {
+async function verifyTurnstile(cfg, token, request, expectedHost) {
   if (!cfg.turnstileSecret) return;
   if (!token) throw new ApiError(400, 'captcha_required');
   const form = new FormData();
@@ -67,7 +67,10 @@ async function verifyTurnstile(cfg, token, request) {
   try {
     const res = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: form, ...(ac ? { signal: ac.signal } : {}) });
     if (!res.ok) throw new Error('turnstile_http_' + res.status);
-    ok = (await res.json())?.success === true;
+    const verdict = await res.json();
+    ok = verdict?.success === true
+      && (!expectedHost || verdict.hostname === expectedHost)
+      && verdict.action === 'account_register';
   }
   catch { throw new ApiError(503, 'captcha_unavailable'); }
   finally { clearTimeout(timer); }
@@ -126,6 +129,7 @@ async function requirePassword(env, user, password, cfg, now) {
     if (hit?.locked_until > now) throw new ApiError(429, 'rate_limited', { retryAfter: Math.ceil((hit.locked_until - now) / 1000) });
     throw new ApiError(400, 'wrong_password', { field: 'currentPassword' });
   }
+  await assertNotLocked(env, [key], now);
   await db.throttleClear(env.DB, key);
 }
 
@@ -154,7 +158,7 @@ async function register({ env, request, url, now, cfg }) {
   if ((code = checkPassword(password, loginId))) throw fieldError('password', code);
   const regKey = await ipKey('register', request);
   await assertRegistrationAllowed(env, regKey, now);
-  await verifyTurnstile(cfg, str(body.turnstileToken, 4096), request);
+  await verifyTurnstile(cfg, str(body.turnstileToken, 4096), request, url.hostname);
   const norm = normalizeLoginId(loginId);
   if (await db.userByLogin(env.DB, norm)) throw fieldError('loginId', 'login_id_taken');
   const user = { id: crypto.randomUUID(), loginId, loginIdNorm: norm, displayName, passwordHash: await hashPassword(password, cfg.iterations), now };
@@ -185,6 +189,7 @@ async function login({ env, request, url, now, cfg }) {
     if (until > now) throw new ApiError(429, 'rate_limited', { retryAfter: Math.ceil((until - now) / 1000) });
     throw new ApiError(401, 'invalid_credentials');
   }
+  await assertNotLocked(env, [idKey, ipK], now);
   await db.throttleClear(env.DB, idKey);
   // upgrade hashes made with fewer iterations than the current setting
   if (hashIterations(user.password_hash) < cfg.iterations) {
