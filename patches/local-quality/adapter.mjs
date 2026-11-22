@@ -105,6 +105,7 @@ const IDENTITY_FILES = [
   'queue-ui-audio-20261031-adapter.mjs',
   'viewport-cache.mjs',
   'viewport-cache-adapter.mjs',
+  'audit-fixes-20261122-adapter.mjs',
   'reviewed-hotpaths-20261107-adapter.mjs',
   'queue-weapons-20261031-adapter.mjs',
   // Every copied runtime and reachable composition input has a source identity.

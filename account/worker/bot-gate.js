@@ -42,7 +42,7 @@ export async function verifyGameGateCookie(cookie, host, secret, now = Date.now(
   const parts = cookie.split('.');
   if (parts.length !== 3 || !/^\d{13}$/.test(parts[0]) || !/^[A-Za-z0-9_-]{22}$/.test(parts[1])) return false;
   const expires = Number(parts[0]);
-  if (!Number.isSafeInteger(expires) || expires <= now || expires > now + SESSION_MS) return false;
+  if (!Number.isSafeInteger(expires) || expires <= now || expires > now + SESSION_MS + 60_000) return false;
   const signature = fromB64url(parts[2]);
   if (!signature || signature.length !== 32) return false;
   return crypto.subtle.verify('HMAC', await signingKey(secret), signature, enc.encode(host + ':' + parts[0] + '.' + parts[1]));
@@ -150,7 +150,7 @@ export async function serveGameWithBotGate(request, env) {
         if (done) break;
         length += value.byteLength;
         if (length > 4096) {
-          await reader.cancel().catch(() => {});
+          void reader.cancel().catch(() => {});
           return textResponse('Form too large', 413);
         }
         chunks.push(value);
