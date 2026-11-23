@@ -689,7 +689,7 @@ const versionFiles = walk(BUILD);
 const revision = sha256(JSON.stringify([...versionFiles].sort().map(file => { const rel=path.relative(BUILD,file); return [rel,loadingPlan.assets[rel.split(path.sep).join('/')]?.[1] ?? sha256(fs.readFileSync(file))]; })));
 for (const file of versionFiles) {
   const rel = path.relative(BUILD,file);
-  if (rel === 'index.html' || rel === '.nojekyll') continue;
+  if (rel === 'index.html' || rel === '.nojekyll' || rel === 'sw.js') continue;
   const dst = path.join(BUILD,'_versions',revision,rel); fs.mkdirSync(path.dirname(dst),{recursive:true}); fs.copyFileSync(file,dst);
 }
 const volumePackaging=dedupeVersionedVolumeAssets(BUILD,revision);

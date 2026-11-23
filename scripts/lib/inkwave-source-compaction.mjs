@@ -79,6 +79,7 @@ export function compactModuleStrings(source) {
     if (identifierPart(source[node.end])) text += ' ';
     return { node, text };
   });
+  const sourceBytes = utf8Length(source);
   const emit = (declarations, edits) => {
     if (!declarations.length) return null;
     // AST literal spans never overlap. Copy each unchanged source segment once
@@ -92,10 +93,7 @@ export function compactModuleStrings(source) {
     chunks.push(source.slice(cursor));
     let code = chunks.join('');
     code = code.slice(0, insertion) + '\n' + declarations.join('') + code.slice(insertion);
-    // Parse the complete result so malformed edits fail the build before it
-    // can be published or enter the offline cache manifest.
-    parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-    const bytesSaved = utf8Length(source) - utf8Length(code);
+    const bytesSaved = sourceBytes - utf8Length(code);
     return bytesSaved > 0 ? { code, bytesSaved, functions: declarations.length } : null;
   };
 
@@ -148,5 +146,8 @@ export function compactModuleStrings(source) {
     ? emit([`function ${dispatcherName}(i){switch(i){${cases.join('')}}}`], dispatchEdits)
     : null;
   if (!direct && !dispatch) return { code: source, bytesSaved: 0, functions: 0 };
-  return dispatch && (!direct || dispatch.bytesSaved > direct.bytesSaved) ? dispatch : direct;
+  const winner = dispatch && (!direct || dispatch.bytesSaved > direct.bytesSaved) ? dispatch : direct;
+  // Parse the winning module so malformed edits fail the build before publishing.
+  parse(winner.code, { ecmaVersion: 'latest', sourceType: 'module' });
+  return winner;
 }

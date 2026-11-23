@@ -919,7 +919,7 @@ function stampGuardCandidate(rt,p,start,end,owner,state) {
   const d0=from.dot(direction),d1=to.dot(direction);
   if(d0<0||d1>0||d0-d1<1e-8)return null;
   const t=clamp(d0/(d0-d1),0,1),point=rt.v4.copy(start).lerp(end,t);
-  const tangent=rt.v5.set(direction.z,0,-direction.x),offset=point.clone().sub(center);
+  const tangent=rt.v5.set(direction.z,0,-direction.x),offset=rt.v6.subVectors(point,center);
   if(Math.abs(offset.dot(tangent))>1.35||Math.abs(offset.y)>.95)return null;
   const length=start.distanceTo(end),at=point.clone();
   return {distance:length*t,point:at,normal:direction.clone(),kind:'ultra-stamp-guard',onHit:()=>{

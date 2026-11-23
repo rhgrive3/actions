@@ -1895,6 +1895,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const param=variable?p.VariableWeaponParam||t:t;
     const burst=param.TripleShotSpanFrame!=null;
     if(r.family==='blaster'){
+      const cost=finite(param.InkConsume,.0092)*100*inkMod(a);
+      if(a.ink<cost){runner._empty();return;}
       runner.cooldown=finite(param.RepeatFrame,50)/HZ;
       beginPending(s,finite(param.PreDelayFrame_HumanShot,10),()=>fireAutoShot(runner,r,s,a,param,variable,burst));
     }else fireAutoShot(runner,r,s,a,param,variable,burst);
@@ -1989,10 +1991,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }else if(r.family==='stringer')emitArrow(runner,r,c);
       else if(r.family==='splatana') {
         const swing=p.spl__WeaponSaberParam.SwingParam,key=c+EPS>=1?'saber-vertical':'saber-horizontal';
-        if(c<1){
+        if(c+EPS<1){
           const amount=finite(swing.InkConsume,.035)*100*inkMod(a),extra=amount-s.paid;
           if(extra>0&&!pay(runner,extra)){cancel(runner);return;}
-          if(extra<0)a.ink=Math.min(100,a.ink-extra);
+          if(extra<0)a.ink=a.ink>100?a.ink-extra:Math.min(100,a.ink-extra);
         }
         const stepped=c+EPS>=1&&a.grounded&&saberStepRequested(s,swing);
         if(stepped)s.lunge=createSaberStep(a,swing);
