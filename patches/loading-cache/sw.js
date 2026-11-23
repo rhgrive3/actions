@@ -336,7 +336,7 @@ async function currentAsset(request, rel) {
   flight.users++;
   const response = await flight.task;
   // The overwhelmingly common single warm request still needs no clone.
-  return flight.users === 1 ? response : response.clone();
+  return --flight.users === 0 ? response : response.clone();
 }
 async function retainedAsset(request, revision) {
   // Existing old documents may need their predecessor's tree. Never substitute the current revision.

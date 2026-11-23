@@ -193,14 +193,18 @@ function strengthMeter() {
   };
 }
 
+let turnstileLoading = null;
 function loadTurnstile() {
   if (window.turnstile) return Promise.resolve(window.turnstile);
-  return new Promise((resolve, reject) => {
+  if (turnstileLoading) return turnstileLoading;
+  turnstileLoading = new Promise((resolve, reject) => {
     const s = h('script', { src: TURNSTILE_SRC, async: true, defer: true });
-    s.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile')));
-    s.onerror = reject;
+    const fail = (err) => { turnstileLoading = null; s.remove(); reject(err); };
+    s.onload = () => (window.turnstile ? resolve(window.turnstile) : fail(new Error('turnstile')));
+    s.onerror = () => fail(new Error('turnstile'));
     document.head.append(s);
   });
+  return turnstileLoading;
 }
 
 // ------------------------------------------------------------------------------------- dialog
@@ -390,10 +394,12 @@ export function mountPanel({ view: startView, onClose } = {}) {
     bar.inert = true;
     scroll.inert = true;
     renderHero();
-    setTimeout(() => {
+    const wt = setTimeout(() => {
+      if (closed) return;
       close({ silent: true });
       try { game.menus()?.toast?.(text.replace(/\n/g, ' '), { kind: 'good' }); } catch { /* optional */ }
     }, reducedMotion() ? 700 : 1300);
+    disposers.push(() => clearTimeout(wt));
   }
 
   // ---------------------------------------------------------------- views
@@ -458,7 +464,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
       // Cloudflare Turnstile, when the Worker has it configured
       account.loadConfig().then((cfg) => {
-        if (closed || viewName !== 'register') return;
+        if (closed || !captchaBox.isConnected) return;
         if (cfg.registrationOpen === false) { bn.show(t('register.closed'), 'info'); go.disabled = true; return; }
         if (!cfg.turnstileSiteKey) return;
         captchaBox.hidden = false;
@@ -472,7 +478,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
             'expired-callback': () => { captchaToken = ''; },
             'error-callback': () => { captchaToken = ''; },
           });
-        }, () => { if (!closed) bn.show(errorText('captcha_unavailable')); });
+        }, () => { if (!closed && captchaBox.isConnected) bn.show(errorText('captcha_unavailable')); });
       });
 
       form.addEventListener('submit', async (e) => {
@@ -730,7 +736,8 @@ export function mountPanel({ view: startView, onClose } = {}) {
     if (!silent) game.sfx('ui_back');
     root.classList.add('is-leaving');
     game.setMenusCovered(false);
-    const done = () => { root.remove(); onClose?.(); };
+    onClose?.();
+    const done = () => { root.remove(); };
     if (reducedMotion()) done(); else setTimeout(done, 200);
     if (prevFocus && prevFocus.isConnected && typeof prevFocus.focus === 'function') prevFocus.focus({ preventScroll: true });
   }

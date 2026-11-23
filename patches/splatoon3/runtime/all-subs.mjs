@@ -1295,7 +1295,7 @@ function customObjectCandidate(api, projectiles, p, start, end) {
     syncObjectAttachment(api,object);
     if (object===p || object.dead || object.team===p.team) continue;
     const torpedoTarget=targetableTorpedo(object);
-    const targetableDeployable=object.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(object.subId);
+    const targetableDeployable=object.phase==='deployed'&&(object.subId==='splashWall'||object.subId==='sprinkler'||object.subId==='beakon');
     if(!torpedoTarget&&!targetableDeployable)continue;
     let t,x,y,z,nx,ny,nz,sphere=false;
     if (object.subId==='splashWall') {

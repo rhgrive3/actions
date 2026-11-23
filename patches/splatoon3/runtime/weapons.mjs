@@ -1263,6 +1263,7 @@ export function installWeapons(context, profile) {
       return result;
     }
     if (input.fire && this.cooldown <= 0 && this.a.ink >= w.inkPerShot) { this.s3BlasterWindup = blasterStartupWindup(this.a, input.firePressed, dt, PLAYER.emergeDelay, w.preDelay); this.s3BlasterFromSwim = false; this.firingT = .35; return; }
+    if (input.fire && this.cooldown <= 0) { this._empty(); return; }
     if (!input.fire) this.cooldown = Math.max(0, this.cooldown);
   };
   installSplatling(api, profile, { splatlingChargeCap, splatlingReservation, tickSplatlingInterrupt, releaseSplatlingInterrupt });
