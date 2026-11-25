@@ -555,7 +555,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(hand!==null)event.hand=hand;
     emit('weapon:fire',event);
     // A Splatana horizontal swing draws its muzzle droplets at 20% (fx.js 'splatana-h').
-    const fxKind=r.family==='blaster'?'blaster':r.family==='splatana'&&a._s3SaberHorizontalNotify?'splatana-h':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
+    const fxKind=r.family==='charger'?'charger':r.family==='blaster'?'blaster':r.family==='splatana'&&a._s3SaberHorizontalNotify?'splatana-h':'shooter',wantFx=!!(a.isLocal || a._nearCamera?.());
     a._s3SaberHorizontalNotify=false;
     const wantMuzzle=wantFx&&!usesBucketSlosherSheet(r.id);
     // Raw-socket births defer only the FX request until this tick's pose (#1431).
@@ -759,6 +759,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     h.point.set(0,0,0);h.normal.set(0,0,0);
     return scratch;
   }
+  function attachCatalogChargerBeam(system,actor,p,origin,direction,charge) {
+    if(typeof system?._ghostBeam!=='function'||!Array.isArray(system.beams))return null;
+    const before=system.beams.length;
+    system._ghostBeam(actor,origin,direction,.0001,clamp(charge),false);
+    const beam=system.beams.length>before?system.beams[system.beams.length-1]:null;
+    if(beam&&p?.catalog)p.catalog.beam=beam;
+    return beam;
+  }
   function spawn(a,r,descriptor,direction,at,options={}) {
     const system=G.projectiles, p=system._new(),scratch=collisionScratch(p);
     p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0,true);
@@ -805,6 +813,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     updateCatalogVisual(p);
     poseBirth.attach(p,at);
     system._push(p);
+    if(r.family==='charger')attachCatalogChargerBeam(system,a,p,p.start,direction,descriptor.charge);
     return p;
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
@@ -1611,6 +1620,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!p.ghost&&q.terrainStop<=q.stop+EPS)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
           1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
       }
+      if(!deviceProbe&&s.r.family==='charger'&&s.beam?.mesh) {
+        if(travelBefore===0&&s.beam.mesh.position?.copy)s.beam.mesh.position.copy(p.start);
+        const beamLen=Math.max(.0001,Math.min(s.travel,s.range,travelBefore+len*clamp(Math.min(1,stop)),
+          travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT)));
+        s.beam.mesh.scale.z=beamLen;
+        if(s.beam.mesh.material?.uniforms?.uLen)s.beam.mesh.material.uniforms.uLen.value=beamLen;
+      }
       if(!p.ghost&&s.r.family==='charger') {
         const stripe=d.chargerPaint;
         if(stripe?.interval>EPS&&len>EPS){
@@ -1772,6 +1788,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.catalog={r,_rPlain:r,splashDir:splashDirScratch,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
         p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index,true);updateCatalogVisual(p);
+        if(r.family==='charger'){
+          const beamDir=p.vel.lengthSq()>EPS?p.vel.clone().normalize():a.aimDir;
+          attachCatalogChargerBeam(this,a,p,p.start,beamDir,d.charge);
+        }
         // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
         // Feed only validated shot metadata into its presentation clock, never
         // a melee collider, ink payment or lunge. Old/repeated births cannot

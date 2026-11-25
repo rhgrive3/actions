@@ -8,6 +8,7 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
   const phrase=spinnerUsesPremix(id),meta=spinnerClipMarkers(id),firstAt=chargeFraction(opts.actor?.weapon);
   let progress=chargeAudioProgress(opts.actor,Number.isFinite(opts.progress)?opts.progress:opts.actor?.weaponRunner?.charge);
   let phase=chargeStage(progress,firstAt),previous=progress,last=ctx.currentTime;
+  let anchorQ=progress,anchorAt=ctx.currentTime,progressAt=ctx.currentTime,speed=1;
   let stopped=false,pending=false,clip=null,clipPhase=-1,native=null,retire=()=>{},position=opts.pos;
   let volume=Number.isFinite(opts.volume)?Math.max(0,opts.volume):.5;
   let first=progress+1e-6>=firstAt,full=progress>=1;
@@ -60,15 +61,30 @@ export function spinnerChargeAudioLoop(engine,id,opts={},nativeLoop=()=>null){
         const q=chargeAudioProgress(opts.actor,next.progress),now=ctx.currentTime,dt=now-last,dp=q-previous;
         const stage=chargeStage(q,firstAt),changed=stage!==phase;
         progress=q;
+        if(dp>0)progressAt=now;
         if(changed){
-          const backwards=stage<phase;phase=stage;pitch=phrase?nominal(phase):.88+.32*q;
+          const backwards=stage<phase;phase=stage;speed=1;anchorQ=q;anchorAt=now;
+          pitch=phrase?nominal(phase):.88+.32*q;
           if(phase===2&&motorHold)holdMotor();
           else if(phrase||motorHold&&backwards&&!clip)start(backwards); // forward edge starts the recorded cue, never the looped tail
         }else if(!phrase)pitch=.88+.32*q;
         else if(phase===2)pitch=1;
         else if(dt>=1/240){
-          if(dp>0)pitch=Math.max(.02,Math.min(4,dp*sourceSpan(phase)/(gameSpan(phase)*dt)));
-          else if(opts.actor?.remote!==true)pitch=0;
+          // Sustained charge speed over >=80 ms (1 = normal, ~1/3 airborne/low-ink);
+          // avoids per-frame dp/dt quantum and render-frame pitch warble.
+          const span=now-anchorAt;
+          if(span>=.08){
+            const measured=(q-anchorQ)*seconds/span;
+            if(measured>0)speed=Math.abs(measured-1)<.2?1:Math.max(.05,Math.min(4,measured));
+            anchorQ=q;anchorAt=now;
+          }
+          const stalled=opts.actor?.remote!==true&&now-progressAt>.06;
+          if(stalled){pitch=0;anchorQ=q;anchorAt=now;}
+          else{
+            const targetPitch=Math.max(.02,Math.min(4,nominal(phase)*speed));
+            if(!Number.isFinite(lastPitch)||lastPitch===0||Math.abs(targetPitch-lastPitch)>.012*Math.max(targetPitch,lastPitch))pitch=targetPitch;
+            else pitch=lastPitch;
+          }
         }
         // Aggregate zero-time simulation ticks rather than divide by zero.
         if(dt>=1/240||changed){last=now;previous=q;}
