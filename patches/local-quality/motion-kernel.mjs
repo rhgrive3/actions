@@ -298,6 +298,18 @@ function downloadLocalFromWasm(pose, ps, count) {
   }
 }
 
+function downloadWpWqFromWasm(pose, ps, count) {
+  const WP = pose.wp, WQ = pose.wq;
+  const wpBase = ps.wpPtr >>> 3;
+  const wqBase = ps.wqPtr >>> 3;
+  for (let i = 0; i < count; i++) {
+    const p3 = wpBase + i * 3, q4 = wqBase + i * 4;
+    const wp = WP[i], wq = WQ[i];
+    wp.x = f64View[p3]; wp.y = f64View[p3 + 1]; wp.z = f64View[p3 + 2];
+    wq._x = f64View[q4]; wq._y = f64View[q4 + 1]; wq._z = f64View[q4 + 2]; wq._w = f64View[q4 + 3];
+  }
+}
+
 function downloadWorldFromWasm(pose, ps, count, skipWorldMat) {
   downloadWpWqFromWasm(pose, ps, count);
   if (skipWorldMat) return;
