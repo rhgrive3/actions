@@ -1863,6 +1863,68 @@ export function installWeaponsFidelity(context,profile) {
     p.reachGravity=weapon.referenceGravity;p.reachValue=reach;
     return reach;
   };
+  const reticleReachCache=new WeakMap();
+  function simulateShooterFamilyReach(params,family,turret){
+    const m=(turret&&params?.MoveLapOverParam)||params?.MoveParam;
+    if(!m||!Number.isFinite(m.SpawnSpeed)||m.SpawnSpeed<=0)return null;
+    const c=(turret&&params?.CollisionLapOverParam)||params?.CollisionParam||{};
+    const colF=Number.isFinite(c.InitRadiusForField)?c.InitRadiusForField:.2;
+    const colP=Number.isFinite(c.InitRadiusForPlayer)?c.InitRadiusForPlayer:.285;
+    const hurtR=context.PLAYER?.s3HumanoidHurtRadius??context.PLAYER?.radius??.35;
+    const y0=family==='dualies'?.84:.96;
+    const muzzleZ=.56;
+    const sf=Number.isFinite(m.GoStraightToBrakeStateFrame)?m.GoStraightToBrakeStateFrame:4;
+    const endSpeed=Number.isFinite(m.GoStraightStateEndMaxSpeed)?m.GoStraightStateEndMaxSpeed:m.SpawnSpeed;
+    const bDrag=Number.isFinite(m.BrakeAirResist)?m.BrakeAirResist:defaults.brakeDragPerFrame;
+    const bGrav=Number.isFinite(m.BrakeGravity)?m.BrakeGravity:defaults.brakeGravity/3600;
+    const fDrag=Number.isFinite(m.FreeAirResist)?m.FreeAirResist:defaults.freeDragPerFrame;
+    const fGrav=Number.isFinite(m.FreeGravity)?m.FreeGravity:defaults.freeGravity/3600;
+    const fVy=Number.isFinite(m.BrakeToFreeVelocityY)?m.BrakeToFreeVelocityY:defaults.brakeToFreeVelocityY/60;
+    let y=y0,z=0,vy=0,vz=m.SpawnSpeed,phase=0;
+    for(let f=1;f<=80;f++){
+      const py=y,pz=z;
+      if(f>sf){
+        if(phase===0){
+          const sp=Math.hypot(vy,vz);
+          if(sp>endSpeed&&sp>0){const k=endSpeed/sp;vy*=k;vz*=k;}
+          phase=1;
+        }
+        const brake=phase===1,k=1-(brake?bDrag:fDrag);
+        vy*=k;vz*=k;
+        vy-=(brake?bGrav:fGrav);
+        if(brake&&vy<fVy)phase=2;
+      }
+      z+=vz;y+=vy;
+      if(y<=colF){
+        const t=py>colF?(py-colF)/(py-y):0;
+        z=pz+(z-pz)*t;
+        break;
+      }
+    }
+    return muzzleZ+z+hurtR+colP;
+  }
+  Projectiles.prototype.s3ReticleReach=function(actor,weapon){
+    const src=actor?.weapon||weapon;
+    if(!src)return null;
+    const rec=src.catalogRecord;
+    const family=rec?rec.family:src.kind;
+    if(family!=='shooter'&&family!=='dualies')return null;
+    const runner=actor?.weaponRunner;
+    const turret=family==='dualies'&&!!(rec
+      ?(runner?.catalogState?.turret>EPSILON||runner?.catalogState?.turretHeld)
+      :runner?.s3Turret);
+    const key=rec||src;
+    let entry=reticleReachCache.get(key);
+    if(!entry){
+      const params=rec?rec.parameters:rawWeapon(src);
+      entry={
+        normal:simulateShooterFamilyReach(params,family,false),
+        turret:family==='dualies'?simulateShooterFamilyReach(params,family,true):null,
+      };
+      reticleReachCache.set(key,entry);
+    }
+    return turret&&entry.turret!=null?entry.turret:entry.normal;
+  };
   const fresh=Projectiles.prototype._new,push=Projectiles.prototype._push,step=Projectiles.prototype._step,ghost=Projectiles.prototype.ghostProjectile,clear=Projectiles.prototype.clear,updateSystem=Projectiles.prototype.update;
   Projectiles.prototype.clear=function(...args){
     const result=clear.apply(this,args);
