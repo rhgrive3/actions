@@ -99,7 +99,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
           // Keep the head ~20 ms behind the funded end; a 30 ms deadband
           // leaves ordinary charging at exactly the nominal (pitch 1x) rate.
           const lag=end-.02-headNow(now);
-          const correction=Math.abs(lag)<.03?1:clamp(1+lag/.4,.9,1.06);
+          const correction=Math.abs(lag)<.045?1:clamp(1+lag/.5,.96,1.04);
           rate=clamp(nominal*speed*correction,.02,4);
         }
         if(rate===0?appliedRate!==0:Math.abs(rate-appliedRate)>.012*Math.max(rate,appliedRate))applyRate(rate,now);

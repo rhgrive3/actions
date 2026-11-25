@@ -2,7 +2,7 @@
 // Native source charts split one physical floor by object and 8m tile. Keep the
 // event's struck face/seed, but let that contact reach other charts on its plane.
 export function nativeContactFace(level, faceId, kind) {
- if (!level.native || kind !== 'ink-contact' || !Number.isInteger(faceId) || faceId < 0) return null;
+ if (!level?.faces || kind !== 'ink-contact' || !Number.isInteger(faceId) || faceId < 0) return null;
  const face = level.faces[faceId];
  return face?.turf ? face : null;
 }
@@ -50,7 +50,7 @@ const CONTACT_PLANE = .05;
 // deck plate overlapping the struck floor by a small step still takes the ink.
 const FACE_LOCK_COS = .999, FACE_LOCK_PLANE = .12;
 export function nativeFaceLockFace(level, faceId) {
- if (!level.native || !Number.isInteger(faceId) || faceId < 0) return null;
+ if (!level?.faces || !Number.isInteger(faceId) || faceId < 0) return null;
  return level.faces[faceId] || null;
 }
 export function nativeFaceLockCoplanar(reference, face, at = null) {

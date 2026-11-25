@@ -44,14 +44,14 @@ export function stretchChargerPCM(channels, sampleRate, ratio) {
   }
   const targetFrames = Math.round(sourceFrames * ratio);
   if (Math.abs(targetFrames - sourceFrames) <= 2) return channels.map(c => c.slice());
-  // 23ms grains at 48k: sufficient tonal content for phase-matching, while
-  // attacks and the short Bamboo/Quick source still contain multiple grains.
-  const grain = Math.min(1024, 1 << Math.floor(Math.log2(sourceFrames / 5)));
-  const hop = Math.floor(grain / 2);
-  if (grain < 128 || hop < 64 || targetFrames < grain + hop) {
+  // 32-43ms grains at 48k with 75% overlap (hop = grain / 4) for smooth
+  // phase-coherent overlap-add on rising harmonic sweeps (e.g. E-liter 4K).
+  const grain = Math.min(2048, 1 << Math.floor(Math.log2(sourceFrames / 4)));
+  const hop = Math.floor(grain / 4);
+  if (grain < 128 || hop < 32 || targetFrames < grain + hop) {
     throw new RangeError('Charger onset too short for a pitch-preserving stretch');
   }
-  const search = Math.max(12, Math.min(Math.round(sampleRate * .006), Math.floor(hop * .55)));
+  const search = Math.max(16, Math.min(Math.round(sampleRate * .010), Math.floor(grain * .45)));
   const first = channels[0], weights = new Float32Array(targetFrames);
   const result = channels.map(() => new Float32Array(targetFrames));
   const window = new Float32Array(grain);
@@ -68,24 +68,30 @@ export function stretchChargerPCM(channels, sampleRate, ratio) {
       Math.round(output / lastOutput * lastInput);
     let input = expected;
     if (j > 0 && j < positions.length - 1) {
-      const overlap = Math.max(0, grain - (output - prevOut));
-      const start = Math.max(0, Math.min(lastInput, expected - search), prevIn + 1);
+      const stepOut = output - prevOut;
+      const natural = Math.min(lastInput, prevIn + stepOut);
+      const cmpLen = Math.min(grain, Math.max(hop * 2, grain - stepOut));
+      const start = Math.max(0, expected - search);
       const end = Math.min(lastInput, expected + search);
-      let best = Infinity;
-      // Search in the mono reference but always apply the chosen alignment to
-      // every channel, avoiding phase drift in decoded stereo samples.
-      for (let candidate = start; candidate <= end; candidate += 2) {
-        let error = 0, energy = 1e-9;
-        for (let k = 0; k < overlap; k += 8) {
-          const a = first[prevIn + grain - overlap + k];
+      let best = -Infinity;
+      let eA = 1e-12;
+      for (let k = 0; k < cmpLen; k += 2) {
+        const a = first[natural + k];
+        eA += a * a;
+      }
+      // 1-sample normalized cross-correlation against the natural continuation
+      // of the previous grain, applied identically to all channels.
+      for (let candidate = start; candidate <= end; candidate++) {
+        let dot = 0, eB = 1e-12;
+        for (let k = 0; k < cmpLen; k += 2) {
+          const a = first[natural + k];
           const b = first[candidate + k];
-          const diff = a - b;
-          error += diff * diff;
-          energy += a * a + b * b;
+          dot += a * b;
+          eB += b * b;
         }
         const d = (candidate - expected) / search;
-        const score = error / energy + .035 * d * d;
-        if (score < best) { best = score; input = candidate; }
+        const score = dot / Math.sqrt(eA * eB) - .025 * d * d;
+        if (score > best) { best = score; input = candidate; }
       }
     }
     for (let k = 0; k < grain; k++) {

@@ -106,20 +106,28 @@ test('a face-locked native impact records one network event and replays identica
   replay.f.G.netm = null;
 });
 
-test('ordinary (non-native) face-locked shots keep their struck-face scope', async () => {
+test('ordinary (non-native) face-locked shots spread across connected coplanar floor tiles without leaking to walls or other heights', async () => {
   const f = await api();
   const level = f.G.level = new f.Level({ bounds: definition.bounds, spawnPads: definition.spawnPads,
     spawnBarrier: 0, half: [], single: [
       { kind: 'box', min: [4,-1,0], max: [8,0,8] },
       { kind: 'box', min: [8,-1,0], max: [12,0,8] },
+      { kind: 'box', min: [4,-2,0], max: [12,-1.2,8] },
     ] });
   class CpuPaint extends f.PaintSystem {
     _initGPU() { this.quads = []; }
     _pushQuad(face) { this.quads.push(face.id); }
   }
   const paint = f.G.paint = new CpuPaint(null, level, { atlasSize: 512, maxDensity: 18 });
-  const [left, right] = level.faces.filter(face => face.turf && face.n.y > .99);
-  assert.ok(left && right);
+  const topFloors = level.faces.filter(face => face.turf && face.n.y > .99 && Math.abs(face.origin.y) < 1e-6);
+  const [left, right] = topFloors;
+  const lower = level.faces.find(face => face.turf && face.n.y > .99 && face.origin.y < -.5);
+  const walls = level.faces.filter(face => face.wall);
+  assert.ok(left && right && lower && walls.length > 0);
   paint.splat(new f.THREE.Vector3(7.9, 0, 4), 2, 0, { kind: 'source-shot', face: left.id, seed: .2, instant: true });
-  assert.ok(isUntouched(paint, right));
+  assert.equal(paint.sampleWorld(left.id, new f.THREE.Vector3(7, 0, 4)), 1);
+  assert.equal(paint.sampleWorld(right.id, new f.THREE.Vector3(9, 0, 4)), 1, 'connected coplanar floor tile receives ink');
+  assert.ok(paint.quads.includes(left.id) && paint.quads.includes(right.id), 'both tiles receive visual stamps');
+  assert.ok(isUntouched(paint, lower), 'lower floor stays untouched');
+  for (const wall of walls) assert.ok(isUntouched(paint, wall), `wall ${wall.id} stays untouched`);
 });

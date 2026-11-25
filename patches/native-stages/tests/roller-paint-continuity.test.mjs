@@ -112,18 +112,21 @@ test('a native contact crossing charts records one event and replays identical o
   replay.f.G.netm = null;
 });
 
-test('legacy contact retains its struck-face scope', async () => {
+test('legacy contact paints across connected coplanar floor tiles without leaking to other heights', async () => {
   const f = await api();
   const level = f.G.level = new f.Level({ bounds: definition.bounds, spawnPads: definition.spawnPads,
     spawnBarrier: 0, half: [], single: [
       { kind: 'box', min: [4,-1,0], max: [8,0,8] },
       { kind: 'box', min: [8,-1,0], max: [12,0,8] },
+      { kind: 'box', min: [4,-2,0], max: [12,-1.2,8] },
     ] });
   class CpuPaint extends f.PaintSystem { _initGPU() {} _pushQuad() {} }
   const paint = f.G.paint = new CpuPaint(null, level, { atlasSize: 512, maxDensity: 18 });
-  const [left,right] = level.faces.filter(face => face.turf && face.n.y > .99);
-  assert.ok(left && right);
+  const [left, right] = level.faces.filter(face => face.turf && face.n.y > .99 && Math.abs(face.origin.y) < 1e-6);
+  const lower = level.faces.find(face => face.turf && face.n.y > .99 && face.origin.y < -.5);
+  assert.ok(left && right && lower);
   paint.splat(new f.THREE.Vector3(7.9,0,4), 2, 0, { kind: 'ink-contact', face: left.id,
     seed: .2, instant: true, stretch: new f.THREE.Vector3(0,0,1), stretchAmt: -.375 });
-  assert.ok(paint.grid.slice(right.grid, right.grid + right.nu * right.nv).every(value => value === 0));
+  assert.equal(paint.sampleWorld(right.id, new f.THREE.Vector3(9, 0, 4)), 1, 'connected floor tile receives roller ink');
+  assert.ok(paint.grid.slice(lower.grid, lower.grid + lower.nu * lower.nv).every(value => value === 0));
 });
