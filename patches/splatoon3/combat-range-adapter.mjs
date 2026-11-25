@@ -5,9 +5,11 @@ export function adaptCombatRange(rel, code, replaceOnce) {
   if (rel !== 'src/game/player.js') return code;
   return replaceOnce(code,
     "    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n    updateShotGuide(this);",
-    "    const isShooterRange = w.kind === 'shooter' && Number.isFinite(w.combatRange);\n" +
-    "    const reticleReach = isShooterRange ? w.combatRange : range;\n" +
-    "    this.inRange = a.aimPoint.distanceTo(a.pos) <= reticleReach + (isShooterRange ? 0 : 0.5);\n" +
+    "    const reachPoint = this.onTarget && this.onTarget !== G.boss ? _v.copy(start).addScaledVector(fwd, best) : a.aimPoint;\n" +
+    "    const liveReach = (w.kind === 'shooter' || w.kind === 'dualies') && typeof G.projectiles?.s3ReticleReach === 'function' ? G.projectiles.s3ReticleReach(a, w, range) : null;\n" +
+    "    const isShooterRange = liveReach == null && w.kind === 'shooter' && Number.isFinite(w.combatRange);\n" +
+    "    const reticleReach = liveReach ?? (isShooterRange ? w.combatRange : range);\n" +
+    "    this.inRange = reachPoint.distanceTo(a.pos) <= reticleReach + (liveReach != null ? 0 : (isShooterRange ? 0 : 0.5));\n" +
     "    updateShotGuide(this);",
     'S3 shooter combat HUD range after charge endpoints');
 }

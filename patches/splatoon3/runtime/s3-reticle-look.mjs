@@ -77,6 +77,7 @@ export const S3_RETICLE_CSS = `
 .iw-xh .iw-ret--splatling .iw-ret__charge.iw-ret__charge-second, .iw-xh .iw-ret--splatling.is-full .iw-ret__charge.iw-ret__charge-second,
 .iw-xh .iw-ret--splatling.is-streaming .iw-ret__charge.iw-ret__charge-second { stroke: #fff; opacity: 1; }
 .iw-xh .iw-ret--charger::before, .iw-xh .iw-ret--charger::after { display: none; }
+.iw-xh.is-muzzle-blocked::after { display: none; }
 .iw-xh .iw-ret g.s3-x { opacity: 0; transition: opacity .06s linear; }
 .iw-xh.is-target .iw-ret g.s3-x { opacity: 1; }
 .iw-xh.is-target .iw-ret--shooter .iw-ret__tick, .iw-xh.is-target .iw-ret--dualies .iw-ret__tick { opacity: 0; }
