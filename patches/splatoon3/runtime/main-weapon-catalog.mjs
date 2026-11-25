@@ -432,7 +432,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // A hard-cancelled main never resumes its old recovery after a special,
     // jump or respawn. Ink recovery remains owned by the separate resource timer.
     s.stop=0;
-    s.rollingFrames=0;s.rollingDash=false;
+    s.rollingFrames=0;s.rollingDash=false;s.swingBuffer=0;s.rollHoldBroken=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
     runner.chargeStage=0;runner.chargeStageProgress=0;
@@ -446,6 +446,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   R.cancelPendingInput = function (...args) {
     const result = legacyCancelPendingInput?.apply(this, args);
     const state = this.a?.weapon?.catalogRecord && this.catalogState;
+    if (state) state.swingBuffer = 0;
     if (state?.pending) {
       state.pending = null;
       state.birthEpoch = (state.birthEpoch || 0) + 1;
@@ -2138,7 +2139,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function swing(runner,r,input,s,dt) {
     const p=r.parameters,a=runner.a,brush=r.family==='brush';
-    if(input.firePressed&&runner.cooldown<=EPS&&!s.pending){
+    if(s.swingBuffer>0)s.swingBuffer=Math.max(0,s.swingBuffer-dt);
+    if(s.pending||runner.cooldown>EPS){
+      if(!input.fire)s.rollHoldBroken=true;
+      if(input.firePressed)s.swingBuffer=.16;
+    }
+    const bufferedSwing=runner.cooldown<=EPS&&!s.pending&&(s.swingBuffer||0)>0;
+    if((input.firePressed||bufferedSwing)&&runner.cooldown<=EPS&&!s.pending){
+      s.swingBuffer=0;
+      if(!input.firePressed&&a.ink<=EPS){
+        runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
+        return;
+      }
       const vertical=!brush&&selectRollerFlickVertical(a,runner),key=brush?'brush':vertical?'vertical':'horizontal';
       const t=brush?p.WeaponSwingParam:vertical?p.WeaponVerticalSwingParam:p.WeaponWideSwingParam;
       const fullInk=finite(t.InkConsume,.085)*100*inkMod(a);
@@ -2157,17 +2169,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
         if (!brush) s.s3SwingInterval = runner.cooldown;
+        s.rollHoldBroken=false;
         runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
         if(brush)s.brushNearestOrdinal=(s.brushNearestOrdinal||0)+1;
       }
-    }else if(input.fire&&(a.grounded||runner.rolling)&&!s.pending&&runner.cooldown<=EPS){
+    }else if(input.fire&&!s.rollHoldBroken&&(a.grounded||runner.rolling)&&!s.pending&&runner.cooldown<=EPS){
       // Keep an established brush/roller-down action through a jump or a
       // transient downhill air frame. rolling() independently requires real
       // ground contact before paint, damage or ink cost, and clears the old
       // stripe so landing cannot connect across the airborne path.
       runner.rolling=true;runner.s3RollerSuspendedHold=!a.grounded;rolling(runner,r,dt);
     }
-    else {runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
+    else {
+      runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
+      if(!input.fire&&!s.pending&&runner.cooldown<=EPS)s.rollHoldBroken=false;
+    }
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
@@ -2575,7 +2591,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }}
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
-      this.rolling=false;this.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
+      this.rolling=false;this.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingBuffer=0;s.rollHoldBroken=false;
       s.pressed=!!input.fire;
       if(r.family==='splatling')G.audio?.syncSpinnerCharge?.(this);
       return;

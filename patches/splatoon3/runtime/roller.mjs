@@ -32,6 +32,7 @@ const POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };
 // ink-gated paint/contact path. No new dry movement/audio numerics are
 // invented: reuse existing rolling speed/pose and keep dry audio muted.
 const DRY_INK = 0.5;
+const ROLLER_TAP_BUFFER = 0.16;
 
 function observedLife(actor) {
   if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
@@ -368,12 +369,20 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const armed = armAheadOf(this, now, !!inp.fire);
     const locks = this.s3RollStop;
     let input = inp;
+    if (this.a.weapon?.kind !== 'roller' || this.a.form !== 'kid' || input.sub || this.aimingSub) {
+      this.s3RollerFlickBuffer = 0;
+    } else if (this.s3RollerFlickBuffer > 0) {
+      this.s3RollerFlickBuffer = Math.max(0, this.s3RollerFlickBuffer - dt);
+    }
     if (this.s3FlickPostSub > 0 && (input.sub || input.subReleased)) input = { ...input, sub: false, subReleased: false };
     if (locks && this.a.weapon?.kind === 'roller') {
       const blocked = rollStopBlocks(now, locks);
       if (blocked.main || blocked.sub) {
         input = { ...input };
-        if (blocked.main && !armed) { input.fire = false; input.firePressed = false; }
+        if (blocked.main && !armed) {
+          if (inp.firePressed) this.s3RollerFlickBuffer = ROLLER_TAP_BUFFER;
+          input.fire = false; input.firePressed = false;
+        }
         if (blocked.sub) { input.sub = false; input.subReleased = false; }
       }
     }
@@ -424,6 +433,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   on?.('hit:rejected', event => resolveRemoteContact(event, false));
   const cancelInput = WeaponRunner.prototype.cancelPendingInput;
   WeaponRunner.prototype.cancelPendingInput = function (...args) {
+    this.s3RollerFlickBuffer = 0;
     if (this.s3RollerSuspendedHold) {
       this.rolling = false; this.s3RollerSuspendedHold = false;
     }
@@ -448,6 +458,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     this.s3RollStop = null;
     this.s3RollerWasDry = false; this.s3RollerPrevInk = null;
     this.s3RollerSuspendedHold = false;
+    this.s3RollerFlickBuffer = 0;
     this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
@@ -499,6 +510,15 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // #305: any positive tank below the full swing cost runs a depletion swing.
     // A truly empty tank still rejects, and the paid amount is the satisfied
     // depletion cost (swing InkConsume * DepletionRate) capped by the tank.
+    if (inp.firePressed && (this.flick >= 0 || this.cooldown > EPS)) {
+      this.s3RollerFlickBuffer = ROLLER_TAP_BUFFER;
+    } else if (this.flick < 0 && this.cooldown <= EPS && this.s3RollerFlickBuffer > 0 &&
+        !(this.s3RollStop && rollStopBlocks(G.time, this.s3RollStop).main)) {
+      this.s3RollerFlickBuffer = 0;
+      if (!inp.firePressed && a.ink > EPS) {
+        inp = { ...inp, fire: true, firePressed: true };
+      }
+    }
     const fullCancelGroundAttack = hasFullCancelGroundAttack(a);
     const flickCost = fullCancelGroundAttack ? w.flickInk : !a.grounded ? w.verticalInk : w.flickInk;
     const depleted = DEPLETION_ENABLED && this.flick < 0 && inp.firePressed && this.cooldown <= EPS &&
@@ -556,11 +576,12 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
         const elapsed = Math.max(0, G.time - this.s3RollerSquidPressT);
         windup = Math.max(EPS, 34 / 60 - elapsed);
       }
+      this.s3RollerFlickBuffer = 0;
       this.s3RollerAttack = {
         vertical: this.s3FlickVertical, windup, interval: mode.flickInterval,
         elapsed: 0, released: false, rolling: false, depleted,
         groundedStart: !this.s3FlickVertical && !!a.grounded && !groundedCancel,
-        jumpConverted: false,
+        jumpConverted: false, rollHoldBroken: false,
       };
 
       this.s3RollerSquidPressT = null;
@@ -588,8 +609,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       }
     }
     if (state && !starting) state.elapsed += dt;
+    if (state && !inp.fire) state.rollHoldBroken = true;
     // Presentation only: a held ZR keeps the released drum down until the roll.
-    if (state) state.holdRoll = inp.fire === true;
+    if (state) state.holdRoll = inp.fire === true && !state.rollHoldBroken;
     // #1056: if ZR was first pressed in the air, touching down in the first
     // five 60Hz frames turns that pending vertical flick into the faster
     // horizontal flick. #1041 grounded-start jump conversions stay separate.
@@ -624,7 +646,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     if (state && state.released) {
       const rollDelay = state.vertical ? (22 / 60) : (7 / 60);
       const postRelease = state.elapsed - state.windup;
-      if (postRelease + EPS < rollDelay) rollInp = fireIn.fire ? { ...fireIn, fire: false } : fireIn;
+      if (postRelease + EPS < rollDelay || state.rollHoldBroken) rollInp = fireIn.fire ? { ...fireIn, fire: false } : fireIn;
     }
     const projectiles = G.projectiles, applyHit = projectiles?.applyHit;
     let result;
@@ -736,7 +758,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       } else if (!inp.fire && state.elapsed + EPS >= state.interval) {
         this.s3RollerAttack = null;
         if (a.character) a.character.s3RollerFlick = null;
-      } else if (state.elapsed + EPS >= Math.max(state.interval, state.windup + rollDelay) && !a.grounded) {
+      } else if (state.elapsed + EPS >= Math.max(state.interval, state.windup + rollDelay)) {
         this.s3RollerAttack = null;
         if (a.character) a.character.s3RollerFlick = null;
       }
@@ -1309,6 +1331,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
       (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
         this.tr[T.T_DODGE] >= this.dodgeDur && spawnMotionAllowsAction(this, this.tr[T.T_SPAWN] >= 1.4)));
+    const spawnerAim = !available && this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
+      this.actor?.character === this && this.actor?.s3?.squidSpawn?.phase === 'aim';
     // #263: once native contact/stripe authority is admitted, use the existing
     // settled ground-contact target, not another raised-carry blend. Keep wRoll
     // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
@@ -1322,14 +1346,15 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     let result;
     try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
     finally { this.wRoll = previous; }
-    if (!available) return result;
+    if (!available && !spawnerAim) return result;
     // Official footage carries the raised drum behind the shoulder, then lowers
     // it only to roll. These targets are rig calibration, not Nintendo joints.
-    const P = this.P, roll = contact ? 1 : this.wRoll;
+    const P = this.P, roll = spawnerAim ? 0 : (contact ? 1 : this.wRoll);
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(READY_ANCHOR[i], ROLL_ANCHOR[i], roll);
       P[C.ANCR + i] = mix(READY_ROTATION[i], ROLL_ROTATION[i], roll);
     }
+    if (spawnerAim) return result;
     // The floor contact anchor is independent of the strafe chest transform.
     // Both wrists are kept reachable by the contact solver below.
     if (contact) {
