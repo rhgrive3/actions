@@ -123,6 +123,10 @@ function replayFloorCoverage(index, grid, full) {
   if (!replay) return scanFloorCoverage(index, grid);
   const { groups, words, ownership, starts, prefix0, prefix1 } = replay;
   const { weights, area } = index;
+  if (LITTLE_ENDIAN && typeof globalThis !== 'undefined' && typeof globalThis.__iwReplayFloorCoverageWasm === 'function') {
+    const wasmRes = globalThis.__iwReplayFloorCoverageWasm(replay, weights, full, area);
+    if (wasmRes) return wasmRes;
+  }
   let first = 0;
   if (!full && replay.valid) {
     for (; first < groups.length; first++) {
@@ -133,20 +137,32 @@ function replayFloorCoverage(index, grid, full) {
   }
   const checkpoint = first >>> PREFIX_SHIFT, start = checkpoint * PREFIX_GROUPS;
   let t0 = start ? prefix0[checkpoint] : 0, t1 = start ? prefix1[checkpoint] : 0;
-  for (let g = start; g < groups.length; g++) {
-    if (!(g % PREFIX_GROUPS)) { prefix0[g >>> PREFIX_SHIFT] = t0; prefix1[g >>> PREFIX_SHIFT] = t1; }
-    const group = groups[g], mask = group & 15, value = (words[group >>> 4] & ELIGIBLE_WORD_MASKS[mask]) >>> 0;
-    ownership[g] = value;
-    // Most native turf is still unpainted. An all-zero word contributes no
-    // additions, so skip all of its original zero-team tests together.
-    if (value === 0) continue;
-    let i = starts[g];
-    for (let byte = 0; byte < 4; byte++) {
-      if (!(mask & 1 << byte)) continue;
-      const team = value >>> (LITTLE_ENDIAN ? byte * 8 : (3 - byte) * 8) & 255;
-      if (team === 1) t0 += weights[i];
-      else if (team === 2) t1 += weights[i];
-      i++;
+  const totalGroups = groups.length;
+  for (let blk = start; blk < totalGroups; blk += PREFIX_GROUPS) {
+    const cp = blk >>> PREFIX_SHIFT;
+    prefix0[cp] = t0; prefix1[cp] = t1;
+    const end = blk + PREFIX_GROUPS < totalGroups ? blk + PREFIX_GROUPS : totalGroups;
+    for (let g = blk; g < end; g++) {
+      const group = groups[g], mask = group & 15, value = (words[group >>> 4] & ELIGIBLE_WORD_MASKS[mask]) >>> 0;
+      ownership[g] = value;
+      // Most native turf is still unpainted. An all-zero word contributes no
+      // additions, so skip all of its original zero-team tests together.
+      if (value === 0) continue;
+      let i = starts[g];
+      if (mask === 15 && LITTLE_ENDIAN) {
+        const b0 = value & 255; if (b0 === 1) t0 += weights[i]; else if (b0 === 2) t1 += weights[i];
+        const b1 = (value >>> 8) & 255; if (b1 === 1) t0 += weights[i + 1]; else if (b1 === 2) t1 += weights[i + 1];
+        const b2 = (value >>> 16) & 255; if (b2 === 1) t0 += weights[i + 2]; else if (b2 === 2) t1 += weights[i + 2];
+        const b3 = value >>> 24; if (b3 === 1) t0 += weights[i + 3]; else if (b3 === 2) t1 += weights[i + 3];
+      } else {
+        for (let byte = 0; byte < 4; byte++) {
+          if (!(mask & 1 << byte)) continue;
+          const team = value >>> (LITTLE_ENDIAN ? byte * 8 : (3 - byte) * 8) & 255;
+          if (team === 1) t0 += weights[i];
+          else if (team === 2) t1 += weights[i];
+          i++;
+        }
+      }
     }
   }
   replay.valid = true; replay.t0 = t0; replay.t1 = t1;

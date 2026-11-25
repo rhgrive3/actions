@@ -34,6 +34,51 @@ export function createSwimFilmGeometry() {
   updateSwimFilmGeometry(g,0,1);return g;
 }
 
+function computeSwimFilmNormals(g) {
+  const posAttr=g.attributes.position,p=posAttr.array;
+  let normalAttr=g.attributes.normal;
+  if(!normalAttr||normalAttr.count!==posAttr.count){
+    normalAttr=new THREE.BufferAttribute(new Float32Array(p.length),3);
+    g.setAttribute('normal',normalAttr);
+  }
+  const norm=normalAttr.array;
+  norm.fill(0);
+  // Accumulate face normals over each regular patch grid in exact (a,c,b), (b,c,d)
+  // order to match THREE.BufferGeometry.computeVertexNormals() without Vector3 allocations.
+  for(const patch of g.userData.patches){
+    const {start,nu,nv}=patch,stride=nu+1;
+    for(let j=0;j<nv;j++){
+      let a=start+j*stride;
+      for(let i=0;i<nu;i++,a++){
+        const ia=a*3,ib=ia+3,ic=(a+stride)*3,id=ic+3;
+        const ax=p[ia],ay=p[ia+1],az=p[ia+2];
+        const bx=p[ib],by=p[ib+1],bz=p[ib+2];
+        const cx=p[ic],cy=p[ic+1],cz=p[ic+2];
+        const dx=p[id],dy=p[id+1],dz=p[id+2];
+        // Triangle 1: (a, c, b) -> (b - c) x (a - c)
+        const cbx=bx-cx,cby=by-cy,cbz=bz-cz;
+        const abx=ax-cx,aby=ay-cy,abz=az-cz;
+        const nx1=cby*abz-cbz*aby,ny1=cbz*abx-cbx*abz,nz1=cbx*aby-cby*abx;
+        norm[ia]+=nx1;norm[ia+1]+=ny1;norm[ia+2]+=nz1;
+        norm[ic]+=nx1;norm[ic+1]+=ny1;norm[ic+2]+=nz1;
+        norm[ib]+=nx1;norm[ib+1]+=ny1;norm[ib+2]+=nz1;
+        // Triangle 2: (b, c, d) -> (d - c) x (b - c)
+        const dcx=dx-cx,dcy=dy-cy,dcz=dz-cz;
+        const nx2=dcy*cbz-dcz*cby,ny2=dcz*cbx-dcx*cbz,nz2=dcx*cby-dcy*cbx;
+        norm[ib]+=nx2;norm[ib+1]+=ny2;norm[ib+2]+=nz2;
+        norm[ic]+=nx2;norm[ic+1]+=ny2;norm[ic+2]+=nz2;
+        norm[id]+=nx2;norm[id+1]+=ny2;norm[id+2]+=nz2;
+      }
+    }
+  }
+  for(let k=0,len=norm.length;k<len;k+=3){
+    const x=norm[k],y=norm[k+1],z=norm[k+2];
+    const inv=1/(Math.sqrt(x*x+y*y+z*z)||1);
+    norm[k]=x*inv;norm[k+1]=y*inv;norm[k+2]=z*inv;
+  }
+  normalAttr.needsUpdate=true;
+}
+
 const hash=n=>fract(Math.sin(n*127.1+311.7)*43758.5453);
 export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
   const p=g.attributes.position.array,k=clamp(speedK),spread=Math.sqrt(k);
@@ -115,7 +160,7 @@ export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
       const n=(start+j*(nu+1)+i)*3;p[n]=x;p[n+1]=y;p[n+2]=z;
     }
   }
-  g.attributes.position.needsUpdate=true;g.computeVertexNormals();
+  g.attributes.position.needsUpdate=true;computeSwimFilmNormals(g);
 }
 
 // Sneaking keeps only a small local surface disturbance. Ninja Squid and an
@@ -203,11 +248,17 @@ function material(light,filmHoles) {
 
 // The conservative local sphere contains the sheets, ligaments and four drops.
 // The vertex shader does not move them; an unseen sphere cannot draw a splash.
-function seenBy(camera,mesh){
-  if(!camera?.projectionMatrix||!camera.matrixWorldInverse||camera.isArrayCamera)return true;
+function prepareFrustum(camera){
+  if(!camera?.projectionMatrix||!camera.matrixWorldInverse||camera.isArrayCamera)return false;
   _view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
   _frustum.setFromProjectionMatrix(_view,THREE.WebGLCoordinateSystem,camera.reversedDepth);
+  return true;
+}
+function seenByFrustum(mesh){
   return _frustum.intersectsSphere(_sphere.copy(mesh.geometry.boundingSphere).applyMatrix4(mesh.matrixWorld));
+}
+function seenBy(camera,mesh){
+  return !prepareFrustum(camera)||seenByFrustum(mesh);
 }
 
 // three.js calls Scene.onBeforeRender before it culls the scene and uploads geometry. A film whose shape was held
@@ -251,6 +302,7 @@ class SwimSurface {
   }
   update(fx,camera){
     this.time=fx._time;
+    let frustumState=camera===undefined?2:0;
     for(const s of this.slots){
       const a=s.actor,wall=!!a?.climbing,sp=swimSurfaceSpeed(a);
       // A touch made before this outer frame's native FX substeps still owns
@@ -281,11 +333,23 @@ class SwimSurface {
 
       // Bounded pooled geometry; skip its shape update while no camera sees it.
       s.shapeTime=this.time+s.phase;s.shapeSpeed=sp/11.8;s.shapeTurn=clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1);s.pending=true;
-      if(camera===undefined||(s.mesh.updateMatrixWorld(),seenBy(camera,s.mesh)))this.shape(s);
+      if(camera===undefined){this.shape(s);}
+      else{
+        s.mesh.updateMatrixWorld();
+        if(frustumState===0)frustumState=prepareFrustum(camera)?1:2;
+        if(frustumState===2||seenByFrustum(s.mesh))this.shape(s);
+      }
     }
   }
   shape(s){s.pending=false;updateSwimFilmGeometry(s.mesh.geometry,s.shapeTime,s.shapeSpeed,s.shapeTurn);}
-  flush(camera){for(const s of this.slots)if(s.pending&&s.mesh.visible&&seenBy(camera,s.mesh))this.shape(s);}
+  flush(camera){
+    let frustumState=0;
+    for(const s of this.slots){
+      if(!s.pending||!s.mesh.visible)continue;
+      if(frustumState===0)frustumState=prepareFrustum(camera)?1:2;
+      if(frustumState===2||seenByFrustum(s.mesh))this.shape(s);
+    }
+  }
   clear(){this.warmPromise=null;for(const s of this.slots){s.actor=null;s.mesh.visible=false;s.pending=false;}}
   dispose(){if(this.disposed)return;this.disposed=true;this.scene?.[PRE_RENDER]?.delete(this);this.root.removeFromParent();for(const s of this.slots){s.mesh.geometry.dispose();s.mesh.material.dispose();s.actor=null;}this.slots.length=0;this.warmTarget?.dispose();this.warmTarget=null;this.warmCleanup?.();this.warmCleanup=null;this.warmPromise=null;}
 }

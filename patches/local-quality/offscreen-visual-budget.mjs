@@ -70,30 +70,36 @@ const CAMERA_PROJECTION = new WeakMap();
  * dependency, and the test only reads the camera's own projection parameters
  * and world matrix.
  */
-export function inViewVolume(ch, cam) {
-  if (!ch?.root || !cam || cam.isPerspectiveCamera !== true) return null;
+/**
+ * Combined conservative frustum membership and squared camera distance.
+ * Returns `-2` when no usable perspective camera/position exists (`null`),
+ * `-1` when provably outside the view volume (`false`), or `>= 0` (squared
+ * distance from camera world position) when inside (`true`).
+ */
+export function inViewVolumeDistSq(ch, cam) {
+  if (!ch?.root || !cam || cam.isPerspectiveCamera !== true) return -2;
   // Shifted/offset views change the projection in ways this test does not model.
-  if (cam.view && cam.view.enabled) return null;
+  if (cam.view && cam.view.enabled) return -2;
   // `matrixWorld` is only a rigid camera transform when the camera has no parent.
-  if (cam.parent) return null;
+  if (cam.parent) return -2;
   const fov = cam.fov, aspect = cam.aspect, near = cam.near, far = cam.far;
-  if (!Number.isFinite(fov) || !Number.isFinite(aspect) || aspect <= 0) return null;
-  if (!Number.isFinite(near) || !Number.isFinite(far)) return null;
-  if (!(near > 0) || !(far > near)) return null;
+  if (!Number.isFinite(fov) || !Number.isFinite(aspect) || aspect <= 0) return -2;
+  if (!Number.isFinite(near) || !Number.isFinite(far)) return -2;
+  if (!(near > 0) || !(far > near)) return -2;
   // three.js scales the frustum by `zoom` and shifts it sideways by `filmOffset`
   // (both live on the camera itself). A projection we do not model must never be
   // reported "provably outside", because `zoom < 1` / a positive `filmOffset`
   // makes the real frustum *larger* than the plain-fov one computed below — that
-  // is exactly the unsafe-culling direction. `null` keeps the actor full rate.
-  if (cam.zoom !== undefined && cam.zoom !== 1) return null;
-  if (cam.filmOffset !== undefined && cam.filmOffset !== 0) return null;
+  // is exactly the unsafe-culling direction. `-2` keeps the actor full rate.
+  if (cam.zoom !== undefined && cam.zoom !== 1) return -2;
+  if (cam.filmOffset !== undefined && cam.filmOffset !== 0) return -2;
   if (typeof cam.updateMatrixWorld === 'function') cam.updateMatrixWorld();
   const e = cam.matrixWorld?.elements;
-  if (!e || e.length < 16) return null;
+  if (!e || e.length < 16) return -2;
 
   // world position of the kid (root may sit under an identity scene transform)
   const p = ch.root.position;
-  if (!p || !Number.isFinite(p.x + p.y + p.z)) return null;
+  if (!p || !Number.isFinite(p.x + p.y + p.z)) return -2;
   let wx = p.x, wy = p.y, wz = p.z;
   const parent = ch.root.parent, m = parent?.matrixWorld?.elements;
   if (m && m.length >= 16) {
@@ -120,13 +126,19 @@ export function inViewVolume(ch, cam) {
   const { t, k, side, vert } = projection;
   // Side planes pass through the eye: f = vx - d*k, |grad| = sqrt(1 + k^2).
   // The sphere is entirely outside only when the centre distance exceeds REACH.
-  if (vx - d * k > side) return false;
-  if (-vx - d * k > side) return false;
-  if (vy - d * t > vert) return false;
-  if (-vy - d * t > vert) return false;
-  if (d < near - REACH) return false;         // behind the near plane
-  if (d > far + REACH) return false;          // beyond the far plane
-  return true;
+  if (vx - d * k > side) return -1;
+  if (-vx - d * k > side) return -1;
+  if (vy - d * t > vert) return -1;
+  if (-vy - d * t > vert) return -1;
+  if (d < near - REACH) return -1;            // behind the near plane
+  if (d > far + REACH) return -1;             // beyond the far plane
+  return dx * dx + dy * dy + dz * dz;
+}
+
+export function inViewVolume(ch, cam) {
+  const distSq = inViewVolumeDistSq(ch, cam);
+  if (distSq === -2) return null;
+  return distSq !== -1;
 }
 
 function gameCamera(G) {
@@ -192,34 +204,38 @@ function chainRenderCatchup(ch, S) {
  * decision itself is directly testable.
  * @returns {boolean}
  */
+function resetOutsideStreak(ch) {
+  ch._ovbOutsideStreak = 0;
+  return false;
+}
+
 export function offscreenBudgeted(ch, s, G) {
   if (!ch || !s) return false;
   // Any reason to stay at full rate also restarts the outside streak, so the
   // budget can only start from two uninterrupted "outside" verdicts.
-  const reset = () => { ch._ovbOutsideStreak = 0; return false; };
   // Owner / local actor is always full rate: death camera, super-jump target,
   // spectate and imminent first-person visibility all live here.
-  if (s.isLocal || ch.isLocal) return reset();
-  if (G?.match?.local && s === G.match.local) return reset();
+  if (s.isLocal || ch.isLocal) return resetOutsideStreak(ch);
+  if (G?.match?.local && s === G.match.local) return resetOutsideStreak(ch);
   // Only network replicas are presentation-only. Offline bots and adopted
   // actors can author projectiles whose native muzzle comes from rig bones.
-  if (s.remote !== true) return reset();
+  if (s.remote !== true) return resetOutsideStreak(ch);
   // Practice Range is isolated from this presentation budget.
-  if (G?.match?.opts?.range) return reset();
+  if (G?.match?.opts?.range) return resetOutsideStreak(ch);
   // Only characters in the live match scene. Menus, showcase portraits, labs and
   // audits render through other cameras and are left alone.
-  if (!ch.inWorld) return reset();
-  if (ch.lod && ch.lod.force >= 0) return reset();
+  if (!ch.inWorld) return resetOutsideStreak(ch);
+  if (ch.lod && ch.lod.force >= 0) return resetOutsideStreak(ch);
   // Objective draw signal: `_camFrame` is written by the native `_camHook`
   // (onBeforeRender). Before the first real draw we cannot tell "culled" from
   // "hook not installed", so we stay at full rate.
   const last = ch._camFrame;
-  if (!Number.isFinite(last) || last < 0) return reset();
+  if (!Number.isFinite(last) || last < 0) return resetOutsideStreak(ch);
   const frame = G?.renderer?.info?.render?.frame;
-  if (Number.isFinite(frame) && frame - last < GRACE_FRAMES) return reset();
+  if (Number.isFinite(frame) && frame - last < GRACE_FRAMES) return resetOutsideStreak(ch);
   const inside = inViewVolume(ch, gameCamera(G));
-  if (inside === null) return reset();         // unknown camera -> full rate
-  if (inside) return reset();
+  if (inside === null) return resetOutsideStreak(ch);         // unknown camera -> full rate
+  if (inside) return resetOutsideStreak(ch);
   // Consecutive outside verdicts under different camera poses: main.js runs
   // `rig.update(dt)` *after* `match.update(dt)`, so the camera that will draw
   // this frame is only known one frame late. Two verdicts plus the oversized
@@ -284,19 +300,20 @@ export function installOffscreenVisualBudget(api, G) {
   // 2) Pose rebuild + hair integration: the CPU bulk. Skipped only while the
   //    actor cannot be drawn this frame.
   if (nativeBuildPose) {
-    proto._buildPose = function _ovbBuildPose(...args) {
+    proto._buildPose = function _ovbBuildPose(dt, s) {
       if (this._ovbBudget) { this._ovbPoseSkips++; return undefined; }
-      return nativeBuildPose.apply(this, args);
+      return nativeBuildPose.call(this, dt, s);
     };
   }
   if (nativeApplyPose) {
-    proto._applyPose = function _ovbApplyPose(...args) {
+    proto._applyPose = function _ovbApplyPose(dt, s) {
       if (this._ovbBudget) { this._ovbPoseSkips++; return undefined; }
-      return nativeApplyPose.apply(this, args);
+      return nativeApplyPose.call(this, dt, s);
     };
   }
 
   proto.update = function _ovbUpdate(dt, s) {
+    if (s?.remote !== true && !this._ovbWasBudgeted) return nativeUpdate.call(this, dt, s);
     const budget = offscreenBudgeted(this, s, G);
     const returning = !budget && this._ovbWasBudgeted;
     this._ovbWasBudgeted = budget;

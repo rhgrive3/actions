@@ -10,14 +10,18 @@ import { installMenuQuality } from './menu.mjs';
 import { installOffscreenVisualBudget } from './offscreen-visual-budget.mjs';
 import { installOfflineOffscreenBudget, installAttractBotBudget } from './offline-offscreen-budget.mjs';
 import { installIntermediateTickBudget } from './intermediate-tick-budget.mjs';
+import { installDistanceOffscreenThrottle } from './distance-offscreen-throttle.mjs';
 import { installKidShadowProxy } from './kid-shadow-proxy.mjs';
 import { touchPrimary } from '../../src/core/device.js';
+import { SourceBank, SourcePose } from '../../src/game/motion/source-bank.js';
+import { installMotionWasm } from './motion-kernel.mjs';
 import * as THREE from 'three';
 export function installQuality(profile){
   const api={Character,CHARACTER_CHANNELS,CHARACTER_TIMERS,Projectiles};
   installRollerMotionQuality(api,rollerDetailMotionSnapshot);
   installRollerVisualQuality(api);
   installMenuQuality(Menus);
+  installMotionWasm(SourceBank, SourcePose);
   // Main #1175 path: presentation-only remote replicas can defer full visual pose.
   installOffscreenVisualBudget(api,G);
   // #845 residual: offline bots author shots from rig-bone muzzles, so retain pose
@@ -27,6 +31,8 @@ export function installQuality(profile){
   installAttractBotBudget({ BotBrain }, G);
   // Outermost Character.update wrapper: bots/replicas skip visual work on fixed ticks that are never drawn.
   installIntermediateTickBudget(api,G);
+  // Staggered offscreen (15Hz) and far-distance (>=14m, 30Hz) Character.update throttle.
+  installDistanceOffscreenThrottle(api,G);
   // Touch devices (sun map capped at 2048²): kids cast their shadow from the far-tier body.
   installKidShadowProxy(api,G,THREE,()=>touchPrimary);
   if (!THREE.Scene.prototype._iwSceneMatrixDedupInstalled) {

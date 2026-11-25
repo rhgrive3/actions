@@ -151,11 +151,11 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     const box = this._s3TankBox(cv, sub, low, nosub);
     const cw = box.w || 18, chh = box.h || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
-    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const resized = cv.width !== W || cv.height !== H;
+    if (resized) { cv.width = W; cv.height = H; }
     const L = this._L;
     if (!L.tankCol) { const s = L.ca || '#ff8a14'; L.tankCol = [shade(s, 0.55), shade(s, 0.08), s, s]; }
     const [cLine, cInk] = L.tankCol;
-    c.clearRect(0, 0, W, H);
     const T2 = this._tankCache || (this._tankCache = {});
     if (T2.W !== W || T2.H !== H) {
       T2.W = W; T2.H = H;
@@ -173,25 +173,34 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
       const frame = Math.max(2.4 * dpr, bw * 0.13);
       const f = bw - frame * 2 > 0 && yEnd - yb - frame * 1.2 > 0 && rf - frame * 0.6 >= 0 ? frame : Math.min(frame, rf);
       const well = new Path2D(); well.roundRect(x0 + f, yb + f * 0.2, bw - f * 2, yEnd - f - (yb + f * 0.2), [bw * 0.06, bw * 0.06, rf - f * 0.6, rf - f * 0.6]);
-      Object.assign(T2, { outline: o, well, wx: x0 + f, ww: bw - f * 2, wy: yb + f * 0.2, wh: yEnd - f - (yb + f * 0.2) });
+      Object.assign(T2, { outline: o, well, wx: x0 + f, ww: bw - f * 2, wy: yb + f * 0.2, wh: yEnd - f - (yb + f * 0.2), pW: -1 });
     }
+    const lvl = T2.wy + T2.wh * (1 - T.level);
+    const lvlPx = Math.round(lvl * 2);
+    const line = T.level > 0.01;
+    const blink = low ? Math.sin(T.t * 14) > 0 : false;
+    if (!resized && T2.pW === W && T2.pH === H && T2.pInk === cInk && T2.pLvlPx === lvlPx && T2.pLine === line && T2.pSub === sub && T2.pLow === low && T2.pNosub === nosub && T2.pBlink === blink) {
+      T.bubbles.length = 0;
+      return;
+    }
+    T2.pW = W; T2.pH = H; T2.pInk = cInk; T2.pLvlPx = lvlPx; T2.pLine = line; T2.pSub = sub; T2.pLow = low; T2.pNosub = nosub; T2.pBlink = blink;
+    c.clearRect(0, 0, W, H);
     c.fillStyle = 'rgba(26,19,27,.92)';
     c.fill(T2.outline);
     c.save();
     c.clip(T2.well);
     c.fillStyle = 'rgba(58,48,58,.55)';
     c.fill(T2.well);
-    const lvl = T2.wy + T2.wh * (1 - T.level);
     c.fillStyle = cInk;
     c.fillRect(T2.wx, lvl, T2.ww, H - lvl);
-    if (T.level > 0.01) { c.fillStyle = cLine; c.fillRect(T2.wx, lvl - 0.6 * dpr, T2.ww, 1.6 * dpr); }
+    if (line) { c.fillStyle = cLine; c.fillRect(T2.wx, lvl - 0.6 * dpr, T2.ww, 1.6 * dpr); }
     c.restore();
     if (sub > 0) {
       const sy = T2.wy + T2.wh * (1 - sub);
       c.fillStyle = nosub ? 'rgba(255,190,200,.95)' : 'rgba(255,255,255,.9)';
       c.fillRect(T2.wx, sy - 0.7 * dpr, T2.ww, 1.4 * dpr);
     }
-    c.lineWidth = 1 * dpr; c.strokeStyle = low ? (Math.sin(T.t * 14) > 0 ? '#ff3d5e' : 'rgba(255,255,255,.5)') : 'rgba(255,255,255,.12)';
+    c.lineWidth = 1 * dpr; c.strokeStyle = low ? (blink ? '#ff3d5e' : 'rgba(255,255,255,.5)') : 'rgba(255,255,255,.12)';
     c.stroke(T2.outline);
     T.bubbles.length = 0;
   }
@@ -267,6 +276,9 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
     const { len, nx, ny } = basis;
     const flowing = ink < 0.995;
     L.tubePhase = ((L.tubePhase || 0) + dt * (flowing ? 11 : 3)) % (Math.PI * 2000);
+    L.tubeAcc = (L.tubeAcc || 0) + dt;
+    if (L.tubeD && L.tubeAcc < 1 / 30) return;
+    L.tubeAcc = 0;
     const beat = flowing ? 0.55 + 0.45 * Math.max(0, Math.sin(T.t * 8.5)) ** 2 : 0.35;
     const amp = Math.min(5, len * 0.07) * beat;
     let d = '';
@@ -275,7 +287,7 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
       const o = p.env * amp * (Math.sin(p.u15 + L.tubePhase) + 0.25 * Math.sin(p.u31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
       d += (i ? 'L' : 'M') + (p.x + nx * o).toFixed(1) + ' ' + (p.y + ny * o).toFixed(1);
     }
-    this._tube[0].setAttribute('d', d); this._tube[1].setAttribute('d', d);
+    if (d !== L.tubeD) { L.tubeD = d; this._tube[0].setAttribute('d', d); this._tube[1].setAttribute('d', d); }
   }
 
 `;

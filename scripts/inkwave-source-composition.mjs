@@ -21,6 +21,7 @@ import { adaptQueueUiAudio20261031 } from '../patches/local-quality/queue-ui-aud
 import { adaptViewportCache } from '../patches/local-quality/viewport-cache-adapter.mjs';
 import { adaptReviewedHotpaths20261107 } from '../patches/local-quality/reviewed-hotpaths-20261107-adapter.mjs';
 import { adaptAuditFixes20261122 } from '../patches/local-quality/audit-fixes-20261122-adapter.mjs';
+import { adaptNonWasmWaste } from '../patches/local-quality/nonwasm-waste-adapter.mjs';
 import { adaptQueueWeapons20261031 } from '../patches/local-quality/queue-weapons-20261031-adapter.mjs';
 import { adaptTitleDemoBudget } from '../patches/local-quality/title-demo-budget-adapter.mjs';
 import { adaptTitlePresentation } from '../patches/local-quality/title-presentation-adapter.mjs';
@@ -239,6 +240,7 @@ export function adaptBuildSource(rel, code, options = {}) {
   code = adaptViewportCache(rel, code);
   if (options.reviewedHotpaths20261107 !== false) code = adaptReviewedHotpaths20261107(rel, code, replaceOnce);
   if (options.auditFixes20261122 !== false) code = adaptAuditFixes20261122(rel, code, replaceOnce);
+  if (options.nonWasmWaste !== false) code = adaptNonWasmWaste(rel, code, replaceOnce);
   return code;
 }
 

@@ -28,8 +28,10 @@ export function driveCanonicalBotSpecial(actor,intent,dt,target,options={},defer
  // Rainmaker owns its carrier's weapon and Actor suppresses specials there.
  // Skip preparation too, so a full meter cannot redirect the carrier's shot.
  const match=(deferInactiveContext?options.world:ctx.world)?.match;
- const actorId=String(actor.nid??`${actor.team}:${actor.slot}`);
- if(match?.mode==='rainmaker'&&match.ranked?.rule?.state?.carrier===actorId)return ctx;
+ if(match?.mode==='rainmaker'){
+  const actorId=String(actor.nid??`${actor.team}:${actor.slot}`);
+  if(match.ranked?.rule?.state?.carrier===actorId)return ctx;
+ }
  // An uncharged bot still uses its ordinary main weapon. Avoid both the
  // category's preparation aim and its more expensive trajectory probes.
  if(!(frame||ctx).state&&!actor.specialReady?.())return ctx;

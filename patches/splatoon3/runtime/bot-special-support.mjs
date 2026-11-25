@@ -10,6 +10,15 @@ import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 // Each action still goes through Actor's ordinary special and throw inputs.
 const IDS = new Set(['bubbler', 'storm', 'tripleInkstrike', 'tacticooler',
   'superChump', 'splattercolorScreen', 'waveBreaker']);
+const _launchVel = new THREE.Vector3();
+const _launchProxy = { aimPitch: 0, aimYaw: 0, vel: null };
+const _launchFlight = { vel: _launchVel, gravity: 0, airResist: 0 };
+const _aimFrom = new THREE.Vector3();
+const _aimTo = new THREE.Vector3();
+const _aimPrev = new THREE.Vector3();
+const _aimNext = new THREE.Vector3();
+const _flightHit = { point: new THREE.Vector3(), normal: new THREE.Vector3() };
+
 const finitePoint = p => {
   if(!p)return p;
   // Preserve eager x/y/z reads, including accessor order, without a triplet.
@@ -112,19 +121,29 @@ function choosePoint(ctx, active) {
 }
 function launch(ctx, pitch, yaw) {
   const { actor, special } = ctx;
-  const proxy = { aimPitch: pitch, aimYaw: yaw, vel: actor.vel };
-  if (special === 'tacticooler') return {
-    vel: new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch))
-      .multiplyScalar(TACTICOOLER_SOURCE.spawnSpeedZ * 60)
-      .add(new THREE.Vector3(0, TACTICOOLER_SOURCE.spawnSpeedY * 60, 0)),
-    gravity: TACTICOOLER_SOURCE.flyGravity * 3600,
-  };
-  if (special === 'storm') return {
-    vel: fidelityThrowVelocity(proxy, 'storm', new THREE.Vector3(), SPECIALS.storm.throwSpeed *
-      (actor.s3?.stormPowerSnapshot?.throwScale ?? actor.s3?.modifiers?.stormThrowScale ?? 1)),
-    gravity: STORM_FLY_GRAVITY, airResist: STORM_FLY_AIR_RESIST,
-  };
-  return specialDeviceFlight({ THREE, SUB }, proxy, special, actor.s3?.abilityPoints?.specialPower || 0);
+  _launchProxy.aimPitch = pitch;
+  _launchProxy.aimYaw = yaw;
+  _launchProxy.vel = actor.vel;
+  if (special === 'tacticooler') {
+    const cp = Math.cos(pitch), speedZ = TACTICOOLER_SOURCE.spawnSpeedZ * 60;
+    _launchVel.set(
+      Math.sin(yaw) * cp * speedZ,
+      Math.sin(pitch) * speedZ + TACTICOOLER_SOURCE.spawnSpeedY * 60,
+      Math.cos(yaw) * cp * speedZ,
+    );
+    _launchFlight.vel = _launchVel;
+    _launchFlight.gravity = TACTICOOLER_SOURCE.flyGravity * 3600;
+    _launchFlight.airResist = 0;
+    return _launchFlight;
+  }
+  if (special === 'storm') {
+    _launchFlight.vel = fidelityThrowVelocity(_launchProxy, 'storm', _launchVel, SPECIALS.storm.throwSpeed *
+      (actor.s3?.stormPowerSnapshot?.throwScale ?? actor.s3?.modifiers?.stormThrowScale ?? 1));
+    _launchFlight.gravity = STORM_FLY_GRAVITY;
+    _launchFlight.airResist = STORM_FLY_AIR_RESIST;
+    return _launchFlight;
+  }
+  return specialDeviceFlight({ THREE, SUB }, _launchProxy, special, actor.s3?.abilityPoints?.specialPower || 0);
 }
 // Horizontal per-60Hz-frame drag (Ink Storm's bomb-family flight) in closed
 // form: distance(t) = h * (1 - keep^(60t)) / (-60 ln keep). Drag-free flights
@@ -156,12 +175,12 @@ function aimPlan(ctx, point) {
   ctx.aimAt(point);
   if (ctx.special === 'bubbler') {
     if (ctx.safePath && !ctx.safePath(point, 6)) return false;
-    const from = ctx.actor.pos.clone(); from.y += 1.1;
-    const to = point.clone(); to.y += .2;
-    return !ctx.world?.physics?.los || ctx.world.physics.los(from, to);
+    _aimFrom.copy(ctx.actor.pos); _aimFrom.y += 1.1;
+    _aimTo.copy(point); _aimTo.y += .2;
+    return !ctx.world?.physics?.los || ctx.world.physics.los(_aimFrom, _aimTo);
   }
   if (ctx.special === 'superChump') return true;
-  const from = ctx.actor.pos.clone(); from.y += ctx.special === 'storm' ? 1.45 : 1.1;
+  const from = _aimFrom.copy(ctx.actor.pos); from.y += ctx.special === 'storm' ? 1.45 : 1.1;
   const distance = flatDistance(from, point), yaw = ctx.wantYaw;
   // Low-arc targeting predicts from the existing launch helper. The actual
   // projectile retains its own fixed-step gravity, drag and collision owner.
@@ -177,18 +196,18 @@ function aimPlan(ctx, point) {
   const time = flightTimeToDistance(flight, distance);
   const endY = from.y + vel.y * time - gravity * time * time / 2;
   if (!Number.isFinite(time) || time > 2 || Math.abs(endY - point.y) > .8) return false;
-  let previous = from;
+  const previous = _aimPrev.copy(from);
   for (let i = 1; i <= 6; i++) {
-    const t = time * i / 6, next = from.clone().addScaledVector(vel, flightHorizontalScale(flight, t));
-    next.y = from.y + vel.y * t - gravity * t * t / 2;
+    const t = time * i / 6;
+    _aimNext.copy(from).addScaledVector(vel, flightHorizontalScale(flight, t));
+    _aimNext.y = from.y + vel.y * t - gravity * t * t / 2;
     // LOS intentionally omits its last .05 WU and ignores grates. A thrown
     // guide has neither exception: trace the full low arc at its real height.
     if (ctx.world?.physics?.segment) {
-      const hit = ctx.memory.flightHit ||= {point:new THREE.Vector3(),normal:new THREE.Vector3()};
-      const contact = ctx.world.physics.segment(previous, next, hit, false);
+      const contact = ctx.world.physics.segment(previous, _aimNext, _flightHit, false);
       if (contact?.hit && !(i === 6 && contact.normal?.y > .4 && contact.point.distanceTo(point) < .3)) return false;
-    } else if (ctx.world?.physics?.los && !ctx.world.physics.los(previous, next)) return false;
-    previous = next;
+    } else if (ctx.world?.physics?.los && !ctx.world.physics.los(previous, _aimNext)) return false;
+    previous.copy(_aimNext);
   }
   return true;
 }
@@ -210,9 +229,32 @@ export function driveSupportSpecial(ctx) {
   // Inapplicable or duplicate support must not steal the ordinary gun aim.
   if (!point) { if (memory.holding) intent.sub = true; return true; }
   if (!state && (!actor.specialReady?.() || covered(ctx, point))) return true;
-  const normalAim = [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged];
-  if (!aimPlan(ctx, point)) {
-    [ctx.wantYaw, ctx.wantPitch, ctx.aimDistance, ctx.aimChanged] = normalAim;
+  const prevYaw = ctx.wantYaw, prevPitch = ctx.wantPitch, prevDist = ctx.aimDistance, prevChanged = ctx.aimChanged;
+  let ac = memory.aimCache;
+  const ap = actor.pos;
+  const needAimPlan = !ac || ac.point !== point || ac.special !== ctx.special ||
+    ac.px !== point.x || ac.py !== point.y || ac.pz !== point.z ||
+    (ap.x - ac.ax) * (ap.x - ac.ax) + (ap.y - ac.ay) * (ap.y - ac.ay) + (ap.z - ac.az) * (ap.z - ac.az) > 0.16 ||
+    memory.supportClock - ac.at >= 0.12 || memory.supportClock < ac.at;
+  let aimOk;
+  if (needAimPlan) {
+    aimOk = aimPlan(ctx, point);
+    if (!ac) ac = memory.aimCache = { point: null, special: '', px: 0, py: 0, pz: 0, ax: 0, ay: 0, az: 0, at: 0, ok: false, wantPitch: 0 };
+    ac.point = point; ac.special = ctx.special;
+    ac.px = point.x; ac.py = point.y; ac.pz = point.z;
+    ac.ax = ap.x; ac.ay = ap.y; ac.az = ap.z;
+    ac.at = memory.supportClock;
+    ac.ok = aimOk;
+    ac.wantPitch = ctx.wantPitch;
+  } else {
+    aimOk = ac.ok;
+    if (aimOk) {
+      ctx.aimAt(point);
+      if (ctx.special !== 'bubbler' && ctx.special !== 'superChump') ctx.wantPitch = ac.wantPitch;
+    }
+  }
+  if (!aimOk) {
+    ctx.wantYaw = prevYaw; ctx.wantPitch = prevPitch; ctx.aimDistance = prevDist; ctx.aimChanged = prevChanged;
     if (memory.holding) intent.sub = true;
     return true;
   }

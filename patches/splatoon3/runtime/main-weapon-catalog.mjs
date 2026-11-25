@@ -64,6 +64,7 @@ import {installNativeMainMeleeDeviceContact,publishNativeMainMeleeFrame} from '.
 // Models remain separate work. Extracted numbers do not certify Nintendo engine equivalence.
 const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
 const UNMODIFIED_MOVE_FAMILIES=Object.freeze(['roller','brush','splatana']);
+const UNMODIFIED_MOVE_FAMILY_SET=new Set(UNMODIFIED_MOVE_FAMILIES);
 const SABER_RESERVED_PRESS=Object.freeze({fire:true,firePressed:true,sub:false,subReleased:false});
 const SABER_RESERVED_RELEASE=Object.freeze({fire:false,firePressed:false,sub:false,subReleased:false});
 const SWING_MODES=Object.freeze(['horizontal','vertical','brush']);
@@ -236,7 +237,7 @@ function definition(r, api) {
   return { id:r.id, name:r.names[api.LANG==='ja'?'ja':'en'], referenceNames:r.names, kind:'catalog', behaviorKind:r.family,
     modelKind:r.modelKind, class:{brush:'Brush',brella:'Brella',stringer:'Stringer',splatana:'Splatana'}[r.family] || existing.class,
     scopedCharge:r.family==='charger' && r.parameters.WeaponScopeParam != null,
-    catalogRecord:r, weaponWeight:weaponWeight(r.id), sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
+    catalogRecord:r, _isAngular:ANGULAR_FAMILIES.has(r.family), _unmodifiedMove:UNMODIFIED_MOVE_FAMILY_SET.has(r.family), weaponWeight:weaponWeight(r.id), sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
     kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
     kitVerifiedSlots:['sub','special'], kitMissingSlots:{},
     blurb:familyDescription(r.family,api.LANG),
@@ -327,9 +328,11 @@ export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random)
 // family recovers over its own source start/end frame window. The
 // established Splatling jump clock is owned by splatling-jump-spread.mjs;
 // this catalog only reads it, not advancing a duplicate clock.
+const _angularEnvelopeScratch = { spreadGround: 0, spreadAir: 0 };
 export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
-  const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
-  return accuracyEnvelope({spreadGround:ground, spreadAir:airborne}, grounded, jumpAge, param, HZ);
+  _angularEnvelopeScratch.spreadGround = ground;
+  _angularEnvelopeScratch.spreadAir = lerp(ground, jump, 1 - clamp(actionReduction));
+  return accuracyEnvelope(_angularEnvelopeScratch, grounded, jumpAge, param, HZ);
 }
 
 function initialState(r,actor) {
@@ -338,6 +341,7 @@ function initialState(r,actor) {
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
     accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
     rollingFrames:0, rollingDash:false, bowTilt:0, remoteBowTilt:null, saberShotOrdinal:0,
+    isAngular:ANGULAR_FAMILIES.has(r.family), unmodifiedMove:UNMODIFIED_MOVE_FAMILY_SET.has(r.family),
     jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
@@ -363,6 +367,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const paintFallbackUp = down.clone().negate();
   const muzzle = new THREE.Vector3(), dir = new THREE.Vector3(), base = new THREE.Vector3();
   const rollerContactAt = new THREE.Vector3(), rollerContactEye = new THREE.Vector3(), rollerTargetCentre = new THREE.Vector3();
+  const splashDirScratch = new THREE.Vector3();
 
   const heldCanopyActors=new Set();
   function state(runner) {
@@ -485,7 +490,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // existing sub-ready owner before selecting main-weapon movement.
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return profile.bomb.holdMoveSpeed;
-    const mod = UNMODIFIED_MOVE_FAMILIES.includes(r.family)?1:this.a.s3?.modifiers?.runSpeedFiring ?? 1;
+    const unmodifiedMove = s && s.id === r.id ? s.unmodifiedMove : (w._unmodifiedMove ?? UNMODIFIED_MOVE_FAMILY_SET.has(r.family));
+    const mod = unmodifiedMove ? 1 : this.a.s3?.modifiers?.runSpeedFiring ?? 1;
     if (s?.roll || s?.lunge || s?.turret>EPS && r.sourceActor !== 'WeaponManeuverDual') return 0;
     if (this.rolling) {
       const roll=p.WeaponRollParam||{},normal=finite(roll.SpeedNormal,.132);
@@ -763,7 +769,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
       // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
-      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
+      catalog:{r,_rPlain:r,splashDir:splashDirScratch,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?options.sectorYaw:null}});
     if(descriptor.key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')){
       // Combination.OrderNum selects the emitting glob, not every member of
@@ -1317,7 +1323,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const source=mode(r,meta[1],meta[2],meta[3]),d=catalogDepletedDescriptor(source,source.packet,
         e[27]?.s3CatalogDepleted===true&&(r.family==='roller'||r.family==='brush'));
       const scratch=collisionScratch(p);p.damage=d.damage;
-      p.catalog={r,descriptor:d,travel:0,index:Math.max(0,finite(meta[4],0)),phase:0,
+      p.catalog={r,_rPlain:r,splashDir:splashDirScratch,descriptor:d,travel:0,index:Math.max(0,finite(meta[4],0)),phase:0,
         stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0,
         hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch};
       return p;
@@ -1533,7 +1539,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         const motion=coherentTick?coherentMotionStart(a):null;
-        if(!motion&&shapes.length===1){
+        if(shapes.length===1){
           if(!segBoundsReady){
             const q0=shapes[0],prMax=Math.max(q0.playerRadius0,q0.playerRadius1);
             if(Number.isFinite(q0.from.x)&&Number.isFinite(q0.from.z)&&Number.isFinite(q0.to.x)&&Number.isFinite(q0.to.z)&&Number.isFinite(prMax)&&prMax>=0){
@@ -1547,7 +1553,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             // Terrain radius + 0.25 is too small for the squid bullet radius
             // (0.675 in the current profile) and can suppress a genuine hit.
             const reach=hurtboxRadius(a,PLAYER)+1e-4;
-            if(a.pos.x<segMinX-reach||a.pos.x>segMaxX+reach||a.pos.z<segMinZ-reach||a.pos.z>segMaxZ+reach)continue;
+            if(!motion){
+              if(a.pos.x<segMinX-reach||a.pos.x>segMaxX+reach||a.pos.z<segMinZ-reach||a.pos.z>segMaxZ+reach)continue;
+            }else if(Number.isFinite(motion.x0)&&Number.isFinite(motion.y0)&&Number.isFinite(motion.z0)){
+              const padX=Math.abs(a.pos.x-motion.x0)+EPS,padZ=Math.abs(a.pos.z-motion.z0)+EPS;
+              if(a.pos.x<segMinX-reach-padX||a.pos.x>segMaxX+reach+padX||a.pos.z<segMinZ-reach-padZ||a.pos.z>segMaxZ+reach+padZ)continue;
+            }
           }
         }
         const scratch=s.collisionScratch;
@@ -1641,7 +1652,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         let direction,footprint,footprintRecord,footprintReady=false;
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
-          direction ||= p.vel.clone().setY(0).normalize();
+          direction ||= (s.splashDir ? s.splashDir.copy(p.vel) : p.vel.clone()).setY(0).normalize();
           const from=(s.splashReleasePoint ||= p.prev.clone()).copy(p.prev).lerp(p.pos,clamp((s.nextSplash-splashBefore)/splashLength));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
@@ -1649,7 +1660,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
             const record=s.r;
             if(!footprintReady||record!==footprintRecord){
               footprint=mainInkFootprint(record);footprintRecord=record;
-              footprintReady=canShareSourceFootprint(record)&&Object.getOwnPropertyDescriptor(s,'r')?.value===record;
+              footprintReady=canShareSourceFootprint(record)&&(s._rPlain===record||Object.getOwnPropertyDescriptor(s,'r')?.value===record);
             }
             args.owner=p.owner;args.team=p.team;args.seed=p.seed;args.salt=s.dropCount;
             args.from=from;args.direction=direction;args.radius=radius;args.spec=d.splashDropSpec||d.sloshFall.spec;
@@ -1758,7 +1769,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const marker=e[27]?.s3CatalogDepleted===true&&
           (r.family==='roller'||r.family==='brush');
         const d=catalogDepletedDescriptor(source,source.packet,marker),scratch=collisionScratch(p);
-        p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
+        p.catalog={r,_rPlain:r,splashDir:splashDirScratch,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
         hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
         p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index,true);updateCatalogVisual(p);
         // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
@@ -2226,14 +2237,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     a.character.trigger('dodge',{x:direction.x*cy-direction.z*sy,z:direction.x*sy+direction.z*cy,t:duration});
     emit('weapon:dodge',{actor:a,dir:direction.clone()});return true;
   };
-  Actor.prototype._horizontal=function(dt,...args){
+  Actor.prototype._horizontal=function(dt,isSquid,onEnemy,extra){
     if(writeCatalogDualiesVelocity(this,dt))return;
     const s=this.weaponRunner?.catalogState,motion=s?.roll||s?.lunge;
     if(this.weapon.catalogRecord&&motion){
       if(motion===s.lunge)saberStepSpeed(motion,dt,this.grounded); // retail slide-ground state is not recovered
       this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
-    if(args[1]&&brushRollIgnoresEnemyInk(this))args[1]=false;
-    return nativeHorizontal.call(this,dt,...args);
+    if(onEnemy&&brushRollIgnoresEnemyInk(this))onEnemy=false;
+    return arguments.length<=3?nativeHorizontal.call(this,dt,isSquid,onEnemy):nativeHorizontal.call(this,dt,isSquid,onEnemy,extra);
   };
   const launchedCanopies = new Set();
   let canopyVisualSerial=0;
@@ -2513,15 +2524,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       else if(s.stepStick){s.stepStick.fill(0);s.stepStickFrames=0;s.stepStickAt=0;}
     }
     s.stop=Math.max(0,s.stop-dt);
+    const isAngular=s.isAngular??ANGULAR_FAMILIES.has(r.family);
     if(r.family!=='splatling') {
       s.accuracy.advance(dt);
-      if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
+      if(isAngular)advanceCatalogJumpClock(s,a,r.family,dt);
     }
     // The legacy runner's _spreadDeg returns zero for kind='catalog'.
     // Restore the sourced per-family cone on idle and cooldown frames so the
     // reticle/shot guide does not flicker to perfect accuracy between rounds.
     // The firing branch may still replace this with a mode-specific shot cone.
-    if(ANGULAR_FAMILIES.has(r.family)){
+    if(isAngular){
       const t=weaponParam(r),ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
       const age=r.family==='splatling'&&Number.isFinite(a.s3SplatlingJumpAgeFrames)
         ?a.s3SplatlingJumpAgeFrames/HZ:s.jumpAge;

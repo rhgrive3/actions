@@ -3,7 +3,7 @@
 // volume per actor; no actor/world scan, meshes, timer or packet changes.
 const SKIN = 0.02, EPS = 1e-9;
 const INSTALLED = Symbol.for('inkwave.spawn-exclusion.v1');
-const origins = new WeakMap();
+const ORIGIN_SYM = Symbol('s3SpawnOrigin');
 
 export function constrainSpawnPosition(actor, level, player, from = null, physics = null) {
   if (!actor.alive || (actor.team !== 0 && actor.team !== 1)) return false;
@@ -119,23 +119,24 @@ export function installSpawnExclusion(Actor, G, player) {
   Object.defineProperty(A,INSTALLED,{value:true});
   const update=A.update, integrate=A._integrate, resolve=A._resolve, finish=A._finishFrame, spawn=A.spawnAt;
   const constrain = a => {
-    const from=origins.get(a);
-    constrainSpawnPosition(a,G.level,player,a.remote ? null : from,G.physics);
-    if (from) { const p=a.pos; from.x=p.x; from.y=p.y; from.z=p.z; }
+    const from = a[ORIGIN_SYM];
+    constrainSpawnPosition(a, G.level, player, (a.remote || !from?.valid) ? null : from, G.physics);
+    if (from?.valid) { const p = a.pos; from.x = p.x; from.y = p.y; from.z = p.z; }
   };
   const remember = a => {
-    let from=origins.get(a);
-    if (!from) origins.set(a,from={x:0,y:0,z:0});
-    const p=a.pos; from.x=p.x; from.y=p.y; from.z=p.z;
+    let from = a[ORIGIN_SYM];
+    if (!from) a[ORIGIN_SYM] = from = { x: 0, y: 0, z: 0, valid: true };
+    else from.valid = true;
+    const p = a.pos; from.x = p.x; from.y = p.y; from.z = p.z;
   };
-  A.update=function(...args) { remember(this); return update.apply(this,args); };
-  A._integrate=function(...args) { remember(this); const result=integrate.apply(this,args); constrain(this); return result; };
-  A._resolve=function(...args) { const result=resolve.apply(this,args); constrain(this); return result; };
+  A.update = function(a0, a1) { remember(this); return arguments.length <= 2 ? update.call(this, a0, a1) : update.apply(this, arguments); };
+  A._integrate = function(a0, a1, a2) { remember(this); const result = arguments.length <= 3 ? integrate.call(this, a0, a1, a2) : integrate.apply(this, arguments); constrain(this); return result; };
+  A._resolve = function(a0, a1, a2) { const result = arguments.length <= 3 ? resolve.call(this, a0, a1, a2) : resolve.apply(this, arguments); constrain(this); return result; };
   // Flight paths and body separation also finish here. Apply before character
   // pose, muzzle/display and grounded Super Jump destination are sampled.
-  A._finishFrame=function(...args) { constrain(this); return finish.apply(this,args); };
-  A.spawnAt=function(...args) {
-    origins.delete(this);
-    const result=spawn.apply(this,args); constrain(this); this.character.root.position.copy(this.pos); return result;
+  A._finishFrame = function(a0) { constrain(this); return arguments.length <= 1 ? finish.call(this, a0) : finish.apply(this, arguments); };
+  A.spawnAt = function(a0, a1, a2) {
+    const from = this[ORIGIN_SYM]; if (from) from.valid = false;
+    const result = arguments.length <= 3 ? spawn.call(this, a0, a1, a2) : spawn.apply(this, arguments); constrain(this); this.character.root.position.copy(this.pos); return result;
   };
 }
