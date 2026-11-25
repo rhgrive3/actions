@@ -644,6 +644,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/combat-info.mjs',
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
+  'patches/local-quality/gtao-budget.mjs',
   'patches/local-quality/motion-kernel.mjs',
 ]);
 // Optional Vite-built account UI (vite build / npm run build:prod). It enters the revisioned tree and the

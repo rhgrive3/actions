@@ -229,6 +229,8 @@
           "patches/local-quality/tests/hidden-showcase-retirement.test.mjs",
           "patches/local-quality/tests/portrait-target-lifetime.test.mjs",
           "patches/local-quality/tests/portrait-work.test.mjs",
+          "patches/local-quality/tests/portrait-live-match-deferral.test.mjs",
+          "patches/local-quality/tests/gtao-budget.test.mjs",
           "patches/local-quality/tests/resource-budget.test.mjs",
           "patches/local-quality/tests/music-dispose-resources.test.mjs",
           "patches/local-quality/tests/music-lazy-fx.test.mjs",

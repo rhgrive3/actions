@@ -1,6 +1,13 @@
 // Source connections stay strict and compose after the existing gameplay layers.
 export function adaptResourceSource(rel, code, replace) {
   const patch = (before, after, label) => { code = replace(code, before, after, 'resource: ' + label); };
+  if (rel === 'src/core/renderer.js') {
+    code = "import { scaledGtaoDimension, installHalfResGtao, installGtaoOccluderFilter } from '../../patches/local-quality/gtao-budget.mjs';\n" + code;
+    patch('const ao = (this.gtao = new GTAOPass(this.scene, this.camera, w, h));',
+      'const ao = (this.gtao = new GTAOPass(this.scene, this.camera, scaledGtaoDimension(w * pr), scaledGtaoDimension(h * pr)));', 'half-res gtao construction');
+    patch('ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });\n      comp.addPass(ao);',
+      'ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });\n      installHalfResGtao(ao, { basePdRadius: 6 });\n      installGtaoOccluderFilter(ao, G);\n      comp.addPass(ao);', 'half-res gtao resize and occluder filter');
+  }
   if (rel === 'src/game/character.js') {
     code = "import { installPortraitCharacterReuse } from '../../patches/local-quality/portrait-work.mjs';\n" + code;
     code += `\ninstallPortraitCharacterReuse(Character, { THREE, STYLE, resolveStyle, mulberry, getHairStyle, getRestPositions, getBoneInverses, BONE_NAMES, BONE_PARENT, HAIR_MAX, HAIR_SEGS, T_GAME, SKIN_TONES, makeSkinMaterial, HEAD_CTR, TAU });\n`;
