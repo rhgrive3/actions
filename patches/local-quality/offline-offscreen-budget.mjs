@@ -245,16 +245,16 @@ export function installOfflineOffscreenBudget(api, G) {
     return height;
   };
   if (nativeUpdateHair) {
-    proto._updateHair = function _oobUpdateHair(...args) {
+    proto._updateHair = function _oobUpdateHair(dt) {
       if (this._oobBudget) { this._oobHairSkips++; return undefined; }
-      return nativeUpdateHair.apply(this, args);
+      return nativeUpdateHair.call(this, dt);
     };
   }
   if (nativeApplyPose) {
-    proto._applyPose = function _oobApplyPose(...args) {
+    proto._applyPose = function _oobApplyPose(dt, s) {
       const budget = this._oobBudget;
       this._oobPoseTailSkipped = false;
-      const result = nativeApplyPose.apply(this, args);
+      const result = nativeApplyPose.call(this, dt, s);
       if (budget) {
         this._oobPoseCoreTicks++;
         if (this._oobPoseTailSkipped) {
@@ -266,13 +266,13 @@ export function installOfflineOffscreenBudget(api, G) {
     };
   }
   if (nativeUpdateMaterials) {
-    proto._updateMaterials = function _oobUpdateMaterials(...args) {
+    proto._updateMaterials = function _oobUpdateMaterials(dt, s) {
       if (this._oobBudget) {
         this._oobMaterialDirty = true;
         this._oobMaterialSkips++;
         return undefined;
       }
-      return nativeUpdateMaterials.apply(this, args);
+      return nativeUpdateMaterials.call(this, dt, s);
     };
   }
   proto.update = function _oobUpdate(dt, s) {
@@ -348,6 +348,7 @@ export function installAttractBotBudget({ BotBrain }, G) {
   Object.defineProperty(proto, ATTRACT_INSTALLED, { value: true });
   const nativeUpdate = proto.update;
   proto.update = function menuAttractBotUpdate(dt) {
+    if (G.mode !== 'menu' || !G?.match?.attract) return nativeUpdate.call(this, dt);
     if (!menuAttractAiEligible(this, G) || !Number.isFinite(dt) || dt <= 0) {
       // Death/super-jump and scope transitions must clear commands on this
       // very frame via native BotBrain.update, never wait for a menu budget.

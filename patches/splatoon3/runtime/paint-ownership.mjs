@@ -69,7 +69,9 @@ function sdRay(px, py, ax, ay, bx, by, ra, rb) {
   return Math.hypot(px - ax - bax * h, py - ay - bay * h) - (ra * (1 - h) + rb * h);
 }
 
-function counts(kind, shapes) { return shapes[kind] || [0, 0, 0, 0]; }
+const EMPTY_SHAPES = [0, 0, 0, 0];
+const EMPTY_F64 = new Float64Array(0);
+function counts(kind, shapes) { return shapes[kind] || EMPTY_SHAPES; }
 
 const _ancillaryPiecePool = [];
 const _ancillaryPieces = [];
@@ -78,6 +80,7 @@ function allocPiece(idx) {
   let p = _ancillaryPiecePool[idx];
   if (!p) {
     p = { type: 0, ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, radius: 0, ux: 0, uy: 0, el: 0, x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    Object.defineProperty(p, 'bulbR', { value: 0, writable: true, enumerable: false, configurable: true });
     _ancillaryPiecePool[idx] = p;
   }
   _ancillaryPieces[idx] = p;
@@ -96,8 +99,8 @@ function ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satellit
   for(const t of templates)if(sameTemplateValue(t.seed,seed)&&sameTemplateValue(t.sa,sa)&&sameTemplateValue(t.dirAng,dirAng)
       &&(!rayCount||t.rayCount===rayCount)&&(!satelliteCount||t.satelliteCount===satelliteCount)&&(!spatterCount||t.spatterCount===spatterCount))return (g._s3AncillaryTemplate=t);
   const wobbles = g._s3Wobble && g._s3WobbleSeed === seed ? g._s3Wobble : (g._s3WobbleSeed = seed, g._s3Wobble = new Map());
-  const rays = new Float64Array(rayCount * 6), sats = new Float64Array(satelliteCount * 7);
-  const spats = new Float64Array(spatterCount * 7), drips = new Float64Array(6 * 3);
+  const rays = rayCount ? new Float64Array(rayCount * 6) : EMPTY_F64, sats = satelliteCount ? new Float64Array(satelliteCount * 7) : EMPTY_F64;
+  const spats = spatterCount ? new Float64Array(spatterCount * 7) : EMPTY_F64, drips = new Float64Array(6 * 3);
   for (let k = 0; k < rayCount; k++) {
     const h1 = paintShapeHash(word, 0, k), h2 = paintShapeHash(word, 1, k), h3 = paintShapeHash(word, 2, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
@@ -195,6 +198,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       const w = r * (0.042 + 0.04 * h3) * (0.75 + 0.35 * fall);
       const p3 = allocPiece(pIdx++);
       p3.type = 3; p3.x0 = x0; p3.yTop = yTop; p3.len = len; p3.w = w; p3.h2 = h2; p3.k = k; p3.r = r;
+      p3.bulbR = w * (1.2 + 0.35 * h2) * (0.6 + 0.4 * dT);
       p3.minX = x0 - w * 2; p3.maxX = x0 + w * 2; p3.minY = yTop - len - w * 2; p3.maxY = yTop + w * 2;
     }
   }
@@ -231,14 +235,22 @@ function pointInsideAncillary(mask, x, y, seed, p) {
     if (!(qx * qx + qy * qy > rHi * rHi) && Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
   }
   if (p.type === 3) {
-    let qx = sx - p.x0, qy = sy - p.yTop;
+    let qx = sx - p.x0;
+    const qy = sy - p.yTop, margin = mask.margin;
+    const bulbR = p.bulbR !== undefined ? p.bulbR : p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
+    const rHi = bulbR * (1 + 1e-5) + 1e-8;
+    const tqy = (qy + p.len - p.w * 0.3) * 0.8;
+    if (margin >= 0 && p.w >= 0) {
+      const xHi = ((bulbR > p.w ? bulbR : p.w) + p.w * 0.35) * (1 + 1e-5) + 1e-8;
+      if (Math.abs(qx) > xHi) return false;
+      if ((qy >= -margin || -p.len - qy >= -margin) && Math.abs(tqy) > rHi) return false;
+    }
     const ty = clamp(-qy / (p.len > 1e-4 ? p.len : 1e-4), 0, 1);
     qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
     const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
     const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
-    const tqy = (qy + p.len - p.w * 0.3) * 0.8;
-    const bulb = Math.hypot(qx, tqy) - p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
-    if (stream < -mask.margin || bulb < -mask.margin) return true;
+    if (stream < -margin) return true;
+    if (!(qx * qx + tqy * tqy > rHi * rHi) && Math.hypot(qx, tqy) - bulbR < -margin) return true;
   }
   return false;
 }
@@ -404,7 +416,9 @@ function paintOrderId(paint, order, prepared=false) {
 
 function paintOrderComesAfter(paint, nextId, previousId) {
   if (nextId === previousId) return true;
-  const a = paint._paintOrderRecords[nextId], b = paint._paintOrderRecords[previousId];
+  const records = paint._paintOrderRecords;
+  const a = records[nextId], b = records[previousId];
+  if (!paint._paintOrderIds?.size && typeof a === 'number' && typeof b === 'number') return a > b;
   if (!a) return false;
   if (!b) return true;
   const aLocal = typeof a === 'number' || a.local, bLocal = typeof b === 'number' || b.local;
@@ -471,37 +485,42 @@ function nextVisitStamp(paint) {
 // (NaN equal to NaN). Grid, owner order and visit state are re-read on every
 // replay through the unchanged body. Drips change with dT and are never kept.
 const sameCacheValue = (a, b) => a === b || (a !== a && b !== b);
-function cellCacheSlot(paint, g, n, n2, tn, face, piece) {
+function cellCacheSlot(paint, g, n, n2, tn, dT, settleTn, face, piece) {
   // Only native source stages (many small wall charts) and only once growth
   // can no longer change ray/bead/satellite shapes; drip ticks re-use them.
-  if (!paint.level?.native || tn < 1.45 || !face.wall || !g.dripDur || piece.type === 3) return null;
+  if (!paint.level?.native || tn < settleTn || dT >= 1 || !face.wall || !g.dripDur || piece.type === 3) return null;
   const entryStride = g.entryStride === 8 ? 8 : 7, slot = n / entryStride;
   const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);
   const pieces = byEntry[slot] || (byEntry[slot] = []);
-  return pieces[n2] || (pieces[n2] = { key: null, cells: null });
+  return pieces[n2] || (pieces[n2] = { face: null, key: null, cells: null });
 }
 function cellCacheKey(key, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
-  key[0] = face; key[1] = face.grid; key[2] = face.nu; key[3] = face.cu; key[4] = face.cv;
-  key[5] = lu; key[6] = lv; key[7] = ext; key[8] = yLo; key[9] = pad;
-  key[10] = bi0; key[11] = bi1; key[12] = bj0; key[13] = bj1;
-  key[14] = mask.sa; key[15] = mask.sdu; key[16] = mask.sdv; key[17] = mask.margin;
+  key[0] = face.grid; key[1] = face.nu; key[2] = face.cu; key[3] = face.cv;
+  key[4] = lu; key[5] = lv; key[6] = ext; key[7] = yLo; key[8] = pad;
+  key[9] = bi0; key[10] = bi1; key[11] = bj0; key[12] = bj1;
+  key[13] = mask.sa; key[14] = mask.sdu; key[15] = mask.sdv; key[16] = mask.margin;
   // Every numeric field a ray (0), bead (1) or satellite (2) piece carries.
-  key[18] = piece.type; key[19] = piece.ax; key[20] = piece.ay; key[21] = piece.bx; key[22] = piece.by;
-  key[23] = piece.ra; key[24] = piece.rb; key[25] = piece.x; key[26] = piece.y; key[27] = piece.radius;
-  key[28] = piece.ux; key[29] = piece.uy; key[30] = piece.el; key[31] = piece.minX; key[32] = piece.maxX;
-  key[33] = piece.minY; key[34] = piece.maxY;
+  key[17] = piece.type; key[18] = piece.ax; key[19] = piece.ay; key[20] = piece.bx; key[21] = piece.by;
+  key[22] = piece.ra; key[23] = piece.rb; key[24] = piece.x; key[25] = piece.y; key[26] = piece.radius;
+  key[27] = piece.ux; key[28] = piece.uy; key[29] = piece.el; key[30] = piece.minX; key[31] = piece.maxX;
+  key[32] = piece.minY; key[33] = piece.maxY;
   return key;
 }
-const _cellCacheProbe = [];
 function sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
   const key = cache.key;
-  if (!key) return false;
-  const next = cellCacheKey(_cellCacheProbe, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
-  for (let i = 0; i < key.length; i++) if (!sameCacheValue(key[i], next[i])) return false;
-  return true;
+  if (!key || cache.face !== face) return false;
+  return sameCacheValue(key[0], face.grid) && sameCacheValue(key[1], face.nu) && sameCacheValue(key[2], face.cu) && sameCacheValue(key[3], face.cv) &&
+    sameCacheValue(key[4], lu) && sameCacheValue(key[5], lv) && sameCacheValue(key[6], ext) && sameCacheValue(key[7], yLo) && sameCacheValue(key[8], pad) &&
+    sameCacheValue(key[9], bi0) && sameCacheValue(key[10], bi1) && sameCacheValue(key[11], bj0) && sameCacheValue(key[12], bj1) &&
+    sameCacheValue(key[13], mask.sa) && sameCacheValue(key[14], mask.sdu) && sameCacheValue(key[15], mask.sdv) && sameCacheValue(key[16], mask.margin) &&
+    sameCacheValue(key[17], piece.type) && sameCacheValue(key[18], piece.ax) && sameCacheValue(key[19], piece.ay) && sameCacheValue(key[20], piece.bx) && sameCacheValue(key[21], piece.by) &&
+    sameCacheValue(key[22], piece.ra) && sameCacheValue(key[23], piece.rb) && sameCacheValue(key[24], piece.x) && sameCacheValue(key[25], piece.y) && sameCacheValue(key[26], piece.radius) &&
+    sameCacheValue(key[27], piece.ux) && sameCacheValue(key[28], piece.uy) && sameCacheValue(key[29], piece.el) && sameCacheValue(key[30], piece.minX) && sameCacheValue(key[31], piece.maxX) &&
+    sameCacheValue(key[32], piece.minY) && sameCacheValue(key[33], piece.maxY);
 }
 function storeCellCache(cache, cells, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
-  cache.key = cellCacheKey(cache.key || new Array(35), face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
+  cache.face = face;
+  cache.key = cellCacheKey(cache.key || new Float64Array(34), face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
   cache.cells = cells;
 }
 
@@ -547,12 +566,14 @@ function nativeAncillaryRectBlocked(paint,face,order,i0,i1,j0,j1){
 function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
+  const sh = counts(g.kind, contract.shapes); if (sh[0] + sh[1] + sh[2] + sh[3] === 0) return 0;
+  const settleTn = (sh[1] === 0 && sh[2] === 0) ? 1 : 1.45;
   const value = g.team + 1, order = g.paintOrder || 0;
   // Growth records can be reused or acquire extra faces: do not let a stale
   // completion marker silently suppress a newly paintable surface.
   const settledGeometry = E.length === g._ancillaryDoneEntries && g.R === g._ancillaryDoneRadius;
-  if (order > 0 && tn >= 1.45 && settledGeometry && g._ancillaryAllDone === order && g.age >= g._ancillaryDoneAge) return 0;
-  const floorSettled = order > 0 && tn >= 1.45 && E.length === g._ancillaryFloorEntries && g.R === g._ancillaryFloorRadius && g._ancillaryFloorDone === order && g.age >= g._ancillaryFloorDoneAge;
+  if (order > 0 && tn >= settleTn && settledGeometry && g._ancillaryAllDone === order && g.age >= g._ancillaryDoneAge) return 0;
+  const floorSettled = order > 0 && tn >= settleTn && E.length === g._ancillaryFloorEntries && g.R === g._ancillaryFloorRadius && g._ancillaryFloorDone === order && g.age >= g._ancillaryFloorDoneAge && g._ancillaryFloorSeed === g.seed && g._ancillaryFloorKind === g.kind && g._ancillaryFloorTeam === g.team;
   let claimed = 0, changed = false;
   const entryStride = g.entryStride === 8 ? 8 : 7;
   for (let n = 0; n < E.length; n += entryStride) {
@@ -571,6 +592,12 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const cellArea = face.cu * face.cv;
     const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
     if (!mask) continue;
+    const skipSettledNonDrip = !paint.level?.native && floorSettled;
+    if (skipSettledNonDrip) {
+      let hasDrip = false;
+      for (let k = 0; k < mask.pieces.length; k++) if (mask.pieces[k].type === 3) { hasDrip = true; break; }
+      if (!hasDrip) continue;
+    }
     // Visit only cells overlapping a piece box. Dot cores also intersect the
     // cell area between fixed samples, so include the complete half-cell extent.
     const stamp = nextVisitStamp(paint);
@@ -580,12 +607,13 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const yLo = -(ext > down ? ext : down);
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
       const piece = mask.pieces[n2];
+      if (skipSettledNonDrip && piece.type !== 3) continue;
       const box = pieceCellBox(mask, piece, pad);
       const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / cu - 0.5));
       const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / cv - 0.5));
       // An empty box visits no cell; skip the cache bookkeeping too.
       if (bi1 < bi0 || bj1 < bj0) continue;
-      const cache = cellCacheSlot(paint, g, n, n2, tn, face, piece);
+      const cache = cellCacheSlot(paint, g, n, n2, tn, dT, settleTn, face, piece);
       const cells = cache && sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) ? cache.cells : null;
       if (cells) {
         for (let k = 0; k < cells.length; k++) {
@@ -615,11 +643,14 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       if (record) storeCellCache(cache, record, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
     }
   }
-  if (order > 0 && tn >= 1.45) {
+  if (order > 0 && tn >= settleTn) {
     g._ancillaryFloorDone = order;
     g._ancillaryFloorDoneAge = g.age;
     g._ancillaryFloorEntries = E.length;
     g._ancillaryFloorRadius = g.R;
+    g._ancillaryFloorSeed = g.seed;
+    g._ancillaryFloorKind = g.kind;
+    g._ancillaryFloorTeam = g.team;
     if (dT >= 1 || !g.dripDur) {
       g._ancillaryAllDone = order;
       g._ancillaryDoneAge = g.age;
@@ -762,18 +793,64 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._paintNextOwner = null;
     const owner = candidate && !candidate.remote && typeof candidate.addTurf === 'function' ? candidate : null;
     const mode = opts.claimMode === 'no-special' ? 1 : 0;
-    const callOpts = ('claimOwner' in opts || 'claimMode' in opts) ? { ...opts } : opts;
-    if (callOpts !== opts) { delete callOpts.claimOwner; delete callOpts.claimMode; }
     const order = paintOrderId(this, opts.__netOrder,true);
     const previousOrder = this._paintCurrentOrder, previousContext = this._paintOwnerContext;
     const ctxDepth = this._paintOwnerDepth || 0, ctxPool = this._paintOwnerPool || (this._paintOwnerPool = []);
     const ctx = ctxPool[ctxDepth] || (ctxPool[ctxDepth] = { owner: null, mode: 0, order: 0, accepted: false });
+    let callOpts = opts, pooledOpts = null;
+    if ('claimOwner' in opts || 'claimMode' in opts) {
+      let extra = false;
+      for (const k in opts) {
+        if (!Object.hasOwn(opts, k)) continue;
+        if (k !== 'claimOwner' && k !== 'claimMode' &&
+            k !== 'seed' && k !== 'kind' && k !== 'stretch' && k !== 'stretchAmt' &&
+            k !== 'instant' && k !== 'cosmetic' && k !== 'face' && k !== 'footprint' &&
+            k !== '__netOrder' && k !== 'kitPaint' && k !== 'normal') {
+          extra = true;
+          break;
+        }
+      }
+      if (!extra) {
+        const optsPool = this._paintCallOptsPool || (this._paintCallOptsPool = []);
+        pooledOpts = optsPool[ctxDepth] || (optsPool[ctxDepth] = {
+          seed: undefined, kind: undefined, stretch: undefined, stretchAmt: undefined,
+          instant: undefined, cosmetic: undefined, face: undefined, footprint: undefined,
+          __netOrder: undefined, kitPaint: undefined, normal: undefined,
+        });
+        pooledOpts.seed = opts.seed;
+        pooledOpts.kind = opts.kind;
+        pooledOpts.stretch = opts.stretch;
+        pooledOpts.stretchAmt = opts.stretchAmt;
+        pooledOpts.instant = opts.instant;
+        pooledOpts.cosmetic = opts.cosmetic;
+        pooledOpts.face = opts.face;
+        pooledOpts.footprint = opts.footprint;
+        pooledOpts.__netOrder = opts.__netOrder;
+        pooledOpts.kitPaint = opts.kitPaint;
+        pooledOpts.normal = opts.normal;
+        callOpts = pooledOpts;
+      } else {
+        callOpts = {};
+        for (const k in opts) {
+          if (Object.hasOwn(opts, k) && k !== 'claimOwner' && k !== 'claimMode') callOpts[k] = opts[k];
+        }
+      }
+    }
     ctx.owner = owner; ctx.mode = mode; ctx.order = order; ctx.accepted = false;
     this._paintOwnerDepth = ctxDepth + 1;
     this._paintCurrentOrder = order;
     this._paintOwnerContext = ctx;
     try { return nativeSplat.call(this, center, radius, team, callOpts); }
-    finally { ctx.owner = null; this._paintOwnerDepth = ctxDepth; this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
+    finally {
+      if (pooledOpts) {
+        pooledOpts.stretch = undefined;
+        pooledOpts.footprint = undefined;
+        pooledOpts.__netOrder = undefined;
+        pooledOpts.kitPaint = undefined;
+        pooledOpts.normal = undefined;
+      }
+      ctx.owner = null; this._paintOwnerDepth = ctxDepth; this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext;
+    }
   };
 
   proto._advanceSplatOwnership = function issue264AdvanceOwnership(g, phase, dripPhase) {
@@ -832,6 +909,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._paintOrderRecords = null;
     this._paintOrderIds = null;
     this._paintOrderRunRows = null;
+    this._paintCallOptsPool = null;
     return result;
   };
   Object.defineProperty(proto, INSTALLED, { value: true });

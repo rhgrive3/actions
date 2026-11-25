@@ -66,6 +66,8 @@ export const BOT_TURF_PAINT = Object.freeze({
 const _probeScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _macroScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _profileScratch = { pitch: -0.10, sweepAmp: 0.50, strafe: 0.32, rollHold: 0.26, stringerChargeCap: 0.22 };
+const _rawFamilyCache = new WeakMap();
+const _paintProfileCache = new WeakMap();
 
 /**
  * Clamps a numeric value between a lower and upper bound.
@@ -81,146 +83,189 @@ function clampVal(v, lo, hi) {
 export function botRawWeaponFamily(weapon, fallbackFamily) {
   if (!weapon) return fallbackFamily || 'shooter';
   const catFam = weapon.catalogRecord?.family || weapon.family;
-  if (catFam === 'brella') return 'brella';
-  if (catFam === 'stringer') return 'stringer';
-  if (catFam === 'splatana') return 'splatana';
-  if (catFam === 'brush' || weapon.brush) return 'brush';
-  if (catFam === 'dualies') return 'dualies';
-  if (catFam === 'splatling') return 'splatling';
-  if (catFam === 'slosher') return 'slosher';
-  if (catFam === 'blaster') return 'blaster';
-  if (catFam === 'charger') return 'charger';
-  if (catFam === 'roller') return 'roller';
+  const brush = !!weapon.brush;
   const src = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
   const wId = weapon.id || '';
-  if (src.includes('Roller') || wId.includes('roller')) return 'roller';
-  if (src.includes('Brush') || wId.includes('brush')) return 'brush';
-  if (src.includes('Splatana') || wId.includes('splatana') || wId.includes('wiper')) return 'splatana';
-  if (src.includes('Stringer') || wId.includes('stringer') || wId.includes('bow')) return 'stringer';
-  if (src.includes('Shelter') || src.includes('Brella') || wId.includes('brella')) return 'brella';
-  if (src.includes('Slosher') || wId.includes('slosher')) return 'slosher';
-  if (src.includes('Blaster') || wId.includes('blaster')) return 'blaster';
-  if (src.includes('Charger') || wId.includes('charger')) return 'charger';
-  if (src.includes('Spinner') || src.includes('Splatling') || wId.includes('splatling')) return 'splatling';
-  return fallbackFamily || catFam || weapon.behaviorKind || weapon.kind || 'shooter';
+  const canCache = typeof weapon === 'object';
+  let entry = canCache ? _rawFamilyCache.get(weapon) : undefined;
+  if (entry && entry.catFam === catFam && entry.brush === brush && entry.src === src && entry.wId === wId) {
+    return entry.detected || fallbackFamily || catFam || weapon.behaviorKind || weapon.kind || 'shooter';
+  }
+
+  let detected = '';
+  if (catFam === 'brella') detected = 'brella';
+  else if (catFam === 'stringer') detected = 'stringer';
+  else if (catFam === 'splatana') detected = 'splatana';
+  else if (catFam === 'brush' || brush) detected = 'brush';
+  else if (catFam === 'dualies') detected = 'dualies';
+  else if (catFam === 'splatling') detected = 'splatling';
+  else if (catFam === 'slosher') detected = 'slosher';
+  else if (catFam === 'blaster') detected = 'blaster';
+  else if (catFam === 'charger') detected = 'charger';
+  else if (catFam === 'roller') detected = 'roller';
+  else if (src.includes('Roller') || wId.includes('roller')) detected = 'roller';
+  else if (src.includes('Brush') || wId.includes('brush')) detected = 'brush';
+  else if (src.includes('Splatana') || wId.includes('splatana') || wId.includes('wiper')) detected = 'splatana';
+  else if (src.includes('Stringer') || wId.includes('stringer') || wId.includes('bow')) detected = 'stringer';
+  else if (src.includes('Shelter') || src.includes('Brella') || wId.includes('brella')) detected = 'brella';
+  else if (src.includes('Slosher') || wId.includes('slosher')) detected = 'slosher';
+  else if (src.includes('Blaster') || wId.includes('blaster')) detected = 'blaster';
+  else if (src.includes('Charger') || wId.includes('charger')) detected = 'charger';
+  else if (src.includes('Spinner') || src.includes('Splatling') || wId.includes('splatling')) detected = 'splatling';
+
+  if (canCache) {
+    if (entry) {
+      entry.catFam = catFam;
+      entry.brush = brush;
+      entry.src = src;
+      entry.wId = wId;
+      entry.detected = detected;
+    } else {
+      _rawFamilyCache.set(weapon, { catFam, brush, src, wId, detected });
+    }
+  }
+  return detected || fallbackFamily || catFam || weapon.behaviorKind || weapon.kind || 'shooter';
 }
 
 /**
  * Resolves sub-archetype paint tuning (LACT-450 vs Tri-Stringer, Carbon/Dynamo/Flingza/BigSwig Roller,
  * Snipewriter 5H vs E-liter, Explosher/Bloblober vs Slosher, Airburst Blasters, Undercover Brella)
- * with zero heap allocations.
+ * with WeakMap memoization per weapon reference and zero per-tick allocations.
  */
 export function botWeaponPaintProfile(weapon, rawFamily) {
-  const p = _profileScratch;
-  p.pitch = BOT_TURF_PAINT.pitchByFamily[rawFamily] ?? -0.10;
-  p.sweepAmp = BOT_TURF_PAINT.sweepAmpByFamily[rawFamily] ?? 0.50;
-  p.strafe = BOT_TURF_PAINT.strafeByFamily[rawFamily] ?? 0.30;
-  p.rollHold = 0.26;
-  p.stringerChargeCap = 0.22;
+  if (!weapon || typeof weapon !== 'object') {
+    const p = _profileScratch;
+    p.pitch = BOT_TURF_PAINT.pitchByFamily[rawFamily] ?? -0.10;
+    p.sweepAmp = BOT_TURF_PAINT.sweepAmpByFamily[rawFamily] ?? 0.50;
+    p.strafe = BOT_TURF_PAINT.strafeByFamily[rawFamily] ?? 0.30;
+    p.rollHold = 0.26;
+    p.stringerChargeCap = 0.22;
+    return p;
+  }
 
-  if (!weapon) return p;
   const actorName = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
   const wId = weapon.id || '';
   const range = weapon.range || 12;
+  let entry = _paintProfileCache.get(weapon);
+  if (entry && entry.rawFamily === rawFamily && entry.actorName === actorName && entry.wId === wId && entry.range === range) {
+    return entry.profile;
+  }
+
+  let pitch = BOT_TURF_PAINT.pitchByFamily[rawFamily] ?? -0.10;
+  let sweepAmp = BOT_TURF_PAINT.sweepAmpByFamily[rawFamily] ?? 0.50;
+  let strafe = BOT_TURF_PAINT.strafeByFamily[rawFamily] ?? 0.30;
+  let rollHold = 0.26;
+  let stringerChargeCap = 0.22;
 
   if (rawFamily === 'roller') {
     if (actorName === 'WeaponRollerHeavy' || wId.includes('dynamo')) {
-      p.pitch = -0.15;
-      p.rollHold = 0.16;
+      pitch = -0.15;
+      rollHold = 0.16;
     } else if (actorName === 'WeaponRollerHunter' || wId.includes('flingza')) {
-      p.pitch = -0.17;
-      p.rollHold = 0.20;
+      pitch = -0.17;
+      rollHold = 0.20;
     } else if (actorName === 'WeaponRollerWide' || wId.includes('big_swig') || wId.includes('wide')) {
-      p.pitch = -0.20;
-      p.rollHold = 0.36;
+      pitch = -0.20;
+      rollHold = 0.36;
     } else if (actorName === 'WeaponRollerCompact' || wId.includes('carbon')) {
-      p.pitch = -0.20;
-      p.rollHold = 0.15;
+      pitch = -0.20;
+      rollHold = 0.15;
     }
   } else if (rawFamily === 'brush') {
     if (actorName === 'WeaponBrushHeavy' || wId.includes('painbrush') || wId.includes('fincent')) {
-      p.pitch = -0.06;
-      p.sweepAmp = 0.72;
-      p.strafe = 0.34;
+      pitch = -0.06;
+      sweepAmp = 0.72;
+      strafe = 0.34;
     } else {
-      p.pitch = -0.04;
-      p.sweepAmp = 0.74;
-      p.strafe = 0.36;
+      pitch = -0.04;
+      sweepAmp = 0.74;
+      strafe = 0.36;
     }
   } else if (rawFamily === 'stringer') {
     if (actorName === 'WeaponStringerShort' || wId.includes('lact')) {
       // LACT-450 (Tier 1 Turf War weapon): rapid uncharged horizontal fan + high strafe
-      p.pitch = -0.09;
-      p.sweepAmp = 0.52;
-      p.strafe = 0.40;
-      p.stringerChargeCap = 0.14;
+      pitch = -0.09;
+      sweepAmp = 0.52;
+      strafe = 0.40;
+      stringerChargeCap = 0.14;
     } else if (actorName === 'WeaponStringerExplosion' || wId.includes('wellstring')) {
-      p.pitch = -0.10;
-      p.sweepAmp = 0.44;
-      p.strafe = 0.32;
-      p.stringerChargeCap = 0.26;
+      pitch = -0.10;
+      sweepAmp = 0.44;
+      strafe = 0.32;
+      stringerChargeCap = 0.26;
     }
   } else if (rawFamily === 'splatana') {
     if (actorName === 'WeaponSplatanaWide' || wId.includes('decavitator') || wId.includes('dental')) {
-      p.pitch = -0.10;
-      p.sweepAmp = 0.38;
-      p.strafe = 0.30;
+      pitch = -0.10;
+      sweepAmp = 0.38;
+      strafe = 0.30;
     } else if (actorName === 'WeaponSplatanaHeavy' || wId.includes('stamper') || wId.includes('gym')) {
-      p.pitch = -0.10;
-      p.sweepAmp = 0.44;
-      p.strafe = 0.32;
+      pitch = -0.10;
+      sweepAmp = 0.44;
+      strafe = 0.32;
     }
   } else if (rawFamily === 'charger') {
     if (actorName === 'WeaponChargerPencil' || wId.includes('snipewriter') || wId.includes('pencil')) {
       // Snipewriter 5H (R-PEN/5H): fan out the 5-shot magazine across adjacent lanes
-      p.pitch = -0.09;
-      p.sweepAmp = 0.42;
-      p.strafe = 0.32;
+      pitch = -0.09;
+      sweepAmp = 0.42;
+      strafe = 0.32;
     } else if (actorName === 'WeaponChargerLight' || actorName === 'WeaponChargerKeeper' || actorName === 'WeaponChargerQuick') {
-      p.pitch = -0.11;
-      p.sweepAmp = 0.34;
-      p.strafe = 0.34;
+      pitch = -0.11;
+      sweepAmp = 0.34;
+      strafe = 0.34;
     } else if (range >= 22) {
-      p.pitch = -0.08;
-      p.sweepAmp = 0.24;
-      p.strafe = 0.24;
+      pitch = -0.08;
+      sweepAmp = 0.24;
+      strafe = 0.24;
     }
   } else if (rawFamily === 'slosher') {
     if (actorName === 'WeaponSlosherLauncher' || wId.includes('explosher')) {
-      p.pitch = -0.06;
-      p.sweepAmp = 0.30;
-      p.strafe = 0.24;
+      pitch = -0.06;
+      sweepAmp = 0.30;
+      strafe = 0.24;
     } else if (actorName === 'WeaponSlosherBathtub' || wId.includes('bloblobber')) {
-      p.pitch = -0.09;
-      p.sweepAmp = 0.46;
-      p.strafe = 0.32;
+      pitch = -0.09;
+      sweepAmp = 0.46;
+      strafe = 0.32;
     } else if (actorName === 'WeaponSlosherDiffusion' || wId.includes('tri_slosher')) {
-      p.pitch = -0.15;
-      p.sweepAmp = 0.46;
-      p.strafe = 0.34;
+      pitch = -0.15;
+      sweepAmp = 0.46;
+      strafe = 0.34;
     } else if (actorName === 'WeaponSlosherDouble' || wId.includes('dread') || wId.includes('double')) {
-      p.pitch = -0.11;
-      p.sweepAmp = 0.40;
-      p.strafe = 0.30;
+      pitch = -0.11;
+      sweepAmp = 0.40;
+      strafe = 0.30;
     }
   } else if (rawFamily === 'splatling') {
     if (actorName === 'WeaponSpinnerQuick' || actorName === 'WeaponSpinnerDownpour' || wId.includes('mini') || wId.includes('ballpoint')) {
-      p.pitch = -0.10;
-      p.sweepAmp = 0.48;
-      p.strafe = 0.36;
+      pitch = -0.10;
+      sweepAmp = 0.48;
+      strafe = 0.36;
     } else if (actorName === 'WeaponSpinnerHyper' || range >= 20) {
-      p.pitch = -0.07;
-      p.sweepAmp = 0.36;
-      p.strafe = 0.26;
+      pitch = -0.07;
+      sweepAmp = 0.36;
+      strafe = 0.26;
     }
   } else if (rawFamily === 'brella') {
     if (actorName === 'WeaponShelterCompact' || wId.includes('undercover')) {
-      p.pitch = -0.11;
-      p.sweepAmp = 0.46;
-      p.strafe = 0.36;
+      pitch = -0.11;
+      sweepAmp = 0.46;
+      strafe = 0.36;
     }
   }
-  return p;
+
+  const profile = Object.freeze({ pitch, sweepAmp, strafe, rollHold, stringerChargeCap });
+  if (entry) {
+    entry.rawFamily = rawFamily;
+    entry.actorName = actorName;
+    entry.wId = wId;
+    entry.range = range;
+    entry.profile = profile;
+  } else {
+    _paintProfileCache.set(weapon, { rawFamily, actorName, wId, range, profile });
+  }
+  return profile;
 }
 
 /**

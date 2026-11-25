@@ -7,7 +7,7 @@ import { resolveWalkFootClearance } from './walk-foot-clearance.mjs';
 // Clip frame counts are source frames, NOT proven Splatoon 3 animation runtime rates.
 // All root speeds, combat actions, surface probing and planted-foot IK remain native.
 let api, tuning;
-const states = new WeakMap();
+const WALK_STATE = Symbol('s3WalkState');
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const mix=(a,b,t)=>a+(b-a)*t;
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
@@ -15,7 +15,7 @@ const ease=x=>{const u=clamp(x,0,1);return u*u*u*(10+u*(6*u-15));};
 const damp=(a,b,rate,dt)=>mix(a,b,1-Math.exp(-rate*dt));
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const cycle=x=>x-Math.floor(x+.5);
-const state=ch=>{let s=states.get(ch);if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3(),supportParent:new api.THREE.Vector3(),supportQ:new api.THREE.Quaternion(),reference:new Float32Array(14)};states.set(ch,s);}return s;};
+const state=ch=>{let s=ch[WALK_STATE];if(!s){s={active:false,pitch:0,pitchV:0,roll:0,rollV:0,vx:0,vz:0,target:new api.THREE.Vector3(),support:new api.THREE.Vector3(),supportParent:new api.THREE.Vector3(),supportQ:new api.THREE.Quaternion(),reference:new Float32Array(14)};ch[WALK_STATE]=s;}return s;};
 function eligible(ch){
   const T=api.CHARACTER_TIMERS, tr=ch.tr;
   return ch.kidForm&&ch.grounded&&!ch.dance&&ch.kidScale>.5&&specialMotionAllowsFootPlant(ch,tr[T.T_LEAP]>1.9&&tr[T.T_SLAM]>1.4)&&dualiesMotionAllowsFootPlant(ch,tr[T.T_DODGE]>ch.dodgeDur*.86)&&tr[T.T_SPAWN]>1.4;
@@ -74,7 +74,7 @@ function land(ch,f,loud){
   // Normal touchdown does not reset the other leg's clock.
   f.mode=api.CHARACTER_FOOT_MODES.M_GAIT;f.offbeat=false;ch._touchDown(f,loud);
 }
-function updateFeet(ch,dt){
+function updateFeet(ch,dt,s=state(ch)){
   const F=ch.feet,R=ch.root.position,M=api.CHARACTER_FOOT_MODES;
   if(ch.tread)for(const f of F){f.pw.x-=ch.tvx*dt;f.pw.z-=ch.tvz*dt;f.from.x-=ch.tvx*dt;f.from.z-=ch.tvz*dt;f.disp.x-=ch.tvx*dt;f.disp.z-=ch.tvz*dt;}
   ch.plantW=damp(ch.plantW,1,14,dt);
@@ -86,12 +86,14 @@ function updateFeet(ch,dt){
     ch.replant=false;ch.feetValid=true;ch.moving=false;ch.settleCd=.06;
   }
   const was=ch.moving;
-  const motion=state(ch),speed=Math.hypot(motion.vx,motion.vz);
+  const speed=Math.hypot(s.vx,s.vz);
   ch.moving=speed>(was?tuning.stopSpeed:tuning.startSpeed);
+  const follow=1-Math.exp(-tuning.targetFollow*dt);
   if(ch.moving){
     if(!was){
-      const along=f=>(f.pw.x-R.x)*ch.gvx+(f.pw.z-R.z)*ch.gvz;
-      const first=along(F[0])<=along(F[1])?0:1;
+      const along0=(F[0].pw.x-R.x)*ch.gvx+(F[0].pw.z-R.z)*ch.gvz;
+      const along1=(F[1].pw.x-R.x)*ch.gvx+(F[1].pw.z-R.z)*ch.gvz;
+      const first=along0<=along1?0:1;
       if(!F[first].sw)startSwing(ch,F[first],false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
       // From rest the clock reaches this foot's touchdown when the short first
       // step lands. A restart while the pelvis still sways (a reversal passing
@@ -104,6 +106,7 @@ function updateFeet(ch,dt){
       for(const f of F)if(f.sw&&f.mode===M.M_SETTLE)startSwing(ch,f,false,Math.min(tuning.firstStepTime,(1-ch.duty)/ch.cad));
     }
     ch.phase+=ch.cad*dt;
+    const bodyYaw=ch.yaw+ch.hipTwist,cosYaw=Math.cos(bodyYaw),sinYaw=Math.sin(bodyYaw);
     for(let i=0;i<2;i++){
       const f=F[i];let elapsed=dt;
       if(f.planted){
@@ -112,9 +115,9 @@ function updateFeet(ch,dt){
         // charging its lateral stance width against the travel allowance. Keep
         // the original catch distance: the full leg length also has to support
         // the pelvis vertically, so it is not a safe horizontal catch limit.
-        const yaw=ch.yaw+ch.hipTwist,stance=ch.stance[f.i===0?0:3];
+        const stance=ch.stance[f.i===0?0:3];
         const rootDist=Math.hypot(f.pw.x-R.x,f.pw.z-R.z);
-        const extension=Math.hypot(f.pw.x-R.x-stance*Math.cos(yaw),f.pw.z-R.z+stance*Math.sin(yaw));
+        const extension=Math.hypot(f.pw.x-R.x-stance*cosYaw,f.pw.z-R.z+stance*sinYaw);
         const far=extension>tuning.catchDistance;
         // A freshly landed foot normally owns at least 60 ms of stance to avoid
         // chatter. Do not keep that hold once the gameplay root has moved farther
@@ -128,8 +131,8 @@ function updateFeet(ch,dt){
         // Retarget early, then commit to the landing. A turn cannot drag a shoe
         // sideways in the final frames of a step.
         if(f.su<tuning.landingLock){
-          const target=state(ch).target,yaw=ch._gaitTarget(f,(1-f.su)*f.dur,target);
-          f.to.lerp(target,1-Math.exp(-tuning.targetFollow*dt));f.toYaw+=angle(yaw-f.toYaw)*(1-Math.exp(-tuning.targetFollow*dt));
+          const target=s.target,yaw=ch._gaitTarget(f,(1-f.su)*f.dur,target);
+          f.to.lerp(target,follow);f.toYaw+=angle(yaw-f.toYaw)*follow;
         }
         if(f.su>=1){const carry=(f.su-1)*f.dur;land(ch,f,1);f.stT=carry;f.stU=clamp(carry/(ch.duty/ch.cad),0,1);}
       }
@@ -143,8 +146,8 @@ function updateFeet(ch,dt){
       if(f.mode!==M.M_SETTLE)startSwing(ch,f,true,tuning.settleTime);
       f.su=Math.min(1,f.su+dt/f.dur);
       if(f.su<tuning.landingLock){
-        const target=state(ch).target,yaw=ch._idealFoot(f,target);target.y=ch._ground(target.x,target.z,f.tn);
-        f.to.lerp(target,1-Math.exp(-tuning.targetFollow*dt));f.toYaw+=angle(yaw-f.toYaw)*(1-Math.exp(-tuning.targetFollow*dt));
+        const target=s.target,yaw=ch._idealFoot(f,target);target.y=ch._ground(target.x,target.z,f.tn);
+        f.to.lerp(target,follow);f.toYaw+=angle(yaw-f.toYaw)*follow;
       }
       if(f.su>=1)land(ch,f,.45);else swinging++;
     }
@@ -153,7 +156,7 @@ function updateFeet(ch,dt){
   }
   // Advance the sole reference pose AFTER the native gait clock and both feet
   // have processed their current tick. No additional phase clocks may drift.
-  sampleLegacyGait(state(ch).reference,ch.phase,ch.mdx,ch.mdz,ch.wAim,ch.runW);
+  sampleLegacyGait(s.reference,ch.phase,ch.mdx,ch.mdz,ch.wAim,ch.runW);
   ch._footPose(F[0],dt);ch._footPose(F[1],dt);
   // Both raw poses now belong to this tick.  Resolve bilateral clearance as a
   // pair so foot 0 never sees last frame's foot 1 position (or vice versa).
@@ -206,7 +209,7 @@ export function installWalkMotion(context,profile){
   };
   C._updateStates=function(dt,s){
     const weight=this.gaitW,twist=this.hipTwist;oldStates.call(this,dt,s);
-    const support=1-this.wAir*.75;advanceLean(this,'pitch',clamp(this.kaz,-48,48),support,dt);advanceLean(this,'roll',clamp(this.kax,-48,48),support,dt);
+    const support=1-this.wAir*.75,w=state(this);advanceLean(this,'pitch',clamp(this.kaz,-48,48),support,dt,w);advanceLean(this,'roll',clamp(this.kax,-48,48),support,dt,w);
     if(!eligible(this))return;
     const v=this.gv,rw=smooth(tuning.runStart,tuning.runFull,v);this.runW=rw;
     this.duty=mix(tuning.walkDuty,tuning.runDuty,rw)+.06*this.wGoo;
@@ -226,21 +229,22 @@ export function installWalkMotion(context,profile){
     this.gaitW=emerging?1:damp(weight,v>(this.moving?tuning.stopSpeed:tuning.startSpeed)?1:0,v>tuning.startSpeed?12:8,dt);
     const limit=tuning.twistRate*dt;this.hipTwist=twist+clamp(damp(twist,strafeTwist(this,v),7,dt)-twist,-limit,limit);
   };
-  C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt);};
+  C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt,w);};
   // Native foot damping consumes the current frame delta too. Preserve it when
   // an airborne, landing or special-action frame falls through this layer.
   C._footPose=function(f,dt){return state(this).active?footPose(this,f):oldPose.apply(this,arguments);};
   C._gaitTarget=function(f,remaining,out){
-    if(!state(this).active)return oldTarget.call(this,f,remaining,out);
-    const motion=state(this),v=Math.hypot(motion.vx,motion.vz),yaw=this.yaw+this.hipTwist+clamp(this.yawRate*remaining*.55,-.2,.2),half=clamp(v*this.duty/this.cad*.5,0,tuning.runHalfStride),w=mix(Math.abs(this.stance[f.side>0?0:3]),.078,this.runW)*f.side;
-    const inv=v>.001?1/v:0;
-    out.set(this.root.position.x+motion.vx*remaining+motion.vx*inv*half+w*Math.cos(yaw),this.root.position.y,this.root.position.z+motion.vz*remaining+motion.vz*inv*half-w*Math.sin(yaw));
+    const motion=state(this);
+    if(!motion.active)return oldTarget.call(this,f,remaining,out);
+    const v=Math.hypot(motion.vx,motion.vz),yaw=this.yaw+this.hipTwist+clamp(this.yawRate*remaining*.55,-.2,.2),half=clamp(v*this.duty/this.cad*.5,0,tuning.runHalfStride),w=mix(Math.abs(this.stance[f.side>0?0:3]),.078,this.runW)*f.side;
+    const inv=v>.001?1/v:0,cosYaw=Math.cos(yaw),sinYaw=Math.sin(yaw);
+    out.set(this.root.position.x+motion.vx*remaining+motion.vx*inv*half+w*cosYaw,this.root.position.y,this.root.position.z+motion.vz*remaining+motion.vz*inv*half-w*sinYaw);
     // Beside the other foot, stay on its own side of the pelvis: a side step
     // closes next to the leading foot instead of passing it. A foot landing a
     // shoe length ahead or behind is not pushed, so a turn cannot shove it out
     // of the leg's reach.
-    const o=this.feet[1-f.i],ref=o.planted?o.pw:o.to,ax=Math.cos(yaw),az=-Math.sin(yaw),dx=out.x-ref.x,dz=out.z-ref.z,lat=(dx*ax+dz*az)*f.side;
-    const push=(tuning.minFootGap-lat)*(1-smooth(tuning.footLength*.5,tuning.footLength,Math.abs(dx*Math.sin(yaw)+dz*Math.cos(yaw))));
+    const o=this.feet[1-f.i],ref=o.planted?o.pw:o.to,ax=cosYaw,az=-sinYaw,dx=out.x-ref.x,dz=out.z-ref.z,lat=(dx*ax+dz*az)*f.side;
+    const push=(tuning.minFootGap-lat)*(1-smooth(tuning.footLength*.5,tuning.footLength,Math.abs(dx*sinYaw+dz*cosYaw)));
     if(push>0){out.x+=push*f.side*ax;out.z+=push*f.side*az;}
     out.y=this._ground(out.x,out.z,f.tn);return yaw+f.side*mix(.1,.04,this.runW);
   };
@@ -275,10 +279,19 @@ export function applyWalkLocomotion(ch,P){
   const lat=clamp(ch.kgx/6,-1,1)*gw*(1-.3*ch.wGoo);P[C.SPINE+2]-=.05*lat;P[C.CHEST+2]-=.025*lat;P[C.HIPS+2]-=.02*lat;
   const squash=.012*c2*rn*gw;P[C.SQY]*=1-squash;P[C.SQXZ]*=1+squash*.45;P[C.HEAD]-=.018*c2*rn*gw;P[C.NECK]+=.012*c2*rn*gw;
 }
-function advanceLean(ch,axis,acceleration,weight,dt){
+function advanceLean(ch,axis,acceleration,weight,dt,s=state(ch)){
   if(!api)return null;
-  const s=state(ch),key=axis==='pitch'?'pitch':'roll',velocity=key+'V',goal=clamp(acceleration*(key==='pitch'?1:-1)*tuning.leanGain,-tuning.leanMax,tuning.leanMax)*weight,omega=2*Math.PI*tuning.leanFrequency;
-  const y=s[key]-goal,j=s[velocity]+omega*y,e=Math.exp(-omega*dt);s[key]=goal+(y+j*dt)*e;s[velocity]=(s[velocity]-omega*j*dt)*e;return s[key];
+  const omega=2*Math.PI*tuning.leanFrequency,e=Math.exp(-omega*dt);
+  if(axis==='pitch'){
+    const goal=clamp(acceleration*tuning.leanGain,-tuning.leanMax,tuning.leanMax)*weight;
+    const y=s.pitch-goal,j=s.pitchV+omega*y;
+    s.pitch=goal+(y+j*dt)*e;s.pitchV=(s.pitchV-omega*j*dt)*e;
+    return s.pitch;
+  }
+  const goal=clamp(-acceleration*tuning.leanGain,-tuning.leanMax,tuning.leanMax)*weight;
+  const y=s.roll-goal,j=s.rollV+omega*y;
+  s.roll=goal+(y+j*dt)*e;s.rollV=(s.rollV-omega*j*dt)*e;
+  return s.roll;
 }
 
 // A foot in flight does not carry body weight. Action poses keep their original
@@ -291,7 +304,7 @@ export function walkSwingUnloaded(ch,f){return state(ch).active?f.sw:f.sw&&f.su>
 // native analytic IK keeps its own final limit. Flight/actions retain the
 // original additional swing margin.
 export function walkFootReach(ch,f){
-  if(!states.get(ch)?.active||!f.planted)return ch.legReach*.97;
+  if(!ch?.[WALK_STATE]?.active||!f.planted)return ch.legReach*.97;
   const leg=f.side>0?ch.limbs.legL:ch.limbs.legR;return (leg.a+leg.b)*.9995;
 }
 
@@ -300,7 +313,7 @@ export function walkFootReach(ch,f){
 // it can shorten a fully weighted, world-locked foot target. This uses the
 // native kid-space targets and limb lengths; no actor or foot clocks change.
 export function walkPelvisDrop(ch,nativeDrop){
-  const s=states.get(ch);if(!s?.active)return nativeDrop;
+  const s=ch?.[WALK_STATE];if(!s?.active)return nativeDrop;
   const C=api.CHARACTER_CHANNELS;
   let drop=nativeDrop;
   for(let i=0;i<2;i++){
@@ -335,18 +348,18 @@ export function weakDiagonalWalkTrace(ch) {
 }
 export function walkActive(ch){
   // An active sourced gait skips the procedural _updateFeet owner, so the old
-  // WeakMap flag is stale. Report the ACTUAL gait owner for game diagnostics.
+  // state flag is stale. Report the ACTUAL gait owner for game diagnostics.
   if(ch.sourceMotion?.active) return !!ch.kidForm&&!!ch.grounded&&ch.sourceMotion.state==='move';
-  return !!states.get(ch)?.active;
+  return !!ch[WALK_STATE]?.active;
 }
 
 // A reversing filtered velocity can pass through zero while the real root
 // still travels. Only an actually stationary root uses preview tread motion.
 export function walkTreadAllowed(ch,nativeTread){
-  const w=states.get(ch);
+  const w=ch?.[WALK_STATE];
   if(!nativeTread||!w?.rootMotionKnown||!ch.kidForm||!ch.grounded||ch.dance)return nativeTread;
   return Math.hypot(w.vx,w.vz)<=1e-6;
 }
 
 // _updateStates advances these once per tick, including hidden/squid bodies.
-export function walkLean(ch,axis){return api&&eligible(ch)?state(ch)[axis==='pitch'?'pitch':'roll']:null;}
+export function walkLean(ch,axis){if(!api||!eligible(ch))return null;const s=state(ch);return axis==='pitch'?s.pitch:s.roll;}

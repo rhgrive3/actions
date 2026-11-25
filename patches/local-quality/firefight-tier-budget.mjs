@@ -12,37 +12,42 @@
  * Do not prune when the discarded total is material: 0.35/0.34/0.31 must stay.
  */
 export function selectNearInvisibleClipTail(list, maxTail) {
-  if (!(maxTail > 0) || list.length <= 2) return false;
-  // Allocation-free O(n) selection. Sorting and spreading a fresh array on
-  // every enemy's 60Hz motion tick would itself become a new hotspot.
-  let a = -1, b = -1, sum = 0;
-  for (let i = 0; i < list.length; i++) {
+  const len = list.length;
+  if (!(maxTail > 0) || len <= 2) return false;
+  // Allocation-free O(n) selection and O(1) compaction. Sorting, spreading,
+  // or splicing on every enemy's 60Hz motion tick would itself become a hotspot.
+  let a = -1, b = -1, wa = -1, wb = -1, sum = 0;
+  for (let i = 0; i < len; i++) {
     const w = list[i].weight;
     if (!(w >= 0) || !Number.isFinite(w)) return false;
     sum += w;
-    if (a < 0 || w > list[a].weight) { b = a; a = i; }
-    else if (b < 0 || w > list[b].weight) b = i;
+    if (w > wa) { b = a; wb = wa; a = i; wa = w; }
+    else if (w > wb) { b = i; wb = w; }
   }
   if (b < 0 || !Number.isFinite(sum)) return false;
-  const kept = list[a].weight + list[b].weight;
-  const tail = Math.max(0, sum - kept);
-  if (!(kept > 0) || tail > maxTail) return false;
-  const first = list[a], second = list[b];
-  for (let i = list.length - 1; i >= 0; i--) {
-    if (list[i] !== first && list[i] !== second) list.splice(i, 1);
-  }
-  for (const item of list) item.weight /= kept;
+  const kept = wa + wb;
+  if (!(kept > 0) || sum - kept > maxTail) return false;
+  const first = a < b ? list[a] : list[b];
+  const second = a < b ? list[b] : list[a];
+  first.weight /= kept;
+  second.weight /= kept;
+  list[0] = first;
+  list[1] = second;
+  list.length = 2;
   return true;
 }
 
 // Flags match the native FX module: F_PAINT=1, F_RING=2, F_NOCOL=4.
 // An omitted ray must be revisited over the WHOLE path from dK to current dP;
 // an expired droplet or imminent water crossing is always tested now.
+// Cosmetic droplets up to 0.055 (matching the native non-paint threshold) defer
+// 2 of every 3 60Hz frames while retaining full dK->dP sweep continuity.
 export function shouldDeferCosmeticDrop(flags, size, remainingLife, yBefore, yAfter, waterY, dt, count, i, phase) {
-  return count > 32 && dt > 0 && dt <= 1 / 45 &&
-    !(flags & 7) && size <= 0.035 && remainingLife > 3 * dt &&
-    yBefore > waterY + 0.25 && yAfter > waterY + 0.25 &&
-    (i + phase) % 3 !== 0;
+  if (!(count > 32) || (flags & 7) || !(size <= 0.055) ||
+      !(dt > 0) || !(dt <= 1 / 45) || !(remainingLife > 3 * dt) ||
+      (i + phase) % 3 === 0) return false;
+  const waterGuard = waterY + 0.25;
+  return yBefore > waterGuard && yAfter > waterGuard;
 }
 
 
@@ -60,11 +65,13 @@ export function adaptFirefightTierBudget(rel, code, replaceOnce) {
       `  else if(moving){
    // The cadence and stride were evaluated from the full list above.
    // Prune only a sub-pixel cosmetic tail, never a substantial third axis.
-   const _px=c.lod?.px||0;
-   const _budget=s.isBot===true&&!s.isLocal&&c.inWorld&&!this.pivoting&&
-      this.grounded&&!this.action&&this.transitionTime>=HOST_MOTION.transitionSeconds&&_px>0
-      ? (_px<110?0.018:0.006) : 0;
-   selectNearInvisibleClipTail(list,_budget);
+   if(list.length>2){
+    const _px=c.lod?.px||0;
+    const _budget=s.isBot===true&&!s.isLocal&&c.inWorld&&!this.pivoting&&
+       this.grounded&&!this.action&&this.transitionTime>=HOST_MOTION.transitionSeconds&&_px>0
+       ? (_px<110?0.018:0.006) : 0;
+    if(_budget>0)selectNearInvisibleClipTail(list,_budget);
+   }
    let total=0;
    for(const item of list){`,
       'bound bot locomotion clip pruning by discarded total weight');
@@ -82,7 +89,7 @@ export function adaptFirefightTierBudget(rel, code, replaceOnce) {
       `      // Gameplay paint/rings, imminent water impacts, large particles and
       // final-life steps retain exact per-frame collision. The saved dK point
       // ensures deferred cosmetic queries sweep the full intervening path.
-      const _defer = shouldDeferCosmeticDrop(flags, A[i8], A[i8 + 2] - A[i8 + 1], oy, ny, wy, dt, this.dN, i, _dropPhase);
+      const _defer = !(flags & 7) && col && this._checks < this.maxChecks && shouldDeferCosmeticDrop(flags, A[i8], A[i8 + 2] - A[i8 + 1], oy, ny, wy, dt, this.dN, i, _dropPhase);
       if (!(flags & F_NOCOL) && !_defer && col && this._checks < this.maxChecks) {`,
       'bounded non-paint tiny droplet raycast deferral');
     code = `${shouldDeferCosmeticDrop.toString()}\n${code}`;

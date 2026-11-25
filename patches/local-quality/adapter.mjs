@@ -109,7 +109,7 @@ const IDENTITY_FILES = [
   'reviewed-hotpaths-20261107-adapter.mjs',
   'queue-weapons-20261031-adapter.mjs',
   // Every copied runtime and reachable composition input has a source identity.
-  'bot-paint-device-profile.mjs', 'ink-ripple-presentation.mjs', 'intermediate-tick-budget.mjs', 'kid-shadow-proxy.mjs', 'legacy-minimap-projection.mjs', 'nav-heuristic-adapter.mjs', 'platform-match-watch.mjs', 'platform-ranked-handoff.mjs', 'platform-simulation-debt.mjs', 'prop-atlas-adapter.mjs', 'prop-retention-adapter.mjs', 'queue-bots-20261030-adapter.mjs', 'queue-render-20261030-adapter.mjs', 'queue-ui-audio-20261030-adapter.mjs',
+  'bot-paint-device-profile.mjs', 'ink-ripple-presentation.mjs', 'intermediate-tick-budget.mjs', 'distance-offscreen-throttle.mjs', 'kid-shadow-proxy.mjs', 'legacy-minimap-projection.mjs', 'nav-heuristic-adapter.mjs', 'platform-match-watch.mjs', 'platform-ranked-handoff.mjs', 'platform-simulation-debt.mjs', 'prop-atlas-adapter.mjs', 'prop-retention-adapter.mjs', 'queue-bots-20261030-adapter.mjs', 'queue-render-20261030-adapter.mjs', 'queue-ui-audio-20261030-adapter.mjs',
   'pause-modal-lifetime-adapter.mjs',
   'online-async-entry-adapter.mjs',
   'landscape-practice-weapons-adapter.mjs',
@@ -147,6 +147,9 @@ const IDENTITY_FILES = [
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
   'motion-fk-hotpath-adapter.mjs',
+  'motion-kernel.wasm',
+  'motion-kernel.mjs',
+  'nonwasm-waste-adapter.mjs',
   'squid-motion-binding-adapter.mjs', 'squid-form-ease-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',

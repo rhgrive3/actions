@@ -227,7 +227,7 @@ await finishTransforms();
 for (const file of walk(QUALITY_ROOT)) {
   const rel = path.relative(QUALITY_ROOT, file);
   // Exclude only audited transformers; mixed runtime/adapter helpers remain shipped.
-  if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + rel.split(path.sep).join('/'))) continue;
+  if (rel.startsWith('tests/') || rel.startsWith('rust/') || rel.endsWith('.md') || rel === 'adapter.mjs' || BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/' + rel.split(path.sep).join('/'))) continue;
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
@@ -644,6 +644,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/combat-info.mjs',
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
+  'patches/local-quality/motion-kernel.mjs',
 ]);
 // Optional Vite-built account UI (vite build / npm run build:prod). It enters the revisioned tree and the
 // Service Worker's integrity-checked asset list, but not the precache or the module preload hints.

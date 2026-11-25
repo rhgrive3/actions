@@ -5,14 +5,52 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   let cache = match._teamHudSnapshot;
   if (!cache) {
     const a = { color: '', players: [] }, b = { color: '', players: [] };
-    cache = match._teamHudSnapshot = { teams: [a, b], forward: [a, b], reverse: [b, a], players: new WeakMap(), coverage: [0, 0] };
+    cache = match._teamHudSnapshot = {
+      teams: [a, b], forward: [a, b], reverse: [b, a], players: new WeakMap(), coverage: [0, 0],
+      covLive: false, covMode: null, covPaint: null, covFn: null, covTime: NaN, covLeader: -1
+    };
   }
   const t0 = cache.teams[0], t1 = cache.teams[1];
   t0.color = colors[0]; t1.color = colors[1];
-  const coverage = match.mode === 'turf' && match.state === 'playing' && !match.attract ? paint?.coverage?.(cache.coverage) : null;
-  const valid = Array.isArray(coverage) && coverage.length === 2 && coverage.every(v => Number.isFinite(v) && v >= 0 && v <= 1) && coverage[0] + coverage[1] <= 1 + Number.EPSILON * 4;
-  const delta = valid ? coverage[0] - coverage[1] : 0;
-  const leader = Math.abs(delta) + Number.EPSILON >= 0.1 ? (delta > 0 ? 0 : 1) : -1;
+  const live = match.mode === 'turf' && match.state === 'playing' && !match.attract;
+  let leader = -1;
+  if (!live) {
+    cache.covLive = false;
+    cache.covMode = match.mode;
+    cache.covLeader = -1;
+  } else {
+    const covFn = paint?.coverage;
+    if (typeof covFn !== 'function') {
+      cache.covLive = true;
+      cache.covMode = match.mode;
+      cache.covPaint = paint;
+      cache.covFn = null;
+      cache.covTime = NaN;
+      cache.covLeader = -1;
+    } else {
+      const t = match.time;
+      if (
+        !cache.covLive ||
+        cache.covMode !== match.mode ||
+        cache.covPaint !== paint ||
+        cache.covFn !== covFn ||
+        !Number.isFinite(t) ||
+        !Number.isFinite(cache.covTime) ||
+        Math.abs(t - cache.covTime) + 1e-9 >= 0.2
+      ) {
+        const coverage = paint.coverage(cache.coverage);
+        const valid = Array.isArray(coverage) && coverage.length === 2 && coverage.every(v => Number.isFinite(v) && v >= 0 && v <= 1) && coverage[0] + coverage[1] <= 1 + Number.EPSILON * 4;
+        const delta = valid ? coverage[0] - coverage[1] : 0;
+        cache.covLeader = Math.abs(delta) + Number.EPSILON >= 0.1 ? (delta > 0 ? 0 : 1) : -1;
+        cache.covLive = true;
+        cache.covMode = match.mode;
+        cache.covPaint = paint;
+        cache.covFn = covFn;
+        cache.covTime = t;
+      }
+      leader = cache.covLeader;
+    }
+  }
   t0.leading = leader === 0; t0.danger = leader === 1;
   t1.leading = leader === 1; t1.danger = leader === 0;
   let n0 = 0, n1 = 0;
@@ -40,16 +78,16 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   frame.special = spentGauge ?? a.specialFrac(); frame.specialReady = specialReady; frame.specialActive = spentGauge !== null || !!a.specialActive;
   frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
-  if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;
-  if (muzzleBlock === undefined) delete crosshair.muzzleBlock; else crosshair.muzzleBlock = muzzleBlock;
+  crosshair.guide = guide;
+  crosshair.muzzleBlock = muzzleBlock;
   // Distinct Charger current-release/maximum endpoint presentation survives
   // the persistent-frame fast path; no alternate hit or range owner.
-  if (chargerCurrent === undefined) delete crosshair.chargerCurrent; else crosshair.chargerCurrent = chargerCurrent;
-  if (chargerFull === undefined) delete crosshair.chargerFull; else crosshair.chargerFull = chargerFull;
+  crosshair.chargerCurrent = chargerCurrent;
+  crosshair.chargerFull = chargerFull;
   frame.crosshair = crosshair;
   map.canvas = showMinimap ? game.minimap.canvas : null; map.expanded = false; map.players = players;
   frame.map = showMinimap ? map : null; frame.markers = markers;
-  if (healthMarkers === undefined) delete frame.healthMarkers; else frame.healthMarkers = healthMarkers;
+  frame.healthMarkers = healthMarkers;
   frame.prompt = prompt; frame.fps = game.settings.showFps ? game.fps : undefined;
   const mobile = cache.mobile;
   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
