@@ -273,8 +273,19 @@ function cancelIdle(task) {
   else globalThis.clearTimeout(task.id);
 }
 
-function portraitModeProtected(showcase, overlayModes) {
-  return showcase.mode === 'results' || (!overlayModes.has(showcase.mode) && showcase._out > 0 && showcase._lastMode === 'results');
+const PORTRAIT_WORK_INSTALLED = Symbol.for('inkwave.local-quality.portrait-work.v1');
+
+export function liveMatchPortraitProtected(G) {
+  const match = G?.match;
+  if (!match || match.attract) return false;
+  if (G?.mode !== 'match') return false;
+  return match.state === 'init' || match.state === 'intro' || match.state === 'playing' || match.state === 'finish' || match.state === 'judge';
+}
+
+function portraitModeProtected(showcase, overlayModes, G) {
+  return showcase.mode === 'results'
+    || (!overlayModes.has(showcase.mode) && showcase._out > 0 && showcase._lastMode === 'results')
+    || liveMatchPortraitProtected(G);
 }
 
 function clearPortraitPointers(showcase) {
@@ -291,6 +302,7 @@ function requeuePortraitJob(showcase, job) {
   if (!job.cbs.length) {
     showcase._portraitJob = null;
     clearPortraitPointers(showcase);
+    releasePendingPortraitTargets(showcase);
     return;
   }
   const duplicate = showcase._pq.findIndex((queued) => queued !== job && queued.key === job.key);
@@ -302,7 +314,19 @@ function requeuePortraitJob(showcase, job) {
   clearPortraitPointers(showcase);
 }
 
+function suspendPortraitTask(showcase, overlayModes, G) {
+  if (!portraitModeProtected(showcase, overlayModes, G)) return false;
+  if (showcase._portraitTask) {
+    cancelIdle(showcase._portraitTask);
+    showcase._portraitTask = null;
+  }
+  if (showcase._portraitJob) requeuePortraitJob(showcase, showcase._portraitJob);
+  return true;
+}
+
 export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
+  if (!Showcase?.prototype || Object.hasOwn(Showcase.prototype, PORTRAIT_WORK_INSTALLED)) return;
+  Object.defineProperty(Showcase.prototype, PORTRAIT_WORK_INSTALLED, { value: true });
   // The native target owner knows queued work and GPU readbacks. Staging moves
   // one job out of that queue before rendering, so include its live callbacks
   // in the same ownership check rather than creating another release policy.
@@ -316,10 +340,25 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
       return releasePortraitTargets.call(this, final);
     };
   }
+  const nativeRender = Showcase.prototype.render;
+  if (typeof nativeRender === 'function') {
+    Showcase.prototype.render = function renderWithPortraitGuard() {
+      suspendPortraitTask(this, overlayModes, G);
+      return nativeRender.apply(this, arguments);
+    };
+  }
+  const nativeHide = Showcase.prototype.hide;
+  if (typeof nativeHide === 'function') {
+    Showcase.prototype.hide = function hideWithPortraitGuard() {
+      const result = nativeHide.apply(this, arguments);
+      suspendPortraitTask(this, overlayModes, G);
+      return result;
+    };
+  }
   const nativePortraitStep = Showcase.prototype._portraitStep;
   Showcase.prototype._portraitStep = function stagedPortraitStep() {
+    if (suspendPortraitTask(this, overlayModes, G)) return;
     if (!this._portraitCharacter) return nativePortraitStep.call(this);
-    if (portraitModeProtected(this, overlayModes)) return;
     if (this._warmState !== 'done' || (this._pflight || 0) >= 2 || this._portraitTask) return;
     if (!this._portraitJob) {
       while (this._pq.length && !this._pq[0].cbs.length) this._pq.shift();
@@ -342,7 +381,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
           releasePendingPortraitTargets(this);
           return;
         }
-        if (portraitModeProtected(this, overlayModes)) {
+        if (portraitModeProtected(this, overlayModes, G)) {
           requeuePortraitJob(this, job);
           return;
         }
@@ -363,7 +402,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
       releasePendingPortraitTargets(this);
     };
     const render = () => {
-      if (portraitModeProtected(this, overlayModes)) {
+      if (portraitModeProtected(this, overlayModes, G)) {
         requeuePortraitJob(this, job);
         return;
       }
