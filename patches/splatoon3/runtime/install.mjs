@@ -206,6 +206,7 @@ export function install(profile) {
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.
   installShotGuide(api, profile);
   installSelfOcclusion(api);
+  installChargerSurface(api);
   // #1097: preserve the composed ordinary muzzle pose while drawing the
   // render-only weapon-class hit layer; install after every pose/muzzle adapter.
   installWeaponHitReaction(api);
