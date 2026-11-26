@@ -296,6 +296,35 @@ function readyPress(actor) {
   return (wr.cooldown || 0) <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
 }
 
+function resetChargerLifeState(brain) {
+  if (!brain) return;
+  brain._chargerMicroRefill = false;
+  brain._bambooComboT = 0;
+  brain._chargerJumpCd = 0;
+  brain._weakChargeHold = 0;
+  brain._chargerFlankSmooth = undefined;
+  brain._chargerSmoothStrafe = undefined;
+  brain._chargerPencilDir = undefined;
+  brain._chargerSweepPos = undefined;
+  brain._chargerSweepDir = undefined;
+  brain._chargerLastNorm = undefined;
+}
+
+function syncChargerLifeState(brain, actor) {
+  if (!brain || !actor) return;
+  if (actor.alive === false) {
+    resetChargerLifeState(brain);
+    return;
+  }
+  const life = actor.netLife;
+  if (life !== undefined && brain._chargerLife !== life) {
+    if (brain._chargerLife !== undefined) {
+      resetChargerLifeState(brain);
+    }
+    brain._chargerLife = life;
+  }
+}
+
 /**
  * Classifies a charger weapon into its authentic Splatoon 3 sub-archetype (all 8 main variants).
  * @param {object} weapon
@@ -479,9 +508,9 @@ function advanceChargerFanSweep(brain, actor, tuning, cache, archetype, loadedRo
  * cover a clean swath with natural breathing cadence instead of robotic square reversals.
  */
 function applyChargerPaintStrafe(brain, actor, dt, move, baseYaw, strafeRatio, cache) {
-  if (!move || typeof move.x !== 'number' || typeof move.z !== 'number' || strafeRatio <= 0) return;
-  const safeDt = dt || 1 / 60;
-  const flankBias = cache?.flankBias || 0;
+  if (!move || !Number.isFinite(move.x) || !Number.isFinite(move.z) || !Number.isFinite(baseYaw) || strafeRatio <= 0) return;
+  const safeDt = dt > 0 && dt < 0.5 ? dt : 1 / 60;
+  const flankBias = Number.isFinite(cache?.flankBias) ? cache.flankBias : 0;
   let targetSign;
   if (Math.abs(flankBias) > 0.06) {
     targetSign = flankBias > 0 ? 1 : -1;
@@ -531,25 +560,35 @@ function applyChargerPaintStrafe(brain, actor, dt, move, baseYaw, strafeRatio, c
  */
 export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, ctx = {}) {
   const it = actor?.intent;
-  if (!it) return;
+  if (!brain || !it) return;
+  syncChargerLifeState(brain, actor);
+  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return;
+  if (it.sub || it.special) {
+    it.fire = false;
+    return;
+  }
+
   const wr = actor.weaponRunner;
   const w = actor.weapon;
   const archetype = resolveCachedArchetype(brain, w);
   const tuning = CHARGER_PAINT_TUNING[archetype] || CHARGER_PAINT_TUNING.standard;
+  const safeInk = Number.isFinite(inkFrac) ? inkFrac : 1;
+  const chargeVal = Number.isFinite(wr?.charge) ? wr.charge : 0;
 
-  const cache = ctx.cache !== undefined ? ctx.cache : brain?._turfMultiCache;
-  const pitchReady = typeof ctx.pitchReady === 'boolean'
+  const cache = ctx?.cache !== undefined ? ctx.cache : brain._turfMultiCache;
+  const pitchReady = typeof ctx?.pitchReady === 'boolean'
     ? ctx.pitchReady
-    : (typeof brain?._turfPaintValidated === 'boolean' ? brain._turfPaintValidated : true);
-  const wantPaintNow = typeof ctx.wantPaintNow === 'boolean'
+    : (typeof brain._turfPaintValidated === 'boolean' ? brain._turfPaintValidated : true);
+  const wantPaintNow = typeof ctx?.wantPaintNow === 'boolean'
     ? ctx.wantPaintNow
-    : Boolean(brain?._turfPaintLatch && pitchReady && inkFrac > 0.10 && (brain.paintPause || 0) <= 0);
+    : Boolean(brain._turfPaintLatch && pitchReady && safeInk > 0.10 && (brain.paintPause || 0) <= 0);
 
   const isPencil = archetype === 'pencil';
   const isLongFamily = archetype === 'long' || archetype === 'longScope';
   const onOwnInk = actor.groundTeam === 1;
-  const coolerPending = !!brain?._coolerPickupPending;
+  const coolerPending = !!brain._coolerPickupPending;
   const loadedRounds = isPencil ? (wr?.catalogState?.rounds || 0) : 0;
+  const hasStoredCharge = Boolean(wr?.s3Stored || wr?.catalogState?.stored);
 
   // Keep legacy paintPause minimal so rapid tap-paint cadence never stalls
   if ((brain.paintPause || 0) > 0.02) {
@@ -566,7 +605,7 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   //    Exploit Charger's ultra-short 20F ink recovery lag to swim-regen between bursts
   //    instead of draining below 12% and stalling in forced refill mode.
   if (brain._chargerMicroRefill) {
-    if (inkFrac >= tuning.swimRefillResume || !onOwnInk || coolerPending || wr?.charging || loadedRounds > 0) {
+    if (safeInk >= tuning.swimRefillResume || !onOwnInk || coolerPending || wr?.charging || hasStoredCharge || loadedRounds > 0) {
       brain._chargerMicroRefill = false;
     } else {
       it.fire = false;
@@ -575,15 +614,23 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
     }
   } else if (
     !wr?.charging &&
+    !hasStoredCharge &&
     loadedRounds <= 0 &&
     onOwnInk &&
     !coolerPending &&
-    inkFrac < tuning.swimRefillFloor &&
-    inkFrac > 0.08
+    safeInk < tuning.swimRefillFloor &&
+    safeInk > 0.08
   ) {
     brain._chargerMicroRefill = true;
     it.fire = false;
     it.squid = true;
+    return;
+  }
+
+  // 1b. Stored Charge Keep resume when entering turf paint
+  if (hasStoredCharge && wantPaintNow && pitchReady) {
+    it.fire = true;
+    it.squid = false;
     return;
   }
 
@@ -594,18 +641,18 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
     const enemyAhead = (cache?.effEnemy || 0) > 0.18;
     const wideOpenEmpty = (cache?.effOwn ?? 0.5) < 0.38;
     const isLongSlot = tuning.longLineEvery > 0 && (shotIdx % tuning.longLineEvery === tuning.longLineEvery - 1);
-    if (inkFrac >= tuning.longLineInkMin && (isLongSlot || (enemyAhead && wideOpenEmpty))) {
+    if (safeInk >= tuning.longLineInkMin && (isLongSlot || (enemyAhead && wideOpenEmpty))) {
       targetCharge = tuning.longLineCharge;
     }
   }
 
   // 3. Active charging takes strict precedence (preserves pitchReady & pencil contract)
   if (wr?.charging) {
-    const reachedTarget = wr.charge >= targetCharge;
-    const lowInkEmergencyRelease = inkFrac < 0.15 && !isPencil;
+    const reachedTarget = chargeVal >= targetCharge;
+    const lowInkEmergencyRelease = (safeInk < 0.15 && !isPencil) || safeInk <= 0.02;
 
     if (reachedTarget || lowInkEmergencyRelease) {
-      if (!pitchReady && inkFrac >= 0.15) {
+      if (!pitchReady && safeInk >= 0.15) {
         // Hold charge until aimPitch climbs back from floor-look (contract in bot-turf-paint.test.mjs)
         it.fire = true;
         it.squid = false;
@@ -629,8 +676,10 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   }
 
   // 4. Snipewriter 5H loaded magazine: fluidly sweep all 5 rounds across a single organic fan arc
+  //    Already-paid rounds cost 0 ink, so fire them even if tank dropped below 10% after full load.
   if (isPencil && loadedRounds > 0) {
-    if (wantPaintNow && readyPress(actor)) {
+    const canFireLoaded = wantPaintNow || (pitchReady && safeInk <= 0.10 && brain._turfPaintLatch !== false && (brain.paintPause || 0) <= 0);
+    if (canFireLoaded && readyPress(actor)) {
       it.fire = true;
       it.squid = false;
       advanceChargerFanSweep(brain, actor, tuning, cache, archetype, loadedRounds);
@@ -658,8 +707,9 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   }
 
   // 6. Start next paint charge cycle when pitch is validated and turf needs paint
-  const canStartPencil = !isPencil || inkFrac >= 0.36;
-  const longMoveFallback = isLongFamily && wantMove && inkFrac > 0.28 && (cache ? (cache.effOwn < 0.78 || cache.effEnemy > 0.06) : true);
+  //    Snipewriter full charge costs 37.5% ink; require >= 0.38 so charge never stalls at 0% ink.
+  const canStartPencil = !isPencil || safeInk >= 0.38;
+  const longMoveFallback = isLongFamily && wantMove && safeInk > 0.28 && (cache ? (cache.effOwn < 0.78 || cache.effEnemy > 0.06) : true);
   if (pitchReady && canStartPencil && (wantPaintNow || longMoveFallback)) {
     it.fire = true;
     it.squid = false;
@@ -679,8 +729,14 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
  * Reusable zero-allocation aim output helper.
  */
 function writeAimOut(brain, idealYaw, idealPitch, wantYaw, wantPitch, blend) {
+  if (!Number.isFinite(idealYaw) || !Number.isFinite(idealPitch) || !Number.isFinite(wantYaw) || !Number.isFinite(wantPitch)) {
+    return null;
+  }
   const out = brain._chargerAimOut || (brain._chargerAimOut = { wantYaw: 0, wantPitch: 0 });
-  out.wantYaw = idealYaw + (wantYaw - idealYaw) * blend;
+  let dy = wantYaw - idealYaw;
+  if (dy > Math.PI) dy -= Math.PI * 2;
+  else if (dy < -Math.PI) dy += Math.PI * 2;
+  out.wantYaw = idealYaw + dy * blend;
   out.wantPitch = idealPitch + (wantPitch - idealPitch) * blend;
   return out;
 }
@@ -715,20 +771,33 @@ function writeAimOut(brain, idealYaw, idealPitch, wantYaw, wantPitch, blend) {
 export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
-  if (!it || !wr || !ctx) return null;
+  if (!brain || !it || !wr || !ctx) return null;
+  syncChargerLifeState(brain, actor);
+  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return null;
+  if (it.sub || it.special) {
+    it.fire = false;
+    return null;
+  }
 
   const w = actor.weapon;
   const archetype = resolveCachedArchetype(brain, w);
   const tuning = CHARGER_COMBAT_TUNING[archetype] || CHARGER_COMBAT_TUNING.standard;
   const canKeep = supportsChargeKeep(w, archetype);
-  const safeDt = dt || 1 / 60;
+  const safeDt = dt > 0 && dt < 0.5 ? dt : 1 / 60;
 
-  const {
-    dist, range, dx, dz,
-    enemyVisible, aimed, off,
-    inkFrac, idealYaw, idealPitch,
-    wantYaw, wantPitch,
-  } = ctx;
+  const dist = Number.isFinite(ctx.dist) ? ctx.dist : 0;
+  const range = Number.isFinite(ctx.range) && ctx.range > 0 ? ctx.range : (w?.rangeMax || w?.range || 22);
+  const dx = Number.isFinite(ctx.dx) ? ctx.dx : 0;
+  const dz = Number.isFinite(ctx.dz) ? ctx.dz : 0;
+  const enemyVisible = Boolean(ctx.enemyVisible);
+  const aimed = Boolean(ctx.aimed);
+  const off = Number.isFinite(ctx.off) ? ctx.off : 0;
+  const inkFrac = Number.isFinite(ctx.inkFrac) ? ctx.inkFrac : 1;
+  const idealYaw = ctx.idealYaw;
+  const idealPitch = ctx.idealPitch;
+  const wantYaw = ctx.wantYaw;
+  const wantPitch = ctx.wantPitch;
+  const chargeVal = Number.isFinite(wr.charge) ? wr.charge : 0;
 
   const safeDist = Math.max(dist, 0.01);
   const nx = dx / safeDist;
@@ -737,6 +806,7 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
   const inThreatRange = dist < range * 1.12;
   const isPencil = archetype === 'pencil';
   const loadedRounds = isPencil ? (wr.catalogState?.rounds || 0) : 0;
+  const hasStoredCharge = Boolean(wr.s3Stored || wr.catalogState?.stored);
 
   // Decay archetype timers (Bamboozler 2-tap window & Squiffer jump-charge cadence)
   if ((brain._bambooComboT || 0) > 0) {
@@ -752,9 +822,37 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
     return null;
   }
 
-  // 1. Snipewriter 5H loaded magazine: fire buffered 68-dmg rounds with steady kiting & magazine preservation
+  // 0. Active Charge Keep continuation (wr.charging becomes false once stored in s3Stored / catalogState.stored)
+  if (hasStoredCharge && canKeep) {
+    const lost = brain.lostTimer || 0;
+    if (enemyVisible && inThreatRange) {
+      // Pop out of squid to surface and unleash the stored charge
+      it.squid = false;
+      it.fire = true;
+      return writeAimOut(brain, idealYaw, idealPitch, wantYaw, wantPitch, tuning.aimBlend);
+    }
+    if (onOwnInk && inkFrac > 0.12 && ((!enemyVisible && lost <= tuning.keepMaxLost) || (enemyVisible && !inThreatRange))) {
+      it.fire = true;
+      it.squid = true;
+      if (archetype === 'keeper' && !enemyVisible && move && typeof move.set === 'function') {
+        const side = brain.strafeS || (((actor.id || 0) & 1) === 0 ? 0.8 : -0.8);
+        const mvx = nx * 0.35 - nz * side * 0.90;
+        const mvz = nz * 0.35 + nx * side * 0.90;
+        const ml = Math.hypot(mvx, mvz);
+        if (ml > 1e-4) move.set(mvx / ml, 0, mvz / ml);
+      }
+      return null;
+    }
+    // Keep expired or off own ink: surface with fire=true for catalog stored consumption (or cancel s3Stored)
+    it.squid = false;
+    it.fire = Boolean(wr.catalogState?.stored);
+    brain._weakChargeHold = 0;
+    return null;
+  }
+
+  // 1. Snipewriter 5H loaded magazine: fire buffered 68-dmg rounds (0 ink cost) with steady kiting & magazine preservation
   if (isPencil && loadedRounds > 0) {
-    if (enemyVisible && inThreatRange && inkFrac > 0.04) {
+    if (enemyVisible && inThreatRange) {
       const tightTol = Math.max(0.045, Math.atan2(0.55, Math.max(dist, 2.0)));
       if ((aimed || off <= tightTol) && readyPress(actor)) {
         it.fire = true;
@@ -823,7 +921,7 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
       }
     } else {
       // Currently charging
-      if (wr.charge < targetCharge) {
+      if (chargeVal < targetCharge) {
         it.fire = true;
         it.squid = false;
         brain._weakChargeHold = 0;
@@ -834,8 +932,8 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
           actor.grounded !== false &&
           !actor.climbing &&
           (brain._chargerJumpCd || 0) <= 1e-6 &&
-          wr.charge >= 0.10 &&
-          wr.charge <= 0.72 &&
+          chargeVal >= 0.10 &&
+          chargeVal <= 0.72 &&
           dist >= tuning.panicDist * 0.85 &&
           dist <= range * 0.94
         ) {
@@ -885,6 +983,14 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
     return null;
   }
 
+  // 2b. Ink exhausted mid-charge: release immediately instead of deadlocking with Fire held forever
+  if (wr.charging && inkFrac <= 0.06) {
+    it.fire = false;
+    it.squid = false;
+    brain._weakChargeHold = 0;
+    return null;
+  }
+
   // 3. Target temporarily broke line-of-sight while charging:
   //    - Charge-Keep weapons (Squiffer / Splat Charger / E-liter 4K / Goo Tuber): swim-keep on own ink
   //      (Goo Tuber uniquely holds partial charges up to 5.0s -> 2.8s tactical reposition window).
@@ -892,7 +998,7 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
   //      never attempt invalid squid-keep, then cancel cleanly.
   if (wr.charging && !enemyVisible) {
     const lost = brain.lostTimer || 0;
-    const canKeepNow = canKeep && onOwnInk && tuning.keepMaxLost > 0 && wr.charge >= tuning.keepMinCharge;
+    const canKeepNow = canKeep && onOwnInk && tuning.keepMaxLost > 0 && chargeVal >= tuning.keepMinCharge;
 
     if (canKeepNow && lost > 0.04 && lost <= tuning.keepMaxLost && inkFrac > 0.12) {
       it.fire = true;
@@ -905,14 +1011,14 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
         const ml = Math.hypot(mvx, mvz);
         if (ml > 1e-4) move.set(mvx / ml, 0, mvz / ml);
       }
-    } else if (!canKeep && lost <= tuning.losHoldMax && wr.charge >= 0.70 && inkFrac > 0.15) {
+    } else if (!canKeep && lost <= tuning.losHoldMax && chargeVal >= 0.70 && inkFrac > 0.15) {
       // Scoped anchor / non-keep pre-aim hold for a brief re-peek before cancelling
       it.fire = true;
       it.squid = false;
       if (move && typeof move.multiplyScalar === 'function') {
         move.multiplyScalar(tuning.chargeMoveScale);
       }
-    } else if (lost > (canKeep ? tuning.keepMaxLost : tuning.losHoldMax)) {
+    } else if (lost > (canKeep ? tuning.keepMaxLost : tuning.losHoldMax) || inkFrac <= (canKeep ? 0.12 : 0.15)) {
       it.fire = false;
       it.squid = false;
       brain._weakChargeHold = 0;

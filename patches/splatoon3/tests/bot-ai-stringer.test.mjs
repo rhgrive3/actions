@@ -442,3 +442,136 @@ test('computeStringerArcPitch returns 0 at close range and bounded positive elev
   const farArc = computeStringerArcPitch(22.0, 1.0, 'normal');
   assert.ok(farArc > 0.04 && farArc <= 0.13, `expected bounded arc pitch, got ${farArc}`);
 });
+
+test('Stringer guards against dead, superJumpState, climbing, specialActive/it.special, and sub conflicts', () => {
+  const w = makeTriStringerWeapon();
+  const baseCtx = {
+    family: 'stringer', dist: 16, range: 25, dx: 0, dz: 16,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  };
+
+  for (const stateOverride of [
+    { alive: false },
+    { superJumpState: { phase: 'flight' } },
+    { climbing: true },
+    { specialActive: { id: 'killerWail' } },
+  ]) {
+    const actor = {
+      id: 21, weapon: w, grounded: true, groundTeam: 1,
+      intent: { fire: false, squid: false, jump: false, sub: false, special: false },
+      weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+      ...stateOverride,
+    };
+    const move = makeMove(0, 1);
+    const brain = { react: 0, _turfPaintLatch: true, _turfPaintValidated: true, _stringerHoldT: 0.3 };
+    assert.equal(applyStringerCombat(brain, {}, actor, 1 / 60, move, baseCtx), null);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(applyStringerTurfPaint(brain, {}, actor, 1 / 60, move, true, 0, 0.8), null);
+    assert.equal(actor.intent.fire, false);
+  }
+
+  // Active it.special activation yields without setting fire
+  const spActor = {
+    id: 22, weapon: w, grounded: true, groundTeam: 1,
+    intent: { fire: false, squid: false, jump: false, sub: false, special: true },
+    weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+  };
+  assert.equal(applyStringerCombat({ react: 0 }, {}, spActor, 1 / 60, makeMove(), baseCtx), null);
+  assert.equal(spActor.intent.fire, false);
+
+  // Sub-weapon conflict (it.sub / _bombAim / aimingSub) clears fire & squid and yields
+  for (const [intentSub, bombAim, aimingSub] of [[true, false, false], [false, true, false], [false, false, true]]) {
+    const subActor = {
+      id: 23, weapon: w, grounded: true, groundTeam: 1,
+      intent: { fire: true, squid: true, jump: false, sub: intentSub, special: false },
+      weaponRunner: { charging: false, charge: 0, cooldown: 0, aimingSub },
+    };
+    const subBrain = { react: 0, _bombAim: bombAim, _turfPaintLatch: true, _turfPaintValidated: true };
+    assert.equal(applyStringerCombat(subBrain, {}, subActor, 1 / 60, makeMove(), baseCtx), null);
+    assert.equal(subActor.intent.fire, false);
+    assert.equal(subActor.intent.squid, false);
+    subActor.intent.fire = true;
+    subActor.intent.squid = true;
+    assert.equal(applyStringerTurfPaint(subBrain, {}, subActor, 1 / 60, makeMove(), true, 0, 0.8), null);
+    assert.equal(subActor.intent.fire, false);
+    assert.equal(subActor.intent.squid, false);
+  }
+});
+
+test('Stringer resets stale per-bot state across deaths and netLife respawns', () => {
+  const w = makeWellstringWeapon();
+  const brain = {
+    react: 0,
+    _stringerHoldT: 0.42,
+    _stringerJumpCd: 1.15,
+    _stringerLowPaintRun: 4,
+    _turfPaintLatch: true,
+    _turfPaintValidated: true,
+  };
+  const actor = {
+    id: 24, netLife: 1, alive: true, weapon: w, grounded: true, groundTeam: 1,
+    intent: { fire: false, squid: false, jump: false, sub: false, special: false },
+    weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+  };
+  applyStringerTurfPaint(brain, {}, actor, 1 / 60, makeMove(), true, 0, 0.8);
+  assert.equal(brain._stringerLife, 1);
+
+  // Respawn with incremented netLife clears stale hold/jump/paint-run timers
+  brain._stringerHoldT = 0.39;
+  brain._stringerJumpCd = 1.10;
+  brain._stringerLowPaintRun = 3;
+  actor.netLife = 2;
+  applyStringerCombat(brain, {}, actor, 1 / 60, makeMove(), {
+    family: 'stringer', dist: 16, range: 23, dx: 0, dz: 16,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(brain._stringerLife, 2);
+  assert.equal(brain._stringerHoldT, 0);
+  assert.equal(brain._stringerJumpCd, 0);
+  assert.equal(brain._stringerLowPaintRun, 0);
+});
+
+test('Stringer releases held charge on ink exhaustion instead of deadlocking with fire=true', () => {
+  const w = makeTriStringerWeapon();
+  const actor = {
+    id: 25, weapon: w, grounded: true, groundTeam: 1,
+    intent: { fire: true, squid: false, jump: false, sub: false, special: false },
+    weaponRunner: { charging: true, charge: 0.55, cooldown: 0 },
+  };
+  const brain = { react: 0, _stringerHoldT: 0.2 };
+  applyStringerCombat(brain, {}, actor, 1 / 60, makeMove(), {
+    family: 'stringer', dist: 15, range: 25, dx: 0, dz: 15,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.03,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(actor.intent.fire, false, 'releases charge when ink is exhausted with visible target in range');
+  assert.equal(brain._stringerHoldT, 0);
+});
+
+test('Stringer NaN/Infinity guards keep arc pitch, charge, and combat outputs finite', () => {
+  const w = makeTriStringerWeapon();
+  assert.equal(computeStringerArcPitch(NaN, 0.8, 'normal'), 0);
+  assert.equal(computeStringerArcPitch(18, NaN, 'normal'), 0);
+  assert.equal(computeStringerArcPitch(Infinity, 1.0, 'normal'), 0);
+  assert.ok(Number.isFinite(computeStringerCombatCharge(w, NaN, 25, 'normal', NaN, NaN, NaN)));
+
+  const actor = {
+    id: 26, weapon: w, grounded: true, groundTeam: 1, yaw: NaN,
+    intent: { fire: true, squid: false, jump: false, sub: false, special: false },
+    weaponRunner: { charging: true, charge: NaN, cooldown: 0 },
+  };
+  const move = makeMove(0, 1);
+  const brain = { react: 0, target: { form: 'human', vel: { x: NaN, z: Infinity } }, lostTimer: 0.3 };
+  const aim = applyStringerCombat(brain, {}, actor, Infinity, move, {
+    family: 'stringer', dist: NaN, range: NaN, dx: NaN, dz: Infinity,
+    enemyVisible: false, aimed: true, off: NaN, inkFrac: 0.8,
+    idealYaw: NaN, idealPitch: NaN, wantYaw: NaN, wantPitch: NaN,
+  });
+  if (aim) {
+    assert.ok(Number.isFinite(aim.wantYaw), 'wantYaw stays finite');
+    assert.ok(Number.isFinite(aim.wantPitch), 'wantPitch stays finite');
+  }
+  assert.ok(Number.isFinite(brain._stringerPhase), '_stringerPhase stays finite');
+});

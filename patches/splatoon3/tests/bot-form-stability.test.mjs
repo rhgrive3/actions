@@ -51,3 +51,32 @@ test('the match applies the hold right after each CPU brain update', () => {
   const out = adaptBuildSource('src/game/match.js', source);
   assert.match(out, /a\.bot\.update\(dt\); stabilizeBotForm\(a, dt, !!a\.bot\._nativeTraversalHandled\);/);
 });
+
+test('sub aim and sub release force kid form so squid intent cannot swallow the throw', () => {
+  const a = bot();
+  a.weaponRunner = { aimingSub: false };
+  // Start in squid form
+  a.intent.squid = true;
+  stabilizeBotForm(a, 1);
+  assert.equal(a.intent.squid, true);
+
+  // Tick 1: sub=true even while squid=true -> must pop out to kid form immediately
+  a.intent.sub = true;
+  a.intent.squid = true;
+  stabilizeBotForm(a, 1 / 60);
+  assert.equal(a.intent.squid, false, 'sub aim must force kid form');
+
+  // Tick 2: sub drops to false while weaponRunner.aimingSub is true and squid is requested ->
+  // must stay in kid form so actor.js delivers subReleased instead of cancelling the sub
+  a.weaponRunner.aimingSub = true;
+  a.intent.sub = false;
+  a.intent.squid = true;
+  stabilizeBotForm(a, 1); // even past BOT_FORM_HOLD
+  assert.equal(a.intent.squid, false, 'sub release tick must stay in kid form while aimingSub is active');
+
+  // Once aimingSub clears and hold expires, squid form is allowed again
+  a.weaponRunner.aimingSub = false;
+  a.intent.squid = true;
+  stabilizeBotForm(a, BOT_FORM_HOLD + 0.05);
+  assert.equal(a.intent.squid, true);
+});

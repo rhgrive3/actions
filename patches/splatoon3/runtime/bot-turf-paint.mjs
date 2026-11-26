@@ -74,6 +74,7 @@ export const BOT_TURF_PAINT = Object.freeze({
 const _probeScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _macroScratch = { own: 0, enemy: 0, empty: 1, n: 0 };
 const _profileScratch = { pitch: -0.10, sweepAmp: 0.50, strafe: 0.32, rollHold: 0.26, stringerChargeCap: 0.22 };
+const _paintCtxScratch = { profile: null, cache: null, pitchReady: true, wantPaintNow: false };
 const _rawFamilyCache = new WeakMap();
 const _paintProfileCache = new WeakMap();
 
@@ -111,9 +112,10 @@ export function botRawWeaponFamily(weapon, fallbackFamily) {
   else if (catFam === 'blaster') detected = 'blaster';
   else if (catFam === 'charger') detected = 'charger';
   else if (catFam === 'roller') detected = 'roller';
+  else if (catFam === 'shooter') detected = 'shooter';
   else if (src.includes('Roller') || wId.includes('roller')) detected = 'roller';
   else if (src.includes('Brush') || wId.includes('brush')) detected = 'brush';
-  else if (src.includes('Splatana') || wId.includes('splatana') || wId.includes('wiper')) detected = 'splatana';
+  else if (src.includes('Splatana') || src.includes('Saber') || wId.includes('splatana') || wId.includes('saber') || wId.includes('wiper')) detected = 'splatana';
   else if (src.includes('Stringer') || wId.includes('stringer') || wId.includes('bow')) detected = 'stringer';
   else if (src.includes('Shelter') || src.includes('Brella') || wId.includes('brella')) detected = 'brella';
   else if (src.includes('Slosher') || wId.includes('slosher')) detected = 'slosher';
@@ -301,6 +303,7 @@ export function botEvaluateTurfPaint(brain, G, actor, move, wantMove, baseYaw, a
   if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) {
     return (aheadStats?.n === 0) || ((aheadStats?.own ?? 0) < 0.75);
   }
+  if (!brain || !actor || !aheadStats) return false;
   let cache = brain._turfMultiCache;
   if (!cache) {
     cache = brain._turfMultiCache = {
@@ -319,7 +322,8 @@ export function botEvaluateTurfPaint(brain, G, actor, move, wantMove, baseYaw, a
   // Preserve exact 1-call regionStats count on synthetic unit-test mocks or single-slab micro-levels.
   const canMultiSample = !!(
     paint && typeof paint.regionStats === 'function' &&
-    paint.grid && level && Array.isArray(level.faces) && level.faces.length > 6
+    paint.grid && level && Array.isArray(level.faces) && level.faces.length > 6 &&
+    actor.pos && Number.isFinite(actor.pos.x) && Number.isFinite(actor.pos.z) && Number.isFinite(baseYaw)
   );
 
   if (!canMultiSample) {
@@ -480,7 +484,7 @@ export function botStabilizeTurfAim(brain, G, actor, family, baseYaw, currentWan
 
   // 2. Terrain slope compensation when following a multi-node stage path
   const nav = G?.nav;
-  if (nav?.nodes && brain.path && brain.pi < brain.path.length) {
+  if (nav?.nodes && actor?.pos && brain.path && brain.pi < brain.path.length) {
     let targetNode = nav.nodes[brain.path[brain.pi]];
     if (targetNode) {
       let hd = Math.hypot(targetNode.x - actor.pos.x, targetNode.z - actor.pos.z);
@@ -517,7 +521,7 @@ export function botStabilizeTurfAim(brain, G, actor, family, baseYaw, currentWan
 
   // 4. Yaw stabilization & exponentially smoothed flank-directed sweep
   let yaw = currentWantYaw;
-  if (cache?.multiActive) {
+  if (cache?.multiActive && Number.isFinite(baseYaw)) {
     const sweepAmp = profile.sweepAmp;
     const wr = actor.weaponRunner;
     const sweepVal = brain.sweep || brain._paintSweepPhase || 0;
@@ -530,8 +534,8 @@ export function botStabilizeTurfAim(brain, G, actor, family, baseYaw, currentWan
   }
 
   const out = brain._turfAimOut || (brain._turfAimOut = { yaw: 0, pitch: 0 });
-  out.yaw = yaw;
-  out.pitch = pitch;
+  out.yaw = Number.isFinite(yaw) ? yaw : (Number.isFinite(currentWantYaw) ? currentWantYaw : 0);
+  out.pitch = Number.isFinite(pitch) ? pitch : (Number.isFinite(currentWantPitch) ? currentWantPitch : -0.10);
   return out;
 }
 
@@ -541,7 +545,7 @@ export function botStabilizeTurfAim(brain, G, actor, family, baseYaw, currentWan
  */
 export function botTurfPitchReady(brain, actor, rawFamily, wantPitch) {
   if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return true;
-  if (brain._footPaint || brain.mode !== 'paint') return true;
+  if (!brain || brain._footPaint || brain.mode !== 'paint') return true;
   if (rawFamily === 'roller' || rawFamily === 'brush') return true;
   // Only gate when recovering from a recent steep downward look (_footPaintCooldown > 0 or _puddleT recent)
   const recentDownLook = (brain._footPaintCooldown || 0) > 1.2 || (brain.t - (brain._puddleT ?? -9)) < 0.45;
@@ -559,8 +563,13 @@ export function botTurfPitchReady(brain, actor, rawFamily, wantPitch) {
  */
 export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac) {
   if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return;
-  const it = actor?.intent;
+  if (!brain || !actor) return;
+  const it = actor.intent;
   if (!it) return;
+  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) {
+    brain._coolerPickupPending = false;
+    return;
+  }
   const rawFamily = botRawWeaponFamily(actor?.weapon, null);
   const profile = botWeaponPaintProfile(actor?.weapon, rawFamily);
   const cache = brain._turfMultiCache;
@@ -572,7 +581,7 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   if (coolers && coolers.length && !actor.s3?.drink) {
     for (let i = 0; i < coolers.length; i++) {
       const c = coolers[i];
-      if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
+      if (c && c.pos && actor.pos && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
         if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
           it.squid = false;
           coolerPending = true;
@@ -599,7 +608,11 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     it.fire = false;
   }
 
-  const _paintCtx = { profile, cache, pitchReady, wantPaintNow };
+  const _paintCtx = _paintCtxScratch;
+  _paintCtx.profile = profile;
+  _paintCtx.cache = cache;
+  _paintCtx.pitchReady = pitchReady;
+  _paintCtx.wantPaintNow = wantPaintNow;
   if (rawFamily === 'charger') {
     applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'stringer') {
@@ -621,6 +634,8 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       it.fire = true;
     }
   }
+  _paintCtx.profile = null;
+  _paintCtx.cache = null;
 
   // 3. Rapid goal cycling: if the bot is close to its paint goal and the area ahead is already >=72% own ink,
   // immediately expire goalTimer so _pickPaintGoal selects a fresh unpainted sector on the next tick!
@@ -638,13 +653,14 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   // 4. カニ歩き塗り (Lateral strafe painting): apply full strafe in open/unpathed space, or gentle micro-strafe on paths
   const hasActiveNavPath = Array.isArray(brain.path) && brain.path.length > 1 && G?.nav?.nodes?.length > 4;
   const strafeRatio = hasActiveNavPath ? profile.strafe * 0.18 : profile.strafe;
-  if (it.fire && wantMove && strafeRatio > 0 && move && typeof move.x === 'number') {
+  if (it.fire && wantMove && strafeRatio > 0 && move && Number.isFinite(move.x) && Number.isFinite(move.z) && Number.isFinite(baseYaw)) {
+    const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 0;
     const flankBias = cache?.flankBias || 0;
     const targetSign = Math.abs(flankBias) > 0.05
       ? (flankBias > 0 ? 1 : -1)
       : (Math.sin((brain.t || 0) * 2.6 + (actor.id || 0) * 1.7) >= 0 ? 1 : -1);
-    const prevStrafe = brain._smoothStrafe ?? targetSign;
-    const smoothSign = prevStrafe + (targetSign - prevStrafe) * Math.min(1, dt * 8.0);
+    const prevStrafe = Number.isFinite(brain._smoothStrafe) ? brain._smoothStrafe : targetSign;
+    const smoothSign = prevStrafe + (targetSign - prevStrafe) * Math.min(1, safeDt * 8.0);
     brain._smoothStrafe = smoothSign;
     const perpX = Math.cos(baseYaw) * smoothSign;
     const perpZ = -Math.sin(baseYaw) * smoothSign;
@@ -678,17 +694,19 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     }
 
     const subId = actor.weapon?.sub;
-    const isUnitStub = !G?.level || !Array.isArray(G.level.faces) || G.level.faces.length <= 6;
+    const wrBusyForSub = !!(wr && (wr.charging || wr.rolling || wr.streaming || wr.aimingSub || wr.catalogState?.pending || wr.catalogState?.canopyOpen));
     if (
       timeLeft > 0.15 &&
       timeLeft <= 4.0 &&
       inkFrac >= 0.72 &&
       (brain.bombCd || 0) <= 0 &&
       !it.sub &&
+      !wrBusyForSub &&
       !actor.specialActive &&
-      (isUnitStub || !subId || (timeLeft >= 2.4 && (subId === 'burst' || subId === 'curling' || subId === 'fizzy')))
+      (!subId || (timeLeft >= 2.4 && (subId === 'burst' || subId === 'curling' || subId === 'fizzy')))
     ) {
       it.sub = true;
+      it.squid = false;
       brain.bombCd = 4.5;
     }
   }
@@ -701,9 +719,15 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
  * enemy/dry ink without painting, and immediately transitions to squid-swim once standing on own ink.
  */
 export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wantYaw, wantPitch, dist, range, inkFrac) {
-  if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return wantPitch;
-  const it = actor?.intent;
-  if (!it) return wantPitch;
+  const basePitch = Number.isFinite(wantPitch) ? wantPitch : 0;
+  if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return basePitch;
+  if (!brain || !actor) return basePitch;
+  const it = actor.intent;
+  if (!it) return basePitch;
+  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) {
+    brain._coolerPickupPending = false;
+    return basePitch;
+  }
   const wr = actor.weaponRunner;
   const rawFamily = botRawWeaponFamily(actor?.weapon, null);
   const srcActor = actor?.weapon?.sourceMainActor || '';
@@ -715,7 +739,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   if (coolers && coolers.length && !actor.s3?.drink) {
     for (let i = 0; i < coolers.length; i++) {
       const c = coolers[i];
-      if (c && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
+      if (c && c.pos && actor.pos && c.team === actor.team && !c.taken?.has(actor) && c.expires > (G.time || 0)) {
         if (Math.hypot(c.pos.x - actor.pos.x, c.pos.z - actor.pos.z) < 6.8) {
           it.squid = false;
           coolerPending = true;
@@ -728,19 +752,24 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
 
   // 1. Buzzer-beater sub throw in combat approach (Curling, Burst, Fizzy)
   const subId = actor?.weapon?.sub;
+  const wrBusyForSub = !!(wr && (wr.charging || wr.rolling || wr.streaming || wr.aimingSub || wr.catalogState?.pending || wr.catalogState?.canopyOpen));
   if (
     tLeft <= 3.2 && tLeft >= 1.6 &&
     (subId === 'curling' || subId === 'burst' || subId === 'fizzy') &&
     inkFrac >= 0.68 &&
     (brain.bombCd || 0) <= 0 &&
     !it.sub &&
+    !it.special &&
+    !wrBusyForSub &&
     !actor.specialActive
   ) {
     it.sub = true;
     it.fire = false;
+    it.squid = false;
     brain.bombCd = 4.5;
     return -0.05;
   }
+  if (it.sub || brain._bombAim || wr?.aimingSub) return basePitch;
 
   // 2. Final 6.5s buzzer-beater weapon release & tap-slashing in fight mode
   if (tLeft <= 6.5 && !actor.specialActive && inkFrac > 0.14) {
@@ -831,9 +860,14 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
         it.fire = true;
         canClear = true;
       }
-    } else if (rawFamily === 'slosher' || rawFamily === 'roller') {
+    } else if (rawFamily === 'slosher') {
       it.fire = true;
       canClear = true;
+    } else if (rawFamily === 'roller') {
+      if (!wr?.catalogState?.pending) {
+        it.fire = true;
+        canClear = true;
+      }
     } else if (rawFamily === 'brella') {
       if (!actor._prevIntent?.fire && !wr?.catalogState?.pending) {
         it.fire = true;
@@ -855,7 +889,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
       it.fire = false;
     }
   }
-  return wantPitch;
+  return basePitch;
 }
 
 /**
@@ -867,7 +901,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
  */
 export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st, baseScore) {
   if (brain?._disableTurfPaintPatch || actor?._disableTurfPaintPatch) return baseScore;
-  if (!G?.level || !Array.isArray(G.level.faces) || G.level.faces.length <= 6) {
+  if (!actor || !node || !st || !G?.level || !Array.isArray(G.level.faces) || G.level.faces.length <= 6) {
     return baseScore;
   }
 
@@ -969,7 +1003,7 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
       if (!other || (other.alive === false) || other.dead || (typeof other.hp === 'number' && other.hp <= 0)) continue;
       if (other.team === actor.team) {
         aliveAllies++;
-        if (other !== actor) {
+        if (other !== actor && other.pos) {
           const dPos = Math.hypot(node.x - other.pos.x, node.z - other.pos.z);
           if (dPos < 11.0) {
             score -= (1 - dPos / 11.0) * 5.5;
@@ -1004,7 +1038,7 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
   if (isBackline) {
     if (progress >= 0.28 && progress <= 0.64) score += 2.10;
     else if (progress > 0.78) score -= 2.20;
-    if (node.y > actor.pos.y + 0.8) score += 1.10;
+    if (actor.pos && node.y > actor.pos.y + 0.8) score += 1.10;
   } else if (isFrontline) {
     if (progress >= 0.36 && progress <= 0.78) score += 2.20;
   } else {
@@ -1051,12 +1085,12 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
   // 7. Forward heading continuity bonus to minimize 180-degree turnaround waste
   const vx = actor.vel?.x || 0, vz = actor.vel?.z || 0;
   const vLen = Math.hypot(vx, vz);
-  if (vLen > 0.5 && dist > 1.0) {
+  if (actor.pos && vLen > 0.5 && dist > 1.0) {
     const dx = (node.x - actor.pos.x) / dist;
     const dz = (node.z - actor.pos.z) / dist;
     const dot = (vx * dx + vz * dz) / vLen;
     score += dot * 1.35;
   }
 
-  return score;
+  return Number.isFinite(score) ? score : baseScore;
 }

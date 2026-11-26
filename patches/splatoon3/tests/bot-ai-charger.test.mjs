@@ -474,3 +474,214 @@ test('Goo Tuber uses 1-ring lethal charge & extended partial Charge Keep; Bamboo
   });
   assert.equal(pencil.intent.squid, false, 'Snipewriter stays in kid form briefly to preserve loaded rounds');
 });
+
+test('guards specialActive, it.sub, it.special, superJumpState, and climbing against input conflicts', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const baseWeapon = { sourceMainActor: 'WeaponChargerNormal', id: 'charger', rangeMax: 26 };
+
+  // specialActive: must not overwrite fire/squid or return aim override
+  const spActor = {
+    id: 21, alive: true, specialActive: true, groundTeam: 1,
+    weapon: baseWeapon,
+    weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+    intent: { fire: true, squid: false, sub: false, special: false },
+  };
+  const spMove = makeMove(0, 1);
+  applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, spActor, 1 / 60, spMove, true, 0, 0.2, { pitchReady: true, wantPaintNow: true });
+  assert.equal(spActor.intent.fire, true, 'specialActive leaves turf paint fire untouched');
+  assert.equal(spActor.intent.squid, false, 'specialActive leaves turf paint squid untouched');
+  const spAim = applyChargerCombat({ react: 0 }, G, spActor, 1 / 60, spMove, {
+    dist: 12, range: 24, dx: 0, dz: 12, enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0.1, wantPitch: 0,
+  });
+  assert.equal(spAim, null, 'specialActive skips combat aim override');
+
+  // it.sub & it.special: must clear fire and avoid setting squid
+  for (const flag of ['sub', 'special']) {
+    const act = {
+      id: 22, alive: true, groundTeam: 1,
+      weapon: baseWeapon,
+      weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+      intent: { fire: true, squid: false, sub: flag === 'sub', special: flag === 'special' },
+    };
+    applyChargerCombat({ react: 0 }, G, act, 1 / 60, makeMove(), {
+      dist: 12, range: 24, dx: 0, dz: 12, enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+      idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+    });
+    assert.equal(act.intent.fire, false, `it.${flag} clears conflicting main fire in combat`);
+    assert.equal(act.intent.squid, false, `it.${flag} does not force squid in combat`);
+
+    act.intent.fire = true;
+    applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, act, 1 / 60, makeMove(), true, 0, 0.2, { pitchReady: true, wantPaintNow: true });
+    assert.equal(act.intent.fire, false, `it.${flag} clears conflicting main fire in turf paint`);
+  }
+
+  // superJumpState & climbing: return early without mutating intent
+  for (const statePatch of [{ superJumpState: { phase: 'air' } }, { climbing: true }]) {
+    const act = {
+      id: 23, alive: true, groundTeam: 1, ...statePatch,
+      weapon: baseWeapon,
+      weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+      intent: { fire: false, squid: true, sub: false, special: false },
+    };
+    applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, act, 1 / 60, makeMove(), true, 0, 0.8, { pitchReady: true, wantPaintNow: true });
+    assert.equal(act.intent.fire, false);
+    assert.equal(act.intent.squid, true);
+    applyChargerCombat({ react: 0 }, G, act, 1 / 60, makeMove(), {
+      dist: 10, range: 24, dx: 0, dz: 10, enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.8,
+      idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+    });
+    assert.equal(act.intent.fire, false);
+    assert.equal(act.intent.squid, true);
+  }
+});
+
+test('resets stale per-bot charger state across deaths and netLife respawns', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const brain = {
+    _turfPaintLatch: true, _turfPaintValidated: true,
+    _chargerMicroRefill: true, _bambooComboT: 0.6, _chargerJumpCd: 1.0, _weakChargeHold: 0.4,
+  };
+  const actor = {
+    id: 24, alive: true, netLife: 1, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerLight', id: 's3-charger-light', rangeMax: 19.5 },
+    weaponRunner: { charging: false, charge: 0, cooldown: 0 },
+    intent: { fire: false, squid: false },
+  };
+  // First tick records netLife = 1 without wiping pre-existing state
+  applyChargerTurfPaint(brain, G, actor, 1 / 60, makeMove(), true, 0, 0.30, { pitchReady: true, wantPaintNow: true });
+  assert.equal(brain._chargerMicroRefill, true);
+
+  // Respawn (netLife increments 1 -> 2) clears stale per-life timers and micro-refill latch
+  actor.netLife = 2;
+  applyChargerTurfPaint(brain, G, actor, 1 / 60, makeMove(), true, 0, 0.35, { pitchReady: true, wantPaintNow: true });
+  assert.equal(brain._chargerMicroRefill, false);
+  assert.equal(brain._bambooComboT, 0);
+  assert.equal(brain._chargerJumpCd, 0);
+  assert.equal(brain._weakChargeHold, 0);
+
+  // Death (alive === false) resets and returns early without mutating intent
+  brain._chargerMicroRefill = true;
+  actor.alive = false;
+  actor.intent.fire = false;
+  actor.intent.squid = false;
+  applyChargerCombat(brain, G, actor, 1 / 60, makeMove(), {
+    dist: 10, range: 19.5, dx: 0, dz: 10, enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(brain._chargerMicroRefill, false);
+  assert.equal(actor.intent.fire, false);
+});
+
+test('Charge Keep continues across frames when stored in s3Stored or catalogState.stored', () => {
+  // Legacy Splat Charger (s3Stored)
+  const std = {
+    id: 25, alive: true, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerNormal', id: 'charger', rangeMax: 26 },
+    weaponRunner: { charging: false, charge: 0, cooldown: 0, s3Stored: { charge: 1.0, remaining: 1.0 } },
+    intent: { fire: false, squid: false },
+  };
+  const brain = { react: 0.5, strafeS: 0.5, lostTimer: 0.30 };
+  applyChargerCombat(brain, {}, std, 1 / 60, makeMove(), {
+    dist: 16, range: 24, dx: 0, dz: 16, enemyVisible: false, aimed: false, off: 0.2, inkFrac: 0.7,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(std.intent.fire, true, 'sustains s3Stored Charge Keep while target is briefly hidden');
+  assert.equal(std.intent.squid, true, 'stays submerged in squid during s3Stored Charge Keep');
+
+  // Target reappears in range -> pops out immediately even with high react
+  applyChargerCombat(brain, {}, std, 1 / 60, makeMove(), {
+    dist: 15, range: 24, dx: 0, dz: 15, enemyVisible: true, aimed: true, off: 0.03, inkFrac: 0.7,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0.02, wantPitch: 0,
+  });
+  assert.equal(std.intent.squid, false, 'pops out of squid when target reappears');
+  assert.equal(std.intent.fire, true, 'holds fire to surface stored charge');
+
+  // Catalog Goo Tuber (catalogState.stored) in turf paint is not clobbered by micro-refill
+  const keeper = {
+    id: 26, alive: true, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerKeeper', id: 's3-charger-keeper', rangeMax: 19.8 },
+    weaponRunner: { charging: false, charge: 0, cooldown: 0, catalogState: { stored: { frames: 50, paid: 10, remaining: 3.5 } } },
+    intent: { fire: false, squid: false },
+  };
+  const kBrain = { _turfPaintLatch: true, _turfPaintValidated: true, _chargerMicroRefill: true };
+  applyChargerTurfPaint(kBrain, {}, keeper, 1 / 60, makeMove(), true, 0, 0.15, { pitchReady: true, wantPaintNow: true });
+  assert.equal(kBrain._chargerMicroRefill, false, 'stored charge clears micro-refill');
+  assert.equal(keeper.intent.fire, true, 'resumes stored charge to paint');
+  assert.equal(keeper.intent.squid, false);
+});
+
+test('ink exhaustion releases stuck charges; Snipewriter fires 0-ink loaded rounds and avoids 36% stall', () => {
+  // Combat ink exhaustion releases active charge
+  const std = {
+    id: 27, alive: true, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerNormal', id: 'charger', rangeMax: 26 },
+    weaponRunner: { charging: true, charge: 0.45, cooldown: 0 },
+    intent: { fire: true, squid: false },
+  };
+  applyChargerCombat({ react: 0 }, {}, std, 1 / 60, makeMove(), {
+    dist: 16, range: 24, dx: 0, dz: 16, enemyVisible: true, aimed: false, off: 0.2, inkFrac: 0.01,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(std.intent.fire, false, 'releases charge immediately on combat ink exhaustion');
+
+  // Snipewriter 5H: ink exhausted mid-charge in turf paint releases instead of deadlocking
+  const pencil = {
+    id: 28, alive: true, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerPencil', id: 's3-charger-pencil', rangeMax: 26 },
+    weaponRunner: { charging: true, charge: 0.85, cooldown: 0, catalogState: { rounds: 0, pending: false } },
+    intent: { fire: true, squid: false },
+    _prevIntent: { fire: false },
+  };
+  applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, {}, pencil, 1 / 60, makeMove(), true, 0, 0.01, {
+    pitchReady: true, wantPaintNow: false,
+  });
+  assert.equal(pencil.intent.fire, false, 'Snipewriter releases charge at <= 2% ink instead of deadlocking');
+
+  // Snipewriter 5H: does not start 37.5%-cost charge at 36.5% ink
+  pencil.weaponRunner.charging = false;
+  pencil.groundTeam = 0; // off own ink so micro-refill does not intercept
+  applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, {}, pencil, 1 / 60, makeMove(), true, 0, 0.365, {
+    pitchReady: true, wantPaintNow: true,
+  });
+  assert.equal(pencil.intent.fire, false, 'Snipewriter waits for >= 38% ink before starting full load');
+
+  // Snipewriter 5H: already-paid loaded rounds fire even at 1% ink in combat & turf paint
+  pencil.weaponRunner.catalogState.rounds = 3;
+  applyChargerCombat({ react: 0 }, {}, pencil, 1 / 60, makeMove(), {
+    dist: 18, range: 24, dx: 0, dz: 18, enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.01,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(pencil.intent.fire, true, 'Snipewriter fires already-paid loaded rounds at 1% ink in combat');
+
+  pencil.intent.fire = false;
+  applyChargerTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, {}, pencil, 1 / 60, makeMove(), true, 0, 0.02, {
+    pitchReady: true, wantPaintNow: false,
+  });
+  assert.equal(pencil.intent.fire, true, 'Snipewriter fires already-paid loaded rounds at 2% ink in turf paint');
+});
+
+test('writeAimOut wraps across +/-PI seam and NaN inputs never poison movement or aim', () => {
+  const actor = {
+    id: 29, alive: true, groundTeam: 1,
+    weapon: { sourceMainActor: 'WeaponChargerNormal', id: 'charger', rangeMax: 26 },
+    weaponRunner: { charging: true, charge: 0.96, cooldown: 0 },
+    intent: { fire: true, squid: false },
+  };
+  const brain = { react: 0, strafeS: 0.5 };
+  // idealYaw = 3.10, wantYaw = -3.10 -> shortest delta is +0.083 rad, NOT -6.20 rad
+  const aim = applyChargerCombat(brain, {}, actor, 1 / 60, makeMove(), {
+    dist: 18, range: 24, dx: 0, dz: 18, enemyVisible: true, aimed: true, off: 0.09, inkFrac: 0.8,
+    idealYaw: 3.10, idealPitch: 0, wantYaw: -3.10, wantPitch: 0,
+  });
+  assert.ok(aim && Math.abs(aim.wantYaw - 3.137) < 0.02, `expected wrapped yaw near +PI, got ${aim?.wantYaw}`);
+
+  // NaN inputs stay finite
+  const move = makeMove(0, 1);
+  const nanAim = applyChargerCombat(brain, {}, actor, NaN, move, {
+    dist: NaN, range: NaN, dx: NaN, dz: NaN, enemyVisible: true, aimed: false, off: NaN, inkFrac: NaN,
+    idealYaw: NaN, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(nanAim, null, 'non-finite aim angles return null safely');
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'move stays finite under NaN ctx');
+});

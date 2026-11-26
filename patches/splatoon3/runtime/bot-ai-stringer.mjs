@@ -27,12 +27,42 @@ const FALLBACK_AIM_OUT = { wantYaw: 0, wantPitch: 0 };
 const FALLBACK_TURF_OUT = { archetype: 'normal', cap: 0.09, fullSweep: false };
 const TWO_PI_10 = Math.PI * 20;
 
+function finite(v, fallback) {
+  return Number.isFinite(v) ? v : fallback;
+}
+
 function clamp(v, lo, hi) {
+  if (!Number.isFinite(v)) return lo;
   return v < lo ? lo : v > hi ? hi : v;
 }
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
+
+function resetStringerTransientState(brain) {
+  if (!brain) return;
+  brain._stringerHoldT = 0;
+  brain._stringerJumpCd = 0;
+  brain._stringerLowPaintRun = 0;
+}
+
+function syncStringerLife(brain, actor) {
+  const life = typeof actor?.netLife === 'number' && Number.isFinite(actor.netLife)
+    ? actor.netLife
+    : null;
+  if (actor?.alive === false) {
+    resetStringerTransientState(brain);
+    if (brain) brain._stringerLife = life;
+    return false;
+  }
+  if (brain && life !== null) {
+    if (brain._stringerLife != null && brain._stringerLife !== life) {
+      resetStringerTransientState(brain);
+    }
+    brain._stringerLife = life;
+  }
+  return true;
 }
 
 /**
@@ -160,6 +190,10 @@ export function computeStringerCombatCharge(
   latSpeed = 0,
   noise = 0,
 ) {
+  dist = finite(dist, 0);
+  closingSpeed = finite(closingSpeed, 0);
+  latSpeed = finite(latSpeed, 0);
+  noise = finite(noise, 0);
   const firstFrac = resolveStringerFirstChargeFrac(weapon, archetype);
   // Small safety margin above ChargeFrameMidCharge so frame rounding never drops explosive bolts.
   const explosiveFloor = Math.min(0.95, firstFrac + 0.025);
@@ -233,6 +267,7 @@ export function computeStringerCombatCharge(
  * Stringer arrow gravity drop over medium/long distances without touching human aimError.
  */
 export function computeStringerArcPitch(dist, charge, archetype) {
+  if (!Number.isFinite(dist) || !Number.isFinite(charge)) return 0;
   // Approximate flat-fire body-height reach at the current charge level (from catalog physics)
   let flatReach;
   if (archetype === 'short') {
@@ -266,7 +301,20 @@ export function applyStringerTurfPaint(brain, G, actor, dt, move, wantMove, base
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
   if (!it || !wr) return null;
+  if (!syncStringerLife(brain, actor)) return null;
+  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+    if (brain) brain._stringerHoldT = 0;
+    return null;
+  }
+  if (it.sub || brain?._bombAim || wr.aimingSub) {
+    it.fire = false;
+    it.squid = false;
+    if (brain) brain._stringerHoldT = 0;
+    return null;
+  }
 
+  inkFrac = finite(inkFrac, 0);
+  const curCharge = finite(wr.charge, 0);
   const w = actor.weapon;
   const archetype = classifyStringerArchetype(w);
   const cache = ctx.cache ?? brain?._turfMultiCache;
@@ -340,7 +388,7 @@ export function applyStringerTurfPaint(brain, G, actor, dt, move, wantMove, base
   if (wr.catalogState?.pending) {
     it.fire = false;
   } else if (wr.charging) {
-    if (wr.charge >= effectiveCap || inkFrac < 0.15) {
+    if (curCharge >= effectiveCap || inkFrac < 0.15) {
       if (!pitchReady && inkFrac >= 0.15) {
         // Hold charge briefly while aim pitch climbs back from downward foot-paint
         it.fire = true;
@@ -353,7 +401,7 @@ export function applyStringerTurfPaint(brain, G, actor, dt, move, wantMove, base
             : 0.02;
           brain._stringerPaintShotIdx = shotIdx + 1;
           if (archetype === 'explosion') {
-            brain._stringerLowPaintRun = (useWellstringFullSweep || wr.charge >= 0.70)
+            brain._stringerLowPaintRun = (useWellstringFullSweep || curCharge >= 0.70)
               ? 0
               : ((typeof brain._stringerLowPaintRun === 'number' ? brain._stringerLowPaintRun : shotIdx) + 1);
           }
@@ -404,19 +452,35 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
   if (!it || !wr) return null;
+  if (!syncStringerLife(brain, actor)) return null;
+  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+    if (brain) brain._stringerHoldT = 0;
+    return null;
+  }
+  if (it.sub || brain?._bombAim || wr.aimingSub) {
+    it.fire = false;
+    it.squid = false;
+    if (brain) brain._stringerHoldT = 0;
+    return null;
+  }
 
   const w = actor.weapon;
   const archetype = classifyStringerArchetype(w);
-  const range = ctx.range || w?.range || (archetype === 'short' ? 15 : archetype === 'explosion' ? 23 : 25);
-  const dist = ctx.dist ?? 0;
-  const dx = ctx.dx ?? 0;
-  const dz = ctx.dz ?? 0;
+  const defaultRange = archetype === 'short' ? 15 : archetype === 'explosion' ? 23 : 25;
+  const range = Number.isFinite(ctx.range) && ctx.range > 0
+    ? ctx.range
+    : (Number.isFinite(w?.range) && w.range > 0 ? w.range : defaultRange);
+  const dist = finite(ctx.dist, 0);
+  const dx = finite(ctx.dx, 0);
+  const dz = finite(ctx.dz, 0);
   const enemyVisible = Boolean(ctx.enemyVisible);
   const aimed = Boolean(ctx.aimed);
-  const off = ctx.off ?? 0;
-  const inkFrac = ctx.inkFrac ?? 1;
-  const wantYaw = ctx.wantYaw ?? actor.yaw ?? 0;
-  const wantPitch = ctx.wantPitch ?? 0;
+  const off = finite(ctx.off, 0);
+  const inkFrac = finite(ctx.inkFrac, 1);
+  const wantYaw = finite(ctx.wantYaw, finite(actor.yaw, 0));
+  const wantPitch = finite(ctx.wantPitch, 0);
+  const curCharge = finite(wr.charge, 0);
+  const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 0;
 
   const hasExplosiveBolts = archetype !== 'short';
   const firstFrac = resolveStringerFirstChargeFrac(w, archetype);
@@ -429,15 +493,16 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
   const holdNoise = stringerMicroNoise(seed, combatShotIdx, 31);
 
   if (brain) {
-    const stepDt = dt || 0;
-    brain._stringerJumpCd = Math.max(0, (brain._stringerJumpCd || 0) - stepDt);
-    brain._stringerPhase = ((brain._stringerPhase || 0) + stepDt) % TWO_PI_10;
+    const prevJumpCd = finite(brain._stringerJumpCd, 0);
+    const prevPhase = finite(brain._stringerPhase, 0);
+    brain._stringerJumpCd = Math.max(0, prevJumpCd - stepDt);
+    brain._stringerPhase = (prevPhase + stepDt) % TWO_PI_10;
   }
 
   // Unit vector toward target (or lastSeenPos)
-  const invDist = 1 / Math.max(dist, 0.01);
-  const nx = dx * invDist;
-  const nz = dz * invDist;
+  const dirLen = Math.hypot(dx, dz);
+  const nx = dirLen > 1e-4 ? dx / dirLen : 0;
+  const nz = dirLen > 1e-4 ? dz / dirLen : 0;
 
   // Fair-play enemy velocity projection: STRICTLY gated on enemyVisible === true (no wallhack)
   let closingSpeed = 0;
@@ -494,11 +559,11 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
         if (brain) brain._stringerHoldT = 0;
       }
     } else {
-      if (wr.charge < wantCharge) {
+      if (curCharge < wantCharge) {
         it.fire = true;
         if (brain) brain._stringerHoldT = 0;
       } else {
-        const holdT = (brain?._stringerHoldT || 0) + (dt || 0);
+        const holdT = finite(brain?._stringerHoldT, 0) + stepDt;
         if (brain) brain._stringerHoldT = holdT;
         if (aimed || off <= releaseTol || holdT >= maxHoldT) {
           it.fire = false;
@@ -540,7 +605,7 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
       !fastStrafer &&
       dist >= verticalMinDist &&
       dist <= verticalMaxDist &&
-      wr.charge >= minJumpCharge &&
+      curCharge >= minJumpCharge &&
       (brain?._stringerJumpCd || 0) <= 0 &&
       !nearWater
     ) {
@@ -562,7 +627,7 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
     }
 
     // 4. Ballistic arc pitch compensation (pure physics offset; leaves human aimError intact)
-    const activeCharge = wr.charging ? Math.max(wr.charge, wantCharge * 0.85) : wantCharge;
+    const activeCharge = wr.charging ? Math.max(curCharge, wantCharge * 0.85) : wantCharge;
     const arcPitch = computeStringerArcPitch(dist, activeCharge, archetype);
     if (arcPitch > 1e-4) {
       return getAimOut(brain, wantYaw, clamp(wantPitch + arcPitch, -1.05, 0.95));
@@ -588,7 +653,7 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
     if (wr.catalogState?.pending) {
       it.fire = false;
     } else if (wr.charging) {
-      if (wr.charge >= coverCharge) {
+      if (curCharge >= coverCharge) {
         it.fire = false;
         if (brain) {
           brain._stringerHoldT = 0;
@@ -598,15 +663,18 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
         it.fire = true;
       }
       const extraLob = (archetype === 'explosion' ? 0.048 : 0.042) + holdNoise * 0.008;
-      const arcPitch = computeStringerArcPitch(dist, Math.max(wr.charge, coverCharge), archetype) + extraLob;
+      const arcPitch = computeStringerArcPitch(dist, Math.max(curCharge, coverCharge), archetype) + extraLob;
       return getAimOut(brain, wantYaw, clamp(wantPitch + arcPitch, -1.05, 0.95));
     }
-  } else if (wr.charging && (!enemyVisible || dist > range * 1.12)) {
-    // Release/cancel wasted charge when target is lost or out of range
-    if (!enemyVisible && lostT >= 0.85) {
+  } else if (wr.charging && (!enemyVisible || dist > range * 1.12 || inkFrac <= 0.05)) {
+    // Release/cancel wasted charge when ink is exhausted, target is lost, or out of range
+    if (inkFrac <= 0.05) {
       it.fire = false;
       if (brain) brain._stringerHoldT = 0;
-    } else if (dist > range * 1.12 && wr.charge >= 0.15) {
+    } else if (!enemyVisible && lostT >= 0.85) {
+      it.fire = false;
+      if (brain) brain._stringerHoldT = 0;
+    } else if (dist > range * 1.12 && curCharge >= 0.15) {
       it.fire = false;
       if (brain) brain._stringerHoldT = 0;
     }

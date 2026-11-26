@@ -302,3 +302,123 @@ test('applyBrushCombat preserves Octobrush wide strafe-dueling and strict fresh-
   });
   assert.equal(actor.intent.fire, false, 'Octobrush releases trigger on held frame to enforce fresh edge');
 });
+
+test('applyBrushTurfPaint and applyBrushCombat respect superJumpState, specialActive, it.special, it.sub, and climbing', () => {
+  const G = { match: { mode: 'turf', time: 90 }, time: 20 };
+  const move = makeMove(0, 1);
+  const combatCtx = {
+    dist: 5.0, dx: 0, dz: 5.0, dy: 0, enemyVisible: true, aimed: true, off: 0.05, inkFrac: 0.85, wantYaw: 0.1, wantPitch: 0,
+  };
+
+  // 1. superJumpState: suppresses fire/squid and resets timers
+  const sjActor = makeActor({ superJumpState: { phase: 'flight' }, intent: { fire: true, squid: true, jump: false, sub: false, special: false } });
+  const sjBrain = { _turfPaintLatch: true, t: 1 };
+  applyBrushTurfPaint(sjBrain, G, sjActor, 1 / 60, move, true, 0, 0.8, { wantPaintNow: true });
+  assert.equal(sjActor.intent.fire, false);
+  assert.equal(sjActor.intent.squid, false);
+
+  // 2. specialActive: preserves special intent without clobbering
+  const spActor = makeActor({ specialActive: { id: 'stamp' }, intent: { fire: true, squid: false, jump: false, sub: false, special: false } });
+  assert.equal(applyBrushCombat({ react: 0, t: 1 }, G, spActor, 1 / 60, move, combatCtx), null);
+  assert.equal(spActor.intent.fire, true, 'specialActive intent must not be overwritten');
+
+  // 3. it.sub & it.special: suppresses main fire/squid so sub/special executes cleanly
+  const subActor = makeActor({ intent: { fire: false, squid: false, jump: false, sub: true, special: false } });
+  assert.equal(applyBrushCombat({ react: 0, t: 1 }, G, subActor, 1 / 60, move, combatCtx), null);
+  assert.equal(subActor.intent.fire, false);
+  assert.equal(subActor.intent.squid, false);
+  assert.equal(subActor.intent.sub, true);
+
+  const trigSpActor = makeActor({ intent: { fire: false, squid: false, jump: false, sub: false, special: true } });
+  assert.equal(applyBrushTurfPaint({ _turfPaintLatch: true, t: 1 }, G, trigSpActor, 1 / 60, move, true, 0, 0.8, { wantPaintNow: true }), null);
+  assert.equal(trigSpActor.intent.fire, false);
+  assert.equal(trigSpActor.intent.special, true);
+
+  // 4. climbing: never fires or cancels squid while climbing wall
+  const climbActor = makeActor({ climbing: true, intent: { fire: false, squid: true, jump: false, sub: false, special: false } });
+  assert.equal(applyBrushTurfPaint({ _turfPaintLatch: true, t: 1 }, G, climbActor, 1 / 60, move, true, 0, 0.8, { wantPaintNow: true }), null);
+  assert.equal(climbActor.intent.fire, false);
+  assert.equal(climbActor.intent.squid, true);
+  assert.equal(applyBrushCombat({ react: 0, t: 1 }, G, climbActor, 1 / 60, move, combatCtx), null);
+  assert.equal(climbActor.intent.fire, false);
+  assert.equal(climbActor.intent.squid, true);
+});
+
+test('brush per-bot state resets cleanly on death (!actor.alive) and across netLife respawns', () => {
+  const G = { match: { mode: 'turf', time: 90 }, time: 20 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({ weapon: makeWeapon('heavy'), alive: true, netLife: 1, groundTeam: 1 });
+  const brain = { _turfPaintLatch: true, react: 0, t: 2.0, ph1: 0.2 };
+
+  // Enter paintRecovering in life 1
+  applyBrushTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.20, { wantPaintNow: true });
+  assert.equal(brain._brushAI.paintRecovering, true);
+  brain._brushAI.swimGapT = 0.25;
+  brain._brushAI.combatChaining = true;
+
+  // Respawn with netLife = 2 (without brain.reset())
+  actor.netLife = 2;
+  applyBrushTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.50, { wantPaintNow: true });
+  assert.equal(brain._brushAI.paintRecovering, false, 'stale paintRecovering must reset on respawn');
+  assert.equal(brain._brushAI.swimGapT, 0, 'stale swimGapT must reset on respawn');
+  assert.equal(brain._brushAI.combatChaining, false, 'stale combatChaining must reset on respawn');
+  assert.equal(actor.intent.fire, true, 'respawned brush swings cleanly without stale recovery lock');
+
+  // Dead actor (!actor.alive) clears fire/squid
+  actor.alive = false;
+  actor.intent.fire = true;
+  applyBrushCombat(brain, G, actor, 1 / 60, move, {
+    dist: 5.0, dx: 0, dz: 5.0, enemyVisible: true, aimed: true, off: 0, inkFrac: 1,
+  });
+  assert.equal(actor.intent.fire, false);
+  assert.equal(actor.intent.squid, false);
+});
+
+test('applyBrushTurfPaint and applyBrushCombat handle string actor.id and NaN/undefined inputs safely', () => {
+  const G = { match: { mode: 'turf', time: NaN }, time: 10 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({
+    id: 'bot-alpha-3',
+    hp: NaN,
+    weapon: Object.freeze({ id: 's3-brush-mini', sourceMainActor: 'WeaponBrushMini', range: Infinity }),
+    weaponRunner: { rolling: true, cooldown: NaN, catalogState: null },
+    groundTeam: 2,
+  });
+  const brain = { _turfPaintLatch: true, react: NaN, strafeS: NaN, aimYaw: NaN, aimPitch: NaN, t: NaN };
+
+  assert.equal(applyBrushTurfPaint(null, G, actor, NaN, move, true, NaN, NaN), null);
+  assert.equal(applyBrushCombat(null, G, actor, NaN, move, {}), null);
+
+  // Rolling with string actor.id and NaN baseYaw must keep move finite
+  applyBrushTurfPaint(brain, G, actor, NaN, move, true, NaN, 0.7, { wantPaintNow: true, cache: { flankBias: NaN } });
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'move must stay finite with string id and NaN baseYaw');
+
+  // Combat with string actor.id and NaN ctx values must keep move and aimOut finite
+  actor.weaponRunner.rolling = false;
+  const aim = applyBrushCombat(brain, G, actor, NaN, move, {
+    dist: NaN, dx: NaN, dz: NaN, dy: 1.5, enemyVisible: true, aimed: true, off: NaN, inkFrac: NaN, wantYaw: NaN, wantPitch: NaN,
+  });
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'combat move must stay finite under string id and NaN ctx');
+  if (aim) {
+    assert.ok(Number.isFinite(aim.wantYaw) && Number.isFinite(aim.wantPitch), 'aimOut must stay finite');
+  }
+});
+
+test('applyBrushTurfPaint emerges cleanly from squid form before firing rising edge', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = makeMove(0, 1);
+  const actor = makeActor({ weapon: makeWeapon('normal'), form: 'squid', groundTeam: 1 });
+  const brain = { _turfPaintLatch: true, t: 1.0, ph1: 0.2 };
+
+  // Frame 1: submerged -> pops up without wasting rising edge or incrementing paintSwings
+  applyBrushTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, { wantPaintNow: true });
+  assert.equal(actor.intent.fire, false);
+  assert.equal(actor.intent.squid, false);
+  assert.equal(brain._brushAI.paintSwings, 0);
+
+  // Frame 2: emerged -> fires fresh rising edge cleanly
+  actor.form = 'human';
+  applyBrushTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, { wantPaintNow: true });
+  assert.equal(actor.intent.fire, true);
+  assert.equal(brain._brushAI.paintSwings, 1);
+});

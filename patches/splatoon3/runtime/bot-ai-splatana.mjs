@@ -16,19 +16,21 @@ const EPS = 1e-6;
 const FULL_CHARGE = 1.0 - 1e-5;
 const INV_UINT32 = 2.3283064365386963e-10; // 1 / 2^32
 
+function finite(v, fallback) {
+  return Number.isFinite(v) ? v : fallback;
+}
+
 function clamp(v, lo, hi) {
+  if (!Number.isFinite(v)) return lo;
   return v < lo ? lo : v > hi ? hi : v;
 }
 
 function wrapAngle(a) {
+  if (!Number.isFinite(a)) return 0;
   let r = a;
   while (r > Math.PI) r -= Math.PI * 2;
   while (r < -Math.PI) r += Math.PI * 2;
   return r;
-}
-
-function finite(v, fallback) {
-  return Number.isFinite(v) ? v : fallback;
 }
 
 export const SPLATANA_PROFILES = Object.freeze({
@@ -253,6 +255,39 @@ function initRuntimeFields(st, actorId) {
   st.turfStrafeTimer = 0.65 + nextRand01(st) * 0.65;
   st.swingJitter = nextRandSigned(st);
   st.spacingBreath = nextRandSigned(st) * 0.45;
+  st.life = null;
+}
+
+function resetSplatanaTransientState(st) {
+  st.plan = 'idle';
+  st.comboFollowupT = 0;
+  st.comboSlashesLeft = 0;
+  st.chargeHoldT = 0;
+  st.wasCharging = false;
+  st.lastCharge = 0;
+  st.turfPathCharge = false;
+  st.turfSwingCount = 0;
+  st.inStepBand = false;
+  st.inHorizBand = false;
+  st.inkRecovering = false;
+}
+
+function syncSplatanaLife(st, actor) {
+  const life = typeof actor.netLife === 'number' && Number.isFinite(actor.netLife)
+    ? actor.netLife
+    : null;
+  if (actor.alive === false) {
+    resetSplatanaTransientState(st);
+    st.life = life;
+    return false;
+  }
+  if (life !== null) {
+    if (st.life != null && st.life !== life) {
+      resetSplatanaTransientState(st);
+    }
+    st.life = life;
+  }
+  return true;
 }
 
 function getSplatanaState(brain, actorId) {
@@ -278,7 +313,7 @@ function getSplatanaState(brain, actorId) {
 function setMove2D(move, x, z) {
   if (!move) return;
   const len = Math.hypot(x, z);
-  if (len > 1e-4) {
+  if (Number.isFinite(len) && len > 1e-4) {
     if (typeof move.set === 'function') move.set(x / len, 0, z / len);
     else { move.x = x / len; move.y = 0; move.z = z / len; }
   } else {
@@ -386,7 +421,31 @@ export function applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, base
 
   const profile = resolveSplatanaProfile(actor.weapon);
   const st = getSplatanaState(brain, actor.id);
-  const safeDt = finite(dt, 1 / HZ);
+  if (!syncSplatanaLife(st, actor)) return null;
+  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+    st.chargeHoldT = 0;
+    st.turfPathCharge = false;
+    st.wasCharging = false;
+    st.lastCharge = 0;
+    st.inStepBand = false;
+    st.inHorizBand = false;
+    st.inkRecovering = false;
+    return null;
+  }
+  if (it.sub || brain._bombAim || wr.aimingSub) {
+    it.fire = false;
+    it.squid = false;
+    st.chargeHoldT = 0;
+    st.turfPathCharge = false;
+    st.wasCharging = false;
+    st.lastCharge = 0;
+    return null;
+  }
+
+  const safeDt = Number.isFinite(dt) && dt >= 0 ? dt : (1 / HZ);
+  inkFrac = finite(inkFrac, 0);
+  baseYaw = finite(baseYaw, 0);
+  const curCharge = finite(wr.charge, 0);
 
   // Reset combat-only timers when in turf paint mode
   st.comboFollowupT = 0;
@@ -445,7 +504,7 @@ export function applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, base
       if (inkFrac < 0.14 || !pitchReady) {
         it.fire = false;
         st.turfPathCharge = false;
-      } else if (wr.charge >= FULL_CHARGE) {
+      } else if (curCharge >= FULL_CHARGE) {
         // Release full-charge vertical path slash without accidental step-lunge lag
         it.fire = false;
         st.turfPathCharge = false;
@@ -455,7 +514,7 @@ export function applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, base
       }
     } else {
       // Standard horizontal turf slash: release immediately once charged past minimal frame
-      if (wr.charge >= 0.02 || inkFrac < 0.15) {
+      if (curCharge >= 0.02 || inkFrac < 0.15) {
         it.fire = (!pitchReady && inkFrac >= 0.15);
       } else {
         it.fire = true;
@@ -501,9 +560,9 @@ export function applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, base
   }
 
   st.wasCharging = !!wr.charging;
-  st.lastCharge = wr.charge || 0;
+  st.lastCharge = curCharge;
 
-  if (ctx && typeof ctx.wantYaw === 'number') {
+  if (ctx && Number.isFinite(ctx.wantYaw)) {
     const out = st.aimOut;
     out.wantYaw = ctx.wantYaw;
     out.wantPitch = profile.paintPitch;
@@ -530,20 +589,46 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
 
   const profile = resolveSplatanaProfile(actor.weapon);
   const st = getSplatanaState(brain, actor.id);
-  const safeDt = finite(dt, 1 / HZ);
+  if (!syncSplatanaLife(st, actor)) return null;
+  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+    st.chargeHoldT = 0;
+    st.turfPathCharge = false;
+    st.wasCharging = false;
+    st.lastCharge = 0;
+    st.inStepBand = false;
+    st.inHorizBand = false;
+    st.inkRecovering = false;
+    return null;
+  }
+  if (it.sub || brain._bombAim || wr.aimingSub) {
+    it.fire = false;
+    it.squid = false;
+    st.chargeHoldT = 0;
+    st.wasCharging = false;
+    st.lastCharge = 0;
+    return null;
+  }
 
-  const {
-    dist, range, dx, dz,
-    enemyVisible, aimed, off,
-    inkFrac, idealYaw, idealPitch,
-    wantYaw, wantPitch,
-  } = ctx;
+  const safeDt = Number.isFinite(dt) && dt >= 0 ? dt : (1 / HZ);
+  const dist = finite(ctx.dist, 0);
+  const range = Number.isFinite(ctx.range) && ctx.range > 0 ? ctx.range : 12;
+  const dx = finite(ctx.dx, 0);
+  const dz = finite(ctx.dz, 0);
+  const enemyVisible = Boolean(ctx.enemyVisible);
+  const aimed = Boolean(ctx.aimed);
+  const off = finite(ctx.off, 0);
+  const inkFrac = finite(ctx.inkFrac, 0);
+  const idealYaw = ctx.idealYaw;
+  const wantYaw = ctx.wantYaw;
+  const wantPitch = ctx.wantPitch;
+  const curCharge = finite(wr.charge, 0);
 
-  const safeDist = Math.max(dist || 0, 0.01);
-  const nx = (dx || 0) / safeDist;
-  const nz = (dz || 0) / safeDist;
-  const effHorizRange = Math.max(profile.horizRange, (range || 12) * 0.95);
-  const effVertRange = Math.max(profile.vertRange, (range || 12) * 1.15);
+  const safeDist = Math.max(dist, 0.01);
+  const dirLen = Math.hypot(dx, dz);
+  const nx = dirLen > 1e-4 ? dx / dirLen : 0;
+  const nz = dirLen > 1e-4 ? dz / dirLen : 0;
+  const effHorizRange = Math.max(profile.horizRange, range * 0.95);
+  const effVertRange = Math.max(profile.vertRange, range * 1.15);
 
   // Decay follow-up combo window
   if (st.comboFollowupT > 0) {
@@ -572,7 +657,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
   const canFight = Boolean(enemyVisible && (brain.react || 0) <= 0.08 && inkFrac > 0.04 && dist <= effVertRange * 1.06);
   const isCommittedCharge = Boolean(
     wr.charging &&
-    (wr.charge || 0) >= 0.35 &&
+    curCharge >= 0.35 &&
     st.plan !== 'horiz_spam' &&
     st.plan !== 'combo_followup'
   );
@@ -591,7 +676,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
         st.chargeHoldT = 0;
       } else {
         // Keep brief pre-charge while closing in or reacquiring
-        it.fire = (wr.charge || 0) < FULL_CHARGE;
+        it.fire = curCharge < FULL_CHARGE;
       }
     } else {
       it.fire = false;
@@ -607,7 +692,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     }
     st.plan = 'idle';
     st.wasCharging = !!wr.charging;
-    st.lastCharge = wr.charge || 0;
+    st.lastCharge = curCharge;
     return null;
   }
 
@@ -699,7 +784,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     const mvz = nz * -0.35 + nx * side * 0.92;
     setMove2D(move, mvx, mvz);
     st.wasCharging = !!wr.charging;
-    st.lastCharge = wr.charge || 0;
+    st.lastCharge = curCharge;
     return null;
   }
 
@@ -712,6 +797,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     subId === 'burst' &&
     !wr.charging &&
     !cs?.pending &&
+    !cs?.melee &&
     !actor.specialActive &&
     aimed &&
     dist >= 4.5 &&
@@ -725,12 +811,12 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     st.comboFollowupT = 0;
     st.comboSlashesLeft = 0;
     st.wasCharging = !!wr.charging;
-    st.lastCharge = wr.charge || 0;
+    st.lastCharge = curCharge;
     return null;
   }
 
   // --- Fire & Charge Execution ---
-  const aimYawRef = typeof actor.aimYaw === 'number' ? actor.aimYaw : idealYaw;
+  const aimYawRef = Number.isFinite(actor.aimYaw) ? actor.aimYaw : finite(idealYaw, 0);
   const side = updateHumanStrafe(st, profile, brain, safeDt);
   const strafeSign = side >= 0 ? 1 : -1;
 
@@ -757,7 +843,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
         it.fire = false;
       }
     } else {
-      if ((wr.charge || 0) < FULL_CHARGE) {
+      if (curCharge < FULL_CHARGE) {
         it.fire = true;
         st.chargeHoldT = 0;
       } else {
@@ -776,7 +862,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
   // --- Human-like Combat Movement, Weapon-Specific Spacing & Step-Lunge Control ---
   const prefDist = Math.min(effHorizRange * profile.prefDistRatio, profile.prefDistMax) + st.spacingBreath;
 
-  if (plan === 'step_slash' && wr.charging && (wr.charge || 0) >= profile.stepCommitCharge) {
+  if (plan === 'step_slash' && wr.charging && curCharge >= profile.stepCommitCharge) {
     // Disguise the lunge during early charge, then snap straight into aim direction (dot >= 0.95)
     // for the final ~5 frames so saberStepRequested() reliably triggers the 1-shot lunge!
     setMove2D(move, nx, nz);
@@ -813,13 +899,13 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
 
     // If about to release a non-stepped charged slash, keep dot(move, aimDir) < 0.80 across the
     // full 5-frame stick window so saberStepRequested() never misfires and adds 10-23F lunge lag.
-    if (plan === 'charge_slash' && wr.charging && (wr.charge || 0) >= profile.stepSuppressCharge) {
+    if (plan === 'charge_slash' && wr.charging && curCharge >= profile.stepSuppressCharge) {
       suppressForwardStep(move, aimYawRef, strafeSign);
     }
   }
 
   st.wasCharging = !!wr.charging;
-  st.lastCharge = wr.charge || 0;
+  st.lastCharge = curCharge;
 
   // --- Fair Projectile-Speed Lead Compensation for Slow Vertical Waves ---
   // Only uses target velocity when enemy is actively visible in the latest perception tick
@@ -829,12 +915,13 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     enemyVisible &&
     (brain.seeTimer || 0) > 1 + EPS &&
     brain.target?.vel &&
-    typeof wantYaw === 'number' &&
-    typeof idealYaw === 'number'
+    Number.isFinite(wantYaw) &&
+    Number.isFinite(idealYaw) &&
+    Number.isFinite(wantPitch)
   ) {
-    const tvx = brain.target.vel.x || 0;
-    const tvz = brain.target.vel.z || 0;
-    if (tvx * tvx + tvz * tvz > 0.04) {
+    const tvx = brain.target.vel.x;
+    const tvz = brain.target.vel.z;
+    if (Number.isFinite(tvx) && Number.isFinite(tvz) && tvx * tvx + tvz * tvz > 0.04) {
       const horizLead = safeDist / Math.max(profile.horizSpeed, 30);
       const vertLead = clamp(profile.chargeBulletDelay + safeDist / Math.max(profile.vertSpeed, 20), 0, 0.55);
       const extraLead = Math.max(0, vertLead - horizLead);
@@ -842,12 +929,14 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
         const predDx = dx + tvx * extraLead;
         const predDz = dz + tvz * extraLead;
         const predYaw = Math.atan2(predDx, predDz);
-        const yawShift = clamp(wrapAngle(predYaw - idealYaw), -0.35, 0.35);
-        // Preserve exact human aimError offset from bots.js: wantYaw = idealYaw + errYaw
-        const out = st.aimOut;
-        out.wantYaw = wrapAngle(wantYaw + yawShift);
-        out.wantPitch = wantPitch;
-        return out;
+        if (Number.isFinite(predYaw)) {
+          const yawShift = clamp(wrapAngle(predYaw - idealYaw), -0.35, 0.35);
+          // Preserve exact human aimError offset from bots.js: wantYaw = idealYaw + errYaw
+          const out = st.aimOut;
+          out.wantYaw = wrapAngle(wantYaw + yawShift);
+          out.wantPitch = wantPitch;
+          return out;
+        }
       }
     }
   }

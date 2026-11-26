@@ -69,7 +69,7 @@ export function createBotSpecialFrame(actor, intent, dt, options = {}, prepared)
   const ctx = beginBotSpecialContext(actor, intent, dt, options, prepared);
   if (!ctx) return null;
   const { brain } = ctx;
-  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));
+  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, finite(actor.yaw)));
   const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
   ctx.wantYaw = finite(options.wantYaw, actualYaw);
   ctx.wantPitch = finite(options.wantPitch, actualPitch);
@@ -99,7 +99,7 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
   // after LOS is lost. An active special must not inherit that live position;
   // hold the actual look unless its policy chooses a last-seen or world point.
   const holdLook = !!state && !visible;
-  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));
+  const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, finite(actor.yaw)));
   const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
   const previousDistance = finitePoint(actor.aimPoint) ? Math.hypot(actor.aimPoint.x - eye.x,
     actor.aimPoint.y - eye.y, actor.aimPoint.z - eye.z) : 6;
@@ -122,7 +122,7 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
     return true;
   };
   ctx.isAimed = (tolerance = 0.13) => {
-    const yaw = finite(brain?.aimYaw, finite(actor.aimYaw, actor.yaw));
+    const yaw = finite(brain?.aimYaw, finite(actor.aimYaw, finite(actor.yaw)));
     const pitch = finite(brain?.aimPitch, finite(actor.aimPitch));
     return Math.hypot(angleDifference(yaw, ctx.wantYaw), pitch - ctx.wantPitch) <= tolerance;
   };
@@ -160,6 +160,7 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
           // navigation height includes them, so probe the actual support too.
           if (!probe || typeof world.physics.raycast !== 'function') return false;
           origin.set(x, ground + 0.65, z);
+          probe.hit = false;
           world.physics.raycast(origin, down, 1.2, probe, true);
           y = probe.hit && probe.normal.y >= 0.68 ? probe.point.y : -Infinity;
         } else y = world.level.groundHeight(x, z, ground + 0.65);

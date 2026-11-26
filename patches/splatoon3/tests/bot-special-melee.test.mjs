@@ -187,3 +187,39 @@ test('Stamp full BotBrain closes a four-unit gap before its direct jump swing', 
   assert.ok(a.pos.z > 1, 'native movement closes the gap instead of hopping in place');
   assert.ok(hits.includes(100), 'native direct swing connects, not only its weak spray');
 });
+
+test('Stamp recovers from unqueued stampReleased lockup and moves when held-throw target leaves throwRange', async () => {
+  const t = await unreachableStamp();
+  for (let i = 0; i < 60 && !t.a.intent.sub; i++) t.step();
+  assert.equal(t.a.intent.sub, true);
+  // Target moves closer than throwRange (< 3WU): bot must keep holding sub and move instead of freezing.
+  t.e.pos.set(0, 1.6, t.a.pos.z + 2);
+  const ctxClose = t.step();
+  assert.equal(t.a.intent.sub, true, 'does not blindly release throw when target is inside 3WU');
+  assert.ok(Math.hypot(t.a.intent.move.x, t.a.intent.move.z) > 0, 'moves to re-enter throw range instead of freezing');
+  // Simulate a stale stampReleased without a queued native throw: advancing st.t must clear the lockup.
+  ctxClose.memory.stampAimThrow = false;
+  ctxClose.memory.stampReleased = true;
+  ctxClose.memory.stampReleasedAt = t.a._s3AllSpecialState.t - .05;
+  t.e.pos.set(0, 0, t.a.pos.z + 4);
+  const ctxRecovered = t.step();
+  assert.equal(ctxRecovered.memory.stampReleased, false, 'stale stampReleased clears when native throw was not queued');
+});
+
+test('Reefslider guards missing/NaN direction and non-finite dashT without crashing', async () => {
+  const t = await setup('reefslider', 12);
+  t.step();
+  assert.ok(t.a.specialActive);
+  const st = t.a._s3AllSpecialState;
+  st.phase = 'startup'; st.direction = null;
+  const ctxStartup = t.f.createBotSpecialContext(t.a, t.a.intent, 1 / 60, t.brain.target, { brain: t.brain, world: t.f.G, move: t.a.intent.move });
+  assert.doesNotThrow(() => t.f.driveMeleeSpecial(ctxStartup));
+  st.phase = 'dash'; st.dashT = NaN; st.direction = { x: 0, y: 0, z: 1 };
+  const ctxNanDashT = t.f.createBotSpecialContext(t.a, t.a.intent, 1 / 60, t.brain.target, { brain: t.brain, world: t.f.G, move: t.a.intent.move });
+  t.f.driveMeleeSpecial(ctxNanDashT);
+  assert.equal(t.a.intent.fire, false, 'non-finite dashT does not bypass the 15F cancel gate');
+  st.dashT = 20 / 60; st.direction = { x: NaN, y: 0, z: 1 };
+  const ctxNanDir = t.f.createBotSpecialContext(t.a, t.a.intent, 1 / 60, t.brain.target, { brain: t.brain, world: t.f.G, move: t.a.intent.move });
+  assert.doesNotThrow(() => t.f.driveMeleeSpecial(ctxNanDir));
+  assert.equal(t.a.intent.fire, true, 'non-finite dash direction fails closed by braking');
+});

@@ -183,10 +183,16 @@ function setMove(move, x, z) {
 }
 
 function resolveMatchTimeLeft(G, ctx) {
-  if (typeof ctx?.timeLeft === 'number') return ctx.timeLeft;
-  if (typeof G?.match?.time === 'number') return G.match.time;
-  if (typeof G?.timeLeft === 'number') return G.timeLeft;
+  if (Number.isFinite(ctx?.timeLeft)) return ctx.timeLeft;
+  if (Number.isFinite(G?.match?.time)) return G.match.time;
+  if (Number.isFinite(G?.timeLeft)) return G.timeLeft;
   return 120;
+}
+
+function resolveActorLife(actor) {
+  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
+  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;
+  return null;
 }
 
 /**
@@ -221,21 +227,26 @@ function phaseWave(seed, step) {
  */
 export function resolveRollerArchetype(weapon) {
   if (!weapon || typeof weapon !== 'object') return ROLLER_ARCHETYPES.normal;
-  const actorName = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
-  const wId = weapon.id || '';
+  const actorName =
+    weapon.sourceMainActor ||
+    weapon.catalogRecord?.sourceActor ||
+    weapon.catalogRecord?.sourceMainActor ||
+    '';
+  const wId = typeof weapon.id === 'string' ? weapon.id : '';
   const cached = _archetypeCache.get(weapon);
   if (cached && cached.actorName === actorName && cached.wId === wId) {
     return cached.arch;
   }
 
+  const lowerId = wId.toLowerCase();
   let arch = ROLLER_ARCHETYPES.normal;
-  if (actorName === 'WeaponRollerHeavy' || wId.includes('dynamo') || wId.includes('heavy')) {
+  if (actorName === 'WeaponRollerHeavy' || lowerId.includes('dynamo') || lowerId.includes('heavy')) {
     arch = ROLLER_ARCHETYPES.heavy;
-  } else if (actorName === 'WeaponRollerHunter' || wId.includes('flingza') || wId.includes('hunter')) {
+  } else if (actorName === 'WeaponRollerHunter' || lowerId.includes('flingza') || lowerId.includes('hunter')) {
     arch = ROLLER_ARCHETYPES.hunter;
-  } else if (actorName === 'WeaponRollerWide' || wId.includes('big_swig') || wId.includes('wide')) {
+  } else if (actorName === 'WeaponRollerWide' || lowerId.includes('big_swig') || lowerId.includes('wide')) {
     arch = ROLLER_ARCHETYPES.wide;
-  } else if (actorName === 'WeaponRollerCompact' || wId.includes('carbon') || wId.includes('compact')) {
+  } else if (actorName === 'WeaponRollerCompact' || lowerId.includes('carbon') || lowerId.includes('compact')) {
     arch = ROLLER_ARCHETYPES.compact;
   }
 
@@ -277,6 +288,15 @@ function isSquidLocked(wr, G) {
   return false;
 }
 
+function syncRollerLife(brain, actor) {
+  const life = resolveActorLife(actor);
+  if (life === null) return;
+  if (brain._rollerLife !== undefined && brain._rollerLife !== null && brain._rollerLife !== life) {
+    resetRollerTransientState(brain);
+  }
+  brain._rollerLife = life;
+}
+
 function ensureCombatState(brain, actor) {
   let st = brain._rollerCombatState;
   if (!st) {
@@ -291,6 +311,7 @@ function ensureCombatState(brain, actor) {
       aimOut: { wantYaw: 0, wantPitch: 0 },
     };
   }
+  syncRollerLife(brain, actor);
   return st;
 }
 
@@ -307,7 +328,26 @@ function ensurePaintState(brain, actor) {
       aimOut: { wantYaw: 0, wantPitch: 0 },
     };
   }
+  syncRollerLife(brain, actor);
   return st;
+}
+
+function resetRollerTransientState(brain) {
+  brain._rollerRollTime = 0;
+  brain._rollerSwimGap = 0;
+  const p = brain._rollerPaintState;
+  if (p) {
+    p.phase = 'idle';
+    p.timer = 0;
+    p.recoveringInk = false;
+  }
+  const c = brain._rollerCombatState;
+  if (c) {
+    c.phase = 'idle';
+    c.timer = 0;
+    c.wantVertical = false;
+    c.recoveringInk = false;
+  }
 }
 
 function setAimOut(aimOut, wantYaw, wantPitch) {
@@ -346,18 +386,51 @@ function computeNaturalSwimGap(arch, pState, onOwnInk, inkFrac, timeLeft) {
  */
 export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, ctx = {}) {
   const it = actor?.intent;
-  if (!it) return null;
+  if (!brain || !it) return null;
   const wr = actor.weaponRunner;
-  const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
-  const arch = resolveRollerArchetype(actor.weapon);
   const pState = ensurePaintState(brain, actor);
+  if (actor.alive === false || actor.superJumpState) {
+    resetRollerTransientState(brain);
+    it.fire = false;
+    it.jump = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.specialActive) {
+    resetRollerTransientState(brain);
+    return null;
+  }
+  if (it.special || it.sub || wr?.aimingSub) {
+    pState.phase = 'idle';
+    pState.timer = 0;
+    brain._rollerRollTime = 0;
+    it.fire = false;
+    it.jump = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.climbing) {
+    pState.phase = 'idle';
+    pState.timer = 0;
+    brain._rollerRollTime = 0;
+    it.fire = false;
+    return null;
+  }
+
+  const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
+  const safeInkFrac = Number.isFinite(inkFrac) ? clampVal(inkFrac, 0, 1) : 0;
+  inkFrac = safeInkFrac;
+  const arch = resolveRollerArchetype(actor.weapon);
   const cache = ctx?.cache || brain._turfMultiCache || null;
   const timeLeft = resolveMatchTimeLeft(G, ctx);
   const coolerPending = !!brain._coolerPickupPending;
-  const maxRollHold = typeof ctx?.profile?.rollHold === 'number' ? ctx.profile.rollHold : arch.rollHold;
+  const maxRollHold =
+    Number.isFinite(ctx?.profile?.rollHold) && ctx.profile.rollHold > 0
+      ? ctx.profile.rollHold
+      : arch.rollHold;
   const swinging = isRollerSwinging(wr);
   const rolling = !!wr?.rolling;
-  const cooldown = wr?.cooldown || 0;
+  const cooldown = Number.isFinite(wr?.cooldown) ? wr.cooldown : 0;
   const onOwnInk = actor.groundTeam === 1;
   const onEnemyInk = actor.groundTeam === 2;
   const needPaint = Boolean(brain._turfPaintLatch || !onOwnInk || (timeLeft <= 6.5 && inkFrac > 0.18));
@@ -366,13 +439,19 @@ export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
   if (brain._rollerCombatState && brain._rollerCombatState.phase !== 'idle') {
     brain._rollerCombatState.phase = 'idle';
     brain._rollerCombatState.timer = 0;
+    brain._rollerCombatState.wantVertical = false;
   }
 
   // 1. Track active roll duration (preserves existing _rollerRollTime / _rollerSwimGap contract)
   if (rolling) {
-    brain._rollerRollTime = (brain._rollerRollTime || 0) + stepDt;
+    brain._rollerRollTime = (Number.isFinite(brain._rollerRollTime) ? brain._rollerRollTime : 0) + stepDt;
     pState.phase = 'idle';
     pState.timer = 0;
+  } else {
+    brain._rollerRollTime = 0;
+  }
+  if (!Number.isFinite(brain._rollerSwimGap)) {
+    brain._rollerSwimGap = 0;
   }
 
   // Compute natural roll hold with lightweight phase jitter (after initial cycle) and turf context.
@@ -545,7 +624,7 @@ export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     }
     if (pState.phase === 'jump_vert') {
       pState.timer += stepDt;
-      if (!actor.grounded || pState.timer >= 0.03) {
+      if (!actor.grounded || pState.timer >= 0.08) {
         it.fire = true;
         it.squid = false;
         it.jump = false;
@@ -640,6 +719,9 @@ export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
 
   // 9c. Splat / Carbon / Big Swig (and dry-foot fallback for Dynamo/Flingza):
   // Horizontal flick into calibrated roll hold.
+  // Clear any stale Flingza/Dynamo phase if we fell through after stepping off own ink or into endgame.
+  pState.phase = 'idle';
+  pState.timer = 0;
   // Keep fire held continuously through cooldown <= 0.25 so the drum transitions smoothly into rolling
   // instead of aborting into squid during post-flick cooldown!
   if (cooldown > 0.25) {
@@ -669,7 +751,7 @@ export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
 
 function computePaintYaw(baseYaw, cache, flickCount, seed, maxOffset) {
   if (!Number.isFinite(baseYaw)) return 0;
-  const flankBias = cache?.flankBias || 0;
+  const flankBias = Number.isFinite(cache?.flankBias) ? cache.flankBias : 0;
   // Smooth quasi-periodic fan using golden-angle progression (avoids robotic 3-step loop)
   const fan = phaseWave(seed, flickCount) * maxOffset * 0.72;
   if (Math.abs(flankBias) > 0.05) {
@@ -692,39 +774,82 @@ function computePaintYaw(baseYaw, cache, flickCount, seed, maxOffset) {
 export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
-  if (!it || !wr) return null;
+  if (!brain || !it || !wr) return null;
+
+  const cState = ensureCombatState(brain, actor);
+  if (actor.alive === false || actor.superJumpState) {
+    resetRollerTransientState(brain);
+    it.fire = false;
+    it.jump = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.specialActive) {
+    resetRollerTransientState(brain);
+    return null;
+  }
+  if (it.special || it.sub || wr.aimingSub) {
+    cState.phase = 'idle';
+    cState.timer = 0;
+    cState.wantVertical = false;
+    brain._rollerRollTime = 0;
+    it.fire = false;
+    it.jump = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.climbing) {
+    cState.phase = 'idle';
+    cState.timer = 0;
+    cState.wantVertical = false;
+    brain._rollerRollTime = 0;
+    it.fire = false;
+    return null;
+  }
 
   const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
   const arch = resolveRollerArchetype(actor.weapon);
-  const cState = ensureCombatState(brain, actor);
   cState.tempoTime += stepDt;
 
-  const dist = typeof ctx.dist === 'number' ? ctx.dist : 6;
-  const dx = typeof ctx.dx === 'number' ? ctx.dx : 0;
-  const dz = typeof ctx.dz === 'number' ? ctx.dz : 1;
-  const dy = typeof ctx.dy === 'number'
+  const dist = Number.isFinite(ctx?.dist) && ctx.dist >= 0 ? ctx.dist : 6;
+  const dx = Number.isFinite(ctx?.dx) ? ctx.dx : 0;
+  const dz = Number.isFinite(ctx?.dz) ? ctx.dz : 1;
+  const dy = Number.isFinite(ctx?.dy)
     ? ctx.dy
-    : (brain.target?.pos && actor.pos ? brain.target.pos.y - actor.pos.y : 0);
-  const enemyVisible = !!ctx.enemyVisible;
-  const aimed = !!ctx.aimed;
-  const off = typeof ctx.off === 'number' ? ctx.off : (aimed ? 0.05 : 0.4);
-  const inkFrac = typeof ctx.inkFrac === 'number' ? ctx.inkFrac : 1;
-  const wantYaw = typeof ctx.wantYaw === 'number' ? ctx.wantYaw : (brain.aimYaw || 0);
-  const wantPitch = typeof ctx.wantPitch === 'number' ? ctx.wantPitch : (brain.aimPitch || 0);
+    : (Number.isFinite(brain.target?.pos?.y) && Number.isFinite(actor.pos?.y)
+      ? brain.target.pos.y - actor.pos.y
+      : 0);
+  const enemyVisible = !!ctx?.enemyVisible;
+  const aimed = !!ctx?.aimed;
+  const off = Number.isFinite(ctx?.off) ? ctx.off : (aimed ? 0.05 : 0.4);
+  const inkFrac = typeof ctx?.inkFrac === 'number'
+    ? (Number.isFinite(ctx.inkFrac) ? clampVal(ctx.inkFrac, 0, 1) : 0)
+    : 1;
+  const wantYaw = Number.isFinite(ctx?.wantYaw)
+    ? ctx.wantYaw
+    : (Number.isFinite(brain.aimYaw) ? brain.aimYaw : 0);
+  const wantPitch = Number.isFinite(ctx?.wantPitch)
+    ? ctx.wantPitch
+    : (Number.isFinite(brain.aimPitch) ? brain.aimPitch : 0);
 
-  const nx = dx / Math.max(dist, 0.01);
-  const nz = dz / Math.max(dist, 0.01);
-  const baseSide = brain.strafeS || brain.strafe || 0.65;
+  const horizLen = Math.hypot(dx, dz);
+  const denom = Math.max(dist, horizLen, 0.01);
+  const nx = dx / denom;
+  const nz = dz / denom;
+  const baseSide =
+    Number.isFinite(brain.strafeS) && brain.strafeS !== 0
+      ? brain.strafeS
+      : (Number.isFinite(brain.strafe) && brain.strafe !== 0 ? brain.strafe : 0.65);
   // Subtle human tempo wave modulates strafe amplitude smoothly without sudden robotic reversals
   const tempoWave = Math.sin(cState.tempoTime * arch.strafeFreq + cState.seed);
   const side = baseSide * (1 + tempoWave * 0.14);
   const onOwnInk = actor.groundTeam === 1;
   const onEnemyInk = actor.groundTeam === 2;
-  const hpFrac = typeof actor.hp === 'number' ? actor.hp / 100 : 1;
+  const hpFrac = Number.isFinite(actor.hp) ? actor.hp / 100 : 1;
   const swinging = isRollerSwinging(wr);
   const rolling = !!wr.rolling;
-  const cooldown = wr.cooldown || 0;
-  const reactReady = (brain.react || 0) <= 0;
+  const cooldown = Number.isFinite(wr.cooldown) ? wr.cooldown : 0;
+  const reactReady = (Number.isFinite(brain.react) ? brain.react : 0) <= 0;
 
   // Reset paint roll tracking when entering combat
   brain._rollerRollTime = 0;
@@ -778,16 +903,17 @@ export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
   // 3. Ongoing flick commitment (survives squid -> kid emergeDelay without 1-frame tap drop!)
   if (cState.phase === 'commit_flick') {
     cState.timer += stepDt;
-    if (cooldown > 0.02 || cState.timer >= 0.16 || inkFrac < 0.03) {
+    if (cooldown > 0.02 || cState.timer >= 0.16 || inkFrac < 0.03 || isRollStopMainLocked(wr, G)) {
       cState.phase = 'idle';
       cState.timer = 0;
+      cState.wantVertical = false;
       it.fire = false;
     } else {
       it.fire = true;
       it.squid = false;
       it.jump = false;
-      if (cState.wantVertical) {
-        return setAimOut(cState.aimOut, wantYaw, wantPitch + arch.vertPitchBias);
+      if (cState.wantVertical && actor.grounded !== true) {
+        return setAimOut(cState.aimOut, wantYaw, clampVal(wantPitch + arch.vertPitchBias, -1.1, 1.0));
       }
       return null;
     }
@@ -796,24 +922,38 @@ export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
   // 4. Ongoing jump-to-vertical flick transition (B -> air ZR edge)
   if (cState.phase === 'jump_vert') {
     cState.timer += stepDt;
-    if (inkFrac < arch.minVertFlickInk || (!enemyVisible && (brain.lostTimer || 0) > 0.45)) {
+    if (
+      inkFrac < arch.minVertFlickInk ||
+      isRollStopMainLocked(wr, G) ||
+      (!enemyVisible && (brain.lostTimer || 0) > 0.45)
+    ) {
       cState.phase = 'idle';
       cState.timer = 0;
+      cState.wantVertical = false;
       it.fire = false;
       it.jump = false;
-    } else if (!actor.grounded || cState.timer >= 0.03) {
-      // Airborne (or timed out trying to jump): press ZR now to commit vertical flick!
+    } else if (!actor.grounded) {
+      // Airborne: press ZR now to commit vertical flick!
       it.fire = true;
       it.squid = false;
       it.jump = false;
       cState.phase = 'commit_flick';
       cState.timer = 0;
-      return setAimOut(cState.aimOut, wantYaw, wantPitch + arch.vertPitchBias);
+      return setAimOut(cState.aimOut, wantYaw, clampVal(wantPitch + arch.vertPitchBias, -1.1, 1.0));
+    } else if (cState.timer >= 0.08) {
+      // Jump failed to take off (e.g. ceiling or grounded lock): abort vertical flick cleanly
+      // instead of firing a grounded horizontal flick with vertical pitch bias.
+      cState.phase = 'idle';
+      cState.timer = 0;
+      cState.wantVertical = false;
+      it.fire = false;
+      it.jump = false;
+      return null;
     } else {
       it.fire = false;
       it.squid = false;
       it.jump = true;
-      return setAimOut(cState.aimOut, wantYaw, wantPitch + arch.vertPitchBias);
+      return setAimOut(cState.aimOut, wantYaw, clampVal(wantPitch + arch.vertPitchBias, -1.1, 1.0));
     }
   }
 
@@ -942,7 +1082,7 @@ export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
       cState.phase = 'jump_vert';
       cState.timer = 0;
       cState.wantVertical = true;
-      return setAimOut(cState.aimOut, wantYaw, wantPitch + arch.vertPitchBias);
+      return setAimOut(cState.aimOut, wantYaw, clampVal(wantPitch + arch.vertPitchBias, -1.1, 1.0));
     }
 
     // Commit horizontal flick (or airborne vertical flick) and hold through emergeDelay
@@ -952,7 +1092,9 @@ export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
     cState.phase = 'commit_flick';
     cState.timer = 0;
     cState.wantVertical = wantVertical;
-    return wantVertical ? setAimOut(cState.aimOut, wantYaw, wantPitch + arch.vertPitchBias) : null;
+    return wantVertical
+      ? setAimOut(cState.aimOut, wantYaw, clampVal(wantPitch + arch.vertPitchBias, -1.1, 1.0))
+      : null;
   }
 
   // 8. Non-firing combat movement: stealth angled approach, spacing, or low-HP reposition

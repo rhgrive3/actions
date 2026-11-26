@@ -247,10 +247,38 @@ export function resolveBrellaArchetype(weapon) {
   return arch;
 }
 
-function getBrellaState(brain) {
+function finite(value, fallback) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function resetBrellaState(st, life) {
+  st.life = life;
+  st.mode = MODE_TAP;
+  st.lastCtx = CTX_NONE;
+  st.holdT = 0;
+  st.maxHoldT = 0;
+  st.guardCd = 0;
+  st.purgeCd = 0;
+  st.releaseTicks = 0;
+  st.prevFire = false;
+  st.prevNaked = 0;
+  st.strafeSign = 1;
+  st.strafeFlipT = 0.45;
+}
+
+function clearBrellaHold(st) {
+  st.mode = MODE_TAP;
+  st.holdT = 0;
+  st.maxHoldT = 0;
+  st.releaseTicks = 0;
+  st.prevFire = false;
+}
+
+function getBrellaState(brain, actor) {
   let st = brain._brellaAiState;
   if (!st) {
     st = brain._brellaAiState = {
+      life: actor?.netLife,
       mode: MODE_TAP,
       lastCtx: CTX_NONE,
       holdT: 0,
@@ -263,12 +291,31 @@ function getBrellaState(brain) {
       strafeSign: 1,
       strafeFlipT: 0.45,
     };
+  } else if (actor && actor.netLife !== undefined && st.life !== actor.netLife) {
+    if (st.life !== undefined) {
+      resetBrellaState(st, actor.netLife);
+    } else {
+      st.life = actor.netLife;
+    }
   }
   return st;
 }
 
+function getBrellaShotInkFrac(weapon) {
+  const catConsume = weapon?.catalogRecord?.parameters?.spl__WeaponShelterShotgunParam?.InkConsume;
+  if (Number.isFinite(catConsume) && catConsume > 0 && catConsume < 1) {
+    return catConsume;
+  }
+  const perShot = weapon?.inkPerShot;
+  if (Number.isFinite(perShot) && perShot > 0) {
+    const frac = perShot > 1 ? perShot / 100 : perShot;
+    if (frac > 0 && frac < 1) return frac;
+  }
+  return 0.02;
+}
+
 function setMoveXZ(move, x, z) {
-  if (!move) return;
+  if (!move || !Number.isFinite(x) || !Number.isFinite(z)) return;
   if (typeof move.set === 'function') move.set(x, 0, z);
   else {
     move.x = x;
@@ -277,8 +324,8 @@ function setMoveXZ(move, x, z) {
 }
 
 function resolveMatchTimeLeft(G) {
-  if (typeof G?.match?.time === 'number') return G.match.time;
-  if (typeof G?.timeLeft === 'number') return G.timeLeft;
+  if (Number.isFinite(G?.match?.time)) return G.match.time;
+  if (Number.isFinite(G?.timeLeft)) return G.timeLeft;
   return 120;
 }
 
@@ -291,14 +338,14 @@ function getPrevFire(actor, st) {
 
 function isCanopyReady(cs) {
   if (!cs) return true;
-  if ((cs.naked || 0) > EPS) return false;
+  if (finite(cs.naked, 0) > EPS) return false;
   if (cs.canopy && cs.canopy.launched) return false;
   return true;
 }
 
 function getCanopyHp(cs, arch) {
-  if (cs && cs.canopy && typeof cs.canopy.hp === 'number') return cs.canopy.hp;
-  if (cs && (cs.naked || 0) > EPS) return 0;
+  if (cs && cs.canopy && Number.isFinite(cs.canopy.hp)) return cs.canopy.hp;
+  if (cs && finite(cs.naked, 0) > EPS) return 0;
   return arch.canopyHp;
 }
 
@@ -330,9 +377,32 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
   const wr = actor.weaponRunner;
   const cs = wr?.catalogState;
   const arch = resolveBrellaArchetype(actor.weapon);
-  const st = getBrellaState(brain);
+  const st = getBrellaState(brain, actor);
+
+  if (actor.alive === false) {
+    resetBrellaState(st, actor.netLife);
+    return;
+  }
+  if (actor.superJumpState || actor.climbing || actor.specialActive) {
+    clearBrellaHold(st);
+    return;
+  }
+  if (it.special) {
+    if (st.mode === MODE_GUARD || st.mode === MODE_PURGE) enterRelease(st, it);
+    st.prevFire = false;
+    return;
+  }
+  if (it.sub || brain._bombAim || brain._releaseBomb) {
+    if (st.mode === MODE_GUARD || st.mode === MODE_PURGE) enterRelease(st, it);
+    else it.fire = false;
+    it.squid = false;
+    st.prevFire = false;
+    return;
+  }
 
   const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / HZ;
+  const safeInk = finite(inkFrac, 0);
+  const minPaintInk = Math.max(arch.paintInkFloor, getBrellaShotInkFrac(actor.weapon));
   st.guardCd = Math.max(0, st.guardCd - safeDt);
   st.purgeCd = Math.max(0, st.purgeCd - safeDt);
 
@@ -350,11 +420,12 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     : (typeof brain._turfPaintValidated === 'boolean' ? brain._turfPaintValidated : true);
   const wantPaintNow = typeof ctx.wantPaintNow === 'boolean'
     ? ctx.wantPaintNow
-    : Boolean(brain._turfPaintLatch && pitchReady && inkFrac > arch.paintInkFloor && (brain.paintPause || 0) <= 0);
+    : Boolean(brain._turfPaintLatch && pitchReady && safeInk > minPaintInk && (brain.paintPause || 0) <= 0);
 
-  const cooldown = wr?.cooldown || 0;
+  const cooldown = Math.max(0, finite(wr?.cooldown, 0));
   const pending = !!cs?.pending;
-  const naked = cs?.naked || 0;
+  const naked = Math.max(0, finite(cs?.naked, 0));
+  const canopyLaunched = !!cs?.canopy?.launched;
   const canopyJustSpent = naked > EPS && st.prevNaked <= EPS;
   st.prevNaked = naked;
 
@@ -367,19 +438,19 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
   if (arch.continuousAutoFire) {
     st.mode = MODE_TAP;
     st.holdT = 0;
-    if (wantPaintNow && pitchReady && inkFrac > arch.paintInkFloor) {
+    if (wantPaintNow && pitchReady && safeInk > minPaintInk) {
       it.fire = true;
       it.squid = false;
     } else {
       it.fire = false;
-      if (!coolerPending && onOwnInk && wantMove && (!wantPaintNow || inkFrac <= arch.paintInkFloor)) {
+      if (!coolerPending && onOwnInk && wantMove && (!wantPaintNow || safeInk <= minPaintInk)) {
         it.squid = true;
       }
     }
 
     // Subtle extra lateral glide for Undercover Brella's 0.72 strafe speed
-    if (it.fire && wantMove && arch.paintStrafeBias > 0 && move && typeof move.x === 'number' && typeof move.z === 'number') {
-      const sign = (cache?.flankBias || 0) >= 0 ? 1 : -1;
+    if (it.fire && wantMove && arch.paintStrafeBias > 0 && move && Number.isFinite(move.x) && Number.isFinite(move.z) && Number.isFinite(baseYaw)) {
+      const sign = finite(cache?.flankBias, 0) >= 0 ? 1 : -1;
       const perpX = Math.cos(baseYaw) * sign;
       const perpZ = -Math.sin(baseYaw) * sign;
       const mx = move.x + perpX * arch.paintStrafeBias;
@@ -410,9 +481,10 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     const minInkDuringPurge = arch.key === 'wide' ? 0.22 : 0.16;
     if (
       canopyJustSpent ||
+      canopyLaunched ||
       naked > EPS ||
       st.holdT >= st.maxHoldT ||
-      inkFrac < minInkDuringPurge ||
+      safeInk < minInkDuringPurge ||
       !pitchReady
     ) {
       st.purgeCd = arch.paintPurgeCdS;
@@ -427,7 +499,7 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
   }
 
   // Decide whether to initiate a turf lane purge (wide / focus only; never normal)
-  const effOwn = cache?.multiActive ? (cache.effOwn || 0) : 0;
+  const effOwn = cache?.multiActive ? finite(cache.effOwn, 0) : 0;
   const shouldStartPurge =
     arch.paintUsePurge &&
     arch.canPurge &&
@@ -437,7 +509,7 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     cooldown <= EPS &&
     !prevFire &&
     isCanopyReady(cs) &&
-    inkFrac >= arch.paintPurgeMinInk &&
+    safeInk >= arch.paintPurgeMinInk &&
     effOwn < arch.paintPurgeMaxOwn &&
     st.purgeCd <= 0 &&
     timeLeft > 2.5;
@@ -453,7 +525,7 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
   }
 
   // Default & Splat Brella (normal): strict tap-fire shotgun cadence (never locks canopy open)
-  if (wantPaintNow && pitchReady && cooldown <= EPS && !pending && !prevFire) {
+  if (wantPaintNow && pitchReady && safeInk > minPaintInk && cooldown <= EPS && !pending && !prevFire) {
     it.fire = true;
     it.squid = false;
   } else if (prevFire) {
@@ -500,7 +572,28 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
 
   const cs = wr.catalogState;
   const arch = resolveBrellaArchetype(w);
-  const st = getBrellaState(brain);
+  const st = getBrellaState(brain, actor);
+
+  if (actor.alive === false) {
+    resetBrellaState(st, actor.netLife);
+    return null;
+  }
+  if (actor.superJumpState || actor.climbing || actor.specialActive) {
+    clearBrellaHold(st);
+    return null;
+  }
+  if (it.special) {
+    if (st.mode === MODE_GUARD || st.mode === MODE_PURGE) enterRelease(st, it);
+    st.prevFire = false;
+    return null;
+  }
+  if (it.sub || brain._bombAim || brain._releaseBomb) {
+    if (st.mode === MODE_GUARD || st.mode === MODE_PURGE) enterRelease(st, it);
+    else it.fire = false;
+    it.squid = false;
+    st.prevFire = false;
+    return null;
+  }
 
   const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / HZ;
   st.guardCd = Math.max(0, st.guardCd - safeDt);
@@ -518,28 +611,37 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     st.lastCtx = CTX_COMBAT;
   }
 
-  const safeRange = Math.max(4, range || w?.range || 12.5);
+  const rawRange = Number.isFinite(range) && range > 0 ? range : (Number.isFinite(w?.range) && w.range > 0 ? w.range : 12.5);
+  const safeRange = Math.max(4, rawRange);
+  const safeDist = Number.isFinite(dist) && dist >= 0 ? dist : Infinity;
+  const safeDx = finite(dx, 0);
+  const safeDz = finite(dz, 0);
+  const safeInk = finite(inkFrac, 0);
+  const minShotInk = getBrellaShotInkFrac(w);
   const engageReach = safeRange * arch.engageRangeFrac;
   const prefMin = safeRange * arch.prefMinDistFrac;
   const prefMax = safeRange * arch.prefMaxDistFrac;
 
-  const cooldown = wr.cooldown || 0;
+  const cooldown = Math.max(0, finite(wr.cooldown, 0));
   const pending = !!cs?.pending;
-  const naked = cs?.naked || 0;
+  const naked = Math.max(0, finite(cs?.naked, 0));
+  const canopyLaunched = !!cs?.canopy?.launched;
   const canopyJustSpent = naked > EPS && st.prevNaked <= EPS;
   st.prevNaked = naked;
 
   const prevFire = getPrevFire(actor, st);
   const onOwnInk = actor.groundTeam === 1;
   const reactReady = (brain.react || 0) <= 0;
-  const lastDamage = typeof actor.lastDamage === 'number' ? actor.lastDamage : 9;
-  const hp = typeof actor.hp === 'number' ? actor.hp : 100;
+  const lastDamage = finite(actor.lastDamage, 9);
+  const hp = finite(actor.hp, 100);
 
   // Unit direction to target (only used when enemyVisible; never peeks hidden enemies)
-  const invDist = 1 / Math.max(dist || 0, 0.01);
-  const nx = (dx || 0) * invDist;
-  const nz = (dz || 0) * invDist;
-  const strafeDir = brain.strafeS ? (brain.strafeS >= 0 ? 1 : -1) : st.strafeSign;
+  const invDist = Number.isFinite(safeDist) ? 1 / Math.max(safeDist, 0.01) : 0;
+  const nx = safeDx * invDist;
+  const nz = safeDz * invDist;
+  const strafeDir = Number.isFinite(brain.strafeS) && brain.strafeS !== 0
+    ? (brain.strafeS > 0 ? 1 : -1)
+    : st.strafeSign;
 
   // 1. Undercover Brella (compact): continuous shielded auto-fire
   if (arch.continuousAutoFire) {
@@ -553,7 +655,7 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     }
 
     const canopyBroken = naked > EPS;
-    const lowHpRetreat = canopyBroken && hp < arch.nakedRetreatHp && dist < safeRange * 0.85;
+    const lowHpRetreat = canopyBroken && hp < arch.nakedRetreatHp && safeDist < safeRange * 0.85;
 
     if (lowHpRetreat) {
       // Canopy broken & low HP: disengage briefly on own ink rather than trading naked
@@ -567,26 +669,26 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
       return null;
     }
 
-    if (reactReady && aimed && inkFrac > 0.04 && dist < engageReach) {
+    if (reactReady && aimed && safeInk >= Math.max(0.04, minShotInk) - EPS && safeDist < engageReach) {
       // Hold fire continuously so canopy stays deployed while auto-firing every 26F
       it.fire = true;
       it.squid = false;
     } else {
       it.fire = false;
-      if (dist > safeRange * arch.combatSwimApproachFrac && onOwnInk) {
+      if (safeDist > safeRange * arch.combatSwimApproachFrac && !pending && onOwnInk) {
         it.squid = true;
       }
     }
 
     // Nimble 0.72 strafe & spacing (kite harder if canopy is broken)
-    if (dist < prefMin || (canopyBroken && dist < prefMax)) {
+    if (safeDist < prefMin || (canopyBroken && safeDist < prefMax)) {
       const backW = canopyBroken ? 0.75 : 0.55;
       const sideW = arch.combatStrafeWeight;
       const mvx = -nx * backW - nz * strafeDir * sideW;
       const mvz = -nz * backW + nx * strafeDir * sideW;
       const ml = Math.hypot(mvx, mvz);
       if (ml > 0.01) setMoveXZ(move, mvx / ml, mvz / ml);
-    } else if (dist <= engageReach) {
+    } else if (safeDist <= engageReach) {
       const sideW = arch.combatStrafeWeight;
       const mvx = -nz * strafeDir * sideW;
       const mvz = nx * strafeDir * sideW;
@@ -603,6 +705,12 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
   if (!enemyVisible) {
     if (st.mode === MODE_GUARD || st.mode === MODE_PURGE) {
       enterRelease(st, it);
+    } else if (st.mode === MODE_RELEASE) {
+      it.fire = false;
+      st.releaseTicks -= 1;
+      if (st.releaseTicks <= 0 && !prevFire) {
+        st.mode = MODE_TAP;
+      }
     } else if (prevFire) {
       it.fire = false;
     }
@@ -627,11 +735,12 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     const canopyHp = getCanopyHp(cs, arch);
     if (
       canopyJustSpent ||
+      canopyLaunched ||
       naked > EPS ||
       st.holdT >= st.maxHoldT ||
       canopyHp < arch.combatGuardMinHp * 0.65 ||
-      inkFrac < 0.18 ||
-      dist > safeRange * 1.25
+      safeInk < 0.18 ||
+      safeDist > safeRange * 1.25
     ) {
       st.guardCd = arch.combatGuardCdS;
       enterRelease(st, it);
@@ -657,10 +766,11 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     const minInkDuringPurge = arch.key === 'wide' ? 0.20 : 0.15;
     if (
       canopyJustSpent ||
+      canopyLaunched ||
       naked > EPS ||
       st.holdT >= st.maxHoldT ||
-      inkFrac < minInkDuringPurge ||
-      dist < safeRange * 0.32
+      safeInk < minInkDuringPurge ||
+      safeDist < safeRange * 0.32
     ) {
       st.purgeCd = arch.combatPurgeCdS;
       enterRelease(st, it);
@@ -695,10 +805,10 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     cooldown <= EPS &&
     !prevFire &&
     st.purgeCd <= 0 &&
-    inkFrac >= arch.combatPurgeMinInk &&
-    dist >= safeRange * arch.combatPurgeMinDistFrac &&
-    dist <= safeRange * arch.combatPurgeMaxDistFrac &&
-    (arch.key === 'wide' || lastDamage < 0.30 || dist >= safeRange * 0.72);
+    safeInk >= arch.combatPurgeMinInk &&
+    safeDist >= safeRange * arch.combatPurgeMinDistFrac &&
+    safeDist <= safeRange * arch.combatPurgeMaxDistFrac &&
+    (arch.key === 'wide' || lastDamage < 0.30 || safeDist >= safeRange * 0.72);
 
   if (shouldCombatPurge) {
     st.mode = MODE_PURGE;
@@ -719,8 +829,8 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     canopyHp >= arch.combatGuardMinHp &&
     st.guardCd <= 0 &&
     lastDamage < 0.22 &&
-    inkFrac >= arch.combatGuardMinInk &&
-    dist < safeRange * 1.15 &&
+    safeInk >= arch.combatGuardMinInk &&
+    safeDist < safeRange * 1.15 &&
     (prevFire || (cooldown <= EPS && !pending && reactReady && aimed));
 
   if (shouldReactiveGuard) {
@@ -735,7 +845,7 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
   }
 
   // 3c. Core shotgun tap-fire (strict rising-edge fire so canopy never locks out shots)
-  if (reactReady && aimed && inkFrac > 0.02 && dist < engageReach) {
+  if (reactReady && aimed && safeInk >= minShotInk - EPS && safeInk > 0.02 && safeDist < engageReach) {
     it.fire = cooldown <= EPS && !pending && !prevFire;
     if (it.fire) it.squid = false;
   } else if (it.fire && prevFire) {
@@ -745,7 +855,7 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
   }
 
   // 4. Spacing & between-shot squid mobility
-  if (arch.key === 'focus' && dist < prefMin && !it.fire) {
+  if (arch.key === 'focus' && safeDist < prefMin && !it.fire) {
     // Recycled Brella 24: maintain tighter mid-range spacing (3 deg spread, 90 dmg)
     const mvx = -nx * 0.65 - nz * strafeDir * arch.combatStrafeWeight;
     const mvz = -nz * 0.65 + nx * strafeDir * arch.combatStrafeWeight;
@@ -754,7 +864,7 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
   } else if (arch.combatSwimBetweenShots && !it.fire && !pending && cooldown > 0.18 && onOwnInk) {
     // Tenta Brella (wide): squid step between slow 51F shots
     it.squid = true;
-  } else if (dist > safeRange * arch.combatSwimApproachFrac && !it.fire && onOwnInk) {
+  } else if (safeDist > safeRange * arch.combatSwimApproachFrac && !it.fire && !pending && onOwnInk) {
     // Close distance in squid form on own ink (matches baseline Splat Brella approach)
     it.squid = true;
   }

@@ -242,3 +242,91 @@ test('full BotBrain Zipcaster cancels a held charge on target loss without an ac
  assert.equal(shots,before,'target loss cancels rather than fires the stored charge');
  assert.equal(a.form,'squid');
 });
+
+
+test('Booyah Bomb holds clean sub=false during queued throw windup and charges when charge is undefined',async()=>{
+ const x=await setup('booyahBomb',15);
+ // During throw windup (s.throwAt !== undefined), it.sub must stay false instead of oscillating.
+ const s=x.a._s3AllSpecialState;
+ s.charge=1;s.phase='ready';s.held.sub=false;s.throwAt=s.t+13/60;
+ for(let i=0;i<5;i++){
+  x.drive({apply:false});
+  assert.equal(x.a.intent.sub,false,'no sub oscillation during queued throw windup');
+ }
+ // When s.charge is undefined and phase is not ready, bot must cheer instead of skipping charge.
+ delete s.throwAt;s.charge=undefined;s.phase='charge';s.t=1;s.nextCheer=0;s.held.booyah=false;
+ x.drive({apply:false});
+ assert.equal(x.a.intent.booyah,true);
+ assert.equal(x.a.intent.sub,false);
+});
+
+test('Crab Tank hysteresis prevents ball/tank mode oscillation across the 6m boundary',async()=>{
+ const x=await setup('crabTank',5.8);
+ x.drive({apply:false});
+ assert.equal(x.a.intent.squid,true,'enters ball mode below 6m');
+ // Jitter just past 6m must stay in ball mode instead of oscillating into 20F exit lockout.
+ x.enemy.pos.set(0,0,6.2);
+ x.drive({apply:false});
+ assert.equal(x.a.intent.squid,true,'hysteresis holds ball mode across 6m jitter');
+ assert.equal(x.a.intent.fire,false);
+ // Once hold timer elapses and target is outside the 7.5m exit band, it returns to tank mode.
+ x.enemy.pos.set(0,0,10);
+ for(let i=0;i<30;i++)x.drive({dt:1/60,apply:false});
+ assert.equal(x.a.intent.squid,false,'exits ball mode once threat and hysteresis clear');
+});
+
+test('Inkjet rejects water/void hazard flight and handles invalid origin without crashing',async()=>{
+ const x=await setup('inkjet',28);
+ x.a.pos.set(0,5,0);
+ // Void floor (<= -100) must stop flight.
+ const origGround=x.f.G.level.groundHeight;
+ x.f.G.level.groundHeight=()=>-200;
+ const cVoid=x.drive({apply:false});
+ assert.equal(cVoid.move.lengthSq(),0,'stops before flying over void');
+ x.f.G.level.groundHeight=origGround;
+ // Water hazard via brain._wet must stop flight even if floor is within 14 units.
+ const cWet={actor:x.a,intent:x.a.intent,dt:1/60,special:'inkjet',state:x.a.specialActive,memory:x.memory,
+  enemy:x.enemy,visible:true,distance:28,height:-5,world:x.f.G,move:new x.f.THREE.Vector3(0,0,1),
+  normalIntent:{fire:true},wantYaw:0,wantPitch:0,aimDistance:28,
+  brain:{_range:()=>12,_wet:()=>true,_nearWater:()=>true}};
+ x.f.driveRangedSpecial(cWet);
+ assert.equal(cWet.move.lengthSq(),0,'stops before flying over water hazard');
+ // Non-finite origin on target loss stops cleanly.
+ x.a._s3AllSpecialState.origin.set(NaN,0,0);
+ const cBadOrigin=x.drive({target:null,apply:false});
+ assert.equal(cBadOrigin.move.lengthSq(),0,'stops when origin is non-finite');
+});
+
+test('Tenta Missiles resets lock time on target loss and across activations/lives',async()=>{
+ const x=await setup('tentaMissiles',20);
+ // Build partial lock time (below 0.12s threshold).
+ for(let i=0;i<6;i++)x.drive({dt:1/60});
+ assert.ok((x.memory.rangedLockTime||0)>0,'lock time accumulates while aligned');
+ // Losing target beyond recentLockPoint window must clear rangedLockTime.
+ x.memory.rangedSeenAge=2;
+ x.drive({target:null,apply:false});
+ assert.equal(x.memory.rangedLockTime,0,'lock time resets when no target is available');
+ // Respawning (netLife change) must clear stale sighting and lock state.
+ x.memory.rangedSeenAge=0;x.memory.rangedSeenTarget=x.enemy;x.memory.rangedLockTime=0.5;
+ x.a.netLife=(x.a.netLife||0)+1;
+ x.drive({target:null,apply:false});
+ assert.equal(x.memory.rangedLockTime,0);
+ assert.equal(x.memory.rangedSeenTarget,null);
+});
+
+test('Zipcaster and NaN guards handle non-finite aimPoint, origin, and actor.pos safely',async()=>{
+ const x=await setup('zipcaster',24);
+ x.a.aimPoint.set(NaN,NaN,NaN);
+ assert.doesNotThrow(()=>x.drive({apply:false}));
+ assert.equal(x.a.intent.sub,false,'non-finite aimPoint never fires a hook');
+ // Non-finite origin on target loss clears stale move vector.
+ x.a._s3AllSpecialState.origin.set(NaN,0,0);
+ const c=x.drive({target:null,apply:false});
+ assert.equal(c.move.lengthSq(),0,'zipcaster stops when origin is non-finite');
+ // Non-finite actor.pos turns inputs off without throwing.
+ x.a.pos.set(NaN,0,0);
+ assert.doesNotThrow(()=>x.drive({apply:false}));
+ assert.equal(x.a.intent.fire,false);
+ assert.equal(x.a.intent.sub,false);
+ assert.equal(x.a.intent.special,false);
+});
