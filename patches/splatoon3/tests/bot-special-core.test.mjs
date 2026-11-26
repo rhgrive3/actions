@@ -130,3 +130,51 @@ test('uncharged bots preserve ordinary combat without invoking category planning
   assert.equal(planned,2);assert.equal(carrier.handled,false);assert.equal(f.intent.fire,true);
   assert.deepEqual([f.intent.move.x,f.intent.move.z],[.1,.8]);assert.equal(f.intent.special,false);
 });
+
+import {captureNav, followNav, strafe, noteSighting, recentSighting} from '../runtime/bot-special-movement.mjs';
+
+test('context guards missing/NaN yaw fallbacks and resets Kraken raycast probe.hit',()=>{
+  const f=setup();
+  delete f.brain.aimYaw; delete f.actor.aimYaw; delete f.actor.yaw;
+  delete f.options.wantYaw;
+  const ctx=f.ctx();
+  assert.equal(ctx.wantYaw,0);
+  assert.equal(ctx.isAimed(.1),true);
+  f.actor.weapon.special='krakenRoyale';
+  let col=0;
+  // Simulate a raycast that only writes out.hit=true on hits without clearing misses.
+  f.world.physics.raycast=(_origin,_down,_length,out)=>{
+    col++;
+    if(col<=3){out.hit=true;out.point.y=0;out.normal.y=1;}
+  };
+  assert.equal(f.ctx().safePath(f.enemy.pos),false,'later missed column must not inherit prior hit=true');
+});
+
+test('movement helpers expire stale sightings across uncharged gaps and guard non-finite inputs',()=>{
+  const f=setup();
+  f.world.time=10; f.actor.netLife=1;
+  let ctx=f.ctx(1/60);
+  noteSighting(ctx);
+  assert.ok(recentSighting(ctx,2.5),'fresh sighting is retained');
+  // Advance world.time by 30s without calling noteSighting (uncharged gap, same netLife).
+  f.world.time=40; f.brain.seeTimer=0;
+  ctx=f.ctx(1/60);
+  noteSighting(ctx);
+  assert.equal(recentSighting(ctx,2.5),null,'stale sighting from 30s ago expires');
+  // New sighting then match reset (world.time decreases).
+  f.brain.seeTimer=1; ctx=f.ctx(1/60); noteSighting(ctx);
+  assert.ok(recentSighting(ctx,2.5));
+  f.world.time=1; f.brain.seeTimer=0; ctx=f.ctx(1/60); noteSighting(ctx);
+  assert.equal(recentSighting(ctx,2.5),null,'sighting clears when world.time resets');
+  // NaN / missing actor.pos and NaN scale guards in strafe and followNav.
+  f.brain.seeTimer=1; f.intent.move.set(0,0,1);
+  ctx=f.ctx(1/60); captureNav(ctx);
+  assert.equal(strafe(ctx,f.enemy.pos,NaN),false);
+  assert.equal(followNav(ctx,NaN),false);
+  const badCtx={...ctx,actor:{...f.actor,pos:{x:NaN,y:0,z:0}}};
+  assert.equal(strafe(badCtx,f.enemy.pos,1),false);
+  assert.equal(followNav(badCtx,1),false);
+  // Stale nav from a prior ctx must not be reused on a new ctx without captureNav.
+  const nextCtx=f.ctx(1/60);
+  assert.equal(followNav(nextCtx,1),false);
+});

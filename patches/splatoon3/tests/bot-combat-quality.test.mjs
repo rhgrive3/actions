@@ -65,3 +65,53 @@ test('composed bots.js wires each rule exactly once', () => {
     'botClearShot(this, family)', 'botFireReach(family, range, w)', 'botCoverBomb(this, a, dist, a.ink, selectedSubCost(a, SUB), dt)', 'wantPitch = botAlertPitch(this, wantPitch);'])
     assert.equal(code.split(call).length - 1, 1, call);
 });
+
+test('cover bomb blocks non-lob utility subs, special/jump/climb/busy weapon states, and NaN inputs', () => {
+  const base = () => ({ bombCd: 0, seeTimer: 0, target: {}, lostTimer: .5 });
+
+  // Non-lob / deployable / zero-gravity subs must not be lobbed with +0.35 lift
+  for (const sub of ['beakon', 'inkMine', 'splashWall', 'sprinkler', 'angleShooter']) {
+    const b = base();
+    const actor = { grounded: true, weapon: { sub } };
+    assert.equal(botCoverBomb(b, actor, 8, 100, 60, 1, () => 0), 0, `${sub} must not trigger cover bomb`);
+    assert.equal(b._bombAim, undefined);
+  }
+
+  // Lobbed bombs & utility clouds remain allowed
+  for (const sub of ['bomb', 'suction', 'burst', 'autobomb', 'fizzy', 'torpedo', 'pointSensor', 'toxicMist']) {
+    const b = base();
+    const actor = { grounded: true, weapon: { sub } };
+    assert.equal(botCoverBomb(b, actor, 8, 100, 60, 1, () => 0), BOT_COMBAT.coverBombLift, `${sub} should allow cover bomb`);
+  }
+
+  // Special, super jump, climbing, dead, or busy weapon states must block cover bomb
+  for (const patch of [
+    { specialActive: { id: 'ultraStamp' } },
+    { superJumpState: { phase: 'air' } },
+    { climbing: true },
+    { alive: false },
+    { intent: { special: true } },
+    { weaponRunner: { rolling: true } },
+    { weaponRunner: { streaming: true } },
+    { weaponRunner: { aimingSub: true } },
+    { weaponRunner: { catalogState: { pending: true } } },
+    { weaponRunner: { catalogState: { canopyOpen: true } } },
+  ]) {
+    const b = base();
+    const actor = { grounded: true, weapon: { sub: 'bomb' }, ...patch };
+    assert.equal(botCoverBomb(b, actor, 8, 100, 70, 1, () => 0), 0);
+    assert.equal(b._bombAim, undefined);
+  }
+
+  // NaN / non-positive inputs must not bypass range or probability checks
+  const actor = { grounded: true, weapon: { sub: 'bomb' } };
+  assert.equal(botCoverBomb(base(), actor, NaN, 100, 70, 1, () => 0), 0);
+  assert.equal(botCoverBomb(base(), actor, 8, 100, 70, NaN, () => 0), 0);
+  assert.equal(botCoverBomb(base(), actor, 8, 100, 70, 0, () => 0), 0);
+  assert.equal(botCoverBomb(base(), actor, 8, NaN, 70, 1, () => 0), 0);
+
+  // botTickAlert must not poison _s3Alert on NaN dt
+  const alertBrain = { _s3Alert: 2.0 };
+  botTickAlert(alertBrain, NaN);
+  assert.equal(alertBrain._s3Alert, 2.0);
+});

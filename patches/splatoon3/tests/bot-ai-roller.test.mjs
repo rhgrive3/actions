@@ -508,3 +508,159 @@ test('Human-like phase cadence varies across cycles, protects catalogState.pendi
   assert.strictEqual(cAim1, cAim2, 'applyRollerCombat must reuse aimOut object (zero allocation)');
   assert.equal(cAim2.wantYaw, 0.07, 'aimError in wantYaw must remain untouched');
 });
+
+test('resolveRollerArchetype supports catalogRecord.sourceActor and non-string/mixed-case weapon ids', () => {
+  assert.equal(resolveRollerArchetype({ catalogRecord: { sourceActor: 'WeaponRollerHeavy' } }).id, 'heavy');
+  assert.equal(resolveRollerArchetype({ catalogRecord: { sourceActor: 'WeaponRollerWide' } }).id, 'wide');
+  assert.equal(resolveRollerArchetype({ id: 'S3_ROLLER_FLINGZA_01' }).id, 'hunter');
+  assert.equal(resolveRollerArchetype({ id: 42 }).id, 'normal');
+});
+
+test('applyRollerTurfPaint and applyRollerCombat respect superJumpState, specialActive, it.special, it.sub, and climbing', () => {
+  const G = { match: { mode: 'turf', time: 90 }, time: 20 };
+  const move = makeMove(0, 1);
+  const combatCtx = {
+    dist: 5.0, dx: 0, dz: 5.0, dy: 0, enemyVisible: true, aimed: true, off: 0.05, inkFrac: 0.85, wantYaw: 0.1, wantPitch: 0,
+  };
+
+  // 1. superJumpState: clears fire/jump/squid and resets roll timer
+  const sjActor = makeActor({ superJumpState: { phase: 'flight' }, intent: { fire: true, squid: true, jump: true, sub: false, special: false } });
+  const sjBrain = { _turfPaintLatch: true, _rollerRollTime: 0.3 };
+  applyRollerTurfPaint(sjBrain, G, sjActor, 1 / 60, move, true, 0, 0.8);
+  assert.equal(sjActor.intent.fire, false);
+  assert.equal(sjActor.intent.jump, false);
+  assert.equal(sjActor.intent.squid, false);
+  assert.equal(sjBrain._rollerRollTime, 0);
+
+  // 2. specialActive: does not overwrite special intent in paint or combat
+  const spActor = makeActor({ specialActive: { id: 'kraken' }, intent: { fire: true, squid: true, jump: false, sub: false, special: false } });
+  const spBrain = { react: 0, _turfPaintLatch: true };
+  assert.equal(applyRollerCombat(spBrain, G, spActor, 1 / 60, move, combatCtx), null);
+  assert.equal(spActor.intent.fire, true, 'specialActive intent must not be clobbered');
+  assert.equal(spActor.intent.squid, true, 'specialActive squid intent must not be clobbered');
+
+  // 3. it.sub (e.g. botCoverBomb) & it.special: suppresses main fire/jump/squid and preserves aim
+  const subActor = makeActor({ intent: { fire: false, squid: false, jump: false, sub: true, special: false } });
+  assert.equal(applyRollerCombat({ react: 0 }, G, subActor, 1 / 60, move, combatCtx), null);
+  assert.equal(subActor.intent.fire, false);
+  assert.equal(subActor.intent.jump, false);
+  assert.equal(subActor.intent.squid, false);
+  assert.equal(subActor.intent.sub, true);
+
+  const trigSpActor = makeActor({ intent: { fire: false, squid: false, jump: false, sub: false, special: true } });
+  assert.equal(applyRollerTurfPaint({ _turfPaintLatch: true }, G, trigSpActor, 1 / 60, move, true, 0, 0.8), null);
+  assert.equal(trigSpActor.intent.fire, false);
+  assert.equal(trigSpActor.intent.special, true);
+
+  // 4. climbing: never fires or drops squid off wall
+  const climbActor = makeActor({ climbing: true, intent: { fire: false, squid: true, jump: false, sub: false, special: false } });
+  assert.equal(applyRollerTurfPaint({ _turfPaintLatch: true }, G, climbActor, 1 / 60, move, true, 0, 0.8), null);
+  assert.equal(climbActor.intent.fire, false);
+  assert.equal(climbActor.intent.squid, true, 'must preserve squid while climbing wall');
+  assert.equal(applyRollerCombat({ react: 0 }, G, climbActor, 1 / 60, move, combatCtx), null);
+  assert.equal(climbActor.intent.fire, false);
+  assert.equal(climbActor.intent.squid, true);
+});
+
+test('applyRollerTurfPaint clears stale _rollerRollTime when rolling is interrupted externally', () => {
+  const G = { match: { mode: 'turf', time: 90 }, time: 20 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({
+    weapon: Object.freeze({ sourceMainActor: 'WeaponRollerCompact', id: 's3-roller-carbon' }),
+    weaponRunner: { flick: -1, rolling: false, cooldown: 0 },
+    groundTeam: 1,
+  });
+  const brain = { _turfPaintLatch: true, _rollerRollTime: 0.40, _rollerSwimGap: 0 };
+  applyRollerTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.8);
+  assert.equal(brain._rollerRollTime, 0, 'stale _rollerRollTime must reset when not rolling');
+  assert.equal(brain._rollerSwimGap, 0, 'interrupted non-rolling state must not trigger spurious swimGap');
+  assert.equal(actor.intent.fire, true, 'roller resumes painting cleanly');
+});
+
+test('applyRollerCombat avoids vertical-flick jump/pitch desync when grounded and aborts on rollStop lock', () => {
+  const G = { time: 25 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({ grounded: true, groundTeam: 1 });
+  const brain = { react: 0, strafeS: 0.5 };
+  const ctx = {
+    dist: 10.0, dx: 0, dz: 10.0, dy: 0, enemyVisible: true, aimed: true, off: 0.05, inkFrac: 0.8, wantYaw: 0.05, wantPitch: 0.02,
+  };
+
+  // Frame 1: initiate jump_vert
+  applyRollerCombat(brain, G, actor, 1 / 30, move, ctx);
+  assert.equal(actor.intent.jump, true);
+  assert.equal(actor.intent.fire, false);
+
+  // Frame 2 (30 FPS = 0.033s, still grounded): must keep jumping rather than firing grounded horizontal flick at 0.03s!
+  applyRollerCombat(brain, G, actor, 1 / 30, move, ctx);
+  assert.equal(actor.intent.jump, true, 'must allow jump to lift off at 30 FPS before timing out');
+  assert.equal(actor.intent.fire, false);
+
+  // Frame 3 & 4 (total >= 0.08s, still blocked grounded under ceiling): aborts cleanly without firing grounded vertical bias
+  applyRollerCombat(brain, G, actor, 0.06, move, ctx);
+  assert.equal(actor.intent.fire, false, 'aborts vertical flick instead of firing grounded horizontal whiff at 10m');
+  assert.equal(actor.intent.jump, false);
+  assert.equal(brain._rollerCombatState.phase, 'idle');
+  assert.equal(brain._rollerCombatState.wantVertical, false);
+
+  // Roll-stop lock aborts ongoing commit_flick cleanly
+  brain._rollerCombatState.phase = 'commit_flick';
+  brain._rollerCombatState.timer = 0.02;
+  actor.weaponRunner.s3RollStop = { main: 25.25, squid: 25.05 };
+  applyRollerCombat(brain, G, actor, 1 / 60, move, ctx);
+  assert.equal(brain._rollerCombatState.phase, 'idle');
+  assert.equal(actor.intent.fire, false);
+});
+
+test('roller per-bot state resets cleanly on death (!actor.alive) and across netLife respawns', () => {
+  const G = { match: { mode: 'turf', time: 90 }, time: 20 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({ alive: true, netLife: 1, grounded: true, groundTeam: 1 });
+  const brain = { react: 0, _turfPaintLatch: true, _rollerRollTime: 0.35, _rollerSwimGap: 0.18 };
+
+  // Enter jump_vert in life 1
+  applyRollerCombat(brain, G, actor, 1 / 60, move, {
+    dist: 10.0, dx: 0, dz: 10.0, dy: 0, enemyVisible: true, aimed: true, off: 0.04, inkFrac: 0.8, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(brain._rollerCombatState.phase, 'jump_vert');
+
+  // Respawn with netLife = 2 (without brain.reset())
+  actor.netLife = 2;
+  brain._rollerRollTime = 0.35;
+  brain._rollerSwimGap = 0.18;
+  applyRollerTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.9);
+  assert.equal(brain._rollerCombatState.phase, 'idle', 'stale combat phase must reset on respawn');
+  assert.equal(brain._rollerSwimGap, 0, 'stale swim gap must reset on respawn');
+  assert.equal(actor.intent.fire, true, 'respawned roller paints immediately without stale recovery stalls');
+
+  // Dead actor (!actor.alive) resets state and suppresses inputs
+  actor.alive = false;
+  actor.intent.fire = true;
+  applyRollerCombat(brain, G, actor, 1 / 60, move, {
+    dist: 4.0, dx: 0, dz: 4.0, enemyVisible: true, aimed: true, off: 0, inkFrac: 1,
+  });
+  assert.equal(actor.intent.fire, false);
+  assert.equal(actor.intent.jump, false);
+});
+
+test('applyRollerTurfPaint and applyRollerCombat guard against NaN/undefined inputs without poisoning move or aimOut', () => {
+  const G = { match: { mode: 'turf', time: NaN }, time: 10 };
+  const move = makeMove(0, 1);
+  const actor = makeActor({ hp: NaN, groundTeam: 1 });
+
+  assert.equal(applyRollerTurfPaint(null, G, actor, NaN, move, true, NaN, NaN), null);
+  assert.equal(applyRollerCombat(null, G, actor, NaN, move, {}), null);
+
+  const brain = { react: NaN, strafeS: NaN, aimYaw: NaN, aimPitch: NaN, _turfPaintLatch: true };
+  applyRollerTurfPaint(brain, G, actor, NaN, move, true, NaN, NaN, { profile: { rollHold: NaN }, cache: { flankBias: NaN } });
+  assert.equal(actor.intent.fire, false, 'NaN inkFrac in turf paint must not fire');
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z));
+
+  const aim = applyRollerCombat(brain, G, actor, NaN, move, {
+    dist: NaN, dx: NaN, dz: NaN, dy: NaN, enemyVisible: true, aimed: true, off: NaN, inkFrac: NaN, wantYaw: NaN, wantPitch: NaN,
+  });
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'move must stay finite under NaN combat inputs');
+  if (aim) {
+    assert.ok(Number.isFinite(aim.wantYaw) && Number.isFinite(aim.wantPitch), 'aimOut must stay finite');
+  }
+});

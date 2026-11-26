@@ -502,3 +502,107 @@ test('resolveSplatanaProfile caches custom catalogue profiles O(1) without per-t
   assert.strictEqual(p1, p2, 'returns cached profile instance with zero per-tick allocation');
   assert.equal(p1.vertSpeed, 0.85 * 60);
 });
+
+test('Splatana guards against dead, superJumpState, climbing, specialActive/it.special and avoids post-special ghost combo', () => {
+  for (const stateOverride of [
+    { alive: false },
+    { superJumpState: { phase: 'charge' } },
+    { climbing: true },
+    { specialActive: { id: 'zipcaster' } },
+  ]) {
+    const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal', stateOverride);
+    const move = makeMove(0, 1);
+    const brain = { react: 0, strafeS: 0.5, seeTimer: 1.2, _turfPaintLatch: true, _turfPaintValidated: true };
+    assert.equal(applySplatanaCombat(brain, {}, actor, 1 / 60, move, makeCombatCtx({ dist: 10, dz: 10 })), null);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(applySplatanaTurfPaint(brain, {}, actor, 1 / 60, move, true, 0, 0.8, { needPaint: true, pitchReady: true }), null);
+    assert.equal(actor.intent.fire, false);
+  }
+
+  // Pre-special full charge cancelled by special must NOT trigger ghost combo_followup after special ends
+  const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal');
+  const brain = { react: 0, strafeS: 0.5, seeTimer: 1.2, bombCd: 0 };
+  actor.weaponRunner.charging = true;
+  actor.weaponRunner.charge = 1.0;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0 }));
+  // Special activates and cancels charge
+  actor.specialActive = { id: 'zipcaster' };
+  actor.weaponRunner.charging = false;
+  actor.weaponRunner.charge = 0;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0 }));
+  // Special ends
+  actor.specialActive = null;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0 }));
+  assert.equal(actor.intent.sub, false, 'does not fire ghost Burst Bomb from pre-special charge');
+  assert.notEqual(brain._splatanaAI.plan, 'combo_followup');
+});
+
+test('Splatana yields on sub-weapon input conflicts (it.sub / _bombAim / aimingSub) and active cs.melee', () => {
+  for (const [intentSub, bombAim, aimingSub] of [[true, false, false], [false, true, false], [false, false, true]]) {
+    const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal');
+    actor.intent.sub = intentSub;
+    actor.intent.fire = true;
+    actor.intent.squid = true;
+    actor.weaponRunner.aimingSub = aimingSub;
+    const brain = { react: 0, _bombAim: bombAim, _turfPaintLatch: true, _turfPaintValidated: true };
+    assert.equal(applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9, dz: 9 })), null);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(actor.intent.squid, false);
+    actor.intent.fire = true;
+    actor.intent.squid = true;
+    assert.equal(applySplatanaTurfPaint(brain, {}, actor, 1 / 60, makeMove(), true, 0, 0.8, { needPaint: true, pitchReady: true }), null);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(actor.intent.squid, false);
+  }
+
+  // Active melee swing hitbox blocks Burst Bomb quick-combo so melee slash is not interrupted
+  const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal');
+  const brain = { react: 0, strafeS: 0.5, seeTimer: 1.2, bombCd: 0 };
+  actor.weaponRunner.charging = true;
+  actor.weaponRunner.charge = 1.0;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0 }));
+  actor.weaponRunner.charging = false;
+  actor.weaponRunner.charge = 0;
+  actor.weaponRunner.catalogState.melee = true;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0, inkFrac: 0.75 }));
+  assert.equal(actor.intent.sub, false, 'does not throw Burst Bomb while melee hitbox is active');
+});
+
+test('Splatana resets stale per-bot state across deaths and netLife respawns', () => {
+  const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal', { alive: true, netLife: 1 });
+  const brain = { react: 0, strafeS: 0.5, seeTimer: 1.2, bombCd: 0 };
+
+  // Life 1: reaches full charge
+  actor.weaponRunner.charging = true;
+  actor.weaponRunner.charge = 1.0;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0 }));
+  assert.equal(brain._splatanaAI.wasCharging, true);
+
+  // Dies and respawns on life 2 with fresh weaponRunner
+  actor.netLife = 2;
+  actor.weaponRunner.charging = false;
+  actor.weaponRunner.charge = 0;
+  applySplatanaCombat(brain, {}, actor, 1 / 60, makeMove(), makeCombatCtx({ dist: 9.0, dz: 9.0, inkFrac: 0.8 }));
+  assert.equal(actor.intent.sub, false, 'respawned Splatana does not throw ghost Burst Bomb from prior life');
+  assert.equal(brain._splatanaAI.comboFollowupT, 0);
+  assert.equal(brain._splatanaAI.plan, 'charge_slash');
+});
+
+test('Splatana NaN/Infinity guards prevent wrapAngle infinite loop and non-finite aim/move outputs', () => {
+  const actor = makeSplatanaActor('s3-saber-normal', 'WeaponSaberNormal', { aimYaw: NaN });
+  const move = makeMove(0, 1);
+  const brain = { react: 0, strafeS: NaN, seeTimer: 1.2, target: { vel: { x: Infinity, z: NaN } } };
+
+  const res = applySplatanaCombat(brain, {}, actor, Infinity, move, makeCombatCtx({
+    dist: NaN, range: NaN, dx: Infinity, dz: NaN, off: NaN,
+    inkFrac: 0.8, idealYaw: Infinity, idealPitch: NaN, wantYaw: Infinity, wantPitch: NaN,
+  }));
+  assert.equal(res, null, 'skips lead override when yaw/vel inputs are non-finite');
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'move stays finite');
+
+  const turfRes = applySplatanaTurfPaint(brain, {}, actor, NaN, move, true, NaN, NaN, {
+    needPaint: true, pitchReady: true, wantYaw: NaN,
+  });
+  assert.equal(turfRes, null, 'skips turf aim override when wantYaw is NaN');
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'turf move stays finite');
+});

@@ -261,6 +261,30 @@ function clamp(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
+function resetSplatlingLifeState(brain) {
+  if (!brain) return;
+  brain._splatlingMicroRefill = 0;
+  brain._splatlingRechargeCd = 0;
+  brain._splatlingKeepT = 0;
+  brain._splatlingHold = 0;
+  brain._splatlingSmoothStrafe = undefined;
+}
+
+function syncSplatlingLifeState(brain, actor) {
+  if (!brain || !actor) return;
+  if (actor.alive === false) {
+    resetSplatlingLifeState(brain);
+    return;
+  }
+  const life = actor.netLife;
+  if (life !== undefined && brain._splatlingLife !== life) {
+    if (brain._splatlingLife !== undefined) {
+      resetSplatlingLifeState(brain);
+    }
+    brain._splatlingLife = life;
+  }
+}
+
 /**
  * Deterministic O(1) human-like micro-variation in [-1, +1] derived from shot index & actor id.
  * Avoids robotic fixed frame-exact thresholds while staying 100% deterministic & allocation-free.
@@ -328,13 +352,14 @@ function canWeaponChargeKeep(weapon, arch) {
  * Applies smooth lateral strafe ("カニ歩き") to `move` in place with zero allocations.
  */
 function applyLateralStrafeInPlace(brain, actor, dt, move, refYaw, ratio, flankBias) {
-  if (!move || typeof move.x !== 'number' || typeof move.z !== 'number' || ratio <= 0) return;
-  const actorId = typeof actor?.id === 'number' ? actor.id : 0;
-  const t = brain?.t || 0;
-  const targetSign = Math.abs(flankBias) > 0.05
-    ? (flankBias > 0 ? 1 : -1)
+  if (!move || !Number.isFinite(move.x) || !Number.isFinite(move.z) || !Number.isFinite(refYaw) || ratio <= 0) return;
+  const actorId = typeof actor?.id === 'number' && Number.isFinite(actor.id) ? actor.id : 0;
+  const t = Number.isFinite(brain?.t) ? brain.t : 0;
+  const safeFlank = Number.isFinite(flankBias) ? flankBias : 0;
+  const targetSign = Math.abs(safeFlank) > 0.05
+    ? (safeFlank > 0 ? 1 : -1)
     : (Math.sin(t * 2.1 + actorId * 1.7) >= 0 ? 1 : -1);
-  const prev = typeof brain?._splatlingSmoothStrafe === 'number' ? brain._splatlingSmoothStrafe : targetSign;
+  const prev = Number.isFinite(brain?._splatlingSmoothStrafe) ? brain._splatlingSmoothStrafe : targetSign;
   const smooth = prev + (targetSign - prev) * Math.min(1, dt * 7.0);
   if (brain) brain._splatlingSmoothStrafe = smooth;
 
@@ -413,14 +438,23 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
   if (!it || !wr) return;
+  syncSplatlingLifeState(brain, actor);
+  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return;
+  if (it.sub || it.special) {
+    it.fire = false;
+    return;
+  }
 
   const safeDt = dt > 0 && dt < 0.5 ? dt : 1 / 60;
+  const safeInk = Number.isFinite(inkFrac) ? inkFrac : 1;
+  const chargeVal = Number.isFinite(wr.charge) ? wr.charge : 0;
   const w = actor.weapon;
   const arch = resolveSplatlingArchetype(w);
   const cache = ctx?.cache ?? brain?._turfMultiCache;
   const onOwnInk = actor.groundTeam === 1;
   const coolerPending = Boolean(brain?._coolerPickupPending);
   const rechargeAllowed = canWeaponRecharge(w, arch);
+  const hasStored = Boolean(wr.catalogState?.stored);
 
   if (brain && (brain._splatlingRechargeCd || 0) > 0) {
     brain._splatlingRechargeCd = Math.max(0, brain._splatlingRechargeCd - safeDt);
@@ -437,7 +471,7 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
 
   const wantPaintNow = typeof ctx?.wantPaintNow === 'boolean'
     ? ctx.wantPaintNow
-    : Boolean(brain?._turfPaintLatch && pitchReady && inkFrac > 0.10 && (brain?.paintPause || 0) <= 0);
+    : Boolean(brain?._turfPaintLatch && pitchReady && safeInk > 0.10 && (brain?.paintPause || 0) <= 0);
 
   if (brain && brain._turfPaintValidated === false) {
     it.fire = false;
@@ -446,14 +480,14 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
   // 1. Micro-refill squid hysteresis on own ink when idle (crucial for Hydra's 35% tank cost)
   if (!wr.streaming && !wr.charging) {
     if (brain?._splatlingMicroRefill) {
-      if (inkFrac >= arch.swimRefillResume || !onOwnInk || coolerPending) {
+      if (safeInk >= arch.swimRefillResume || !onOwnInk || coolerPending || hasStored) {
         brain._splatlingMicroRefill = 0;
       } else {
         it.fire = false;
         it.squid = true;
         return;
       }
-    } else if (onOwnInk && !coolerPending && inkFrac < arch.swimRefillFloor && inkFrac > 0.06) {
+    } else if (!hasStored && onOwnInk && !coolerPending && safeInk < arch.swimRefillFloor && safeInk > 0.06) {
       if (brain) brain._splatlingMicroRefill = 1;
       it.fire = false;
       it.squid = true;
@@ -462,11 +496,19 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
   }
 
   // 2. Stored charge-keep resume (Nautilus entering paint with a stored charge)
-  if (wr.catalogState?.stored && wantPaintNow && pitchReady) {
-    it.fire = true;
-    it.squid = false;
-    if (brain) brain._splatlingKeepT = 0;
-    return;
+  if (hasStored) {
+    if (wantPaintNow && pitchReady) {
+      it.fire = true;
+      it.squid = false;
+      if (brain) brain._splatlingKeepT = 0;
+      return;
+    }
+    if (!wantPaintNow && onOwnInk && wantMove && !coolerPending) {
+      // Preserve stored charge while swimming to next unpainted sector
+      it.fire = true;
+      it.squid = true;
+      return;
+    }
   }
 
   // 3. Active firing stream: hose the lane with natural sweep modulation & lateral strafe
@@ -482,7 +524,7 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
       rechargeAllowed &&
       wantPaintNow &&
       pitchReady &&
-      inkFrac >= arch.rechargeInkFloor &&
+      safeInk >= arch.rechargeInkFloor &&
       elapsed >= DOWNPOUR_SHORT_MODE_SEC - 0.06 &&
       elapsed < DOWNPOUR_SHORT_MODE_SEC + 0.04 &&
       (brain?._splatlingRechargeCd || 0) <= 0
@@ -498,7 +540,7 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
     it.fire = false;
 
     // Human-like sweep cadence: wider, fluid sweep early/mid stream, steadying near tail
-    if (brain && typeof brain.sweep === 'number') {
+    if (brain && Number.isFinite(brain.sweep)) {
       const paceMod = 0.78 + 0.34 * remFrac;
       brain.sweep += safeDt * (arch.paintSweepSpeed * paceMod - 2.1) * 0.45;
     }
@@ -524,8 +566,8 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
       targetSpin = clamp(targetSpin, STANDARD_PAINT_MIN_SPIN, 1.0);
     }
 
-    if (wr.charge >= targetSpin || inkFrac < 0.16) {
-      if (!pitchReady && inkFrac >= 0.16) {
+    if (chargeVal >= targetSpin || safeInk < 0.16) {
+      if (!pitchReady && safeInk >= 0.16) {
         // Hold spin while aimPitch recovers from floor-look (bot-turf-paint.test.mjs contract)
         it.fire = true;
         it.squid = false;
@@ -577,6 +619,12 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
   if (!it || !wr || !ctx) return null;
+  syncSplatlingLifeState(brain, actor);
+  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return null;
+  if (it.sub || it.special) {
+    it.fire = false;
+    return null;
+  }
 
   const safeDt = dt > 0 && dt < 0.5 ? dt : 1 / 60;
   const w = actor.weapon;
@@ -584,14 +632,15 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
   const rechargeAllowed = canWeaponRecharge(w, arch);
   const keepAllowed = canWeaponChargeKeep(w, arch);
 
-  const dist = typeof ctx.dist === 'number' ? ctx.dist : 0;
-  const range = ctx.range > 0 ? ctx.range : (w?.range || 18);
-  const dx = typeof ctx.dx === 'number' ? ctx.dx : 0;
-  const dz = typeof ctx.dz === 'number' ? ctx.dz : 0;
+  const dist = Number.isFinite(ctx.dist) ? ctx.dist : 0;
+  const range = Number.isFinite(ctx.range) && ctx.range > 0 ? ctx.range : (w?.range || 18);
+  const dx = Number.isFinite(ctx.dx) ? ctx.dx : 0;
+  const dz = Number.isFinite(ctx.dz) ? ctx.dz : 0;
   const enemyVisible = Boolean(ctx.enemyVisible);
   const aimed = Boolean(ctx.aimed);
-  const off = typeof ctx.off === 'number' ? ctx.off : 0;
-  const inkFrac = typeof ctx.inkFrac === 'number' ? ctx.inkFrac : 1;
+  const off = Number.isFinite(ctx.off) ? ctx.off : 0;
+  const inkFrac = Number.isFinite(ctx.inkFrac) ? ctx.inkFrac : 1;
+  const chargeVal = Number.isFinite(wr.charge) ? wr.charge : 0;
 
   const safeDist = dist > 0.01 ? dist : 0.01;
   const nx = dx / safeDist;
@@ -619,8 +668,9 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
       return null;
     }
     if (keepExpired) {
+      // Surface with fire=true so catalogState.stored is consumed instead of stalling uncleared
       it.squid = false;
-      it.fire = false;
+      it.fire = true;
       if (brain) brain._splatlingKeepT = 0;
       return null;
     }
@@ -749,7 +799,7 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
       }
     } else {
       // Currently charging
-      if (wr.charge < wantSpin) {
+      if (chargeVal < wantSpin) {
         it.fire = true;
         it.squid = false;
         if (brain) brain._splatlingHold = 0;
@@ -785,6 +835,14 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
     return null;
   }
 
+  // 3b. Ink exhausted mid-spin: release immediately instead of holding Fire forever
+  if (wr.charging && inkFrac <= 0.06) {
+    it.fire = false;
+    it.squid = false;
+    if (brain) brain._splatlingHold = 0;
+    return null;
+  }
+
   // 4. Charging while enemy broke LOS or moved out of range
   if (wr.charging) {
     const lost = brain?.lostTimer || 0;
@@ -793,7 +851,7 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
     if (
       keepAllowed &&
       onOwnInk &&
-      wr.charge >= 0.45 &&
+      chargeVal >= 0.45 &&
       inkFrac > arch.keepInkFloor &&
       ((!enemyVisible && lost > 0.05 && lost <= arch.keepMaxSec) || (enemyVisible && !inThreatRange))
     ) {

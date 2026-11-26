@@ -128,3 +128,57 @@ test('splatana uses rapid tap-slashes at close range and full charge at long ran
   });
   assert.equal(actor.intent.fire, true, 'splatana holds to full charge at long range');
 });
+
+test('botWeakWeaponCombat guards specialActive, superJumpState, climbing, active sub, and NaN inputs', () => {
+  const ctx = {
+    family: 'charger', dist: 18, range: 22, dx: 0, dz: 18,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  };
+  for (const patch of [
+    { specialActive: { id: 'killerWail' } },
+    { superJumpState: { phase: 'air' } },
+    { climbing: true },
+    { alive: false },
+    { intent: { fire: false, squid: false, sub: true } },
+    { weaponRunner: { cooldown: 0, charging: false, charge: 0, aimingSub: true } },
+  ]) {
+    const actor = {
+      weapon: { kind: 'charger', id: 'charger', rangeMax: 24 },
+      intent: { fire: false, squid: false, sub: false },
+      weaponRunner: { cooldown: 0, charging: false, charge: 0 },
+      groundTeam: 1,
+      ...patch,
+    };
+    const res = botWeakWeaponCombat({ react: 0 }, {}, actor, 1 / 60, makeMove(), ctx);
+    assert.equal(res, null);
+    assert.equal(actor.intent.fire, false);
+  }
+
+  // Active cover-bomb aim must not be clobbered by weak-weapon combat
+  const actor = {
+    weapon: { kind: 'charger', id: 'charger', rangeMax: 24 },
+    intent: { fire: false, squid: false, sub: false },
+    weaponRunner: { cooldown: 0, charging: false, charge: 0 },
+    groundTeam: 1,
+  };
+  assert.equal(botWeakWeaponCombat({ react: 0, _bombAim: true }, {}, actor, 1 / 60, makeMove(), ctx), null);
+
+  // NaN inputs return null safely
+  assert.equal(botWeakWeaponCombat({ react: 0 }, {}, actor, NaN, makeMove(), ctx), null);
+  assert.equal(botWeakWeaponCombat({ react: 0 }, {}, actor, 1 / 60, makeMove(), { ...ctx, dist: NaN }), null);
+  assert.equal(botWeakWeaponCombat({ react: 0 }, {}, actor, 1 / 60, makeMove(), { ...ctx, inkFrac: NaN }), null);
+
+  // Explicit shooter catalogRecord.family is never misclassified into weak-weapon routing
+  const shooterWithTrickyId = {
+    weapon: { catalogRecord: { family: 'shooter' }, id: 's3-shooter-rainbow', range: 12 },
+    intent: { fire: true, squid: false },
+    weaponRunner: { cooldown: 0, charging: false, charge: 0 },
+    groundTeam: 1,
+  };
+  assert.equal(
+    botWeakWeaponCombat({ react: 0 }, {}, shooterWithTrickyId, 1 / 60, makeMove(), { ...ctx, family: 'shooter', dist: 8, range: 12 }),
+    null,
+    'explicit shooter family must remain untouched by botWeakWeaponCombat'
+  );
+});

@@ -495,3 +495,161 @@ test('organic human-like variation modulates sweep step across different bot pha
   assert.notEqual(Math.abs(b1.sweep), Math.abs(b2.sweep), 'different bot phases produce organic non-identical sweep steps');
   assert.ok(Math.abs(b1.sweep) > 0.3 && Math.abs(b2.sweep) > 0.3, 'both steps remain calibrated to avoid tip-blast overlap');
 });
+
+test('Blaster AI clears s3BlasterCancelLatch deadlock and protects active s3BlasterWindup', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = makeMove(0, 1);
+
+  // Clash Blaster with latched s3BlasterCancelLatch must release fire for 1 tick to break deadlock
+  const clashActor = makeBlasterActor({
+    weapon: {
+      id: 's3-blaster-lightshort',
+      kind: 'blaster',
+      range: 9.5,
+      fireInterval: 0.33,
+      catalogRecord: { family: 'blaster', sourceRow: 'Blaster_LightShort_00' },
+    },
+  });
+  clashActor.intent.fire = true;
+  clashActor.weaponRunner.s3BlasterCancelLatch = true;
+  const clashBrain = { _turfPaintLatch: true, _turfPaintValidated: true, react: 0, strafeS: 0.4, t: 1.0 };
+
+  applyBlasterTurfPaint(clashBrain, G, clashActor, 1 / 60, move, true, 0, 0.85, {
+    pitchReady: true,
+    wantPaintNow: true,
+  });
+  assert.equal(clashActor.intent.fire, false, 'turf paint releases fire to clear s3BlasterCancelLatch');
+  assert.equal(clashActor.intent.squid, false);
+
+  clashActor.intent.fire = true;
+  applyBlasterCombat(clashBrain, G, clashActor, 1 / 60, move, {
+    family: 'blaster', dist: 8.0, range: 9.5, dx: 0, dz: 8.0,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.85,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(clashActor.intent.fire, false, 'combat releases fire to clear s3BlasterCancelLatch');
+
+  // Native blaster during s3BlasterWindup must not submerge into microRecover squid
+  const hotActor = makeBlasterActor();
+  hotActor.weaponRunner.s3BlasterWindup = 0.12;
+  const hotBrain = { _turfPaintLatch: true, _turfPaintValidated: true, t: 1.0, ph1: 0.3 };
+  applyBlasterTurfPaint(hotBrain, G, hotActor, 1 / 60, move, true, 0, 0.25, {
+    pitchReady: true,
+    wantPaintNow: true,
+  });
+  assert.equal(hotActor.intent.squid, false, 'does not interrupt active s3BlasterWindup with squid form');
+});
+
+test('Blaster AI yields cleanly to sub throws, active specials, superJumpState, and wall climbing', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const move = makeMove(0, 1);
+
+  // Sub bomb aim (_bombAim / it.sub): must not fire or squid or overwrite coverBombLift pitch
+  const subActor = makeBlasterActor({ intent: { fire: true, squid: true, jump: false, sub: true, special: false } });
+  const subBrain = { react: 0, target: { id: 4 }, lostTimer: 0.3, _bombAim: true, t: 1.0 };
+  const subRes = applyBlasterCombat(subBrain, G, subActor, 1 / 60, move, {
+    family: 'blaster', dist: 10.0, range: 10.5, dx: 0, dz: 10.0,
+    enemyVisible: false, aimed: false, off: 0.05, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0.25,
+  });
+  assert.equal(subRes, null, 'does not overwrite cover-bomb pitch');
+  assert.equal(subActor.intent.fire, false, 'clears fire when throwing sub');
+  assert.equal(subActor.intent.squid, false, 'clears squid when throwing sub');
+
+  // Active special (e.g., Zipcaster): preserves existing intent.fire (normalIntent) without mutating coverShots or move
+  const spMove = makeMove(0, 1);
+  const spActor = makeBlasterActor({
+    specialActive: { kind: 'zipcaster' },
+    intent: { fire: true, squid: false, jump: false, sub: false, special: false },
+  });
+  const spBrain = { react: 0, target: { id: 4 }, t: 1.0 };
+  const spRes = applyBlasterCombat(spBrain, G, spActor, 1 / 60, spMove, {
+    family: 'blaster', dist: 4.5, range: 10.5, dx: 0, dz: 4.5,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: -0.25,
+  });
+  assert.equal(spRes, null);
+  assert.equal(spActor.intent.fire, true, 'preserves native fire intent during specialActive (Zipcaster)');
+  assert.equal(spMove.z, 1, 'does not overwrite move vector during specialActive');
+
+  // Climbing wall or superJumpState: must not knock bot out of squid form
+  const climbActor = makeBlasterActor({
+    climbing: true,
+    intent: { fire: false, squid: true, jump: false, sub: false, special: false },
+  });
+  const climbBrain = { _turfPaintLatch: true, _turfPaintValidated: true, t: 1.0 };
+  applyBlasterTurfPaint(climbBrain, G, climbActor, 1 / 60, move, true, 0, 0.9, {
+    pitchReady: true,
+    wantPaintNow: true,
+  });
+  assert.equal(climbActor.intent.fire, false);
+  assert.equal(climbActor.intent.squid, true, 'preserves squid form while climbing');
+});
+
+test('Blaster AI resets stale state on death/respawn (netLife / !alive), prevents ink-exhausted dry fire, and guards NaN inputs', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const target = { id: 77 };
+  const actor = makeBlasterActor({ alive: true, netLife: 1 });
+  const brain = { react: 0, target, lostTimer: 0.3, t: 1.0 };
+  const move = makeMove(0, 1);
+  const coverCtx = {
+    family: 'blaster', dist: 10.0, range: 10.5, dx: 0, dz: 10.0,
+    enemyVisible: false, aimed: false, off: 0.05, inkFrac: 0.7,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: -0.02,
+  };
+
+  // Exhaust 2-shot cover budget in life 1
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  actor.intent.fire = false;
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  assert.equal(actor.intent.fire, false, 'budget exhausted in life 1');
+
+  // Respawn (netLife increments to 2) -> cover budget resets cleanly
+  actor.netLife = 2;
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  assert.equal(actor.intent.fire, true, 'fresh life resets stale cover-shot budget');
+
+  // Cover blast while submerged in squid form emerges first without burning coverShots
+  actor.netLife = 3;
+  actor.form = 'squid';
+  actor.intent.fire = false;
+  actor.intent.squid = true;
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  assert.equal(actor.intent.squid, false, 'emerges from squid before cover blast');
+  assert.equal(actor.intent.fire, false, 'does not burn cover shot while submerged');
+  actor.form = 'kid';
+  applyBlasterCombat(brain, G, actor, 1 / 60, move, coverCtx);
+  assert.equal(actor.intent.fire, true, 'fires cover shot once emerged');
+
+  // Ink exhaustion: Long Blaster (11% ink/shot) at 6% ink must clear bots.js fire intent
+  const longActor = makeBlasterActor({
+    weapon: {
+      id: 's3-blaster-long',
+      kind: 'blaster',
+      range: 14.5,
+      inkPerShot: 11,
+      catalogRecord: { family: 'blaster', sourceRow: 'Blaster_Long_00' },
+    },
+    intent: { fire: true, squid: false, jump: false, sub: false, special: false },
+  });
+  applyBlasterCombat({ react: 0, target: { id: 8 }, t: 1.0 }, G, longActor, 1 / 60, move, {
+    family: 'blaster', dist: 13.0, range: 14.5, dx: 0, dz: 13.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.06,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(longActor.intent.fire, false, 'clears dry-fire intent when ink is below shot cost');
+
+  // NaN / undefined inputs never produce NaN in move or aim output
+  const nanMove = makeMove(0, 1);
+  const nanBrain = { react: 0, t: Number.NaN, ph1: Number.NaN, strafeS: Number.NaN, sweep: Number.NaN };
+  const nanActor = makeBlasterActor();
+  const nanRes = applyBlasterCombat(nanBrain, G, nanActor, Number.NaN, nanMove, {
+    family: 'blaster', dist: Number.NaN, range: Number.NaN, dx: Number.NaN, dz: Number.NaN,
+    enemyVisible: true, aimed: true, off: Number.NaN, inkFrac: Number.NaN,
+    idealYaw: Number.NaN, idealPitch: Number.NaN, wantYaw: Number.NaN, wantPitch: Number.NaN,
+  });
+  assert.equal(nanRes, null);
+  assert.equal(nanActor.intent.fire, false);
+  assert.ok(Number.isFinite(nanMove.x) && Number.isFinite(nanMove.z), 'move stays finite under NaN inputs');
+});

@@ -229,3 +229,125 @@ test('real Wave Breaker Bot preserves its charge below an out-of-range high plat
   for(let i=0;i<180;i++)f.tick(a,b);
   assert.equal(a.stats.specials,0,'low generator cannot reach the upper terrain surface');
 });
+
+test('driveSupportSpecial clears memory.holding across special end, airborne and death without sticking intent.sub', async () => {
+  const f = await setup('storm');
+  const { a, enemy, brain } = f;
+  const memory = {};
+  const makeCtx = (state, dt = 1 / 60) => {
+    Object.assign(a.intent, { fire: false, sub: false, jump: false, squid: false, special: false });
+    const ctx = {
+      actor: a, intent: a.intent, dt, special: 'storm', state, memory, enemy,
+      distance: 20, height: 0, visible: true, world: f.G, brain, move: a.intent.move,
+      wantYaw: a.aimYaw, wantPitch: a.aimPitch, aimDistance: 20,
+      aimAt(p) {
+        const dx = p.x - a.pos.x, dz = p.z - a.pos.z, dy = p.y - a.pos.y - 1.1;
+        ctx.wantYaw = Math.atan2(dx, dz); ctx.wantPitch = Math.atan2(dy, Math.hypot(dx, dz));
+        ctx.aimDistance = Math.hypot(dx, dy, dz);
+      },
+      isAimed: () => true,
+    };
+    return ctx;
+  };
+  const fakeState = { id: 'storm', phase: 'active', t: 0 };
+  a.grounded = true;
+  f.driveSupportSpecial(makeCtx(fakeState)); // initialize
+  f.driveSupportSpecial(makeCtx(fakeState)); // begin holding
+  assert.equal(memory.holding, true);
+  assert.equal(a.intent.sub, true);
+
+  // Special ends while bot is airborne and caller reuses memory.
+  a.grounded = false;
+  f.driveSupportSpecial(makeCtx(null));
+  assert.equal(memory.holding, false, 'holding cleared on special end');
+  assert.equal(a.intent.sub, false, 'airborne post-special tick must not hold intent.sub');
+
+  // Re-enter active hold, then die: holding must clear and intent.sub stay false.
+  a.grounded = true;
+  const fakeState2 = { id: 'storm', phase: 'active', t: 0 };
+  f.driveSupportSpecial(makeCtx(fakeState2));
+  f.driveSupportSpecial(makeCtx(fakeState2));
+  assert.equal(memory.holding, true);
+  a.alive = false;
+  const handledDead = f.driveSupportSpecial(makeCtx(fakeState2));
+  assert.equal(handledDead, false);
+  assert.equal(memory.holding, false);
+  assert.equal(a.intent.sub, false);
+});
+
+test('Triple Inkstrike recovers from a dropped release edge instead of stalling in pending', async () => {
+  const f = await setup('tripleInkstrike');
+  const { a, enemy, brain } = f;
+  const memory = {};
+  const native = { id: 'tripleInkstrike', shots: 0, t: 1, nextMarkerStart: 0, markerQueued: false };
+  a._s3AllSpecialState = native;
+  const state = { id: 'tripleInkstrike', phase: 'active', t: 1 };
+  const step = (dt = 1 / 60) => {
+    Object.assign(a.intent, { fire: false, sub: false, jump: false, squid: false, special: false });
+    const ctx = {
+      actor: a, intent: a.intent, dt, special: 'tripleInkstrike', state, memory, enemy,
+      distance: 20, height: 0, visible: true, world: f.G, brain, move: a.intent.move,
+      wantYaw: a.aimYaw, wantPitch: a.aimPitch, aimDistance: 20,
+      aimAt(p) {
+        const dx = p.x - a.pos.x, dz = p.z - a.pos.z, dy = p.y - a.pos.y - 1.1;
+        ctx.wantYaw = Math.atan2(dx, dz); ctx.wantPitch = Math.atan2(dy, Math.hypot(dx, dz));
+        ctx.aimDistance = Math.hypot(dx, dy, dz);
+      },
+      isAimed: () => true,
+    };
+    f.driveSupportSpecial(ctx);
+    return ctx;
+  };
+  // Initialize, hold >= 0.12s, and release shot 0.
+  for (let i = 0; i < 12 && memory.releasedShot !== 0; i++) step();
+  assert.equal(memory.releasedShot, 0, 'bot released shot 0');
+  assert.equal(a.intent.sub, false);
+
+  // Simulate dropped subUp edge: native.throwAt stays undefined, markerQueued false, shots still 0.
+  let reheld = false;
+  for (let i = 0; i < 20; i++) {
+    step();
+    if (a.intent.sub) { reheld = true; break; }
+  }
+  assert.equal(reheld, true, 'bot clears stale releasedShot after grace window and re-holds sub');
+});
+
+test('support aimCache invalidates on velocity change and guards NaN dt/yaw inputs', async () => {
+  const f = await setup('storm');
+  const { a, enemy, brain } = f;
+  const memory = {};
+  const state = { id: 'storm', phase: 'active', t: 0 };
+  const step = (dt = 1 / 60, wantYaw = a.aimYaw) => {
+    Object.assign(a.intent, { fire: false, sub: false, jump: false, squid: false, special: false });
+    const ctx = {
+      actor: a, intent: a.intent, dt, special: 'storm', state, memory, enemy,
+      distance: 20, height: 0, visible: true, world: f.G, brain, move: a.intent.move,
+      wantYaw, wantPitch: a.aimPitch, aimDistance: 20,
+      aimAt(p) {
+        const dx = p.x - a.pos.x, dz = p.z - a.pos.z, dy = p.y - a.pos.y - 1.1;
+        ctx.wantYaw = Math.atan2(dx, dz); ctx.wantPitch = Math.atan2(dy, Math.hypot(dx, dz));
+        ctx.aimDistance = Math.hypot(dx, dy, dz);
+      },
+      isAimed: () => true,
+    };
+    f.driveSupportSpecial(ctx);
+    return ctx;
+  };
+  a.vel.set(0, 0, 8);
+  const movingCtx = step(1 / 60);
+  const movingPitch = movingCtx.wantPitch;
+  assert.ok(Number.isFinite(movingPitch));
+
+  // Stop moving on the very next frame without changing position (inside 0.12s cache TTL).
+  a.vel.set(0, 0, 0);
+  const stoppedCtx = step(1 / 60);
+  assert.ok(Number.isFinite(stoppedCtx.wantPitch));
+  assert.notEqual(stoppedCtx.wantPitch, movingPitch, 'aimCache recomputes pitch when actor.vel changes');
+
+  // Non-finite dt and NaN yaw must not poison supportClock, holdTime, or wantPitch.
+  a.aimYaw = Infinity;
+  const nanCtx = step(NaN, NaN);
+  assert.ok(Number.isFinite(memory.supportClock), 'supportClock stays finite');
+  assert.ok(Number.isFinite(nanCtx.wantPitch), 'wantPitch stays finite');
+  assert.ok(Number.isFinite(memory.aimCache.wantPitch), 'cached wantPitch stays finite');
+});

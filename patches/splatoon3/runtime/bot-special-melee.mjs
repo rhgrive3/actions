@@ -5,31 +5,44 @@ import { KRAKEN_MOVEMENT, reefsliderRawSpeed } from './all-specials.mjs';
 // weapon statistics; the admitted Actor inputs retain all attack/physics owners.
 const IDS = new Set(['krakenRoyale', 'ultraStamp', 'reefslider', 'tripleSplashdown', 'slam']);
 const EPS = 1e-8;
-const stop = ctx => ctx.move.set(0, 0, 0);
+const _rushEnd = { x: 0, y: 0, z: 0 };
+const _facing = { x: 0, y: 0, z: 0 };
+const stop = ctx => ctx.move?.set?.(0, 0, 0);
 const seen = ctx => !!(ctx.enemy?.alive && ctx.enemy.team !== ctx.actor.team && ctx.visible);
-const remaining = (ctx, st) => Number.isFinite(st?.duration) ? st.duration - st.t : Infinity;
+const finiteDir = d => !!d && Number.isFinite(d.x) && Number.isFinite(d.z);
+const remaining = (ctx, st) => Number.isFinite(st?.duration) && Number.isFinite(st?.t) ? st.duration - st.t : Infinity;
 function quiet(ctx) {
   const it = ctx.intent;
   it.fire = it.sub = it.jump = it.squid = it.special = false;
 }
 function aimEnemy(ctx, tolerance = .16) {
+  if (!ctx.enemy?.pos) return false;
   ctx.aimAt(ctx.enemy.pos, { height: .7 });
   return ctx.isAimed(tolerance);
 }
 function rushPoint(ctx, direction, length) {
-  return ctx.actor.pos.clone().addScaledVector(direction, length);
+  const pos = ctx.actor.pos;
+  const dy = Number.isFinite(direction.y) ? direction.y : 0;
+  _rushEnd.x = pos.x + direction.x * length;
+  _rushEnd.y = pos.y + dy * length;
+  _rushEnd.z = pos.z + direction.z * length;
+  return _rushEnd;
 }
 function safeRush(ctx, direction, length) {
-  if (!direction || !Number.isFinite(length) || length <= 0) return false;
+  if (!finiteDir(direction) || !Number.isFinite(length) || length <= 0) return false;
   const magnitude = Math.hypot(direction.x, direction.z);
-  if (magnitude < .5 || !ctx.actor.grounded || ctx.actor.climbing) return false;
+  if (!Number.isFinite(magnitude) || magnitude < .5 || !ctx.actor.grounded || ctx.actor.climbing) return false;
   // A rush cannot brake/steer around a missing deck. Probe the complete body
   // route, including its shoulders, before committing a charge or slide.
   const end = rushPoint(ctx, direction, length / magnitude);
   return ctx.safePath(end, Infinity, .65);
 }
 function facing(ctx) {
-  return ctx.actor.pos.clone().set(Math.sin(ctx.actor.aimYaw || 0), 0, Math.cos(ctx.actor.aimYaw || 0));
+  const yaw = Number.isFinite(ctx.actor.aimYaw) ? ctx.actor.aimYaw : (Number.isFinite(ctx.actor.yaw) ? ctx.actor.yaw : 0);
+  _facing.x = Math.sin(yaw);
+  _facing.y = 0;
+  _facing.z = Math.cos(yaw);
+  return _facing;
 }
 // No visible target: chase the last-seen point briefly, then keep moving on
 // the brain's own navigation (objective / ink) instead of idling in place.
@@ -64,14 +77,14 @@ function kraken(ctx) {
     activate(ctx); return;
   }
   stop(ctx);
-  if (!st || st.phase === 'startup' || st.phase === 'finish' || st.t < 1 - EPS) return;
+  if (!st || st.phase === 'startup' || st.phase === 'finish' || !Number.isFinite(st.t) || st.t < 1 - EPS) return;
   if (st.phase === 'dash') return; // The native released dash owns its heading.
   const near = target && ctx.distance <= 2.5 && Math.abs(ctx.height) <= 2;
   const chargeTarget = target && ctx.distance >= 3 && ctx.distance <= 13 && Math.abs(ctx.height) <= .8;
   const enoughTime = remaining(ctx, st) > KRAKEN_MOVEMENT.chargeTime + KRAKEN_MOVEMENT.dashTime + .15;
   if (target) aimEnemy(ctx, .12);
   if (st.phase === 'charge') {
-    const ready = st.chargeT + EPS >= KRAKEN_MOVEMENT.chargeTime;
+    const ready = Number.isFinite(st.chargeT) && st.chargeT + EPS >= KRAKEN_MOVEMENT.chargeTime;
     // Recheck the complete committed corridor at release, not every charge
     // frame. During charging the body moves only slowly; probe that local path.
     const clear = chargeTarget && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), ready ? 12 : 1.5);
@@ -99,12 +112,16 @@ function kraken(ctx) {
 // at the body after the native throw windup; it grants no projectile effects.
 function aimStampThrow(ctx, state) {
   const { actor, enemy, memory } = ctx;
-  const delay = state.throwAt === undefined ? .7 : Math.max(0, state.throwAt - state.t);
-  let lead = delay + ctx.distance / 40, pitch = 0, valid = false;
-  const point = memory.stampThrowPoint ||= actor.pos.clone();
+  if (!enemy?.pos) return false;
+  const delay = Number.isFinite(state?.throwAt) && Number.isFinite(state?.t) ? Math.max(0, state.throwAt - state.t) : .7;
+  const vx = Number.isFinite(enemy.vel?.x) ? enemy.vel.x : 0;
+  const vz = Number.isFinite(enemy.vel?.z) ? enemy.vel.z : 0;
+  let lead = delay + (Number.isFinite(ctx.distance) ? ctx.distance : 0) / 40, pitch = 0, valid = false;
+  const point = memory.stampThrowPoint ||= { x: 0, y: 0, z: 0 };
   for (let pass = 0; pass < 2; pass++) {
-    point.copy(enemy.pos);
-    point.x += (enemy.vel?.x || 0) * lead; point.z += (enemy.vel?.z || 0) * lead;
+    point.x = enemy.pos.x + vx * lead;
+    point.y = enemy.pos.y;
+    point.z = enemy.pos.z + vz * lead;
     const distance = Math.hypot(point.x - actor.pos.x, point.z - actor.pos.z);
     let best = Infinity, flight = 0;
     for (let angle = -.8; angle <= .80001; angle += .015) {
@@ -136,11 +153,14 @@ function stamp(ctx) {
     return;
   }
   stop(ctx);
-  if (!st || st.t + EPS < 17 / 60) return;
+  if (!st || !Number.isFinite(st.t) || st.t + EPS < 17 / 60) return;
   if (st.throwAt !== undefined) { if (target) aimStampThrow(ctx, st); return; }
   // Once the sub release has queued a throw the action owner keeps its 42F
   // startup. A second timer-driven pulse would only corrupt its held input.
   if (st.phase === 'throw') return;
+  if (memory.stampReleased && st.t > (memory.stampReleasedAt ?? -Infinity) + EPS) {
+    memory.stampReleased = false;
+  }
   if (!target) {
     // Releasing a previously held throw would launch blindly. Keep holding
     // until a visible target returns or the normal special duration expires.
@@ -160,7 +180,12 @@ function stamp(ctx) {
     if (aimed && throwRange) {
       // This off edge is the normal sub-release path, not a projectile call.
       intent.sub = false; memory.stampAimThrow = false; memory.stampReleased = true;
-    } else intent.sub = true;
+      memory.stampReleasedAt = st.t;
+    } else {
+      intent.sub = true;
+      if (ctx.distance > 24) ctx.moveToward(ctx.enemy.pos, .6);
+      else if (ctx.distance < 3 && !ctx.moveToward(ctx.enemy.pos, -.6)) strafe(ctx, ctx.enemy.pos, .6);
+    }
     return;
   }
   if (memory.stampReleased) return;
@@ -202,11 +227,12 @@ function reef(ctx) {
   if (st.phase === 'startup') {
     // Startup aim remains controllable; keep the committed safe rail rather
     // than inheriting the main weapon's paint sweep or last-seen enemy aim.
-    ctx.aimAt(rushPoint(ctx, st.direction, 10), { height: 1.1 });
+    if (finiteDir(st.direction)) ctx.aimAt(rushPoint(ctx, st.direction, 10), { height: 1.1 });
     return;
   }
-  if (st.phase !== 'dash' || st.dashT + ctx.dt + EPS < 15 / 60) return;
-  const brake = reefBrakeDistance(st.reefSpeedRaw || 0);
+  if (st.phase !== 'dash' || !Number.isFinite(st.dashT) || st.dashT + ctx.dt + EPS < 15 / 60) return;
+  if (!finiteDir(st.direction)) { intent.fire = true; return; }
+  const brake = reefBrakeDistance(Number.isFinite(st.reefSpeedRaw) ? st.reefSpeedRaw : 0);
   const dx = target ? ctx.enemy.pos.x - actor.pos.x : 0;
   const dz = target ? ctx.enemy.pos.z - actor.pos.z : 0;
   const ahead = dx * st.direction.x + dz * st.direction.z;
@@ -226,7 +252,7 @@ function splashdown(ctx) {
 }
 export function driveMeleeSpecial(ctx) {
   if (!IDS.has(ctx.special)) return false;
-  ctx.memory.meleeHop = Math.max(0, (ctx.memory.meleeHop || 0) - ctx.dt);
+  ctx.memory.meleeHop = Math.max(0, (Number.isFinite(ctx.memory.meleeHop) ? ctx.memory.meleeHop : 0) - ctx.dt);
   captureNav(ctx);
   if (ctx.state) quiet(ctx);
   noteSighting(ctx);

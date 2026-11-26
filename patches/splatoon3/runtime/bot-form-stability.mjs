@@ -23,6 +23,13 @@ export function stabilizeBotForm(actor, dt, traversal = false) {
   if (!actor.alive || actor.superJumpState || actor.specialActive || actor.climbing || traversal) {
     s.squid = want; s.t = Infinity; return;
   }
+  // Keep humanoid form while aiming or releasing a sub weapon so squid intent
+  // cannot silently drop sub aim or cancel subReleased on the following tick.
+  if (it.sub || actor.weaponRunner?.aimingSub) {
+    if (it.squid) it.squid = false;
+    if (s.squid) { s.squid = false; s.t = 0; }
+    return;
+  }
   if (want === s.squid) return;
   const action = !want && (it.fire || it.sub || it.special || it.throw);
   if (action || s.t >= BOT_FORM_HOLD) { s.squid = want; s.t = 0; return; }

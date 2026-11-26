@@ -310,15 +310,33 @@ function humanWave(t, ph, freq) {
   return Math.sin(x) * 0.62 + Math.sin(x * 1.73 + 0.9) * 0.38;
 }
 
-function resolvePhase(brain, actor) {
-  if (typeof brain.ph1 === 'number') return brain.ph1;
-  return ((actor?.id || 0) * 1.73) % 20;
+function finite(value, fallback) {
+  return Number.isFinite(value) ? value : fallback;
 }
 
-function getBlasterState(brain) {
+function resolvePhase(brain, actor) {
+  if (Number.isFinite(brain.ph1)) return brain.ph1;
+  return ((finite(actor?.id, 0)) * 1.73) % 20;
+}
+
+function resetBlasterState(st, life) {
+  st.life = life;
+  st.prevCooldown = 0;
+  st.burstShots = 0;
+  st.microRecover = false;
+  st.microRecoverT = 0;
+  st.coverShots = 0;
+  st.lastCoverTarget = null;
+  st.sweepDir = 1;
+  st.combatJumpCd = 0;
+  st.paintJumpCd = 0;
+}
+
+function getBlasterState(brain, actor) {
   let st = brain._blasterAiState;
   if (!st) {
     st = brain._blasterAiState = {
+      life: actor?.netLife,
       prevCooldown: 0,
       burstShots: 0,
       microRecover: false,
@@ -330,19 +348,40 @@ function getBlasterState(brain) {
       paintJumpCd: 0,
       _aimOut: { wantYaw: 0, wantPitch: 0 },
     };
+  } else if (actor && actor.netLife !== undefined && st.life !== actor.netLife) {
+    if (st.life !== undefined) {
+      resetBlasterState(st, actor.netLife);
+    } else {
+      st.life = actor.netLife;
+    }
   }
   return st;
 }
 
 function isPostShotLocked(wr) {
   if (!wr) return false;
-  return (wr.s3PostShotRemaining || 0) > EPS ||
-    (wr.s3BlasterInterruptSquid || 0) > EPS ||
+  return finite(wr.s3PostShotRemaining, 0) > EPS ||
+    finite(wr.s3BlasterInterruptSquid, 0) > EPS ||
+    finite(wr.s3BlasterWindup, 0) > EPS ||
+    !!wr.s3BlasterCancelLatch ||
     !!wr.catalogState?.pending;
 }
 
+function getBlasterShotInkFrac(weapon) {
+  const catConsume = weapon?.catalogRecord?.parameters?.WeaponParam?.InkConsume;
+  if (Number.isFinite(catConsume) && catConsume > 0 && catConsume < 1) {
+    return catConsume;
+  }
+  const perShot = weapon?.inkPerShot;
+  if (Number.isFinite(perShot) && perShot > 0) {
+    const frac = perShot > 1 ? perShot / 100 : perShot;
+    if (frac > 0 && frac < 1) return frac;
+  }
+  return 0.04;
+}
+
 function setMoveXZ(move, x, z) {
-  if (!move) return;
+  if (!move || !Number.isFinite(x) || !Number.isFinite(z)) return;
   if (typeof move.set === 'function') move.set(x, 0, z);
   else {
     move.x = x;
@@ -351,8 +390,8 @@ function setMoveXZ(move, x, z) {
 }
 
 function resolveMatchTimeLeft(G) {
-  if (typeof G?.match?.time === 'number') return G.match.time;
-  if (typeof G?.timeLeft === 'number') return G.timeLeft;
+  if (Number.isFinite(G?.match?.time)) return G.match.time;
+  if (Number.isFinite(G?.timeLeft)) return G.timeLeft;
   return 120;
 }
 
@@ -385,12 +424,36 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   const it = actor.intent;
   const wr = actor.weaponRunner;
   const arch = getBlasterArchetype(actor.weapon);
-  const st = getBlasterState(brain);
+  const st = getBlasterState(brain, actor);
+
+  if (actor.alive === false) {
+    resetBlasterState(st, actor.netLife);
+    return;
+  }
+  if (actor.superJumpState || actor.climbing) {
+    st.microRecover = false;
+    st.microRecoverT = 0;
+    return;
+  }
+  if (actor.specialActive || it.special) {
+    st.microRecover = false;
+    st.microRecoverT = 0;
+    return;
+  }
+  if (it.sub || brain._bombAim || brain._releaseBomb) {
+    st.microRecover = false;
+    st.microRecoverT = 0;
+    it.fire = false;
+    it.squid = false;
+    return;
+  }
 
   const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
+  const safeInk = finite(inkFrac, 0);
+  const minPaintInk = Math.max(0.10, getBlasterShotInkFrac(actor.weapon));
   st.paintJumpCd = Math.max(0, st.paintJumpCd - safeDt);
 
-  const t = typeof brain.t === 'number' ? brain.t : 0;
+  const t = finite(brain.t, 0);
   const ph = resolvePhase(brain, actor);
   const rhythmWave = humanWave(t, ph, 0.58);
 
@@ -400,9 +463,9 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
     : (typeof brain._turfPaintValidated === 'boolean' ? brain._turfPaintValidated : true);
   const wantPaintNow = typeof ctx.wantPaintNow === 'boolean'
     ? ctx.wantPaintNow
-    : Boolean(brain._turfPaintLatch && pitchReady && inkFrac > 0.10 && (brain.paintPause || 0) <= 0);
+    : Boolean(brain._turfPaintLatch && pitchReady && safeInk > minPaintInk && (brain.paintPause || 0) <= 0);
 
-  const cooldown = wr?.cooldown || 0;
+  const cooldown = Math.max(0, finite(wr?.cooldown, 0));
   const postLocked = isPostShotLocked(wr);
   const onOwnInk = actor.groundTeam === 1;
   const onEnemyInk = actor.groundTeam === 2;
@@ -413,7 +476,7 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   // Detect fresh shot emission (cooldown jumped upward) to step sweep angle & count burst shots
   if (cooldown > st.prevCooldown + 0.08) {
     st.burstShots += 1;
-    if (typeof brain.sweep === 'number') {
+    if (Number.isFinite(brain.sweep)) {
       // Advance sweep phase by organically modulated step so consecutive tip-blast circles tile naturally
       const flankBias = cache?.flankBias || 0;
       if (Math.abs(flankBias) > 0.10) {
@@ -444,7 +507,7 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
       isEndgamePush ||
       !onOwnInk ||
       coolerPending ||
-      inkFrac >= dynRecoverTarget ||
+      safeInk >= dynRecoverTarget ||
       st.microRecoverT >= maxRecoverTime
     ) {
       st.microRecover = false;
@@ -460,7 +523,7 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
     !coolerPending &&
     onOwnInk &&
     !postLocked &&
-    (inkFrac < dynRecoverTrigger || (st.burstShots >= dynBurstLimit && inkFrac < 0.56))
+    (safeInk < dynRecoverTrigger || (st.burstShots >= dynBurstLimit && safeInk < 0.56))
   ) {
     st.microRecover = true;
     st.microRecoverT = 0;
@@ -470,7 +533,7 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   }
 
   // 2. Guard against firing into the floor (terrain-impact blast shrinks paint radius from ~0.5-0.6 to 0.3)
-  const aimPitch = typeof brain.aimPitch === 'number' ? brain.aimPitch : arch.minAirburstPitch;
+  const aimPitch = finite(brain.aimPitch, arch.minAirburstPitch);
   const floorRisk = !brain._footPaint && !onEnemyInk && aimPitch < -0.22;
 
   // 3. Shot cadence & between-shot squid swim (1発ごとのイカ移動キャンセル/慣性移動)
@@ -487,10 +550,10 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
       }
     } else {
       // Clash Blaster (20F cadence): keep continuous firing cadence without squid-form startup overhead
-      it.fire = wantPaintNow && !floorRisk && inkFrac > 0.12;
+      it.fire = wantPaintNow && !floorRisk && safeInk > Math.max(0.12, minPaintInk);
       if (it.fire) it.squid = false;
     }
-  } else if (wantPaintNow && pitchReady && !floorRisk && inkFrac > 0.10) {
+  } else if (wantPaintNow && pitchReady && !floorRisk && safeInk >= minPaintInk - EPS && safeInk > 0.10) {
     // Ready to fire next airburst paint shell
     it.fire = true;
     it.squid = false;
@@ -514,17 +577,17 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   }
 
   // 4. Lateral strafe painting ("カニ歩き塗り") with smooth organic cadence per archetype
-  if ((it.fire || postLocked) && wantMove && move && typeof move.x === 'number' && typeof move.z === 'number') {
+  if ((it.fire || postLocked) && wantMove && move && Number.isFinite(move.x) && Number.isFinite(move.z) && Number.isFinite(baseYaw)) {
     const hasActiveNavPath = Array.isArray(brain.path) && brain.path.length > 1 && (G?.nav?.nodes?.length || 0) > 4;
-    const baseStrafe = ctx.profile?.strafe ?? arch.paintStrafe;
+    const baseStrafe = finite(ctx.profile?.strafe, arch.paintStrafe);
     const strafeMod = 1 + 0.18 * humanWave(t, ph + 2.4, 0.85);
     const strafeRatio = (hasActiveNavPath ? baseStrafe * 0.25 : baseStrafe) * strafeMod;
     if (strafeRatio > 0) {
-      const flankBias = cache?.flankBias || 0;
+      const flankBias = finite(cache?.flankBias, 0);
       const targetSign = Math.abs(flankBias) > 0.05
         ? (flankBias > 0 ? 1 : -1)
         : humanWave(t, ph, arch.paintStrafeFreq);
-      const prevStrafe = brain._smoothStrafe ?? targetSign;
+      const prevStrafe = finite(brain._smoothStrafe, targetSign);
       const smoothSign = prevStrafe + (targetSign - prevStrafe) * Math.min(1, safeDt * 6.5);
       brain._smoothStrafe = smoothSign;
       const perpX = Math.cos(baseYaw) * smoothSign;
@@ -571,28 +634,58 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
   } = ctx;
 
   const arch = getBlasterArchetype(w);
-  const st = getBlasterState(brain);
+  const st = getBlasterState(brain, actor);
+
+  if (actor.alive === false) {
+    resetBlasterState(st, actor.netLife);
+    return null;
+  }
+  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+    st.microRecover = false;
+    st.microRecoverT = 0;
+    return null;
+  }
+  if (it.sub || brain._bombAim || brain._releaseBomb) {
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
+
   const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
   st.combatJumpCd = Math.max(0, st.combatJumpCd - safeDt);
 
-  const t = typeof brain.t === 'number' ? brain.t : 0;
+  const safeDist = Number.isFinite(dist) && dist >= 0 ? dist : Infinity;
+  const safeDx = finite(dx, 0);
+  const safeDz = finite(dz, 0);
+  const safeInk = finite(inkFrac, 0);
+  const safeOff = finite(off, Infinity);
+  const safeIdealPitch = finite(idealPitch, 0);
+  const safeWantYaw = finite(wantYaw, 0);
+  const safeWantPitch = finite(wantPitch, 0);
+  const minShotInk = Math.max(0.04, getBlasterShotInkFrac(w));
+
+  const t = finite(brain.t, 0);
   const ph = resolvePhase(brain, actor);
   const breathWave = humanWave(t, ph, 0.72);
   const strafeWave = humanWave(t, ph + 1.9, arch.combatStrafeFreq);
 
-  const safeRange = Math.max(4, range || w?.range || 10.5);
-  const splashRadius = w?.splashRadius || arch.defaultSplashRadius;
+  const rawRange = Number.isFinite(range) && range > 0 ? range : (Number.isFinite(w?.range) && w.range > 0 ? w.range : 10.5);
+  const safeRange = Math.max(4, rawRange);
+  const splashRadius = Number.isFinite(w?.splashRadius) && w.splashRadius > 0 ? w.splashRadius : arch.defaultSplashRadius;
   const blastReach = safeRange + splashRadius * 0.82;
   const sweetMin = safeRange * (arch.sweetMinFrac + breathWave * 0.012);
   const sweetPref = safeRange * (arch.sweetPrefFrac + breathWave * 0.025);
   const sweetMax = safeRange * (arch.sweetMaxFrac + breathWave * 0.015);
 
-  const nx = dx / Math.max(dist, 0.01);
-  const nz = dz / Math.max(dist, 0.01);
-  const baseSide = brain.strafeS || (brain.strafe || 1) * 0.65;
+  const invDist = Number.isFinite(safeDist) ? 1 / Math.max(safeDist, 0.01) : 0;
+  const nx = safeDx * invDist;
+  const nz = safeDz * invDist;
+  const rawStrafe = Number.isFinite(brain.strafeS) && brain.strafeS !== 0
+    ? brain.strafeS
+    : (finite(brain.strafe, 1) * 0.65);
   // Blend bot's eased strafe with archetype-paced organic weave (keeps direction sign & natural cutbacks)
-  const side = baseSide * (0.82 + 0.18 * strafeWave) + strafeWave * 0.16;
-  const cooldown = wr.cooldown || 0;
+  const side = rawStrafe * (0.82 + 0.18 * strafeWave) + strafeWave * 0.16;
+  const cooldown = Math.max(0, finite(wr.cooldown, 0));
   const postLocked = isPostShotLocked(wr);
   const onOwnInk = actor.groundTeam === 1;
 
@@ -602,15 +695,15 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
     st.lastCoverTarget = brain.target || null;
   }
 
-  let outPitch = wantPitch;
+  let outPitch = safeWantPitch;
   let pitchAdjusted = false;
 
   // S-BLAST close-range mode threshold with subtle organic variation
   const sblastCloseDist = safeRange * (0.68 + breathWave * 0.025);
-  const isSblastCloseMode = arch.combatJumpClose && dist < sblastCloseDist;
+  const isSblastCloseMode = arch.combatJumpClose && safeDist < sblastCloseDist;
 
   // 1. Spacing & movement (爆風距離の維持・引き撃ち・追い撃ち・硬直明けイカステップ)
-  if (dist < sweetMin) {
+  if (safeDist < sweetMin) {
     // Too close: airburst would overshoot behind enemy -> backpedal + lateral strafe (引き撃ち)
     const backWeight = arch.kiteBackWeight;
     const strafeWeight = arch.kiteStrafeWeight;
@@ -631,14 +724,14 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
       it.jump = true;
       st.combatJumpCd = 0.68 + 0.18 * (0.5 + 0.5 * breathWave);
     }
-  } else if (dist > sweetMax) {
+  } else if (safeDist > sweetMax) {
     // Out of optimal airburst zone: swim in on own ink when not firing (追い撃ち)
-    if (onOwnInk && !postLocked && (!it.fire || cooldown > 0.06)) {
+    if (onOwnInk && !postLocked && (!it.fire || cooldown > arch.combatSwimCdMin)) {
       it.squid = true;
     }
   } else {
     // Inside airburst sweet spot: archetype-calibrated lateral weave + gentle radial breathing
-    const distErr = (dist - sweetPref) / Math.max(safeRange * 0.25, 1.0);
+    const distErr = (safeDist - sweetPref) / Math.max(safeRange * 0.25, 1.0);
     const radial = Math.max(-0.35, Math.min(0.35, distErr * 0.4 + arch.pushBias));
     const sw = arch.sweetStrafeWeight;
     const mvx = nx * radial - nz * side * sw;
@@ -649,12 +742,12 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
 
   // 2. Firing & between-shot squid step discipline
   if (enemyVisible) {
-    const canEngage = (brain.react || 0) <= 0 && inkFrac > 0.04 && dist < blastReach;
+    const canEngage = (brain.react || 0) <= 0 && safeInk >= minShotInk - EPS && safeInk > 0.04 && safeDist < blastReach;
     // Archetype-specific angular tolerance in airburst zone (narrow for S-BLAST long & Range, wide for Luna/Clash)
     const offTol = isSblastCloseMode && arch.closeBlastAimOffTol
       ? arch.closeBlastAimOffTol
       : arch.blastAimOffTol;
-    const blastAimed = aimed || (dist >= sweetMin && dist < blastReach && off < offTol);
+    const blastAimed = aimed || (safeDist >= sweetMin && safeDist < blastReach && safeOff < offTol);
 
     if (postLocked) {
       it.fire = false;
@@ -662,13 +755,13 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
     } else if (cooldown > arch.combatSwimCdMin && arch.swimBetweenShots) {
       // Post-shot lock finished with ample cooldown (> emergeDelay): quick squid step only when repositioning out of sweet zone
       it.fire = false;
-      if (onOwnInk && (dist < sweetMin || dist > sweetMax)) {
+      if (onOwnInk && (safeDist < sweetMin || safeDist > sweetMax)) {
         it.squid = true;
       }
     } else if (canEngage && blastAimed) {
       it.fire = true;
       it.squid = false;
-    } else if (dist >= blastReach) {
+    } else if (!canEngage || safeDist >= blastReach) {
       it.fire = false;
     }
 
@@ -677,10 +770,10 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
     // instead of hitting the floor early (25-35 dmg). Never alters wantYaw (human aimError preserved).
     if (
       it.fire &&
-      dist >= safeRange * 0.55 &&
-      dist < blastReach &&
-      idealPitch > -0.22 &&
-      wantPitch < arch.minCombatAirburstPitch
+      safeDist >= safeRange * 0.55 &&
+      safeDist < blastReach &&
+      safeIdealPitch > -0.22 &&
+      safeWantPitch < arch.minCombatAirburstPitch
     ) {
       outPitch = arch.minCombatAirburstPitch;
       pitchAdjusted = true;
@@ -692,9 +785,9 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
       arch.evadeJumpCd > 0 &&
       it.fire &&
       actor.grounded &&
-      (actor.lastDamage ?? 9) < 0.25 &&
+      finite(actor.lastDamage, 9) < 0.25 &&
       st.combatJumpCd <= 0 &&
-      dist < safeRange * 0.85 &&
+      safeDist < safeRange * 0.85 &&
       !isNearWaterSafe(brain, actor, 1.6)
     ) {
       it.jump = true;
@@ -704,36 +797,42 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
     brain.target &&
     (brain.lostTimer || 0) > 0 &&
     (brain.lostTimer || 0) < arch.coverLostMax &&
-    dist < blastReach &&
-    inkFrac > arch.coverMinInk &&
-    off < 0.22
+    safeDist < blastReach &&
+    safeInk > Math.max(arch.coverMinInk, minShotInk) &&
+    safeOff < 0.22
   ) {
     // 5. Splash-around-cover ("障害物裏の角撃ち"): fire archetype-calibrated airburst shells at lastSeenPos
     if (postLocked) {
       it.fire = false;
       it.squid = false;
-    } else if (cooldown > 0.05 && arch.swimBetweenShots) {
+    } else if (cooldown > arch.combatSwimCdMin && arch.swimBetweenShots) {
       it.fire = false;
       if (onOwnInk) it.squid = true;
     } else if (st.coverShots < arch.coverShotCap && cooldown <= EPS) {
-      it.fire = true;
-      it.squid = false;
-      st.coverShots += 1;
-      // S-BLAST uses short wide jump-blast for close cover corners, grounded long blast for far corners
-      if (
-        arch.combatJumpClose &&
-        dist < safeRange * 0.72 &&
-        actor.grounded &&
-        st.combatJumpCd <= 0 &&
-        !isNearWaterSafe(brain, actor, 1.6)
-      ) {
-        it.jump = true;
-        st.combatJumpCd = 0.75;
-      }
-      // Keep cover-blast shells airborne so they detonate past the obstacle corner
-      if (wantPitch < -0.04 && idealPitch > -0.22) {
-        outPitch = -0.04;
-        pitchAdjusted = true;
+      if (actor.form === 'squid') {
+        // Emerge before committing cover-shot budget so emergeDelay does not swallow shots
+        it.fire = false;
+        it.squid = false;
+      } else {
+        it.fire = true;
+        it.squid = false;
+        st.coverShots += 1;
+        // S-BLAST uses short wide jump-blast for close cover corners, grounded long blast for far corners
+        if (
+          arch.combatJumpClose &&
+          safeDist < safeRange * 0.72 &&
+          actor.grounded &&
+          st.combatJumpCd <= 0 &&
+          !isNearWaterSafe(brain, actor, 1.6)
+        ) {
+          it.jump = true;
+          st.combatJumpCd = 0.75;
+        }
+        // Keep cover-blast shells airborne so they detonate past the obstacle corner
+        if (safeWantPitch < -0.04 && safeIdealPitch > -0.22) {
+          outPitch = -0.04;
+          pitchAdjusted = true;
+        }
       }
     } else {
       it.fire = false;
@@ -741,7 +840,7 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
   }
 
   if (pitchAdjusted) {
-    st._aimOut.wantYaw = wantYaw;
+    st._aimOut.wantYaw = safeWantYaw;
     st._aimOut.wantPitch = outPitch;
     return st._aimOut;
   }

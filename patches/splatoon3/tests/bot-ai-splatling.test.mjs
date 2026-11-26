@@ -393,3 +393,130 @@ test('integrity & lightweight performance: no weapon/aimError mutation, no wall-
   assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'movement stays finite');
   assert.ok(elapsedMs < 200, `6000 paint+combat ticks should stay lightweight (< 200ms), got ${elapsedMs.toFixed(2)}ms`);
 });
+
+test('guards specialActive, it.sub, it.special, superJumpState, and climbing against input conflicts', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const weapon = { id: 'splatling', sourceMainActor: 'WeaponSpinnerStandard', range: 21 };
+
+  // specialActive: must not overwrite fire/squid
+  const spActor = makeActor({ id: 21, weapon, wr: { charging: false, streaming: false } });
+  spActor.alive = true;
+  spActor.specialActive = true;
+  spActor.intent.fire = true;
+  applySplatlingTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, spActor, 1 / 60, makeMove(), true, 0, 0.2, { pitchReady: true, wantPaintNow: true });
+  assert.equal(spActor.intent.fire, true);
+  assert.equal(spActor.intent.squid, false);
+
+  // it.sub & it.special: clear fire, do not set squid
+  for (const flag of ['sub', 'special']) {
+    const act = makeActor({ id: 22, weapon, wr: { charging: false, streaming: false } });
+    act.alive = true;
+    act.intent.fire = true;
+    act.intent[flag] = true;
+    applySplatlingCombat({ react: 0 }, G, act, 1 / 60, makeMove(), {
+      dist: 12, range: 21, dx: 0, dz: 12, enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    });
+    assert.equal(act.intent.fire, false, `it.${flag} clears conflicting fire in combat`);
+    assert.equal(act.intent.squid, false);
+
+    act.intent.fire = true;
+    applySplatlingTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, act, 1 / 60, makeMove(), true, 0, 0.2, { pitchReady: true, wantPaintNow: true });
+    assert.equal(act.intent.fire, false, `it.${flag} clears conflicting fire in turf paint`);
+  }
+
+  // superJumpState & climbing: return early without mutating intent
+  for (const patch of [{ superJumpState: { phase: 'air' } }, { climbing: true }]) {
+    const act = makeActor({ id: 23, weapon, wr: { charging: false, streaming: false } });
+    Object.assign(act, { alive: true, ...patch });
+    act.intent.squid = true;
+    applySplatlingTurfPaint({ _turfPaintLatch: true, _turfPaintValidated: true }, G, act, 1 / 60, makeMove(), true, 0, 0.8, { pitchReady: true, wantPaintNow: true });
+    assert.equal(act.intent.fire, false);
+    assert.equal(act.intent.squid, true);
+  }
+});
+
+test('resets stale per-bot splatling state across deaths and netLife respawns', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const weapon = { id: 's3-spinner-hyper', sourceMainActor: 'WeaponSpinnerHyper', range: 24 };
+  const brain = {
+    _turfPaintLatch: true, _turfPaintValidated: true,
+    _splatlingMicroRefill: 1, _splatlingRechargeCd: 0.7, _splatlingKeepT: 0.5, _splatlingHold: 0.3,
+  };
+  const actor = makeActor({ id: 24, weapon, wr: { charging: false, streaming: false } });
+  actor.alive = true;
+  actor.netLife = 1;
+
+  // Initial call records netLife = 1 without wiping pre-populated state
+  applySplatlingTurfPaint(brain, G, actor, 1 / 60, makeMove(), true, 0, 0.40, { pitchReady: true, wantPaintNow: true });
+  assert.equal(brain._splatlingMicroRefill, 1);
+
+  // Respawn (netLife 1 -> 2) clears all stale per-life state
+  actor.netLife = 2;
+  applySplatlingTurfPaint(brain, G, actor, 1 / 60, makeMove(), true, 0, 0.40, { pitchReady: true, wantPaintNow: true });
+  assert.equal(brain._splatlingMicroRefill, 0);
+  assert.equal(brain._splatlingRechargeCd, 0);
+  assert.equal(brain._splatlingKeepT, 0);
+  assert.equal(brain._splatlingHold, 0);
+
+  // Death resets state and returns early
+  brain._splatlingMicroRefill = 1;
+  actor.alive = false;
+  actor.intent.fire = false;
+  applySplatlingCombat(brain, G, actor, 1 / 60, makeMove(), {
+    dist: 12, range: 24, dx: 0, dz: 12, enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+  });
+  assert.equal(brain._splatlingMicroRefill, 0);
+  assert.equal(actor.intent.fire, false);
+});
+
+test('combat ink exhaustion releases stuck spin; Nautilus keepExpired consumes stored charge and turf micro-refill preserves it', () => {
+  // Combat ink exhaustion releases active spin instead of holding Fire forever
+  const heavy = makeActor({
+    id: 25,
+    weapon: { id: 'splatling', sourceMainActor: 'WeaponSpinnerStandard', range: 21 },
+    wr: { charging: true, charge: 0.40, cooldown: 0 },
+  });
+  heavy.intent.fire = true;
+  applySplatlingCombat({ react: 0, _splatlingHold: 0.2 }, {}, heavy, 1 / 60, makeMove(), {
+    dist: 12, range: 21, dx: 0, dz: 12, enemyVisible: true, aimed: false, off: 0.2, inkFrac: 0.01,
+  });
+  assert.equal(heavy.intent.fire, false, 'releases splatling spin immediately on combat ink exhaustion');
+
+  // Nautilus keepExpired pops out with fire=true to consume catalogState.stored (preventing uncleared-stored oscillation)
+  const naut = makeActor({
+    id: 26,
+    weapon: { id: 's3-spinner-serein', sourceMainActor: 'WeaponSpinnerSerein', range: 18 },
+    wr: { charging: false, streaming: false, catalogState: { stored: { frames: 50, paid: 10, remaining: 2.0 } } },
+    groundTeam: 1,
+  });
+  const nBrain = { react: 0, lostTimer: 1.2, _splatlingKeepT: 1.2 };
+  applySplatlingCombat(nBrain, {}, naut, 1 / 60, makeMove(), {
+    dist: 14, range: 18, dx: 0, dz: 14, enemyVisible: false, aimed: false, off: 0.5, inkFrac: 0.6,
+  });
+  assert.equal(naut.intent.squid, false, 'Nautilus surfaces when Charge Keep expires');
+  assert.equal(naut.intent.fire, true, 'Nautilus holds fire on surface frame to consume catalogState.stored');
+  assert.equal(nBrain._splatlingKeepT, 0);
+
+  // Nautilus turf-paint micro-refill does not cancel stored charge
+  const pBrain = { _turfPaintLatch: true, _turfPaintValidated: true, _splatlingMicroRefill: 1 };
+  applySplatlingTurfPaint(pBrain, {}, naut, 1 / 60, makeMove(), true, 0, 0.15, { pitchReady: true, wantPaintNow: true });
+  assert.equal(pBrain._splatlingMicroRefill, 0, 'stored charge clears micro-refill latch');
+  assert.equal(naut.intent.fire, true, 'resumes stored charge for painting');
+  assert.equal(naut.intent.squid, false);
+});
+
+test('NaN inputs never poison splatling movement or sweep state', () => {
+  const actor = makeActor({
+    id: 27,
+    weapon: { id: 'splatling', sourceMainActor: 'WeaponSpinnerStandard', range: 21 },
+    wr: { charging: true, charge: NaN, streaming: false, cooldown: 0 },
+  });
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: true, sweep: 0, t: NaN };
+  const move = makeMove(0, 1);
+  applySplatlingTurfPaint(brain, {}, actor, NaN, move, true, NaN, NaN, { pitchReady: true, wantPaintNow: true });
+  applySplatlingCombat(brain, {}, actor, NaN, move, {
+    dist: NaN, range: NaN, dx: NaN, dz: NaN, enemyVisible: true, aimed: false, off: NaN, inkFrac: NaN,
+  });
+  assert.ok(Number.isFinite(move.x) && Number.isFinite(move.z), 'move remains finite under NaN inputs');
+  assert.ok(Number.isFinite(brain.sweep), 'sweep remains finite under NaN inputs');
+});

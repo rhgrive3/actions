@@ -639,3 +639,102 @@ test('allied Tacticooler drink pickup intent is preserved and prevents subsequen
   assert.equal(actor.intent.squid, false, 'combat helper preserves kid form near cooler');
 });
 
+
+test('turf paint and combat paint no-op during specialActive, superJumpState, climbing, and guard utility subs / busy weapons / NaN', () => {
+  const G = { match: { mode: 'turf', time: 2.5 } };
+  const move = { x: 0, z: 1 };
+
+  // 1. specialActive / superJumpState / climbing / alive:false must not fire, pop squid, or throw subs
+  for (const statePatch of [
+    { specialActive: { id: 'ultraStamp' } },
+    { superJumpState: { phase: 'air' } },
+    { climbing: true },
+    { alive: false },
+  ]) {
+    const actor = {
+      team: 0, pos: { x: 0, y: 0, z: 0 }, groundTeam: 2,
+      weapon: { catalogRecord: { family: 'shooter' }, sub: 'burst', range: 12 },
+      weaponRunner: { cooldown: 0 },
+      intent: { fire: false, squid: true, sub: false, special: false },
+      ...statePatch,
+    };
+    const brain = { _turfPaintLatch: true, _turfPaintValidated: true, bombCd: 0 };
+    botApplyTurfPaintMechanics(brain, G, actor, 1 / 60, move, true, 0, 0.9);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(actor.intent.sub, false);
+    assert.equal(actor.intent.squid, true);
+
+    const p = botApplyTurfCombatPaint(brain, G, actor, 1 / 60, move, true, 0, 0.1, 8, 12, 0.9);
+    assert.equal(p, 0.1);
+    assert.equal(actor.intent.fire, false);
+    assert.equal(actor.intent.sub, false);
+  }
+
+  // 2. Utility subs (beakon, inkMine, splashWall, sprinkler, angleShooter, pointSensor, toxicMist) are not thrown as buzzer-beaters even on unit stubs
+  for (const sub of ['beakon', 'inkMine', 'splashWall', 'sprinkler', 'angleShooter', 'pointSensor', 'toxicMist']) {
+    const actor = {
+      team: 0, pos: { x: 0, y: 0, z: 0 }, groundTeam: 1,
+      weapon: { catalogRecord: { family: 'shooter' }, sub, range: 12 },
+      weaponRunner: { cooldown: 0 },
+      intent: { fire: false, squid: true, sub: false, special: false },
+    };
+    const brain = { _turfPaintLatch: false, _turfPaintValidated: false, bombCd: 0 };
+    botApplyTurfPaintMechanics(brain, G, actor, 1 / 60, move, true, 0, 0.9);
+    assert.equal(actor.intent.sub, false, `${sub} must not trigger buzzer-beater sub`);
+  }
+
+  // 3. Valid buzzer-beater sub clears squid=false and respects charging/canopyOpen conflict
+  const burstActor = {
+    team: 0, pos: { x: 0, y: 0, z: 0 }, groundTeam: 1,
+    weapon: { catalogRecord: { family: 'brella' }, sub: 'burst', range: 11 },
+    weaponRunner: { cooldown: 0, catalogState: { canopyOpen: true } },
+    intent: { fire: false, squid: true, sub: false, special: false },
+  };
+  const burstBrain = { _turfPaintLatch: false, _turfPaintValidated: false, bombCd: 0 };
+  botApplyTurfPaintMechanics(burstBrain, G, burstActor, 1 / 60, move, true, 0, 0.9);
+  assert.equal(burstActor.intent.sub, false, 'must not throw sub while canopyOpen');
+
+  burstActor.weaponRunner.catalogState.canopyOpen = false;
+  botApplyTurfPaintMechanics(burstBrain, G, burstActor, 1 / 60, move, true, 0, 0.9);
+  assert.equal(burstActor.intent.sub, true, 'valid buzzer-beater sub triggers when not busy');
+  assert.equal(burstActor.intent.squid, false, 'buzzer-beater sub clears squid intent');
+
+  // 4. Active cover-bomb aim (_bombAim) is preserved by botApplyTurfCombatPaint (no downward foot-clear override)
+  const coverActor = {
+    team: 0, pos: { x: 0, y: 0, z: 0 }, groundTeam: 2,
+    weapon: { catalogRecord: { family: 'shooter' }, sub: 'bomb', range: 12 },
+    weaponRunner: { cooldown: 0 },
+    intent: { fire: false, squid: false, sub: false },
+  };
+  const coverBrain = { _bombAim: true, bombCd: 5 };
+  const coverPitch = botApplyTurfCombatPaint(coverBrain, { match: { mode: 'turf', time: 90 } }, coverActor, 1 / 60, move, true, 0, 0.35, 8, 12, 0.9);
+  assert.equal(coverPitch, 0.35, 'cover-bomb pitch lift must not be overwritten by foot-clearing');
+  assert.equal(coverActor.intent.fire, false);
+
+  // 5. Roller foot-clearing respects catalogState.pending
+  const pendingRoller = {
+    team: 0, pos: { x: 0, y: 0, z: 0 }, groundTeam: 2,
+    weapon: { catalogRecord: { family: 'roller' }, range: 8 },
+    weaponRunner: { cooldown: 0, catalogState: { pending: true } },
+    intent: { fire: false, squid: false, sub: false },
+  };
+  const rollerPitch = botApplyTurfCombatPaint({ bombCd: 5 }, { match: { mode: 'turf', time: 90 } }, pendingRoller, 1 / 60, move, true, 0, 0.05, 5, 8, 0.9);
+  assert.equal(pendingRoller.intent.fire, false, 'pending roller flick must not fire during foot-clear');
+  assert.equal(rollerPitch, 0.05);
+
+  // 6. Missing actor.pos in botScorePaintCandidate and NaN dt/baseYaw in strafe painting stay finite
+  const backlineNoPos = { id: 9, team: 0, vel: { x: 2, z: 2 }, weapon: { catalogRecord: { family: 'charger' }, range: 22 } };
+  const scoreNoPos = botScorePaintCandidate({ t: 10 }, { level: { faces: new Array(12).fill({}) }, match: { mode: 'turf', time: 100 } }, backlineNoPos, { x: 5, y: 2, z: 5 }, 10, 0.5, { empty: 0.5, enemy: 0.2, own: 0.3 }, 10);
+  assert.ok(Number.isFinite(scoreNoPos));
+
+  const nanMove = { x: 0, z: 1 };
+  const strafeBrain = { t: 1, _turfPaintLatch: true, _turfPaintValidated: true };
+  const strafeActor = {
+    id: 1, team: 0, groundTeam: 1,
+    weapon: { catalogRecord: { family: 'shooter' }, range: 12 },
+    weaponRunner: { cooldown: 0 },
+    intent: { fire: true, squid: false, sub: false },
+  };
+  botApplyTurfPaintMechanics(strafeBrain, { match: { mode: 'turf', time: 100 } }, strafeActor, NaN, nanMove, true, 0, 0.8);
+  assert.ok(Number.isFinite(nanMove.x) && Number.isFinite(nanMove.z), 'NaN dt must not poison strafe move vector');
+});

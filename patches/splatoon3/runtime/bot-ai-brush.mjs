@@ -154,14 +154,47 @@ function setMove(move, x, z) {
 }
 
 function resolveMatchTimeLeft(G, ctx) {
-  if (typeof ctx?.timeLeft === 'number') return ctx.timeLeft;
-  if (typeof G?.match?.time === 'number') return G.match.time;
-  if (typeof G?.timeLeft === 'number') return G.timeLeft;
+  if (Number.isFinite(ctx?.timeLeft)) return ctx.timeLeft;
+  if (Number.isFinite(G?.match?.time)) return G.match.time;
+  if (Number.isFinite(G?.timeLeft)) return G.timeLeft;
   return 120;
 }
 
-function ensureBrushState(brain) {
+function resolveActorLife(actor) {
+  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;
+  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;
+  return null;
+}
+
+function resolveBrushPhase(brain, actor) {
+  if (Number.isFinite(brain?.ph1)) return brain.ph1;
+  const id = actor?.id;
+  if (typeof id === 'number' && Number.isFinite(id)) return id * 0.37;
+  if (typeof id === 'string' && id.length > 0) {
+    let h = 2166136261;
+    for (let i = 0; i < id.length; i++) {
+      h ^= id.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return ((h >>> 0) % 6283) * 0.001;
+  }
+  return 0;
+}
+
+function resetBrushTransientState(st) {
+  st.paintSwings = 0;
+  st.paintRecovering = false;
+  st.paintPauseT = 0;
+  st.rollT = 0;
+  st.swimGapT = 0;
+  st.combatPauseT = 0;
+  st.combatChaining = false;
+  st.combatRollT = 0;
+}
+
+function ensureBrushState(brain, actor) {
   let st = brain._brushAI;
+  const life = resolveActorLife(actor);
   if (!st) {
     st = brain._brushAI = {
       // Paint state
@@ -174,9 +207,16 @@ function ensureBrushState(brain) {
       combatPauseT: 0,
       combatChaining: false,
       combatRollT: 0,
+      // Life epoch tracking across respawns
+      lastLife: life,
       // Reusable aim output (zero per-frame allocations)
       aimOut: { wantYaw: 0, wantPitch: 0 },
     };
+  } else if (life !== null && st.lastLife !== null && st.lastLife !== life) {
+    resetBrushTransientState(st);
+    st.lastLife = life;
+  } else if (life !== null && st.lastLife === null) {
+    st.lastLife = life;
   }
   return st;
 }
@@ -253,11 +293,41 @@ export function resolveBrushArchetype(weapon) {
  */
 export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, ctx) {
   const it = actor?.intent;
-  if (!it) return null;
+  if (!brain || !it) return null;
   const wr = actor.weaponRunner;
+  const st = ensureBrushState(brain, actor);
+  if (actor.alive === false || actor.superJumpState) {
+    resetBrushTransientState(st);
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.specialActive) {
+    resetBrushTransientState(st);
+    return null;
+  }
+  if (it.special || it.sub || wr?.aimingSub) {
+    st.rollT = 0;
+    st.combatRollT = 0;
+    st.combatChaining = false;
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.climbing) {
+    st.rollT = 0;
+    st.combatRollT = 0;
+    st.combatChaining = false;
+    it.fire = false;
+    return null;
+  }
+
   const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
+  inkFrac = Number.isFinite(inkFrac) ? clampVal(inkFrac, 0, 1) : 0;
+  const safeBaseYaw = Number.isFinite(baseYaw)
+    ? baseYaw
+    : (Number.isFinite(actor.yaw) ? actor.yaw : 0);
   const arch = resolveBrushArchetype(actor.weapon);
-  const st = ensureBrushState(brain);
   const cache = ctx?.cache || brain._turfMultiCache || null;
   const timeLeft = resolveMatchTimeLeft(G, ctx);
   const coolerPending = !!brain._coolerPickupPending;
@@ -265,14 +335,14 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
   const onEnemyInk = actor.groundTeam === 2;
   const pending = !!wr?.catalogState?.pending;
   const rolling = !!wr?.rolling;
-  const cooldown = wr?.cooldown || 0;
+  const cooldown = Number.isFinite(wr?.cooldown) ? wr.cooldown : 0;
   const prevFire = !!actor._prevIntent?.fire;
   const wantPaintNow =
     typeof ctx?.wantPaintNow === 'boolean'
       ? ctx.wantPaintNow
       : Boolean(brain._turfPaintLatch && inkFrac > 0.10 && (brain.paintPause || 0) <= 0);
   const t = Number.isFinite(brain?.t) ? brain.t : 0;
-  const ph1 = Number.isFinite(brain?.ph1) ? brain.ph1 : ((actor?.id || 0) * 0.37);
+  const ph1 = resolveBrushPhase(brain, actor);
 
   // Reset combat-only timers when in turf-paint mode
   st.combatChaining = false;
@@ -308,10 +378,10 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
       // Gentle O(1) triangle-wave weave while rolling so movement is human, never a rigid straight line
       if (move && typeof move.x === 'number') {
         const weave = triWave(t * arch.zigzagFreq * 0.65 + ph1) * (arch.ignoresEnemyInkOnRoll ? 0.34 : 0.20);
-        const fx = Math.sin(baseYaw);
-        const fz = Math.cos(baseYaw);
-        const rx = Math.cos(baseYaw);
-        const rz = -Math.sin(baseYaw);
+        const fx = Math.sin(safeBaseYaw);
+        const fz = Math.cos(safeBaseYaw);
+        const rx = Math.cos(safeBaseYaw);
+        const rz = -Math.sin(safeBaseYaw);
         const mx = fx + rx * weave;
         const mz = fz + rz * weave;
         const ml = Math.hypot(mx, mz);
@@ -394,6 +464,12 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
   }
 
   // 8. Tap-swing execution with strict fresh edge (!prevFire) and human rhythm micro-variation
+  if (actor.form === 'squid') {
+    // Emerge cleanly before firing so the 1-frame rising edge is not swallowed by emergeDelay
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
   if (prevFire || cooldown > EPS) {
     it.fire = false;
     // Keep kid form during rapid tap cadence so we don't trigger squid emerge delay every swing
@@ -416,7 +492,7 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
   st.paintPauseT = wave01 * arch.paintCadenceJitter;
 
   // 9. Fan-shaped horizontal sweep aim with flank bias (reusing st.aimOut, zero allocation)
-  const flankBias = cache?.flankBias || 0;
+  const flankBias = Number.isFinite(cache?.flankBias) ? cache.flankBias : 0;
   const sweepWave = triWave(t * 1.35 + ph1 + st.paintSwings * 0.31);
   const yawOffset = clampVal(
     sweepWave * arch.paintSweepAmp * 0.72 + clampVal(flankBias, -0.32, 0.32),
@@ -444,35 +520,69 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
 export function applyBrushCombat(brain, G, actor, dt, move, ctx) {
   const it = actor?.intent;
   const wr = actor?.weaponRunner;
-  if (!it || !wr) return null;
+  if (!brain || !it || !wr) return null;
+
+  const st = ensureBrushState(brain, actor);
+  if (actor.alive === false || actor.superJumpState) {
+    resetBrushTransientState(st);
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.specialActive) {
+    resetBrushTransientState(st);
+    return null;
+  }
+  if (it.special || it.sub || wr.aimingSub) {
+    st.rollT = 0;
+    st.combatRollT = 0;
+    st.combatChaining = false;
+    it.fire = false;
+    it.squid = false;
+    return null;
+  }
+  if (actor.climbing) {
+    st.rollT = 0;
+    st.combatRollT = 0;
+    st.combatChaining = false;
+    it.fire = false;
+    return null;
+  }
 
   const stepDt = Number.isFinite(dt) && dt > 0 ? dt : 1 / 60;
   const arch = resolveBrushArchetype(actor.weapon);
-  const st = ensureBrushState(brain);
 
-  const dist = typeof ctx?.dist === 'number' ? ctx.dist : 6;
-  const dx = typeof ctx?.dx === 'number' ? ctx.dx : 0;
-  const dz = typeof ctx?.dz === 'number' ? ctx.dz : 1;
-  const dy = typeof ctx?.dy === 'number' ? ctx.dy : 0;
+  const dist = Number.isFinite(ctx?.dist) && ctx.dist >= 0 ? ctx.dist : 6;
+  const dx = Number.isFinite(ctx?.dx) ? ctx.dx : 0;
+  const dz = Number.isFinite(ctx?.dz) ? ctx.dz : 1;
+  const dy = Number.isFinite(ctx?.dy) ? ctx.dy : 0;
   const enemyVisible = !!ctx?.enemyVisible;
   const aimed = !!ctx?.aimed;
-  const off = typeof ctx?.off === 'number' ? ctx.off : (aimed ? 0.06 : 0.45);
-  const inkFrac = typeof ctx?.inkFrac === 'number' ? ctx.inkFrac : 1;
-  const wantYaw = typeof ctx?.wantYaw === 'number' ? ctx.wantYaw : (brain.aimYaw || 0);
-  const wantPitch = typeof ctx?.wantPitch === 'number' ? ctx.wantPitch : (brain.aimPitch || 0);
+  const off = Number.isFinite(ctx?.off) ? ctx.off : (aimed ? 0.06 : 0.45);
+  const inkFrac = typeof ctx?.inkFrac === 'number'
+    ? (Number.isFinite(ctx.inkFrac) ? clampVal(ctx.inkFrac, 0, 1) : 0)
+    : 1;
+  const wantYaw = Number.isFinite(ctx?.wantYaw)
+    ? ctx.wantYaw
+    : (Number.isFinite(brain.aimYaw) ? brain.aimYaw : 0);
+  const wantPitch = Number.isFinite(ctx?.wantPitch)
+    ? ctx.wantPitch
+    : (Number.isFinite(brain.aimPitch) ? brain.aimPitch : 0);
 
-  const nx = dx / Math.max(dist, 0.01);
-  const nz = dz / Math.max(dist, 0.01);
+  const horizLen = Math.hypot(dx, dz);
+  const denom = Math.max(dist, horizLen, 0.01);
+  const nx = dx / denom;
+  const nz = dz / denom;
   const onOwnInk = actor.groundTeam === 1;
   const onEnemyInk = actor.groundTeam === 2;
-  const hpFrac = typeof actor.hp === 'number' ? actor.hp / 100 : 1;
+  const hpFrac = Number.isFinite(actor.hp) ? actor.hp / 100 : 1;
   const pending = !!wr.catalogState?.pending;
   const rolling = !!wr.rolling;
-  const cooldown = wr.cooldown || 0;
+  const cooldown = Number.isFinite(wr.cooldown) ? wr.cooldown : 0;
   const prevFire = !!actor._prevIntent?.fire;
-  const reactReady = (brain.react || 0) <= 0;
+  const reactReady = (Number.isFinite(brain.react) ? brain.react : 0) <= 0;
   const t = Number.isFinite(brain?.t) ? brain.t : 0;
-  const ph1 = Number.isFinite(brain?.ph1) ? brain.ph1 : ((actor?.id || 0) * 0.37);
+  const ph1 = resolveBrushPhase(brain, actor);
 
   // Reset turf-only timers on combat entry
   st.rollT = 0;
@@ -484,13 +594,16 @@ export function applyBrushCombat(brain, G, actor, dt, move, ctx) {
   }
 
   // Effective reach respects live weapon.range without ever mutating weapon stats
-  const weaponRange = typeof actor.weapon?.range === 'number' && actor.weapon.range > 0
+  const weaponRange = Number.isFinite(actor.weapon?.range) && actor.weapon.range > 0
     ? actor.weapon.range
     : arch.maxReach;
   const maxReach = Math.max(arch.maxReach, weaponRange * 1.04);
 
   // O(1) human zigzag lateral sign & amplitude modulation
-  const baseSide = brain.strafeS || brain.strafe || 0.75;
+  const baseSide =
+    Number.isFinite(brain.strafeS) && brain.strafeS !== 0
+      ? brain.strafeS
+      : (Number.isFinite(brain.strafe) && brain.strafe !== 0 ? brain.strafe : 0.75);
   const zigWave = triWave(t * arch.zigzagFreq + ph1);
   // Blend brain's strafe direction with smooth triangle-wave oscillation for natural evasiveness
   const lateralSign = (baseSide >= 0 ? 1 : -1) * (0.45 + 0.55 * zigWave);

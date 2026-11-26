@@ -26,16 +26,24 @@ export const BOT_COMBAT = Object.freeze({
   coverBombMin: 4, coverBombMax: 13, coverBombLost: 1.4, coverBombChancePerSecond: .9, coverBombLift: .35,
 });
 const LOB_FAMILIES = new Set(['slosher']);
+// Deployables and zero-gravity Angle Shooter cannot be lobbed over cover with coverBombLift.
+const NON_COVER_SUBS = new Set(['beakon', 'inkMine', 'splashWall', 'sprinkler', 'angleShooter']);
 
 export function botNoteSighting(brain, target, now) {
+  if (!brain || !target?.pos) return;
   brain._s3Alert = BOT_COMBAT.alertSeconds;
   brain._s3SeenAt = now;
   const last = brain._s3LastSeen || (brain._s3LastSeen = { x: 0, y: 0, z: 0 });
   last.x = target.pos.x; last.y = target.pos.y; last.z = target.pos.z;
 }
-export function botTickAlert(brain, dt) { brain._s3Alert = Math.max(0, (brain._s3Alert || 0) - dt); }
+export function botTickAlert(brain, dt) {
+  if (!brain) return;
+  const step = Number.isFinite(dt) && dt > 0 ? dt : 0;
+  const cur = Number.isFinite(brain._s3Alert) ? brain._s3Alert : 0;
+  brain._s3Alert = Math.max(0, cur - step);
+}
 export function botAlertPitch(brain, wantPitch) {
-  return brain._s3Alert > 0 ? Math.max(wantPitch, BOT_COMBAT.alertPitch) : wantPitch;
+  return brain?._s3Alert > 0 ? Math.max(wantPitch, BOT_COMBAT.alertPitch) : wantPitch;
 }
 
 /**
@@ -45,7 +53,7 @@ export function botAlertPitch(brain, wantPitch) {
  */
 export function botClearShot(brain, family) {
   if (LOB_FAMILIES.has(family)) return true;
-  return brain.seeTimer > 1 + 1e-9;
+  return (brain?.seeTimer ?? 0) > 1 + 1e-9;
 }
 
 export function blasterRadius(w) {
@@ -77,9 +85,18 @@ export function botStrafePlan(brain, random = Math.random) {
  * Sets brain._bombAim (the existing release path) and returns the extra pitch.
  */
 export function botCoverBomb(brain, actor, dist, ink, cost, dt, random = Math.random) {
+  if (!brain || !actor) return 0;
+  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) return 0;
+  if (actor.intent?.special || brain._bombAim || brain._releaseBomb) return 0;
+  const wr = actor.weaponRunner;
+  if (wr && (wr.rolling || wr.streaming || wr.aimingSub || wr.catalogState?.pending || wr.catalogState?.canopyOpen)) return 0;
+  const subId = actor.weapon?.sub;
+  if (subId && NON_COVER_SUBS.has(subId)) return 0;
   if (brain.bombCd > 0 || !actor.grounded || brain.seeTimer > 0 || !brain.target) return 0;
   if (!(brain.lostTimer > 0 && brain.lostTimer < BOT_COMBAT.coverBombLost)) return 0;
-  if (dist < BOT_COMBAT.coverBombMin || dist > BOT_COMBAT.coverBombMax || !(ink > cost + 8)) return 0;
+  if (!(dist >= BOT_COMBAT.coverBombMin && dist <= BOT_COMBAT.coverBombMax)) return 0;
+  if (!Number.isFinite(ink) || !Number.isFinite(cost) || !(ink > cost + 8)) return 0;
+  if (!Number.isFinite(dt) || dt <= 0) return 0;
   if (random() >= BOT_COMBAT.coverBombChancePerSecond * dt) return 0;
   brain._bombAim = true;
   brain.bombCd = 5 + random() * 5;

@@ -452,3 +452,158 @@ test('Non-brella weapons are ignored cleanly by both turf and combat functions',
   assert.equal(res, null);
   assert.equal(actor.intent.fire, false);
 });
+
+test('Brella AI resets stale canopy holds on death/respawn (netLife / !alive) and yields to specials, subs, and climbing', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const weapon = makeBrellaWeapon('wide');
+  const actor = makeActor(weapon, { alive: true, netLife: 1 });
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: true, react: 0, strafeS: 1 };
+  const move = makeMove(0, 1);
+
+  // Enter MODE_PURGE in life 1
+  applyBrellaTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, {
+    pitchReady: true,
+    wantPaintNow: true,
+    cache: { multiActive: true, effOwn: 0.10, flankBias: 0 },
+  });
+  assert.equal(actor.intent.fire, true);
+  syncPrevIntent(actor);
+
+  // Die and respawn (netLife -> 2) with wantPaintNow=false: must NOT remain stuck holding canopy open
+  actor.netLife = 2;
+  actor._prevIntent.fire = false;
+  actor.intent.fire = false;
+  applyBrellaTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, {
+    pitchReady: true,
+    wantPaintNow: false,
+    cache: { multiActive: true, effOwn: 0.10, flankBias: 0 },
+  });
+  assert.equal(actor.intent.fire, false, 'respawn clears stale MODE_PURGE hold');
+
+  // Active special clears any active hold and leaves move/intent untouched
+  applyBrellaCombat(brain, G, actor, 1 / 60, move, {
+    family: 'brella', dist: 11.0, range: 15.0, dx: 0, dz: 11.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.85,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(actor.intent.fire, true);
+  syncPrevIntent(actor);
+
+  const spMove = makeMove(0, 1);
+  actor.specialActive = { kind: 'inkVac' };
+  actor.intent.fire = false;
+  applyBrellaCombat(brain, G, actor, 1 / 60, spMove, {
+    family: 'brella', dist: 11.0, range: 15.0, dx: 0, dz: 11.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.85,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(actor.intent.fire, false, 'does not assert fire during active special');
+  assert.equal(spMove.z, 1, 'does not overwrite move during active special');
+  actor.specialActive = null;
+
+  // Sub bomb throw releases active hold and prevents squid cancel
+  actor.intent.sub = true;
+  actor.intent.squid = true;
+  applyBrellaCombat(brain, G, actor, 1 / 60, move, {
+    family: 'brella', dist: 8.0, range: 15.0, dx: 0, dz: 8.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.85,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(actor.intent.fire, false, 'clears fire when throwing sub');
+  assert.equal(actor.intent.squid, false, 'clears squid when throwing sub');
+  actor.intent.sub = false;
+
+  // Climbing preserves squid form
+  actor.climbing = true;
+  actor.intent.squid = true;
+  applyBrellaTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, {
+    pitchReady: true,
+    wantPaintNow: true,
+  });
+  assert.equal(actor.intent.fire, false);
+  assert.equal(actor.intent.squid, true, 'preserves squid form while climbing');
+});
+
+test('Brella AI handles canopy-launch desync, completes MODE_RELEASE while hidden, prevents low-ink dry fire, and guards NaN', () => {
+  const G = { match: { mode: 'turf', time: 100 } };
+  const weapon = makeBrellaWeapon('wide');
+  const actor = makeActor(weapon);
+  const brain = { _turfPaintLatch: true, _turfPaintValidated: true, react: 0, strafeS: 1 };
+  const move = makeMove(0, 1);
+
+  // Canopy marked launched before naked updates -> immediately exits MODE_PURGE
+  applyBrellaTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.85, {
+    pitchReady: true,
+    wantPaintNow: true,
+    cache: { multiActive: true, effOwn: 0.10, flankBias: 0 },
+  });
+  assert.equal(actor.intent.fire, true);
+  syncPrevIntent(actor);
+  actor.weaponRunner.catalogState.canopy.launched = true;
+  applyBrellaTurfPaint(brain, G, actor, 1 / 60, move, true, 0, 0.80, {
+    pitchReady: true,
+    wantPaintNow: true,
+    cache: { multiActive: true, effOwn: 0.10, flankBias: 0 },
+  });
+  assert.equal(actor.intent.fire, false, 'releases immediately when canopy.launched is true');
+
+  // MODE_RELEASE completes while enemy is hidden so re-sighting fires immediately without 1-frame stall
+  const cActor = makeActor(weapon);
+  const cBrain = { react: 0, strafeS: 1 };
+  applyBrellaCombat(cBrain, G, cActor, 1 / 60, move, {
+    family: 'brella', dist: 11.0, range: 15.0, dx: 0, dz: 11.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.85,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(cActor.intent.fire, true);
+  syncPrevIntent(cActor);
+  // Enemy hides (enters MODE_RELEASE)
+  applyBrellaCombat(cBrain, G, cActor, 1 / 60, move, {
+    family: 'brella', dist: 11.0, range: 15.0, dx: 0, dz: 11.0,
+    enemyVisible: false, aimed: false, off: 0.4, inkFrac: 0.80,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(cActor.intent.fire, false);
+  syncPrevIntent(cActor);
+  // Enemy stays hidden 1 more tick -> MODE_RELEASE completes to MODE_TAP
+  applyBrellaCombat(cBrain, G, cActor, 1 / 60, move, {
+    family: 'brella', dist: 11.0, range: 15.0, dx: 0, dz: 11.0,
+    enemyVisible: false, aimed: false, off: 0.4, inkFrac: 0.80,
+    wantYaw: 0, wantPitch: 0,
+  });
+  syncPrevIntent(cActor);
+  // Enemy reappears at close range -> fires immediately on first visible tick!
+  applyBrellaCombat(cBrain, G, cActor, 1 / 60, move, {
+    family: 'brella', dist: 6.0, range: 15.0, dx: 0, dz: 6.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.80,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(cActor.intent.fire, true, 'fires immediately when enemy reappears after hidden release');
+
+  // Ink exhaustion: Tenta Brella (11% ink/shot, paintInkFloor 0.14) must not dry-fire at 10.5% turf or 5% combat
+  const dryActor = makeActor(weapon);
+  const dryBrain = { _turfPaintLatch: true, _turfPaintValidated: true, react: 0 };
+  applyBrellaTurfPaint(dryBrain, G, dryActor, 1 / 60, move, true, 0, 0.105, {
+    pitchReady: true,
+    wantPaintNow: true,
+  });
+  assert.equal(dryActor.intent.fire, false, 'wide brella does not dry-fire below paintInkFloor in turf');
+
+  applyBrellaCombat(dryBrain, G, dryActor, 1 / 60, move, {
+    family: 'brella', dist: 6.0, range: 15.0, dx: 0, dz: 6.0,
+    enemyVisible: true, aimed: true, off: 0.01, inkFrac: 0.05,
+    wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(dryActor.intent.fire, false, 'wide brella does not dry-fire below 11% shot cost in combat');
+
+  // NaN / undefined inputs keep move finite and avoid bogus firing
+  const nanMove = makeMove(0, 1);
+  const nanActor = makeActor(makeBrellaWeapon('compact'));
+  applyBrellaCombat({ react: 0, strafeS: Number.NaN }, G, nanActor, Number.NaN, nanMove, {
+    family: 'brella', dist: Number.NaN, range: Number.NaN, dx: Number.NaN, dz: Number.NaN,
+    enemyVisible: true, aimed: true, off: Number.NaN, inkFrac: Number.NaN,
+    wantYaw: Number.NaN, wantPitch: Number.NaN,
+  });
+  assert.equal(nanActor.intent.fire, false);
+  assert.ok(Number.isFinite(nanMove.x) && Number.isFinite(nanMove.z), 'move remains finite under NaN inputs');
+});
