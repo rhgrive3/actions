@@ -18,6 +18,7 @@
 //    only some of the time, instead of a coin flip every 0.6-1.8 s.
 //  - Cover bomb: a target that just broke line of sight within throwing range
 //    gets a lobbed bomb at its last seen position instead of nothing.
+import { specialAllowsSub } from './bot-special-movement.mjs';
 
 export const BOT_COMBAT = Object.freeze({
   alertSeconds: 2.5, alertPitch: -0.12,
@@ -86,7 +87,7 @@ export function botStrafePlan(brain, random = Math.random) {
  */
 export function botCoverBomb(brain, actor, dist, ink, cost, dt, random = Math.random) {
   if (!brain || !actor) return 0;
-  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) return 0;
+  if (actor.alive === false || !specialAllowsSub(actor) || actor.superJumpState || actor.climbing) return 0;
   if (actor.intent?.special || brain._bombAim || brain._releaseBomb) return 0;
   const wr = actor.weaponRunner;
   if (wr && (wr.rolling || wr.streaming || wr.aimingSub || wr.catalogState?.pending || wr.catalogState?.canopyOpen)) return 0;

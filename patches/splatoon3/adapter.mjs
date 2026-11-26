@@ -452,6 +452,12 @@ export function adaptSource(rel, code) {
   code = adaptMovementPhysics(rel, code, replaceOnce);
   code = adaptBrellaGuardFacing(rel, code, replaceOnce);
   code = adaptFireHoldFacing(rel, code, replaceOnce);
+  if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code,
+      '    if (this.specialActive || this.superJumpState) {\n      if (hs > 0.6) target = Math.atan2(this.vel.x, this.vel.z);\n    }',
+      "    if (this.specialActive || this.superJumpState) {\n      if (!this.superJumpState && ((this.specialActive.id === 'killerWail' && ((this._s3AllSpecialState?.id === 'killerWail' ? this._s3AllSpecialState.t : this.specialActive.t) + 1e-8 >= 40 / 60)) || (this.specialActive.id === 'zipcaster' && (this._s3AllSpecialState?.id === 'zipcaster' ? this._s3AllSpecialState.phase : this.specialActive.phase) === 'ready')) && !isSquid && (this.weaponRunner.firingPose() || this.fireFacing > 0 || (this.intent.sub && this.specialActive.id === 'killerWail') || heldBrellaGuardFacing(this) || heldFireAimFacing(this, isSquid) || (!this.weaponRunner.rolling && this.intent.fire && (this.weapon?.behaviorKind === 'roller' || this.weapon?.behaviorKind === 'brush')))) {\n        target = this.aimYaw; omega = P.aimFaceOmega; maxRate = P.aimFaceMaxRate; maxAcc = P.aimFaceMaxAcc;\n      } else if (hs > 0.6) target = Math.atan2(this.vel.x, this.vel.z);\n    }",
+      'aim-facing during specials that allow main weapons');
+  }
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
   if (rel !== 'src/game/weapons.js') code = adaptKitRescue(rel, code, replaceOnce);

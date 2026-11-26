@@ -3,7 +3,7 @@
 // and gameplay, but put its existing whip on the real release and its cock in
 // the aiming phase. Curve ages below are native visual calibration, not Switch
 // input-frame measurements or extracted Nintendo animation parameters.
-import { specialMotionAllowsAction } from './action-admission.mjs';
+import { specialMotionAllowsAction, specialAllowsSubWeapon } from './action-admission.mjs';
 const INSTALL = Symbol.for('inkwave.s3.bomb-motion.install.v1'), RESET = Symbol.for('inkwave.s3.bomb-motion.reset.v1');
 const states = new WeakMap(), sampleCaches = new WeakMap(), disposed = new WeakSet();
 const stowedWeapons=new WeakMap();
@@ -40,7 +40,7 @@ function hidden(root) {
   return false;
 }
 function specialAllows(ch, owner, timers) {
-  if (owner?.specialActive?.id === 'storm' && owner.specialActive.phase === 'hold') return true;
+  if (owner?.specialActive && specialAllowsSubWeapon(owner)) return true;
   return specialMotionAllowsAction(ch, !owner?.specialActive
     && ch.tr[timers.T_LEAP] >= 1.9 && ch.tr[timers.T_SLAM] >= 1.4);
 }

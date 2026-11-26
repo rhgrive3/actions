@@ -2,11 +2,18 @@
 export function adaptResourceSource(rel, code, replace) {
   const patch = (before, after, label) => { code = replace(code, before, after, 'resource: ' + label); };
   if (rel === 'src/core/renderer.js') {
-    code = "import { scaledGtaoDimension, installHalfResGtao, installGtaoOccluderFilter } from '../../patches/local-quality/gtao-budget.mjs';\n" + code;
+    code = "import { scaledGtaoDimension, installHalfResGtao, installGtaoOccluderFilter } from '../../patches/local-quality/gtao-budget.mjs';\n" +
+      "import { setupGradeOutputFusion, disposeGradeOutputFusion } from '../../patches/local-quality/grade-output-fusion.mjs';\n" + code;
     patch('const ao = (this.gtao = new GTAOPass(this.scene, this.camera, w, h));',
       'const ao = (this.gtao = new GTAOPass(this.scene, this.camera, scaledGtaoDimension(w * pr), scaledGtaoDimension(h * pr)));', 'half-res gtao construction');
     patch('ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });\n      comp.addPass(ao);',
       'ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });\n      installHalfResGtao(ao, { basePdRadius: 6 });\n      installGtaoOccluderFilter(ao, G);\n      comp.addPass(ao);', 'half-res gtao resize and occluder filter');
+    patch('    this.renderPass = this.gtao = this.bloom = this.grade = this.fxaa = null;',
+      '    disposeGradeOutputFusion(this, { gradeDisposed: true });\n    this.renderPass = this.gtao = this.bloom = this.grade = this.outputPass = this.fxaa = null;', 'grade-output fusion disposal');
+    patch('    comp.addPass(new OutputPass());',
+      '    this.outputPass = new OutputPass();\n    comp.addPass(this.outputPass);\n    setupGradeOutputFusion(this);', 'grade-output fusion setup');
+    patch('      if (this.bloom) { this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2]; }\n    }',
+      '      if (this.bloom) { this.bloom.strength = bl[0]; this.bloom.radius = bl[1]; this.bloom.threshold = bl[2]; }\n    }\n    this._syncGradeOutputFusion?.();', 'grade-output fusion per-frame sync');
   }
   if (rel === 'src/game/character.js') {
     code = "import { installPortraitCharacterReuse } from '../../patches/local-quality/portrait-work.mjs';\n" + code;

@@ -11,6 +11,8 @@ import { spinnerAudioIds, spinnerClipDefinition, spinnerPreload, spinnerReleaseC
 import { spinnerChargeAudioLoop } from './spinner-charge-control.mjs';
 import { usesStringerCharge, stringerChargeAudioLoop } from './stringer-charge-control.mjs';
 import { installChargeAudioLifecycle, prewarmChargeCue } from './charge-audio-lifecycle.mjs';
+import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
+const CHARGER_CHARGE_TIME=new Map(MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='charger').map(r=>{const f=r.parameters?.WeaponParam?.ChargeFrameFullCharge;return [r.id,Number.isFinite(f)&&f>0?f/60:1];}));
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
@@ -65,7 +67,7 @@ export function installWeaponAudioEngine(Engine){
     return originalPlay.call(this,name,options);
   };
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
-  p.prepareWeapon=function(id,{urgent=true}={}){
+  p.prepareWeapon=function(id,{urgent=true,chargeTime}={}){
     const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);
     id=borrowedRecordedMainId(requested);
     if(!AUDIO_RECIPES[id]||!urgent)return;
@@ -81,7 +83,8 @@ export function installWeaponAudioEngine(Engine){
       this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
     }
     const prewarmOwner=this._prewarmOwner;
-    if(usesChargerRise(id))this.prewarmChargerChargeRise?.(id);
+    const resolvedChargeTime=Number.isFinite(chargeTime)&&chargeTime>0?chargeTime:(CHARGER_CHARGE_TIME.get(requested)??CHARGER_CHARGE_TIME.get(id)??1);
+    if(usesChargerRise(id))this.prewarmChargerChargeRise?.(id,resolvedChargeTime);
     this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
     if(!id.includes(':')){
       const loader=this._realS3Loader;

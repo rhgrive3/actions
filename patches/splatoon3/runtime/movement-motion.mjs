@@ -3,6 +3,7 @@
 // Nintendo's public clips establish the actions, not exact joint curves.
 // The owning closures stay private, but registration is on the production
 // prototypes. Independently evaluated modules must discover that same owner.
+import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
 const CHARACTER_OWNER = Symbol.for('inkwave.s3.movement-motion.character.v1');
 const ACTOR_INSTALL = Symbol.for('inkwave.s3.movement-motion.actor.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
@@ -80,7 +81,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       const action = frame?.surgePresentationC1088 ?? frame?.actions?.surge;
       // Actor state is authoritative. A missed notification cannot strand a
       // pose; hidden characters still advance/cancel their action clocks.
-      const allowed = (s.form || 'kid') !== 'kid' && !this.dance && !(frame && (!frame.alive || frame.special));
+      const allowed = (s.form || 'kid') !== 'kid' && !this.dance && !(frame && (!frame.alive || (frame.special && !specialKeepsNativeForm(frame.special.id))));
       if (!allowed) cancel(this, m);
       else {
         const live = frame?.actions?.roll;
@@ -189,7 +190,7 @@ export function installMovementMotion({ Character, Actor, THREE }, profile) {
       const original = A[method];
       A[method] = function (...args) {
         const result = original.apply(this, args);
-        if (method === 'reset' || !this.alive || this.specialActive || this.superJumpState) {
+        if (method === 'reset' || !this.alive || (this.specialActive && !specialAllowsMainWeapon(this) && !specialKeepsNativeForm(this.specialActive.id)) || this.superJumpState) {
           const ch = this.character;
           // Actor registration may have been evaluated in a different realm or
           // against another Character. Never allocate state on cancellation.

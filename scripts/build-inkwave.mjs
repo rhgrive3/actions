@@ -545,6 +545,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/weapon-models/kit.mjs',
   // C42: retain the new static runtime dependencies and full precache; defer their extra eager hints.
   'patches/local-quality/portrait-work.mjs',
+  'patches/local-quality/grade-output-fusion.mjs',
   'patches/local-quality/runtime/audio-listener.mjs',
   'patches/splatoon3/runtime/splatling-jump-spread.mjs',
   // C40: retain the new static runtime dependencies and full precache; defer their extra eager hints.

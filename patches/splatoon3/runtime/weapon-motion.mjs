@@ -2,6 +2,7 @@
 // curves and glow intensities are visual calibration, not extracted Nintendo
 // animation parameters. Aim/admission/timing stay unchanged; the retimed
 // Slosher muzzle additionally requires a full-segment birth obstruction guard.
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const muzzleInstalled = new WeakSet();
 const installed = new WeakSet(), resetInstalled = new WeakSet(), states = new WeakMap(), views = new WeakMap();
 const EPS = 1e-10;
@@ -81,7 +82,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const ch = actor?.character, w = actor?.weapon;
     const sourcedSlosh = w?.catalogRecord?.family === 'slosher' && weapon === w.catalogRecord.id;
     if ((weapon !== 'slosher' && !sourcedSlosh) || !ch || ch.s3WeaponMotionEnabled === false || ch.weaponKind !== 'slosher' ||
-        !actor.alive || actor.form !== 'kid' || actor.weaponRunner?.aimingSub || actor.specialActive) return;
+        !actor.alive || actor.form !== 'kid' || actor.weaponRunner?.aimingSub || !specialAllowsMainWeapon(actor)) return;
     if (!(w.windup > 0 && w.fireInterval > w.windup)) return;
     const m = state(ch);
     if (!m.slosh || m.slosh.released || m.slosh.releasePending) return;
@@ -137,7 +138,7 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
       if (a) {
         a.previousElapsed = a.elapsed;
         const owner = this._owner();
-        if (!this.kidForm || this.weaponKind !== 'slosher' || owner?.alive === false || r?.aimingSub || owner?.specialActive || this.dance || !this.visible) m.slosh = null;
+        if (!this.kidForm || this.weaponKind !== 'slosher' || owner?.alive === false || r?.aimingSub || !specialAllowsMainWeapon(owner) || this.dance || !this.visible) m.slosh = null;
         else if (a.releasePending) { a.elapsed = Math.max(a.windup, a.previousElapsed + dt); a.released = true; a.releasePending = false; }
         else if (r && r.slosh >= 0 && !a.released) a.elapsed = r.slosh;
         else if (r && !a.released) { a.elapsed = a.windup; a.released = true; }

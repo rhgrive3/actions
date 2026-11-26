@@ -1,7 +1,7 @@
 // Fine motion calibrated against Nintendo's normal Slosher / Splat Charger /
 // Heavy Splatling / Blaster clips. These are this rig's visual curves, never
 // claimed to be unpublished Nintendo joint parameters. Gameplay is read only.
-import { specialMotionAllowsAction } from './action-admission.mjs';
+import { specialMotionAllowsAction, specialAllowsMainWeapon } from './action-admission.mjs';
 import { BLASTER_MECHANISM, blasterMechanismCycle } from './blaster-mechanism.mjs';
 import { slosherMotionSnapshot } from './weapon-motion.mjs';
 const INSTALLED = Symbol.for('inkwave.weapon-detail-motion.installed');
@@ -104,7 +104,7 @@ function recoilOverlaySlot(state, depth) {
   return slot;
 }
 function activeSpecial(ch, T) {
-  return !specialMotionAllowsAction(ch, !(ch._owner()?.specialActive ||
+  return !specialMotionAllowsAction(ch, !(!specialAllowsMainWeapon(ch._owner()) ||
     Number.isInteger(T.T_SLAM) && ch.tr[T.T_SLAM] < 1.4 ||
     Number.isInteger(T.T_LEAP) && ch.tr[T.T_LEAP] < 1.9));
 }

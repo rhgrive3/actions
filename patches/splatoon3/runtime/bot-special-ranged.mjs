@@ -42,9 +42,20 @@ function aim(c,p,height=.7,lead=0) {
 }
 function keepDistance(c,near,far) {
   // A blocked retreat/approach sidesteps instead of freezing in place.
+  // Inside [near, far], weave laterally instead of dead-stopping.
   if(c.distance<near){if(!c.moveToward?.(c.enemy.pos,-1)&&!strafe(c,c.enemy.pos,.8))stop(c);}
   else if(c.distance>far){if(!c.moveToward?.(c.enemy.pos,.65)&&!strafe(c,c.enemy.pos,.65))stop(c);}
-  else stop(c);
+  else {
+    const m=c.memory;
+    if(m){
+      m.rangedStrafeT=(Number.isFinite(m.rangedStrafeT)?m.rangedStrafeT:0)-c.dt;
+      if(m.rangedStrafeT<=0){
+        m.rangedStrafeT=1.2;
+        if(m.strafeSide)m.strafeSide=-m.strafeSide;
+      }
+    }
+    if(!strafe(c,c.enemy.pos,.55))stop(c);
+  }
 }
 // No visible target while a moving special is active: chase the recent
 // sighting, then follow the brain's own navigation instead of idling.
@@ -77,6 +88,27 @@ function flyToward(c,point,scale=1) {
   if(!Number.isFinite(floor)||floor<= -100||floor>probe.y+.1||probe.y-floor>14||wet||world?.physics?.los?.(actor.pos,probe)!==true){stop(c);return false;}
   const clamped=Math.max(-1,Math.min(1,scale));
   move.set(dx/d*clamped,0,dz/d*clamped);return true;
+}
+function flyStrafe(c,point,scale=.55) {
+  const {actor,memory:m}=c;
+  if(typeof c.safePath!=='function'||!finitePoint(actor?.pos)||!finitePoint(point))return false;
+  const dx=point.x-actor.pos.x,dz=point.z-actor.pos.z,d=Math.hypot(dx,dz);
+  if(!(d>=.5))return false;
+  if(m){
+    m.rangedStrafeT=(Number.isFinite(m.rangedStrafeT)?m.rangedStrafeT:0)-c.dt;
+    if(m.rangedStrafeT<=0){
+      m.rangedStrafeT=1.2;
+      if(m.strafeSide)m.strafeSide=-m.strafeSide;
+    }
+  }
+  const preferred=m?.strafeSide||(((actor.slot??actor.nid??0)&1)?-1:1);
+  const target=(m.rangedFlightStrafe ||= actor.pos.clone());
+  for(let i=0;i<2;i++){
+    const side=i===0?preferred:-preferred;
+    target.set(actor.pos.x+(-dz/d*side)*2,actor.pos.y,actor.pos.z+(dx/d*side)*2);
+    if(flyToward(c,target,scale)){if(m)m.strafeSide=side;return true;}
+  }
+  stop(c);return false;
 }
 function inputsOff(c) {
   const it=c.intent;if(!it)return;
@@ -112,12 +144,14 @@ function bombThreat(c) {
 }
 // Pick the low flight arc of the existing NiceBall source trajectory. This
 // compensates its horizontal drag; it does not modify the projectile itself.
-function aimBooyah(c) {
-  const m=c.memory,ap=c.actor.pos,ep=c.enemy.pos;
+function aimBooyah(c, targetPos = c.enemy?.pos) {
+  if(!finitePoint(targetPos))return false;
+  const m=c.memory,ap=c.actor.pos,ep=targetPos;
+  const useCache=!!c.enemy&&targetPos===c.enemy.pos;
   const p=(m.rangedAimPoint ||= ap.clone());
   const now=cacheClock(c),level=c.world?.level||null,physics=c.world?.physics||null;
   let cache=m._booyahCache;
-  if(cacheMatches(cache,now,level,physics,c.enemy,ap,ep)){
+  if(useCache&&cacheMatches(cache,now,level,physics,c.enemy,ap,ep)){
     if(cache.ok){p.set(cache.x,cache.y,cache.z);aim(c,p,0);return true;}
     return false;
   }
@@ -136,7 +170,7 @@ function aimBooyah(c) {
   // all-specials emits along aimPoint minus feet, while the shared spring
   // constructs that point from the eye. Keep this target in the emitter basis.
   p.set(ep.x,ap.y+Math.tan(bestPitch)*d,ep.z);
-  if(Number.isFinite(now)){
+  if(useCache&&Number.isFinite(now)){
     if(!cache)cache=m._booyahCache={};
     cache.t=now;cache.level=level;cache.physics=physics;cache.enemy=c.enemy;
     cache.ax=ap.x;cache.ay=ap.y;cache.az=ap.z;cache.ex=ep.x;cache.ey=ep.y;cache.ez=ep.z;
@@ -289,22 +323,36 @@ export function driveRangedSpecial(c) {
   if(c.special==='killerWail'){
     // Three lock windows share the real aim; after them the native main policy
     // resumes, including its ordinary weapon range and release semantics.
-    if((s.beams||0)<3){
+    const beamsDone=(s.beams||0)>=3;
+    if(!beamsDone){
       const p=enemy?.pos||recentLockPoint(c);if(p)aim(c,p,.7);
     }
     if((s.t??c.state.t??0)>=40/60){
       const normal=c.normalIntent;
-      it.fire=!!normal?.fire&&!!enemy&&c.distance<=mainRange(c)*1.1&&aimed(c,.16);
-      it.sub=!!normal?.sub&&!!enemy;it.squid=!!normal?.squid;it.jump=!!normal?.jump;
+      const nonCombat=c.brain?.mode==='paint'||c.brain?.mode==='refill';
+      if(enemy){
+        it.fire=!!normal?.fire&&c.distance<=mainRange(c)*1.1&&aimed(c,.16);
+        it.sub=!!normal?.sub;
+      }else if(nonCombat){
+        it.fire=!!normal?.fire;
+        it.sub=!!normal?.sub;
+        if(beamsDone)followNav(c,1);
+      }else{
+        it.fire=false;it.sub=false;
+        if(beamsDone)roam(c,.85);
+      }
+      it.squid=!!normal?.squid;it.jump=!!normal?.jump;
     }
     return true;
   }
   if(c.special==='tentaMissiles'){
-    stop(c);if(s.phase==='launching'){m.rangedLockTime=0;m.rangedLockTarget=null;return true;}
+    if(s.phase==='launching'){stop(c);m.rangedLockTime=0;m.rangedLockTarget=null;return true;}
     const p=enemy?.pos||recentLockPoint(c);
     const target=enemy||m.rangedSeenTarget;
-    if(!p||target?.botBossTarget){m.rangedLockTime=0;m.rangedLockTarget=null;return true;}
+    if(!p||target?.botBossTarget){m.rangedLockTime=0;m.rangedLockTarget=null;roam(c,.85);return true;}
     aim(c,p,.7);
+    if(enemy)keepDistance(c,14,30);
+    else roam(c,.7);
     LOCK_API.Projectiles=c.world?.projectiles?.constructor;
     const preview=tentaMissilesLockPreview(LOCK_API,actor);
     LOCK_API.Projectiles=null;
@@ -315,27 +363,44 @@ export function driveRangedSpecial(c) {
   }
   if(c.special==='booyahBomb'){
     stop(c);
-    if(s.throwAt!==undefined){if(enemy)aimBooyah(c);return true;}
+    if(s.throwAt!==undefined){if(enemy)aimBooyah(c,enemy.pos);return true;}
     if((s.charge??0)<1&&s.phase!=='ready'){
       // One sampled release between cheers, gated by the runtime's own cooldown.
       it.booyah=!s.held?.booyah&&(s.t||0)+c.dt>=Math.max(.5,s.nextCheer||0);
-      if(enemy)aimBooyah(c);return true;
+      if(enemy)aimBooyah(c,enemy.pos);return true;
     }
-    if(!enemy){it.sub=!!s.held?.sub;return true;}
-    const reachable=aimBooyah(c),ready=reachable&&aimed(c,.13);
+    let targetPos=enemy?.pos;
+    if(!targetPos){
+      const seen=recentSighting(c,5);
+      const navGoal=c.world?.nav?.nodes?.[c.brain?.goal];
+      if(seen)targetPos=seen;
+      else if(finitePoint(navGoal))targetPos=navGoal;
+      else {
+        const yaw=Number.isFinite(actor.aimYaw)?actor.aimYaw:(Number.isFinite(actor.yaw)?actor.yaw:0);
+        targetPos=(m.rangedBooyahFallback ||= actor.pos.clone()).set(actor.pos.x+Math.sin(yaw)*14,actor.pos.y,actor.pos.z+Math.cos(yaw)*14);
+      }
+    }
+    const reachable=aimBooyah(c,targetPos),ready=(reachable||!enemy)&&aimed(c,.15);
     // A held R followed by release is the native throw, not a ZR pulse.
     it.sub=s.held?.sub?!ready:ready;return true;
   }
   if(c.special==='inkVac'){
+    const flicker=!enemy&&m.rangedSeenAge<=.45&&m.rangedSeenTarget?.alive&&m.rangedSeenTarget.team!==actor.team&&finitePoint(m.rangedSeenPoint)?m.rangedSeenPoint:null;
+    const flickerDist=flicker?Math.hypot(flicker.x-actor.pos.x,flicker.z-actor.pos.z):Infinity;
+    const flickerHeight=flicker?Math.abs(flicker.y-actor.pos.y):Infinity;
     if(enemy)aim(c,enemy.pos,.7);
+    else if(flicker&&s.phase!=='exhale')aim(c,flicker,.7);
     if(s.phase==='exhale'){
       // Preserve the held level while target/aim is lost: a release would fire.
       it.fire=!!s.fireHeld;
       if(enemy&&c.distance<=32&&Math.abs(c.height)<=12&&aimed(c,.13)&&(s.t||0)>=20/60)it.fire=!s.fireHeld;
-      if(enemy)keepDistance(c,8,22);else stop(c);
+      if(enemy)keepDistance(c,8,22);else roam(c,.75);
     }else{
-      it.fire=!!enemy&&c.distance<=30&&Math.abs(c.height)<=10;
-      if(enemy)keepDistance(c,7,18);else stop(c);
+      const keepInhale=(!!enemy&&c.distance<=30&&Math.abs(c.height)<=10)||(!!flicker&&flickerDist<=30&&flickerHeight<=10);
+      it.fire=keepInhale;
+      if(enemy)keepDistance(c,7,18);
+      else if(flicker){if(!c.moveToward?.(flicker,.65)&&!strafe(c,flicker,.55))roam(c,.7);}
+      else roam(c,.8);
     }
     return true;
   }
@@ -352,22 +417,24 @@ export function driveRangedSpecial(c) {
       // Entering swim cancels a held native charge; releasing ZR in kid form
       // would fire at the last aim after recognition has already been lost.
       it.squid=true;
-      if(finitePoint(s.origin))c.moveToward?.(s.origin,.65);
-      else stop(c);
+      if(finitePoint(s.origin)){
+        if(!c.moveToward?.(s.origin,.65)&&!roam(c,.65))stop(c);
+      }else stop(c);
     }
     else stop(c);
     return true;
   }
   if(c.special==='trizooka'){
+    const spent=(s.shots||0)>=3;
     aim(c,enemy.pos,.75,Number.isFinite(c.distance)?Math.min(.35,c.distance/67.5):0);keepDistance(c,12,28);
-    it.fire=c.distance<=38&&Math.abs(c.height)<=12&&aimed(c,.12);return true;
+    it.fire=!spent&&c.distance<=38&&Math.abs(c.height)<=12&&aimed(c,.12);return true;
   }
   if(c.special==='inkjet'){
     const dist3=Math.hypot(c.distance,c.height);
     aim(c,enemy.pos,.65,Number.isFinite(dist3)?Math.min(1.5,dist3/21):0);
-    if(c.distance<16)flyToward(c,enemy.pos,-1);
-    else if(c.distance>24)flyToward(c,enemy.pos,.65);
-    else stop(c);
+    if(c.distance<16){if(!flyToward(c,enemy.pos,-1))flyStrafe(c,enemy.pos,.55);}
+    else if(c.distance>24){if(!flyToward(c,enemy.pos,.65))flyStrafe(c,enemy.pos,.55);}
+    else flyStrafe(c,enemy.pos,.55);
     it.fire=dist3<=29.5&&(c.aimDistance??0)<=30&&aimed(c,.14);
     return true;
   }
@@ -397,16 +464,25 @@ export function driveRangedSpecial(c) {
     return true;
   }
   if(c.special==='zipcaster'){
-    stop(c);if(s.phase!=='ready')return true;
+    if(s.phase!=='ready'){stop(c);return true;}
     if(c.distance<=mainRange(c)*1.05&&Math.abs(c.height)<=10){
       const speed=Number(actor.weapon?.projSpeed);
       aim(c,enemy.pos,.65,Number.isFinite(c.distance)?Math.min(.25,c.distance/(Number.isFinite(speed)&&speed>0?speed:30)):0);
+      keepDistance(c,Math.min(6,mainRange(c)*.45),mainRange(c)*.9);
       // The native main policy owns charge/release cycles (Stringer/Splatana,
       // Charger and Splatling); a permanent hold never fires release weapons.
       it.fire=!!c.normalIntent?.fire&&aimed(c,.14);return true;
     }
-    if((s.inkFuel??150)<15||(s.t||0)<(s.nextHookAt||0))return true;
-    const point=hookPoint(c);if(!point)return true;
+    if((s.inkFuel??150)<15||(s.t||0)<(s.nextHookAt||0)){
+      if(!c.moveToward?.(enemy.pos,.75)&&!strafe(c,enemy.pos,.65))stop(c);
+      return true;
+    }
+    const point=hookPoint(c);
+    if(!point){
+      if(!c.moveToward?.(enemy.pos,.75)&&!strafe(c,enemy.pos,.65))stop(c);
+      return true;
+    }
+    stop(c);
     // Hook uses aimPoint-minus-feet from a chest-height origin. Offset the
     // reticle so the actual emitted ray reaches the sampled floor surface.
     aim(c,point,-1.05);

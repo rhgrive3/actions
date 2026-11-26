@@ -1,7 +1,7 @@
 // Dualies-only pose correction. Nintendo footage supplies the visible sequence,
 // not joint curves or world units. The native rig, IK and shot impulses remain
 // authoritative; gameplay state is only read here.
-import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
+import { specialMotionAllowsAction, bombMotionAllowsAction, specialAllowsMainWeapon } from './action-admission.mjs';
 import { clearRemoteDodgeClock, remoteDodgePresentation } from './remote-dodge-clock.mjs';
 const INSTALL = Symbol.for('inkwave.splatoon3.dualies-motion.v1');
 const clamp01 = x => Math.max(0, Math.min(1, x));
@@ -102,7 +102,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     return shown && ch.kidForm && !ch.dance && a?.alive !== false && !a?.superJumpState
       && !(input?.subAim ?? runner?.aimingSub) && !ch.bombHeld
       && bombMotionAllowsAction(ch, ch.tr[T.T_THROW] >= .62) && ch.tr[T.T_SPAWN] >= 1.4
-      && specialMotionAllowsAction(ch, !a?.specialActive && ch.tr[T.T_LEAP] >= 1.9 && ch.tr[T.T_SLAM] >= 1.4);
+      && specialMotionAllowsAction(ch, specialAllowsMainWeapon(a) && ch.tr[T.T_LEAP] >= 1.9 && ch.tr[T.T_SLAM] >= 1.4);
   }
   function clear(ch) {
     states.delete(ch);

@@ -1,4 +1,5 @@
 import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } from './action-admission.mjs';
+import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
 // Match idle only. Nintendo's short shooter demonstrations show a restrained
 // carry between attacks, not a measured full idle cycle. Removing the large
 // showcase flourishes and reducing the native look gesture is visual calibration.
@@ -47,7 +48,7 @@ function classify(ch, s, api) {
       || runner?.dodge || runner?.s3Turret || (runner?.lockT || 0) > 0
       || tr[T.T_FLICK] < .7 || tr[T.T_SLOSH] < .66 || tr[T.T_REL] < .35
       || ch.lastShot < .5 || ch.lastRelease < .35) return 'weapon';
-  if (actor.specialActive || actor.superJumpState || actor.s3?.actions?.roll
+  if ((actor.specialActive && !specialAllowsMainWeapon(actor)) || actor.superJumpState || actor.s3?.actions?.roll
       || actor.s3?.actions?.surge || actor.hurtFlash > 0 || ch.hitAcc > 0
       || tr[T.T_SPAWN] < 1.4 || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
       || dualiesMotionLock(ch,runner,tr[T.T_DODGE] < ch.dodgeDur + .3) || tr[T.T_LAND] < .8 && ch.landAmp > .3)

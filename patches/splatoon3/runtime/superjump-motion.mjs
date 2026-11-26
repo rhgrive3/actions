@@ -1,6 +1,7 @@
 // State-driven Super Jump presentation on the actual public rig. No trajectory,
 // physics, form change, gameplay timer or input is written here. Nintendo's
 // public report establishes preparation/flight, not a published joint curve.
+import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
 const INSTALLED = Symbol.for('inkwave.s3.superjump-motion.installed.v1');
 const STATE = Symbol.for('inkwave.s3.superjump-motion.state.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
@@ -72,7 +73,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
     s = s || {};
     const f = s.movementMotion, owner = this._owner();
     const sj = owner ? owner.superJumpState : f?.superJump;
-    const eligible = f && f.alive && owner?.alive !== false && !f.special && !owner?.specialActive && !this.dance
+    const eligible = f && f.alive && owner?.alive !== false && (!f.special || specialKeepsNativeForm(f.special.id)) && (!owner?.specialActive || specialAllowsMainWeapon(owner) || specialKeepsNativeForm(owner.specialActive.id)) && !this.dance
       && this.s3SuperjumpMotionEnabled !== false && !s.firing && !s.subAim && !s.rolling;
     if (!eligible) clear(this, m);
     const allowed = eligible && (!sj || sj !== m.blocked);
@@ -159,7 +160,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
       const original = A[method];
       A[method] = function (...args) {
         const result = original.apply(this, args);
-        if (method === 'reset' || !this.alive || this.specialActive) {
+        if (method === 'reset' || !this.alive || (this.specialActive && !specialAllowsMainWeapon(this) && !specialKeepsNativeForm(this.specialActive.id))) {
           if (this.character) clear(this.character, get(this.character));
           if (this.anim?.movementMotion) delete this.anim.movementMotion.superJumpVelocity;
         }

@@ -2,6 +2,9 @@
 // they are never rewritten to make a pose eligible. No engine imports, so the
 // adapted Character can call these at its original native decision boundaries.
 import { specialMotionAllowsFootPlant, specialMotionOwnsPose } from './special-motion.mjs';
+import { specialAllowsMainWeapon, specialAllowsSubWeapon } from './special-presentation-owner.mjs';
+
+export { specialAllowsMainWeapon, specialAllowsSubWeapon };
 
 const SPECIAL = Symbol.for('inkwave.s3.special-motion.install.v1');
 const DUALIES = Symbol.for('inkwave.splatoon3.dualies-motion.v1');
@@ -15,6 +18,9 @@ export function specialMotionAllowsAction(ch, nativeEligible) {
   // _owner() can update native lookup/cache clocks. The installed Special
   // observer has already resolved the actual Actor before state/pose hooks.
   const owner = ch?.actor?.character === ch ? ch.actor : null, live = owner?.specialActive;
+  if (live && specialAllowsMainWeapon(owner) && ch.s3SpecialMotionEnabled !== false) {
+    return !specialMotionOwnsPose(ch);
+  }
   const mapped = !live || Number.isFinite(live.t) && (live.id === 'storm'
     || live.id === 'slam' && ['rise', 'hang', 'fall'].includes(live.phase));
   if (!owner || !m?.controlled || m.nativeOnly || ch.s3SpecialMotionEnabled === false

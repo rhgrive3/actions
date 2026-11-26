@@ -8,7 +8,7 @@
 // whipped for ~16F, releasing ink with the drum still at chest height.
 // Frame counts are read from the clip; the weapon version, gear and input frame
 // of the clip are unknown, and the vertical swing reuses this shape unverified.
-export const HEAVY_ROLLER_SWING = Object.freeze({ coilAt: 22 / 60, whip: 3 / 60, rest: 20 / 60, ret: 10 / 60,
+export const HEAVY_ROLLER_SWING = Object.freeze({ coilAt: 22 / 60, whip: 3 / 60, rest: 20 / 60, ret: 10 / 60, verticalSettle: 5 / 60, verticalFollowPitch: 1.4,
   source: 'official clip rpGkB4xjYXg (Dynamo-type horizontal swing); vertical shape inferred' });
 // Standard Rollers share the same S3 order with their own timing, read from
 // Nintendo's official Splat Roller clips AZLlvZRlJpm (side view, frames ~60-80)
