@@ -85,7 +85,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
       src.loopStart=Math.max(offset,end-.035);src.loopEnd=end;
       if(dp>0)progressAt=now;
       if(dt>=1/240){
-        if(wasPaused&&dp>0){anchorQ=previous;anchorAt=last;wasPaused=false;}
+        if(wasPaused&&dp>0){anchorQ=previous;anchorAt=last;wasPaused=false;head=Math.max(offset,end-Math.min(.04*nominal,body*q));headAt=now;buildingHeadroom=false;speed=1;}
         // Sustained charge speed relative to the nominal clock (1 = normal,
         // ~1/3 for an airborne/empty-tank charge), measured over >=45 ms.
         // Never reset anchorAt on head catch-up so a sudden 1 -> 1/3 drop on
