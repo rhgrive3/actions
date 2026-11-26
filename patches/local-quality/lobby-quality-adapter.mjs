@@ -22,7 +22,7 @@ const SYNC_PATCHED = `    const q = resolveLobbyQualityName(G.settings?.quality,
 // Showcase.render() lobby branch only: gate the every-frame shadow refresh.
 // The overlay branch (`_cameraPedestal`/`_cameraResults`) anchor is untouched.
 const RENDER_ANCHOR = `      this._lobEnv(L);\n      r.shadowMap.needsUpdate = true;\n      r.setRenderTarget(target);`;
-const RENDER_PATCHED = `      this._lobEnv(L);\n      if (lobbyShadowDue(L)) r.shadowMap.needsUpdate = true;\n      r.setRenderTarget(target);`;
+const RENDER_PATCHED = `      this._lobEnv(L);\n      r.shadowMap.needsUpdate = !!lobbyShadowDue(L);\n      r.setRenderTarget(target);`;
 
 /**
  * Build-only source transform for `src/game/showcase.js` (lobby anchors only).

@@ -229,7 +229,7 @@ const RENDER_GRADE_GUARD =
   '      this._buildComposer();\n' +
   '    }\n' +
   '    const gr = G.env && G.env.grade;\n' +
-  '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled;\n' +
+  '    const gradeCanUsePackedTarget = this._composerPackedCapable ? (composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled) : false;\n' +
   '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) {\n' +
   '      updateComposerTargetPrecision(THREE, this.composer, gradeCanUsePackedTarget);\n' +
   '      this._composerUsesPackedTarget = gradeCanUsePackedTarget;\n' +

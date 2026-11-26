@@ -147,7 +147,10 @@ export class RangeSession {
     if (a && a.alive && !a.superJumpState) {
       for (const p of this.pads.defs) {
         const dx = a.pos.x - p.x, dz = a.pos.z - p.z;
-        if (dx * dx + dz * dz < PAD_R * PAD_R && Math.abs(a.pos.y - (G.level.groundHeight(p.x, p.z) || 0)) < 0.7) { on = p; break; }
+        if (dx * dx + dz * dz < PAD_R * PAD_R) {
+          if (p._yLevel !== G.level) { p._yLevel = G.level; p._y = G.level.groundHeight(p.x, p.z) || 0; }
+          if (Math.abs(a.pos.y - p._y) < 0.7) { on = p; break; }
+        }
       }
     }
     if (on !== this.padOn) { this.padOn = on; this.padT = 0; this.padFired = false; }
@@ -274,15 +277,32 @@ export class RangeSession {
   }
 
   // ------------------------------------------------------------------ read-outs
-  telemetry() {
+  telemetry(out) {
     const a = this.local;
     if (!a) return null;
     const hs = Math.hypot(a.vel.x, a.vel.z);
     const zone = zoneAt(a.pos.x, a.pos.z);
-    let measure = null;
-    if (zone === 'lane' || zone === 'gallery' || (zone === 'hub' && a.pos.z > -3)) measure = { kind: 'downrange', value: a.pos.z - FIRE_Z };
-    else if (zone === 'wall') measure = { kind: 'wall', value: WALL_FACE_Z - a.pos.z };
-    return { speed: hs, vy: a.vel.y, zone, measure, weapon: a.weaponId, form: a.anim?.form || a.form };
+    let measureKind = null, measureVal = 0;
+    if (zone === 'lane' || zone === 'gallery' || (zone === 'hub' && a.pos.z > -3)) { measureKind = 'downrange'; measureVal = a.pos.z - FIRE_Z; }
+    else if (zone === 'wall') { measureKind = 'wall'; measureVal = WALL_FACE_Z - a.pos.z; }
+    const form = a.anim?.form || a.form;
+    if (out) {
+      out.speed = hs;
+      out.vy = a.vel.y;
+      out.zone = zone;
+      if (measureKind) {
+        const m = out._measure || (out._measure = { kind: '', value: 0 });
+        m.kind = measureKind; m.value = measureVal;
+        out.measure = m;
+      } else {
+        out.measure = null;
+      }
+      out.weapon = a.weaponId;
+      out.form = form;
+      return out;
+    }
+    const measure = measureKind ? { kind: measureKind, value: measureVal } : null;
+    return { speed: hs, vy: a.vel.y, zone, measure, weapon: a.weaponId, form };
   }
   // painted area of the 400 m² paint-test floor (CPU turf grid cells of its top face, your team)
   paintStats() {

@@ -12,13 +12,24 @@ const INPUT_KEYS = ['fire','sub','special','squid','jump','booyah'];
 const AIM_OPTS = {height:0,lead:0};
 const WATER_PROBE = {pos:null};
 const LOCK_API = {Projectiles:null};
+const CACHE_TTL = 0.08;
+const CACHE_POS_SQ = 0.35 * 0.35;
 const finitePoint = p => !!(p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z));
 const stop = c => c.move?.set(0,0,0);
 const aimed = (c,t=.13) => c.isAimed ? c.isAimed(t) : c.aligned === true;
 const mainRange = c => Math.max(1, Number(c.brain?._range?.()) || Number(c.actor.weapon?.range) || 16);
-function safeFloor(c,p) {
+const cacheClock = c => Number.isFinite(c.time) ? c.time : (Number.isFinite(c.world?.match?.time) ? c.world.match.time : NaN);
+function cacheMatches(cache, now, level, physics, enemy, ap, ep) {
+  if (!cache || !Number.isFinite(now) || now < cache.t || now - cache.t >= CACHE_TTL) return false;
+  if (cache.enemy !== enemy || cache.level !== level || cache.physics !== physics) return false;
+  const adx = ap.x - cache.ax, ady = ap.y - cache.ay, adz = ap.z - cache.az;
+  if (adx * adx + ady * ady + adz * adz > CACHE_POS_SQ) return false;
+  const edx = ep.x - cache.ex, edy = ep.y - cache.ey, edz = ep.z - cache.ez;
+  return edx * edx + edy * edy + edz * edz <= CACHE_POS_SQ;
+}
+function safeFloor(c,p,knownFloor) {
   if(!finitePoint(p))return false;
-  const y=c.world?.level?.groundHeight?.(p.x,p.z,p.y+1);
+  const y=knownFloor !== undefined ? knownFloor : c.world?.level?.groundHeight?.(p.x,p.z,p.y+1);
   if(!(Number.isFinite(y) && y> -100 && Math.abs(y-p.y)<2))return false;
   WATER_PROBE.pos=p;
   const wet=!!c.brain?._nearWater?.(WATER_PROBE,1.5);
@@ -102,8 +113,16 @@ function bombThreat(c) {
 // Pick the low flight arc of the existing NiceBall source trajectory. This
 // compensates its horizontal drag; it does not modify the projectile itself.
 function aimBooyah(c) {
-  const dx=c.enemy.pos.x-c.actor.pos.x,dz=c.enemy.pos.z-c.actor.pos.z,d=Math.hypot(dx,dz);
-  const h=c.actor.pos.y+1.2-c.enemy.pos.y;
+  const m=c.memory,ap=c.actor.pos,ep=c.enemy.pos;
+  const p=(m.rangedAimPoint ||= ap.clone());
+  const now=cacheClock(c),level=c.world?.level||null,physics=c.world?.physics||null;
+  let cache=m._booyahCache;
+  if(cacheMatches(cache,now,level,physics,c.enemy,ap,ep)){
+    if(cache.ok){p.set(cache.x,cache.y,cache.z);aim(c,p,0);return true;}
+    return false;
+  }
+  const dx=ep.x-ap.x,dz=ep.z-ap.z,d=Math.hypot(dx,dz);
+  const h=ap.y+1.2-ep.y;
   let bestError=Infinity,bestPitch=0;
   for(let pitch=-.6;pitch<=1.00001;pitch+=.04){
     const vy=Math.max(-24,60*Math.sin(pitch)),a=75.6/7200,b=a-vy/60;
@@ -113,21 +132,34 @@ function aimBooyah(c) {
     const error=Math.abs(travel-d);
     if(error<bestError){bestError=error;bestPitch=pitch;}
   }
-  const p=(c.memory.rangedAimPoint ||= c.actor.pos.clone());
+  const ok=bestError<=10;
   // all-specials emits along aimPoint minus feet, while the shared spring
   // constructs that point from the eye. Keep this target in the emitter basis.
-  p.set(c.enemy.pos.x,c.actor.pos.y+Math.tan(bestPitch)*d,c.enemy.pos.z);
-  aim(c,p,0);return bestError<=10;
+  p.set(ep.x,ap.y+Math.tan(bestPitch)*d,ep.z);
+  if(Number.isFinite(now)){
+    if(!cache)cache=m._booyahCache={};
+    cache.t=now;cache.level=level;cache.physics=physics;cache.enemy=c.enemy;
+    cache.ax=ap.x;cache.ay=ap.y;cache.az=ap.z;cache.ex=ep.x;cache.ey=ep.y;cache.ez=ep.z;
+    cache.ok=ok;cache.x=p.x;cache.y=p.y;cache.z=p.z;cache.pitch=bestPitch;
+  }
+  aim(c,p,0);return ok;
 }
 // Cannon shells brake and drop much sooner than the rapid-fire rounds. Aim
 // their existing short arc toward the target's ground instead of reusing ZR.
 function aimCrabCannon(c) {
-  const m=c.memory,direction=(m.rangedCannonDirection ||= c.actor.pos.clone());
-  const origin=(m.rangedCannonOrigin ||= c.actor.pos.clone());
-  const point=(m.rangedAimPoint ||= c.actor.pos.clone());
-  const yaw=Math.atan2(c.enemy.pos.x-c.actor.pos.x,c.enemy.pos.z-c.actor.pos.z);
+  const m=c.memory,ap=c.actor.pos,ep=c.enemy.pos;
+  const point=(m.rangedAimPoint ||= ap.clone());
+  const now=cacheClock(c),level=c.world?.level||null,physics=c.world?.physics||null;
+  let cache=m._crabCannonCache;
+  if(cacheMatches(cache,now,level,physics,c.enemy,ap,ep)){
+    if(cache.ok===true){point.set(cache.x,cache.y,cache.z);aim(c,point,0);return true;}
+    return false;
+  }
+  const direction=(m.rangedCannonDirection ||= ap.clone());
+  const origin=(m.rangedCannonOrigin ||= ap.clone());
+  const yaw=Math.atan2(ep.x-ap.x,ep.z-ap.z);
   const reach=Math.max(3,Number.isFinite(c.distance)?c.distance:3);
-  let error=Infinity;
+  let error=Infinity,bestPitch=0;
   for(let pitch=-.1;pitch<=1.00001;pitch+=.05){
     const cp=Math.cos(pitch);direction.set(Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp);
     crabTankMuzzle(c.actor,'cannon',origin,direction);
@@ -135,34 +167,68 @@ function aimCrabCannon(c) {
     for(let frame=0;frame<102;frame++){
       if(frame>=8){vy-=(frame===8?144:180)/60;const retain=frame===8?.9:.88;vx*=retain;vy*=retain;vz*=retain;}
       x+=vx/60;y+=vy/60;z+=vz/60;
-      if(y<=c.enemy.pos.y+.28&&vy<0){
-        const miss=Math.hypot(x-c.enemy.pos.x,z-c.enemy.pos.z);
-        if(miss<error){error=miss;point.copy(origin).addScaledVector(direction,reach);}
+      if(y<=ep.y+.28&&vy<0){
+        const miss=Math.hypot(x-ep.x,z-ep.z);
+        if(miss<error){error=miss;bestPitch=pitch;point.copy(origin).addScaledVector(direction,reach);}
         break;
       }
     }
   }
-  if(error>4)return false;
+  const ok=error<=4;
+  if(Number.isFinite(now)){
+    if(!cache)cache=m._crabCannonCache={};
+    cache.t=now;cache.level=level;cache.physics=physics;cache.enemy=c.enemy;
+    cache.ax=ap.x;cache.ay=ap.y;cache.az=ap.z;cache.ex=ep.x;cache.ey=ep.y;cache.ez=ep.z;
+    cache.ok=ok;cache.x=point.x;cache.y=point.y;cache.z=point.z;cache.pitch=bestPitch;
+  }
+  if(!ok)return false;
   aim(c,point,0);return true;
+}
+function saveHookCache(m,now,level,physics,enemy,range,ap,ep,hit,pt) {
+  if(!Number.isFinite(now))return;
+  const hc=m._hookCache||(m._hookCache={});
+  hc.t=now;hc.level=level;hc.physics=physics;hc.enemy=enemy;hc.range=range;
+  hc.ax=ap.x;hc.ay=ap.y;hc.az=ap.z;hc.ex=ep.x;hc.ey=ep.y;hc.ez=ep.z;
+  hc.hit=hit;
+  if(hit&&pt){hc.x=pt.x;hc.y=pt.y;hc.z=pt.z;}
 }
 function hookPoint(c) {
   const {actor,enemy,memory:m,world}=c,d=c.distance;
   if(!(d>1)||!world?.physics?.raycast)return null;
-  const gap=Math.max(3.5,Math.min(8,mainRange(c)*.65));
-  const point=(m.rangedHookPoint ||= actor.pos.clone());
-  point.copy(enemy.pos);point.x-=(enemy.pos.x-actor.pos.x)*gap/d;point.z-=(enemy.pos.z-actor.pos.z)*gap/d;
-  const floor=world.level?.groundHeight?.(point.x,point.z,point.y+1);
-  if(!Number.isFinite(floor))return null;point.y=floor;
-  if(!safeFloor(c,point))return null;
-  const origin=(m.rangedHookOrigin ||= actor.pos.clone()).copy(actor.pos);origin.y+=1.05;
-  const direction=(m.rangedHookDirection ||= actor.pos.clone()).copy(point).sub(origin);
-  const length=direction.length();if(length<3||length>35)return null;direction.normalize();
-  const hit=(m.rangedHookHit ||= {hit:false,point:actor.pos.clone(),normal:actor.pos.clone()});
-  hit.hit=false;const contact=world.physics.raycast(origin,direction,Math.min(35,length+.3),hit,true);
-  if(!contact?.hit||!finitePoint(contact.point)||!finitePoint(contact.normal)||contact.normal.y<.5)return null;
-  if(contact.point.distanceTo(point)>1.5||!safeFloor(c,contact.point))return null;
+  const range=mainRange(c);
+  const now=cacheClock(c),level=world.level||null,physics=world.physics;
+  const ap=actor.pos,ep=enemy.pos;
+  const hc=m._hookCache;
+  if(cacheMatches(hc,now,level,physics,enemy,ap,ep)&&hc.range===range){
+    if(!hc.hit)return null;
+    const out=(m.rangedHookPoint ||= ap.clone());
+    out.set(hc.x,hc.y,hc.z);
+    return out;
+  }
+  const gap=Math.max(3.5,Math.min(8,range*.65));
+  const scratch=(m._hookScratch ||= ap.clone());
+  scratch.copy(ep);scratch.x-=(ep.x-ap.x)*gap/d;scratch.z-=(ep.z-ap.z)*gap/d;
+  const floor=level?.groundHeight?.(scratch.x,scratch.z,scratch.y+1);
+  if(!Number.isFinite(floor)){saveHookCache(m,now,level,physics,enemy,range,ap,ep,false,null);return null;}
+  scratch.y=floor;
+  if(!safeFloor(c,scratch,floor)){saveHookCache(m,now,level,physics,enemy,range,ap,ep,false,null);return null;}
+  const origin=(m.rangedHookOrigin ||= ap.clone()).copy(ap);origin.y+=1.05;
+  const direction=(m.rangedHookDirection ||= ap.clone()).copy(scratch).sub(origin);
+  const length=direction.length();
+  if(length<3||length>35){saveHookCache(m,now,level,physics,enemy,range,ap,ep,false,null);return null;}
+  direction.normalize();
+  const hit=(m.rangedHookHit ||= {hit:false,point:ap.clone(),normal:ap.clone()});
+  hit.hit=false;const contact=physics.raycast(origin,direction,Math.min(35,length+.3),hit,true);
+  if(!contact?.hit||!finitePoint(contact.point)||!finitePoint(contact.normal)||contact.normal.y<.5){
+    saveHookCache(m,now,level,physics,enemy,range,ap,ep,false,null);return null;
+  }
+  if(contact.point.distanceTo(scratch)>1.5||!safeFloor(c,contact.point)){
+    saveHookCache(m,now,level,physics,enemy,range,ap,ep,false,null);return null;
+  }
+  saveHookCache(m,now,level,physics,enemy,range,ap,ep,true,contact.point);
   // The aim point must be the actual surface, never an arbitrary enemy reticle.
-  return point.copy(contact.point);
+  const out=(m.rangedHookPoint ||= ap.clone());
+  return out.copy(contact.point);
 }
 
 

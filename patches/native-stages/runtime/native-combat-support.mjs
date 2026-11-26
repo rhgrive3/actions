@@ -10,7 +10,7 @@ const groundedMoveIntent=a=>!a.specialActive||a.specialActive.id==='trizooka'&&a
  * so continuous ramps remain legal and unqualified cliff drops do not. */
 export function nativeCombatWet(brain,G,x,z,y){
  const a=brain.a;
- if(!G.level?.native||G.physics?.level!==G.level||!a?.alive||!a.grounded||!['fight','retreat'].includes(brain.mode)||a.climbing||!groundedMoveIntent(a)||a.superJumpState||a.s3?.squidSpawn)return null;
+ if(!G.level?.native||G.physics?.level!==G.level||!a?.alive||!a.grounded||(brain.mode!=='fight'&&brain.mode!=='retreat')||a.climbing||!groundedMoveIntent(a)||a.superJumpState||a.s3?.squidSpawn)return null;
  const distance=Math.hypot(x-a.pos.x,z-a.pos.z);
  if(!Number.isFinite(distance)||!Number.isFinite(y))return true;
  const hit=brain._nativeCombatGround||(brain._nativeCombatGround=new GroundHit());

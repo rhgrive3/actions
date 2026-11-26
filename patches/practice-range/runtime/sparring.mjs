@@ -124,14 +124,34 @@ export class SparringBots {
     victim.respawnTimer = SPARRING_RESPAWN;
   }
   /** Player-side numbers since the last spawn / reset. */
-  readout() {
+  readout(light = false) {
     const ins = insightsOf(this.s.local);
     const attacks = ins ? ins.attacks - this.stats.attacks0 : 0, landed = ins ? ins.landed - this.stats.landed0 : 0;
+    const accuracy = attacks > 0 ? landed / attacks : null;
+    const damage = Math.round(this.stats.damageTaken);
+    const damageTaken = Math.round(this.stats.damageToPlayer);
+    if (light) {
+      const out = this._lightReadout || (this._lightReadout = {
+        bots: 0, attacks: 0, landed: 0, accuracy: null,
+        damage: 0, hits: 0, splats: 0, lastTtk: null, bestTtk: null, damageTaken: 0,
+      });
+      out.bots = this.bots.length;
+      out.attacks = attacks;
+      out.landed = landed;
+      out.accuracy = accuracy;
+      out.damage = damage;
+      out.hits = this.stats.hitsTaken;
+      out.splats = this.stats.splats;
+      out.lastTtk = this.stats.lastTtk;
+      out.bestTtk = this.stats.bestTtk;
+      out.damageTaken = damageTaken;
+      return out;
+    }
     return {
       bots: this.bots.length, behaviors: this.bots.map(b => b.sparring.behavior), weapons: this.bots.map(b => b.weaponId),
-      attacks, landed, accuracy: attacks > 0 ? landed / attacks : null,
-      damage: Math.round(this.stats.damageTaken), hits: this.stats.hitsTaken, splats: this.stats.splats,
-      lastTtk: this.stats.lastTtk, bestTtk: this.stats.bestTtk, damageTaken: Math.round(this.stats.damageToPlayer),
+      attacks, landed, accuracy,
+      damage, hits: this.stats.hitsTaken, splats: this.stats.splats,
+      lastTtk: this.stats.lastTtk, bestTtk: this.stats.bestTtk, damageTaken,
     };
   }
   update() {

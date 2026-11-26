@@ -5,6 +5,9 @@ import { KRAKEN_MOVEMENT, reefsliderRawSpeed } from './all-specials.mjs';
 // weapon statistics; the admitted Actor inputs retain all attack/physics owners.
 const IDS = new Set(['krakenRoyale', 'ultraStamp', 'reefslider', 'tripleSplashdown', 'slam']);
 const EPS = 1e-8;
+const LOG_097 = Math.log(.97);
+const CACHE_TTL = 0.08;
+const CACHE_POS_SQ = 0.35 * 0.35;
 const _rushEnd = { x: 0, y: 0, z: 0 };
 const _facing = { x: 0, y: 0, z: 0 };
 const stop = ctx => ctx.move?.set?.(0, 0, 0);
@@ -111,30 +114,67 @@ function kraken(ctx) {
 // 46.8WU/s², .97 horizontal retention per source frame). The low arc aims
 // at the body after the native throw windup; it grants no projectile effects.
 function aimStampThrow(ctx, state) {
-  const { actor, enemy, memory } = ctx;
+  const { actor, enemy, memory, world } = ctx;
   if (!enemy?.pos) return false;
-  const delay = Number.isFinite(state?.throwAt) && Number.isFinite(state?.t) ? Math.max(0, state.throwAt - state.t) : .7;
+  const hasThrowAt = Number.isFinite(state?.throwAt) && Number.isFinite(state?.t);
+  const delay = hasThrowAt ? Math.max(0, state.throwAt - state.t) : .7;
   const vx = Number.isFinite(enemy.vel?.x) ? enemy.vel.x : 0;
   const vz = Number.isFinite(enemy.vel?.z) ? enemy.vel.z : 0;
-  let lead = delay + (Number.isFinite(ctx.distance) ? ctx.distance : 0) / 40, pitch = 0, valid = false;
   const point = memory.stampThrowPoint ||= { x: 0, y: 0, z: 0 };
+  const now = Number.isFinite(ctx.time) ? ctx.time : (Number.isFinite(world?.match?.time) ? world.match.time : NaN);
+  const level = world?.level || null;
+  const physics = world?.physics || null;
+  const ap = actor.pos, ep = enemy.pos;
+  let cache = memory._stampThrowCache;
+  if (
+    cache &&
+    Number.isFinite(now) &&
+    now >= cache.t &&
+    now - cache.t < CACHE_TTL &&
+    cache.enemy === enemy &&
+    cache.level === level &&
+    cache.physics === physics &&
+    cache.hasThrowAt === hasThrowAt &&
+    Math.abs(delay - cache.delay) <= 0.04 &&
+    Math.abs(vx - cache.vx) <= 0.35 &&
+    Math.abs(vz - cache.vz) <= 0.35
+  ) {
+    const adx = ap.x - cache.ax, ady = ap.y - cache.ay, adz = ap.z - cache.az;
+    const edx = ep.x - cache.ex, edy = ep.y - cache.ey, edz = ep.z - cache.ez;
+    if (adx * adx + ady * ady + adz * adz <= CACHE_POS_SQ && edx * edx + edy * edy + edz * edz <= CACHE_POS_SQ) {
+      point.x = cache.x;
+      point.y = cache.y;
+      point.z = cache.z;
+      ctx.aimAt(point);
+      return cache.valid && ctx.isAimed(.065);
+    }
+  }
+  let lead = delay + (Number.isFinite(ctx.distance) ? ctx.distance : 0) / 40, pitch = 0, valid = false;
   for (let pass = 0; pass < 2; pass++) {
-    point.x = enemy.pos.x + vx * lead;
-    point.y = enemy.pos.y;
-    point.z = enemy.pos.z + vz * lead;
-    const distance = Math.hypot(point.x - actor.pos.x, point.z - actor.pos.z);
+    point.x = ep.x + vx * lead;
+    point.y = ep.y;
+    point.z = ep.z + vz * lead;
+    const distance = Math.hypot(point.x - ap.x, point.z - ap.z);
     let best = Infinity, flight = 0;
     for (let angle = -.8; angle <= .80001; angle += .015) {
       const factor = 1 - distance * .03 / (.85 * Math.cos(angle) * .97);
       if (!(factor > 0 && factor < 1)) continue;
-      const frames = Math.log(factor) / Math.log(.97);
+      const frames = Math.log(factor) / LOG_097;
       if (frames > 108) continue;
-      const y = actor.pos.y + 1.1 + (51 * Math.sin(angle) + 10.2) * frames / 60 - .013 * frames * (frames + 1) / 2;
-      const error = Math.abs(y - (enemy.pos.y + .7));
+      const y = ap.y + 1.1 + (51 * Math.sin(angle) + 10.2) * frames / 60 - .013 * frames * (frames + 1) / 2;
+      const error = Math.abs(y - (ep.y + .7));
       if (error < best) { best = error; pitch = angle; flight = frames / 60; }
     }
     valid = best < .7; lead = delay + flight;
-    point.y = actor.pos.y + Math.tan(pitch) * distance;
+    point.y = ap.y + Math.tan(pitch) * distance;
+  }
+  if (Number.isFinite(now)) {
+    if (!cache) cache = memory._stampThrowCache = {};
+    cache.t = now; cache.level = level; cache.physics = physics; cache.enemy = enemy;
+    cache.ax = ap.x; cache.ay = ap.y; cache.az = ap.z;
+    cache.ex = ep.x; cache.ey = ep.y; cache.ez = ep.z;
+    cache.vx = vx; cache.vz = vz; cache.hasThrowAt = hasThrowAt; cache.delay = delay;
+    cache.valid = valid; cache.x = point.x; cache.y = point.y; cache.z = point.z;
   }
   // Native aimDirection subtracts the feet, while BotBrain constructs its
   // aimPoint from the eye. Request the actual emitter-basis point unchanged.

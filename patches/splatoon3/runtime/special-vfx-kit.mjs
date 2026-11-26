@@ -371,7 +371,7 @@ class SpritePool {
       R[o] = p[i + 16]; R[o + 1] = p[i + 17]; R[o + 2] = t; R[o + 3] = p[i + 19];
     }
     const count = this.n + 1;
-    for (const a of this.updateAttributes) { if (a === this.aDir) continue; a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
+    for (const a of this.updateAttributes) { if (a === this.aDir) continue; markAttributeRange(a, 0, count * 4); }
     markAttributeRange(this.aDir, dirStart, dirEnd);
     this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;
   }
@@ -552,10 +552,11 @@ class RibbonPool {
     markAttributeRange(this.rib, ribStart, ribEnd);
     // Capture the same attribute identities before any upload callback runs.
     const posAttribute=this.pos,colAttribute=this.col,sideAttribute=this.side,faceAttribute=this.face;
-    posAttribute.clearUpdateRanges(); posAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*posAttribute.itemSize); posAttribute.needsUpdate=true;
-    colAttribute.clearUpdateRanges(); colAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*colAttribute.itemSize); colAttribute.needsUpdate=true;
-    sideAttribute.clearUpdateRanges(); sideAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*sideAttribute.itemSize); sideAttribute.needsUpdate=true;
-    faceAttribute.clearUpdateRanges(); faceAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*faceAttribute.itemSize); faceAttribute.needsUpdate=true;
+    const vertCount = slot ? slot * this.M * 2 : 4;
+    markAttributeRange(posAttribute, 0, vertCount * posAttribute.itemSize);
+    markAttributeRange(colAttribute, 0, vertCount * colAttribute.itemSize);
+    markAttributeRange(sideAttribute, 0, vertCount * sideAttribute.itemSize);
+    markAttributeRange(faceAttribute, 0, vertCount * faceAttribute.itemSize);
   }
   clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; r.samples.length=0; r.count=0; } this.list.length = 0; this._emptyUploaded = false; }
 }
@@ -882,7 +883,7 @@ void main(){
 // A retained instanced pool. Records: { a: Float32Array(16) attribute values, t, life, follow?(rec,dt)->bool }.
 class ShapePool {
   constructor(THREE, name, geometry, cap, attrs, vert, frag, additive, uTime, extra = {}, light = {}) {
-    this.cap = cap; this.recs = []; this.attrs = attrs; this._emptyUploaded = false;
+    this.cap = cap; this.recs = []; this.free = []; this.attrs = attrs; this._emptyUploaded = false;
     const g = new THREE.InstancedBufferGeometry();
     for (const key of Object.keys(geometry.attributes)) g.setAttribute(key, geometry.attributes[key]);
     if (geometry.index) g.setIndex(geometry.index);
@@ -899,11 +900,21 @@ class ShapePool {
     if (record.retired) return;
     record.retired = true;
     const finish = record.onEnd; record.onEnd = null;
+    record.follow = null;
     if (finish) finish();
+    const v = record.v;
+    if (v) {
+      record.v = null;
+      if (this.free.length < this.cap) this.free.push(v);
+    }
+  }
+  _alloc(life, follow) {
+    const v = this.free.pop() || new Float32Array(16);
+    return { v, t: 0, life, follow, dead: false };
   }
   add(life, values, follow = null) {
     if (this.recs.length >= this.cap - 1) this._retire(this.recs.shift());
-    const rec = { v: new Float32Array(16), t: 0, life, follow, dead: false };
+    const rec = this._alloc(life, follow);
     rec.v.set(values);
     this.recs.push(rec);
     return rec;
@@ -911,7 +922,7 @@ class ShapePool {
   // Scalar births retain fresh public handles while avoiding the transient values array.
   addRaw(life, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15, follow = null) {
     if (this.recs.length >= this.cap - 1) this._retire(this.recs.shift());
-    const rec = { v: new Float32Array(16), t: 0, life, follow, dead: false }, v = rec.v;
+    const rec = this._alloc(life, follow), v = rec.v;
     v[0]=a0;v[1]=a1;v[2]=a2;v[3]=a3;v[4]=a4;v[5]=a5;v[6]=a6;v[7]=a7;
     v[8]=a8;v[9]=a9;v[10]=a10;v[11]=a11;v[12]=a12;v[13]=a13;v[14]=a14;v[15]=a15;
     this.recs.push(rec);return rec;

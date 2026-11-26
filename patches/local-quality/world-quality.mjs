@@ -249,6 +249,7 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
     if (f.atlas) oldAtlasMap.set(f, { ...f.atlas });
   }
 
+  const isNative = !!paint.level?.native;
   const newDensity = targetSize >= 4096 ? 30 : 18;
   let newRT = null;
   const renderer = paint.renderer;
@@ -260,9 +261,9 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
       newRT = new THREE_LIB.WebGLRenderTarget(targetSize, targetSize, {
         type: THREE_LIB.UnsignedByteType,
         format: THREE_LIB.RGBAFormat,
-        minFilter: THREE_LIB.LinearMipmapLinearFilter,
+        minFilter: isNative ? THREE_LIB.LinearFilter : THREE_LIB.LinearMipmapLinearFilter,
         magFilter: THREE_LIB.LinearFilter,
-        generateMipmaps: typeof paint._regenerateMipmaps !== 'function',
+        generateMipmaps: isNative ? false : typeof paint._regenerateMipmaps !== 'function',
         depthBuffer: false,
         stencilBuffer: false,
       });
@@ -310,7 +311,7 @@ export function updatePaintQuality(game, targetSize, ctx = null, THREE_LIB = THR
     paint.rt = newRT;
     paint.texture = newRT.texture;
     // Resampling is an atlas write even when no future paint/drying is queued.
-    paint._regenerateMipmaps?.();
+    if (!isNative) paint._regenerateMipmaps?.();
   }
 
   // Update dryMesh geometry to match new atlas dimensions

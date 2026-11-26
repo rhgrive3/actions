@@ -58,8 +58,8 @@ function updateBalanceCenterRotations(balance) {
  for(let i=0;i<count;i++)if(!pose.wq[i]||pose.wq[i]._onChangeCallback!==balanceCenterEmptyChange)return false;
  const bones=bank.bones,local=pose.q,world=pose.wq,indices=balance.rotationWorldIndices;
  for(let k=0;k<indices.length;k++)if(indices[k]>=count)return false;
- for(const i of indices){
-  const q=local[i],target=world[i],parent=bones[i].parent,x=q._x,y=q._y,z=q._z,w=q._w;
+ for(let k=0;k<indices.length;k++){
+  const i=indices[k],q=local[i],target=world[i],parent=bones[i].parent,x=q._x,y=q._y,z=q._z,w=q._w;
   if(parent>=0){
    const pq=world[parent],qax=pq._x,qay=pq._y,qaz=pq._z,qaw=pq._w;
    let rx=qax*w+qaw*x+qay*z-qaz*y,ry=qay*w+qaw*y+qaz*x-qax*z;
@@ -67,8 +67,8 @@ function updateBalanceCenterRotations(balance) {
    let length=Math.sqrt(rx*rx+ry*ry+rz*rz+rw*rw);
    if(length===0){rx=0;ry=0;rz=0;rw=1;}
    else{length=1/length;rx=rx*length;ry=ry*length;rz=rz*length;rw=rw*length;}
-   target._x=rx;target._y=ry;target._z=rz;target._w=rw;target._onChangeCallback();
-  }else{target._x=x;target._y=y;target._z=z;target._w=w;target._onChangeCallback();}
+   target._x=rx;target._y=ry;target._z=rz;target._w=rw;
+  }else{target._x=x;target._y=y;target._z=z;target._w=w;}
  }
  return true;
 }

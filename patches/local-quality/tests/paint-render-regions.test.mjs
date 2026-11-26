@@ -10,7 +10,7 @@ import {markPaintAttributeRange} from '../paint-attribute-upload-cache.mjs';
 
 test('build adapter preserves the existing source and installs all three owners exactly once',()=>{
  const nativeUpload='const range=at._paintRange||(at._paintRange={start:0,count:0});\n        range.count=n*at.itemSize;\n        at.clearUpdateRanges(); at.updateRanges.push(range); at.needsUpdate = true;';
- const guardedUpload='markPaintAttributeRange(at, n, THREE.BufferAttribute);';
+ const guardedUpload='if (!this._iwTransferActive) markPaintAttributeRange(at, n, THREE.BufferAttribute);';
  const source='export class PaintSystem { _drawQuads(){'+nativeUpload+'} _regenerateMipmaps(){} }\nconst blend=THREE.ReverseSubtractEquation;';
  const result=adaptPaintRenderRegions('src/world/paint.js',source);
  assert.equal(result.split(guardedUpload).length,2);

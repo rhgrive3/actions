@@ -1,4 +1,4 @@
-import { setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance-color-upload.mjs';
+import { markAttributeRange, setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance-color-upload.mjs';
 // Splatoon 3 in-flight projectile silhouettes for Shooters, Brellas,
 // Stringers, Splatanas, Sloshing Machine, Explosher and Bloblobber.
 //
@@ -386,7 +386,7 @@ function createRenderer(THREE, scene) {
         this.wetSlashV = null;
       }
       scene.remove(body, slashH, slashV, shell, core, sparks);
-      for (const o of [body, slashH, slashV, shell, core, sparks]) { o.geometry.dispose(); o.material.dispose(); }
+      for (const o of [body, slashH, slashV, shell, core, sparks]) { o.dispose?.(); o.geometry.dispose(); o.material.dispose(); }
     } };
 }
 
@@ -417,7 +417,7 @@ function createWetSlash(THREE, scene) {
 function upload(mesh, n) {
   mesh.count = n; mesh.visible = n > 0;
   if (!n) return;
-  mesh.instanceMatrix.clearUpdateRanges(); mesh.instanceMatrix.addUpdateRange(0, n * 16); mesh.instanceMatrix.needsUpdate = true;
+  markAttributeRange(mesh.instanceMatrix, 0, n * 16);
   uploadTrackedInstanceColors(mesh);
 }
 
@@ -529,10 +529,12 @@ function fireInk(R, p, kind, f, G, system) {
   }
 }
 
-export function drawS3Shapes(system, THREE, G) {
+export function drawS3Shapes(system, THREE, G, out = null) {
   let R = system._s3Shapes;
-  if (!R && !system.list.some(p => p.s3Shape && !(p.delay > 0) && p.owner?.color))
+  if (!R && !system.list.some(p => p.s3Shape && !(p.delay > 0) && p.owner?.color)) {
+    if (out) { out.body = out.slashH = out.slashV = out.shell = out.core = out.sparkles = out.sheets = out.drills = 0; return out; }
     return { body: 0, slashH: 0, slashV: 0, shell: 0, core: 0, sparkles: 0, sheets: 0, drills: 0 };
+  }
   if (!R) R = system._s3Shapes = createRenderer(THREE, system.scene);
   if (!system.list.length && !R.sheets.bursts.length && !R.sheets.drills.length) {
     for (const mesh of R.idleMeshes) { mesh.count = 0; mesh.visible = false; }
@@ -542,6 +544,7 @@ export function drawS3Shapes(system, THREE, G) {
     R.sparks.visible = false; R.sparks.userData.count = 0; R.sparks.geometry.setDrawRange(0, 0);
     R.sheets.mesh.count = R.sheets.drillMesh.count = 0;
     R.sheets.mesh.visible = R.sheets.drillMesh.visible = false;
+    if (out) { out.body = out.slashH = out.slashV = out.shell = out.core = out.sparkles = out.sheets = out.drills = 0; return out; }
     return { body: 0, slashH: 0, slashV: 0, shell: 0, core: 0, sparkles: 0, sheets: 0, drills: 0 };
   }
   const { body, bodyData, slashH, slashV, shell, core, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
@@ -598,7 +601,7 @@ export function drawS3Shapes(system, THREE, G) {
         } else s.multiplyScalar(0.82);
         m.compose(v, q, s);
         const peel = wetWave ? nw : kind === 'slash-h' ? nh : nv;
-        mesh.setMatrixAt(peel, m); mesh.setColorAt(peel, color);
+        mesh.setMatrixAt(peel, m); setTrackedInstanceColor(mesh, peel, color);
         if (wetWave) nw++; else if (kind === 'slash-h') nh++; else nv++;
       }
     } else if (kind === 'bubble') {
@@ -683,7 +686,7 @@ export function drawS3Shapes(system, THREE, G) {
       }
     }
   }
-  bodyData.clearUpdateRanges(); bodyData.addUpdateRange(0, nb * 4); bodyData.needsUpdate = nb > 0;
+  bodyData && nb && markAttributeRange(bodyData, 0, nb * 4);
   upload(body, nb); upload(slashH, nh); upload(slashV, nv); upload(shell, ns); upload(core, nc);
   if (R.wetSlashV) upload(R.wetSlashV, nw);
   // SWEPs MuzzleSplash renders at the muzzle attachment every frame
@@ -697,8 +700,13 @@ export function drawS3Shapes(system, THREE, G) {
   const sheets = ink.sheets, drills = ink.drills;
   R.sparks.visible = nk > 0; R.sparks.userData.count = nk; R.sparks.geometry.setDrawRange(0, nk);
   if (nk) {
-    sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
-    sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
+    markAttributeRange(sparkPos, 0, nk * 3);
+    markAttributeRange(sparkSize, 0, nk);
+  }
+  if (out) {
+    out.body = nb; out.slashH = nh; out.slashV = nv + nw; out.shell = ns;
+    out.core = nc; out.sparkles = nk; out.sheets = sheets; out.drills = drills;
+    return out;
   }
   return { body: nb, slashH: nh, slashV: nv + nw, shell: ns, core: nc, sparkles: nk, sheets, drills };
 }
@@ -712,9 +720,13 @@ export function installS3ProjectileShapes(api) {
   if (!P || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const draw = P._draw, clear = P.clear;
-  P._draw = function (...args) {
+  P._draw = function (a, b, c) {
     for (const p of this.list) p.s3Shape = cachedS3ShapeKind(p);
-    const result = draw.apply(this, args);
+    const result = arguments.length === 0 ? draw.call(this)
+      : arguments.length === 1 ? draw.call(this, a)
+      : arguments.length === 2 ? draw.call(this, a, b)
+      : arguments.length === 3 ? draw.call(this, a, b, c)
+      : draw.apply(this, arguments);
     this.s3ShapeCounts = drawS3Shapes(this, THREE, G);
     return result;
   };

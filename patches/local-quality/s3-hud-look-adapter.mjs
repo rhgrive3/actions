@@ -216,6 +216,7 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
       if (typeof ResizeObserver === 'function') {
         B.ro = new ResizeObserver(() => {
           B.w = cv.clientWidth; B.h = cv.clientHeight;
+          if (this._L) this._L.tubeGeo = null;
           if (B.valid && B.w && B.h && this.tankCanvas === cv) this._s3PaintTank(B.sub, B.low, B.nosub);
         });
         B.ro.observe(cv);
@@ -232,13 +233,17 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
 // leaves shortly after the tank is full; kid form keeps the existing show-when-not-full rule.
 const SWIM_TANK = `    const me = this._local();
     const swimTank = !!(me && me.alive !== false && me.form === 'squid' && !me.superJumpState);
-    if (swimTank !== L.swimTank) { L.swimTank = swimTank; L.tubeGeo = null; this.tank.classList.toggle('is-swim', swimTank); if (!swimTank) this.tank.style.transform = ''; }
+    if (swimTank !== L.swimTank) { L.swimTank = swimTank; if (!this._tankBox?.ro) L.tubeGeo = null; this.tank.classList.toggle('is-swim', swimTank); if (!swimTank) { this.tank.style.transform = ''; L.tx = L.ty = NaN; } }
     if (swimTank && G.camera && me.pos) {
       const p = this._project(G.camera, me.pos.x, me.pos.y + 0.3, me.pos.z);
       if (p && p.z < 1) {
         const hw = innerWidth / 2, hh = innerHeight / 2;
         const x = Math.max(-hw * 0.8, Math.min(hw * 0.7, p.x * hw)), y = Math.max(-hh * 0.5, Math.min(hh * 0.55, -p.y * hh));   // stays above the bottom splat bar
+        const tx = Math.round(x * 10), ty = Math.round(y * 10);
+        if (tx !== L.tx || ty !== L.ty) {
+          L.tx = tx; L.ty = ty;
         this.tank.style.transform = \`translate3d(\${x.toFixed(1)}px,\${y.toFixed(1)}px,0)\`;
+        }
         this._s3TankTube(ink, dt);
       }
     }
@@ -259,10 +264,15 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
       svg.append(...this._tube); this.tank.prepend(svg);
     }
     const vw = innerWidth, vh = innerHeight;
+    const touchUi = !!(typeof document !== 'undefined' && document.documentElement?.classList?.contains('iw-touch-ui'));
+    const isSwimCls = !!this.tank?.classList?.contains('is-swim');
+    if (L.tubeTouch !== touchUi || L.tubeSwimCls !== isSwimCls) { L.tubeTouch = touchUi; L.tubeSwimCls = isSwimCls; L.tubeGeo = null; }
     // geometry is read once per squid entry / viewport size, never every frame (no layout thrash)
-    if (!L.tubeGeo || L.tubeGeo.vw !== vw || L.tubeGeo.vh !== vh)
-      L.tubeGeo = { vw, vh, l: this.tank.offsetLeft, t: this.tank.offsetTop, h: this.tank.offsetHeight, w: this.tank.offsetWidth };
-    const g = L.tubeGeo;
+    let g = L.tubeGeo;
+    if (!L.tubeGeo || L.tubeGeo.vw !== vw || L.tubeGeo.vh !== vh) {
+      g = { vw, vh, l: this.tank.offsetLeft, t: this.tank.offsetTop, h: this.tank.offsetHeight, w: this.tank.offsetWidth };
+      if (g.w > 0 && g.h > 0) L.tubeGeo = g; else L.tubeGeo = null;
+    }
     let basis = g.basis;
     if (!basis || basis.w !== g.w || basis.h !== g.h || basis.l !== g.l || basis.t !== g.t) {
       const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
@@ -358,7 +368,7 @@ const RETICLE_CSS = `
 export function adaptS3HudLook(rel, code) {
   if (rel === 'src/main.js') return once(code,
     "        this.hud?.hitMarker(killed ? 'kill' : 'hit');",
-    "        this.hud?.hitMarker(killed ? 'kill' : 'hit', { damage });", 'accepted damage feedback payload');
+    "        this.hud?.hitMarker(killed ? 'kill' : 'hit', ((this._iwHitFb || (this._iwHitFb = { damage: 0 })).damage = damage, this._iwHitFb));", 'accepted damage feedback payload');
   if (rel === 'src/ui/hud.js') {
     // The guide's parent SVG group owns projection; the ring retains its
     // original local kick. Reuse one animation per hand so rapid fire cannot

@@ -36,7 +36,7 @@ function cover(texture, width, height) {
 export function renderLockerStage(game, G, dt) {
   const showcase = game.showcase, renderer = G.renderer;
   showcase.update(dt);
-  if (game._skipRender) return;
+  if (game._skipRender || renderer?.domElement?.ownerDocument?.hidden) return;
   const s = backdrop();
   let frame = s.frame;
   if (!frame || frame.busy) {

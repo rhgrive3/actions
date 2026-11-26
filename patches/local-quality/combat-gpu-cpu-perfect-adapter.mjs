@@ -282,9 +282,11 @@ uniform int uWakeCount;`,
         aC[i4] = S.C[i3]; aC[i4 + 1] = S.C[i3 + 1]; aC[i4 + 2] = S.C[i3 + 2]; aC[i4 + 3] = X[x + 5];
         aA[i4] = S.A[i4]; aA[i4 + 1] = S.A[i4 + 1]; aA[i4 + 2] = S.A[i4 + 2]; aA[i4 + 3] = S.A[i4 + 3];
       }
-      for (const attr of [S.geo.attributes.aColA, S.geo.attributes.aAxis]) {
+      for (let ai = 0; ai < 2; ai++) {
+        const attr = ai === 0 ? S.geo.attributes.aColA : S.geo.attributes.aAxis;
         let first = sStart * 4, last = sEnd * 4;
-        for (const pending of attr.updateRanges) {
+        for (let ri = 0; ri < attr.updateRanges.length; ri++) {
+          const pending = attr.updateRanges[ri];
           first = Math.min(first, pending.start);
           last = Math.max(last, pending.start + pending.count);
         }
@@ -603,13 +605,13 @@ export class SwimWake {`
         try {
           scene.traverse((o) => {
             if (o.castShadow && (o.isMesh || o.isInstancedMesh) && !stat.has(o)) {
-              dyn.push([o, o.castShadow]); o.castShadow = false;
+              dyn.push(o, o.castShadow); o.castShadow = false;
             }
           });
           sm.needsUpdate = true;
           orig.call(sm, lights, scene, camera);
         } finally {
-          for (const [o, wasCasting] of dyn) o.castShadow = wasCasting;
+          for (let i = 0; i < dyn.length; i += 2) dyn[i].castShadow = dyn[i + 1];
           dyn.length = 0; stat.clear();
         }`,
       replaceOnce,

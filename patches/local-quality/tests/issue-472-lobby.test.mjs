@@ -66,7 +66,7 @@ test('build-only showcase patch hits lobby anchors exactly once, leaves arena al
   const out = patchLobbySetShowcase('src/game/showcase.js', raw);
   assert.equal((out.match(/issue-472-adapter\.mjs/g) || []).length, 1);
   assert.equal((out.match(/resolveLobbyQualityName\(G\.settings\?\.quality, G\.mobile \?\? G\.game\?\.mobile\)/g) || []).length, 2);
-  assert.equal((out.match(/if \(lobbyShadowDue\(L\)\) r\.shadowMap\.needsUpdate = true;/g) || []).length, 1);
+  assert.equal((out.match(/r\.shadowMap\.needsUpdate = !!lobbyShadowDue\(L\);/g) || []).length, 1);
   // LOW/touch native-correct fallback: native constructor + setQuality rows used, no invented fields.
   assert.match(out, /new mod\.LobbySet\(this\.r, \{ quality: q,/);
   assert.match(out, /S\.setQuality\?\.\(q\)/);
@@ -74,7 +74,7 @@ test('build-only showcase patch hits lobby anchors exactly once, leaves arena al
   assert.match(out, /const opacity = OVERLAY\.has\(this\.mode\) \? eOut3\(this\.fadeIn\) : c01\(this\._out \/ \(this\._outDur \|\| 0\.2\)\);\n      r\.shadowMap\.needsUpdate = true;/);
   // Arena/world paths untouched: no gameplay, collision, or renderer-wide edit.
   assert.equal(out.includes('G.scene'), false);
-  assert.equal((out.match(/r\.shadowMap\.needsUpdate = true/g) || []).length, 4);
+  assert.equal((out.match(/r\.shadowMap\.needsUpdate = true/g) || []).length, 3);
   assert.equal((out.match(/^      r\.shadowMap\.needsUpdate = true;$/gm) || []).length, 1);
   // Unrelated file passthrough + idempotency guard.
   assert.equal(patchLobbySetShowcase('src/game/lobbySet.js', 'x'), 'x');
@@ -90,6 +90,6 @@ test('current studio-shadow owner and lobby quality compose in both orders',asyn
     assert.equal((out.match(/import \{ resolveLobbyQualityName, lobbyShadowDue \}/g)||[]).length,1);
     assert.equal((out.match(/syncStudioShadow\(this.key/g)||[]).length,3);
     assert.ok(out.includes('releaseStudioShadow(this.key);'));
-    assert.ok(out.includes('if (lobbyShadowDue(L)) r.shadowMap.needsUpdate = true;'));
+    assert.ok(out.includes('r.shadowMap.needsUpdate = !!lobbyShadowDue(L);'));
   }
 });

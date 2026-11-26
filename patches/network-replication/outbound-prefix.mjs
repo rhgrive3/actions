@@ -55,7 +55,7 @@ export function queueOutboundEvent(n,event,G){
 }
 export function sendOutboundTick(n,msg,pack,G){
  const s=state(n);if(s.failed)return false;
- if(!sync(n,s,true))return abort(n,s,'Outbound event backlog exceeded',G);
+ if(n.out.length===0){s.rows=0;s.bytes=0;}else if(!sync(n,s,true))return abort(n,s,'Outbound event backlog exceeded',G);
  const count=Math.min(n.out.length,s.window,OUTBOUND_LIMITS.packetRows),prefix=count?n.out.slice(0,count):null;
  if(count){msg.r=2;msg.e=prefix;}
  const session=n.s,transport=session?.tr,owner=session?.match,match=n.match;

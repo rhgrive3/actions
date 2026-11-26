@@ -13,6 +13,7 @@
 // Every value below is INKWAVE visual calibration, not recovered Nintendo
 // effect data. Retail comparison is still pending (see the behaviour report).
 import { crescentGeometry, S3_SHAPE, splatanaHorizontalSweep } from './s3-projectile-shapes.mjs';
+import { markAttributeRange, setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance-color-upload.mjs';
 
 const INSTALLED = Symbol.for('inkwave.splatana-wave-presentation.v1');
 export const SPLATANA_WAVE = Object.freeze({
@@ -47,20 +48,30 @@ function createState(THREE, scene) {
     scene.add(mesh);
     return mesh;
   };
+  const meshH = mk(S3_SHAPE.slashH), meshV = mk(S3_SHAPE.slashV);
   return {
-    meshH: mk(S3_SHAPE.slashH), meshV: mk(S3_SHAPE.slashV), mat,
-    live: new Map(), dissolving: [], lastTime: null,
+    meshH, meshV, mat,
+    live: new Map(), dissolving: [], seen: new Set(), hadActive: false, lastTime: null,
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), s: new THREE.Vector3(), v: new THREE.Vector3(),
-    x: new THREE.Vector3(), y: new THREE.Vector3(), basis: new THREE.Matrix4(), UP: new THREE.Vector3(0, 1, 0),
-    dv: new THREE.Vector3(), THREE,
+    x: new THREE.Vector3(), y: new THREE.Vector3(), negX: new THREE.Vector3(), basis: new THREE.Matrix4(), UP: new THREE.Vector3(0, 1, 0),
+    dv: new THREE.Vector3(), THREE, _disposed: false,
+    dispose() {
+      if (this._disposed) return;
+      this._disposed = true;
+      this.live.clear(); this.dissolving.length = 0; this.seen.clear(); this.hadActive = false;
+      scene?.remove?.(meshH, meshV);
+      meshH.dispose?.(); meshV.dispose?.();
+      meshH.geometry?.dispose?.(); meshV.geometry?.dispose?.();
+      mat.dispose?.();
+    },
   };
 }
 
 function orient(W, f, horizontal) {
-  const { x, y, basis, q, UP } = W;
+  const { x, y, negX, basis, q, UP } = W;
   x.crossVectors(UP, f); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
   y.crossVectors(f, x).normalize();
-  if (horizontal) basis.makeBasis(x, y, f); else basis.makeBasis(y, x.clone().negate(), f);
+  if (horizontal) basis.makeBasis(x, y, f); else basis.makeBasis(y, negX.copy(x).negate(), f);
   return q.setFromRotationMatrix(basis);
 }
 
@@ -88,11 +99,19 @@ export function drawSplatanaWaves(system, THREE, G) {
   const any = system.list.some(isSlash);
   if (!W && !any) return 0;
   if (!W) W = system._splatanaWaves = createState(THREE, system.scene);
+  if (!any && W.live.size === 0 && W.dissolving.length === 0) {
+    if (!W.hadActive) return 0;
+    W.meshH.count = W.meshV.count = 0;
+    W.meshH.visible = W.meshV.visible = false;
+    W.hadActive = false;
+    return 0;
+  }
   const now = Number.isFinite(G?.time) ? G.time : 0;
   const dt = W.lastTime == null ? 0 : clamp(now - W.lastTime, 0, 0.1);
   W.lastTime = now;
   const fx = G?.fx;
-  const seen = new Set();
+  const seen = W.seen;
+  seen.clear();
   let nh = 0, nv = 0;
   const put = (rec, pos, sx, sy, sz) => {
     const horizontal = rec.horizontal, mesh = horizontal ? W.meshH : W.meshV;
@@ -100,7 +119,7 @@ export function drawSplatanaWaves(system, THREE, G) {
     if (n >= MAX_WAVES) return;
     orient(W, rec.f, horizontal);
     W.m.compose(pos, W.q, W.s.set(sx, sy, sz));
-    mesh.setMatrixAt(n, W.m); mesh.setColorAt(n, rec.color);
+    mesh.setMatrixAt(n, W.m); setTrackedInstanceColor(mesh, n, rec.color);
     if (horizontal) nh++; else nv++;
   };
   for (const p of system.list) {
@@ -153,10 +172,12 @@ export function drawSplatanaWaves(system, THREE, G) {
     // widens and thins while it falls apart
     put(rec, rec.pos, 1 + 0.35 * e, Math.max(0.05, 1 - 0.95 * e), Math.max(0.05, 1 - 0.7 * e));
   }
-  for (const [mesh, n] of [[W.meshH, nh], [W.meshV, nv]]) {
-    mesh.count = n; mesh.visible = n > 0;
-    if (n) { mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true; }
-  }
+  seen.clear();
+  W.meshH.count = nh; W.meshH.visible = nh > 0;
+  if (nh) { markAttributeRange(W.meshH.instanceMatrix, 0, nh * 16); uploadTrackedInstanceColors(W.meshH); }
+  W.meshV.count = nv; W.meshV.visible = nv > 0;
+  if (nv) { markAttributeRange(W.meshV.instanceMatrix, 0, nv * 16); uploadTrackedInstanceColors(W.meshV); }
+  W.hadActive = nh > 0 || nv > 0;
   return nh + nv;
 }
 
@@ -165,9 +186,13 @@ export function installSplatanaWavePresentation(api) {
   const P = Projectiles?.prototype;
   if (!P || !THREE || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
-  const draw = P._draw, clear = P.clear;
-  P._draw = function (...args) {
-    const result = draw.apply(this, args);
+  const draw = P._draw, clear = P.clear, dispose = P.dispose, disposeVisuals = P.disposeVisuals;
+  P._draw = function (a, b, c) {
+    const result = arguments.length === 0 ? draw.call(this)
+      : arguments.length === 1 ? draw.call(this, a)
+      : arguments.length === 2 ? draw.call(this, a, b)
+      : arguments.length === 3 ? draw.call(this, a, b, c)
+      : draw.apply(this, arguments);
     try { this.splatanaWaveCount = drawSplatanaWaves(this, THREE, G); }
     catch (error) { console.error('[inkwave] splatana wave presentation', error); }
     return result;
@@ -175,7 +200,17 @@ export function installSplatanaWavePresentation(api) {
   if (typeof clear === 'function') P.clear = function (...args) {
     const result = clear.apply(this, args);
     const W = this._splatanaWaves;
-    if (W) { W.live.clear(); W.dissolving.length = 0; W.meshH.count = W.meshV.count = 0; W.meshH.visible = W.meshV.visible = false; }
+    if (W) { W.live.clear(); W.dissolving.length = 0; W.seen.clear(); W.hadActive = false; W.meshH.count = W.meshV.count = 0; W.meshH.visible = W.meshV.visible = false; }
     return result;
+  };
+  if (typeof dispose === 'function') P.dispose = function (...args) {
+    const W = this._splatanaWaves;
+    if (W) { W.dispose(); this._splatanaWaves = null; }
+    return dispose.apply(this, args);
+  };
+  if (typeof disposeVisuals === 'function') P.disposeVisuals = function (...args) {
+    const W = this._splatanaWaves;
+    if (W) { W.dispose(); this._splatanaWaves = null; }
+    return disposeVisuals.apply(this, args);
   };
 }

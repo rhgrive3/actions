@@ -151,7 +151,8 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
     const probe = origin ? { point: origin.clone(), normal: origin.clone() } : null;
     for (let i = 1; i <= samples; i++) {
       const travel = reach * i / samples;
-      for (const side of [0, -width, width]) {
+      for (let s = 0; s < 3; s++) {
+        const side = s === 0 ? 0 : s === 1 ? -width : width;
         const x = actor.pos.x + ux * travel - uz * side;
         const z = actor.pos.z + uz * travel + ux * side;
         let y;
@@ -168,7 +169,8 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
         if (side === 0) ground = y;
       }
     }
-    for (const side of [0, -width, width]) {
+    for (let s = 0; s < 3; s++) {
+      const side = s === 0 ? 0 : s === 1 ? -width : width;
       start.x = actor.pos.x - uz * side; start.y = actor.pos.y + 0.45; start.z = actor.pos.z + ux * side;
       end.x = actor.pos.x + ux * reach - uz * side; end.y = ground + 0.45; end.z = actor.pos.z + uz * reach + ux * side;
       if (!world.physics.los(start, end)) return false;

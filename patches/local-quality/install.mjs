@@ -29,10 +29,10 @@ export function installQuality(profile){
   // stable offscreen leg IK, pose tail, hair and material presentation work.
   installOfflineOffscreenBudget(api,G);
   installAttractBotBudget({ BotBrain }, G);
-  // Outermost Character.update wrapper: bots/replicas skip visual work on fixed ticks that are never drawn.
-  installIntermediateTickBudget(api,G);
   // Staggered offscreen (15Hz) and far-distance (>=14m, 30Hz) Character.update throttle.
   installDistanceOffscreenThrottle(api,G);
+  // Outermost Character.update wrapper: bots/replicas skip visual work on fixed ticks that are never drawn.
+  installIntermediateTickBudget(api,G);
   // Touch devices (sun map capped at 2048²): kids cast their shadow from the far-tier body.
   installKidShadowProxy(api,G,THREE,()=>touchPrimary);
   if (!THREE.Scene.prototype._iwSceneMatrixDedupInstalled) {

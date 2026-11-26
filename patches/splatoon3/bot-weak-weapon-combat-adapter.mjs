@@ -20,7 +20,9 @@ export function adaptBotWeakWeaponCombat(rel, code, replaceOnce) {
     code,
     "        if (!it.fire && !a.weaponRunner.charging) wantPitch += botCoverBomb(this, a, dist, a.ink, selectedSubCost(a, SUB), dt);\n",
     "        if (!it.fire && !a.weaponRunner.charging) wantPitch += botCoverBomb(this, a, dist, a.ink, selectedSubCost(a, SUB), dt);\n" +
-    "        const _weakAim = botWeakWeaponCombat(this, G, a, dt, move, { family, dist, range, dx, dz, enemyVisible, aimed, off, inkFrac, idealYaw, idealPitch, wantYaw, wantPitch });\n" +
+    "        const _wctx = this._weakCombatCtx || (this._weakCombatCtx = { family: '', dist: 0, range: 0, dx: 0, dz: 0, enemyVisible: false, aimed: false, off: 0, inkFrac: 0, idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0 });\n" +
+    "        _wctx.family = family; _wctx.dist = dist; _wctx.range = range; _wctx.dx = dx; _wctx.dz = dz; _wctx.enemyVisible = enemyVisible; _wctx.aimed = aimed; _wctx.off = off; _wctx.inkFrac = inkFrac; _wctx.idealYaw = idealYaw; _wctx.idealPitch = idealPitch; _wctx.wantYaw = wantYaw; _wctx.wantPitch = wantPitch;\n" +
+    "        const _weakAim = botWeakWeaponCombat(this, G, a, dt, move, _wctx);\n" +
     "        if (_weakAim) { wantYaw = _weakAim.wantYaw; wantPitch = _weakAim.wantPitch; }\n",
     'bot weak-weapon combat hook'
   );

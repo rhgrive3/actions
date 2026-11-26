@@ -22,7 +22,7 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
     function clear() { for (const actor of entries.keys()) retire(actor); }
     function sync(actor, alpha) {
       const root = actor.character?.root;
-      if (!root?.traverse || !root.visible) { retire(actor); return; }
+      if ((!root?.traverseVisible && !root?.traverse) || !root.visible) { retire(actor); return; }
       let entry = entries.get(actor);
       if (entry?.root !== root) { retire(actor); entry = null; }
       if (!entry) {
@@ -33,11 +33,8 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
       entry.material.opacity = alpha;
       const used = borrowSet();
       try {
-      root.traverse(source => {
+      const visit = source => {
         if (!source.isMesh) return;
-        let visible = true;
-        for (let p = source; p; p = p.parent) { if (!p.visible) { visible = false; break; } if (p === root) break; }
-        if (!visible) return;
         used.add(source);
         let proxy = entry.meshes.get(source);
         if (!proxy) {
@@ -55,12 +52,21 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
           proxy.bindMatrix.copy(source.bindMatrix); proxy.bindMatrixInverse.copy(source.bindMatrixInverse);
         }
         if (source.morphTargetInfluences) proxy.morphTargetInfluences = source.morphTargetInfluences;
-      });
+      };
+      if (typeof root.traverseVisible === 'function') {
+        root.traverseVisible(visit);
+      } else {
+        root.traverse(source => {
+          if (!source.isMesh) return;
+          for (let p = source; p; p = p.parent) { if (!p.visible) return; if (p === root) break; }
+          visit(source);
+        });
+      }
       for (const [source, proxy] of entry.meshes) if (!used.has(source)) { scene.remove(proxy); entry.meshes.delete(source); }
       } finally { releaseSet(used); }
     }
-    renderer.render = function (source, camera, ...args) {
-      const result = native.call(this, source, camera, ...args);
+    renderer.render = function (source, camera) {
+      const result = arguments.length <= 2 ? native.call(this, source, camera) : native.apply(this, arguments);
       if (rendering || source !== G.scene || source.overrideMaterial || camera !== G.camera) return result;
       const viewer = G.match?.local, actors = G.match?.actors;
       if (!viewer?.alive || viewer.remote || G.match?.attract || G.match?.state !== 'playing' ||

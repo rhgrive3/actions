@@ -61,6 +61,30 @@ const DEG = Math.PI / 180;
 const R_MARGIN = (r, g) => r * Math.sqrt(1 + g * g);
 const CAMERA_PROJECTION = new WeakMap();
 
+let _scopedCh = null;
+let _scopedCam = null;
+let _scopedDistSq = -2;
+
+/**
+ * Reentrant-safe synchronous scope handoff for a precomputed `inViewVolumeDistSq`
+ * result so downstream callers within the same tick skip redundant frustum math.
+ */
+export function runWithCachedViewDistSq(ch, cam, distSq, fn) {
+  const prevCh = _scopedCh;
+  const prevCam = _scopedCam;
+  const prevDistSq = _scopedDistSq;
+  _scopedCh = ch;
+  _scopedCam = cam;
+  _scopedDistSq = distSq;
+  try {
+    return fn();
+  } finally {
+    _scopedCh = prevCh;
+    _scopedCam = prevCam;
+    _scopedDistSq = prevDistSq;
+  }
+}
+
 /**
  * Conservative frustum membership for a Character under `cam`.
  * Returns `true` (may be drawn), `false` (provably outside) or `null` when no
@@ -77,6 +101,7 @@ const CAMERA_PROJECTION = new WeakMap();
  * distance from camera world position) when inside (`true`).
  */
 export function inViewVolumeDistSq(ch, cam) {
+  if (ch != null && cam != null && ch === _scopedCh && cam === _scopedCam) return _scopedDistSq;
   if (!ch?.root || !cam || cam.isPerspectiveCamera !== true) return -2;
   // Shifted/offset views change the projection in ways this test does not model.
   if (cam.view && cam.view.enabled) return -2;

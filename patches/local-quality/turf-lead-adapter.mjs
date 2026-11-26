@@ -12,7 +12,7 @@ export function adaptTurfLead(rel, code, once) {
       color: G.teamHex[t], leading: leader === t, danger: leader >= 0 && leader !== t,`, 'derive team-bound flags from authoritative coverage');
   } else if (rel === 'src/ui/hud.js') {
     patch('  _updSquads(teams) {', `  _setTurfLead(side, state) {
-    const squad = this.squads[side], key = 'turfLead' + side;
+    const squad = this.squads[side], key = side === 0 ? 'turfLead0' : 'turfLead1';
     if (this._L[key] === state) return;
     this._L[key] = state;
     squad.classList.toggle('is-turf-leading', state === 1);

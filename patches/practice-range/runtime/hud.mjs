@@ -27,7 +27,8 @@ export class RangeHud {
     this.measure = h('b', { class: 'iwr-num' });
     this.measureLbl = h('small');
     this.measureBox = h('span', { class: 'iwr-tel__cell iwr-tel__measure' }, this.measureLbl, h('span', null, this.measure, h('i', null, 'm')));
-    this.paintBox = h('span', { class: 'iwr-tel__cell iwr-tel__paint' });
+    this.paintVal = h('span');
+    this.paintBox = h('span', { class: 'iwr-tel__cell iwr-tel__paint', title: L('of the 400 m² test floor') }, h('small', null, L('PAINTED')), this.paintVal);
     this.tel = h('div', { class: 'iwr-tel' },
       h('span', { class: 'iwr-tel__cell iwr-tel__weapon' }, this.wIcon, this.wName),
       h('span', { class: 'iwr-tel__cell' }, h('small', null, L('SPEED')), h('span', null, this.speed, h('i', null, 'm/s'))),
@@ -92,7 +93,12 @@ export class RangeHud {
 
   _updSparring() {
     if (!this.spar) return;
-    const r = this.s?.sparring?.readout();
+    const sp = this.s?.sparring;
+    if (!sp || (Array.isArray(sp.bots) && sp.bots.length === 0)) {
+      if (!this.spar.hidden) this.spar.hidden = true;
+      return;
+    }
+    const r = sp.readout(true);
     const on = !!r && r.bots > 0;
     if (this.spar.hidden === on) this.spar.hidden = !on;
     if (!on) return;
@@ -103,7 +109,7 @@ export class RangeHud {
   }
   update(dt) {
     this._updSparring();
-    const tel = this.s.telemetry();
+    const tel = this.s.telemetry(this._telScratch || (this._telScratch = { speed: 0, vy: 0, zone: null, measure: null, weapon: null, form: null }));
     if (!tel) return;
     const L0 = this._L;
     if (tel.weapon !== L0.weapon) {
@@ -133,7 +139,21 @@ export class RangeHud {
       const ps = this.s.paintStats();
       if (ps) {
         const txt = `${fmt(ps.own, 1)} m² · ${fmt((ps.own / ps.total) * 100, 1)} %`;
-        if (txt !== L0.paint) { L0.paint = txt; this.paintBox.innerHTML = ''; this.paintBox.append(h('small', null, L('PAINTED')), h('span', null, txt)); this.paintBox.title = L('of the 400 m² test floor'); }
+        if (txt !== L0.paint) {
+          L0.paint = txt;
+          if (!this.paintVal && this.paintBox && typeof this.paintBox.append === 'function') {
+            this.paintVal = h('span');
+            this.paintBox.innerHTML = '';
+            this.paintBox.append(h('small', null, L('PAINTED')), this.paintVal);
+            this.paintBox.title = L('of the 400 m² test floor');
+          }
+          if (this.paintVal) {
+            this.paintVal.textContent = txt;
+          } else if (this.paintBox) {
+            this.paintBox.innerHTML = `<small>${L('PAINTED')}</small><span>${txt}</span>`;
+            this.paintBox.title = L('of the 400 m² test floor');
+          }
+        }
       }
     }
     // target card: the target you hit last, until 4 s after the last hit
@@ -160,20 +180,22 @@ export class RangeHud {
       }
     }
     // floating numbers over the targets
-    const cam = G.camera, W = innerWidth, H = innerHeight;
-    for (let i = this._float.length - 1; i >= 0; i--) {
-      const f = this._float[i];
-      f.t += dt;
-      if (f.t > f.life) { f.el.remove(); this._float.splice(i, 1); continue; }
-      _p.copy(f.target.pos); _p.y += PLAYER.height + 0.35 + f.t * 0.6;
-      _p.project(cam);
-      if (!Number.isFinite(_p.x) || !Number.isFinite(_p.y) || !Number.isFinite(_p.z) || _p.z < -1 || _p.z > 1) {
-        f.el.style.opacity = '0'; continue;
+    if (this._float.length > 0) {
+      const cam = G.camera, W = innerWidth, H = innerHeight;
+      for (let i = this._float.length - 1; i >= 0; i--) {
+        const f = this._float[i];
+        f.t += dt;
+        if (f.t > f.life) { f.el.remove(); this._float.splice(i, 1); continue; }
+        _p.copy(f.target.pos); _p.y += PLAYER.height + 0.35 + f.t * 0.6;
+        _p.project(cam);
+        if (!Number.isFinite(_p.x) || !Number.isFinite(_p.y) || !Number.isFinite(_p.z) || _p.z < -1 || _p.z > 1) {
+          f.el.style.opacity = '0'; continue;
+        }
+        const x = (_p.x * 0.5 + 0.5) * W + f.dx * f.t, y = (-_p.y * 0.5 + 0.5) * H;
+        const k = f.t / f.life;
+        f.el.style.opacity = String(Math.min(1, (1 - k) * 2.4));
+        f.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${(1 + 0.35 * Math.max(0, 0.15 - f.t) / 0.15).toFixed(3)})`;
       }
-      const x = (_p.x * 0.5 + 0.5) * W + f.dx * f.t, y = (-_p.y * 0.5 + 0.5) * H;
-      const k = f.t / f.life;
-      f.el.style.opacity = String(Math.min(1, (1 - k) * 2.4));
-      f.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${(1 + 0.35 * Math.max(0, 0.15 - f.t) / 0.15).toFixed(3)})`;
     }
     this._toastT += dt;
     if (this._toastT > (this._toastLife || 1.8) && this.toastEl.classList.contains('is-on')) this.toastEl.classList.remove('is-on');
