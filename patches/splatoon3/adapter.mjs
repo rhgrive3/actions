@@ -823,12 +823,12 @@ export function adaptSource(rel, code) {
       "      const rec = (b && typeof b === 'object') ? b : null;\n" +
       "      const key = stagText(rec ? (rec.key ?? rec.id) : b, 32);\n" +
       "      if (key) {\n" +
-      "        if (typeof GLYPHS !== 'undefined' && GLYPHS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--glyph', title: key, html: GLYPHS[key] });\n" +
-      "        if (typeof AWARDS !== 'undefined' && AWARDS[key]) {\n" +
+      "        if (typeof GLYPHS !== 'undefined' && Object.hasOwn(GLYPHS, key) && typeof GLYPHS[key] === 'string' && GLYPHS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--glyph', title: key, html: GLYPHS[key] });\n" +
+      "        if (typeof AWARDS !== 'undefined' && Object.hasOwn(AWARDS, key) && AWARDS[key]) {\n" +
       "          const aw = AWARDS[key];\n" +
       "          return h('span', { class: 'iw-stag__badge iw-stag__badge--award is-' + (aw.metal || 'gold'), title: stagText(aw.label, 48), html: awardIcon(aw.icon) });\n" +
       "        }\n" +
-      "        if (typeof AWARD_ICONS !== 'undefined' && AWARD_ICONS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--award', title: key, html: awardIcon(key) });\n" +
+      "        if (typeof AWARD_ICONS !== 'undefined' && Object.hasOwn(AWARD_ICONS, key) && AWARD_ICONS[key]) return h('span', { class: 'iw-stag__badge iw-stag__badge--award', title: key, html: awardIcon(key) });\n" +
       "      }\n" +
       "      const label = stagText(rec ? (rec.label ?? rec.text) : b, 8);\n" +
       "      if (label && /^[A-Za-z0-9_ -]+$/.test(label)) return h('span', { class: 'iw-stag__badge iw-stag__badge--text', title: label }, label.slice(0, 4));\n" +

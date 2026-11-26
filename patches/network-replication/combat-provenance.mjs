@@ -136,8 +136,9 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
     const sub=source.weapon?.sub;
     const committedSprinkler=acceptedSub?.sourceKind==='native-sprinkler' && acceptedSub.from===from &&
       acceptedSub.nid===id && acceptedSub.subId==='sprinkler' && sub==='sprinkler' && e[3]==='bomb' && e[11]==='sprinkler';
-    if(['bomb','suction','curling','autobomb'].includes(sub)&&!(acceptedSub?.sourceKind==='native-bomb'&&acceptedSub.from===from&&acceptedSub.nid===id&&acceptedSub.subId===sub))return null;
-    if(sub==='sprinkler' && !committedSprinkler)return null;
+    const committedNativeBomb=acceptedSub?.sourceKind==='native-bomb' && acceptedSub.from===from &&
+      acceptedSub.nid===id && acceptedSub.subId===sub && ['bomb','suction','curling','autobomb'].includes(sub);
+    if(!committedSprinkler && !committedNativeBomb)return null;
     if(!committedSprinkler && e[3]!==sub && !(e[3]==='bomb' && EXPLOSIVE_SUBS.has(sub)))return null;
     origin=e.slice(4,7);direction=e.slice(7,10);
     cause=sub;kind='sub';maxUses=8;
@@ -392,6 +393,7 @@ function equippedCause(actor,d,type) {
 // admission) and the generated per-sub/per-Special table, not from the claim.
 // Boss body claims carry the guest-side weak-point and stunned multipliers.
 // A Special without an authored damage field keeps its existing policy.
+const NON_DAMAGING_SPECIALS = new Set(['tacticooler', 'bubbler']);
 const CEILING_SLACK = .011; // r2() wire rounding of an exact ceiling value
 const MAIN_DEFINITION_SKIP = new Set(['catalogRecord']);
 const mainCeilings = new WeakMap();
@@ -411,10 +413,11 @@ export function claimCeiling(actor,d,type,table=COMBAT_HIT_CEILINGS) {
   let ceiling;
   if(type==='boss'&&d.c>=0&&d.w==='crab') {
     // Crablets take any slot's damage under one generic marker.
-    const special=w.special?table.special[w.special]:0;
+    const special=w.special?(NON_DAMAGING_SPECIALS.has(w.special)?0:table.special[w.special]):0;
     if(special===null)return Infinity;
     ceiling=Math.max(mainCeiling(w,table),table.sub[w.sub]??0,special??0);
   } else if(w.special&&d.w===w.special) {
+    if(NON_DAMAGING_SPECIALS.has(d.w))return -1;
     ceiling=table.special[d.w];
     if(ceiling===null)return Infinity;
   } else if(d.w==='torpedo-splash'&&w.sub==='torpedo')ceiling=table.sub['torpedo-splash'];
@@ -497,7 +500,7 @@ function contactProof(nm,from,d,type,t,target) {
 }
 function specialProof(nm,from,d,type,t,target) {
   const a=ownerActor(nm,from,d.a),w=a?.weapon;
-  if(!a || !equippedCause(a,d,type) || d.w!==w.special)return false;
+  if(!a || !equippedCause(a,d,type) || d.w!==w.special || NON_DAMAGING_SPECIALS.has(d.w))return false;
   if(type==='boss'&&d.weak===1)return false;
   if(d.w==='storm' && d.d>160)return false;
   // Close-range Kraken dash/splat, not the default 45m duration-wide reach.

@@ -78,7 +78,7 @@ function installTouchLayout(MobileInput, controls) {
       if (!this.editing) return;
       if (e.key === 'Escape') { stopEdit(e); this._closeEditor(false); return; }
       if (e.key === 'Tab') {
-        const items = [...this.root.querySelectorAll('button, select, input, [tabindex="0"]')].filter(el => el.getClientRects().length);
+        const items = [...this.root.querySelectorAll('button, select, input, summary, [tabindex="0"]')].filter(el => el.getClientRects().length);
         const current = items.indexOf(document.activeElement);
         stopEdit(e); items[(current + (e.shiftKey ? -1 : 1) + items.length) % items.length]?.focus(); return;
       }

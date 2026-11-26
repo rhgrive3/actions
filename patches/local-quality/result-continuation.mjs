@@ -13,7 +13,7 @@ export function continuationNavigation(menus, name, opts) {
   else c.opening = false;
 }
 export function resultChangeButton(menus, result) {
-  if (menus._resultContinuationDisposed || !result || result !== menus._results || result.mode === 'boss' || typeof (result.online ? menus.api.netContinue : menus.api.rematch) !== 'function') return null;
+  if (menus._resultContinuationDisposed || !result || result !== menus._results || result.mode === 'boss' || (result.online && result.mode && result.mode !== 'turf') || typeof (result.online ? menus.api.netContinue : menus.api.rematch) !== 'function') return null;
   const generation = menus._swapToken;
   return menus._btn({id:'change-gear-continue',label:'CHANGE GEAR, THEN GO!',cls:'iw-btn--wide iw-in iw-in--pop',sound:'ui_click',accept:()=>{
     if (menus._resultContinuationDisposed || menus._swapToken !== generation || menus.current !== 'results' || menus._results !== result || menus._modal) return;
@@ -24,7 +24,7 @@ export function resultChangeButton(menus, result) {
   }});
 }
 export function resultKeepButton(menus, result) {
-  if (!result?.online || result.mode === 'boss' || typeof menus.api.netContinue !== 'function') return null;
+  if (!result?.online || (result.mode && result.mode !== 'turf') || typeof menus.api.netContinue !== 'function') return null;
   const generation = menus._swapToken;
   const button = menus._btn({id:'keep-going',label:'KEEP GOING',cls:'iw-btn--wide iw-btn--primary iw-in iw-in--pop',sound:'ui_confirm',accept:()=>{
     if (menus._resultContinuationDisposed || menus._swapToken !== generation || menus.current !== 'results' || menus._results !== result || menus._modal || button.disabled) return;

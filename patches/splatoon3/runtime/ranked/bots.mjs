@@ -459,7 +459,7 @@ export function installRankedBots(api = {}) {
   const { G, BotBrain } = api;
   const proto = BotBrain?.prototype;
   if (!proto || proto._rankedBotWrapped) return () => {};
-  Object.defineProperty(proto, '_rankedBotWrapped', { value: true });
+  Object.defineProperty(proto, '_rankedBotWrapped', { value: true, configurable: true });
   const update = proto.update;
   const rankedUpdate = function (dt) {
     const match = G?.match, engine = match?.ranked, actor = this.a;

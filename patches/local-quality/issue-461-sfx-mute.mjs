@@ -124,7 +124,7 @@ export function adaptIssue461Source(rel, code) {
 
   _requestSfxLoop(name, d, o) {
     const eng = this;
-    const rec = { name, d, o, stopped: false, live: null };
+    const rec = { name, d, o: { ...o }, stopped: false, live: null };
     const h = {
       name,
       get playing() { return !rec.stopped && !!rec.live && rec.live.playing; },

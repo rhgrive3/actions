@@ -133,7 +133,11 @@ export function installPaintProfileBatch(C) {
     return value;
   };
   P._drawQuads = function (...args) {
-    const state=this[KEY];
+    let state=this[KEY];
+    if(state&&this.rt!==state.target){
+      release(this);
+      try{state=this[KEY]=allocate(this);}catch{state=this[KEY]=null;}
+    }
     if(state){
       state.prepared=Number.isInteger(this.quads)&&this.quads>=1&&this.quads<=PROFILE_BATCH_LIMIT&&!globalThis.document?.hidden&&eligible(this,state)&&profilePaintBounds(this,state.rectangles);
       state.preparedCount=this.quads;

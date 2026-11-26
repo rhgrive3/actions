@@ -26,7 +26,7 @@ export async function applyNativeQuality(game,settings,mobile,deps){
  if(!world)return;
  // Keep the stage's GPU budget (and any step-down after context loss) across setting changes.
  const tier=world.gpuTier||0,q=capQuality(deps.q,nativeRenderCaps({mobile:!!mobile?.touch,tier}));
- updatePaintQuality(game,q.paintAtlas,G,THREE);
+ if(updatePaintQuality(game,q.paintAtlas,G,THREE))game.levelMesh?.bindPaint?.(G.paint);
  G.paint.texture.generateMipmaps=false;G.paint.texture.minFilter=THREE.LinearFilter;
  const ranked=G.match?.rankedWorld,face=ranked?.towerPaintFace,u=ranked?.towerInkMaterial?.uniforms;
  if(face?.atlas&&u){const a=face.atlas,S=G.paint.size;u.uPaint.value=G.paint.texture;u.uAtlasOrigin.value.set((a.x+a.pad)/S,(a.y+a.pad)/S);u.uAtlasScale.value.set(face.su*a.ppm/S,face.sv*a.ppm/S);}

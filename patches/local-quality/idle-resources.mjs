@@ -63,15 +63,23 @@ export function refreshEnvironmentBudget(env, settings, mobile) {
   return true;
 }
 
+export function disposePausedWorldFrame(game) {
+  if (!game) return;
+  const previous = game._pausedWorldCanvas;
+  if (previous) {
+    for (const event of ['webglcontextlost', 'webglcontextrestored']) previous.canvas?.removeEventListener?.(event, previous.invalidate);
+    previous.document?.removeEventListener?.('visibilitychange', previous.invalidate);
+    game._pausedWorldCanvas = null;
+  }
+  game._pausedWorld = null;
+}
+
 export function pausedWorldFrame(game, G, viewport = globalThis) {
   // A platform owner can stop RAF throughout context loss. Do not depend on
   // observing a lost context inside a frame in order to repaint after restore.
   const canvas = G.renderer?.domElement;
   if (game._pausedWorldCanvas?.canvas !== canvas) {
-    const previous = game._pausedWorldCanvas;
-    for (const event of ['webglcontextlost', 'webglcontextrestored']) previous?.canvas?.removeEventListener?.(event, previous.invalidate);
-    previous?.document?.removeEventListener?.('visibilitychange', previous.invalidate);
-    game._pausedWorldCanvas = null;
+    disposePausedWorldFrame(game);
     if (canvas?.addEventListener) {
       const invalidate = () => { game._pausedWorld = null; game.R?.releasePausedFrame?.(); };
       for (const event of ['webglcontextlost', 'webglcontextrestored']) canvas.addEventListener(event, invalidate);

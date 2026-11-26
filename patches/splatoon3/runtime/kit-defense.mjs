@@ -118,9 +118,10 @@ export function installKitDefense(api) {
       if (candidate) {
         if (p.ghost) return; // shield actor damage without spending/proposing dome HP
         const damage = distanceDamage(context.bands, candidate.distance, context.linear);
-        const old = context.spent.get(candidate.domeId) || 0;
+        const key = candidate.domeId ?? candidate.object ?? candidate.damageTarget ?? candidate;
+        const old = context.spent.get(key) || 0;
         if (damage > old) {
-          context.spent.set(candidate.domeId, damage); probe.damage = damage - old;
+          context.spent.set(key, damage); probe.damage = damage - old;
           this.kitBarrierCandidate(probe, context.origin, end)?.onHit();
         }
         return;

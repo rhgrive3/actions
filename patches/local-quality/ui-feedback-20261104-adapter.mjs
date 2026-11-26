@@ -178,7 +178,7 @@ const BACKDROP_PIN = `    // ${MARKER}: full-cover backdrop layers stay put whil
           box._iwBackdrops = [...box.children].filter((child) => {
             if (!(child instanceof HTMLElement) || child.textContent.trim() || child.querySelector('button, input, select, a, [data-nav]')) return false;
             const cs = getComputedStyle(child);
-            return (cs.position === 'absolute' || cs.position === 'fixed') && child.offsetWidth >= box.clientWidth * 0.9 && child.offsetHeight >= box.clientHeight * 0.9;
+            return cs.position === 'absolute' && child.offsetWidth >= box.clientWidth * 0.9 && child.offsetHeight >= box.clientHeight * 0.9;
           });
         }
         const y = box.scrollTop;

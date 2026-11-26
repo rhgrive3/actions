@@ -109,10 +109,10 @@ const descriptions = Object.freeze({
   waveBreaker: { radius: 27, paintRadius: 0, damageMax: 45, damageMin: 45, directDamage: 45, splashBands: [[27, 45]] },
 });
 
-let activeStampCount=0;
+const activeStampActors = new Set();
 const actorStates = new WeakMap();
-function setActorState(actor,state){const old=actorStates.get(actor);if(old?.id==='ultraStamp')activeStampCount--;if(state?.id==='ultraStamp')activeStampCount++;actorStates.set(actor,state);}
-function deleteActorState(actor){if(actorStates.get(actor)?.id==='ultraStamp')activeStampCount--;return actorStates.delete(actor);}
+function setActorState(actor,state){if(state?.id==='ultraStamp')activeStampActors.add(actor);else activeStampActors.delete(actor);actorStates.set(actor,state);}
+function deleteActorState(actor){activeStampActors.delete(actor);return actorStates.delete(actor);}
 const booyahAfterArmor = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
@@ -896,7 +896,7 @@ function candidate(rt, p, start, end) {
     const c=breakerCandidate(rt,p,start,end,object)||chumpCandidate(rt,p,start,end,object);
     if(c&&(!best||c.distance<best.distance))best=c;
   }
-  if(activeStampCount>0)for(const owner of rt.api.G.actors||[]) {
+  if(activeStampActors.size>0)for(const owner of rt.api.G.actors||[]) {
     const state=actorStates.get(owner);
     if(!state||state.id!=='ultraStamp'||state.phase==='throw'||!owner?.alive||owner.team===p?.team)continue;
     if(state.expiresAt&&rt.api.G.time>state.expiresAt){if(!p?.s3Prediction&&!isNativeDeviceProbe(p))deleteActorState(owner);continue;}
@@ -2480,10 +2480,15 @@ function installRuntime(api) {
     const state=actorStates.get(actor);
     if(state?.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
   };
-  api.on?.('actor:removed',event=>retireActorPresentation(event?.actor));
+  api.on?.('actor:removed',event=>{
+    const actor=event?.actor;
+    retireActorPresentation(actor);
+    if(actor&&actorStates.get(actor)?.id==='ultraStamp')deleteActorState(actor);
+  });
   api.on?.('match:dispose',event=>{
     retireWaveFrontGeometry(rt);retireDecoyGeometry(rt);
     for(const actor of event?.match?.actors||[])retireActorPresentation(actor);
+    for(const actor of [...activeStampActors])deleteActorState(actor);
   });
   // Only native completed attacks/jumps retire wall protection. Input held
   // through hook flight / hookWait may still be denied by the action runner.
@@ -2499,6 +2504,7 @@ function installRuntime(api) {
   // host adoption flips their Actor.remote flag to false. Match the ordinary
   // ghost retirement boundary and release their meshes/colliders first.
   const retireReplicas=actor=>{
+    if(actor&&actorStates.get(actor)?.id==='ultraStamp')deleteActorState(actor);
     rt.system=api.G.projectiles||rt.system;if(!rt.system)return;
     for(const object of [...rt.system._s3AllSpecialObjects||[]])if(object.owner===actor&&object.remote)removeWorld(rt,object,'expire');
   };
@@ -2586,9 +2592,14 @@ function installRuntime(api) {
       if(!finite(dt)||dt<=0)return undefined;
       const state=actorStates.get(this);if(!state)return undefined;
       state.sourceCarry=(state.sourceCarry||0)+dt;
-      while(state.sourceCarry+1e-10>=1/FPS&&this.specialActive?.id===id){
-        state.sourceCarry=Math.max(0,state.sourceCarry-1/FPS);activeStep(rt,this,1/FPS);
+      const step=1/FPS;
+      let steps=0;
+      while(state.sourceCarry+1e-10>=step&&this.specialActive?.id===id&&steps<8){
+        state.sourceCarry=Math.max(0,state.sourceCarry-step);
+        activeStep(rt,this,step);
+        steps++;
       }
+      if(steps>=8&&state.sourceCarry+1e-10>=step)state.sourceCarry=0;
       return undefined;
     }
     activeStep(rt,this,dt);
@@ -2759,6 +2770,7 @@ function installRuntime(api) {
     clearActiveSpecialGauges(api.G,(actor,state)=>{
       if(actorStates.get(actor)===state)endSpecial(rt,actor,'reset');
     });
+    for(const actor of [...activeStampActors])deleteActorState(actor);
     this._s3WailTails=[];this._s3WailTailClock=0;
     rt.system=this;
     clearCrabSplashVisuals(this,api.G);

@@ -5,7 +5,7 @@ export function nativeTowerBoarding(G,reachable,body,halfSize=1.2){
  const jumpPeak=body.jumpVel**2/(2*body.gravity),maxJumpHeight=jumpPeak+Math.min(body.ledgeAssist,.22),metrics={candidates:0,arcs:0,bodySamples:0};
  const feet=G.level.spawnPads[0].clone(),cache=new Map(),outer=Math.SQRT2*halfSize+body.radius+.05,inner=Math.min(halfSize+.05,Math.max(.82,halfSize-.3));
  const find=(id,target)=>{
-  const key=id+'/'+target[1];if(cache.has(key))return cache.get(key);
+  const key=id+'/'+target[0]+'/'+target[1]+'/'+target[2];if(cache.has(key))return cache.get(key);
   const node=N.nodes[id],candidates=[];
   for(let dz=-3;dz<=3;dz++)for(let dx=-3;dx<=3;dx++){
    const ix=node.ix+dx,iz=node.iz+dz;if(ix<0||iz<0||ix>=N.nx||iz>=N.nz)continue;

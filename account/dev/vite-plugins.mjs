@@ -20,7 +20,16 @@ function sendFile(res, file) {
   res.statusCode = 200;
   res.setHeader('Content-Type', TYPES[path.extname(file)] || 'application/octet-stream');
   res.setHeader('Cache-Control', 'no-cache');
-  fs.createReadStream(file).pipe(res);
+  const stream = fs.createReadStream(file);
+  stream.on('error', () => {
+    if (!res.headersSent) {
+      res.statusCode = 404;
+      res.end('not found');
+    } else {
+      res.destroy();
+    }
+  });
+  stream.pipe(res);
 }
 
 /** Maps a URL path into `dir`, refusing anything that escapes it. */
@@ -67,11 +76,11 @@ export function accountDevServer() {
           // the game's own stylesheets and fonts for the harness page
           if (url.pathname.startsWith('/game-styles/')) {
             const f = inside(path.join(publicSrc, 'styles'), url.pathname.slice('/game-styles'.length));
-            if (f && fs.existsSync(f)) return sendFile(res, f);
+            if (f && fs.existsSync(f) && fs.statSync(f).isFile()) return sendFile(res, f);
           }
           if (url.pathname.startsWith('/assets/fonts/') || url.pathname.startsWith('/assets/stages/')) {
             const f = inside(publicSrc, url.pathname);
-            if (f && fs.existsSync(f) && !fs.existsSync(path.join(site, 'index.html'))) return sendFile(res, f);
+            if (f && fs.existsSync(f) && fs.statSync(f).isFile() && !fs.existsSync(path.join(site, 'index.html'))) return sendFile(res, f);
           }
           if (!fs.existsSync(path.join(site, 'index.html'))) return next();
           // no Service Worker in development: it would cache the game across rebuilds

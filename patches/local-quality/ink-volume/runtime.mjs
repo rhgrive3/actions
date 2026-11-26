@@ -61,6 +61,7 @@ export class InkVolumes {
     if (this.disposed || this.assets.has(name)) throw Error('Ink volume name already registered or engine disposed');
     if (!pack || pack.schema !== 'inkwave-volume-v1' || !Array.isArray(pack.patterns) || !pack.patterns.length || pack.patterns.length > 8) throw Error('Invalid volume pack');
     const asset = { patterns: [], resources: [], batches:[], bytes: 0, warmFrames: WARM_FRAMES, showAll: true };
+    const createdMeshes = [];
     try {
       for (const p of pack.patterns) {
         if (!Number.isInteger(p.width) || !Number.isInteger(p.height) || p.width < 1 || p.height < 1 || p.width > 512 || p.height > 512 || !Array.isArray(p.frames) || p.frames.length < 1 || p.frames.length > 32 || !(p.fps > 0 && p.fps <= 120)) throw Error('Invalid volume pattern');
@@ -94,12 +95,13 @@ export class InkVolumes {
             g.setAttribute('position', new THREE.BufferAttribute(data.positions.slice(), 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(drawIndices, 1)); g.setAttribute('normal', new THREE.BufferAttribute(data.normals.slice(), 3, data.normals instanceof Int16Array)); g.setDrawRange(0,opaque.length);g.computeBoundingSphere();
             pattern.radius = Math.max(pattern.radius, g.boundingSphere.radius + g.boundingSphere.center.length());
             const mesh = new THREE.InstancedMesh(g, material, this.capacity);
+            createdMeshes.push(mesh);
             mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage); mesh.instanceColor.onUpload(clearVolumeUploadRanges);
             // Opaque ink writes depth; source-alpha fringe blends against that
             // depth without hiding the solid surface behind it. Both passes
             // share all geometry and instance buffers, never duplicate sprites.
             const fg=new THREE.BufferGeometry();asset.resources.push(fg);for(const [key,a] of Object.entries(g.attributes))fg.setAttribute(key,a);fg.setIndex(g.index);fg.setDrawRange(opaque.length,partial.length);
-            const fringe = new THREE.InstancedMesh(fg,fringeMaterial,1); fringe.instanceMatrix=mesh.instanceMatrix; fringe.instanceColor=mesh.instanceColor;
+            const fringe = new THREE.InstancedMesh(fg,fringeMaterial,1); createdMeshes.push(fringe); fringe.instanceMatrix=mesh.instanceMatrix; fringe.instanceColor=mesh.instanceColor;
             const b0=(f%cols+.5/p.width)/cols, b1=(Math.floor(f/cols)+.5/p.height)/rows;
             const b2=(f%cols+1-.5/p.width)/cols, b3=(Math.floor(f/cols)+1-.5/p.height)/rows;
             // The opaque/fringe materials share uniforms across frames. Cache the
@@ -126,7 +128,7 @@ export class InkVolumes {
       for (const p of asset.patterns) for (const levels of p.frames) for (const b of levels) this.root.add(b.mesh,b.fringe);
       this.assets.set(name, asset);this.warmAssets.add(asset); this.metrics.bytes += asset.bytes;
       return asset;
-    } catch (error) { for (const r of asset.resources) r.dispose(); throw error; }
+    } catch (error) { for (const m of createdMeshes) m.dispose(); for (const r of asset.resources) r.dispose(); throw error; }
   }
   begin(camera = this.camera) {
     this.hissenContourFrame=false;this.measureOnly=false;this.frameDemandTriangles=0;this.frameDemandInstances=0;

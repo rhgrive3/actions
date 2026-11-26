@@ -47,6 +47,7 @@ export function isMotionWasmReady() {
 export function initMotionWasm(wasmUrlOrBytes) {
   if (wasmExports) return Promise.resolve(true);
   if (loadPromise) return loadPromise;
+  let failed = false;
   const p = (async () => {
     try {
       let bytes;
@@ -56,9 +57,11 @@ export function initMotionWasm(wasmUrlOrBytes) {
         const url = wasmUrlOrBytes || new URL('./motion-kernel.wasm', import.meta.url);
         if (typeof fetch === 'function') {
           const res = await fetch(url);
-          if (!res.ok) return false;
+          if (!res.ok) { failed = true; loadPromise = null; return false; }
           bytes = await res.arrayBuffer();
         } else {
+          failed = true;
+          loadPromise = null;
           return false;
         }
       }
@@ -68,11 +71,12 @@ export function initMotionWasm(wasmUrlOrBytes) {
       covOutPtr = allocBytes(16);
       return true;
     } catch {
+      failed = true;
       loadPromise = null;
       return false;
     }
   })();
-  loadPromise = p;
+  if (!failed) loadPromise = p;
   return p;
 }
 

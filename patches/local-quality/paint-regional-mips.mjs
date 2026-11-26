@@ -114,6 +114,13 @@ export function installPaintRegionalMips(C){
  P.clear=function(...args){const s=this[KEY];if(s)s.forceFull=true;try{return clear.apply(this,args);}finally{if(s){reset(s);s.forceFull=false;}}};
  P._drawQuads=function(...args){
   const s=this[KEY];if(!s||globalThis.document?.hidden||(!this.quads&&!this.dryMesh.visible))return draw.apply(this,args);
+  if(s.target!==this.rt||!this.rt||this.rt.width!==s.N||this.rt.height!==s.N){
+   release(this);
+   if(this.rt&&!this.renderer?.getContext?.()?.isContextLost?.()){
+    try{this[KEY]=allocate(this);if(this[KEY])this[KEY].forceFull=true;}catch{this[KEY]=null;}
+   }
+   return draw.apply(this,args);
+  }
   if(!s.forceFull&&!usable(this,s)){release(this);return draw.apply(this,args);}
   track(s,this);
   const requested=!!this._mipRequested,bounds=requested&&usable(this,s)?region(s):null;

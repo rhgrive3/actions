@@ -429,7 +429,7 @@ export function stepTrizooka(actor, dt, System, movementOwned = false) {
   if (!s?.active) return [];
   // dt 0 is a strict no-op: no time, no gate change, no shot, no event.
   if (!(dt > 0)) return [];
-  if (!actor.alive || actor.superJumpState || !matchIsPlaying()) { disposeTrizooka(actor); return []; }
+  if (!actor.alive || actor.superJumpState || !matchIsPlaying()) { endTrizooka(actor, !actor.alive ? 'death' : actor.superJumpState ? 'superjump' : 'match-end'); return []; }
 
   s.t += dt;
   // #1030: use the authoritative Trizooka lifetime as the active special meter.
@@ -497,7 +497,9 @@ export function endTrizooka(actor, reason = 'done') {
 
 // Death, reset, weapon change and disposal drop the token permanently.
 export function disposeTrizooka(actor) {
-  if (actor) actor.s3Trizooka = null;
+  if (!actor) return;
+  if (actor.specialActive?.id === TRIZOOKA_ID) actor.specialActive = null;
+  actor.s3Trizooka = null;
 }
 
 // Activation. The gauge and the stats counter are consumed by the native

@@ -53,10 +53,13 @@ export class SparringBots {
     if (!SPARRING_BEHAVIORS.includes(behavior) || !local) return null;
     while (this.bots.length >= SPARRING_MAX) this.remove(this.bots[0]);
     const id = WEAPONS[weapon] ? weapon : WEAPON_ORDER[(Math.random() * WEAPON_ORDER.length) | 0];
-    const slot = 40 + this.bots.length;
-    const a = new Actor({ team: 1, slot, weapon: id, isLocal: false, isBot: true, name: `Bot ${this.bots.length + 1}`, style: null, CharacterClass: m.opts.CharacterClass });
+    const usedSlots = new Set(this.bots.map((b) => b.slot));
+    let slotIndex = 0;
+    while (usedSlots.has(40 + slotIndex) && slotIndex < SPARRING_MAX) slotIndex++;
+    const slot = 40 + slotIndex;
+    const a = new Actor({ team: 1, slot, weapon: id, isLocal: false, isBot: true, name: `Bot ${slotIndex + 1}`, style: null, CharacterClass: m.opts.CharacterClass });
     // Anchor: in front of the player, spread sideways per Bot, on the ground.
-    const yaw = local.yaw, off = (this.bots.length - 1) * 2.2;
+    const yaw = local.yaw, off = (slotIndex - 1) * 2.2;
     const ax = local.pos.x + Math.sin(yaw) * SPARRING_DISTANCE + Math.cos(yaw) * off;
     const az = local.pos.z + Math.cos(yaw) * SPARRING_DISTANCE - Math.sin(yaw) * off;
     const ay = G.level?.groundHeight?.(ax, az, local.pos.y + 3);

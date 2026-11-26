@@ -11,7 +11,7 @@ export function nativeTowerClearance(level,actorBody,halfSize=1.2){
   box.min.set(Math.min(a[0],b[0])-radius,Math.min(a[1],b[1])-.25,Math.min(a[2],b[2])-radius);
   box.max.set(Math.max(a[0],b[0])+radius,Math.max(a[1],b[1])+height,Math.max(a[2],b[2])+radius);
   metrics.queries++;let fits=true;
-  world.queryBox(box.min,box.max,id=>{if(!fits)return;metrics.triangleTests++;if(box.intersectsTriangle(world.triangle(id)))fits=false;});
+  world.queryBox(box.min,box.max,id=>{if(!fits)return false;metrics.triangleTests++;if(box.intersectsTriangle(world.triangle(id))){fits=false;return false;}},true);
   return fits;
  };
  return {clear,metrics,radius,height,halfSize,assurance:'Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified'};

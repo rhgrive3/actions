@@ -328,7 +328,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
   }
 
   /** Runs an API call for a form: busy state, field errors, banners, rate-limit countdown, expired sessions. */
-  async function submit({ btn, busyLabel, fields = {}, banner: bn, run }) {
+  async function submit({ btn, busyLabel, fields = {}, banner: bn, run, onLockChange }) {
     if (closed || btn.disabled) return null;
     const ownerEpoch = viewEpoch;
     ++pendingForms;
@@ -359,7 +359,13 @@ export function mountPanel({ view: startView, onClose } = {}) {
       if (err.code === 'rate_limited') {
         // keep the button locked until the server's wait is over
         locked = true;
-        const unlock = () => { if (!closed) btn.disabled = false; };
+        onLockChange?.(true);
+        const unlock = () => {
+          if (!closed) {
+            if (onLockChange) onLockChange(false);
+            else btn.disabled = false;
+          }
+        };
         const secs = err.retryAfter || 60;
         if (bn) bn.countdown(secs, unlock); else setTimeout(unlock, secs * 1000);
       } else if (f) { f.setError(err.code); f.focus(); }
@@ -683,8 +689,9 @@ export function mountPanel({ view: startView, onClose } = {}) {
       const confirm = field({ name: 'confirm-id', label: t('delete.confirm', { id: u.loginId }), autocomplete: 'off', placeholder: u.loginId, maxLength: 64, enterkeyhint: 'next' });
       const pw = field({ name: 'current-password', label: t('f.password'), type: 'password', autocomplete: 'current-password', maxLength: PASSWORD_MAX, enterkeyhint: 'done' });
       const go = button(t('delete.btn'), { type: 'submit', kind: 'danger', iconName: 'trash', cls: 'zva-btn--wide' });
+      let rateLimited = false;
       const matches = () => confirm.value.trim().toLowerCase() === u.loginId.toLowerCase();
-      const sync = () => { go.disabled = !matches() || !pw.value; confirm.setValid(matches()); };
+      const sync = () => { go.disabled = rateLimited || !matches() || !pw.value; confirm.setValid(matches()); };
       confirm.input.addEventListener('input', sync);
       pw.input.addEventListener('input', sync);
       sync();
@@ -697,6 +704,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
         const ownerEpoch = viewEpoch;
         let finishedHere = false;
         await submit({ btn: go, busyLabel: t('delete.busy'), banner: bn, fields: { confirm, currentPassword: pw },
+          onLockChange: (v) => { rateLimited = v; if (!closed && ownerEpoch === viewEpoch) sync(); },
           run: () => account.mutateSession(() => api.remove(body, expectedUserId).then(() => ({ ok: true })), () => {
             // signedOut synchronously replaces a protected view with login.
             // Capture ownership before that notification, and finish only this

@@ -489,7 +489,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     // from older clients; the ordered bomb event is replayed on the victim owner.
     if (d.w === 'bomb' || d.w === 'splat-bomb-far') return;`, 'reject cross-match and shooter bomb hits');
     patch("    this.s.tr?.sendTo(from ?? atk.owner, { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0, vl: v.netLife ?? 0 });",
-      `    const hitState = [this.myId, hitLife, hitRevision, now(), v.hp, !!v.alive];
+      `    const hitState = [this.myId, hitLife, hitRevision, now(), hitClamp(v.hp), !!v.alive];
     v.net ||= {};
     v.net._hitAuthority = hitState;
     const ack = { k: 'hit_ack', h: d.h, v: v.nid, a: atk.nid, d: r2(acceptedDmg), kld: killed ? 1 : 0,
@@ -674,6 +674,8 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       clearRemoteDropRoll(a);
       clearRemoteRollerPresentation(a);
       retireNetworkGhosts(a);
+      delete a._s3SuperJumpEpoch;
+      delete a._s3SuperJumpEndedEpoch;
       if (a.net) {
         a.net._stormBirthAuth = null;
         const life = hitSafe(a.netLife) ? a.netLife : (a.net.lastLife ?? 0);
@@ -711,7 +713,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     }`,
       'pending Turf respawn enters the installed Squid Spawn lifecycle');
     patch('    a.superJumpState = null; a.specialActive = null;',
-      '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);',
+      '    a.superJumpState = null; a.specialActive = null;\n    restoreAdoptionState(this, a, adoptionTransfer);\n    a._adoptionSequence = Math.max(Number.isSafeInteger(a._adoptionSequence) ? a._adoptionSequence : 0, Number.isSafeInteger(a.net?._adoptionSeq) ? a.net._adoptionSeq : 0);\n    if (a.net) { a.net._adoptionSeq = 0; a.net._adoptionTickOwner = null; }',
       'restore authoritative actor state after ordinary runner reset');
     {
       const rowWithStats = 'r3(Number.isFinite(a.superJumpState?.t) ? Math.max(0, a.superJumpState.t) : 0), a.stats.specials || 0];';
@@ -730,7 +732,8 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       'sample adoption state on the sender timeline');
     patch('      a.net.lastLife = snap.life;', `      if (s.length !== 21 && s.length !== 22 && s.length !== 23 && s.length !== 24 && s.length !== 25 && s.length !== 26 && s.length !== 27) continue;
       const adoption = s.length >= 24
-        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind, a.net._adoptionSeq, a.weapon?.special, d.u, a,
+        ? readAdoptionState(s[23], snap.life, s[10], s[11], a.weapon?.kind,
+          a.net._adoptionTickOwner === from ? a.net._adoptionSeq : 0, a.weapon?.special, d.u, a,
           a.net._adoptionTickOwner === from ? a.net._adoptionTick : undefined)
         : null;
       if (s.length >= 24 && !adoption) continue;
@@ -1080,7 +1083,10 @@ function applyHitHandoff(net, actor, state, sequence, ts, hp, splat) {
   setHitHandoffRevision(state, sequence, ts, hp);
   if (actor.alive) actor.hp = next;
   else actor.hp = 0;
-  if (actor.alive && (splat || actor.hp <= 0)) net._remoteSplat?.(actor, null, 'shooter');
+  if (actor.alive && (splat || actor.hp <= 0)) {
+    if (!actor.remote && typeof actor.splat === 'function') actor.splat(null, 'shooter');
+    else net._remoteSplat?.(actor, null, 'shooter');
+  }
 }
 function hitAuthorityRow(state) {
   return hitArray(state) ? state : null;
@@ -1482,7 +1488,6 @@ function restoreAdoptionState(match, actor, transfer) {
   // sampled action. onLeave transfers ownership before any future impact.
   restoreSlamState(actor, latest.slam);
   actor._adoptionSequence = Math.max(Number.isSafeInteger(actor._adoptionSequence) ? actor._adoptionSequence : 0, latest.sequence);
-  actor.net._adoptionSeq = Math.max(Number.isSafeInteger(actor.net._adoptionSeq) ? actor.net._adoptionSeq : 0, latest.sequence);
   // Resume from the newest accepted owner state, not the delayed visual
   // sample (which would extend protection or undo an already broken armor).
   if (latest.squidSpawn) {
@@ -1804,7 +1809,7 @@ function firstSplatStateFor(session,cfg) {
       '      if (drop) { this._remove(a); this._retirePendingHitsForVictim(a.nid); continue; }',
       'retire hits when noBots removes the victim');
     patch('      else { a.net.buf.length = 0; a.net.handoff = true; }   // same squidkid, new sender: glide onto its new path',
-      '      else { a.net.buf.length = 0; a.net.handoff = true; }   // same squidkid, new sender: glide onto its new path\n      this._retryPendingHitsForLeave(a, id);',
+      '      else { a.net.buf.length = 0; a.net.handoff = true; a.net._adoptionSeq = 0; a.net._adoptionTickOwner = null; }   // same squidkid, new sender: glide onto its new path\n      this._retryPendingHitsForLeave(a, id);',
       'retry relay-confirmed hit after owner transfer');
     patch("    emit('combat:respawn', { actor: a });",
       "    this._retirePendingHitsForVictim(a.nid);\n    emit('combat:respawn', { actor: a });",
@@ -1950,7 +1955,7 @@ function firstSplatStateFor(session,cfg) {
         : hitHandoffLife(handoff) === life ? victim.hp - d.d : d.hp;
       victim.hp = hitClamp(reportedHp);
     } else victim.hp = 0;
-    if (victim.alive && (d.la === 0 || victim.hp <= 0)) this._remoteSplat?.(victim, null, 'shooter');
+    if (victim.alive && (d.la === 0 || (victim.hp <= 0 && !(d.la === 1 && d.hp <= 0)))) this._remoteSplat?.(victim, null, 'shooter');
     victim.net._hitAuthority = [from, life, d.hr, d.ht, victim.hp, !!victim.alive];
     if (victim.hp < hpBefore) victim.lastDamage = 0;
     return true;
@@ -2009,7 +2014,10 @@ function firstSplatStateFor(session,cfg) {
     // The shooter remains the authenticated sender. A new victim owner never
     // turns a proxy into authority or receives a newly synthesized hit.
     if (owner === this.myId) this._hit(message, attacker.owner);
-    else this.s.tr?.sendTo(owner, message);
+    else if (this.s.tr?.sendTo(owner, message) !== true) {
+      this._retirePendingHit(message.h);
+      return false;
+    }
     return true;
   }
 
