@@ -905,11 +905,11 @@ class ShapePool {
     const v = record.v;
     if (v) {
       record.v = null;
-      if (this.free.length < this.cap) this.free.push(v);
+      if (this.free && this.free.length < this.cap) this.free.push(v);
     }
   }
   _alloc(life, follow) {
-    const v = this.free.pop() || new Float32Array(16);
+    const v = (this.free && this.free.pop()) || new Float32Array(16);
     return { v, t: 0, life, follow, dead: false };
   }
   add(life, values, follow = null) {
