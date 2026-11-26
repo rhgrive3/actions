@@ -72,7 +72,8 @@ function deathPaint(nm, from, e, proof) {
   let cached=plans.get(proof[2]),same=!!cached;
   if(same)for(let i=3;i<=10;i++)if(cached.keys[i-3]!==proof[i]){same=false;break;}
   if(!same){
-    cached={keys:proof.slice(3,11),plan:deathBlastPlan(position,proof[9],DEATH_PAINT_SPEC)};
+    const keys=proof.slice(3,11);
+    cached={keys,plan:deathBlastPlan(position,proof[9],DEATH_PAINT_SPEC),fingerprint:JSON.stringify(keys)};
     plans.set(proof[2],cached);
     if(plans.size>8)plans.delete(plans.keys().next().value);
   }
@@ -85,7 +86,7 @@ function deathPaint(nm, from, e, proof) {
   if (previous.generation !== proof[3] || previous.life > proof[4]) return false;
   if (previous.life < proof[4]) return true;
   if (previous.mask & (1 << proof[11])) return false;
-  return previous.fingerprint === JSON.stringify(proof.slice(3, 11));
+  return previous.fingerprint === cached.fingerprint;
 }
 function zonePaint(nm, from, e, proof) {
   if (proof.length !== 5 || from !== nm.s.hostId || proof[2] !== from
@@ -100,7 +101,7 @@ function zonePaint(nm, from, e, proof) {
   const radius = Math.max(.08, Math.min(.42, Math.hypot(face.cu, face.cv)*.72));
   return e[2] === center.x && e[3] === center.y && e[4] === center.z && e[5] === radius
     && e[7] === (((proof[3]+1)*0x9e3779b1+(cell+1)*0x85ebca6b)>>>0)
-    && e[8] === 'blast' && e.slice(9,13).every(n=>n===0) && e[13] === face.id && e[14][3] === 1;
+    && e[8] === 'blast' && e[9] === 0 && e[10] === 0 && e[11] === 0 && e[12] === 0 && e[13] === face.id && e[14][3] === 1;
 }
 export function admitPaintAuthority(nm, from, e) {
   const proof = e?.[14]?.[4];
@@ -117,8 +118,15 @@ export function admitPaintAuthority(nm, from, e) {
 export function consumePaintAuthority(nm, e) {
   const p = e[14][4];
   if (p[1] !== 'death') return;
-  const deaths = state(nm).deaths, previous = deaths.get(p[2]);
-  const fingerprint = JSON.stringify(p.slice(3, 11));
+  const s = state(nm), deaths = s.deaths, previous = deaths.get(p[2]);
+  const cached = s.deathPlans.get(p[2]);
+  let fingerprint = null;
+  if (cached && cached.fingerprint) {
+    let same = true;
+    for (let i = 3; i <= 10; i++) if (cached.keys[i - 3] !== p[i]) { same = false; break; }
+    if (same) fingerprint = cached.fingerprint;
+  }
+  if (fingerprint === null) fingerprint = JSON.stringify(p.slice(3, 11));
   const mask = previous?.fingerprint === fingerprint ? previous.mask : 0;
   deaths.set(p[2], { generation: p[3], life: p[4], fingerprint, mask: mask | (1 << p[11]) });
 }

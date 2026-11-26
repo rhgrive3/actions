@@ -76,7 +76,7 @@ function region(s){
 function generate(s,plan){
  const {gl,N,size,tail}=s,T=gl.TEXTURE_2D;
  const base=0;
- const read=gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),draw=gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING),texture=gl.getParameter(gl.TEXTURE_BINDING_2D);
+ const read=gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),texture=gl.getParameter(gl.TEXTURE_BINDING_2D);
  try{
   gl.bindTexture(T,s.atlas);
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER,s.framebuffer);
@@ -97,7 +97,7 @@ function generate(s,plan){
  }finally{
   gl.bindTexture(T,s.atlas);gl.texParameteri(T,gl.TEXTURE_BASE_LEVEL,base);
   gl.bindTexture(T,texture);
-  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,read);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,draw);
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER,read);
  }
  s.partial++;s.basePixels+=size*size*plan.count;s.tailPixels+=(N>>tail)**2;reset(s);
 }

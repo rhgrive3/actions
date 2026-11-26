@@ -17,7 +17,7 @@
 // Root position and rotation are owned by Actor before Character.update is called,
 // so locomotion remains smooth at 60 fps while skipped ticks accumulate dt cleanly.
 
-import { inViewVolumeDistSq } from './offscreen-visual-budget.mjs';
+import { inViewVolumeDistSq, runWithCachedViewDistSq } from './offscreen-visual-budget.mjs';
 
 const INSTALLED = Symbol.for('inkwave.local-quality.distance-offscreen-throttle.v1');
 const FAR_DIST_SQ = 14 * 14;       // 14 meters
@@ -26,16 +26,40 @@ const OFFSCREEN_COMBAT_STRIDE = 2; // 30 Hz
 const FAR_STRIDE = 2;              // 30 Hz
 
 let nextSlot = 0;
+const scratchOut = { hasDistSq: false, distSq: -2, cam: null };
+let outBusy = false;
 
 function gameCamera(G) {
   return G?.rig?.gameCam || G?.camera || null;
 }
 
+function runDotUpdate(ch, dt, safeDt, s, nativeUpdate) {
+  const owed = ch._dotDeferredDt;
+  if (owed > 0) {
+    ch._dotDeferredDt = 0;
+    dt = safeDt + owed;
+    if (Number.isFinite(dt)) {
+      let slices = 0;
+      while (dt > 0.1 && slices < 31) {
+        nativeUpdate.call(ch, 0.1, s);
+        dt -= 0.1;
+        slices++;
+      }
+      if (dt > 0.1) {
+        ch._dotDeferredDt = dt - 0.1;
+        dt = 0.1;
+      }
+    }
+  }
+  return nativeUpdate.call(ch, dt, s);
+}
+
 /**
  * Returns the update stride (1 = full 60Hz, 2 = 30Hz far/offscreen-combat, 4 = 15Hz offscreen)
- * for this Character tick. Pure decision helper (no side effects).
+ * for this Character tick. Pure decision helper (no side effects unless optional `out` is supplied).
  */
-export function computeCharacterThrottleStride(ch, s, G) {
+export function computeCharacterThrottleStride(ch, s, G, out) {
+  if (out) out.hasDistSq = false;
   if (!ch || !s || ch.s3DistanceThrottle === false) return 1;
   // Local player is always full 60 Hz.
   if (s.isLocal || ch.isLocal) return 1;
@@ -50,7 +74,13 @@ export function computeCharacterThrottleStride(ch, s, G) {
   if (s.alive === false || s.dead === true) return 1;
   if ((s.form || 'kid') !== ch.form) return 1;
 
-  const distSq = inViewVolumeDistSq(ch, gameCamera(G));
+  const cam = gameCamera(G);
+  const distSq = inViewVolumeDistSq(ch, cam);
+  if (out) {
+    out.hasDistSq = true;
+    out.distSq = distSq;
+    out.cam = cam;
+  }
   if (distSq === -2) return 1;
   const combatActive = !!(s.firing || s.subFiring || s.specialActive || (s.charge > 0.01));
   if (distSq === -1) return combatActive ? OFFSCREEN_COMBAT_STRIDE : OFFSCREEN_STRIDE;
@@ -72,33 +102,30 @@ export function installDistanceOffscreenThrottle(api, G) {
   proto.update = function _dotUpdate(dt, s) {
     if (this._dotSlot === undefined) this._dotSlot = nextSlot++;
     const tick = (this._dotTick = (this._dotTick + 1) | 0);
-    const stride = computeCharacterThrottleStride(this, s, G);
-    const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 0;
+    const out = outBusy ? { hasDistSq: false, distSq: -2, cam: null } : scratchOut;
+    const ownedScratch = out === scratchOut;
+    if (ownedScratch) outBusy = true;
+    try {
+      const stride = computeCharacterThrottleStride(this, s, G, out);
+      const safeDt = Number.isFinite(dt) && dt > 0 ? dt : 0;
 
-    if (stride > 1 && ((tick + this._dotSlot) % stride) !== 0 && (this._dotDeferredDt + safeDt) < 0.095) {
-      this._dotDeferredDt += safeDt;
-      this._dotSkipped++;
-      return undefined;
-    }
+      if (stride > 1 && ((tick + this._dotSlot) % stride) !== 0 && (this._dotDeferredDt + safeDt) < 0.095) {
+        this._dotDeferredDt += safeDt;
+        this._dotSkipped++;
+        return undefined;
+      }
 
-    const owed = this._dotDeferredDt;
-    if (owed > 0) {
-      this._dotDeferredDt = 0;
-      dt = safeDt + owed;
-      if (Number.isFinite(dt)) {
-        let slices = 0;
-        while (dt > 0.1 && slices < 31) {
-          nativeUpdate.call(this, 0.1, s);
-          dt -= 0.1;
-          slices++;
-        }
-        if (dt > 0.1) {
-          this._dotDeferredDt = dt - 0.1;
-          dt = 0.1;
-        }
+      if (out.hasDistSq) {
+        return runWithCachedViewDistSq(this, out.cam, out.distSq, () => runDotUpdate(this, dt, safeDt, s, nativeUpdate));
+      }
+      return runDotUpdate(this, dt, safeDt, s, nativeUpdate);
+    } finally {
+      if (ownedScratch) {
+        scratchOut.hasDistSq = false;
+        scratchOut.cam = null;
+        outBusy = false;
       }
     }
-    return nativeUpdate.call(this, dt, s);
   };
   return true;
 }

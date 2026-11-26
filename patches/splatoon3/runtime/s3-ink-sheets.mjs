@@ -294,11 +294,24 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), coneBase = new THREE.Quaternion(), s = new THREE.Vector3(),
     x = new THREE.Vector3(), y = new THREE.Vector3(), z = new THREE.Vector3(), basis = new THREE.Matrix4(),
     Z = new THREE.Vector3(0, 0, 1), UP = new THREE.Vector3(0, 1, 0), drop = new THREE.Vector3();
+  const markRange = (attr, count) => {
+    if (!(count > 0)) return;
+    if (Array.isArray(attr.updateRanges)) {
+      const range = attr._s3SheetRange || (attr._s3SheetRange = { start: 0, count: 0 });
+      range.start = 0; range.count = count;
+      attr.updateRanges.length = 0;
+      attr.updateRanges.push(range);
+    } else if (typeof attr.addUpdateRange === 'function') {
+      attr.clearUpdateRanges?.();
+      attr.addUpdateRange(0, count);
+    }
+    attr.needsUpdate = true;
+  };
   const upload = (o, n, attrs, size) => {
     o.count = n; o.visible = n > 0;
     if (!n) return;
-    for (const attr of attrs) { attr.clearUpdateRanges(); attr.addUpdateRange(0, n * size); attr.needsUpdate = true; }
-    o.instanceMatrix.clearUpdateRanges(); o.instanceMatrix.addUpdateRange(0, n * 16); o.instanceMatrix.needsUpdate = true;
+    for (const attr of attrs) markRange(attr, n * size);
+    markRange(o.instanceMatrix, n * 16);
     uploadTrackedInstanceColors(o);
   };
   return {
@@ -413,7 +426,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     dispose() {
       this.clear(); freeBursts.length = 0; drillSlots.length = 0;
       scene.remove(mesh, drillMesh);
-      for (const o of [mesh, drillMesh]) { o.geometry.dispose(); o.material.dispose(); }
+      for (const o of [mesh, drillMesh]) { o.dispose?.(); o.geometry.dispose(); o.material.dispose(); }
       splashTex.dispose(); ringTex.dispose();
     },
   };

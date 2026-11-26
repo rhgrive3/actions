@@ -48,6 +48,7 @@ function retire(hud) {
     for (const record of hud._s3HealthBars.values()) record.node?.remove();
     hud._s3HealthBars.clear();
   }
+  hud._s3HealthSeen?.clear();
   hud._s3HealthLayer?.remove();
   hud._s3HealthLayer = null; hud._s3HealthMatch = null;
 }
@@ -95,7 +96,9 @@ export function installHealthBarHud(api, env = globalThis) {
       this._s3HealthProjected = new THREE.Vector3();
     }
     const now = valid(G.time) ? G.time : this._t;
-    const seen = new Set(), viewer = match.local, maxHp = PLAYER.hp;
+    const seen = this._s3HealthSeen || (this._s3HealthSeen = new Set());
+    seen.clear();
+    const viewer = match.local, maxHp = PLAYER.hp;
     const camera = G.camera, world = this._s3HealthWorld, projected = this._s3HealthProjected;
     const width = this.el.clientWidth || env.innerWidth || 1;
     const height = this.el.clientHeight || env.innerHeight || 1;
@@ -106,23 +109,24 @@ export function installHealthBarHud(api, env = globalThis) {
       if (!record) { record = makeRow(this._s3HealthLayer, doc); bars.set(actor, record); }
       advanceHealthBar(record, actor, now, maxHp);
       const character = actor.character;
-      if (!character?.getHeadPosition || !character.root?.visible || actor.alive === false) {
+      if (!character?.getHeadPosition || !character.root?.visible || actor.alive === false ||
+          !shouldShowHealthBar(actor, viewer, record, now, maxHp, true)) {
         record.node.style.display = 'none';continue;
       }
       character.getHeadPosition(world);world.y += 0.32;
       // Do not reveal enemy HP through map walls or while submerged unless a
       // real recon/reveal status explicitly authorizes it.
-      let sight = true;
       if (actor.team !== viewer.team && !healthRevealForTeam(actor, viewer, now) &&
           typeof G.physics?.los === 'function') {
+        let sight = false;
         try { sight = !!G.physics.los(camera.position, world); }
         catch { sight = false; }
-      }
-      if (!shouldShowHealthBar(actor,viewer,record,now,maxHp,sight)) {
-        record.node.style.display = 'none';continue;
+        if (!sight) {
+          record.node.style.display = 'none';continue;
+        }
       }
       projected.copy(world).project(camera);
-      if (![projected.x,projected.y,projected.z].every(valid) ||
+      if (!valid(projected.x) || !valid(projected.y) || !valid(projected.z) ||
           projected.z < -1 || projected.z > 1 ||
           Math.abs(projected.x) > 1.02 || Math.abs(projected.y) > 1.02) {
         record.node.style.display = 'none';continue;
@@ -134,6 +138,7 @@ export function installHealthBarHud(api, env = globalThis) {
       record.fill.style.background = G.teamHex?.[actor.team] || '#ffffff';
     }
     for (const [actor,record] of bars) if (!seen.has(actor)) {record.node.remove();bars.delete(actor);}
+    seen.clear();
     return result;
   };
   proto.dispose = function (...args) {

@@ -7,7 +7,7 @@ export function adaptPaintRenderRegions(rel, code, once) {
     if (!code.includes(anchor)) throw new Error('Regional paint source contract missing: ' + anchor);
   }
   const before = 'const range=at._paintRange||(at._paintRange={start:0,count:0});\n        range.count=n*at.itemSize;\n        at.clearUpdateRanges(); at.updateRanges.push(range); at.needsUpdate = true;';
-  const after = 'markPaintAttributeRange(at, n, THREE.BufferAttribute);';
+  const after = 'if (!this._iwTransferActive) markPaintAttributeRange(at, n, THREE.BufferAttribute);';
   if (code.split(before).length !== 2) throw new Error('Paint attribute upload source contract missing or duplicated');
   code = code.replace(before, after);
   // Order matters: sparse drying selects its exact geometry before the inner

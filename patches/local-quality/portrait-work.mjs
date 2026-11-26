@@ -275,6 +275,10 @@ function cancelIdle(task) {
 
 const PORTRAIT_WORK_INSTALLED = Symbol.for('inkwave.local-quality.portrait-work.v1');
 
+function portraitTargetSize(req) {
+  return Math.max(32, Math.min(512, (req?.size | 0) || 128));
+}
+
 export function liveMatchPortraitProtected(G) {
   const match = G?.match;
   if (!match || match.attract) return false;
@@ -366,6 +370,10 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
     }
     const job = this._portraitJob;
     if (!job) { releasePendingPortraitTargets(this); return; }
+    if ((this._pflight || 0) > 0 && this._prt8 && this._prt8.width !== portraitTargetSize(job.req)) {
+      requeuePortraitJob(this, job);
+      return;
+    }
     if (job._portraitCacheEpoch == null) job._portraitCacheEpoch = this._portraitCacheEpoch || 0;
     const cacheEpoch = job._portraitCacheEpoch;
     const started = performance.now();
@@ -403,6 +411,10 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
     };
     const render = () => {
       if (portraitModeProtected(this, overlayModes, G)) {
+        requeuePortraitJob(this, job);
+        return;
+      }
+      if ((this._pflight || 0) > 0 && this._prt8 && this._prt8.width !== portraitTargetSize(job.req)) {
         requeuePortraitJob(this, job);
         return;
       }

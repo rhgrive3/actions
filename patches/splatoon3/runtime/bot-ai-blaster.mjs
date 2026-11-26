@@ -266,40 +266,42 @@ export const BLASTER_ARCHETYPES = Object.freeze({
 /**
  * Classifies a blaster weapon into its Splatoon 3 sub-archetype without mutating weapon stats.
  */
+const _blasterArchetypeCache = new WeakMap();
+
 export function getBlasterArchetype(weapon) {
   if (!weapon || typeof weapon !== 'object') return BLASTER_ARCHETYPES.hot;
+  const cached = _blasterArchetypeCache.get(weapon);
+  if (cached) return cached;
   const id = String(weapon.id || weapon.catalogRecord?.id || '').toLowerCase();
   const actorName = String(weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '');
   const row = String(weapon.catalogRecord?.sourceRow || '');
 
+  let arch;
   if (row.includes('LightShort') || actorName.includes('LightShort') || id.includes('lightshort') || id.includes('clash')) {
-    return BLASTER_ARCHETYPES.clash;
+    arch = BLASTER_ARCHETYPES.clash;
+  } else if (row.includes('LightLong') || actorName.includes('LightLong') || id.includes('lightlong') || id.includes('rapid_pro') || id.includes('elite')) {
+    arch = BLASTER_ARCHETYPES.rapid_pro;
+  } else if (row.includes('Light') || actorName.includes('Light') || id.includes('blaster-light') || id.includes('rapid')) {
+    arch = BLASTER_ARCHETYPES.rapid;
+  } else if (row.includes('Precision') || actorName.includes('Precision') || id.includes('precision') || id.includes('sblast') || id.includes('s-blast')) {
+    arch = BLASTER_ARCHETYPES.sblast;
+  } else if (row.includes('Long') || actorName.includes('Long') || id.includes('blaster-long') || id.includes('range_blaster') || id.includes('long_blaster')) {
+    arch = BLASTER_ARCHETYPES.long;
+  } else if (row.includes('Short') || actorName.includes('Short') || id.includes('blaster-short') || id.includes('luna') || id.includes('nova')) {
+    arch = BLASTER_ARCHETYPES.nova;
+  } else if (row.includes('Middle') || actorName.includes('Middle') || id === 'blaster') {
+    arch = BLASTER_ARCHETYPES.hot;
+  } else {
+    // Fallback heuristic based on read-only weapon specs
+    const fireInterval = weapon.fireInterval || 0.78;
+    const range = weapon.range || 10.5;
+    if (fireInterval <= 0.42) arch = BLASTER_ARCHETYPES.clash;
+    else if (range >= 15.5) arch = (weapon.directDamage || 125) < 100 ? BLASTER_ARCHETYPES.rapid_pro : BLASTER_ARCHETYPES.long;
+    else if (range <= 8.8) arch = BLASTER_ARCHETYPES.nova;
+    else arch = BLASTER_ARCHETYPES.hot;
   }
-  if (row.includes('LightLong') || actorName.includes('LightLong') || id.includes('lightlong') || id.includes('rapid_pro') || id.includes('elite')) {
-    return BLASTER_ARCHETYPES.rapid_pro;
-  }
-  if (row.includes('Light') || actorName.includes('Light') || id.includes('blaster-light') || id.includes('rapid')) {
-    return BLASTER_ARCHETYPES.rapid;
-  }
-  if (row.includes('Precision') || actorName.includes('Precision') || id.includes('precision') || id.includes('sblast') || id.includes('s-blast')) {
-    return BLASTER_ARCHETYPES.sblast;
-  }
-  if (row.includes('Long') || actorName.includes('Long') || id.includes('blaster-long') || id.includes('range_blaster') || id.includes('long_blaster')) {
-    return BLASTER_ARCHETYPES.long;
-  }
-  if (row.includes('Short') || actorName.includes('Short') || id.includes('blaster-short') || id.includes('luna') || id.includes('nova')) {
-    return BLASTER_ARCHETYPES.nova;
-  }
-  if (row.includes('Middle') || actorName.includes('Middle') || id === 'blaster') {
-    return BLASTER_ARCHETYPES.hot;
-  }
-  // Fallback heuristic based on read-only weapon specs
-  const fireInterval = weapon.fireInterval || 0.78;
-  const range = weapon.range || 10.5;
-  if (fireInterval <= 0.42) return BLASTER_ARCHETYPES.clash;
-  if (range >= 15.5) return (weapon.directDamage || 125) < 100 ? BLASTER_ARCHETYPES.rapid_pro : BLASTER_ARCHETYPES.long;
-  if (range <= 8.8) return BLASTER_ARCHETYPES.nova;
-  return BLASTER_ARCHETYPES.hot;
+  _blasterArchetypeCache.set(weapon, arch);
+  return arch;
 }
 
 /**

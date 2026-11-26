@@ -39,8 +39,11 @@ export function splatlingStages(charge,runner,w,out={}){
 }
 export function updateSplatlingStages(hud,charge,runner,w){
  const p=splatlingStages(charge,runner,w,hud._splatStages ||= {}),L=hud._L;
- if(L.splatFirst!==p.first){L.splatFirst=p.first;hud._chargeEl.style.strokeDashoffset=(100*(1-p.first)).toFixed(2);}
- if(L.splatSecond!==p.second){L.splatSecond=p.second;hud._chargeSecond.style.strokeDashoffset=(100*(1-p.second)).toFixed(2);}
+ const q1=Math.round((1-p.first)*10000),q2=Math.round((1-p.second)*10000);
+ if(L.splatFirst==null||L.splatFirstQ!==q1){L.splatFirstQ=q1;hud._chargeEl.style.strokeDashoffset=(100*(1-p.first)).toFixed(2);}
+ L.splatFirst=p.first;
+ if(L.splatSecond==null||L.splatSecondQ!==q2){L.splatSecondQ=q2;hud._chargeSecond.style.strokeDashoffset=(100*(1-p.second)).toFixed(2);}
+ L.splatSecond=p.second;
  const complete=p.first>=1-1e-9, prior=L.splatFirstComplete===true;
  if(L.splatFirstComplete!==complete){
   L.splatFirstComplete=complete;

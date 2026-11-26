@@ -130,10 +130,16 @@ export class InkVolumes {
       return asset;
     } catch (error) { for (const m of createdMeshes) m.dispose(); for (const r of asset.resources) r.dispose(); throw error; }
   }
+  _ensureCameraWorld() {
+    if (this.camera && this._cameraWorldFrame !== this.frame) {
+      this.camera.updateMatrixWorld();
+      this._cameraWorldFrame = this.frame;
+    }
+  }
   begin(camera = this.camera) {
     this.hissenContourFrame=false;this.measureOnly=false;this.frameDemandTriangles=0;this.frameDemandInstances=0;
     this.camera = camera; this.metrics.active = this.metrics.culled = this.metrics.overflow = this.metrics.fallback = this.metrics.fallbackDropped = this.metrics.triangles = this.metrics.batches = 0;
-    if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
+    this._cameraWorldFrame = -1; this._frustumReady = false;
     this.frame++;
     for(const b of this.activeBatches){b.n=0;b.mesh.count=b.fringe.count=0;b.mesh.visible=b.fringe.visible=false;}
     this.activeBatches.length=0;
@@ -148,6 +154,7 @@ export class InkVolumes {
     if(this.camera){
       if(this._lightingFrame!==this.frame){
         this._lightingFrame=this.frame;
+        this._ensureCameraWorld();
         (this._sunDirV||(this._sunDirV=new THREE.Vector3())).copy(this.light.sunDir).transformDirection(this.camera.matrixWorldInverse);
         (this._upV||(this._upV=new THREE.Vector3())).set(0,1,0).transformDirection(this.camera.matrixWorldInverse);
       }
@@ -179,13 +186,20 @@ export class InkVolumes {
       if(part.stretch)this.scale.copy(part.stretch).multiplyScalar(size);else this.scale.setScalar(size);
       if(!finiteVector(this.scale)||!finiteVector(pos)||Math.min(this.scale.x,this.scale.y,this.scale.z)<=0)return false;
       const q=part.rotation||binding.q;if(!Number.isFinite(q.x)||!Number.isFinite(q.y)||!Number.isFinite(q.z)||!Number.isFinite(q.w)||Math.abs(q.lengthSq()-1)>.001)return false;
+      if (!this._frustumReady && this.camera) {
+        this._ensureCameraWorld();
+        this.clip.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
+        this.frustum.setFromProjectionMatrix(this.clip);
+        this._frustumReady = true;
+      }
       const distance=this.camera?this.camera.position.distanceToSquared(pos):0,plan=this.plans[i];
       this.sphere.center.copy(pos);this.sphere.radius=Math.max(this.scale.x,this.scale.y,this.scale.z)*p.radius;
       plan.culled=distance>this.maxDistance**2||(this.camera&&!this.frustum.intersectsSphere(this.sphere));
       if(plan.culled){culled++;continue;}
       const levels=p.frames[animationFrame(source.age,p.frames.length,p.fps)];
       plan.batch=levels[distance>this.lodDistance**2?1:0]||levels[0];
-      plan.matrix.compose(pos,q,this.scale);active++;triangles+=plan.batch.triangles;
+      if (!this.measureOnly) plan.matrix.compose(pos,q,this.scale);
+      active++;triangles+=plan.batch.triangles;
     }
     if(this.measureOnly){this.frameDemandTriangles+=triangles;this.frameDemandInstances+=active;return true;}
     if(this.metrics.active+active>this.capacity||this.metrics.triangles+triangles>this.triangleBudget){this.metrics.overflow++;return false;}

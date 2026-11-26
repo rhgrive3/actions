@@ -55,17 +55,51 @@ function toward(ctx, point, distance) {
   return new THREE.Vector3(from.x + (point.x - from.x) / d * distance,
     point.y, from.z + (point.z - from.z) / d * distance);
 }
+function nearPoint(p, point, radius) {
+  return finitePoint(p) && flatDistance(p, point) < radius && Math.abs(p.y - point.y) < 4;
+}
 function covered(ctx, point) {
   const { world, special, actor } = ctx;
-  const near = (p, radius) => finitePoint(p) && flatDistance(p, point) < radius && Math.abs(p.y - point.y) < 4;
-  if (special === 'bubbler') return [bigBubblerDomes(), bigBubblerRemoteDomes()].some(list =>
-    list.some(o => !o.dead && o.team === actor.team && near(o.pos, 9)));
-  if (special === 'tacticooler') return (world.projectiles?._s3SupportCoolers || []).some(o =>
-    o.team === actor.team && o.expires > world.time + 3 && near(o.pos, 10));
-  if (special === 'storm') return (world.projectiles?.clouds || []).some(o =>
-    o.team === actor.team && o.t < o.dur - 2 && near(o.group?.position, 10));
-  return (world.projectiles?._s3AllSpecialObjects || []).some(o => !o.dead && o.team === actor.team &&
-    o.id === special && ['wave', 'screen'].includes(o.kind) && near(o.pos, special === 'waveBreaker' ? 12 : 10));
+  if (special === 'bubbler') {
+    const localDomes = bigBubblerDomes();
+    for (let i = 0; i < localDomes.length; i++) {
+      const o = localDomes[i];
+      if (!o.dead && o.team === actor.team && nearPoint(o.pos, point, 9)) return true;
+    }
+    const remoteDomes = bigBubblerRemoteDomes();
+    for (let i = 0; i < remoteDomes.length; i++) {
+      const o = remoteDomes[i];
+      if (!o.dead && o.team === actor.team && nearPoint(o.pos, point, 9)) return true;
+    }
+    return false;
+  }
+  if (special === 'tacticooler') {
+    const list = world.projectiles?._s3SupportCoolers;
+    if (!list) return false;
+    const minExpires = world.time + 3;
+    for (let i = 0; i < list.length; i++) {
+      const o = list[i];
+      if (o.team === actor.team && o.expires > minExpires && nearPoint(o.pos, point, 10)) return true;
+    }
+    return false;
+  }
+  if (special === 'storm') {
+    const list = world.projectiles?.clouds;
+    if (!list) return false;
+    for (let i = 0; i < list.length; i++) {
+      const o = list[i];
+      if (o.team === actor.team && o.t < o.dur - 2 && nearPoint(o.group?.position, point, 10)) return true;
+    }
+    return false;
+  }
+  const list = world.projectiles?._s3AllSpecialObjects;
+  if (!list) return false;
+  const radius = special === 'waveBreaker' ? 12 : 10;
+  for (let i = 0; i < list.length; i++) {
+    const o = list[i];
+    if (!o.dead && o.team === actor.team && o.id === special && (o.kind === 'wave' || o.kind === 'screen') && nearPoint(o.pos, point, radius)) return true;
+  }
+  return false;
 }
 function choosePoint(ctx, active) {
   const { actor, special, enemy, distance, visible, brain } = ctx;

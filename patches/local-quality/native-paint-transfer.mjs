@@ -9,6 +9,33 @@ const STATE = Symbol.for('inkwave.native-paint-transfer.state.v1');
 const NAMES = ['aPos', 'aLocal', 'aSplat', 'aStretch', 'aGrow'];
 const MAX_QUADS = 6000;
 
+function snapshotPlainRecord(obj) {
+  const keys = [], vals = [];
+  if (obj != null) {
+    for (const k in obj) {
+      if (Object.hasOwn(obj, k)) {
+        const v = obj[k];
+        if (v !== undefined) { keys.push(k); vals.push(v); }
+      }
+    }
+  }
+  return [keys, vals];
+}
+
+function samePlainRecord(obj, keys, vals) {
+  if (obj == null) return keys.length === 0;
+  let count = 0;
+  for (const k in obj) {
+    if (Object.hasOwn(obj, k) && obj[k] !== undefined) count++;
+  }
+  if (count !== keys.length) return false;
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i];
+    if (!Object.hasOwn(obj, k) || !Object.is(obj[k], vals[i])) return false;
+  }
+  return true;
+}
+
 function attach(paint) {
   const draw = paint._drawQuads, mesh = paint.mesh, geo = paint.geo, mat = paint.mat;
   const renderer = paint.renderer, arrays = NAMES.map(name => paint[name]);
@@ -27,6 +54,7 @@ function attach(paint) {
   let packedVertex = vertex;
   for (const [from, to] of substitutions) packedVertex = packedVertex.replace(from, to);
   const buffer = new THREE.InstancedInterleavedBuffer(new Float32Array(MAX_QUADS * 20), 20, 1).setUsage(THREE.DynamicDrawUsage);
+  const transferRange = { start: 0, count: 0 };
   const fastGeo = new THREE.InstancedBufferGeometry();
   fastGeo.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 0, 2, 3]), 1));
   fastGeo.setAttribute('iwCorner', new THREE.BufferAttribute(new Float32Array([0, 1, 2, 3]), 1));
@@ -42,7 +70,9 @@ function attach(paint) {
   const bits = arrays.map(a => new Uint32Array(a.buffer, a.byteOffset, a.length));
   const packed = new Uint32Array(buffer.array.buffer);
   const index = geo.index, indexVersion = index?.version, indexArray = index?.array, uniforms = mat.uniforms;
-  const fragment = mat.fragmentShader, defines = JSON.stringify(mat.defines || {}), extensions = JSON.stringify(mat.extensions || {});
+  const fragment = mat.fragmentShader;
+  const [defineKeys, defineVals] = snapshotPlainRecord(mat.defines);
+  const [extKeys, extVals] = snapshotPlainRecord(mat.extensions);
   const attrLayout = attributes.map(a => [a?.itemSize, a?.normalized, a?.gpuType]);
   const scalarKeys = Object.keys(mat).filter(k => ['number', 'boolean', 'string'].includes(typeof mat[k]));
   const scalars = scalarKeys.map(k => mat[k]);
@@ -61,7 +91,7 @@ function attach(paint) {
         attributes[i].itemSize === attrLayout[i][0] && attributes[i].normalized === attrLayout[i][1] && attributes[i].gpuType === attrLayout[i][2] &&
         attributes[i].onUploadCallback === THREE.BufferAttribute.prototype.onUploadCallback) &&
       mat.uniforms === uniforms && mat.vertexShader === vertex && mat.fragmentShader === fragment &&
-      JSON.stringify(mat.defines || {}) === defines && JSON.stringify(mat.extensions || {}) === extensions &&
+      samePlainRecord(mat.defines, defineKeys, defineVals) && samePlainRecord(mat.extensions, extKeys, extVals) &&
       mat.clippingPlanes === null && mat.blendColor?.equals?.(fastMat.blendColor) === true && scalarKeys.every((k, i) => Object.is(mat[k], scalars[i])) &&
       mat.onBeforeCompile === THREE.Material.prototype.onBeforeCompile &&
       mat.customProgramCacheKey === THREE.Material.prototype.customProgramCacheKey &&
@@ -100,13 +130,15 @@ function attach(paint) {
     try { accepted = compatible(count) && pack(count); } catch { /* unrecognised custom state */ }
     if (!accepted) return draw.apply(this, args);
     buffer.clearUpdateRanges();
-    buffer.addUpdateRange(0, count * 20);
+    transferRange.count = count * 20;
+    buffer.updateRanges.push(transferRange);
     buffer.needsUpdate = true;
     fastGeo.instanceCount = count;
     mesh.geometry = fastGeo;
     mesh.material = fastMat;
+    this._iwTransferActive = true;
     try { return draw.apply(this, args); }
-    finally { mesh.geometry = geo; mesh.material = mat; }
+    finally { this._iwTransferActive = false; mesh.geometry = geo; mesh.material = mat; }
   };
   paint._drawQuads = wrapped;
   return { dispose() { if (paint._drawQuads === wrapped) paint._drawQuads = draw; fastGeo.dispose(); fastMat.dispose(); } };

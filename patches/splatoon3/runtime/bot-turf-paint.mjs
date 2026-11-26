@@ -994,32 +994,24 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
   // 3. Strong 4-bot ally deconfliction ("味方と塗る場所が被らないように分かれて塗る" - Game8)
   const actors = G?.actors;
   const navNodes = G?.nav?.nodes;
-  let aliveAllies = 1, aliveEnemies = 1;
   if (Array.isArray(actors)) {
-    aliveAllies = 0;
-    aliveEnemies = 0;
     for (let i = 0; i < actors.length; i++) {
       const other = actors[i];
-      if (!other || (other.alive === false) || other.dead || (typeof other.hp === 'number' && other.hp <= 0)) continue;
-      if (other.team === actor.team) {
-        aliveAllies++;
-        if (other !== actor && other.pos) {
-          const dPos = Math.hypot(node.x - other.pos.x, node.z - other.pos.z);
-          if (dPos < 11.0) {
-            score -= (1 - dPos / 11.0) * 5.5;
-          }
-          const oBrain = other.bot || other.brain;
-          const rawGoal = oBrain?.goal;
-          const gNode = (typeof rawGoal === 'number' && navNodes) ? navNodes[rawGoal] : rawGoal;
-          if (gNode && typeof gNode.x === 'number') {
-            const dGoal = Math.hypot(node.x - gNode.x, node.z - gNode.z);
-            if (dGoal < 13.0) {
-              score -= (1 - dGoal / 13.0) * 7.5;
-            }
+      if (!other || other === actor || other.team !== actor.team || other.alive === false || other.dead || (typeof other.hp === 'number' && other.hp <= 0)) continue;
+      if (other.pos) {
+        const dPos = Math.hypot(node.x - other.pos.x, node.z - other.pos.z);
+        if (dPos < 11.0) {
+          score -= (1 - dPos / 11.0) * 5.5;
+        }
+        const oBrain = other.bot || other.brain;
+        const rawGoal = oBrain?.goal;
+        const gNode = (typeof rawGoal === 'number' && navNodes) ? navNodes[rawGoal] : rawGoal;
+        if (gNode && typeof gNode.x === 'number') {
+          const dGoal = Math.hypot(node.x - gNode.x, node.z - gNode.z);
+          if (dGoal < 13.0) {
+            score -= (1 - dGoal / 13.0) * 7.5;
           }
         }
-      } else {
-        aliveEnemies++;
       }
     }
   }
@@ -1052,10 +1044,13 @@ export function botScorePaintCandidate(brain, G, actor, node, dist, progress, st
 
   if (isTurfMode) {
     let teamLead = 0;
-    if (typeof G?.paint?.coverage === 'function') {
-      const cov = G.paint.coverage();
+    const pObj = G?.paint;
+    const ownTeamIdx = actor.team === 1 ? 1 : 0;
+    if (pObj?.counts && pObj.turfTotal > 0) {
+      teamLead = ((pObj.counts[ownTeamIdx] || 0) - (pObj.counts[1 - ownTeamIdx] || 0)) / pObj.turfTotal;
+    } else if (typeof pObj?.coverage === 'function') {
+      const cov = pObj.coverage();
       if (Array.isArray(cov) && cov.length >= 2) {
-        const ownTeamIdx = actor.team === 1 ? 1 : 0;
         teamLead = (cov[ownTeamIdx] || 0) - (cov[1 - ownTeamIdx] || 0);
       }
     }

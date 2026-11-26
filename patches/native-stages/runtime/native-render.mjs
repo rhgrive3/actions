@@ -365,6 +365,10 @@ function* nativeDisplaySteps(data,textures,quality){
   // drawn under the ink overlay (native-ink-underlay.mjs); the rest is unchanged.
   const allIndices=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),underMask=o.inkUnderlayMask;
   const parts=underMask?splitUnderlayIndices(allIndices,underMask):[{ib:allIndices,underlay:false}];
+  const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),inter=new THREE.InterleavedBuffer(vb,8);
+  // Bounds are final below and nothing raycasts the display: once the GPU
+  // holds the vertices/indices, drop these CPU views (Three's disposeArray).
+  inter.onUpload(releaseArray);
   for(const {ib,underlay} of parts){
   const key=underlay?o.material+'\u0000ink-underlay':o.material;
   let mat=cache.get(key)?.mat;
@@ -392,13 +396,10 @@ function* nativeDisplaySteps(data,textures,quality){
    if(underlay){mat.depthWrite=false;mat.name+='#ink-underlay';}
    cache.set(key,{mat,channels,syncChannelProgram,source:o.material});materials.push(mat);
   }
-  const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
+  const g=new THREE.BufferGeometry();
   geometries.push(g);
   const cones=yield* nativeNormalConeSteps(vb,ib);if(cones){g.setAttribute('nativeNormalCone',cones);cones.onUpload(releaseArray);}
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));yield* objectBoundingSphereSteps(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
-  // Bounds are final above and nothing raycasts the display: once the GPU
-  // holds the vertices/indices, drop these CPU views (Three's disposeArray).
-  inter.onUpload(releaseArray);
   const mesh=new THREE.Mesh(g,mat);
   // Exporter positions are already baked; these per-object local transforms
   // stay identity. Skip hundreds of unchanged matrix compositions per frame,

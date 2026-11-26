@@ -221,7 +221,7 @@ function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
     // latter is presentation, so an omitted/rejected birth cannot be replaced
     // by a second self-authored row. Charger hitscan keeps its no-birth path.
     if(candidate.src==='ev'&&candidate.kind==='main'&&
-       ['shooter','dualies','splatling'].includes(actor?.weapon?.catalogRecord?.family||actor?.weapon?.behaviorKind||actor?.weapon?.kind))continue;
+       BIRTH_REQUIRED_FAMILIES.has(actor?.weapon?.catalogRecord?.family||actor?.weapon?.behaviorKind||actor?.weapon?.kind))continue;
     const interval=actor?.weapon?.fireInterval;
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
     if(recent>=rate)continue;
@@ -251,6 +251,7 @@ function sameShotBirth(store,start,c) {
 // view of the attacker's own reported body. Lobbed/area families (Slosher,
 // Roller and Brush flings, Blaster bursts, Stringer, Splatana, Brella) and
 // subs/Specials are not straight lines, so they keep the ray-proximity gate.
+const BIRTH_REQUIRED_FAMILIES = new Set(['shooter','dualies','splatling']);
 const DIRECT_FIRE = new Set(['shooter','dualies','splatling','charger']);
 const SAME_SHOT_SECONDS = 1/60, SAME_SHOT_MUZZLE = .05;
 const HISTORY_AGE = 1.2, HISTORY_SIZE = 32, HISTORY_SPACING = 1/40, HISTORY_POSES = 8;

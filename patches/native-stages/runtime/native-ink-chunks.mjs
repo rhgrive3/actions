@@ -466,7 +466,6 @@ export class NativeInkMesh extends THREE.Mesh {
     }
     this._lastVisibleCount = visibleCount;
     const faces = this._faceCulling ? this._facePainted : null;
-    const paintOnly = !changed && this._faceDirty;
     if (this._faceDirty) changed = true;
     this._faceDirty = false;
     // Moving a camera without changing the visible set never re-uploads
@@ -483,10 +482,9 @@ export class NativeInkMesh extends THREE.Mesh {
       // Painted charts in visible tiles, still in source triangle order.
       const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible, single=this._faceSingleTile;
       let count = 0;
-      // Most paint stamps append source-ordered charts without changing tile
-      // visibility. Compare only that path; moving-camera rebuilds retain the
-      // original loop and its cost even when the whole index list changes.
-      if(paintOnly){
+      // Compare against existing GPU indices in both paint-only and camera-shift
+      // paths, skipping unchanged prefix/suffix spans so only [dirty.start, dirty.end)
+      // is written and uploaded (and drawRange-only changes skip bufferSubData).
       for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
         let word=this._paintedFaceWords[wordIndex];
         while(word){
@@ -500,42 +498,30 @@ export class NativeInkMesh extends THREE.Mesh {
             while(start<end&&index[count]===start){count++;start++;}
             if(start<end)dirty.start=count;
           }
-          count=writeIdentityRange(index,count,start,end);
-          continue;
-        }
-        for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
-          if (!visible[tileOf[tri]]) continue;
-          const i = tri * 3;
-          if(dirty.start===Infinity){
-            if(index[count]===i&&index[count+1]===i+1&&index[count+2]===i+2){count+=3;continue;}
-            dirty.start=count;
+          if(start<end){
+            let changedEnd=end;
+            while(changedEnd>start&&index[count+changedEnd-start-1]===changedEnd-1)changedEnd--;
+            if(changedEnd>start){
+              writeIdentityRange(index,count,start,changedEnd);
+              dirty.end=count+changedEnd-start;
+            }
+            count+=end-start;
           }
-          index[count++]=i;index[count++]=i+1;index[count++]=i+2;
-        }
-        }
-      }
-      }else{
-        dirty.start=0;
-      for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
-        let word=this._paintedFaceWords[wordIndex];
-        while(word){
-        const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
-        if(face>=faces.length)continue;
-        const tile=single?.[face]??-1;
-        if(tile>=0){
-          if(visible[tile])count=writeIdentityRange(index,count,starts[face]*3,starts[face+1]*3);
           continue;
         }
         for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
           if (!visible[tileOf[tri]]) continue;
           const i = tri * 3;
-          index[count++]=i;index[count++]=i+1;index[count++]=i+2;
+          if(index[count]!==i||index[count+1]!==i+1||index[count+2]!==i+2){
+            if(dirty.start===Infinity)dirty.start=count;
+            index[count]=i;index[count+1]=i+1;index[count+2]=i+2;
+            dirty.end=count+3;
+          }
+          count+=3;
         }
         }
-      }
       }
       this.geometry.setDrawRange(0, count);
-      if(dirty.start!==Infinity)dirty.end=count;
       publishIndexRange(this._drawIndex,dirty,count);
       this._fullDraw = false;
       return visibleCount;

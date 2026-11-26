@@ -14,9 +14,11 @@ function liveSourceFloor(L,hit,localScratch){
  * by RankedWorld. Opted physical transitions have only been qualified with the
  * ordinary zero-AP Shooter, so other weapon states retain direct-LOS policy. */
 export function nativeRankedBotGoalReachable(G,row,target){
- const N=G.nav,L=G.level;if(!L?.native||!N||!row||!Array.isArray(target)||target.length<3||!target.slice(0,3).every(Number.isFinite))return false;
- const a=G.actors.find(a=>String(a.nid??`${a.team??0}:${a.slot??0}`)===String(row.id));
- if(!a?.alive||a.team!==row.team||!a.bot||a.weaponId!=='shooter'||a.specialActive||a.superJumpState||a.s3?.squidSpawn||Object.values(a.s3?.abilityPoints||{}).some(n=>n>0))return false;
+ const N=G.nav,L=G.level;if(!L?.native||!N||!row||!Array.isArray(target)||target.length<3||!(Number.isFinite(target[0])&&Number.isFinite(target[1])&&Number.isFinite(target[2])))return false;
+ const rowId=String(row.id),actors=G.actors;let a=null;
+ for(let i=0;i<actors.length;i++){const cand=actors[i];if(String(cand.nid??`${cand.team??0}:${cand.slot??0}`)===rowId){a=cand;break;}}
+ if(!a?.alive||a.team!==row.team||!a.bot||a.weaponId!=='shooter'||a.specialActive||a.superJumpState||a.s3?.squidSpawn)return false;
+ const ap=a.s3?.abilityPoints;if(ap){for(const k in ap){if(Object.hasOwn(ap,k)&&ap[k]>0)return false;}}
  const start=N.nearest(a.pos,.6);if(start<0||!nativeSourceFootSupported(G,a,N.nodes[start])||Math.hypot(N.nodes[start].x-a.pos.x,N.nodes[start].z-a.pos.z)>.85)return false;
  const scratch=a.bot._nativeRankedGoalQuery||(a.bot._nativeRankedGoalQuery={point:a.pos.clone(),down:a.pos.clone().set(0,-1,0),origin:a.pos.clone(),startFeet:a.pos.clone(),goalFeet:a.pos.clone(),sample:a.pos.clone(),local:a.pos.clone(),hit:{point:a.pos.clone(),normal:a.pos.clone()},options:{minNormalY:.68}});
  const point=scratch.point.fromArray(target),goal=N.nearest(point,.6),n=N.nodes[goal];

@@ -25,48 +25,50 @@ const terrainRadius=squid=>{
 export function nativeDropClearance(level){
  const w=level.triangleWorld,q=Array.from({length:4},()=>new THREE.Vector3()),t0=new THREE.Triangle(),t1=new THREE.Triangle(),box=new THREE.Box3();
  const metrics={queries:0,triangleTests:0,distanceTests:0};
+ let fits=true,skip=false,segment=false,thresh=0,bMinX=0,bMaxX=0,bMinY=0,bMaxY=0,bMinZ=0,bMaxZ=0;
+ const visit=id=>{
+  if(!fits||skip&&(w.flags[id]&4))return;
+  const offset=id*9,vertices=w.triangles;
+  const x0=vertices[offset],x1=vertices[offset+3],x2=vertices[offset+6];
+  if((x0<bMinX&&x1<bMinX&&x2<bMinX)||(x0>bMaxX&&x1>bMaxX&&x2>bMaxX))return;
+  const y0=vertices[offset+1],y1=vertices[offset+4],y2=vertices[offset+7];
+  if((y0<bMinY&&y1<bMinY&&y2<bMinY)||(y0>bMaxY&&y1>bMaxY&&y2>bMaxY))return;
+  const z0=vertices[offset+2],z1=vertices[offset+5],z2=vertices[offset+8];
+  if((z0<bMinZ&&z1<bMinZ&&z2<bMinZ)||(z0>bMaxZ&&z1>bMaxZ&&z2>bMaxZ))return;
+  const tri=w.triangle(id);metrics.triangleTests++;if(!box.intersectsTriangle(tri))return;
+  let distance;
+  if(segment)distance=w._capsuleDistance(q[0],q[3],tri);
+  else{
+   const ta=tri.a,tb=tri.b,tc=tri.c,q0=q[0],q1=q[1],q2=q[2],q3=q[3];
+   distance=w._capsuleDistance(ta,tb,t0);
+   if(distance>=thresh){const d=w._capsuleDistance(ta,tb,t1);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t0);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t1);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t0);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t1);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(q0,q1,tri);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(q1,q3,tri);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(q3,q2,tri);if(d<distance)distance=d;}
+   if(distance>=thresh){const d=w._capsuleDistance(q2,q0,tri);if(d<distance)distance=d;}
+  }
+  metrics.distanceTests++;if(distance<thresh){fits=false;return false;}
+ };
  const clear=(from,to,radius,lift,height,skipGrates=false)=>{
   const low=lift+radius,high=low>height-radius?low:height-radius;
   const fx=from.x,fy=from.y,fz=from.z,tx=to.x,ty=to.y,tz=to.z;
   q[0].set(fx,fy+low,fz);q[1].set(fx,fy+high,fz);
   q[2].set(tx,ty+low,tz);q[3].set(tx,ty+high,tz);
-  const bMinX=(fx<tx?fx:tx)-radius,bMaxX=(fx>tx?fx:tx)+radius;
-  const bMinY=(fy<ty?fy:ty)+low-radius,bMaxY=(fy>ty?fy:ty)+high+radius;
-  const bMinZ=(fz<tz?fz:tz)-radius,bMaxZ=(fz>tz?fz:tz)+radius;
+  bMinX=(fx<tx?fx:tx)-radius;bMaxX=(fx>tx?fx:tx)+radius;
+  bMinY=(fy<ty?fy:ty)+low-radius;bMaxY=(fy>ty?fy:ty)+high+radius;
+  bMinZ=(fz<tz?fz:tz)-radius;bMaxZ=(fz>tz?fz:tz)+radius;
   box.min.set(bMinX,bMinY,bMinZ);box.max.set(bMaxX,bMaxY,bMaxZ);
-  const dx=tx-fx,dz=tz-fz,vertical=dx*dx+dz*dz<1e-20,segment=vertical||high-low<1e-10;
+  const dx=tx-fx,dz=tz-fz,vertical=dx*dx+dz*dz<1e-20;
+  segment=vertical||high-low<1e-10;
   if(vertical){q[0].y=(fy<ty?fy:ty)+low;q[3].y=(fy>ty?fy:ty)+high;}
   else if(segment)q[3].copy(q[2]);
   else {t0.set(q[0],q[1],q[2]);t1.set(q[1],q[3],q[2]);}
-  let fits=true;metrics.queries++;
-  const thresh=radius-.003;
-  w.queryBox(box.min,box.max,id=>{
-   if(!fits||skipGrates&&(w.flags[id]&4))return;
-   const offset=id*9,vertices=w.triangles;
-   const x0=vertices[offset],x1=vertices[offset+3],x2=vertices[offset+6];
-   if((x0<bMinX&&x1<bMinX&&x2<bMinX)||(x0>bMaxX&&x1>bMaxX&&x2>bMaxX))return;
-   const y0=vertices[offset+1],y1=vertices[offset+4],y2=vertices[offset+7];
-   if((y0<bMinY&&y1<bMinY&&y2<bMinY)||(y0>bMaxY&&y1>bMaxY&&y2>bMaxY))return;
-   const z0=vertices[offset+2],z1=vertices[offset+5],z2=vertices[offset+8];
-   if((z0<bMinZ&&z1<bMinZ&&z2<bMinZ)||(z0>bMaxZ&&z1>bMaxZ&&z2>bMaxZ))return;
-   const tri=w.triangle(id);metrics.triangleTests++;if(!box.intersectsTriangle(tri))return;
-   let distance;
-   if(segment)distance=w._capsuleDistance(q[0],q[3],tri);
-   else{
-    const ta=tri.a,tb=tri.b,tc=tri.c,q0=q[0],q1=q[1],q2=q[2],q3=q[3];
-    distance=w._capsuleDistance(ta,tb,t0);
-    if(distance>=thresh){const d=w._capsuleDistance(ta,tb,t1);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t0);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t1);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t0);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t1);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(q0,q1,tri);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(q1,q3,tri);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(q3,q2,tri);if(d<distance)distance=d;}
-    if(distance>=thresh){const d=w._capsuleDistance(q2,q0,tri);if(d<distance)distance=d;}
-   }
-   metrics.distanceTests++;if(distance<thresh){fits=false;return false;}
-  },true);
+  fits=true;skip=skipGrates;thresh=radius-.003;metrics.queries++;
+  w.queryBox(box.min,box.max,visit,true);
   return fits;
  };
  return {clear,metrics};

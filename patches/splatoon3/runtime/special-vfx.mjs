@@ -281,9 +281,20 @@ class Director {
     return t;
   }
   endTrack(a, t) { this.call(DIRECTORS[t.id]?.end, a, t); for (const r of t.d.ribbons || []) { this.kit.ribbons.end(r); this.kit.glowRibbons.end(r); } for (const r of t.d.recs || []) r.dead = true; }
-  call(fn, ...args) {
+  call(fn, a, b, c) {
     if (!fn) return;
-    try { fn.call(this, ...args); } catch (e) { if (this.errors++ < 5) console.warn('[special-vfx]', e); }
+    try {
+      const n = arguments.length;
+      if (n <= 1) fn.call(this);
+      else if (n === 2) fn.call(this, a);
+      else if (n === 3) fn.call(this, a, b);
+      else if (n === 4) fn.call(this, a, b, c);
+      else {
+        const args = [];
+        for (let i = 1; i < n; i++) args.push(arguments[i]);
+        fn.apply(this, args);
+      }
+    } catch (e) { if (this.errors++ < 5) console.warn('[special-vfx]', e); }
   }
   // ------------------------------------------------------------------ main update (render cadence)
   update(dt, camera) {
@@ -1744,8 +1755,8 @@ export function installSpecialVfx(api) {
   const setCollider = FX.prototype.setCollider;
   FX.prototype.setCollider = function (...args) { const out = setCollider.apply(this, args); try { ensure(this); } catch (e) { console.warn('[special-vfx]', e); } return out; };
   const update = FX.prototype.update;
-  FX.prototype.update = function (dt, camera, ...rest) {
-    const out = update.call(this, dt, camera, ...rest);
+  FX.prototype.update = function (dt, camera) {
+    const out = arguments.length <= 2 ? update.call(this, dt, camera) : update.apply(this, arguments);
     const d = ensure(this);
     if (d && G.fx === this && this.s3SpecialVfxEnabled !== false) d.update(Math.min(dt || 0, 0.05), camera);
     return out;

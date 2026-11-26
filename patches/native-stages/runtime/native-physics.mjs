@@ -176,20 +176,27 @@ export class NativePhysics extends Physics {
   const sy0=pos.y+lift+radius,sy1=pos.y+Math.max(lift+radius,height-radius);
   const pad=margin<0?radius-margin:radius;
   const w=this.world,s0=w._s0.set(pos.x,sy0,pos.z),s1=w._s1.set(pos.x,sy1,pos.z);
-  min.set(pos.x-pad,sy0-pad,pos.z-pad);max.set(pos.x+pad,sy1+pad,pos.z+pad);let fits=true;
-  // A fit query never moves its capsule. Keep the exact precheck bounds once,
-  // but leave empty/grate-only queries free of the extra bounds calculation.
-  let boundsReady=false,x0,y0,z0,x1,y1,z1;
-  w.queryBox(min,max,id=>{
-   if(!fits||(skipGrates&&(w.flags[id]&4)))return;
-   if(!boundsReady){
-    x0=(s0.x<s1.x?s0.x:s1.x)-pad;y0=(s0.y<s1.y?s0.y:s1.y)-pad;z0=(s0.z<s1.z?s0.z:s1.z)-pad;
-    x1=(s0.x>s1.x?s0.x:s1.x)+pad;y1=(s0.y>s1.y?s0.y:s1.y)+pad;z1=(s0.z>s1.z?s0.z:s1.z)+pad;boundsReady=true;
-   }
-   if(w.triangleOverlapsBounds?.(id,x0,y0,z0,x1,y1,z1)===false)return;
-   if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}
-  },true);
-  return fits;
+  min.set(pos.x-pad,sy0-pad,pos.z-pad);max.set(pos.x+pad,sy1+pad,pos.z+pad);
+  // A fit query never moves its capsule. Reuse a cached callback and state
+  // object to avoid per-call closure allocation while keeping lazy bounds.
+  let state=this._fitState;
+  if(!state){
+   state=this._fitState={w:null,s0:null,s1:null,pad:0,limit:0,skipGrates:false,fits:true,boundsReady:false,x0:0,y0:0,z0:0,x1:0,y1:0,z1:0,cb:null};
+   state.cb=id=>{
+    const st=state,world=st.w;
+    if(!st.fits||(st.skipGrates&&(world.flags[id]&4)))return;
+    if(!st.boundsReady){
+     const a=st.s0,b=st.s1,p=st.pad;
+     st.x0=(a.x<b.x?a.x:b.x)-p;st.y0=(a.y<b.y?a.y:b.y)-p;st.z0=(a.z<b.z?a.z:b.z)-p;
+     st.x1=(a.x>b.x?a.x:b.x)+p;st.y1=(a.y>b.y?a.y:b.y)+p;st.z1=(a.z>b.z?a.z:b.z)+p;st.boundsReady=true;
+    }
+    if(world.triangleOverlapsBounds?.(id,st.x0,st.y0,st.z0,st.x1,st.y1,st.z1)===false)return;
+    if(world._capsuleDistance(st.s0,st.s1,world.triangle(id))<st.limit){st.fits=false;return false;}
+   };
+  }
+  state.w=w;state.s0=s0;state.s1=s1;state.pad=pad;state.limit=radius-margin;state.skipGrates=skipGrates;state.fits=true;state.boundsReady=false;
+  w.queryBox(min,max,state.cb,true);
+  return state.fits;
  }
  /** A raised source foot snap follows the body solve. Reconcile only a new
   * source contact using that same installed solver and footprint probe. The

@@ -394,6 +394,8 @@ function resolveCachedArchetype(brain, weapon) {
  * Checks whether the given charger supports Splatoon 3 Charge Keep.
  * Scoped chargers (Splatterscope, E-liter 4K Scope), Bamboozler 14, and Snipewriter 5H cannot keep charge.
  */
+const _chargeKeepCache = new WeakMap();
+
 export function supportsChargeKeep(weapon, archetype) {
   if (!weapon) return false;
   if (
@@ -404,13 +406,26 @@ export function supportsChargeKeep(weapon, archetype) {
   ) {
     return false;
   }
-  if (weapon.scoped || weapon.scopedCharge) return false;
-  const src = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
-  const id = typeof weapon.id === 'string' ? weapon.id.toLowerCase() : '';
-  if ((typeof src === 'string' && src.includes('Scope')) || id.includes('scope')) return false;
-  const keepParam = weapon.catalogRecord?.parameters?.WeaponKeepChargeParam;
-  if (keepParam && keepParam.KeepChargeFullFrame <= 0) return false;
-  return true;
+  const isObj = typeof weapon === 'object';
+  if (isObj) {
+    const cached = _chargeKeepCache.get(weapon);
+    if (cached !== undefined) return cached;
+  }
+  let supported = true;
+  if (weapon.scoped || weapon.scopedCharge) {
+    supported = false;
+  } else {
+    const src = weapon.sourceMainActor || weapon.catalogRecord?.sourceMainActor || '';
+    const id = typeof weapon.id === 'string' ? weapon.id.toLowerCase() : '';
+    if ((typeof src === 'string' && src.includes('Scope')) || id.includes('scope')) {
+      supported = false;
+    } else {
+      const keepParam = weapon.catalogRecord?.parameters?.WeaponKeepChargeParam;
+      if (keepParam && keepParam.KeepChargeFullFrame <= 0) supported = false;
+    }
+  }
+  if (isObj) _chargeKeepCache.set(weapon, supported);
+  return supported;
 }
 
 /**

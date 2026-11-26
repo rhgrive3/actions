@@ -1509,7 +1509,7 @@ export function buildScreenSheet(THREE, color, width, height) {
   const tex = { offset: mat.uniforms.uFlow.value, dispose() {} };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'splattercolor-sheet';
-  const edge = new THREE.Mesh(new THREE.ShapeGeometry(shp, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+  const edge = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
   edge.scale.set(1.01, 1.01, 1); edge.position.z = -0.01;
   const group = new THREE.Group(); group.add(edge, mesh); group.userData.s3ScreenSheet = { mat, tex };
   return group;

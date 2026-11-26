@@ -244,8 +244,8 @@ const patches = {
       1
     ],
     [
-      "outboundUtf8Encoder.encode(s).byteLength",
-      "utf8ByteLength(s)",
+      "s.length > 64 * 1024 || outboundUtf8Encoder.encode(s).byteLength > 64 * 1024",
+      "s.length > 65536 || (s.length > 21845 && utf8ByteLength(s) > 65536)",
       1
     ]
   ],

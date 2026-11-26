@@ -79,6 +79,27 @@ export function collectGtaoNonOccluders(G, out = []) {
     pushVisibleUnique(proj.blobs, out);
     pushVisibleUnique(proj.projectileVisuals?.mesh, out);
     pushVisibleUnique(proj.arcRing, out);
+    if (proj.sights) {
+      if (Array.isArray(proj.sights)) {
+        for (let i = 0; i < proj.sights.length; i++) pushVisibleUnique(proj.sights[i], out);
+      } else if (typeof proj.sights.values === 'function') {
+        for (const node of proj.sights.values()) pushVisibleUnique(node, out);
+      }
+    }
+    if (Array.isArray(proj.clouds)) {
+      for (let i = 0; i < proj.clouds.length; i++) {
+        const c = proj.clouds[i];
+        if (c) {
+          pushVisibleUnique(c.group, out);
+          pushVisibleUnique(c.mesh, out);
+        }
+      }
+    }
+    if (Array.isArray(proj.beams)) {
+      for (let i = 0; i < proj.beams.length; i++) {
+        pushVisibleUnique(proj.beams[i]?.mesh, out);
+      }
+    }
   }
 
   return out;

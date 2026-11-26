@@ -216,45 +216,55 @@ export class TriangleWorld {
   * leave it untouched; omitted out still returns an independently owned hit. */
  sweepSphere(from,to,radius,{ignoreGrates=false,endRadius=radius}={},out=null){
   if(!(radius>=0)||!(endRadius>=0)||!Number.isFinite(radius+endRadius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
-  const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
+  const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{delta,probe,normal}=scratch;
   delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
   const maxRadius=radius>endRadius?radius:endRadius,change=endRadius-radius,bPad=maxRadius+1e-9;
   let curMinX=(from.x<to.x?from.x:to.x)-bPad,curMinY=(from.y<to.y?from.y:to.y)-bPad,curMinZ=(from.z<to.z?from.z:to.z)-bPad;
   let curMaxX=(from.x>to.x?from.x:to.x)+bPad,curMaxY=(from.y>to.y?from.y:to.y)+bPad,curMaxZ=(from.z>to.z?from.z:to.z)+bPad;
-  box.min.set(curMinX,curMinY,curMinZ);box.max.set(curMaxX,curMaxY,curMaxZ);
   let best=Infinity,bestReference=null,bestTriangle=-1,bestTime=0,px=0,py=0,pz=0,nx=0,ny=0,nz=0;this.queryCount++;
   const pad=maxRadius+1e-6;
   const bMinX=curMinX,bMinY=curMinY,bMinZ=curMinZ,bMaxX=curMaxX,bMaxY=curMaxY,bMaxZ=curMaxZ;
-  this.queryBox(box.min,box.max,id=>{
-   if(ignoreGrates&&(this.flags[id]&4))return;
-   if(!this.triangleOverlapsBounds(id,bMinX,bMinY,bMinZ,bMaxX,bMaxY,bMaxZ))return;
-   this.triangleTests++;
-   if(best<1&&!this.triangleOverlapsBounds(id,curMinX,curMinY,curMinZ,curMaxX,curMaxY,curMaxZ))return;
-   const tri=this.triangle(id);
-   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal,lengthSquared,best<1?best+1e-7:1);
-   if(time===Infinity)return;
-   const analyticTime=time;
-   if(bestTriangle>=0&&Math.abs(time-best)<=1e-9){
-    // Original distance searches quantise almost simultaneous source contacts.
-    // Preserve their selected triangle/material only for these ambiguous hits;
-    // far-away candidates never incur the old per-triangle search cost.
-    if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(bestTriangle),probe);
-    const reference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(id),probe);
-    if(reference===Infinity||reference>bestReference||reference===bestReference&&id>bestTriangle)return;
-    time=reference;bestReference=reference;
-   }else {if(time>best)return;bestReference=null;}
-   probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,this.triangle(id));
-   normal.subVectors(probe,this._bestp);
-   if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
-   else normal.normalize();
-   best=analyticTime;bestTriangle=id;bestTime=time;px=this._bestp.x;py=this._bestp.y;pz=this._bestp.z;nx=normal.x;ny=normal.y;nz=normal.z;
-   if(best<1){
-    const tb=best+1e-6<1?best+1e-6:1,tx=from.x+delta.x*tb,ty=from.y+delta.y*tb,tz=from.z+delta.z*tb;
-    curMinX=(from.x<tx?from.x:tx)-pad;curMaxX=(from.x>tx?from.x:tx)+pad;
-    curMinY=(from.y<ty?from.y:ty)-pad;curMaxY=(from.y>ty?from.y:ty)+pad;
-    curMinZ=(from.z<tz?from.z:tz)-pad;curMaxZ=(from.z>tz?from.z:tz)+pad;
+  const a=this.nodes,flags=this.flags,order=this.order,stack=this._acquireStack();let top=1;
+  try{
+   while(top){
+    const n=stack[--top]*8;
+    if(a[n]>curMaxX||a[n+1]>curMaxY||a[n+2]>curMaxZ||a[n+3]<curMinX||a[n+4]<curMinY||a[n+5]<curMinZ)continue;
+    const left=a[n+6]|0,right=a[n+7]|0;
+    if(left>=0){stack[top++]=left;stack[top++]=right;continue;}
+    const start=-left-1;
+    for(let k=start;k<start+right;k++){
+     const id=order[k];
+     if(ignoreGrates&&(flags[id]&4))continue;
+     if(!this.triangleOverlapsBounds(id,bMinX,bMinY,bMinZ,bMaxX,bMaxY,bMaxZ))continue;
+     this.triangleTests++;
+     if(best<1&&!this.triangleOverlapsBounds(id,curMinX,curMinY,curMinZ,curMaxX,curMaxY,curMaxZ))continue;
+     const tri=this.triangle(id);
+     let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal,lengthSquared,best<1?best+1e-7:1);
+     if(time===Infinity)continue;
+     const analyticTime=time;
+     if(bestTriangle>=0&&Math.abs(time-best)<=1e-9){
+      // Original distance searches quantise almost simultaneous source contacts.
+      // Preserve their selected triangle/material only for these ambiguous hits;
+      // far-away candidates never incur the old per-triangle search cost.
+      if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(bestTriangle),probe);
+      const reference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(id),probe);
+      if(reference===Infinity||reference>bestReference||reference===bestReference&&id>bestTriangle)continue;
+      time=reference;bestReference=reference;
+     }else {if(time>best)continue;bestReference=null;}
+     probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,this.triangle(id));
+     normal.subVectors(probe,this._bestp);
+     if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
+     else normal.normalize();
+     best=analyticTime;bestTriangle=id;bestTime=time;px=this._bestp.x;py=this._bestp.y;pz=this._bestp.z;nx=normal.x;ny=normal.y;nz=normal.z;
+     if(best<1){
+      const tb=best+1e-6<1?best+1e-6:1,tx=from.x+delta.x*tb,ty=from.y+delta.y*tb,tz=from.z+delta.z*tb;
+      curMinX=(from.x<tx?from.x:tx)-pad;curMaxX=(from.x>tx?from.x:tx)+pad;
+      curMinY=(from.y<ty?from.y:ty)-pad;curMaxY=(from.y>ty?from.y:ty)+pad;
+      curMinZ=(from.z<tz?from.z:tz)-pad;curMaxZ=(from.z>tz?from.z:tz)+pad;
+     }
+    }
    }
-  });
+  }finally{this._releaseStack(stack);}
   if(bestTriangle<0)return null;
   if(!out)return {triangle:bestTriangle,time:bestTime,distance:bestTime*length,point:new THREE.Vector3(px,py,pz),normal:new THREE.Vector3(nx,ny,nz),flags:this.flags[bestTriangle],object:this.objectIds[bestTriangle]};
   out.triangle=bestTriangle;out.time=bestTime;out.distance=bestTime*length;

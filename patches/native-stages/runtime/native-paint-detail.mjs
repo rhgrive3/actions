@@ -8,7 +8,7 @@ import { paintShapeSeed } from '../../splatoon3/runtime/paint-ownership.mjs';
 export const NATIVE_DETAIL_SIZE = 1024;
 export const NATIVE_DETAIL_TILE = 256;
 export const NATIVE_DETAIL_PPM = 30;
-const SIDE = 8, PAD = 8, SLOTS = 16, RECORD_BUDGET = 128, VERTEX_LIMIT = 32766;
+const SIDE = 8, PAD = 8, SLOTS = 16, RECORD_BUDGET = 128, VERTEX_LIMIT = 32766, MAX_PAGE_RECORDS = 512;
 // Metres of selection hysteresis for resident pages: half a page, so motion
 // inside one page's width cannot change which pages hold the 16 slots.
 const RESIDENT_HOLD = SIDE / 2;
@@ -172,6 +172,7 @@ export class NativePaintDetail {
       const array = this.arrays[name] = new Float32Array(VERTEX_LIMIT * size);
       this.geometry.setAttribute(name, new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage));
     }
+    this._attrList = Object.values(this.geometry.attributes);
     this.mesh = new THREE.Mesh(this.geometry, this.material); this.mesh.frustumCulled = false;
     this.scene = new THREE.Scene(); this.scene.add(this.mesh); this.camera = new THREE.Camera();
     this.vertexCount = 0;
@@ -197,7 +198,7 @@ export class NativePaintDetail {
       this.emit.call(this.sink, record.g, 3, 1, false);
     }
     record.tn = Math.max(record.tn, tn); record.dT = Math.max(record.dT, dT);
-    for (const page of record.pages) if (page.slot >= 0) page.pending.set(record.id, record);
+    for (const page of record.pages) if (page.slot >= 0 && page.records.has(record.id)) page.pending.set(record.id, record);
   }
 
   index(record, f, u0,u1,v0,v1) {
@@ -228,7 +229,7 @@ export class NativePaintDetail {
         const center=new THREE.Vector3().copy(plane.n).multiplyScalar(plane.d).addScaledVector(plane.u,x*SIDE+SIDE/2).addScaledVector(plane.v,z*SIDE+SIDE/2);
         page={key,x:x*SIDE,z:z*SIDE,plane,center,records:new Map(),pending:new Map(),slot:-1,ready:false};this.pages.set(key,page);this.dirtySelection=true;
       }
-      if(!page.records.has(record.id)){page.records.set(record.id,record);record.pages.push(page);}
+      if(!page.records.has(record.id)){while(page.records.size>=MAX_PAGE_RECORDS){const oldestId=page.records.keys().next().value;page.records.delete(oldestId);page.pending.delete(oldestId);}page.records.set(record.id,record);record.pages.push(page);}
     }
   }
 
@@ -307,7 +308,7 @@ export class NativePaintDetail {
     const cache=this._projectionCache;
     let entry=cache.get(f);
     if(entry&&entry.source===T&&entry.ids===f.triangles&&entry.points.length===f.triangles.length*20&&
-      entry.plane===plane&&sameProjectionFrame(entry.frame,f,plane))return entry.points;
+      entry.plane===plane&&sameProjectionFrame(entry.frame,f,plane)){cache.delete(f);cache.set(f,entry);return entry.points;}
     if(entry){this._projectionBytes-=entry.points.byteLength;cache.delete(f);}
     const bytes=f.triangles.length*20*Float64Array.BYTES_PER_ELEMENT;
     if(!bytes||bytes>PROJECTION_CACHE_BYTES)return null;
@@ -361,7 +362,7 @@ export class NativePaintDetail {
 
   draw() {
     if(!this.vertexCount)return;
-    for(const attr of Object.values(this.geometry.attributes)){attr.clearUpdateRanges();attr.addUpdateRange(0,this.vertexCount*attr.itemSize);attr.needsUpdate=true;}
+    const attrs=this._attrList;for(let i=0;i<attrs.length;i++){const attr=attrs[i];attr.clearUpdateRanges();attr.addUpdateRange(0,this.vertexCount*attr.itemSize);attr.needsUpdate=true;}
     this.geometry.setDrawRange(0,this.vertexCount);this.paint.renderer.render(this.scene,this.camera);this.vertexCount=0;
   }
 
