@@ -1,3 +1,11 @@
+import { applyChargerTurfPaint } from './bot-ai-charger.mjs';
+import { applyBlasterTurfPaint } from './bot-ai-blaster.mjs';
+import { applyRollerTurfPaint } from './bot-ai-roller.mjs';
+import { applyStringerTurfPaint } from './bot-ai-stringer.mjs';
+import { applySplatanaTurfPaint } from './bot-ai-splatana.mjs';
+import { applyBrushTurfPaint } from './bot-ai-brush.mjs';
+import { applySplatlingTurfPaint } from './bot-ai-splatling.mjs';
+import { applyBrellaTurfPaint } from './bot-ai-brella.mjs';
 // Bot Turf War painting, sub-archetype calibration & 3-phase tactical runtime module (2026-11-08).
 // Grounded in authentic Splatoon 3 Turf War strategy guides:
 // - MatchGuyのスプラ塾「効率のいい塗り方」(https://spl3.ink/matchguy-vol03/):
@@ -27,9 +35,9 @@ export const BOT_TURF_PAINT = Object.freeze({
     charger: -0.10,
     splatling: -0.08,
     slosher: -0.14,
-    blaster: -0.14,
+    blaster: -0.06,
     roller: -0.22,
-    brush: -0.05,
+    brush: 0.06,
   }),
 
   // Base horizontal sweep amplitude (radians) per raw weapon family in paint mode
@@ -39,10 +47,10 @@ export const BOT_TURF_PAINT = Object.freeze({
     brella: 0.40,
     splatana: 0.48,
     stringer: 0.46,
-    charger: 0.28,
-    splatling: 0.44,
+    charger: 0.56,
+    splatling: 0.68,
     slosher: 0.40,
-    blaster: 0.32,
+    blaster: 0.54,
     roller: 0.0,
     brush: 0.72,
   }),
@@ -154,8 +162,8 @@ export function botWeaponPaintProfile(weapon, rawFamily) {
   let pitch = BOT_TURF_PAINT.pitchByFamily[rawFamily] ?? -0.10;
   let sweepAmp = BOT_TURF_PAINT.sweepAmpByFamily[rawFamily] ?? 0.50;
   let strafe = BOT_TURF_PAINT.strafeByFamily[rawFamily] ?? 0.30;
-  let rollHold = 0.26;
-  let stringerChargeCap = 0.22;
+  let rollHold = 0.85;
+  let stringerChargeCap = 0.09;
 
   if (rawFamily === 'roller') {
     if (actorName === 'WeaponRollerHeavy' || wId.includes('dynamo')) {
@@ -166,18 +174,18 @@ export function botWeaponPaintProfile(weapon, rawFamily) {
       rollHold = 0.20;
     } else if (actorName === 'WeaponRollerWide' || wId.includes('big_swig') || wId.includes('wide')) {
       pitch = -0.20;
-      rollHold = 0.36;
+      rollHold = 1.15;
     } else if (actorName === 'WeaponRollerCompact' || wId.includes('carbon')) {
       pitch = -0.20;
       rollHold = 0.15;
     }
   } else if (rawFamily === 'brush') {
     if (actorName === 'WeaponBrushHeavy' || wId.includes('painbrush') || wId.includes('fincent')) {
-      pitch = -0.06;
+      pitch = 0.04;
       sweepAmp = 0.72;
       strafe = 0.34;
     } else {
-      pitch = -0.04;
+      pitch = 0.06;
       sweepAmp = 0.74;
       strafe = 0.36;
     }
@@ -212,12 +220,12 @@ export function botWeaponPaintProfile(weapon, rawFamily) {
       strafe = 0.32;
     } else if (actorName === 'WeaponChargerLight' || actorName === 'WeaponChargerKeeper' || actorName === 'WeaponChargerQuick') {
       pitch = -0.11;
-      sweepAmp = 0.34;
+      sweepAmp = 0.56;
       strafe = 0.34;
     } else if (range >= 22) {
       pitch = -0.08;
-      sweepAmp = 0.24;
-      strafe = 0.24;
+      sweepAmp = 0.48;
+      strafe = 0.26;
     }
   } else if (rawFamily === 'slosher') {
     if (actorName === 'WeaponSlosherLauncher' || wId.includes('explosher')) {
@@ -244,8 +252,8 @@ export function botWeaponPaintProfile(weapon, rawFamily) {
       strafe = 0.36;
     } else if (actorName === 'WeaponSpinnerHyper' || range >= 20) {
       pitch = -0.07;
-      sweepAmp = 0.36;
-      strafe = 0.26;
+      sweepAmp = 0.62;
+      strafe = 0.28;
     }
   } else if (rawFamily === 'brella') {
     if (actorName === 'WeaponShelterCompact' || wId.includes('undercover')) {
@@ -591,124 +599,24 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
     it.fire = false;
   }
 
+  const _paintCtx = { profile, cache, pitchReady, wantPaintNow };
   if (rawFamily === 'charger') {
-    const isPencil = actor.weapon?.sourceMainActor === 'WeaponChargerPencil' || (actor.weapon?.id || '').includes('pencil') || (actor.weapon?.id || '').includes('snipewriter');
-    const isKeeper = actor.weapon?.sourceMainActor === 'WeaponChargerKeeper' || (actor.weapon?.id || '').includes('keeper') || (actor.weapon?.id || '').includes('soituber') || (actor.weapon?.id || '').includes('squiffer');
-    const isLongCharger = (actor.weapon?.chargeTime || 1.0) >= 1.25;
-    const targetCharge = isPencil ? 1.0 : isKeeper ? 0.22 : 0.70;
-
-    if (wr?.s3ReleaseHold || (wr?.s3ChargerCancelSwimRemaining || 0) > 1e-6) {
-      it.fire = false;
-    } else if (wr?.charging) {
-      // Active charging takes strict precedence: never emit loaded rounds prematurely
-      if (wr.charge >= targetCharge || (inkFrac < 0.15 && !isPencil)) {
-        if (!pitchReady && inkFrac >= 0.15) {
-          it.fire = true;
-        } else {
-          it.fire = false;
-          brain.paintPause = 0.02;
-        }
-      } else {
-        it.fire = true;
-      }
-    } else if (isPencil && wr?.catalogState?.rounds > 0) {
-      // Consume buffered Snipewriter rounds only once charge cycle has permitted
-      it.fire = wantPaintNow && (wr.cooldown || 0) <= 1e-6 && !wr.catalogState?.pending && !actor._prevIntent?.fire;
-    } else if (pitchReady && (wantPaintNow || (isLongCharger && wantMove && inkFrac > 0.24)) && (wr?.cooldown || 0) <= 1e-6) {
-      it.fire = true;
-    }
+    applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'stringer') {
-    const cap = profile.stringerChargeCap || 0.22;
-    if (wr?.catalogState?.pending) {
-      it.fire = false;
-    } else if (wr?.charging) {
-      if (wr.charge >= cap || inkFrac < 0.15) {
-        if (!pitchReady && inkFrac >= 0.15) {
-          it.fire = true;
-        } else {
-          it.fire = false;
-          brain.paintPause = 0.02;
-        }
-      } else {
-        it.fire = true;
-      }
-    } else if (wantPaintNow && (wr?.cooldown || 0) <= 1e-6) {
-      it.fire = true;
-    }
+    applyStringerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'splatana') {
-    if (wr?.catalogState?.pending || wr?.catalogState?.melee) {
-      it.fire = false;
-    } else if (wr?.charging) {
-      if (wr.charge >= 0.12 || inkFrac < 0.15) {
-        if (!pitchReady && inkFrac >= 0.15) {
-          it.fire = true;
-        } else {
-          it.fire = false;
-          brain.paintPause = 0.02;
-        }
-      } else {
-        it.fire = true;
-      }
-    } else if (wantPaintNow && (wr?.cooldown || 0) <= 1e-6 && !actor._prevIntent?.fire) {
-      it.fire = true;
-    }
+    applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'splatling') {
-    // Preserve full spin-up (>= 0.88) for standard splatlings per test contract;
-    // Ballpoint Splatling retains authentic short-charge high-spread mode (0.24).
-    if (wr?.streaming) {
-      it.fire = false;
-    } else if (wr?.charging) {
-      const isBallpoint = actor.weapon?.sourceMainActor === 'WeaponSpinnerDownpour' || (actor.weapon?.id || '').includes('ballpoint');
-      const targetSpin = isBallpoint ? 0.24 : 0.90;
-      if (wr.charge >= targetSpin || inkFrac < 0.16) {
-        if (!pitchReady && inkFrac >= 0.16) {
-          it.fire = true;
-        } else {
-          it.fire = false;
-          brain._splatlingHold = 0;
-          brain.paintPause = 0.03;
-        }
-      } else {
-        it.fire = true;
-      }
-    } else if (wantPaintNow && (wr?.cooldown || 0) <= 1e-6) {
-      it.fire = true;
-    }
+    applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'roller') {
-    // Authentic Splatoon 3 Roller turf cycle:
-    // Roller sub-archetypes combine flick paint with weapon-calibrated roll duration (profile.rollHold),
-    // followed by squid swim recovery into own ink to restore momentum and ink reserve.
-    const maxRollHold = profile.rollHold || 0.26;
-    if (wr?.catalogState?.pending) {
-      it.fire = false;
-    } else {
-      if (wr?.rolling) {
-        brain._rollerRollTime = (brain._rollerRollTime || 0) + dt;
-      }
-      if ((brain._rollerSwimGap || 0) > 0) {
-        brain._rollerSwimGap = Math.max(0, brain._rollerSwimGap - dt);
-        it.fire = false;
-        if (!brain._coolerPickupPending && actor.groundTeam === 1 && wantMove) it.squid = true;
-      } else if ((brain._rollerRollTime || 0) >= maxRollHold) {
-        brain._rollerRollTime = 0;
-        brain._rollerSwimGap = actor.groundTeam === 1 ? 0.22 : 0.04;
-        it.fire = false;
-        if (!brain._coolerPickupPending && actor.groundTeam === 1 && wantMove) it.squid = true;
-      } else if ((wr?.cooldown || 0) > 0.06 && actor.groundTeam === 1 && wantMove) {
-        it.fire = false;
-        if (!brain._coolerPickupPending) it.squid = true;
-      } else if (wantMove && inkFrac > 0.08 && (brain._turfPaintLatch || actor.groundTeam !== 1 || (resolveMatchTimeLeft(G) <= 6.5 && inkFrac > 0.18))) {
-        it.fire = true;
-        it.squid = false;
-      }
-    }
+    applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
   } else if (rawFamily === 'brush') {
-    if (wantPaintNow && inkFrac > 0.08) {
-      it.fire = (wr?.cooldown || 0) <= 1e-6 && !wr?.catalogState?.pending && !actor._prevIntent?.fire;
-    } else if (inkFrac > 0.08 && wantMove && actor.groundTeam === 2) {
-      it.fire = (wr?.cooldown || 0) <= 1e-6 && !wr?.catalogState?.pending && !actor._prevIntent?.fire;
-    }
-  } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'slosher' || rawFamily === 'brella') {
+    applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
+  } else if (rawFamily === 'brella') {
+    applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
+  } else if (rawFamily === 'blaster') {
+    applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw, inkFrac, _paintCtx);
+  } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'slosher') {
     if (brain._turfPaintValidated === true && wantPaintNow && (wr?.cooldown || 0) <= 1e-6) {
       it.fire = true;
     }
@@ -866,7 +774,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
 
   // 3. Combat approach path-painting ("道作り"): out of range (dist > range * 1.08)
   if (dist > range * 1.08) {
-    if (!brain._coolerPickupPending && rawFamily === 'roller' && actor.groundTeam === 1 && wantMove) {
+    if (!brain._coolerPickupPending && rawFamily === 'roller' && actor.groundTeam === 1 && wantMove && !(wr?.flick >= 0) && !wr?.catalogState?.pending && brain._rollerCombatState !== 'commit_flick') {
       it.fire = false;
       it.squid = true;
     } else if (actor.groundTeam !== 1 && inkFrac > 0.18 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging) {
@@ -894,7 +802,13 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
           it.squid = false;
           return Math.min(wantPitch, -0.06);
         }
-      } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') {
+      } else if (rawFamily === 'brella') {
+        if ((wr?.cooldown || 0) <= 1e-6 && !wr?.catalogState?.pending && !actor._prevIntent?.fire) {
+          it.fire = true;
+          it.squid = false;
+          return Math.min(wantPitch, -0.12);
+        }
+      } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster') {
         if ((wr?.cooldown || 0) <= 1e-6) {
           it.fire = true;
           it.squid = false;
@@ -902,8 +816,6 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
         }
       }
     }
-  } else if (rawFamily === 'splatana' && wr?.charging && dist < 8.5 && wr.charge >= 0.08) {
-    it.fire = false;
   }
 
   // 4. Enemy ink underfoot clearing ("足元塗り"): stuck on enemy ink during fight
@@ -922,7 +834,12 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
     } else if (rawFamily === 'slosher' || rawFamily === 'roller') {
       it.fire = true;
       canClear = true;
-    } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster' || rawFamily === 'brella') {
+    } else if (rawFamily === 'brella') {
+      if (!actor._prevIntent?.fire && !wr?.catalogState?.pending) {
+        it.fire = true;
+        canClear = true;
+      }
+    } else if (rawFamily === 'shooter' || rawFamily === 'dualies' || rawFamily === 'blaster') {
       it.fire = true;
       canClear = true;
     }

@@ -6,6 +6,7 @@ import { adaptCustomMatch } from '../patches/splatoon3/custom-match-adapter.mjs'
 import { adaptSmallTeamModes } from '../patches/splatoon3/small-team-modes-adapter.mjs';
 import { adaptBotPaintPitch } from '../patches/splatoon3/bot-paint-pitch-adapter.mjs';
 import { adaptBotTurfPaint } from '../patches/splatoon3/bot-turf-paint-adapter.mjs';
+import { adaptBotWeakWeaponCombat } from '../patches/splatoon3/bot-weak-weapon-combat-adapter.mjs';
 import { adaptDualiesStanceSpread } from '../patches/splatoon3/dualies-stance-spread-adapter.mjs';
 import { adaptBotCombatQuality } from '../patches/splatoon3/bot-combat-quality-adapter.mjs';
 import { adaptBombBlastForecast } from '../patches/splatoon3/bomb-blast-forecast-adapter.mjs';
@@ -230,6 +231,7 @@ export function adaptBuildSource(rel, code, options = {}) {
   // Shooter / Dualies Bots paint with a shallower aim (owner request).
   code = adaptBotPaintPitch(rel, code, replaceOnce);
   code = adaptBotTurfPaint(rel, code, replaceOnce);
+  code = adaptBotWeakWeaponCombat(rel, code, replaceOnce);
   // Dualies: wider aim stance so the two landing guides sit side by side (owner request).
   // Frozen pre-request evidence (native action corpus, historical Character
   // owner) may compose without this pass and replay it explicitly.
