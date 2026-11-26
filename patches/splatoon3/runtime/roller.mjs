@@ -1,6 +1,6 @@
 import { traceRollingFloor } from './rolling-floor.mjs';
 import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
-import { specialMotionAllowsAction } from './action-admission.mjs';
+import { specialMotionAllowsAction, specialAllowsMainWeapon } from './action-admission.mjs';
 import { createVerticalShaftReturn } from './roller-vertical-shaft-return.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
@@ -68,7 +68,7 @@ export function rollerFireBuffer(actor, fallback, dt) {
 export function rollerSwingMoveSpeed(runner) {
   const a = runner?.a, attack = runner?.s3RollerAttack;
   if (!a || a.weapon?.kind !== 'roller' || !attack || runner.rolling || runner.lockT > 0 ||
-      runner.aimingSub || a.form === 'squid' || a.specialActive || a.superJumpState ||
+      runner.aimingSub || a.form === 'squid' || !specialAllowsMainWeapon(a) || a.superJumpState ||
       !(attack.interval > 0) || attack.elapsed >= attack.interval - EPS) return null;
   const speed = a.weapon.moveSpeedFiring; // 11.3.0 SwingMoveSpeed: 0.048 source units/frame * 60.
   return Number.isFinite(speed) && speed >= 0 ? speed : null;
@@ -330,7 +330,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     if (r && this.weapon?.kind === 'roller') {
       const prev = this._prevIntent || {};
       if (this.intent?.fire && !prev.fire) r.s3RollerSquidPressT = this.form === 'squid' ? G.time : null;
-      if (!this.alive || this.specialActive || this.superJumpState) r.s3RollerSquidPressT = null;
+      if (!this.alive || !specialAllowsMainWeapon(this) || this.superJumpState) r.s3RollerSquidPressT = null;
     }
     return actorUpdate.call(this, dt);
   };
@@ -857,6 +857,20 @@ function s3SwingPose(elapsed, windup, interval, keys, heavy, held = false) {
 export function horizontalRollerPose(elapsed, windup, interval, shape = null, held = false) {
   return s3SwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS, shape === 'heavy', held);
 }
+export function heavyHorizontalTorsoAge(elapsed, windup, interval, held = false) {
+  const H = HEAVY_ROLLER_SWING, release = Math.max(1e-6, windup);
+  const whip = Math.min(H.whip, release * .5), hold = release - whip;
+  const coilAt = Math.min(H.coilAt, hold * .9);
+  const restEnd = Math.max(release + H.rest, interval);
+  const end = restEnd + H.ret;
+  const t = Math.max(0, Math.min(end, elapsed));
+  if (t <= coilAt) return (t / Math.max(1e-6, coilAt)) * .15;
+  if (t <= hold) return .15;
+  if (t <= release) return .15 + ((t - hold) / Math.max(1e-6, whip)) * .08;
+  if (t <= restEnd) return .23 + ((t - release) / Math.max(1e-6, restEnd - release)) * (.42 - .23);
+  if (held) return .42;
+  return .42 + ((t - restEnd) / Math.max(1e-6, end - restEnd)) * (.68 - .42);
+}
 // Splat Roller vertical footage NablZy7jqxO, 60fps: wind back through
 // f400-420, last upward turn f422-424, ink f426, low follow-through f430-440,
 // carry returning f442-448. These are presentation fits, not input-frame data.
@@ -867,8 +881,30 @@ export const VERTICAL_ROLLER_SWING = Object.freeze({ whip: 4 / 60, crestLead: 2 
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval, shape = null, held = false) {
-  // Keep the separately calibrated Dynamo path until its vertical footage is measured.
-  if (shape === 'heavy') return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, true, held);
+  // Dynamo vertical swing uses HEAVY_ROLLER_SWING phase timing with prompt low follow-through settlement.
+  if (shape === 'heavy') {
+    const H = HEAVY_ROLLER_SWING, release = Math.max(1e-6, windup);
+    const whip = Math.min(H.whip, release * .5), hold = release - whip;
+    const coilAt = Math.min(H.coilAt, hold * .9);
+    let restEnd, end, settle;
+    if (held) {
+      end = Math.max(release + 2 / 60, interval);
+      settle = release + Math.min(H.verticalSettle, (end - release) * .35);
+      restEnd = Math.max(settle + (end - settle) * .1, release + (end - release) * .5);
+    } else {
+      restEnd = Math.max(release + H.rest, interval);
+      end = restEnd + H.ret;
+      settle = release + Math.min(H.verticalSettle, (restEnd - release) * .5);
+    }
+    const follow = { a: VERTICAL_GRIPS[3].a, r: [H.verticalFollowPitch, 0, Math.PI / 2] };
+    const k = [VERTICAL_GRIPS[0], VERTICAL_GRIPS[1], VERTICAL_GRIPS[1], VERTICAL_GRIPS[2], follow, follow, held ? ROLL_GRIP : VERTICAL_GRIPS[4]];
+    const times = [0, coilAt, hold, release, settle, restEnd, end];
+    const t = Math.max(0, Math.min(end, elapsed));
+    const { anchor, rotation } = hermiteKeys(k, times, t);
+    return { anchor, rotation, weight: ease(t / (2 / 60)) * (held ? 1 : 1 - ease((t - restEnd) / (end - restEnd))),
+      coil: ease(t / coilAt) * (1 - ease((t - hold) / whip)),
+      whip: ease((t - hold) / whip) * (1 - ease((t - restEnd) / (end - restEnd))) };
+  }
   const V = VERTICAL_ROLLER_SWING, release = Math.max(1e-6, windup);
   const whip = Math.min(V.whip, release * .3), hold = release - whip;
   const crest = release - Math.min(V.crestLead, whip * .5);
@@ -948,7 +984,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const supportBlend = this._s3RollerGripBlend || 0;
     const supportDef = this.weapon?.def;
     if (limb === this.limbs.armL && this.weaponKind === 'roller' && this.kidForm && !this.dance &&
-        !this.actor?.specialActive && orientation && weight > .999 && this.P[C.LTW] < .001 &&
+        specialAllowsMainWeapon(this.actor) && orientation && weight > .999 && this.P[C.LTW] < .001 &&
         !this.P[C.SPIN] && supportBlend > .001 && supportDef?.fold?.pivot &&
         Math.abs(supportDef.gripL.handZ.x) + Math.abs(supportDef.gripL.handZ.y) < 1e-8 && supportDef.gripL.handZ.z > .999) {
       if (!supportWeaponPos) {
@@ -1014,7 +1050,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
       // A held special replaces the roller with its own two-hand prop. Its
       // wrist targets must use the native solver, never roller drum alignment.
-      this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
+      this.kidForm && !this.dance && specialAllowsMainWeapon(this.actor) && !!orientation && weight > .999 && !this.P[C.SPIN];
     if (!isRightRoller) {
       if (limb === this.limbs.armR) {
         shaftReturn.clear(this);
@@ -1390,9 +1426,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // Torso effort and arm IK remain native, but the actual two-hand grip
       // is sampled directly from the Runner's release time instead of
       // borrowing the incompatible fixed .23/.68-second preview timeline.
-      const age = state.elapsed < state.windup
-        ? state.elapsed / state.windup * .23
-        : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
+      const swingInterval = state.swingInterval ?? state.interval;
+      const age = state.swingShape === 'heavy'
+        ? heavyHorizontalTorsoAge(state.elapsed, state.windup, swingInterval, state.holdRoll === true)
+        : state.elapsed < state.windup
+          ? state.elapsed / state.windup * .23
+          : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
       const depth=this._s3FlickPoseDepth||0,pool=this._s3FlickPoseScratch||=([]);
       let base=pool[depth];
       if(!base||base.length!==P.length||base.constructor!==P.constructor)base=pool[depth]=new P.constructor(P.length);

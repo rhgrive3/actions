@@ -85,11 +85,12 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
   let enemy = target?.alive && target.team !== actor.team && finitePoint(target.pos) ? target : bossEnemy(actor, target, brain, world);
   const recognized = enemy?.botBossTarget ? true : brain && brain.target === target && brain.seeTimer > 0;
   const eye = { x: actor.pos.x, y: actor.pos.y + 1.1, z: actor.pos.z };
+  const losEye = { x: actor.pos.x, y: actor.pos.y + 1.3, z: actor.pos.z };
   let visible = false;
   if (enemy && recognized && typeof world?.physics?.los === 'function') {
     const ep = enemy.pos;
-    const targetEye = { x: ep.x, y: ep.y + (enemy.botBossTarget ? 0 : enemy.form === 'squid' ? 0.3 : 0.85), z: ep.z };
-    visible = world.physics.los(eye, targetEye) === true;
+    const targetEye = { x: ep.x, y: ep.y + (enemy.botBossTarget ? 0 : enemy.form === 'squid' ? 0.3 : 1.0), z: ep.z };
+    visible = world.physics.los(losEye, targetEye) === true;
   }
   // Do not expose a live position after recognition or line of sight is lost.
   if (!visible) enemy = null;
@@ -160,19 +161,19 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
           // Kraken remains a squid and falls through grates. The ordinary
           // navigation height includes them, so probe the actual support too.
           if (!probe || typeof world.physics.raycast !== 'function') return false;
-          origin.set(x, ground + 0.65, z);
+          origin.set(x, ground + 0.85, z);
           probe.hit = false;
-          world.physics.raycast(origin, down, 1.2, probe, true);
+          world.physics.raycast(origin, down, 1.65, probe, true);
           y = probe.hit && probe.normal.y >= 0.68 ? probe.point.y : -Infinity;
-        } else y = world.level.groundHeight(x, z, ground + 0.65);
-        if (!Number.isFinite(y) || y < ground - 0.55 || y > ground + 0.65) return false;
+        } else y = world.level.groundHeight(x, z, ground + 0.85);
+        if (!Number.isFinite(y) || y < ground - 0.75 || y > ground + 0.85) return false;
         if (side === 0) ground = y;
       }
     }
     for (let s = 0; s < 3; s++) {
       const side = s === 0 ? 0 : s === 1 ? -width : width;
-      start.x = actor.pos.x - uz * side; start.y = actor.pos.y + 0.45; start.z = actor.pos.z + ux * side;
-      end.x = actor.pos.x + ux * reach - uz * side; end.y = ground + 0.45; end.z = actor.pos.z + uz * reach + ux * side;
+      start.x = actor.pos.x - uz * side; start.y = actor.pos.y + 0.55; start.z = actor.pos.z + ux * side;
+      end.x = actor.pos.x + ux * reach - uz * side; end.y = ground + 0.55; end.z = actor.pos.z + uz * reach + ux * side;
       if (!world.physics.los(start, end)) return false;
       // Unlike perception LOS, segment() includes solid grate/wall contacts.
       if (typeof world.physics.segment === 'function' && world.physics.segment(start, end)?.hit) return false;
@@ -183,7 +184,7 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
     if (!move?.set || !finitePoint(point) || !Number.isFinite(scale)) return false;
     const dx = point.x - actor.pos.x, dz = point.z - actor.pos.z, length = Math.hypot(dx, dz);
     const direction = scale < 0 ? { x: actor.pos.x - dx, y: actor.pos.y, z: actor.pos.z - dz } : point;
-    if (length < 1e-5 || !ctx.safePath(direction, 1.2)) { move.set(0, 0, 0); return false; }
+    if (length < 1e-5 || (!ctx.safePath(direction, 1.2) && !ctx.safePath(direction, 0.65))) { move.set(0, 0, 0); return false; }
     const amount = Math.max(-1, Math.min(1, scale));
     move.set(dx / length * amount, 0, dz / length * amount);
     return true;

@@ -12,6 +12,8 @@
 // sub, special) stays immediate, as does every frame owned by a native-stage
 // traversal (climb/drop/jump attach) and death, super jump and specials.
 // INKWAVE bot behaviour, not a Splatoon 3 measurement.
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 export const BOT_FORM_HOLD = 0.3;
 
 export function stabilizeBotForm(actor, dt, traversal = false) {
@@ -20,7 +22,7 @@ export function stabilizeBotForm(actor, dt, traversal = false) {
   const want = !!it.squid;
   const s = actor._s3BotForm || (actor._s3BotForm = { squid: want, t: Infinity });
   s.t += Number.isFinite(dt) && dt > 0 ? dt : 0;
-  if (!actor.alive || actor.superJumpState || actor.specialActive || actor.climbing || traversal) {
+  if (!actor.alive || actor.superJumpState || !specialAllowsMain(actor) || actor.climbing || traversal) {
     s.squid = want; s.t = Infinity; return;
   }
   // Keep humanoid form while aiming or releasing a sub weapon so squid intent
@@ -32,7 +34,9 @@ export function stabilizeBotForm(actor, dt, traversal = false) {
   }
   if (want === s.squid) return;
   const action = !want && (it.fire || it.sub || it.special || it.throw);
-  if (action || s.t >= BOT_FORM_HOLD) { s.squid = want; s.t = 0; return; }
+  // Entering swim to cancel a held charge (e.g. Zipcaster target loss) must stay immediate.
+  const cancelCharge = want && !it.fire && !!actor.weaponRunner?.charging;
+  if (action || cancelCharge || s.t >= BOT_FORM_HOLD) { s.squid = want; s.t = 0; return; }
   it.squid = s.squid;
   // Holding squid form cancels nothing else; holding human form keeps the
   // humanoid move intent unchanged.

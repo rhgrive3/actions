@@ -3,6 +3,7 @@
 // Delegates each of the 8 weak weapon families (39 individual weapons) to its
 // dedicated O(1) zero-allocation module grounded in Splatoon 3 mechanics.
 import { botRawWeaponFamily } from './bot-turf-paint.mjs';
+import { specialAllowsMain } from './bot-special-movement.mjs';
 import { applyChargerCombat } from './bot-ai-charger.mjs';
 import { applyBlasterCombat } from './bot-ai-blaster.mjs';
 import { applyRollerCombat } from './bot-ai-roller.mjs';
@@ -83,7 +84,7 @@ function clampMoveInsideAlliedBubbler(actor, move, ctx) {
 
 export function botWeakWeaponCombat(brain, G, actor, dt, move, ctx) {
   if (!brain || !actor || !ctx) return null;
-  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) return null;
+  if (actor.alive === false || !specialAllowsMain(actor) || actor.superJumpState || actor.climbing) return null;
 
   const w = actor.weapon;
   const rawFamily = botRawWeaponFamily(w, ctx.family);

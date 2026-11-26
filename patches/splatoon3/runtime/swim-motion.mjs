@@ -3,6 +3,7 @@
 // Keep the native squid mesh, material deformation, eyes and IK. Integrate the
 // oscillators instead of multiplying a changing frequency by Character.t.
 import { movementMotionSnapshot } from './movement-motion.mjs';
+import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.swim-motion.install.v1');
 const TAU = Math.PI * 2;
@@ -37,12 +38,12 @@ function eligible(ch, s, owner) {
     && !(ch.formPrev === 'kid' && ch.formT < .45)
     && ch.root.visible && ch.root.parent?.visible !== false
     && s.hp !== 0 && !s.subAim && !s.firing && !s.rolling && !(s.charge > .01)
-    && owner?.alive !== false && !owner?.specialActive && !owner?.superJumpState
+    && owner?.alive !== false && (!owner?.specialActive || specialAllowsMainWeapon(owner) || specialKeepsNativeForm(owner.specialActive.id)) && !owner?.superJumpState
     && !owner?.weaponRunner?.aimingSub && !owner?.weaponRunner?.dodge
     && !owner?.weaponRunner?.rolling && !(owner?.weaponRunner?.charge > .01)
     && !(owner?.weaponRunner?.lockT > 0)
     && !owner?.s3?.actions?.roll && !owner?.s3?.actions?.surge
-    && !(frame && (!frame.alive || frame.special || frame.superJump
+    && !(frame && (!frame.alive || (frame.special && !specialKeepsNativeForm(frame.special.id)) || frame.superJump
       || frame.actions?.roll || frame.actions?.surge))
     && !movementMotionSnapshot(ch)?.phase;
 }
@@ -206,7 +207,7 @@ export function installSwimMotion({ Character, Actor, THREE }, _profile) {
       const original = Actor.prototype[method]; if (!original) continue;
       Actor.prototype[method] = function (...args) {
         const result = original.apply(this, args);
-        if (method === 'reset' || !this.alive || this.specialActive || this.superJumpState)
+        if (method === 'reset' || !this.alive || (this.specialActive && !specialAllowsMainWeapon(this) && !specialKeepsNativeForm(this.specialActive.id)) || this.superJumpState)
           if (this.character) clear(this.character, states);
         return result;
       };

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SUB, SPECIALS } from '../../../src/config.js';
+import { captureNav, followNav, strafe } from './bot-special-movement.mjs';
 import { specialDeviceFlight } from './special-device-flight.mjs';
 import { fidelityThrowVelocity } from './sub-special-fidelity.mjs';
 import { STORM_FLY_GRAVITY, STORM_FLY_AIR_RESIST } from './kit-subs.mjs';
@@ -27,6 +28,47 @@ const finitePoint = p => {
 };
 const flatDistance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+function moveWhileHolding(ctx, scale = 0.55) {
+  if (ctx.visible && ctx.enemy && strafe(ctx, ctx.enemy.pos, scale)) return;
+  if (followNav(ctx, Math.min(0.7, scale + 0.15))) return;
+  ctx.move?.set?.(0, 0, 0);
+}
+
+function fallbackThrow(ctx, memory, intent, native, shot) {
+  const { actor, special } = ctx;
+  const yaw = Number.isFinite(actor.aimYaw) ? actor.aimYaw : (Number.isFinite(actor.yaw) ? actor.yaw : 0);
+  ctx.wantYaw = yaw;
+  ctx.wantPitch = 0.25;
+  ctx.aimDistance = 12;
+  ctx.aimChanged = true;
+  if (special === 'superChump') {
+    intent.fire = true;
+    memory.activeHoldElapsed = 0;
+    return true;
+  }
+  if (special === 'bubbler') return true;
+  if (special === 'tripleInkstrike' && (native?.t || 0) < (native?.nextMarkerStart || 0)) {
+    intent.sub = !!memory.holding;
+    return true;
+  }
+  if (!memory.holding) {
+    memory.holding = true;
+    memory.holdTime = 0;
+    intent.sub = true;
+    return true;
+  }
+  if ((memory.holdTime || 0) < 0.12) {
+    intent.sub = true;
+    return true;
+  }
+  intent.sub = false;
+  memory.holding = false;
+  memory.releasedShot = shot;
+  memory.releasedAt = memory.supportClock;
+  memory.activeHoldElapsed = 0;
+  return true;
+}
 
 function goalPoint(ctx) {
   // A combat path may have been made from a now-hidden enemy. Never read that
@@ -262,15 +304,17 @@ function aimPlan(ctx, point) {
 
 export function driveSupportSpecial(ctx) {
   if (!IDS.has(ctx.special)) return false;
+  captureNav(ctx);
   const { actor, intent, state, memory } = ctx;
   if (!actor?.alive || !finitePoint(actor.pos)) {
-    if (memory) { memory.holding = false; memory.holdTime = 0; }
+    if (memory) { memory.holding = false; memory.holdTime = 0; memory.activeHoldElapsed = 0; }
     return false;
   }
   if (memory.activeState !== state) {
     memory.activeState = state;
     memory.holding = false;
     memory.holdTime = 0;
+    memory.activeHoldElapsed = 0;
     memory.initialized = false;
     memory.releasedShot = -1;
     memory.releasedAt = -Infinity;
@@ -279,7 +323,6 @@ export function driveSupportSpecial(ctx) {
     memory.replanAt = 0;
     if (memory.aimCache) memory.aimCache.point = null;
   }
-  if (!actor.grounded) { if (state && memory.holding) intent.sub = true; return true; }
   const dt = Number.isFinite(ctx.dt) && ctx.dt > 0 ? ctx.dt : 0;
   memory.supportClock = (Number.isFinite(memory.supportClock) ? memory.supportClock : 0) + dt;
   const native = actor._s3AllSpecialState?.id === ctx.special ? actor._s3AllSpecialState : null;
@@ -296,13 +339,38 @@ export function driveSupportSpecial(ctx) {
     }
   }
   const pending = activeThrow || releaseGrace;
+  const waitingMarker = ctx.special === 'tripleInkstrike' && (native?.t || 0) < (native?.nextMarkerStart || 0);
+  if (state && !pending && !waitingMarker) {
+    memory.activeHoldElapsed = (Number.isFinite(memory.activeHoldElapsed) ? memory.activeHoldElapsed : 0) + dt;
+    if (memory.holding) memory.holdTime = (Number.isFinite(memory.holdTime) ? memory.holdTime : 0) + dt;
+  } else if (!state || pending) {
+    memory.activeHoldElapsed = 0;
+  } else if (memory.holding) {
+    memory.holdTime = (Number.isFinite(memory.holdTime) ? memory.holdTime : 0) + dt;
+  }
+  const timedOut = !!(state && !pending && memory.activeHoldElapsed >= 1.5);
+  if (!actor.grounded) {
+    if (state) {
+      moveWhileHolding(ctx);
+      if (timedOut) return fallbackThrow(ctx, memory, intent, native, shot);
+      if (memory.holding) intent.sub = true;
+    }
+    return true;
+  }
   if (!pending && (!memory.point || memory.shot !== shot || memory.supportClock >= (memory.replanAt || 0))) {
     memory.point = choosePoint(ctx, !!state);
     memory.shot = shot; memory.replanAt = memory.supportClock + .25;
   }
   const point = memory.point;
   // Inapplicable or duplicate support must not steal the ordinary gun aim.
-  if (!point) { if (state && memory.holding) intent.sub = true; return true; }
+  if (!point) {
+    if (state) {
+      moveWhileHolding(ctx);
+      if (timedOut) return fallbackThrow(ctx, memory, intent, native, shot);
+      if (memory.holding) intent.sub = true;
+    }
+    return true;
+  }
   if (!state && (!actor.specialReady?.() || covered(ctx, point))) return true;
   const prevYaw = ctx.wantYaw, prevPitch = ctx.wantPitch, prevDist = ctx.aimDistance, prevChanged = ctx.aimChanged;
   let ac = memory.aimCache;
@@ -337,7 +405,11 @@ export function driveSupportSpecial(ctx) {
   }
   if (!aimOk) {
     ctx.wantYaw = prevYaw; ctx.wantPitch = prevPitch; ctx.aimDistance = prevDist; ctx.aimChanged = prevChanged;
-    if (state && memory.holding) intent.sub = true;
+    if (state) {
+      moveWhileHolding(ctx);
+      if (timedOut) return fallbackThrow(ctx, memory, intent, native, shot);
+      if (memory.holding) intent.sub = true;
+    }
     return true;
   }
   if (!state) {
@@ -348,10 +420,12 @@ export function driveSupportSpecial(ctx) {
     ctx.move.set(0, 0, 0);
     return true;
   }
-  ctx.move.set(0, 0, 0);
+  if (waitingMarker && ((native?.nextMarkerStart || 0) - (native?.t || 0)) > 0.18) moveWhileHolding(ctx, 0.45);
+  else ctx.move.set(0, 0, 0);
   if (pending) { intent.sub = false; return true; }
   if (ctx.special === 'superChump') {
-    intent.fire = ctx.isAimed(.12);
+    intent.fire = ctx.isAimed(.12) || timedOut;
+    if (intent.fire) memory.activeHoldElapsed = 0;
     return true;
   }
   if (ctx.special === 'bubbler') return true;
@@ -359,11 +433,11 @@ export function driveSupportSpecial(ctx) {
   if (!memory.holding) {
     memory.holding = true; memory.holdTime = 0; intent.sub = true; return true;
   }
-  memory.holdTime = (Number.isFinite(memory.holdTime) ? memory.holdTime : 0) + dt;
   intent.sub = true;
-  if (memory.holdTime < .12 || !ctx.isAimed(.1) ||
+  if (memory.holdTime < .12 || (!ctx.isAimed(.1) && !timedOut) ||
     ctx.special === 'tripleInkstrike' && (native?.t || 0) < (native?.nextMarkerStart || 0)) return true;
   // Do not recompute the target during the Actor's release windup.
   intent.sub = false; memory.holding = false; memory.releasedShot = shot; memory.releasedAt = memory.supportClock;
+  memory.activeHoldElapsed = 0;
   return true;
 }

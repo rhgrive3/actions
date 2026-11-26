@@ -1,5 +1,6 @@
 import {box as fullBox,sphere as fullSphere,zlathe as fullZlathe,zcyl as fullZcyl,ring as fullRing,pipe as fullPipe,cyl as fullCyl} from './kit.mjs';
 import { BRELLA_APERTURE } from '../brella-aperture.mjs';
+import { specialAllowsMainWeapon } from '../special-presentation-owner.mjs';
 // Brella family models (Splatoon 3 Ver.11.3.0): Splat Brella, Tenta Brella, Undercover Brella,
 // Recycled Brella 24 Mk I. The catalogue gives them the shooter model kind (pistol grip, trigger / led channels);
 // each model is the gun body (pistol or crook grip, shaft = shotgun barrel, hub with the nozzle) plus a separate
@@ -330,7 +331,7 @@ function guardPose(ch, dt, s, C) {
   const active = !!canopy?.open && !canopy.launched;
   if (!m && !active) return;
   if (!m || m.weapon !== ch.weapon) { m = { weapon:ch.weapon, w:0, p:[0,0,0], r:[0,0,0] }; guardStates.set(ch,m); }
-  if (!ch.kidForm || ch.dance || r?.a?.specialActive || s.subAim || (ch.wSub || 0) > .01 || s.firing) { m.w = 0; return; }
+  if (!ch.kidForm || ch.dance || !specialAllowsMainWeapon(r?.a) || s.subAim || (ch.wSub || 0) > .01 || s.firing) { m.w = 0; return; }
   m.w = damp(m.w, active ? 1 : 0, active ? 22 : 14, Math.min(.1,Math.max(0,dt||0)));
   if (m.w < .001) { m.w = 0; return; }
   if (active) {

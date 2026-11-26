@@ -2,6 +2,7 @@
 // snapshots can pose cloth. This never creates a gameplay canopy, HP or paint.
 import { getWeaponDef } from '../../../src/game/character-weapons.js';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const TAG='inkwave.brella-view.v1', INSTALL=Symbol.for(TAG), HEADER=13, STRIDE=9, MAX_FLIGHTS=4;
 const HELD_INTERRUPT=2|2048|8192|16384|32768;
 const integer=n=>Number.isSafeInteger(n)&&n>=0;
@@ -47,7 +48,7 @@ export function installBrellaNetwork(api){
     if(!row){row=new Array(HEADER);localRows.set(actor,row);}
     const s=actor.weaponRunner?.catalogState,c=s?.canopy;
     row[0]=TAG;row[1]=actor.netLife??0;row[2]=message.u;row[3]=family(actor)?actor.weapon.catalogRecord.id:null;
-    row[4]=family(actor)&&actor.alive&&actor.form==='kid'&&!actor.specialActive&&!actor.superJumpState&&!actor.weaponRunner?.aimingSub
+    row[4]=family(actor)&&actor.alive&&actor.form==='kid'&&specialAllowsMainWeapon(actor)&&!actor.superJumpState&&!actor.weaponRunner?.aimingSub
       ? c?.open?2:c?.preparing?1:0 : 0;
     row[5]=family(actor)&&Number.isFinite(s?.naked)?Math.max(0,s.naked):0;
     const pos=c?.pos,dir=c?.dir;

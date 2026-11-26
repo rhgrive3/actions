@@ -17,7 +17,7 @@ import { slosherIntermediateSpec } from './slosher-intermediate-paint.mjs';
 import { catalogFieldUnitCanDamage, catalogFlickSourceDamage } from './catalog-flick-damage.mjs';
 import { catalogDepletionPayment, catalogDepletedUnitCount,
   catalogDepletedUnitSpeed, catalogDepletedDescriptor } from './catalog-depletion.mjs';
-import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
+import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
 import { spawnSplashDrop, paintDistanceFlight, advanceSplashDrops, ownDistanceFlightState, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
@@ -879,6 +879,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(h.hit&&h.normal.y>=.5)paint(a,h.point,radius,1,null,h.face,mainInkFootprint(a.weapon));
       }
     }
+    if(r.family==='charger'&&!a.remote&&a.alive!==false){
+      const radius=finite(desc.b.SplashPaintParam?.RadiusSpawnNearest,0);
+      const minRate=finite(desc.b.SplashSpawnParam?.SpawnNearestChargeRate,0);
+      if(radius>0&&charge>=minRate){
+        base.set(a.pos.x,a.pos.y+.2,a.pos.z);
+        const h=G.physics.raycast(base,down,3.5,floorHit,true);
+        if(h.hit&&G.paint?.splat){
+          const area=G.paint.splat(base.copy(h.point).addScaledVector(h.normal,.1),radius,a.team,{seed:0,footprint:mainInkFootprint(r),kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:a});
+          a.addTurf?.(area);
+        }
+      }
+    }
     // Only an admitted, spawned catalogue round consumes the chosen hand.
     // Hand-specific physics muzzle, network birth and visual trigger agree.
     if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
@@ -1060,8 +1072,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const rx=Object.is(rightYaw,yawZ)?fz:Math.cos(rightYaw),backYaw=a.yaw,rz=-(Object.is(backYaw,yawX)?fx:Math.sin(backYaw));
     // SplashNearest's downward offset and MaxHeight bound the ground query, so a
     // high airborne swing paints nothing under the player (native foot-paint rule).
-    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);
-    const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);
+    const lift=Math.max(.65,n.MaxHeight);
+    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+lift,a.pos.z+rz*o.X+fz*o.Z);
+    const h=G.physics.raycast(base,down,lift+Math.abs(o.Y),floorHit,true);
     if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face,mainInkFootprint(a.weapon));
   }
   function emitArrow(runner,r,charge) {

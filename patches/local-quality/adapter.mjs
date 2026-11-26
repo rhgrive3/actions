@@ -179,7 +179,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
-  'resource-adapter.mjs', 'shadow-visibility-pass.mjs', 'resource-budget.mjs', 'gtao-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
+  'resource-adapter.mjs', 'shadow-visibility-pass.mjs', 'resource-budget.mjs', 'gtao-budget.mjs', 'grade-output-fusion.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'ui-actor-lifetime-adapter.mjs',
   'tenacity-adapter.mjs', 'tenacity.mjs',

@@ -6,6 +6,7 @@ import { applySplatanaTurfPaint } from './bot-ai-splatana.mjs';
 import { applyBrushTurfPaint } from './bot-ai-brush.mjs';
 import { applySplatlingTurfPaint } from './bot-ai-splatling.mjs';
 import { applyBrellaTurfPaint } from './bot-ai-brella.mjs';
+import { specialAllowsMain, specialAllowsSub } from './bot-special-movement.mjs';
 // Bot Turf War painting, sub-archetype calibration & 3-phase tactical runtime module (2026-11-08).
 // Grounded in authentic Splatoon 3 Turf War strategy guides:
 // - MatchGuyのスプラ塾「効率のいい塗り方」(https://spl3.ink/matchguy-vol03/):
@@ -566,7 +567,7 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
   if (!brain || !actor) return;
   const it = actor.intent;
   if (!it) return;
-  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) {
+  if (actor.alive === false || !specialAllowsMain(actor) || actor.superJumpState || actor.climbing) {
     brain._coolerPickupPending = false;
     return;
   }
@@ -702,7 +703,7 @@ export function botApplyTurfPaintMechanics(brain, G, actor, dt, move, wantMove, 
       (brain.bombCd || 0) <= 0 &&
       !it.sub &&
       !wrBusyForSub &&
-      !actor.specialActive &&
+      specialAllowsSub(actor) &&
       (!subId || (timeLeft >= 2.4 && (subId === 'burst' || subId === 'curling' || subId === 'fizzy')))
     ) {
       it.sub = true;
@@ -724,7 +725,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   if (!brain || !actor) return basePitch;
   const it = actor.intent;
   if (!it) return basePitch;
-  if (actor.alive === false || actor.specialActive || actor.superJumpState || actor.climbing) {
+  if (actor.alive === false || !specialAllowsMain(actor) || actor.superJumpState || actor.climbing) {
     brain._coolerPickupPending = false;
     return basePitch;
   }
@@ -761,7 +762,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
     !it.sub &&
     !it.special &&
     !wrBusyForSub &&
-    !actor.specialActive
+    specialAllowsSub(actor)
   ) {
     it.sub = true;
     it.fire = false;
@@ -772,7 +773,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   if (it.sub || brain._bombAim || wr?.aimingSub) return basePitch;
 
   // 2. Final 6.5s buzzer-beater weapon release & tap-slashing in fight mode
-  if (tLeft <= 6.5 && !actor.specialActive && inkFrac > 0.14) {
+  if (tLeft <= 6.5 && specialAllowsMain(actor) && inkFrac > 0.14) {
     if (rawFamily === 'charger' || srcActor === 'WeaponChargerLong') {
       if (wr?.charging && wr.charge >= 0.45) {
         it.fire = false;
@@ -806,7 +807,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
     if (!brain._coolerPickupPending && rawFamily === 'roller' && actor.groundTeam === 1 && wantMove && !(wr?.flick >= 0) && !wr?.catalogState?.pending && brain._rollerCombatState !== 'commit_flick') {
       it.fire = false;
       it.squid = true;
-    } else if (actor.groundTeam !== 1 && inkFrac > 0.18 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging) {
+    } else if (actor.groundTeam !== 1 && inkFrac > 0.18 && specialAllowsMain(actor) && !actor.specialReady?.() && !wr?.charging) {
       if (rawFamily === 'splatana') {
         if (!actor._prevIntent?.fire && !wr?.catalogState?.pending && !wr?.catalogState?.melee && (wr?.cooldown || 0) <= 1e-6) {
           it.fire = true;
@@ -848,7 +849,7 @@ export function botApplyTurfCombatPaint(brain, G, actor, dt, move, wantMove, wan
   }
 
   // 4. Enemy ink underfoot clearing ("足元塗り"): stuck on enemy ink during fight
-  if (!it.fire && actor.groundTeam === 2 && inkFrac > 0.14 && !actor.specialActive && !actor.specialReady?.() && !wr?.charging && (wr?.cooldown || 0) <= 1e-6) {
+  if (!it.fire && actor.groundTeam === 2 && inkFrac > 0.14 && specialAllowsMain(actor) && !actor.specialReady?.() && !wr?.charging && (wr?.cooldown || 0) <= 1e-6) {
     let canClear = false;
     if (rawFamily === 'splatana') {
       if (!actor._prevIntent?.fire && !wr?.catalogState?.pending && !wr?.catalogState?.melee) {

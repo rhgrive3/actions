@@ -81,7 +81,7 @@ function kraken(ctx) {
   }
   stop(ctx);
   if (!st || st.phase === 'startup' || st.phase === 'finish' || !Number.isFinite(st.t) || st.t < 1 - EPS) return;
-  if (st.phase === 'dash') return; // The native released dash owns its heading.
+  if (st.phase === 'dash') { memory.krakenHoldLost = 0; return; } // The native released dash owns its heading.
   const near = target && ctx.distance <= 2.5 && Math.abs(ctx.height) <= 2;
   const chargeTarget = target && ctx.distance >= 3 && ctx.distance <= 13 && Math.abs(ctx.height) <= .8;
   const enoughTime = remaining(ctx, st) > KRAKEN_MOVEMENT.chargeTime + KRAKEN_MOVEMENT.dashTime + .15;
@@ -91,18 +91,41 @@ function kraken(ctx) {
     // Recheck the complete committed corridor at release, not every charge
     // frame. During charging the body moves only slowly; probe that local path.
     const clear = chargeTarget && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), ready ? 12 : 1.5);
-    // An early release cancels charging. A FULL charge releases a real dash:
-    // hold it if the target died/disappeared or the route became unsafe.
-    intent.fire = ready ? !(clear && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) : clear && enoughTime;
+    if (!ready) {
+      memory.krakenHoldLost = 0;
+      intent.fire = clear && enoughTime;
+      return;
+    }
+    if (clear && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) {
+      memory.krakenHoldLost = 0;
+      intent.fire = false;
+      return;
+    }
+    // Hold briefly (0.65s) so a momentary target loss does not trigger a blind
+    // dash, then break out of the charge-hold freeze by dashing safely or roaming.
+    memory.krakenHoldLost = (Number.isFinite(memory.krakenHoldLost) ? memory.krakenHoldLost : 0) + ctx.dt;
+    if (memory.krakenHoldLost < .65) {
+      intent.fire = true;
+      return;
+    }
+    if (safeRush(ctx, facing(ctx), 12) && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) {
+      memory.krakenHoldLost = 0;
+      intent.fire = false;
+    } else {
+      intent.fire = true;
+      if (target) { if (!ctx.moveToward(ctx.enemy.pos, .7)) strafe(ctx, ctx.enemy.pos, .7); }
+      else roam(ctx, .7);
+    }
     return;
   }
+  memory.krakenHoldLost = 0;
   if (near && remaining(ctx, st) > .2) {
     hop(ctx, .28);
     if (ctx.distance > 1.8) ctx.moveToward(ctx.enemy.pos, .45);
   } else if (chargeTarget && enoughTime && ctx.isAimed(.12) && safeRush(ctx, facing(ctx), 12)) {
     intent.fire = true;
-  } else if (target && Math.abs(ctx.height) <= 2 && ctx.distance > 2.5 && remaining(ctx, st) > 1.3) {
-    if (!ctx.moveToward(ctx.enemy.pos)) strafe(ctx, ctx.enemy.pos);
+  } else if (target && ctx.distance > 2.5) {
+    if (!ctx.moveToward(ctx.enemy.pos) && !strafe(ctx, ctx.enemy.pos)) roam(ctx);
   } else if (!target) {
     // A Kraken that sits motionless for its whole duration is the most
     // unnatural possible use; keep swimming toward the fight.
@@ -203,8 +226,16 @@ function stamp(ctx) {
   }
   if (!target) {
     // Releasing a previously held throw would launch blindly. Keep holding
-    // until a visible target returns or the normal special duration expires.
-    if (memory.stampAimThrow) { intent.sub = true; roam(ctx, .6); return; }
+    // while roaming until a visible target returns or the hold timeout expires.
+    if (memory.stampAimThrow) {
+      memory.stampAimHoldT = (Number.isFinite(memory.stampAimHoldT) ? memory.stampAimHoldT : 0) + ctx.dt;
+      if (memory.stampAimHoldT >= 1.5) {
+        intent.sub = false; memory.stampAimThrow = false; memory.stampAimHoldT = 0;
+        memory.stampReleased = true; memory.stampReleasedAt = st.t;
+        return;
+      }
+      intent.sub = true; roam(ctx, .6); return;
+    }
     // Keep stamping forward on the way back to the fight instead of
     // standing still with the hammer raised.
     if (roam(ctx)) intent.fire = true;
@@ -217,20 +248,23 @@ function stamp(ctx) {
   const shouldThrow = throwRange && (remaining(ctx, st) < 1.35 || (!reachable && ctx.distance > 4));
   const aimed = shouldThrow || memory.stampAimThrow || memory.stampReleased ? aimStampThrow(ctx, st) : aimEnemy(ctx, .2);
   if (memory.stampAimThrow) {
-    if (aimed && throwRange) {
+    memory.stampAimHoldT = (Number.isFinite(memory.stampAimHoldT) ? memory.stampAimHoldT : 0) + ctx.dt;
+    if ((aimed && throwRange) || memory.stampAimHoldT >= 1.2) {
       // This off edge is the normal sub-release path, not a projectile call.
-      intent.sub = false; memory.stampAimThrow = false; memory.stampReleased = true;
+      intent.sub = false; memory.stampAimThrow = false; memory.stampAimHoldT = 0; memory.stampReleased = true;
       memory.stampReleasedAt = st.t;
     } else {
       intent.sub = true;
       if (ctx.distance > 24) ctx.moveToward(ctx.enemy.pos, .6);
       else if (ctx.distance < 3 && !ctx.moveToward(ctx.enemy.pos, -.6)) strafe(ctx, ctx.enemy.pos, .6);
+      else if (!strafe(ctx, ctx.enemy.pos, .55)) roam(ctx, .5);
     }
     return;
   }
+  memory.stampAimHoldT = 0;
   if (memory.stampReleased) return;
   if (shouldThrow && aimed) {
-    intent.sub = true; memory.stampAimThrow = true; return;
+    intent.sub = true; memory.stampAimThrow = true; memory.stampAimHoldT = 0; return;
   }
   if (!aimed) return;
   // The native jump swing's direct contact is only about 2.5WU ahead.

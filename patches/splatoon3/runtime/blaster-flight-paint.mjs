@@ -248,7 +248,12 @@ function landSplashDrop(game, drop, hit) {
     const centreBack = 0.375 * drop.radius * amount;
     drop.landingDepth = depth;
     if (amount > 0) {
-      drop.next.set(drop.dirX, 0, drop.dirZ);
+      const nx = hit.normal.x, ny = hit.normal.y, nz = hit.normal.z;
+      const dot = drop.dirX * nx + drop.dirZ * nz;
+      const tx = drop.dirX - nx * dot, ty = -ny * dot, tz = drop.dirZ - nz * dot;
+      const len = Math.hypot(tx, ty, tz);
+      if (len > 1e-6) drop.next.set(tx / len, ty / len, tz / len);
+      else drop.next.set(drop.dirX, 0, drop.dirZ);
       point.addScaledVector(drop.next, -centreBack);
       opts.stretch = drop.next; opts.stretchAmt = amount;
     }

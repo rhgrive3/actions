@@ -2,6 +2,7 @@
 // The default braking curve is the existing INKWAVE Splat Dualies calibration,
 // not recovered Nintendo executable code. An explicit Kd is interpreted as
 // geometric per-frame retention, normalized to the source MoveDist.
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const EPS=1e-9,HZ=60;
 const clamp=x=>Math.max(0,Math.min(1,x));
 
@@ -59,7 +60,7 @@ function peakSpeed(motion,preparedK,preparedDuration,preparedLog,preparedDenom) 
 export function catalogDualiesMotion(actor) {
   const s=actor?.weaponRunner?.catalogState;
   const motion=s?.roll||s?.slip;
-  if(!motion||actor?.weapon?.catalogRecord?.family!=='dualies'||actor.remote||actor.alive===false||actor.form!=='kid'||actor.climbing||actor.specialActive||actor.superJumpState)return null;
+  if(!motion||actor?.weapon?.catalogRecord?.family!=='dualies'||actor.remote||actor.alive===false||actor.form!=='kid'||actor.climbing||!specialAllowsMainWeapon(actor)||actor.superJumpState)return null;
   return motion;
 }
 

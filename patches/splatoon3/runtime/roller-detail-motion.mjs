@@ -1,5 +1,5 @@
 import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
-import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
+import { specialMotionAllowsAction, bombMotionAllowsAction, specialAllowsMainWeapon } from './action-admission.mjs';
 // Additive detail for the public Character, installed after roller.mjs. Nintendo
 // footage supports the motion order; these targets are INKWAVE rig calibration,
 // never extracted Nintendo joint angles or a change to the gameplay clock.
@@ -49,7 +49,7 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
   };
   function interrupted(ch, s) {
     const a = ch._owner?.(), r = ch._runner?.(s), tr = ch.tr;
-    return hidden(ch.root) || !ch.kidForm || !!ch.dance || a?.alive === false || !!a?.specialActive || !!a?.superJumpState
+    return hidden(ch.root) || !ch.kidForm || !!ch.dance || a?.alive === false || !specialAllowsMainWeapon(a) || !!a?.superJumpState
       || !!a?.s3?.actions?.roll || !!a?.s3?.actions?.surge
       || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || !bombMotionAllowsAction(ch,tr[T.T_THROW] >= .62)
       || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
