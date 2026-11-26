@@ -2,6 +2,7 @@ import { SnapshotPool } from './snapshot-pool.mjs';
 import { gearCurve } from './gear.mjs';
 import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs';
 import { startSpecialGauge, endSpecialGauge } from './tacticooler-gauge.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 
 // Big Bubbler (Splat Roller special; internal id SpGreatBarrier) for the
 // composed public INKWAVE runtime.
@@ -67,6 +68,7 @@ import { objectDamageRow, objectDamageScale, catalogueAttackRow } from './sub-re
 
 const BUBBLER_ID = 'bubbler';
 const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
+const NET_MATCH_WRAPPED = Symbol('s3BigBubblerNetMatch');
 
 // Pinned raw 11.3.0 values (verbatim from the receipts above).
 export const BIG_BUBBLER_RAW = Object.freeze({
@@ -1577,6 +1579,30 @@ export function installKitBigBubbler(context, profile) {
     resetBigBubblerReplay('match-disposal');   // clears remote domes + dedupe window
     return clear.apply(this, args);
   };
+  const retireReplicas = (actor) => {
+    if (!actor) return;
+    for (const dome of [...remoteDomes]) if (dome.owner === actor) removeDome(dome, 'owner-retire');
+  };
+  if (context?.G) registerReplicaRetirement(context.G, retireReplicas);
+  const netMatchProto = context?.NetMatch?.prototype;
+  if (netMatchProto && !netMatchProto[NET_MATCH_WRAPPED]) {
+    Object.defineProperty(netMatchProto, NET_MATCH_WRAPPED, { value: true, enumerable: false });
+    const leave = netMatchProto.onLeave;
+    if (typeof leave === 'function') {
+      netMatchProto.onLeave = function (id, ...args) {
+        for (const actor of this.byNid?.values?.() || []) if (actor.owner === id) retireReplicas(actor);
+        return leave.call(this, id, ...args);
+      };
+    }
+    for (const name of ['_adopt', '_remove']) {
+      const original = netMatchProto[name];
+      if (typeof original !== 'function') continue;
+      netMatchProto[name] = function (actor, ...args) {
+        retireReplicas(actor);
+        return original.call(this, actor, ...args);
+      };
+    }
+  }
   Object.defineProperty(context, INSTALL, { value: true, enumerable: false });
   return api;
 }

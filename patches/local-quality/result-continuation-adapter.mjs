@@ -5,9 +5,9 @@ export function adaptResultContinuation(rel, code, once) {
     code=once(code,'  dispose() {','  dispose() {\n    clearContinuation(this, true);','continuation disposal');
     code=once(code,'  showResults(data) {','  showResults(data) {\n    clearContinuation(this); this._onlineResultWaiting=null;','continuation results replacement');
     code=once(code,"    const scr = this['_scr_' + name](opts);", "    const scr = this['_scr_' + name](opts);\n    if (name === 'loadout') augmentContinuationLoadout(this, scr);",'continuation existing loadout augmentation');
-    code=once(code,'    const backIn = online ? 12 : 0;', "    const onlineTurf = online && !boss;\n    const backIn = online && boss ? 12 : 0;", 'Turf results have no forced countdown');
-    code=once(code,"const lobbyPill = online ?", "const lobbyPill = online && boss ?", 'Turf explicit continuation status');
-    code=once(code,"const hostBack = online && G.net", "const hostBack = online && boss && G.net", 'Turf host also chooses individually');
+    code=once(code,'    const backIn = online ? 12 : 0;', "    const onlineTurf = online && !boss && (!d.mode || d.mode === 'turf');\n    const backIn = online && !onlineTurf ? 12 : 0;", 'Turf results have no forced countdown');
+    code=once(code,"const lobbyPill = online ?", "const lobbyPill = online && !onlineTurf ?", 'Turf explicit continuation status');
+    code=once(code,"const hostBack = online && G.net", "const hostBack = online && !onlineTurf && G.net", 'Turf host also chooses individually');
     return once(code,'hostBack ? null : lobbyPill, rematch, home','hostBack ? null : lobbyPill, onlineTurf ? resultKeepButton(this, d) : rematch, resultChangeButton(this, d), home','continuation Turf result choice');
   }
   if(rel==='src/main.js'){
@@ -31,8 +31,9 @@ export function adaptResultContinuation(rel, code, once) {
         if (netm.sendEnd() !== false) this.netMatchEnd();
       }, 12000);
     }`;
-    code=once(code, code.includes(timerGuarded) ? timerGuarded : timerRaw,
-      '    // Turf waits for each connected player to keep going or leave.', 'remove Turf forced return');
+    const matchedTimer = code.includes(timerGuarded) ? timerGuarded : timerRaw;
+    code=once(code, matchedTimer,
+      `    // Turf waits for each connected player to keep going or leave.\n    const _iwResMode = m.result?.mode ?? m.mode;\n    if (_iwResMode && _iwResMode !== 'turf') {\n${matchedTimer}\n    }`, 'remove Turf forced return');
     return once(code,'    if (!this.showcase) return;','    if (!this.showcase) return;\n    restoreResultShowcase(this, G, s);','continuation original result podium');
   }
   if(rel==='src/net/session.js'){

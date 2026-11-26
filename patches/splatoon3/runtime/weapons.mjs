@@ -467,6 +467,8 @@ export function installWeapons(context, profile) {
     this.s3ChargerCancelRefillPending = false;
     this.s3SplatlingCancelRefillPending = false;
     this.s3ShooterHeld = false; this.s3ShooterPendingFirst = false; this.s3ShooterFirstRemaining = 0;
+    this.s3ShooterInterruptSub = 0; this.s3ShooterInterruptSquid = 0;
+    this.s3ShooterInterruptJustArmed = false; this.s3ShooterCancelMain = false; this.s3ShooterStreamActive = false;
     this.s3ShooterNearestSlot = 0; // #507: reset only for a new actor life/weapon
     this.s3Accuracy = new ShooterAccuracy(profile.weaponsFidelityCompletion?.weapons?.shooter?.WeaponParam);
     this.s3DualiesAccuracy = new DualiesAccuracy(profile.weaponsFidelityCompletion?.weapons?.dualies?.WeaponParam);
@@ -1133,7 +1135,7 @@ export function installWeapons(context, profile) {
   const fireBlaster = Projectiles.prototype.fireBlaster;
   Projectiles.prototype.fireBlaster = function (a, w, spreadDeg) {
     const state = a?.weaponRunner?.s3BlasterJumpState?.(w);
-    const bias = state?.active ? state.bias : blasterParam.Stand_DegBiasMax;
+    const bias = state?.active ? state.bias : blasterParam?.Stand_DegBiasMax;
     const full = state?.active ? state.envelope : spreadDeg;
     return withShotBias(a, bias, bias, () => fireBlaster.call(this, a, w, full));
   };
@@ -1309,8 +1311,10 @@ export function installWeapons(context, profile) {
     if (sequence === null) return 'rejected';
     const groups = this._s3SlosherOwnerGroups || (this._s3SlosherOwnerGroups = new Map());
     const floors = this._s3SlosherOwnerFloors || (this._s3SlosherOwnerFloors = new Map());
+    if (!attacker) return 'rejected';
     const source = volleySourceKey(attacker);
     const key = volleyOwnerKey(attacker, groupId);
+    if (!key) return 'rejected';
     let group = groups.get(key);
     // Already-admitted groups retain their own committed damage maximum even
     // when an out-of-order newer volley advances the eviction watermark.
@@ -1345,7 +1349,6 @@ export function installWeapons(context, profile) {
     this._s3SlosherOwnerFloors?.clear();
     return clearProjectiles.apply(this, args);
   };
-  installContactRecovery(api);
 }
 
 // Trajectory-preview presentation budget for Issue #798.

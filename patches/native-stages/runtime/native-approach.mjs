@@ -8,6 +8,7 @@ import {nativeDropClearance} from './native-drop.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
 import {nativeTowerRider} from './native-ranked-boarding.mjs';
 import {nativeSourceWallHeights} from './native-jump-attach.mjs';
+import {nativeApproachEdgeAllowed} from './native-bots.mjs';
 import {LEGACY_JUMP_FEEL} from '../../splatoon3/runtime/normal-jump-hold.mjs';
 
 const radius=sq=>(sq?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw)*PLAYER.s3TerrainDistanceScale;
@@ -184,12 +185,4 @@ export function updateNativeApproach(brain,G,dt){
  return true;
 }
 
-/** Forecasts intentionally qualify the zero-AP canonical Shooter only. Other
- * loadouts retain their existing source routes until independently measured. */
-export function nativeApproachEdgeAllowed(actor,edge){
- if(edge.climb?.kind!=='approach'&&edge.climb?.kind!=='gap-jump')return true;
- if(actor?.weaponId!=='shooter')return false;
- const points=actor.s3?.abilityPoints;if(!points)return true;
- for(const key in points)if(Object.hasOwn(points,key)&&points[key]!==0)return false;
- return true;
-}
+export {nativeApproachEdgeAllowed} from './native-bots.mjs';

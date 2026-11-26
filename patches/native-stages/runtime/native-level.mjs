@@ -216,6 +216,7 @@ export class NativeLevel extends Level {
  }
  invalidateMinimapSupport(){this.minimapSupportRevision=(this.minimapSupportRevision||0)+1;}
  groundHeight(x,z,yMax=50){
+  if(!this.triangleWorld?.nodes||this.triangleWorld.nodes.length<8)return -Infinity;
   const yMin=this.triangleWorld.nodes[1]-1;
   if(yMax<yMin)return -Infinity;
   const hit=this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,this._groundOptions,this._groundHit);
@@ -228,6 +229,7 @@ export class NativeLevel extends Level {
   if(this.groundHeight!==NATIVE_GROUND_HEIGHT){
    const y=this.groundHeight(x,z,yMax);return y!==-Infinity&&!(y<minimumY);
   }
+  if(!this.triangleWorld?.nodes||this.triangleWorld.nodes.length<8)return false;
   const yMin=this.triangleWorld.nodes[1]-1;
   if(yMax<yMin)return false;
   this._supportOptions.minHitY=minimumY;

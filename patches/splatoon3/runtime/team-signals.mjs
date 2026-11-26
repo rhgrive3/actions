@@ -71,12 +71,30 @@ export function installTeamSignals({ G, PlayerController, HUD, on, emit }) {
     if (v?.bot && !v.remote) state.pendingOuch.push({ actor: v, at: state.clock + BOT_OUCH_DELAY });
   });
 
+  on?.('match:state', (e) => {
+    const next = typeof e === 'string' ? e : e?.state;
+    if (next !== 'playing') {
+      state.list.length = 0;
+      state.pendingOuch.length = 0;
+      state.last = new WeakMap();
+    }
+  });
+
   const hudUpdate = HUD.prototype.update;
   HUD.prototype.update = function (...args) {
     const result = hudUpdate.apply(this, args);
     drawSignals(this, G, state);
     touchButtons(this, G);
     return result;
+  };
+
+  const hudDispose = HUD.prototype.dispose;
+  HUD.prototype.dispose = function (...args) {
+    this._signalTouch?.remove();
+    this._signalTouch = this._signalTouchUp = this._signalTouchNice = null;
+    for (const el of this._signalEls?.values?.() || []) el.remove();
+    this._signalEls?.clear?.();
+    return hudDispose?.apply(this, args);
   };
   return send;
 }
@@ -94,8 +112,9 @@ function callBots(G, caller) {
 function drawSignals(hud, G, state) {
   const me = G.match?.local, layer = hud.downLayer, cam = G.camera;
   const pool = hud._signalEls || (hud._signalEls = new Map());
-  for (const [rec, el] of pool) if (!state.list.includes(rec) || state.clock - rec.t > SIGNAL_LIFE) { el.remove(); pool.delete(rec); }
-  if (!me || !layer || typeof hud._project !== 'function' || !globalThis.document) return;
+  const active = G.match?.state === 'playing' && !!hud._visible;
+  for (const [rec, el] of pool) if (!active || !state.list.includes(rec) || state.clock - rec.t > SIGNAL_LIFE) { el.remove(); pool.delete(rec); }
+  if (!active || !me || !layer || typeof hud._project !== 'function' || !globalThis.document) return;
   for (const rec of state.list) {
     if (rec.team !== me.team || rec.actor === me || state.clock - rec.t > SIGNAL_LIFE) continue;
     let el = pool.get(rec);

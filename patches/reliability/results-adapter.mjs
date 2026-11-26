@@ -34,7 +34,7 @@ export function adaptResults(rel, code) {
     'room return owners');
   code = replaceOnce(code,
     "      await this._fade(1, 350);\n      this.hud?.setVisible(false);\n      this.hud?.hideSplatted?.();\n      this.showcase.hide();\n      G.mode = 'menu';\n      G.net?.endMatch();",
-    "      await this._fade(1, 350);\n      if (!resultsCurrent()) return;\n      this.hud?.setVisible(false);\n      this.hud?.hideSplatted?.();\n      this.showcase.hide();\n      G.mode = 'menu';\n      net?.endMatch();",
+    "      await this._fade(1, 350);\n      if (!resultsCurrent()) return;\n      this.hud?.setVisible(false);\n      this.hud?.hideSplatted?.();\n      this.showcase.hide();\n      G.mode = 'menu';\n      if (net?.endMatch() === false) {\n        if (this.match === m && G.net === net) this.quitToMenu?.();\n        return;\n      }",
     'room return continuation');
   code = replaceOnce(code,
     '  async _bossResults() {\n    const m = this.match, R = m.result, bo = R.boss || {};',

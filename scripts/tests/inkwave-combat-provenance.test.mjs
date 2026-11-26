@@ -36,7 +36,7 @@ const {installCombatProvenance,combatAdmission,claimCeiling,sampleLocalHistory,v
 // emitted modes. Source-generated predicates below remain a modeled native gate.
 const {commitOwnerTick}=await import(new URL(runtimePaths[1],runtimeRoot));
 const {validActorSnapshotRow}=await import(new URL(runtimePaths[2],runtimeRoot));
-const {stageAcceptedSubBirth,replayWithSubBirthCommit}=await import(new URL(runtimePaths[3],runtimeRoot));
+const {stageAcceptedSubBirth,replayWithSubBirthCommit,stageAcceptedNativeBombBirth,commitCreatedNativeBombBirth}=await import(new URL(runtimePaths[3],runtimeRoot));
 function declaration(source, name) {
   const nodes=parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.map(n=>n.declaration||n);
   const matches=nodes.filter(n=>n.id?.name===name || n.declarations?.some(d=>d.id.name===name));
@@ -95,13 +95,23 @@ class Stub {
       a.net.buf=[snap];a.net.lastLife=snap.life;
       admitted.push({actor:a,nid:a.nid,owner:a.owner,x:snap.x,y:snap.y,z:snap.z});
     }
-    for(const e of d.e||[])if(e[1]==='ac'&&e[2]==='sub'){
-      const a=this.byNid.get(e[3]);if(!a)continue;
-      Object.assign(e,{_netPeer:from,_netTick:e[6],_netSeq:e[7]});
-      if(stageAcceptedSubBirth(this,from,e,d.ts,e[6]))replayWithSubBirthCommit(this,from,e,report=>{
-        if(e[5].phase!=='spawn'||e[4]!==Math.max(a.netLife||0,a.net.lastLife||0)||e[5].subId!==a.weapon.sub)return false;
-        report?.('created',{owner:a,seq:e[5].seq,sourceLife:e[4],subId:e[5].subId});return true;
-      });
+    for(const e of d.e||[]){
+      if(e[1]==='ac'&&e[2]==='sub'){
+        const a=this.byNid.get(e[3]);if(!a)continue;
+        Object.assign(e,{_netPeer:from,_netTick:e[6],_netSeq:e[7]});
+        if(stageAcceptedSubBirth(this,from,e,d.ts,e[6]))replayWithSubBirthCommit(this,from,e,report=>{
+          if(e[5].phase!=='spawn'||e[4]!==Math.max(a.netLife||0,a.net.lastLife||0)||e[5].subId!==a.weapon.sub)return false;
+          report?.('created',{owner:a,seq:e[5].seq,sourceLife:e[4],subId:e[5].subId});return true;
+        });
+      } else if(e[1]==='b'&&e[3]==='bomb'&&(e.length===15||e.length===16)){
+        const a=this.byNid.get(e[2]);if(!a)continue;
+        const tick=e.length===16?e[14]:e[13],seq=e.length===16?e[15]:e[14];
+        Object.assign(e,{_netPeer:from,_netTick:tick,_netSeq:seq});
+        if(stageAcceptedNativeBombBirth(this,from,e,d.ts,tick))commitCreatedNativeBombBirth(this,from,e,{
+          owner:a,ghost:true,kind:'bomb',s3GhostResolved:{spec:{id:a.weapon.sub}},
+          _netBorn:e[0],_netBornTick:tick,_netPeer:this.peers.get(from)
+        });
+      }
     }
     commitOwnerTick(this,from,d,d.e||[],admitted);
   }
@@ -265,12 +275,24 @@ test('equipped damage-dealing sub projectile uses its own wire cause',()=>{
   assert.equal(nm.hitCalls.length,1,'Angle Shooter shot must survive proof gate');
 });
 test('explosive sub birth with generic bomb visual still admits its real equipped kind',()=>{
+  const rawBurst=new Stub();rawBurst.byNid.get(1).weapon.sub='burst';rawBurst.byNid.get(1).netLife=0;
+  rawBurst.onMessage('peerA',hit(2,1,'burst'));
+  ownerTick(rawBurst,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
+    e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
+  assert.equal(rawBurst.hitCalls.length,0,'catalogue sub cannot mint proof via raw b event without acceptedSub');
+
   const nm=new Stub(),attacker=nm.byNid.get(1);
-  attacker.weapon.sub='burst';
+  attacker.weapon.sub='burst';attacker.netLife=0;
   nm.onMessage('peerA',hit(2,1,'burst'));
   ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
-    e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
-  assert.equal(nm.hitCalls.length,1);
+    e:[[100,'ac','sub',1,0,{v:1,phase:'spawn',subId:'burst',seq:1,life:0,sourceLife:0,x:0,y:1,z:0,vx:0,vy:0,vz:45},6000,1]]});
+  assert.equal(nm.hitCalls.length,1,'catalogue sub admits through canonical ac/sub spawn path');
+
+  const nativeBomb=new Stub();nativeBomb.byNid.get(1).weapon.sub='suction';nativeBomb.byNid.get(1).netLife=0;
+  nativeBomb.onMessage('peerA',hit(2,1,'suction'));
+  ownerTick(nativeBomb,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
+    e:[[100,'b',1,'bomb',0,1,0,0,0,45,null,'suction',0,['inkwave-kit-birth-v1','test-match',0],6000,1]]});
+  assert.equal(nativeBomb.hitCalls.length,1,'native-bomb admits through acceptedSub b birth path');
 });
 test('wrong sub cause cannot spoof a different equipped weapon',()=>{
   const nm=new Stub();nm.byNid.get(1).weapon.sub='bomb';
@@ -460,10 +482,13 @@ test('sub ceilings follow the equipped sub, including generic bomb and Torpedo s
   a.weapon.sub='torpedo';assert.equal(claimCeiling(a,{w:'torpedo-splash'},'pvp'),12);
   a.weapon.sub='toxicMist';assert.equal(claimCeiling(a,{w:'toxicMist'},'pvp'),0);
   a.weapon.sub='unknownSub';assert.equal(claimCeiling(a,{w:'unknownSub'},'pvp'),-1,'unknown definitions fail closed');
-  const nm=new Stub();nm.byNid.get(1).weapon.sub='burst';
-  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
+  const nm=new Stub();nm.byNid.get(1).weapon.sub='burst';nm.byNid.get(1).netLife=0;
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
+    e:[[100,'ac','sub',1,0,{v:1,phase:'spawn',subId:'burst',seq:1,life:0,sourceLife:0,x:0,y:1,z:0,vx:0,vy:0,vz:45},6000,1]]});
   nm.onMessage('peerA',{...hit(2,1,'burst'),d:35.5});
   assert.equal(nm.hitCalls.length,0,'Burst Bomb cannot deliver a Splat Bomb sized hit');
+  nm.onMessage('peerA',{...hit(2,2,'burst'),d:35});
+  assert.equal(nm.hitCalls.length,1,'Burst Bomb within 35 ceiling is admitted');
 });
 test('Special ceiling applies when authored, otherwise the existing Special policy decides',()=>{
   const a=actor('shooter','trizooka');

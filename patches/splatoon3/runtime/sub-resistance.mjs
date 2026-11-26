@@ -69,8 +69,10 @@ const mainCauseCache=new Map();
 function validWireCause(weapon,cause){
   if(Array.isArray(wireObjectCauses[weapon]))return wireObjectCauses[weapon].includes(cause);
   if(!mainCauseCache.has(weapon)){
-    const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id===weapon),rows=new Set();
-    if(r)for(const type of ['shot','roller','brush-body','canopy','saber-melee','area'])for(const charge of [0,1])for(const key of ['variable','saber-vertical','other']){
+    const r=MAIN_WEAPON_CATALOG.records.find(r=>r.id===weapon);
+    if(!r)return false;
+    const rows=new Set();
+    for(const type of ['shot','roller','brush-body','canopy','saber-melee','area'])for(const charge of [0,1])for(const key of ['variable','saber-vertical','other']){
       const row=catalogueAttackRow({type,catalog:{r,descriptor:{charge,key}}},{});if(row)rows.add(row);
     }
     mainCauseCache.set(weapon,rows);

@@ -22,7 +22,7 @@ const MAX_BACKLOG_BYTES = 512 * 1024;
 const JOIN_RATE = 4, JOIN_BURST = 16;
 const hostDirectedControl = kind => kind === 'me' || kind === 'ready' || kind === 'bhit';
 const hostOnlyControl = kind => kind === 'lobby' || kind === 'go' || kind === 'st'
-  || kind === 'res' || kind === 'end' || kind === 'own';
+  || kind === 'res' || kind === 'end' || kind === 'own' || kind === 'start';
 import { validNetworkAppearance } from '../../patches/reliability/session-admission.mjs';
 import { utf8ByteLength } from '../../patches/network-replication/utf8-length.mjs';
 const decoder = new TextDecoder();

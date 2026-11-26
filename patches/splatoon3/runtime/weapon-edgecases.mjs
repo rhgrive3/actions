@@ -328,6 +328,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     // Keep the original input identity and skip the wrapper's dispatch.
     if (kind === 'dualies' && input && !lockedAtStart &&
         !this.s3DualiesSubBuffered && !this.s3DualiesSubReleaseBuffered &&
+        !this.s3DualiesInterruptCancelMain &&
         !source.sub && !source.subReleased) {
       return weaponUpdate.call(this, dt, input);
     }

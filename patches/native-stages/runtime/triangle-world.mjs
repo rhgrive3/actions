@@ -27,7 +27,7 @@ export class TriangleWorld {
  // Optional out owns point/normal Vector3s distinct from the ray inputs. Misses
  // leave it untouched; callers omitting it still receive independently owned hits.
  ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={},out=null) {
-  if(!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
+  if(!this.nodes||this.nodes.length<8||!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
   const nodes=this.nodes,stack=this._acquireStack(),verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
   try {
   // Ground/edge probes use this exact direction. Keep native division and
@@ -109,6 +109,7 @@ export class TriangleWorld {
  hasCanonicalRay(){return this.ray===CANONICAL_RAY;}
  rayDownBatch(origins,far,options,outputs){
   const count=origins.length,{ignoreGrates=false,minNormalY=-2}=options||{};
+  if(!this.nodes||this.nodes.length<8){for(let i=0;i<count;i++)outputs[i].hit=false;return outputs;}
   if(count>30||!(far>0)||!Number.isFinite(far)||options?.anyHit||this.ray!==CANONICAL_RAY){
    for(let i=0;i<count;i++)outputs[i].hit=!!this.ray(origins[i],_groundDown,far,options,outputs[i]);
    return outputs;
@@ -167,6 +168,7 @@ export class TriangleWorld {
  }
  // Opt-in early termination leaves existing callback return semantics intact.
  queryBox(min,max,fn,stopOnFalse=false){
+  if(!this.nodes||this.nodes.length<8)return;
   const a=this.nodes,stack=this._acquireStack();let top=1;
   try {
   while(top){const n=stack[--top]*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;

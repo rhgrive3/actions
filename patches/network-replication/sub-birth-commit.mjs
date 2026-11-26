@@ -62,7 +62,7 @@ export function replayWithSubBirthCommit(nm,from,event,replay) {
 // authority and not an alternate ac/sub route. Native payload guards remain.
 function finiteSprinklerPose(event) {
   // slice(4,10).every skips holes and includes inherited numeric properties.
-  for(let i=4;i<10;i++)if(i in event&&!finite(event[i]))return false;
+  for(let i=4;i<10;i++)if(!Object.hasOwn(event,i)||!finite(event[i]))return false;
   return true;
 }
 export function stageAcceptedSprinklerBirth(nm,from,event,packetTime,ownerTick) {

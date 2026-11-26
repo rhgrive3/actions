@@ -263,7 +263,7 @@ export function buildFrame(match, api) {
     const row = owned.row;
     row.life = rainmakerActorLife(a); row.owner = rainmakerActorOwner(a); row.rainmakerShotRequired = shotRequired; row.rainmakerShotOrigin = shotOrigin;
     row.special = special; row.specialDeployed = specialDeployed; row.clamDrop = a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0;
-    row.id = id; row.team = a.team; row.alive = a.alive && !a.s3Disconnected && (!hostRemote || admitted); row.grounded = grounded;
+    row.id = id; row.team = a.team; row.alive = a.alive && !Boolean(a.s3?.disconnected || a.s3Disconnected) && (!hostRemote || admitted); row.grounded = grounded;
     row.remote = a.remote; row.onTower = !!a._rankedOnTower; row.weight = a.weapon.weight || 'middle'; row.swimming = swimming; row.slot = a.slot;
     actors[index] = row;
   }

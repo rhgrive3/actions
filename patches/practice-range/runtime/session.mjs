@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { G, on, emit } from '../../../src/core/ctx.js';
 import { PLAYER, WEAPONS, WEAPON_ORDER } from '../../../src/config.js';
 import { Actor } from '../../../src/game/actor.js';
-import { disposeInkVac } from '../../splatoon3/runtime/kit-ink-vac.mjs';
+import { interruptSpecialForObjective } from '../../splatoon3/runtime/all-specials.mjs';
 import { TargetDummyCharacter } from './dummy.mjs';
 import { RangePads } from './pads.mjs';
 import { RangeHud } from './hud.mjs';
@@ -179,7 +179,7 @@ export class RangeSession {
     finally {
       // A downstream setter can throw after the new loadout was committed.
       // Retire the old input owner whenever the requested change actually landed.
-      if (a.weaponId === id && a.weaponId !== previousWeapon) disposeInkVac(a);
+      if (a.weaponId === id && a.weaponId !== previousWeapon) interruptSpecialForObjective({ G, Projectiles: G.projectiles?.constructor }, a);
     }
     // a weapon switch starts from a full tank and an empty special gauge, as if you had just picked it up
     a.ink = PLAYER.inkMax; a.special = 0;

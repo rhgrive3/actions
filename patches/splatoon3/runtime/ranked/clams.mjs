@@ -1043,7 +1043,7 @@ export class ClamsRule {
     if (inv.small > 0 && target && reachable(target)) {
       // Carry toward a reachable power-clam carrier for a physical pass when
       // one is available; the controller expresses the eventual throw intent.
-      const ally = this._actorList(frame).find(other => other.id !== actor.id && other.alive !== false && other.team === actor.team && this.state.inventories[other.id]?.power);
+      const ally = this._actorList(frame).find(other => other.id !== actor.id && other.alive !== false && other.team === actor.team && !this.state.inventories[other.id]?.power && (this.state.inventories[other.id]?.small || 0) > 0 && this.state.inventories[other.id].small < CLAMS_PER_POWER);
       if (ally && reachable(ally.pos)) return { pos: vec(ally.pos), action: 'throw', aim: aimAt(ally.pos), pass: true };
       return { pos: [...target], action: 'carry', aim: aimAt(target) };
     }

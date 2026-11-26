@@ -3,6 +3,7 @@ import { watchGuestMatchEnd } from './platform-match-watch.mjs';
 import { resetPlatformInput } from './platform-input.mjs';
 import { releaseHiddenRankedHost } from './platform-ranked-handoff.mjs';
 import { createPlatformSimulationDebt } from './platform-simulation-debt.mjs';
+import { disposePausedWorldFrame } from './idle-resources.mjs';
 const INSTALLED = Symbol.for('inkwave.platform.game.v1');
 
 export function rebasePlatformGame(game) {
@@ -369,6 +370,7 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
     r.driver.dispose(); r.off(); r.disposeProfiler?.();
     r.notice?.remove(); for (const dispose of r.disposers) dispose();
+    disposePausedWorldFrame(this);
     this.menus?.setPlatformDriven?.(false); this.input?.disposePlatform?.();
     G.audio?.disposePlatform?.();
     if (r.rendererLost) owner.block('webgl', false);

@@ -124,7 +124,7 @@ export class GyroPermission {
     const generation = this.generation;
     this.probe = this.env.setTimeout(() => {
       this.probe = null;
-      if (this.disposed || !this.lifecycle.active || generation !== this.generation || this.received) return;
+      if (this.disposed || !this.lifecycle?.active || generation !== this.generation || this.received) return;
       if (this.hasSample) { this.availability = 'stale'; this.reason = 'sensor-data-stale'; }
       else {
         this.availability = 'unavailable'; this.reason = 'no-sensor-data'; this.wanted = false;
@@ -135,7 +135,7 @@ export class GyroPermission {
     this.notify();
   }
   sample(time = this.env.performance?.now?.() ?? Date.now()) {
-    if (!this.lifecycle.active || this.disposed) return;
+    if (!this.lifecycle?.active || this.disposed) return;
     if (Number.isFinite(time)) this.lastSampleAt = time;
     this.healthAt = this.env.performance?.now?.() ?? Date.now();
     if (this.received && this.availability === 'active') return;
@@ -147,7 +147,7 @@ export class GyroPermission {
     const generation = this.generation;
     this.healthProbe = this.env.setTimeout(() => {
       this.healthProbe = null;
-      if (this.disposed || generation !== this.generation || !this.lifecycle.active || this.lifecycle.focused === false || !this.wanted) return;
+      if (this.disposed || generation !== this.generation || !this.lifecycle?.active || this.lifecycle?.focused === false || !this.wanted) return;
       const age = (this.env.performance?.now?.() ?? Date.now()) - this.healthAt;
       if (age < GYRO_STALE_MS) { this.startHealthProbe(GYRO_STALE_MS - age); return; }
       this.availability = 'stale'; this.reason = 'sensor-data-stale'; this.notify();

@@ -98,9 +98,10 @@ export function installPaintDryRegions(PaintSystem) {
       // unknown here: dry the complete canonical region for a full wetness
       // lifetime, then resume sparse tracking. Never treat a transferred
       // atlas as newly empty or retain a retired target's geometry.
-      const transferred=!!this.level?.native&&(s.target!==this.rt||
-        this.rt.width!==s.tracker.size||this.rt.height!==s.tracker.size);
-      release(this,transferred);
+      const targetChanged=s.target!==this.rt||
+        this.rt.width!==s.tracker.size||this.rt.height!==s.tracker.size;
+      const transferred=!!this.level?.native&&targetChanged;
+      release(this,targetChanged);
       if(!transferred||!(s=allocate(this)))return draw.apply(this,args);
       this[KEY]=s;
       const t=s.tracker;

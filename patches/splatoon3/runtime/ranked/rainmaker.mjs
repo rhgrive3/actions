@@ -295,6 +295,7 @@ export class RainmakerRule {
       graceReason,
       graceStartTick: this.state.tickSerial,
     };
+    delete this.state.overtimeCarrierLost;
     this._event('overtime', { team: losingTeam, mode: 'rainmaker' });
     return true;
   }
@@ -318,9 +319,11 @@ export class RainmakerRule {
       }
     }
 
-    if (this.state.lastDropTeam === overtime.losingTeam
-      && this.state.lastDropAge === 0
-      && this.state.lastDropReason !== 'checkpoint') {
+    if (this.state.overtimeCarrierLost
+      || (this.state.lastDropTeam === overtime.losingTeam
+        && this.state.lastDropAge === 0
+        && this.state.lastDropReason !== 'checkpoint')) {
+      delete this.state.overtimeCarrierLost;
       this._finish(overtime.winningTeam, 'rainmaker-overtime-carrier-lost');
       return;
     }
@@ -363,6 +366,8 @@ export class RainmakerRule {
     this.state.pos = copyPos(this.state.pos);
     if (!validId(this.state.carrier)) this.state.carrier = null;
     if (!validTeam(this.state.carrierTeam)) this.state.carrierTeam = null;
+    if (this.state.overtimeCarrierLost) this.state.overtimeCarrierLost = true;
+    else delete this.state.overtimeCarrierLost;
     return this;
   }
 
@@ -460,6 +465,7 @@ export class RainmakerRule {
     this.state.dropped = false;
     this.state.dropTimer = 0;
     this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: 0, balance: 0, team: null };
+    delete this.state.overtimeCarrierLost;
     this._event('rainmaker-pickup', { id: actor.id, team: actor.team, pos: this.state.pos.slice() });
   }
 
@@ -744,6 +750,9 @@ export class RainmakerRule {
       this.state.dropped = true;
       this.state.dropTimer = 0;
       this._event('rainmaker-drop', { id, pos: pos.slice(), team, reason });
+    }
+    if (this.state.overtime.active && team === this.state.overtime.losingTeam && reason !== 'checkpoint') {
+      this.state.overtimeCarrierLost = true;
     }
   }
 

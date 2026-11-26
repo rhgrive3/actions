@@ -29,7 +29,7 @@ function rankedPoseContext(nm, m, api) {
       for (let i=0;i<length;i++) {
         if(!(i in actors))continue;
         const a=actors[i];
-        if (a === actor || a.team !== actor.team || !a.alive || a.s3Disconnected) continue;
+        if (a === actor || a.team !== actor.team || !a.alive || Boolean(a.s3?.disconnected || a.s3Disconnected)) continue;
         const pose = a.remote ? nm.rankedPose?.get(actorId(a)) : null;
         yield pose?.actor === a ? pose.last.pos : a.pos;
         yield a.superJumpGround;

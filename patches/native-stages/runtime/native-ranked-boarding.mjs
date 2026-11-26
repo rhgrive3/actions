@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {nativeTowerBoarding} from './native-tower-boarding.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
+import {nativeApproachEdgeAllowed} from './native-bots.mjs';
 const _boardDir=new THREE.Vector3(),_boardPoint=new THREE.Vector3(),_boardOrigin=new THREE.Vector3(),_boardDown=new THREE.Vector3(0,-1,0),_boardAim=new THREE.Vector3();
 
 /** Use the source-screened static supports already selected with the vehicle
@@ -10,19 +11,21 @@ export function nativeRankedTowerApproach(brain,target,engine,G){
  if(!G.level?.native||!Array.isArray(proofs))return null;
  const start=N.nearest(brain.a.pos,1.2);if(start<0)return false;
  const screen=nativeTowerBoarding(G,N.validIds,G.physics.actorBody,engine.stage.tower.halfSize);
+ const wallApproach=!!G.level.manifest?.sourceNavigation?.wallApproach;
+ const acceptEdge=wallApproach?(e)=>nativeApproachEdgeAllowed(brain.a,e):null;
  let best=null;
  for(const id of new Set(proofs.map(p=>p.sourceNode))){
   if(!N.valid[id])continue;
   const proof=screen.find(id,[target.x,target.y,target.z]);if(!proof)continue;
   if(!N.valid[proof.sourceNode])continue;
-  const path=N.path(start,proof.sourceNode,brain.a.team,Math.max(6000,N.nodes.length*4));if(!path)continue;
-  let cost=0;for(let i=1;i<path.length;i++)cost+=N.nodes[path[i-1]].nb.find(e=>e.to===path[i])?.cost??1;
+  const path=N.path(start,proof.sourceNode,brain.a.team,Math.max(6000,N.nodes.length*4),acceptEdge);if(!path)continue;
+  let cost=0;for(let i=1;i<path.length;i++)cost+=N.nodes[path[i-1]].nb.find(e=>e.to===path[i]&&(!acceptEdge||acceptEdge(e)))?.cost??1;
   if(!best||cost<best.cost)best={path,proof,cost};
  }
  if(!best){brain._nativeTowerBoarding=null;return false;}
  brain.path=best.path;brain.pi=Math.min(1,best.path.length-1);brain.goal=best.proof.sourceNode;brain.bestD=Infinity;brain.noProg=0;
  brain._rankedApproachGoal={...target};brain._rankedApproachNode=best.proof.sourceNode;
- brain._nativeTowerBoarding={proof:best.proof,target:{...target},phase:'approach',seconds:0,level:G.level,nav:G.nav,world:G.match?.rankedWorld,engine};
+ brain._nativeTowerBoarding={proof:best.proof,target:{...target},phase:'approach',seconds:0,totalSeconds:0,level:G.level,nav:G.nav,world:G.match?.rankedWorld,engine};
  return true;
 }
 
@@ -39,10 +42,10 @@ export function updateNativeTowerBoarding(brain,G,engine,dt){
  if(state.phase==='approach'){
   const node=G.nav.nodes[p.sourceNode];
   if(!nativeSourceFootSupported(G,a,node)||Math.hypot(a.pos.x-start.x,a.pos.z-start.z)>.18||Math.hypot(a.vel.x,a.vel.z)>.65)return false;
-  state.phase='hop';state.seconds=0;
+  state.phase='hop';state.seconds=0;state.totalSeconds=0;
  }
- state.seconds+=dt;
- if(state.seconds>2){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
+ state.seconds+=dt;state.totalSeconds=(state.totalSeconds||0)+dt;
+ if(state.totalSeconds>2){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
  it.fire=it.squid=it.jump=it.sub=it.special=false;it.move.set(0,0,0);brain.noProg=0;
  // Enemy ink changes the real jump height. Repaint the actual supported
  // launch floor through the installed weapon before requesting the arc.

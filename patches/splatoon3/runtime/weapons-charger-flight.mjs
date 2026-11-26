@@ -402,7 +402,7 @@ export function chargerWallDropParameters(raw,charge,splash=false,seed=.5){
 }
 function nonnegativeFinite(value){return Number.isFinite(value)&&value>=0;}
 export function beginChargerWallDrop(system,job,hit,raw,api,splash=false){
- if(job.ghost||!hit?.hit||Math.abs(hit.normal.y)>=.55||hit.block?.grate)return false;
+ if(job.ghost||!hit?.hit||Math.abs(hit.normal.y)>=.55||Boolean(hit.block?.grate||api?.G?.physics?.level?.blocks?.[hit.block]?.grate||hit.grate))return false;
  const seed=Number.isFinite(job.seed)?job.seed:.5,plan=chargerWallDropParameters(raw,job.charge,splash,seed);
  const state={owner:job.owner,team:job.team,ghost:false,plan,seed,frame:0,carry:0,speed:0,paintIndex:0,
   pos:hit.point.clone().addScaledVector(hit.normal,.025),normal:hit.normal.clone(),face:hit.face,

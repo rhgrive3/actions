@@ -109,11 +109,12 @@ export function adaptStart(rel, code) {
   // The results overlay already guards room/match identity. The operation handle
   // also protects a new start that is awaiting fade but has not created its match.
   code = method(code, '  async netMatchEnd() {', '\n  // the room went away mid-match', source => {
-    source = replaceOnce(source, '    if (this._netEnding) return;', '    if (this._netEnding) return;\n    const flow = this._beginMatchFlow();', 'room return reservation');
+    source = replaceOnce(source, '    this._netEnding = true;', '    const flow = this._beginMatchFlow();\n    this._netEnding = true;', 'room return reservation');
     for (const line of ['      this.input.exitLock();', '      this.menus?.show(null);']) {
       source = replaceOnce(source, line, line + '\n      if (!flow.current()) return;', 'room return synchronous ownership');
     }
     source = replaceOnce(source, '      if (!resultsCurrent()) return;', '      if (!resultsCurrent() || !flow.current()) return;', 'room return operation');
+    source = replaceOnce(source, '        if (this.match === m && G.net === net) this.quitToMenu?.();', '        if (flow.current() && this.match === m && G.net === net) this.quitToMenu?.();', 'room return failed end recovery');
     return source;
   });
   // Match identity survives the departure/start fade. A presentation also owns

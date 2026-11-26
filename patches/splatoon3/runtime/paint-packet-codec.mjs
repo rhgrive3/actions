@@ -137,6 +137,7 @@ export class PaintPacketNegotiation {
  canEncode(){if(!this.nonce||!this.members.size)return false;for(const p of this.members.values())if(!p.received||p.peerNonce!==p.ackNonce)return false;return true;}
  packTick(tick){
   if(!this.canEncode()||tick?.k!=='t')return tick;
+  if(Array.isArray(tick.e)&&tick.e.length>256)return tick;
   // For ordinary native ticks, replacing e with pe and adding pn can only
   // increase envelope overhead. The final exact UTF-8 whole-packet comparison
   // therefore subsumes the standalone events-only profitability comparison.
@@ -144,7 +145,7 @@ export class PaintPacketNegotiation {
   const specialJson=typeof tick.toJSON==='function'||typeof tick.e?.toJSON==='function';
   if(!specialJson&&Array.isArray(tick.e)&&!tick.e.some(row=>Array.isArray(row)&&row[1]==='s'))return tick;
   const conservative=tick.e?.length<2||Object.hasOwn(tick,'pe')||Object.hasOwn(tick,'pn')||specialJson;
-  const payload=conservative?encodePaintEvents(tick.e):encodePaintPayload(tick.e)?.payload;if(!payload)return tick;
+  const payload=conservative?encodePaintEvents(tick.e):encodePaintPayload(tick.e)?.payload;if(!payload||payload[2].length>256)return tick;
   const {e,...rest}=tick,out={...rest,pe:payload,pn:this.nonce};
   // Include the generation binding and every sidecar in the actual decision.
   return utf8Bytes(JSON.stringify(out))<utf8Bytes(JSON.stringify(tick))?out:tick;
