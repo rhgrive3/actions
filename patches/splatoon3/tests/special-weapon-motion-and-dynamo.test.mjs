@@ -818,7 +818,7 @@ test('Dynamo mid-recovery ZR release fades smoothly through swing end without ~1
 
     sjActor.specialActive = { id: 'slam', t: 0.2 };
     sjActor._startSpecial?.();
-    assert.equal(sjActor.anim.movementMotion.superJumpVelocity, undefined, 'superJumpVelocity cleared for non-native-form special');
+    assert.equal(sjActor.anim.movementMotion?.superJumpVelocity, undefined, 'superJumpVelocity cleared for non-native-form special');
   } finally {
     sjRig.close();
   }

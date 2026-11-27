@@ -11,9 +11,10 @@ import { qualityIdentity } from '../adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const UPSTREAM = path.join(ROOT, 'inkwave-public');
 
-async function loadModuleWithThree(relPath) {
+async function loadModuleWithThree(relPath, extraGlobals = {}) {
   const fullPath = path.join(ROOT, relPath);
   const context = vm.createContext({
+    ...extraGlobals,
     console,
     Math,
     Float32Array,
@@ -784,7 +785,8 @@ test('full adaptBuildSource composition for src/core/renderer.js wires grade-out
 });
 
 test('paint-regional-mips: _regenerateMipmaps clears forceFull when visible and preserves it when hidden', async () => {
-  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const mockDocument = { hidden: true };
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs', { document: mockDocument });
   const h = createMockPaintHarness({ N: 2048 });
   installPaintRegionalMips(h.MockPaintSystem);
   const ps = new h.MockPaintSystem();
@@ -793,18 +795,13 @@ test('paint-regional-mips: _regenerateMipmaps clears forceFull when visible and 
   assert.ok(state, 'regional mip state allocated');
   // Simulate forceFull triggered on a draw without _mipRequested
   state.forceFull = true;
-  const prevDoc = globalThis.document;
-  try {
-    globalThis.document = { hidden: true };
-    ps._regenerateMipmaps();
-    assert.equal(state.forceFull, true, 'hidden tab preserves forceFull');
+  mockDocument.hidden = true;
+  ps._regenerateMipmaps();
+  assert.equal(state.forceFull, true, 'hidden tab preserves forceFull');
 
-    globalThis.document = { hidden: false };
-    ps._regenerateMipmaps();
-    assert.equal(state.forceFull, false, 'visible full rebuild clears forceFull');
-  } finally {
-    globalThis.document = prevDoc;
-  }
+  mockDocument.hidden = false;
+  ps._regenerateMipmaps();
+  assert.equal(state.forceFull, false, 'visible full rebuild clears forceFull');
   // Subsequent small splat can now take the partial path again
   h.addQuadPixels(ps, 300, 550, 340, 590);
   ps._mipRequested = true;
