@@ -240,7 +240,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch("    this._rec(['ev', name, packEvent(e)]);", "    recordWipeoutLife(this, name, e);\n    this._rec(['ev', name, packEvent(e)]);", 'owner wipeout transitions');
     patch('    if (this.out.length) { msg.e = this.out; this.out = []; }', '    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (this.out.length) { msg.e = this.out; this.out = []; }', 'owner wipeout history and watermark');
     patch("      case 't': this._tick(from, d); break;", "      case 't': if (d.wf) acceptWipeoutTimeline(this, from, d.wf); this._tick(from, d); break;\n      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", 'authenticated wipeout protocol');
-    code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
+    code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\nimport { specialKeepsNativeForm } from '../../patches/splatoon3/runtime/special-presentation-owner.mjs';\n" + code;
     patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);\n    if (discardSoloTick(this, G)) { replayWipeoutConfirmations(this); return true; }', 'per-player result continuation');
     patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
     patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
@@ -657,7 +657,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       '  if (a.rollId && a.rollId === b.rollId) o.rollRemaining = a.rollRemaining + (b.rollRemaining - a.rollRemaining) * u;\n  if (a.dropRollId && a.dropRollId === b.dropRollId) o.dropRollRemaining = a.dropRollRemaining + (b.dropRollRemaining - a.dropRollRemaining) * u;',
       'interpolate matching owner Drop Roller pose');
     patch('    const S = n.cur;\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
-      '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || (flags & F.special) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
+      '    const S = n.cur;\n    if (a.remote) {\n      const flags = S.f;\n      if (!a.alive || !(flags & F.alive) || !(flags & F.squid) || ((flags & F.special) && !specialKeepsNativeForm(a.specialActive?.id ?? a.weapon?.special)) || !S.rollId) clearRemoteSquidroll(a);\n      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n    }\n    if (!a.alive) { a.respawnTimer -= dt; return; }',
       'remote presentation follows accepted owner Roll snapshot');
     patch('      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));',
       '      else syncRemoteSquidroll(a, S, this.peers.get(a.owner));\n      if (!a.alive || !(flags & F.alive) || (flags & F.special) || !S.dropRollId) clearRemoteDropRoll(a);\n      else syncRemoteDropRoll(a, S, this.peers.get(a.owner));',
@@ -1556,7 +1556,7 @@ function packSquidrollSnapshot(a) {
     previous.action = null;
     return [SQUIDROLL_ROW_TAG, 0, 0, 0, 0];
   };
-  if (!action || !a.alive || a.form !== 'squid' || a.specialActive || a.superJumpState
+  if (!action || !a.alive || a.form !== 'squid' || (a.specialActive && !specialKeepsNativeForm(a.specialActive)) || a.superJumpState
     || !Number.isFinite(action.time) || action.time <= 0 || action.time > 0.5
     || !Number.isFinite(action.vx) || !Number.isFinite(action.vz)
     || Math.hypot(action.vx, action.vz) <= 1e-6 || Math.hypot(action.vx, action.vz) > 40) return inactive();

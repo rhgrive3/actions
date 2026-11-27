@@ -129,8 +129,13 @@ export function recentSighting(ctx, maxAge) {
   return s && s.age <= maxAge && s.life === ctx.actor.netLife ? s : null;
 }
 
+const resetHooks = new Set();
+export function registerBotSpecialReset(fn) {
+  if (typeof fn === 'function') resetHooks.add(fn);
+}
 export function resetBotSpecialMovement(actor) {
   if (!actor) return;
   navigation.delete(actor);
   sightings.delete(actor);
+  for (const fn of resetHooks) fn(actor);
 }

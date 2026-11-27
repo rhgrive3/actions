@@ -1445,12 +1445,14 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         P[C.ANC + i] = curve.anchor[i];
         P[C.ANCR + i] = curve.rotation[i];
       }
-      const weight = ease(state.elapsed / (3 / 60)) * (state.released && state.rolling ? 1 - this.wRoll : 1);
+      const releaseFade = state.swingShape === 'heavy' && Number.isFinite(state.releaseFadeAt) ? 1 - ease((state.elapsed - state.releaseFadeAt) / HEAVY_ROLLER_SWING.ret) : 1;
+      const weight = ease(state.elapsed / (3 / 60)) * (state.released && state.rolling ? 1 - this.wRoll : 1) * releaseFade;
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);
       }finally{this._s3FlickPoseDepth=depth;}
       return;
     }
-    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
+    const releaseFade = state.swingShape === 'heavy' && Number.isFinite(state.releaseFadeAt) ? 1 - ease((state.elapsed - state.releaseFadeAt) / HEAVY_ROLLER_SWING.ret) : 1;
+    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1) * releaseFade;
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(P[C.ANC + i], p.anchor[i], w);
       P[C.ANCR + i] = mix(P[C.ANCR + i], p.rotation[i], w);

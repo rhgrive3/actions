@@ -736,9 +736,21 @@ test('grade-output-fusion: buildFusedFragmentShader negative guards reject missi
   const linearMat = { uniforms, fragmentShader: 'void main() { gl_FragColor = vec4(1.0); }' };
   const gradePass = { uniforms, material: linearMat, _fsQuad: { material: linearMat }, enabled: true };
   const outputPass = { enabled: true };
-  const owner = { grade: gradePass, outputPass, extraPass: { enabled: false } };
+  const owner = {
+    renderer: { toneMapping: THREE.NeutralToneMapping, outputColorSpace: THREE.SRGBColorSpace, toneMappingExposure: 1.0 },
+    grade: gradePass,
+    outputPass,
+    extraPass: { enabled: false },
+    _gradeOutputMat: { stale: true },
+    _gradeOutputState: { outputColorSpace: 'stale', toneMapping: -1 },
+    _syncGradeOutputFusion: () => true,
+  };
 
   assert.equal(setupGradeOutputFusion(owner), false);
+  assert.equal(owner._gradeLinearMat, linearMat);
+  assert.equal(owner._gradeOutputMat, null);
+  assert.equal(owner._gradeOutputState, null);
+  assert.equal(owner._syncGradeOutputFusion, null);
   assert.equal(gradePass.material, linearMat);
   assert.equal(gradePass._fsQuad.material, linearMat);
   assert.equal(outputPass.enabled, true);
@@ -769,4 +781,36 @@ test('full adaptBuildSource composition for src/core/renderer.js wires grade-out
 
   const buildScript = fs.readFileSync(path.join(ROOT, 'scripts/build-inkwave.mjs'), 'utf8');
   assert.ok(buildScript.includes("'patches/local-quality/grade-output-fusion.mjs'"));
+});
+
+test('paint-regional-mips: _regenerateMipmaps clears forceFull when visible and preserves it when hidden', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const h = makePaintHarness(2048);
+  installPaintRegionalMips(h.PaintSystem);
+  const ps = new h.PaintSystem();
+  ps._initGPU();
+  const state = ps._iwPaintRegionalMips;
+  assert.ok(state, 'regional mip state allocated');
+  // Simulate forceFull triggered on a draw without _mipRequested
+  state.forceFull = true;
+  const prevDoc = globalThis.document;
+  try {
+    globalThis.document = { hidden: true };
+    ps._regenerateMipmaps();
+    assert.equal(state.forceFull, true, 'hidden tab preserves forceFull');
+
+    globalThis.document = { hidden: false };
+    ps._regenerateMipmaps();
+    assert.equal(state.forceFull, false, 'visible full rebuild clears forceFull');
+  } finally {
+    globalThis.document = prevDoc;
+  }
+  // Subsequent small splat can now take the partial path again
+  ps.quads = 1;
+  ps.aPos[0] = -0.95; ps.aPos[1] = -0.95; ps.aPos[2] = -0.90; ps.aPos[5] = -0.90;
+  ps._mipRequested = true;
+  const partialBefore = state.partial;
+  ps._drawQuads();
+  assert.equal(state.partial, partialBefore + 1, 'partial mip rebuild resumes after _regenerateMipmaps clears forceFull');
+  ps.dispose();
 });

@@ -23,7 +23,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
   const nominal=clamp(body/Math.max(.05,chargeTime),.02,4);
   let stopped=false,ended=false,src=null,sourceGain=null,untrack=()=>{};
   let previous=q,last=ctx.currentTime,rate=q>0?nominal:0,level=clamp(Number(volume)||0,0,1),position=pos;
-  let appliedRate=q>0?nominal:0,gainTarget=0,gainSettlesAt=0;
+  let appliedRate=q>0?nominal:0,gainTarget=0;
   let head=0,headAt=ctx.currentTime,anchorQ=q,anchorAt=ctx.currentTime,progressAt=ctx.currentTime,speed=1;
   let buildingHeadroom=false,wasPaused=false;
   const headNow=now=>{
@@ -63,15 +63,25 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
     const end=offset+Math.max(step*2,body*q);
     head=Math.max(offset,end-Math.min(.04*nominal,body*q));headAt=now;
     s.loop=!full;s.loopStart=Math.max(offset,end-.035);s.loopEnd=end;
-    g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(q>0?level:0,now+.006);
-    gainTarget=q>0?level:0;gainSettlesAt=now+.006;
     s.onended=()=>{disconnect(s,g);if(src===s){ended=true;untrack();try{panner?.disconnect?.();}catch{}}};
     if(full){
-      const tailDur=tail/nominal;
-      g.gain.setValueAtTime(level,now+Math.max(.006,tailDur-.02));
-      g.gain.linearRampToValueAtTime(0,now+tailDur);
-      s.start(now,offset+body,tailDur);
-    }else s.start(now,head);
+      const maxTail=Number.isFinite(buffer.duration)?Math.max(0,buffer.duration-(offset+body)):tail;
+      const playTail=Math.min(tail,maxTail);
+      if(playTail<=0){
+        g.gain.setValueAtTime(0,now);gainTarget=0;
+        s.start(now,Math.min(offset+body,Number.isFinite(buffer.duration)?buffer.duration:offset+body),0);
+      }else{
+        const tailDur=playTail/nominal,fadeIn=Math.min(.006,tailDur*.5),holdEnd=Math.min(tailDur,Math.max(fadeIn,tailDur-.02));
+        g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(level,now+fadeIn);
+        g.gain.setValueAtTime(level,now+holdEnd);g.gain.linearRampToValueAtTime(0,now+tailDur);
+        gainTarget=0;
+        s.start(now,offset+body,playTail);
+      }
+    }else{
+      g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(q>0?level:0,now+.006);
+      gainTarget=q>0?level:0;
+      s.start(now,head);
+    }
     if(old)retire(old,oldGain);
   }
   const h={
@@ -99,7 +109,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
           anchorQ=previous;anchorAt=last;wasPaused=false;buildingHeadroom=false;speed=1;
           const targetHead=Math.max(offset,end-Math.min(.04*nominal,body*q));
           if(Math.abs(targetHead-headNow(now))>.045*nominal&&end-headNow(now)>.15*nominal){
-            start(false);previous=q;last=now;return;
+            start(false);anchorQ=q;anchorAt=now;previous=q;last=now;return;
           }
           resumedFromPause=true;
         }
@@ -145,11 +155,11 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
         else rate=appliedRate;
         const target=rate>0&&q>0?level:0;
         // Preserve every in-flight ramp, but do not reschedule a settled target.
-        if(target!==gainTarget || now<gainSettlesAt){
+        if(target!==gainTarget){
           sourceGain.gain.cancelScheduledValues(now);
           sourceGain.gain.setValueAtTime(sourceGain.gain.value,now);
           sourceGain.gain.linearRampToValueAtTime(target,now+.006);
-          gainTarget=target;gainSettlesAt=now+.006;
+          gainTarget=target;
         }
         previous=q;last=now;
       }

@@ -160,7 +160,7 @@ export function installSuperjumpMotion({ Character, Actor, THREE, CHARACTER_TIME
       const original = A[method];
       A[method] = function (...args) {
         const result = original.apply(this, args);
-        if (method === 'reset' || !this.alive || this.specialActive) {
+        if (method === 'reset' || !this.alive || (this.specialActive && !specialKeepsNativeForm(this.specialActive))) {
           if (this.character) clear(this.character, get(this.character));
           if (this.anim?.movementMotion) delete this.anim.movementMotion.superJumpVelocity;
         }
