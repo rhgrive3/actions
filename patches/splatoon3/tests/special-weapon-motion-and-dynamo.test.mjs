@@ -838,15 +838,20 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
   //    and drops it for non-allowing specials (e.g. slam).
   const ownerRig = makeActorRig(f, 's3-shelter-normal');
   const proxyRig = makeActorRig(f, 's3-shelter-normal');
+  const slamProxyRig = makeActorRig(f, 's3-shelter-normal');
   const sender = new f.NetMatch(makeSession('A'), { map: 'standard' });
   const receiver = new f.NetMatch(makeSession('B'), { map: 'standard' });
+  const slamReceiver = new f.NetMatch(makeSession('C'), { map: 'standard' });
   try {
     const owner = ownerRig.a;
     const proxy = proxyRig.a;
+    const slamProxy = slamProxyRig.a;
     Object.assign(owner, { nid: 11, owner: 'A', remote: false, alive: true, form: 'kid' });
     Object.assign(proxy, { nid: 11, owner: 'A', remote: true, alive: true, form: 'kid' });
-    owner.weapon.special = 'killerWail';
-    proxy.weapon.special = 'killerWail';
+    Object.assign(slamProxy, { nid: 11, owner: 'A', remote: true, alive: true, form: 'kid' });
+    owner.weapon = { ...owner.weapon, special: 'killerWail' };
+    proxy.weapon = { ...proxy.weapon, special: 'killerWail' };
+    slamProxy.weapon = { ...slamProxy.weapon, special: 'slam' };
     owner.specialActive = { id: 'killerWail', t: 45 / 60 };
     // Open owner canopy so pack() writes row[4] === 2
     owner.weaponRunner.catalogState = {
@@ -856,6 +861,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     };
     sender.bind({ actors: [owner] });
     receiver.bind({ actors: [proxy] });
+    slamReceiver.bind({ actors: [slamProxy] });
     f.G.netm = receiver;
 
     // Playback cursor on receiver is still pre-40F (10/60) when packet arrives
@@ -863,17 +869,14 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     sender._sendTick();
     assert.ok(lastMsg?.bc?.[owner.nid], 'owner broadcasts Brella sidecar during unlocked Killer Wail');
     receiver._tick('A', lastMsg);
+    assert.equal(proxy.net.buf.length, 1, 'receiver accepted first owner tick');
     const snap1 = proxy.net.buf.at(-1);
     assert.ok(Array.isArray(snap1?.s3Brella), '_tick()->read() retains Brella sidecar for killerWail even when receiver cursor < 40F');
 
-    // Non-allowing special (slam) must drop held canopy row in read()
-    const slamMsg = JSON.parse(JSON.stringify(lastMsg));
-    slamMsg.ts = (lastMsg.ts || 0) + 0.05;
-    slamMsg.u = (lastMsg.u || 0) + 3;
-    slamMsg.bc[owner.nid][2] = slamMsg.u;
-    proxy.weapon.special = 'slam';
-    receiver._tick('A', slamMsg);
-    const snapSlam = proxy.net.buf.at(-1);
+    // Non-allowing special (slam) must drop held canopy row in read() on a clean receiver
+    slamReceiver._tick('A', JSON.parse(JSON.stringify(lastMsg)));
+    assert.equal(slamProxy.net.buf.length, 1, 'slamReceiver accepted owner tick');
+    const snapSlam = slamProxy.net.buf.at(-1);
     assert.equal(snapSlam?.s3Brella, null, '_tick()->read() drops held Brella sidecar for non-allowing special');
 
     // 2. Special start Frame 1 (S.f & SPECIAL_FLAG set before proxy.specialActive updates) suppresses canopy;
@@ -881,7 +884,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     const F_ALIVE = 1;
     const F_SPECIAL = 8192;
     const row = ['inkwave.brella-view.v1', 1, 10, 's3-shelter-normal', 2, 0, 0, 1, 1.2, 0, 0, 1, 0];
-    proxy.weapon.special = 'killerWail';
+    proxy.weapon = { ...proxy.weapon, special: 'killerWail' };
     proxy.specialActive = null; // Frame 1 before apply.call populates specialActive
     const startSnap = { t: 2.0, tp: 0, life: 1, f: F_ALIVE | F_SPECIAL, s3BrellaOwner: 'A', s3Brella: row };
     proxy.net = { ready: true, lastLife: 1, cur: startSnap, buf: [startSnap], err: new f.THREE.Vector3() };
@@ -932,7 +935,9 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
   } finally {
     sender.dispose();
     receiver.dispose();
+    slamReceiver.dispose();
     ownerRig.close();
     proxyRig.close();
+    slamProxyRig.close();
   }
 });

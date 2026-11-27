@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { createBotSpecialContext, resetBotSpecialMemory } from '../runtime/bot-special-context.mjs';
+import { createBotSpecialContext } from '../runtime/bot-special-context.mjs';
 import { captureNav, followNav, specialAllowsMain, specialAllowsSub } from '../runtime/bot-special-movement.mjs';
 import { installRankedBots } from '../runtime/ranked/bots.mjs';
 import { botWeakWeaponCombat } from '../runtime/bot-weak-weapon-combat.mjs';
@@ -13,6 +13,7 @@ const EXTRA = `
 export { driveRangedSpecial } from './patches/splatoon3/runtime/bot-special-ranged.mjs';
 export { driveSupportSpecial } from './patches/splatoon3/runtime/bot-special-support.mjs';
 export { driveMeleeSpecial } from './patches/splatoon3/runtime/bot-special-melee.mjs';
+export { resetBotSpecialMemory } from './patches/splatoon3/runtime/bot-special-context.mjs';
 `;
 
 let _fxPromise = null;
@@ -546,7 +547,7 @@ test('Killer Wail post-40F beamsDone preserves paint/ranked aim, retreat follows
     f.driveRangedSpecial(ctx);
 
     // 3a. Super-jump / resetBotSpecialMemory clears rangedSeen immediately (cannot chase +Z sighting)
-    resetBotSpecialMemory(h.actor);
+    f.resetBotSpecialMemory(h.actor);
     h.world.time = 10.05;
     ctx = h.makeCtx({ navMove: [0, 0, -1], target: null, see: false });
     f.driveRangedSpecial(ctx);
