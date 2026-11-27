@@ -823,3 +823,116 @@ test('Dynamo mid-recovery ZR release fades smoothly through swing end without ~1
     sjRig.close();
   }
 });
+
+test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Frame 1, reflects end immediately, and remote Squid Roll respects specialKeepsNativeForm', async () => {
+  const f = await getApi();
+  let lastMsg = null;
+  const makeSession = (id) => ({
+    myId: id,
+    isHost: false,
+    _members: new Map([['A', {}], ['B', {}]]),
+    tr: { broadcast(m) { lastMsg = JSON.parse(JSON.stringify(m)); } },
+  });
+
+  // 1. _tick() -> read() retains Brella packet for specialCanAllowMain even when remote playback cursor is < 40F,
+  //    and drops it for non-allowing specials (e.g. slam).
+  const ownerRig = makeActorRig(f, 's3-shelter-normal');
+  const proxyRig = makeActorRig(f, 's3-shelter-normal');
+  const sender = new f.NetMatch(makeSession('A'), { map: 'standard' });
+  const receiver = new f.NetMatch(makeSession('B'), { map: 'standard' });
+  try {
+    const owner = ownerRig.a;
+    const proxy = proxyRig.a;
+    Object.assign(owner, { nid: 11, owner: 'A', remote: false, alive: true, form: 'kid' });
+    Object.assign(proxy, { nid: 11, owner: 'A', remote: true, alive: true, form: 'kid' });
+    owner.weapon.special = 'killerWail';
+    proxy.weapon.special = 'killerWail';
+    owner.specialActive = { id: 'killerWail', t: 45 / 60 };
+    // Open owner canopy so pack() writes row[4] === 2
+    owner.weaponRunner.catalogState = {
+      ...(owner.weaponRunner.catalogState || {}),
+      canopy: { open: true, preparing: false, pos: new f.THREE.Vector3(0, 1, 1), dir: new f.THREE.Vector3(0, 0, 1) },
+      naked: 0,
+    };
+    sender.bind({ actors: [owner] });
+    receiver.bind({ actors: [proxy] });
+    f.G.netm = receiver;
+
+    // Playback cursor on receiver is still pre-40F (10/60) when packet arrives
+    proxy.specialActive = { id: 'killerWail', net: true, t: 10 / 60 };
+    sender._sendTick();
+    assert.ok(lastMsg?.bc?.[owner.nid], 'owner broadcasts Brella sidecar during unlocked Killer Wail');
+    receiver._tick('A', lastMsg);
+    const snap1 = proxy.net.buf.at(-1);
+    assert.ok(Array.isArray(snap1?.s3Brella), '_tick()->read() retains Brella sidecar for killerWail even when receiver cursor < 40F');
+
+    // Non-allowing special (slam) must drop held canopy row in read()
+    const slamMsg = JSON.parse(JSON.stringify(lastMsg));
+    slamMsg.ts = (lastMsg.ts || 0) + 0.05;
+    slamMsg.u = (lastMsg.u || 0) + 3;
+    slamMsg.bc[owner.nid][2] = slamMsg.u;
+    proxy.weapon.special = 'slam';
+    receiver._tick('A', slamMsg);
+    const snapSlam = proxy.net.buf.at(-1);
+    assert.equal(snapSlam?.s3Brella, null, '_tick()->read() drops held Brella sidecar for non-allowing special');
+
+    // 2. Special start Frame 1 (S.f & SPECIAL_FLAG set before proxy.specialActive updates) suppresses canopy;
+    //    Special end frame (!(S.f & SPECIAL_FLAG) while proxy.specialActive is still stale) shows canopy immediately.
+    const F_ALIVE = 1;
+    const F_SPECIAL = 8192;
+    const row = ['inkwave.brella-view.v1', 1, 10, 's3-shelter-normal', 2, 0, 0, 1, 1.2, 0, 0, 1, 0];
+    proxy.weapon.special = 'killerWail';
+    proxy.specialActive = null; // Frame 1 before apply.call populates specialActive
+    const startSnap = { t: 2.0, tp: 0, life: 1, f: F_ALIVE | F_SPECIAL, s3BrellaOwner: 'A', s3Brella: row };
+    proxy.net = { ready: true, lastLife: 1, cur: startSnap, buf: [startSnap], err: new f.THREE.Vector3() };
+    receiver.peers.set('A', { tr: 2.0, lastTs: 2.0, physicsPoints: [2.0, 10] });
+    receiver.applyRemote(proxy, STEP);
+    assert.equal(proxy.character.s3BrellaPresentation?.canopy, null, 'special start Frame 1 suppresses held canopy before specialActive updates');
+
+    // Special end frame: F_SPECIAL cleared in S.f even while stale specialActive is still set
+    proxy.specialActive = { id: 'slam', net: true, t: 0.5 };
+    const endSnap = { t: 2.05, tp: 0, life: 1, f: F_ALIVE, s3BrellaOwner: 'A', s3Brella: row };
+    proxy.net = { ready: true, lastLife: 1, cur: endSnap, buf: [endSnap], err: new f.THREE.Vector3() };
+    receiver.applyRemote(proxy, STEP);
+    assert.ok(proxy.character.s3BrellaPresentation?.canopy?.open, 'special end frame reflects held canopy immediately without 1-frame lag');
+
+    // 3. Remote Squid Roll pack + applyRemote respects specialKeepsNativeForm
+    const rollAction = { time: 0.25, vx: 6, vz: 0 };
+    owner.form = 'squid';
+    owner.s3 = { ...(owner.s3 || {}), actions: { roll: rollAction } };
+    owner.specialActive = { id: 'killerWail', t: 0.2 };
+    lastMsg = null;
+    sender._sendTick();
+    const ownerRowWail = lastMsg?.a?.find((r) => r[0] === owner.nid);
+    const hasRollWail = Array.isArray(ownerRowWail) && ownerRowWail.some((v) => Array.isArray(v) && v[0] === 's3roll-v1' && v[1] > 0);
+    assert.equal(hasRollWail, true, 'packSquidrollSnapshot packs active Squid Roll during specialKeepsNativeForm (killerWail)');
+
+    owner.specialActive = { id: 'slam', t: 0.2 };
+    lastMsg = null;
+    sender._sendTick();
+    const ownerRowSlam = lastMsg?.a?.find((r) => r[0] === owner.nid);
+    const hasActiveRollSlam = Array.isArray(ownerRowSlam) && ownerRowSlam.some((v) => Array.isArray(v) && v[0] === 's3roll-v1' && v[1] > 0);
+    assert.equal(hasActiveRollSlam, false, 'packSquidrollSnapshot suppresses active Squid Roll during non-native-form special (slam)');
+
+    // Receiver applyRemote Squid Roll with F_SPECIAL set
+    const F_SQUID = 2;
+    const rollSnap = {
+      t: 3.0, tp: 0, life: 1, f: F_ALIVE | F_SQUID | F_SPECIAL,
+      rollId: 7, rollRemaining: 0.25, rollVx: 6, rollVz: 0,
+    };
+    proxy.net = { ready: true, lastLife: 1, cur: rollSnap, buf: [rollSnap], err: new f.THREE.Vector3() };
+    receiver.peers.set('A', { tr: 3.0, lastTs: 3.0, physicsPoints: [3.0, 20] });
+    proxy.specialActive = { id: 'killerWail', net: true, t: 0.2 };
+    receiver.applyRemote(proxy, STEP);
+    assert.equal(proxy.remoteSquidrollVisual?.id, 7, 'applyRemote preserves remoteSquidrollVisual during specialKeepsNativeForm');
+
+    proxy.specialActive = { id: 'slam', net: true, t: 0.2 };
+    receiver.applyRemote(proxy, STEP);
+    assert.equal(proxy.remoteSquidrollVisual, null, 'applyRemote clears remoteSquidrollVisual during non-native-form special');
+  } finally {
+    sender.dispose();
+    receiver.dispose();
+    ownerRig.close();
+    proxyRig.close();
+  }
+});

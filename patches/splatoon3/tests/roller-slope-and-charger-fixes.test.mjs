@@ -377,6 +377,23 @@ test('full-charge tail passes buffer-time playTail, clamps short/zero tail monot
     for (let i = 1; i < times.length; i++) assert.ok(times[i] >= times[i - 1], 'gain timeline monotonic');
     h.stop();
   }
+  // Short-tail buffer clamp (0 < tailDur < 0.006): monotonic gain schedule with fadeIn <= holdEnd <= tailDur
+  {
+    const { ctx, sources, gains } = makeAudioCtx();
+    const length = 1.215, body = length / 1.215, shortPlayTail = 0.004;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(body + shortPlayTail), { offset: 0, length, chargeTime: 1, progress: 0.5, volume: 0.55 });
+    ctx.currentTime = 0.05;
+    h.set({ progress: 1.0 });
+    assert.equal(sources.length, 2, 'short tail spawns second source');
+    assert.ok(Math.abs(sources[1].startArgs[2] - shortPlayTail) < 1e-6, `short tail passes clamped buffer-time (${sources[1].startArgs[2]})`);
+    const times = gains[1].gain.calls.map(c => c.time ?? c[2]).filter(Number.isFinite);
+    assert.ok(times.length >= 3, 'short tail schedules gain envelope');
+    for (let i = 1; i < times.length; i++) {
+      assert.ok(times[i] >= times[i - 1], `short tail gain timeline monotonic (${times[i - 1]} -> ${times[i]})`);
+    }
+    assert.ok(times[times.length - 1] <= 0.05 + shortPlayTail + 1e-6, 'short tail envelope ends within now + tailDur');
+    h.stop();
+  }
   // Zero-tail buffer clamp (buffer.duration === offset + body)
   {
     const { ctx, sources } = makeAudioCtx();
