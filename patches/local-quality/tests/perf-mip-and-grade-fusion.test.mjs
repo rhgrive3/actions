@@ -785,9 +785,9 @@ test('full adaptBuildSource composition for src/core/renderer.js wires grade-out
 
 test('paint-regional-mips: _regenerateMipmaps clears forceFull when visible and preserves it when hidden', async () => {
   const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
-  const h = makePaintHarness(2048);
-  installPaintRegionalMips(h.PaintSystem);
-  const ps = new h.PaintSystem();
+  const h = createMockPaintHarness({ N: 2048 });
+  installPaintRegionalMips(h.MockPaintSystem);
+  const ps = new h.MockPaintSystem();
   ps._initGPU();
   const state = ps._iwPaintRegionalMips;
   assert.ok(state, 'regional mip state allocated');
@@ -806,8 +806,7 @@ test('paint-regional-mips: _regenerateMipmaps clears forceFull when visible and 
     globalThis.document = prevDoc;
   }
   // Subsequent small splat can now take the partial path again
-  ps.quads = 1;
-  ps.aPos[0] = -0.95; ps.aPos[1] = -0.95; ps.aPos[2] = -0.90; ps.aPos[5] = -0.90;
+  h.addQuadPixels(ps, 300, 550, 340, 590);
   ps._mipRequested = true;
   const partialBefore = state.partial;
   ps._drawQuads();

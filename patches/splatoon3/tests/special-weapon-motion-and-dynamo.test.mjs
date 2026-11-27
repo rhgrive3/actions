@@ -677,7 +677,7 @@ test('Dynamo Roller held=true and mid-recovery ZR release preserve continuity wi
       a.weaponRunner.update(STEP, { fire: a.intent.fire, firePressed: tick === 0 });
       f.G.time += STEP;
       a._finishFrame(STEP);
-      if (tick >= 64 && tick <= 74) {
+      if (tick >= 64 && tick <= 80) {
         const anc = [ch.P[C.ANC], ch.P[C.ANC + 1], ch.P[C.ANC + 2]];
         const rot = [ch.P[C.ANCR], ch.P[C.ANCR + 1], ch.P[C.ANCR + 2]];
         if (prevAnc) {
@@ -688,8 +688,9 @@ test('Dynamo Roller held=true and mid-recovery ZR release preserve continuity wi
         prevRot = rot;
       }
     }
-    assert.ok(maxAncJump < 0.15, `mid-recovery ZR release anchor stays continuous (maxJump=${maxAncJump.toFixed(4)})`);
-    assert.ok(maxRotJump < 0.32, `mid-recovery ZR release rotation stays continuous without C0 snap (maxJump=${maxRotJump.toFixed(4)})`);
+    assert.ok(maxAncJump < 0.15, `mid-recovery ZR release anchor stays continuous through swing end (maxJump=${maxAncJump.toFixed(4)})`);
+    // Smoothstep releaseFade over HEAVY_ROLLER_SWING.ret (10F) has peak slope ~0.56 rad/frame vs ~3.0 rad C0 snap
+    assert.ok(maxRotJump < 0.75, `mid-recovery ZR release rotation fades smoothly through swing end without C0 snap (maxJump=${maxRotJump.toFixed(4)})`);
   } finally {
     rig.close();
   }
@@ -776,35 +777,49 @@ test('Remote killerWail and zipcaster symmetry via specialAllowsMainWeapon and b
 
 test('Dynamo mid-recovery ZR release fades smoothly through swing end without ~170° snap, and superjump-motion survives specialKeepsNativeForm', async () => {
   const f = await getApi();
-  // Verify _poseFlick releaseFade smoothly decays weight to 0 across HEAVY_ROLLER_SWING.ret
-  const a = new f.Actor({ team: 0, name: 'dynamo-fade', isLocal: true, weapon: 's3-roller-heavy', CharacterClass: f.Character, style: { hair: 0, skin: 0, outfit: 0, eyes: 0 } });
-  const ch = a.character;
-  a.grounded = true;
-  ch.s3RollerFlick = {
-    vertical: true, windup: 55 / 60, interval: 85 / 60, swingInterval: 76 / 60,
-    elapsed: 68 / 60, released: true, rolling: false, holdRoll: true, rollHoldBroken: true,
-    swingShape: 'heavy', releaseFadeAt: 68 / 60,
-  };
-  let prevRot = null, maxJump = 0;
-  for (let tick = 68; tick <= 80; tick++) {
-    ch.s3RollerFlick.elapsed = tick / 60;
-    ch.P.fill(0);
-    ch._poseWeapon?.(1 / 60, a.anim);
-    ch._poseFlick(1 / 60, a.anim);
-    const rot = [ch.P[f.CHARACTER_CHANNELS.ANCR], ch.P[f.CHARACTER_CHANNELS.ANCR + 1], ch.P[f.CHARACTER_CHANNELS.ANCR + 2]];
-    if (prevRot) {
-      const d = Math.hypot(rot[0] - prevRot[0], rot[1] - prevRot[1], rot[2] - prevRot[2]);
-      maxJump = Math.max(maxJump, d);
+  const C = f.CHARACTER_CHANNELS;
+  // Verify _poseFlick releaseFade smoothly decays weight to 0 across HEAVY_ROLLER_SWING.ret (10F)
+  const rig = makeActorRig(f, 's3-roller-heavy');
+  try {
+    const { a, ch } = rig;
+    a.grounded = true;
+    ch.s3RollerFlick = {
+      vertical: true, windup: 55 / 60, interval: 78 / 60, swingInterval: 76 / 60,
+      elapsed: 68 / 60, released: true, rolling: false, holdRoll: true, rollHoldBroken: true,
+      swingShape: 'heavy', releaseFadeAt: 68 / 60,
+    };
+    let prevRot = null, maxJump = 0, endRot = null;
+    for (let tick = 68; tick <= 78; tick++) {
+      ch.s3RollerFlick.elapsed = tick / 60;
+      ch.P.fill(0);
+      ch._poseFlick(ch.P, tick / 60);
+      const rot = [ch.P[C.ANCR], ch.P[C.ANCR + 1], ch.P[C.ANCR + 2]];
+      if (prevRot) {
+        maxJump = Math.max(maxJump, Math.hypot(rot[0] - prevRot[0], rot[1] - prevRot[1], rot[2] - prevRot[2]));
+      }
+      prevRot = rot;
+      endRot = rot;
     }
-    prevRot = rot;
+    assert.ok(maxJump < 0.75, `vertical mid-recovery release fades smoothly (maxJump=${maxJump.toFixed(4)})`);
+    assert.ok(Math.hypot(endRot[0], endRot[1], endRot[2]) < 1e-6, 'at releaseFadeAt + HEAVY_ROLLER_SWING.ret, vertical releaseFade reaches 0');
+  } finally {
+    rig.close();
   }
-  // At tick 78 (releaseFadeAt + 10/60 = 78/60), releaseFade reaches 0 so clearing s3RollerFlick has near-zero jump
-  assert.ok(maxJump < 1.0, `vertical mid-recovery release fades smoothly (maxJump=${maxJump})`);
 
-  // Verify superjump-motion lifecycle hook preserves state for specialKeepsNativeForm specials
-  const sjActor = new f.Actor({ team: 0, name: 'sj-keep', isLocal: true, weapon: 'shooter', CharacterClass: f.Character, style: { hair: 0, skin: 0, outfit: 0, eyes: 0 } });
-  sjActor.anim.movementMotion = { superJumpVelocity: new f.THREE.Vector3(0, 5, 0) };
-  sjActor.specialActive = { id: 'killerWail', t: 0.2 };
-  sjActor._startSpecial?.();
-  assert.ok(sjActor.anim.movementMotion.superJumpVelocity, 'superJumpVelocity preserved for specialKeepsNativeForm special');
+  // Verify superjump-motion lifecycle hook preserves state for specialKeepsNativeForm specials and clears for others
+  const sjRig = makeActorRig(f, 'shooter');
+  try {
+    const sjActor = sjRig.a;
+    sjActor.alive = true;
+    sjActor.anim.movementMotion = { superJumpVelocity: new f.THREE.Vector3(0, 5, 0) };
+    sjActor.specialActive = { id: 'killerWail', t: 0.2 };
+    sjActor._startSpecial?.();
+    assert.ok(sjActor.anim.movementMotion.superJumpVelocity, 'superJumpVelocity preserved for specialKeepsNativeForm special');
+
+    sjActor.specialActive = { id: 'slam', t: 0.2 };
+    sjActor._startSpecial?.();
+    assert.equal(sjActor.anim.movementMotion.superJumpVelocity, undefined, 'superJumpVelocity cleared for non-native-form special');
+  } finally {
+    sjRig.close();
+  }
 });
