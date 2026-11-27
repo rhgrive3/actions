@@ -15,7 +15,9 @@ export function specialAllowsMainWeapon(actor) {
     return Number.isFinite(t) && t + 1e-8 >= KILLER_WAIL_UNLOCK_S;
   }
   if (s.id === 'zipcaster') {
-    const phase = actor._s3AllSpecialState?.id === 'zipcaster' ? actor._s3AllSpecialState.phase : s.phase;
+    const phase = actor._s3AllSpecialState?.id === 'zipcaster'
+      ? actor._s3AllSpecialState.phase
+      : (s.phase ?? (s.net === true ? 'ready' : undefined));
     return phase === 'ready';
   }
   return false;

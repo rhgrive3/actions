@@ -145,11 +145,11 @@ export function installChargerFlight(api,completion) {
   };
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
   function feetSplash(actor,w){
-    const radius=w.feetPaintRadius>0?w.feetPaintRadius:(w.kind==='charger'?1.2:0);
+    const radius=Number.isFinite(w.feetPaintRadius)?w.feetPaintRadius:(w.kind==='charger'?1.2:0);
     if(!(radius>0)||!actor?.alive)return;
     feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
     const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
-    if(!h.hit)return;
+    if(!h.hit||h.normal.y<.5)return;
     const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:actor});
     actor.addTurf(area);
   }

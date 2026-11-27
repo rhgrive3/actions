@@ -1365,6 +1365,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   };
   Character.prototype._poseWeapon = function (dt, s) {
     const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
+      specialAllowsMainWeapon(this.actor) &&
       (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
         this.tr[T.T_DODGE] >= this.dodgeDur && spawnMotionAllowsAction(this, this.tr[T.T_SPAWN] >= 1.4)));
     const spawnerAim = !available && this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&

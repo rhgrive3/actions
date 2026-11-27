@@ -18,6 +18,8 @@
 // 8. Snipewriter 5H (s3-charger-pencil): https://splatoonwiki.org/wiki/Snipewriter_5H
 //    (1.2s full charge loads 5 rounds, 37.5% cost, no Charge Keep, 5-round sweeping fan & magazine preservation)
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const GOLDEN_ANGLE = 2.399963229728653;
 
 /**
@@ -577,7 +579,7 @@ export function applyChargerTurfPaint(brain, G, actor, dt, move, wantMove, baseY
   const it = actor?.intent;
   if (!brain || !it) return;
   syncChargerLifeState(brain, actor);
-  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return;
+  if (actor.alive === false || actor.superJumpState || !specialAllowsMain(actor) || actor.climbing) return;
   if (it.sub || it.special) {
     it.fire = false;
     return;
@@ -788,7 +790,7 @@ export function applyChargerCombat(brain, G, actor, dt, move, ctx) {
   const wr = actor?.weaponRunner;
   if (!brain || !it || !wr || !ctx) return null;
   syncChargerLifeState(brain, actor);
-  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return null;
+  if (actor.alive === false || actor.superJumpState || !specialAllowsMain(actor) || actor.climbing) return null;
   if (it.sub || it.special) {
     it.fire = false;
     return null;

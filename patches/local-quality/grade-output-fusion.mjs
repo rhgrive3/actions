@@ -112,7 +112,9 @@ export function setupGradeOutputFusion(owner) {
 export function syncGradeOutputFusion(owner) {
   if (!owner?.grade || !owner?.outputPass || !owner._gradeLinearMat || !owner._gradeOutputMat) return false;
   const fuse = !owner.extraPass?.enabled;
-  owner.grade.material = fuse ? owner._gradeOutputMat : owner._gradeLinearMat;
+  const nextMat = fuse ? owner._gradeOutputMat : owner._gradeLinearMat;
+  owner.grade.material = nextMat;
+  if (owner.grade._fsQuad) owner.grade._fsQuad.material = nextMat;
   owner.outputPass.enabled = !fuse;
   if (fuse && owner.renderer) {
     const r = owner.renderer;
@@ -138,6 +140,14 @@ export function disposeGradeOutputFusion(owner, { gradeDisposed = false } = {}) 
   const fused = owner._gradeOutputMat;
   if (linear && (!gradeDisposed || linear !== active)) linear.dispose?.();
   if (fused && fused !== linear && (!gradeDisposed || fused !== active)) fused.dispose?.();
+  if (!gradeDisposed && owner.grade) {
+    if (owner.grade.material === linear || owner.grade.material === fused) {
+      owner.grade.material = null;
+    }
+    if (owner.grade._fsQuad && (owner.grade._fsQuad.material === linear || owner.grade._fsQuad.material === fused)) {
+      owner.grade._fsQuad.material = null;
+    }
+  }
   owner._gradeLinearMat = null;
   owner._gradeOutputMat = null;
   owner._gradeOutputState = null;

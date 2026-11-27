@@ -22,11 +22,18 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
   // end so it never wraps the guard loop or chops on a single dropped frame.
   const nominal=clamp(body/Math.max(.05,chargeTime),.02,4);
   let stopped=false,ended=false,src=null,sourceGain=null,untrack=()=>{};
-  let previous=q,last=ctx.currentTime,rate=nominal,level=clamp(Number(volume)||0,0,1),position=pos;
-  let appliedRate=nominal,gainTarget=0,gainSettlesAt=0;
+  let previous=q,last=ctx.currentTime,rate=q>0?nominal:0,level=clamp(Number(volume)||0,0,1),position=pos;
+  let appliedRate=q>0?nominal:0,gainTarget=0,gainSettlesAt=0;
   let head=0,headAt=ctx.currentTime,anchorQ=q,anchorAt=ctx.currentTime,progressAt=ctx.currentTime,speed=1;
   let buildingHeadroom=false,wasPaused=false;
-  const headNow=now=>head+appliedRate*Math.max(0,now-headAt);
+  const headNow=now=>{
+    const raw=head+appliedRate*Math.max(0,now-headAt);
+    if(src&&src.loop&&appliedRate>0&&src.loopEnd>src.loopStart&&raw>=src.loopEnd){
+      const span=src.loopEnd-src.loopStart;
+      return src.loopStart+((raw-src.loopStart)%span);
+    }
+    return raw;
+  };
   function applyRate(next,now){
     head=headNow(now);headAt=now;
     src.playbackRate.cancelScheduledValues?.(now);
@@ -49,7 +56,7 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
     const now=ctx.currentTime,old=src,oldGain=sourceGain;
     const s=ctx.createBufferSource(),g=ctx.createGain();src=s;sourceGain=g;
     s.buffer=buffer;s.connect(g);g.connect(panner||target);
-    const initialRate=full?1:nominal;
+    const initialRate=full?nominal:(q>0?nominal:0);
     rate=initialRate;
     s.playbackRate.value=initialRate;
     appliedRate=initialRate;
@@ -60,9 +67,10 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
     gainTarget=q>0?level:0;gainSettlesAt=now+.006;
     s.onended=()=>{disconnect(s,g);if(src===s){ended=true;untrack();try{panner?.disconnect?.();}catch{}}};
     if(full){
-      g.gain.setValueAtTime(level,now+Math.max(.006,tail-.02));
-      g.gain.linearRampToValueAtTime(0,now+tail);
-      s.start(now,offset+body,tail);
+      const tailDur=tail/nominal;
+      g.gain.setValueAtTime(level,now+Math.max(.006,tailDur-.02));
+      g.gain.linearRampToValueAtTime(0,now+tailDur);
+      s.start(now,offset+body,tailDur);
     }else s.start(now,head);
     if(old)retire(old,oldGain);
   }
@@ -82,10 +90,19 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
       q=next;
       if(q>=1){start(true);return;}
       const end=offset+Math.max(step*2,body*q);
+      head=headNow(now);headAt=now;
       src.loopStart=Math.max(offset,end-.035);src.loopEnd=end;
       if(dp>0)progressAt=now;
       if(dt>=1/240){
-        if(wasPaused&&dp>0){anchorQ=previous;anchorAt=last;wasPaused=false;head=Math.max(offset,end-Math.min(.04*nominal,body*q));headAt=now;buildingHeadroom=false;speed=1;}
+        let resumedFromPause=false;
+        if(wasPaused&&dp>0){
+          anchorQ=previous;anchorAt=last;wasPaused=false;buildingHeadroom=false;speed=1;
+          const targetHead=Math.max(offset,end-Math.min(.04*nominal,body*q));
+          if(Math.abs(targetHead-headNow(now))>.045*nominal&&end-headNow(now)>.15*nominal){
+            start(false);previous=q;last=now;return;
+          }
+          resumedFromPause=true;
+        }
         // Sustained charge speed relative to the nominal clock (1 = normal,
         // ~1/3 for an airborne/empty-tank charge), measured over >=45 ms.
         // Never reset anchorAt on head catch-up so a sudden 1 -> 1/3 drop on
@@ -98,17 +115,30 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
         }
         // Only mute on a genuine pause/hold where progress has stopped
         // advancing for >80 ms; never chop on a single 33 ms frame hitch.
-        const paused=now-progressAt>.08;
+        const paused=q<=0||now-progressAt>.08;
         if(paused){
           rate=0;wasPaused=true;buildingHeadroom=false;
+        }else if(resumedFromPause){
+          rate=nominal;
         }else{
           // Target ~40 ms of wall-clock headroom behind the funded end.
           // Softly decelerate when approaching `end` instead of muting, and
           // keep a wide deadband so normal 30/60/120 Hz charging stays steady.
           const headroom=(end-headNow(now))/nominal;
-          if(headroom<.012)buildingHeadroom=true;
-          else if(headroom>=.035)buildingHeadroom=false;
-          const correction=buildingHeadroom?.25:headroom>.075?clamp(1+(headroom-.04)/.5,1.02,1.06):1;
+          if(body*q<.04*nominal){
+            buildingHeadroom=false;
+          }else if(headroom<.006){
+            buildingHeadroom=true;
+          }else if(headroom>=.035){
+            buildingHeadroom=false;
+          }
+          let correction=1;
+          if(buildingHeadroom&&headroom<.035){
+            const slow=headroom<=.003?.5:clamp(.78+(headroom/.035)*.22,.78,1);
+            correction=speed<.5?Math.max(.78,slow):slow;
+          }else if(headroom>.075){
+            correction=clamp(1+(headroom-.04)/.5,1.02,1.06);
+          }
           rate=clamp(nominal*speed*correction,.02,4);
         }
         if(rate===0?appliedRate!==0:Math.abs(rate-appliedRate)>.012*Math.max(rate,appliedRate))applyRate(rate,now);

@@ -59,7 +59,15 @@ function makeHarness(special, { distance = 18, enemyY = 0, active = true, stateE
     physics: {
       los: () => true,
       segment: () => ({ hit: false }),
-      raycast: (o, d, _len, out) => { out.hit = true; out.point.set(o.x, 0, o.z); out.normal.set(0, 1, 0); return out; },
+      raycast: (o, _d, _len, out) => {
+        const y = world.level.groundHeight(o.x, o.z, o.y);
+        if (Number.isFinite(y) && y <= o.y) {
+          out.hit = true; out.point.set(o.x, y, o.z); out.normal.set(0, 1, 0);
+        } else {
+          out.hit = false;
+        }
+        return out;
+      },
     },
     projectiles: { bombs: [], clouds: [], _s3SupportCoolers: [], _s3AllSpecialObjects: [] },
     paint: { regionStats: () => ({ n: 1, own: 0, enemy: 1, empty: 0 }) },
@@ -255,7 +263,7 @@ test('Killer Wail 5.1: post-40F allows turf painting/roaming and simultaneous-ma
     alive: true, team: 0, pos: vec(0, 0, 0), grounded: true,
     specialActive: { id: 'killerWail', t: 1.0 },
     weapon: { id: 's3-charger-normal', family: 'charger' },
-    weaponRunner: { cooldown: 0, charging: false, charge: 0 },
+    weaponRunner: { cooldown: 0, charging: true, charge: 0.5 },
     intent: { fire: false, squid: false, sub: false },
   };
   const wwRes = botWeakWeaponCombat({ _chargerState: null }, {}, wwActor, 1 / 60, vec(0, 0, 1), {
@@ -263,7 +271,16 @@ test('Killer Wail 5.1: post-40F allows turf painting/roaming and simultaneous-ma
     enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
     idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
   });
-  assert.notEqual(wwRes, undefined, 'botWeakWeaponCombat passes specialActive gate during post-40F Killer Wail');
+  assert.notEqual(wwRes, null, 'botWeakWeaponCombat passes specialActive gate during post-40F Killer Wail');
+
+  // Negative control: pre-40F Killer Wail (10/60) is blocked and returns null.
+  wwActor.specialActive = { id: 'killerWail', t: 10 / 60 };
+  const wwPreRes = botWeakWeaponCombat({ _chargerState: null }, {}, wwActor, 1 / 60, vec(0, 0, 1), {
+    family: 'charger', dist: 16, range: 22, dx: 0, dz: 16,
+    enemyVisible: true, aimed: true, off: 0.02, inkFrac: 0.8,
+    idealYaw: 0, idealPitch: 0, wantYaw: 0, wantPitch: 0,
+  });
+  assert.equal(wwPreRes, null, 'botWeakWeaponCombat returns null during pre-40F Killer Wail');
 });
 
 test('Zipcaster: moves/strafes during ready phase combat, roams if origin path blocked, and allows main (not sub)', async () => {
@@ -322,12 +339,11 @@ test('Support hold specials: move when blocked and release via bounded 1.5s fall
   const { driveSupportSpecial } = await getFx();
   for (const special of ['storm', 'tacticooler', 'waveBreaker', 'splattercolorScreen', 'tripleInkstrike', 'superChump']) {
     const h = makeHarness(special, { distance: 20, stateExtra: { phase: 'active', t: 1, shots: 0, nextMarkerStart: 0 } });
-    // Force !point by returning -Infinity groundHeight (blocks normal aimPlan).
-    h.world.level.groundHeight = () => -Infinity;
+    // Keep local floor valid for real safePath while forcing distant choosePoint targets to -Infinity.
+    h.world.level.groundHeight = (x, z) => (Math.hypot(x, z) < 2.5 ? 0 : -Infinity);
     let moved = false, threw = false, held = false;
     for (let i = 0; i < 130; i++) {
       const c = h.makeCtx({ dt: 1 / 60, navMove: [1, 0, 0], target: null, see: false });
-      c.safePath = () => true;
       driveSupportSpecial(c);
       if (c.move.lengthSq() > 0.01) moved = true;
       if (special === 'superChump') {
@@ -391,4 +407,98 @@ test('Ultra Stamp: strafes and times out cleanly when stampAimThrow is stuck on 
   }
   assert.equal(moved, true, 'strafes instead of freezing while stampAimThrow waits on !isAimed');
   assert.equal(released, true, 'times out stampAimThrow cleanly after ~1.2s');
+});
+
+test('followNav: does not clobber explicit aimChanged or when steerLook=false, and rejects non-positive scale', () => {
+  const h = makeHarness('tentaMissiles', { distance: 18 });
+  const ctx = h.makeCtx({ navMove: [1, 0, 0], target: null, see: false });
+  captureNav(ctx);
+  assert.equal(followNav(ctx, 0), false, 'scale <= 0 returns false');
+  assert.equal(followNav(ctx, -0.5), false, 'negative scale returns false');
+
+  // Explicit aim target sets ctx.aimChanged = true; followNav must preserve wantYaw/wantPitch.
+  ctx.aimAt(vec(0, 2, 10));
+  const savedYaw = ctx.wantYaw, savedPitch = ctx.wantPitch;
+  assert.equal(followNav(ctx, 0.8), true, 'still moves along nav when aimChanged is true');
+  assert.equal(ctx.wantYaw, savedYaw, 'does not clobber explicit wantYaw');
+  assert.equal(ctx.wantPitch, savedPitch, 'does not clobber explicit wantPitch');
+
+  // Even when aimChanged is false, steerLook: false preserves wantYaw/wantPitch.
+  const ctx2 = h.makeCtx({ navMove: [1, 0, 0], target: null, see: false });
+  ctx2.wantYaw = 0.1; ctx2.wantPitch = -0.35;
+  captureNav(ctx2);
+  assert.equal(followNav(ctx2, 0.8, { steerLook: false }), true);
+  assert.equal(ctx2.wantYaw, 0.1, 'steerLook: false preserves wantYaw');
+  assert.equal(ctx2.wantPitch, -0.35, 'steerLook: false preserves wantPitch');
+});
+
+test('Killer Wail 5.1: post-40F preserves ranked nonCombat fire and does not clobber firing pitch', async () => {
+  const { driveRangedSpecial } = await getFx();
+  const h = makeHarness('killerWail', { distance: 20, stateExtra: { t: 40 / 60, beams: 3 } });
+  h.brain.mode = 'ranked';
+  h.brain.aimYaw = 0; h.brain.aimPitch = -0.35;
+  h.intent.fire = true;
+  const ctx = h.makeCtx({ navMove: [1, 0, 0], target: null, see: false });
+  driveRangedSpecial(ctx);
+  assert.equal(h.intent.fire, true, 'post-40F Killer Wail preserves ranked objective fire');
+  assert.ok(ctx.move.x > 0.5, 'post-40F Killer Wail navigates in ranked mode');
+  assert.equal(ctx.wantPitch, -0.35, 'does not clobber firing pitch with look-ahead steering');
+});
+
+test('Super Chump: fallbackThrow waits until grounded and pulse-gates on !native.held.fire', async () => {
+  const { driveSupportSpecial } = await getFx();
+  const h = makeHarness('superChump', { distance: 20, stateExtra: { phase: 'active', t: 1, held: { fire: false } } });
+  h.world.level.groundHeight = (x, z) => (Math.hypot(x, z) < 2.5 ? 0 : -Infinity);
+  h.actor.grounded = false;
+  // Advance past 1.5s timeout while airborne: must NOT fire and must NOT reset activeHoldElapsed.
+  let c;
+  for (let i = 0; i < 100; i++) {
+    c = h.makeCtx({ dt: 1 / 60, navMove: [1, 0, 0], target: null, see: false });
+    h.intent.fire = false;
+    driveSupportSpecial(c);
+    assert.equal(h.intent.fire, false, 'does not fire Super Chump fallbackThrow while airborne');
+  }
+  assert.ok(c.memory.activeHoldElapsed >= 1.5, 'preserves activeHoldElapsed while waiting to land');
+
+  // Land with native.held.fire = true -> pulse gate blocks fire on held tick.
+  h.actor.grounded = true;
+  h.actor._s3AllSpecialState.held.fire = true;
+  const cHeld = h.makeCtx({ dt: 1 / 60, navMove: [1, 0, 0], target: null, see: false });
+  h.intent.fire = false;
+  driveSupportSpecial(cHeld);
+  assert.equal(h.intent.fire, false, 'pulse-gates Super Chump fallbackThrow on !native.held.fire');
+
+  // Release native.held.fire -> fires immediately on grounded tick.
+  h.actor._s3AllSpecialState.held.fire = false;
+  const cFire = h.makeCtx({ dt: 1 / 60, navMove: [1, 0, 0], target: null, see: false });
+  h.intent.fire = false;
+  driveSupportSpecial(cFire);
+  assert.equal(h.intent.fire, true, 'fires Super Chump fallbackThrow once grounded and unheld');
+});
+
+test('stabilizeBotForm: cancelCharge is scoped to Zipcaster and clears _s3BotForm when match not playing', () => {
+  // Non-Zipcaster charging must NOT bypass BOT_FORM_HOLD when requesting squid.
+  const a = {
+    alive: true,
+    specialActive: null,
+    weaponRunner: { charging: true },
+    intent: { squid: false, fire: false, sub: false, special: false },
+  };
+  stabilizeBotForm(a, 1);
+  // Flip to human via fire so hold timer resets to 0.
+  a.intent.squid = true; stabilizeBotForm(a, 1);
+  a.intent.squid = false; a.intent.fire = true; stabilizeBotForm(a, 1 / 60);
+  assert.equal(a.intent.squid, false);
+  // Immediately request squid while charging (non-Zipcaster): must be held back.
+  a.intent.fire = false; a.intent.squid = true; stabilizeBotForm(a, 1 / 60);
+  assert.equal(a.intent.squid, false, 'non-Zipcaster charging respects BOT_FORM_HOLD');
+
+  // Zipcaster charging DOES bypass BOT_FORM_HOLD immediately to cancel charge.
+  a.specialActive = { id: 'zipcaster', phase: 'ready' };
+  a.intent.fire = false; a.intent.squid = true; stabilizeBotForm(a, 1 / 60);
+  assert.equal(a.intent.squid, true, 'Zipcaster charging cancels immediately into squid');
+
+  // Match not playing clears actor._s3BotForm.
+  stabilizeBotForm(a, 1 / 60, false, { match: { playing: () => false } });
+  assert.equal(a._s3BotForm, undefined, 'clears _s3BotForm when match is not playing');
 });

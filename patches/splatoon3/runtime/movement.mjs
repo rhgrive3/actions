@@ -1,6 +1,7 @@
 import { slamProtected } from './tidal-slam-gauge.mjs';
 import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 import { absorbZipcasterDamage } from './zipcaster-armor.mjs';
+import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
 let api, config;
 // Read the installed local controller calibration; native route screening must
 // not duplicate a different Surge impulse or charging duration.
@@ -16,7 +17,7 @@ export function rollEligible(velocity, move, cfg) {
 }
 // Input is already deadzone-filtered; wall-roll admission is angular.
 export function wallRollRequested(a, jumpPressed, normal = a.wallN) {
-  if (!jumpPressed || !a.alive || !a.climbing || a.form !== 'squid' || a.specialActive || a.superJumpState) return false;
+  if (!jumpPressed || !a.alive || !a.climbing || a.form !== 'squid' || (a.specialActive && !specialKeepsNativeForm(a.specialActive)) || a.superJumpState) return false;
   const move = a.intent.move, length = Math.hypot(move.x, move.z), nl = Math.hypot(normal.x, normal.z);
   if (!Number.isFinite(length + nl) || length <= EPSILON || nl <= EPSILON) return false;
   return (move.x * normal.x + move.z * normal.z) / (length * nl) + EPSILON >= Math.cos(config.wallRollMaximumAngle);
@@ -75,7 +76,7 @@ function fullCancelGroundAttackReady(a, state) {
   const age = api.G.time - context.pressT;
   const window = Math.max(api.PLAYER.fireBuffer, Number.isFinite(a.weapon?.squidFlickDelay) ? a.weapon.squidFlickDelay : 0);
   const expiresAt = Number.isFinite(context.expiresAt) ? context.expiresAt : context.pressT + window;
-  const valid = a.alive && !a.specialActive && !a.superJumpState && a.form === 'kid' &&
+  const valid = a.alive && specialAllowsMainWeapon(a) && !a.superJumpState && a.form === 'kid' &&
     a.weapon?.kind === 'roller' && a._firePressT === context.pressT &&
     Number.isFinite(age) && Number.isFinite(expiresAt) && age >= -EPSILON && api.G.time <= expiresAt + EPSILON;
   if (!valid) state.fullCancelGroundAttack = null;
@@ -116,7 +117,7 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
   state.fullCancelJumpVelocity = null;
   advanceChainTimer(state, dt);
 
-  if (!a.alive || a.specialActive || a.superJumpState || a.form === 'squid') {
+  if (!a.alive || !specialAllowsMainWeapon(a) || a.superJumpState || a.form === 'squid') {
     state.fullCancelCandidate = null; state.fullCancelGroundAttack = null;
   } else if (input.wasSquid && input.wasSubmerged && !input.wasClimbing && input.firePressed && input.fireWins &&
       !state.roll && !state.surge) {
@@ -127,7 +128,7 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
   if (candidate) {
     const age = api.G.time - candidate.pressT, window = api.PLAYER.fireBuffer;
     const inWindow = Number.isFinite(age) && Number.isFinite(window) && age >= -EPSILON && age <= window + EPSILON;
-    if (!inWindow || !a.alive || a.specialActive || a.superJumpState || a.form !== 'kid') {
+    if (!inWindow || !a.alive || !specialAllowsMainWeapon(a) || a.superJumpState || a.form !== 'kid') {
       state.fullCancelCandidate = null;
     } else if (jumpPressed) {
       state.fullCancelCandidate = null;
@@ -158,11 +159,11 @@ export function beforeActions(a, dt, jumpPressed, input = {}) {
     state.roll.time -= dt;
     if (state.roll.time <= 1e-10 || a.form !== 'squid') state.roll = null;
   }
-  if (!a.alive || a.specialActive || a.superJumpState || a.form !== 'squid') {
+  if (!a.alive || (a.specialActive && !specialKeepsNativeForm(a.specialActive)) || a.superJumpState || a.form !== 'squid') {
     state.roll = state.surge = state.armor = state.floorSpeed = null;
     // #972: ordinary humanoid/attack transitions cancel the action and shield,
     // not the still-live consecutive-roll history. Its own clock expires it.
-    if (!a.alive || a.specialActive || a.superJumpState) state.chainSpeed = 0;
+    if (!a.alive || (a.specialActive && !specialKeepsNativeForm(a.specialActive)) || a.superJumpState) state.chainSpeed = 0;
     a.anim.surgeCharge = 0; sync(a, state); return false;
   }
   // Keep the last qualifying real velocity direction briefly; do not queue raw input.
@@ -248,7 +249,7 @@ export function crossSurgeInkGap(a, hit, into) {
 }
 function beginSurgeLaunchArmor(actor, surge) {
   if (!surge?.armorPending || !actor.alive || actor.form !== 'squid' || actor.climbing ||
-      actor.specialActive || actor.superJumpState || movementState(actor).surge !== surge) return;
+      (actor.specialActive && !specialKeepsNativeForm(actor.specialActive)) || actor.superJumpState || movementState(actor).surge !== surge) return;
   surge.armorPending = false;
   surge.armorTime = config.surge.armorTime;
   armorBirthTimes.set(surge, api.G.time);
@@ -398,7 +399,7 @@ export function installMovement(context, tuning) {
     // A fresh held B may start the existing charge path again once the boost countdown has run out.
     if (state.surge?.phase === 'burst' && state.surge.time <= 1e-10 && this.intent.jump) { state.surge = null; sync(this, state); }
     const charging = this.alive && this.form === 'squid' && this.climbing && this.intent.jump &&
-      !this.specialActive && !this.superJumpState && (!state.surge || state.surge.phase === 'charge');
+      (!this.specialActive || specialKeepsNativeForm(this.specialActive)) && !this.superJumpState && (!state.surge || state.surge.phase === 'charge');
     const P = api.PLAYER, speed = P.climbSpeed, side = P.climbSideSpeed;
     if (charging) {
       P.climbSpeed *= config.surge.chargeMoveScale;
@@ -417,7 +418,7 @@ export function installMovement(context, tuning) {
     // swimming. Terminal speed and acceleration are provisional calibration
     // (profile.json movement.neutralWallSlide, numeric-status unverified), not measured S3.
     const neutralCling = this.alive && this.climbing && this.form === 'squid' &&
-      !this.specialActive && !this.superJumpState && !this.intent.jump && !state.surge && !state.roll &&
+      (!this.specialActive || specialKeepsNativeForm(this.specialActive)) && !this.superJumpState && !this.intent.jump && !state.surge && !state.roll &&
       Math.hypot(this.intent.move.x, this.intent.move.z) <= 0.01;
     if (neutralCling && Number.isFinite(args[0]) && args[0] > 0) {
       const slide = config.neutralWallSlide;
@@ -435,7 +436,7 @@ export function installMovement(context, tuning) {
     const original = Actor.prototype[method];
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
-      if (this.specialActive || this.superJumpState) {
+      if ((this.specialActive && !specialKeepsNativeForm(this.specialActive)) || this.superJumpState) {
         clearFullCancelCandidate(this);
         const state = movementState(this);
         state.roll = state.surge = state.armor = state.floorSpeed = null;

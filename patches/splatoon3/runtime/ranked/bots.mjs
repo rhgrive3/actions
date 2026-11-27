@@ -5,6 +5,7 @@ const towerCombatAction = value => value === 'ride' || value === 'defend';
 const clamCombatAction = value => value === 'collect' || value === 'carry' || value === 'defend';
 import { firstThreeFinite } from './coordinates.mjs';
 import { OWNED_RANKED_BLOCKED } from './frame-ownership.mjs';
+import { specialAllowsMain } from '../bot-special-movement.mjs';
 const clamArcMemo = new WeakMap();
 // Exact, directly evaluated angles; no trigonometric approximation or reordered arithmetic.
 const CLAM_ARC_SAMPLES = Array.from({ length: 211 }, (_, step) => {
@@ -273,6 +274,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
     const gravity = Math.max(1, finite(PLAYER?.gravity, 25));
     const maxJumpHeight = jumpVelocity * jumpVelocity / (2 * gravity) + 0.22;
     const foundTowerApproach = engine.mode === 'tower' && action === 'ride'
+      && specialAllowsMain(a)
       && towerApproachPath(brain, target, engine, G, frame, maxJumpHeight, nativeTower);
     // Only use the edge-target steering below after A* has selected a real
     // static nav node. If the nav mesh has no reachable node, keep the clear
@@ -425,6 +427,10 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   brain._bombAim = false;
   brain._releaseBomb = false;
   brain._tail(dt, move, wantYaw, wantPitch, aimDist, move.lengthSq() > 0.01);
+  if (alreadyRiding && a.specialActive?.id !== 'inkjet' && a.specialActive?.id !== 'zipcaster') {
+    a.intent?.move?.set?.(0, 0, 0);
+    brain.mvMag = 0;
+  }
   // Preserve the native aim spring: a throw must not leave the hand until its
   // actual smoothed ray is lined up with the rule-owned ballistic target.
   // Otherwise the cooldown starts on a miss even though the bot was turning.
@@ -441,7 +447,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   // which can stop short of a Rainmaker shield that is farther away. Preserve
   // the native aim spring, but extend its smoothed ray to the actual target
   // distance so shooter flight and collision remain authoritative.
-  if (!a.specialActive && !it.special && engine.mode === 'rainmaker' && action === 'barrier' && aim) {
+  if (specialAllowsMain(a) && !it.special && engine.mode === 'rainmaker' && action === 'barrier' && aim) {
     const cp = Math.cos(a.aimPitch);
     a.aimPoint.set(a.pos.x + Math.sin(a.aimYaw) * cp * aimDist,
       a.pos.y + 1.1 + Math.sin(a.aimPitch) * aimDist,
@@ -466,6 +472,10 @@ export function installRankedBots(api = {}) {
     if (!engine || !RANKED_MODES.has(engine.mode) || !actor?.alive || actor.superJumpState
       || (typeof match.playing === 'function' && !match.playing())) {
       if(this._nativeTowerBoarding)this._nativeTowerBoarding=null;
+      this._rankedBarrierCenter = null;
+      this._rankedBarrierApproach = null;
+      this._rankedGoalKey = null;
+      this._rankedThrowCd = 0;
       return update.call(this, dt);
     }
     if(engine.mode!=='tower'&&this._nativeTowerBoarding)this._nativeTowerBoarding=null;
@@ -474,7 +484,7 @@ export function installRankedBots(api = {}) {
     if(this._nativeTowerBoarding){
       const boardingFrame=engine.frame||{actors:[],inputs:{}};
       const boardingGoal=engine.rule?.botGoal?.(frameActor(actor,boardingFrame),boardingFrame);
-      if(actor.specialActive || boardingGoal?.action!=='ride')this._nativeTowerBoarding=null;
+      if(!specialAllowsMain(actor) || boardingGoal?.action!=='ride')this._nativeTowerBoarding=null;
       else if(api.nativeTower?.update?.(this,G,engine,dt))return;
     }
     let nativeTail = null;
@@ -536,6 +546,10 @@ export function installRankedBots(api = {}) {
         actor.intent.jump = false;
       }
       oldTail.apply(this, nativeTail);
+      if (riding && !refill && actor.specialActive?.id !== 'inkjet' && actor.specialActive?.id !== 'zipcaster') {
+        actor.intent?.move?.set?.(0, 0, 0);
+        this.mvMag = 0;
+      }
       return result;
     }
     // Native perception and reaction timing still run; the final steering and

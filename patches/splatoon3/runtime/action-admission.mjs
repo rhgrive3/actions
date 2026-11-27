@@ -18,7 +18,7 @@ export function specialMotionAllowsAction(ch, nativeEligible) {
   // _owner() can update native lookup/cache clocks. The installed Special
   // observer has already resolved the actual Actor before state/pose hooks.
   const owner = ch?.actor?.character === ch ? ch.actor : null, live = owner?.specialActive;
-  if (live && specialAllowsMainWeapon(owner) && ch.s3SpecialMotionEnabled !== false) {
+  if (live && specialAllowsMainWeapon(owner) && m?.controlled && !m.nativeOnly && ch.s3SpecialMotionEnabled !== false) {
     return !specialMotionOwnsPose(ch);
   }
   const mapped = !live || Number.isFinite(live.t) && (live.id === 'storm'

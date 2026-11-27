@@ -1,12 +1,16 @@
 // INKWAVE policy helpers. Recognition, terrain and the admitted Actor inputs
 // stay authoritative; this module never starts an effect or spends/refills ink.
+import { resetBotSpecialMovement } from './bot-special-movement.mjs';
+
 const memories = new WeakMap();
 const finitePoint = p => !!p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z);
 const angleDifference = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
 
 export function resetBotSpecialMemory(actor) {
-  if (actor) memories.delete(actor);
+  if (!actor) return;
+  memories.delete(actor);
+  if (typeof resetBotSpecialMovement === 'function') resetBotSpecialMovement(actor);
 }
 
 function bossEnemy(actor, target, brain, world) {
@@ -142,23 +146,30 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
     const reach = Math.min(length, maxDistance);
     if (reach < 1e-5) return true;
     const ux = dx / length, uz = dz / length, samples = Math.max(1, Math.ceil(reach / 0.45));
+    const stepDist = reach / samples;
+    const maxDrop = Math.min(0.55, stepDist * 1.15);
+    const maxRise = Math.min(0.35, stepDist * 0.85);
     const width = Math.max(0, Math.min(1, finite(halfWidth, 0.34)));
     let ground = actor.pos.y;
     const start = { x: 0, y: 0, z: 0 }, end = { x: 0, y: 0, z: 0 };
+    const skipGrates = special === 'krakenRoyale' || !!ctx.intent?.squid || actor.form === 'squid';
     // A zero-foot groundProbe still casts its complete nine-ray ring. These
     // already width-sampled path columns need only one downward ray each.
-    const origin = special === 'krakenRoyale' ? actor.pos.clone?.() : null;
+    const origin = skipGrates ? actor.pos.clone?.() : null;
     const down = origin?.clone().set(0, -1, 0);
     const probe = origin ? { point: origin.clone(), normal: origin.clone() } : null;
+    const hasSegment = typeof world.physics.segment === 'function';
+    let prevTravel = 0;
     for (let i = 1; i <= samples; i++) {
       const travel = reach * i / samples;
+      const prevGround = ground;
       for (let s = 0; s < 3; s++) {
         const side = s === 0 ? 0 : s === 1 ? -width : width;
         const x = actor.pos.x + ux * travel - uz * side;
         const z = actor.pos.z + uz * travel + ux * side;
         let y;
-        if (special === 'krakenRoyale') {
-          // Kraken remains a squid and falls through grates. The ordinary
+        if (skipGrates) {
+          // Kraken and squid form fall through grates. The ordinary
           // navigation height includes them, so probe the actual support too.
           if (!probe || typeof world.physics.raycast !== 'function') return false;
           origin.set(x, ground + 0.85, z);
@@ -166,17 +177,18 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
           world.physics.raycast(origin, down, 1.65, probe, true);
           y = probe.hit && probe.normal.y >= 0.68 ? probe.point.y : -Infinity;
         } else y = world.level.groundHeight(x, z, ground + 0.85);
-        if (!Number.isFinite(y) || y < ground - 0.75 || y > ground + 0.85) return false;
+        if (!Number.isFinite(y) || y < -1.45 || y < ground - maxDrop || y > ground + maxRise) return false;
         if (side === 0) ground = y;
       }
-    }
-    for (let s = 0; s < 3; s++) {
-      const side = s === 0 ? 0 : s === 1 ? -width : width;
-      start.x = actor.pos.x - uz * side; start.y = actor.pos.y + 0.55; start.z = actor.pos.z + ux * side;
-      end.x = actor.pos.x + ux * reach - uz * side; end.y = ground + 0.55; end.z = actor.pos.z + uz * reach + ux * side;
-      if (!world.physics.los(start, end)) return false;
-      // Unlike perception LOS, segment() includes solid grate/wall contacts.
-      if (typeof world.physics.segment === 'function' && world.physics.segment(start, end)?.hit) return false;
+      for (let s = 0; s < 3; s++) {
+        const side = s === 0 ? 0 : s === 1 ? -width : width;
+        start.x = actor.pos.x + ux * prevTravel - uz * side; start.y = prevGround + 0.38; start.z = actor.pos.z + uz * prevTravel + ux * side;
+        end.x = actor.pos.x + ux * travel - uz * side; end.y = ground + 0.38; end.z = actor.pos.z + uz * travel + ux * side;
+        if (!world.physics.los(start, end)) return false;
+        // Unlike perception LOS, segment() includes solid grate/wall contacts.
+        if (hasSegment && world.physics.segment(start, end)?.hit) return false;
+      }
+      prevTravel = travel;
     }
     return true;
   };

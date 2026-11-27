@@ -10,7 +10,9 @@ function hasState(r){
 }
 function readTargetFbo(r){
  const prev=typeof r?.getRenderTarget==='function'?r.getRenderTarget():null;
- return prev?(r.properties?.get?.(prev)?.__webglFramebuffer??null):null;
+ if(!prev)return null;
+ const props=r.properties?.get?.(prev);
+ return prev.samples>0?(props?.__webglMultisampledFramebuffer??props?.__webglFramebuffer??null):(props?.__webglFramebuffer??null);
 }
 function allocate(p) {
  const r=p.renderer,gl=r?.getContext?.(),N=p.size;

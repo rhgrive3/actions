@@ -455,8 +455,16 @@ export function adaptSource(rel, code) {
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code,
       '    if (this.specialActive || this.superJumpState) {\n      if (hs > 0.6) target = Math.atan2(this.vel.x, this.vel.z);\n    }',
-      "    if (this.specialActive || this.superJumpState) {\n      if (!this.superJumpState && ((this.specialActive.id === 'killerWail' && ((this._s3AllSpecialState?.id === 'killerWail' ? this._s3AllSpecialState.t : this.specialActive.t) + 1e-8 >= 40 / 60)) || (this.specialActive.id === 'zipcaster' && (this._s3AllSpecialState?.id === 'zipcaster' ? this._s3AllSpecialState.phase : this.specialActive.phase) === 'ready')) && !isSquid && (this.weaponRunner.firingPose() || this.fireFacing > 0 || (this.intent.sub && this.specialActive.id === 'killerWail') || heldBrellaGuardFacing(this) || heldFireAimFacing(this, isSquid) || (!this.weaponRunner.rolling && this.intent.fire && (this.weapon?.behaviorKind === 'roller' || this.weapon?.behaviorKind === 'brush')))) {\n        target = this.aimYaw; omega = P.aimFaceOmega; maxRate = P.aimFaceMaxRate; maxAcc = P.aimFaceMaxAcc;\n      } else if (hs > 0.6) target = Math.atan2(this.vel.x, this.vel.z);\n    }",
+      '    if ((this.specialActive && !specialAllowsMainWeapon(this)) || this.superJumpState) {\n      if (hs > 0.6) target = Math.atan2(this.vel.x, this.vel.z);\n    }',
       'aim-facing during specials that allow main weapons');
+    code = replaceOnce(code,
+      '(this.weapon.behaviorKind === "roller" || this.weapon.behaviorKind === "brush")',
+      '(this.weapon.behaviorKind === "roller" || this.weapon.behaviorKind === "brush" || this.weapon.kind === "roller")',
+      'base Splat Roller aim-facing');
+    code = replaceOnce(code,
+      '|| this.intent.sub || heldBrellaGuardFacing(this)',
+      '|| (this.intent.sub && specialAllowsSubWeapon(this)) || heldBrellaGuardFacing(this)',
+      'sub aim-facing gated by specialAllowsSubWeapon');
   }
   code = adaptSubSpecialFidelity(rel, code, replaceOnce);
   code = adaptPaintSplatPool(rel, code, replaceOnce);
@@ -1524,8 +1532,8 @@ export function adaptSource(rel, code) {
     code = code.slice(0, fallStart) + '    if (this._checkFallDeath()) return;\n\n' + code.slice(fallEnd);
     code = replaceOnce(code, '  _nearCamera() {', '  _checkFallDeath() {\n    const P = PLAYER;\n' + fallBody + '    return false;\n  }\n\n  _nearCamera() {', 'shared environmental death');
     code = replaceOnce(code, "    if (this.specialActive) a.form = 'kid';",
-      "    if (this.specialActive && !specialKeepsNativeForm(this.specialActive.id)) a.form = 'kid';", 'special native swim and climb presentation');
-    code = "import { specialKeepsNativeForm } from '../../patches/splatoon3/runtime/special-presentation-owner.mjs';\n" + code;
+      "    if (this.specialActive && !specialKeepsNativeForm(this.specialActive)) a.form = 'kid';", 'special native swim and climb presentation');
+    code = "import { specialKeepsNativeForm, specialAllowsMainWeapon, specialAllowsSubWeapon } from '../../patches/splatoon3/runtime/special-presentation-owner.mjs';\n" + code;
     code = replaceOnce(code, '    this._updateClimb(dt, isSquid);',
       '    this._updateClimb(dt, isSquid, jumpPressed);\n    const actionHandled = beforeActions(this, dt, jumpPressed, { wasSquid, wasSubmerged, wasClimbing, firePressed, fireWins });', 'movement actions');
     code = replaceOnce(code, '  _updateClimb(dt, isSquid) {',

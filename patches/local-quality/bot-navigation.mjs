@@ -24,12 +24,17 @@ export function botGoalAllowed(brain, nav, node) {
 }
 
 const grateNodes = new WeakMap();
+const NATIVE_SWIM_SPECIALS = new Set([
+  'killerWail', 'zipcaster', 'tentaMissiles', 'storm', 'tacticooler',
+  'waveBreaker', 'splattercolorScreen', 'superChump', 'trizooka', 'ultraStamp',
+]);
 
 export function botTravelForm(brain) {
   const a = brain.a, it = a.intent, nav = G.nav, L = G.level;
   // Native source transitions paint and qualify their own wall corridors and
   // deliberate grate drops. Do not override those state machines.
-  if (L?.native || !it.squid || !a.alive || !a.grounded || a.climbing || a.superJumpState || a.specialActive) return;
+  if (L?.native || !it.squid || !a.alive || !a.grounded || a.climbing || a.superJumpState ||
+    (a.specialActive && !NATIVE_SWIM_SPECIALS.has(a.specialActive.id))) return;
   if (a.ground?.grate) { it.squid = false; return; }
   if (!nav || !G.physics?.raycast || it.move.lengthSq() < 0.01) return;
   let probe = brain._travelProbe;

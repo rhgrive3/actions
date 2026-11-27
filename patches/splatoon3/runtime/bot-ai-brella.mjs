@@ -28,6 +28,8 @@
 import { botRawWeaponFamily } from './bot-turf-paint.mjs';
 
 const HZ = 60;
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EPS = 1e-6;
 
 // State machine modes (primitive ints for O(1), zero-allocation state updates)
@@ -383,7 +385,7 @@ export function applyBrellaTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     resetBrellaState(st, actor.netLife);
     return;
   }
-  if (actor.superJumpState || actor.climbing || actor.specialActive) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor)) {
     clearBrellaHold(st);
     return;
   }
@@ -578,7 +580,7 @@ export function applyBrellaCombat(brain, G, actor, dt, move, ctx) {
     resetBrellaState(st, actor.netLife);
     return null;
   }
-  if (actor.superJumpState || actor.climbing || actor.specialActive) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor)) {
     clearBrellaHold(st);
     return null;
   }

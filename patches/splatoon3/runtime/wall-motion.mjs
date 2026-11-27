@@ -7,7 +7,7 @@ export const WALL_MOTION_CALIBRATION = Object.freeze({
   readyFlashTime: .14, readyEmission: .85, glintSize: .58,
   status: 'visual calibration; original shape curves and crest rotation unknown',
 });
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialKeepsNativeForm } from './special-presentation-owner.mjs';
 const INSTALL = Symbol.for('inkwave.s3.wall-motion.install.v1');
 const states = new WeakMap(), disposed = new WeakSet();
 const EPS = 1e-10;
@@ -143,8 +143,8 @@ export function installWallMotion(api, profile) {
     const action = frame?.surgePresentationC1088 ?? owner?.s3?.c1088SurgePresentation ?? actions?.surge;
     const allowed = this.s3WallMotionEnabled !== false &&
       (s.form === 'climb' || s.form === 'squid') && !this.dance &&
-      owner?.alive !== false && frame?.alive !== false && (!owner?.specialActive || specialAllowsMainWeapon(owner) || specialKeepsNativeForm(owner.specialActive.id)) &&
-      (!frame?.special || specialKeepsNativeForm(frame.special.id)) && !owner?.superJumpState && !frame?.superJump &&
+      owner?.alive !== false && frame?.alive !== false && (!owner?.specialActive || specialKeepsNativeForm(owner.specialActive)) &&
+      (!frame?.special || specialKeepsNativeForm(frame.special)) && !owner?.superJumpState && !frame?.superJump &&
       (!actions?.roll || action?.phase === 'charge' || action?.phase === 'burst') &&
       !s.subAim && !s.firing && !s.rolling && !(s.charge > .01) &&
       !owner?.weaponRunner?.aimingSub && !owner?.weaponRunner?.dodge &&
@@ -282,7 +282,7 @@ export function installWallMotion(api, profile) {
     if (!original) continue;
     Actor.prototype[method] = function (...args) {
       const result = original.apply(this, args);
-      if (method === 'reset' || this.alive === false || (this.specialActive && !specialAllowsMainWeapon(this) && !specialKeepsNativeForm(this.specialActive.id)) || this.superJumpState) {
+      if (method === 'reset' || this.alive === false || (this.specialActive && !specialKeepsNativeForm(this.specialActive)) || this.superJumpState) {
         const m = states.get(this.character);
         if (m) clear(this.character, m, true);
       }

@@ -73,7 +73,7 @@ export function installWeaponAudioEngine(Engine){
     if(!AUDIO_RECIPES[id]||!urgent)return;
     // Remote bots must not block the iPad player's first shot behind an
     // unbounded serial MP3 decode queue. Admit the active local weapon first.
-    this._warmWeapons||=new Set();this._warmWeapons.clear();this._warmWeapons.add(id);
+    this._warmWeapons||=new Set();this._warmWeapons.clear();this._warmWeapons.add(requested);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
     if(spinnerAudioIds.has(requested)&&typeof window!=='undefined')void spinnerPreload(this,requested).catch(()=>{});

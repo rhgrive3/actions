@@ -367,7 +367,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const paintFallbackUp = down.clone().negate();
   const muzzle = new THREE.Vector3(), dir = new THREE.Vector3(), base = new THREE.Vector3();
   const rollerContactAt = new THREE.Vector3(), rollerContactEye = new THREE.Vector3(), rollerTargetCentre = new THREE.Vector3();
-  const splashDirScratch = new THREE.Vector3();
+  const splashDirScratch = new THREE.Vector3(), chargerFootAt = new THREE.Vector3();
 
   const heldCanopyActors=new Set();
   function state(runner) {
@@ -885,8 +885,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(radius>0&&charge>=minRate){
         base.set(a.pos.x,a.pos.y+.2,a.pos.z);
         const h=G.physics.raycast(base,down,3.5,floorHit,true);
-        if(h.hit&&G.paint?.splat){
-          const area=G.paint.splat(base.copy(h.point).addScaledVector(h.normal,.1),radius,a.team,{seed:0,footprint:mainInkFootprint(r),kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:a});
+        if(h.hit&&h.normal.y>=.5&&G.paint?.splat){
+          const area=G.paint.splat(chargerFootAt.copy(h.point).addScaledVector(h.normal,.1),radius,a.team,{seed:0,footprint:mainInkFootprint(r),kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:a});
           a.addTurf?.(area);
         }
       }

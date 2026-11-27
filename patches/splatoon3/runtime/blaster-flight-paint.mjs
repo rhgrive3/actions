@@ -249,7 +249,8 @@ function landSplashDrop(game, drop, hit) {
     drop.landingDepth = depth;
     if (amount > 0) {
       const nx = hit.normal.x, ny = hit.normal.y, nz = hit.normal.z;
-      const dot = drop.dirX * nx + drop.dirZ * nz;
+      const n2 = nx * nx + ny * ny + nz * nz;
+      const dot = n2 > 1e-12 ? (drop.dirX * nx + drop.dirZ * nz) / n2 : 0;
       const tx = drop.dirX - nx * dot, ty = -ny * dot, tz = drop.dirZ - nz * dot;
       const len = Math.hypot(tx, ty, tz);
       if (len > 1e-6) drop.next.set(tx / len, ty / len, tz / len);
