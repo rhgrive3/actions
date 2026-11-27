@@ -23,6 +23,8 @@
 //   powerhouse: never whiff outside reach, commit through initial 23F windup without squid-canceling,
 //   chain swings once engaged, disengage if enemy escapes range, and use burst painting with ink recovery.
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EPS = 1e-6;
 const _archetypeCache = new WeakMap();
 
@@ -302,7 +304,7 @@ export function applyBrushTurfPaint(brain, G, actor, dt, move, wantMove, baseYaw
     it.squid = false;
     return null;
   }
-  if (actor.specialActive) {
+  if (!specialAllowsMain(actor)) {
     resetBrushTransientState(st);
     return null;
   }
@@ -529,7 +531,7 @@ export function applyBrushCombat(brain, G, actor, dt, move, ctx) {
     it.squid = false;
     return null;
   }
-  if (actor.specialActive) {
+  if (!specialAllowsMain(actor)) {
     resetBrushTransientState(st);
     return null;
   }

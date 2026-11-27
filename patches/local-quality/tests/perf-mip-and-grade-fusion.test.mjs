@@ -19,6 +19,7 @@ async function loadModuleWithThree(relPath) {
     Float32Array,
     Int32Array,
     Uint8Array,
+    Uint16Array,
     Uint32Array,
     Symbol,
     Object,
@@ -55,7 +56,7 @@ async function loadModuleWithThree(relPath) {
   return entry.namespace;
 }
 
-function createMockPaintHarness({ N = 2048, withState = true, prevRenderTarget = null } = {}) {
+function createMockPaintHarness({ N = 2048, withState = true, prevRenderTarget = null, prevRenderTargetProps = null } = {}) {
   const calls = {
     getParameter: [],
     activeTexture: 0,
@@ -69,6 +70,7 @@ function createMockPaintHarness({ N = 2048, withState = true, prevRenderTarget =
   };
   const atlasTex = { id: 'atlas' };
   const prevFbo = prevRenderTarget ? { id: 'prev-fbo' } : null;
+  const prevMsaaFbo = prevRenderTarget?.samples > 0 ? { id: 'prev-msaa-fbo' } : null;
   let texSeq = 0, fboSeq = 0;
 
   const gl = {
@@ -147,7 +149,12 @@ function createMockPaintHarness({ N = 2048, withState = true, prevRenderTarget =
   };
   const rt = { width: N, height: N, samples: 0, texture: rtTexture };
   propMap.set(rtTexture, { __webglTexture: atlasTex });
-  if (prevRenderTarget) propMap.set(prevRenderTarget, { __webglFramebuffer: prevFbo });
+  if (prevRenderTarget) {
+    propMap.set(prevRenderTarget, prevRenderTargetProps ?? {
+      __webglFramebuffer: prevFbo,
+      ...(prevMsaaFbo ? { __webglMultisampledFramebuffer: prevMsaaFbo } : {}),
+    });
+  }
 
   const state = withState ? {
     activeTexture() { calls.activeTexture++; },
@@ -204,7 +211,7 @@ function createMockPaintHarness({ N = 2048, withState = true, prevRenderTarget =
     paint.aPos[i + 6] = nx0; paint.aPos[i + 7] = ny1;
   }
 
-  return { MockPaintSystem, calls, gl, renderer, prevFbo, atlasTex, addQuadPixels };
+  return { MockPaintSystem, calls, gl, renderer, prevFbo, prevMsaaFbo, atlasTex, addQuadPixels };
 }
 
 test('paint-regional-mips: zero gl.getParameter calls during generate() and cached allocate(), restores state via renderer.state', async () => {
@@ -278,6 +285,69 @@ test('paint-regional-mips: safe fallback when renderer.state is absent', async (
   assert.equal(lastFboBind.fbo, h.prevFbo);
 });
 
+test('paint-regional-mips: prevRenderTarget null restores null framebuffer via renderer.state', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const h = createMockPaintHarness({ N: 2048, withState: true, prevRenderTarget: null });
+  installPaintRegionalMips(h.MockPaintSystem);
+
+  const paint = new h.MockPaintSystem();
+  paint._initGPU();
+  h.calls.bindFramebuffer.length = 0;
+
+  h.addQuadPixels(paint, 64, 64, 96, 96);
+  paint._mipRequested = true;
+  paint._drawQuads();
+
+  assert.equal(h.calls.fullRegen, 0);
+  const lastFboBind = h.calls.bindFramebuffer[h.calls.bindFramebuffer.length - 1];
+  assert.equal(lastFboBind.via, 'state');
+  assert.equal(lastFboBind.target, h.gl.READ_FRAMEBUFFER);
+  assert.equal(lastFboBind.fbo, null);
+});
+
+test('paint-regional-mips: multisampled prevRenderTarget (samples: 4) restores __webglMultisampledFramebuffer and falls back to __webglFramebuffer', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+
+  // Case 1: samples: 4 with __webglMultisampledFramebuffer present
+  const msaaRt = { id: 'msaa-rt', samples: 4 };
+  const h1 = createMockPaintHarness({ N: 2048, withState: true, prevRenderTarget: msaaRt });
+  installPaintRegionalMips(h1.MockPaintSystem);
+  const p1 = new h1.MockPaintSystem();
+  p1._initGPU();
+  h1.calls.bindFramebuffer.length = 0;
+
+  h1.addQuadPixels(p1, 64, 64, 96, 96);
+  p1._mipRequested = true;
+  p1._drawQuads();
+
+  const lastFbo1 = h1.calls.bindFramebuffer[h1.calls.bindFramebuffer.length - 1];
+  assert.equal(lastFbo1.via, 'state');
+  assert.equal(lastFbo1.target, h1.gl.READ_FRAMEBUFFER);
+  assert.equal(lastFbo1.fbo, h1.prevMsaaFbo, 'must restore __webglMultisampledFramebuffer when samples > 0');
+
+  // Case 2: samples: 4 without __webglMultisampledFramebuffer falls back to __webglFramebuffer
+  const fallbackFbo = { id: 'fallback-fbo' };
+  const msaaRtFallback = { id: 'msaa-rt-fallback', samples: 4 };
+  const h2 = createMockPaintHarness({
+    N: 2048,
+    withState: true,
+    prevRenderTarget: msaaRtFallback,
+    prevRenderTargetProps: { __webglFramebuffer: fallbackFbo },
+  });
+  installPaintRegionalMips(h2.MockPaintSystem);
+  const p2 = new h2.MockPaintSystem();
+  p2._initGPU();
+  h2.calls.bindFramebuffer.length = 0;
+
+  h2.addQuadPixels(p2, 64, 64, 96, 96);
+  p2._mipRequested = true;
+  p2._drawQuads();
+
+  const lastFbo2 = h2.calls.bindFramebuffer[h2.calls.bindFramebuffer.length - 1];
+  assert.equal(lastFbo2.via, 'state');
+  assert.equal(lastFbo2.fbo, fallbackFbo, 'must fall back to __webglFramebuffer when __webglMultisampledFramebuffer is absent');
+});
+
 test('paint-regional-mips: disjoint distant tiles stay partial without full-atlas fallback, and >8 tiles fall back', async () => {
   const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
   const h = createMockPaintHarness({ N: 2048, withState: true });
@@ -332,6 +402,44 @@ test('paint-regional-mips: disjoint distant tiles stay partial without full-atla
   assert.equal(s.dirtyCount, 0, 'bitset resets after full fallback');
 });
 
+test('paint-regional-mips: N=512 4-tile stays partial and 5-tile 25%-area triggers full fallback', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const h = createMockPaintHarness({ N: 512, withState: true });
+  installPaintRegionalMips(h.MockPaintSystem);
+
+  const paint = new h.MockPaintSystem();
+  paint._initGPU();
+  const s = paint._iwPaintRegionalMips;
+  assert.equal(s.size, 128, 'N=512 uses 128px tiles');
+  assert.equal(s.grid, 4, 'N=512 has 4x4=16 tiles');
+
+  // 4 tiles = exactly 25% area (4 * 128^2 === 512^2 * 0.25) -> stays partial
+  for (let t = 0; t < 4; t++) {
+    const px = t * 128 + 32, py = t * 128 + 32;
+    h.addQuadPixels(paint, px, py, px + 16, py + 16);
+  }
+  paint._mipRequested = true;
+  h.calls.copyTexSubImage2D.length = 0;
+  paint._drawQuads();
+  assert.equal(s.partial, 1, '4 tiles (25% area) must remain partial');
+  assert.equal(s.full, 0);
+  assert.equal(h.calls.copyTexSubImage2D.filter(c => c.level === 0).length, 4);
+
+  // 5 tiles (> 25% area even though <= 8 tiles) -> triggers full fallback
+  paint.quads = 0;
+  for (let t = 0; t < 4; t++) {
+    const px = t * 128 + 32, py = t * 128 + 32;
+    h.addQuadPixels(paint, px, py, px + 16, py + 16);
+  }
+  h.addQuadPixels(paint, 32, 3 * 128 + 32, 48, 3 * 128 + 48); // 5th tile: (0, 3)
+  paint._mipRequested = true;
+  paint._drawQuads();
+  assert.equal(s.full, 1, '5 tiles on N=512 (>25% area) must trigger full fallback');
+  assert.equal(s.partial, 1, '5 tiles on N=512 must not increment partial counter');
+  assert.equal(paint._mipRequested, true, 'native full mipmap request remains active on fallback');
+  assert.equal(s.dirtyCount, 0);
+});
+
 test('paint-regional-mips: dryMesh per-triangle tracking marks interior tiles and disjoint drying rects accurately', async () => {
   const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
   const h = createMockPaintHarness({ N: 2048, withState: true });
@@ -370,7 +478,82 @@ test('paint-regional-mips: dryMesh per-triangle tracking marks interior tiles an
   assert.deepEqual(level0Copies.map(c => [c.x, c.y]), [[0, 0], [1792, 1792]]);
 });
 
-test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/colorSpace defines, preserves passes & disposes both materials', async () => {
+test('paint-regional-mips: indexed dryMesh marks exact tiles via geometry.index', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const h = createMockPaintHarness({ N: 2048, withState: true });
+  installPaintRegionalMips(h.MockPaintSystem);
+
+  const paint = new h.MockPaintSystem();
+  paint._initGPU();
+  const s = paint._iwPaintRegionalMips;
+
+  const toNdc = (px) => (px / 2048) * 2 - 1;
+  // 8 vertices: quad A in tile (1, 0) [300..360, 40..100], quad B in tile (6, 7) [1600..1660, 1840..1900]
+  const positions = new Float32Array([
+    toNdc(300), toNdc(40), 0,
+    toNdc(360), toNdc(40), 0,
+    toNdc(360), toNdc(100), 0,
+    toNdc(300), toNdc(100), 0,
+    toNdc(1600), toNdc(1840), 0,
+    toNdc(1660), toNdc(1840), 0,
+    toNdc(1660), toNdc(1900), 0,
+    toNdc(1600), toNdc(1900), 0,
+  ]);
+  const indices = new Uint16Array([
+    0, 1, 2, 0, 2, 3,
+    4, 5, 6, 4, 6, 7,
+  ]);
+  paint.dryMesh = {
+    visible: true,
+    geometry: {
+      attributes: { position: new THREE.BufferAttribute(positions, 3) },
+      index: new THREE.BufferAttribute(indices, 1),
+      drawRange: { count: 12 },
+    },
+  };
+  paint._mipRequested = true;
+  h.calls.copyTexSubImage2D.length = 0;
+  paint._drawQuads();
+
+  assert.equal(s.partial, 1);
+  assert.equal(s.full, 0);
+  const level0Copies = h.calls.copyTexSubImage2D.filter(c => c.level === 0);
+  assert.deepEqual(level0Copies.map(c => [c.x, c.y]), [[256, 0], [1536, 1792]]);
+});
+
+test('paint-regional-mips: invalid dryMesh drawRange.count triggers forceFull fallback', async () => {
+  const { installPaintRegionalMips } = await loadModuleWithThree('patches/local-quality/paint-regional-mips.mjs');
+  const posAttr = new THREE.BufferAttribute(new Float32Array([
+    -0.9, -0.9, 0, -0.8, -0.9, 0, -0.8, -0.8, 0,
+    -0.9, -0.9, 0, -0.8, -0.8, 0, -0.9, -0.8, 0,
+  ]), 3);
+
+  for (const badCount of [4, -3, Number.NaN]) {
+    const h = createMockPaintHarness({ N: 2048, withState: true });
+    installPaintRegionalMips(h.MockPaintSystem);
+    const paint = new h.MockPaintSystem();
+    paint._initGPU();
+    const s = paint._iwPaintRegionalMips;
+
+    paint.dryMesh = {
+      visible: true,
+      geometry: {
+        attributes: { position: posAttr },
+        index: null,
+        drawRange: { count: badCount },
+      },
+    };
+    paint._mipRequested = true;
+    paint._drawQuads();
+
+    assert.equal(s.full, 1, `drawRange.count=${badCount} must fall back to full mipmap rebuild`);
+    assert.equal(s.partial, 0, `drawRange.count=${badCount} must not run partial update`);
+    assert.equal(paint._mipRequested, true, `drawRange.count=${badCount} leaves native full mipmap request active`);
+    assert.equal(s.forceFull, false, `drawRange.count=${badCount} resets forceFull after full fallback`);
+  }
+});
+
+test('grade-output-fusion: toggles on extraPass.enabled, syncs _fsQuad.material and toneMapping/colorSpace defines, preserves passes & disposes both materials', async () => {
   const fusion = await loadModuleWithThree('patches/local-quality/grade-output-fusion.mjs');
   const { setupGradeOutputFusion, syncGradeOutputFusion, disposeGradeOutputFusion } = fusion;
 
@@ -389,7 +572,7 @@ test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/color
     fragmentShader: linearFragment,
     dispose() { linearDisposed++; },
   };
-  const gradePass = { uniforms, material: linearMat, enabled: true };
+  const gradePass = { uniforms, material: linearMat, _fsQuad: { material: linearMat }, enabled: true };
   const outputPass = { enabled: true };
   const extraPass = { enabled: false };
   const passes = [{ name: 'render' }, gradePass, extraPass, outputPass];
@@ -413,6 +596,7 @@ test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/color
 
   // Initial state: extraPass.enabled === false -> fused
   assert.equal(gradePass.material, owner._gradeOutputMat);
+  assert.equal(gradePass._fsQuad.material, owner._gradeOutputMat, '_fsQuad.material must switch to fused material');
   assert.equal(outputPass.enabled, false);
   assert.deepEqual({ ...owner._gradeOutputMat.defines }, { SRGB_TRANSFER: '', NEUTRAL_TONE_MAPPING: '' });
   assert.equal(owner.composer.passes, passes, 'composer.passes array identity preserved');
@@ -443,6 +627,7 @@ test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/color
   extraPass.enabled = true;
   assert.equal(syncGradeOutputFusion(owner), false);
   assert.equal(gradePass.material, linearMat);
+  assert.equal(gradePass._fsQuad.material, linearMat, '_fsQuad.material must switch back to linearMat');
   assert.equal(outputPass.enabled, true);
   assert.equal(owner.composer.passes, passes, 'composer.passes identity preserved on unfuse');
 
@@ -450,6 +635,7 @@ test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/color
   extraPass.enabled = false;
   assert.equal(syncGradeOutputFusion(owner), true);
   assert.equal(gradePass.material, owner._gradeOutputMat);
+  assert.equal(gradePass._fsQuad.material, owner._gradeOutputMat, '_fsQuad.material must re-fuse');
   assert.equal(outputPass.enabled, false);
 
   // Dispose: simulates _disposeComposer where grade.dispose() disposes active material
@@ -463,6 +649,99 @@ test('grade-output-fusion: toggles on extraPass.enabled, syncs toneMapping/color
   assert.equal(linearDisposed, 1, 'linear material disposed exactly once');
   assert.equal(owner._gradeLinearMat, null);
   assert.equal(owner._gradeOutputMat, null);
+});
+
+test('grade-output-fusion: unfused disposal (extraPass.enabled === true) and !gradeDisposed clear grade & _fsQuad materials', async () => {
+  const { setupGradeOutputFusion, disposeGradeOutputFusion } = await loadModuleWithThree('patches/local-quality/grade-output-fusion.mjs');
+  const linearFragment = `
+    uniform sampler2D tDiffuse;
+    varying vec2 vUv;
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      gl_FragColor = c;
+    }
+  `;
+
+  // Case 1: unfused disposal with gradeDisposed: true (active material is linearMat)
+  {
+    let linearDisposed = 0, fusedDisposed = 0;
+    const uniforms = { tDiffuse: { value: null }, uExposure: { value: 1.0 } };
+    const linearMat = { uniforms, fragmentShader: linearFragment, dispose() { linearDisposed++; } };
+    const gradePass = { uniforms, material: linearMat, _fsQuad: { material: linearMat }, enabled: true };
+    const outputPass = { enabled: true };
+    const extraPass = { enabled: true };
+    const owner = {
+      renderer: { toneMapping: THREE.NeutralToneMapping, outputColorSpace: THREE.SRGBColorSpace, toneMappingExposure: 1.0 },
+      grade: gradePass,
+      outputPass,
+      extraPass,
+    };
+
+    assert.equal(setupGradeOutputFusion(owner), true);
+    assert.equal(gradePass.material, linearMat);
+    assert.equal(gradePass._fsQuad.material, linearMat);
+    assert.equal(outputPass.enabled, true);
+
+    const origFusedDispose = owner._gradeOutputMat.dispose.bind(owner._gradeOutputMat);
+    owner._gradeOutputMat.dispose = () => { fusedDisposed++; origFusedDispose(); };
+
+    gradePass.material.dispose(); // active is linearMat
+    disposeGradeOutputFusion(owner, { gradeDisposed: true });
+    assert.equal(linearDisposed, 1, 'linearMat disposed once when active and unfused');
+    assert.equal(fusedDisposed, 1, 'fusedMat disposed once when inactive and unfused');
+    assert.equal(owner._gradeLinearMat, null);
+    assert.equal(owner._gradeOutputMat, null);
+  }
+
+  // Case 2: !gradeDisposed clears both grade.material and grade._fsQuad.material so neither points to disposed materials
+  {
+    let linearDisposed = 0, fusedDisposed = 0;
+    const uniforms = { tDiffuse: { value: null }, uExposure: { value: 1.0 } };
+    const linearMat = { uniforms, fragmentShader: linearFragment, dispose() { linearDisposed++; } };
+    const gradePass = { uniforms, material: linearMat, _fsQuad: { material: linearMat }, enabled: true };
+    const outputPass = { enabled: true };
+    const extraPass = { enabled: false };
+    const owner = {
+      renderer: { toneMapping: THREE.NeutralToneMapping, outputColorSpace: THREE.SRGBColorSpace, toneMappingExposure: 1.0 },
+      grade: gradePass,
+      outputPass,
+      extraPass,
+    };
+
+    assert.equal(setupGradeOutputFusion(owner), true);
+    const origFusedDispose = owner._gradeOutputMat.dispose.bind(owner._gradeOutputMat);
+    owner._gradeOutputMat.dispose = () => { fusedDisposed++; origFusedDispose(); };
+
+    disposeGradeOutputFusion(owner, { gradeDisposed: false });
+    assert.equal(linearDisposed, 1);
+    assert.equal(fusedDisposed, 1);
+    assert.equal(gradePass.material, null, 'grade.material cleared when !gradeDisposed');
+    assert.equal(gradePass._fsQuad.material, null, 'grade._fsQuad.material cleared when !gradeDisposed');
+  }
+});
+
+test('grade-output-fusion: buildFusedFragmentShader negative guards reject missing, duplicate, or non-string gl_FragColor = c;', async () => {
+  const { buildFusedFragmentShader, setupGradeOutputFusion } = await loadModuleWithThree('patches/local-quality/grade-output-fusion.mjs');
+
+  assert.equal(buildFusedFragmentShader(null), null);
+  assert.equal(buildFusedFragmentShader(123), null);
+  assert.equal(buildFusedFragmentShader('void main() { gl_FragColor = vec4(1.0); }'), null);
+  assert.equal(
+    buildFusedFragmentShader('void main() { vec4 c = vec4(1.0); gl_FragColor = c; gl_FragColor = c; }'),
+    null,
+  );
+
+  // setupGradeOutputFusion must abort cleanly and leave gradePass intact on invalid shader
+  const uniforms = { tDiffuse: { value: null } };
+  const linearMat = { uniforms, fragmentShader: 'void main() { gl_FragColor = vec4(1.0); }' };
+  const gradePass = { uniforms, material: linearMat, _fsQuad: { material: linearMat }, enabled: true };
+  const outputPass = { enabled: true };
+  const owner = { grade: gradePass, outputPass, extraPass: { enabled: false } };
+
+  assert.equal(setupGradeOutputFusion(owner), false);
+  assert.equal(gradePass.material, linearMat);
+  assert.equal(gradePass._fsQuad.material, linearMat);
+  assert.equal(outputPass.enabled, true);
 });
 
 test('full adaptBuildSource composition for src/core/renderer.js wires grade-output-fusion cleanly and registers identity/preload', () => {

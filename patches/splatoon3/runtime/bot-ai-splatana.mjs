@@ -11,6 +11,8 @@
 // - Controls only standard player inputs (fire, squid, sub, move, yaw/pitch lead).
 // - O(1) time and zero per-tick heap allocations on the steady-state hot path.
 
+import { specialAllowsMain, specialAllowsSub } from './bot-special-movement.mjs';
+
 const HZ = 60;
 const EPS = 1e-6;
 const FULL_CHARGE = 1.0 - 1e-5;
@@ -422,7 +424,7 @@ export function applySplatanaTurfPaint(brain, G, actor, dt, move, wantMove, base
   const profile = resolveSplatanaProfile(actor.weapon);
   const st = getSplatanaState(brain, actor.id);
   if (!syncSplatanaLife(st, actor)) return null;
-  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor) || it.special) {
     st.chargeHoldT = 0;
     st.turfPathCharge = false;
     st.wasCharging = false;
@@ -590,7 +592,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
   const profile = resolveSplatanaProfile(actor.weapon);
   const st = getSplatanaState(brain, actor.id);
   if (!syncSplatanaLife(st, actor)) return null;
-  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor) || it.special) {
     st.chargeHoldT = 0;
     st.turfPathCharge = false;
     st.wasCharging = false;
@@ -684,7 +686,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
       if (dist > effVertRange * 1.02) {
         if (actor.groundTeam === 1) {
           it.squid = true;
-        } else if (inkFrac > 0.20 && !actor.specialActive) {
+        } else if (inkFrac > 0.20 && specialAllowsMain(actor)) {
           driveHorizontalTap(actor, wr, it, profile.reserveWindow);
           if (it.fire) it.squid = false;
         }
@@ -733,7 +735,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     !wr.charging &&
     !cs?.pending &&
     !cs?.melee &&
-    !actor.specialActive &&
+    specialAllowsMain(actor) &&
     !emergencyClose &&
     st.comboFollowupT <= 0 &&
     dist > profile.stepMax + 1.0
@@ -798,7 +800,7 @@ export function applySplatanaCombat(brain, G, actor, dt, move, ctx) {
     !wr.charging &&
     !cs?.pending &&
     !cs?.melee &&
-    !actor.specialActive &&
+    specialAllowsSub(actor) &&
     aimed &&
     dist >= 4.5 &&
     dist <= 13.5 &&

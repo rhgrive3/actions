@@ -6,7 +6,7 @@ import { EYE_FRAMES, EYEB } from '../../../src/game/character-face.js';
 const INSTALL = Symbol.for('inkwave.s3.face-motion.install.v1');
 const RESET = Symbol.for('inkwave.s3.face-motion.reset.v1');
 import { reverseShotRelease } from './shooter-movement.mjs';
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialAllowsMainWeapon, specialAllowsSubWeapon } from './special-presentation-owner.mjs';
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const finite = p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z);
 export const FACE_MOTION_CALIBRATION = Object.freeze({
@@ -30,7 +30,7 @@ function makeState(ch, installation) {
 
 function action(ch, s, owner, timers) {
   if (ch.s3FaceMotionEnabled === false || !ch.kidForm || ch.dance || owner?.alive === false
-      || ch.t < s.suspendedUntil || ch.lifeLv === 0 || (owner?.specialActive && !specialAllowsMainWeapon(owner) && !specialKeepsNativeForm(owner.specialActive.id)) || owner?.superJumpState) return null;
+      || ch.t < s.suspendedUntil || ch.lifeLv === 0 || (owner?.specialActive && !specialAllowsMainWeapon(owner) && !specialAllowsSubWeapon(owner)) || owner?.superJumpState) return null;
   for (let node = ch.root; node; node = node.parent) if (!node.visible) return null;
   if (s.input.subAim) return 'sub-aim';
   if (Number.isInteger(timers?.T_THROW) && ch.tr[timers.T_THROW] < FACE_MOTION_CALIBRATION.throwRecovery) return 'throw';

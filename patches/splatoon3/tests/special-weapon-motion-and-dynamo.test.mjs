@@ -246,11 +246,35 @@ test('Dualies dodge-roll motion and catalog dualies motion work during Killer Wa
       a.intent.fire = true;
       a.intent.jump = true;
       a.intent.move.set(1, 0, 0);
-      a.weaponRunner.update(STEP, { fire: true, firePressed: true, jumpPressed: true, move: a.intent.move });
+      const dodged = a.weaponRunner.tryDodge(a.intent.move);
+      assert.equal(dodged, true, `${special.id}: dualies tryDodge admitted`);
+      for (let i = 0; i < 6; i++) {
+        a.weaponRunner.update(STEP, { fire: true, firePressed: false, move: a.intent.move });
+        f.G.time += STEP;
+        a._finishFrame(STEP);
+      }
+      const snap = f.dualiesMotionSnapshot(ch);
+      assert.ok(snap && !snap.blockedRoll, `${special.id}: dualies dodge-roll not blocked`);
+      assert.equal(snap.phase, 'roll', `${special.id}: dualies enters roll phase (got ${snap.phase})`);
+    } finally {
+      rig.close();
+    }
+  }
+
+  // Negative control: Killer Wail pre-40F blocks Dualies dodge-roll motion
+  {
+    const rig = makeActorRig(f, 'dualies');
+    try {
+      const { a, ch } = rig;
+      a.specialActive = { id: 'killerWail', t: 10 / 60, phase: 'charge' };
+      a.intent.fire = true;
+      a.intent.move.set(1, 0, 0);
+      a.weaponRunner.dodge = { token: 1, t: 0.05, dur: 0.2, startup: 0, startupDur: 0 };
+      ch.trigger('dodge', { x: 1, z: 0, t: 0.2 });
       f.G.time += STEP;
       a._finishFrame(STEP);
       const snap = f.dualiesMotionSnapshot(ch);
-      assert.ok(snap && !snap.blockedRoll, `${special.id}: dualies dodge-roll not blocked`);
+      assert.notEqual(snap?.phase, 'roll', 'killerWail pre-40F blocks dualies roll phase');
     } finally {
       rig.close();
     }
@@ -332,23 +356,50 @@ test('Blaster, Splatling, Charger detail motion and Inkbrush roll immunity work 
   assert.equal(brushRollIgnoresEnemyInk(inkbrush({ id: 'zipcaster', phase: 'ready', t: 0.2 })), true);
   assert.equal(brushRollIgnoresEnemyInk(inkbrush({ id: 'killerWail', t: 10 / 60 })), false);
   assert.equal(brushRollIgnoresEnemyInk(inkbrush({ id: 'zipcaster', phase: 'hookFlight', t: 0.2 })), false);
+  assert.equal(
+    brushRollIgnoresEnemyInk({
+      ...inkbrush({ id: 'zipcaster', phase: 'ready', t: 0.2 }),
+      ink: 0,
+      _s3AllSpecialState: { id: 'zipcaster', phase: 'ready', inkFuel: 45 },
+    }),
+    true,
+    'Inkbrush activated on empty tank keeps enemy-ink immunity via Zipcaster inkFuel',
+  );
 
   const f = await getApi();
   for (const weaponId of ['blaster', 'splatling', 'charger']) {
     const rig = makeActorRig(f, weaponId);
     try {
       const { a, ch } = rig;
-      a.specialActive = { id: 'killerWail', t: 45 / 60, phase: 'laser' };
-      f.G.time += STEP;
-      a._finishFrame(STEP);
-      assert.equal(f.specialMotionAllowsAction(ch, false), true, `${weaponId}: action allowed during Killer Wail post-40F`);
-
-      a.specialActive = { id: 'zipcaster', t: 0.4, phase: 'ready' };
-      f.G.time += STEP;
-      a._finishFrame(STEP);
-      assert.equal(f.specialMotionAllowsAction(ch, false), true, `${weaponId}: action allowed during Zipcaster ready`);
+      for (const special of [
+        { id: 'killerWail', t: 45 / 60, phase: 'laser' },
+        { id: 'zipcaster', t: 0.4, phase: 'ready' },
+      ]) {
+        a.specialActive = { ...special };
+        a.ink = 100;
+        a.intent.fire = true;
+        for (let i = 0; i < 6; i++) {
+          a.weaponRunner.update(STEP, { fire: true, firePressed: i === 0 });
+          f.G.time += STEP;
+          a._finishFrame(STEP);
+        }
+        assert.equal(f.specialMotionAllowsAction(ch, false), true, `${weaponId}: action allowed during ${special.id}`);
+        if (weaponId === 'blaster') {
+          assert.ok(
+            a.weaponRunner.s3BlasterWindup > 0 || a.weaponRunner.firingT > 0 || a.weaponRunner.cooldown > 0,
+            `blaster actually fires during ${special.id}`,
+          );
+        } else {
+          assert.equal(a.weaponRunner.charging, true, `${weaponId} actively charges during ${special.id}`);
+          assert.ok(a.weaponRunner.charge > 0, `${weaponId} accumulates charge during ${special.id}`);
+        }
+        a.intent.fire = false;
+        a.weaponRunner.reset();
+      }
 
       a.specialActive = { id: 'killerWail', t: 10 / 60, phase: 'charge' };
+      a.intent.fire = true;
+      a.weaponRunner.update(STEP, { fire: true, firePressed: true });
       f.G.time += STEP;
       a._finishFrame(STEP);
       assert.equal(f.specialMotionAllowsAction(ch, false), false, `${weaponId}: action blocked during Killer Wail pre-40F`);
@@ -413,6 +464,31 @@ test('Body aim-facing faces aimYaw when firing during Killer Wail post-40F and Z
   assert.equal(heldFireAimFacing(plain({ id: 'zipcaster', phase: 'zip', t: 0.3 }), false), false);
 
   const f = await getApi();
+  // Negative control: Killer Wail pre-40F keeps velocity-facing instead of turning to aimYaw
+  {
+    const rig = makeActorRig(f, 'shooter');
+    try {
+      const { a } = rig;
+      a.specialActive = { id: 'killerWail', t: 10 / 60, phase: 'charge' };
+      a.aimYaw = AIM;
+      a.yaw = BACK;
+      a.yawVel = 0;
+      a.intent.fire = true;
+      a.intent.move.set(Math.sin(BACK), 0, Math.cos(BACK));
+      a.vel.set(Math.sin(BACK) * 3, 0, Math.cos(BACK) * 3);
+      a.fireFacing = 0;
+      for (let i = 0; i < 20; i++) {
+        a._face(STEP, false);
+      }
+      assert.ok(
+        Math.abs(wrap(a.yaw - BACK)) < 0.1,
+        `killerWail pre-40F should not face aimYaw (diff from BACK=${Math.abs(wrap(a.yaw - BACK)).toFixed(3)})`,
+      );
+    } finally {
+      rig.close();
+    }
+  }
+
   for (const weaponId of ['shooter', 'blaster', 'charger', 'splatling', 'slosher', 'dualies', 'roller']) {
     for (const special of [
       { id: 'killerWail', t: 45 / 60, phase: 'laser' },
@@ -423,19 +499,19 @@ test('Body aim-facing faces aimYaw when firing during Killer Wail post-40F and Z
         const { a } = rig;
         a.specialActive = { ...special };
         a.aimYaw = AIM;
-        a.yaw = AIM;
+        a.yaw = BACK;
         a.yawVel = 0;
         a.intent.fire = true;
         a.intent.move.set(Math.sin(BACK), 0, Math.cos(BACK));
         a.vel.set(Math.sin(BACK) * 3, 0, Math.cos(BACK) * 3);
         a.weaponRunner.rolling = false;
-        a.fireFacing = 0.25;
-        for (let i = 0; i < 15; i++) {
+        a.fireFacing = 0;
+        for (let i = 0; i < 30; i++) {
           a._face(STEP, false);
         }
         assert.ok(
           Math.abs(wrap(a.yaw - AIM)) < 0.05,
-          `${weaponId} during ${special.id} should face aimYaw (diff=${Math.abs(wrap(a.yaw - AIM)).toFixed(3)})`,
+          `${weaponId} during ${special.id} should turn from BACK to aimYaw (diff=${Math.abs(wrap(a.yaw - AIM)).toFixed(3)})`,
         );
       } finally {
         rig.close();
@@ -561,6 +637,138 @@ test('Dynamo Roller vertical swing settles promptly into low follow-through and 
     assert.ok(settledAxis && settledAxis[2] > 0.9 && Math.abs(settledAxis[1]) < 0.35, `settled vertical drum axis points forward/level (${settledAxis})`);
     assert.ok(maxGapR < 0.002, `handR grip stays within reach (${maxGapR})`);
     assert.ok(maxGapL < 0.02, `handL grip stays within reach (${maxGapL})`);
+  } finally {
+    rig.close();
+  }
+});
+
+test('Dynamo Roller held=true and mid-recovery ZR release preserve continuity without C0 snap', async () => {
+  const vWindup = 55 / 60;
+  const vInterval = 75 / 60;
+  const hWindup = 45 / 60;
+  const hInterval = 66 / 60;
+
+  // Held horizontal torso age stays at 0.42 past restEnd
+  assert.ok(Math.abs(heavyHorizontalTorsoAge(70 / 60, hWindup, hInterval, true) - 0.42) < 1e-9);
+
+  // Held vertical pose settles to ROLL_ANCHOR at end with weight = 1
+  const heldEnd = verticalRollerPose(vInterval, vWindup, vInterval, 'heavy', true);
+  assert.deepEqual(heldEnd.anchor, ROLLER_POSE.ROLL_ANCHOR);
+  assert.equal(heldEnd.weight, 1);
+
+  const f = await getApi();
+  // Grounded vertical swing with ZR held, then released mid-recovery (past restEnd = 65F)
+  const rig = makeActorRig(f, 's3-roller-heavy');
+  try {
+    const { a, ch } = rig;
+    const C = f.CHARACTER_CHANNELS;
+    f.recordMovementLaunch(a);
+    let prevAnc = null;
+    let prevRot = null;
+    let maxAncJump = 0;
+    let maxRotJump = 0;
+    for (let tick = 0; tick <= 80; tick++) {
+      const flying = tick < 40;
+      a.pos.set(0, flying ? 1.0 * Math.sin((Math.PI * tick) / 40) : 0, 0);
+      a.vel.set(0, flying ? ((1.0 * Math.PI) / (40 / 60)) * Math.cos((Math.PI * tick) / 40) : 0, 0);
+      a.grounded = !flying;
+      // Hold ZR through tick 67, then release mid-recovery at tick 68 (past restEnd = 65F)
+      a.intent.fire = tick <= 67;
+      a.weaponRunner.update(STEP, { fire: a.intent.fire, firePressed: tick === 0 });
+      f.G.time += STEP;
+      a._finishFrame(STEP);
+      if (tick >= 64 && tick <= 74) {
+        const anc = [ch.P[C.ANC], ch.P[C.ANC + 1], ch.P[C.ANC + 2]];
+        const rot = [ch.P[C.ANCR], ch.P[C.ANCR + 1], ch.P[C.ANCR + 2]];
+        if (prevAnc) {
+          maxAncJump = Math.max(maxAncJump, Math.hypot(anc[0] - prevAnc[0], anc[1] - prevAnc[1], anc[2] - prevAnc[2]));
+          maxRotJump = Math.max(maxRotJump, Math.hypot(rot[0] - prevRot[0], rot[1] - prevRot[1], rot[2] - prevRot[2]));
+        }
+        prevAnc = anc;
+        prevRot = rot;
+      }
+    }
+    assert.ok(maxAncJump < 0.15, `mid-recovery ZR release anchor stays continuous (maxJump=${maxAncJump.toFixed(4)})`);
+    assert.ok(maxRotJump < 0.32, `mid-recovery ZR release rotation stays continuous without C0 snap (maxJump=${maxRotJump.toFixed(4)})`);
+  } finally {
+    rig.close();
+  }
+
+  // Airborne vertical swing with ZR held must not hold weight=1 until 85F
+  const airRig = makeActorRig(f, 's3-roller-heavy');
+  try {
+    const { a, ch } = airRig;
+    f.recordMovementLaunch(a);
+    for (let tick = 0; tick <= 80; tick++) {
+      a.pos.set(0, 5, 0);
+      a.vel.set(0, 0, 0);
+      a.grounded = false;
+      a.intent.fire = true;
+      a.weaponRunner.update(STEP, { fire: true, firePressed: tick === 0 });
+      f.G.time += STEP;
+      a._finishFrame(STEP);
+      if (tick === 70) {
+        assert.equal(ch.s3RollerFlick?.holdRoll, false, 'airborne vertical swing does not latch holdRoll');
+      }
+    }
+  } finally {
+    airRig.close();
+  }
+});
+
+test('Remote killerWail and zipcaster symmetry via specialAllowsMainWeapon and brella-network', async () => {
+  // Remote zipcaster without explicit phase defaults to ready; explicit non-ready phase blocks
+  assert.equal(specialAllowsMainWeapon({ specialActive: { id: 'zipcaster', net: true } }), true);
+  assert.equal(specialAllowsMainWeapon({ specialActive: { id: 'zipcaster', net: true, phase: 'zip' } }), false);
+  assert.equal(specialAllowsMainWeapon({ specialActive: { id: 'zipcaster', net: true, phase: 'hookFlight' } }), false);
+
+  // Remote killerWail tracks s.t
+  assert.equal(specialAllowsMainWeapon({ specialActive: { id: 'killerWail', net: true, t: 10 / 60 } }), false);
+  assert.equal(specialAllowsMainWeapon({ specialActive: { id: 'killerWail', net: true, t: 45 / 60 } }), true);
+  assert.equal(specialAllowsSubWeapon({ specialActive: { id: 'killerWail', net: true, t: 45 / 60 } }), true);
+
+  // Remote Brella held canopy view over network with F.special (8192) set
+  const f = await getApi();
+  const rig = makeActorRig(f, 's3-shelter-normal');
+  try {
+    const { a, ch } = rig;
+    a.remote = true;
+    a.owner = 'peer-2';
+    a.nid = 7;
+    a.alive = true;
+    const net = new f.NetMatch({ myId: 'peer-1', isHost: false }, { map: 'standard' });
+    net.byNid.set(a.nid, a);
+    const F_ALIVE = 1;
+    const F_SPECIAL = 8192;
+    const makeRow = (life, tick) => [
+      'inkwave.brella-view.v1', life, tick, 's3-shelter-normal', 2, 0,
+      0, 1.0, 1.2, 0, 0, 1, 0,
+    ];
+
+    // 1. Remote Zipcaster (net: true, no phase) -> held canopy accepted & shown
+    a.specialActive = { id: 'zipcaster', net: true, t: 0.4 };
+    const snap1 = { t: 1.0, tp: 0, life: 1, f: F_ALIVE | F_SPECIAL, s3BrellaOwner: 'peer-2', s3Brella: makeRow(1, 10) };
+    a.net = { ready: true, lastLife: 1, cur: snap1, buf: [snap1], err: new f.THREE.Vector3() };
+    net.peers.set('peer-2', { tr: 1.0, lastTs: 0.9, physicsPoints: [1.0, 10] });
+    net.applyRemote(a, STEP);
+    assert.ok(ch.s3BrellaPresentation?.canopy?.open, 'remote Brella held canopy stays open during remote Zipcaster');
+
+    // 2. Remote Killer Wail post-40F -> held canopy stays open
+    a.specialActive = { id: 'killerWail', net: true, t: 45 / 60 };
+    net.applyRemote(a, STEP);
+    assert.ok(ch.s3BrellaPresentation?.canopy?.open, 'remote Brella held canopy stays open during remote Killer Wail post-40F');
+
+    // 3. Remote Killer Wail pre-40F -> held canopy suppressed
+    a.specialActive = { id: 'killerWail', net: true, t: 10 / 60 };
+    net.applyRemote(a, STEP);
+    assert.equal(ch.s3BrellaPresentation?.canopy, null, 'remote Brella held canopy suppressed during remote Killer Wail pre-40F');
+
+    // 4. Remote Tidal Slam -> held canopy suppressed
+    a.specialActive = { id: 'slam', net: true, t: 0.5 };
+    net.applyRemote(a, STEP);
+    assert.equal(ch.s3BrellaPresentation?.canopy, null, 'remote Brella held canopy suppressed during remote Tidal Slam');
+
+    net.dispose();
   } finally {
     rig.close();
   }

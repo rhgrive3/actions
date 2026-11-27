@@ -4,7 +4,9 @@ import { getWeaponDef } from '../../../src/game/character-weapons.js';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const TAG='inkwave.brella-view.v1', INSTALL=Symbol.for(TAG), HEADER=13, STRIDE=9, MAX_FLIGHTS=4;
-const HELD_INTERRUPT=2|2048|8192|16384|32768;
+const HELD_INTERRUPT=2|2048|16384|32768;
+const SPECIAL_FLAG=8192;
+const specialBlocksHeld=(actor,f)=>!!(f&SPECIAL_FLAG)&&!specialAllowsMainWeapon(actor);
 const integer=n=>Number.isSafeInteger(n)&&n>=0;
 const bounded=(n,lo,hi)=>Number.isFinite(n)&&n>=lo&&n<=hi;
 const family=(a)=>a?.weapon?.catalogRecord?.family==='brella';
@@ -20,7 +22,7 @@ function read(api,raw,actor,snap,tick){
     (raw[3]!==actor.weapon?.catalogRecord?.id&&raw[3]!==null)||
     !Number.isInteger(raw[4])||raw[4]<0||raw[4]>2||!bounded(raw[5],0,60)||!validPose(raw,6)||
     !Number.isInteger(raw[12])||raw[12]<0||raw[12]>MAX_FLIGHTS||raw.length!==HEADER+STRIDE*raw[12])return null;
-  if(raw[4]&&(!family(actor)||!(snap.f&1)||(snap.f&HELD_INTERRUPT)))return null;
+  if(raw[4]&&(!family(actor)||!(snap.f&1)||(snap.f&HELD_INTERRUPT)||specialBlocksHeld(actor,snap.f)))return null;
   for(let i=0;i<raw[12];i++){
     const k=HEADER+i*STRIDE;
     if(!integer(raw[k])||!raw[k]||!rowIsBrella(api,raw[k+1])||!bounded(raw[k+2],0,10)||!validPose(raw,k+3))return null;
@@ -84,7 +86,7 @@ export function installBrellaNetwork(api){
     const nextRow=next?.s3Brella;
     const compatible=nextRow&&nextRow[1]===row[1]&&next.s3BrellaOwner===actor.owner&&next.tp===source.tp;
     const q=compatible&&next.t>source.t?clamp((S.t-source.t)/(next.t-source.t)):0;
-    const held=!!row[4]&&actor.alive&&(S.f&1)&&!(S.f&HELD_INTERRUPT);
+    const held=!!row[4]&&actor.alive&&(S.f&1)&&!(S.f&HELD_INTERRUPT)&&!specialBlocksHeld(actor,S.f);
     view.naked=row[5];
     if(held){
       pose(view.held,row,6,nextRow,q,compatible&&nextRow[4]===row[4]?6:0);view.held.pos.add(n.err);

@@ -429,7 +429,13 @@ export function FAMILY_POSE(ch, dt, s, C) {
   a.rolling = a.released && !!r.rolling;
   // Held ZR: the runner admits the roll when its cooldown ends, so the swing's
   // rest leads into the roll grip instead of lifting back to the carry first.
-  a.holdRoll = !r.a.remote && !!r.a.intent?.fire;
+  const holdLockAt = a.vertical
+    ? a.windup + Math.max(0, a.swingInterval - a.windup) * 0.5
+    : Math.max(a.windup + 18 / 60, a.swingInterval);
+  if (!r.a.intent?.fire) a.rollHoldBroken = true;
+  if (!(a.holdRoll && a.elapsed > holdLockAt)) {
+    a.holdRoll = !r.a.remote && !!r.a.intent?.fire && !a.rollHoldBroken && (r.rolling || r.a.grounded);
+  }
   if (a.elapsed >= a.interval || (a.rolling && (ch.wRoll || 0) >= 0.95)) { m.attack = null; ch.s3RollerFlick = null; }
 }
 

@@ -40,9 +40,8 @@ function hidden(root) {
   return false;
 }
 function specialAllows(ch, owner, timers) {
-  if (owner?.specialActive && specialAllowsSubWeapon(owner)) return true;
-  return specialMotionAllowsAction(ch, !owner?.specialActive
-    && ch.tr[timers.T_LEAP] >= 1.9 && ch.tr[timers.T_SLAM] >= 1.4);
+  if (owner?.specialActive) return specialAllowsSubWeapon(owner);
+  return specialMotionAllowsAction(ch, ch.tr[timers.T_LEAP] >= 1.9 && ch.tr[timers.T_SLAM] >= 1.4);
 }
 const SECONDARY = ['_animWeapon', '_applyFace', '_updateHair', '_updateTank', '_applyJiggle', '_applyFingers'];
 const noop = () => {};

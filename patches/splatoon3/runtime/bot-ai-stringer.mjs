@@ -22,6 +22,8 @@
 //   Ref: https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%95%E3%83%AB%E3%82%A4%E3%83%89V
 //   Ref: https://splatoonwiki.org/wiki/Wellstring_V
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EMPTY_CTX = Object.freeze({});
 const FALLBACK_AIM_OUT = { wantYaw: 0, wantPitch: 0 };
 const FALLBACK_TURF_OUT = { archetype: 'normal', cap: 0.09, fullSweep: false };
@@ -302,7 +304,7 @@ export function applyStringerTurfPaint(brain, G, actor, dt, move, wantMove, base
   const wr = actor?.weaponRunner;
   if (!it || !wr) return null;
   if (!syncStringerLife(brain, actor)) return null;
-  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor) || it.special) {
     if (brain) brain._stringerHoldT = 0;
     return null;
   }
@@ -453,7 +455,7 @@ export function applyStringerCombat(brain, G, actor, dt, move, ctx = EMPTY_CTX) 
   const wr = actor?.weaponRunner;
   if (!it || !wr) return null;
   if (!syncStringerLife(brain, actor)) return null;
-  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor) || it.special) {
     if (brain) brain._stringerHoldT = 0;
     return null;
   }

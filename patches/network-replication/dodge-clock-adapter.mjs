@@ -9,7 +9,8 @@ function replaceOnce(code, before, after, label) {
 
 export function adaptIssue1163RemoteDodgeClock(code) {
   code = "import { acceptRemoteDodgeClock, interruptRemoteDodgeClock, clearRemoteDodgeClock, syncRemoteDodgeClock } from '../../patches/splatoon3/runtime/remote-dodge-clock.mjs';\n" +
-    "import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLockDuration, dualiesNetworkLock } from '../../patches/splatoon3/runtime/catalog-dualies-motion.mjs';\n" + code;
+    "import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLockDuration, dualiesNetworkLock } from '../../patches/splatoon3/runtime/catalog-dualies-motion.mjs';\n" +
+    "import { specialAllowsMainWeapon } from '../../patches/splatoon3/runtime/special-presentation-owner.mjs';\n" + code;
 
   code = replaceOnce(code,
     '  _rec(e) {',
@@ -89,7 +90,7 @@ export function adaptIssue1163RemoteDodgeClock(code) {
     '    wr.lockT = S.lock;',
     `    wr.lockT = S.lock;
     if (a.remote) {
-      const interrupted = !!(f & (F.squid | F.subAim | F.special | F.sjCharge | F.sjFlight));
+      const interrupted = !!(f & (F.squid | F.subAim | F.sjCharge | F.sjFlight)) || (!!(f & F.special) && !specialAllowsMainWeapon(a));
       syncRemoteDodgeClock(a, this._peer(a.owner).tr, S, !!(f & F.dodge), interrupted);
     }`, 'sync action clock on sender playback timeline');
 

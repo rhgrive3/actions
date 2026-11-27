@@ -35,6 +35,8 @@
 //   3F ultra-rapid fire (20 shots/s, 180F stream) that melts foes and carpets turf.
 //   Ref: https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%A4%E3%82%B0%E3%82%B6%E3%83%9F%E3%83%8A%E3%83%BC
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EPS = 1e-6;
 const STANDARD_PAINT_MIN_SPIN = 0.88;
 const DOWNPOUR_SHORT_MODE_SEC = 0.50; // 30F short-range phase before variable long-range transition
@@ -439,7 +441,7 @@ export function applySplatlingTurfPaint(brain, G, actor, dt, move, wantMove, bas
   const wr = actor?.weaponRunner;
   if (!it || !wr) return;
   syncSplatlingLifeState(brain, actor);
-  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return;
+  if (actor.alive === false || actor.superJumpState || !specialAllowsMain(actor) || actor.climbing) return;
   if (it.sub || it.special) {
     it.fire = false;
     return;
@@ -620,7 +622,7 @@ export function applySplatlingCombat(brain, G, actor, dt, move, ctx) {
   const wr = actor?.weaponRunner;
   if (!it || !wr || !ctx) return null;
   syncSplatlingLifeState(brain, actor);
-  if (actor.alive === false || actor.superJumpState || actor.specialActive || actor.climbing) return null;
+  if (actor.alive === false || actor.superJumpState || !specialAllowsMain(actor) || actor.climbing) return null;
   if (it.sub || it.special) {
     it.fire = false;
     return null;

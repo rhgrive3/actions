@@ -2,7 +2,7 @@
 // presented. These offsets are INKWAVE visual calibration, not Nintendo joint
 // angles or game-frame timings. Native contact, springs and limb IK still run.
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 export const LANDING_MOTION_CALIBRATION = Object.freeze({
   normalPeak: .04, hardPeak: .055, normalRecovery: .22, hardRecovery: .34,
   normalDrop: .045, hardDrop: .08, hipPitch: .07, spinePitch: .10,
@@ -41,7 +41,7 @@ export function installLandingMotion(api, _profile) {
     const tr = ch.tr;
     for (let p = ch.root; p; p = p.parent) if (p.visible === false) return false;
     return ch.kidForm && ch.grounded && !ch.dance && ch.wDance < .001 &&
-      (!owner || (owner.alive !== false && (!owner.specialActive || specialAllowsMainWeapon(owner) || specialKeepsNativeForm(owner.specialActive.id)) && !owner.superJumpState)) &&
+      (!owner || (owner.alive !== false && specialAllowsMainWeapon(owner) && !owner.superJumpState)) &&
       s?.hp !== 0 && !s?.subAim && !runner?.aimingSub && ch.wSub < .001 &&
       tr[T.T_SPAWN] > 1.4 && specialMotionAllowsFootPlant(ch, tr[T.T_LEAP] > 1.9 && tr[T.T_SLAM] > 1.4) &&
       tr[T.T_DODGE] > ch.dodgeDur + .3 && ch.lockW < .001 &&

@@ -1,5 +1,6 @@
 import { weaponAccelerationClass } from './weapon-weight.mjs';
 import { integrateCatalogDualies } from './catalog-dualies-motion.mjs';
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 // Authoritative root physics only. No input, network, Character or visual pose writes.
 // Rates are world units/second; duration/age are seconds. Reference decisions and
 // deliberately retained calibration are in reports/movement-physics-fidelity-report.md.
@@ -112,7 +113,7 @@ export function airborneHumanTargetSpeed(actor, P, mist = 1) {
   const runner = actor.weaponRunner;
   const speed = runner.moveSpeed();
   const s = runner.catalogState;
-  const attack = !actor.specialActive && !actor.superJumpState &&
+  const attack = specialAllowsMainWeapon(actor) && !actor.superJumpState &&
     (runner.firingPose?.() ||
       (!!runner.s3RollerAttack && !runner.rolling) ||
       !!s?.pending || !!s?.melee || s?.stream > 0 || s?.chargeF > 0);
@@ -143,7 +144,7 @@ export function softPushActor(physics, P, a, dx, dz) {
 export function rollingMovementActive(a) {
   const r = a.weaponRunner;
   return a.weapon.kind === 'roller' && !!r.rolling && a.form === 'kid' &&
-    a.grounded && !a.specialActive && !a.superJumpState &&
+    a.grounded && specialAllowsMainWeapon(a) && !a.superJumpState &&
     r.flick < 0 && !r.aimingSub;
 }
 
@@ -155,7 +156,7 @@ export function rollingMovementActive(a) {
 export function rollingHeadingActive(a) {
   const r = a.weaponRunner, kind = a.weapon?.behaviorKind || a.weapon?.kind;
   return !!r?.rolling && (kind === 'roller' || kind === 'brush') && a.form === 'kid' &&
-    a.grounded && !a.climbing && !a.specialActive && !a.superJumpState && !(r.flick >= 0) && !r.aimingSub;
+    a.grounded && !a.climbing && specialAllowsMainWeapon(a) && !a.superJumpState && !(r.flick >= 0) && !r.aimingSub;
 }
 
 /** Speed along the body heading only, so steering is a turn and no lateral
@@ -232,7 +233,7 @@ export function integrateMovement(a, dt, isSquid, jumped, radius) {
   if (d && !d.s3DiveInitiated) { d.s3DiveInitiated = true; beginDualiesRoll(r); }
   if (!d || a.climbing || a.specialActive || a.superJumpState || !(dt > 0)) {
     const slide = r.s3DualiesGlide;
-    if (!d && slide && !a.climbing && !a.specialActive && !a.superJumpState &&
+    if (!d && slide && !a.climbing && specialAllowsMainWeapon(a) && !a.superJumpState &&
         a.weapon.kind === 'dualies' && a.form === 'kid' && r.lockT > 0 && a.alive !== false && dt > 0) {
       const remaining = Math.max(0, slide.duration - slide.elapsed);
       const active = Math.min(dt, remaining);
@@ -261,7 +262,8 @@ export function integrateMovement(a, dt, isSquid, jumped, radius) {
       return;
     }
     if (slide) r.s3DualiesGlide = null;
-    return a._integrateMovementStep(dt, isSquid, jumped);
+    if (!(d && !(d.startup > MOVEMENT_EPSILON) && !a.climbing && specialAllowsMainWeapon(a) && !a.superJumpState && dt > 0))
+      return a._integrateMovementStep(dt, isSquid, jumped);
   }
   const distance = dodgeIntervalDistance(activeDualiesRollDistance(a.weapon), d.dur, d.t, dt);
   // Bound by peak velocity, not mean velocity: the front of the curve is fastest.
@@ -288,6 +290,6 @@ export function integrateMovement(a, dt, isSquid, jumped, radius) {
   // The 12F moving roll completes 4WU; the remaining 1WU is applied only
   // after the native 4F post-roll recovery begins. No double movement.
   if (d.t + dt >= d.dur - MOVEMENT_EPSILON && a.weapon.kind === 'dualies'
-      && a.alive !== false && !a.specialActive && !a.superJumpState)
+      && a.alive !== false && specialAllowsMainWeapon(a) && !a.superJumpState)
     beginDualiesPostSlide(r, a.weapon);
 }

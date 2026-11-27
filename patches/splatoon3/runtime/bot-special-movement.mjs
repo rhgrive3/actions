@@ -19,7 +19,7 @@ export function specialAllowsMain(actor) {
   const st = actor._s3AllSpecialState?.id === id ? actor._s3AllSpecialState : sa;
   if (id === 'killerWail') {
     const t = Number.isFinite(st?.t) ? st.t : (Number.isFinite(sa.t) ? sa.t : 0);
-    return t >= 40 / 60;
+    return t + 1e-8 >= 40 / 60;
   }
   if (id === 'zipcaster') {
     return (st?.phase ?? sa.phase) === 'ready';
@@ -35,7 +35,7 @@ export function specialAllowsSub(actor) {
   if (sa.id === 'killerWail') {
     const st = actor._s3AllSpecialState?.id === 'killerWail' ? actor._s3AllSpecialState : sa;
     const t = Number.isFinite(st?.t) ? st.t : (Number.isFinite(sa.t) ? sa.t : 0);
-    return t >= 40 / 60;
+    return t + 1e-8 >= 40 / 60;
   }
   return false;
 }
@@ -51,11 +51,11 @@ export function captureNav(ctx) {
 }
 
 /** Follow that navigation instead of idling in place. */
-export function followNav(ctx, scale = 1) {
+export function followNav(ctx, scale = 1, { steerLook = true } = {}) {
   const { actor, move } = ctx || {};
   const nav = actor ? navigation.get(actor) : null;
   const length = nav && nav.ctx === ctx ? Math.hypot(nav.x, nav.z) : 0;
-  if (!move?.set || !finitePoint(actor?.pos) || length < 0.1 || !Number.isFinite(scale) || typeof ctx.safePath !== 'function') return false;
+  if (!move?.set || !finitePoint(actor?.pos) || length < 0.1 || !Number.isFinite(scale) || !(scale > 0) || typeof ctx.safePath !== 'function') return false;
   const ux = nav.x / length, uz = nav.z / length;
   _probe.x = actor.pos.x + ux * 1.5; _probe.y = actor.pos.y; _probe.z = actor.pos.z + uz * 1.5;
   if (!ctx.safePath(_probe, 1.5)) {
@@ -66,7 +66,7 @@ export function followNav(ctx, scale = 1) {
   move.set(ux * amount, 0, uz * amount);
   // Steer look toward navigation direction when no enemy is visible so holdLook
   // does not freeze the bot's gaze while actively roaming.
-  if (!ctx.enemy && typeof ctx.aimAt === 'function') {
+  if (!ctx.enemy && !ctx.aimChanged && steerLook && typeof ctx.aimAt === 'function') {
     _look.x = actor.pos.x + ux * 6; _look.y = actor.pos.y; _look.z = actor.pos.z + uz * 6;
     ctx.aimAt(_look, _lookOpts);
   }
@@ -81,20 +81,18 @@ export function strafe(ctx, point = ctx?.enemy?.pos, scale = 1) {
   const dx = point.x - actor.pos.x, dz = point.z - actor.pos.z, length = Math.hypot(dx, dz);
   if (!Number.isFinite(length) || length < 1e-5) return false;
   const preferred = memory?.strafeSide || ((finite(actor.slot, finite(actor.nid)) & 1) ? -1 : 1);
-  for (let i = 0; i < 2; i++) {
-    const side = i === 0 ? preferred : -preferred;
-    const sx = -dz / length * side, sz = dx / length * side;
-    _probe.x = actor.pos.x + sx * 1.5; _probe.y = actor.pos.y; _probe.z = actor.pos.z + sz * 1.5;
-    let ok = ctx.safePath(_probe, 1.5);
-    if (!ok) {
-      _probe.x = actor.pos.x + sx * 0.75; _probe.y = actor.pos.y; _probe.z = actor.pos.z + sz * 0.75;
-      ok = ctx.safePath(_probe, 0.75);
+  for (let d = 0; d < 2; d++) {
+    const dist = d === 0 ? 1.5 : 0.75;
+    for (let i = 0; i < 2; i++) {
+      const side = i === 0 ? preferred : -preferred;
+      const sx = -dz / length * side, sz = dx / length * side;
+      _probe.x = actor.pos.x + sx * dist; _probe.y = actor.pos.y; _probe.z = actor.pos.z + sz * dist;
+      if (!ctx.safePath(_probe, dist)) continue;
+      if (memory) memory.strafeSide = side;
+      const amount = Math.max(0, Math.min(1, scale));
+      move.set(sx * amount, 0, sz * amount);
+      return true;
     }
-    if (!ok) continue;
-    if (memory) memory.strafeSide = side;
-    const amount = Math.max(0, Math.min(1, scale));
-    move.set(sx * amount, 0, sz * amount);
-    return true;
   }
   move.set(0, 0, 0);
   return false;
@@ -129,4 +127,10 @@ export function noteSighting(ctx) {
 export function recentSighting(ctx, maxAge) {
   const s = ctx?.actor && sightings.get(ctx.actor);
   return s && s.age <= maxAge && s.life === ctx.actor.netLife ? s : null;
+}
+
+export function resetBotSpecialMovement(actor) {
+  if (!actor) return;
+  navigation.delete(actor);
+  sightings.delete(actor);
 }

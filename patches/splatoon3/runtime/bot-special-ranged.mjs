@@ -10,6 +10,8 @@ const RANGED = new Set(['trizooka','tentaMissiles','inkjet','booyahBomb','killer
 const LIMITS = {trizooka:[8,38,12],tentaMissiles:[12,90,35],inkjet:[9,28,12],booyahBomb:[8,30,9],killerWail:[5,80,30],inkVac:[6,26,10],crabTank:[10,32,10],zipcaster:[12,30,12]};
 const INPUT_KEYS = ['fire','sub','special','squid','jump','booyah'];
 const AIM_OPTS = {height:0,lead:0};
+const NO_STEER_LOOK = {steerLook:false};
+const rangedSeen = new WeakMap();
 const WATER_PROBE = {pos:null};
 const LOCK_API = {Projectiles:null};
 const CACHE_TTL = 0.08;
@@ -91,7 +93,7 @@ function flyToward(c,point,scale=1) {
 }
 function flyStrafe(c,point,scale=.55) {
   const {actor,memory:m}=c;
-  if(typeof c.safePath!=='function'||!finitePoint(actor?.pos)||!finitePoint(point))return false;
+  if(!finitePoint(actor?.pos)||!finitePoint(point))return false;
   const dx=point.x-actor.pos.x,dz=point.z-actor.pos.z,d=Math.hypot(dx,dz);
   if(!(d>=.5))return false;
   if(m){
@@ -102,7 +104,7 @@ function flyStrafe(c,point,scale=.55) {
     }
   }
   const preferred=m?.strafeSide||(((actor.slot??actor.nid??0)&1)?-1:1);
-  const target=(m.rangedFlightStrafe ||= actor.pos.clone());
+  const target=m?(m.rangedFlightStrafe ||= actor.pos.clone()):actor.pos.clone();
   for(let i=0;i<2;i++){
     const side=i===0?preferred:-preferred;
     target.set(actor.pos.x+(-dz/d*side)*2,actor.pos.y,actor.pos.z+(dx/d*side)*2);
@@ -123,17 +125,33 @@ function ownState(c) {
   if(c.special==='inkVac')return inkVacState(c.actor)||c.state;
   return c.actor._s3AllSpecialState?.id===c.special?c.actor._s3AllSpecialState:c.state;
 }
+function clearRangedSeen(actor,m) {
+  if(actor)rangedSeen.delete(actor);
+  if(m){m.rangedSeenAge=Infinity;m.rangedSeenTarget=null;}
+}
+function getRangedSeen(actor) {
+  let s=rangedSeen.get(actor);
+  if(!s){s={life:actor.netLife,age:Infinity,target:null,point:null,mem:null};rangedSeen.set(actor,s);}
+  if(s.life!==actor.netLife){s.life=actor.netLife;s.age=Infinity;s.target=null;s.point=null;s.mem=null;}
+  return s;
+}
 function rememberVisible(c) {
+  const s=getRangedSeen(c.actor);
   const m=c.memory;
-  m.rangedSeenAge=(m.rangedSeenAge??Infinity)+c.dt;
-  if(c.enemy&&c.visible&&finitePoint(c.enemy.pos)){
-    (m.rangedSeenPoint ||= c.actor.pos.clone()).copy(c.enemy.pos);
-    m.rangedSeenTarget=c.enemy;m.rangedSeenAge=0;
+  if(m&&s.mem===m){
+    if(m.rangedSeenAge!==s.age)s.age=m.rangedSeenAge??Infinity;
+    if(m.rangedSeenTarget!==s.target)s.target=m.rangedSeenTarget??null;
   }
+  s.age+=c.dt;
+  if(c.enemy&&c.visible&&finitePoint(c.enemy.pos)){
+    (s.point ||= c.actor.pos.clone()).copy(c.enemy.pos);
+    s.target=c.enemy;s.age=0;
+  }
+  if(m){s.mem=m;m.rangedSeenAge=s.age;m.rangedSeenTarget=s.target;m.rangedSeenPoint=s.point;}
 }
 function recentLockPoint(c) {
-  const m=c.memory;
-  return m.rangedSeenAge<=.8 && m.rangedSeenTarget?.alive && m.rangedSeenTarget.team!==c.actor.team ? m.rangedSeenPoint : null;
+  const s=rangedSeen.get(c.actor);
+  return s&&s.life===c.actor.netLife&&s.age<=.8&&s.target?.alive&&s.target.team!==c.actor.team?s.point:null;
 }
 function bombThreat(c) {
   for(const bomb of c.world?.projectiles?.bombs||[]){
@@ -284,15 +302,15 @@ export function driveRangedSpecial(c) {
   captureNav(c);
   const {actor,intent:it}=c;
   if(!actor?.alive||actor.remote||!finitePoint(actor.pos)||!(c.dt>0)||!Number.isFinite(c.dt)){
-    if(c.memory&&!actor?.alive){
-      c.memory.rangedSeenAge=Infinity;c.memory.rangedSeenTarget=null;
-      resetActivationMemory(c.memory);
+    if(!actor?.alive){
+      clearRangedSeen(actor,c.memory);
+      if(c.memory)resetActivationMemory(c.memory);
     }
     inputsOff(c);return true;
   }
   const m=(c.memory ||= {});
   if(m.rangedLife!==actor.netLife){
-    m.rangedLife=actor.netLife;m.rangedSeenAge=Infinity;m.rangedSeenTarget=null;
+    m.rangedLife=actor.netLife;
     resetActivationMemory(m);
   }
   if(m.rangedState!==c.state){
@@ -327,19 +345,19 @@ export function driveRangedSpecial(c) {
     if(!beamsDone){
       const p=enemy?.pos||recentLockPoint(c);if(p)aim(c,p,.7);
     }
-    if((s.t??c.state.t??0)>=40/60){
+    if((s.t??c.state.t??0)+1e-8>=40/60){
       const normal=c.normalIntent;
-      const nonCombat=c.brain?.mode==='paint'||c.brain?.mode==='refill';
+      const nonCombat=c.brain?.mode==='paint'||c.brain?.mode==='refill'||c.brain?.mode==='ranked';
       if(enemy){
         it.fire=!!normal?.fire&&c.distance<=mainRange(c)*1.1&&aimed(c,.16);
         it.sub=!!normal?.sub;
       }else if(nonCombat){
         it.fire=!!normal?.fire;
         it.sub=!!normal?.sub;
-        if(beamsDone)followNav(c,1);
+        if(beamsDone)followNav(c,1,normal?.fire?NO_STEER_LOOK:undefined);
       }else{
-        it.fire=false;it.sub=false;
-        if(beamsDone)roam(c,.85);
+        it.fire=false;it.sub=!!normal?.sub;
+        if(beamsDone&&!normal?.sub)roam(c,.85);
       }
       it.squid=!!normal?.squid;it.jump=!!normal?.jump;
     }

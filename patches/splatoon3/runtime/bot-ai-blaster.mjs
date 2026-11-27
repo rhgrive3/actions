@@ -33,6 +33,8 @@
 //   Lateral strafe painting ("カニ歩き塗り") for blasters to paint wide lanes cleanly.
 import { botRawWeaponFamily } from './bot-turf-paint.mjs';
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EPS = 1e-6;
 
 export const BLASTER_ARCHETYPES = Object.freeze({
@@ -437,7 +439,7 @@ export function applyBlasterTurfPaint(brain, G, actor, dt, move, wantMove, baseY
     st.microRecoverT = 0;
     return;
   }
-  if (actor.specialActive || it.special) {
+  if (!specialAllowsMain(actor) || it.special) {
     st.microRecover = false;
     st.microRecoverT = 0;
     return;
@@ -642,7 +644,7 @@ export function applyBlasterCombat(brain, G, actor, dt, move, ctx) {
     resetBlasterState(st, actor.netLife);
     return null;
   }
-  if (actor.superJumpState || actor.climbing || actor.specialActive || it.special) {
+  if (actor.superJumpState || actor.climbing || !specialAllowsMain(actor) || it.special) {
     st.microRecover = false;
     st.microRecoverT = 0;
     return null;

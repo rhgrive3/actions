@@ -43,8 +43,9 @@ function fallbackThrow(ctx, memory, intent, native, shot) {
   ctx.aimDistance = 12;
   ctx.aimChanged = true;
   if (special === 'superChump') {
-    intent.fire = true;
-    memory.activeHoldElapsed = 0;
+    if (!actor.grounded) return true;
+    intent.fire = !native?.held?.fire;
+    if (intent.fire) memory.activeHoldElapsed = 0;
     return true;
   }
   if (special === 'bubbler') return true;
@@ -55,15 +56,27 @@ function fallbackThrow(ctx, memory, intent, native, shot) {
   if (!memory.holding) {
     memory.holding = true;
     memory.holdTime = 0;
+    memory.fallbackStarted = true;
+    memory.fallbackElapsed = 0;
     intent.sub = true;
     return true;
   }
-  if ((memory.holdTime || 0) < 0.12) {
+  if (!memory.fallbackStarted) {
+    memory.fallbackStarted = true;
+    memory.fallbackElapsed = 0;
+    intent.sub = true;
+    return true;
+  }
+  const dt = Number.isFinite(ctx.dt) && ctx.dt > 0 ? ctx.dt : 0;
+  memory.fallbackElapsed = (Number.isFinite(memory.fallbackElapsed) ? memory.fallbackElapsed : 0) + dt;
+  if ((memory.holdTime || 0) < 0.12 || (!ctx.isAimed?.(0.25) && memory.fallbackElapsed < 0.25)) {
     intent.sub = true;
     return true;
   }
   intent.sub = false;
   memory.holding = false;
+  memory.fallbackStarted = false;
+  memory.fallbackElapsed = 0;
   memory.releasedShot = shot;
   memory.releasedAt = memory.supportClock;
   memory.activeHoldElapsed = 0;
@@ -307,7 +320,7 @@ export function driveSupportSpecial(ctx) {
   captureNav(ctx);
   const { actor, intent, state, memory } = ctx;
   if (!actor?.alive || !finitePoint(actor.pos)) {
-    if (memory) { memory.holding = false; memory.holdTime = 0; memory.activeHoldElapsed = 0; }
+    if (memory) { memory.holding = false; memory.holdTime = 0; memory.activeHoldElapsed = 0; memory.fallbackStarted = false; memory.fallbackElapsed = 0; }
     return false;
   }
   if (memory.activeState !== state) {
@@ -315,6 +328,8 @@ export function driveSupportSpecial(ctx) {
     memory.holding = false;
     memory.holdTime = 0;
     memory.activeHoldElapsed = 0;
+    memory.fallbackStarted = false;
+    memory.fallbackElapsed = 0;
     memory.initialized = false;
     memory.releasedShot = -1;
     memory.releasedAt = -Infinity;
@@ -423,8 +438,10 @@ export function driveSupportSpecial(ctx) {
   if (waitingMarker && ((native?.nextMarkerStart || 0) - (native?.t || 0)) > 0.18) moveWhileHolding(ctx, 0.45);
   else ctx.move.set(0, 0, 0);
   if (pending) { intent.sub = false; return true; }
+  memory.fallbackStarted = false;
+  memory.fallbackElapsed = 0;
   if (ctx.special === 'superChump') {
-    intent.fire = ctx.isAimed(.12) || timedOut;
+    intent.fire = (ctx.isAimed(.12) || timedOut) && !native?.held?.fire;
     if (intent.fire) memory.activeHoldElapsed = 0;
     return true;
   }

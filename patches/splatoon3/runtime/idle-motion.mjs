@@ -1,5 +1,5 @@
 import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } from './action-admission.mjs';
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 // Match idle only. Nintendo's short shooter demonstrations show a restrained
 // carry between attacks, not a measured full idle cycle. Removing the large
 // showcase flourishes and reducing the native look gesture is visual calibration.

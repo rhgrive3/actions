@@ -2,7 +2,7 @@
 // into the weapon stance. These are INKWAVE visual calibrations, not published
 // Nintendo joint curves, transformation frames, or gameplay timings.
 import { specialMotionAllowsAction, bombMotionAllowsAction, dualiesMotionLock } from './action-admission.mjs';
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialKeepsNativeForm } from './special-presentation-owner.mjs';
 import { formExchangeWeight, FORM_EXCHANGE } from './form-timing.mjs';
 export const FORM_MOTION_CALIBRATION = Object.freeze({
   settleStart: .10, settleEnd: .22, reversalBlend: .08, gestureEnd: .16,
@@ -73,9 +73,9 @@ function state(ch) {
 function busy(ch, m, T) {
   const s = m.frame, a = ch._owner?.(), r = a?.weaponRunner;
   const f = s?.movementMotion;
-  if (s?.hp === 0 || f?.alive === false || (f?.special && !specialKeepsNativeForm(f.special.id)) || f?.superJump ||
+  if (s?.hp === 0 || f?.alive === false || (f?.special && !specialKeepsNativeForm(f.special)) || f?.superJump ||
       f?.actions?.roll || f?.actions?.surge || a?.s3?.actions?.roll || a?.s3?.actions?.surge) return true;
-  if (a?.alive === false || ch.dance || ch.fidget >= 0 || !ch.grounded || (a?.specialActive && !specialAllowsMainWeapon(a) && !specialKeepsNativeForm(a.specialActive.id)) || a?.superJumpState) return true;
+  if (a?.alive === false || ch.dance || ch.fidget >= 0 || !ch.grounded || (a?.specialActive && !specialKeepsNativeForm(a.specialActive)) || a?.superJumpState) return true;
   if (s?.firing || s?.charge > .01 || s?.subAim || s?.rolling || r?.aimingSub || r?.dodge ||
       r?.charge > .01 || r?.rolling || r?.firingPose?.()) return true;
   if (ch.lastShot < .5 || ch.lastRelease < .35) return true;

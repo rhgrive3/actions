@@ -104,11 +104,12 @@ function kraken(ctx) {
     // Hold briefly (0.65s) so a momentary target loss does not trigger a blind
     // dash, then break out of the charge-hold freeze by dashing safely or roaming.
     memory.krakenHoldLost = (Number.isFinite(memory.krakenHoldLost) ? memory.krakenHoldLost : 0) + ctx.dt;
-    if (memory.krakenHoldLost < .65) {
+    const rushSafe = safeRush(ctx, facing(ctx), 12);
+    if (memory.krakenHoldLost < .65 && !(near && !rushSafe)) {
       intent.fire = true;
       return;
     }
-    if (safeRush(ctx, facing(ctx), 12) && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) {
+    if (rushSafe && remaining(ctx, st) > KRAKEN_MOVEMENT.dashTime + .15) {
       memory.krakenHoldLost = 0;
       intent.fire = false;
     } else {

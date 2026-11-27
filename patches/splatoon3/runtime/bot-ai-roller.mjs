@@ -12,6 +12,8 @@
 // - Big Swig Roller: https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%83%AF%E3%82%A4%E3%83%89%E3%83%AD%E3%83%BC%E3%83%A9%E3%83%BC
 // - MatchGuy Turf Painting Guide: https://spl3.ink/matchguy-vol03/
 
+import { specialAllowsMain } from './bot-special-movement.mjs';
+
 const EPS = 1e-6;
 const GOLDEN_ANGLE = 2.399963229728653;
 const _archetypeCache = new WeakMap();
@@ -396,7 +398,7 @@ export function applyRollerTurfPaint(brain, G, actor, dt, move, wantMove, baseYa
     it.squid = false;
     return null;
   }
-  if (actor.specialActive) {
+  if (!specialAllowsMain(actor)) {
     resetRollerTransientState(brain);
     return null;
   }
@@ -784,7 +786,7 @@ export function applyRollerCombat(brain, G, actor, dt, move, ctx = {}) {
     it.squid = false;
     return null;
   }
-  if (actor.specialActive) {
+  if (!specialAllowsMain(actor)) {
     resetRollerTransientState(brain);
     return null;
   }

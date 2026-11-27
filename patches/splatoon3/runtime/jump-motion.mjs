@@ -3,7 +3,7 @@
 // retail clip selection or Nintendo joint curves. Every pose profile below is
 // explicitly local INKWAVE calibration in the native kid rig's space.
 import { specialMotionAllowsFootPlant } from './special-motion.mjs';
-import { specialAllowsMainWeapon, specialKeepsNativeForm } from './special-presentation-owner.mjs';
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const GUARD = Symbol.for('inkwave.splatoon3.jump-motion.v1');
 const clamp = x => Math.max(0, Math.min(1, x));
 const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a)); return u * u * (3 - 2 * u); };
@@ -136,7 +136,7 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   const interrupted = (ch, input) => {
     const a = ch._owner(), runner = ch._runner(input);
     return ch.s3JumpMotionEnabled === false || (input?.form || 'kid') !== 'kid'
-      || a?.alive === false || (a?.specialActive && !specialAllowsMainWeapon(a) && !specialKeepsNativeForm(a.specialActive.id)) || a?.superJumpState || input?.alive === false
+      || a?.alive === false || (a?.specialActive && !specialAllowsMainWeapon(a)) || a?.superJumpState || input?.alive === false
       || !shown(ch) || ch.dance || ch.wDance > .001 || ch.formT < .5
       || !jumpFamilyAdmitted(ch.weaponKind)
       || input?.subAim || runner?.aimingSub || runner?.dodge || runner?.s3Turret
@@ -190,11 +190,14 @@ export function installJumpMotion({ Character, Actor, CHARACTER_CHANNELS: C, CHA
   };
   proto.dispose = function (...args) { states.delete(this); return dispose.apply(this, args); };
   if (Actor) {
-    for (const name of ['reset', 'splat']) {
+    for (const name of ['reset', 'splat', '_startSpecial']) {
       const original = Actor.prototype[name];
+      if (!original) continue;
       Actor.prototype[name] = function (...args) {
         const result = original.apply(this, args);
-        if (name === 'reset' || !this.alive) forget(this.character);
+        if (name === '_startSpecial') {
+          if (this.specialActive && !specialAllowsMainWeapon(this)) clear(this.character);
+        } else if (name === 'reset' || !this.alive) forget(this.character);
         return result;
       };
     }

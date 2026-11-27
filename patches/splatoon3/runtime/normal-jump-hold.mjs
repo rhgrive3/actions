@@ -20,6 +20,7 @@ export const LEGACY_JUMP_FEEL=Object.freeze({
   holdFrames:5,releaseRate:0.7,
   status:'unverified-game-feel-prototype',
 });
+import { specialAllowsMainWeapon } from './special-presentation-owner.mjs';
 const INSTALL=Symbol.for('inkwave.s3.normal-jump-hold.v1');
 const states=new WeakMap();
 export function normalJumpHoldState(actor) {
@@ -47,7 +48,7 @@ export function installNormalJumpHold({ Actor },profile={}) {
   Actor.prototype.update=function(dt) {
     const before=this.s3JumpSerial||0,prior=states.get(this);
     const ordinary=!!this.alive && this.form==='kid' && !this.superJumpState &&
-      !this.specialActive && !this.climbing;
+      specialAllowsMainWeapon(this) && !this.climbing;
     if(prior && ordinary && Number.isFinite(dt) && dt>0 &&
        this.grounded===false && Number.isFinite(this.vel?.y) && this.vel.y>0) {
       if(this.intent?.jump) prior.frames+=dt*60;
@@ -70,7 +71,7 @@ export function installNormalJumpHold({ Actor },profile={}) {
     // Own the successful jump, not the form at the beginning of its input tick.
     const started=(this.s3JumpSerial||0)!==before;
     if(started && this.alive && this.form==='kid' && !this.superJumpState &&
-       !this.specialActive && !this.climbing) {
+       specialAllowsMainWeapon(this) && !this.climbing) {
       states.set(this,{serial:this.s3JumpSerial,frames:Number.isFinite(dt)&&dt>0?dt*60:0,
         // Buffered presses can be released before native landing admission.
         // Observe that release on the next ascent tick just like an ordinary
@@ -81,7 +82,7 @@ export function installNormalJumpHold({ Actor },profile={}) {
     // including the takeoff tick under a low ceiling. Retire it before any
     // later external impulse gets a chance to make velocity positive again.
     if(this.vel?.y <= 0 || this.grounded || !this.alive || this.form!=='kid' ||
-       this.superJumpState || this.specialActive || this.climbing) states.delete(this);
+       this.superJumpState || !specialAllowsMainWeapon(this) || this.climbing) states.delete(this);
     return result;
   };
   Actor.prototype.reset=function(...args){states.delete(this);return reset.apply(this,args);};

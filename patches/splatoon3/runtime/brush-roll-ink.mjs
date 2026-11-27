@@ -10,9 +10,11 @@ export function brushRollIgnoresEnemyInk(a) {
   // Collision resolution removes velocity into a wall before the resource
   // phase. A held movement attempt into that actual contact is still a roll,
   // unlike a neutral stick or an input directed away from the wall.
+  const ink = a?.specialActive?.id === 'zipcaster' && a._s3AllSpecialState?.id === 'zipcaster'
+    ? (a._s3AllSpecialState.inkFuel || 0) : a?.ink;
   return a?.weapon?.catalogRecord?.parameters?.WeaponRollParam?.NoOpInkEffect===true &&
     a.alive!==false && a.form==='kid' && a.grounded && !a.climbing &&
-    specialAllowsMainWeapon(a) && !a.superJumpState && a.ink>0 &&
+    specialAllowsMainWeapon(a) && !a.superJumpState && ink>0 &&
     !!runner?.rolling && !runner.aimingSub && !runner.catalogState?.pending &&
     !!a.intent?.fire && !a.intent.sub &&
     Math.hypot(a.intent.move?.x||0,a.intent.move?.z||0)>1e-9 &&
