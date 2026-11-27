@@ -13,6 +13,7 @@ const EXTRA = `
 export { driveRangedSpecial } from './patches/splatoon3/runtime/bot-special-ranged.mjs';
 export { driveSupportSpecial } from './patches/splatoon3/runtime/bot-special-support.mjs';
 export { driveMeleeSpecial } from './patches/splatoon3/runtime/bot-special-melee.mjs';
+export { resetBotSpecialMemory } from './patches/splatoon3/runtime/bot-special-context.mjs';
 `;
 
 let _fxPromise = null;
@@ -501,4 +502,83 @@ test('stabilizeBotForm: cancelCharge is scoped to Zipcaster and clears _s3BotFor
   // Match not playing clears actor._s3BotForm.
   stabilizeBotForm(a, 1 / 60, false, { match: { playing: () => false } });
   assert.equal(a._s3BotForm, undefined, 'clears _s3BotForm when match is not playing');
+});
+
+test('Killer Wail post-40F beamsDone preserves paint/ranked aim, retreat follows nav, rangedSeen resets & ages via world.time/dt, and safePath accepts cross-slope shoulders', async () => {
+  const f = await getFx();
+
+  // 1. Unlocked Killer Wail in both 'paint' and 'ranked' modes does not freeze wantYaw/wantPitch to brain.aimYaw/aimPitch
+  for (const mode of ['paint', 'ranked']) {
+    const h = makeHarness('killerWail', { distance: 12, stateExtra: { t: 0.9, beams: 3 } });
+    h.brain.mode = mode;
+    h.brain.aimYaw = 0;
+    h.brain.aimPitch = 0;
+    const ctx = createBotSpecialContext(h.actor, h.intent, 1 / 60, null, {
+      world: h.world,
+      brain: h.brain,
+      move: h.intent.move,
+      wantYaw: 1.2,
+      wantPitch: -0.35,
+      aimDistance: 12,
+    });
+    assert.ok(Math.abs(ctx.wantYaw - 1.2) < 1e-6, `unlocked ${mode} Killer Wail preserves options.wantYaw`);
+    assert.ok(Math.abs(ctx.wantPitch - (-0.35)) < 1e-6, `unlocked ${mode} Killer Wail preserves options.wantPitch`);
+  }
+
+  // 2. Retreat mode during post-40F Killer Wail follows nav (-Z) instead of charging +Z sighting
+  {
+    const h = makeHarness('killerWail', { distance: 12, stateExtra: { t: 0.9, beams: 3 } });
+    h.brain.mode = 'retreat';
+    // Prime sighting toward +Z
+    let ctx = h.makeCtx({ navMove: [0, 0, -1], target: h.enemy, see: true });
+    f.driveRangedSpecial(ctx);
+    // Hide enemy -> retreat must follow nav (-Z) instead of charging +Z sighting
+    ctx = h.makeCtx({ navMove: [0, 0, -1], target: null, see: false });
+    f.driveRangedSpecial(ctx);
+    assert.ok(ctx.move.z < -0.5, `retreat follows nav (-Z) instead of charging +Z sighting (move.z=${ctx.move.z})`);
+  }
+
+  // 3. rangedSeen resets on resetBotSpecialMemory, expires on world.time jump, and ages via c.dt when world.time is fixed
+  {
+    const h = makeHarness('inkVac', { distance: 10, stateExtra: { phase: 'inhale', t: 0.2 } });
+    h.world.time = 10;
+    // Prime sighting toward +Z enemy
+    let ctx = h.makeCtx({ navMove: [0, 0, -1], target: h.enemy, see: true });
+    f.driveRangedSpecial(ctx);
+
+    // 3a. Super-jump / resetBotSpecialMemory clears rangedSeen immediately (cannot chase +Z sighting)
+    f.resetBotSpecialMemory(h.actor);
+    h.world.time = 10.05;
+    ctx = h.makeCtx({ navMove: [0, 0, -1], target: null, see: false });
+    f.driveRangedSpecial(ctx);
+    assert.ok(ctx.move.z < 0, `resetBotSpecialMemory clears rangedSeen so bot follows nav (-Z) instead of +Z sighting (move.z=${ctx.move.z})`);
+
+    // 3b. world.time jump across uncharged gap expires rangedSeen
+    ctx = h.makeCtx({ navMove: [0, 0, -1], target: h.enemy, see: true });
+    f.driveRangedSpecial(ctx);
+    h.world.time = 30.0;
+    ctx = h.makeCtx({ navMove: [0, 0, -1], target: null, see: false });
+    f.driveRangedSpecial(ctx);
+    assert.ok(ctx.move.z < 0, `world.time jump expires rangedSeen so bot follows nav (-Z) (move.z=${ctx.move.z})`);
+
+    // 3c. Fixed world.time environment ages rangedSeen via c.dt accumulation
+    h.world.time = 40.0;
+    ctx = h.makeCtx({ navMove: [0, 0, -1], target: h.enemy, see: true });
+    f.driveRangedSpecial(ctx);
+    // Advance 3.0s of dt with fixed world.time = 40.0 (past 2.2s sighting window)
+    for (let i = 0; i < 60; i++) {
+      ctx = h.makeCtx({ dt: 0.05, navMove: [0, 0, -1], target: null, see: false });
+      f.driveRangedSpecial(ctx);
+    }
+    assert.ok(ctx.move.z < 0, `fixed world.time still expires rangedSeen via dt accumulation (move.z=${ctx.move.z})`);
+  }
+
+  // 4. safePath accepts gentle 15° cross-slope on short probe
+  {
+    const h = makeHarness('trizooka', { distance: 15 });
+    const slope = Math.tan((15 * Math.PI) / 180);
+    h.world.level.groundHeight = (x) => x * slope;
+    const ctx = h.makeCtx({ target: null, see: false });
+    assert.equal(ctx.safePath(vec(0, 0, 0.1), 1.2), true, 'short probe on 15° cross-slope passes');
+  }
 });

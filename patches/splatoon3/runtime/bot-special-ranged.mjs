@@ -1,4 +1,4 @@
-import { captureNav, followNav, strafe, noteSighting, recentSighting } from './bot-special-movement.mjs';
+import { captureNav, followNav, strafe, noteSighting, recentSighting, registerBotSpecialReset } from './bot-special-movement.mjs';
 import { trizookaState } from './kit-trizooka.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { tentaMissilesLockPreview } from './all-specials.mjs';
@@ -129,10 +129,11 @@ function clearRangedSeen(actor,m) {
   if(actor)rangedSeen.delete(actor);
   if(m){m.rangedSeenAge=Infinity;m.rangedSeenTarget=null;}
 }
+registerBotSpecialReset(actor=>{rangedSeen.delete(actor);});
 function getRangedSeen(actor) {
   let s=rangedSeen.get(actor);
-  if(!s){s={life:actor.netLife,age:Infinity,target:null,point:null,mem:null};rangedSeen.set(actor,s);}
-  if(s.life!==actor.netLife){s.life=actor.netLife;s.age=Infinity;s.target=null;s.point=null;s.mem=null;}
+  if(!s){s={life:actor.netLife,age:Infinity,target:null,point:null,mem:null,lastTime:NaN};rangedSeen.set(actor,s);}
+  if(s.life!==actor.netLife){s.life=actor.netLife;s.age=Infinity;s.target=null;s.point=null;s.mem=null;s.lastTime=NaN;}
   return s;
 }
 function rememberVisible(c) {
@@ -142,7 +143,15 @@ function rememberVisible(c) {
     if(m.rangedSeenAge!==s.age)s.age=m.rangedSeenAge??Infinity;
     if(m.rangedSeenTarget!==s.target)s.target=m.rangedSeenTarget??null;
   }
-  s.age+=c.dt;
+  const worldTime=c.world?.time;
+  if(Number.isFinite(worldTime)){
+    if(Number.isFinite(s.lastTime)&&worldTime<s.lastTime)s.age=Infinity;
+    else if(Number.isFinite(s.lastTime)&&worldTime-s.lastTime>c.dt)s.age+=worldTime-s.lastTime;
+    else s.age+=c.dt;
+    s.lastTime=worldTime;
+  }else{
+    s.age+=c.dt;
+  }
   if(c.enemy&&c.visible&&finitePoint(c.enemy.pos)){
     (s.point ||= c.actor.pos.clone()).copy(c.enemy.pos);
     s.target=c.enemy;s.age=0;
@@ -355,6 +364,9 @@ export function driveRangedSpecial(c) {
         it.fire=!!normal?.fire;
         it.sub=!!normal?.sub;
         if(beamsDone)followNav(c,1,normal?.fire?NO_STEER_LOOK:undefined);
+      }else if(c.brain?.mode==='retreat'){
+        it.fire=false;it.sub=!!normal?.sub;
+        if(beamsDone&&!normal?.sub)followNav(c,1);
       }else{
         it.fire=false;it.sub=!!normal?.sub;
         if(beamsDone&&!normal?.sub)roam(c,.85);

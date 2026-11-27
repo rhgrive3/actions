@@ -190,7 +190,7 @@ export function installPaintRegionalMips(C){
  };
  P._regenerateMipmaps=function(...args){
   const s=this[KEY],bounds=!globalThis.document?.hidden&&usable(this,s)?region(s):null;
-  if(!bounds){const v=regen.apply(this,args);if(s&&!globalThis.document?.hidden){s.full++;reset(s);}return v;}
+  if(!bounds){const v=regen.apply(this,args);if(s&&!globalThis.document?.hidden){s.full++;reset(s);s.forceFull=false;}return v;}
   try{generate(s,bounds);}catch(error){release(this);return regen.apply(this,args);}this._lastMipClock=this.clock;this._mipsDirty=false;this._mipRebuildCount=(this._mipRebuildCount||0)+1;
  };
  P.dispose=function(...args){release(this);return dispose.apply(this,args);};

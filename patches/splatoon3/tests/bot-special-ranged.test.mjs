@@ -78,7 +78,7 @@ test('Inkjet owns its 30-unit weapon range instead of the equipped main range',a
  const x=await setup('inkjet',23);
  for(let i=0;i<100;i++)x.drive();
  assert.ok(x.events.some(e=>e.action==='shot'),'a 12-unit main still fires Inkjet at 23');
- x.enemy.pos.z=x.a.pos.z+40;x.drive({apply:false});assert.equal(x.a.intent.fire,false);assert.ok(x.a.intent.move.lengthSq()===0);
+ x.enemy.pos.z=x.a.pos.z+40;const c=x.drive({apply:false});assert.equal(x.a.intent.fire,false);assert.ok(c.move.z>0);
 });
 
 test('Ink Vac retains suction, holds through target loss, and releases only an aimed countershot',async()=>{

@@ -103,7 +103,11 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
   // Native combat computes its desired look from the remembered Actor even
   // after LOS is lost. An active special must not inherit that live position;
   // hold the actual look unless its policy chooses a last-seen or world point.
-  const holdLook = !!state && !visible;
+  const kwState = actor._s3AllSpecialState?.id === 'killerWail' ? actor._s3AllSpecialState : state;
+  const kwT = Number.isFinite(kwState?.t) ? kwState.t : (Number.isFinite(state?.t) ? state.t : 0);
+  const kwUnlocked = special === 'killerWail' && state?.id === 'killerWail' && kwT + 1e-8 >= 40 / 60 && (kwState?.beams || 0) >= 3;
+  const nonCombatMode = brain?.mode === 'paint' || brain?.mode === 'refill' || brain?.mode === 'ranked';
+  const holdLook = !!state && !visible && !(kwUnlocked && nonCombatMode);
   const actualYaw = finite(brain?.aimYaw, finite(actor.aimYaw, finite(actor.yaw)));
   const actualPitch = finite(brain?.aimPitch, finite(actor.aimPitch));
   const previousDistance = finitePoint(actor.aimPoint) ? Math.hypot(actor.aimPoint.x - eye.x,
@@ -177,7 +181,9 @@ export function completeBotSpecialContext(ctx, target, options = {}) {
           world.physics.raycast(origin, down, 1.65, probe, true);
           y = probe.hit && probe.normal.y >= 0.68 ? probe.point.y : -Infinity;
         } else y = world.level.groundHeight(x, z, ground + 0.85);
-        if (!Number.isFinite(y) || y < -1.45 || y < ground - maxDrop || y > ground + maxRise) return false;
+        const dropLim = side === 0 ? maxDrop : Math.max(maxDrop, Math.min(0.55, width * 1.15));
+        const riseLim = side === 0 ? maxRise : Math.max(maxRise, Math.min(0.35, width * 0.85));
+        if (!Number.isFinite(y) || y < -1.45 || y < ground - dropLim || y > ground + riseLim) return false;
         if (side === 0) ground = y;
       }
       for (let s = 0; s < 3; s++) {

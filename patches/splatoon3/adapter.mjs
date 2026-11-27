@@ -430,7 +430,7 @@ export function adaptSource(rel, code) {
     // Owner report 2026-11-07: CPU form flicker (runtime/bot-form-stability.mjs).
     code = "import { stabilizeBotForm } from '../../patches/splatoon3/runtime/bot-form-stability.mjs';\n" + code;
     code = replaceOnce(code, '        if (live) a.bot.update(dt);',
-      '        if (live) { a.bot._nativeTraversalHandled = false; a.bot.update(dt); stabilizeBotForm(a, dt, !!a.bot._nativeTraversalHandled); }',
+      '        if (live) { a.bot._nativeTraversalHandled = false; a.bot.update(dt); stabilizeBotForm(a, dt, !!a.bot._nativeTraversalHandled); } else if (a._s3BotForm) delete a._s3BotForm;',
       'CPU form hold');
     code = "import { softPushActor } from '../../patches/splatoon3/runtime/movement-physics.mjs';\nimport { captureTurfFinish, blockExpiredGuestInput, requestTurfFinish } from '../../patches/splatoon3/runtime/turf-finish.mjs';\n" + code;
 

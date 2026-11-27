@@ -359,3 +359,78 @@ test('installWeaponAudioEngine preserves requested weapon id before init() so Sn
     `Snipewriter 5H prewarms 1.2s buffer (got ${prewarmCalls[0].chargeTime})`,
   );
 });
+
+test('full-charge tail passes buffer-time playTail, clamps short/zero tail monotonically, and post-seek stays at 1x without 4x spike', () => {
+  // Unstretched Bamboozler (nominal = 3.0): tail in buffer-time is length - length/1.215
+  {
+    const { ctx, sources, gains } = makeAudioCtx();
+    const length = 1.215, chargeTime = 20 / 60;
+    const expectedTail = length - length / 1.215;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(length), { offset: 0, length, chargeTime, progress: 0.5, volume: 0.55 });
+    ctx.currentTime = 0.05;
+    h.set({ progress: 1.0 });
+    assert.equal(sources.length, 2, 'full-charge tail spawns second source');
+    assert.ok(Math.abs(sources[1].startArgs[2] - expectedTail) < 1e-6, `tail uses buffer-time (${sources[1].startArgs[2]} vs ${expectedTail})`);
+    assert.ok(Math.abs(sources[1].playbackRate.value - 3.0) < 1e-4, 'tail keeps nominal 3x rate');
+    // Verify gain timestamps are monotonically non-decreasing
+    const times = gains[1].gain.calls.map(c => c.time ?? c[2]).filter(Number.isFinite);
+    for (let i = 1; i < times.length; i++) assert.ok(times[i] >= times[i - 1], 'gain timeline monotonic');
+    h.stop();
+  }
+  // Short-tail buffer clamp (0 < tailDur < 0.006): monotonic gain schedule with fadeIn <= holdEnd <= tailDur
+  {
+    const { ctx, sources, gains } = makeAudioCtx();
+    const length = 1.215, body = length / 1.215, shortPlayTail = 0.004;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(body + shortPlayTail), { offset: 0, length, chargeTime: 1, progress: 0.5, volume: 0.55 });
+    ctx.currentTime = 0.05;
+    h.set({ progress: 1.0 });
+    assert.equal(sources.length, 2, 'short tail spawns second source');
+    assert.ok(Math.abs(sources[1].startArgs[2] - shortPlayTail) < 1e-6, `short tail passes clamped buffer-time (${sources[1].startArgs[2]})`);
+    const times = gains[1].gain.calls.map(c => c.time ?? c[2]).filter(Number.isFinite);
+    assert.ok(times.length >= 3, 'short tail schedules gain envelope');
+    for (let i = 1; i < times.length; i++) {
+      assert.ok(times[i] >= times[i - 1], `short tail gain timeline monotonic (${times[i - 1]} -> ${times[i]})`);
+    }
+    assert.ok(times[times.length - 1] <= 0.05 + shortPlayTail + 1e-6, 'short tail envelope ends within now + tailDur');
+    h.stop();
+  }
+  // Zero-tail buffer clamp (buffer.duration === offset + body)
+  {
+    const { ctx, sources } = makeAudioCtx();
+    const length = 1.215, body = length / 1.215;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(body), { offset: 0, length, chargeTime: 1, progress: 0.5, volume: 0.55 });
+    ctx.currentTime = 0.05;
+    h.set({ progress: 1.0 });
+    assert.equal(sources[1].startArgs[2], 0, 'clamped zero tail starts with duration 0');
+    h.stop();
+  }
+  // Large paused jump seek: 6 frames of 60Hz 1x charging stays near 1x (no 4x pitch spike)
+  {
+    const { ctx, sources } = makeAudioCtx();
+    const length = 1.215;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(length), { offset: 0, length, chargeTime: 1, progress: 0.2, volume: 0.55 });
+    for (let i = 1; i <= 10; i++) { ctx.currentTime = i / 60; h.set({ progress: 0.2 }); }
+    ctx.currentTime = 11 / 60;
+    h.set({ progress: 0.75 });
+    assert.equal(sources.length, 2, 'large jump seeks fresh source');
+    for (let i = 1; i <= 6; i++) {
+      ctx.currentTime = (11 + i) / 60;
+      h.set({ progress: 0.75 + i / 60 });
+      assert.ok(Math.abs(sources[1].playbackRate.value - 1) < 0.05, `post-seek frame ${i} stays near 1x (${sources[1].playbackRate.value})`);
+    }
+    h.stop();
+  }
+  // 200Hz constant volume: no redundant gain ramp cancellations
+  {
+    const { ctx, gains } = makeAudioCtx();
+    const length = 1.215;
+    const h = playProgressCharge({ ctx, sfxIn: {} }, pcm(length), { offset: 0, length, chargeTime: 1, progress: 0.05, volume: 0.55 });
+    const initialCalls = gains[0].gain.calls.length;
+    for (let i = 1; i <= 60; i++) {
+      ctx.currentTime = i / 200;
+      h.set({ progress: 0.05 + i / 200 });
+    }
+    assert.equal(gains[0].gain.calls.length, initialCalls, '200Hz constant volume schedules zero redundant gain ramps');
+    h.stop();
+  }
+});

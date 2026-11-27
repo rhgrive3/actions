@@ -7,7 +7,7 @@
 // Registry applies the independently measured source model scale to the entire
 // completed model (including variants); PaintParam never sets its final width.
 // Internal model names: Leanny/splat3 ActorInfo (Fmdb).
-import { heavyRollerSwingEnd } from '../roller-heavy-swing.mjs';
+import { HEAVY_ROLLER_SWING, heavyRollerSwingEnd } from '../roller-heavy-swing.mjs';
 import { weaponWeight } from '../weapon-weight.mjs';
 import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe, part, rebuild, gripSpec, clamp, damp, smooth, slab} from './kit.mjs';
 
@@ -435,6 +435,9 @@ export function FAMILY_POSE(ch, dt, s, C) {
   if (!r.a.intent?.fire) a.rollHoldBroken = true;
   if (!(a.holdRoll && a.elapsed > holdLockAt)) {
     a.holdRoll = !r.a.remote && !!r.a.intent?.fire && !a.rollHoldBroken && (r.rolling || r.a.grounded);
+  } else if (a.swingShape === 'heavy' && a.rollHoldBroken && !r.rolling) {
+    a.releaseFadeAt ??= a.elapsed;
+    a.interval = Math.max(a.interval, a.releaseFadeAt + HEAVY_ROLLER_SWING.ret);
   }
   if (a.elapsed >= a.interval || (a.rolling && (ch.wRoll || 0) >= 0.95)) { m.attack = null; ch.s3RollerFlick = null; }
 }
