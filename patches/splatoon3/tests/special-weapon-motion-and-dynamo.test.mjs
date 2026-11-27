@@ -909,16 +909,14 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     owner.specialActive = { id: 'killerWail', t: 0.2 };
     lastMsg = null;
     sender._sendTick();
-    const ownerRowWail = lastMsg?.a?.find((r) => r[0] === owner.nid);
-    const hasRollWail = Array.isArray(ownerRowWail) && ownerRowWail.some((v) => Array.isArray(v) && v[0] === 's3roll-v1' && v[1] > 0);
-    assert.equal(hasRollWail, true, 'packSquidrollSnapshot packs active Squid Roll during specialKeepsNativeForm (killerWail)');
+    const sqWail = lastMsg?.sq?.[owner.nid];
+    assert.equal(Array.isArray(sqWail) && sqWail[0] === 's3roll-v1' && sqWail[1] > 0, true, 'packSquidrollSnapshot packs active Squid Roll in msg.sq during specialKeepsNativeForm (killerWail)');
 
     owner.specialActive = { id: 'slam', t: 0.2 };
     lastMsg = null;
     sender._sendTick();
-    const ownerRowSlam = lastMsg?.a?.find((r) => r[0] === owner.nid);
-    const hasActiveRollSlam = Array.isArray(ownerRowSlam) && ownerRowSlam.some((v) => Array.isArray(v) && v[0] === 's3roll-v1' && v[1] > 0);
-    assert.equal(hasActiveRollSlam, false, 'packSquidrollSnapshot suppresses active Squid Roll during non-native-form special (slam)');
+    const sqSlam = lastMsg?.sq?.[owner.nid];
+    assert.equal(Array.isArray(sqSlam) && sqSlam[0] === 's3roll-v1' && sqSlam[1] > 0, false, 'packSquidrollSnapshot suppresses active Squid Roll in msg.sq during non-native-form special (slam)');
 
     // Receiver applyRemote Squid Roll with F_SPECIAL set
     const F_SQUID = 2;
