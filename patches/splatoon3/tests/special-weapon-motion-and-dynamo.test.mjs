@@ -830,7 +830,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
   const makeSession = (id) => ({
     myId: id,
     isHost: false,
-    _members: new Map([['A', {}], ['B', {}]]),
+    _members: new Map([['A', {}], ['B', {}], ['C', {}]]),
     tr: { broadcast(m) { lastMsg = JSON.parse(JSON.stringify(m)); } },
   });
 
@@ -851,7 +851,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     Object.assign(slamProxy, { nid: 11, owner: 'A', remote: true, alive: true, form: 'kid' });
     owner.weapon = { ...owner.weapon, special: 'killerWail' };
     proxy.weapon = { ...proxy.weapon, special: 'killerWail' };
-    slamProxy.weapon = { ...slamProxy.weapon, special: 'slam' };
+    slamProxy.weapon = { ...slamProxy.weapon, special: 'trizooka' };
     owner.specialActive = { id: 'killerWail', t: 45 / 60 };
     // Open owner canopy so pack() writes row[4] === 2
     owner.weaponRunner.catalogState = {
@@ -868,13 +868,16 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     proxy.specialActive = { id: 'killerWail', net: true, t: 10 / 60 };
     sender._sendTick();
     assert.ok(lastMsg?.bc?.[owner.nid], 'owner broadcasts Brella sidecar during unlocked Killer Wail');
+    const msgCopyForNonAllow = JSON.parse(JSON.stringify(lastMsg));
     receiver._tick('A', lastMsg);
     assert.equal(proxy.net.buf.length, 1, 'receiver accepted first owner tick');
     const snap1 = proxy.net.buf.at(-1);
     assert.ok(Array.isArray(snap1?.s3Brella), '_tick()->read() retains Brella sidecar for killerWail even when receiver cursor < 40F');
 
-    // Non-allowing special (slam) must drop held canopy row in read() on a clean receiver
-    slamReceiver._tick('A', JSON.parse(JSON.stringify(lastMsg)));
+    // Non-allowing special (trizooka) must drop held canopy row in read() on a clean receiver
+    f.G.netm = slamReceiver;
+    slamReceiver._tick('A', msgCopyForNonAllow);
+    f.G.netm = receiver;
     assert.equal(slamProxy.net.buf.length, 1, 'slamReceiver accepted owner tick');
     const snapSlam = slamProxy.net.buf.at(-1);
     assert.equal(snapSlam?.s3Brella, null, '_tick()->read() drops held Brella sidecar for non-allowing special');
