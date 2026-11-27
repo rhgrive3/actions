@@ -889,7 +889,8 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     const row = ['inkwave.brella-view.v1', 1, 10, 's3-shelter-normal', 2, 0, 0, 1, 1.2, 0, 0, 1, 0];
     proxy.weapon = { ...proxy.weapon, special: 'killerWail' };
     proxy.specialActive = null; // Frame 1 before apply.call populates specialActive
-    const startSnap = { t: 2.0, tp: 0, life: 1, f: F_ALIVE | F_SPECIAL, s3BrellaOwner: 'A', s3Brella: row };
+    const basePose = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, hp: 100, ink: 100, ch: 0, lock: 0, sjT: 0 };
+    const startSnap = { ...basePose, t: 2.0, tp: 0, life: 1, f: F_ALIVE | F_SPECIAL, s3BrellaOwner: 'A', s3Brella: row };
     proxy.net = { ready: true, lastLife: 1, cur: startSnap, buf: [startSnap], err: new f.THREE.Vector3() };
     receiver.peers.set('A', { tr: 2.0, lastTs: 2.0, physicsPoints: [2.0, 10] });
     receiver.applyRemote(proxy, STEP);
@@ -897,7 +898,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
 
     // Special end frame: F_SPECIAL cleared in S.f even while stale specialActive is still set
     proxy.specialActive = { id: 'slam', net: true, t: 0.5 };
-    const endSnap = { t: 2.05, tp: 0, life: 1, f: F_ALIVE, s3BrellaOwner: 'A', s3Brella: row };
+    const endSnap = { ...basePose, t: 2.05, tp: 0, life: 1, f: F_ALIVE, s3BrellaOwner: 'A', s3Brella: row };
     proxy.net = { ready: true, lastLife: 1, cur: endSnap, buf: [endSnap], err: new f.THREE.Vector3() };
     receiver.applyRemote(proxy, STEP);
     assert.ok(proxy.character.s3BrellaPresentation?.canopy?.open, 'special end frame reflects held canopy immediately without 1-frame lag');
@@ -921,7 +922,7 @@ test('Remote Brella _tick->read retains 40F-46F packets, suppresses special Fram
     // Receiver applyRemote Squid Roll with F_SPECIAL set
     const F_SQUID = 2;
     const rollSnap = {
-      t: 3.0, tp: 0, life: 1, f: F_ALIVE | F_SQUID | F_SPECIAL,
+      ...basePose, t: 3.0, tp: 0, life: 1, f: F_ALIVE | F_SQUID | F_SPECIAL,
       rollId: 7, rollRemaining: 0.25, rollVx: 6, rollVz: 0,
     };
     proxy.net = { ready: true, lastLife: 1, cur: rollSnap, buf: [rollSnap], err: new f.THREE.Vector3() };
