@@ -207,7 +207,7 @@ export function installSwimMotion({ Character, Actor, THREE }, _profile) {
       const original = Actor.prototype[method]; if (!original) continue;
       Actor.prototype[method] = function (...args) {
         const result = original.apply(this, args);
-        if (method === 'reset' || !this.alive || (this.specialActive && !specialAllowsMainWeapon(this) && !specialKeepsNativeForm(this.specialActive.id)) || this.superJumpState)
+        if (method === 'reset' || !this.alive || (this.specialActive && !specialKeepsNativeForm(this.specialActive)) || this.superJumpState)
           if (this.character) clear(this.character, states);
         return result;
       };

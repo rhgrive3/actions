@@ -6,8 +6,8 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 export const TARGET = 'patches/splatoon3/runtime/swim-motion.mjs';
-export const CURRENT_SHA256 = 'dba191dd0f24617ca5ea029e2e7faa12181ee29aa4844bbfa665842dc54f27c6';
-export const REFERENCE_SHA256 = 'aaabf72c87b476bd65f34153f9224d234f4268c40ad60e00046d22c734679584';
+export const CURRENT_SHA256 = 'f0a4895bf2838467551c2ff0b302e4a668a4629e78bdcd7b57ddbd77fbc098e8';
+export const REFERENCE_SHA256 = '28d14f348f3e65e94ba397b513fb6e486885eccc578644253bfff33042fe5a1c';
 export const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 const git = (root,...args) => execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
