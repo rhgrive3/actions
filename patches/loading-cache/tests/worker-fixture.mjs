@@ -76,6 +76,7 @@ export class World {
     const e=await event('fetch',{request});const handled=!!e.response;
     const response=await(e.response||world.fetch(request));await e.done();return {response,handled,synchronousWaits:e.synchronousWaits};
    },
+   message:async(data,ports=[])=>{const e=await event('message',{data,ports});await e.done();},
    status:async()=>{let result;const e=await event('message',{data:{type:'INKWAVE_CACHE_STATUS'},ports:[{postMessage:value=>result=value}]});await e.done();return result;}
   };
  }

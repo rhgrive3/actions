@@ -13,6 +13,8 @@
 @keyframes iw-zl-scan{from{transform:translateX(-100%)}to{transform:translateX(265%)}}
 #inkwave-startup-retry{display:inline-grid;place-items:center;min-height:44px;margin-top:calc(var(--u)*2.4);padding:0 1.6em;border:1.5px solid var(--a);color:#fff;font:700 var(--fs-s)/1 Rubik,system-ui,sans-serif;letter-spacing:.2em;text-decoration:none;background:rgba(var(--a-rgb),.14)}
 #inkwave-cache-status{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:45;max-width:90vw;box-sizing:border-box;padding:6px 12px;border-radius:8px;background:#101018ed;color:#fff;font:14px/1.5 system-ui;pointer-events:none}
+#inkwave-cache-status.iw-update-ready{pointer-events:auto;display:inline-flex;align-items:center;gap:8px}
+#inkwave-update-apply{padding:4px 10px;border:1px solid #ff8a14;border-radius:6px;background:rgba(255,138,20,.22);color:#fff;font:700 13px/1.2 system-ui;cursor:pointer;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.iw-load-shell .iw-zl__fill{animation:none;transform:translateX(80%)}}
 </style>
 <link rel="preload" href="patches/local-quality/assets/loading/arena.webp" as="image" type="image/webp" fetchpriority="high">

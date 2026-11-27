@@ -181,8 +181,20 @@ export function installWeaponAudioEngine(Engine){
     }
     // All Charger onsets use the selected Splat phrase. Admit START only after
     // its real buffer has decoded; a cold one-shot must not silently disappear.
-    if(usesChargerRise(requested)&&!await chargerRiseBuffer(this.ctx,{retry:true}))
-      throw new Error('チャージ音の録音を読み込めません。通信を確認してSTARTを押してください');
+    if(usesChargerRise(requested)){
+      if(!await chargerRiseBuffer(this.ctx,{retry:true}))
+        throw new Error('チャージ音の録音を読み込めません。通信を確認してSTARTを押してください');
+      const ct=CHARGER_CHARGE_TIME.get(requested)??CHARGER_CHARGE_TIME.get(id)??1;
+      if(Math.abs(ct-1)>=.005){
+        let stretchTimer;
+        try{
+          await Promise.race([
+            prewarmChargerRise(this,{weaponId:requested,chargeTime:ct,retry:true}).catch(()=>false),
+            new Promise(resolve=>{stretchTimer=setTimeout(resolve,1500);})
+          ]);
+        }finally{clearTimeout(stretchTimer);}
+      }
+    }
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
     if(this.ctx.state&&this.ctx.state!=='running'){

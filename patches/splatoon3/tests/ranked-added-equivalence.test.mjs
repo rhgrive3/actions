@@ -24,7 +24,18 @@ const digest=crypto.createHash('sha256').update(bytes).digest('hex');
 assert.equal(digest,'0f2da1f1ff70386f84871f08f1e28ce45b2db6cedb1db0b2ebf5ecaf40fe00ea');
 
 test('family and impact validation retain exact bytes, selection precedence and numeric bands',()=>{
- assert.deepEqual(footprint.INK_PROFILE_BYTES,oldFoot.INK_PROFILE_BYTES);
+ // Rows 1 (ink-slosh) and 2 (ink-brush) were intentionally trimmed from ~3.00/3.25 R^2;
+ // every other row (0, 3..15) must remain byte-for-byte identical.
+ assert.equal(footprint.INK_PROFILE_BYTES.byteLength,oldFoot.INK_PROFILE_BYTES.byteLength);
+ const rowBytes=footprint.INK_PROFILE_SIZE*4;
+ for(let row=0;row<footprint.INK_PROFILE_HEIGHT;row++){
+  if(row===1||row===2)continue;
+  assert.deepEqual(
+   footprint.INK_PROFILE_BYTES.subarray(row*rowBytes,(row+1)*rowBytes),
+   oldFoot.INK_PROFILE_BYTES.subarray(row*rowBytes,(row+1)*rowBytes),
+   `row ${row} drifted`
+  );
+ }
  for(const family of ['shooter','dualies','splatling','blaster','stringer','brella','splatana','slosher','charger','roller','brush','bad',undefined])for(const sourceActor of [undefined,'WeaponSlosherBathtub'])for(const contact of [false,true]){
   const w={family,kind:'shooter',sourceActor};
   assert.equal(footprint.mainInkFootprint(w,contact),oldFoot.mainInkFootprint(w,contact));

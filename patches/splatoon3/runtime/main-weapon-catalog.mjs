@@ -1168,7 +1168,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       return;
     }
-    const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
+    const bpWrap=p.catalog.r.parameters.BlastParam;
+    let paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
+    if(bpWrap?.BlastParam===descriptor&&Number.isFinite(bpWrap.PaintRadiusNear)&&Number.isFinite(bpWrap.PaintRadiusFar)){
+      const distXZ=Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
+      const dn=finite(bpWrap.DistanceNear,0),df=finite(bpWrap.DistanceFar,dn);
+      const t=df>dn?clamp((distXZ-dn)/(df-dn)):0;
+      paintRadius=lerp(bpWrap.PaintRadiusNear,bpWrap.PaintRadiusFar,t);
+    }
     if(p.catalog.r.family==='blaster'){
       paintCatalogBlasterBurst(G,p,skip!==null||contact!==null,contact);
     }else{
@@ -1236,8 +1243,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return Math.max(0,amount);
   }
-  function impactPaint(p) {
-    const d=p.catalog.descriptor,q=d.b.PaintParam||{},distance=Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
+  function impactPaint(p,hitNormal=null) {
+    const d=p.catalog.descriptor;
+    const q=(d.key==='slosh'&&p.catalog.index>0&&d.b.AfterPaintParam)?d.b.AfterPaintParam:(d.b.PaintParam||{});
+    const distance=Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
     const near=finite(q.WidthHalfNear,d.radius),far=finite(q.WidthHalfFar,near);
     const brush=p.catalog.r.family==='brush';
     const middle=finite(q.WidthHalfMiddle,near),nearDistance=finite(q.DistanceXZNear,brush?finite(q.DistanceNear,1.1):finite(q.DistanceMiddle,1.1));
@@ -1246,7 +1255,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const fall=clamp((Math.max(0,p.start.y-p.pos.y)-finite(q.ScaleStartFallDistance,1.5))/Math.max(EPS,finite(q.ScaleEndFallDistance,12)-finite(q.ScaleStartFallDistance,1.5)));
     const factor=lerp(1,finite(q.WidthDepthScaleFall,1),fall);
     width*=factor;
-    const depth=lerp(finite(q.DepthScaleNear,d.depth),finite(q.DepthScaleFar,d.depth),t)*factor;
+    let depth=lerp(finite(q.DepthScaleNear,d.depth),finite(q.DepthScaleFar,d.depth),t)*factor;
+    if(q.PaintDegreeMax>0&&Number.isFinite(q.DepthScaleMin)&&Number.isFinite(q.DepthScaleMax)){
+      const speed=p.vel.length();
+      if(speed>EPS){
+        const sinA=hitNormal?Math.abs(p.vel.dot(hitNormal))/speed:Math.abs(p.vel.y)/speed;
+        const deg=Math.asin(clamp(sinA,0,1))*180/Math.PI;
+        depth=lerp(q.DepthScaleMax,q.DepthScaleMin,clamp(deg/q.PaintDegreeMax,0,1))*factor;
+      }
+    }
     const out=p.catalog.impactFootprint||=( {width:0,depth:0} );
     out.width=width;out.depth=depth;return out;
   }
@@ -1441,7 +1458,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       updateCatalogVisual(p);return false;
     }
     if(p.ghost)return true;
-    const footprint=impactPaint(p);
+    const footprint=impactPaint(p,h.normal);
     paint(p.owner,at,footprint.width,footprint.depth,_impactHorizDir.copy(p.vel).setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))

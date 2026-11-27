@@ -114,13 +114,12 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
           resumedFromPause=true;
         }
         // Sustained charge speed relative to the nominal clock (1 = normal,
-        // ~1/3 for an airborne/empty-tank charge), measured over >=45 ms.
-        // Never reset anchorAt on head catch-up so a sudden 1 -> 1/3 drop on
-        // jump always completes its measurement window cleanly.
+        // ~1/3 for an airborne/empty-tank charge), measured over >=160 ms so
+        // 30/60/120 Hz tick quantization never perturbs steady charging.
         const span=now-anchorAt;
-        if(span>=.045){
+        if(span>=.16){
           const measured=(q-anchorQ)*Math.max(.05,chargeTime)/span;
-          if(measured>0)speed=Math.abs(measured-1)<.22?1:clamp(measured,.05,4);
+          if(measured>0)speed=Math.abs(measured-1)<.35?1:clamp(measured,.05,4);
           anchorQ=q;anchorAt=now;
         }
         // Only mute on a genuine pause/hold where progress has stopped
@@ -131,27 +130,25 @@ export function playProgressCharge(audio,buffer,{offset=0,length,chargeTime=1,pr
         }else if(resumedFromPause){
           rate=nominal;
         }else{
-          // Target ~40 ms of wall-clock headroom behind the funded end.
-          // Softly decelerate when approaching `end` instead of muting, and
-          // keep a wide deadband so normal 30/60/120 Hz charging stays steady.
+          // Keep pitch steady on normal charging: only apply gentle bounded
+          // drift correction (never an octave-dropping 0.5x brake).
           const headroom=(end-headNow(now))/nominal;
           if(body*q<.04*nominal){
             buildingHeadroom=false;
-          }else if(headroom<.006){
+          }else if(headroom<.004){
             buildingHeadroom=true;
-          }else if(headroom>=.035){
+          }else if(headroom>=.03){
             buildingHeadroom=false;
           }
           let correction=1;
-          if(buildingHeadroom&&headroom<.035){
-            const slow=headroom<=.003?.5:clamp(.78+(headroom/.035)*.22,.78,1);
-            correction=speed<.5?Math.max(.78,slow):slow;
-          }else if(headroom>.075){
-            correction=clamp(1+(headroom-.04)/.5,1.02,1.06);
+          if(buildingHeadroom&&headroom<.03){
+            correction=clamp(.94+(headroom/.03)*.06,.94,1);
+          }else if(headroom>.09){
+            correction=clamp(1+(headroom-.06)/.75,1.01,1.04);
           }
           rate=clamp(nominal*speed*correction,.02,4);
         }
-        if(rate===0?appliedRate!==0:Math.abs(rate-appliedRate)>.012*Math.max(rate,appliedRate))applyRate(rate,now);
+        if(rate===0?appliedRate!==0:Math.abs(rate-appliedRate)>.015*Math.max(rate,appliedRate))applyRate(rate,now);
         else rate=appliedRate;
         const target=rate>0&&q>0?level:0;
         // Preserve every in-flight ramp, but do not reschedule a settled target.
