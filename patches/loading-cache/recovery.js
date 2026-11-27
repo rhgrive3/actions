@@ -34,11 +34,31 @@
     status.textContent = '最新のゲームデータを確認しています…';
     // Registration used to depend on reaching the menu, so a broken boot could
     // never update its worker. Do this only on failure, with a bounded wait.
+    const alreadyRecovering = url.searchParams.has(parameter);
     if ('serviceWorker' in navigator && window.isSecureContext) {
       await Promise.race([
         navigator.serviceWorker.register(new URL('sw.js', root), {
           scope: root.pathname, updateViaCache: 'none'
-        }).then(registration => registration.update()).catch(() => {}),
+        }).then(async registration => {
+          await registration.update().catch(() => {});
+          if (manual && registration.waiting) {
+            try { registration.waiting.postMessage({ type: 'INKWAVE_SKIP_WAITING' }); } catch {}
+          }
+          if (manual && alreadyRecovering) {
+            await registration.unregister().catch(() => {});
+          }
+        }).catch(() => {}),
+        new Promise(resolve => setTimeout(resolve, 1500))
+      ]);
+    }
+    // If automatic recovery already ran and the user manually retries while online,
+    // clear only this app's scoped startup caches so a wedged cache cannot trap the tab.
+    if (manual && alreadyRecovering && typeof caches !== 'undefined') {
+      const prefix = 'inkwave-startup-v2:' + root.pathname + ':';
+      await Promise.race([
+        caches.keys().then(keys => Promise.all(
+          keys.filter(key => key.startsWith(prefix)).map(key => caches.delete(key))
+        )).catch(() => {}),
         new Promise(resolve => setTimeout(resolve, 1500))
       ]);
     }

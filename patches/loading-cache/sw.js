@@ -159,7 +159,10 @@ async function verifiedAsset(request, expected) {
 async function populate(cache, rel, reusable, reusableRevision) {
   const url = new URL(rel, REVISION_PREFIX).href;
   const existing = await cache.match(url);
-  if (existing) { await verify(existing, BUILD.assets[rel]); return; }
+  if (existing) {
+    try { await verify(existing, BUILD.assets[rel]); return; }
+    catch { await cache.delete(url); }
+  }
   if (reusable && reusableRevision) {
     const oldURL = new URL(`_versions/${reusableRevision}/${rel}`, SCOPE).href;
     const old = await reusable.match(oldURL);
@@ -259,7 +262,8 @@ async function repairCachedModules() {
   // normal warm path and every valid/offline asset, setting and neighbor cache.
   try {
     const cache = await caches.open(CURRENT);
-    for (const rel of Object.keys(BUILD.assets).filter(rel => /\.m?js$/.test(rel))) {
+    const targets = new Set([...BUILD.precache, ...Object.keys(BUILD.assets).filter(rel => /\.m?js$/.test(rel))]);
+    for (const rel of targets) {
       const url = new URL(rel, REVISION_PREFIX).href;
       const hit = await cache.match(url);
       if (hit) {
@@ -376,6 +380,10 @@ self.addEventListener('fetch', event => {
   event.waitUntil(work.then(() => undefined, () => undefined));
 });
 self.addEventListener('message', event => {
+  if (event.data?.type === 'INKWAVE_SKIP_WAITING') {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   if (event.data?.type !== 'INKWAVE_CACHE_STATUS') return;
   event.waitUntil((async () => {
     const ready = !!await complete(BUILD.revision);

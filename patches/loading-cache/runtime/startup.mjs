@@ -23,10 +23,35 @@ const badge = document.getElementById('inkwave-cache-status');
 const offlineText = () => navigator.onLine === false ? 'オフラインです。保存済みデータを確認しています。' : 'ゲームを準備しています…';
 if (status) status.textContent = offlineText();
 let menuObserver, profileTimeout, registrationPending = false, registered = false, engine = null, startupFailed = false, updateAvailable = false;
-const updateText = '更新データを準備しました。すべてのZEVANT画面を閉じると適用されます。';
+let activeRegistration = null, applyingUpdate = false, lastUpdateCheck = 0;
+const updateText = '更新データを準備しました。';
 const failureText = () => navigator.onLine === false ? '起動に必要なデータが保存されていません。通信が戻ってから開き直してください。' : 'ゲームの読み込みに失敗しました。通信を確認して開き直してください。';
 const menuVisible = () => ['title', 'main'].includes(document.querySelector('.iw-ui')?.dataset.screen);
-const badgeMessage = message => { if (badge) { badge.textContent = message; badge.hidden = !message || !menuVisible(); } };
+const applyPendingUpdate = () => {
+  if (applyingUpdate) return;
+  const waiting = activeRegistration?.waiting;
+  if (!waiting) { location.reload(); return; }
+  applyingUpdate = true;
+  if (badge) { badge.classList?.remove?.('iw-update-ready'); badge.textContent = '更新を適用しています…'; }
+  try { waiting.postMessage({ type: 'INKWAVE_SKIP_WAITING' }); }
+  catch { location.reload(); }
+};
+const badgeMessage = message => {
+  if (!badge) return;
+  const show = !!message && menuVisible();
+  badge.hidden = !show;
+  badge.classList?.toggle?.('iw-update-ready', show && updateAvailable && !applyingUpdate);
+  if (!show) return;
+  badge.textContent = message;
+  if (updateAvailable && !applyingUpdate && typeof document.createElement === 'function' && typeof badge.appendChild === 'function') {
+    const button = document.createElement('button');
+    button.id = 'inkwave-update-apply';
+    button.type = 'button';
+    button.textContent = '今すぐ更新';
+    button.addEventListener?.('click', applyPendingUpdate);
+    badge.appendChild(button);
+  }
+};
 let cacheMessage = navigator.onLine === false ? 'オフライン：保存済みデータを使用中' : '';
 const updateConnectivity = () => {
   if (status && !shell?.hidden) status.textContent = startupFailed ? failureText() : offlineText();
@@ -35,6 +60,13 @@ const updateConnectivity = () => {
 };
 addEventListener('online', () => { updateConnectivity(); deferRegistration(); cacheStatus(navigator.serviceWorker?.controller, true); });
 addEventListener('offline', updateConnectivity);
+document.addEventListener?.('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !registered || !activeRegistration || !menuVisible() || navigator.onLine === false) return;
+  const now = Date.now();
+  if (now - lastUpdateCheck < 60000) return;
+  lastUpdateCheck = now;
+  activeRegistration.update?.().catch(() => {});
+});
 
 // Share only in-flight work; readiness is never a durable cache assertion.
 const cacheProbes = new WeakMap();
@@ -64,7 +96,12 @@ function cacheStatus(worker, refresh = false) {
   catch { finish(null); }
   return entry.promise;
 }
-navigator.serviceWorker?.addEventListener?.('controllerchange', () => cacheStatus(navigator.serviceWorker.controller, true));
+navigator.serviceWorker?.addEventListener?.('controllerchange', () => {
+  updateAvailable = false;
+  updateConnectivity();
+  cacheStatus(navigator.serviceWorker.controller, true);
+  if (applyingUpdate) location.reload();
+});
 function deferRegistration() {
   if (registered || registrationPending || !engine || !menuVisible()) return;
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
@@ -77,6 +114,8 @@ function deferRegistration() {
       // document.baseURI points into _versions; registration is rooted in the document URL, not that base.
       const root = new URL('./', location.href);
       const registration = await navigator.serviceWorker.register(new URL('sw.js', root), { scope: root.pathname, updateViaCache: 'none' });
+      activeRegistration = registration;
+      lastUpdateCheck = Date.now();
       registered = true;
       mark('sw-registration');
       const notifyWaiting = () => {

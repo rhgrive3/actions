@@ -33,14 +33,12 @@ export const INK_PROFILE_LAST_KIND = 10 + INK_FOOTPRINT_KINDS.length - 1;
 export const INK_PROFILE_SECTIONS = Object.freeze([
   // Shooter / Dualies: blunt pool and broken shoulders, narrow trailing neck.
   [[-1,0,0],[-.94,.13,.08],[-.84,.21,.29],[-.72,.19,.22],[-.59,.46,.38],[-.47,.43,.54],[-.33,.72,.62],[-.20,.68,.76],[-.08,.92,.88],[.06,.86,.94],[.19,1,.88],[.33,.93,1],[.48,.89,.84],[.61,.70,.81],[.74,.71,.59],[.85,.43,.48],[.94,.26,.20],[1,0,0]],
-  // Slosher: lobed, broad rounded-square puddles; the existing nine-unit
-  // Bucket volley, rather than one giant tear stamp, makes its tapered stripe.
-  [[-1,0,0],[-.92,.26,.20],[-.83,.66,.59],[-.72,.60,.76],[-.60,.85,.73],[-.47,.79,.93],[-.33,.98,.84],[-.19,.85,1],[-.05,.94,.90],[.10,1,.94],[.25,.89,.82],[.40,.95,.96],[.55,.83,.84],[.69,.88,.73],[.80,.59,.64],[.91,.30,.36],[1,0,0]],
-  // Brush flick: rounded ribbon with small scallops, not a pointed leaf.
-  // The isolated orange strokes in the brush reference have two broad caps.
-  // The sourced
-  // Mini/Normal/Heavy pellet spread and widths determine the whole fan.
-  [[-1,0,0],[-.94,.45,.40],[-.84,.74,.70],[-.71,.79,.84],[-.58,.90,.82],[-.44,.83,.93],[-.30,.95,.86],[-.16,.89,.92],[0,.92,.86],[.15,.88,.96],[.29,.96,.88],[.43,.87,1],[.57,1,.91],[.70,.89,.95],[.82,.75,.77],[.93,.43,.49],[1,0,0]],
+  // Slosher: lobed puddle trimmed to realistic coverage (~2.25 R^2) instead of
+  // a near-square block; the nine-unit volley still builds the tapered stripe.
+  [[-1,0,0],[-.92,.14,.10],[-.82,.34,.28],[-.70,.42,.52],[-.57,.62,.54],[-.43,.64,.76],[-.29,.84,.72],[-.15,.76,.92],[0,.92,.84],[.15,1,.88],[.30,.82,.74],[.45,.78,.82],[.59,.62,.66],[.72,.54,.44],[.83,.34,.38],[.92,.16,.20],[1,0,0]],
+  // Brush / Splatana flick: leaner scalloped ribbon (~2.28 R^2) instead of an
+  // oversized >circle rectangle; sourced pellet/slash widths set total fan size.
+  [[-1,0,0],[-.93,.18,.14],[-.82,.42,.38],[-.69,.54,.60],[-.56,.68,.60],[-.42,.66,.76],[-.28,.82,.72],[-.14,.76,.84],[0,.86,.78],[.15,.78,.90],[.29,.92,.80],[.43,.76,.96],[.57,.90,.78],[.70,.68,.72],[.82,.46,.48],[.93,.20,.24],[1,0,0]],
   // Roller flick: uneven broad head and tapered connecting fingers. The
   // horizontal/vertical unit distributions remain separate source volleys.
   [[-1,0,0],[-.93,.12,.09],[-.82,.21,.25],[-.69,.18,.16],[-.56,.38,.30],[-.42,.51,.60],[-.29,.47,.50],[-.16,.78,.73],[-.02,.86,.91],[.12,.81,.85],[.26,1,.93],[.40,.90,1],[.54,.91,.82],[.68,.72,.84],[.80,.61,.55],[.92,.31,.36],[1,0,0]],

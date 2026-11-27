@@ -163,14 +163,19 @@ export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',ch
   // version is instant at play time. If Worker preparation is still in flight,
   // play the original phrase at pitch 1x and prepare for the next hold.
   const ratio=chargerOnsetRatio(chargeTime);
+  let effectiveChargeTime=chargeTime;
   if(ratio!==null&&Math.abs(ratio-1)>=.005){
     const excerpt=state.excerpt;
     const ready=excerpt&&state.stretchCache?.lookup('splat-charger-phrase',excerpt,chargeTime);
     if(ready){buffer=ready;offset=0;length=ready.duration;}
-    else void prewarmChargerRise(audio,{weaponId,chargeTime}).catch(()=>{});
+    else{
+      // Keep the unstretched fallback at natural 1x pitch while WSOLA warms up.
+      effectiveChargeTime=length/1.215;
+      void prewarmChargerRise(audio,{weaponId,chargeTime}).catch(()=>{});
+    }
   }
   if(!(length>.2))return null;
-  if(Number.isFinite(progress))return playProgressCharge(audio,buffer,{offset,length,chargeTime,progress,volume:level,pos});
+  if(Number.isFinite(progress))return playProgressCharge(audio,buffer,{offset,length,chargeTime:effectiveChargeTime,progress,volume:level,pos});
   const now=ctx.currentTime,source=ctx.createBufferSource(),gain=ctx.createGain();
   const validPos=pos&&[pos.x,pos.y,pos.z].every(Number.isFinite);
   const panner=validPos&&typeof audio._panner==='function'?audio._panner(pos,3):null;
